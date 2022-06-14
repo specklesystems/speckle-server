@@ -1,26 +1,12 @@
+import * as ThemeStateManager from '@/main/utils/themeStateManager'
 import '@mdi/font/css/materialdesignicons.css'
 import Vue from 'vue'
 import Vuetify from 'vuetify/lib'
 
 Vue.use(Vuetify)
 
-let hasLocalStorage = typeof Storage !== 'undefined'
-
-try {
-  localStorage.setItem('foo', 'bar')
-  localStorage.getItem('foo')
-  localStorage.removeItem('foo')
-} catch {
-  hasLocalStorage = false
-}
-
-const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)').matches
-const hasDarkMode = hasLocalStorage
-  ? localStorage.getItem('darkModeEnabled')
-  : darkMediaQuery
-if (!hasDarkMode && darkMediaQuery && hasLocalStorage) {
-  localStorage.setItem('darkModeEnabled', 'dark')
-}
+ThemeStateManager.initialize()
+const isDarkMode = ThemeStateManager.isDarkTheme()
 
 export default new Vuetify({
   icons: {
@@ -28,7 +14,7 @@ export default new Vuetify({
   },
   theme: {
     options: { customProperties: true },
-    dark: hasLocalStorage ? localStorage.getItem('darkModeEnabled') === 'dark' : false,
+    dark: isDarkMode,
     themes: {
       light: {
         primary: '#047EFB', //blue

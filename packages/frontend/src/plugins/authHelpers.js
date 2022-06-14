@@ -1,6 +1,7 @@
 import { MainUserDataQuery } from '@/graphql/user'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import md5 from '@/helpers/md5'
+import { VALID_EMAIL_REGEX } from '@/main/lib/common/vuetify/validators'
 
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
@@ -132,7 +133,5 @@ export async function refreshToken() {
 }
 
 export function isEmailValid(email) {
-  const emailValidator =
-    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-  return emailValidator.test(email)
+  return VALID_EMAIL_REGEX.test(email)
 }

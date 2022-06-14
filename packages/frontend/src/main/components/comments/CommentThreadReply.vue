@@ -1,12 +1,11 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
   <div
-    class="d-flex align-center"
+    class="d-flex align-center comment-thread-reply"
     @mouseenter="hover = true"
     @mouseleave="hover = false"
   >
     <div
-      v-if="!link"
       :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
         $userId() === reply.authorId ? 'primary white--text' : 'background'
       }`"
@@ -19,45 +18,13 @@
       >
         <user-avatar :id="reply.authorId" :size="30" />
       </div>
-      <div
-        :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`"
-        v-html="linkifiedText"
-      ></div>
-    </div>
-    <div
-      v-else
-      style="width: 300px"
-      :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center`"
-    >
-      <div
-        :class="`d-inline-block ${
-          $userId() === reply.authorId ? 'xxx-order-last' : ''
-        }`"
-      >
-        <user-avatar :id="reply.authorId" :size="30" />
-      </div>
-      <div
-        :class="`reply-box d-inline-block py-2 flex-grow-1 float-left caption ${
-          $userId() === reply.authorId ? 'pr-3' : 'pl-1'
-        }`"
-      >
-        <div class="d-block">
-          <v-btn
-            v-tooltip="reply.text"
-            block
-            rounded
-            :href="reply.text"
-            target="_blank"
-            :class="`reply-box overflow-hidden ${
-              $userId() === reply.authorId ? 'primary white--text' : 'background'
-            }`"
-          >
-            <span class="caption">
-              {{ link.host.substring(0, 18) }} {{ link.host.length > 20 ? '...' : '' }}
-            </span>
-            <v-icon small class="ml-2">mdi-open-in-new</v-icon>
-          </v-btn>
-        </div>
+      <div :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`">
+        <smart-text-editor
+          min-width
+          read-only
+          :schema-options="richTextSchema"
+          :value="reply.text.doc"
+        />
       </div>
     </div>
     <div style="width: 20px; overflow: hidden">
@@ -103,11 +70,13 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import linkifyUrls from 'linkify-urls'
+import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
+import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar'),
+    SmartTextEditor
   },
   props: {
     reply: { type: Object, default: () => null },
@@ -117,7 +86,8 @@ export default {
   data() {
     return {
       hover: false,
-      showArchiveDialog: false
+      showArchiveDialog: false,
+      richTextSchema: SMART_EDITOR_SCHEMA
     }
   },
   computed: {
@@ -126,26 +96,6 @@ export default {
       if (this.stream.role === 'stream:owner' || this.reply.authorId === this.$userId())
         return true
       return false
-    },
-    link() {
-      if (!this.reply) return false
-      try {
-        const url = new URL(this.reply.text)
-        return url
-      } catch {
-        return null
-      }
-    },
-    linkifiedText() {
-      return linkifyUrls(this.reply.text, {
-        attributes: {
-          target: '_blank',
-          class:
-            this.reply.authorId === this.$userId()
-              ? 'comment-link white--text font-weight-bold text-decoration-none'
-              : 'comment-link font-weight-bold text-decoration-none'
-        }
-      })
     }
   },
   methods: {
@@ -177,13 +127,17 @@ export default {
   }
 }
 </script>
-<style scoped>
->>> .comment-link:after {
-  content: ' ↗ ';
-}
+<style scoped lang="scss">
+::v-deep .smart-text-editor {
+  a {
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    word-break: break-all;
 
-.reply-box {
-  white-space: pre-wrap;
-  word-break: break-word;
+    &:after {
+      content: ' ↗ ';
+    }
+  }
 }
 </style>

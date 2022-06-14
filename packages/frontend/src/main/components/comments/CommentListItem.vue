@@ -16,7 +16,7 @@
         <div class="text-truncate body-1 mr-auto">
           <div class="text-truncate">
             <router-link class="text-decoration-none" :to="link">
-              {{ commentDetails.text }}
+              {{ documentToBasicString(commentDetails.text.doc) }}
             </router-link>
           </div>
           <div class="text-truncate caption">
@@ -116,6 +116,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
 
 export default {
   components: {
@@ -136,7 +137,9 @@ export default {
         query ($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
             id
-            text
+            text {
+              doc
+            }
             authorId
             screenshot
             createdAt
@@ -201,7 +204,8 @@ export default {
   data() {
     return {
       hovered: false,
-      showArchiveDialog: false
+      showArchiveDialog: false,
+      documentToBasicString
     }
   },
   computed: {

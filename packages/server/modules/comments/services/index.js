@@ -2,7 +2,9 @@
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const { SpeckleForbiddenError } = require('@/modules/shared/errors')
-const sanitizeHtml = require('sanitize-html')
+const {
+  buildCommentTextFromInput
+} = require('@/modules/comments/services/commentTextService')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -51,15 +53,6 @@ const resourceCheck = async (res, streamId) => {
 }
 
 module.exports = {
-  /**
-   * Format comment text field (e.g. for returning to frontend or saving to DB)
-   * @param {Object} comment
-   * @returns {string}
-   */
-  formatCommentText(comment) {
-    if (!comment || !comment.text) return ''
-    return sanitizeHtml(comment.text)
-  },
   async streamResourceCheck({ streamId, resources }) {
     // this itches - a for loop with queries... but okay let's hit the road now
     await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
@@ -87,7 +80,7 @@ module.exports = {
 
     comment.id = crs({ length: 10 })
     comment.authorId = userId
-    comment.text = module.exports.formatCommentText(comment)
+    comment.text = buildCommentTextFromInput(input.text)
 
     await Comments().insert(comment)
     try {
@@ -107,19 +100,18 @@ module.exports = {
       throw e // pass on to resolver
     }
     await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
-    return comment.id
+    return comment
   },
 
   async createCommentReply({ authorId, parentCommentId, streamId, text, data }) {
     const comment = {
       id: crs({ length: 10 }),
       authorId,
-      text,
+      text: buildCommentTextFromInput(text),
       data,
       streamId,
       parentComment: parentCommentId
     }
-    comment.text = module.exports.formatCommentText(comment)
 
     await Comments().insert(comment)
     try {
@@ -135,7 +127,7 @@ module.exports = {
     }
     await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
 
-    return comment.id
+    return comment
   },
 
   async editComment({ userId, input, matchUser = false }) {
@@ -144,7 +136,8 @@ module.exports = {
     if (matchUser && editedComment.authorId !== userId)
       throw new SpeckleForbiddenError("You cannot edit someone else's comments")
 
-    await Comments().where({ id: input.id }).update({ text: input.text })
+    const newText = buildCommentTextFromInput(input.text)
+    await Comments().where({ id: input.id }).update({ text: newText })
   },
 
   async viewComment({ userId, commentId }) {

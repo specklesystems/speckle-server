@@ -57,4 +57,31 @@ class BaseError extends VError {
   }
 }
 
-module.exports = { BaseError }
+/**
+ * Use this to validate args
+ */
+class InvalidArgumentError extends BaseError {
+  static code = 'INVALID_ARGUMENT_ERROR'
+  static defaultMessage = 'Invalid arguments received'
+}
+
+/**
+ * Use this to throw when user tries to access data that he shouldn't have access to
+ */
+class UnauthorizedAccessError extends BaseError {
+  static code = 'UNAUTHORIZED_ACCESS_ERROR'
+  static defaultMessage = 'Attempted unauthorized access to data'
+}
+
+class RichTextParseError extends BaseError {
+  static code = 'RICH_TEXT_PARSE_ERROR'
+  static defaultMessage =
+    'An error occurred while trying to parse the rich text document'
+}
+
+module.exports = {
+  BaseError,
+  InvalidArgumentError,
+  UnauthorizedAccessError,
+  RichTextParseError
+}

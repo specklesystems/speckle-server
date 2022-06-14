@@ -45,6 +45,7 @@ const config = {
     historyApiFallback: {
       rewrites: [
         { from: /^\/$/, to: '/app.html' },
+        { from: /\/embed(.*)/, to: '/embedApp.html' },
         { from: /./, to: '/app.html' }
       ]
     }

@@ -142,7 +142,8 @@ const routes = [
             name: 'commit',
             meta: {
               title: 'Commit | Speckle',
-              resizableNavbar: true
+              resizableNavbar: true,
+              hideEmailBanner: true
             },
             component: () => import('@/main/pages/stream/CommitObjectViewer.vue')
           },
@@ -151,7 +152,8 @@ const routes = [
             name: 'objects',
             meta: {
               title: 'Object | Speckle',
-              resizableNavbar: true
+              resizableNavbar: true,
+              hideEmailBanner: true
             },
             component: () => import('@/main/pages/stream/CommitObjectViewer.vue')
           },

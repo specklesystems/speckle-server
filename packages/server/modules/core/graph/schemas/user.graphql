@@ -5,9 +5,14 @@ extend type Query {
   user(id: String): User
 
   """
-  Get users from the server in a paginated view. The query search for matches in name, company and email.
+  Get all (or search for specific) users from the server in a paginated view, if you have the server:admin role.
+  The query looks for matches in name, company and email.
   """
   users(limit: Int! = 25, offset: Int! = 0, query: String = null): UserCollection
+  """
+  Search for users and return limited metadata about them, if you have the server:user role.
+  The query looks for matches in name & email
+  """
   userSearch(
     query: String!
     limit: Int! = 25

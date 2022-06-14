@@ -75,7 +75,7 @@ type Comment {
   authorId: String!
   archived: Boolean!
   screenshot: String
-  text: String!
+  text: SmartTextEditorValue!
   data: JSONObject
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
@@ -100,7 +100,7 @@ type Comment {
 type CommentCollection {
   totalCount: Int!
   cursor: DateTime
-  items: [Comment]!
+  items: [Comment!]!
 }
 
 type ResourceIdentifier {
@@ -129,7 +129,10 @@ input CommentCreateInput {
   - a comment targets only a stream
   """
   resources: [ResourceIdentifierInput]!
-  text: String!
+  """
+  ProseMirror document object
+  """
+  text: JSONObject!
   data: JSONObject!
   screenshot: String
 }
@@ -137,14 +140,20 @@ input CommentCreateInput {
 input ReplyCreateInput {
   streamId: String!
   parentComment: String!
-  text: String!
+  """
+  ProseMirror document object
+  """
+  text: JSONObject!
   data: JSONObject
 }
 
 input CommentEditInput {
   streamId: String!
   id: String!
-  text: String!
+  """
+  ProseMirror document object
+  """
+  text: JSONObject!
 }
 
 extend type Mutation {

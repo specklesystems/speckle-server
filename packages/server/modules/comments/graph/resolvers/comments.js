@@ -15,9 +15,11 @@ const {
   viewComment,
   archiveComment,
   editComment,
-  streamResourceCheck,
-  formatCommentText
-} = require('@/modules/comments/services')
+  streamResourceCheck
+} = require('@/modules/comments/services/index')
+const {
+  ensureCommentSchema
+} = require('@/modules/comments/services/commentTextService')
 
 const authorizeStreamAccess = async ({
   streamId,
@@ -79,8 +81,12 @@ module.exports = {
         cursor: args.cursor
       })
     },
+    /**
+     * Format comment.text for output, since it can have multiple formats
+     */
     text(parent) {
-      return formatCommentText(parent)
+      const commentText = parent?.text || ''
+      return ensureCommentSchema(commentText)
     }
   },
   Stream: {
@@ -171,11 +177,15 @@ module.exports = {
       if (!stream.allowPublicComments && !stream.role)
         throw new ForbiddenError('You are not authorized.')
 
-      const id = await createComment({ userId: context.userId, input: args.input })
+      const { id, text } = await createComment({
+        userId: context.userId,
+        input: args.input
+      })
 
       await pubsub.publish('COMMENT_ACTIVITY', {
         commentActivity: {
           ...args.input,
+          text,
           authorId: context.userId,
           id,
           replies: { totalCount: 0 },
@@ -282,7 +292,7 @@ module.exports = {
       if (!stream.allowPublicComments && !stream.role)
         throw new ForbiddenError('You are not authorized.')
 
-      const id = await createCommentReply({
+      const { id, text } = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
@@ -295,6 +305,7 @@ module.exports = {
           eventType: 'reply-added',
           ...args.input,
           id,
+          text,
           authorId: context.userId,
           updatedAt: Date.now(),
           createdAt: Date.now()
