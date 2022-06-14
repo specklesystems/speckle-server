@@ -14,7 +14,7 @@ const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) 
   await Promise.all(
     uploadResults.map(async (upload) => {
       await saveUploadFile({
-        fileId: upload.fileId,
+        fileId: upload.blobId,
         streamId,
         branchName,
         userId,
@@ -48,7 +48,7 @@ exports.init = async (app) => {
               await saveFileUploads({
                 userId: req.context.userId,
                 streamId: req.params.streamId,
-                branchName: '',
+                branchName: req.params.branchName ?? 'main',
                 uploadResults
               })
             }

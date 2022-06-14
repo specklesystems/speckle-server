@@ -38,7 +38,7 @@ module.exports = {
     for (const mtlFile of dependencies) {
       // there might be multiple files named with the same name, take the first...
       const [file] = (await getFileInfoByName({ fileName: mtlFile, streamId, token }))
-        .files
+        .blobs
       if (!file) {
         console.log(`OBJ dependency file not found in stream: ${mtlFile}`)
         continue
