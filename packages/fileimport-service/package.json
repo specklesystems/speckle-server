@@ -27,7 +27,6 @@
     "bcrypt": "^5.0.1",
     "crypto-random-string": "^3.3.1",
     "knex": "^2.0.0",
-    "node-fetch": "^2.6.5",
     "pg": "^8.7.3",
     "prom-client": "^14.0.1",
     "undici": "^5.4.0",
