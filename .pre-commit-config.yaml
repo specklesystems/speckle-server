@@ -16,6 +16,7 @@ repos:
           - '@typescript-eslint/parser@5.21.0'
           - typescript@4.5.4
           - '@rushstack/eslint-patch@1.1.3'
+          - '@vue/eslint-config-typescript@11.0.0'
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: 'v2.6.2' # Use the sha / tag you want to point at
