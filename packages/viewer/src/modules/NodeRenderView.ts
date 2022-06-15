@@ -67,6 +67,14 @@ export class NodeRenderView {
     return this._batchIndexStart + this._batchIndexCount
   }
 
+  public get batchCount() {
+    return this._batchIndexCount
+  }
+
+  public get batchId() {
+    return this._batchId
+  }
+
   public get needsSegmentConversion() {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||

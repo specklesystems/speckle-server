@@ -24,7 +24,7 @@ export default class Batch {
   private id: string
   private renderViews: NodeRenderView[]
   private geometry: BufferGeometry | LineSegmentsGeometry
-  private material: Material
+  public batchMaterial: Material
   public mesh: Mesh | Line | Line2
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
@@ -32,13 +32,20 @@ export default class Batch {
     this.renderViews = renderViews
   }
 
-  public setMaterial(material: Material) {
-    this.material = material
+  public setBatchMaterial(material: Material) {
+    this.batchMaterial = material
+  }
 
-    this.mesh
-    this.material
-    this.renderViews
-    this.geometry
+  public setMaterial(material: Material | Material[]) {
+    this.mesh.material = material
+  }
+
+  public addDrawGroup(start: number, count: number, materialIndex: number) {
+    this.geometry.addGroup(start, count, materialIndex)
+  }
+
+  public clearDrawGroups() {
+    this.geometry.clearGroups()
   }
 
   public buildBatch(type: GeometryType) {
@@ -56,8 +63,8 @@ export default class Batch {
   public getRenderView(index: number): NodeRenderView {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
-        index >= this.renderViews[k].batchStart &&
-        index < this.renderViews[k].batchEnd
+        index * 3 >= this.renderViews[k].batchStart &&
+        index * 3 < this.renderViews[k].batchEnd
       ) {
         return this.renderViews[k]
       }
@@ -92,7 +99,7 @@ export default class Batch {
       arrayOffset += geometry.attributes.INDEX.length
     }
     this.makeMeshGeometry(indices, position)
-    this.mesh = new Mesh(this.geometry, this.material)
+    this.mesh = new Mesh(this.geometry, this.batchMaterial)
   }
 
   private buildLineBatch() {
@@ -138,12 +145,12 @@ export default class Batch {
     if (Geometry.THICK_LINES) {
       this.mesh = new LineSegments2(
         this.geometry as LineSegmentsGeometry,
-        this.material as SpeckleLineMaterial
+        this.batchMaterial as SpeckleLineMaterial
       )
       ;(this.mesh as LineSegments2).computeLineDistances()
       this.mesh.scale.set(1, 1, 1)
     } else {
-      this.mesh = new Line(this.geometry, this.material)
+      this.mesh = new Line(this.geometry, this.batchMaterial)
     }
   }
 

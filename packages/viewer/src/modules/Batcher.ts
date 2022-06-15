@@ -3,6 +3,7 @@ import Batch, { GeometryType } from './Batch'
 import { SpeckleType } from './converter/GeometryConverter'
 import { WorldTree } from './converter/WorldTree'
 import Materials from './materials/Materials'
+import { NodeRenderView } from './NodeRenderView'
 
 export default class Batcher {
   private materials: Materials
@@ -49,7 +50,7 @@ export default class Batcher {
 
       const batchID = generateUUID()
       this.batches[batchID] = new Batch(batchID, batch)
-      this.batches[batchID].setMaterial(material)
+      this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch(batchType)
       console.warn(batch)
     }
@@ -57,5 +58,21 @@ export default class Batcher {
 
   public getRenderView(batchId: string, index: number) {
     return this.batches[batchId].getRenderView(index)
+  }
+
+  public resetBatchesDrawGroups() {
+    for (const k in this.batches) {
+      this.batches[k].clearDrawGroups()
+      this.batches[k].mesh.material = this.batches[k].batchMaterial
+    }
+  }
+
+  public selectRenderView(renderView: NodeRenderView) {
+    const batch = this.batches[renderView.batchId]
+    batch.setMaterial([batch.batchMaterial, this.materials.meshHighlightMaterial])
+    batch.clearDrawGroups()
+    batch.addDrawGroup(0, renderView.batchStart, 0)
+    batch.addDrawGroup(renderView.batchStart, renderView.batchCount, 1)
+    batch.addDrawGroup(renderView.batchEnd, Infinity, 0)
   }
 }

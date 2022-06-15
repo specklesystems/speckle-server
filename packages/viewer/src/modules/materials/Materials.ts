@@ -8,6 +8,7 @@ import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 
 export default class Materials {
   private readonly materialMap: { [hash: number]: Material } = {}
+  public meshHighlightMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -48,6 +49,17 @@ export default class Materials {
   }
 
   public createDefaultMaterials() {
+    this.meshHighlightMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0x7f7fff,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide // TBD
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
