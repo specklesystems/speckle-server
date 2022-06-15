@@ -11,7 +11,7 @@ type BlobMetadataCollection {
   totalCount: Int!
   totalSize: Int!
   cursor: String
-  items: [BlobMetadata]
+  items: [BlobMetadata!]
 }
 
 type BlobMetadata {
