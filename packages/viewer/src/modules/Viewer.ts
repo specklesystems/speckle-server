@@ -17,6 +17,8 @@ import { Optional } from '../helpers/typeHelper'
 import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { Geometry } from './converter/Geometry'
+import { Intersections } from './Intersections'
+import Batcher from './Batcher'
 
 export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
@@ -35,6 +37,9 @@ export class Viewer extends EventEmitter implements IViewer {
   public cameraHandler: CameraHandler
   private sceneURL = '' // Temporary
   private startupParams: ViewerParams
+
+  public intersections: Intersections
+  public batcher: Batcher
 
   public static Assets: Assets
 
@@ -141,6 +146,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.needsRender = true
 
     this.inProgressOperations = 0
+    this.batcher = new Batcher()
+    this.intersections = new Intersections(this.scene, this.batcher)
   }
 
   public async init(): Promise<void> {

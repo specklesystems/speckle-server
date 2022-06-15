@@ -29,6 +29,7 @@ export class RenderTree {
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
     let ret: NodeRenderData = null
+
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
@@ -37,7 +38,9 @@ export class RenderTree {
         id: node.model.id,
         speckleType: GeometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
-        renderMaterial: Materials.renderMaterialFromNode(renderMaterialNode),
+        renderMaterial: Materials.renderMaterialFromNode(
+          renderMaterialNode || displayStyleNode
+        ),
         /** Line-type geometry can also use a renderMaterial*/
         displayStyle: Materials.displayStyleFromNode(
           displayStyleNode || renderMaterialNode

@@ -17,6 +17,8 @@ export default class Materials {
         id: node.model.raw.renderMaterial.id,
         color: node.model.raw.renderMaterial.diffuse,
         opacity: node.model.raw.renderMaterial.opacity
+          ? node.model.raw.renderMaterial.opacity
+          : 1
       }
     }
     return renderMaterial
@@ -32,7 +34,7 @@ export default class Materials {
       lineWeigth = units ? lineWeigth * getConversionFactor(units) : 0
       displayStyle = {
         id: node.model.raw.displayStyle.id,
-        color: node.model.raw.displayStyle.diffuse,
+        color: node.model.raw.displayStyle.diffuse || node.model.raw.displayStyle.color,
         lineWeigth
       }
     } else if (node.model.raw.renderMaterial) {
@@ -49,7 +51,7 @@ export default class Materials {
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
-          color: 0x000000,
+          color: 0x7f7f7f,
           emissive: 0x0,
           roughness: 1,
           metalness: 0,
@@ -120,6 +122,7 @@ export default class Materials {
     material: RenderMaterial | DisplayStyle,
     type: GeometryType
   ): Material {
+    // console.log(this.materialMap)
     if (this.materialMap[hash]) {
       console.warn(`Duplicate material hash found: ${hash}`)
       return this.materialMap[hash]

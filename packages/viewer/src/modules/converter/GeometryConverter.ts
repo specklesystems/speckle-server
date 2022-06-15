@@ -292,11 +292,11 @@ export class GeometryConverter {
   /**
    * POLYCURVE
    */
-  private static PolycurveToGeometryData(node: NodeData): GeometryData {
+  private static PolycurveToGeometryData(node): GeometryData {
     const buffers = []
-    for (let i = 0; i < node.raw.segments.length; i++) {
-      const element = node.raw.segments[i]
-      const conv = GeometryConverter.convertNodeToGeometryData(element.model)
+    for (let i = 0; i < node.children.length; i++) {
+      const element = node.children[i]
+      const conv = GeometryConverter.convertNodeToGeometryData(element)
       buffers.push(conv)
     }
     return Geometry.mergeGeometryData(buffers)
@@ -305,8 +305,8 @@ export class GeometryConverter {
   /**
    * CURVE
    */
-  private static CurveToGeometryData(node: NodeData) {
-    return this.PolylineToGeometryData(node.raw.displayValue.model)
+  private static CurveToGeometryData(node) {
+    return this.PolylineToGeometryData(node.children[0])
   }
 
   /**

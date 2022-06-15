@@ -1,9 +1,9 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
 import { WorldTree } from './converter/WorldTree'
-import Batcher from './Batcher'
 import { GeometryType } from './Batch'
 import { SpeckleType } from './converter/GeometryConverter'
+import { Group } from 'three'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */
@@ -70,7 +70,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
-    // const parsedObjects = [] // Temporary until refactor
+    // let parsedObjects = [] // Temporary until refactor
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.viewer.emit('load-progress', {
@@ -105,13 +105,19 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
-    const batcher = new Batcher()
     WorldTree.getRenderTree().buildRenderTree()
 
-    batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
-    batcher.makeBatches(GeometryType.LINE, SpeckleType.Line)
-    for (const k in batcher.batches) {
-      this.viewer.scene.add(batcher.batches[k].mesh)
+    this.viewer.batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
+    this.viewer.batcher.makeBatches(
+      GeometryType.LINE,
+      // SpeckleType.Line,
+      SpeckleType.Curve
+    )
+    const contentGroup = new Group()
+    contentGroup.name = 'ContentGroup'
+    this.viewer.scene.add(contentGroup)
+    for (const k in this.viewer.batcher.batches) {
+      contentGroup.add(this.viewer.batcher.batches[k].mesh)
     }
 
     // parsedObjects = WorldTree.getRenderTree().getObjectWrappers()

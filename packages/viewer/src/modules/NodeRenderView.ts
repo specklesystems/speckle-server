@@ -59,6 +59,14 @@ export class NodeRenderView {
     return this._geometryType
   }
 
+  public get batchStart() {
+    return this._batchIndexStart
+  }
+
+  public get batchEnd() {
+    return this._batchIndexStart + this._batchIndexCount
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
     this._geometryType = this.getGeometryType()
@@ -95,7 +103,7 @@ export class NodeRenderView {
 
   private displayStyleToString() {
     return (
-      this.renderData.displayStyle.color.toString() +
+      this.renderData.displayStyle.color?.toString() +
       '/' +
       this.renderData.displayStyle.lineWeigth.toString()
     )
@@ -104,7 +112,7 @@ export class NodeRenderView {
   private getMaterialHash() {
     const mat = this.renderData.renderMaterial
       ? this.renderMaterialToString()
-      : this.renderData.displayStyle
+      : this.renderData.displayStyle && this.geometryType !== GeometryType.MESH
       ? this.displayStyleToString()
       : ''
     const s = this.geometryType.toString() + mat

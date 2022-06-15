@@ -50,6 +50,18 @@ export default class Batch {
         this.buildLineBatch()
         break
     }
+    this.mesh.uuid = this.id
+  }
+
+  public getRenderView(index: number): NodeRenderView {
+    for (let k = 0; k < this.renderViews.length; k++) {
+      if (
+        index >= this.renderViews[k].batchStart &&
+        index < this.renderViews[k].batchEnd
+      ) {
+        return this.renderViews[k]
+      }
+    }
   }
 
   private buildMeshBatch() {

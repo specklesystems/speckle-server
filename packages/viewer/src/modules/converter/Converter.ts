@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { generateUUID } from 'three/src/math/MathUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { TreeNode, WorldTree } from './WorldTree'
 
@@ -16,6 +17,7 @@ export default class Coverter {
   private lastAsyncPause: number
   private activePromises: number
   private maxChildrenPromises: number
+  private spoofIDs = false
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -93,7 +95,7 @@ export default class Coverter {
     }
 
     const childNode: TreeNode = WorldTree.getInstance().parse({
-      id: obj.id,
+      id: this.getNodeId(obj),
       raw: Object.assign({}, obj),
       geometry: null,
       children: []
@@ -133,7 +135,7 @@ export default class Coverter {
         if (!displayValue.units) displayValue.units = obj.units
         try {
           const nestedNode: TreeNode = WorldTree.getInstance().parse({
-            id: displayValue.id,
+            id: this.getNodeId(displayValue),
             raw: Object.assign({}, displayValue),
             geometry: null,
             children: []
@@ -157,7 +159,7 @@ export default class Coverter {
           const val = await this.resolveReference(element)
           if (!val.units) val.units = obj.units
           const nestedNode: TreeNode = WorldTree.getInstance().parse({
-            id: val.id,
+            id: this.getNodeId(val),
             raw: Object.assign({}, val),
             geometry: null,
             children: []
@@ -211,6 +213,10 @@ export default class Coverter {
     this.activePromises -= childrenConversionPromisses.length
   }
 
+  private getNodeId(obj) {
+    if (this.spoofIDs) return generateUUID()
+    return obj.id
+  }
   /**
    * Takes an array composed of chunked references and dechunks it.
    * @param  {[type]} arr [description]
@@ -301,7 +307,7 @@ export default class Coverter {
     for (const def of definition.geometry) {
       const ref = await this.resolveReference(def)
       const childNode: TreeNode = WorldTree.getInstance().parse({
-        id: ref.id,
+        id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
         geometry: null,
         children: []
@@ -328,7 +334,7 @@ export default class Coverter {
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
       const ref = await this.resolveReference(displayValue)
       const nestedNode: TreeNode = WorldTree.getInstance().parse({
-        id: ref.id,
+        id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
         geometry: null,
         children: []
@@ -378,7 +384,6 @@ export default class Coverter {
   }
 
   private async PolycurveToNode(obj, node) {
-    node.model.raw.segments = []
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       /** Not a big fan of this... */
@@ -386,7 +391,7 @@ export default class Coverter {
         element = this.getDisplayValue(element)
       }
       const nestedNode: TreeNode = WorldTree.getInstance().parse({
-        id: element.id,
+        id: this.getNodeId(element),
         raw: Object.assign({}, element),
         geometry: null,
         children: []
@@ -400,7 +405,7 @@ export default class Coverter {
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
     const nestedNode: TreeNode = WorldTree.getInstance().parse({
-      id: displayValue.id,
+      id: this.getNodeId(displayValue),
       raw: Object.assign({}, displayValue),
       geometry: null,
       children: []
