@@ -4,7 +4,8 @@ const Busboy = require('busboy')
 const {
   authMiddlewareCreator,
   streamReadPermissions,
-  streamWritePermissions
+  streamWritePermissions,
+  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
 } = require('@/modules/shared/authz')
 const {
   ensureStorageAccess,
@@ -66,7 +67,11 @@ exports.init = async (app) => {
   app.post(
     '/api/stream/:streamId/blob',
     contextMiddleware,
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator([
+      ...streamWritePermissions,
+      // todo should we add public comments upload escape hatch?
+      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
+    ]),
     async (req, res) => {
       // no checking of startup conditions, just dont init the endpoints if not configured right
       //authorize request
@@ -74,7 +79,8 @@ exports.init = async (app) => {
       const finalizePromises = []
       const busboy = Busboy({
         headers: req.headers,
-        limits: { fileSize: 10_000_000_000 }
+        // this is 100 MB which matches the current frontend file size limit
+        limits: { fileSize: 104_857_600 }
       })
       const streamId = req.params.streamId
       busboy.on('file', (name, file, info) => {
@@ -138,7 +144,10 @@ exports.init = async (app) => {
   app.get(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
-    authMiddlewareCreator(streamReadPermissions),
+    authMiddlewareCreator([
+      ...streamReadPermissions,
+      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
+    ]),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
         const { fileName } = await getBlobMetadata({

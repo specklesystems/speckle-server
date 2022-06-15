@@ -162,6 +162,14 @@ const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole = async ({
     ? authSuccess(context)
     : { context, authResult }
 
+const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments = async ({
+  context,
+  authResult
+}) =>
+  context.auth && context.stream.isPublic && context.stream.allowPublicComments
+    ? authSuccess(context)
+    : { context, authResult }
+
 const authPipelineCreator = (steps) => {
   const pipeline = async ({ context, params }) => {
     let authResult = { authorized: false, error: null }
@@ -220,6 +228,8 @@ module.exports = {
   contextRequiresStream,
   SpeckleContextError,
   authMiddlewareCreator,
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   streamWritePermissions: [
     validateServerRole({ requiredRole: Roles.Server.User }),
     validateScope({ requiredScope: Scopes.Streams.Write }),
