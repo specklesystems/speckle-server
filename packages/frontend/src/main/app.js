@@ -1,7 +1,5 @@
 import Vue from 'vue'
-
-// Event hub
-Vue.prototype.$eventHub = new Vue()
+import '@/vueBootstrapper'
 
 import App from '@/main/App.vue'
 import store from '@/main/store'
@@ -16,13 +14,6 @@ import {
 import router from '@/main/router/index'
 import vuetify from '@/plugins/vuetify'
 
-// process.env.NODE_ENV is injected by Webpack
-// eslint-disable-next-line no-undef
-Vue.config.productionTip = process.env.NODE_ENV === 'development'
-
-import PortalVue from 'portal-vue'
-Vue.use(PortalVue)
-
 import VueTimeago from 'vue-timeago'
 Vue.use(VueTimeago, { locale: 'en' })
 
@@ -36,22 +27,6 @@ import PerfectScrollbar from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 
 Vue.use(PerfectScrollbar)
-
-import VTooltip from 'v-tooltip'
-Vue.use(VTooltip, {
-  defaultDelay: 300,
-  defaultBoundariesElement: document.body,
-  defaultHtml: false
-})
-
-import VueMixpanel from 'vue-mixpanel'
-Vue.use(VueMixpanel, {
-  token: 'acd87c5a50b56df91a795e999812a3a4',
-  config: {
-    // eslint-disable-next-line camelcase
-    api_host: 'https://analytics.speckle.systems'
-  }
-})
 
 // Async HistogramSlider load
 Vue.component('HistogramSlider', async () => {

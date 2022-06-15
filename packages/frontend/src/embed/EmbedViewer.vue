@@ -1,138 +1,66 @@
 <template>
-  <!--  
-    HIC SVNT DRACONES
-    this needs some cleanup, possibly even moving to the main app, 
-    and ensuring local storage absence handling is properly done 
-  -->
   <v-app
-    :class="`no-scrollbar ${
+    :class="`embed-viewer no-scrollbar ${
       $vuetify.theme.dark ? 'background-dark' : 'background-light'
     }`"
   >
-    <div v-if="!error" style="z-index: 10">
-      <div
-        class="top-left bottom-left pa-4"
-        style="right: 0px; position: fixed; z-index: 100000"
-      >
-        <span v-show="!drawer" class="caption d-inline-flex align-center">
-          <img src="@/assets/logo.svg" height="18" />
-          <span style="margin-top: 2px" class="primary--text">
-            <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
-              <b>Powered by Speckle</b>
-            </a>
-          </span>
-        </span>
-        <br />
-      </div>
-      <div v-show="!drawer && loadedModel" class="caption grey--text pa-2">
-        <v-btn fab small @click="drawer = true">
-          <v-icon>mdi-menu</v-icon>
-        </v-btn>
-      </div>
-      <div
-        class="pa-2 d-flex align-center justify-space-between caption"
-        style="position: fixed; bottom: 0; width: 100%"
-      >
-        <portal to="viewercontrols">
-          <v-btn
-            v-if="stream && serverInfo"
-            v-tooltip="'View extra details in Speckle!'"
-            icon
-            dark
-            large
-            class="elevation-5 primary pa-0 ma-o"
-            :href="goToServerUrl"
-            target="blank"
-          >
-            <v-icon dark small>mdi-open-in-new</v-icon>
-          </v-btn>
-        </portal>
-      </div>
-      <div
-        :style="`width: 100%; bottom: 12px; left: 0px; position: ${
-          $isMobile() ? 'fixed' : 'absolute'
-        }; z-index: 20`"
-        :class="`d-flex justify-center`"
-      >
-        <viewer-controls v-show="loadedModel" />
-      </div>
-    </div>
-
+    <!-- BG image -->
     <div
-      v-if="!loadedModel"
+      v-if="!isModelLoaded"
       ref="cover"
-      class="d-flex fullscreen align-center justify-center bg-img"
+      class="viewer-image-overlay d-flex fullscreen align-center justify-center bg-img"
     />
+
+    <!-- Play button -->
     <div
-      v-if="!loadedModel && loadProgress > 0"
-      class="d-flex fullscreen align-center justify-center"
+      v-if="!isModelLoaded"
+      class="viewer-play d-flex fullscreen align-center justify-center"
     >
-      <v-progress-linear
-        v-model="loadProgress"
-        :indeterminate="loadProgress >= 99 && !loadedModel"
+      <v-btn
+        id="viewer-play-btn"
+        :disabled="showPlayLoader"
+        fab
         color="primary"
-        style="max-width: 30%"
-      ></v-progress-linear>
-    </div>
-    <div
-      v-if="!loadedModel && loadProgress === 0"
-      class="d-flex fullscreen align-center justify-center"
-    >
-      <v-btn fab color="primary" class="elevation-20 hover-tada" @click="load()">
-        <v-icon>mdi-play</v-icon>
+        class="elevation-4 hover-tada"
+        @click="load()"
+      >
+        <v-icon v-if="!showPlayLoader">mdi-play</v-icon>
+        <v-icon v-else class="spinning-icon">mdi-loading</v-icon>
       </v-btn>
     </div>
-    <v-navigation-drawer
-      ref="drawer"
-      v-model="drawer"
-      app
-      floating
-      style="z-index: 10000"
-    >
-      <div class="mx-1 mt-4 pr-2" style="height: 100%; width: 100%">
-        <!-- Views display -->
-        <views-display v-if="views.length !== 0" :views="views" :sticky-top="false" />
 
-        <!-- Filters display -->
-        <viewer-filters
-          :props="objectProperties"
-          style="width: 100%"
-          :sticky-top="false"
-        />
-      </div>
-    </v-navigation-drawer>
-    <div style="position: fixed" class="no-scrollbar">
-      <speckle-viewer @load-progress="captureProgress" />
-    </div>
+    <!-- Async loaded viewer -->
+    <embed-viewer-core
+      v-if="shouldLoadHeavyDeps"
+      :input="input"
+      :object-url="objectUrl"
+      @model-loaded="onModelLoaded"
+      @error="onError"
+    />
   </v-app>
 </template>
 
-<script>
-import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue'
-import { getCommit, getLatestBranchCommit, getServerInfo } from '@/embed/speckleUtils'
+<script lang="ts">
+import { Nullable } from '@/helpers/typeHelpers'
+import { getCommit, getLatestBranchCommit } from '@/embed/speckleUtils'
+import Vue from 'vue'
 
-export default {
+/**
+ * TODO:
+ * - Move EmbedViewer back to main app? The main app has a lot of global dependencies
+ * that this endpoint doesn't need, tho...
+ * - Make speckle-viewer configurable through props/events not through window.__viewer
+ */
+
+export default Vue.extend({
   name: 'EmbedViewer',
   components: {
-    SpeckleViewer,
-    ViewerControls: () => import('@/main/components/viewer/ViewerControls'),
-    ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
-    ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue')
-  },
-  filters: {
-    truncate(str, n = 20) {
-      return str.length > n ? str.substr(0, n - 3) + '...' : str
-    }
+    EmbedViewerCore: () => import('@/embed/EmbedViewerCore.vue')
   },
   data() {
     return {
-      drawer: false,
-      loadedModel: false,
-      loadProgress: 0,
-      error: null,
-      objectId: this.$route.query.object,
-      views: [],
-      objectProperties: null,
+      isModelLoaded: false,
+      error: null as Nullable<Error>,
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
@@ -141,19 +69,13 @@ export default {
         overlay: this.$route.query.overlay,
         camera: this.$route.query.c,
         filter: this.$route.query.filter
-      },
-      lastCommit: null,
-      specificCommit: null,
-      serverInfo: null
+      } as Record<string, string>,
+      isInitialized: false as boolean,
+      shouldLoadHeavyDeps: false as boolean
     }
   },
   computed: {
-    isSmall() {
-      return (
-        this.$vuetify.breakpoint.name === 'xs' || this.$vuetify.breakpoint.name === 'sm'
-      )
-    },
-    displayType() {
+    displayType(): string {
       if (!this.input.stream) {
         return 'error'
       }
@@ -164,150 +86,95 @@ export default {
 
       return 'stream'
     },
-    stream() {
-      return this.lastCommit || this.specificCommit
+    objectUrl(): string {
+      return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.input.object}`
     },
-    objectUrl() {
-      return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.objectId}`
-    },
-    goToServerUrl() {
-      const stream = this.input.stream
-      const base = `${window.location.origin}/streams/${stream}/`
-
-      const commit = this.input.commit
-      if (commit) return base + `commits/${commit}`
-
-      const object = this.objectId
-      if (object) return base + `objects/${object}`
-
-      const branch = this.input.branch
-      if (branch) return base + `branches/${encodeURI(branch)}`
-
-      return base
+    showPlayLoader(): boolean {
+      return !this.isInitialized || (this.shouldLoadHeavyDeps && !this.isModelLoaded)
     }
   },
   watch: {
-    displayType(oldVal, newVal) {
-      if (newVal === 'error') this.error = 'Provided details were invalid'
-      else {
-        this.error = null
-      }
+    displayType(_oldVal: string, newVal: string) {
+      this.error =
+        newVal === 'error' ? new Error('Provided details were invalid') : null
+    },
+    error(newVal: Error | null) {
+      if (newVal) console.error(newVal)
     }
   },
   async beforeMount() {
-    try {
-      const serverInfoResponse = await getServerInfo()
-      this.serverInfo = serverInfoResponse.data.serverInfo
-    } catch (e) {
-      this.error = e.message
-      return
-    }
-    if (this.displayType === 'commit') {
-      try {
-        const res = await getCommit(this.input.stream, this.input.commit)
-        const data = res.data
-        const latestCommit = data.stream.commit
-        if (this.input.object === undefined)
-          this.objectId = latestCommit.referencedObject
-        this.specificCommit = data.stream
-      } catch (e) {
-        this.error = e.message
-        return
+    // Initialize base data, which can potentially change input.object
+    await (this.displayType === 'commit'
+      ? this.initializeForCommit()
+      : this.initializeForStream())
+
+    // Load BG image
+    await this.getPreviewImage()
+
+    // Mark as initialized (enable play button)
+    this.isInitialized = true
+  },
+  methods: {
+    onError(e: Error) {
+      this.error = e
+    },
+    onModelLoaded() {
+      this.isModelLoaded = true
+    },
+    load() {
+      if (!this.isInitialized || this.shouldLoadHeavyDeps || this.isModelLoaded) return
+
+      this.shouldLoadHeavyDeps = true
+      this.$mixpanel.track('Embedded Model Load', {
+        type: 'action'
+      })
+    },
+    async getPreviewImage(angle?: number) {
+      angle = angle || 0
+      const previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      const res = await fetch(previewUrl)
+      const blob = await res.blob()
+      const imgUrl = URL.createObjectURL(blob)
+      if (this.$refs.cover) {
+        ;(this.$refs.cover as HTMLElement).style.backgroundImage = `url('${imgUrl}')`
       }
-    } else {
+    },
+    async initializeForStream() {
       try {
         const res = await getLatestBranchCommit(this.input.stream, this.input.branch)
         const data = res.data
         const latestCommit =
           data.stream.branch.commits.items[0] || data.stream.branch.commit
+
         if (!latestCommit) {
-          this.error = 'No commit for this branch'
-          this.lastCommit = data.stream
+          this.error = new Error('No commit for this branch')
           return
         }
-        if (this.input.object === undefined)
-          this.objectId = latestCommit.referencedObject
-        else this.objectId = this.input.object
-        this.lastCommit = data.stream
-      } catch (e) {
-        this.error = e.message
-        console.log(e)
-        return
-      }
-    }
-    this.getPreviewImage()
-  },
-  mounted() {},
-  methods: {
-    async load() {
-      this.$mixpanel.track('Embedded Model Load', {
-        step: this.onboarding,
-        type: 'action'
-      })
 
-      await window.__viewer.loadObject(this.objectUrl)
-
-      if (this.input.overlay) {
-        const resIds = this.input.overlay.split(',')
-        for (const res of resIds) {
-          console.log(res)
-          if (res.length !== 10) {
-            await window.__viewer.loadObject(
-              `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${res}`
-            )
-          } else {
-            const { data } = await getCommit(this.input.stream, res)
-            await window.__viewer.loadObject(
-              `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${data.stream.commit.referencedObject}`
-            )
-          }
+        // Updating input.object
+        if (this.input.object === undefined) {
+          this.input.object = latestCommit.referencedObject
         }
-      }
-
-      window.__viewer.zoomExtents(undefined, true)
-
-      this.loadedModel = true
-
-      this.views.push(...window.__viewer.sceneManager.views)
-      this.objectProperties = await window.__viewer.getObjectsProperties()
-
-      if (this.input.filter) {
-        const parsedFilter = JSON.parse(this.input.filter)
-        setTimeout(() => {
-          this.$store.commit('setFilterDirect', { filter: parsedFilter })
-        }, 1000)
-      }
-
-      if (this.input.camera) {
-        const cam = JSON.parse(this.input.camera)
-        window.__viewer.interactions.setLookAt(
-          { x: cam[0], y: cam[1], z: cam[2] }, // position
-          { x: cam[3], y: cam[4], z: cam[5] } // target
-        )
+      } catch (e: unknown) {
+        this.error = e instanceof Error ? e : new Error('An unexpected error occurred')
       }
     },
-    captureProgress(args) {
-      this.loadProgress = args.progress * 100
-    },
-    async getPreviewImage(angle) {
-      angle = angle || 0
-      const previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
-      let token = undefined
+    async initializeForCommit() {
       try {
-        token = localStorage.getItem('AuthToken')
-      } catch (e) {
-        console.warn('Sanboxed mode, only public streams will fetch properly.')
+        const res = await getCommit(this.input.stream, this.input.commit)
+        const data = res.data
+        const latestCommit = data.stream.commit
+
+        // Updating input.object
+        if (this.input.object === undefined) {
+          this.input.object = latestCommit.referencedObject
+        }
+      } catch (e: unknown) {
+        this.error = e instanceof Error ? e : new Error('An unexpected error occurred')
       }
-      const res = await fetch(previewUrl, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
-      })
-      const blob = await res.blob()
-      const imgUrl = URL.createObjectURL(blob)
-      if (this.$refs.cover) this.$refs.cover.style.backgroundImage = `url('${imgUrl}')`
-      this.hasImg = true
     }
   }
-}
+})
 </script>
 
 <style lang="scss">
@@ -319,26 +186,51 @@ body::-webkit-scrollbar {
   height: 100vh !important;
   width: 100vw !important;
   position: fixed;
+
   &::-webkit-scrollbar {
     display: none;
   }
+
+  top: 0;
+  left: 0;
+  z-index: 10;
 }
 
 .no-scrollbar {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+
   &::-webkit-scrollbar {
     display: none;
   }
 }
+
 .bg-img {
   background-position: center;
   background-repeat: no-repeat;
   /*background-attachment: fixed;*/
   filter: blur(2px);
 }
-.no-events {
-  pointer-events: none;
+
+#viewer-play-btn {
+  @keyframes spinner-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  // kinda hacky, but vuetify renders the disabled state in a stupid way that relies
+  // on the background color of the thing behind the button
+  &.v-btn--fab.v-btn--disabled {
+    background-color: #242424 !important;
+  }
+
+  .spinning-icon {
+    animation: spinner-spin 0.5s linear infinite;
+  }
 }
 </style>
