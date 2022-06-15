@@ -67,6 +67,17 @@ export class NodeRenderView {
     return this._batchIndexStart + this._batchIndexCount
   }
 
+  public get needsSegmentConversion() {
+    return (
+      this._renderData.speckleType === SpeckleType.Curve ||
+      this._renderData.speckleType === SpeckleType.Polyline ||
+      this._renderData.speckleType === SpeckleType.Polycurve ||
+      this.renderData.speckleType === SpeckleType.Arc ||
+      this.renderData.speckleType === SpeckleType.Circle ||
+      this.renderData.speckleType === SpeckleType.Ellipse
+    )
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
     this._geometryType = this.getGeometryType()

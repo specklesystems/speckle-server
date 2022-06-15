@@ -32,6 +32,7 @@ export default class Batcher {
       const batch = rendeViews.filter(
         (value) => value.renderMaterialHash === materialHashes[i]
       )
+
       let matRef = null
 
       if (batchType === GeometryType.MESH) {

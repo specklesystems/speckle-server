@@ -96,21 +96,43 @@ export default class Batch {
   }
 
   private buildLineBatch() {
-    const attributeCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
-    ).length
+    let attributeCount = 0
+    this.renderViews.forEach(
+      (val: NodeRenderView) =>
+        (attributeCount += val.needsSegmentConversion
+          ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
+          : val.renderData.geometry.attributes.POSITION.length)
+    )
     const position = new Float32Array(attributeCount)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
-      position.set(geometry.attributes.POSITION, offset)
-      this.renderViews[k].setBatchData(
-        this.id,
-        offset,
-        geometry.attributes.POSITION.length
-      )
+      let points = null
+      /** We need to make sure the line geometry has a layout of :
+       *  start(x,y,z), end(x,y,z), start(x,y,z), end(x,y,z)... etc
+       *  Some geometries have that inherent form, some don't
+       */
+      if (this.renderViews[k].needsSegmentConversion) {
+        const length = geometry.attributes.POSITION.length - 3
+        points = new Array(2 * length)
 
-      offset += geometry.attributes.POSITION.length
+        for (let i = 0; i < length; i += 3) {
+          points[2 * i] = geometry.attributes.POSITION[i]
+          points[2 * i + 1] = geometry.attributes.POSITION[i + 1]
+          points[2 * i + 2] = geometry.attributes.POSITION[i + 2]
+
+          points[2 * i + 3] = geometry.attributes.POSITION[i + 3]
+          points[2 * i + 4] = geometry.attributes.POSITION[i + 4]
+          points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
+        }
+      } else {
+        points = geometry.attributes.POSITION
+      }
+
+      position.set(points, offset)
+      this.renderViews[k].setBatchData(this.id, offset, points.length)
+
+      offset += points.length
     }
     this.makeLineGeometry(position)
     if (Geometry.THICK_LINES) {
