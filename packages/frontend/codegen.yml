@@ -1,0 +1,12 @@
+overwrite: true
+schema: 'http://localhost:3000/graphql'
+documents:
+  - 'src/graphql/**/*.gql'
+  - 'src/**/*.{ts,tsx,js,jsx,vue}'
+generates:
+  src/graphql/generated/graphql.ts:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+      - 'typescript-document-nodes'
+      - 'typescript-vue-apollo-smart-ops'

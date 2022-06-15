@@ -101,6 +101,14 @@ The suggested IDE for working in this repo is VSCode, because the repo has speci
 
 This repository relies on [VSCode multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces), so for the best DX and proper formatting/linting make sure you open the project using the `workspace.code-workspace` file instead of just opening the folder in VSCode.
 
+### Troubleshooting
+
+#### lint-on-commit fails with "File ignored because of a matchin ignore pattern"
+
+There's currently a limitation in ESLint & lint-staged that causes this - the warning is thrown whenver your Git changes contain a file that is ignored by ESLint (https://github.com/eslint/eslint/issues/15010).
+
+To get around this you can use the `--no-verify` flag of `git commit`, for now, but make sure all other issues found by the linter are fixed.
+
 ### Contributing
 
 Please make sure you read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md) for an overview of the best practices we try to follow.

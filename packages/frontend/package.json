@@ -3,18 +3,18 @@
   "version": "2.5.4",
   "private": true,
   "scripts": {
-    "dev": "vue-cli-service serve --mode development",
     "serve": "ws -p 8080 -d dist -r '/embed(.*) -> /embedApp.html' '/([a-zA-Z0-9-_/]*)(\\?.*)? -> /app.html' ",
     "build": "vue-cli-service build --mode production --silent",
+    "lint": "eslint . --ext .js,.ts,.vue,.tsx,.jsx",
+    "lint:vue": "vti diagnostics",
+    "lint:ts": "tsc --noEmit",
     "build:dev": "vue-cli-service build --mode development --silent",
-    "build:profile": "yarn build -- --profile",
     "build:dev:profile": "yarn build:dev -- --profile",
+    "build:profile": "yarn build -- --profile",
+    "dev": "vue-cli-service serve --mode development",
     "inspect": "vue-cli-service inspect --mode production",
     "inspect:dev": "vue-cli-service inspect --mode development",
-    "lint": "eslint . --ext .js,.ts,.vue"
-  },
-  "engines": {
-    "node": "^16.0.0"
+    "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
     "@speckle/viewer": "workspace:^",
@@ -59,12 +59,24 @@
     "vuex": "^3.6.2"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "2.6.2",
+    "@graphql-codegen/introspection": "2.1.1",
+    "@graphql-codegen/typescript": "2.5.1",
+    "@graphql-codegen/typescript-document-nodes": "2.2.13",
+    "@graphql-codegen/typescript-operations": "2.4.2",
+    "@graphql-codegen/typescript-vue-apollo-smart-ops": "^2.2.13",
     "@mdi/font": "^5.8.55",
+    "@rushstack/eslint-patch": "^1.1.3",
     "@types/lodash": "^4.14.180",
+    "@typescript-eslint/eslint-plugin": "^5.21.0",
+    "@typescript-eslint/parser": "^5.21.0",
+    "@vue/cli": "^4.5.17",
     "@vue/cli-plugin-babel": "~4.3.0",
     "@vue/cli-plugin-router": "~4.3.0",
+    "@vue/cli-plugin-typescript": "~4.5.17",
     "@vue/cli-plugin-vuex": "~4.3.0",
     "@vue/cli-service": "~4.3.0",
+    "@vue/eslint-config-typescript": "^11.0.0",
     "babel-eslint": "^10.1.0",
     "babel-plugin-lodash": "^3.3.4",
     "duplicate-dependencies-webpack-plugin": "^1.0.2",
@@ -80,12 +92,19 @@
     "sass": "~1.32.6",
     "sass-loader": "^8.0.0",
     "speed-measure-webpack-plugin": "^1.5.0",
+    "type-fest": "^2.13.1",
+    "typescript": "~4.1.5",
+    "vti": "^0.1.5",
+    "vue-apollo-smart-ops": "^0.2.0-beta.1",
     "vue-cli-plugin-apollo": "~0.21.3",
     "vue-cli-plugin-vuetify": "^2.0.8",
     "vue-template-compiler": "^2.6.12",
     "vuetify-loader": "^1.6.0",
     "webpack": "^4.46.0",
     "webpack-bundle-analyzer": "^4.5.0"
+  },
+  "engines": {
+    "node": "^16.0.0"
   },
   "vuePlugins": {
     "service": [

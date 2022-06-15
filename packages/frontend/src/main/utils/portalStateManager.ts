@@ -1,7 +1,6 @@
 import Vue from 'vue'
-import camelCase from 'lodash/camelCase'
-import upperFirst from 'lodash/upperFirst'
-import reduce from 'lodash/reduce'
+import { camelCase, upperFirst, reduce } from 'lodash'
+import { Optional, CombinedVueInstance, ExtendedVue } from '@/helpers/typeHelpers'
 
 export const STANDARD_PORTAL_KEYS = {
   Toolbar: 'toolbar',
@@ -16,37 +15,35 @@ export const STANDARD_PORTAL_KEYS = {
  * manager which manages multiple claims to the same portal space and only allows one source to use it at a time.
  */
 
-/**
- * @type {Object<string, Object<string, {priority: number }>>}
- */
-const claims = {}
+const claims: Record<string, Record<string, { priority: number }>> = {}
 
-/**
- * @type {{currentPortals: Object<string, string>}}
- */
 const portalsState = Vue.observable({
-  currentPortals: {}
+  currentPortals: {} as Record<string, string>
 })
 
 function recalculateState() {
-  const newPortals = {}
+  const newPortals: Record<string, string> = {}
   for (const [portalKey, portalClaims] of Object.entries(claims)) {
-    let highestPriority = undefined
-    let highestPriorityIdentity = undefined
+    let highestPriority: Optional<{
+      identity: string
+      priority: number
+    }> = undefined
     for (const [identity, data] of Object.entries(portalClaims)) {
-      if (!highestPriorityIdentity || data.priority > highestPriority) {
-        highestPriorityIdentity = identity
-        highestPriority = data.priority
+      if (!highestPriority || data.priority > highestPriority.priority) {
+        highestPriority = { priority: data.priority, identity }
       } else if (
-        highestPriority === data.priority &&
-        highestPriorityIdentity === identity
+        highestPriority.priority === data.priority &&
+        highestPriority.identity === identity
       ) {
         console.error(
           'Multiple portals with the same priority encountered, your portals might not act deterministically'
         )
       }
     }
-    newPortals[portalKey] = highestPriorityIdentity
+
+    if (highestPriority?.identity) {
+      newPortals[portalKey] = highestPriority.identity
+    }
   }
 
   Vue.set(portalsState, 'currentPortals', newPortals)
@@ -54,11 +51,8 @@ function recalculateState() {
 
 /**
  * Claim access to a specific toolbar
- * @param {string} portal
- * @param {string} identity
- * @param {number} priority
  */
-export function claimPortal(portal, identity, priority) {
+export function claimPortal(portal: string, identity: string, priority: number) {
   // Register claim
   if (!claims[portal]) {
     claims[portal] = {}
@@ -71,11 +65,8 @@ export function claimPortal(portal, identity, priority) {
 
 /**
  * Claim access to multiple toolbars
- * @param {string[]} portals
- * @param {string} identity
- * @param {number} priority
  */
-export function claimPortals(portals, identity, priority) {
+export function claimPortals(portals: string[], identity: string, priority: number) {
   for (const portal of portals) {
     claimPortal(portal, identity, priority)
   }
@@ -83,10 +74,8 @@ export function claimPortals(portals, identity, priority) {
 
 /**
  * Remove claim to a specific toolbar
- * @param {string} portal
- * @param {string} identity
  */
-export function unclaimPortal(portal, identity) {
+export function unclaimPortal(portal: string, identity: string) {
   if (claims[portal]) {
     delete claims[portal][identity]
   }
@@ -95,10 +84,8 @@ export function unclaimPortal(portal, identity) {
 
 /**
  * Remove claims to multiple toolbars
- * @param {string[]} portals
- * @param {string} identity
  */
-export function unclaimPortals(portals, identity) {
+export function unclaimPortals(portals: string[], identity: string) {
   for (const portal of portals) {
     unclaimPortal(portal, identity)
   }
@@ -106,30 +93,42 @@ export function unclaimPortals(portals, identity) {
 
 /**
  * Check if portal source is allowed to render in the target portal
- * @param {string} portal
- * @param {string} identity
- * @returns {boolean}
  */
-export function canRenderPortalSource(portal, identity) {
+export function canRenderPortalSource(portal: string, identity: string): boolean {
   return portalsState.currentPortals[portal] === identity
 }
 
 /**
  * Build mixin for tracking whether portal targets can be rendered to
- * @param {string[]} portals Portal identifier keys
- * @param {string} identity The unique identity of the portal source
- * @param {number} priority Priority starting from 0. Higher priorities will take precedence
+ * @param portals Portal identifier keys
+ * @param identity The unique identity of the portal source
+ * @param priority Priority starting from 0. Higher priorities will take precedence
  * over other portal sources.
  */
-export function buildPortalStateMixin(portals, identity, priority) {
-  return {
+export function buildPortalStateMixin(
+  portals: string[],
+  identity: string,
+  priority: number
+): ExtendedVue<
+  Vue,
+  unknown,
+  unknown,
+  {
+    allowedPortals: Record<string, boolean>
+    canRenderToolbarPortal?: boolean
+    canRenderActionsPortal?: boolean
+    canRenderNavPortal?: boolean
+    canRenderSubnavPortal?: boolean
+  }
+> {
+  return Vue.extend({
     computed: {
       /**
        * Object with keys of portal names and values representing if the component
        * is allowed to use those portals
        */
       allowedPortals() {
-        const res = {}
+        const res: Record<string, boolean> = {}
         for (const portal of portals) {
           res[portal] = portalsState.currentPortals[portal] === identity
         }
@@ -143,12 +142,19 @@ export function buildPortalStateMixin(portals, identity, priority) {
         portals,
         (res, portal) => {
           const computedKey = `canRender${upperFirst(camelCase(portal))}Portal`
-          res[computedKey] = function () {
+          res[computedKey] = function (
+            this: CombinedVueInstance<
+              Vue,
+              unknown,
+              unknown,
+              { allowedPortals: Record<string, boolean> }
+            >
+          ) {
             return !!this.allowedPortals[portal]
           }
           return res
         },
-        {}
+        {} as Record<string, () => boolean>
       )
     },
     mounted() {
@@ -157,5 +163,5 @@ export function buildPortalStateMixin(portals, identity, priority) {
     beforeDestroy() {
       unclaimPortals(portals, identity)
     }
-  }
+  })
 }

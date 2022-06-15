@@ -24,15 +24,49 @@ Comprehensive developer and user documentation can be found in our:
 
 Make sure you follow the Developing and Debugging section in the project root readme.
 
-### Compiles and hot-reloads for development
+### Running
+
+Dev server with hot reload:
 
 ```
-yarn serve
+yarn dev
 ```
+
+Build static build & serve it (for development, otherwise use docker image):
+
+```
+yarn build && yarn serve
+```
+
+### TypeScript
+
+This project also supports TypeScript, both in Vue SFCs and outside them. It's preferred that you use it when writing new code and also migrate JS files when there's a good oppurtunity to do so.
+
+#### TS in Vue
+
+1. Set `<script lang="ts">` in your .vue SFC
+1. Make sure you do `export default Vue.extends({...})` (or something else that is explicity typed to be a Vue component) not just `export default`, otherwise it's not clear to TS that the exported object is a Vue component
+1. If Vetur reports incorrect errors, check this out: https://vuejs.github.io/vetur/guide/FAQ.html
+
+Note: If you're defining a Vue component in a non-standard way (e.g. `vueWithMixins([]).extends({...})`), make sure you add a `// @vue/component` comment right above the Vue component object definition so that ESLint shows Vue appropriate linting rules, otherwise it won't.
+
+#### Improved GraphQL DX w/ TS
+
+Run `yarn gqlgen` to generate relevant TS types from the GraphQL Schema (introspected from server which must be running) and operations defined in the frontend. Check this out for more info: https://www.graphql-code-generator.com/plugins/typescript-vue-apollo-smart-ops#examples
 
 ### Packaging for production
 
 If you plan to package the frontend to use in a production setting, see our [Server deployment instructions](https://speckle.guide/dev/server-setup.html) (chapter `Run your speckle-server fork`)
+
+### Troubleshooting
+
+#### Vue TypeScript types get stuck in VSCode
+
+Restart the Vetur Vue Language Server (VLS) through the command palette. Vetur is a bit janky and sometimes it gets stuck and isn't able to find new types/code.
+
+#### Property 'xxx' does not exist on type 'CombinedVueInstance'
+
+If you are getting a lot of Property 'xxx' does not exist on type 'CombinedVueInstance' errors, it's an issue with Vue's typing and TypeScript. You can work around it by annotating the return type for each computed/data property, making sure data/props keys are defined even if they're empty.
 
 ## Community
 
