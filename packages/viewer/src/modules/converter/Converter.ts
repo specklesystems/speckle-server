@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { generateUUID } from 'three/src/math/MathUtils'
 import ObjectWrapper from './ObjectWrapper'
-import { TreeNode, WorldTree } from './WorldTree'
+import { TreeNode, WorldTree } from '../tree/WorldTree'
 
 export type ConverterResultDelegate = (
   object: ObjectWrapper | undefined
@@ -97,7 +97,7 @@ export default class Coverter {
     const childNode: TreeNode = WorldTree.getInstance().parse({
       id: this.getNodeId(obj),
       raw: Object.assign({}, obj),
-      geometry: null,
+      atomic: true,
       children: []
     })
     if (node === null) {
@@ -137,7 +137,7 @@ export default class Coverter {
           const nestedNode: TreeNode = WorldTree.getInstance().parse({
             id: this.getNodeId(displayValue),
             raw: Object.assign({}, displayValue),
-            geometry: null,
+            atomic: false,
             children: []
           })
           await this.convertToNode(displayValue, nestedNode)
@@ -161,7 +161,7 @@ export default class Coverter {
           const nestedNode: TreeNode = WorldTree.getInstance().parse({
             id: this.getNodeId(val),
             raw: Object.assign({}, val),
-            geometry: null,
+            atomic: false,
             children: []
           })
           await this.convertToNode(val, nestedNode)
@@ -309,7 +309,7 @@ export default class Coverter {
       const childNode: TreeNode = WorldTree.getInstance().parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
-        geometry: null,
+        atomic: true,
         children: []
       })
       WorldTree.getInstance().addNode(childNode, node)
@@ -336,7 +336,7 @@ export default class Coverter {
       const nestedNode: TreeNode = WorldTree.getInstance().parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
-        geometry: null,
+        atomic: false,
         children: []
       })
       await this.convertToNode(ref, nestedNode)
@@ -393,7 +393,7 @@ export default class Coverter {
       const nestedNode: TreeNode = WorldTree.getInstance().parse({
         id: this.getNodeId(element),
         raw: Object.assign({}, element),
-        geometry: null,
+        atomic: false,
         children: []
       })
       await this.convertToNode(element, nestedNode)
@@ -407,7 +407,7 @@ export default class Coverter {
     const nestedNode: TreeNode = WorldTree.getInstance().parse({
       id: this.getNodeId(displayValue),
       raw: Object.assign({}, displayValue),
-      geometry: null,
+      atomic: false,
       children: []
     })
     await this.convertToNode(displayValue, nestedNode)

@@ -6,27 +6,23 @@ import {
   InterleavedBufferAttribute,
   Line,
   Material,
-  Mesh
+  Mesh,
+  Vector4
 } from 'three'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
-import { BatchUpdateRange } from './Batcher'
-import { Geometry } from './converter/Geometry'
-import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
-import { NodeRenderView } from './NodeRenderView'
-import { World } from './World'
+import { Geometry } from '../converter/Geometry'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
+import { NodeRenderView } from '../tree/NodeRenderView'
+import { World } from '../World'
+import { Batch, BatchUpdateRange } from './Batch'
 
-export enum GeometryType {
-  MESH,
-  LINE
-}
-
-export default class LineBatch {
-  private id: string
-  private renderViews: NodeRenderView[]
+export default class LineBatch implements Batch {
+  public id: string
+  public renderViews: NodeRenderView[]
   private geometry: BufferGeometry | LineSegmentsGeometry
-  public batchMaterial: Material
+  public batchMaterial: SpeckleLineMaterial
   public material: Material | Material[]
   public mesh: Mesh | Line | Line2
   public colorBuffer: InstancedInterleavedBuffer
@@ -36,40 +32,24 @@ export default class LineBatch {
     this.renderViews = renderViews
   }
 
-  public setBatchMaterial(material: Material) {
+  public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
   }
 
-  public setMaterial(material: Material | Material[]) {
-    this.material = material
-  }
-
-  //   public addDrawGroup(start: number, count: number, materialIndex: number) {
-  //     this.colorBuffer.updateRange = { offset: 0, count: this.colorBuffer.array.length }
-  //     this.colorBuffer.needsUpdate = true
-  //     this.geometry.attributes['instanceColorStart'].needsUpdate = true
-  //     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
-  //   }
-
-  public updateDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
-      const material = this.material[ranges[i].materialIndex]
+      const material = ranges[i].material as SpeckleLineMaterial
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +
         ranges[i].count * this.colorBuffer.stride
-      for (
-        let k = start;
-        k < (ranges[i].count === Infinity ? this.colorBuffer.array.length : len);
-        k += 4
-      ) {
-        data[k] = material.color.r
-        data[k + 1] = material.color.g
-        data[k + 2] = material.color.b
-        data[k + 3] = 1
-      }
+      this.updateColorBuffer(
+        start,
+        ranges[i].count === Infinity ? this.colorBuffer.array.length : len,
+        new Vector4(material.color.r, material.color.g, material.color.b, 1)
+      )
     }
     this.colorBuffer.updateRange = { offset: 0, count: data.length }
     this.colorBuffer.needsUpdate = true
@@ -77,32 +57,15 @@ export default class LineBatch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
-  public clearDrawGroups() {
-    this.updateDrawRanges({
+  public resetDrawRanges() {
+    this.setDrawRanges({
       offset: 0,
       count: Infinity,
-      materialIndex: 0
+      material: this.batchMaterial
     })
   }
 
-  public buildBatch(type: GeometryType) {
-    type
-    this.buildLineBatch()
-    this.mesh.uuid = this.id
-  }
-
-  public getRenderView(index: number): NodeRenderView {
-    for (let k = 0; k < this.renderViews.length; k++) {
-      if (
-        index >= this.renderViews[k].batchStart &&
-        index < this.renderViews[k].batchEnd
-      ) {
-        return this.renderViews[k]
-      }
-    }
-  }
-
-  private buildLineBatch() {
+  public buildBatch() {
     let attributeCount = 0
     this.renderViews.forEach(
       (val: NodeRenderView) =>
@@ -152,6 +115,18 @@ export default class LineBatch {
     } else {
       this.mesh = new Line(this.geometry, this.batchMaterial)
     }
+    this.mesh.uuid = this.id
+  }
+
+  public getRenderView(index: number): NodeRenderView {
+    for (let k = 0; k < this.renderViews.length; k++) {
+      if (
+        index >= this.renderViews[k].batchStart &&
+        index < this.renderViews[k].batchEnd
+      ) {
+        return this.renderViews[k]
+      }
+    }
   }
 
   private makeLineGeometry(position: Float32Array) {
@@ -177,9 +152,19 @@ export default class LineBatch {
     const geometry = new LineSegmentsGeometry()
     geometry.setPositions(position)
 
-    const buffer = new Float32Array(position.length + position.length / 3).fill(0.0)
+    const buffer = new Float32Array(position.length + position.length / 3)
     this.colorBuffer = new InstancedInterleavedBuffer(buffer, 8, 1) // rgba, rgba
     this.colorBuffer.setUsage(DynamicDrawUsage)
+    this.updateColorBuffer(
+      0,
+      buffer.length,
+      new Vector4(
+        this.batchMaterial.color.r,
+        this.batchMaterial.color.g,
+        this.batchMaterial.color.b,
+        1
+      )
+    )
     geometry.setAttribute(
       'instanceColorStart',
       new InterleavedBufferAttribute(this.colorBuffer, 4, 0)
@@ -190,5 +175,15 @@ export default class LineBatch {
     ) // rgb
     geometry.computeBoundingBox()
     return geometry
+  }
+
+  private updateColorBuffer(start: number, end: number, color: Vector4) {
+    const data = this.colorBuffer.array as number[]
+    for (let k = start; k < end; k += 4) {
+      data[k] = color.x
+      data[k + 1] = color.y
+      data[k + 2] = color.z
+      data[k + 3] = color.w
+    }
   }
 }

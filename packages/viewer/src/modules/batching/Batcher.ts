@@ -1,20 +1,16 @@
 import { generateUUID } from 'three/src/math/MathUtils'
-import Batch, { GeometryType } from './Batch'
-import { SpeckleType } from './converter/GeometryConverter'
-import { WorldTree } from './converter/WorldTree'
+import MeshBatch from './MeshBatch'
+import { SpeckleType } from '../converter/GeometryConverter'
+import { WorldTree } from '../tree/WorldTree'
 import LineBatch from './LineBatch'
-import Materials from './materials/Materials'
-import { NodeRenderView } from './NodeRenderView'
-
-export interface BatchUpdateRange {
-  offset: number
-  count: number
-  materialIndex: number
-}
+import Materials from '../materials/Materials'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
+import { NodeRenderView } from '../tree/NodeRenderView'
+import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 
 export default class Batcher {
   private materials: Materials
-  public batches: { [id: string]: Batch | LineBatch } = {}
+  public batches: { [id: string]: Batch } = {}
 
   public constructor() {
     this.materials = new Materials()
@@ -23,7 +19,7 @@ export default class Batcher {
 
   public makeBatches(batchType: GeometryType, ...speckleType: SpeckleType[]) {
     const rendeViews = WorldTree.getRenderTree()
-      .getRenderViews(...speckleType)
+      .getAtomicRenderViews(...speckleType)
       .sort((a, b) => {
         if (a.renderMaterialHash === 0) return -1
         if (b.renderMaterialHash === 0) return 1
@@ -57,10 +53,10 @@ export default class Batcher {
 
       const batchID = generateUUID()
       if (batchType === GeometryType.MESH)
-        this.batches[batchID] = new Batch(batchID, batch)
+        this.batches[batchID] = new MeshBatch(batchID, batch)
       else this.batches[batchID] = new LineBatch(batchID, batch)
-      this.batches[batchID].setBatchMaterial(material)
-      this.batches[batchID].buildBatch(batchType)
+      this.batches[batchID].setBatchMaterial(material as SpeckleLineMaterial)
+      this.batches[batchID].buildBatch()
       console.warn(batch)
     }
   }
@@ -71,36 +67,31 @@ export default class Batcher {
 
   public resetBatchesDrawGroups() {
     for (const k in this.batches) {
-      this.batches[k].clearDrawGroups()
-      this.batches[k].mesh.material = this.batches[k].batchMaterial
+      this.batches[k].resetDrawRanges()
     }
   }
 
   public selectRenderView(renderView: NodeRenderView) {
+    this.resetBatchesDrawGroups()
     const batch = this.batches[renderView.batchId]
-    batch.setMaterial([batch.batchMaterial, this.materials.lineHighlightMaterial])
-    batch.clearDrawGroups()
-    batch.updateDrawRanges(
+    batch.setDrawRanges(
       ...[
-        // {
-        //   offset: 0,
-        //   count: renderView.batchStart,
-        //   materialIndex: 0
-        // } as BatchUpdateRange
+        {
+          offset: 0,
+          count: renderView.batchStart,
+          material: batch.batchMaterial
+        } as BatchUpdateRange,
         {
           offset: renderView.batchStart,
           count: renderView.batchCount,
-          materialIndex: 1
+          material: this.materials.meshHighlightMaterial
+        } as BatchUpdateRange,
+        {
+          offset: renderView.batchEnd,
+          count: Infinity,
+          material: batch.batchMaterial
         } as BatchUpdateRange
-        // {
-        //   offset: renderView.batchEnd,
-        //   count: Infinity,
-        //   materialIndex: 0
-        // } as BatchUpdateRange
       ]
     )
-    // batch.addDrawGroup(0, renderView.batchStart, 0)
-    // batch.addDrawGroup(renderView.batchStart, renderView.batchCount, 1)
-    // batch.addDrawGroup(renderView.batchEnd, Infinity, 0)
   }
 }

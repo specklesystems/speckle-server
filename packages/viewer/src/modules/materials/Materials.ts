@@ -1,8 +1,8 @@
 import { Color, DoubleSide, Material, Vector2 } from 'three'
-import { GeometryType } from '../Batch'
+import { GeometryType } from '../batching/Batch'
 // import { getConversionFactor } from '../converter/Units'
-import { TreeNode } from '../converter/WorldTree'
-import { DisplayStyle, NodeRenderView, RenderMaterial } from '../NodeRenderView'
+import { TreeNode } from '../tree/WorldTree'
+import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 
@@ -52,7 +52,7 @@ export default class Materials {
   public createDefaultMaterials() {
     this.meshHighlightMaterial = new SpeckleStandardMaterial(
       {
-        color: 0x7f7fff,
+        color: 0xff0000,
         emissive: 0x0,
         roughness: 1,
         metalness: 0,

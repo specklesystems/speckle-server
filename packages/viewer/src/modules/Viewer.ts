@@ -18,7 +18,7 @@ import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { Geometry } from './converter/Geometry'
 import { Intersections } from './Intersections'
-import Batcher from './Batcher'
+import Batcher from './batching/Batcher'
 
 export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock

@@ -1,9 +1,9 @@
 import { Matrix4 } from 'three'
-import { Geometry } from './converter/Geometry'
-import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
-import ObjectWrapper from './converter/ObjectWrapper'
-import { TreeNode, WorldTree } from './converter/WorldTree'
-import Materials from './materials/Materials'
+import { Geometry } from '../converter/Geometry'
+import { GeometryConverter, SpeckleType } from '../converter/GeometryConverter'
+import ObjectWrapper from '../converter/ObjectWrapper'
+import { TreeNode, WorldTree } from './WorldTree'
+import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 
 export class RenderTree {
@@ -87,15 +87,25 @@ export class RenderTree {
     return transform
   }
 
-  public getRenderViews(...types: SpeckleType[]): NodeRenderView[] {
+  public getAtomicRenderViews(...types: SpeckleType[]): NodeRenderView[] {
     return this.root
       .all((node: TreeNode): boolean => {
         return (
           node.model.renderView !== null &&
-          types.includes(node.model.renderView.renderData.speckleType)
+          types.includes(node.model.renderView.renderData.speckleType) &&
+          node.model.atomic
         )
       })
       .map((val: TreeNode) => val.model.renderView)
+  }
+
+  public getAtomicParent(node: TreeNode) {
+    if (node.model.atomic) {
+      return node.model.renderView
+    }
+    return WorldTree.getInstance()
+      .getAncestors(node)
+      .find((node) => node.model.atomic)
   }
 
   /**

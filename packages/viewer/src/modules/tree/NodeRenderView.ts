@@ -1,6 +1,6 @@
-import { GeometryType } from './Batch'
-import { GeometryData } from './converter/Geometry'
-import { SpeckleType } from './converter/GeometryConverter'
+import { GeometryType } from '../batching/Batch'
+import { GeometryData } from '../converter/Geometry'
+import { SpeckleType } from '../converter/GeometryConverter'
 
 export interface RenderMaterial {
   id: string

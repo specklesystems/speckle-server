@@ -1,9 +1,9 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
-import { WorldTree } from './converter/WorldTree'
-import { GeometryType } from './Batch'
+import { WorldTree } from './tree/WorldTree'
 import { SpeckleType } from './converter/GeometryConverter'
 import { Group } from 'three'
+import { GeometryType } from './batching/Batch'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */
@@ -110,13 +110,13 @@ export default class ViewerObjectLoader {
     this.viewer.batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
     this.viewer.batcher.makeBatches(
       GeometryType.LINE,
-      // SpeckleType.Line,
-      // SpeckleType.Curve,
-      // SpeckleType.Polycurve,
-      // SpeckleType.Polyline,
-      SpeckleType.Arc
-      // SpeckleType.Circle,
-      // SpeckleType.Ellipse
+      SpeckleType.Line,
+      SpeckleType.Curve,
+      SpeckleType.Polycurve,
+      SpeckleType.Polyline,
+      SpeckleType.Arc,
+      SpeckleType.Circle,
+      SpeckleType.Ellipse
     )
     const contentGroup = new Group()
     contentGroup.name = 'ContentGroup'

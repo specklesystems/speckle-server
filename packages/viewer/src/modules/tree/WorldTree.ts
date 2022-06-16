@@ -1,6 +1,6 @@
 import TreeModel from 'tree-model'
-import { NodeRenderView } from '../NodeRenderView'
-import { RenderTree } from '../RenderTree'
+import { NodeRenderView } from './NodeRenderView'
+import { RenderTree } from './RenderTree'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean

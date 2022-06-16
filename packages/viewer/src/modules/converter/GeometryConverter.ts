@@ -9,7 +9,7 @@ import {
 import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
-import { NodeData } from './WorldTree'
+import { NodeData } from '../tree/WorldTree'
 
 export enum SpeckleType {
   View3D = 'View3D',
