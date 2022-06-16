@@ -68,6 +68,7 @@
       class="viewer-controls-drawer"
       app
       floating
+      disable-resize-watcher
       style="z-index: 10000"
     >
       <div class="px-1 pt-1 d-flex flex-column" style="height: 100%; width: 100%">
