@@ -2,30 +2,29 @@ const {
   getBlobMetadata,
   getBlobMetadataCollection,
   blobCollectionSummary
-} = require('../../services')
-const {
-  SpeckleNotFoundError,
-  SpeckleResourceMismatch
-} = require('@/modules/shared/errors')
+} = require('@/modules/blobstorage/services')
+const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
 const { UserInputError } = require('apollo-server-errors')
 
 module.exports = {
   Stream: {
     async blobs(parent, args) {
       const streamId = parent.id
-      const { totalCount, totalSize } = await blobCollectionSummary({
-        streamId,
-        query: args.query
-      })
-      const blobs = await getBlobMetadataCollection({
-        streamId,
-        query: args.query,
-        limit: args.limit,
-        cursor: args.cursor
-      })
+      const [summary, blobs] = await Promise.all([
+        blobCollectionSummary({
+          streamId,
+          query: args.query
+        }),
+        getBlobMetadataCollection({
+          streamId,
+          query: args.query,
+          limit: args.limit,
+          cursor: args.cursor
+        })
+      ])
       return {
-        totalCount,
-        totalSize,
+        totalCount: summary.totalCount,
+        totalSize: summary.totalSize,
         cursor: blobs.cursor,
         items: blobs.blobs
       }
@@ -34,9 +33,8 @@ module.exports = {
       try {
         return await getBlobMetadata({ streamId: parent.id, blobId: args.id })
       } catch (err) {
-        if (err instanceof SpeckleNotFoundError) return null
-        if (err instanceof SpeckleResourceMismatch)
-          throw new UserInputError(err.message)
+        if (err instanceof NotFoundError) return null
+        if (err instanceof ResourceMismatch) throw new UserInputError(err.message)
         throw err
       }
     }

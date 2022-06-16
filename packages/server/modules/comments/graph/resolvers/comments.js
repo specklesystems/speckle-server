@@ -1,6 +1,10 @@
 const { pubsub } = require('@/modules/shared')
-const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
-const { SpeckleForbiddenError } = require('@/modules/shared/errors')
+const {
+  ForbiddenError: ApolloForbiddenError,
+  ApolloError,
+  withFilter
+} = require('apollo-server-express')
+const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { saveActivity } = require('@/modules/activitystream/services')
@@ -29,7 +33,7 @@ const authorizeStreamAccess = async ({
   requireRole = false
 }) => {
   if (serverRole === Roles.Server.ArchivedUser)
-    throw new ForbiddenError('You are not authorized.')
+    throw new ApolloForbiddenError('You are not authorized.')
   const stream = await getStream({ streamId, userId })
   if (!stream) throw new ApolloError('Stream not found')
 
@@ -42,7 +46,7 @@ const authorizeStreamAccess = async ({
   if (stream.isPublic && requireRole && !stream.allowPublicComments && !stream.role)
     authZed = false
 
-  if (!authZed) throw new ForbiddenError('You are not authorized.')
+  if (!authZed) throw new ApolloForbiddenError('You are not authorized.')
   return stream
 }
 
@@ -57,7 +61,7 @@ module.exports = {
       })
       const comment = await getComment({ id: args.id, userId: context.userId })
       if (comment.streamId !== args.streamId)
-        throw new ForbiddenError('You do not have access to this comment.')
+        throw new ApolloForbiddenError('You do not have access to this comment.')
       return comment
     },
 
@@ -92,14 +96,14 @@ module.exports = {
   Stream: {
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
       return await getStreamCommentCount({ streamId: parent.id })
     }
   },
   Commit: {
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
@@ -107,14 +111,14 @@ module.exports = {
     // urgh, i think we tripped our gql schemas in there a bit
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   Object: {
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
@@ -155,7 +159,7 @@ module.exports = {
       })
 
       if (!stream.allowPublicComments && !stream.role)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-typing-status', data: args.data },
@@ -167,7 +171,7 @@ module.exports = {
 
     async commentCreate(parent, args, context) {
       if (!context.userId)
-        throw new ForbiddenError('Only registered users can comment.')
+        throw new ApolloForbiddenError('Only registered users can comment.')
 
       const stream = await getStream({
         streamId: args.input.streamId,
@@ -175,7 +179,7 @@ module.exports = {
       })
 
       if (!stream.allowPublicComments && !stream.role)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
 
       const { id, text } = await createComment({
         userId: context.userId,
@@ -226,7 +230,7 @@ module.exports = {
         await editComment({ userId: context.userId, input: args.input, matchUser })
         return true
       } catch (err) {
-        if (err instanceof SpeckleForbiddenError) throw new ForbiddenError(err.message)
+        if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
       }
     },
@@ -256,7 +260,7 @@ module.exports = {
       try {
         await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
       } catch (err) {
-        if (err instanceof SpeckleForbiddenError) throw new ForbiddenError(err.message)
+        if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
       }
 
@@ -282,7 +286,7 @@ module.exports = {
 
     async commentReply(parent, args, context) {
       if (!context.userId)
-        throw new ForbiddenError('Only registered users can comment.')
+        throw new ApolloForbiddenError('Only registered users can comment.')
 
       const stream = await getStream({
         streamId: args.input.streamId,
@@ -290,7 +294,7 @@ module.exports = {
       })
 
       if (!stream.allowPublicComments && !stream.role)
-        throw new ForbiddenError('You are not authorized.')
+        throw new ApolloForbiddenError('You are not authorized.')
 
       const { id, text } = await createCommentReply({
         authorId: context.userId,
@@ -337,7 +341,7 @@ module.exports = {
           })
 
           if (!stream.allowPublicComments && !stream.role)
-            throw new ForbiddenError('You are not authorized.')
+            throw new ApolloForbiddenError('You are not authorized.')
 
           return (
             payload.streamId === variables.streamId &&
@@ -356,7 +360,7 @@ module.exports = {
           })
 
           if (!stream.allowPublicComments && !stream.role)
-            throw new ForbiddenError('You are not authorized.')
+            throw new ApolloForbiddenError('You are not authorized.')
 
           // if we're listening for a stream's root comments events
           if (!variables.resourceIds) {
@@ -399,7 +403,7 @@ module.exports = {
           })
 
           if (!stream.allowPublicComments && !stream.role)
-            throw new ForbiddenError('You are not authorized.')
+            throw new ApolloForbiddenError('You are not authorized.')
 
           return (
             payload.streamId === variables.streamId &&

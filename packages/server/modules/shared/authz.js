@@ -2,59 +2,10 @@ const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 const { getStream } = require('@/modules/core/services/streams')
 const { getRoles } = require('@/modules/shared')
 const {
-  SpeckleForbiddenError: SFE,
-  SpeckleUnauthorizedError: SUE
-} = require('./errors')
-
-class SpeckleContextError extends Error {
-  constructor(message) {
-    super(message)
-    this.name = 'SpeckleContextError'
-  }
-}
-
-// const authorizeStreamAccess = async ({
-//   streamId,
-//   userId,
-//   serverRole,
-//   auth,
-//   requireRole = false
-// }) => {
-//   if (serverRole === Roles.Server.ArchivedUser)
-//     throw new ForbiddenError('You are not authorized.')
-//   const stream = await getStream({ streamId, userId })
-//   if (!stream) throw new ApolloError('Stream not found')
-
-//   let authZed = true
-
-//   if (!stream.isPublic && auth === false) authZed = false
-
-//   if (!stream.isPublic && !stream.role) authZed = false
-
-//   if (stream.isPublic && requireRole && !stream.allowPublicComments && !stream.role)
-//     authZed = false
-
-//   if (!authZed) throw new ForbiddenError('You are not authorized.')
-//   return stream
-// }
-
-// async function oldvalidateServerRole(context, requiredRole) {
-//   if (!roles) roles = await knex('user_roles').select('*')
-
-//   if (!context.auth) throw new ForbiddenError('You must provide an auth token.')
-
-//   const role = roles.find((r) => r.name === requiredRole)
-//   const myRole = roles.find((r) => r.name === context.role)
-
-//   if (!role) throw new ApolloError('Invalid server role specified')
-//   if (!myRole)
-//     throw new ForbiddenError('You do not have the required server role (null)')
-
-//   if (context.role === 'server:admin') return true
-//   if (myRole.weight >= role.weight) return true
-
-//   throw new ForbiddenError('You do not have the required server role')
-// }
+  ForbiddenError: SFE,
+  UnauthorizedError: SUE,
+  ContextError
+} = require('@modules/shared/errors')
 
 const authFailed = (context, error = null) => ({
   context,
@@ -132,12 +83,12 @@ const contextRequiresStream =
     if (!params?.streamId)
       return authFailed(
         context,
-        new SpeckleContextError("The context doesn't have a streamId")
+        new ContextError("The context doesn't have a streamId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
     if (!context)
-      return authFailed(context, new SpeckleContextError('The context is not defined'))
+      return authFailed(context, new ContextError('The context is not defined'))
 
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
@@ -150,7 +101,7 @@ const contextRequiresStream =
       return { context, authResult }
     } catch (err) {
       // this prob needs some more detailing to not leak internal errors
-      return authFailed(context, new SpeckleContextError(err.message))
+      return authFailed(context, new ContextError(err.message))
     }
   }
 
@@ -226,7 +177,7 @@ module.exports = {
   validateServerRole,
   validateStreamRole,
   contextRequiresStream,
-  SpeckleContextError,
+  ContextError,
   authMiddlewareCreator,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,

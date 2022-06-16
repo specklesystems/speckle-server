@@ -13,10 +13,7 @@ const {
   setStreamFavorited,
   canUserFavoriteStream
 } = require('@/modules/core/repositories/streams')
-const {
-  SpeckleUnauthorizedError,
-  SpeckleInvalidArgumentError
-} = require('@/modules/shared/errors')
+const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 
 /**
  * Get base query for finding or counting user streams
@@ -288,12 +285,9 @@ module.exports = {
   async favoriteStream({ userId, streamId, favorited }) {
     // Check if user has access to stream
     if (!(await canUserFavoriteStream({ userId, streamId }))) {
-      throw new SpeckleUnauthorizedError(
-        "User doesn't have access to the specified stream",
-        {
-          info: { userId, streamId }
-        }
-      )
+      throw new UnauthorizedError("User doesn't have access to the specified stream", {
+        info: { userId, streamId }
+      })
     }
 
     // Favorite/unfavorite the stream
@@ -340,7 +334,7 @@ module.exports = {
     }
 
     if (!streamId) {
-      throw new SpeckleInvalidArgumentError('Invalid stream ID')
+      throw new InvalidArgumentError('Invalid stream ID')
     }
 
     return (
@@ -357,7 +351,7 @@ module.exports = {
    */
   async getStreamFavoritesCount({ ctx, streamId }) {
     if (!streamId) {
-      throw new SpeckleInvalidArgumentError('Invalid stream ID')
+      throw new InvalidArgumentError('Invalid stream ID')
     }
 
     return (await ctx.loaders.streams.getFavoritesCount.load(streamId)) || 0
@@ -371,7 +365,7 @@ module.exports = {
    */
   async getOwnedFavoritesCount({ ctx, userId }) {
     if (!userId) {
-      throw new SpeckleInvalidArgumentError('Invalid user ID')
+      throw new InvalidArgumentError('Invalid user ID')
     }
 
     return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0

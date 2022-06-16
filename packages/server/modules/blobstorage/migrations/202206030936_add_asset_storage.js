@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-const TABLE_NAME = 'asset_storage'
+const TABLE_NAME = 'blob_storage'
 
 /**
  * @param { import("knex").Knex } knex
@@ -12,8 +12,8 @@ exports.up = async (knex) => {
     // dont cascade on delete, cause it doesn't clean the object storage for the objs
     // it needs to be exposed as a service, to be able to cleanup fully after a stream
 
-    table.string('streamId', 10).references('id').inTable('streams')
-    table.string('userId', 10).references('id').inTable('users')
+    table.string('streamId', 10)
+    table.string('userId', 10)
     table.string('objectKey')
     table.string('fileName').notNullable()
     table.string('fileType').notNullable()

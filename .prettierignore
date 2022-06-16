@@ -10,6 +10,7 @@ packages/viewer/example/speckleviewer.web.js
 packages/frontend/**/generated
 package-lock.json
 yarn.lock
+.yarn
 
 # Profiler output
 events.json

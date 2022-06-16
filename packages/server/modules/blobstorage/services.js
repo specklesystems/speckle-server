@@ -1,8 +1,5 @@
 const knex = require('@/db/knex')
-const {
-  SpeckleNotFoundError,
-  SpeckleResourceMismatch
-} = require('@/modules/shared/errors')
+const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
 const BlobStorage = () => knex('blob_storage')
 
 const blobLookup = ({ blobId }) => BlobStorage().where({ id: blobId })
@@ -30,11 +27,10 @@ const uploadFileStream = async (
 
 const getBlobMetadata = async ({ streamId, blobId }) => {
   const obj = (await blobLookup({ blobId }).first()) || null
-  if (!obj)
-    throw new SpeckleNotFoundError(`The requested asset: ${blobId} doesn't exist`)
-  if (!streamId) throw new SpeckleResourceMismatch('No steamId provided')
+  if (!obj) throw new NotFoundError(`The requested asset: ${blobId} doesn't exist`)
+  if (!streamId) throw new ResourceMismatch('No steamId provided')
   if (obj.streamId !== streamId)
-    throw new SpeckleResourceMismatch("The stream doesn't have the given resource")
+    throw new ResourceMismatch("The stream doesn't have the given resource")
   return obj
 }
 

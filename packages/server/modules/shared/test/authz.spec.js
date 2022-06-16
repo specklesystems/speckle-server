@@ -6,11 +6,11 @@ const {
   validateRole,
   validateScope,
   contextRequiresStream,
-  SpeckleContextError
+  ContextError
 } = require('@/modules/shared/authz')
 const {
   SpeckleForbiddenError: SFE,
-  SpeckleUnauthorizedError: SUE
+  UnauthorizedError: SUE
 } = require('@/modules/shared/errors')
 
 describe('AuthZ @shared', () => {
@@ -173,7 +173,7 @@ describe('AuthZ @shared', () => {
       const step = contextRequiresStream(async () => ({ ur: 'bamboozled' }))
       const { authResult } = await step({ params: {} })
       expectAuthError(
-        new SpeckleContextError("The context doesn't have a streamId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
@@ -181,7 +181,7 @@ describe('AuthZ @shared', () => {
       const step = contextRequiresStream(async () => ({ ur: 'bamboozled' }))
       const { authResult } = await step({})
       expectAuthError(
-        new SpeckleContextError("The context doesn't have a streamId"),
+        new ContextError("The context doesn't have a streamId"),
         authResult
       )
     })
@@ -201,7 +201,7 @@ describe('AuthZ @shared', () => {
       const step = contextRequiresStream(async () => {})
       const { authResult } = await step({ params: { streamId: 'the need for stream' } })
 
-      expectAuthError(new SpeckleContextError('The context is not defined'), authResult)
+      expectAuthError(new ContextError('The context is not defined'), authResult)
     })
     it('If stream getter raises, the error is handled', async () => {
       const errorMessage = 'oh dangit'
@@ -213,7 +213,7 @@ describe('AuthZ @shared', () => {
         params: { streamId: 'the need for stream' }
       })
 
-      expectAuthError(new SpeckleContextError(errorMessage), authResult)
+      expectAuthError(new ContextError(errorMessage), authResult)
     })
   })
 })

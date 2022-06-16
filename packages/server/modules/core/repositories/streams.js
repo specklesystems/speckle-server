@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const { Streams, StreamAcl, StreamFavorites, knex } = require('@/modules/core/dbSchema')
-const { SpeckleInvalidArgumentError } = require('@/modules/shared/errors')
+const { InvalidArgumentError } = require('@/modules/shared/errors')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 
 /**
@@ -25,7 +25,7 @@ const BASE_STREAM_COLUMNS = [
  * @returns {Promise<Object>}
  */
 async function getStream({ streamId, userId }) {
-  if (!streamId) throw new SpeckleInvalidArgumentError('Invalid stream ID')
+  if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
 
   const stream = await Streams.knex().where({ id: streamId }).select('*').first()
   if (!userId) return stream
@@ -44,7 +44,7 @@ async function getStream({ streamId, userId }) {
  */
 function getFavoritedStreamsQueryBase(userId) {
   if (!userId)
-    throw new SpeckleInvalidArgumentError(
+    throw new InvalidArgumentError(
       'User ID must be specified to retrieve favorited streams'
     )
 
@@ -117,7 +117,7 @@ async function getFavoritedStreamsCount(userId) {
  */
 async function setStreamFavorited({ streamId, userId, favorited = true }) {
   if (!userId || !streamId)
-    throw new SpeckleInvalidArgumentError('Invalid stream or user ID', {
+    throw new InvalidArgumentError('Invalid stream or user ID', {
       info: { userId, streamId }
     })
 
@@ -152,7 +152,7 @@ async function setStreamFavorited({ streamId, userId, favorited = true }) {
  */
 async function getBatchUserFavoriteData({ userId, streamIds }) {
   if (!userId || !streamIds || !streamIds.length)
-    throw new SpeckleInvalidArgumentError('Invalid user ID or stream IDs', {
+    throw new InvalidArgumentError('Invalid user ID or stream IDs', {
       info: { userId, streamIds }
     })
 
@@ -190,7 +190,7 @@ async function getBatchStreamFavoritesCounts(streamIds) {
  */
 async function canUserFavoriteStream({ userId, streamId }) {
   if (!userId || !streamId)
-    throw new SpeckleInvalidArgumentError('Invalid stream or user ID', {
+    throw new InvalidArgumentError('Invalid stream or user ID', {
       info: { userId, streamId }
     })
 

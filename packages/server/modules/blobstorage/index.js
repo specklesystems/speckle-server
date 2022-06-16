@@ -13,7 +13,7 @@ const {
   getObjectStream,
   deleteObject,
   getObjectAttributes
-} = require('./objectStorage')
+} = require('@modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
 const {
   uploadFileStream,
@@ -25,10 +25,7 @@ const {
   getBlobMetadata,
   getBlobMetadataCollection
 } = require('@/modules/blobstorage/services')
-const {
-  SpeckleNotFoundError,
-  SpeckleResourceMismatch
-} = require('@/modules/shared/errors')
+const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -51,9 +48,9 @@ const errorHandler = async (req, res, callback) => {
   try {
     await callback(req, res)
   } catch (err) {
-    if (err instanceof SpeckleNotFoundError) {
+    if (err instanceof NotFoundError) {
       res.status(404).send({ error: err.message })
-    } else if (err instanceof SpeckleResourceMismatch) {
+    } else if (err instanceof ResourceMismatch) {
       res.status(400).send({ error: err.message })
     } else {
       res.status(500).send({ error: err.message })
