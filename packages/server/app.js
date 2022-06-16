@@ -8,7 +8,6 @@ const express = require('express')
 require('express-async-errors')
 const compression = require('compression')
 const logger = require('morgan-debug')
-const bodyParser = require('body-parser')
 const debug = require('debug')
 const { createTerminus } = require('@godaddy/terminus')
 
@@ -106,15 +105,15 @@ exports.init = async () => {
     app.use(compression())
   }
 
-  app.use(bodyParser.json({ limit: '100mb' }))
-  app.use(bodyParser.urlencoded({ limit: '100mb', extended: false }))
+  app.use(express.json({ limit: '100mb' }))
+  app.use(express.urlencoded({ limit: '100mb', extended: false }))
 
   const { init } = require('./modules')
 
-  // Initialise default modules, including rest api handlers
+  // Initialize default modules, including rest api handlers
   await init(app)
 
-  // Initialise graphql server
+  // Initialize graphql server
   graphqlServer = module.exports.buildApolloServer()
   graphqlServer.applyMiddleware({ app })
 

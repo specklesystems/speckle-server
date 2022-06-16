@@ -128,6 +128,12 @@ jobs:
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
       CANONICAL_URL: 'http://localhost:3000'
+      DISABLE_FILE_UPLOADS: 'true'
+      S3_ENDPOINT: 'http://localhost:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
     steps:
       - checkout
       - restore_cache:
@@ -146,7 +152,7 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
 
-      - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
+      - run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
           command: touch .env.test

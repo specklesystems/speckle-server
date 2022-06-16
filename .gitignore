@@ -23,6 +23,8 @@ packages/frontend/schema.graphql
 packages/server/reports*
 
 **/venv/**
+**/.venv/**
+*.pyc
 **/start/
 
 # Profiler output
