@@ -1,4 +1,4 @@
-export const speckle_line_frag = /* glsl */ `
+export const speckleLineFrag = /* glsl */ `
 		uniform vec3 diffuse;
 		uniform float opacity;
 		uniform float linewidth;
@@ -149,7 +149,12 @@ export const speckle_line_frag = /* glsl */ `
 			vec4 diffuseColor = vec4( diffuse, alpha );
 
 			#include <logdepthbuf_fragment>
-			#include <color_fragment>
+			// #include <color_fragment> COMMENTED CHUNK
+			#if defined( USE_COLOR_ALPHA )
+				diffuseColor *= vColor;
+			#elif defined( USE_COLOR )
+				diffuseColor.rgb = vColor;
+			#endif
 
 			gl_FragColor = vec4( diffuseColor.rgb, alpha );
 

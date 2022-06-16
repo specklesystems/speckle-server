@@ -1,5 +1,7 @@
 import { Raycaster, Scene } from 'three'
 import Batcher from './Batcher'
+import { SpeckleType } from './converter/GeometryConverter'
+import { WorldTree } from './converter/WorldTree'
 
 export class Intersections {
   private scene: Scene
@@ -22,10 +24,18 @@ export class Intersections {
       return
     }
 
+    console.warn(WorldTree.getInstance().findId('2d10312df9a1910074ab5b0426ea89d3'))
+    const rendeViews = WorldTree.getRenderTree()
+      .getRenderViews(SpeckleType.Arc)
+      .sort((a, b) => {
+        return a.batchStart - b.batchStart
+      })
+    console.warn(rendeViews)
+
     results.sort((value) => value.distance)
-    // console.log(results[0].faceIndex)
+    console.warn(results[0])
     const rv = this.batcher.getRenderView(results[0].object.uuid, results[0].faceIndex)
-    // console.log(rv.renderData)
+    console.warn(rv)
     this.batcher.selectRenderView(rv)
   }
 }

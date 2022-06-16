@@ -13,8 +13,8 @@ export const speckleLineVert = /* glsl */ `
 		attribute vec3 instanceStart;
 		attribute vec3 instanceEnd;
 
-		attribute vec3 instanceColorStart;
-		attribute vec3 instanceColorEnd;
+		attribute vec4 instanceColorStart;
+		attribute vec4 instanceColorEnd;
 		// varying vec3 debugColor;
 
 		#ifdef WORLD_UNITS
@@ -83,7 +83,7 @@ export const speckleLineVert = /* glsl */ `
             vec3 computedPosition = position;
 			#ifdef USE_COLOR
 
-				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
+				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart.xyz : instanceColorEnd.xyz;
 
 			#endif
 

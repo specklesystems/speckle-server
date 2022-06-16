@@ -1,6 +1,6 @@
 import { Color, DoubleSide, Material, Vector2 } from 'three'
 import { GeometryType } from '../Batch'
-import { getConversionFactor } from '../converter/Units'
+// import { getConversionFactor } from '../converter/Units'
 import { TreeNode } from '../converter/WorldTree'
 import { DisplayStyle, NodeRenderView, RenderMaterial } from '../NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
@@ -9,6 +9,7 @@ import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 export default class Materials {
   private readonly materialMap: { [hash: number]: Material } = {}
   public meshHighlightMaterial: Material = null
+  public lineHighlightMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -30,19 +31,19 @@ export default class Materials {
     let displayStyle: DisplayStyle = null
     if (node.model.raw.displayStyle) {
       /** If there are no units specified, we ignore the line width value */
-      let lineWeigth = node.model.raw.displayStyle.lineweigth
-      const units = node.model.raw.displayStyle.units
-      lineWeigth = units ? lineWeigth * getConversionFactor(units) : 0
+      const lineWeight = node.model.raw.displayStyle.lineweight || 0
+      // const units = node.model.raw.displayStyle.units
+      // lineWeigth = units ? lineWeigth * getConversionFactor(units) : 0
       displayStyle = {
         id: node.model.raw.displayStyle.id,
         color: node.model.raw.displayStyle.diffuse || node.model.raw.displayStyle.color,
-        lineWeigth
+        lineWeight
       }
     } else if (node.model.raw.renderMaterial) {
       displayStyle = {
         id: node.model.raw.renderMaterial.id,
         color: node.model.raw.renderMaterial.diffuse,
-        lineWeigth: 0
+        lineWeight: 0
       }
     }
     return displayStyle
@@ -60,6 +61,25 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+
+    this.lineHighlightMaterial = new SpeckleLineMaterial({
+      color: 0x7f7fff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: false,
+      alphaToCoverage: false,
+      resolution: new Vector2(1281, 1306)
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0xff0000)
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2(
+      1281,
+      1306
+    )
+
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
@@ -111,9 +131,9 @@ export default class Materials {
   private makeLineMaterial(materialData: DisplayStyle): Material {
     const mat = new SpeckleLineMaterial({
       color: materialData.color,
-      linewidth: materialData.lineWeigth > 0 ? materialData.lineWeigth : 1,
-      worldUnits: materialData.lineWeigth > 0 ? true : false,
-      vertexColors: false,
+      linewidth: materialData.lineWeight > 0 ? materialData.lineWeight : 1,
+      worldUnits: materialData.lineWeight > 0 ? true : false,
+      vertexColors: true,
       alphaToCoverage: false,
       resolution: new Vector2(1281, 1306)
       // clippingPlanes: this.viewer.sectionBox.planes
@@ -121,8 +141,9 @@ export default class Materials {
     // Thank you prettier
     ;(<SpeckleLineMaterial>mat).color = new Color(materialData.color)
     ;(<SpeckleLineMaterial>mat).linewidth =
-      materialData.lineWeigth > 0 ? materialData.lineWeigth : 1
-    ;(<SpeckleLineMaterial>mat).worldUnits = materialData.lineWeigth > 0 ? true : false
+      materialData.lineWeight > 0 ? materialData.lineWeight : 1
+    ;(<SpeckleLineMaterial>mat).worldUnits = materialData.lineWeight > 0 ? true : false
+    ;(<SpeckleLineMaterial>mat).vertexColors = true
     ;(<SpeckleLineMaterial>mat).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>mat).resolution = new Vector2(1281, 1306)
 

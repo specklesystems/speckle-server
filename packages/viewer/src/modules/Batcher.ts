@@ -2,12 +2,19 @@ import { generateUUID } from 'three/src/math/MathUtils'
 import Batch, { GeometryType } from './Batch'
 import { SpeckleType } from './converter/GeometryConverter'
 import { WorldTree } from './converter/WorldTree'
+import LineBatch from './LineBatch'
 import Materials from './materials/Materials'
 import { NodeRenderView } from './NodeRenderView'
 
+export interface BatchUpdateRange {
+  offset: number
+  count: number
+  materialIndex: number
+}
+
 export default class Batcher {
   private materials: Materials
-  public batches: { [id: string]: Batch } = {}
+  public batches: { [id: string]: Batch | LineBatch } = {}
 
   public constructor() {
     this.materials = new Materials()
@@ -49,7 +56,9 @@ export default class Batcher {
       )
 
       const batchID = generateUUID()
-      this.batches[batchID] = new Batch(batchID, batch)
+      if (batchType === GeometryType.MESH)
+        this.batches[batchID] = new Batch(batchID, batch)
+      else this.batches[batchID] = new LineBatch(batchID, batch)
       this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch(batchType)
       console.warn(batch)
@@ -69,10 +78,29 @@ export default class Batcher {
 
   public selectRenderView(renderView: NodeRenderView) {
     const batch = this.batches[renderView.batchId]
-    batch.setMaterial([batch.batchMaterial, this.materials.meshHighlightMaterial])
+    batch.setMaterial([batch.batchMaterial, this.materials.lineHighlightMaterial])
     batch.clearDrawGroups()
-    batch.addDrawGroup(0, renderView.batchStart, 0)
-    batch.addDrawGroup(renderView.batchStart, renderView.batchCount, 1)
-    batch.addDrawGroup(renderView.batchEnd, Infinity, 0)
+    batch.updateDrawRanges(
+      ...[
+        // {
+        //   offset: 0,
+        //   count: renderView.batchStart,
+        //   materialIndex: 0
+        // } as BatchUpdateRange
+        {
+          offset: renderView.batchStart,
+          count: renderView.batchCount,
+          materialIndex: 1
+        } as BatchUpdateRange
+        // {
+        //   offset: renderView.batchEnd,
+        //   count: Infinity,
+        //   materialIndex: 0
+        // } as BatchUpdateRange
+      ]
+    )
+    // batch.addDrawGroup(0, renderView.batchStart, 0)
+    // batch.addDrawGroup(renderView.batchStart, renderView.batchCount, 1)
+    // batch.addDrawGroup(renderView.batchEnd, Infinity, 0)
   }
 }

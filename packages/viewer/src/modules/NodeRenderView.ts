@@ -11,7 +11,7 @@ export interface RenderMaterial {
 export interface DisplayStyle {
   id: string
   color: number
-  lineWeigth: number
+  lineWeight: number
 }
 
 export interface NodeRenderData {
@@ -124,7 +124,7 @@ export class NodeRenderView {
     return (
       this.renderData.displayStyle.color?.toString() +
       '/' +
-      this.renderData.displayStyle.lineWeigth.toString()
+      this.renderData.displayStyle.lineWeight.toString()
     )
   }
 

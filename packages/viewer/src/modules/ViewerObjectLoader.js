@@ -110,13 +110,13 @@ export default class ViewerObjectLoader {
     this.viewer.batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
     this.viewer.batcher.makeBatches(
       GeometryType.LINE,
-      SpeckleType.Line,
-      SpeckleType.Curve,
-      SpeckleType.Polycurve,
-      SpeckleType.Polyline,
-      SpeckleType.Arc,
-      SpeckleType.Circle,
-      SpeckleType.Ellipse
+      // SpeckleType.Line,
+      // SpeckleType.Curve,
+      // SpeckleType.Polycurve,
+      // SpeckleType.Polyline,
+      SpeckleType.Arc
+      // SpeckleType.Circle,
+      // SpeckleType.Ellipse
     )
     const contentGroup = new Group()
     contentGroup.name = 'ContentGroup'

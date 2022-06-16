@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { speckleLineVert } from './shaders/speckle-line-vert'
-import { speckle_line_frag } from './shaders/speckle-line-frag'
+import { speckleLineFrag } from './shaders/speckle-line-frag'
 import { UniformsUtils, ShaderLib, Vector3 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -31,7 +31,7 @@ class SpeckleLineMaterial extends LineMaterial {
       value: 0
     }
     ;(this as any).vertProgram = speckleLineVert
-    ;(this as any).fragProgram = speckle_line_frag
+    ;(this as any).fragProgram = speckleLineFrag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.line.uniforms,
       {

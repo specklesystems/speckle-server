@@ -1,11 +1,12 @@
 import {
   BufferGeometry,
+  DynamicDrawUsage,
   Float32BufferAttribute,
+  InstancedInterleavedBuffer,
+  InterleavedBufferAttribute,
   Line,
   Material,
-  Mesh,
-  Uint16BufferAttribute,
-  Uint32BufferAttribute
+  Mesh
 } from 'three'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
@@ -21,12 +22,14 @@ export enum GeometryType {
   LINE
 }
 
-export default class Batch {
+export default class LineBatch {
   private id: string
   private renderViews: NodeRenderView[]
   private geometry: BufferGeometry | LineSegmentsGeometry
   public batchMaterial: Material
+  public material: Material | Material[]
   public mesh: Mesh | Line | Line2
+  public colorBuffer: InstancedInterleavedBuffer
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
@@ -38,29 +41,53 @@ export default class Batch {
   }
 
   public setMaterial(material: Material | Material[]) {
-    this.mesh.material = material
+    this.material = material
   }
 
+  //   public addDrawGroup(start: number, count: number, materialIndex: number) {
+  //     this.colorBuffer.updateRange = { offset: 0, count: this.colorBuffer.array.length }
+  //     this.colorBuffer.needsUpdate = true
+  //     this.geometry.attributes['instanceColorStart'].needsUpdate = true
+  //     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
+  //   }
+
   public updateDrawRanges(...ranges: BatchUpdateRange[]) {
-    console.warn(ranges)
-  }
-  public addDrawGroup(start: number, count: number, materialIndex: number) {
-    this.geometry.addGroup(start, count, materialIndex)
+    const data = this.colorBuffer.array as number[]
+
+    for (let i = 0; i < ranges.length; i++) {
+      const material = this.material[ranges[i].materialIndex]
+      const start = ranges[i].offset * this.colorBuffer.stride
+      const len =
+        ranges[i].offset * this.colorBuffer.stride +
+        ranges[i].count * this.colorBuffer.stride
+      for (
+        let k = start;
+        k < (ranges[i].count === Infinity ? this.colorBuffer.array.length : len);
+        k += 4
+      ) {
+        data[k] = material.color.r
+        data[k + 1] = material.color.g
+        data[k + 2] = material.color.b
+        data[k + 3] = 1
+      }
+    }
+    this.colorBuffer.updateRange = { offset: 0, count: data.length }
+    this.colorBuffer.needsUpdate = true
+    this.geometry.attributes['instanceColorStart'].needsUpdate = true
+    this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
   public clearDrawGroups() {
-    this.geometry.clearGroups()
+    this.updateDrawRanges({
+      offset: 0,
+      count: Infinity,
+      materialIndex: 0
+    })
   }
 
   public buildBatch(type: GeometryType) {
-    switch (type) {
-      case GeometryType.MESH:
-        this.buildMeshBatch()
-        break
-      case GeometryType.LINE:
-        this.buildLineBatch()
-        break
-    }
+    type
+    this.buildLineBatch()
     this.mesh.uuid = this.id
   }
 
@@ -73,37 +100,6 @@ export default class Batch {
         return this.renderViews[k]
       }
     }
-  }
-
-  private buildMeshBatch() {
-    const indicesCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.INDEX
-    ).length
-    const attributeCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
-    ).length
-    const indices = new Uint32Array(indicesCount)
-    const position = new Float32Array(attributeCount)
-    let offset = 0
-    let arrayOffset = 0
-    for (let k = 0; k < this.renderViews.length; k++) {
-      const geometry = this.renderViews[k].renderData.geometry
-      indices.set(
-        geometry.attributes.INDEX.map((val) => val + offset / 3),
-        arrayOffset
-      )
-      position.set(geometry.attributes.POSITION, offset)
-      this.renderViews[k].setBatchData(
-        this.id,
-        arrayOffset,
-        geometry.attributes.INDEX.length
-      )
-
-      offset += geometry.attributes.POSITION.length
-      arrayOffset += geometry.attributes.INDEX.length
-    }
-    this.makeMeshGeometry(indices, position)
-    this.mesh = new Mesh(this.geometry, this.batchMaterial)
   }
 
   private buildLineBatch() {
@@ -158,44 +154,6 @@ export default class Batch {
     }
   }
 
-  /**
-   * DUPLICATE from Geometry. Will unify in the future
-   */
-  private makeMeshGeometry(
-    indices: Uint32Array | Uint16Array,
-    position: Float32Array
-  ): BufferGeometry {
-    this.geometry = new BufferGeometry()
-    if (position.length >= 65535 || indices.length >= 65535) {
-      this.geometry.setIndex(new Uint32BufferAttribute(indices, 1))
-    } else {
-      this.geometry.setIndex(new Uint16BufferAttribute(indices, 1))
-    }
-
-    if (position) {
-      this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
-    }
-
-    // if (geometryData.attributes.COLOR) {
-    //   this.bufferGeometry.setAttribute(
-    //     'color',
-    //     new Float32BufferAttribute(geometryData.attributes.COLOR, 3)
-    //   )
-    // }
-
-    this.geometry.computeVertexNormals()
-    this.geometry.computeBoundingSphere()
-    this.geometry.computeBoundingBox()
-
-    World.expandWorld(this.geometry.boundingBox)
-
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(this.geometry)
-    }
-
-    return this.geometry
-  }
-
   private makeLineGeometry(position: Float32Array) {
     if (Geometry.THICK_LINES) {
       this.geometry = this.makeLineGeometryTriangle(position)
@@ -218,7 +176,18 @@ export default class Batch {
   private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {
     const geometry = new LineSegmentsGeometry()
     geometry.setPositions(position)
-    // if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
+
+    const buffer = new Float32Array(position.length + position.length / 3).fill(0.0)
+    this.colorBuffer = new InstancedInterleavedBuffer(buffer, 8, 1) // rgba, rgba
+    this.colorBuffer.setUsage(DynamicDrawUsage)
+    geometry.setAttribute(
+      'instanceColorStart',
+      new InterleavedBufferAttribute(this.colorBuffer, 4, 0)
+    ) // rgb
+    geometry.setAttribute(
+      'instanceColorEnd',
+      new InterleavedBufferAttribute(this.colorBuffer, 4, 4)
+    ) // rgb
     geometry.computeBoundingBox()
     return geometry
   }

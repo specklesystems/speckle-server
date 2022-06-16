@@ -237,7 +237,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     // you can skip this condition to render though
     if (hasControlsUpdated || this.needsRender) {
-      this.needsRender = false
+      // this.needsRender = false
       if (this.stats) this.stats.begin()
       this.render()
 
