@@ -13,7 +13,7 @@
 
     <!-- Play button -->
     <div
-      v-if="!isModelLoaded"
+      v-if="!isModelLoaded && !error"
       class="viewer-play d-flex fullscreen align-center justify-center"
     >
       <v-btn
@@ -37,6 +37,17 @@
       @model-loaded="onModelLoaded"
       @error="onError"
     />
+
+    <!-- Display error if needed -->
+    <div v-if="error" class="fullscreen d-flex justify-center align-center">
+      <div class="">
+        <p class="text-h5 text-center red--text">Embedding Error</p>
+        <p class="text-center">
+          Double check to see if the stream is public and if the embed link is correct.
+        </p>
+        <p class="caption text-center">The robot council said: {{ error.message }}</p>
+      </div>
+    </div>
   </v-app>
 </template>
 
@@ -99,7 +110,9 @@ export default Vue.extend({
         newVal === 'error' ? new Error('Provided details were invalid') : null
     },
     error(newVal: Error | null) {
-      if (newVal) console.error(newVal)
+      if (newVal) {
+        console.error(newVal)
+      }
     }
   },
   async beforeMount() {
