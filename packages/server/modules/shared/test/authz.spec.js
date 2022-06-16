@@ -9,7 +9,7 @@ const {
   ContextError
 } = require('@/modules/shared/authz')
 const {
-  SpeckleForbiddenError: SFE,
+  ForbiddenError: SFE,
   UnauthorizedError: SUE
 } = require('@/modules/shared/errors')
 

@@ -13,7 +13,7 @@ const {
   getObjectStream,
   deleteObject,
   getObjectAttributes
-} = require('@modules/blobstorage/objectStorage')
+} = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
 const {
   uploadFileStream,

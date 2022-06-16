@@ -1,7 +1,7 @@
 'use strict'
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
-const { SpeckleForbiddenError } = require('@/modules/shared/errors')
+const { ForbiddenError } = require('@/modules/shared/errors')
 const {
   buildCommentTextFromInput
 } = require('@/modules/comments/services/commentTextService')
@@ -134,7 +134,7 @@ module.exports = {
     const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error("The comment doesn't exist")
     if (matchUser && editedComment.authorId !== userId)
-      throw new SpeckleForbiddenError("You cannot edit someone else's comments")
+      throw new ForbiddenError("You cannot edit someone else's comments")
 
     const newText = buildCommentTextFromInput(input.text)
     await Comments().where({ id: input.id }).update({ text: newText })
@@ -181,9 +181,7 @@ module.exports = {
 
     if (comment.authorId !== userId) {
       if (!aclEntry || aclEntry.role !== 'stream:owner')
-        throw new SpeckleForbiddenError(
-          "You don't have permission to archive the comment"
-        )
+        throw new ForbiddenError("You don't have permission to archive the comment")
     }
 
     await Comments().where({ id: commentId }).update({ archived })

@@ -5,7 +5,7 @@ const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
   ContextError
-} = require('@modules/shared/errors')
+} = require('@/modules/shared/errors')
 
 const authFailed = (context, error = null) => ({
   context,
