@@ -13,10 +13,11 @@ import { getConversionFactor } from './converter/Units'
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
 export default class SceneObjectManager {
+  views = []
+
   constructor(viewer, skipPostLoad = false) {
     this.viewer = viewer
     this.scene = viewer.scene
-    this.views = []
 
     this.sceneObjects = new SceneObjects(viewer)
 
