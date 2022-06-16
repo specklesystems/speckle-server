@@ -4,7 +4,8 @@ const { trim, isString, isObjectLike } = require('lodash')
  * @typedef {SmartTextEditorValueSchema}
  * @property {string} version The version of the schema
  * @property {string} type The type of value (comment, issue, blog post etc.)
- * @property {import("@tiptap/core").JSONContent} doc The ProseMirror document representing the text
+ * @property {import("@tiptap/core").JSONContent} [doc] The ProseMirror document representing the text, if any
+ * @property {string[]} [blobIds] Attachment blob IDs, if any
  */
 
 /**
@@ -18,7 +19,9 @@ function isTextEditorDoc(value) {
 }
 
 function isTextEditorValueSchema(value) {
-  return isObjectLike(value) && value.type && value.version && value.doc
+  return (
+    isObjectLike(value) && value.type && value.version && (value.doc || value.blobIds)
+  )
 }
 
 /**

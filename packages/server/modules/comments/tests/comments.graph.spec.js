@@ -54,6 +54,7 @@ const writeComment = async ({ apollo, resources, shouldSucceed }) => {
       input: {
         streamId: resources.streamId,
         text: buildCommentInputFromString('foo'),
+        blobIds: [],
         data: {},
         resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
       }
@@ -133,6 +134,7 @@ const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('i wrote this myself'),
+      blobIds: [],
       data: {},
       resources: [
         { resourceId: resources.streamId, resourceType: 'stream' },
@@ -177,6 +179,7 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('i wrote this myself'),
+      blobIds: [],
       data: {},
       resources: [
         { resourceId: resources.streamId, resourceType: 'stream' },
@@ -194,7 +197,8 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
       input: {
         streamId: resources.streamId,
         id: commentId,
-        text: buildCommentInputFromString('im going to overwrite myself')
+        text: buildCommentInputFromString('im going to overwrite myself'),
+        blobIds: []
       }
     }
   })
@@ -216,7 +220,8 @@ const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
         id: resources.commentId,
         text: buildCommentInputFromString(
           'what you wrote is dumb, here, let me fix it for you'
-        )
+        ),
+        blobIds: []
       }
     }
   })
@@ -239,6 +244,7 @@ const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
         text: buildCommentInputFromString(
           'what you wrote is dump, here, let me fix it for you'
         ),
+        blobIds: [],
         data: {}
       }
     }
@@ -293,6 +299,7 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
         input: {
           streamId: resources.streamId,
           text: buildCommentInputFromString(`${key}`),
+          blobIds: [],
           data: {},
           resources: [{ resourceId: objectId, resourceType: 'object' }]
         }
@@ -334,6 +341,7 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('im expecting some replies here'),
+      blobIds: [],
       data: {},
       resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
     }
@@ -365,6 +373,7 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('im expecting some replies here'),
+      blobIds: [],
       data: {},
       resources: [{ resourceId: objectId, resourceType: 'object' }]
     }
@@ -404,6 +413,7 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('im expecting some replies here'),
+      blobIds: [],
       data: {},
       resources: [{ resourceId: commitId, resourceType: 'commit' }]
     }
@@ -447,6 +457,7 @@ const queryCommitCollectionCommentCount = async ({
     input: {
       streamId: resources.streamId,
       text: buildCommentInputFromString('im expecting some replies here'),
+      blobIds: [],
       data: {},
       resources: [{ resourceId: commitId, resourceType: 'commit' }]
     }
@@ -837,6 +848,7 @@ describe('Graphql @comments', () => {
             input: {
               streamId: stream.id,
               text: buildCommentInputFromString('foo'),
+              blobIds: [],
               data: {},
               resources: [{ resourceId: stream.id, resourceType: 'stream' }]
             }

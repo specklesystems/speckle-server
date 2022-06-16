@@ -23,4 +23,4 @@ utils/helm/speckle-server/templates
 venv
 
 .*.{ts,js,vue,tsx,jsx}
-generated/**/*
+**/generated/**/*

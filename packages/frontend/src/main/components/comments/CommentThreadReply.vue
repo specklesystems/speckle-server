@@ -6,26 +6,34 @@
     @mouseleave="hover = false"
   >
     <div
-      :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
+      :class="`flex-grow-1 d-flex flex-column px-2 py-1 mb-2 rounded-xl elevation-2 ${
         $userId() === reply.authorId ? 'primary white--text' : 'background'
       }`"
       style="width: 290px"
     >
-      <div
-        :class="`d-inline-block ${
-          $userId() === reply.authorId ? 'xxx-order-last' : ''
-        }`"
-      >
-        <user-avatar :id="reply.authorId" :size="30" />
+      <div class="d-flex">
+        <div
+          :class="`d-inline-block ${
+            $userId() === reply.authorId ? 'xxx-order-last' : ''
+          }`"
+        >
+          <user-avatar :id="reply.authorId" :size="30" />
+        </div>
+        <div
+          :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`"
+        >
+          <smart-text-editor
+            min-width
+            read-only
+            :schema-options="richTextSchema"
+            :value="reply.text.doc"
+          />
+        </div>
       </div>
-      <div :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`">
-        <smart-text-editor
-          min-width
-          read-only
-          :schema-options="richTextSchema"
-          :value="reply.text.doc"
-        />
-      </div>
+      <comment-thread-reply-attachments
+        v-if="reply.text.attachments && reply.text.attachments.length"
+        :attachments="reply.text.attachments"
+      />
     </div>
     <div style="width: 20px; overflow: hidden">
       <v-scroll-x-transition>
@@ -72,11 +80,13 @@
 import gql from 'graphql-tag'
 import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
+import CommentThreadReplyAttachments from '@/main/components/comments/CommentThreadReplyAttachments.vue'
 
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
-    SmartTextEditor
+    SmartTextEditor,
+    CommentThreadReplyAttachments
   },
   props: {
     reply: { type: Object, default: () => null },
@@ -128,16 +138,19 @@ export default {
 }
 </script>
 <style scoped lang="scss">
-::v-deep .smart-text-editor {
+::v-deep .smart-text-editor,
+::v-deep .comment-attachments {
   a {
     font-weight: bold;
     color: white;
     text-decoration: none;
     word-break: break-all;
+  }
+}
 
-    &:after {
-      content: ' ↗ ';
-    }
+::v-deep .smart-text-editor {
+  a:after {
+    content: ' ↗ ';
   }
 }
 </style>

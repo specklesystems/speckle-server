@@ -10,7 +10,13 @@ type SmartTextEditorValue {
   type: String!
 
   """
-  The actual (ProseMirror) document representing the text
+  The actual (ProseMirror) document representing the text. Can be empty,
+  if there are attachments.
   """
-  doc: JSONObject!
+  doc: JSONObject
+
+  """
+  File attachments, if any
+  """
+  attachments: [BlobMetadata!]
 }

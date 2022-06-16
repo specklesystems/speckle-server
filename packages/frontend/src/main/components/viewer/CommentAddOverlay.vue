@@ -13,7 +13,7 @@
       overflow: hidden;
       z-index: 25;
     "
-    class="no-mouse"
+    class="comment-add-overlay no-mouse"
   >
     <v-slide-x-transition>
       <div
@@ -42,11 +42,14 @@
             >
               <div v-if="$loggedIn() && canComment" class="d-flex mouse">
                 <comment-editor
-                  v-model="commentText"
+                  ref="desktopEditor"
+                  v-model="commentValue"
+                  :stream-id="$route.params.streamId"
                   adding-comment
                   style="width: 300px"
-                  class="elevation-5 rounded-xl"
                   max-height="300px"
+                  :disabled="isSubmitDisabled"
+                  @attachments-processing="anyAttachmentsProcessing = $event"
                   @submit="addComment()"
                 />
               </div>
@@ -54,23 +57,36 @@
                 v-if="$loggedIn() && canComment"
                 class="d-flex mt-2 mouse justify-end"
               >
-                <template v-for="reaction in $store.state.commentReactions">
-                  <v-btn
-                    v-show="commentIsEmptyOrNull"
-                    :key="reaction"
-                    class="mr-2"
-                    fab
-                    small
-                    @click="addCommentDirect(reaction)"
-                  >
-                    <span
-                      class="text-h5"
-                      style="position: relative; top: 1px; left: -1px"
-                    >
-                      {{ reaction }}
-                    </span>
-                  </v-btn>
-                </template>
+                <v-fade-transition group>
+                  <template v-if="isCommentEmpty">
+                    <template v-for="reaction in $store.state.commentReactions">
+                      <v-btn
+                        :key="reaction"
+                        class="mr-2"
+                        fab
+                        small
+                        @click="addCommentDirect(reaction)"
+                      >
+                        <span
+                          class="text-h5"
+                          style="position: relative; top: 1px; left: -1px"
+                        >
+                          {{ reaction }}
+                        </span>
+                      </v-btn>
+                    </template>
+                  </template>
+                </v-fade-transition>
+                <v-btn
+                  v-tooltip="'Add attachments'"
+                  :disabled="loading"
+                  fab
+                  small
+                  class="mx-2 elevation-10"
+                  @click="addAttachments()"
+                >
+                  <v-icon small>mdi-paperclip</v-icon>
+                </v-btn>
                 <v-btn
                   v-tooltip="'Send comment (press enter)'"
                   :disabled="loading"
@@ -104,10 +120,11 @@
             </div>
           </v-slide-x-transition>
         </div>
+
         <v-dialog
           v-if="$vuetify.breakpoint.xs"
           v-model="expand"
-          class="elevation-0 flat"
+          content-class="elevation-0 flat px-2"
           @click:outside="toggleExpand()"
         >
           <div
@@ -122,18 +139,20 @@
             style="position: relative"
           >
             <comment-editor
-              v-model="commentText"
+              ref="mobileEditor"
+              v-model="commentValue"
+              :stream-id="$route.params.streamId"
               adding-comment
               style="width: 100%"
-              class="elevation-5 rounded-xl"
               max-height="60vh"
-              :disabled="loading"
+              :disabled="isSubmitDisabled"
               @submit="addComment()"
+              @attachments-processing="anyAttachmentsProcessing = $event"
             />
           </div>
           <div
             v-if="$loggedIn() && canComment"
-            class="my-2 d-flex justify-center"
+            class="my-2 d-flex justify-end"
             style="position: relative"
           >
             <v-btn
@@ -147,20 +166,33 @@
               <v-icon small class="mr-1">mdi-account</v-icon>
               Sign in to comment
             </v-btn>
-            <template v-for="reaction in $store.state.commentReactions">
-              <v-btn
-                v-show="commentIsEmptyOrNull"
-                :key="reaction"
-                class="mr-2"
-                fab
-                small
-                @click="addCommentDirect(reaction)"
-              >
-                <span class="text-h5">
-                  {{ reaction }}
-                </span>
-              </v-btn>
-            </template>
+            <v-fade-transition group>
+              <template v-if="isCommentEmpty">
+                <template v-for="reaction in $store.state.commentReactions">
+                  <v-btn
+                    :key="reaction"
+                    class="mr-2 elevation-4"
+                    fab
+                    small
+                    @click="addCommentDirect(reaction)"
+                  >
+                    <span class="text-h5">
+                      {{ reaction }}
+                    </span>
+                  </v-btn>
+                </template>
+              </template>
+            </v-fade-transition>
+            <v-btn
+              v-tooltip="'Add attachments'"
+              :disabled="loading"
+              fab
+              small
+              class="mx-2 elevation-4"
+              @click="addAttachments()"
+            >
+              <v-icon small>mdi-paperclip</v-icon>
+            </v-btn>
             <v-btn
               v-tooltip="'Send comment (press enter)'"
               :disabled="loading"
@@ -168,7 +200,7 @@
               dark
               fab
               small
-              class="primary mr-2 elevation-4"
+              class="primary elevation-4"
               @click="addComment()"
             >
               <v-icon dark small>mdi-send</v-icon>
@@ -203,7 +235,6 @@ import { getCamArray } from './viewerFrontendHelpers'
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import {
   basicStringToDocument,
-  documentToBasicString,
   isDocEmpty
 } from '@/main/lib/common/text-editor/documentHelper'
 import {
@@ -211,6 +242,11 @@ import {
   SMART_EDITOR_SCHEMA
 } from '@/main/lib/viewer/comments/commentsHelper'
 import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
+import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
+
+/**
+ * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
+ */
 
 export default {
   components: { CommentEditor },
@@ -252,18 +288,20 @@ export default {
       expand: false,
       visible: true,
       loading: false,
-      commentText: null,
-      editorSchemaOptions: SMART_EDITOR_SCHEMA
+      commentValue: { doc: null, attachments: [] },
+      editorSchemaOptions: SMART_EDITOR_SCHEMA,
+      anyAttachmentsProcessing: false
     }
   },
   computed: {
     canComment() {
       return !!this.stream?.role || this.stream?.allowPublicComments
     },
-    commentIsEmptyOrNull() {
-      if (!this.commentText) return true
-      const res = documentToBasicString(this.commentText)
-      return res === ''
+    isCommentEmpty() {
+      return isDocEmpty(this.commentValue.doc) && !this.commentValue.attachments.length
+    },
+    isSubmitDisabled() {
+      return this.loading || this.anyAttachmentsProcessing
     }
   },
   mounted() {
@@ -298,12 +336,16 @@ export default {
       this.updateCommentBubble()
     },
     async addCommentDirect(emoji) {
-      this.commentText = basicStringToDocument(emoji, this.editorSchemaOptions)
+      this.commentValue.doc = basicStringToDocument(emoji, this.editorSchemaOptions)
       await this.addComment()
+    },
+    addAttachments() {
+      const editor = this.$refs.desktopEditor || this.$refs.mobileEditor
+      editor.addAttachments()
     },
     async addComment() {
       if (this.loading) return
-      if (isDocEmpty(this.commentText)) {
+      if (this.isCommentEmpty) {
         this.$eventHub.$emit('notification', {
           text: `Comment cannot be empty.`
         })
@@ -313,6 +355,10 @@ export default {
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'create' })
 
       const camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
+
+      const blobIds = this.commentValue.attachments
+        .filter(isSuccessfullyUploaded)
+        .map((a) => a.result.blobId)
       const commentInput = {
         streamId: this.$route.params.streamId,
         resources: [
@@ -321,7 +367,8 @@ export default {
             resourceId: this.$route.params.resourceId
           }
         ],
-        text: this.commentText,
+        text: this.commentValue.doc,
+        blobIds,
         data: {
           location: this.location
             ? this.location
@@ -340,9 +387,11 @@ export default {
             .map((res) => ({ resourceId: res, resourceType: this.$resourceType(res) }))
         )
       }
+
+      let success = false
       this.loading = true
       try {
-        await this.$apollo.mutate({
+        const { data } = await this.$apollo.mutate({
           mutation: gql`
             mutation commentCreate($input: CommentCreateInput!) {
               commentCreate(input: $input)
@@ -350,15 +399,24 @@ export default {
           `,
           variables: { input: commentInput }
         })
+        success = !!data.commentCreate
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: e.message
         })
       }
+
+      // On success, mark uploads as in use, to prevent cleanup
+      if (success) {
+        this.commentValue.attachments.forEach((a) => {
+          a.inUse = true
+        })
+      }
+
       this.loading = false
       this.expand = false
       this.visible = false
-      this.commentText = null
+      this.commentValue = { doc: null, attachments: [] }
       this.$store.commit('setAddingCommentState', { addingCommentState: false })
       window.__viewer.interactions.deselectObjects()
     },
