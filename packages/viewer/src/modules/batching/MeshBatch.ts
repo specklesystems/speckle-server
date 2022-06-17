@@ -9,7 +9,7 @@ import {
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
-import { Batch, BatchUpdateRange } from './Batch'
+import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -28,6 +28,11 @@ export default class MeshBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
+    if (ranges.length === 1 && ranges[0] === HideAllBatchUpdateRange) {
+      this.geometry.setDrawRange(0, 0)
+      this.mesh.visible = false
+      return
+    }
     let minOffset = Infinity
     let maxOffset = 0
     ranges.forEach((range) => {
@@ -53,16 +58,16 @@ export default class MeshBatch implements Batch {
       return a.offset - b.offset
     })
     for (let k = 0; k < sortedRanges.length; k++) {
-      if (k === 0) {
-        if (sortedRanges[k].offset > 0) {
-          this.geometry.addGroup(0, sortedRanges[k].offset, 0)
-        }
-      } else {
-        if (
-          sortedRanges[k].offset >
-          sortedRanges[k - 1].offset + sortedRanges[k - 1].count
-        ) {
-          if (autoFill)
+      if (autoFill) {
+        if (k === 0) {
+          if (sortedRanges[k].offset > 0) {
+            this.geometry.addGroup(0, sortedRanges[k].offset, 0)
+          }
+        } else {
+          if (
+            sortedRanges[k].offset >
+            sortedRanges[k - 1].offset + sortedRanges[k - 1].count
+          ) {
             this.geometry.addGroup(
               sortedRanges[k - 1].offset + sortedRanges[k - 1].count,
               sortedRanges[k].offset -
@@ -70,6 +75,7 @@ export default class MeshBatch implements Batch {
                 sortedRanges[k - 1].count,
               0
             )
+          }
         }
       }
       this.geometry.addGroup(
@@ -77,24 +83,25 @@ export default class MeshBatch implements Batch {
         ranges[k].count,
         materials.indexOf(ranges[k].material)
       )
-
-      if (k === sortedRanges.length - 1) {
-        if (
-          sortedRanges[k].offset + sortedRanges[k].count <
-          this.geometry.index.count
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k].offset + sortedRanges[k].count,
-            this.geometry.index.count - sortedRanges[k].offset + sortedRanges[k].count,
-            0
-          )
-        }
-      } else {
-        if (
-          sortedRanges[k].offset + sortedRanges[k].count <
-          sortedRanges[k + 1].offset
-        ) {
-          if (autoFill)
+      if (autoFill) {
+        if (k === sortedRanges.length - 1) {
+          if (
+            sortedRanges[k].offset + sortedRanges[k].count <
+            this.geometry.index.count
+          ) {
+            this.geometry.addGroup(
+              sortedRanges[k].offset + sortedRanges[k].count,
+              this.geometry.index.count -
+                sortedRanges[k].offset +
+                sortedRanges[k].count,
+              0
+            )
+          }
+        } else {
+          if (
+            sortedRanges[k].offset + sortedRanges[k].count <
+            sortedRanges[k + 1].offset
+          ) {
             this.geometry.addGroup(
               sortedRanges[k].offset + sortedRanges[k].count,
               sortedRanges[k + 1].offset -
@@ -102,6 +109,7 @@ export default class MeshBatch implements Batch {
                 sortedRanges[k].count,
               0
             )
+          }
         }
       }
     }
@@ -109,6 +117,7 @@ export default class MeshBatch implements Batch {
 
   public resetDrawRanges() {
     this.mesh.material = this.batchMaterial
+    this.mesh.visible = true
     this.geometry.clearGroups()
     this.geometry.setDrawRange(0, Infinity)
   }

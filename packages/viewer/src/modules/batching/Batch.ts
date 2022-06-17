@@ -9,7 +9,7 @@ export enum GeometryType {
 export interface Batch {
   id: string
   renderViews: NodeRenderView[]
-  batchMaterial?: Material
+  batchMaterial: Material
 
   setBatchMaterial(material: Material): void
   setVisibleRange(...range: BatchUpdateRange[])
@@ -22,5 +22,10 @@ export interface Batch {
 export interface BatchUpdateRange {
   offset: number
   count: number
-  material: Material
+  material?: Material
 }
+
+export const HideAllBatchUpdateRange = {
+  offset: 0,
+  count: 0
+} as BatchUpdateRange

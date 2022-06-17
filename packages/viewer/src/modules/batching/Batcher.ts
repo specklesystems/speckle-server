@@ -6,7 +6,7 @@ import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Batch, BatchUpdateRange, GeometryType } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 
 export default class Batcher {
   private materials: Materials
@@ -145,10 +145,7 @@ export default class Batcher {
     console.warn('<<<< BATCHES >>>>>>')
     for (const k in this.batches) {
       if (!batchIds.includes(k)) {
-        this.batches[k].setVisibleRange({
-          offset: 0,
-          count: 0
-        } as BatchUpdateRange)
+        this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
       }
     }
     for (let i = 0; i < batchIds.length; i++) {
