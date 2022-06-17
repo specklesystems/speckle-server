@@ -31,13 +31,30 @@ export default class LineBatch implements Batch {
     this.id = id
     this.renderViews = renderViews
   }
-  setVisibleRange(...range: BatchUpdateRange[]) {
-    range
-    console.error('Method not implemented.')
-  }
 
   public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
+  }
+
+  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+    const data = this.colorBuffer.array as number[]
+    for (let k = 0; k < data.length; k += 4) {
+      data[k + 3] = 0
+    }
+    for (let i = 0; i < ranges.length; i++) {
+      const start = ranges[i].offset * this.colorBuffer.stride
+      const len =
+        ranges[i].offset * this.colorBuffer.stride +
+        ranges[i].count * this.colorBuffer.stride
+      for (let k = start; k < len; k += 4) {
+        data[k + 3] = 1
+      }
+    }
+
+    this.colorBuffer.updateRange = { offset: 0, count: data.length }
+    this.colorBuffer.needsUpdate = true
+    this.geometry.attributes['instanceColorStart'].needsUpdate = true
+    this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
   public setDrawRanges(autoFill: boolean, ...ranges: BatchUpdateRange[]) {

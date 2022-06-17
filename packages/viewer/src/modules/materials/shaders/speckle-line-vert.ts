@@ -80,6 +80,11 @@ export const speckleLineVert = /* glsl */ `
 		}
 
 		void main() {
+			if(instanceColorStart.w == 0.) {
+				gl_Position = vec4(0.);
+				return;
+			}
+			
             vec3 computedPosition = position;
 			#ifdef USE_COLOR
 
