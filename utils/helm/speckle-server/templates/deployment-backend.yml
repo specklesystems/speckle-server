@@ -108,7 +108,7 @@ spec:
                 name: {{ .Values.secretName }}
                 key: postgres_url
           - name: POSTGRES_MAX_CONNECTIONS_SERVER
-            value: {{ .Values.db.maxConnectionsServer}}
+            value: {{ .Values.db.maxConnectionsServer | quote }}
 
           - name: PGSSLMODE
             value: "{{ .Values.db.PGSSLMODE }}"
