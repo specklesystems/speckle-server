@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 'use strict'
 
@@ -44,31 +45,47 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
 // types.setTypeParser(TIMESTAMPTZ_OID, (val) => val)
 // types.setTypeParser(TIMESTAMP_OID, (val) => val)
 
+// Another NOTE:
+// this is why the new datetime columns are created like this
+// table.specificType('createdAt', 'TIMESTAMPTZ(3)').defaultTo(knex.fn.now())
+
+const postgresMaxConnections = env.POSTGRES_MAX_CONNECTIONS_SERVER || 4
+
+const commonConfig = {
+  client: 'pg',
+  migrations: {
+    directory: migrationDirs
+  },
+  pool: { min: 0, max: postgresMaxConnections }
+}
+
 /** @type {Object<string, import('knex').Knex.Config>} */
 const config = {
   test: {
-    client: 'pg',
-    connection: connectionUri || 'postgres://localhost/speckle2_test',
-    migrations: {
-      directory: migrationDirs
+    ...commonConfig,
+    connection: {
+      connectionString: connectionUri || 'postgres://localhost/speckle2_test',
+      application_name: 'speckle_server'
     }
   },
   development: {
-    client: 'pg',
-    connection: connectionUri || 'postgres://localhost/speckle2_dev',
-    migrations: {
-      directory: migrationDirs
-    },
-    pool: { min: 2, max: 4 }
+    ...commonConfig,
+    connection: {
+      connectionString: connectionUri || 'postgres://localhost/speckle2_dev',
+      application_name: 'speckle_server'
+    }
   },
   production: {
-    client: 'pg',
-    connection: connectionUri,
-    migrations: {
-      directory: migrationDirs
-    },
-    pool: { min: 2, max: 4 }
+    ...commonConfig,
+    connection: {
+      connectionString: connectionUri,
+      application_name: 'speckle_server',
+      // global timeout of 12 hours, that kills stuck connections
+      query_timeout: 4.32e7
+    }
   }
 }
+
+console.log(config)
 
 module.exports = config
