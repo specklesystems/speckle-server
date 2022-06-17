@@ -31,12 +31,16 @@ export default class LineBatch implements Batch {
     this.id = id
     this.renderViews = renderViews
   }
+  setVisibleRange(...range: BatchUpdateRange[]) {
+    range
+    console.error('Method not implemented.')
+  }
 
   public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(autoFill: boolean, ...ranges: BatchUpdateRange[]) {
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
@@ -58,7 +62,7 @@ export default class LineBatch implements Batch {
   }
 
   public resetDrawRanges() {
-    this.setDrawRanges({
+    this.setDrawRanges(false, {
       offset: 0,
       count: Infinity,
       material: this.batchMaterial

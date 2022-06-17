@@ -34,7 +34,12 @@ export class Intersections {
     console.warn(hitNode)
     const renderViews = WorldTree.getRenderTree().getRenderViewsForNode(hitNode)
     console.warn(renderViews)
-    this.batcher.selectRenderViews(renderViews)
+    // this.batcher.selectRenderViews(renderViews)
     // this.batcher.selectRenderView(rv)
+    this.batcher.isolateRenderViews(renderViews)
+
+    // const node1 = WorldTree.getInstance().findId('62942139c0010e51500ee10655ce33a6')
+    // const node2 = WorldTree.getInstance().findId('c6268101e02c2c5b1b3af25aed1f722b')
+    // this.batcher.isolateRenderViews([node1.model.renderView, node2.model.renderView])
   }
 }

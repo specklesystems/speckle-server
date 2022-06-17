@@ -9,10 +9,11 @@ export enum GeometryType {
 export interface Batch {
   id: string
   renderViews: NodeRenderView[]
-  batchMaterial: Material
+  batchMaterial?: Material
 
   setBatchMaterial(material: Material): void
-  setDrawRanges(...ranges: BatchUpdateRange[])
+  setVisibleRange(...range: BatchUpdateRange[])
+  setDrawRanges(autoFill?: boolean, ...ranges: BatchUpdateRange[])
   resetDrawRanges()
   buildBatch()
   getRenderView(index: number): NodeRenderView

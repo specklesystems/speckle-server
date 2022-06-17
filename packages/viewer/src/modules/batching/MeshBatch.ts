@@ -27,12 +27,25 @@ export default class MeshBatch implements Batch {
     this.batchMaterial = material
   }
 
+  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+    let minOffset = Infinity
+    let maxOffset = 0
+    ranges.forEach((range) => {
+      minOffset = Math.min(minOffset, range.offset)
+      maxOffset = Math.max(maxOffset, range.offset)
+    })
+
+    this.geometry.setDrawRange(
+      minOffset,
+      maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
+    )
+  }
   /**
    * This is the first version for multi draw ranges with automatic fill support
    * In the near future, we'll re-sort the index buffer so we minimize draw calls to
    * a minimmum. For now it's ok
    */
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(autoFill: boolean, ...ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => val.material)
     materials.splice(0, 0, this.batchMaterial)
     this.mesh.material = materials
@@ -49,13 +62,14 @@ export default class MeshBatch implements Batch {
           sortedRanges[k].offset >
           sortedRanges[k - 1].offset + sortedRanges[k - 1].count
         ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].offset + sortedRanges[k - 1].count,
-            sortedRanges[k].offset -
-              sortedRanges[k - 1].offset +
-              sortedRanges[k - 1].count,
-            0
-          )
+          if (autoFill)
+            this.geometry.addGroup(
+              sortedRanges[k - 1].offset + sortedRanges[k - 1].count,
+              sortedRanges[k].offset -
+                sortedRanges[k - 1].offset +
+                sortedRanges[k - 1].count,
+              0
+            )
         }
       }
       this.geometry.addGroup(
@@ -80,11 +94,14 @@ export default class MeshBatch implements Batch {
           sortedRanges[k].offset + sortedRanges[k].count <
           sortedRanges[k + 1].offset
         ) {
-          this.geometry.addGroup(
-            sortedRanges[k].offset + sortedRanges[k].count,
-            sortedRanges[k + 1].offset - sortedRanges[k].offset + sortedRanges[k].count,
-            0
-          )
+          if (autoFill)
+            this.geometry.addGroup(
+              sortedRanges[k].offset + sortedRanges[k].count,
+              sortedRanges[k + 1].offset -
+                sortedRanges[k].offset +
+                sortedRanges[k].count,
+              0
+            )
         }
       }
     }
@@ -93,6 +110,7 @@ export default class MeshBatch implements Batch {
   public resetDrawRanges() {
     this.mesh.material = this.batchMaterial
     this.geometry.clearGroups()
+    this.geometry.setDrawRange(0, Infinity)
   }
 
   public buildBatch() {

@@ -87,7 +87,7 @@ export default class Batcher {
           }
         })
       console.warn(views)
-      batch.setDrawRanges(...views)
+      batch.setDrawRanges(true, ...views)
     }
   }
 
@@ -95,6 +95,7 @@ export default class Batcher {
     this.resetBatchesDrawRanges()
     const batch = this.batches[renderView.batchId]
     batch.setDrawRanges(
+      false,
       {
         offset: 0,
         count: renderView.batchStart,
@@ -111,5 +112,59 @@ export default class Batcher {
         material: batch.batchMaterial
       } as BatchUpdateRange
     )
+  }
+
+  public isolateRenderView(renderView: NodeRenderView) {
+    this.resetBatchesDrawRanges()
+
+    for (const k in this.batches) {
+      if (k === renderView.batchId) {
+        const batch = this.batches[renderView.batchId]
+        batch.setVisibleRange({
+          offset: renderView.batchStart,
+          count: renderView.batchCount,
+          material: batch.batchMaterial
+        } as BatchUpdateRange)
+        batch.setDrawRanges(false, {
+          offset: renderView.batchStart,
+          count: renderView.batchCount,
+          material: batch.batchMaterial
+        } as BatchUpdateRange)
+      } else {
+        this.batches[k].setVisibleRange({
+          offset: 0,
+          count: 0
+        } as BatchUpdateRange)
+      }
+    }
+  }
+
+  public isolateRenderViews(renderViews: NodeRenderView[]) {
+    this.resetBatchesDrawRanges()
+    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
+    console.warn('<<<< BATCHES >>>>>>')
+    for (const k in this.batches) {
+      if (!batchIds.includes(k)) {
+        this.batches[k].setVisibleRange({
+          offset: 0,
+          count: 0
+        } as BatchUpdateRange)
+      }
+    }
+    for (let i = 0; i < batchIds.length; i++) {
+      const batch = this.batches[batchIds[i]]
+      const views = renderViews
+        .filter((value) => value.batchId === batchIds[i])
+        .map((rv: NodeRenderView) => {
+          return {
+            offset: rv.batchStart,
+            count: rv.batchCount,
+            material: batch.batchMaterial
+          }
+        })
+      console.warn(views)
+      batch.setDrawRanges(false, ...views)
+      batch.setVisibleRange(...views)
+    }
   }
 }
