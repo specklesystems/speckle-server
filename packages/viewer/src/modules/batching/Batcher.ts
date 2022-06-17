@@ -65,33 +65,51 @@ export default class Batcher {
     return this.batches[batchId].getRenderView(index)
   }
 
-  public resetBatchesDrawGroups() {
+  public resetBatchesDrawRanges() {
     for (const k in this.batches) {
       this.batches[k].resetDrawRanges()
     }
   }
 
+  public selectRenderViews(renderViews: NodeRenderView[]) {
+    this.resetBatchesDrawRanges()
+    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
+    console.warn('<<<< BATCHES >>>>>>')
+    for (let i = 0; i < batchIds.length; i++) {
+      const batch = this.batches[batchIds[i]]
+      const views = renderViews
+        .filter((value) => value.batchId === batchIds[i])
+        .map((rv: NodeRenderView) => {
+          return {
+            offset: rv.batchStart,
+            count: rv.batchCount,
+            material: this.materials.meshHighlightMaterial
+          }
+        })
+      console.warn(views)
+      batch.setDrawRanges(...views)
+    }
+  }
+
   public selectRenderView(renderView: NodeRenderView) {
-    this.resetBatchesDrawGroups()
+    this.resetBatchesDrawRanges()
     const batch = this.batches[renderView.batchId]
     batch.setDrawRanges(
-      ...[
-        {
-          offset: 0,
-          count: renderView.batchStart,
-          material: batch.batchMaterial
-        } as BatchUpdateRange,
-        {
-          offset: renderView.batchStart,
-          count: renderView.batchCount,
-          material: this.materials.meshHighlightMaterial
-        } as BatchUpdateRange,
-        {
-          offset: renderView.batchEnd,
-          count: Infinity,
-          material: batch.batchMaterial
-        } as BatchUpdateRange
-      ]
+      {
+        offset: 0,
+        count: renderView.batchStart,
+        material: batch.batchMaterial
+      } as BatchUpdateRange,
+      {
+        offset: renderView.batchStart,
+        count: renderView.batchCount,
+        material: this.materials.meshHighlightMaterial
+      } as BatchUpdateRange,
+      {
+        offset: renderView.batchEnd,
+        count: Infinity,
+        material: batch.batchMaterial
+      } as BatchUpdateRange
     )
   }
 }

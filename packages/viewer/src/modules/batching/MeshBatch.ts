@@ -27,15 +27,66 @@ export default class MeshBatch implements Batch {
     this.batchMaterial = material
   }
 
+  /**
+   * This is the first version for multi draw ranges with automatic fill support
+   * In the near future, we'll re-sort the index buffer so we minimize draw calls to
+   * a minimmum. For now it's ok
+   */
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => val.material)
+    materials.splice(0, 0, this.batchMaterial)
     this.mesh.material = materials
-    for (let k = 0; k < ranges.length; k++) {
+    const sortedRanges = ranges.sort((a, b) => {
+      return a.offset - b.offset
+    })
+    for (let k = 0; k < sortedRanges.length; k++) {
+      if (k === 0) {
+        if (sortedRanges[k].offset > 0) {
+          this.geometry.addGroup(0, sortedRanges[k].offset, 0)
+        }
+      } else {
+        if (
+          sortedRanges[k].offset >
+          sortedRanges[k - 1].offset + sortedRanges[k - 1].count
+        ) {
+          this.geometry.addGroup(
+            sortedRanges[k - 1].offset + sortedRanges[k - 1].count,
+            sortedRanges[k].offset -
+              sortedRanges[k - 1].offset +
+              sortedRanges[k - 1].count,
+            0
+          )
+        }
+      }
       this.geometry.addGroup(
         ranges[k].offset,
         ranges[k].count,
         materials.indexOf(ranges[k].material)
       )
+
+      if (k === sortedRanges.length - 1) {
+        if (
+          sortedRanges[k].offset + sortedRanges[k].count <
+          this.geometry.index.count
+        ) {
+          this.geometry.addGroup(
+            sortedRanges[k].offset + sortedRanges[k].count,
+            this.geometry.index.count - sortedRanges[k].offset + sortedRanges[k].count,
+            0
+          )
+        }
+      } else {
+        if (
+          sortedRanges[k].offset + sortedRanges[k].count <
+          sortedRanges[k + 1].offset
+        ) {
+          this.geometry.addGroup(
+            sortedRanges[k].offset + sortedRanges[k].count,
+            sortedRanges[k + 1].offset - sortedRanges[k].offset + sortedRanges[k].count,
+            0
+          )
+        }
+      }
     }
   }
 

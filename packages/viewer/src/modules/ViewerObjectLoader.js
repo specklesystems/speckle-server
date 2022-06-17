@@ -107,7 +107,11 @@ export default class ViewerObjectLoader {
 
     WorldTree.getRenderTree().buildRenderTree()
 
-    this.viewer.batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
+    this.viewer.batcher.makeBatches(
+      GeometryType.MESH,
+      SpeckleType.Mesh,
+      SpeckleType.Brep
+    )
     this.viewer.batcher.makeBatches(
       GeometryType.LINE,
       SpeckleType.Line,

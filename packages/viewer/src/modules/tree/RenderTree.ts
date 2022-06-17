@@ -29,6 +29,9 @@ export class RenderTree {
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
     let ret: NodeRenderData = null
+    if (node.model.id === '3841e3cbc45d52c47bc2f1b7b0ad4eb9') {
+      console.warn('test')
+    }
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
@@ -93,8 +96,21 @@ export class RenderTree {
         return (
           node.model.renderView !== null &&
           types.includes(node.model.renderView.renderData.speckleType) &&
-          node.model.atomic
+          (node.model.atomic ||
+            (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
         )
+      })
+      .map((val: TreeNode) => val.model.renderView)
+  }
+
+  public getRenderViewsForNode(node: TreeNode): NodeRenderView[] {
+    if (node.model.atomic) {
+      return [node.model.renderView]
+    }
+
+    return node.parent
+      .all((_node: TreeNode): boolean => {
+        return _node.model.renderView !== null && _node.model.renderView.hasGeometry
       })
       .map((val: TreeNode) => val.model.renderView)
   }
