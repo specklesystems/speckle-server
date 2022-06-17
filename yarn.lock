@@ -1392,6 +1392,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/eslint-parser@npm:^7.18.2":
+  version: 7.18.2
+  resolution: "@babel/eslint-parser@npm:7.18.2"
+  dependencies:
+    eslint-scope: ^5.1.1
+    eslint-visitor-keys: ^2.1.0
+    semver: ^6.3.0
+  peerDependencies:
+    "@babel/core": ">=7.11.0"
+    eslint: ^7.5.0 || ^8.0.0
+  checksum: dc9328cf3304b25c9029682e6b6196761e18d3ab80d66c3085a69c6f240fa2db91b824a61672e94139e73683b7ceeefe9ff58acac1ee89fe73274007b16e43d5
+  languageName: node
+  linkType: hard
+
 "@babel/generator@npm:7.17.10, @babel/generator@npm:^7.17.10":
   version: 7.17.10
   resolution: "@babel/generator@npm:7.17.10"
@@ -4988,6 +5002,8 @@ __metadata:
     "@tiptap/vue-2": ^2.0.0-beta.79
     "@tryghost/content-api": ^1.5.12
     "@types/lodash": ^4.14.180
+    "@types/mixpanel-browser": ^2.38.0
+    "@types/node": ^17.0.43
     "@typescript-eslint/eslint-plugin": ^5.21.0
     "@typescript-eslint/parser": ^5.21.0
     "@vue/cli": ^4.5.17
@@ -5218,6 +5234,7 @@ __metadata:
   resolution: "@speckle/viewer@workspace:packages/viewer"
   dependencies:
     "@babel/core": ^7.18.2
+    "@babel/eslint-parser": ^7.18.2
     "@rollup/plugin-babel": ^5.3.1
     "@speckle/objectloader": "workspace:^"
     "@types/three": ^0.136.0
@@ -5869,6 +5886,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/mixpanel-browser@npm:^2.38.0":
+  version: 2.38.0
+  resolution: "@types/mixpanel-browser@npm:2.38.0"
+  checksum: 1ade271188446005644cf10b65af554a9a75bd2008b827db4cdcfb2eedf858e2426a4d3d21ccf5b0a25a8590f8c3095da25549cfb7765077002e03e64afa9f0a
+  languageName: node
+  linkType: hard
+
 "@types/mocha@npm:^7.0.2":
   version: 7.0.2
   resolution: "@types/mocha@npm:7.0.2"
@@ -5904,6 +5928,13 @@ __metadata:
   version: 10.17.60
   resolution: "@types/node@npm:10.17.60"
   checksum: 2cdb3a77d071ba8513e5e8306fa64bf50e3c3302390feeaeff1fd325dd25c8441369715dfc8e3701011a72fed5958c7dfa94eb9239a81b3c286caa4d97db6eef
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^17.0.43":
+  version: 17.0.43
+  resolution: "@types/node@npm:17.0.43"
+  checksum: 7fd84b1e37dc406c1c73a1461ccd6a1a38a5a335563788dd25e0aa75476d6948f815d0e9e4c2201f785a36a72269e6aaf0d851ca75c1e44b92e3a9d504e04a1e
   languageName: node
   linkType: hard
 
@@ -13430,7 +13461,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-visitor-keys@npm:^2.0.0":
+"eslint-visitor-keys@npm:^2.0.0, eslint-visitor-keys@npm:^2.1.0":
   version: 2.1.0
   resolution: "eslint-visitor-keys@npm:2.1.0"
   checksum: e3081d7dd2611a35f0388bbdc2f5da60b3a3c5b8b6e928daffff7391146b434d691577aa95064c8b7faad0b8a680266bcda0a42439c18c717b80e6718d7e267d
@@ -27016,7 +27047,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^4.4.3, typescript@npm:^4.5.4":
+"typescript@npm:^4.5.4":
   version: 4.6.4
   resolution: "typescript@npm:4.6.4"
   bin:
@@ -27026,53 +27057,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^4.4.4":
-  version: 4.7.3
-  resolution: "typescript@npm:4.7.3"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: fd13a1ce53790a36bb8350e1f5e5e384b5f6cb9b0635114a6d01d49cb99916abdcfbc13c7521cdae2f2d3f6d8bc4a8ae7625edf645a04ee940588cd5e7597b2f
-  languageName: node
-  linkType: hard
-
-"typescript@npm:~4.1.5":
-  version: 4.1.6
-  resolution: "typescript@npm:4.1.6"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 54aed909f94b16178c8a8d8911871b4e1c04454a3e6c82166715e28083e7ce6271e4d1df6f82c89544a4759b07aec780785032534e9c93b254e2107a18712c05
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@^4.4.3#~builtin<compat/typescript>, typescript@patch:typescript@^4.5.4#~builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A^4.5.4#~builtin<compat/typescript>":
   version: 4.6.4
   resolution: "typescript@patch:typescript@npm%3A4.6.4#~builtin<compat/typescript>::version=4.6.4&hash=bda367"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 1cb434fbc637d347be90e3a0c6cd05e33c38f941713c8786d3031faf1842c2c148ba91d2fac01e7276b0ae3249b8633f1660e32686cc7a8c6a8fd5361dc52c66
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@^4.4.4#~builtin<compat/typescript>":
-  version: 4.7.3
-  resolution: "typescript@patch:typescript@npm%3A4.7.3#~builtin<compat/typescript>::version=4.7.3&hash=bda367"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 8257ce7ecbbf9416da60045a76a99d473698ca9e973fa0ddab7137cacb1587255431176cbbcc801a650938c4dc8109ab88355774829a714fabe56a53a2fe4524
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@~4.1.5#~builtin<compat/typescript>":
-  version: 4.1.6
-  resolution: "typescript@patch:typescript@npm%3A4.1.6#~builtin<compat/typescript>::version=4.1.6&hash=bda367"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 3bd9915f236817e4e2d32dd0d90e8902875929f014bb87a478000e32adda91d12f0425931ee6f9d6a2bc7d0c9242588fcee1050ac294497dfabf27d3d73b335c
   languageName: node
   linkType: hard
 
