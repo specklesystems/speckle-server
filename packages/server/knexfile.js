@@ -49,7 +49,7 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
 // this is why the new datetime columns are created like this
 // table.specificType('createdAt', 'TIMESTAMPTZ(3)').defaultTo(knex.fn.now())
 
-const postgresMaxConnections = env.POSTGRES_SERVER_MAX_CONNECTIONS || 4
+const postgresMaxConnections = env.POSTGRES_MAX_CONNECTIONS_SERVER || 4
 
 const commonConfig = {
   client: 'pg',
