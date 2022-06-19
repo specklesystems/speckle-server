@@ -79,14 +79,28 @@
             Copy the code below to embed an iframe of this model in your webpage or
             document.
           </div>
-          <v-text-field
-            dense
-            :value="getIframeUrl()"
-            hint="Copied to clipboard!"
-            filled
-            rounded
-            @focus="copyToClipboard"
-          ></v-text-field>
+          <div class="d-flex align-center mt-4">
+            <v-text-field
+              dense
+              :value="getIframeUrl()"
+              hint="Copied to clipboard!"
+              filled
+              rounded
+              @focus="copyToClipboard"
+            ></v-text-field>
+            <div style="position: relative; top: -12px" class="d-flex align-center">
+              <v-checkbox
+                v-model="transparentBg"
+                class="ml-2 caption"
+                label=""
+              ></v-checkbox>
+              <span class="caption grey--text">
+                Transparent
+                <br />
+                background
+              </span>
+            </div>
+          </div>
         </v-card-text>
       </div>
     </v-sheet>
@@ -219,7 +233,8 @@ export default {
   },
   data() {
     return {
-      swapPermsLoading: false
+      swapPermsLoading: false,
+      transparentBg: false
     }
   },
   computed: {
@@ -264,7 +279,10 @@ export default {
         base += `&filter=${encodeURIComponent(this.$route.query.filter)}`
       }
 
-      return `<iframe src="${base}" width="600" height="400"></iframe>`
+      if (this.transparentBg) {
+        base += `&transparent=true`
+      }
+      return `<iframe src="${base}" width="600" height="400" frameborder="0"></iframe>`
     },
     async changeVisibility() {
       this.swapPermsLoading = true
