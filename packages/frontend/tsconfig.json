@@ -11,6 +11,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "allowJs": true,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -21,7 +22,10 @@
       "vue-apollo-smart-ops",
       "vue-infinite-loading",
       "type-fest",
-      "vue"
+      "vue",
+      "@types/node",
+      "@types/mixpanel-browser",
+      "vuetify"
     ]
   },
   "include": [
