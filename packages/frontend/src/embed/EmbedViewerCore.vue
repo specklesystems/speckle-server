@@ -218,7 +218,11 @@ export default Vue.extend({
 
     top: 0;
     left: 0;
+<<<<<<< HEAD
     z-index: 1;
+=======
+    z-index: 10;
+>>>>>>> main
   }
 
   .no-scrollbar {

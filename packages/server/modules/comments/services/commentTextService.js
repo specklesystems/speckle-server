@@ -1,4 +1,4 @@
-const { RichTextParseError } = require('@/modules/core/errors/base')
+const { RichTextParseError } = require('@/modules/shared/errors')
 const {
   isTextEditorValueSchema,
   isTextEditorDoc,

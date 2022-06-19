@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const { Streams, StreamAcl, StreamFavorites, knex } = require('@/modules/core/dbSchema')
-const { InvalidArgumentError } = require('@/modules/core/errors/base')
+const { InvalidArgumentError } = require('@/modules/shared/errors')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 
 /**

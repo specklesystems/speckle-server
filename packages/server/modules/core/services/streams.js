@@ -13,10 +13,7 @@ const {
   setStreamFavorited,
   canUserFavoriteStream
 } = require('@/modules/core/repositories/streams')
-const {
-  UnauthorizedAccessError,
-  InvalidArgumentError
-} = require('@/modules/core/errors/base')
+const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 
 /**
  * Get base query for finding or counting user streams
@@ -288,12 +285,9 @@ module.exports = {
   async favoriteStream({ userId, streamId, favorited }) {
     // Check if user has access to stream
     if (!(await canUserFavoriteStream({ userId, streamId }))) {
-      throw new UnauthorizedAccessError(
-        "User doesn't have access to the specified stream",
-        {
-          info: { userId, streamId }
-        }
-      )
+      throw new UnauthorizedError("User doesn't have access to the specified stream", {
+        info: { userId, streamId }
+      })
     }
 
     // Favorite/unfavorite the stream
