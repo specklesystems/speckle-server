@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es6",
     "module": "es2020",
-    "strict": true,
+    "strict": false,
     "jsx": "preserve",
     "importHelpers": true,
     "moduleResolution": "node",

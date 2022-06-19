@@ -1,27 +1,37 @@
 <template>
   <v-app
     :class="`embed-viewer no-scrollbar ${
-      $vuetify.theme.dark ? 'background-dark' : 'background-light'
+      $route.query.transparent === 'true'
+        ? ''
+        : $vuetify.theme.dark
+        ? 'background-dark'
+        : 'background-light'
     }`"
   >
     <!-- BG image -->
     <div
-      v-if="!isModelLoaded"
-      ref="cover"
-      class="viewer-image-overlay d-flex fullscreen align-center justify-center bg-img"
-    />
+      v-if="objectIdsToLoad.length !== 0 && !isModelLoaded"
+      style="position: fixed; top: 0; width: 100%; height: 100%; cursor: pointer"
+      @click="load()"
+    >
+      <preview-image
+        :url="`/preview/${$route.query.stream}/objects/${objectIdsToLoad[0]}`"
+        :height="height"
+        rotate
+      ></preview-image>
+    </div>
 
     <!-- Play button -->
     <div
       v-if="!isModelLoaded && !error"
-      class="viewer-play d-flex fullscreen align-center justify-center"
+      class="viewer-play d-flex fullscreen align-center justify-center no-mouse"
     >
       <v-btn
         id="viewer-play-btn"
         :disabled="showPlayLoader"
         fab
         color="primary"
-        class="elevation-4 hover-tada"
+        class="elevation-4 hover-tada mouse"
         @click="load()"
       >
         <v-icon v-if="!showPlayLoader">mdi-play</v-icon>
@@ -32,8 +42,7 @@
     <!-- Async loaded viewer -->
     <embed-viewer-core
       v-if="shouldLoadHeavyDeps"
-      :input="input"
-      :object-url="objectUrl"
+      :objects="objectIdsToLoad"
       @model-loaded="onModelLoaded"
       @error="onError"
     />
@@ -41,11 +50,10 @@
     <!-- Display error if needed -->
     <div v-if="error" class="fullscreen d-flex justify-center align-center">
       <div class="">
-        <p class="text-h5 text-center red--text">Embedding Error</p>
-        <p class="text-center">
+        <p class="text-h5 text-center red--text">Speckle Embedding Error</p>
+        <p class="text-center grey--text">
           Double check to see if the stream is public and if the embed link is correct.
         </p>
-        <p class="caption text-center">The robot council said: {{ error.message }}</p>
       </div>
     </div>
   </v-app>
@@ -53,7 +61,7 @@
 
 <script lang="ts">
 import { Nullable } from '@/helpers/typeHelpers'
-import { getCommit, getLatestBranchCommit } from '@/embed/speckleUtils'
+import { getStreamObj, getBranchObj, getCommitObj } from '@/embed/speckleUtils'
 import Vue from 'vue'
 
 /**
@@ -66,12 +74,15 @@ import Vue from 'vue'
 export default Vue.extend({
   name: 'EmbedViewer',
   components: {
-    EmbedViewerCore: () => import('@/embed/EmbedViewerCore.vue')
+    EmbedViewerCore: () => import('@/embed/EmbedViewerCore.vue'),
+    PreviewImage: () => import('@/main/components/common/PreviewImage')
   },
   data() {
     return {
       isModelLoaded: false,
       error: null as Nullable<Error>,
+      displayType: 'stream',
+      objectIdsToLoad: [] as any[],
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
@@ -82,20 +93,13 @@ export default Vue.extend({
         filter: this.$route.query.filter
       } as Record<string, string>,
       isInitialized: false as boolean,
-      shouldLoadHeavyDeps: false as boolean
+      shouldLoadHeavyDeps: false as boolean,
+      height: window.innerHeight
     }
   },
   computed: {
-    displayType(): string {
-      if (!this.input.stream) {
-        return 'error'
-      }
-
-      if (this.input.commit) return 'commit'
-      if (this.input.object) return 'object'
-      if (this.input.branch) return 'branch'
-
-      return 'stream'
+    streamId(): string {
+      return this.$route.query.stream as string
     },
     objectUrl(): string {
       return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.input.object}`
@@ -104,28 +108,82 @@ export default Vue.extend({
       return !this.isInitialized || (this.shouldLoadHeavyDeps && !this.isModelLoaded)
     }
   },
-  watch: {
-    displayType(_oldVal: string, newVal: string) {
-      this.error =
-        newVal === 'error' ? new Error('Provided details were invalid') : null
-    },
-    error(newVal: Error | null) {
-      if (newVal) {
-        console.error(newVal)
-      }
+  mounted() {
+    if (this.$route.query.transparent === 'true') {
+      document.getElementById('app').classList.remove('theme--dark')
+      document.getElementById('app').classList.remove('theme--light')
     }
+    window.addEventListener('resize', () => {
+      this.height = window.innerHeight
+    })
   },
   async beforeMount() {
-    // Initialize base data, which can potentially change input.object
-    await (this.displayType === 'commit'
-      ? this.initializeForCommit()
-      : this.initializeForStream())
+    if (this.$route.query.stream) this.displayType = 'stream'
+    if (this.$route.query.branch) this.displayType = 'branch'
+    if (this.$route.query.commit) this.displayType = 'commit'
+    if (this.$route.query.object) this.displayType = 'object'
+    if (this.$route.query.overlay) this.displayType = 'multiple'
 
-    // Load BG image
-    await this.getPreviewImage()
-
-    // Mark as initialized (enable play button)
-    this.isInitialized = true
+    try {
+      switch (this.displayType) {
+        case 'stream': {
+          const res = await getStreamObj(this.$route.query.stream)
+          if (res.data.stream.commits.totalCount === 0)
+            throw new Error('Stream has no commits.')
+          this.objectIdsToLoad.push(res.data.stream.commits.items[0].referencedObject)
+          break
+        }
+        case 'branch': {
+          const res = await getBranchObj(
+            this.$route.query.stream,
+            this.$route.query.branch
+          )
+          if (res.data.stream.branch.commits.totalCount === 0)
+            throw new Error('Branch has no commits.')
+          this.objectIdsToLoad.push(
+            res.data.stream.branch.commits.items[0].referencedObject
+          )
+          break
+        }
+        case 'commit': {
+          const res = await getCommitObj(
+            this.$route.query.stream,
+            this.$route.query.commit
+          )
+          this.objectIdsToLoad.push(res.data.stream.commit.referencedObject)
+          break
+        }
+        case 'object':
+          this.objectIdsToLoad.push(this.$route.query.object)
+          break
+        case 'multiple': {
+          if (this.$route.query.commit) {
+            const res = await getCommitObj(
+              this.$route.query.stream,
+              this.$route.query.commit
+            )
+            this.objectIdsToLoad.push(res.data.stream.commit.referencedObject)
+          } else {
+            this.objectIdsToLoad.push(this.$route.query.object)
+          }
+          for (const resId of this.$route.query.overlay.split(',')) {
+            if (resId.length === 10) {
+              const res = await getCommitObj(this.$route.query.stream, resId)
+              this.objectIdsToLoad.push(res.data.stream.commit.referencedObject)
+            } else {
+              this.objectIdsToLoad.push(resId)
+            }
+          }
+          break
+        }
+        default:
+          break
+      }
+      // Mark as initialized (enable play button)
+      this.isInitialized = true
+    } catch (e) {
+      this.error = e
+    }
   },
   methods: {
     onError(e: Error) {
@@ -141,50 +199,6 @@ export default Vue.extend({
       this.$mixpanel.track('Embedded Model Load', {
         type: 'action'
       })
-    },
-    async getPreviewImage(angle?: number) {
-      angle = angle || 0
-      const previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
-      const res = await fetch(previewUrl)
-      const blob = await res.blob()
-      const imgUrl = URL.createObjectURL(blob)
-      if (this.$refs.cover) {
-        ;(this.$refs.cover as HTMLElement).style.backgroundImage = `url('${imgUrl}')`
-      }
-    },
-    async initializeForStream() {
-      try {
-        const res = await getLatestBranchCommit(this.input.stream, this.input.branch)
-        const data = res.data
-        const latestCommit =
-          data.stream.branch.commits.items[0] || data.stream.branch.commit
-
-        if (!latestCommit) {
-          this.error = new Error('No commit for this branch')
-          return
-        }
-
-        // Updating input.object
-        if (this.input.object === undefined) {
-          this.input.object = latestCommit.referencedObject
-        }
-      } catch (e: unknown) {
-        this.error = e instanceof Error ? e : new Error('An unexpected error occurred')
-      }
-    },
-    async initializeForCommit() {
-      try {
-        const res = await getCommit(this.input.stream, this.input.commit)
-        const data = res.data
-        const latestCommit = data.stream.commit
-
-        // Updating input.object
-        if (this.input.object === undefined) {
-          this.input.object = latestCommit.referencedObject
-        }
-      } catch (e: unknown) {
-        this.error = e instanceof Error ? e : new Error('An unexpected error occurred')
-      }
     }
   }
 })
@@ -245,5 +259,11 @@ body::-webkit-scrollbar {
   .spinning-icon {
     animation: spinner-spin 0.5s linear infinite;
   }
+}
+.no-mouse {
+  pointer-events: none;
+}
+.mouse {
+  pointer-events: auto;
 }
 </style>
