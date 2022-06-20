@@ -62,12 +62,12 @@
         ></v-text-field>
       </v-card-text>
     </v-sheet>
-    <v-sheet v-if="$route.params.resourceId">
+    <v-sheet v-if="$route.params.resourceId || true">
       <v-toolbar dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>mdi-camera</v-icon>
         </v-app-bar-nav-icon>
-        <v-toolbar-title>Embed Viewer</v-toolbar-title>
+        <v-toolbar-title>Embed {{ embedType }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <span v-if="!stream.isPublic" class="caption">
           Viewer embedding only works if the stream is public.
@@ -76,8 +76,9 @@
       <div v-if="stream.isPublic">
         <v-card-text>
           <div class="caption mx-1 pb-2">
-            Copy the code below to embed an iframe of this model in your webpage or
-            document.
+            Copy the code below to embed an iframe of
+            <b>{{ embedDescription }}</b>
+            in your webpage or document.
           </div>
           <div class="d-flex align-center mt-4">
             <v-text-field
@@ -240,6 +241,16 @@ export default {
   computed: {
     streamUrl() {
       return `${window.location.origin}/streams/${this.$route.params.streamId}`
+    },
+    embedType() {
+      if (this.$route.params.branchName) return 'Branch'
+      if (this.$route.params.resourceId) return 'Model'
+      return 'Stream'
+    },
+    embedDescription() {
+      if (this.$route.params.branchName) return 'the latest commit in this branch'
+      if (this.$route.params.resourceId) return 'model'
+      return 'the latest commit in this stream'
     }
   },
   mounted() {
@@ -263,11 +274,17 @@ export default {
       this.$refs.streamInviteDialog.show()
     },
     getIframeUrl() {
+      let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
+
+      if (this.$route.params.branchName) {
+        base += `&branch=${this.$route.params.branchName}`
+        return this.wrapUrlInIframe(base)
+      }
+
       const resourceId = this.$route.params.resourceId
-      if (!resourceId) return null
-      let base = `${window.location.origin}/embed?stream=${
-        this.$route.params.streamId
-      }&${this.$resourceType(resourceId)}=${this.$route.params.resourceId}`
+      if (!resourceId) return this.wrapUrlInIframe(base)
+
+      base += `&${this.$resourceType(resourceId)}=${this.$route.params.resourceId}`
 
       if (this.$route.query.overlay) {
         base += `&overlay=${this.$route.query.overlay}`
@@ -279,10 +296,13 @@ export default {
         base += `&filter=${encodeURIComponent(this.$route.query.filter)}`
       }
 
+      return this.wrapUrlInIframe(base)
+    },
+    wrapUrlInIframe(url) {
       if (this.transparentBg) {
-        base += `&transparent=true`
+        url += `&transparent=true`
       }
-      return `<iframe src="${base}" width="600" height="400" frameborder="0"></iframe>`
+      return `<iframe src="${url}" width="600" height="400" frameborder="0"></iframe>`
     },
     async changeVisibility() {
       this.swapPermsLoading = true
