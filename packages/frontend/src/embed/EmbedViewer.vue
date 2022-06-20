@@ -259,12 +259,9 @@ body::-webkit-scrollbar {
   .spinning-icon {
     animation: spinner-spin 0.5s linear infinite;
   }
-<<<<<<< HEAD
 }
 .no-mouse {
   pointer-events: none;
-=======
->>>>>>> main
 }
 .mouse {
   pointer-events: auto;

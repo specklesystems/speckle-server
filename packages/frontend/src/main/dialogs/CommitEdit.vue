@@ -17,7 +17,7 @@
           <v-row>
             <v-col cols="12" class="pb-0">
               <v-text-field
-                v-model="commit.message"
+                v-model="message"
                 label="Message"
                 :rules="nameRules"
                 required
@@ -25,7 +25,7 @@
               ></v-text-field>
               <p>Move this commit to a different branch:</p>
               <v-select
-                v-model="commit.branchName"
+                v-model="newBranch"
                 filled
                 rounded
                 dense
@@ -33,7 +33,6 @@
                 :items="branchNames"
                 prepend-icon="mdi-source-branch"
                 class="pb-5"
-                @change="setNewBranchName"
               />
             </v-col>
           </v-row>
@@ -105,7 +104,8 @@ export default {
       showDeleteDialog: false,
       localBranches: [],
       branchCursor: null,
-      newBranch: null,
+      newBranch: this.stream.commit.branchName,
+      message: this.stream.commit.message,
       loading: false,
       commitIdConfirmation: '',
       commit: this.stream.commit,
@@ -126,35 +126,54 @@ export default {
     await this.fetchBranches()
   },
   methods: {
-    setNewBranchName(newBranch) {
-      this.newBranch = newBranch
-    },
     async editCommit() {
-      console.log(this.commit.branch)
       this.$mixpanel.track('Commit Action', { type: 'action', name: 'update' })
       this.loading = true
-      try {
-        await this.$apollo.mutate({
-          mutation: gql`
-            mutation commitUpdate($myCommit: CommitUpdateInput!) {
-              commitUpdate(commit: $myCommit)
-            }
-          `,
-          variables: {
-            myCommit: {
-              streamId: this.stream.id,
-              id: this.commit.id,
-              message: this.commit.message,
-              newBranchName: this.newBranch
-            }
+      const myCommit = {
+        streamId: this.stream.id,
+        id: this.commit.id
+      }
+
+      let messageChanged = false
+      let branchChanged = false
+
+      if (this.commit.message !== this.message) {
+        messageChanged = true
+        myCommit.message = this.message
+      }
+
+      if (this.commit.branchName !== this.newBranch) {
+        branchChanged = true
+        myCommit.newBranchName = this.newBranch
+      }
+
+      if (messageChanged || branchChanged)
+        try {
+          await this.$apollo.mutate({
+            mutation: gql`
+              mutation commitUpdate($myCommit: CommitUpdateInput!) {
+                commitUpdate(commit: $myCommit)
+              }
+            `,
+            variables: { myCommit }
+          })
+        } catch (err) {
+          this.$eventHub.$emit('notification', {
+            text: err.message
+          })
+        }
+      this.loading = false
+      this.commit.message = this.message
+      this.commit.branchName = this.newBranch
+      if (branchChanged) {
+        this.$eventHub.$emit('notification', {
+          text: `Commit moved to branch ${this.newBranch}.`,
+          action: {
+            name: 'View Branch',
+            to: `/streams/${this.$route.params.streamId}/branches/${this.newBranch}`
           }
         })
-      } catch (err) {
-        this.$eventHub.$emit('notification', {
-          text: err.message
-        })
       }
-      this.loading = false
       this.$emit('close')
     },
     async deleteCommit() {
@@ -196,7 +215,7 @@ export default {
           query Stream($streamId: String!, $cursor: String) {
             stream(id: $streamId) {
               id
-              branches(limit: 10, cursor: $cursor) {
+              branches(limit: 100, cursor: $cursor) {
                 totalCount
                 cursor
                 items {
