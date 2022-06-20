@@ -155,7 +155,7 @@ module.exports = {
         id: args.commit.id
       })
 
-      if (commit.authorId !== context.userId || role !== 'stream:owner')
+      if (commit.authorId !== context.userId && role !== 'stream:owner')
         throw new ForbiddenError(
           'Only the author of a commit or a stream owner may update it.'
         )
