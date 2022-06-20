@@ -1,4 +1,10 @@
-import { BufferGeometry, Float32BufferAttribute, Material, Points } from 'three'
+import {
+  BufferGeometry,
+  Float32BufferAttribute,
+  Material,
+  Object3D,
+  Points
+} from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
 import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
@@ -13,6 +19,10 @@ export default class PointBatch implements Batch {
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.renderViews = renderViews
+  }
+
+  public get renderObject(): Object3D {
+    return this.mesh
   }
 
   public getCount() {

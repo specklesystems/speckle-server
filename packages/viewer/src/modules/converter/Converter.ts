@@ -53,7 +53,7 @@ export default class Coverter {
     WorldTree.getInstance()
   }
 
-  private async asyncPause() {
+  public async asyncPause() {
     // Don't freeze the UI when doing all those traversals
     if (Date.now() - this.lastAsyncPause >= 100) {
       this.lastAsyncPause = Date.now()

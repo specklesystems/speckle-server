@@ -72,4 +72,8 @@ export class WorldTree {
   public getAncestors(node: TreeNode): Array<TreeNode> {
     return node.getPath().reverse().slice(1) // We skip the node itself
   }
+
+  public walk(predicate: SearchPredicate): void {
+    this._root.walk(predicate)
+  }
 }

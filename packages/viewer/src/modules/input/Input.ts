@@ -1,0 +1,97 @@
+import EventEmitter from '../EventEmitter'
+
+export interface InputOptions {
+  hover: boolean
+}
+
+export default class SelectionHelper extends EventEmitter {
+  private pointerDown = false
+  private tapTimeout
+  private lastTap = 0
+  private touchLocation: Touch
+  private multiSelect = false
+  private container
+
+  constructor(container: HTMLElement, _options: InputOptions) {
+    super()
+    _options
+    this.container = container
+
+    // Handle mouseclicks
+    let mdTime
+    this.container.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      mdTime = new Date().getTime()
+    })
+
+    this.container.addEventListener('pointerup', (e) => {
+      e.preventDefault()
+      const delta = new Date().getTime() - mdTime
+      this.pointerDown = false
+
+      if (delta > 250) return
+
+      this.emit('object-clicked', this._getNormalisedClickPosition(e))
+    })
+
+    // Doubleclicks on touch devices
+    // http://jsfiddle.net/brettwp/J4djY/
+    this.container.addEventListener('touchstart', (e) => {
+      this.touchLocation = e.targetTouches[0]
+    })
+    this.container.addEventListener('touchend', (e) => {
+      // Ignore the first `touchend` when pinch-zooming (so we don't consider double-tap)
+      if (e.targetTouches.length > 0) {
+        return
+      }
+      const currentTime = new Date().getTime()
+      const tapLength = currentTime - this.lastTap
+      clearTimeout(this.tapTimeout)
+      if (tapLength < 500 && tapLength > 0) {
+        this.emit(
+          'object-doubleclicked',
+          this._getNormalisedClickPosition(this.touchLocation)
+        )
+      } else {
+        this.tapTimeout = setTimeout(function () {
+          clearTimeout(this.tapTimeout)
+        }, 500)
+      }
+      this.lastTap = currentTime
+    })
+
+    this.container.addEventListener('dblclick', (e) => {
+      this.emit('object-doubleclicked', this._getNormalisedClickPosition(e))
+    })
+
+    // Handle multiple object selection
+    document.addEventListener('keydown', (e) => {
+      if (e.isComposing || e.keyCode === 229) return
+      if (e.key === 'Shift') this.multiSelect = true
+    })
+
+    document.addEventListener('keyup', (e) => {
+      if (e.isComposing || e.keyCode === 229) return
+      if (e.key === 'Shift') this.multiSelect = false
+    })
+  }
+
+  _getNormalisedClickPosition(e) {
+    // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
+    const canvas = this.container
+    const rect = this.container.getBoundingClientRect()
+
+    const pos = {
+      x: ((e.clientX - rect.left) * canvas.width) / rect.width,
+      y: ((e.clientY - rect.top) * canvas.height) / rect.height
+    }
+    return {
+      x: (pos.x / canvas.width) * 2 - 1,
+      y: (pos.y / canvas.height) * -2 + 1
+    }
+  }
+
+  dispose() {
+    super.dispose()
+  }
+}

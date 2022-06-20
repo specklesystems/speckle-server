@@ -25,10 +25,11 @@ export class Intersections {
 
     results.sort((value) => value.distance)
     console.warn(results[0])
-    const hitId = this.batcher.getRenderView(
+    const rv = this.batcher.getRenderView(
       results[0].object.uuid,
       results[0].faceIndex !== undefined ? results[0].faceIndex : results[0].index
-    ).renderData.id
+    )
+    const hitId = rv.renderData.id
 
     const hitNode = WorldTree.getInstance().findId(hitId)
     console.warn(hitNode)

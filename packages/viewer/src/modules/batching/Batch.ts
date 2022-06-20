@@ -1,4 +1,4 @@
-import { Material } from 'three'
+import { Material, Object3D } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
 export enum GeometryType {
@@ -12,6 +12,7 @@ export interface Batch {
   id: string
   renderViews: NodeRenderView[]
   batchMaterial: Material
+  renderObject: Object3D
 
   getCount(): number
   setBatchMaterial(material: Material): void

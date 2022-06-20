@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import SelectionHelper from './SelectionHelper'
+import SelectionHelper from './legacy/SelectionHelper'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import SpeckleLambertMaterial from './materials/SpeckleLambertMaterial'
 import { Geometry } from './converter/Geometry'
@@ -41,7 +41,9 @@ export default class InteractionHandler {
       worldUnits: false,
       vertexColors: false,
       alphaToCoverage: true,
-      resolution: this.viewer.renderer.getDrawingBufferSize(new THREE.Vector2()),
+      resolution: this.viewer.speckleRenderer.renderer.getDrawingBufferSize(
+        new THREE.Vector2()
+      ),
       clippingPlanes: this.viewer.sectionBox.planes
     })
     // Not a fan of this, but it should be fine for now
@@ -49,10 +51,10 @@ export default class InteractionHandler {
     this.selectionLine2Material.polygonOffsetFactor = -0.1
 
     this.selectedObjects = new THREE.Group()
-    this.viewer.scene.add(this.selectedObjects)
+    this.viewer.speckleRenderer.scene.add(this.selectedObjects)
     this.selectedObjects.renderOrder = 1000
     this.selectionBox = new THREE.Group()
-    this.viewer.scene.add(this.selectionBox)
+    this.viewer.speckleRenderer.scene.add(this.selectionBox)
 
     this.overlayMeshMaterial = new SpeckleLambertMaterial(
       {
@@ -66,7 +68,7 @@ export default class InteractionHandler {
     )
     this.overlayMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     this.overlaidObjects = new THREE.Group()
-    this.viewer.scene.add(this.overlaidObjects)
+    this.viewer.speckleRenderer.scene.add(this.overlaidObjects)
     this.overlaidObjects.renderOrder = 2000
 
     this.selectedObjectsUserData = []
@@ -181,9 +183,10 @@ export default class InteractionHandler {
             material.linewidth = child.material.linewidth
             material.worldUnits = child.material.worldUnits
             material.alphaToCoverage = child.material.alphaToCoverage
-            material.resolution = this.viewer.renderer.getDrawingBufferSize(
-              new THREE.Vector2()
-            )
+            material.resolution =
+              this.viewer.speckleRenderer.renderer.getDrawingBufferSize(
+                new THREE.Vector2()
+              )
             child.material = material
           } else {
             child.material = this.selectionMeshMaterial
@@ -213,7 +216,7 @@ export default class InteractionHandler {
         material.linewidth = objs[0].object.material.linewidth
         material.worldUnits = objs[0].object.material.worldUnits
         material.alphaToCoverage = objs[0].object.material.alphaToCoverage
-        material.resolution = this.viewer.renderer.getDrawingBufferSize(
+        material.resolution = this.viewer.speckleRenderer.renderer.getDrawingBufferSize(
           new THREE.Vector2()
         )
         const l = new Line2(objs[0].object.geometry, material)
@@ -397,7 +400,8 @@ export default class InteractionHandler {
       this.viewer.needsRender = true
       this.viewer.render()
     }
-    const screenshot = this.viewer.renderer.domElement.toDataURL('image/png')
+    const screenshot =
+      this.viewer.speckleRenderer.renderer.domElement.toDataURL('image/png')
     if (sectionBoxVisible) {
       this.viewer.sectionBox.displayOn()
     }

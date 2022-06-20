@@ -3,6 +3,7 @@ import {
   Float32BufferAttribute,
   Material,
   Mesh,
+  Object3D,
   Uint16BufferAttribute,
   Uint32BufferAttribute
 } from 'three'
@@ -21,6 +22,10 @@ export default class MeshBatch implements Batch {
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.renderViews = renderViews
+  }
+
+  public get renderObject(): Object3D {
+    return this.mesh
   }
 
   public getCount(): number {

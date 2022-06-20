@@ -5,11 +5,9 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Line,
-  Material,
-  Mesh,
+  Object3D,
   Vector4
 } from 'three'
-import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import { Geometry } from '../converter/Geometry'
@@ -23,13 +21,16 @@ export default class LineBatch implements Batch {
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry | LineSegmentsGeometry
   public batchMaterial: SpeckleLineMaterial
-  public material: Material | Material[]
-  public mesh: Mesh | Line | Line2
+  private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.renderViews = renderViews
+  }
+
+  public get renderObject(): Object3D {
+    return this.mesh
   }
 
   public getCount(): number {

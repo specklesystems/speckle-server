@@ -11,7 +11,7 @@ import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
-export default class SceneObjectManager {
+export default class _SceneObjectManager {
   constructor(viewer, skipPostLoad = false) {
     this.viewer = viewer
     this.scene = viewer.scene

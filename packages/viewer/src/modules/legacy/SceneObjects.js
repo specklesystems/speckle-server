@@ -6,7 +6,7 @@ import FilteringManager from './FilteringManager'
 /**
  * Container for the scene objects, to allow loading/unloading/filtering/coloring/grouping
  */
-export default class SceneObjects {
+export default class _SceneObjects {
   constructor(viewer) {
     this.viewer = viewer
     this.scene = viewer.scene

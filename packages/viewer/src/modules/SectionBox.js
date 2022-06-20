@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import SelectionHelper from './SelectionHelper'
+import SelectionHelper from './legacy/SelectionHelper'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { Box3 } from 'three'
 
@@ -7,12 +7,12 @@ export default class SectionBox {
   constructor(viewer) {
     this.viewer = viewer
 
-    this.viewer.renderer.localClippingEnabled = true
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = true
 
     this.dragging = false
     this.display = new THREE.Group()
     this.display.name = 'SectionBox'
-    this.viewer.scene.add(this.display)
+    this.viewer.speckleRenderer.scene.add(this.display)
 
     // box
     this.boxGeometry = this._generateSimpleCube(5, 5, 5)
@@ -122,7 +122,7 @@ export default class SectionBox {
     this.controls?.detach()
     this.controls = new TransformControls(
       this.viewer.cameraHandler.activeCam.camera,
-      this.viewer.renderer.domElement
+      this.viewer.speckleRenderer.renderer.domElement
     )
     this.controls.setSize(0.75)
     this.display.add(this.controls)
@@ -419,19 +419,19 @@ export default class SectionBox {
   toggle() {
     this.setBox()
     this.display.visible = !this.display.visible
-    this.viewer.renderer.localClippingEnabled = this.display.visible
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = this.display.visible
     this.viewer.needsRender = true
   }
 
   off() {
     this.display.visible = false
-    this.viewer.renderer.localClippingEnabled = false
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = false
     this.viewer.needsRender = true
   }
 
   on() {
     this.display.visible = true
-    this.viewer.renderer.localClippingEnabled = true
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = true
     this.viewer.needsRender = true
   }
 

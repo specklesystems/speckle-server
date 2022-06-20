@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import EventEmitter from './EventEmitter'
+import EventEmitter from '../EventEmitter'
 
 /**
  * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
@@ -11,7 +11,7 @@ import EventEmitter from './EventEmitter'
  *            }
  */
 
-export default class SelectionHelper extends EventEmitter {
+export default class _SelectionHelper extends EventEmitter {
   constructor(parent, _options) {
     super()
     this.viewer = parent
@@ -36,23 +36,29 @@ export default class SelectionHelper extends EventEmitter {
 
     // Handle mouseclicks
     let mdTime
-    this.viewer.renderer.domElement.addEventListener('pointerdown', (e) => {
-      e.preventDefault()
-      mdTime = new Date().getTime()
-    })
+    this.viewer.speckleRenderer.renderer.domElement.addEventListener(
+      'pointerdown',
+      (e) => {
+        e.preventDefault()
+        mdTime = new Date().getTime()
+      }
+    )
 
-    this.viewer.renderer.domElement.addEventListener('pointerup', (e) => {
-      e.preventDefault()
-      if (this.viewer.cameraHandler.orbiting) return
+    this.viewer.speckleRenderer.renderer.domElement.addEventListener(
+      'pointerup',
+      (e) => {
+        e.preventDefault()
+        if (this.viewer.cameraHandler.orbiting) return
 
-      const delta = new Date().getTime() - mdTime
-      this.pointerDown = false
+        const delta = new Date().getTime() - mdTime
+        this.pointerDown = false
 
-      if (delta > 250) return
+        if (delta > 250) return
 
-      const selectionObjects = this.getClickedObjects(e)
-      this.emit('object-clicked', selectionObjects)
-    })
+        const selectionObjects = this.getClickedObjects(e)
+        this.emit('object-clicked', selectionObjects)
+      }
+    )
 
     // Doubleclicks on touch devices
     // http://jsfiddle.net/brettwp/J4djY/
@@ -60,32 +66,41 @@ export default class SelectionHelper extends EventEmitter {
     this.lastTap = 0
     this.touchLocation
 
-    this.viewer.renderer.domElement.addEventListener('touchstart', (e) => {
-      this.touchLocation = e.targetTouches[0]
-    })
-    this.viewer.renderer.domElement.addEventListener('touchend', (e) => {
-      // Ignore the first `touchend` when pinch-zooming (so we don't consider double-tap)
-      if (e.targetTouches.length > 0) {
-        return
+    this.viewer.speckleRenderer.renderer.domElement.addEventListener(
+      'touchstart',
+      (e) => {
+        this.touchLocation = e.targetTouches[0]
       }
-      const currentTime = new Date().getTime()
-      const tapLength = currentTime - this.lastTap
-      clearTimeout(this.tapTimeout)
-      if (tapLength < 500 && tapLength > 0) {
-        const selectionObjects = this.getClickedObjects(this.touchLocation)
-        this.emit('object-doubleclicked', selectionObjects)
-      } else {
-        this.tapTimeout = setTimeout(function () {
-          clearTimeout(this.tapTimeout)
-        }, 500)
+    )
+    this.viewer.speckleRenderer.renderer.domElement.addEventListener(
+      'touchend',
+      (e) => {
+        // Ignore the first `touchend` when pinch-zooming (so we don't consider double-tap)
+        if (e.targetTouches.length > 0) {
+          return
+        }
+        const currentTime = new Date().getTime()
+        const tapLength = currentTime - this.lastTap
+        clearTimeout(this.tapTimeout)
+        if (tapLength < 500 && tapLength > 0) {
+          const selectionObjects = this.getClickedObjects(this.touchLocation)
+          this.emit('object-doubleclicked', selectionObjects)
+        } else {
+          this.tapTimeout = setTimeout(function () {
+            clearTimeout(this.tapTimeout)
+          }, 500)
+        }
+        this.lastTap = currentTime
       }
-      this.lastTap = currentTime
-    })
+    )
 
-    this.viewer.renderer.domElement.addEventListener('dblclick', (e) => {
-      const selectionObjects = this.getClickedObjects(e)
-      this.emit('object-doubleclicked', selectionObjects)
-    })
+    this.viewer.speckleRenderer.renderer.domElement.addEventListener(
+      'dblclick',
+      (e) => {
+        const selectionObjects = this.getClickedObjects(e)
+        this.emit('object-doubleclicked', selectionObjects)
+      }
+    )
 
     // Handle multiple object selection
     this.multiSelect = false
@@ -135,20 +150,10 @@ export default class SelectionHelper extends EventEmitter {
     return []
   }
 
-  // get all children of a subset passed as a THREE.Group
-  _getGroupChildren(group) {
-    let children = []
-    if (group.children.length === 0) return [group]
-    group.children.forEach(
-      (c) => (children = [...children, ...this._getGroupChildren(c)])
-    )
-    return children
-  }
-
   _getNormalisedClickPosition(e) {
     // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
-    const canvas = this.viewer.renderer.domElement
-    const rect = this.viewer.renderer.domElement.getBoundingClientRect()
+    const canvas = this.viewer.speckleRenderer.renderer.domElement
+    const rect = this.viewer.speckleRenderer.renderer.domElement.getBoundingClientRect()
 
     const pos = {
       x: ((e.clientX - rect.left) * canvas.width) / rect.width,

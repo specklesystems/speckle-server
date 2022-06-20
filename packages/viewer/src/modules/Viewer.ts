@@ -2,44 +2,35 @@ import * as THREE from 'three'
 
 import Stats from 'three/examples/jsm/libs/stats.module'
 
-import ObjectManager from './SceneObjectManager'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import InteractionHandler from './InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Clock, CubeCamera, Texture, Vector3 } from 'three'
-import { Scene } from 'three'
-import { WebGLRenderer } from 'three'
+import { Clock, Texture, Vector3 } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { Geometry } from './converter/Geometry'
-import { Intersections } from './Intersections'
-import Batcher from './batching/Batcher'
+import { TreeNode, WorldTree } from './tree/WorldTree'
+import SpeckleRenderer from './SpeckleRenderer'
 
 export class Viewer extends EventEmitter implements IViewer {
+  public speckleRenderer: SpeckleRenderer
   private clock: Clock
   private container: HTMLElement
-  private cubeCamera: CubeCamera
   private stats: Optional<Stats>
   private loaders: { [id: string]: ViewerObjectLoader } = {}
   private needsRender: boolean
   private inProgressOperations: number
 
-  public scene: Scene
   public sectionBox: SectionBox
-  public sceneManager: ObjectManager
   public interactions: InteractionHandler
-  private renderer: WebGLRenderer
   public cameraHandler: CameraHandler
   private sceneURL = '' // Temporary
   private startupParams: ViewerParams
-
-  public intersections: Intersections
-  public batcher: Batcher
 
   public static Assets: Assets
 
@@ -66,7 +57,6 @@ export class Viewer extends EventEmitter implements IViewer {
     ;(async () => {
       await this.unloadAll()
       Geometry.USE_RTE = value
-      this.sceneManager.initMaterials()
       World.resetWorld()
       await this.loadObject(this.sceneURL, undefined, undefined)
     })()
@@ -80,7 +70,6 @@ export class Viewer extends EventEmitter implements IViewer {
     ;(async () => {
       await this.unloadAll()
       Geometry.THICK_LINES = value
-      this.sceneManager.initMaterials()
       World.resetWorld()
       await this.loadObject(this.sceneURL, undefined, undefined)
     })()
@@ -92,37 +81,17 @@ export class Viewer extends EventEmitter implements IViewer {
   ) {
     super()
 
-    window.THREE = THREE
+    window.THREE = THREE // Do we really need this?
     this.startupParams = params
     this.clock = new THREE.Clock()
 
     this.container = container || document.getElementById('renderer')
-    this.scene = new THREE.Scene()
 
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      preserveDrawingBuffer: true
-    })
-    this.renderer.setClearColor(0xcccccc, 0)
-    this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.outputEncoding = THREE.sRGBEncoding
-    this.renderer.toneMapping = THREE.LinearToneMapping
-    this.renderer.toneMappingExposure = 0.5
-    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
-    this.container.appendChild(this.renderer.domElement)
-
-    Viewer.Assets = new Assets(this.renderer)
+    this.speckleRenderer = new SpeckleRenderer()
+    this.speckleRenderer.create(this.container)
+    Viewer.Assets = new Assets(this.speckleRenderer.renderer)
 
     this.cameraHandler = new CameraHandler(this)
-
-    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(512, {
-      format: THREE.RGBFormat,
-      generateMipmaps: true,
-      minFilter: THREE.LinearMipmapLinearFilter
-    })
-    this.cubeCamera = new THREE.CubeCamera(0.1, 10_000, cubeRenderTarget)
-    this.scene.add(this.cubeCamera)
 
     if (params.showStats) {
       this.stats = Stats()
@@ -136,25 +105,33 @@ export class Viewer extends EventEmitter implements IViewer {
     this.sectionBox = new SectionBox(this)
     this.sectionBox.off()
 
-    this.sceneManager = new ObjectManager(this)
     this.interactions = new InteractionHandler(this)
 
-    this.sceneLights()
     this.animate()
     this.onWindowResize()
-    this.interactions.zoomExtents()
+    // this.interactions.zoomExtents()
     this.needsRender = true
 
     this.inProgressOperations = 0
-    this.batcher = new Batcher()
-    this.intersections = new Intersections(this.scene, this.batcher)
+
+    this.on('load-complete', (url) => {
+      WorldTree.getInstance().walk((node: TreeNode) => {
+        node.model.raw.__importedUrl = url
+        return true
+      })
+
+      WorldTree.getRenderTree().buildRenderTree()
+      this.speckleRenderer.addRenderTree()
+
+      console.warn('Built stuff')
+    })
   }
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
       Viewer.Assets.getEnvironment(this.startupParams.environmentSrc)
         .then((value: Texture) => {
-          this.scene.environment = value
+          this.speckleRenderer.indirectIBL = value
         })
         .catch((reason) => {
           console.warn(reason)
@@ -163,68 +140,11 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  private sceneLights() {
-    // const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
-    // dirLight.color.setHSL( 0.1, 1, 0.95 )
-    // dirLight.position.set( -1, 1.75, 1 )
-    // dirLight.position.multiplyScalar( 1000 )
-    // this.scene.add( dirLight )
-
-    // const dirLight2 = new THREE.DirectionalLight( 0xffffff, 0.9 )
-    // dirLight2.color.setHSL( 0.1, 1, 0.95 )
-    // dirLight2.position.set( 0, -1.75, 1 )
-    // dirLight2.position.multiplyScalar( 1000 )
-    // this.scene.add( dirLight2 )
-
-    // const hemiLight2 = new THREE.HemisphereLight( 0xffffff, new THREE.Color( '#232323' ), 1.9 )
-    // hemiLight2.color.setHSL( 1, 1, 1 )
-    // // hemiLight2.groundColor = new THREE.Color( '#232323' )
-    // hemiLight2.up.set( 0, 0, 1 )
-    // this.scene.add( hemiLight2 )
-
-    // let axesHelper = new THREE.AxesHelper( 1 )
-    // this.scene.add( axesHelper )
-
-    // return
-
-    const ambientLight = new THREE.AmbientLight(0xffffff)
-    this.scene.add(ambientLight)
-
-    const lights = []
-    lights[0] = new THREE.PointLight(0xffffff, 0.21, 0)
-    lights[1] = new THREE.PointLight(0xffffff, 0.21, 0)
-    lights[2] = new THREE.PointLight(0xffffff, 0.21, 0)
-    lights[3] = new THREE.PointLight(0xffffff, 0.21, 0)
-
-    const factor = 1000
-    lights[0].position.set(1 * factor, 1 * factor, 1 * factor)
-    lights[1].position.set(1 * factor, -1 * factor, 1 * factor)
-    lights[2].position.set(-1 * factor, -1 * factor, 1 * factor)
-    lights[3].position.set(-1 * factor, 1 * factor, 1 * factor)
-
-    this.scene.add(lights[0])
-    this.scene.add(lights[1])
-    this.scene.add(lights[2])
-    this.scene.add(lights[3])
-
-    // let sphereSize = 0.2
-    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
-
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x0, 0.2)
-    hemiLight.color.setHSL(1, 1, 1)
-    hemiLight.groundColor.setHSL(0.095, 1, 0.75)
-    hemiLight.up.set(0, 0, 1)
-    this.scene.add(hemiLight)
-
-    const group = new THREE.Group()
-    this.scene.add(group)
-  }
-
   onWindowResize() {
-    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
+    this.speckleRenderer.renderer.setSize(
+      this.container.offsetWidth,
+      this.container.offsetHeight
+    )
     this.needsRender = true
   }
 
@@ -243,14 +163,17 @@ export class Viewer extends EventEmitter implements IViewer {
 
       const infoDrawsEl = document.getElementById('info-draws')
       if (this.stats && infoDrawsEl) {
-        infoDrawsEl.textContent = '' + this.renderer.info.render.calls
+        infoDrawsEl.textContent = '' + this.speckleRenderer.renderer.info.render.calls
       }
       if (this.stats) this.stats.end()
     }
   }
 
   private render() {
-    this.renderer.render(this.scene, this.cameraHandler.activeCam.camera)
+    this.speckleRenderer.renderer.render(
+      this.speckleRenderer.scene,
+      this.cameraHandler.activeCam.camera
+    )
   }
 
   public toggleSectionBox() {
@@ -323,18 +246,71 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public async applyFilter(filter: unknown) {
-    try {
-      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
-
-      this.interactions.deselectObjects()
-      return await this.sceneManager.sceneObjects.applyFilter(filter)
-    } finally {
-      if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-    }
+    filter
+    // try {
+    //   if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
+    //   this.interactions.deselectObjects()
+    //   return await this.sceneManager.sceneObjects.applyFilter(filter)
+    // } finally {
+    //   if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
+    // }
   }
 
-  public getObjectsProperties(includeAll = true) {
-    return this.sceneManager.sceneObjects.getObjectsProperties(includeAll)
+  public getObjectsProperties() {
+    // return this.spceneManager.sceneObjects.getObjectsProperties(includeAll)
+    // const props = []
+    const flattenObject = function (obj) {
+      const flatten = {}
+      for (const k in obj) {
+        if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k))
+          continue
+        const v = obj[k]
+        if (v === null || v === undefined || Array.isArray(v)) continue
+        if (v.constructor === Object) {
+          const flattenProp = flattenObject(v)
+          for (const pk in flattenProp) {
+            flatten[`${k}.${pk}`] = flattenProp[pk]
+          }
+          continue
+        }
+        if (['string', 'number', 'boolean'].includes(typeof v)) flatten[k] = v
+      }
+      return flatten
+    }
+    const propValues = {}
+
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      const obj = flattenObject(node.model.raw)
+      for (const prop of Object.keys(obj)) {
+        if (!(prop in propValues)) {
+          propValues[prop] = []
+        }
+        propValues[prop].push(obj[prop])
+      }
+      return true
+    })
+
+    const propInfo = {}
+    for (const prop in propValues) {
+      const pinfo = {
+        type: typeof propValues[prop][0],
+        objectCount: propValues[prop].length,
+        allValues: propValues[prop],
+        uniqueValues: {},
+        minValue: propValues[prop][0],
+        maxValue: propValues[prop][0]
+      }
+      for (const v of propValues[prop]) {
+        if (v < pinfo.minValue) pinfo.minValue = v
+        if (v > pinfo.maxValue) pinfo.maxValue = v
+        if (!(v in pinfo.uniqueValues)) {
+          pinfo.uniqueValues[v] = 0
+        }
+        pinfo.uniqueValues[v] += 1
+      }
+
+      propInfo[prop] = pinfo
+    }
   }
 
   public dispose() {
