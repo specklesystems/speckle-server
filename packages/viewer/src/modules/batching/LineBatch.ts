@@ -32,6 +32,10 @@ export default class LineBatch implements Batch {
     this.renderViews = renderViews
   }
 
+  public getCount(): number {
+    return this.geometry.attributes.position.array.length / 6
+  }
+
   public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
   }

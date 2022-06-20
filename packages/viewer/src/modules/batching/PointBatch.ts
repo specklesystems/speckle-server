@@ -1,30 +1,22 @@
-import {
-  BufferGeometry,
-  Float32BufferAttribute,
-  Material,
-  Mesh,
-  Uint16BufferAttribute,
-  Uint32BufferAttribute
-} from 'three'
-import { Geometry } from '../converter/Geometry'
+import { BufferGeometry, Float32BufferAttribute, Material, Points } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
 import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
 
-export default class MeshBatch implements Batch {
+export default class PointBatch implements Batch {
   public id: string
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry
   public batchMaterial: Material
-  public mesh: Mesh
+  public mesh: Points
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.renderViews = renderViews
   }
 
-  public getCount(): number {
-    return this.geometry.index.count
+  public getCount() {
+    return this.geometry.attributes.position.array.length / 3
   }
 
   public setBatchMaterial(material: Material) {
@@ -89,15 +81,10 @@ export default class MeshBatch implements Batch {
       )
       if (autoFill) {
         if (k === sortedRanges.length - 1) {
-          if (
-            sortedRanges[k].offset + sortedRanges[k].count <
-            this.geometry.index.count
-          ) {
+          if (sortedRanges[k].offset + sortedRanges[k].count < this.getCount()) {
             this.geometry.addGroup(
               sortedRanges[k].offset + sortedRanges[k].count,
-              this.geometry.index.count -
-                sortedRanges[k].offset +
-                sortedRanges[k].count,
+              this.getCount() - sortedRanges[k].offset + sortedRanges[k].count,
               0
             )
           }
@@ -127,42 +114,34 @@ export default class MeshBatch implements Batch {
   }
 
   public buildBatch() {
-    const indicesCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.INDEX
-    ).length
     const attributeCount = this.renderViews.flatMap(
       (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
     ).length
-    const indices = new Uint32Array(indicesCount)
     const position = new Float32Array(attributeCount)
+    const color = new Float32Array(attributeCount).fill(1)
     let offset = 0
-    let arrayOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
-      indices.set(
-        geometry.attributes.INDEX.map((val) => val + offset / 3),
-        arrayOffset
-      )
       position.set(geometry.attributes.POSITION, offset)
+      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
       this.renderViews[k].setBatchData(
         this.id,
-        arrayOffset,
-        geometry.attributes.INDEX.length
+        offset / 3,
+        geometry.attributes.POSITION.length / 3
       )
 
       offset += geometry.attributes.POSITION.length
-      arrayOffset += geometry.attributes.INDEX.length
     }
-    this.makeMeshGeometry(indices, position)
-    this.mesh = new Mesh(this.geometry, this.batchMaterial)
+    this.makePointGeometry(position, color)
+    this.mesh = new Points(this.geometry, this.batchMaterial)
     this.mesh.uuid = this.id
   }
 
   public getRenderView(index: number): NodeRenderView {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
-        index * 3 >= this.renderViews[k].batchStart &&
-        index * 3 < this.renderViews[k].batchEnd
+        index >= this.renderViews[k].batchStart &&
+        index < this.renderViews[k].batchEnd
       ) {
         return this.renderViews[k]
       }
@@ -172,27 +151,14 @@ export default class MeshBatch implements Batch {
   /**
    * DUPLICATE from Geometry. Will unify in the future
    */
-  private makeMeshGeometry(
-    indices: Uint32Array | Uint16Array,
-    position: Float32Array
+  private makePointGeometry(
+    position: Float32Array,
+    color: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
-    if (position.length >= 65535 || indices.length >= 65535) {
-      this.geometry.setIndex(new Uint32BufferAttribute(indices, 1))
-    } else {
-      this.geometry.setIndex(new Uint16BufferAttribute(indices, 1))
-    }
 
-    if (position) {
-      this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
-    }
-
-    // if (geometryData.attributes.COLOR) {
-    //   this.bufferGeometry.setAttribute(
-    //     'color',
-    //     new Float32BufferAttribute(geometryData.attributes.COLOR, 3)
-    //   )
-    // }
+    this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+    this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
 
     this.geometry.computeVertexNormals()
     this.geometry.computeBoundingSphere()
@@ -200,9 +166,9 @@ export default class MeshBatch implements Batch {
 
     World.expandWorld(this.geometry.boundingBox)
 
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(this.geometry)
-    }
+    // if (Geometry.USE_RTE) {
+    //   Geometry.updateRTEGeometry(this.geometry)
+    // }
 
     return this.geometry
   }

@@ -1,4 +1,4 @@
-export const speckle_basic_vert = /* glsl */ `
+export const speckleBasicVert = /* glsl */ `
 #include <common>
 #ifdef USE_RTE
     attribute vec3 position_high;

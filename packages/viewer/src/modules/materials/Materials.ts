@@ -5,11 +5,14 @@ import { TreeNode } from '../tree/WorldTree'
 import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
+import SpecklePointMaterial from './SpecklePointMaterial'
 
 export default class Materials {
   private readonly materialMap: { [hash: number]: Material } = {}
   public meshHighlightMaterial: Material = null
   public lineHighlightMaterial: Material = null
+  public pointCloudHighlightMaterial: Material = null
+  public pointHighlightMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -80,6 +83,22 @@ export default class Materials {
       1306
     )
 
+    this.pointCloudHighlightMaterial = new SpecklePointMaterial({
+      color: 0xff0000,
+      vertexColors: true,
+      size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+
+    this.pointHighlightMaterial = new SpecklePointMaterial({
+      color: 0xff0000,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
@@ -108,6 +127,22 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.materialMap[hash]).worldUnits = false
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2(1281, 1306)
+
+    this.materialMap[NodeRenderView.NullPointMaterialHash] = new SpecklePointMaterial({
+      color: 0x7f7f7f,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] =
+      new SpecklePointMaterial({
+        color: 0xffffff,
+        vertexColors: true,
+        size: 2,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      })
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
@@ -169,8 +204,24 @@ export default class Materials {
         case GeometryType.LINE:
           this.materialMap[hash] = this.makeLineMaterial(material as DisplayStyle)
           break
+        case GeometryType.POINT:
+          console.error(`No material definition for points!`)
+          break
       }
     }
     return this.materialMap[hash]
+  }
+
+  public getHighlightMaterial(renderView: NodeRenderView): Material {
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        return this.meshHighlightMaterial
+      case GeometryType.LINE:
+        return this.lineHighlightMaterial
+      case GeometryType.POINT:
+        return this.pointHighlightMaterial
+      case GeometryType.POINT_CLOUD:
+        return this.pointCloudHighlightMaterial
+    }
   }
 }

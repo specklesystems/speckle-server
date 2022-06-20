@@ -29,9 +29,6 @@ export class RenderTree {
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
     let ret: NodeRenderData = null
-    if (node.model.id === '3841e3cbc45d52c47bc2f1b7b0ad4eb9') {
-      console.warn('test')
-    }
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)

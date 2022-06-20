@@ -3,7 +3,9 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 
 export enum GeometryType {
   MESH,
-  LINE
+  LINE,
+  POINT,
+  POINT_CLOUD
 }
 
 export interface Batch {
@@ -11,6 +13,7 @@ export interface Batch {
   renderViews: NodeRenderView[]
   batchMaterial: Material
 
+  getCount(): number
   setBatchMaterial(material: Material): void
   setVisibleRange(...range: BatchUpdateRange[])
   setDrawRanges(autoFill?: boolean, ...ranges: BatchUpdateRange[])

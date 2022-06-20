@@ -122,6 +122,9 @@ export default class ViewerObjectLoader {
       SpeckleType.Circle,
       SpeckleType.Ellipse
     )
+    this.viewer.batcher.makeBatches(GeometryType.POINT, SpeckleType.Point)
+    this.viewer.batcher.makeBatches(GeometryType.POINT, SpeckleType.Pointcloud)
+
     const contentGroup = new Group()
     contentGroup.name = 'ContentGroup'
     this.viewer.scene.add(contentGroup)

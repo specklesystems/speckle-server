@@ -37,6 +37,14 @@ export class NodeRenderView {
   public static readonly NullDisplayStyleHash = this.hashCode(
     GeometryType.LINE.toString()
   )
+  public static readonly NullPointMaterialHash = this.hashCode(
+    GeometryType.POINT.toString()
+  )
+
+  public static readonly NullPointCloudMaterialHash = this.hashCode(
+    GeometryType.POINT_CLOUD.toString()
+  )
+
   private static hashCode(s: string) {
     let h
     for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
@@ -106,6 +114,10 @@ export class NodeRenderView {
     switch (this._renderData.speckleType) {
       case SpeckleType.Mesh:
         return GeometryType.MESH
+      case SpeckleType.Point:
+        return GeometryType.POINT
+      case SpeckleType.Pointcloud:
+        return GeometryType.POINT_CLOUD
 
       default:
         return GeometryType.LINE
@@ -131,7 +143,9 @@ export class NodeRenderView {
   private getMaterialHash() {
     const mat = this.renderData.renderMaterial
       ? this.renderMaterialToString()
-      : this.renderData.displayStyle && this.geometryType !== GeometryType.MESH
+      : this.renderData.displayStyle &&
+        this.geometryType !== GeometryType.MESH &&
+        this.geometryType !== GeometryType.POINT
       ? this.displayStyleToString()
       : ''
     const s = this.geometryType.toString() + mat

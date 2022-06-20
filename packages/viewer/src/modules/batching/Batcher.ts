@@ -7,6 +7,7 @@ import Materials from '../materials/Materials'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
+import PointBatch from './PointBatch'
 
 export default class Batcher {
   private materials: Materials
@@ -52,9 +53,21 @@ export default class Batcher {
       )
 
       const batchID = generateUUID()
-      if (batchType === GeometryType.MESH)
-        this.batches[batchID] = new MeshBatch(batchID, batch)
-      else this.batches[batchID] = new LineBatch(batchID, batch)
+      switch (batchType) {
+        case GeometryType.MESH:
+          this.batches[batchID] = new MeshBatch(batchID, batch)
+          break
+        case GeometryType.LINE:
+          this.batches[batchID] = new LineBatch(batchID, batch)
+          break
+        case GeometryType.POINT:
+          this.batches[batchID] = new PointBatch(batchID, batch)
+          break
+        case GeometryType.POINT_CLOUD:
+          this.batches[batchID] = new PointBatch(batchID, batch)
+          break
+      }
+
       this.batches[batchID].setBatchMaterial(material as SpeckleLineMaterial)
       this.batches[batchID].buildBatch()
       console.warn(batch)
@@ -83,7 +96,7 @@ export default class Batcher {
           return {
             offset: rv.batchStart,
             count: rv.batchCount,
-            material: this.materials.meshHighlightMaterial
+            material: this.materials.getHighlightMaterial(rv)
           }
         })
       console.warn(views)
@@ -104,7 +117,7 @@ export default class Batcher {
       {
         offset: renderView.batchStart,
         count: renderView.batchCount,
-        material: this.materials.meshHighlightMaterial
+        material: this.materials.getHighlightMaterial(renderView)
       } as BatchUpdateRange,
       {
         offset: renderView.batchEnd,
@@ -131,10 +144,7 @@ export default class Batcher {
           material: batch.batchMaterial
         } as BatchUpdateRange)
       } else {
-        this.batches[k].setVisibleRange({
-          offset: 0,
-          count: 0
-        } as BatchUpdateRange)
+        this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
       }
     }
   }
