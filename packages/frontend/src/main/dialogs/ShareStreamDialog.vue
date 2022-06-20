@@ -70,7 +70,7 @@
         <v-toolbar-title>Embed {{ embedType }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <span v-if="!stream.isPublic" class="caption">
-          Viewer embedding only works if the stream is public.
+          Viewer embedding only works if link sharing is on.
         </span>
       </v-toolbar>
       <div v-if="stream.isPublic">
@@ -114,7 +114,7 @@
           <v-icon>{{ stream.isPublic ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
         </v-app-bar-nav-icon>
         <v-toolbar-title>
-          {{ stream.isPublic ? 'Public stream' : 'Private stream' }}
+          {{ stream.isPublic ? 'Link Sharing On' : 'Link Sharing Off' }}
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-switch
@@ -127,11 +127,12 @@
         />
       </v-toolbar>
       <v-card-text v-if="stream.isPublic" class="pt-2">
-        This stream is public. This means that anyone with the link can view and read
-        data from it.
+        Link sharing is on. This means that anyone with the link can view this stream.
+        Only collaborators will be able to send or edit data.
       </v-card-text>
       <v-card-text v-if="!stream.isPublic" class="pt-2 pb-2">
-        This stream is private. This means that only collaborators can access it.
+        Link sharing is off. This means that only collaborators can view or edit this
+        stream.
       </v-card-text>
     </v-sheet>
     <v-sheet v-if="stream">

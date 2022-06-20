@@ -55,7 +55,7 @@
                 v-model="isPublic"
                 inset
                 class="mt-5"
-                :label="isPublic ? 'Public (Link Sharing)' : 'Private'"
+                :label="isPublic ? 'Link Sharing On' : 'Link Sharing Off'"
                 :hint="
                   isPublic
                     ? 'Anyone with the link can view this stream. It is also visible on your profile page. Only collaborators can push data to it.'
