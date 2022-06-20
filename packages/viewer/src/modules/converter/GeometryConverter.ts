@@ -113,7 +113,8 @@ export class GeometryConverter {
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
-      colors = GeometryConverter.unpackColors(colorsRaw)
+      /** We want the colors in linear space */
+      colors = GeometryConverter.unpackColors(colorsRaw, true)
     }
     return {
       attributes: {
@@ -550,7 +551,7 @@ export class GeometryConverter {
     return output
   }
 
-  private static unpackColors(int32Colors: number[]): number[] {
+  private static unpackColors(int32Colors: number[], tolinear = false): number[] {
     const colors = new Array<number>(int32Colors.length * 3)
     for (let i = 0; i < int32Colors.length; i++) {
       const color = int32Colors[i]
@@ -560,7 +561,19 @@ export class GeometryConverter {
       colors[i * 3] = r / 255
       colors[i * 3 + 1] = g / 255
       colors[i * 3 + 2] = b / 255
+      if (tolinear) {
+        colors[i * 3] = GeometryConverter.srgbToLinear(colors[i * 3])
+        colors[i * 3 + 1] = GeometryConverter.srgbToLinear(colors[i * 3 + 1])
+        colors[i * 3 + 2] = GeometryConverter.srgbToLinear(colors[i * 3 + 2])
+      }
     }
     return colors
+  }
+
+  private static srgbToLinear(x) {
+    if (x <= 0) return 0
+    else if (x >= 1) return 1
+    else if (x < 0.04045) return x / 12.92
+    else return Math.pow((x + 0.055) / 1.055, 2.4)
   }
 }

@@ -39,5 +39,5 @@ sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 // Load demo object
 sandbox.loadUrl(
-  'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce?c=%5B33.05147,79.11588,111.54311,90.85614,-8.557,-5.97019,0,1%5D'
+  'https://speckle.xyz/streams/9285308238/commits/de5699b8f6?c=%5B8.08303,6.08136,6.22769,-1.02295,-0.34969,0.82464,0,1%5D'
 )
