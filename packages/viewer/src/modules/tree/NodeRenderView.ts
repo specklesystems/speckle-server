@@ -1,3 +1,4 @@
+import { Box3 } from 'three'
 import { GeometryType } from '../batching/Batch'
 import { GeometryData } from '../converter/Geometry'
 import { SpeckleType } from '../converter/GeometryConverter'
@@ -30,6 +31,8 @@ export class NodeRenderView {
   private readonly _renderData: NodeRenderData
   private _materialHash: number
   private _geometryType: GeometryType
+
+  private _aabb: Box3 = null
 
   public static readonly NullRenderMaterialHash = this.hashCode(
     GeometryType.MESH.toString()
@@ -83,6 +86,10 @@ export class NodeRenderView {
     return this._batchId
   }
 
+  public get aabb() {
+    return this._aabb
+  }
+
   public get needsSegmentConversion() {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||
@@ -108,6 +115,10 @@ export class NodeRenderView {
     this._batchId = id
     this._batchIndexStart = start
     this._batchIndexCount = count
+  }
+
+  public computeAABB() {
+    this._aabb = new Box3().setFromArray(this._renderData.geometry.attributes.POSITION)
   }
 
   public getGeometryType(): GeometryType {

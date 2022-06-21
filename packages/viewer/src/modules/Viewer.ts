@@ -23,7 +23,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private container: HTMLElement
   private stats: Optional<Stats>
   private loaders: { [id: string]: ViewerObjectLoader } = {}
-  private needsRender: boolean
+  public needsRender: boolean
   private inProgressOperations: number
 
   public sectionBox: SectionBox
@@ -87,7 +87,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.container = container || document.getElementById('renderer')
 
-    this.speckleRenderer = new SpeckleRenderer()
+    this.speckleRenderer = new SpeckleRenderer(this)
     this.speckleRenderer.create(this.container)
     Viewer.Assets = new Assets(this.speckleRenderer.renderer)
 

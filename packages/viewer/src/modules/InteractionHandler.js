@@ -74,8 +74,8 @@ export default class InteractionHandler {
     this.selectedObjectsUserData = []
     this.selectedRawObjects = []
 
-    this.selectionHelper.on('object-doubleclicked', this._handleDoubleClick.bind(this))
-    this.selectionHelper.on('object-clicked', this._handleSelect.bind(this))
+    // this.selectionHelper.on('object-doubleclicked', this._handleDoubleClick.bind(this))
+    // this.selectionHelper.on('object-clicked', this._handleSelect.bind(this))
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.viewer.mouseOverRenderer) {

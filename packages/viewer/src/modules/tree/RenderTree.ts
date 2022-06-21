@@ -22,7 +22,9 @@ export class RenderTree {
           transform.premultiply(rendeNode.geometry.bakeTransform)
         }
         Geometry.transformGeometryData(rendeNode.geometry, transform)
+        node.model.renderView.computeAABB()
       }
+
       return true
     })
   }

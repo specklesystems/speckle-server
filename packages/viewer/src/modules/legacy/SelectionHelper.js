@@ -129,7 +129,7 @@ export default class _SelectionHelper extends EventEmitter {
       normalizedPosition,
       this.viewer.cameraHandler.activeCam.camera
     )
-    this.viewer.intersections.intersectScene(this.raycaster)
+    // this.viewer.intersections.intersectScene(this.raycaster)
     /**
      * This 'subset' thing is really weird and it's breaking picking. I would gladly
      * do something about it, however I'm afraid that it will open up a can of worms,

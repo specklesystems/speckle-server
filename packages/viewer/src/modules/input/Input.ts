@@ -1,15 +1,18 @@
+import { Vector2 } from 'three'
 import EventEmitter from '../EventEmitter'
 
 export interface InputOptions {
   hover: boolean
 }
 
-export default class SelectionHelper extends EventEmitter {
-  private pointerDown = false
+export const InputOptionsDefault = {
+  hover: false
+}
+
+export default class Input extends EventEmitter {
   private tapTimeout
   private lastTap = 0
   private touchLocation: Touch
-  private multiSelect = false
   private container
 
   constructor(container: HTMLElement, _options: InputOptions) {
@@ -27,7 +30,6 @@ export default class SelectionHelper extends EventEmitter {
     this.container.addEventListener('pointerup', (e) => {
       e.preventDefault()
       const delta = new Date().getTime() - mdTime
-      this.pointerDown = false
 
       if (delta > 250) return
 
@@ -65,15 +67,15 @@ export default class SelectionHelper extends EventEmitter {
     })
 
     // Handle multiple object selection
-    document.addEventListener('keydown', (e) => {
-      if (e.isComposing || e.keyCode === 229) return
-      if (e.key === 'Shift') this.multiSelect = true
-    })
+    // document.addEventListener('keydown', (e) => {
+    //   if (e.isComposing || e.keyCode === 229) return
+    //   if (e.key === 'Shift') this.multiSelect = true
+    // })
 
-    document.addEventListener('keyup', (e) => {
-      if (e.isComposing || e.keyCode === 229) return
-      if (e.key === 'Shift') this.multiSelect = false
-    })
+    // document.addEventListener('keyup', (e) => {
+    //   if (e.isComposing || e.keyCode === 229) return
+    //   if (e.key === 'Shift') this.multiSelect = false
+    // })
   }
 
   _getNormalisedClickPosition(e) {
@@ -85,10 +87,12 @@ export default class SelectionHelper extends EventEmitter {
       x: ((e.clientX - rect.left) * canvas.width) / rect.width,
       y: ((e.clientY - rect.top) * canvas.height) / rect.height
     }
-    return {
-      x: (pos.x / canvas.width) * 2 - 1,
-      y: (pos.y / canvas.height) * -2 + 1
-    }
+    const v = new Vector2(
+      (pos.x / canvas.width) * 2 - 1,
+      (pos.y / canvas.height) * -2 + 1
+    )
+    console.warn(v)
+    return v
   }
 
   dispose() {
