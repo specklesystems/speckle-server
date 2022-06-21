@@ -45,7 +45,7 @@
             </a>
           </div>
           <div class="ml-5 mt-10">
-            <span class="caption">There's no comments in this stream yet.</span>
+            <span class="caption">There are no comments in this stream yet.</span>
             <br />
             <a
               href="https://speckle.systems/tutorials/live-3d-comments-for-distributed-real-time-reviews/"

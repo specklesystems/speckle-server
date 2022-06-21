@@ -1,11 +1,14 @@
 <template>
   <div class="embed-viewer-core">
     <!-- Viewer navbar (position fixed) -->
-    <div v-if="!error" style="z-index: 10" class="viewer-navbar">
+    <div v-if="!error" style="z-index: 100">
       <div
-        class="top-left bottom-left pa-4"
-        style="right: 0px; position: fixed; z-index: 100000"
+        class="top-left bottom-left pa-4 d-flex justify-space-between"
+        style="right: 0px; position: fixed; z-index: 1000; width: 100%"
       >
+        <v-btn fab small style="z-index=1000" @click="drawer = !drawer">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
         <span v-show="!drawer" class="caption d-inline-flex align-center">
           <img src="@/assets/logo.svg" height="18" />
           <span style="margin-top: 2px" class="primary--text">
@@ -14,13 +17,12 @@
             </a>
           </span>
         </span>
-        <br />
       </div>
-      <div v-show="!drawer && loadedModel" class="caption grey--text pa-2">
-        <v-btn fab small @click="drawer = true">
-          <v-icon>mdi-menu</v-icon>
-        </v-btn>
-      </div>
+      <div
+        v-show="!drawer && loadedModel"
+        class="caption grey--text pa-2"
+        style="z-index=1000"
+      ></div>
       <div
         class="pa-2 d-flex align-center justify-space-between caption"
         style="position: fixed; bottom: 0; width: 100%"
@@ -90,15 +92,14 @@
     </v-navigation-drawer>
 
     <!-- Actual viewer -->
-    <div style="position: fixed" class="viewer-wrapper no-scrollbar">
+    <div style="position: fixed" class="viewer-wrapper no-scrollbar fullscreen">
       <speckle-viewer @load-progress="captureProgress" @viewer-init="onViewerInit" />
     </div>
   </div>
 </template>
 <script lang="ts">
 import { Nullable } from '@/helpers/typeHelpers'
-import Vue, { PropType } from 'vue'
-import { getCommit } from '@/embed/speckleUtils'
+import Vue from 'vue'
 import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue'
 import ViewerControls from '@/main/components/viewer/ViewerControls.vue'
 import ViewsDisplay from '@/main/components/viewer/ViewsDisplay.vue'
@@ -114,16 +115,6 @@ import ViewerFilters from '@/main/components/viewer/ViewerFilters.vue'
 
 type UnknownObject = Record<string, unknown>
 
-type EmbedViewerInput = {
-  stream: string
-  object: Nullable<string>
-  branch: Nullable<string>
-  commit: Nullable<string>
-  overlay: Nullable<string>
-  camera: Nullable<string>
-  filter: Nullable<string>
-}
-
 export default Vue.extend({
   name: 'EmbedViewerCore',
   components: {
@@ -133,13 +124,9 @@ export default Vue.extend({
     ViewerFilters
   },
   props: {
-    input: {
-      type: Object as PropType<EmbedViewerInput>,
-      required: true
-    },
-    objectUrl: {
-      type: String,
-      required: true
+    objects: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
@@ -154,17 +141,14 @@ export default Vue.extend({
   },
   computed: {
     goToServerUrl(): string {
-      const stream = this.input.stream
-      const base = `${window.location.origin}/streams/${stream}/`
+      const base = `${window.location.origin}/streams/${this.$route.query.stream}/`
 
-      const commit = this.input.commit
-      if (commit) return base + `commits/${commit}`
+      if (this.$route.query.commit) return base + `commits/${this.$route.query.commit}`
 
-      const object = this.input.object
-      if (object) return base + `objects/${object}`
+      if (this.$route.query.object) return base + `objects/${this.$route.query.object}`
 
-      const branch = this.input.branch
-      if (branch) return base + `branches/${encodeURI(branch)}`
+      if (this.$route.query.branch)
+        return base + `branches/${encodeURI(this.$route.query.branch as string)}`
 
       return base
     }
@@ -187,30 +171,10 @@ export default Vue.extend({
         throw new Error('Viewer instance unavailable')
       }
 
-      await window.__viewer.loadObject(this.objectUrl)
-
-      const overlayPromises = []
-      if (this.input.overlay) {
-        const resIds = this.input.overlay.split(',')
-        for (const res of resIds) {
-          if (res.length !== 10) {
-            overlayPromises.push(
-              window.__viewer.loadObject(
-                `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${res}`
-              )
-            )
-          } else {
-            overlayPromises.push(
-              getCommit(this.input.stream, res).then(({ data }) => {
-                return window.__viewer!.loadObject(
-                  `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${data.stream.commit.referencedObject}`
-                )
-              })
-            )
-          }
-        }
-      }
-      await Promise.all(overlayPromises)
+      for (const id of this.objects)
+        await window.__viewer.loadObject(
+          `${window.location.origin}/streams/${this.$route.query.stream}/objects/${id}`
+        )
 
       window.__viewer.zoomExtents(undefined, true)
 
@@ -219,15 +183,15 @@ export default Vue.extend({
       this.views.push(...window.__viewer.sceneManager.views)
       this.objectProperties = await window.__viewer.getObjectsProperties()
 
-      if (this.input.filter) {
-        const parsedFilter = JSON.parse(this.input.filter)
+      if (this.$route.query.filter) {
+        const parsedFilter = JSON.parse(this.$route.query.filter as string)
         setTimeout(() => {
           this.$store.commit('setFilterDirect', { filter: parsedFilter })
         }, 1000)
       }
 
-      if (this.input.camera) {
-        const cam = JSON.parse(this.input.camera)
+      if (this.$route.query.c) {
+        const cam = JSON.parse(this.$route.query.c as string)
         window.__viewer.interactions.setLookAt(
           { x: cam[0], y: cam[1], z: cam[2] }, // position
           { x: cam[3], y: cam[4], z: cam[5] } // target
@@ -254,7 +218,7 @@ export default Vue.extend({
 
     top: 0;
     left: 0;
-    z-index: 10;
+    z-index: 1;
   }
 
   .no-scrollbar {

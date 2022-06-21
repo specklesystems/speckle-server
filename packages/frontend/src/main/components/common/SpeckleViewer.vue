@@ -3,7 +3,13 @@
     <div
       id="rendererparent"
       ref="rendererparent"
-      :class="`background-${$vuetify.theme.dark ? 'dark' : 'light'}`"
+      :class="`${
+        $route.query.transparent === 'true'
+          ? ''
+          : $vuetify.theme.dark
+          ? 'background-dark'
+          : 'background-light'
+      }`"
     ></div>
   </div>
 </template>

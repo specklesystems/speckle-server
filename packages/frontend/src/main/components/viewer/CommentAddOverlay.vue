@@ -56,6 +56,7 @@
               >
                 <template v-for="reaction in $store.state.commentReactions">
                   <v-btn
+                    v-show="commentIsEmptyOrNull"
                     :key="reaction"
                     class="mr-2"
                     fab
@@ -148,6 +149,7 @@
             </v-btn>
             <template v-for="reaction in $store.state.commentReactions">
               <v-btn
+                v-show="commentIsEmptyOrNull"
                 :key="reaction"
                 class="mr-2"
                 fab
@@ -201,6 +203,7 @@ import { getCamArray } from './viewerFrontendHelpers'
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import {
   basicStringToDocument,
+  documentToBasicString,
   isDocEmpty
 } from '@/main/lib/common/text-editor/documentHelper'
 import {
@@ -256,6 +259,11 @@ export default {
   computed: {
     canComment() {
       return !!this.stream?.role || this.stream?.allowPublicComments
+    },
+    commentIsEmptyOrNull() {
+      if (!this.commentText) return true
+      const res = documentToBasicString(this.commentText)
+      return res === ''
     }
   },
   mounted() {

@@ -242,7 +242,8 @@ export default {
           c.bouncing = false
           if (
             this.localComments.findIndex((lc) => c.id === lc.id) === -1 &&
-            !c.archived
+            !c.archived &&
+            c.data.location
           ) {
             this.localComments.push({ ...c })
           }
@@ -289,7 +290,8 @@ export default {
             if (prevResult.comments.items.find((c) => c.id === newComment.id)) {
               return
             }
-            if (!newComment.archived) this.localComments.push(newComment)
+            if (!newComment.archived && newComment.data.location)
+              this.localComments.push(newComment)
 
             setTimeout(() => {
               // console.log('updateQuery timeout')

@@ -101,7 +101,8 @@ module.exports = {
         throw new Error('Failed to update commit branch. ')
       }
     }
-    return await Commits().where({ id }).update({ message })
+    if (message) await Commits().where({ id }).update({ message })
+    return true
   },
 
   async getCommitById({ streamId, id }) {
