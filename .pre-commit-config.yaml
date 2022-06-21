@@ -5,7 +5,7 @@ repos:
       - id: eslint
         types: [file]
         files: \.[jt]s$|vue$ # *.js, *.ts and vue
-        exclude: '(\/|^)((.*generated\/.*)|(\..*\.([jt]sx?|vue)))$'
+        exclude: '(\/|^)((generated\/.*)|(\..*\.([jt]sx?|vue)))$'
         args:
           - '--max-warnings=0'
         additional_dependencies:
