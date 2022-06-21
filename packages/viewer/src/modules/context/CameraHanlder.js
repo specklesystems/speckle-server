@@ -148,9 +148,7 @@ export default class CameraHandler {
     // fit the camera inside, so we don't have clipping plane issues.
     // WIP implementation
     const camPos = this.orthoCamera.position
-    const box = new THREE.Box3().setFromObject(
-      this.viewer.sceneManager.sceneObjects.allObjects
-    )
+    const box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
     const sphere = new THREE.Sphere()
     box.getBoundingSphere(sphere)
 

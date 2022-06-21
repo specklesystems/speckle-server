@@ -104,6 +104,9 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.off()
+    this.sectionBox.controls.addEventListener('change', () => {
+      this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
+    })
 
     this.interactions = new InteractionHandler(this)
 
@@ -189,7 +192,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public zoomExtents(fit?: number, transition?: boolean) {
-    this.interactions.zoomExtents(fit, transition)
+    this.speckleRenderer.zoomExtents(fit, transition)
   }
 
   public setProjectionMode(mode: typeof CameraHandler.prototype.activeCam) {

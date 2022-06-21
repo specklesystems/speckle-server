@@ -5,6 +5,7 @@ import {
   HemisphereLight,
   Intersection,
   LinearToneMapping,
+  Plane,
   PointLight,
   Scene,
   Sphere,
@@ -35,6 +36,11 @@ export default class SceneManager {
 
   public set indirectIBL(texture: Texture) {
     this.scene.environment = texture
+  }
+
+  /** TEMPORARY for backwards compatibility */
+  public get allObjects() {
+    return this.scene.getObjectByName('ContentGroup')
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -87,6 +93,15 @@ export default class SceneManager {
     for (const k in this.batcher.batches) {
       contentGroup.add(this.batcher.batches[k].renderObject)
     }
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    this.allObjects.traverse((object) => {
+      const material = (object as unknown as { material }).material
+      if (material) {
+        material.clippingPlanes = planes
+      }
+    })
   }
 
   private addDirectLights() {
@@ -174,18 +189,18 @@ export default class SceneManager {
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
-  zoomExtents(fit = 1.2, transition = true) {
+  public zoomExtents(fit = 1.2, transition = true) {
     if (this.viewer.sectionBox.display.visible) {
-      this.zoomToBox(this.viewer.sectionBox.cube, 1.2, true)
+      this.zoomToBox(this.viewer.sectionBox.cube.geometry.boundingBox, 1.2, true)
       return
     }
-    if (this.scene.getObjectByName('ContentGroup').children.length === 0) {
+    if (this.allObjects.children.length === 0) {
       const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
       this.zoomToBox(box, fit, transition)
       return
     }
 
-    const box = new Box3().setFromObject(this.scene.getObjectByName('ContentGroup'))
+    const box = new Box3().setFromObject(this.allObjects)
     this.zoomToBox(box, fit, transition)
     // this.viewer.controls.setBoundary( box )
   }
