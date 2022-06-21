@@ -75,7 +75,7 @@ export default Vue.extend({
   name: 'EmbedViewer',
   components: {
     EmbedViewerCore: () => import('@/embed/EmbedViewerCore.vue'),
-    PreviewImage: () => import('@/main/components/common/PreviewImage')
+    PreviewImage: () => import('@/main/components/common/PreviewImage.vue')
   },
   data() {
     return {
@@ -110,8 +110,8 @@ export default Vue.extend({
   },
   mounted() {
     if (this.$route.query.transparent === 'true') {
-      document.getElementById('app').classList.remove('theme--dark')
-      document.getElementById('app').classList.remove('theme--light')
+      document.getElementById('app')!.classList.remove('theme--dark')
+      document.getElementById('app')!.classList.remove('theme--light')
     }
     window.addEventListener('resize', () => {
       this.height = window.innerHeight
@@ -166,7 +166,7 @@ export default Vue.extend({
           } else {
             this.objectIdsToLoad.push(this.$route.query.object)
           }
-          for (const resId of this.$route.query.overlay.split(',')) {
+          for (const resId of (this.$route.query.overlay as string).split(',')) {
             if (resId.length === 10) {
               const res = await getCommitObj(this.$route.query.stream, resId)
               this.objectIdsToLoad.push(res.data.stream.commit.referencedObject)
@@ -181,13 +181,13 @@ export default Vue.extend({
       }
       // Mark as initialized (enable play button)
       this.isInitialized = true
-    } catch (e) {
-      this.error = e
+    } catch (e: unknown) {
+      this.error = e instanceof Error ? e : new Error('Unexpected error')
     }
   },
   methods: {
-    onError(e: Error) {
-      this.error = e
+    onError(e: unknown) {
+      this.error = e instanceof Error ? e : new Error('Unexpected error')
     },
     onModelLoaded() {
       this.isModelLoaded = true

@@ -148,7 +148,7 @@ export default Vue.extend({
       if (this.$route.query.object) return base + `objects/${this.$route.query.object}`
 
       if (this.$route.query.branch)
-        return base + `branches/${encodeURI(this.$route.query.branch)}`
+        return base + `branches/${encodeURI(this.$route.query.branch as string)}`
 
       return base
     }
