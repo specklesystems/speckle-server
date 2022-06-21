@@ -1333,81 +1333,6 @@ export type StreamCommitQueryQuery = {
   } | null
 }
 
-export type MainServerInfoFieldsFragment = {
-  __typename?: 'ServerInfo'
-  name: string
-  company?: string | null
-  description?: string | null
-  adminContact?: string | null
-  canonicalUrl?: string | null
-  termsOfService?: string | null
-  inviteOnly?: boolean | null
-  version?: string | null
-}
-
-export type ServerInfoRolesFieldsFragment = {
-  __typename?: 'ServerInfo'
-  roles: Array<{
-    __typename?: 'Role'
-    name: string
-    description: string
-    resourceTarget: string
-  } | null>
-}
-
-export type ServerInfoScopesFieldsFragment = {
-  __typename?: 'ServerInfo'
-  scopes: Array<{ __typename?: 'Scope'; name: string; description: string } | null>
-}
-
-export type CommonStreamFieldsFragment = {
-  __typename?: 'Stream'
-  id: string
-  name: string
-  description?: string | null
-  role?: string | null
-  isPublic: boolean
-  createdAt: any
-  updatedAt: any
-  commentCount: number
-  favoritedDate?: any | null
-  favoritesCount: number
-  collaborators: Array<{
-    __typename?: 'StreamCollaborator'
-    id: string
-    name: string
-    company?: string | null
-    avatar?: string | null
-    role: string
-  } | null>
-  commits?: { __typename?: 'CommitCollection'; totalCount: number } | null
-  branches?: { __typename?: 'BranchCollection'; totalCount: number } | null
-}
-
-export type CommonUserFieldsFragment = {
-  __typename?: 'User'
-  id: string
-  suuid?: string | null
-  email?: string | null
-  name?: string | null
-  bio?: string | null
-  company?: string | null
-  avatar?: string | null
-  verified?: boolean | null
-  profiles?: any | null
-  role?: string | null
-  streams?: { __typename?: 'StreamCollection'; totalCount: number } | null
-  commits?: {
-    __typename?: 'CommitCollectionUser'
-    totalCount: number
-    items?: Array<{
-      __typename?: 'CommitCollectionUserNode'
-      id: string
-      createdAt?: any | null
-    } | null> | null
-  } | null
-}
-
 export type StreamObjectQueryVariables = Exact<{
   streamId: Scalars['String']
   id: Scalars['String']
@@ -1446,6 +1371,33 @@ export type StreamObjectNoDataQuery = {
       speckleType?: string | null
     } | null
   } | null
+}
+
+export type MainServerInfoFieldsFragment = {
+  __typename?: 'ServerInfo'
+  name: string
+  company?: string | null
+  description?: string | null
+  adminContact?: string | null
+  canonicalUrl?: string | null
+  termsOfService?: string | null
+  inviteOnly?: boolean | null
+  version?: string | null
+}
+
+export type ServerInfoRolesFieldsFragment = {
+  __typename?: 'ServerInfo'
+  roles: Array<{
+    __typename?: 'Role'
+    name: string
+    description: string
+    resourceTarget: string
+  } | null>
+}
+
+export type ServerInfoScopesFieldsFragment = {
+  __typename?: 'ServerInfo'
+  scopes: Array<{ __typename?: 'Scope'; name: string; description: string } | null>
 }
 
 export type MainServerInfoQueryVariables = Exact<{ [key: string]: never }>
@@ -1591,6 +1543,30 @@ export type StreamsQuery = {
   } | null
 }
 
+export type CommonStreamFieldsFragment = {
+  __typename?: 'Stream'
+  id: string
+  name: string
+  description?: string | null
+  role?: string | null
+  isPublic: boolean
+  createdAt: any
+  updatedAt: any
+  commentCount: number
+  favoritedDate?: any | null
+  favoritesCount: number
+  collaborators: Array<{
+    __typename?: 'StreamCollaborator'
+    id: string
+    name: string
+    company?: string | null
+    avatar?: string | null
+    role: string
+  } | null>
+  commits?: { __typename?: 'CommitCollection'; totalCount: number } | null
+  branches?: { __typename?: 'BranchCollection'; totalCount: number } | null
+}
+
 export type StreamQueryVariables = Exact<{
   id: Scalars['String']
 }>
@@ -1619,6 +1595,30 @@ export type StreamQuery = {
     } | null>
     commits?: { __typename?: 'CommitCollection'; totalCount: number } | null
     branches?: { __typename?: 'BranchCollection'; totalCount: number } | null
+  } | null
+}
+
+export type CommonUserFieldsFragment = {
+  __typename?: 'User'
+  id: string
+  suuid?: string | null
+  email?: string | null
+  name?: string | null
+  bio?: string | null
+  company?: string | null
+  avatar?: string | null
+  verified?: boolean | null
+  profiles?: any | null
+  role?: string | null
+  streams?: { __typename?: 'StreamCollection'; totalCount: number } | null
+  commits?: {
+    __typename?: 'CommitCollectionUser'
+    totalCount: number
+    items?: Array<{
+      __typename?: 'CommitCollectionUserNode'
+      id: string
+      createdAt?: any | null
+    } | null> | null
   } | null
 }
 
@@ -1761,6 +1761,61 @@ export type UserQuery = {
   } | null
 }
 
+export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never }>
+
+export type Unnamed_1_Query = {
+  __typename?: 'Query'
+  user?: {
+    __typename?: 'User'
+    id: string
+    email?: string | null
+    name?: string | null
+    bio?: string | null
+    company?: string | null
+    avatar?: string | null
+    verified?: boolean | null
+    profiles?: any | null
+    role?: string | null
+    streams?: {
+      __typename?: 'StreamCollection'
+      totalCount: number
+      cursor?: string | null
+      items?: Array<{
+        __typename?: 'Stream'
+        id: string
+        name: string
+        description?: string | null
+        isPublic: boolean
+        createdAt: any
+        updatedAt: any
+        collaborators: Array<{
+          __typename?: 'StreamCollaborator'
+          id: string
+          name: string
+          company?: string | null
+          avatar?: string | null
+          role: string
+        } | null>
+        commits?: { __typename?: 'CommitCollection'; totalCount: number } | null
+        branches?: { __typename?: 'BranchCollection'; totalCount: number } | null
+      }> | null
+    } | null
+    commits?: {
+      __typename?: 'CommitCollectionUser'
+      totalCount: number
+      cursor?: string | null
+      items?: Array<{
+        __typename?: 'CommitCollectionUserNode'
+        id: string
+        message?: string | null
+        streamId?: string | null
+        streamName?: string | null
+        createdAt?: any | null
+      } | null> | null
+    } | null
+  } | null
+}
+
 export type UserProfileQueryVariables = Exact<{
   id: Scalars['String']
 }>
@@ -1866,116 +1921,6 @@ export type WebhooksQuery = {
             lastUpdate: any
           } | null> | null
         } | null
-      } | null> | null
-    } | null
-  } | null
-}
-
-export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never }>
-
-export type Unnamed_1_Query = {
-  __typename?: 'Query'
-  user?: {
-    __typename?: 'User'
-    id: string
-    email?: string | null
-    name?: string | null
-    bio?: string | null
-    company?: string | null
-    avatar?: string | null
-    verified?: boolean | null
-    profiles?: any | null
-    role?: string | null
-    streams?: {
-      __typename?: 'StreamCollection'
-      totalCount: number
-      cursor?: string | null
-      items?: Array<{
-        __typename?: 'Stream'
-        id: string
-        name: string
-        description?: string | null
-        isPublic: boolean
-        createdAt: any
-        updatedAt: any
-        collaborators: Array<{
-          __typename?: 'StreamCollaborator'
-          id: string
-          name: string
-          company?: string | null
-          avatar?: string | null
-          role: string
-        } | null>
-        commits?: { __typename?: 'CommitCollection'; totalCount: number } | null
-        branches?: { __typename?: 'BranchCollection'; totalCount: number } | null
-      }> | null
-    } | null
-    commits?: {
-      __typename?: 'CommitCollectionUser'
-      totalCount: number
-      cursor?: string | null
-      items?: Array<{
-        __typename?: 'CommitCollectionUserNode'
-        id: string
-        message?: string | null
-        streamId?: string | null
-        streamName?: string | null
-        createdAt?: any | null
-      } | null> | null
-    } | null
-  } | null
-}
-
-export type Unnamed_2_QueryVariables = Exact<{ [key: string]: never }>
-
-export type Unnamed_2_Query = {
-  __typename?: 'Query'
-  user?: {
-    __typename?: 'User'
-    id: string
-    email?: string | null
-    name?: string | null
-    bio?: string | null
-    company?: string | null
-    avatar?: string | null
-    verified?: boolean | null
-    profiles?: any | null
-    role?: string | null
-    streams?: {
-      __typename?: 'StreamCollection'
-      totalCount: number
-      cursor?: string | null
-      items?: Array<{
-        __typename?: 'Stream'
-        id: string
-        name: string
-        description?: string | null
-        isPublic: boolean
-        createdAt: any
-        updatedAt: any
-        collaborators: Array<{
-          __typename?: 'StreamCollaborator'
-          id: string
-          name: string
-          company?: string | null
-          avatar?: string | null
-          role: string
-        } | null>
-        commits?: { __typename?: 'CommitCollection'; totalCount: number } | null
-        branches?: { __typename?: 'BranchCollection'; totalCount: number } | null
-      }> | null
-    } | null
-    commits?: {
-      __typename?: 'CommitCollectionUser'
-      totalCount: number
-      cursor?: string | null
-      items?: Array<{
-        __typename?: 'CommitCollectionUserNode'
-        id: string
-        message?: string | null
-        streamId?: string | null
-        streamName?: string | null
-        createdAt?: any | null
       } | null> | null
     } | null
   } | null
@@ -2295,6 +2240,7 @@ export const User = gql`
     }
   }
 `
+
 export const UserProfile = gql`
   query UserProfile($id: String!) {
     user(id: $id) {
@@ -2372,7 +2318,6 @@ export const Webhooks = gql`
     }
   }
 `
-
 export const MainServerInfoFieldsFragmentDoc = gql`
   fragment MainServerInfoFields on ServerInfo {
     name
@@ -3076,6 +3021,57 @@ export const useUserQuery = createSmartQueryOptionsFunction<
   ApolloError
 >(UserDocument)
 
+export const Document = gql`
+  {
+    user {
+      id
+      email
+      name
+      bio
+      company
+      avatar
+      verified
+      profiles
+      role
+      streams(limit: 25) {
+        totalCount
+        cursor
+        items {
+          id
+          name
+          description
+          isPublic
+          createdAt
+          updatedAt
+          collaborators {
+            id
+            name
+            company
+            avatar
+            role
+          }
+          commits {
+            totalCount
+          }
+          branches {
+            totalCount
+          }
+        }
+      }
+      commits(limit: 25) {
+        totalCount
+        cursor
+        items {
+          id
+          message
+          streamId
+          streamName
+          createdAt
+        }
+      }
+    }
+  }
+`
 export const UserProfileDocument = gql`
   query UserProfile($id: String!) {
     user(id: $id) {
@@ -3268,106 +3264,3 @@ export const useWebhooksQuery = createSmartQueryOptionsFunction<
   WebhooksQueryVariables,
   ApolloError
 >(WebhooksDocument)
-
-export const Document = gql`
-  {
-    user {
-      id
-      email
-      name
-      bio
-      company
-      avatar
-      verified
-      profiles
-      role
-      streams(limit: 25) {
-        totalCount
-        cursor
-        items {
-          id
-          name
-          description
-          isPublic
-          createdAt
-          updatedAt
-          collaborators {
-            id
-            name
-            company
-            avatar
-            role
-          }
-          commits {
-            totalCount
-          }
-          branches {
-            totalCount
-          }
-        }
-      }
-      commits(limit: 25) {
-        totalCount
-        cursor
-        items {
-          id
-          message
-          streamId
-          streamName
-          createdAt
-        }
-      }
-    }
-  }
-`
-export const Document = gql`
-  {
-    user {
-      id
-      email
-      name
-      bio
-      company
-      avatar
-      verified
-      profiles
-      role
-      streams(limit: 25) {
-        totalCount
-        cursor
-        items {
-          id
-          name
-          description
-          isPublic
-          createdAt
-          updatedAt
-          collaborators {
-            id
-            name
-            company
-            avatar
-            role
-          }
-          commits {
-            totalCount
-          }
-          branches {
-            totalCount
-          }
-        }
-      }
-      commits(limit: 25) {
-        totalCount
-        cursor
-        items {
-          id
-          message
-          streamId
-          streamName
-          createdAt
-        }
-      }
-    }
-  }
-`

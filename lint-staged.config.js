@@ -6,8 +6,8 @@ module.exports = {
     const finalFiles = micromatch.not(files, [
       // Filter out files that start with a period, since they're ignored by default
       `**/.*.{${extList}}`,
-      // Filter out .ignored suffix files
-      `**/*.ignored.{${extList}}`
+      // Filter out generated folder files
+      `**/generated/**/*`
     ])
 
     return 'eslint --cache --max-warnings=0 ' + finalFiles.join(' ')

@@ -26,7 +26,7 @@ const config = {
     'public',
     'events.json',
     '.*.{ts,js,vue,tsx,jsx}',
-    '*.ignored.{ts,js,vue,tsx,jsx}'
+    'generated/**/*'
   ]
 }
 

@@ -44,7 +44,7 @@ import {
   UserFavoriteStreamsQuery,
   UserFavoriteStreamsQueryVariables,
   useUserFavoriteStreamsQuery
-} from '@/graphql/generated/graphql.ignored'
+} from '@/graphql/generated/graphql'
 import type { StateChanger } from 'vue-infinite-loading'
 import type { Get } from 'type-fest'
 import type { SmartQuery } from 'vue-apollo/types/vue-apollo'

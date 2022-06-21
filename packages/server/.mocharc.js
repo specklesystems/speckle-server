@@ -1,6 +1,6 @@
 'use strict'
 
-// RANDOM CHANGEE
+// RANDOM CHANGEEE
 
 /** @type {import("mocha").MochaOptions} */
 const config = {
