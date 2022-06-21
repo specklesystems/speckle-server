@@ -43,9 +43,5 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
-  },
-  "lint-staged": {
-    "*.{js,ts,vue}": "eslint --cache --max-warnings=0",
-    "*.**": "prettier --check --ignore-unknown"
   }
 }

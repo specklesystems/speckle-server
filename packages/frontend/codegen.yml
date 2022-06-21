@@ -4,7 +4,7 @@ documents:
   - 'src/graphql/**/*.gql'
   - 'src/**/*.{ts,tsx,js,jsx,vue}'
 generates:
-  src/graphql/generated/graphql.ts:
+  src/graphql/generated/graphql.ignored.ts:
     plugins:
       - 'typescript'
       - 'typescript-operations'

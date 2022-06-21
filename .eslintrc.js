@@ -20,7 +20,14 @@ const config = {
     'prefer-const': 'warn',
     'object-shorthand': 'warn'
   },
-  ignorePatterns: ['node_modules', 'dist', 'public', 'events.json', '.mocharc.js']
+  ignorePatterns: [
+    'node_modules',
+    'dist',
+    'public',
+    'events.json',
+    '.*',
+    '*.ignored.{ts,js,vue,tsx,jsx}'
+  ]
 }
 
 module.exports = config

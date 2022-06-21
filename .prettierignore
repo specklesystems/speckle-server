@@ -22,3 +22,6 @@ utils/helm/speckle-server/templates
 .eslintcache
 .venv
 venv
+
+.*
+*.ignored.{ts,js,vue,tsx,jsx}

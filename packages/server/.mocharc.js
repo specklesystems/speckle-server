@@ -1,5 +1,7 @@
 'use strict'
 
+// RANDOM CHANGE
+
 /** @type {import("mocha").MochaOptions} */
 const config = {
   spec: ['modules/**/*.spec.js'],

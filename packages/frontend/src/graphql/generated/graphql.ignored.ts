@@ -97,6 +97,27 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
+export type BlobMetadata = {
+  __typename?: 'BlobMetadata';
+  createdAt: Scalars['DateTime'];
+  fileName: Scalars['String'];
+  fileSize?: Maybe<Scalars['Int']>;
+  fileType: Scalars['String'];
+  id: Scalars['String'];
+  streamId: Scalars['String'];
+  uploadError?: Maybe<Scalars['String']>;
+  uploadStatus: Scalars['Int'];
+  userId: Scalars['String'];
+};
+
+export type BlobMetadataCollection = {
+  __typename?: 'BlobMetadataCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items?: Maybe<Array<BlobMetadata>>;
+  totalCount: Scalars['Int'];
+  totalSize: Scalars['Int'];
+};
+
 export type Branch = {
   __typename?: 'Branch';
   /** All the recent activity on this branch in chronological order */
@@ -167,7 +188,7 @@ export type Comment = {
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<Maybe<ResourceIdentifier>>;
   screenshot?: Maybe<Scalars['String']>;
-  text: Scalars['String'];
+  text: SmartTextEditorValue;
   /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
   updatedAt?: Maybe<Scalars['DateTime']>;
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
@@ -183,7 +204,7 @@ export type CommentRepliesArgs = {
 export type CommentCollection = {
   __typename?: 'CommentCollection';
   cursor?: Maybe<Scalars['DateTime']>;
-  items: Array<Maybe<Comment>>;
+  items: Array<Comment>;
   totalCount: Scalars['Int'];
 };
 
@@ -198,13 +219,15 @@ export type CommentCreateInput = {
   resources: Array<InputMaybe<ResourceIdentifierInput>>;
   screenshot?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
-  text: Scalars['String'];
+  /** ProseMirror document object */
+  text: Scalars['JSONObject'];
 };
 
 export type CommentEditInput = {
   id: Scalars['String'];
   streamId: Scalars['String'];
-  text: Scalars['String'];
+  /** ProseMirror document object */
+  text: Scalars['JSONObject'];
 };
 
 export type Commit = {
@@ -678,8 +701,15 @@ export type Query = {
   /** Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header). */
   user?: Maybe<User>;
   userPwdStrength?: Maybe<Scalars['JSONObject']>;
+  /**
+   * Search for users and return limited metadata about them, if you have the server:user role.
+   * The query looks for matches in name & email
+   */
   userSearch?: Maybe<UserSearchResultCollection>;
-  /** Get users from the server in a paginated view. The query search for matches in name, company and email. */
+  /**
+   * Get all (or search for specific) users from the server in a paginated view, if you have the server:admin role.
+   * The query looks for matches in name, company and email.
+   */
   users?: Maybe<UserCollection>;
 };
 
@@ -753,7 +783,8 @@ export type ReplyCreateInput = {
   data?: InputMaybe<Scalars['JSONObject']>;
   parentComment: Scalars['String'];
   streamId: Scalars['String'];
-  text: Scalars['String'];
+  /** ProseMirror document object */
+  text: Scalars['JSONObject'];
 };
 
 export type ResourceIdentifier = {
@@ -870,11 +901,24 @@ export type ServerStats = {
   userHistory?: Maybe<Array<Maybe<Scalars['JSONObject']>>>;
 };
 
+export type SmartTextEditorValue = {
+  __typename?: 'SmartTextEditorValue';
+  /** The actual (ProseMirror) document representing the text */
+  doc: Scalars['JSONObject'];
+  /** The type of editor value (comment, blog post etc.) */
+  type: Scalars['String'];
+  /** The version of the schema */
+  version: Scalars['String'];
+};
+
 export type Stream = {
   __typename?: 'Stream';
   /** All the recent activity on this stream in chronological order */
   activity?: Maybe<ActivityCollection>;
   allowPublicComments: Scalars['Boolean'];
+  blob?: Maybe<BlobMetadata>;
+  /** Get the metadata collection of blobs stored for this stream. */
+  blobs?: Maybe<BlobMetadataCollection>;
   branch?: Maybe<Branch>;
   branches?: Maybe<BranchCollection>;
   collaborators: Array<Maybe<StreamCollaborator>>;
@@ -919,6 +963,18 @@ export type StreamActivityArgs = {
   before?: InputMaybe<Scalars['DateTime']>;
   cursor?: InputMaybe<Scalars['DateTime']>;
   limit?: Scalars['Int'];
+};
+
+
+export type StreamBlobArgs = {
+  id: Scalars['String'];
+};
+
+
+export type StreamBlobsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1300,6 +1356,16 @@ export type StreamCommitQueryQueryVariables = Exact<{
 
 export type StreamCommitQueryQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, commit?: { __typename?: 'Commit', id: string, message?: string | null, referencedObject: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, createdAt?: any | null, branchName?: string | null, sourceApplication?: string | null } | null } | null };
 
+export type MainServerInfoFieldsFragment = { __typename?: 'ServerInfo', name: string, company?: string | null, description?: string | null, adminContact?: string | null, canonicalUrl?: string | null, termsOfService?: string | null, inviteOnly?: boolean | null, version?: string | null };
+
+export type ServerInfoRolesFieldsFragment = { __typename?: 'ServerInfo', roles: Array<{ __typename?: 'Role', name: string, description: string, resourceTarget: string } | null> };
+
+export type ServerInfoScopesFieldsFragment = { __typename?: 'ServerInfo', scopes: Array<{ __typename?: 'Scope', name: string, description: string } | null> };
+
+export type CommonStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null };
+
+export type CommonUserFieldsFragment = { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null };
+
 export type StreamObjectQueryVariables = Exact<{
   streamId: Scalars['String'];
   id: Scalars['String'];
@@ -1315,12 +1381,6 @@ export type StreamObjectNoDataQueryVariables = Exact<{
 
 
 export type StreamObjectNoDataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, object?: { __typename?: 'Object', totalChildrenCount?: number | null, id: string, speckleType?: string | null } | null } | null };
-
-export type MainServerInfoFieldsFragment = { __typename?: 'ServerInfo', name: string, company?: string | null, description?: string | null, adminContact?: string | null, canonicalUrl?: string | null, termsOfService?: string | null, inviteOnly?: boolean | null, version?: string | null };
-
-export type ServerInfoRolesFieldsFragment = { __typename?: 'ServerInfo', roles: Array<{ __typename?: 'Role', name: string, description: string, resourceTarget: string } | null> };
-
-export type ServerInfoScopesFieldsFragment = { __typename?: 'ServerInfo', scopes: Array<{ __typename?: 'Scope', name: string, description: string } | null> };
 
 export type MainServerInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1353,16 +1413,12 @@ export type StreamsQueryVariables = Exact<{
 
 export type StreamsQuery = { __typename?: 'Query', streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: any | null, message?: string | null, authorId?: string | null, branchName?: string | null, authorName?: string | null, authorAvatar?: string | null, referencedObject: string } | null> | null } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null };
 
-export type CommonStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null };
-
 export type StreamQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
 
 
 export type StreamQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null } | null };
-
-export type CommonUserFieldsFragment = { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null };
 
 export type UserFavoriteStreamsQueryVariables = Exact<{
   cursor?: InputMaybe<Scalars['String']>;
@@ -1387,11 +1443,6 @@ export type UserQueryVariables = Exact<{
 
 
 export type UserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, suuid?: string | null } | null };
-
-export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type Unnamed_1_Query = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, message?: string | null, streamId?: string | null, streamName?: string | null, createdAt?: any | null } | null> | null } | null } | null };
 
 export type UserProfileQueryVariables = Exact<{
   id: Scalars['String'];
@@ -1424,6 +1475,16 @@ export type WebhooksQueryVariables = Exact<{
 
 
 export type WebhooksQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, webhooks?: { __typename?: 'WebhookCollection', items?: Array<{ __typename?: 'Webhook', id: string, streamId: string, url: string, description?: string | null, triggers: Array<string | null>, enabled?: boolean | null, history?: { __typename?: 'WebhookEventCollection', items?: Array<{ __typename?: 'WebhookEvent', status: number, statusInfo: string, lastUpdate: any } | null> | null } | null } | null> | null } | null } | null };
+
+export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type Unnamed_1_Query = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, message?: string | null, streamId?: string | null, streamName?: string | null, createdAt?: any | null } | null> | null } | null } | null };
+
+export type Unnamed_2_QueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type Unnamed_2_Query = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, message?: string | null, streamId?: string | null, streamName?: string | null, createdAt?: any | null } | null> | null } | null } | null };
 
 export const MainServerInfoFields = gql`
     fragment MainServerInfoFields on ServerInfo {
@@ -1733,7 +1794,6 @@ export const User = gql`
   }
 }
     `;
-
 export const UserProfile = gql`
     query UserProfile($id: String!) {
   user(id: $id) {
@@ -1811,6 +1871,8 @@ export const Webhooks = gql`
   }
 }
     `;
+
+
 export const MainServerInfoFieldsFragmentDoc = gql`
     fragment MainServerInfoFields on ServerInfo {
   name
@@ -2508,57 +2570,6 @@ export const useUserQuery = createSmartQueryOptionsFunction<
   ApolloError
 >(UserDocument);
 
-export const Document = gql`
-    {
-  user {
-    id
-    email
-    name
-    bio
-    company
-    avatar
-    verified
-    profiles
-    role
-    streams(limit: 25) {
-      totalCount
-      cursor
-      items {
-        id
-        name
-        description
-        isPublic
-        createdAt
-        updatedAt
-        collaborators {
-          id
-          name
-          company
-          avatar
-          role
-        }
-        commits {
-          totalCount
-        }
-        branches {
-          totalCount
-        }
-      }
-    }
-    commits(limit: 25) {
-      totalCount
-      cursor
-      items {
-        id
-        message
-        streamId
-        streamName
-        createdAt
-      }
-    }
-  }
-}
-    `;
 export const UserProfileDocument = gql`
     query UserProfile($id: String!) {
   user(id: $id) {
@@ -2751,3 +2762,106 @@ export const useWebhooksQuery = createSmartQueryOptionsFunction<
   WebhooksQueryVariables,
   ApolloError
 >(WebhooksDocument);
+
+export const Document = gql`
+    {
+  user {
+    id
+    email
+    name
+    bio
+    company
+    avatar
+    verified
+    profiles
+    role
+    streams(limit: 25) {
+      totalCount
+      cursor
+      items {
+        id
+        name
+        description
+        isPublic
+        createdAt
+        updatedAt
+        collaborators {
+          id
+          name
+          company
+          avatar
+          role
+        }
+        commits {
+          totalCount
+        }
+        branches {
+          totalCount
+        }
+      }
+    }
+    commits(limit: 25) {
+      totalCount
+      cursor
+      items {
+        id
+        message
+        streamId
+        streamName
+        createdAt
+      }
+    }
+  }
+}
+    `;
+export const Document = gql`
+    {
+  user {
+    id
+    email
+    name
+    bio
+    company
+    avatar
+    verified
+    profiles
+    role
+    streams(limit: 25) {
+      totalCount
+      cursor
+      items {
+        id
+        name
+        description
+        isPublic
+        createdAt
+        updatedAt
+        collaborators {
+          id
+          name
+          company
+          avatar
+          role
+        }
+        commits {
+          totalCount
+        }
+        branches {
+          totalCount
+        }
+      }
+    }
+    commits(limit: 25) {
+      totalCount
+      cursor
+      items {
+        id
+        message
+        streamId
+        streamName
+        createdAt
+      }
+    }
+  }
+}
+    `;
