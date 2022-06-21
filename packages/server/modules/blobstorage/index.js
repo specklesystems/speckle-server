@@ -25,7 +25,11 @@ const {
   getBlobMetadata,
   getBlobMetadataCollection
 } = require('@/modules/blobstorage/services')
-const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
+const {
+  NotFoundError,
+  ResourceMismatch,
+  BadRequestError
+} = require('@/modules/shared/errors')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -50,7 +54,7 @@ const errorHandler = async (req, res, callback) => {
   } catch (err) {
     if (err instanceof NotFoundError) {
       res.status(404).send({ error: err.message })
-    } else if (err instanceof ResourceMismatch) {
+    } else if (err instanceof ResourceMismatch || err instanceof BadRequestError) {
       res.status(400).send({ error: err.message })
     } else {
       res.status(500).send({ error: err.message })
