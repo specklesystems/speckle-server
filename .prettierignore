@@ -7,7 +7,6 @@ coverage
 packages/server/reports*
 packages/objectloader/examples/browser/objectloader.web.js
 packages/viewer/example/speckleviewer.web.js
-packages/frontend/**/generated
 package-lock.json
 yarn.lock
 .yarn
@@ -22,3 +21,6 @@ utils/helm/speckle-server/templates
 .eslintcache
 .venv
 venv
+
+.*.{ts,js,vue,tsx,jsx}
+generated/**/*

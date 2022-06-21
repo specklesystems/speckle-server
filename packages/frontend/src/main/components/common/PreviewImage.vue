@@ -1,7 +1,13 @@
 <template>
   <div
     :style="`position: relative; height: ${height}px;`"
-    :class="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
+    :class="`${
+      $route.query.transparent === 'true'
+        ? ''
+        : $vuetify.theme.dark
+        ? 'grey darken-4'
+        : 'grey lighten-4'
+    }`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
     @mousemove="setIndex"

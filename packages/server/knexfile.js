@@ -79,9 +79,7 @@ const config = {
     ...commonConfig,
     connection: {
       connectionString: connectionUri,
-      application_name: 'speckle_server',
-      // global timeout of 12 hours, that kills stuck connections
-      query_timeout: 4.32e7
+      application_name: 'speckle_server'
     }
   }
 }

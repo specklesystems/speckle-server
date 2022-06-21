@@ -46,17 +46,13 @@
       <v-btn
         v-if="stream"
         v-tooltip="'Share this stream'"
-        elevation="0"
-        text
+        xxxelevation="0"
         rounded
-        class="mr-1 px-0"
+        class="mr-2 ml-2 px-0 primary"
         @click="shareStream = true"
       >
-        <v-icon v-if="!stream.isPublic" x-small class="mr-1 grey--text">
-          mdi-lock
-        </v-icon>
-        <v-icon v-else x-small class="mr-1 grey--text">mdi-lock-open</v-icon>
-        <v-icon small class="primary--text">mdi-share-variant</v-icon>
+        <v-icon v-if="!stream.isPublic" small class="mr-1">mdi-lock</v-icon>
+        <v-icon small>mdi-share-variant</v-icon>
       </v-btn>
     </portal>
     <v-dialog

@@ -1,31 +1,70 @@
-import {
-  branchLastCommitQuery,
-  serverInfoQuery,
-  streamCommitQuery
-} from './speckleQueries.js'
-
-export const SERVER_URL = window.location.origin
+const SERVER_URL = window.location.origin
 
 // Unauthorised fetch, without token to prevent use of localStorage or exposing elsewhere.
-export async function speckleFetch(query, variables) {
-  try {
-    const res = await fetch(`${SERVER_URL}/graphql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query,
-        variables
-      })
+async function speckleFetch(query, variables) {
+  const res = await fetch(`${SERVER_URL}/graphql`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      query,
+      variables
     })
-    return await res.json()
-  } catch (err) {
-    console.error('API call failed', err)
-  }
+  })
+  return await res.json()
 }
 
 export const getServerInfo = () => speckleFetch(serverInfoQuery)
-export const getLatestBranchCommit = (id, branch) =>
-  speckleFetch(branchLastCommitQuery, { id, branch })
-export const getCommit = (id, commit) => speckleFetch(streamCommitQuery, { id, commit })
+
+export const getStreamObj = (id) => speckleFetch(streamQuery, { id })
+
+export const getBranchObj = (id, branch) => speckleFetch(branchQuery, { id, branch })
+
+export const getCommitObj = (id, commit) => speckleFetch(commitQuery, { id, commit })
+
+const serverInfoQuery = `
+  query ServerInfo {
+    serverInfo {
+      name
+    }
+  }
+`
+
+const streamQuery = `
+  query Stream($id: String!) {
+    stream(id: $id) {
+      commits(limit: 1) {
+        totalCount
+        items {
+          referencedObject
+        }
+      }
+    }
+  }
+`
+
+const branchQuery = `
+  query Stream($id: String!, $branch: String!) {
+    stream(id: $id) {
+      branch(name: $branch) {
+        commits(limit: 1) {
+          totalCount
+          items {
+            referencedObject
+          }
+        }
+      }
+    }
+  }
+`
+
+const commitQuery = `
+  query Stream($id: String!, $commit: String!) {
+    stream(id: $id) {
+      commit(id: $commit) {
+        referencedObject
+      }
+    }
+  }
+`

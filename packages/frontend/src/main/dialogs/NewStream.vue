@@ -33,12 +33,12 @@
           v-model="isPublic"
           v-tooltip="
             isPublic
-              ? `Anyone can view this stream. It is also visible on your profile page. Only collaborators
+              ? `Anyone with the link can view this stream. It is also visible on your profile page. Only collaborators
           can edit it.`
               : `Only collaborators can access this stream.`
           "
           inset
-          :label="`${isPublic ? 'Public stream' : 'Private stream'}`"
+          :label="`${isPublic ? 'Link Sharing On' : 'Link Sharing Off'}`"
         />
 
         <p class="mt-5">
@@ -155,7 +155,7 @@ export default {
       valid: false,
       search: null,
       nameRules: [],
-      isPublic: false,
+      isPublic: true,
       collabs: [],
       isLoading: false
     }

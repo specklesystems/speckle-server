@@ -5,13 +5,15 @@ repos:
       - id: eslint
         types: [file]
         files: \.[jt]s$|vue$ # *.js, *.ts and vue
-        exclude: 'mocharc.js$'
+        exclude: '(\/|^)((generated\/.*)|(\..*\.([jt]sx?|vue)))$'
         args:
           - '--max-warnings=0'
         additional_dependencies:
           - eslint@8.11.0
           - eslint-config-prettier@8.5.0
           - eslint-plugin-vue@8.5.0
+          - '@babel/eslint-parser@7.18.2'
+          - '@babel/preset-env@t 7.16.11'
           - '@typescript-eslint/eslint-plugin@5.21.0'
           - '@typescript-eslint/parser@5.21.0'
           - typescript@4.5.4

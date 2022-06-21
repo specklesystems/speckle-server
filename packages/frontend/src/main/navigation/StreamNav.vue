@@ -215,7 +215,7 @@
     >
       <new-branch
         @close="newBranchDialog = false"
-        @refetch-branches="$apollo.queries.branchQuery.refetch()"
+        @refetch-branches="refetchBranches()"
       />
     </v-dialog>
   </portal>
@@ -327,7 +327,7 @@ export default {
           query Stream($streamId: String!, $cursor: String) {
             stream(id: $streamId) {
               id
-              branches(limit: 10, cursor: $cursor) {
+              branches(limit: 100, cursor: $cursor) {
                 totalCount
                 cursor
                 items {

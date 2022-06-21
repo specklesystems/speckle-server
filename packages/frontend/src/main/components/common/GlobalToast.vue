@@ -1,8 +1,8 @@
 <template>
-  <v-snackbar v-model="snack" app bottom color="primary">
+  <v-snackbar v-model="snack" app bottom color="primary" timeout="10000">
     {{ text }}
     <template #action="{}">
-      <v-btn v-if="actionName" :to="to" @click="snack = false">
+      <v-btn v-if="actionName" :to="to" small @click="snack = false">
         {{ actionName }}
       </v-btn>
       <v-btn small icon @click="snack = false">

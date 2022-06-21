@@ -62,31 +62,46 @@
         ></v-text-field>
       </v-card-text>
     </v-sheet>
-    <v-sheet v-if="$route.params.resourceId">
+    <v-sheet v-if="$route.params.resourceId || true">
       <v-toolbar dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>mdi-camera</v-icon>
         </v-app-bar-nav-icon>
-        <v-toolbar-title>Embed Viewer</v-toolbar-title>
+        <v-toolbar-title>Embed {{ embedType }}</v-toolbar-title>
         <v-spacer></v-spacer>
         <span v-if="!stream.isPublic" class="caption">
-          Viewer embedding only works if the stream is public.
+          Viewer embedding only works if link sharing is on.
         </span>
       </v-toolbar>
       <div v-if="stream.isPublic">
         <v-card-text>
           <div class="caption mx-1 pb-2">
-            Copy the code below to embed an iframe of this model in your webpage or
-            document.
+            Copy the code below to embed an iframe of
+            <b>{{ embedDescription }}</b>
+            in your webpage or document.
           </div>
-          <v-text-field
-            dense
-            :value="getIframeUrl()"
-            hint="Copied to clipboard!"
-            filled
-            rounded
-            @focus="copyToClipboard"
-          ></v-text-field>
+          <div class="d-flex align-center mt-4">
+            <v-text-field
+              dense
+              :value="getIframeUrl()"
+              hint="Copied to clipboard!"
+              filled
+              rounded
+              @focus="copyToClipboard"
+            ></v-text-field>
+            <div style="position: relative; top: -12px" class="d-flex align-center">
+              <v-checkbox
+                v-model="transparentBg"
+                class="ml-2 caption"
+                label=""
+              ></v-checkbox>
+              <span class="caption grey--text">
+                Transparent
+                <br />
+                background
+              </span>
+            </div>
+          </div>
         </v-card-text>
       </div>
     </v-sheet>
@@ -99,7 +114,7 @@
           <v-icon>{{ stream.isPublic ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
         </v-app-bar-nav-icon>
         <v-toolbar-title>
-          {{ stream.isPublic ? 'Public stream' : 'Private stream' }}
+          {{ stream.isPublic ? 'Link Sharing On' : 'Link Sharing Off' }}
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-switch
@@ -112,11 +127,12 @@
         />
       </v-toolbar>
       <v-card-text v-if="stream.isPublic" class="pt-2">
-        This stream is public. This means that anyone with the link can view and read
-        data from it.
+        Link sharing is on. This means that anyone with the link can view this stream.
+        Only collaborators will be able to send or edit data.
       </v-card-text>
       <v-card-text v-if="!stream.isPublic" class="pt-2 pb-2">
-        This stream is private. This means that only collaborators can access it.
+        Link sharing is off. This means that only collaborators can view or edit this
+        stream.
       </v-card-text>
     </v-sheet>
     <v-sheet v-if="stream">
@@ -219,12 +235,23 @@ export default {
   },
   data() {
     return {
-      swapPermsLoading: false
+      swapPermsLoading: false,
+      transparentBg: false
     }
   },
   computed: {
     streamUrl() {
       return `${window.location.origin}/streams/${this.$route.params.streamId}`
+    },
+    embedType() {
+      if (this.$route.params.branchName) return 'Branch'
+      if (this.$route.params.resourceId) return 'Model'
+      return 'Stream'
+    },
+    embedDescription() {
+      if (this.$route.params.branchName) return 'the latest commit in this branch'
+      if (this.$route.params.resourceId) return 'model'
+      return 'the latest commit in this stream'
     }
   },
   mounted() {
@@ -248,11 +275,17 @@ export default {
       this.$refs.streamInviteDialog.show()
     },
     getIframeUrl() {
+      let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
+
+      if (this.$route.params.branchName) {
+        base += `&branch=${this.$route.params.branchName}`
+        return this.wrapUrlInIframe(base)
+      }
+
       const resourceId = this.$route.params.resourceId
-      if (!resourceId) return null
-      let base = `${window.location.origin}/embed?stream=${
-        this.$route.params.streamId
-      }&${this.$resourceType(resourceId)}=${this.$route.params.resourceId}`
+      if (!resourceId) return this.wrapUrlInIframe(base)
+
+      base += `&${this.$resourceType(resourceId)}=${this.$route.params.resourceId}`
 
       if (this.$route.query.overlay) {
         base += `&overlay=${this.$route.query.overlay}`
@@ -264,7 +297,13 @@ export default {
         base += `&filter=${encodeURIComponent(this.$route.query.filter)}`
       }
 
-      return `<iframe src="${base}" width="600" height="400"></iframe>`
+      return this.wrapUrlInIframe(base)
+    },
+    wrapUrlInIframe(url) {
+      if (this.transparentBg) {
+        url += `&transparent=true`
+      }
+      return `<iframe src="${url}" width="600" height="400" frameborder="0"></iframe>`
     },
     async changeVisibility() {
       this.swapPermsLoading = true
