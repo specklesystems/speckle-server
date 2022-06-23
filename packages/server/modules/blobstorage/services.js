@@ -6,7 +6,8 @@ const {
 } = require('@/modules/shared/errors')
 const BlobStorage = () => knex('blob_storage')
 
-const blobLookup = ({ blobId }) => BlobStorage().where({ id: blobId })
+const blobLookup = ({ blobId, streamId }) =>
+  BlobStorage().where({ id: blobId, streamId })
 
 const uploadFileStream = async (
   storeFileStream,
@@ -37,9 +38,9 @@ const uploadFileStream = async (
 }
 
 const getBlobMetadata = async ({ streamId, blobId }, blobRepo = blobLookup) => {
-  const obj = (await blobRepo({ blobId }).first()) || null
-  if (!obj) throw new NotFoundError(`The requested asset: ${blobId} doesn't exist`)
   if (!streamId) throw new BadRequestError('No steamId provided')
+  const obj = (await blobRepo({ blobId, streamId }).first()) || null
+  if (!obj) throw new NotFoundError(`The requested asset: ${blobId} doesn't exist`)
   if (obj.streamId !== streamId)
     throw new ResourceMismatch("The stream doesn't have the given resource")
   return obj
@@ -122,13 +123,13 @@ const markUploadError = async (deleteObject, streamId, blobId, error) =>
 const deleteBlob = async ({ streamId, blobId, deleteObject }) => {
   const { objectKey } = await getBlobMetadata({ streamId, blobId })
   await deleteObject({ objectKey })
-  await blobLookup({ blobId }).del()
+  await blobLookup({ blobId, streamId }).del()
 }
 
 const updateBlobMetadata = async (streamId, blobId, updateCallback) => {
   const { objectKey, fileName } = await getBlobMetadata({ streamId, blobId })
   const updateData = await updateCallback({ objectKey })
-  await blobLookup({ blobId }).update(updateData)
+  await blobLookup({ blobId, streamId }).update(updateData)
   return { blobId, fileName, ...updateData }
 }
 

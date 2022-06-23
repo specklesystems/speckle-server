@@ -106,16 +106,14 @@ exports.init = async (app) => {
             markUploadSuccess(getObjectAttributes, streamId, blobId)
           )
         })
-        file.on('limit', () => {
+        file.on('limit', async () => {
+          await uploadOperations[blobId]
           finalizePromises.push(
             markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
           )
         })
         file.on('error', (err) => {
-          console.log(err)
-          finalizePromises.push(
-            markUploadError(deleteObject, blobId, 'i need some error info here')
-          )
+          finalizePromises.push(markUploadError(deleteObject, blobId, err.message))
         })
       })
 
@@ -129,8 +127,14 @@ exports.init = async (app) => {
         res.status(201).send({ uploadResults })
       })
 
-      busboy.on('error', (err) => {
+      busboy.on('error', async (err) => {
         debug('speckle:error')(`File upload error: ${err}`)
+        //delete all started uploads
+        await Promise.all(
+          Object.keys(uploadOperations).map((blobId) =>
+            markUploadError(deleteObject, streamId, blobId, err.message)
+          )
+        )
 
         const status = 400
         const response = 'Upload request error. The server logs have more details'

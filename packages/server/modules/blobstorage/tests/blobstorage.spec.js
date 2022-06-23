@@ -1,4 +1,3 @@
-const knex = require('@/db/knex')
 const expect = require('chai').expect
 const { beforeEachContext } = require('@/test/hooks')
 const {
@@ -13,43 +12,17 @@ const {
   markUploadOverFileSizeLimit,
   markUploadSuccess
 } = require('@/modules/blobstorage/services')
-const crs = require('crypto-random-string')
 const {
   NotFoundError,
   ResourceMismatch,
   BadRequestError
 } = require('@/modules/shared/errors')
 const { range } = require('lodash')
-const BlobStorage = () => knex('blob_storage')
+const { fakeIdGenerator, createBlobs } = require('@/modules/blobstorage/tests/helpers')
 
-const fakeIdGenerator = () => crs({ length: 10 })
 const fakeFileStreamStore = (fakeHash) => async () => ({ fileHash: fakeHash })
-const createBlobs = async ({ streamId, number, fileSize = 1 }) =>
-  await Promise.all(
-    range(number).map(async (num) => {
-      const id = fakeIdGenerator()
-      const dbFile = {
-        id: `${num}`.padStart(10, '0'),
-        streamId,
-        userId: id,
-        objectKey: id,
-        fileName: `${id}.${`${num}`.padStart(10, '0')}`,
-        fileType: id,
-        createdAt: new Date(num * 10_000),
-        fileSize
-      }
-      await BlobStorage().insert(dbFile)
-      return dbFile
-    })
-  )
 
 describe('Blob storage @blobstorage', () => {
-  // const user = {
-  //   name: 'Baron Von Blubba',
-  //   email: 'barron@bubble.bobble',
-  //   password: 'bubblesAreMyBlobs'
-  // }
-
   before(async () => {
     await beforeEachContext()
   })
@@ -315,6 +288,7 @@ describe('Blob storage @blobstorage', () => {
   it('markUploadSuccess returns with fileSize', async () => {
     const streamId = fakeIdGenerator()
     const [blob] = await createBlobs({ streamId, number: 1 })
+    console.log(blob)
     const blobId = blob.id
     const fileSize = 12345
     const getObjectAttributes = async () => ({ fileSize })

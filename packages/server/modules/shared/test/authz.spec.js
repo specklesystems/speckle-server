@@ -10,7 +10,8 @@ const {
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
-  UnauthorizedError: SUE
+  UnauthorizedError: SUE,
+  BadRequestError
 } = require('@/modules/shared/errors')
 
 describe('AuthZ @shared', () => {
@@ -214,6 +215,15 @@ describe('AuthZ @shared', () => {
       })
 
       expectAuthError(new ContextError(errorMessage), authResult)
+    })
+    it("If stream getter doesn't find a stream it returns fatal auth failure", async () => {
+      const step = contextRequiresStream(async () => {})
+      const { authResult } = await step({
+        params: { streamId: 'the need for stream' },
+        context: {}
+      })
+
+      expectAuthError(new BadRequestError('Stream inputs are malformed'), authResult)
     })
   })
 })
