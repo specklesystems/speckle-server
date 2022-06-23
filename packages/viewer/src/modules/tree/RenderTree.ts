@@ -102,6 +102,10 @@ export class RenderTree {
       .map((val: TreeNode) => val.model.renderView)
   }
 
+  /** This gets the render views for a particular node/id.
+   *  Currently it doesn't treat Blocks in a special way, but
+   *  we might want to.
+   */
   public getRenderViewsForNode(node: TreeNode): NodeRenderView[] {
     if (node.model.atomic) {
       return [node.model.renderView]
@@ -121,6 +125,15 @@ export class RenderTree {
     return WorldTree.getInstance()
       .getAncestors(node)
       .find((node) => node.model.atomic)
+  }
+
+  public getRenderViewsForNodeId(id: string): NodeRenderView[] {
+    const node = WorldTree.getInstance().findId(id)
+    if (!node) {
+      console.warn(`Id ${id} does not exist`)
+      return null
+    }
+    return this.getRenderViewsForNode(node)
   }
 
   /**

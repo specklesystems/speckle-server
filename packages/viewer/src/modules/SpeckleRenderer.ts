@@ -23,6 +23,7 @@ import {
 import { GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { SpeckleType } from './converter/GeometryConverter'
+import { FilterMaterial } from './FilteringManager'
 import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
@@ -133,6 +134,10 @@ export default class SceneManager {
     this.scene.add(helper)
 
     this.addDirectLights()
+  }
+
+  public applyFilter(ids: string[], filterMaterial: FilterMaterial) {
+    this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -253,10 +258,11 @@ export default class SceneManager {
     const hitId = rv.renderData.id
 
     const hitNode = WorldTree.getInstance().findId(hitId)
+    this.batcher.setObjectsFilterMaterial([hitNode.model.id], FilterMaterial.SELECT)
     // console.warn(hitNode)
-    const renderViews = WorldTree.getRenderTree().getRenderViewsForNode(hitNode)
+    // const renderViews = WorldTree.getRenderTree().getRenderViewsForNode(hitNode)
     // console.warn(renderViews)
-    this.batcher.selectRenderViews(renderViews)
+    // this.batcher.selectRenderViews(renderViews)
     // this.batcher.selectRenderView(rv)
     // this.batcher.isolateRenderViews(renderViews)
   }

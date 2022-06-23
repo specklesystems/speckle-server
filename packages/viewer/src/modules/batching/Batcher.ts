@@ -6,8 +6,9 @@ import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
+import { FilterMaterial } from '../FilteringManager'
 
 export default class Batcher {
   private materials: Materials
@@ -84,6 +85,37 @@ export default class Batcher {
     }
   }
 
+  public setObjectsFilterMaterial(ids: string[], filterMaterial: FilterMaterial) {
+    this.resetBatchesDrawRanges()
+
+    let rvs = []
+    ids.forEach((val: string) => {
+      const views = WorldTree.getRenderTree().getRenderViewsForNodeId(val)
+      for (let k = 0; k < views.length; k++) {
+        if (rvs.includes(views[k])) return
+      }
+      rvs = rvs.concat(WorldTree.getRenderTree().getRenderViewsForNodeId(val))
+    })
+    // console.log(ids)
+    // console.log(rvs)
+    const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
+    for (let i = 0; i < batchIds.length; i++) {
+      const batch = this.batches[batchIds[i]]
+      const views = rvs
+        .filter((value) => value.batchId === batchIds[i])
+        .map((rv: NodeRenderView) => {
+          return {
+            offset: rv.batchStart,
+            count: rv.batchCount,
+            material: this.materials.getFilterMaterial(rv, filterMaterial)
+          } as BatchUpdateRange
+        })
+      batch.setDrawRanges(true, ...views)
+    }
+  }
+
+  /** KEEPING THESE FOR REFERENCE FOR NOW */
+  /*
   public selectRenderViews(renderViews: NodeRenderView[]) {
     this.resetBatchesDrawRanges()
     const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
@@ -99,7 +131,7 @@ export default class Batcher {
             material: this.materials.getHighlightMaterial(rv)
           }
         })
-      console.warn(views)
+      // console.warn(views)
       batch.setDrawRanges(true, ...views)
     }
   }
@@ -152,7 +184,7 @@ export default class Batcher {
   public isolateRenderViews(renderViews: NodeRenderView[]) {
     this.resetBatchesDrawRanges()
     const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
-    console.warn('<<<< BATCHES >>>>>>')
+    // console.warn('<<<< BATCHES >>>>>>')
     for (const k in this.batches) {
       if (!batchIds.includes(k)) {
         this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
@@ -169,9 +201,10 @@ export default class Batcher {
             material: batch.batchMaterial
           }
         })
-      console.warn(views)
+      // console.warn(views)
       batch.setDrawRanges(false, ...views)
       batch.setVisibleRange(...views)
     }
   }
+  */
 }

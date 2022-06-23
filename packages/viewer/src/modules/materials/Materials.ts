@@ -6,13 +6,15 @@ import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRender
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
+import { FilterMaterial } from '../FilteringManager'
 
 export default class Materials {
   private readonly materialMap: { [hash: number]: Material } = {}
-  public meshHighlightMaterial: Material = null
-  public lineHighlightMaterial: Material = null
-  public pointCloudHighlightMaterial: Material = null
-  public pointHighlightMaterial: Material = null
+  private meshHighlightMaterial: Material = null
+  private meshGhostMaterial: Material = null
+  private lineHighlightMaterial: Material = null
+  private pointCloudHighlightMaterial: Material = null
+  private pointHighlightMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -82,7 +84,6 @@ export default class Materials {
       1281,
       1306
     )
-
     this.pointCloudHighlightMaterial = new SpecklePointMaterial({
       color: 0xff0000,
       vertexColors: true,
@@ -99,6 +100,16 @@ export default class Materials {
       // clippingPlanes: this.viewer.sectionBox.planes
     })
 
+    this.meshGhostMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0x7080a0,
+        side: DoubleSide,
+        transparent: true,
+        opacity: 0.2,
+        wireframe: false
+      },
+      ['USE_RTE']
+    )
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
@@ -222,6 +233,31 @@ export default class Materials {
         return this.pointHighlightMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointCloudHighlightMaterial
+    }
+  }
+
+  public getGhostMaterial(renderView: NodeRenderView): Material {
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        return this.meshGhostMaterial
+      case GeometryType.LINE:
+        return this.meshGhostMaterial
+      case GeometryType.POINT:
+        return this.meshGhostMaterial
+      case GeometryType.POINT_CLOUD:
+        return this.meshGhostMaterial
+    }
+  }
+
+  public getFilterMaterial(renderView: NodeRenderView, filterMaterial: FilterMaterial) {
+    switch (filterMaterial) {
+      case FilterMaterial.SELECT:
+        return this.getHighlightMaterial(renderView)
+      case FilterMaterial.GHOST:
+        return this.getGhostMaterial(renderView)
+        return null
+      case FilterMaterial.GRADIENT:
+        return null
     }
   }
 }

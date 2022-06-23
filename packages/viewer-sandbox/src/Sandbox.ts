@@ -1,4 +1,6 @@
-import { Viewer, IViewer } from '@speckle/viewer'
+import { SpeckleType } from '@speckle/viewer'
+import { GeometryConverter } from '@speckle/viewer'
+import { Viewer, IViewer, WorldTree, FilterMaterial } from '@speckle/viewer'
 import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
 import { Object3D } from '@speckle/viewer/node_modules/@types/three'
 import { Pane } from 'tweakpane'
@@ -32,7 +34,7 @@ export default class Sandbox {
     const t = `matrix(1.2, 0, 0, 1.2, -25, 16)`
     this.pane['containerElem_'].style.transform = t
     this.tabs = this.pane.addTab({
-      pages: [{ title: 'General' }, { title: 'Scene' }]
+      pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
     Sandbox.sceneParams.useRTE = viewer.RTE
     Sandbox.sceneParams.thickLines = viewer.thickLines
@@ -207,6 +209,23 @@ export default class Sandbox {
       })
   }
 
+  makeFilteringUI() {
+    const filteringFolder = this.tabs.pages[2].addFolder({
+      title: 'Filtering',
+      expanded: true
+    })
+    filteringFolder
+      .addButton({
+        title: 'Select Random'
+      })
+      .on('click', () => {
+        this.viewer.speckleRenderer.applyFilter(
+          this.getRandomNodeIds(),
+          FilterMaterial.GHOST
+        )
+      })
+  }
+
   public async loadUrl(url: string) {
     const objUrls = await UrlHelper.getResourceUrls(url)
     for (const url of objUrls) {
@@ -217,5 +236,34 @@ export default class Sandbox {
       await this.viewer.loadObject(url, authToken)
     }
     localStorage.setItem('last-load-url', url)
+  }
+
+  private getRandomNodeIds(): string[] {
+    const res: string[] = []
+    WorldTree.getInstance().walk(
+      (node: {
+        [x: string]: unknown
+        model: {
+          renderView: { hasGeometry: unknown }
+          atomic: unknown
+          children: string | unknown[]
+          id: string
+        }
+      }) => {
+        if (
+          node.model.renderView !== null &&
+          GeometryConverter.getSpeckleType(node.model) in SpeckleType &&
+          (node.model.atomic ||
+            (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
+        ) {
+          const _try = Math.random()
+          if (_try > 0.75) {
+            res.push(node.model.id)
+          }
+        }
+        return true
+      }
+    )
+    return res
   }
 }
