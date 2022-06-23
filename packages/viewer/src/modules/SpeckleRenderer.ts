@@ -184,6 +184,7 @@ export default class SceneManager {
     this.sun.position.setFromSpherical(spherical)
     this.sun.position.add(this.sunTarget.position)
     this.sun.updateWorldMatrix(true, true)
+    this.sunTarget.updateMatrixWorld()
     this.sun.shadow.updateMatrices(this.sun)
     const box = this.sceneBox
     const low = box.min
@@ -230,6 +231,7 @@ export default class SceneManager {
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
     this.camHelper.update()
+    // console.log(lightSpaceBox.min, lightSpaceBox.max)
   }
 
   private onObjectClick(e) {
