@@ -288,7 +288,6 @@ describe('Blob storage @blobstorage', () => {
   it('markUploadSuccess returns with fileSize', async () => {
     const streamId = fakeIdGenerator()
     const [blob] = await createBlobs({ streamId, number: 1 })
-    console.log(blob)
     const blobId = blob.id
     const fileSize = 12345
     const getObjectAttributes = async () => ({ fileSize })

@@ -112,8 +112,7 @@ const ensureStorageAccess = async () => {
     }
     if (createBucket) {
       try {
-        const res = await client.send(new CreateBucketCommand({ Bucket }))
-        console.log(res)
+        await client.send(new CreateBucketCommand({ Bucket }))
       } catch (err) {
         console.log(err)
       }
