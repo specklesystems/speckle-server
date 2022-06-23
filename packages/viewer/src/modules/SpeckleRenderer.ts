@@ -183,8 +183,8 @@ export default class SceneManager {
     const spherical = new Spherical(this.sceneSphere.radius + radiusOffset, phi, theta)
     this.sun.position.setFromSpherical(spherical)
     this.sun.position.add(this.sunTarget.position)
-
-    this.sun.shadow.camera.updateProjectionMatrix()
+    this.sun.updateWorldMatrix(true, true)
+    this.sun.shadow.updateMatrices(this.sun)
     const box = this.sceneBox
     const low = box.min
     const high = box.max
@@ -224,6 +224,9 @@ export default class SceneManager {
     this.sun.shadow.camera.right = lightSpaceBox.max.x
     this.sun.shadow.camera.top = lightSpaceBox.min.y
     this.sun.shadow.camera.bottom = lightSpaceBox.max.y
+    /** z is negative so smaller is actually 'larger' */
+    this.sun.shadow.camera.near = Math.abs(lightSpaceBox.max.z)
+    this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
     this.camHelper.update()
