@@ -1,17 +1,23 @@
 import {
-  AmbientLight,
   Box3,
+  Box3Helper,
+  CameraHelper,
+  Color,
+  DirectionalLight,
+  DirectionalLightHelper,
   Group,
-  HemisphereLight,
   Intersection,
   LinearToneMapping,
+  Mesh,
+  Object3D,
   Plane,
-  PointLight,
   Scene,
   Sphere,
+  Spherical,
   sRGBEncoding,
   Texture,
   Vector3,
+  VSMShadowMap,
   WebGLRenderer
 } from 'three'
 import { GeometryType } from './batching/Batch'
@@ -19,6 +25,7 @@ import Batcher from './batching/Batcher'
 import { SpeckleType } from './converter/GeometryConverter'
 import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { WorldTree } from './tree/WorldTree'
 import { Viewer } from './Viewer'
 
@@ -28,7 +35,10 @@ export default class SceneManager {
   private batcher: Batcher
   private intersections: Intersections
   private input: Input
+  private sun: DirectionalLight
+  private sunTarget: Object3D
   public viewer: Viewer // TEMPORARY
+  private camHelper: CameraHelper
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -41,6 +51,18 @@ export default class SceneManager {
   /** TEMPORARY for backwards compatibility */
   public get allObjects() {
     return this.scene.getObjectByName('ContentGroup')
+  }
+
+  public get sceneBox() {
+    return new Box3().setFromObject(this.allObjects)
+  }
+
+  public get sceneSphere() {
+    return this.sceneBox.getBoundingSphere(new Sphere())
+  }
+
+  public get sceneCenter() {
+    return this.sceneBox.getCenter(new Vector3())
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -61,14 +83,18 @@ export default class SceneManager {
     this._renderer.outputEncoding = sRGBEncoding
     this._renderer.toneMapping = LinearToneMapping
     this._renderer.toneMappingExposure = 0.5
+    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.type = VSMShadowMap
+    this.renderer.shadowMap.autoUpdate = false
+    this.renderer.shadowMap.needsUpdate = true
+    this.renderer.physicallyCorrectLights = true
+
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on('object-clicked', this.onObjectClick.bind(this))
     this.input.on('object-doubleclicked', this.onObjectDoubleClick.bind(this))
-
-    this.addDirectLights()
   }
 
   public addRenderTree() {
@@ -91,11 +117,26 @@ export default class SceneManager {
     this.scene.add(contentGroup)
 
     for (const k in this.batcher.batches) {
+      const batch = this.batcher.batches[k]
+      const batchRenderable = batch.renderObject
       contentGroup.add(this.batcher.batches[k].renderObject)
+      if ((batchRenderable as Mesh).isMesh) {
+        const mesh = batchRenderable as unknown as Mesh
+        const material = mesh.material as SpeckleStandardMaterial
+        if (!material.transparent) {
+          batchRenderable.castShadow = true
+          batchRenderable.receiveShadow = true
+        }
+      }
     }
+    const helper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
+    this.scene.add(helper)
+
+    this.addDirectLights()
   }
 
   public updateClippingPlanes(planes: Plane[]) {
+    if (!this.allObjects) return
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
       if (material) {
@@ -105,31 +146,87 @@ export default class SceneManager {
   }
 
   private addDirectLights() {
-    const ambientLight = new AmbientLight(0xffffff)
-    this.scene.add(ambientLight)
+    this.sun = new DirectionalLight(0xffffff, 5)
+    this.sun.name = 'sun'
+    this.scene.add(this.sun)
 
-    const lights = []
-    lights[0] = new PointLight(0xffffff, 0.21, 0)
-    lights[1] = new PointLight(0xffffff, 0.21, 0)
-    lights[2] = new PointLight(0xffffff, 0.21, 0)
-    lights[3] = new PointLight(0xffffff, 0.21, 0)
+    this.sun.castShadow = true
 
-    const factor = 1000
-    lights[0].position.set(1 * factor, 1 * factor, 1 * factor)
-    lights[1].position.set(1 * factor, -1 * factor, 1 * factor)
-    lights[2].position.set(-1 * factor, -1 * factor, 1 * factor)
-    lights[3].position.set(-1 * factor, 1 * factor, 1 * factor)
+    this.sun.shadow.mapSize.width = 2048
+    this.sun.shadow.mapSize.height = 2048
 
-    this.scene.add(lights[0])
-    this.scene.add(lights[1])
-    this.scene.add(lights[2])
-    this.scene.add(lights[3])
+    const sceneSize = new Box3().setFromObject(this.allObjects).getSize(new Vector3())
+    const d = Math.max(sceneSize.x, sceneSize.y, sceneSize.z)
 
-    const hemiLight = new HemisphereLight(0xffffff, 0x0, 0.2)
-    hemiLight.color.setHSL(1, 1, 1)
-    hemiLight.groundColor.setHSL(0.095, 1, 0.75)
-    hemiLight.up.set(0, 0, 1)
-    this.scene.add(hemiLight)
+    this.sun.shadow.camera.left = -d
+    this.sun.shadow.camera.right = d
+    this.sun.shadow.camera.top = d
+    this.sun.shadow.camera.bottom = -d
+    this.sun.shadow.bias = 0.5
+    this.sun.shadow.camera.near = 5
+    this.sun.shadow.camera.far = 350
+    this.sun.shadow.bias = -0.0001
+
+    this.sunTarget = new Object3D()
+    this.scene.add(this.sunTarget)
+    this.sunTarget.position.copy(this.sceneCenter)
+    this.sun.target = this.sunTarget
+    const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
+    this.scene.add(dirLightHelper)
+    this.camHelper = new CameraHelper(this.sun.shadow.camera)
+    this.scene.add(this.camHelper)
+
+    this.updateDirectLights(0.47, 0)
+  }
+
+  public updateDirectLights(phi: number, theta: number, radiusOffset = 0) {
+    const spherical = new Spherical(this.sceneSphere.radius + radiusOffset, phi, theta)
+    this.sun.position.setFromSpherical(spherical)
+    this.sun.position.add(this.sunTarget.position)
+
+    this.sun.shadow.camera.updateProjectionMatrix()
+    const box = this.sceneBox
+    const low = box.min
+    const high = box.max
+
+    /** Get the 8 vertices of the world space bounding box */
+    const corner1 = new Vector3(low.x, low.y, low.z)
+    const corner2 = new Vector3(high.x, low.y, low.z)
+    const corner3 = new Vector3(low.x, high.y, low.z)
+    const corner4 = new Vector3(low.x, low.y, high.z)
+
+    const corner5 = new Vector3(high.x, high.y, low.z)
+    const corner6 = new Vector3(high.x, low.y, high.z)
+    const corner7 = new Vector3(low.x, high.y, high.z)
+    const corner8 = new Vector3(high.x, high.y, high.z)
+
+    /** Transform them to light space */
+    corner1.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner2.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner3.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner4.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner5.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner6.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner7.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    corner8.applyMatrix4(this.sun.shadow.camera.matrixWorldInverse)
+    /** Compute the light space bounding box */
+    const lightSpaceBox = new Box3().setFromPoints([
+      corner1,
+      corner2,
+      corner3,
+      corner4,
+      corner5,
+      corner6,
+      corner7,
+      corner8
+    ])
+    this.sun.shadow.camera.left = lightSpaceBox.min.x
+    this.sun.shadow.camera.right = lightSpaceBox.max.x
+    this.sun.shadow.camera.top = lightSpaceBox.min.y
+    this.sun.shadow.camera.bottom = lightSpaceBox.max.y
+    this.sun.shadow.camera.updateProjectionMatrix()
+    this.renderer.shadowMap.needsUpdate = true
+    this.camHelper.update()
   }
 
   private onObjectClick(e) {

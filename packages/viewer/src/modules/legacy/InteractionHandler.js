@@ -1,9 +1,9 @@
 import * as THREE from 'three'
-import SelectionHelper from './legacy/SelectionHelper'
+import SelectionHelper from './SelectionHelper'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
-import SpeckleLambertMaterial from './materials/SpeckleLambertMaterial'
-import { Geometry } from './converter/Geometry'
-import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import SpeckleLambertMaterial from '../materials/SpeckleLambertMaterial'
+import { Geometry } from '../converter/Geometry'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 
 export default class InteractionHandler {
   constructor(viewer) {

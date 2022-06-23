@@ -4,7 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
-import InteractionHandler from './InteractionHandler'
+import InteractionHandler from './legacy/InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'

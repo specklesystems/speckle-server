@@ -19,7 +19,10 @@ export default class Sandbox {
     thickLines: true,
     pixelThreshold: 0.5,
     exposure: 0.4,
-    tonemapping: 'Linear'
+    tonemapping: 'Linear',
+    sunPhi: 0.5,
+    sunTheta: 0.5,
+    sunRadiusOffset: 0
   }
 
   public constructor(viewer: Viewer) {
@@ -172,6 +175,35 @@ export default class Sandbox {
       })
       .on('change', () => {
         this.viewer.renderer.toneMapping = Sandbox.sceneParams.tonemapping
+      })
+
+    const lightsFolder = this.tabs.pages[1].addFolder({
+      title: 'Lights',
+      expanded: true
+    })
+    lightsFolder
+      .addInput(Sandbox.sceneParams, 'sunPhi', {
+        min: 0,
+        max: Math.PI
+      })
+      .on('change', () => {
+        this.viewer.speckleRenderer.updateDirectLights(
+          Sandbox.sceneParams.sunPhi,
+          Sandbox.sceneParams.sunTheta,
+          Sandbox.sceneParams.sunRadiusOffset
+        )
+      })
+    lightsFolder
+      .addInput(Sandbox.sceneParams, 'sunTheta', {
+        min: -Math.PI * 0.5,
+        max: Math.PI * 0.5
+      })
+      .on('change', () => {
+        this.viewer.speckleRenderer.updateDirectLights(
+          Sandbox.sceneParams.sunPhi,
+          Sandbox.sceneParams.sunTheta,
+          Sandbox.sceneParams.sunRadiusOffset
+        )
       })
   }
 
