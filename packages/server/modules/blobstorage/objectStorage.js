@@ -93,7 +93,8 @@ const storeFileStream = async ({ objectKey, fileStream }) => {
 
   const data = await parallelUploads3.done()
   // the ETag is a hash of the object. Could be used to dedupe stuff...
-  return { fileHash: data.ETag }
+  const fileHash = data.ETag.replaceAll('"', '')
+  return { fileHash }
 }
 
 const deleteObject = async ({ objectKey }) => {

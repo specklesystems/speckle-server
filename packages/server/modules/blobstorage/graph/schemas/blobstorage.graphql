@@ -24,6 +24,7 @@ type BlobMetadata {
   userId: String!
   fileName: String!
   fileType: String!
+  fileHash: String
   fileSize: Int
   uploadStatus: Int!
   uploadError: String

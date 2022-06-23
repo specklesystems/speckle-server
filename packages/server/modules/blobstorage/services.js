@@ -34,6 +34,7 @@ const uploadFileStream = async (
   await BlobStorage().insert(dbFile)
   const { fileHash } = await storeFileStream({ objectKey, fileStream })
   // here we should also update the blob db record with the fileHash
+  await BlobStorage().where({ id: blobId }).update({ fileHash })
   return { blobId, fileName, fileHash }
 }
 

@@ -17,7 +17,8 @@ const createBlobs = async ({ streamId, number, fileSize = 1 }) =>
         fileName: `${id}.${`${num}`.padStart(10, '0')}`,
         fileType: id,
         createdAt: new Date(num * 10_000),
-        fileSize
+        fileSize,
+        fileHash: id
       }
       await BlobStorage().insert(dbFile)
       return dbFile

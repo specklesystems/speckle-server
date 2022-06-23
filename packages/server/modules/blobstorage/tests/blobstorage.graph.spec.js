@@ -42,6 +42,7 @@ describe('Blobs graphql @blobstorage', () => {
             fileName
             uploadStatus
             fileSize
+            fileHash
           }
         }
       }
@@ -58,6 +59,7 @@ describe('Blobs graphql @blobstorage', () => {
     const blobMetadata = result.data.stream.blob
     expect(blobMetadata.id).to.equal(blob.id)
     expect(blobMetadata.fileSize).to.equal(blob.fileSize)
+    expect(blobMetadata.fileHash).to.equal(blob.fileHash)
   })
 
   it('Blob metadata collection returns proper summary values', async () => {
