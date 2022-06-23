@@ -18,7 +18,6 @@ let server
 describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
     before(async () => {
-      console.log('before auth')
       ;({ app } = await beforeEachContext())
       ;({ server, sendRequest } = await initializeTestServer(app))
     })

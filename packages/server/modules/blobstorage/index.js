@@ -25,7 +25,11 @@ const {
   getBlobMetadata,
   getBlobMetadataCollection
 } = require('@/modules/blobstorage/services')
-const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
+const {
+  NotFoundError,
+  ResourceMismatch,
+  BadRequestError
+} = require('@/modules/shared/errors')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -50,7 +54,7 @@ const errorHandler = async (req, res, callback) => {
   } catch (err) {
     if (err instanceof NotFoundError) {
       res.status(404).send({ error: err.message })
-    } else if (err instanceof ResourceMismatch) {
+    } else if (err instanceof ResourceMismatch || err instanceof BadRequestError) {
       res.status(400).send({ error: err.message })
     } else {
       res.status(500).send({ error: err.message })
@@ -102,16 +106,14 @@ exports.init = async (app) => {
             markUploadSuccess(getObjectAttributes, streamId, blobId)
           )
         })
-        file.on('limit', () => {
+        file.on('limit', async () => {
+          await uploadOperations[blobId]
           finalizePromises.push(
             markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
           )
         })
         file.on('error', (err) => {
-          console.log(err)
-          finalizePromises.push(
-            markUploadError(deleteObject, blobId, 'i need some error info here')
-          )
+          finalizePromises.push(markUploadError(deleteObject, blobId, err.message))
         })
       })
 
@@ -125,8 +127,14 @@ exports.init = async (app) => {
         res.status(201).send({ uploadResults })
       })
 
-      busboy.on('error', (err) => {
+      busboy.on('error', async (err) => {
         debug('speckle:error')(`File upload error: ${err}`)
+        //delete all started uploads
+        await Promise.all(
+          Object.keys(uploadOperations).map((blobId) =>
+            markUploadError(deleteObject, streamId, blobId, err.message)
+          )
+        )
 
         const status = 400
         const response = 'Upload request error. The server logs have more details'

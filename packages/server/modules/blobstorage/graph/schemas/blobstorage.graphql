@@ -2,7 +2,11 @@ extend type Stream {
   """
   Get the metadata collection of blobs stored for this stream.
   """
-  blobs(query: String, limit: Int = 25, cursor: String): BlobMetadataCollection
+  blobs(
+    query: String = null
+    limit: Int = 25
+    cursor: String = null
+  ): BlobMetadataCollection
 
   blob(id: String!): BlobMetadata
 }
@@ -20,6 +24,7 @@ type BlobMetadata {
   userId: String!
   fileName: String!
   fileType: String!
+  fileHash: String
   fileSize: Int
   uploadStatus: Int!
   uploadError: String

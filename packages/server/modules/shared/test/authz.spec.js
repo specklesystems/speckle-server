@@ -10,14 +10,49 @@ const {
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
-  UnauthorizedError: SUE
+  UnauthorizedError: SUE,
+  BadRequestError,
+  UnauthorizedError
 } = require('@/modules/shared/errors')
 
 describe('AuthZ @shared', () => {
-  it('Empty pipeline returns no authorization', async () => {
-    const pipeline = authPipelineCreator([])
-    const { authResult } = await pipeline({ context: { foo: 'bar' } })
-    expect(authResult.authorized).to.equal(false)
+  describe('Auth pipeline', () => {
+    it('Empty pipeline returns no authorization', async () => {
+      const pipeline = authPipelineCreator([])
+      const { authResult } = await pipeline({ context: { foo: 'bar' } })
+      expect(authResult.authorized).to.equal(false)
+    })
+    it('Pipeline breaks on fatal error', async () => {
+      const errorMessage = 'dummy'
+      const fatalFail = async () => authFailed({}, new Error(errorMessage), true)
+      const shouldRescue = async () => authSuccess()
+      const pipeline = authPipelineCreator([shouldRescue, fatalFail, shouldRescue])
+      const { authResult } = await pipeline({ context: { foo: 'bar' } })
+      expect(authResult.authorized).to.equal(false)
+      expect(authResult.fatal).to.equal(true)
+      expect(authResult.error.message).to.equal(errorMessage)
+    })
+    it('Pipeline continues for non fatal errors', async () => {
+      const nonFatalFail = async () => authFailed({}, new Error('errorMessage'), false)
+      const shouldRescue = async () => authSuccess()
+      const pipeline = authPipelineCreator([shouldRescue, nonFatalFail, shouldRescue])
+      const { authResult } = await pipeline({ context: { foo: 'bar' } })
+      expect(authResult.authorized).to.equal(true)
+      expect(authResult.fatal).to.not.exist
+      expect(authResult.error).to.not.exist
+    })
+    it('Pipeline throws Error if authorized but has error', async () => {
+      const borkedStep = async () => ({
+        authResult: { authorized: true, error: new UnauthorizedError('Weird stuff') }
+      })
+      const pipeline = authPipelineCreator([borkedStep])
+      try {
+        await pipeline({ context: { foo: 'bar' } })
+        throw new Error('This should have thrown')
+      } catch (err) {
+        expect(err.message).to.equal('Auth failure')
+      }
+    })
   })
 
   describe('Role validation', () => {
@@ -214,6 +249,15 @@ describe('AuthZ @shared', () => {
       })
 
       expectAuthError(new ContextError(errorMessage), authResult)
+    })
+    it("If stream getter doesn't find a stream it returns fatal auth failure", async () => {
+      const step = contextRequiresStream(async () => {})
+      const { authResult } = await step({
+        params: { streamId: 'the need for stream' },
+        context: {}
+      })
+
+      expectAuthError(new BadRequestError('Stream inputs are malformed'), authResult)
     })
   })
 })

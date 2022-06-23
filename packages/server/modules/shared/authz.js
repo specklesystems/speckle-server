@@ -4,12 +4,13 @@ const { getRoles } = require('@/modules/shared')
 const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
-  ContextError
+  ContextError,
+  BadRequestError
 } = require('@/modules/shared/errors')
 
-const authFailed = (context, error = null) => ({
+const authFailed = (context, error = null, fatal = false) => ({
   context,
-  authResult: { authorized: false, error }
+  authResult: { authorized: false, error, fatal }
 })
 const authSuccess = (context) => ({
   context,
@@ -97,6 +98,12 @@ const contextRequiresStream =
         streamId: params.streamId,
         userId: context?.userId
       })
+      if (!stream)
+        return authFailed(
+          context,
+          new BadRequestError('Stream inputs are malformed'),
+          true
+        )
       context.stream = stream
       return { context, authResult }
     } catch (err) {
@@ -126,10 +133,10 @@ const authPipelineCreator = (steps) => {
     let authResult = { authorized: false, error: null }
     for (const step of steps) {
       ;({ context, authResult } = await step({ context, authResult, params }))
+      if (authResult.fatal) break
     }
     // validate auth result a bit...
-    if (authResult.authorized && authResult.error)
-      throw new Error('a big fuckup on our end')
+    if (authResult.authorized && authResult.error) throw new Error('Auth failure')
     return { context, authResult }
   }
   return pipeline

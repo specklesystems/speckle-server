@@ -1,9 +1,11 @@
+const { NotFoundError } = require('@/modules/shared/errors')
 const {
   S3Client,
   GetObjectCommand,
   HeadBucketCommand,
   DeleteObjectCommand,
-  CreateBucketCommand
+  CreateBucketCommand,
+  S3ServiceException
 } = require('@aws-sdk/client-s3')
 const { Upload } = require('@aws-sdk/lib-storage')
 
@@ -47,15 +49,28 @@ const getObjectStorage = () => ({
   createBucket: process.env.S3_CREATE_BUCKET || false
 })
 
-const getObjectStream = async ({ objectKey }) => {
+const sendCommand = async (command) => {
   const { client, Bucket } = getObjectStorage()
-  const data = await client.send(new GetObjectCommand({ Bucket, Key: objectKey }))
+  try {
+    return await client.send(command(Bucket))
+  } catch (err) {
+    if (err instanceof S3ServiceException && err.Code === 'NoSuchKey')
+      throw new NotFoundError(err.message)
+    throw err
+  }
+}
+
+const getObjectStream = async ({ objectKey }) => {
+  const data = await sendCommand(
+    (Bucket) => new GetObjectCommand({ Bucket, Key: objectKey })
+  )
   return data.Body
 }
 
 const getObjectAttributes = async ({ objectKey }) => {
-  const { client, Bucket } = getObjectStorage()
-  const data = await client.send(new GetObjectCommand({ Bucket, Key: objectKey }))
+  const data = await sendCommand(
+    (Bucket) => new GetObjectCommand({ Bucket, Key: objectKey })
+  )
   return { fileSize: data.ContentLength }
 }
 
@@ -78,12 +93,12 @@ const storeFileStream = async ({ objectKey, fileStream }) => {
 
   const data = await parallelUploads3.done()
   // the ETag is a hash of the object. Could be used to dedupe stuff...
-  return { fileHash: data.ETag }
+  const fileHash = data.ETag.replaceAll('"', '')
+  return { fileHash }
 }
 
 const deleteObject = async ({ objectKey }) => {
-  const { client, Bucket } = getObjectStorage()
-  await client.send(new DeleteObjectCommand({ Bucket, Key: objectKey }))
+  await sendCommand((Bucket) => new DeleteObjectCommand({ Bucket, Key: objectKey }))
 }
 const ensureStorageAccess = async () => {
   const { client, Bucket, createBucket } = getObjectStorage()
@@ -97,8 +112,7 @@ const ensureStorageAccess = async () => {
     }
     if (createBucket) {
       try {
-        const res = await client.send(new CreateBucketCommand({ Bucket }))
-        console.log(res)
+        await client.send(new CreateBucketCommand({ Bucket }))
       } catch (err) {
         console.log(err)
       }

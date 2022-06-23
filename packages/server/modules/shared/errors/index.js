@@ -18,6 +18,11 @@ class NotFoundError extends BaseError {
   static defaultMessage = "These aren't the droids you're looking for."
 }
 
+class BadRequestError extends BaseError {
+  static code = 'BAD_REQUEST_ERROR'
+  static defaultMessage = 'The request contains invalid data'
+}
+
 class ResourceMismatch extends BaseError {
   static code = 'BAD_REQUEST_ERROR'
   static defaultMessage = 'The target resources mismatch'
@@ -41,6 +46,7 @@ class ContextError extends BaseError {
 }
 
 module.exports = {
+  BadRequestError,
   ForbiddenError,
   UnauthorizedError,
   NotFoundError,
