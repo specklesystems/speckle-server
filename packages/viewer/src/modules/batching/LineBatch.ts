@@ -5,6 +5,7 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Line,
+  Material,
   Object3D,
   Vector4
 } from 'three'
@@ -62,7 +63,7 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
-  public setDrawRanges(autoFill: boolean, ...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
@@ -83,8 +84,13 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
+  autoFillDrawRanges(material?: Material) {
+    material
+    // to do
+  }
+
   public resetDrawRanges() {
-    this.setDrawRanges(false, {
+    this.setDrawRanges({
       offset: 0,
       count: Infinity,
       material: this.batchMaterial

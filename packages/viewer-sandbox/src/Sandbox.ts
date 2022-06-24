@@ -220,8 +220,8 @@ export default class Sandbox {
       })
       .on('click', () => {
         this.viewer.speckleRenderer.applyFilter(
-          this.getRandomNodeIds(),
-          FilterMaterial.GHOST
+          this.getRandomNodeIds(0.75),
+          FilterMaterial.SELLECT
         )
       })
   }
@@ -238,7 +238,7 @@ export default class Sandbox {
     localStorage.setItem('last-load-url', url)
   }
 
-  private getRandomNodeIds(): string[] {
+  private getRandomNodeIds(chance: number): string[] {
     const res: string[] = []
     WorldTree.getInstance().walk(
       (node: {
@@ -257,7 +257,7 @@ export default class Sandbox {
             (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
         ) {
           const _try = Math.random()
-          if (_try > 0.75) {
+          if (_try < chance) {
             res.push(node.model.id)
           }
         }

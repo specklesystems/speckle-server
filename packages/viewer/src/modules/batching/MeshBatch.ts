@@ -59,68 +59,69 @@ export default class MeshBatch implements Batch {
    * In the near future, we'll re-sort the index buffer so we minimize draw calls to
    * a minimmum. For now it's ok
    */
-  public setDrawRanges(autoFill: boolean, ...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => val.material)
-    materials.splice(0, 0, this.batchMaterial)
     this.mesh.material = materials
     const sortedRanges = ranges.sort((a, b) => {
       return a.offset - b.offset
     })
     for (let k = 0; k < sortedRanges.length; k++) {
-      if (autoFill) {
-        if (k === 0) {
-          if (sortedRanges[k].offset > 0) {
-            this.geometry.addGroup(0, sortedRanges[k].offset, 0)
-          }
-        } else {
-          if (
-            sortedRanges[k].offset >
-            sortedRanges[k - 1].offset + sortedRanges[k - 1].count
-          ) {
-            this.geometry.addGroup(
-              sortedRanges[k - 1].offset + sortedRanges[k - 1].count,
-              sortedRanges[k].offset -
-                sortedRanges[k - 1].offset +
-                sortedRanges[k - 1].count,
-              0
-            )
-          }
-        }
-      }
       this.geometry.addGroup(
         ranges[k].offset,
         ranges[k].count,
         materials.indexOf(ranges[k].material)
       )
-      if (autoFill) {
-        if (k === sortedRanges.length - 1) {
-          if (
-            sortedRanges[k].offset + sortedRanges[k].count <
-            this.geometry.index.count
-          ) {
-            this.geometry.addGroup(
-              sortedRanges[k].offset + sortedRanges[k].count,
-              this.geometry.index.count -
-                sortedRanges[k].offset +
-                sortedRanges[k].count,
-              0
-            )
-          }
-        } else {
-          if (
-            sortedRanges[k].offset + sortedRanges[k].count <
-            sortedRanges[k + 1].offset
-          ) {
-            this.geometry.addGroup(
-              sortedRanges[k].offset + sortedRanges[k].count,
-              sortedRanges[k + 1].offset -
-                sortedRanges[k].offset +
-                sortedRanges[k].count,
-              0
-            )
-          }
+    }
+  }
+
+  public autoFillDrawRanges(material?: Material) {
+    const materials = Array.isArray(this.mesh.material)
+      ? this.mesh.material
+      : [this.mesh.material]
+    materials.splice(0, 0, material ? material : this.batchMaterial)
+    this.mesh.material = materials
+    const sortedRanges = this.geometry.groups
+      .sort((a, b) => {
+        return a.start - b.start
+      })
+      .slice()
+    for (let k = 0; k < sortedRanges.length; k++) {
+      if (k === 0) {
+        if (sortedRanges[k].start > 0) {
+          this.geometry.addGroup(0, sortedRanges[k].start, 0)
+        }
+      } else {
+        if (
+          sortedRanges[k].start >
+          sortedRanges[k - 1].start + sortedRanges[k - 1].count
+        ) {
+          this.geometry.addGroup(
+            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
+            sortedRanges[k].start -
+              sortedRanges[k - 1].start +
+              sortedRanges[k - 1].count,
+            0
+          )
         }
       }
+      if (k === sortedRanges.length - 1) {
+        if (sortedRanges[k].start + sortedRanges[k].count < this.geometry.index.count) {
+          this.geometry.addGroup(
+            sortedRanges[k].start + sortedRanges[k].count,
+            this.geometry.index.count - sortedRanges[k].start + sortedRanges[k].count,
+            0
+          )
+        }
+      } else {
+        if (sortedRanges[k].start + sortedRanges[k].count < sortedRanges[k + 1].start) {
+          this.geometry.addGroup(
+            sortedRanges[k].start + sortedRanges[k].count,
+            sortedRanges[k + 1].start - sortedRanges[k].start + sortedRanges[k].count,
+            0
+          )
+        }
+      }
+      sortedRanges[k].materialIndex++
     }
   }
 

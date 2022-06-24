@@ -17,7 +17,8 @@ export interface Batch {
   getCount(): number
   setBatchMaterial(material: Material): void
   setVisibleRange(...range: BatchUpdateRange[])
-  setDrawRanges(autoFill?: boolean, ...ranges: BatchUpdateRange[])
+  setDrawRanges(...ranges: BatchUpdateRange[])
+  autoFillDrawRanges(material?: Material)
   resetDrawRanges()
   buildBatch()
   getRenderView(index: number): NodeRenderView

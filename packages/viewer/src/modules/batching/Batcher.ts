@@ -118,7 +118,8 @@ export default class Batcher {
             material: this.materials.getFilterMaterial(rv, filterMaterial)
           } as BatchUpdateRange
         })
-      batch.setDrawRanges(true, ...views)
+      batch.setDrawRanges(...views)
+      batch.autoFillDrawRanges()
     }
   }
 
