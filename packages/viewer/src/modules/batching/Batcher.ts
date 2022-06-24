@@ -75,6 +75,14 @@ export default class Batcher {
     }
   }
 
+  public purgeBatches() {
+    for (const k in this.batches) {
+      this.batches[k].purge()
+      delete this.batches[k]
+    }
+    this.materials.purge()
+  }
+
   public getRenderView(batchId: string, index: number) {
     return this.batches[batchId].getRenderView(index)
   }

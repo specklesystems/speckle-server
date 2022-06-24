@@ -125,6 +125,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
       WorldTree.getRenderTree().buildRenderTree()
       this.speckleRenderer.addRenderTree()
+      // this.zoomExtents()
 
       console.warn('Built stuff')
     })
@@ -229,22 +230,26 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public async unloadObject(url: string) {
-    try {
-      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
-
-      await this.loaders[url].unload()
-      delete this.loaders[url]
-    } finally {
-      if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-    }
+    url
+    // try {
+    //   if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
+    //   await this.loaders[url].unload()
+    //   delete this.loaders[url]
+    // } finally {
+    //   if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
+    // }
   }
 
   public async unloadAll() {
     for (const key of Object.keys(this.loaders)) {
-      await this.loaders[key].unload()
       delete this.loaders[key]
     }
+
     await this.applyFilter(null)
+    this.speckleRenderer.removeRenderTree()
+    WorldTree.getRenderTree().purge()
+    WorldTree.getInstance().purge()
+
     return
   }
 

@@ -76,4 +76,11 @@ export class WorldTree {
   public walk(predicate: SearchPredicate): void {
     this._root.walk(predicate)
   }
+
+  public purge() {
+    WorldTree.renderTreeInstance = null
+    this._root.children.length = 0
+    this._root = null
+    this.tree = new TreeModel()
+  }
 }

@@ -31,6 +31,7 @@ import { WorldTree } from './tree/WorldTree'
 import { Viewer } from './Viewer'
 
 export default class SceneManager {
+  private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
   public scene: Scene
   private batcher: Batcher
@@ -68,6 +69,11 @@ export default class SceneManager {
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this.scene = new Scene()
+    if (this.SHOW_HELPERS) {
+      const helpers = new Group()
+      helpers.name = 'Helpers'
+      this.scene.add(helpers)
+    }
     this.batcher = new Batcher()
     this.intersections = new Intersections()
     this.viewer = viewer
@@ -130,10 +136,21 @@ export default class SceneManager {
         }
       }
     }
-    const helper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
-    this.scene.add(helper)
+    if (this.SHOW_HELPERS) {
+      const helper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
+      this.scene.getObjectByName('Helpers').add(helper)
+    }
 
     this.addDirectLights()
+  }
+
+  public removeRenderTree() {
+    this.scene.remove(this.scene.getObjectByName('ContentGroup'))
+    this.batcher.purgeBatches()
+    this.scene.remove(this.sun, this.sunTarget)
+    if (this.SHOW_HELPERS) {
+      this.scene.remove(this.scene.getObjectByName('Helpers'))
+    }
   }
 
   public applyFilter(ids: string[], filterMaterial: FilterMaterial) {
@@ -176,10 +193,12 @@ export default class SceneManager {
     this.scene.add(this.sunTarget)
     this.sunTarget.position.copy(this.sceneCenter)
     this.sun.target = this.sunTarget
-    const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
-    this.scene.add(dirLightHelper)
-    this.camHelper = new CameraHelper(this.sun.shadow.camera)
-    this.scene.add(this.camHelper)
+    if (this.SHOW_HELPERS) {
+      const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
+      this.scene.getObjectByName('Helpers').add(dirLightHelper)
+      this.camHelper = new CameraHelper(this.sun.shadow.camera)
+      this.scene.getObjectByName('Helpers').add(this.camHelper)
+    }
 
     this.updateDirectLights(0.47, 0)
   }
@@ -235,7 +254,7 @@ export default class SceneManager {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
-    this.camHelper.update()
+    if (this.SHOW_HELPERS) this.camHelper.update()
     // console.log(lightSpaceBox.min, lightSpaceBox.max)
   }
 

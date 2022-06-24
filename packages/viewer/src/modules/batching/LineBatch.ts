@@ -212,4 +212,12 @@ export default class LineBatch implements Batch {
       data[k + 3] = color.w
     }
   }
+
+  public purge() {
+    this.renderViews.length = 0
+    this.geometry.dispose()
+    this.batchMaterial.dispose()
+    this.mesh = null
+    this.colorBuffer.length = 0
+  }
 }

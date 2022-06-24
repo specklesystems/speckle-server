@@ -260,4 +260,8 @@ export default class Materials {
         return null
     }
   }
+
+  public purge() {
+    // to do
+  }
 }

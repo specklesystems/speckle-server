@@ -211,4 +211,11 @@ export default class MeshBatch implements Batch {
 
     return this.geometry
   }
+
+  public purge() {
+    this.renderViews.length = 0
+    this.geometry.dispose()
+    this.batchMaterial.dispose()
+    this.mesh = null
+  }
 }

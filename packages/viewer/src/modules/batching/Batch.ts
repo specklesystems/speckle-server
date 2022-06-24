@@ -21,6 +21,7 @@ export interface Batch {
   resetDrawRanges()
   buildBatch()
   getRenderView(index: number): NodeRenderView
+  purge()
 }
 
 export interface BatchUpdateRange {
