@@ -20,8 +20,8 @@ export default class Sandbox {
     useRTE: false,
     thickLines: true,
     pixelThreshold: 0.5,
-    exposure: 0.4,
-    tonemapping: 'Linear',
+    exposure: 0.5,
+    tonemapping: 'ACESFilmicToneMapping',
     sunPhi: 0.5,
     sunTheta: 0.5,
     sunRadiusOffset: 0
@@ -165,7 +165,8 @@ export default class Sandbox {
         max: 1
       })
       .on('change', () => {
-        this.viewer.renderer.toneMappingExposure = Sandbox.sceneParams.exposure
+        this.viewer.speckleRenderer.renderer.toneMappingExposure =
+          Sandbox.sceneParams.exposure
       })
 
     postFolder
@@ -176,7 +177,8 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.renderer.toneMapping = Sandbox.sceneParams.tonemapping
+        this.viewer.speckleRenderer.renderer.toneMapping =
+          Sandbox.sceneParams.tonemapping
       })
 
     const lightsFolder = this.tabs.pages[1].addFolder({

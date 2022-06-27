@@ -1,4 +1,5 @@
 import {
+  ACESFilmicToneMapping,
   Box3,
   Box3Helper,
   CameraHelper,
@@ -7,7 +8,6 @@ import {
   DirectionalLightHelper,
   Group,
   Intersection,
-  LinearToneMapping,
   Mesh,
   Object3D,
   Plane,
@@ -89,7 +89,7 @@ export default class SceneManager {
     this._renderer.setClearColor(0xcccccc, 0)
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.outputEncoding = sRGBEncoding
-    this._renderer.toneMapping = LinearToneMapping
+    this._renderer.toneMapping = ACESFilmicToneMapping
     this._renderer.toneMappingExposure = 0.5
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = VSMShadowMap
