@@ -113,7 +113,7 @@ export default class MeshBatch implements Batch {
         return a.start - b.start
       })
       .slice()
-    console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
+    // console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
     for (let k = 0; k < sortedRanges.length; k++) {
       if (k === 0) {
         if (sortedRanges[k].start > 0) {
@@ -172,6 +172,7 @@ export default class MeshBatch implements Batch {
       count += val.count
     })
     if (count < this.getCount()) {
+      // Shouldn't happen
       console.error(`DrawRange MESH autocomplete failed! ${count}vs${this.getCount()}`)
     }
   }

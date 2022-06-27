@@ -15,6 +15,7 @@ export default class Materials {
   private lineHighlightMaterial: Material = null
   private pointCloudHighlightMaterial: Material = null
   private pointHighlightMaterial: Material = null
+  private meshGradientMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -111,6 +112,19 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshGhostMaterial.depthWrite = false
+
+    this.meshGradientMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0x0000ff,
+        side: DoubleSide,
+        transparent: false,
+        opacity: 1,
+        wireframe: false
+      },
+      ['USE_RTE']
+    )
+    this.meshGhostMaterial.depthWrite = false
+
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
@@ -243,11 +257,24 @@ export default class Materials {
       case GeometryType.MESH:
         return this.meshGhostMaterial
       case GeometryType.LINE:
-        return this.meshGhostMaterial
+        return this.meshGhostMaterial // TO DO
       case GeometryType.POINT:
-        return this.meshGhostMaterial
+        return this.meshGhostMaterial // TO DO
       case GeometryType.POINT_CLOUD:
-        return this.meshGhostMaterial
+        return this.meshGhostMaterial // TO DO
+    }
+  }
+
+  public getGradientMaterial(renderView: NodeRenderView): Material {
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        return this.meshGradientMaterial
+      case GeometryType.LINE:
+        return this.meshGradientMaterial // TO DO
+      case GeometryType.POINT:
+        return this.meshGradientMaterial // TO DO
+      case GeometryType.POINT_CLOUD:
+        return this.meshGradientMaterial // TO DO
     }
   }
 
@@ -257,9 +284,8 @@ export default class Materials {
         return this.getHighlightMaterial(renderView)
       case FilterMaterial.GHOST:
         return this.getGhostMaterial(renderView)
-        return null
       case FilterMaterial.GRADIENT:
-        return null
+        return this.getGradientMaterial(renderView)
     }
   }
 

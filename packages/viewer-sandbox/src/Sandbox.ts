@@ -230,7 +230,7 @@ export default class Sandbox {
 
     filteringFolder
       .addButton({
-        title: 'Select&Ghost Random'
+        title: 'Select&Ghost&Gradient Random'
       })
       .on('click', () => {
         this.viewer.speckleRenderer.clearFilter()
@@ -242,6 +242,10 @@ export default class Sandbox {
         this.viewer.speckleRenderer.applyFilter(
           this.getRandomNodeIds(0.25),
           FilterMaterial.GHOST
+        )
+        this.viewer.speckleRenderer.applyFilter(
+          this.getRandomNodeIds(0.15),
+          FilterMaterial.GRADIENT
         )
         this.viewer.speckleRenderer.endFilter()
       })
