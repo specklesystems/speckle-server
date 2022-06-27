@@ -125,7 +125,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
       WorldTree.getRenderTree().buildRenderTree()
       this.speckleRenderer.addRenderTree()
-      // this.zoomExtents()
+      this.zoomExtents()
 
       console.warn('Built stuff')
     })

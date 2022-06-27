@@ -61,67 +61,118 @@ export default class MeshBatch implements Batch {
    */
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => val.material)
-    this.mesh.material = materials
+    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+    if (Array.isArray(this.mesh.material))
+      this.mesh.material = this.mesh.material.concat(uniqueMaterials)
+    else {
+      this.mesh.material = [this.mesh.material, ...uniqueMaterials]
+    }
     const sortedRanges = ranges.sort((a, b) => {
       return a.offset - b.offset
     })
+    const newGroups = []
     for (let k = 0; k < sortedRanges.length; k++) {
+      const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
+      if (collidingGroup) {
+        console.warn(`Draw range collision @ ${this.id} overwritting...`)
+        collidingGroup.materialIndex = this.mesh.material.indexOf(
+          sortedRanges[k].material
+        )
+        continue
+      }
+      newGroups.push(sortedRanges[k])
+    }
+    for (let i = 0; i < newGroups.length; i++) {
       this.geometry.addGroup(
-        ranges[k].offset,
-        ranges[k].count,
-        materials.indexOf(ranges[k].material)
+        newGroups[i].offset,
+        newGroups[i].count,
+        this.mesh.material.indexOf(newGroups[i].material)
       )
     }
   }
 
-  public autoFillDrawRanges(material?: Material) {
-    const materials = Array.isArray(this.mesh.material)
-      ? this.mesh.material
-      : [this.mesh.material]
-    materials.splice(0, 0, material ? material : this.batchMaterial)
-    this.mesh.material = materials
+  private getDrawRangeCollision(range: BatchUpdateRange): {
+    start: number
+    count: number
+    materialIndex?: number
+  } {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (range.offset === this.geometry.groups[i].start) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
+  public autoFillDrawRanges() {
     const sortedRanges = this.geometry.groups
       .sort((a, b) => {
         return a.start - b.start
       })
       .slice()
+    console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
     for (let k = 0; k < sortedRanges.length; k++) {
       if (k === 0) {
         if (sortedRanges[k].start > 0) {
           this.geometry.addGroup(0, sortedRanges[k].start, 0)
         }
-      } else {
         if (
-          sortedRanges[k].start >
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count
+          sortedRanges.length === 1 &&
+          sortedRanges[k].start + sortedRanges[k].count < this.getCount()
+        ) {
+          this.geometry.addGroup(
+            sortedRanges[k].start + sortedRanges[k].count,
+            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
+            0
+          )
+        }
+      } else if (k === sortedRanges.length - 1) {
+        if (sortedRanges[k].start + sortedRanges[k].count < this.getCount()) {
+          this.geometry.addGroup(
+            sortedRanges[k].start + sortedRanges[k].count,
+            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
+            0
+          )
+        }
+        if (
+          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
+          sortedRanges[k].start
         ) {
           this.geometry.addGroup(
             sortedRanges[k - 1].start + sortedRanges[k - 1].count,
             sortedRanges[k].start -
-              sortedRanges[k - 1].start +
-              sortedRanges[k - 1].count,
+              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
             0
           )
         }
-      }
-      if (k === sortedRanges.length - 1) {
-        if (sortedRanges[k].start + sortedRanges[k].count < this.geometry.index.count) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.geometry.index.count - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
+        continue
       } else {
-        if (sortedRanges[k].start + sortedRanges[k].count < sortedRanges[k + 1].start) {
+        if (
+          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
+          sortedRanges[k].start
+        ) {
           this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            sortedRanges[k + 1].start - sortedRanges[k].start + sortedRanges[k].count,
+            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
+            sortedRanges[k].start -
+              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
             0
           )
         }
       }
-      sortedRanges[k].materialIndex++
+    }
+    this.geometry.groups.sort((a, b) => {
+      return a.start - b.start
+    })
+
+    let count = 0
+    this.geometry.groups.forEach((val) => {
+      count += val.count
+    })
+    if (count < this.getCount()) {
+      console.error(`DrawRange MESH autocomplete failed! ${count}vs${this.getCount()}`)
     }
   }
 

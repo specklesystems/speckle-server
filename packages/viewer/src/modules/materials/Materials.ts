@@ -102,14 +102,15 @@ export default class Materials {
 
     this.meshGhostMaterial = new SpeckleStandardMaterial(
       {
-        color: 0x7080a0,
-        side: DoubleSide,
+        color: 0x00ff00,
+        // side: DoubleSide,
         transparent: true,
         opacity: 0.2,
         wireframe: false
       },
       ['USE_RTE']
     )
+    this.meshGhostMaterial.depthWrite = false
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
@@ -170,6 +171,7 @@ export default class Materials {
       ['USE_RTE']
     )
     mat.transparent = mat.opacity < 1 ? true : false
+    mat.depthWrite = mat.transparent ? false : true
     mat.color.convertSRGBToLinear()
     return mat
   }

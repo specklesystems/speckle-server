@@ -219,10 +219,31 @@ export default class Sandbox {
         title: 'Select Random'
       })
       .on('click', () => {
+        this.viewer.speckleRenderer.clearFilter()
+        this.viewer.speckleRenderer.beginFilter()
         this.viewer.speckleRenderer.applyFilter(
-          this.getRandomNodeIds(0.75),
-          FilterMaterial.SELLECT
+          this.getRandomNodeIds(0.25),
+          FilterMaterial.SELECT
         )
+        this.viewer.speckleRenderer.endFilter()
+      })
+
+    filteringFolder
+      .addButton({
+        title: 'Select&Ghost Random'
+      })
+      .on('click', () => {
+        this.viewer.speckleRenderer.clearFilter()
+        this.viewer.speckleRenderer.beginFilter()
+        this.viewer.speckleRenderer.applyFilter(
+          this.getRandomNodeIds(0.25),
+          FilterMaterial.SELECT
+        )
+        this.viewer.speckleRenderer.applyFilter(
+          this.getRandomNodeIds(0.25),
+          FilterMaterial.GHOST
+        )
+        this.viewer.speckleRenderer.endFilter()
       })
   }
 

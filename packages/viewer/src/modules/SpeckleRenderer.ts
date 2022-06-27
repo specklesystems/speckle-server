@@ -41,6 +41,7 @@ export default class SceneManager {
   private sunTarget: Object3D
   public viewer: Viewer // TEMPORARY
   private camHelper: CameraHelper
+  private filterBatchRecording: string[]
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -153,8 +154,23 @@ export default class SceneManager {
     }
   }
 
+  public clearFilter() {
+    this.batcher.resetBatchesDrawRanges()
+    this.filterBatchRecording = []
+  }
+
   public applyFilter(ids: string[], filterMaterial: FilterMaterial) {
-    this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
+    this.filterBatchRecording.push(
+      ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
+    )
+  }
+
+  public beginFilter() {
+    this.filterBatchRecording = []
+  }
+
+  public endFilter() {
+    this.batcher.autoFillDrawRanges(this.filterBatchRecording)
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -277,7 +293,11 @@ export default class SceneManager {
     const hitId = rv.renderData.id
 
     const hitNode = WorldTree.getInstance().findId(hitId)
-    this.batcher.setObjectsFilterMaterial([hitNode.model.id], FilterMaterial.SELECT)
+
+    this.batcher.resetBatchesDrawRanges()
+    this.batcher.autoFillDrawRanges(
+      this.batcher.setObjectsFilterMaterial([hitNode.model.id], FilterMaterial.SELECT)
+    )
     // console.warn(hitNode)
     // const renderViews = WorldTree.getRenderTree().getRenderViewsForNode(hitNode)
     // console.warn(renderViews)

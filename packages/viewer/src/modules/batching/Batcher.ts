@@ -9,6 +9,7 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
 import { FilterMaterial } from '../FilteringManager'
+import { Mesh } from 'three'
 
 export default class Batcher {
   private materials: Materials
@@ -93,21 +94,25 @@ export default class Batcher {
     }
   }
 
-  public setObjectsFilterMaterial(ids: string[], filterMaterial: FilterMaterial) {
-    this.resetBatchesDrawRanges()
-
+  public setObjectsFilterMaterial(
+    ids: string[],
+    filterMaterial: FilterMaterial
+  ): string[] {
     let rvs = []
     ids.forEach((val: string) => {
       const views = WorldTree.getRenderTree().getRenderViewsForNodeId(val)
       for (let k = 0; k < views.length; k++) {
         if (rvs.includes(views[k])) return
       }
-      rvs = rvs.concat(WorldTree.getRenderTree().getRenderViewsForNodeId(val))
+      rvs = rvs.concat(views)
     })
     // console.log(ids)
     // console.log(rvs)
     const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
     for (let i = 0; i < batchIds.length; i++) {
+      if (!batchIds[i]) {
+        continue
+      }
       const batch = this.batches[batchIds[i]]
       const views = rvs
         .filter((value) => value.batchId === batchIds[i])
@@ -119,8 +124,22 @@ export default class Batcher {
           } as BatchUpdateRange
         })
       batch.setDrawRanges(...views)
-      batch.autoFillDrawRanges()
     }
+    return batchIds
+  }
+
+  public autoFillDrawRanges(batchIds: string[]) {
+    const uniqueBatches = [...Array.from(new Set(batchIds.map((value) => value)))]
+    uniqueBatches.forEach((value) => {
+      if (!value) return
+      this.batches[value].autoFillDrawRanges()
+    })
+    let groupCount = 0
+    for (const k in this.batches) {
+      const gLength = (this.batches[k].renderObject as Mesh).geometry.groups.length
+      groupCount += gLength === 0 ? 1 : gLength
+    }
+    console.warn(groupCount)
   }
 
   /** KEEPING THESE FOR REFERENCE FOR NOW */

@@ -5,7 +5,6 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Line,
-  Material,
   Object3D,
   Vector4
 } from 'three'
@@ -84,8 +83,7 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
-  autoFillDrawRanges(material?: Material) {
-    material
+  autoFillDrawRanges() {
     // to do
   }
 
