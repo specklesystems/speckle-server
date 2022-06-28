@@ -133,8 +133,8 @@ export class GeometryConverter {
   /**
    * BREP
    */
-  private static BrepToGeometryData(node: NodeData) {
-    return this.MeshToGeometryData(node.raw.displaValue)
+  private static BrepToGeometryData(node) {
+    return this.MeshToGeometryData(node.children[0])
   }
 
   /**

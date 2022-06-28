@@ -91,7 +91,7 @@ export default class Input extends EventEmitter {
       (pos.x / canvas.width) * 2 - 1,
       (pos.y / canvas.height) * -2 + 1
     )
-    console.warn(v)
+    // console.warn(v)
     return v
   }
 

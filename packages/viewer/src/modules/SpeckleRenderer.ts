@@ -27,7 +27,6 @@ import { FilterMaterial } from './FilteringManager'
 import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { WorldTree } from './tree/WorldTree'
 import { Viewer } from './Viewer'
 
 export default class SceneManager {
@@ -292,18 +291,15 @@ export default class SceneManager {
     )
     const hitId = rv.renderData.id
 
-    const hitNode = WorldTree.getInstance().findId(hitId)
+    // const hitNode = WorldTree.getInstance().findId(hitId)
 
     this.batcher.resetBatchesDrawRanges()
-    this.batcher.autoFillDrawRanges(
-      this.batcher.setObjectsFilterMaterial([hitNode.model.id], FilterMaterial.SELECT)
-    )
-    // console.warn(hitNode)
-    // const renderViews = WorldTree.getRenderTree().getRenderViewsForNode(hitNode)
-    // console.warn(renderViews)
-    // this.batcher.selectRenderViews(renderViews)
-    // this.batcher.selectRenderView(rv)
-    // this.batcher.isolateRenderViews(renderViews)
+
+    this.batcher.isolateRenderView(hitId)
+    /** In case the above call has breaking bugs, just use this instead */
+    // this.batcher.autoFillDrawRanges(
+    //   this.batcher.setObjectsFilterMaterial([hitNode.model.id], FilterMaterial.SELECT)
+    // )
   }
 
   private onObjectDoubleClick(e) {

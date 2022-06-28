@@ -93,6 +93,7 @@ export default class LineBatch implements Batch {
       count: Infinity,
       material: this.batchMaterial
     })
+    this.mesh.material = this.batchMaterial
   }
 
   public buildBatch() {

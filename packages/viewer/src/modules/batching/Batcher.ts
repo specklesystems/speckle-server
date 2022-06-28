@@ -9,7 +9,7 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
 import { FilterMaterial } from '../FilteringManager'
-import { Mesh } from 'three'
+import { Material } from 'three'
 
 export default class Batcher {
   private materials: Materials
@@ -134,12 +134,46 @@ export default class Batcher {
       if (!value) return
       this.batches[value].autoFillDrawRanges()
     })
-    let groupCount = 0
+    // let groupCount = 0
+    // for (const k in this.batches) {
+    //   const gLength = (this.batches[k].renderObject as Mesh).geometry.groups.length
+    //   groupCount += gLength === 0 ? 1 : gLength
+    // }
+    // console.warn(groupCount)
+  }
+
+  /** Conveniece method. This should also work as a filtering action
+   *  Though, because the batches are not smart enough yet to group
+   *  their draw ranges, it would be currently be inneficient to isolate
+   *  via filtering. Thid will change in the future
+   */
+  public isolateRenderView(id: string) {
+    const rvs = WorldTree.getRenderTree().getRenderViewsForNodeId(id)
+    const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
     for (const k in this.batches) {
-      const gLength = (this.batches[k].renderObject as Mesh).geometry.groups.length
-      groupCount += gLength === 0 ? 1 : gLength
+      if (!batchIds.includes(k)) {
+        ;(this.batches[k].renderObject as unknown as { material: Material }).material =
+          this.materials.getGhostMaterial(this.batches[k].renderViews[0])
+      } else {
+        const drawRanges = []
+        for (let i = 0; i < this.batches[k].renderViews.length; i++) {
+          if (!rvs.includes(this.batches[k].renderViews[i])) {
+            drawRanges.push({
+              offset: this.batches[k].renderViews[i].batchStart,
+              count: this.batches[k].renderViews[i].batchCount,
+              material: this.materials.getFilterMaterial(
+                this.batches[k].renderViews[i],
+                FilterMaterial.GHOST
+              )
+            })
+          }
+        }
+        if (drawRanges.length > 0) {
+          this.batches[k].setDrawRanges(...drawRanges)
+          this.batches[k].autoFillDrawRanges()
+        }
+      }
     }
-    console.warn(groupCount)
   }
 
   /** KEEPING THESE FOR REFERENCE FOR NOW */
