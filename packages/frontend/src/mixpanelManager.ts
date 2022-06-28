@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import mixpanel, { OverridedMixpanel } from 'mixpanel-browser'
 import { Optional } from '@/helpers/typeHelpers'
-import { SpeckleLocalStorage } from '@/utils/localStorage'
+import { AppLocalStorage } from '@/utils/localStorage'
 import md5 from '@/helpers/md5'
 import * as ThemeStateManager from '@/main/utils/themeStateManager'
 
@@ -9,7 +9,7 @@ import * as ThemeStateManager from '@/main/utils/themeStateManager'
  * Get mixpanel user ID, if user is authenticated and can be identified, or undefined otherwise
  */
 export function getMixpanelUserId(): Optional<string> {
-  return new SpeckleLocalStorage().get('distinct_id') || undefined
+  return AppLocalStorage.get('distinct_id') || undefined
 }
 
 /**

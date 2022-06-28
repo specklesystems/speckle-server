@@ -14,11 +14,6 @@ function checkLocalStorageAvailability(): boolean {
 }
 
 /**
- * Whether or not the local storage is available in this session
- */
-const isLocalStorageAvailable = checkLocalStorageAvailability()
-
-/**
  * In memory implementation of the Storage interface, for use when LocalStorage
  * isn't available
  */
@@ -51,31 +46,31 @@ class FakeStorage implements Storage {
 }
 
 /**
+ * Whether or not the local storage is available in this session
+ */
+const isLocalStorageAvailable = checkLocalStorageAvailability()
+
+/**
+ * Localstorage (real or faked) to use in this session
+ */
+const internalStorage: Storage = isLocalStorageAvailable
+  ? window.localStorage
+  : new FakeStorage()
+
+/**
  * Utility for nicer reads/writes from/to LocalStorage without having to worry about the browser
  * throwing a hissy fit because the page is opened in Incognito mode or whatever
  */
-export class SpeckleLocalStorage {
-  #storage: Storage
-
-  constructor() {
-    if (isLocalStorageAvailable) {
-      this.#storage = window.localStorage
-    } else {
-      const fakeStorage: Storage = window.fakeLocalStorage || new FakeStorage()
-      window.fakeLocalStorage = fakeStorage
-      this.#storage = fakeStorage
-    }
-  }
-
+export const AppLocalStorage = {
   get(key: string): Nullable<string> {
-    return this.#storage.getItem(key)
-  }
+    return internalStorage.getItem(key)
+  },
 
   set(key: string, value: string): void {
-    this.#storage.setItem(key, value)
-  }
+    internalStorage.setItem(key, value)
+  },
 
   remove(key: string): void {
-    this.#storage.removeItem(key)
+    internalStorage.removeItem(key)
   }
 }
