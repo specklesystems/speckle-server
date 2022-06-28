@@ -3,13 +3,13 @@ const { keyBy } = require('lodash')
 
 module.exports = {
   SmartTextEditorValue: {
-    attachments(parent) {
+    async attachments(parent) {
       const { blobIds } = parent
       if (!blobIds) return null
 
-      const blobs = getBlobs({ blobIds })
+      const blobs = await getBlobs({ blobIds })
       const blobsById = keyBy(blobs, (b) => b.id)
-      return blobIds.map((blobId) => blobsById[blobId] || null)
+      return blobIds.map((blobId) => blobsById[blobId] || null).filter((b) => !!b)
     }
   }
 }
