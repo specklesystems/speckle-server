@@ -4,6 +4,7 @@ import '@/vueBootstrapper'
 import App from '@/main/App.vue'
 import store from '@/main/store'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
+import * as MixpanelManager from '@/mixpanelManager'
 
 import { createProvider } from '@/vue-apollo'
 import {
@@ -13,8 +14,14 @@ import {
 
 import router from '@/main/router/index'
 import vuetify from '@/plugins/vuetify'
-
 import VueTimeago from 'vue-timeago'
+
+// Init mixpanel
+MixpanelManager.initialize({
+  hostApp: 'web',
+  hostAppDisplayName: 'Web App'
+})
+
 Vue.use(VueTimeago, { locale: 'en' })
 
 import VueFilterDateParse from '@vuejs-community/vue-filter-date-parse'
@@ -28,17 +35,6 @@ import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 
 Vue.use(PerfectScrollbar)
 
-// Async HistogramSlider load
-Vue.component('HistogramSlider', async () => {
-  await import(
-    /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider/dist/histogram-slider.css'
-  )
-  const component = await import(
-    /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider'
-  )
-  return component
-})
-
 // Async ApexChart load
 Vue.component('ApexChart', async () => {
   const VueApexCharts = await import(
@@ -48,11 +44,6 @@ Vue.component('ApexChart', async () => {
 
   return VueApexCharts
 })
-
-import { formatNumber } from '@/plugins/formatNumber'
-// Filter to turn any number into a nice string like '10k', '5.5m'
-// Accepts 'max' parameter to set it's formatting while being animated
-Vue.filter('prettynum', formatNumber)
 
 // Filter to capitalize words
 Vue.filter('capitalize', (value) => {
