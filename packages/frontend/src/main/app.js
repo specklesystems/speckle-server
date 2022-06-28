@@ -16,12 +16,6 @@ import router from '@/main/router/index'
 import vuetify from '@/plugins/vuetify'
 import VueTimeago from 'vue-timeago'
 
-// Init mixpanel
-MixpanelManager.initialize({
-  hostApp: 'web',
-  hostAppDisplayName: 'Web App'
-})
-
 Vue.use(VueTimeago, { locale: 'en' })
 
 import VueFilterDateParse from '@vuejs-community/vue-filter-date-parse'
@@ -62,7 +56,7 @@ const apolloProvider = createProvider()
 if (AuthToken) {
   prefetchUserAndSetSuuid(apolloProvider.defaultClient)
     .then(() => {
-      initVue()
+      postAuthInit()
     })
     .catch(() => {
       if (RefreshToken) {
@@ -76,14 +70,20 @@ if (AuthToken) {
       return prefetchUserAndSetSuuid(apolloProvider.defaultClient)
     })
     .then(() => {
-      initVue()
+      postAuthInit()
     })
     .catch(() => {
-      initVue()
+      postAuthInit()
     })
 }
 
-function initVue() {
+function postAuthInit() {
+  // Init mixpanel
+  MixpanelManager.initialize({
+    hostApp: 'web',
+    hostAppDisplayName: 'Web App'
+  })
+
   new Vue({
     router,
     vuetify,
