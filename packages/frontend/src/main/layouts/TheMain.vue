@@ -137,19 +137,6 @@ export default {
   mounted() {
     this.setNavResizeEvents()
 
-    // eslint-disable-next-line camelcase
-    this.$mixpanel.register({ server_id: this.$mixpanelServerId(), hostApp: 'web' })
-    const mixpanelId = this.$mixpanelId()
-    if (mixpanelId !== null) {
-      this.$mixpanel.identify(mixpanelId)
-      this.$mixpanel.people.set(
-        'Theme Web',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
-      this.$mixpanel.people.set('Identified', true)
-    }
-    this.$mixpanel.track('Visit Web App')
-
     if (this.$route.query.emailverfiedstatus) {
       setTimeout(() => {
         this.$eventHub.$emit('notification', {

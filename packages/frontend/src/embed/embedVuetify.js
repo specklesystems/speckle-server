@@ -1,17 +1,20 @@
 import '@mdi/font/css/materialdesignicons.css'
+import * as ThemeStateManager from '@/main/utils/themeStateManager'
 import Vue from 'vue'
 import Vuetify from 'vuetify/lib'
 
 Vue.use(Vuetify)
 
-const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+ThemeStateManager.initialize()
+const isDarkMode = ThemeStateManager.isDarkTheme()
+
 export default new Vuetify({
   icons: {
     iconfont: 'mdi'
   },
   theme: {
     options: { customProperties: true },
-    dark: darkMediaQuery ? 'dark' : null,
+    dark: isDarkMode,
     themes: {
       light: {
         primary: '#047EFB', //blue
