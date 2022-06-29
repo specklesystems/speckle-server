@@ -1,6 +1,6 @@
 <template>
   <v-row class="align-center px-3">
-    <v-col class="text-truncate">
+    <v-col cols="3" class="text-truncate">
       <user-avatar :id="selfUser.id" :size="30" class="mr-2"></user-avatar>
 
       <router-link
@@ -26,12 +26,13 @@
     </v-col>
     <v-col
       v-tooltip="selfUser.company ? selfUser.company : 'No company info.'"
+      cols="3"
       class="caption text-truncate"
     >
       <v-icon x-small>mdi-domain</v-icon>
       {{ selfUser.company ? selfUser.company : 'No company info.' }}
     </v-col>
-    <v-col class="d-flex align-center text-right">
+    <v-col cols="3" class="d-flex align-center text-right">
       <v-icon small class="mr-2">
         {{
           selfUser.role === 'server:admin'
@@ -67,6 +68,7 @@
 </template>
 <script>
 export default {
+  name: 'UsersListUserItem',
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
   },

@@ -1,5 +1,11 @@
 const _ = require('lodash')
-const { Streams, StreamAcl, StreamFavorites, knex } = require('@/modules/core/dbSchema')
+const {
+  Streams,
+  StreamAcl,
+  StreamFavorites,
+  knex,
+  Users
+} = require('@/modules/core/dbSchema')
 const { InvalidArgumentError } = require('@/modules/shared/errors')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 
@@ -16,6 +22,17 @@ const BASE_STREAM_COLUMNS = [
   Streams.col.updatedAt,
   StreamAcl.col.role
 ]
+
+/**
+ * Get multiple streams
+ * @param {string[]} streamIds
+ * @returns {Promise<Object[]>}
+ */
+async function getStreams(streamIds) {
+  if (!streamIds?.length) throw new InvalidArgumentError('Invalid stream IDs')
+  const q = Streams.knex().whereIn(Streams.col.id, streamIds)
+  return await q
+}
 
 /**
  * Get a single stream
@@ -231,6 +248,31 @@ async function getOwnedFavoritesCountByUserIds(userIds) {
   return _.mapValues(_.keyBy(results, 'userId'), (r) => r?.count || 0)
 }
 
+/**
+ * Get user & role, only if they are a stream collaborator
+ * @param {string} streamId
+ * @param {string} userId
+ * @returns {Promise<import('@/modules/core/helpers/userHelper').LimitedUserRecord & {role: string} | null>}
+ */
+async function getStreamCollaborator(streamId, userId) {
+  const query = StreamAcl.knex()
+    .select(
+      StreamAcl.col.role,
+      Users.col.id,
+      Users.col.name,
+      Users.col.bio,
+      Users.col.company,
+      Users.col.avatar,
+      Users.col.verified,
+      Users.col.createdAt
+    )
+    .where({ [StreamAcl.col.resourceId]: streamId, [Users.col.id]: userId })
+    .rightJoin(Users.name, Users.col.id, StreamAcl.col.userId)
+    .first()
+
+  return await query
+}
+
 module.exports = {
   getStream,
   getFavoritedStreams,
@@ -240,5 +282,7 @@ module.exports = {
   getBatchUserFavoriteData,
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds,
+  getStreamCollaborator,
+  getStreams,
   BASE_STREAM_COLUMNS
 }

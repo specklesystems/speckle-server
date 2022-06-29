@@ -22,8 +22,8 @@
     <v-row v-if="stream">
       <v-col v-if="stream.role !== 'stream:owner'" cols="12">
         <v-alert type="warning">
-          Your permission level ({{ stream.role }}) is not high enough to edit this
-          stream's details.
+          Your permission level ({{ stream.role ? stream.role : 'none' }}) is not high
+          enough to edit this stream's details.
         </v-alert>
       </v-col>
       <v-col cols="12">

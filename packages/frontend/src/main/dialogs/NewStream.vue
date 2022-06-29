@@ -4,7 +4,7 @@
       <v-app-bar-nav-icon style="pointer-events: none">
         <v-icon>mdi-plus-box</v-icon>
       </v-app-bar-nav-icon>
-      <v-toolbar-title>Create a New Stream</v-toolbar-title>
+      <v-toolbar-title>Create a new Stream</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon @click="$emit('close')"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
@@ -42,7 +42,7 @@
         />
 
         <p class="mt-5">
-          <b>Add collaborators</b>
+          <b>Invite collaborators</b>
         </p>
         <v-text-field
           v-model="search"
@@ -117,7 +117,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import userSearchQuery from '../../graphql/userSearch.gql'
+import { userSearchQuery } from '@/graphql/user'
 
 export default {
   components: {
@@ -195,6 +195,7 @@ export default {
     async createStream() {
       if (!this.$refs.form.validate()) return
 
+      const collabIds = this.collabs.map((c) => c.id)
       this.isLoading = true
       this.$mixpanel.track('Stream Action', { type: 'action', name: 'create' })
       try {
@@ -208,29 +209,12 @@ export default {
             myStream: {
               name: this.name,
               isPublic: this.isPublic,
-              description: this.description
+              description: this.description,
+              withContributors: collabIds
             }
           }
         })
 
-        if (this.collabs.length !== 0) {
-          for (const user of this.collabs) {
-            await this.$apollo.mutate({
-              mutation: gql`
-                mutation grantPermission($params: StreamGrantPermissionInput!) {
-                  streamGrantPermission(permissionParams: $params)
-                }
-              `,
-              variables: {
-                params: {
-                  streamId: res.data.streamCreate,
-                  userId: user.id,
-                  role: 'stream:contributor'
-                }
-              }
-            })
-          }
-        }
         this.$emit('created')
         if (this.redirect)
           this.$router.push({ path: `/streams/${res.data.streamCreate}` })

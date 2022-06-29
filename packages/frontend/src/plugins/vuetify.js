@@ -33,7 +33,7 @@ export default new Vuetify({
         accent: '#FCF25E', //yellow
         error: '#FF5555', //red
         warning: '#FF9100', //orange
-        info: '#313BCF', //dark blue
+        info: '#9298f0', //dark blue
         success: '#4caf50',
         background: '#1a1a1a'
       }

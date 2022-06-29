@@ -118,7 +118,6 @@
     </portal-target>
 
     <!-- Dialogs  -->
-
     <v-dialog
       v-model="newStreamDialog"
       max-width="500"
@@ -127,23 +126,18 @@
       <new-stream @created="newStreamDialog = false" @close="newStreamDialog = false" />
     </v-dialog>
 
-    <v-dialog
-      v-model="inviteUsersDialog"
-      max-width="500"
-      :fullscreen="$vuetify.breakpoint.xsOnly"
-    >
-      <server-invites @close="inviteUsersDialog = false" />
-    </v-dialog>
+    <invite-dialog :visible.sync="inviteUsersDialog" />
   </div>
 </template>
 <script>
-import { MainUserDataQuery } from '@/graphql/user'
+import { mainUserDataQuery } from '@/graphql/user'
+import InviteDialog from '@/main/dialogs/InviteDialog.vue'
 
 export default {
   components: {
     MainLogo: () => import('@/main/navigation/MainLogo'),
     NewStream: () => import('@/main/dialogs/NewStream'),
-    ServerInvites: () => import('@/main/dialogs/ServerInvites'),
+    InviteDialog,
     UserAvatarIcon: () => import('@/main/components/common/UserAvatarIcon')
   },
   props: {
@@ -152,7 +146,7 @@ export default {
   },
   apollo: {
     user: {
-      query: MainUserDataQuery,
+      query: mainUserDataQuery,
       skip() {
         return !this.$loggedIn()
       }

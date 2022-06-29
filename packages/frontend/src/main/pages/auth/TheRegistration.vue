@@ -189,6 +189,7 @@ import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
+import { processSuccessfulAuth } from '@/main/lib/auth/services/authService'
 
 export default {
   name: 'TheRegistration',
@@ -248,7 +249,8 @@ export default {
       pwdSuggestions: null,
       appId: null,
       challenge: null,
-      suuid: null
+      suuid: null,
+      inviteId: null
     }
   },
   computed: {
@@ -258,7 +260,8 @@ export default {
         query: {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
-          suuid: this.$route.query.suuid
+          suuid: this.$route.query.suuid,
+          inviteId: this.$route.query.inviteId
         }
       }
     },
@@ -334,7 +337,7 @@ export default {
             isInvite: this.inviteId !== null,
             type: 'action'
           })
-          window.location = res.url
+          processSuccessfulAuth(res)
           return
         }
 

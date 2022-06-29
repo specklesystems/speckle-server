@@ -1,3 +1,6 @@
+import { LocalStorageKeys } from '@/helpers/mainConstants'
+import { AppLocalStorage } from '@/utils/localStorage'
+import { GlobalEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
@@ -245,13 +248,13 @@ const routes = [
             name: 'Admin | Users',
             path: 'users',
             component: () => import('@/main/pages/admin/Users.vue'),
-            props: (route) => ({ ...route.query, ...route.props })
+            props: (route) => ({ ...route.query })
           },
           {
             name: 'Admin | Streams',
             path: 'streams',
             component: () => import('@/main/pages/admin/Streams.vue'),
-            props: (route) => ({ ...route.query, ...route.props })
+            props: (route) => ({ ...route.query })
           },
           {
             name: 'Admin | Settings',
@@ -291,15 +294,6 @@ const routes = [
     },
     component: () => import('@/main/pages/common/NotFound.vue')
   }
-  // NOTE: only used for local debugging of the full embed app.
-  // (I might be missing something obvious though!)
-  // {
-  //   path: '/embed*',
-  //   meta: {
-  //     title: 'Embed View | Speckle'
-  //   },
-  //   component: () => import('@/embed/EmbedViewer.vue')
-  // }
 ]
 
 const router = new VueRouter({
@@ -315,34 +309,52 @@ const router = new VueRouter({
   }
 })
 
-router.beforeEach((to, from, next) => {
-  const uuid = localStorage.getItem('uuid')
-  const redirect = localStorage.getItem('shouldRedirectTo')
-  router.app.$eventHub.$emit('page-load', true)
+function shouldForceToLogin(isLoggedIn, to) {
+  if (isLoggedIn) return false
 
-  if (
-    !uuid &&
-    !to.matched.some(
-      ({ name }) => name === 'stream' || name === 'commit' || name === 'branch'
-    ) && //allow public streams to be viewed
-    to.name !== 'Embeded Viewer' &&
-    to.name !== 'Login' &&
-    to.name !== 'Register' &&
-    to.name !== 'Error' &&
-    to.name !== 'Reset Password' &&
-    to.name !== 'Reset Password Finalization'
-  ) {
-    localStorage.setItem('shouldRedirectTo', to.path)
+  const allowedForUnauthedNames = [
+    'stream',
+    'commit',
+    'branch',
+    'Embedded Viewer',
+    'Login',
+    'Register',
+    'Error',
+    'Reset Password',
+    'Reset Password Finalization'
+  ]
 
+  // Check if any of the new routes (nested or not) is one of the routes that is allowed for unauthed users
+  // If it is - we shouldnt force a redirect
+  const isAllowedRoute = to.matched.some(
+    ({ name }) => name && allowedForUnauthedNames.includes(name)
+  )
+  return !isAllowedRoute
+}
+
+router.beforeEach((to, _from, next) => {
+  const uuid = AppLocalStorage.get(LocalStorageKeys.Uuid)
+  const redirect = AppLocalStorage.get(LocalStorageKeys.ShouldRedirectTo)
+
+  router.app.$eventHub.$emit(GlobalEvents.PageLoading, true)
+
+  // Redirect to log in page if not authed and on private pages
+  if (shouldForceToLogin(!!uuid, to)) {
+    // Redirect back here afterwards, unless if there's an already pending redirect
+    if (!redirect) {
+      AppLocalStorage.set(LocalStorageKeys.ShouldRedirectTo, to.path)
+    }
     return next({ name: 'Login' })
   }
 
+  // Redirect to home if in one of the routes that are guest only
   if ((to.name === 'Login' || to.name === 'Register') && uuid) {
     return next({ name: 'home' })
   }
 
+  // If we're logged in, we should redirect to the stored redirect path
   if (uuid && redirect && redirect !== to.path) {
-    localStorage.removeItem('shouldRedirectTo')
+    AppLocalStorage.remove(LocalStorageKeys.ShouldRedirectTo)
     return next({ path: redirect })
   }
 
@@ -351,9 +363,11 @@ router.beforeEach((to, from, next) => {
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
 router.afterEach((to) => {
-  router.app.$eventHub.$emit('page-load', false)
-  if (localStorage.getItem('shouldRedirectTo') === to.path)
-    localStorage.removeItem('shouldRedirectTo')
+  router.app.$eventHub.$emit(GlobalEvents.PageLoading, false)
+
+  if (AppLocalStorage.get(LocalStorageKeys.ShouldRedirectTo) === to.path) {
+    AppLocalStorage.remove(LocalStorageKeys.ShouldRedirectTo)
+  }
 
   Vue.nextTick(() => {
     document.title = (to.meta && to.meta.title) || 'Speckle'

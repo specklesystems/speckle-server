@@ -8,6 +8,10 @@ const passport = require('passport')
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 
+/**
+ * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
+ */
+
 module.exports = async (app) => {
   const authStrategies = []
 
@@ -23,6 +27,9 @@ module.exports = async (app) => {
     cookie: { maxAge: 1000 * 60 * 3 } // 3 minutes
   })
 
+  /**
+   * Move incoming auth query params to session, for easier access (?)
+   */
   const sessionStorage = (req, res, next) => {
     if (!req.query.challenge)
       return res.status(400).send('Invalid request: no challenge detected.')
@@ -50,18 +57,15 @@ module.exports = async (app) => {
         userId: req.user.id,
         challenge: req.session.challenge
       })
-      // const defaultApps = ['explorer', 'sdm', 'sca', 'spklexcel']
-      // await Promise.all(
-      //   defaultApps.map((appId) =>
-      //     createAuthorizationCode({
-      //       appId,
-      //       userId: req.user.id,
-      //       challenge: req.session.challenge
-      //     })
-      //   )
-      // )
+
       if (req.session) req.session.destroy()
-      return res.redirect(`${process.env.CANONICAL_URL}?access_code=${ac}`)
+
+      // Resolve redirect URL
+      const urlObj = new URL(req.authRedirectPath || '/', process.env.CANONICAL_URL)
+      urlObj.searchParams.set('access_code', ac)
+      const redirectUrl = urlObj.toString()
+
+      return res.redirect(redirectUrl)
     } catch (err) {
       sentry({ err })
       if (req.session) req.session.destroy()

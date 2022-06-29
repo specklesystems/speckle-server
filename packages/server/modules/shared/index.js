@@ -6,6 +6,13 @@ const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { buildRequestLoaders } = require('@/modules/core/loaders')
 const { validateToken } = require(`@/modules/core/services/tokens`)
 
+const StreamPubsubEvents = Object.freeze({
+  UserStreamAdded: 'USER_STREAM_ADDED',
+  UserStreamRemoved: 'USER_STREAM_REMOVED',
+  StreamUpdated: 'STREAM_UPDATED',
+  StreamDeleted: 'STREAM_DELETED'
+})
+
 const pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
@@ -136,10 +143,9 @@ async function validateScopes(scopes, scope) {
 
 /**
  * Checks the userId against the resource's acl.
- * @param  {[type]} userId       [description]
- * @param  {[type]} resourceId   [description]
- * @param  {[type]} requiredRole [description]
- * @return {[type]}              [description]
+ * @param  {string} userId
+ * @param  {string} resourceId
+ * @param  {string} requiredRole
  */
 async function authorizeResolver(userId, resourceId, requiredRole) {
   if (!roles) roles = await knex('user_roles').select('*')
@@ -209,5 +215,6 @@ module.exports = {
   validateScopes,
   authorizeResolver,
   pubsub,
-  getRoles
+  getRoles,
+  StreamPubsubEvents
 }

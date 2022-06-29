@@ -1,3 +1,9 @@
+enum StreamRole {
+  STREAM_OWNER
+  STREAM_CONTRIBUTOR
+  STREAM_REVIEWER
+}
+
 type SmartTextEditorValue {
   """
   The version of the schema

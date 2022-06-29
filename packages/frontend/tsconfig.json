@@ -25,11 +25,13 @@
       "vue",
       "@types/node",
       "@types/mixpanel-browser",
-      "vuetify"
+      "vuetify",
+      "@types/dompurify"
     ]
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.js",
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",

@@ -40,6 +40,7 @@ exports.graph = () => {
       directive @hasScope(scope: String!) on FIELD_DEFINITION
       directive @hasScopes(scopes: [String]!) on FIELD_DEFINITION
       directive @hasRole(role: String!) on FIELD_DEFINITION
+      directive @hasStreamRole(role: StreamRole!) on FIELD_DEFINITION
 
       type Query {
       """

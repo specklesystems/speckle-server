@@ -95,11 +95,29 @@ To get started, run:
 After this, you can use the scripts in the individual packages or run all in dev mode:
 `$ yarn dev`
 
+For development you'll also want to run `yarn dev:docker:up` which will start up the docker containers you will need
+to be able to run the apps on your machine.
+
 ### IDE
 
 The suggested IDE for working in this repo is VSCode, because the repo has special configs to improve the DX there (auto-format & auto-lint, recommended extensions etc.).
 
 This repository relies on [VSCode multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces), so for the best DX and proper formatting/linting make sure you open the project using the `workspace.code-workspace` file instead of just opening the folder in VSCode.
+
+### Useful containers
+
+#### Maildev
+
+We have a [Maildev](https://github.com/maildev/maildev) container available that you can use to see all e-mails sent out from the app. Make sure your `server` .env file is configured properly to use it:
+
+```
+EMAIL=true
+EMAIL_FROM="speckle@speckle.local"
+EMAIL_HOST="localhost"
+EMAIL_PORT="1025"
+```
+
+The web portal is available at `localhost:1080` and it's listening for mail on port `1025`.
 
 ### Contributing
 

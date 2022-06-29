@@ -13,6 +13,8 @@
         </v-btn-toggle>
       </div>
     </portal>
+    <!-- Stream invites -->
+    <user-stream-invite-banners @invite-used="onInviteUsed" />
     <!-- No streams -->
     <v-row v-if="streams && streams.items.length === 0">
       <no-data-placeholder v-if="user">
@@ -81,18 +83,23 @@
 </template>
 <script>
 import streamsQuery from '@/graphql/streams.gql'
-import { MainUserDataQuery } from '@/graphql/user'
+import { mainUserDataQuery } from '@/graphql/user'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import UserStreamInviteBanners from '@/main/components/stream/UserStreamInviteBanners.vue'
+import InfiniteLoading from 'vue-infinite-loading'
+import StreamPreviewCard from '@/main/components/common/StreamPreviewCard.vue'
+import NoDataPlaceholder from '@/main/components/common/NoDataPlaceholder.vue'
 
 export default {
   name: 'TheStreams',
   components: {
-    InfiniteLoading: () => import('vue-infinite-loading'),
-    StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue'),
-    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
+    InfiniteLoading,
+    StreamPreviewCard,
+    NoDataPlaceholder,
+    UserStreamInviteBanners
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'streams', 0)],
   apollo: {
@@ -100,7 +107,7 @@ export default {
       query: streamsQuery
     },
     user: {
-      query: MainUserDataQuery
+      query: mainUserDataQuery
     }
   },
   data() {
@@ -140,6 +147,10 @@ export default {
     }
   },
   methods: {
+    onInviteUsed() {
+      // Refetch streams
+      this.$apollo.queries.streams.refetch()
+    },
     checkFilter(role) {
       if (this.streamFilter === 1) return true
       if (this.streamFilter === 2 && role === 'stream:owner') return true

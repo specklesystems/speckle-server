@@ -210,22 +210,24 @@
           Send Invite
         </v-btn>
       </v-toolbar>
-      <stream-invite-dialog
-        ref="streamInviteDialog"
+      <invite-dialog
         :stream-id="$route.params.streamId"
+        :visible.sync="inviteDialogVisible"
       />
     </v-sheet>
   </v-card>
 </template>
 <script>
 import gql from 'graphql-tag'
-import { COMMON_STREAM_FIELDS } from '@/graphql/streams'
-// import { $resourceType } from '@/plugins/resourceIdentifier'
+import { commonStreamFieldsFragment } from '@/graphql/streams'
+import InviteDialog from '@/main/dialogs/InviteDialog.vue'
+import UserAvatar from '@/main/components/common/UserAvatar.vue'
+
 export default {
   name: 'ShareStreamDialog',
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar'),
-    StreamInviteDialog: () => import('@/main/dialogs/StreamInviteDialog')
+    UserAvatar,
+    InviteDialog
   },
   props: {
     stream: {
@@ -236,7 +238,8 @@ export default {
   data() {
     return {
       swapPermsLoading: false,
-      transparentBg: false
+      transparentBg: false,
+      inviteDialogVisible: false
     }
   },
   computed: {
@@ -272,7 +275,7 @@ export default {
       this.$emit('close')
     },
     showStreamInviteDialog() {
-      this.$refs.streamInviteDialog.show()
+      this.inviteDialogVisible = true
     },
     getIframeUrl() {
       let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
@@ -331,12 +334,12 @@ export default {
             const normalizedId = `Stream:${this.stream.id}`
             const cachedStream = cache.readFragment({
               id: normalizedId,
-              fragment: COMMON_STREAM_FIELDS
+              fragment: commonStreamFieldsFragment
             })
 
             cache.writeFragment({
               id: normalizedId,
-              fragment: COMMON_STREAM_FIELDS,
+              fragment: commonStreamFieldsFragment,
               data: {
                 ...cachedStream,
                 isPublic: isSuccessFul ? newIsPublic : !newIsPublic

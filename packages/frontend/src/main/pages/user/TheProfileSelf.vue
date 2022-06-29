@@ -39,7 +39,7 @@
   </v-container>
 </template>
 <script>
-import { ProfileSelfQuery } from '@/graphql/user'
+import { profileSelfQuery } from '@/graphql/user'
 import { signOut } from '@/plugins/authHelpers'
 import {
   STANDARD_PORTAL_KEYS,
@@ -61,7 +61,7 @@ export default {
   ],
   apollo: {
     user: {
-      query: ProfileSelfQuery
+      query: profileSelfQuery
     }
   },
   methods: {
