@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const MAIN_SERVER_INFO_FIELDS = gql`
+export const mainServerInfoFieldsFragment = gql`
   fragment MainServerInfoFields on ServerInfo {
     name
     company
@@ -13,7 +13,7 @@ export const MAIN_SERVER_INFO_FIELDS = gql`
   }
 `
 
-export const SERVER_INFO_ROLES_FIELDS = gql`
+export const serverInfoRolesFieldsFragment = gql`
   fragment ServerInfoRolesFields on ServerInfo {
     roles {
       name
@@ -23,7 +23,7 @@ export const SERVER_INFO_ROLES_FIELDS = gql`
   }
 `
 
-export const SERVER_INFO_SCOPES_FIELDS = gql`
+export const serverInfoScopesFieldsFragment = gql`
   fragment ServerInfoScopesFields on ServerInfo {
     scopes {
       name
@@ -35,17 +35,17 @@ export const SERVER_INFO_SCOPES_FIELDS = gql`
 /**
  * Get main server info
  */
-export const MainServerInfoQuery = gql`
+export const mainServerInfoQuery = gql`
   query MainServerInfo {
     serverInfo {
       ...MainServerInfoFields
     }
   }
 
-  ${MAIN_SERVER_INFO_FIELDS}
+  ${mainServerInfoFieldsFragment}
 `
 
-export const FullServerInfoQuery = gql`
+export const fullServerInfoQuery = gql`
   query FullServerInfo {
     serverInfo {
       ...MainServerInfoFields
@@ -54,7 +54,7 @@ export const FullServerInfoQuery = gql`
     }
   }
 
-  ${MAIN_SERVER_INFO_FIELDS}
-  ${SERVER_INFO_ROLES_FIELDS}
-  ${SERVER_INFO_SCOPES_FIELDS}
+  ${mainServerInfoFieldsFragment}
+  ${serverInfoRolesFieldsFragment}
+  ${serverInfoScopesFieldsFragment}
 `

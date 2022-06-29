@@ -5652,6 +5652,7 @@ __metadata:
     "@tiptap/extension-underline": ^2.0.0-beta.23
     "@tiptap/vue-2": ^2.0.0-beta.79
     "@tryghost/content-api": ^1.5.12
+    "@types/dompurify": ^2.3.3
     "@types/lodash": ^4.14.180
     "@types/mixpanel-browser": ^2.38.0
     "@types/node": ^17.0.43
@@ -6295,6 +6296,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/dompurify@npm:^2.3.3":
+  version: 2.3.3
+  resolution: "@types/dompurify@npm:2.3.3"
+  dependencies:
+    "@types/trusted-types": "*"
+  checksum: 427e2dc60d94d13d7860a293b926b376727cb2f545a3334a3f2e7de695a2bb23058dd15108e49e0651378229b443ee8ae0028034b6f2df9a9008c04fb7ad6f8f
+  languageName: node
+  linkType: hard
+
 "@types/ejs@npm:^2.7.0":
   version: 2.7.0
   resolution: "@types/ejs@npm:2.7.0"
@@ -6790,6 +6800,13 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 9578470db0b527c26e246a1220ae9bffc6bf47f20f89c54aac467c083ab1f7e16c00d9a7b4bb6cb4e2dfae465027270827e5908a6236063f6214625e50585d78
+  languageName: node
+  linkType: hard
+
+"@types/trusted-types@npm:*":
+  version: 2.0.2
+  resolution: "@types/trusted-types@npm:2.0.2"
+  checksum: 3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
   languageName: node
   linkType: hard
 

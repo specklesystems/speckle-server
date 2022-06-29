@@ -32,6 +32,10 @@ const {
 } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { respectsLimits } = require('@/modules/core/services/ratelimits')
+const {
+  getPendingStreamCollaborators
+} = require('@/modules/serverinvites/services/inviteRetrievalService')
+const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 
 // subscription events
 const USER_STREAM_ADDED = 'USER_STREAM_ADDED'
@@ -140,6 +144,11 @@ module.exports = {
       return users
     },
 
+    async pendingCollaborators(parent) {
+      const { id: streamId } = parent
+      return await getPendingStreamCollaborators(streamId)
+    },
+
     async favoritedDate(parent, _args, ctx) {
       const { id: streamId } = parent
       return await getActiveUserStreamFavoriteDate({ ctx, streamId })
@@ -151,7 +160,6 @@ module.exports = {
       return await getStreamFavoritesCount({ ctx, streamId })
     }
   },
-
   User: {
     async streams(parent, args, context) {
       if (args.limit && args.limit > 50)
@@ -343,6 +351,14 @@ module.exports = {
       const { userId } = ctx
 
       return await favoriteStream({ userId, streamId, favorited })
+    },
+
+    async streamLeave(_parent, args, ctx) {
+      const { streamId } = args
+      const { userId } = ctx
+
+      await revokePermissionsStream({ streamId, userId })
+      return true
     }
   },
 
@@ -383,6 +399,21 @@ module.exports = {
           return payload.streamId === variables.streamId
         }
       )
+    }
+  },
+  PendingStreamCollaborator: {
+    /**
+     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
+     * @param {Object} _args
+     * @param {import('@/modules/shared/index').GraphQLContext} ctx
+     * @returns
+     */
+    async invitedBy(parent, _args, ctx) {
+      const { invitedById } = parent
+      if (!invitedById) return null
+
+      const user = await ctx.loaders.users.getUser.load(invitedById)
+      return user ? removePrivateFields(user) : null
     }
   }
 }

@@ -4,6 +4,8 @@ export type Nullable<T> = T | null
 
 export type Optional<T> = T | undefined
 
+export type MaybeFalsy<T> = T | null | undefined | false | '' | 0
+
 // Copied from Vue typings & improved ergonomics
 export type CombinedVueInstance<
   Instance extends Vue = Vue,

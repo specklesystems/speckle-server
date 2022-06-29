@@ -136,10 +136,9 @@ async function validateScopes(scopes, scope) {
 
 /**
  * Checks the userId against the resource's acl.
- * @param  {[type]} userId       [description]
- * @param  {[type]} resourceId   [description]
- * @param  {[type]} requiredRole [description]
- * @return {[type]}              [description]
+ * @param  {string} userId
+ * @param  {string} resourceId
+ * @param  {string} requiredRole
  */
 async function authorizeResolver(userId, resourceId, requiredRole) {
   if (!roles) roles = await knex('user_roles').select('*')

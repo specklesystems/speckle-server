@@ -3,8 +3,6 @@ const { UserInputError } = require('apollo-server-express')
 const {
   getUser,
   getUserByEmail,
-  getUsers,
-  countUsers,
   getUserRole,
   updateUser,
   deleteUser,
@@ -17,6 +15,9 @@ const {
 const { saveActivity } = require('@/modules/activitystream/services')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
+const {
+  getAdminUsersListCollection
+} = require('@/modules/core/services/users/adminUsersListService')
 
 module.exports = {
   Query: {
@@ -40,12 +41,8 @@ module.exports = {
       return await getUser(args.id || context.userId)
     },
 
-    async users(parent, args, context) {
-      await validateServerRole(context, 'server:admin')
-      await validateScopes(context.scopes, 'users:read')
-      const users = await getUsers(args.limit, args.offset, args.query)
-      const totalCount = await countUsers(args.query)
-      return { totalCount, items: users }
+    async adminUsers(_parent, args) {
+      return await getAdminUsersListCollection(args)
     },
 
     async userSearch(parent, args, context) {

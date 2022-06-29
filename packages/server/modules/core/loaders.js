@@ -4,6 +4,8 @@ const {
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds
 } = require('@/modules/core/repositories/streams')
+const { getUsers } = require('@/modules/core/repositories/users')
+const { keyBy } = require('lodash')
 
 /**
  * All DataLoaders available on the GQL ctx object
@@ -11,8 +13,11 @@ const {
  * @property {{
  *  getUserFavoriteData: DataLoader<string, {}>,
  *  getFavoritesCount: DataLoader<string, number>,
- *  getOwnedFavoritesCount: DataLoader<string, number>
+ *  getOwnedFavoritesCount: DataLoader<string, number>,
  * }} streams
+ * @property {{
+ *  getUser: DataLoader<string, import('@/modules/core/helpers/userHelper').UserRecord>
+ * }} users
  */
 
 module.exports = {
@@ -51,6 +56,16 @@ module.exports = {
          */
         getOwnedFavoritesCount: new DataLoader(async (userIds) => {
           const results = await getOwnedFavoritesCountByUserIds(userIds)
+          return userIds.map((i) => results[i])
+        })
+      },
+
+      users: {
+        /**
+         * Get user from DB
+         */
+        getUser: new DataLoader(async (userIds) => {
+          const results = keyBy(await getUsers(userIds), 'id')
           return userIds.map((i) => results[i])
         })
       }

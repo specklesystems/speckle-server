@@ -1,4 +1,4 @@
-import { MainUserDataQuery } from '@/graphql/user'
+import { mainUserDataQuery } from '@/graphql/user'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import md5 from '@/helpers/md5'
 import { VALID_EMAIL_REGEX } from '@/main/lib/common/vuetify/validators'
@@ -28,7 +28,6 @@ export async function checkAccessCodeAndGetTokens() {
     if (response.hasOwnProperty('token')) {
       localStorage.setItem(LocalStorageKeys.AuthToken, response.token)
       localStorage.setItem(LocalStorageKeys.RefreshToken, response.refreshToken)
-      window.history.replaceState({}, document.title, '/')
       return true
     }
   } else {
@@ -47,7 +46,7 @@ export async function prefetchUserAndSetSuuid(apolloClient) {
 
   // Pull user info (& remember it in the Apollo cache)
   const { data } = await apolloClient.query({
-    query: MainUserDataQuery
+    query: mainUserDataQuery
   })
 
   if (data.user) {

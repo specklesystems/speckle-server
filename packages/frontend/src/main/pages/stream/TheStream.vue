@@ -7,6 +7,9 @@
       <!-- Stream Page App Bar (Toolbar) -->
       <stream-toolbar v-if="stream" :stream="stream" :user="user" />
 
+      <!-- Stream invite banner -->
+      <stream-invite-banner :stream-id="streamId" />
+
       <!-- Stream Child Routes -->
       <div v-if="!error">
         <transition name="fade">
@@ -26,15 +29,18 @@
 
 <script>
 import gql from 'graphql-tag'
-import { StreamQuery } from '@/graphql/streams'
-import { MainUserDataQuery } from '@/graphql/user'
+import { streamQuery } from '@/graphql/streams'
+import { mainUserDataQuery } from '@/graphql/user'
+import StreamInviteBanner from '@/main/components/stream/StreamInviteBanner.vue'
+import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 
 export default {
   name: 'TheStream',
   components: {
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder.vue'),
     StreamNav: () => import('@/main/navigation/StreamNav.vue'),
-    StreamToolbar: () => import('@/main/toolbars/StreamToolbar.vue')
+    StreamToolbar: () => import('@/main/toolbars/StreamToolbar.vue'),
+    StreamInviteBanner
   },
   data() {
     return {
@@ -43,21 +49,31 @@ export default {
       branchMenuOpen: false
     }
   },
+  computed: {
+    streamId() {
+      return this.$route.params.streamId
+    }
+  },
   apollo: {
     stream: {
-      query: StreamQuery,
+      query: streamQuery,
       variables() {
         return {
-          id: this.$route.params.streamId
+          id: this.streamId
         }
       },
       error(err) {
-        if (err.message) this.error = err.message.replace('GraphQL error: ', '')
-        else this.error = err
+        this.error =
+          err instanceof Error ? err.message.replace('GraphQL error: ', '') : `${err}`
+      },
+      result(res) {
+        if (res.data?.stream) {
+          this.error = null
+        }
       }
     },
     user: {
-      query: MainUserDataQuery,
+      query: mainUserDataQuery,
       skip() {
         return !this.$loggedIn()
       }
@@ -71,7 +87,7 @@ export default {
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId
+            streamId: this.streamId
           }
         },
         result({ data }) {
@@ -80,7 +96,7 @@ export default {
             text: `A new branch was created!`,
             action: {
               name: 'View Branch',
-              to: `/streams/${this.$route.params.streamId}/branches/${data.branchCreated.name}`
+              to: `/streams/${this.streamId}/branches/${data.branchCreated.name}`
             }
           })
         },
@@ -96,7 +112,7 @@ export default {
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId
+            streamId: this.streamId
           }
         },
         result({ data }) {
@@ -108,7 +124,7 @@ export default {
             text: `A new commit was created!`,
             action: {
               name: 'View Commit',
-              to: `/streams/${this.$route.params.streamId}/commits/${data.commitCreated.id}`
+              to: `/streams/${this.streamId}/commits/${data.commitCreated.id}`
             }
           })
         },
@@ -119,13 +135,9 @@ export default {
     }
   },
   mounted() {
-    // Open stream invite dialog if ?invite=true (used by desktop connectors)
-    if (this.$route.query.invite && this.$route.query.invite === 'true') {
-      console.log('todo - invite popup')
-      setTimeout(() => {
-        this.$refs.streamInviteDialog.show()
-      }, 500)
-    }
+    this.$eventHub.$on(StreamEvents.Refetch, () => {
+      this.$apollo.queries.stream.refetch()
+    })
   }
 }
 </script>

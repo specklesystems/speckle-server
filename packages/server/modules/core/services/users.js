@@ -14,6 +14,7 @@ const Acl = () => ServerAclSchema.knex()
 
 const debug = require('debug')
 const { deleteStream } = require('./streams')
+const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -32,6 +33,19 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
 }
 
 const userByEmailQuery = (email) => Users().whereRaw('lower(email) = lower(?)', [email])
+
+const getUsersBaseQuery = (searchQuery = null) => {
+  const query = Users()
+  if (searchQuery) {
+    query.where((queryBuilder) => {
+      queryBuilder
+        .where('email', 'ILIKE', `%${searchQuery}%`)
+        .orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        .orWhere('company', 'ILIKE', `%${searchQuery}%`)
+    })
+  }
+  return query
+}
 
 module.exports = {
   /*
@@ -89,9 +103,17 @@ module.exports = {
 
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?
-    return { id: await module.exports.createUser(user), email: user.email }
+    return {
+      id: await module.exports.createUser(user),
+      email: user.email,
+      isNewUser: true
+    }
   },
 
+  /**
+   * @param {{userId: string}} param0
+   * @returns {import('@/modules/core/helpers/userHelper').UserRecord | null}
+   */
   async getUserById({ userId }) {
     const user = await Users().where({ id: userId }).select('*').first()
     if (user) delete user.passwordDigest
@@ -113,7 +135,9 @@ module.exports = {
   },
 
   async getUserRole(id) {
-    const { role } = await Acl().where({ userId: id }).select('role').first()
+    const { role } = (await Acl().where({ userId: id }).select('role').first()) || {
+      role: null
+    }
     return role
   },
 
@@ -138,7 +162,7 @@ module.exports = {
   async searchUsers(searchQuery, limit, cursor, archived = false) {
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
-      .select('id', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt')
+      .select(...LIMITED_USER_FIELDS)
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
         queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
@@ -199,23 +223,14 @@ module.exports = {
   /**
    * Get all users or filter them with the specified searchQuery. This is meant for
    * server admins, because it exposes the User object (& thus the email).
+   * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
    */
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
     // sanitize limit
     const maxLimit = 200
     if (limit > maxLimit) limit = maxLimit
 
-    const query = Users()
-
-    if (searchQuery) {
-      query.where((queryBuilder) => {
-        queryBuilder
-          .where('email', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('name', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('company', 'ILIKE', `%${searchQuery}%`)
-      })
-    }
-
+    const query = getUsersBaseQuery(searchQuery)
     query.limit(limit).offset(offset)
 
     const users = await query
@@ -240,16 +255,7 @@ module.exports = {
   },
 
   async countUsers(searchQuery = null) {
-    const query = Users()
-    if (searchQuery) {
-      query.where((queryBuilder) => {
-        queryBuilder
-          .where('email', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('name', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('company', 'ILIKE', `%${searchQuery}%`)
-      })
-    }
-
+    const query = getUsersBaseQuery(searchQuery)
     const [userCount] = await query.count()
     return parseInt(userCount.count)
   }

@@ -189,6 +189,7 @@ import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
+import { processSuccessfulAuth } from '@/main/lib/auth/services/authService'
 
 export default {
   name: 'TheRegistration',
@@ -334,7 +335,7 @@ export default {
             isInvite: this.inviteId !== null,
             type: 'action'
           })
-          window.location = res.url
+          processSuccessfulAuth(res)
           return
         }
 

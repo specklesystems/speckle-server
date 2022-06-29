@@ -112,6 +112,27 @@ describe('GraphQL API Core @core-api', () => {
   let b3 = {}
   let b4 = {}
 
+  before(async () => {
+    // Prepare API tokens for use in tests
+    const res1 = await sendRequest(userA.token, {
+      query:
+        'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read"]}) }'
+    })
+    token1 = `Bearer ${res1.body.data.apiTokenCreate}`
+
+    const res2 = await sendRequest(userA.token, {
+      query:
+        'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }'
+    })
+    token2 = `Bearer ${res2.body.data.apiTokenCreate}`
+
+    const res3 = await sendRequest(userB.token, {
+      query:
+        'mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }'
+    })
+    token3 = `Bearer ${res3.body.data.apiTokenCreate}`
+  })
+
   describe('Mutations', () => {
     describe('Users & Api tokens', () => {
       it('Should create some api tokens', async () => {
@@ -1165,20 +1186,6 @@ describe('GraphQL API Core @core-api', () => {
         const queryPagination =
           'query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } '
         res = await sendRequest(userB.token, { query: queryPagination })
-        expect(res).to.be.json
-        expect(res.body.errors).to.exist
-      })
-
-      it('Query users', async () => {
-        const queryUsers =
-          'query { users( limit: 2, query: "matteo") {totalCount, items {id name}}}'
-        let res = await sendRequest(userA.token, { query: queryUsers })
-        expect(res).to.be.json
-        expect(res.body.errors).to.not.exist
-        expect(res.body.data.users.items.length).to.equal(2)
-        expect(res.body.data.users.totalCount).to.equal(10)
-
-        res = await sendRequest(userC.token, { query: queryUsers })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
       })

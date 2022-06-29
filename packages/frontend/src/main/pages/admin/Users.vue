@@ -2,7 +2,9 @@
   <div>
     <portal v-if="canRenderToolbarPortal" to="toolbar">
       User Management (showing
-      <span v-if="users">{{ users.items.length }} of {{ users.totalCount }} users</span>
+      <span v-if="adminUsers">
+        {{ adminUsers.items.length }} of {{ adminUsers.totalCount }} users
+      </span>
       )
     </portal>
     <portal v-if="canRenderActionsPortal" to="actions">
@@ -28,13 +30,14 @@
         dense
       ></v-text-field>
       <div v-if="!$apollo.loading">
-        <div v-for="user in users.items" :key="user.id">
-          <user-list-item
-            :key="user.id"
-            :user="user"
+        <div v-for="item in adminUsers.items" :key="item.id">
+          <users-list-item
+            :item="item"
             :roles="availableRoles"
-            @change-role="changeUserRole"
-            @delete="initiateDeleteUser"
+            @user-change-role="changeUserRole"
+            @user-delete="initiateDeleteUser"
+            @invite-delete="deleteInvite"
+            @invite-resend="resendInvite"
           />
         </div>
       </div>
@@ -105,12 +108,22 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import {
+  deleteInviteMutation,
+  resendInviteMutation,
+  useAdminUsersListQuery
+} from '@/graphql/generated/graphql'
+import SectionCard from '@/main/components/common/SectionCard.vue'
+import UsersListItem from '@/main/components/admin/UsersListItem.vue'
+import { Roles } from '@/helpers/mainConstants'
+
+// TODO: This needs a redesign, it's pretty unusable on small screens
 
 export default {
   name: 'UserAdmin',
   components: {
-    UserListItem: () => import('@/main/components/admin/UserListItem'),
-    SectionCard: () => import('@/main/components/common/SectionCard')
+    SectionCard,
+    UsersListItem
   },
   mixins: [
     buildPortalStateMixin(
@@ -127,16 +140,14 @@ export default {
   data() {
     return {
       roleLookupTable: {
-        'server:user': 'User',
-        'server:admin': 'Admin',
-        'server:archived-user': 'Archived'
+        [Roles.Server.User]: 'User',
+        [Roles.Server.Admin]: 'Admin',
+        [Roles.Server.ArchivedUser]: 'Archived'
       },
-      users: {
+      adminUsers: {
         items: [],
         totalCount: 0
       },
-      // currentPage: 1,
-      // searchQuery: null,
       showConfirmDialog: false,
       showDeleteDialog: false,
       manipulatedUser: null,
@@ -167,7 +178,7 @@ export default {
       return (this.page - 1) * this.queryLimit
     },
     numberOfPages() {
-      return Math.ceil(this.users.totalCount / this.limit)
+      return Math.ceil(this.adminUsers.totalCount / this.limit)
     },
     availableRoles() {
       const roleItems = []
@@ -178,6 +189,48 @@ export default {
     }
   },
   methods: {
+    async deleteInvite({ inviteId }) {
+      const { data, errors } = await deleteInviteMutation(this, {
+        variables: { inviteId }
+      })
+
+      if (data?.inviteDelete) {
+        this.refetch()
+        this.$triggerNotification({
+          text: 'Invitation deleted successfully',
+          type: 'success'
+        })
+      } else {
+        const errMsg =
+          errors?.[0]?.message || 'An unexpected issue occurred while deleting invite'
+        this.$triggerNotification({
+          text: errMsg,
+          type: 'error'
+        })
+      }
+    },
+    async resendInvite({ inviteId }) {
+      const { data, errors } = await resendInviteMutation(this, {
+        variables: { inviteId }
+      })
+
+      if (data?.inviteResend) {
+        this.$triggerNotification({
+          text: 'Invitation re-sent successfully',
+          type: 'success'
+        })
+      } else {
+        const errMsg =
+          errors?.[0]?.message || 'An unexpected issue occurred while resending invite'
+        this.$triggerNotification({
+          text: errMsg,
+          type: 'error'
+        })
+      }
+    },
+    refetch() {
+      this.$apollo.queries.adminUsers.refetch()
+    },
     initiateDeleteUser(user) {
       this.showDeleteDialog = true
       this.manipulatedUser = user
@@ -193,7 +246,7 @@ export default {
           userEmail: user.email
         },
         update: () => {
-          this.$apollo.queries.users.refetch()
+          this.refetch()
         },
         error: (err) => {
           this.$eventHub.$emit('notification', {
@@ -216,7 +269,7 @@ export default {
     },
     cancelRoleChange() {
       this.showConfirmDialog = false
-      this.$apollo.queries.users.refetch()
+      this.refetch()
       this.resetManipulatedUser()
     },
     async proceedRoleChange() {
@@ -236,7 +289,7 @@ export default {
           newRole
         },
         update: () => {
-          this.$apollo.queries.users.refetch()
+          this.refetch()
         },
         error: (err) => {
           this.$eventHub.$emit('notification', {
@@ -258,29 +311,7 @@ export default {
     }
   },
   apollo: {
-    users: {
-      query: gql`
-        query Users($limit: Int, $offset: Int, $query: String) {
-          users(limit: $limit, offset: $offset, query: $query) {
-            totalCount
-            items {
-              id
-              suuid
-              email
-              name
-              bio
-              company
-              avatar
-              verified
-              profiles
-              role
-              authorizedApps {
-                name
-              }
-            }
-          }
-        }
-      `,
+    adminUsers: useAdminUsersListQuery({
       variables() {
         return {
           limit: this.queryLimit,
@@ -288,7 +319,7 @@ export default {
           query: this.q
         }
       }
-    }
+    })
   }
 }
 </script>

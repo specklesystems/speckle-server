@@ -3,6 +3,9 @@ const { defaultFieldResolver } = require('graphql')
 const { validateScopes } = require('@/modules/shared')
 
 module.exports = {
+  /**
+   * Ensure that the user's access token has the specified scope allowed for it
+   */
   hasScope: class HasScopeDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field) {
       const { resolver = field.resolve || defaultFieldResolver } = field
@@ -17,6 +20,9 @@ module.exports = {
       }
     }
   },
+  /**
+   * Ensure that the user's access token has the specified scopes allowed for it
+   */
   hasScopes: class HasScopeDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field) {
       const { resolver = field.resolve || defaultFieldResolver } = field

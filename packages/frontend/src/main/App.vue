@@ -2,13 +2,13 @@
   <router-view></router-view>
 </template>
 <script>
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainServerInfoQuery } from '@/graphql/server'
 
 export default {
   components: {},
   apollo: {
     serverInfo: {
-      query: MainServerInfoQuery
+      query: mainServerInfoQuery
     }
   }
 }

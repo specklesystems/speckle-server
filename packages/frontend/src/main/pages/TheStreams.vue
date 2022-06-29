@@ -81,7 +81,7 @@
 </template>
 <script>
 import streamsQuery from '@/graphql/streams.gql'
-import { MainUserDataQuery } from '@/graphql/user'
+import { mainUserDataQuery } from '@/graphql/user'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
@@ -100,7 +100,7 @@ export default {
       query: streamsQuery
     },
     user: {
-      query: MainUserDataQuery
+      query: mainUserDataQuery
     }
   },
   data() {
