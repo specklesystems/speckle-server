@@ -116,16 +116,6 @@
           </v-btn>
           <div class="pr-5">
             <v-btn
-              v-tooltip="'Add attachments'"
-              :disabled="loadingReply"
-              icon
-              large
-              class="mouse elevation-5 background mr-3"
-              @click="addAttachments()"
-            >
-              <v-icon small>mdi-paperclip</v-icon>
-            </v-btn>
-            <v-btn
               v-tooltip="'Copy comment url to clipboard'"
               :disabled="loadingReply"
               class="mouse elevation-5 background mr-3"
@@ -135,7 +125,17 @@
             >
               <v-icon dark small>mdi-share-variant</v-icon>
             </v-btn>
-
+            <v-btn
+              v-tooltip="'Add attachments'"
+              :disabled="loadingReply"
+              icon
+              large
+              class="mouse elevation-5 background mr-3"
+              @click="addAttachments()"
+            >
+              <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+              <v-icon v-else small>mdi-paperclip</v-icon>
+            </v-btn>
             <v-btn
               v-tooltip="'Send comment (press enter)'"
               :disabled="isSubmitDisabled"

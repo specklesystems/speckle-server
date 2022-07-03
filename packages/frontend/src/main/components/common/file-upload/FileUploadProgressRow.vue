@@ -10,7 +10,7 @@
     >
       <v-icon small>mdi-close</v-icon>
     </v-btn>
-    <v-card class="file-upload-progress-row__card px-2 py-1">
+    <v-card class="file-upload-progress-row__card px-3 py-3 rounded-xl">
       <div class="d-flex align-end">
         <div v-tooltip="item.file.name" class="mr-1 text-subtitle-2 ellipsis-text">
           {{ item.file.name }}

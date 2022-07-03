@@ -1,14 +1,17 @@
 <template>
-  <div class="comment-attachments d-flex my-2">
-    <v-icon small color="white">mdi-paperclip</v-icon>
-    <div class="ml-2 text-caption d-flex flex-column">
+  <div class="comment-attachments d-flex">
+    <div class="text-caption d-flex flex-column">
       <a
         v-for="attachment in attachments"
         :key="attachment.url"
+        v-tooltip="attachment.fileName"
         href="javascript:;"
+        class="my-1"
         @click="onAttachmentClick(attachment)"
       >
-        {{ attachment.fileName }}
+        <v-icon small color="white">mdi-paperclip</v-icon>
+        {{ attachment.fileName.substring(0, 22) }}
+        {{ attachment.fileName.length > 20 ? '...' : '' }}
       </a>
     </div>
   </div>

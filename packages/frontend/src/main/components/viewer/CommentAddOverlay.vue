@@ -85,7 +85,8 @@
                   class="mx-2 elevation-10"
                   @click="addAttachments()"
                 >
-                  <v-icon small>mdi-paperclip</v-icon>
+                  <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+                  <v-icon v-else small>mdi-paperclip</v-icon>
                 </v-btn>
                 <v-btn
                   v-tooltip="'Send comment (press enter)'"
@@ -191,7 +192,8 @@
               class="mx-2 elevation-4"
               @click="addAttachments()"
             >
-              <v-icon small>mdi-paperclip</v-icon>
+              <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+              <v-icon v-else small>mdi-paperclip</v-icon>
             </v-btn>
             <v-btn
               v-tooltip="'Send comment (press enter)'"
