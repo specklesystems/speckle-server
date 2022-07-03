@@ -11,6 +11,8 @@ export const COMMENT_FULL_INFO_FRAGMENT = gql`
         id
         fileName
         streamId
+        fileType
+        fileSize
       }
     }
     data

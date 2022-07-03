@@ -85,7 +85,39 @@ export default Vue.extend({
       editorSchemaOptions: SMART_EDITOR_SCHEMA,
       fileSizeLimit: 1024 * 1024 * 25, // 25MB
       countLimit: 5, // if it's more than 5, just zip it up
-      acceptValue: [UniqueFileTypeSpecifier.AnyImage, '.pdf', '.zip'].join(',')
+      acceptValue: [
+        UniqueFileTypeSpecifier.AnyImage,
+        UniqueFileTypeSpecifier.AnyVideo,
+        '.pdf',
+        '.zip',
+        '.pptx',
+        '.ifc',
+        '.dwg',
+        '.dxf',
+        '.3dm',
+        '.ghx',
+        '.gh',
+        '.rvt',
+        '.pla',
+        '.pln',
+        '.obj',
+        '.blend',
+        '.3ds',
+        '.max',
+        '.mtl',
+        '.stl',
+        '.md',
+        '.txt',
+        '.csv',
+        '.xlsx',
+        '.xls',
+        '.doc',
+        '.docx',
+        '.svg',
+        '.eps',
+        '.gwb',
+        '.skp'
+      ].join(',')
     }
   },
   computed: {

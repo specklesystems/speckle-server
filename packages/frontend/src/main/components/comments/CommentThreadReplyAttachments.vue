@@ -9,7 +9,7 @@
         class="my-1"
         @click="onAttachmentClick(attachment)"
       >
-        <v-icon small color="white">mdi-paperclip</v-icon>
+        <v-icon small color="white">{{ icon(attachment.fileType) }}</v-icon>
         {{ attachment.fileName.substring(0, 22) }}
         {{ attachment.fileName.length > 20 ? '...' : '' }}
       </a>
@@ -30,6 +30,21 @@ export default Vue.extend({
     }
   },
   methods: {
+    icon(fileType: string) {
+      switch (fileType) {
+        case 'png':
+        case 'jpg':
+        case 'jpeg':
+        case 'gif':
+          return 'mdi-image'
+        case 'pdf':
+          return 'mdi-pdf-box'
+        case 'zip':
+          return 'mdi-zip-box'
+        default:
+          return 'mdi-paperclip'
+      }
+    },
     onAttachmentClick(a: BlobMetadata) {
       const { id, fileName, streamId } = a
       downloadBlobWithUrl(id, fileName, { streamId })
