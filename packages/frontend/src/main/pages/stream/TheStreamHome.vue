@@ -129,6 +129,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 
 export default {
   name: 'TheStreamHome',
@@ -209,11 +210,12 @@ export default {
             totalCount
             cursor
             items {
-              id
-              archived
+              ...CommentFullInfo
             }
           }
         }
+
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'no-cache',
       variables() {

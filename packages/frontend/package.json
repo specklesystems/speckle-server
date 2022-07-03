@@ -36,7 +36,6 @@
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
     "apexcharts": "^3.33.1",
-    "crypto-random-string": "^3.3.0",
     "dompurify": "^2.3.6",
     "lodash": "^4.17.21",
     "numeral": "^2.0.6",

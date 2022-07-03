@@ -117,6 +117,9 @@
 <script>
 import gql from 'graphql-tag'
 import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+
+// TODO: Stop polling each comment separately
 
 export default {
   components: {
@@ -136,26 +139,10 @@ export default {
       query: gql`
         query ($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
-            id
-            text {
-              doc
-            }
-            authorId
-            screenshot
-            createdAt
-            updatedAt
-            viewedAt
-            archived
-            resources {
-              resourceType
-              resourceId
-            }
-            data
-            replies {
-              totalCount
-            }
+            ...CommentFullInfo
           }
         }
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'no-cache',
       variables() {
@@ -175,7 +162,9 @@ export default {
       commentThreadActivity: {
         query: gql`
           subscription ($streamId: String!, $commentId: String!) {
-            commentThreadActivity(streamId: $streamId, commentId: $commentId)
+            commentThreadActivity(streamId: $streamId, commentId: $commentId) {
+              type
+            }
           }
         `,
         variables() {
@@ -189,12 +178,12 @@ export default {
         },
         result({ data }) {
           if (!data || !data.commentThreadActivity) return
-          if (data.commentThreadActivity.eventType === 'reply-added') {
+          if (data.commentThreadActivity.type === 'reply-added') {
             this.commentDetails.replies.totalCount++
             this.commentDetails.updatedAt = Date.now()
             return
           }
-          if (data.commentThreadActivity.eventType === 'comment-archived') {
+          if (data.commentThreadActivity.type === 'comment-archived') {
             this.$emit('deleted', this.comment)
           }
         }

@@ -44,7 +44,7 @@
         This comment is targeting other resources.
         <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
       </div>
-      <div v-show="$apollo.loading" class="px-2">
+      <div v-show="$apollo.loading" class="px-2 mb-2">
         <v-progress-linear indeterminate />
       </div>
       <template v-for="(reply, index) in thread">
@@ -79,23 +79,29 @@
         </v-slide-y-transition>
         <div v-if="canReply" class="d-flex">
           <comment-editor
-            v-model="replyText"
+            ref="commentEditor"
+            v-model="replyValue"
+            :stream-id="$route.params.streamId"
             adding-comment
             max-height="300px"
-            class="mb-2 elevation-5 rounded-xl"
+            class="mb-2"
             :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
             :disabled="loadingReply"
             @input="debTypingUpdate"
+            @attachments-processing="anyAttachmentsProcessing = $event"
             @submit="addReply()"
           />
         </div>
         <div v-else class="caption background rounded-xl py-2 px-4 elevation-2">
           You do not have sufficient permissions to reply to comments in this stream.
         </div>
-        <div v-show="loadingReply" class="px-2">
+        <div v-show="loadingReply" class="px-2 mb-2">
           <v-progress-linear indeterminate />
         </div>
-        <div ref="replyinput" class="d-flex justify-space-between align-center">
+        <div
+          ref="replyinput"
+          class="d-flex justify-space-between align-center comment-actions"
+        >
           <v-btn
             v-show="canArchiveThread"
             v-tooltip="'Marks this thread as archived.'"
@@ -119,10 +125,20 @@
             >
               <v-icon dark small>mdi-share-variant</v-icon>
             </v-btn>
-
+            <v-btn
+              v-tooltip="'Add attachments'"
+              :disabled="loadingReply"
+              icon
+              large
+              class="mouse elevation-5 background mr-3"
+              @click="addAttachments()"
+            >
+              <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+              <v-icon v-else small>mdi-paperclip</v-icon>
+            </v-btn>
             <v-btn
               v-tooltip="'Send comment (press enter)'"
-              :disabled="loadingReply"
+              :disabled="isSubmitDisabled"
               class="mouse elevation-5 primary"
               icon
               dark
@@ -178,6 +194,8 @@ import CommentThreadReply from '@/main/components/comments/CommentThreadReply.vu
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import { isDocEmpty } from '@/main/lib/common/text-editor/documentHelper'
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
+import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 
 export default {
   components: {
@@ -226,16 +244,12 @@ export default {
               totalCount
               cursor
               items {
-                id
-                text {
-                  doc
-                }
-                authorId
-                createdAt
+                ...CommentFullInfo
               }
             }
           }
         }
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'cache-and-network',
       variables() {
@@ -258,8 +272,15 @@ export default {
       commentThreadActivity: {
         query: gql`
           subscription ($streamId: String!, $commentId: String!) {
-            commentThreadActivity(streamId: $streamId, commentId: $commentId)
+            commentThreadActivity(streamId: $streamId, commentId: $commentId) {
+              type
+              data
+              reply {
+                ...CommentFullInfo
+              }
+            }
           }
+          ${COMMENT_FULL_INFO_FRAGMENT}
         `,
         variables() {
           return {
@@ -272,21 +293,21 @@ export default {
         },
         result({ data }) {
           if (!data || !data.commentThreadActivity) return
-          if (data.commentThreadActivity.eventType === 'reply-added') {
+          if (data.commentThreadActivity.type === 'reply-added') {
             if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
             else {
               setTimeout(() => {
                 this.$emit('refresh-layout') // needed for layout reshuffle in parent
               }, 100)
             }
-            this.localReplies.push({ ...data.commentThreadActivity })
+            this.localReplies.push(data.commentThreadActivity.reply)
             this.$refs.replyinput.scrollIntoView({ behaviour: 'smooth', block: 'end' })
             return
           }
-          if (data.commentThreadActivity.eventType === 'comment-archived') {
+          if (data.commentThreadActivity.type === 'comment-archived') {
             this.$emit('deleted', this.comment)
           }
-          if (data.commentThreadActivity.eventType === 'reply-typing-status') {
+          if (data.commentThreadActivity.type === 'reply-typing-status') {
             const state = data.commentThreadActivity.data
             if (state.userId === this.$userId()) return
             const existingUser = this.whoIsTyping.find((u) => u.userId === state.userId)
@@ -311,17 +332,21 @@ export default {
   data() {
     return {
       hovered: true,
-      replyText: null,
+      replyValue: { doc: null, attachments: [] },
       localReplies: [],
       minimize: false,
       showArchiveDialog: false,
       loadingReply: false,
       whoIsTyping: [],
       isTyping: true,
-      editorSchemaOptions: SMART_EDITOR_SCHEMA
+      editorSchemaOptions: SMART_EDITOR_SCHEMA,
+      anyAttachmentsProcessing: false
     }
   },
   computed: {
+    isSubmitDisabled() {
+      return this.loadingReply || this.anyAttachmentsProcessing
+    },
     canReply() {
       return !!this.stream?.role || this.stream?.allowPublicComments
     },
@@ -421,7 +446,9 @@ export default {
       7000,
       { leading: true }
     ),
-
+    addAttachments() {
+      this.$refs.commentEditor.addAttachments()
+    },
     async sendTypingUpdate(state = true) {
       if (!this.$loggedIn()) return
       await this.$apollo.mutate({
@@ -478,25 +505,31 @@ export default {
       const delta = Math.abs(prev - curr)
       return delta > 450000
     },
+    isReplyEmpty() {
+      return isDocEmpty(this.replyValue.doc) && !this.replyValue.attachments.length
+    },
     async addReply() {
-      if (isDocEmpty(this.replyText)) {
+      if (this.isReplyEmpty()) {
         this.$eventHub.$emit('notification', {
           text: `Cannot post an empty reply.`
         })
         return
       }
 
+      const blobIds = this.replyValue.attachments
+        .filter(isSuccessfullyUploaded)
+        .map((a) => a.result.blobId)
       const replyInput = {
         streamId: this.$route.params.streamId,
         parentComment: this.comment.id,
-        text: this.replyText
+        text: this.replyValue.doc,
+        blobIds
       }
 
+      let success = false
       this.loadingReply = true
-
       try {
-        this.replyText = null
-        await this.$apollo.mutate({
+        const { data } = await this.$apollo.mutate({
           mutation: gql`
             mutation commentReply($input: ReplyCreateInput!) {
               commentReply(input: $input)
@@ -504,6 +537,7 @@ export default {
           `,
           variables: { input: replyInput }
         })
+        success = !!data.commentReply
         await this.sendTypingUpdate(false)
         this.$mixpanel.track('Comment Action', { type: 'action', name: 'reply' })
       } catch (e) {
@@ -512,7 +546,15 @@ export default {
         })
       }
 
+      // On success, mark uploads as in use, to prevent cleanup
+      if (success) {
+        this.replyValue.attachments.forEach((a) => {
+          a.inUse = true
+        })
+      }
+
       this.loadingReply = false
+      this.replyValue = { doc: null, attachments: [] }
 
       setTimeout(() => {
         // Shhh.
@@ -544,7 +586,7 @@ export default {
             commentId: this.comment.id
           }
         })
-        this.replyText = null
+        this.replyValue = { doc: null, attachments: [] }
         this.showArchiveDialog = false
         this.$emit('deleted', this.comment)
         this.$mixpanel.track('Comment Action', { type: 'action', name: 'archive' })

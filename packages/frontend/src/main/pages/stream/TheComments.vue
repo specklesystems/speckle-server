@@ -95,6 +95,7 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 
 export default {
   name: 'TheComments',
@@ -141,11 +142,12 @@ export default {
             totalCount
             cursor
             items {
-              id
-              archived
+              ...CommentFullInfo
             }
           }
         }
+
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'no-cache',
       variables() {
@@ -157,17 +159,22 @@ export default {
       subscribeToMore: {
         document: gql`
           subscription ($streamId: String!) {
-            commentActivity(streamId: $streamId)
+            commentActivity(streamId: $streamId) {
+              type
+              comment {
+                ...CommentFullInfo
+              }
+            }
           }
+          ${COMMENT_FULL_INFO_FRAGMENT}
         `,
         variables() {
           return { streamId: this.$route.params.streamId }
         },
         updateQuery(prevResult, { subscriptionData }) {
-          if (
-            this.localComments.findIndex((lc) => subscriptionData.id === lc.id) === -1
-          ) {
-            this.localComments.push({ ...subscriptionData.data.commentActivity })
+          const { comment } = subscriptionData.data.commentActivity
+          if (this.localComments.findIndex((lc) => comment.id === lc.id) === -1) {
+            this.localComments.push(comment)
           }
         },
         skip() {
