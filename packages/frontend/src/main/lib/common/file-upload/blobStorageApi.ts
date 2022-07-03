@@ -63,6 +63,31 @@ export async function downloadBlobWithUrl(
 }
 
 /**
+ * Creates a string with a URL representing the blob. Use to display image previews, etc.
+ * @param blobId
+ * @param fileName Download filename
+ * @param principal Owner of the blob
+ */
+export async function getBlobUrl(blobId: string, principal: BlobUploadPrincipal) {
+  const token = getAuthToken()
+  const res = await fetch(`/api/stream/${principal.streamId}/blob/${blobId}`, {
+    headers: token
+      ? {
+          Authorization: token
+        }
+      : undefined
+  })
+
+  if (res.status !== 200) {
+    throw new BlobRetrievalError()
+  }
+
+  const blob = await res.blob()
+  const fileUrl = window.URL.createObjectURL(blob)
+  return fileUrl
+}
+
+/**
  * Upload a single file and return an UploadFileItem
  * @param file File emitted from FileUploadZone
  * @param principal What entity should the file be attached to on the server
