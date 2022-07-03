@@ -7,7 +7,6 @@
         v-tooltip="attachment.fileName"
         href="javascript:;"
         class="my-1"
-        @xxxclick="onAttachmentClick(attachment)"
         @click="
           showAttachmentPreview = true
           selectedAttachment = attachment
@@ -31,7 +30,6 @@
 </template>
 <script lang="ts">
 import { BlobMetadata } from '@/graphql/generated/graphql'
-import { downloadBlobWithUrl } from '@/main/lib/common/file-upload/blobStorageApi'
 import Vue, { PropType } from 'vue'
 import CommentThreadAttachmentPreview from '@/main/components/comments/CommentThreadAttachmentPreview.vue'
 
@@ -67,10 +65,6 @@ export default Vue.extend({
         default:
           return 'mdi-paperclip'
       }
-    },
-    onAttachmentClick(a: BlobMetadata) {
-      const { id, fileName, streamId } = a
-      downloadBlobWithUrl(id, fileName, { streamId })
     }
   }
 })

@@ -10,9 +10,6 @@
         {{ prettyFileSize(attachment.fileSize) }}
       </v-btn>
     </v-toolbar>
-    <!-- {{ attachment }}
-    <br />
-    {{ blobUrl }} -->
     <template v-if="isImage">
       <v-img min-width="100%" min-height="100px" :src="blobUrl">
         <template #placeholder>
@@ -77,7 +74,6 @@ export default Vue.extend({
     }
   },
   async mounted() {
-    console.log('mounted', this.attachment)
     if (this.isImage) {
       this.blobUrl = await getBlobUrl(this.attachment.id, {
         streamId: this.$route.params.streamId
