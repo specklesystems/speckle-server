@@ -4,7 +4,7 @@
     :style="`${
       $vuetify.breakpoint.xs
         ? 'width: 90vw; padding-right:30px;'
-        : 'padding-right:30px;'
+        : 'max-width: 350px; padding-right:30px;'
     } ${
       hovered ? 'opacity: 1;' : 'opacity: 1;'
     } transition: opacity 0.2s ease; padding-left: 6px;`"
@@ -33,16 +33,31 @@
     <div
       v-show="!$vuetify.breakpoint.xs || !minimize"
       style="width: 100%"
-      class="mouse"
+      class="mouse d-block"
     >
-      <div
+      <!-- <div
         v-if="!isComplete"
-        class="warning rounded-xl py-2 caption mb-2 text-center"
+        class="warning rounded-xl py-2 px-4 caption mb-2 mr-5 text-center"
         dense
       >
         <v-icon x-small>mdi-alert-circle-outline</v-icon>
         This comment is targeting other resources.
-        <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
+        <br />
+      </div> -->
+      <div v-if="!isComplete" class="mb-2 mr-5" dense>
+        <v-btn
+          v-tooltip="
+            'This comment is attached to extra commits or objects. Click here to load them.'
+          "
+          small
+          rounded
+          block
+          class="warning"
+          @click="addMissingResources()"
+        >
+          <v-icon small class="mr-2">mdi-target</v-icon>
+          Load full context
+        </v-btn>
       </div>
       <div v-show="$apollo.loading" class="px-2 mb-2">
         <v-progress-linear indeterminate />
@@ -92,13 +107,14 @@
             @submit="addReply()"
           />
         </div>
-        <div v-else class="caption background rounded-xl py-2 px-4 elevation-2">
+        <div v-else class="caption background rounded-xl py-2 px-4 mr-4 elevation-2">
           You do not have sufficient permissions to reply to comments in this stream.
         </div>
         <div v-show="loadingReply" class="px-2 mb-2">
           <v-progress-linear indeterminate />
         </div>
         <div
+          v-if="canReply"
           ref="replyinput"
           class="d-flex justify-space-between align-center comment-actions"
         >
@@ -172,12 +188,14 @@
           </v-card>
         </v-dialog>
       </div>
-      <div v-else>
+      <div v-else class="pr-5">
         <v-btn
           block
           depressed
           color="primary"
-          class="rounded-xl"
+          rounded
+          class="elevation-5"
+          large
           @click="$loginAndSetRedirect()"
         >
           <v-icon small class="mr-1">mdi-account</v-icon>

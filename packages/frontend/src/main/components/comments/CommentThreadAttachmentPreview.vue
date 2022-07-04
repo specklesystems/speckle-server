@@ -10,7 +10,7 @@
         {{ prettyFileSize(attachment.fileSize) }}
       </v-btn>
     </v-toolbar>
-    <template v-if="isImage">
+    <template v-if="isImage && !error">
       <v-img min-width="100%" min-height="100px" :src="blobUrl">
         <template #placeholder>
           <v-row class="fill-height ma-0" align="center" justify="center">
@@ -22,10 +22,16 @@
         </template>
       </v-img>
     </template>
-    <template v-else>
+    <template v-else-if="!error">
       <v-card-text class="mt-4">
         <v-icon small class="mr-2">mdi-alert</v-icon>
         Be cautious when downloading! Attachments are not scanned for harmful content.
+      </v-card-text>
+    </template>
+    <template v-else>
+      <v-card-text class="mt-4">
+        <v-icon small class="mr-2">mdi-alert</v-icon>
+        Failed to preview.
       </v-card-text>
     </template>
   </v-card>
@@ -51,7 +57,8 @@ export default Vue.extend({
   },
   data: () => ({
     prettyFileSize,
-    blobUrl: null as Nullable<string>
+    blobUrl: null as Nullable<string>,
+    error: null as Nullable<Error>
   }),
   computed: {
     isImage() {
@@ -74,10 +81,14 @@ export default Vue.extend({
     }
   },
   async mounted() {
-    if (this.isImage) {
-      this.blobUrl = await getBlobUrl(this.attachment.id, {
-        streamId: this.$route.params.streamId
-      })
+    try {
+      if (this.isImage) {
+        this.blobUrl = await getBlobUrl(this.attachment.id, {
+          streamId: this.$route.params.streamId
+        })
+      }
+    } catch (e) {
+      this.error = e as Error
     }
   },
   methods: {
