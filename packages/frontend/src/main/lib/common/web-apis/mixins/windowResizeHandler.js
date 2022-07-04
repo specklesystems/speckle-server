@@ -18,11 +18,14 @@ export function buildResizeHandlerMixin({ shouldThrottle, wait } = {}) {
       window.removeEventListener('resize', this.resizeHandler)
     },
     watch: {
-      '$vuetify.breakpoint.name'() {
-        // Vuetify breakpoint service sometimes kicks in late, triggering
-        // a final update handler on next tick
-        clearTimeout(this.breakpointTimeout)
-        this.breakpointTimeout = setTimeout(() => this.onWindowResize, 0)
+      '$vuetify.breakpoint': {
+        handler() {
+          // Vuetify breakpoint service sometimes kicks in late, so we're triggering
+          // a final update handler on next tick to make sure any code that depends on $vuetify.breakpoint
+          // can be updated as well
+          this.resizeHandler()
+        },
+        deep: true
       }
     },
     methods: {

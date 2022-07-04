@@ -3,7 +3,8 @@ const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const {
-  buildCommentTextFromInput
+  buildCommentTextFromInput,
+  validateInputAttachments
 } = require('@/modules/comments/services/commentTextService')
 
 const Comments = () => knex('comments')
@@ -74,13 +75,21 @@ module.exports = {
     if (stream && stream.resourceId !== input.streamId)
       throw Error("Input streamId doesn't match the stream resource.resourceId")
 
-    const comment = { ...input }
-
-    delete comment.resources
+    const comment = {
+      streamId: input.streamId,
+      text: input.text,
+      data: input.data,
+      screenshot: input.screenshot
+    }
 
     comment.id = crs({ length: 10 })
     comment.authorId = userId
-    comment.text = buildCommentTextFromInput(input.text)
+
+    await validateInputAttachments(input.streamId, input.blobIds)
+    comment.text = buildCommentTextFromInput({
+      doc: input.text,
+      blobIds: input.blobIds
+    })
 
     await Comments().insert(comment)
     try {
@@ -100,14 +109,25 @@ module.exports = {
       throw e // pass on to resolver
     }
     await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
-    return comment
+
+    // Get new comment from DB, that way we don't have to mock/fill in the missing
+    // values
+    return module.exports.getComment({ id: comment.id, userId })
   },
 
-  async createCommentReply({ authorId, parentCommentId, streamId, text, data }) {
+  async createCommentReply({
+    authorId,
+    parentCommentId,
+    streamId,
+    text,
+    data,
+    blobIds
+  }) {
+    await validateInputAttachments(streamId, blobIds)
     const comment = {
       id: crs({ length: 10 }),
       authorId,
-      text: buildCommentTextFromInput(text),
+      text: buildCommentTextFromInput({ doc: text, blobIds }),
       data,
       streamId,
       parentComment: parentCommentId
@@ -127,7 +147,9 @@ module.exports = {
     }
     await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
 
-    return comment
+    // Get new comment from DB, that way we don't have to mock/fill in the missing
+    // values
+    return module.exports.getComment({ id: comment.id, userId: authorId })
   },
 
   async editComment({ userId, input, matchUser = false }) {
@@ -136,8 +158,16 @@ module.exports = {
     if (matchUser && editedComment.authorId !== userId)
       throw new ForbiddenError("You cannot edit someone else's comments")
 
-    const newText = buildCommentTextFromInput(input.text)
+    await validateInputAttachments(input.streamId, input.blobIds)
+    const newText = buildCommentTextFromInput({
+      doc: input.text,
+      blobIds: input.blobIds
+    })
     await Comments().where({ id: input.id }).update({ text: newText })
+
+    // Get new comment from DB, that way we don't have to mock/fill in the missing
+    // values
+    return module.exports.getComment({ id: input.id, userId })
   },
 
   async viewComment({ userId, commentId }) {

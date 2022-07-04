@@ -63,5 +63,21 @@ module.exports = {
       role: 'server_acl.role'
     }
   },
+  Comments: {
+    name: 'comments',
+    knex: () => knex('comments'),
+    col: {
+      id: 'comments.id',
+      streamId: 'comments.streamId',
+      authorId: 'comments.authorId',
+      createdAt: 'comments.createdAt',
+      updatedAt: 'comments.updatedAt',
+      text: 'comments.text',
+      screenshot: 'comments.screenshot',
+      data: 'comments.data',
+      archived: 'comments.archived',
+      parentComment: 'comments.parentComment'
+    }
+  },
   knex
 }

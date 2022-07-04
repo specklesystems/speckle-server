@@ -7,20 +7,12 @@ import router from './embedRouter'
 
 import '@/plugins/helpers'
 import store from '@/main/store'
+import * as MixpanelManager from '@/mixpanelManager'
 
-import { formatNumber } from '@/plugins/formatNumber'
-// Filter to turn any number into a nice string like '10k', '5.5m'
-// Accepts 'max' parameter to set it's formatting while being animated
-Vue.filter('prettynum', formatNumber)
-
-Vue.component('HistogramSlider', async () => {
-  await import(
-    /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider/dist/histogram-slider.css'
-  )
-  const component = await import(
-    /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider'
-  )
-  return component
+// Init mixpanel
+MixpanelManager.initialize({
+  hostApp: 'web-embed',
+  hostAppDisplayName: 'Embed App'
 })
 
 new Vue({

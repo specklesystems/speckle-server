@@ -162,7 +162,7 @@ module.exports = {
         throw new ApolloForbiddenError('You are not authorized.')
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
-        commentThreadActivity: { eventType: 'reply-typing-status', data: args.data },
+        commentThreadActivity: { type: 'reply-typing-status', data: args.data },
         streamId: args.streamId,
         commentId: args.commentId
       })
@@ -181,22 +181,15 @@ module.exports = {
       if (!stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const { id, text } = await createComment({
+      const comment = await createComment({
         userId: context.userId,
         input: args.input
       })
 
       await pubsub.publish('COMMENT_ACTIVITY', {
         commentActivity: {
-          ...args.input,
-          text,
-          authorId: context.userId,
-          id,
-          replies: { totalCount: 0 },
-          updatedAt: Date.now(),
-          createdAt: Date.now(),
-          eventType: 'comment-added',
-          archived: false
+          type: 'comment-added',
+          comment
         },
         streamId: args.input.streamId,
         resourceIds: args.input.resources.map((res) => res.resourceId).join(',') // TODO: hack for now
@@ -205,14 +198,14 @@ module.exports = {
       await saveActivity({
         streamId: args.input.streamId,
         resourceType: 'comment',
-        resourceId: id,
+        resourceId: comment.id,
         actionType: 'comment_created',
         userId: context.userId,
         info: { input: args.input },
-        message: `Comment added: ${id} (${args.input})`
+        message: `Comment added: ${comment.id} (${args.input})`
       })
 
-      return id
+      return comment.id
     },
 
     async commentEdit(parent, args, context) {
@@ -266,7 +259,7 @@ module.exports = {
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {
-          eventType: args.archived ? 'comment-archived' : 'comment-added'
+          type: args.archived ? 'comment-archived' : 'comment-added'
         },
         streamId: args.streamId,
         commentId: args.commentId
@@ -296,23 +289,19 @@ module.exports = {
       if (!stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const { id, text } = await createCommentReply({
+      const reply = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
         text: args.input.text,
-        data: args.input.data
+        data: args.input.data,
+        blobIds: args.input.blobIds
       })
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {
-          eventType: 'reply-added',
-          ...args.input,
-          id,
-          text,
-          authorId: context.userId,
-          updatedAt: Date.now(),
-          createdAt: Date.now()
+          type: 'reply-added',
+          reply
         },
         streamId: args.input.streamId,
         commentId: args.input.parentComment
@@ -327,7 +316,7 @@ module.exports = {
         info: { input: args.input },
         message: `Comment reply created.`
       })
-      return id
+      return reply.id
     }
   },
   Subscription: {

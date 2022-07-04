@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import md5 from '@/helpers/md5'
+import { getMixpanelUserId, getMixpanelServerId } from '@/mixpanelManager'
 
 let hasLocalStorage = typeof Storage !== 'undefined'
 
@@ -17,12 +17,11 @@ Vue.prototype.$userId = function () {
 }
 
 Vue.prototype.$mixpanelId = function () {
-  if (hasLocalStorage) return localStorage.getItem('distinct_id')
-  else return null
+  return getMixpanelUserId()
 }
 
 Vue.prototype.$mixpanelServerId = function () {
-  return md5(window.location.hostname.toLowerCase()).toUpperCase()
+  return getMixpanelServerId()
 }
 
 Vue.prototype.$loggedIn = function () {

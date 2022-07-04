@@ -294,6 +294,7 @@ export default {
         status: 'viewing'
       }
 
+      if (!this.$route.params.streamId) return
       await this.$apollo.mutate({
         mutation: gql`
           mutation userViewerActivityBroadcast(
@@ -317,6 +318,8 @@ export default {
     },
     async sendDisconnect() {
       if (!this.$loggedIn()) return
+      if (!this.$route.params.streamId) return
+
       await this.$apollo.mutate({
         mutation: gql`
           mutation userViewerActivityBroadcast(

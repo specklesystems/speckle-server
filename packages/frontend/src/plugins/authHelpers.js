@@ -6,6 +6,16 @@ import { VALID_EMAIL_REGEX } from '@/main/lib/common/vuetify/validators'
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
 
+export function getAuthToken() {
+  try {
+    return localStorage.getItem(LocalStorageKeys.AuthToken)
+  } catch (e) {
+    // suppressed localStorage errors
+  }
+
+  return null
+}
+
 /**
  * Checks for an access token in the url and tries to exchange it for a token/refresh pair.
  * @return {boolean} true if everything is ok, otherwise throws an error.
