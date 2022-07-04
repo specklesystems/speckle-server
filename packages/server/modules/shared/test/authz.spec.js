@@ -6,7 +6,9 @@ const {
   validateRole,
   validateScope,
   contextRequiresStream,
-  ContextError
+  ContextError,
+  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
@@ -258,6 +260,149 @@ describe('AuthZ @shared', () => {
       })
 
       expectAuthError(new BadRequestError('Stream inputs are malformed'), authResult)
+    })
+  })
+  describe('Escape hatches', () => {
+    describe('Allow for public stream no role', () => {
+      it('not public stream, no auth returns same context ', async () => {
+        const input = { context: 'dummy', authResult: 'fake' }
+        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
+          input
+        )
+        expect(result).to.deep.equal(input)
+      })
+      it('public stream, no auth returns same context ', async () => {
+        const input = { context: { stream: { isPublic: true } }, authResult: 'fake' }
+        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
+          input
+        )
+        expect(result).to.deep.equal(input)
+      })
+      it('not public stream, with auth returns same context ', async () => {
+        const input = {
+          context: { auth: true, stream: { isPublic: false } },
+          authResult: 'fake'
+        }
+        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
+          input
+        )
+        expect(result).to.deep.equal(input)
+      })
+      it('public stream, with auth returns authSuccess', async () => {
+        const input = {
+          context: { auth: true, stream: { isPublic: true } },
+          authResult: 'fake'
+        }
+        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
+          input
+        )
+        expect(result).to.deep.equal(authSuccess(input.context))
+      })
+    })
+    describe('Allow for public stream public comments', () => {
+      const sameContextTestData = [
+        ['no stream, no auth', { context: 'dummy', authResult: 'fake' }],
+        ['no stream, auth', { context: { auth: true }, authResult: 'fake' }],
+        [
+          'auth, private stream, private comments',
+          {
+            context: {
+              auth: true,
+              stream: { isPublic: false, allowPublicComments: false }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'auth, private stream, public comments',
+          {
+            context: {
+              auth: true,
+              stream: { isPublic: false, allowPublicComments: true }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'auth, private stream, public comments',
+          {
+            context: {
+              auth: true,
+              stream: { isPublic: false, allowPublicComments: true }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'no auth, private stream, private comments',
+          {
+            context: {
+              auth: false,
+              stream: { isPublic: false, allowPublicComments: false }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'no auth, public stream, private comments',
+          {
+            context: {
+              auth: false,
+              stream: { isPublic: true, allowPublicComments: false }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'no auth, public stream, public comments',
+          {
+            context: {
+              auth: false,
+              stream: { isPublic: true, allowPublicComments: true }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'no auth, public stream, private comments',
+          {
+            context: {
+              auth: false,
+              stream: { isPublic: true, allowPublicComments: false }
+            },
+            authResult: 'fake'
+          }
+        ],
+        [
+          'auth, public stream, private comments',
+          {
+            context: {
+              auth: false,
+              stream: { isPublic: true, allowPublicComments: false }
+            },
+            authResult: 'fake'
+          }
+        ]
+      ]
+      sameContextTestData.map(([caseName, context]) =>
+        it(`${caseName} returns same context`, async () => {
+          const result =
+            await allowForAllRegisteredUsersOnPublicStreamsWithPublicComments(context)
+          expect(result).to.deep.equal(context)
+        })
+      )
+      it(`Auth public stream public comments returns authSuccess`, async () => {
+        const input = {
+          context: {
+            auth: true,
+            stream: { isPublic: true, allowPublicComments: true }
+          },
+          authResult: 'fake'
+        }
+        const result =
+          await allowForAllRegisteredUsersOnPublicStreamsWithPublicComments(input)
+        expect(result).to.deep.equal(authSuccess(input.context))
+      })
     })
   })
 })

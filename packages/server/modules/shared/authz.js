@@ -116,7 +116,7 @@ const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole = async ({
   context,
   authResult
 }) =>
-  context.auth && context.stream.isPublic
+  context.auth && context.stream?.isPublic
     ? authSuccess(context)
     : { context, authResult }
 
@@ -124,7 +124,7 @@ const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments = async ({
   context,
   authResult
 }) =>
-  context.auth && context.stream.isPublic && context.stream.allowPublicComments
+  context.auth && context.stream?.isPublic && context.stream?.allowPublicComments
     ? authSuccess(context)
     : { context, authResult }
 
