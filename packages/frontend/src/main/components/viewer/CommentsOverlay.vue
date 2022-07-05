@@ -116,7 +116,7 @@
       >
         <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
         <v-fade-transition>
-          <div>
+          <div class="position:relative">
             <comment-thread-viewer
               :comment="comment"
               @bounce="bounceComment"

@@ -32,6 +32,7 @@
           <comment-thread-reply-attachments
             v-if="reply.text.attachments && reply.text.attachments.length"
             :attachments="reply.text.attachments"
+            :primary="$userId() === reply.authorId"
           />
         </div>
       </div>

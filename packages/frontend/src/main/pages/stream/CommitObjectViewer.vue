@@ -154,6 +154,14 @@
         <comments-overlay key="c" @add-resources="addResources" />
         <comment-add-overlay key="b" />
       </div>
+
+      <!-- 
+      Note: portaling out the mobile view of comment threads because of
+      stacking chaos caused by transforms, etc. in positioning from the default
+      view. 
+      -->
+      <portal-target name="mobile-comment-thread"></portal-target>
+
       <!-- Progress bar -->
       <div
         v-if="!loadedModel"

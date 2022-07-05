@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="!$vuetify.breakpoint.xs"
     class="no-mouse py-2"
     :style="`${
       $vuetify.breakpoint.xs
@@ -11,30 +12,7 @@
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
-    <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5 mouse">
-      <v-btn
-        icon
-        small
-        class="background ml-2 elevation-10"
-        @click="minimize = !minimize"
-      >
-        <v-icon v-if="!minimize" small>mdi-minus</v-icon>
-        <v-icon v-else small>mdi-plus</v-icon>
-      </v-btn>
-      <v-btn
-        icon
-        small
-        class="primary dark white--text ml-2 elevation-10"
-        @click="$emit('close', comment)"
-      >
-        <v-icon small>mdi-close</v-icon>
-      </v-btn>
-    </div>
-    <div
-      v-show="!$vuetify.breakpoint.xs || !minimize"
-      style="width: 100%"
-      class="mouse d-block"
-    >
+    <div style="width: 100%" class="mouse d-block">
       <div v-if="!isComplete" class="mb-2 mr-5" dense>
         <v-btn
           v-tooltip="
@@ -83,7 +61,7 @@
             {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
-        <div v-if="canReply" class="d-flex">
+        <div v-if="canReply" class="d-flex mr-2">
           <comment-editor
             ref="commentEditor"
             v-model="replyValue"
@@ -194,6 +172,209 @@
         </v-btn>
       </div>
     </div>
+  </div>
+  <!-- 
+    Note: portaling out the mobile view of comment threads because of
+    stacking chaos caused by transforms, etc. in positioning from the default
+    view. 
+  -->
+  <div v-else-if="comment.expanded">
+    <portal to="mobile-comment-thread">
+      <div
+        :class="`mobile-thread mouse background ${mobileExpanded ? 'expanded' : ''}`"
+        style="overflow-y: scroll"
+      >
+        <v-card class="elevation-0 transparent">
+          <v-toolbar
+            style="position: sticky; top: 0; z-index: 1000"
+            @click="mobileExpanded = !mobileExpanded"
+          >
+            <v-app-bar-nav-icon>
+              <v-icon v-if="!mobileExpanded">mdi-chevron-up</v-icon>
+              <v-icon v-else>mdi-chevron-down</v-icon>
+            </v-app-bar-nav-icon>
+            <v-toolbar-title>Comment Thread</v-toolbar-title>
+            <v-spacer />
+            <v-btn icon @click.stop="$emit('close', comment)">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+          <!-- 
+            I know, this is bad copy paste. Sigh. Currently, one can only wish for a better world
+            with less technical debt. 
+          -->
+          <div style="width: 100%" class="mouse d-block mt-4 mb-4 pl-4">
+            <div v-if="!isComplete" class="mb-2 mr-5" dense>
+              <v-btn
+                v-tooltip="
+                  'This comment is attached to extra commits or objects. Click here to load them.'
+                "
+                small
+                rounded
+                block
+                class="warning"
+                @click="addMissingResources()"
+              >
+                <v-icon small class="mr-2">mdi-target</v-icon>
+                Load full context
+              </v-btn>
+            </div>
+            <div v-show="$apollo.loading" class="px-2 mb-2">
+              <v-progress-linear indeterminate />
+            </div>
+            <template v-for="(reply, index) in thread">
+              <div
+                v-if="showTime(index)"
+                :key="index + 'date'"
+                class="d-flex justify-center mouse"
+              >
+                <div
+                  class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text"
+                >
+                  {{ new Date(reply.createdAt).toLocaleString() }}
+                  <timeago
+                    :datetime="reply.createdAt"
+                    class="font-italic ma-1"
+                  ></timeago>
+                </div>
+              </div>
+              <comment-thread-reply
+                :key="index + 'reply'"
+                :reply="reply"
+                :stream="stream"
+                :index="index"
+                @deleted="handleReplyDeleteEvent"
+              />
+            </template>
+            <div v-if="$loggedIn()" class="px-0 mb-4">
+              <v-slide-y-transition>
+                <div
+                  v-show="whoIsTyping.length > 0"
+                  class="px-4 py-2 caption mb-2 background rounded-xl"
+                >
+                  {{ typingStatusText }}
+                </div>
+              </v-slide-y-transition>
+              <div v-if="canReply" class="d-flex pr-5">
+                <comment-editor
+                  ref="commentEditor"
+                  v-model="replyValue"
+                  :stream-id="$route.params.streamId"
+                  adding-comment
+                  max-height="300px"
+                  class="mb-2"
+                  :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
+                  :disabled="loadingReply"
+                  @input="debTypingUpdate"
+                  @attachments-processing="anyAttachmentsProcessing = $event"
+                  @submit="addReply()"
+                />
+              </div>
+              <div
+                v-else
+                class="caption background rounded-xl py-2 px-4 mr-4 elevation-2"
+              >
+                You do not have sufficient permissions to reply to comments in this
+                stream.
+              </div>
+              <div v-show="loadingReply" class="px-2 mb-2">
+                <v-progress-linear indeterminate />
+              </div>
+              <div
+                v-if="canReply"
+                ref="replyinput"
+                class="d-flex justify-space-between align-center comment-actions"
+              >
+                <v-btn
+                  v-show="canArchiveThread"
+                  v-tooltip="'Marks this thread as archived.'"
+                  class="white--text ml-2"
+                  small
+                  icon
+                  depressed
+                  color="error"
+                  @click="showArchiveDialog = true"
+                >
+                  <v-icon small>mdi-delete-outline</v-icon>
+                </v-btn>
+                <div class="pr-5">
+                  <v-btn
+                    v-tooltip="'Copy comment url to clipboard'"
+                    :disabled="loadingReply"
+                    class="mouse elevation-5 background mr-3"
+                    icon
+                    large
+                    @click="copyCommentLinkToClip()"
+                  >
+                    <v-icon dark small>mdi-share-variant</v-icon>
+                  </v-btn>
+                  <v-btn
+                    v-tooltip="'Add attachments'"
+                    :disabled="loadingReply"
+                    icon
+                    large
+                    class="mouse elevation-5 background mr-3"
+                    @click="addAttachments()"
+                  >
+                    <v-icon v-if="$vuetify.breakpoint.smAndDown" small>
+                      mdi-camera
+                    </v-icon>
+                    <v-icon v-else small>mdi-paperclip</v-icon>
+                  </v-btn>
+                  <v-btn
+                    v-tooltip="'Send comment (press enter)'"
+                    :disabled="isSubmitDisabled"
+                    class="mouse elevation-5 primary"
+                    icon
+                    dark
+                    large
+                    @click="addReply()"
+                  >
+                    <v-icon dark small>mdi-send</v-icon>
+                  </v-btn>
+                </div>
+              </div>
+              <v-dialog v-model="showArchiveDialog" max-width="500">
+                <v-card>
+                  <v-toolbar color="error" dark flat>
+                    <v-app-bar-nav-icon style="pointer-events: none">
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-app-bar-nav-icon>
+                    <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn icon @click="showArchiveDialog = false">
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </v-toolbar>
+                  <v-card-text class="mt-4">
+                    This comment thread will be archived. Are you sure?
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
+                    <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </div>
+            <div v-else class="pr-5">
+              <v-btn
+                block
+                depressed
+                color="primary"
+                rounded
+                class="elevation-5"
+                large
+                @click="$loginAndSetRedirect()"
+              >
+                <v-icon small class="mr-1">mdi-account</v-icon>
+                Sign in to reply
+              </v-btn>
+            </div>
+          </div>
+        </v-card>
+      </div>
+    </portal>
   </div>
 </template>
 <script>
@@ -348,7 +529,9 @@ export default {
       whoIsTyping: [],
       isTyping: true,
       editorSchemaOptions: SMART_EDITOR_SCHEMA,
-      anyAttachmentsProcessing: false
+      anyAttachmentsProcessing: false,
+      mobileExpanded: false,
+      showMobileCommentThread: false
     }
   },
   computed: {
@@ -616,5 +799,20 @@ export default {
 }
 .mouse {
   pointer-events: auto;
+}
+
+.mobile-thread {
+  transition: all 0.3s ease;
+  z-index: 30;
+  position: fixed;
+  top: 80%;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.mobile-thread.expanded {
+  top: 0;
+  left: 0;
 }
 </style>
