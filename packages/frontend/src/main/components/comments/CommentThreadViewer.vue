@@ -35,15 +35,6 @@
       style="width: 100%"
       class="mouse d-block"
     >
-      <!-- <div
-        v-if="!isComplete"
-        class="warning rounded-xl py-2 px-4 caption mb-2 mr-5 text-center"
-        dense
-      >
-        <v-icon x-small>mdi-alert-circle-outline</v-icon>
-        This comment is targeting other resources.
-        <br />
-      </div> -->
       <div v-if="!isComplete" class="mb-2 mr-5" dense>
         <v-btn
           v-tooltip="
@@ -282,7 +273,6 @@ export default {
           if (this.localReplies.findIndex((c) => c.id === item.id) === -1)
             this.localReplies.push(item)
         })
-        // this.localReplies.push(...data.comment.replies.items)
       },
       update: (data) => data.comment
     },
