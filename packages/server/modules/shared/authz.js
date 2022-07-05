@@ -128,6 +128,10 @@ const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments = async ({
     ? authSuccess(context)
     : { context, authResult }
 
+const allowAnonymousUsersOnPublicStreams = async ({ context, authResult }) => {
+  return context.stream?.isPublic ? authSuccess(context) : { context, authResult }
+}
+
 const authPipelineCreator = (steps) => {
   const pipeline = async ({ context, params }) => {
     let authResult = { authorized: false, error: null }
@@ -188,6 +192,7 @@ module.exports = {
   authMiddlewareCreator,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+  allowAnonymousUsersOnPublicStreams,
   streamWritePermissions: [
     validateServerRole({ requiredRole: Roles.Server.User }),
     validateScope({ requiredScope: Scopes.Streams.Write }),

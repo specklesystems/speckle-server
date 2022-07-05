@@ -5,7 +5,7 @@
         {{ attachment.fileName }}
       </v-toolbar-title>
       <v-spacer />
-      <v-btn class="primary" @click="downloadBlob">
+      <v-btn class="primary" @click="downloadBlob()">
         <v-icon class="mr-2">mdi-download</v-icon>
         {{ prettyFileSize(attachment.fileSize) }}
       </v-btn>
@@ -31,14 +31,13 @@
     <template v-else>
       <v-card-text class="mt-4">
         <v-icon small class="mr-2">mdi-alert</v-icon>
-        Failed to preview.
+        Failed to preview attachment.
       </v-card-text>
     </template>
   </v-card>
 </template>
-<script lang="ts">
+<script>
 import Vue from 'vue'
-import { Nullable } from '@/helpers/typeHelpers'
 import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
 import {
   getBlobUrl,
@@ -57,8 +56,8 @@ export default Vue.extend({
   },
   data: () => ({
     prettyFileSize,
-    blobUrl: null as Nullable<string>,
-    error: null as Nullable<Error>
+    blobUrl: null,
+    error: null
   }),
   computed: {
     isImage() {
@@ -88,13 +87,19 @@ export default Vue.extend({
         })
       }
     } catch (e) {
-      this.error = e as Error
+      this.error = e
     }
   },
   methods: {
-    downloadBlob() {
-      const { id, fileName, streamId } = this.attachment
-      downloadBlobWithUrl(id, fileName, { streamId })
+    async downloadBlob() {
+      try {
+        const { id, fileName, streamId } = this.attachment
+        await downloadBlobWithUrl(id, fileName, { streamId })
+      } catch (e) {
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
+      }
       this.$emit('close')
     }
   }

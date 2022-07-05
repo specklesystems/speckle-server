@@ -5,7 +5,9 @@ const {
   authMiddlewareCreator,
   streamReadPermissions,
   streamWritePermissions,
-  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
+  allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+  allowAnonymousUsersOnPublicStreams
 } = require('@/modules/shared/authz')
 const {
   ensureStorageAccess,
@@ -155,7 +157,9 @@ exports.init = async (app) => {
     contextMiddleware,
     authMiddlewareCreator([
       ...streamReadPermissions,
-      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
+      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+      allowAnonymousUsersOnPublicStreams
     ]),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
