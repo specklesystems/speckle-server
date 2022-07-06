@@ -5,12 +5,12 @@
         {{ attachment.fileName }}
       </v-toolbar-title>
       <v-spacer />
-      <v-btn class="primary" @click="downloadBlob">
+      <v-btn class="primary" @click="downloadBlob()">
         <v-icon class="mr-2">mdi-download</v-icon>
         {{ prettyFileSize(attachment.fileSize) }}
       </v-btn>
     </v-toolbar>
-    <template v-if="isImage">
+    <template v-if="isImage && !error">
       <v-img min-width="100%" min-height="100px" :src="blobUrl">
         <template #placeholder>
           <v-row class="fill-height ma-0" align="center" justify="center">
@@ -22,17 +22,22 @@
         </template>
       </v-img>
     </template>
-    <template v-else>
+    <template v-else-if="!error">
       <v-card-text class="mt-4">
         <v-icon small class="mr-2">mdi-alert</v-icon>
         Be cautious when downloading! Attachments are not scanned for harmful content.
       </v-card-text>
     </template>
+    <template v-else>
+      <v-card-text class="mt-4">
+        <v-icon small class="mr-2">mdi-alert</v-icon>
+        Failed to preview attachment.
+      </v-card-text>
+    </template>
   </v-card>
 </template>
-<script lang="ts">
+<script>
 import Vue from 'vue'
-import { Nullable } from '@/helpers/typeHelpers'
 import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
 import {
   getBlobUrl,
@@ -51,7 +56,8 @@ export default Vue.extend({
   },
   data: () => ({
     prettyFileSize,
-    blobUrl: null as Nullable<string>
+    blobUrl: null,
+    error: null
   }),
   computed: {
     isImage() {
@@ -74,16 +80,26 @@ export default Vue.extend({
     }
   },
   async mounted() {
-    if (this.isImage) {
-      this.blobUrl = await getBlobUrl(this.attachment.id, {
-        streamId: this.$route.params.streamId
-      })
+    try {
+      if (this.isImage) {
+        this.blobUrl = await getBlobUrl(this.attachment.id, {
+          streamId: this.$route.params.streamId
+        })
+      }
+    } catch (e) {
+      this.error = e
     }
   },
   methods: {
-    downloadBlob() {
-      const { id, fileName, streamId } = this.attachment
-      downloadBlobWithUrl(id, fileName, { streamId })
+    async downloadBlob() {
+      try {
+        const { id, fileName, streamId } = this.attachment
+        await downloadBlobWithUrl(id, fileName, { streamId })
+      } catch (e) {
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
+      }
       this.$emit('close')
     }
   }

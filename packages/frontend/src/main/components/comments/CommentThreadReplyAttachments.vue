@@ -6,13 +6,15 @@
         :key="attachment.url"
         v-tooltip="attachment.fileName"
         href="javascript:;"
-        class="my-1"
+        :class="`my-1 ${primary ? '' : 'blue--text'}`"
         @click="
           showAttachmentPreview = true
           selectedAttachment = attachment
         "
       >
-        <v-icon small color="white">{{ icon(attachment.fileType) }}</v-icon>
+        <v-icon small :class="`${primary ? 'white--text' : 'blue--text'}`">
+          {{ icon(attachment.fileType) }}
+        </v-icon>
         {{ attachment.fileName.substring(0, 22) }}
         {{ attachment.fileName.length > 20 ? '...' : '' }}
       </a>
@@ -42,6 +44,10 @@ export default Vue.extend({
     attachments: {
       type: Array as PropType<Array<BlobMetadata>>,
       required: true
+    },
+    primary: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => {
