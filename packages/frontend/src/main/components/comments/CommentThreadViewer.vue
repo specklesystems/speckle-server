@@ -134,28 +134,6 @@
             </v-btn>
           </div>
         </div>
-        <v-dialog v-model="showArchiveDialog" max-width="500">
-          <v-card>
-            <v-toolbar color="error" dark flat>
-              <v-app-bar-nav-icon style="pointer-events: none">
-                <v-icon>mdi-pencil</v-icon>
-              </v-app-bar-nav-icon>
-              <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn icon @click="showArchiveDialog = false">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
-            </v-toolbar>
-            <v-card-text class="mt-4">
-              This comment thread will be archived. Are you sure?
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
-              <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
       </div>
       <div v-else class="pr-5">
         <v-btn
@@ -184,18 +162,34 @@
         :class="`mobile-thread mouse background ${mobileExpanded ? 'expanded' : ''}`"
         style="overflow-y: scroll"
       >
-        <v-card class="elevation-0 transparent">
+        <v-card class="elevation-0" style="height: 100vh">
           <v-toolbar
             style="position: sticky; top: 0; z-index: 1000"
-            @click="mobileExpanded = !mobileExpanded"
+            @click.stop="mobileExpanded = !mobileExpanded"
           >
-            <v-app-bar-nav-icon>
+            <v-btn
+              v-tooltip="'Add attachments'"
+              :disabled="loadingReply"
+              icon
+              large
+              class="mouse elevation-5 background"
+              @click.stop="addAttachments()"
+            >
+              <v-icon v-if="$vuetify.breakpoint.smAndDown" small>
+                mdi-camera-plus
+              </v-icon>
+              <v-icon v-else small>mdi-paperclip</v-icon>
+            </v-btn>
+            <v-app-bar-nav-icon class="ml-0 pl-0">
               <v-icon v-if="!mobileExpanded">mdi-chevron-up</v-icon>
               <v-icon v-else>mdi-chevron-down</v-icon>
             </v-app-bar-nav-icon>
-            <v-toolbar-title>Comment Thread</v-toolbar-title>
+            <v-toolbar-title>
+              {{ localReplies.length }}
+              {{ localReplies.length !== 1 ? 'replies' : 'reply' }}
+            </v-toolbar-title>
             <v-spacer />
-            <v-btn icon @click.stop="$emit('close', comment)">
+            <v-btn icon @click.stop="timeoutClose()">
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
@@ -203,7 +197,11 @@
             I know, this is bad copy paste. Sigh. Currently, one can only wish for a better world
             with less technical debt. 
           -->
-          <div style="width: 100%" class="mouse d-block mt-4 mb-4 pl-4">
+          <div
+            style="width: 100%"
+            class="mouse d-block mt-4 mb-4 pl-4"
+            @click.stop="expandMobileIfNotExpandedAlready()"
+          >
             <div v-if="!isComplete" class="mb-2 mr-5" dense>
               <v-btn
                 v-tooltip="
@@ -260,6 +258,7 @@
                   ref="commentEditor"
                   v-model="replyValue"
                   :stream-id="$route.params.streamId"
+                  :autofocus="false"
                   adding-comment
                   max-height="300px"
                   class="mb-2"
@@ -283,7 +282,7 @@
               <div
                 v-if="canReply"
                 ref="replyinput"
-                class="d-flex justify-space-between align-center comment-actions"
+                class="pb-10 mb-10 d-flex justify-space-between align-center comment-actions"
               >
                 <v-btn
                   v-show="canArchiveThread"
@@ -314,10 +313,10 @@
                     icon
                     large
                     class="mouse elevation-5 background mr-3"
-                    @click="addAttachments()"
+                    @click.stop="addAttachments()"
                   >
                     <v-icon v-if="$vuetify.breakpoint.smAndDown" small>
-                      mdi-camera
+                      mdi-camera-plus
                     </v-icon>
                     <v-icon v-else small>mdi-paperclip</v-icon>
                   </v-btn>
@@ -334,28 +333,6 @@
                   </v-btn>
                 </div>
               </div>
-              <v-dialog v-model="showArchiveDialog" max-width="500">
-                <v-card>
-                  <v-toolbar color="error" dark flat>
-                    <v-app-bar-nav-icon style="pointer-events: none">
-                      <v-icon>mdi-pencil</v-icon>
-                    </v-app-bar-nav-icon>
-                    <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
-                    <v-spacer></v-spacer>
-                    <v-btn icon @click="showArchiveDialog = false">
-                      <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                  </v-toolbar>
-                  <v-card-text class="mt-4">
-                    This comment thread will be archived. Are you sure?
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
-                    <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
             </div>
             <div v-else class="pr-5">
               <v-btn
@@ -375,6 +352,28 @@
         </v-card>
       </div>
     </portal>
+    <v-dialog v-model="showArchiveDialog" max-width="500">
+      <v-card>
+        <v-toolbar color="error" dark flat>
+          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-icon>mdi-pencil</v-icon>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="showArchiveDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="mt-4">
+          This comment thread will be archived. Are you sure?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
+          <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
@@ -531,7 +530,7 @@ export default {
       editorSchemaOptions: SMART_EDITOR_SCHEMA,
       anyAttachmentsProcessing: false,
       mobileExpanded: false,
-      showMobileCommentThread: false
+      mobileFullyClosing: false
     }
   },
   computed: {
@@ -616,6 +615,7 @@ export default {
     }
   },
   mounted() {
+    this.mobileExpanded = false
     window.addEventListener('beforeunload', async () => {
       await this.sendTypingUpdate(false)
     })
@@ -628,6 +628,20 @@ export default {
     }, 5000)
   },
   methods: {
+    timeoutClose() {
+      if (this.mobileExpanded) {
+        this.mobileExpanded = false
+        setTimeout(() => {
+          this.$emit('close', this.comment)
+        }, 200)
+      } else {
+        this.$emit('close', this.comment)
+      }
+    },
+    expandMobileIfNotExpandedAlready() {
+      if (this.mobileExpanded) return
+      this.mobileExpanded = true
+    },
     debTypingUpdate: debounce(
       async function () {
         if (!this.$loggedIn()) return
@@ -802,7 +816,7 @@ export default {
 }
 
 .mobile-thread {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   z-index: 30;
   position: fixed;
   top: 80%;

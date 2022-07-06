@@ -13,7 +13,7 @@
       <smart-text-editor
         v-model="doc"
         :class="['elevation-5 rounded-xl', isFileDrag ? 'dragging-files' : '']"
-        autofocus
+        :autofocus="autofocus"
         min-width
         :placeholder="placeholder"
         :schema-options="editorSchemaOptions"
@@ -78,6 +78,10 @@ export default Vue.extend({
     streamId: {
       type: String,
       required: true
+    },
+    autofocus: {
+      type: Boolean,
+      default: true
     }
   },
   data() {
