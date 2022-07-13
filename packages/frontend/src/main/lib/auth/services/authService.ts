@@ -1,4 +1,6 @@
 import { LocalStorageKeys } from '@/helpers/mainConstants'
+import { Nullable } from '@/helpers/typeHelpers'
+import { getCurrentQueryParams } from '@/main/lib/common/web-apis/helpers/urlHelper'
 import { AppLocalStorage } from '@/utils/localStorage'
 
 /**
@@ -27,4 +29,11 @@ export function processSuccessfulAuth(res: Response): void {
   }
 
   window.location.href = redirectUrl
+}
+
+/**
+ * Get invite id from URL query string
+ */
+export function getInviteIdFromURL(): Nullable<string> {
+  return getCurrentQueryParams().get('inviteId')
 }

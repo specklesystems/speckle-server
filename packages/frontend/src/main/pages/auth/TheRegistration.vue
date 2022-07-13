@@ -249,7 +249,8 @@ export default {
       pwdSuggestions: null,
       appId: null,
       challenge: null,
-      suuid: null
+      suuid: null,
+      inviteId: null
     }
   },
   computed: {
@@ -259,7 +260,8 @@ export default {
         query: {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
-          suuid: this.$route.query.suuid
+          suuid: this.$route.query.suuid,
+          inviteId: this.$route.query.inviteId
         }
       }
     },

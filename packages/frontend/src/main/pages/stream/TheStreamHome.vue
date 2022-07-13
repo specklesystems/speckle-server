@@ -145,7 +145,6 @@ export default {
   data() {
     return {
       clearRendererTrigger: 0,
-      error: '',
       selectedBranch: null
     }
   },
@@ -199,10 +198,6 @@ export default {
         return {
           id: this.streamId
         }
-      },
-      error(err) {
-        if (err.message) this.error = err.message.replace('GraphQL error: ', '')
-        else this.error = err
       }
     },
     comments: {

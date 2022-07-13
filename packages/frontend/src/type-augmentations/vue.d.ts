@@ -20,6 +20,12 @@ declare module 'vue/types/vue' {
      * Redirect to log in and redirect back to current page post-login
      */
     $loginAndSetRedirect: () => void
+
+    /**
+     * Check if auth token is stored in localStorage
+     * @deprecated Use `isLoggedInQuery`/`isLoggedInMixin` instead
+     */
+    $loggedIn: () => boolean
   }
 }
 

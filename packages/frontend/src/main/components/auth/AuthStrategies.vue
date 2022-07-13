@@ -30,6 +30,7 @@
   </div>
 </template>
 <script>
+import { getInviteIdFromURL } from '@/main/lib/auth/services/authService'
 export default {
   name: 'AuthStrategies',
   props: {
@@ -56,9 +57,7 @@ export default {
     }
   },
   mounted() {
-    const urlParams = new URLSearchParams(window.location.search)
-    const inviteId = urlParams.get('inviteId')
-    this.inviteId = inviteId
+    this.inviteId = getInviteIdFromURL()
   },
   methods: {
     trackSignIn(strategyName) {

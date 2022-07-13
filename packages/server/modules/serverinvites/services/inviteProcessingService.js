@@ -3,7 +3,8 @@ const { getStreamRoute } = require('@/modules/core/helpers/routeHelper')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
 const {
   isStreamInvite,
-  buildUserTarget
+  buildUserTarget,
+  ResourceTargets
 } = require('@/modules/serverinvites/helpers/inviteHelper')
 const {
   getServerInvite,
@@ -12,7 +13,8 @@ const {
   getStreamInvite,
   deleteStreamInvite,
   getInvite,
-  deleteInvite: deleteInviteFromDb
+  deleteInvite: deleteInviteFromDb,
+  deleteInvitesByTarget
 } = require('@/modules/serverinvites/repositories')
 const { grantPermissionsStream } = require('@/modules/core/services/streams')
 const {
@@ -50,8 +52,8 @@ async function validateServerInvite(email, inviteId) {
   if (!invite) {
     throw new NoInviteFoundError(
       inviteId
-        ? 'A Speckle server invitation for the specified e-mail address and with the specified invite token could not be found'
-        : 'A Speckle server invitation for the specified e-mail address could not be found',
+        ? "Wrong e-mail address or invite ID. Make sure you're using the same e-mail address that received the invite."
+        : "Wrong e-mail address. Make sure you're using the same e-mail address that received the invite.",
       {
         info: {
           email,
@@ -103,10 +105,21 @@ async function finalizeStreamInvite(accept, streamId, inviteId, userId) {
     // Add access for user
     const { role = Roles.Stream.Contributor } = invite
     await grantPermissionsStream({ streamId, role, userId })
+
+    // Delete all invites to this stream
+    await deleteInvitesByTarget(
+      buildUserTarget(userId),
+      ResourceTargets.Streams,
+      streamId
+    )
   }
 
-  // Delete invite
-  await deleteStreamInvite(invite.id)
+  // Delete all invites to this stream
+  await deleteInvitesByTarget(
+    buildUserTarget(userId),
+    ResourceTargets.Streams,
+    streamId
+  )
 }
 
 /**

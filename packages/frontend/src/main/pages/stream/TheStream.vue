@@ -8,7 +8,7 @@
       <stream-toolbar v-if="stream" :stream="stream" :user="user" />
 
       <!-- Stream invite banner -->
-      <stream-invite-banner :stream-id="streamId" />
+      <stream-invite-banner v-if="!isAccessError" :stream-id="streamId" />
 
       <!-- Stream Child Routes -->
       <div v-if="!error">
@@ -17,24 +17,40 @@
         </transition>
       </div>
       <div v-else style="width: 100%">
-        <error-placeholder
-          :error-type="error.toLowerCase().includes('not found') ? '404' : 'access'"
-        >
-          <h2>{{ error }}</h2>
+        <error-placeholder :error-type="errorType">
+          <h2>{{ errorMsg }}</h2>
         </error-placeholder>
       </div>
     </v-col>
   </v-row>
 </template>
 
-<script>
+<script lang="ts">
 import gql from 'graphql-tag'
-import { streamQuery } from '@/graphql/streams'
-import { mainUserDataQuery } from '@/graphql/user'
 import StreamInviteBanner from '@/main/components/stream/StreamInviteBanner.vue'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
+import Vue, { defineComponent } from 'vue'
+import { Nullable, MaybeFalsy } from '@/helpers/typeHelpers'
+import { ApolloError } from 'vue-apollo-smart-ops'
+import {
+  StreamInviteQuery,
+  useStreamInviteQuery,
+  useStreamQuery,
+  useMainUserDataQuery,
+  MainUserDataQuery
+} from '@/graphql/generated/graphql'
+import type { Get } from 'type-fest'
 
-export default {
+// TODO: Move streamInvite from banner to here and feed it through props
+// TODO: Report subscription types being very borked for vue-apollo-smart-ops
+// Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
+type VueThis = Vue & {
+  streamId: string
+  inviteId: Nullable<string>
+  error: Nullable<Error>
+}
+
+export default defineComponent({
   name: 'TheStream',
   components: {
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder.vue'),
@@ -44,40 +60,69 @@ export default {
   },
   data() {
     return {
-      error: '',
+      error: null as Nullable<ApolloError>,
+      user: null as Nullable<Get<MainUserDataQuery, 'user'>>,
+      streamInvite: null as Nullable<Get<StreamInviteQuery, 'streamInvite'>>,
       shareStream: false,
       branchMenuOpen: false
     }
   },
   computed: {
-    streamId() {
+    inviteId(): Nullable<string> {
+      return this.$route.query['inviteId'] as Nullable<string>
+    },
+    inviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
+      return this.streamInvite?.invitedBy
+    },
+    streamId(): string {
       return this.$route.params.streamId
+    },
+    errorMsg(): MaybeFalsy<string> {
+      return this.error?.message.replace('GraphQL error: ', '')
+    },
+    errorType(): Nullable<string> {
+      const err = this.error
+      if (!err) return null
+
+      const isAccess = err.graphQLErrors.some(
+        (e) => e.extensions?.['code'] === 'FORBIDDEN'
+      )
+      if (isAccess) return 'access'
+
+      const isNotFound = err.message.toLowerCase().includes('not found')
+      if (isNotFound) return '404'
+
+      return null
+    },
+    isAccessError(): boolean {
+      return this.errorType === 'access'
     }
   },
   apollo: {
-    stream: {
-      query: streamQuery,
+    streamInvite: useStreamInviteQuery<VueThis>({
+      variables() {
+        return {
+          streamId: this.streamId,
+          inviteId: this.inviteId
+        }
+      }
+    }),
+    stream: useStreamQuery<VueThis>({
       variables() {
         return {
           id: this.streamId
         }
       },
       error(err) {
-        this.error =
-          err instanceof Error ? err.message.replace('GraphQL error: ', '') : `${err}`
+        this.error = err
       },
       result(res) {
         if (res.data?.stream) {
           this.error = null
         }
       }
-    },
-    user: {
-      query: mainUserDataQuery,
-      skip() {
-        return !this.$loggedIn()
-      }
-    },
+    }),
+    user: useMainUserDataQuery(),
     $subscribe: {
       branchCreated: {
         query: gql`
@@ -85,12 +130,15 @@ export default {
             branchCreated(streamId: $streamId)
           }
         `,
-        variables() {
+        variables(this: VueThis): Record<string, unknown> {
           return {
             streamId: this.streamId
           }
         },
-        result({ data }) {
+        result(
+          this: VueThis,
+          { data }: { data: { branchCreated: Record<string, unknown> } }
+        ): void {
           if (!data.branchCreated) return
           this.$eventHub.$emit('notification', {
             text: `A new branch was created!`,
@@ -100,7 +148,7 @@ export default {
             }
           })
         },
-        skip() {
+        skip(this: VueThis): boolean {
           return !this.$loggedIn()
         }
       },
@@ -110,16 +158,16 @@ export default {
             commitCreated(streamId: $streamId)
           }
         `,
-        variables() {
+        variables(this: VueThis): Record<string, unknown> {
           return {
             streamId: this.streamId
           }
         },
-        result({ data }) {
+        result(
+          this: VueThis,
+          { data }: { data: { commitCreated: Record<string, unknown> } }
+        ): void {
           if (!data.commitCreated) return
-          this.snackbar = true
-          this.snackbarInfo = { ...data.commitCreated, type: 'commit' }
-
           this.$eventHub.$emit('notification', {
             text: `A new commit was created!`,
             action: {
@@ -128,7 +176,7 @@ export default {
             }
           })
         },
-        skip() {
+        skip(this: VueThis): boolean {
           return !this.$loggedIn()
         }
       }
@@ -139,5 +187,5 @@ export default {
       this.$apollo.queries.stream.refetch()
     })
   }
-}
+})
 </script>

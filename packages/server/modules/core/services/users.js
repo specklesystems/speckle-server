@@ -15,6 +15,7 @@ const Acl = () => ServerAclSchema.knex()
 const debug = require('debug')
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
+const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -216,6 +217,9 @@ module.exports = {
     for (const i in streams.rows) {
       await deleteStream({ streamId: streams.rows[i].id })
     }
+
+    // Delete all invites (they don't have a FK, so we need to do this manually)
+    await deleteAllUserInvites(id)
 
     return await Users().where({ id }).del()
   },

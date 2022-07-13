@@ -1,5 +1,8 @@
 const { ServerInvites, Users } = require('@/modules/core/dbSchema')
 
+const NEW_UNIQUE_IDX_COLS = ['target', 'resourceTarget', 'resourceId']
+const NEW_IDX_2 = ['resourceTarget', 'resourceId']
+
 /**
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
@@ -21,14 +24,14 @@ exports.up = async function (knex) {
     // Rename email -> target
     table.renameColumn('email', 'target')
 
-    // Create new index
-    table.unique(['target', 'resourceTarget', 'resourceId'])
+    // Create new unique index
+    table.unique(NEW_UNIQUE_IDX_COLS)
 
     // Add a FK to the users table for inviterId
     table.foreign('inviterId').references(Users.col.id).onDelete('cascade')
 
     // Add idx to resourceTarget & resourceId for fast access
-    table.index(['resourceTarget', 'resourceId'])
+    table.index(NEW_IDX_2)
   })
 }
 
@@ -37,10 +40,21 @@ exports.up = async function (knex) {
  * @returns { Promise<void> }
  */
 exports.down = async function (knex) {
+  // Since we want to add back the unique idx on email, we need to delete rows that have duplicate emails
+  await knex(ServerInvites.name)
+    .whereIn(
+      ServerInvites.col.target,
+      knex(ServerInvites.name)
+        .select('target')
+        .groupBy('target')
+        .havingRaw('COUNT(id) > 1')
+    )
+    .delete()
+
   await knex.schema.alterTable(ServerInvites.name, (table) => {
-    table.dropIndex(['resourceTarget', 'resourceId'])
+    table.dropIndex(NEW_IDX_2)
     table.dropForeign('inviterId')
-    table.dropUnique(['target', 'resourceTarget', 'resourceId'])
+    table.dropUnique(NEW_UNIQUE_IDX_COLS)
     table.renameColumn('target', 'email')
     table.unique('email')
   })

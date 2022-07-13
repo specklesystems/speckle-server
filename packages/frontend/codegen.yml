@@ -13,3 +13,5 @@ generates:
     config:
       vueApolloErrorHandlerFunction: handleApolloError
       vueApolloErrorHandlerFunctionImportFrom: '@/config/vueApolloSmartOpsConfig'
+      scalars:
+        JSONObject: Record<string, unknown>

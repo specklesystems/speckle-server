@@ -2,7 +2,8 @@ const { ServerInvites } = require('@/modules/core/dbSchema')
 const { getUserByEmail, getUser } = require('@/modules/core/repositories/users')
 const {
   resolveTarget,
-  ResourceTargets
+  ResourceTargets,
+  buildUserTarget
 } = require('@/modules/serverinvites/helpers/inviteHelper')
 const { uniq, isArray } = require('lodash')
 
@@ -230,6 +231,46 @@ async function deleteInvite(inviteId) {
   return true
 }
 
+/**
+ * Delete invites by target - useful when there are potentially duplicate invites that need cleaning up
+ * (e.g. same target, but multiple inviters)
+ * @param {string|string[]} targets
+ * @param {string} resourceTarget
+ * @param {string} resourceId
+ * @returns
+ */
+async function deleteInvitesByTarget(targets, resourceTarget, resourceId) {
+  if (!targets) return false
+  targets = isArray(targets) ? targets : [targets]
+  if (!targets.length) return
+
+  resourceTarget = resourceTarget || null
+  resourceId = resourceId || null
+
+  await ServerInvites.knex()
+    .where({
+      [ServerInvites.col.resourceTarget]: resourceTarget,
+      [ServerInvites.col.resourceId]: resourceId
+    })
+    .whereIn(ServerInvites.col.target, targets)
+    .delete()
+
+  return true
+}
+
+/**
+ * Delete all invites that target the specified user
+ * @param {string} userId
+ * @returns {Promise<boolean>}
+ */
+async function deleteAllUserInvites(userId) {
+  if (!userId) return false
+  await ServerInvites.knex()
+    .where(ServerInvites.col.target, buildUserTarget(userId))
+    .delete()
+  return true
+}
+
 module.exports = {
   insertInviteAndDeleteOld,
   getServerInvite,
@@ -242,5 +283,7 @@ module.exports = {
   countServerInvites,
   findServerInvites,
   getInvite,
-  deleteInvite
+  deleteInvite,
+  deleteInvitesByTarget,
+  deleteAllUserInvites
 }
