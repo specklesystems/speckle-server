@@ -140,8 +140,8 @@ export default {
 }
 </script>
 <style scoped lang="scss">
-::v-deep .smart-text-editor,
-::v-deep .comment-attachments {
+:deep(.smart-text-editor),
+:deep(.comment-attachments) {
   a {
     font-weight: bold;
     color: white;
@@ -150,7 +150,7 @@ export default {
   }
 }
 
-::v-deep .smart-text-editor {
+:deep(.smart-text-editor) {
   a:after {
     content: ' ↗ ';
   }

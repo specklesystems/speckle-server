@@ -45,7 +45,7 @@ This project also supports TypeScript, both in Vue SFCs and outside them. It's p
 #### TS in Vue
 
 1. Set `<script lang="ts">` in your .vue SFC
-1. Make sure you do `export default Vue.extends({...})` (or something else that is explicity typed to be a Vue component) not just `export default`, otherwise it's not clear to TS that the exported object is a Vue component
+1. Make sure you do `export default defineComponent({...})` (or something else that is explicity typed to be a Vue component) not just `export default`, otherwise it's not clear to TS that the exported object is a Vue component
 1. If Vetur reports incorrect errors, check this out: https://vuejs.github.io/vetur/guide/FAQ.html
 
 Note: If you're defining a Vue component in a non-standard way (e.g. `vueWithMixins([]).extends({...})`), make sure you add a `// @vue/component` comment right above the Vue component object definition so that ESLint shows Vue appropriate linting rules, otherwise it won't.

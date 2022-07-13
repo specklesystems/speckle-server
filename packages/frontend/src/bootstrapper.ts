@@ -1,3 +1,6 @@
+// @see https://github.com/Akryum/vue-cli-plugin-apollo/issues/452
+import 'regenerator-runtime/runtime'
+
 import Vue from 'vue'
 import VTooltip from 'v-tooltip'
 import VueMixpanel from 'vue-mixpanel'
@@ -5,7 +8,7 @@ import PortalVue from 'portal-vue'
 import { formatNumber } from '@/plugins/formatNumber'
 
 /**
- * Global Vue bootstrapping that is used in all of the frontend apps (main/embed)
+ * Global bootstrapping that is used in all of the frontend apps (main/embed)
  */
 
 // Filter to turn any number into a nice string like '10k', '5.5m'

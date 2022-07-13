@@ -1,5 +1,5 @@
+import '@/bootstrapper'
 import Vue from 'vue'
-import '@/vueBootstrapper'
 
 import App from './EmbedApp.vue'
 import vuetify from './embedVuetify'

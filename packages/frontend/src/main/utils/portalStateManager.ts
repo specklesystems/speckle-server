@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue, { computed, onMounted, onBeforeUnmount } from 'vue'
 import { camelCase, upperFirst, reduce } from 'lodash'
 import { Optional, CombinedVueInstance, ExtendedVue } from '@/helpers/typeHelpers'
 
@@ -164,4 +164,50 @@ export function buildPortalStateMixin(
       unclaimPortals(portals, identity)
     }
   })
+}
+
+/**
+ * Composition API version of the portal state mixin - tracks whether portal targets can be rendered to
+ * @param portals Portal identifier keys
+ * @param identity The unique identity of the portal source
+ * @param priority Priority starting from 0. Higher priorities will take precedence
+ * over other portal sources.
+ */
+export function usePortalState(portals: string[], identity: string, priority: number) {
+  const allowedPortals = computed(() => {
+    const res: Record<string, boolean> = {}
+    for (const portal of portals) {
+      res[portal] = portalsState.currentPortals[portal] === identity
+    }
+    return res
+  })
+
+  const canRenderToolbarPortal = computed(
+    () => !!allowedPortals.value[STANDARD_PORTAL_KEYS.Toolbar]
+  )
+  const canRenderActionsPortal = computed(
+    () => !!allowedPortals.value[STANDARD_PORTAL_KEYS.Actions]
+  )
+  const canRenderNavPortal = computed(
+    () => !!allowedPortals.value[STANDARD_PORTAL_KEYS.Nav]
+  )
+  const canRenderSubnavPortal = computed(
+    () => !!allowedPortals.value[STANDARD_PORTAL_KEYS.SubnavAdmin]
+  )
+
+  onMounted(() => {
+    claimPortals(portals, identity, priority)
+  })
+
+  onBeforeUnmount(() => {
+    unclaimPortals(portals, identity)
+  })
+
+  return {
+    allowedPortals,
+    canRenderToolbarPortal,
+    canRenderActionsPortal,
+    canRenderNavPortal,
+    canRenderSubnavPortal
+  }
 }

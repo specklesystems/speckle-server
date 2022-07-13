@@ -505,7 +505,7 @@ export default {
 }
 </script>
 <style scoped lang="scss">
-::v-deep .v-dialog {
+:deep(.v-dialog) {
   box-shadow: none;
   overflow-y: hidden;
   overflow-x: hidden;

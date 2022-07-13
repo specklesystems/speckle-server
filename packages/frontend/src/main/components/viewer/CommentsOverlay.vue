@@ -595,7 +595,7 @@ export default {
 }
 </script>
 <style scoped lang="scss">
-::v-deep .emoji-btn {
+:deep(.emoji-btn) {
   background-color: initial !important;
 
   .v-btn__content {
