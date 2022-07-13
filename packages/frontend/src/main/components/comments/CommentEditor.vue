@@ -234,7 +234,7 @@ export default Vue.extend({
 })
 </script>
 <style lang="scss" scoped>
-::v-deep .smart-text-editor {
+:deep(.smart-text-editor) {
   // transparent border, so we don't get a layout shift
   border: 2px solid transparent;
 

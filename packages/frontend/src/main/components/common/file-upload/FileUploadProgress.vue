@@ -39,7 +39,7 @@ export default Vue.extend({
 })
 </script>
 <style lang="scss" scoped>
-::v-deep .file-upload-progress-row:last-of-type {
+:deep(.file-upload-progress-row:last-of-type) {
   margin-bottom: 0 !important;
 }
 </style>

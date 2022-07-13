@@ -1,5 +1,5 @@
+import '@/bootstrapper'
 import Vue from 'vue'
-import '@/vueBootstrapper'
 
 import App from '@/main/App.vue'
 import store from '@/main/store'
