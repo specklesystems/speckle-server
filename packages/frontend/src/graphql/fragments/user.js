@@ -20,3 +20,17 @@ export const streamCollaboratorFieldsFragment = gql`
     avatar
   }
 `
+
+export const usersOwnInviteFieldsFragment = gql`
+  fragment UsersOwnInviteFields on PendingStreamCollaborator {
+    id
+    inviteId
+    streamId
+    streamName
+    invitedBy {
+      ...LimitedUserFields
+    }
+  }
+
+  ${limitedUserFieldsFragment}
+`

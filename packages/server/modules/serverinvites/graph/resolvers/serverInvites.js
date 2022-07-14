@@ -17,7 +17,8 @@ const {
   deleteInvite
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const {
-  getPendingStreamCollaborator
+  getUserPendingStreamInvite,
+  getUserPendingStreamInvites
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
 const { authorizeResolver } = require('@/modules/shared')
 const { chunk } = require('lodash')
@@ -151,7 +152,11 @@ module.exports = {
     async streamInvite(_parent, args, context) {
       const { streamId, inviteId } = args
 
-      return await getPendingStreamCollaborator(streamId, context.userId, inviteId)
+      return await getUserPendingStreamInvite(streamId, context.userId, inviteId)
+    },
+    async streamInvites(_parrent, _args, context) {
+      const { userId } = context
+      return await getUserPendingStreamInvites(userId)
     }
   },
   ServerInvite: {

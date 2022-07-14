@@ -1,21 +1,17 @@
 import {
   StreamInviteQuery,
-  useStreamInviteQuery,
   useStreamInviteMutation,
-  StreamInviteDocument
+  StreamInviteDocument,
+  UserStreamInvitesQuery,
+  UserStreamInvitesDocument
 } from '@/graphql/generated/graphql'
-import { Nullable, vueWithMixins } from '@/helpers/typeHelpers'
+import { MaybeFalsy, Nullable, vueWithMixins } from '@/helpers/typeHelpers'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { Get } from 'type-fest'
 import { PropType } from 'vue'
 
-// Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
-type VueThis = Vue & {
-  streamId: string
-  inviteId: Nullable<string>
-  error: Nullable<Error>
-}
+export type StreamInviteType = NonNullable<Get<StreamInviteQuery, 'streamInvite'>>
 
 /**
  * Mixin for getting the invite to the current stream, if any, and accepting/declining it
@@ -24,35 +20,32 @@ type VueThis = Vue & {
  */
 export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
   props: {
-    streamId: {
-      type: String,
+    streamInvite: {
+      type: Object as PropType<StreamInviteType>,
       required: true
-    },
-    inviteId: {
-      type: String as PropType<Nullable<string>>,
-      default: () => null
     }
   },
   data: () => ({
-    streamInvite: null as Nullable<Get<StreamInviteQuery, 'streamInvite'>>,
     streamInviteClosed: false
   }),
-  apollo: {
-    streamInvite: useStreamInviteQuery<VueThis>({
-      variables() {
-        return {
-          streamId: this.streamId,
-          inviteId: this.inviteId
-        }
-      }
-    })
-  },
   computed: {
+    streamId(): string {
+      return this.streamInvite.streamId
+    },
+    inviteId(): string {
+      return this.streamInvite.inviteId
+    },
     streamInviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
-      return this.streamInvite?.invitedBy
+      return this.streamInvite.invitedBy
     },
     hasInvite(): boolean {
       return !!(this.streamInvite && !this.streamInviteClosed)
+    },
+    streamName(): string {
+      return this.streamInvite.streamName
+    },
+    linkToStream(): string {
+      return `/streams/${this.streamId}`
     }
   },
   methods: {
@@ -66,24 +59,75 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
       this.$loginAndSetRedirect()
     },
     async processInvite(accept: boolean) {
-      if (!this.streamInvite?.inviteId) return
+      if (!this.inviteId) return
 
       const { data, errors } = await useStreamInviteMutation(this, {
         variables: {
           accept,
           streamId: this.streamId,
-          inviteId: this.streamInvite.inviteId
+          inviteId: this.inviteId
         },
         update: (cache, { data }) => {
-          // Remove invite from cache
-          if (data?.streamInviteUse) {
+          if (!data?.streamInviteUse) return
+
+          // It's weird that i'm emitting from inside the update handler, but if I invoke the emit
+          // at the bottom of `processInvite()`, the event won't be fired because of a race condition
+          // between the cache updates below and the queries that rely on the cached invites in the parent
+          // component. Basically - I have to do it this way or the event won't be handled
+          this.$emit('invite-used', { accept })
+
+          // Remove invite from various cached queries we might have
+          // 1. Single stream invite query
+          const singleStreamInviteCacheFilter = {
+            query: StreamInviteDocument,
+            variables: { streamId: this.streamId, inviteId: this.inviteId }
+          }
+          let singleStreamInviteQueryData: MaybeFalsy<StreamInviteQuery> = undefined
+          try {
+            singleStreamInviteQueryData = cache.readQuery<StreamInviteQuery>(
+              singleStreamInviteCacheFilter
+            )
+          } catch (err) {
+            // suppressed
+          }
+
+          if (singleStreamInviteQueryData?.streamInvite) {
             cache.writeQuery({
-              query: StreamInviteDocument,
-              variables: { streamId: this.streamId, inviteId: this.inviteId },
+              ...singleStreamInviteCacheFilter,
               data: {
                 streamInvite: null
               }
             })
+          }
+
+          // 2. All user's stream invites query
+          let allUsersStreamInvitesQueryData: MaybeFalsy<UserStreamInvitesQuery> =
+            undefined
+          try {
+            allUsersStreamInvitesQueryData = cache.readQuery<UserStreamInvitesQuery>({
+              query: UserStreamInvitesDocument
+            })
+          } catch (err) {
+            // suppressed
+          }
+
+          if (allUsersStreamInvitesQueryData?.streamInvites) {
+            const removableInviteIdx =
+              allUsersStreamInvitesQueryData.streamInvites.findIndex(
+                (i) => i.inviteId === this.inviteId
+              )
+            if (removableInviteIdx !== -1) {
+              const newInvites = allUsersStreamInvitesQueryData.streamInvites.slice()
+              newInvites.splice(removableInviteIdx, 1)
+
+              cache.writeQuery<UserStreamInvitesQuery>({
+                query: UserStreamInvitesDocument,
+                data: {
+                  ...allUsersStreamInvitesQueryData,
+                  streamInvites: newInvites
+                }
+              })
+            }
           }
         }
       })
@@ -102,7 +146,6 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
         }
 
         this.streamInviteClosed = true
-        this.$emit('invite-used', { accept })
       } else {
         const errMsg = errors?.[0].message || 'An unexpected issue occurred!'
         this.$triggerNotification({

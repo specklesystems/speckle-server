@@ -785,6 +785,7 @@ export type PendingStreamCollaborator = {
   invitedBy: LimitedUser;
   role: Scalars['String'];
   streamId: Scalars['String'];
+  streamName: Scalars['String'];
   /** E-mail address or name of the invited user */
   title: Scalars['String'];
   /** Set only if user is registered */
@@ -824,6 +825,8 @@ export type Query = {
    * isn't specified, the server will look for any valid invite.
    */
   streamInvite?: Maybe<PendingStreamCollaborator>;
+  /** Get all invitations to streams that the active user has */
+  streamInvites: Array<PendingStreamCollaborator>;
   /** All the streams of the current user, pass in the `query` parameter to search by name, description or ID. */
   streams?: Maybe<StreamCollection>;
   /**
@@ -1526,13 +1529,20 @@ export type LimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string
 
 export type StreamCollaboratorFieldsFragment = { __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null };
 
+export type UsersOwnInviteFieldsFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } };
+
 export type StreamInviteQueryVariables = Exact<{
   streamId: Scalars['String'];
   inviteId?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
+export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
+
+export type UserStreamInvitesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UserStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } }> };
 
 export type UseStreamInviteMutationVariables = Exact<{
   accept: Scalars['Boolean'];
@@ -1754,6 +1764,15 @@ export const CommentFullInfo = gql`
   viewedAt
 }
     `;
+export const StreamCollaboratorFields = gql`
+    fragment StreamCollaboratorFields on StreamCollaborator {
+  id
+  name
+  role
+  company
+  avatar
+}
+    `;
 export const LimitedUserFields = gql`
     fragment LimitedUserFields on LimitedUser {
   id
@@ -1764,15 +1783,17 @@ export const LimitedUserFields = gql`
   verified
 }
     `;
-export const StreamCollaboratorFields = gql`
-    fragment StreamCollaboratorFields on StreamCollaborator {
+export const UsersOwnInviteFields = gql`
+    fragment UsersOwnInviteFields on PendingStreamCollaborator {
   id
-  name
-  role
-  company
-  avatar
+  inviteId
+  streamId
+  streamName
+  invitedBy {
+    ...LimitedUserFields
+  }
 }
-    `;
+    ${LimitedUserFields}`;
 export const MainServerInfoFields = gql`
     fragment MainServerInfoFields on ServerInfo {
   name
@@ -1910,15 +1931,17 @@ export const StreamCommitQuery = gql`
 export const StreamInvite = gql`
     query StreamInvite($streamId: String!, $inviteId: String) {
   streamInvite(streamId: $streamId, inviteId: $inviteId) {
-    id
-    inviteId
-    streamId
-    invitedBy {
-      ...LimitedUserFields
-    }
+    ...UsersOwnInviteFields
   }
 }
-    ${LimitedUserFields}`;
+    ${UsersOwnInviteFields}`;
+export const UserStreamInvites = gql`
+    query UserStreamInvites {
+  streamInvites {
+    ...UsersOwnInviteFields
+  }
+}
+    ${UsersOwnInviteFields}`;
 export const UseStreamInvite = gql`
     mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
   streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
@@ -2280,6 +2303,15 @@ export const CommentFullInfoFragmentDoc = gql`
   viewedAt
 }
     `;
+export const StreamCollaboratorFieldsFragmentDoc = gql`
+    fragment StreamCollaboratorFields on StreamCollaborator {
+  id
+  name
+  role
+  company
+  avatar
+}
+    `;
 export const LimitedUserFieldsFragmentDoc = gql`
     fragment LimitedUserFields on LimitedUser {
   id
@@ -2290,15 +2322,17 @@ export const LimitedUserFieldsFragmentDoc = gql`
   verified
 }
     `;
-export const StreamCollaboratorFieldsFragmentDoc = gql`
-    fragment StreamCollaboratorFields on StreamCollaborator {
+export const UsersOwnInviteFieldsFragmentDoc = gql`
+    fragment UsersOwnInviteFields on PendingStreamCollaborator {
   id
-  name
-  role
-  company
-  avatar
+  inviteId
+  streamId
+  streamName
+  invitedBy {
+    ...LimitedUserFields
+  }
 }
-    `;
+    ${LimitedUserFieldsFragmentDoc}`;
 export const MainServerInfoFieldsFragmentDoc = gql`
     fragment MainServerInfoFields on ServerInfo {
   name
@@ -2525,15 +2559,10 @@ export const useStreamCommitQueryQuery = createSmartQueryOptionsFunction<
 export const StreamInviteDocument = gql`
     query StreamInvite($streamId: String!, $inviteId: String) {
   streamInvite(streamId: $streamId, inviteId: $inviteId) {
-    id
-    inviteId
-    streamId
-    invitedBy {
-      ...LimitedUserFields
-    }
+    ...UsersOwnInviteFields
   }
 }
-    ${LimitedUserFieldsFragmentDoc}`;
+    ${UsersOwnInviteFieldsFragmentDoc}`;
 
 /**
  * __useStreamInviteQuery__
@@ -2562,6 +2591,39 @@ export const useStreamInviteQuery = createSmartQueryOptionsFunction<
   StreamInviteQueryVariables,
   ApolloError
 >(StreamInviteDocument, handleApolloError);
+
+export const UserStreamInvitesDocument = gql`
+    query UserStreamInvites {
+  streamInvites {
+    ...UsersOwnInviteFields
+  }
+}
+    ${UsersOwnInviteFieldsFragmentDoc}`;
+
+/**
+ * __useUserStreamInvitesQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useUserStreamInvitesQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     userStreamInvites: useUserStreamInvitesQuery({
+ *       variables: {},
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useUserStreamInvitesQuery = createSmartQueryOptionsFunction<
+  UserStreamInvitesQuery,
+  UserStreamInvitesQueryVariables,
+  ApolloError
+>(UserStreamInvitesDocument, handleApolloError);
 
 export const UseStreamInviteDocument = gql`
     mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {

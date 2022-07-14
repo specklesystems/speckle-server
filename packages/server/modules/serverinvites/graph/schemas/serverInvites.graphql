@@ -55,6 +55,13 @@ extend type Query {
   isn't specified, the server will look for any valid invite.
   """
   streamInvite(streamId: String!, inviteId: String): PendingStreamCollaborator
+
+  """
+  Get all invitations to streams that the active user has
+  """
+  streamInvites: [PendingStreamCollaborator!]!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 }
 
 type ServerInvite {

@@ -406,7 +406,6 @@ module.exports = {
      * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
      * @param {Object} _args
      * @param {import('@/modules/shared/index').GraphQLContext} ctx
-     * @returns
      */
     async invitedBy(parent, _args, ctx) {
       const { invitedById } = parent
@@ -414,6 +413,16 @@ module.exports = {
 
       const user = await ctx.loaders.users.getUser.load(invitedById)
       return user ? removePrivateFields(user) : null
+    },
+    /**
+     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
+     * @param {Object} _args
+     * @param {import('@/modules/shared/index').GraphQLContext} ctx
+     */
+    async streamName(parent, _args, ctx) {
+      const { streamId } = parent
+      const stream = await ctx.loaders.streams.getStream.load(streamId)
+      return stream.name
     }
   }
 }

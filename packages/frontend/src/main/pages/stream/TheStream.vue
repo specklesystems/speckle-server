@@ -10,8 +10,7 @@
       <!-- Stream invite banner -->
       <stream-invite-banner
         v-if="hasInvite && !showInvitePlaceholder"
-        :stream-id="streamId"
-        :invite-id="inviteId"
+        :stream-invite="streamInvite"
         @invite-used="onInviteClosed"
       />
 
@@ -27,8 +26,7 @@
         </error-placeholder>
         <stream-invite-placeholder
           v-else
-          :stream-id="streamId"
-          :invite-id="inviteId"
+          :stream-invite="streamInvite"
           @invite-used="onInviteClosed"
         />
       </div>
@@ -44,7 +42,6 @@ import Vue from 'vue'
 import { Nullable, MaybeFalsy } from '@/helpers/typeHelpers'
 import { ApolloError } from 'vue-apollo-smart-ops'
 import {
-  StreamInviteQuery,
   useStreamInviteQuery,
   useMainUserDataQuery,
   MainUserDataQuery,
@@ -55,6 +52,7 @@ import {
 import type { ApolloQueryResult } from 'apollo-client'
 import type { Get } from 'type-fest'
 import StreamInvitePlaceholder from '@/main/components/stream/StreamInvitePlaceholder.vue'
+import { StreamInviteType } from '@/main/lib/stream/mixins/streamInviteMixin'
 
 // Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
 type VueThis = Vue & {
@@ -76,7 +74,7 @@ export default Vue.extend({
     return {
       error: null as Nullable<ApolloError>,
       user: null as Nullable<Get<MainUserDataQuery, 'user'>>,
-      streamInvite: null as Nullable<Get<StreamInviteQuery, 'streamInvite'>>,
+      streamInvite: null as Nullable<StreamInviteType>,
       shareStream: false,
       branchMenuOpen: false,
       inviteClosed: false

@@ -77,6 +77,7 @@ type PendingStreamCollaborator {
   id: String!
   inviteId: String!
   streamId: String!
+  streamName: String!
   """
   E-mail address or name of the invited user
   """

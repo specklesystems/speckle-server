@@ -2,7 +2,8 @@ const DataLoader = require('dataloader')
 const {
   getBatchUserFavoriteData,
   getBatchStreamFavoritesCounts,
-  getOwnedFavoritesCountByUserIds
+  getOwnedFavoritesCountByUserIds,
+  getStreams
 } = require('@/modules/core/repositories/streams')
 const { getUsers } = require('@/modules/core/repositories/users')
 const { keyBy } = require('lodash')
@@ -14,6 +15,7 @@ const { keyBy } = require('lodash')
  *  getUserFavoriteData: DataLoader<string, {}>,
  *  getFavoritesCount: DataLoader<string, number>,
  *  getOwnedFavoritesCount: DataLoader<string, number>,
+ *  getStream: DataLoader<string, {}>
  * }} streams
  * @property {{
  *  getUser: DataLoader<string, import('@/modules/core/helpers/userHelper').UserRecord>
@@ -57,9 +59,19 @@ module.exports = {
         getOwnedFavoritesCount: new DataLoader(async (userIds) => {
           const results = await getOwnedFavoritesCountByUserIds(userIds)
           return userIds.map((i) => results[i])
+        }),
+
+        /**
+         * Get stream from DB
+         *
+         * Note: Considering the difficulty of writing a single query that queries for multiple stream IDs
+         * and multiple user IDs also, currently this dataloader will only use a single userId
+         */
+        getStream: new DataLoader(async (streamIds) => {
+          const results = keyBy(await getStreams(streamIds), 'id')
+          return streamIds.map((i) => results[i])
         })
       },
-
       users: {
         /**
          * Get user from DB

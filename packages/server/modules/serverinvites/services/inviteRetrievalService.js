@@ -1,5 +1,6 @@
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 const { getUsers, getUser } = require('@/modules/core/repositories/users')
+const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
 const {
   resolveTarget,
   resolveInviteTargetTitle,
@@ -7,7 +8,8 @@ const {
 } = require('@/modules/serverinvites/helpers/inviteHelper')
 const {
   getAllStreamInvites,
-  getStreamInvite
+  getStreamInvite,
+  getAllUserStreamInvites
 } = require('@/modules/serverinvites/repositories')
 const { keyBy, uniq } = require('lodash')
 
@@ -32,16 +34,17 @@ function buildPendingStreamCollaboratorId(invite) {
 }
 
 /**
- * @param {string} streamId
  * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | null} targetUser
  * @returns {PendingStreamCollaboratorGraphQLType}
  */
-function buildPendingStreamCollaboratorModel(streamId, invite, targetUser) {
+function buildPendingStreamCollaboratorModel(invite, targetUser) {
+  const { resourceId } = invite
+
   return {
     id: buildPendingStreamCollaboratorId(invite),
     inviteId: invite.id,
-    streamId,
+    streamId: resourceId,
     title: resolveInviteTargetTitle(invite, targetUser),
     role: invite.role,
     invitedById: invite.inviterId,
@@ -86,21 +89,21 @@ async function getPendingStreamCollaborators(streamId) {
       user = removePrivateFields(usersById[userId])
     }
 
-    results.push(buildPendingStreamCollaboratorModel(streamId, invite, user))
+    results.push(buildPendingStreamCollaboratorModel(invite, user))
   }
 
   return results
 }
 
 /**
- * Resolve a stream invite as a PendingStreamCollaborator.
+ * Find a pending invitation to the specified stream for the specified user
  * Either the user ID or invite ID must be set
  * @param {string} streamId
  * @param {string|null} userId
  * @param {string|null} inviteId
- * @returns {PendingStreamCollaboratorGraphQLType}
+ * @returns {Promise<PendingStreamCollaboratorGraphQLType>}
  */
-async function getPendingStreamCollaborator(streamId, userId, inviteId) {
+async function getUserPendingStreamInvite(streamId, userId, inviteId) {
   if (!userId && !inviteId) return null
 
   const invite = await getStreamInvite(
@@ -112,10 +115,28 @@ async function getPendingStreamCollaborator(streamId, userId, inviteId) {
 
   const targetUser = userId ? await getUser(userId) : null
 
-  return buildPendingStreamCollaboratorModel(streamId, invite, targetUser)
+  return buildPendingStreamCollaboratorModel(invite, targetUser)
+}
+
+/**
+ * Get all pending invitations to streams that this user has
+ * @param {string} userId
+ * @returns {Promise<PendingStreamCollaboratorGraphQLType[]>}
+ */
+async function getUserPendingStreamInvites(userId) {
+  if (!userId) return []
+
+  const targetUser = await getUser(userId)
+  if (!targetUser) {
+    throw new NoInviteFoundError('Nonexistant user specified')
+  }
+
+  const invites = await getAllUserStreamInvites(userId)
+  return invites.map((i) => buildPendingStreamCollaboratorModel(i, targetUser))
 }
 
 module.exports = {
   getPendingStreamCollaborators,
-  getPendingStreamCollaborator
+  getUserPendingStreamInvite,
+  getUserPendingStreamInvites
 }

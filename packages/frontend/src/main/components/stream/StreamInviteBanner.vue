@@ -11,7 +11,12 @@
         />
         <div>
           <strong>{{ streamInviter.name }}</strong>
-          has invited you to become a collaborator on this stream
+          has invited you to become a collaborator on
+          <template v-if="showStreamName">
+            the stream
+            <router-link :to="linkToStream">{{ streamName }}</router-link>
+          </template>
+          <template v-else>this stream</template>
         </div>
       </div>
       <div class="d-flex mt-2 mt-md-0" style="min-width: 210px; text-align: right">
@@ -54,6 +59,12 @@ export default vueWithMixins(UsersStreamInviteMixin).extend({
   name: 'StreamInviteBanner',
   components: {
     UserAvatar
+  },
+  props: {
+    showStreamName: {
+      type: Boolean,
+      default: false
+    }
   }
 })
 </script>

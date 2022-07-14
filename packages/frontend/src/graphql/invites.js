@@ -1,19 +1,24 @@
 import gql from 'graphql-tag'
-import { limitedUserFieldsFragment } from '@/graphql/fragments/user'
+import { usersOwnInviteFieldsFragment } from '@/graphql/fragments/user'
 
 export const streamInviteQuery = gql`
   query StreamInvite($streamId: String!, $inviteId: String) {
     streamInvite(streamId: $streamId, inviteId: $inviteId) {
-      id
-      inviteId
-      streamId
-      invitedBy {
-        ...LimitedUserFields
-      }
+      ...UsersOwnInviteFields
     }
   }
 
-  ${limitedUserFieldsFragment}
+  ${usersOwnInviteFieldsFragment}
+`
+
+export const userStreamInvitesQuery = gql`
+  query UserStreamInvites {
+    streamInvites {
+      ...UsersOwnInviteFields
+    }
+  }
+
+  ${usersOwnInviteFieldsFragment}
 `
 
 export const useStreamInviteMutation = gql`

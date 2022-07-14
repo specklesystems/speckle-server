@@ -147,12 +147,29 @@ async function getAllStreamInvites(streamId) {
 }
 
 /**
+ * Get all invitations to streams that the specified user has
+ * @param {string} userId
+ * @returns {Promise<ServerInviteRecord[]>}
+ */
+async function getAllUserStreamInvites(userId) {
+  if (!userId) return []
+  const target = buildUserTarget(userId)
+
+  const q = ServerInvites.knex().where({
+    [ServerInvites.col.target]: target,
+    [ServerInvites.col.resourceTarget]: ResourceTargets.Streams
+  })
+
+  return await q
+}
+
+/**
  * Retrieve a stream invite for the specified target, inviteId or both.
  * Note: Either the target or inviteId must be set
  * @param {string} streamId
  * @param {string|null} target
  * @param {string|null} inviteId
- * @returns {ServerInviteRecord | null}
+ * @returns {Promise<ServerInviteRecord | null>}
  */
 async function getStreamInvite(streamId, target = null, inviteId = null) {
   if (!target && !inviteId) return null
@@ -305,5 +322,6 @@ module.exports = {
   deleteInvite,
   deleteInvitesByTarget,
   deleteAllUserInvites,
-  getResource
+  getResource,
+  getAllUserStreamInvites
 }

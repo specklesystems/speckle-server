@@ -24,6 +24,17 @@ const BASE_STREAM_COLUMNS = [
 ]
 
 /**
+ * Get multiple streams
+ * @param {string[]} streamIds
+ * @returns {Promise<Object[]>}
+ */
+async function getStreams(streamIds) {
+  if (!streamIds?.length) throw new InvalidArgumentError('Invalid stream IDs')
+  const q = Streams.knex().whereIn(Streams.col.id, streamIds)
+  return await q
+}
+
+/**
  * Get a single stream
  * @param {Object} p
  * @param {string} p.streamId
@@ -272,5 +283,6 @@ module.exports = {
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds,
   getStreamCollaborator,
+  getStreams,
   BASE_STREAM_COLUMNS
 }

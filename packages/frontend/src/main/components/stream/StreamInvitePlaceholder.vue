@@ -1,8 +1,6 @@
 <template>
   <page-placeholder v-if="hasInvite">
     <template #image>
-      <!-- <v-img contain max-height="200" src="@/assets/lockbox.png" />
-       -->
       <user-avatar
         :id="streamInviter.id"
         :name="streamInviter.name"
