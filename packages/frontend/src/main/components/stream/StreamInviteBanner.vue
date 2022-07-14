@@ -1,16 +1,16 @@
 <template>
-  <v-alert v-if="!closed && streamInvite" rounded="lg" elevation="4" dense>
+  <v-alert v-if="hasInvite" rounded="lg" elevation="4" dense>
     <div class="d-flex flex-column flex-md-row">
       <div class="flex-grow-1 d-flex align-center">
         <user-avatar
-          :id="inviter.id"
-          :name="inviter.name"
-          :avatar="inviter.avatar"
+          :id="streamInviter.id"
+          :name="streamInviter.name"
+          :avatar="streamInviter.avatar"
           :size="25"
           class="mr-1"
         />
         <div>
-          <strong>{{ inviter.name }}</strong>
+          <strong>{{ streamInviter.name }}</strong>
           has invited you to become a collaborator on this stream
         </div>
       </div>
@@ -19,20 +19,24 @@
           <v-btn
             color="success"
             class="mr-2 flex-grow-1 flex-md-grow-0"
-            @click="$emit('accept')"
+            @click="acceptInvite"
           >
             Accept
           </v-btn>
           <v-btn
             color="error"
             class="flex-grow-1 flex-md-grow-0"
-            @click="$emit('decline')"
+            @click="declineInvite"
           >
             Decline
           </v-btn>
         </template>
         <template v-else>
-          <v-btn class="flex-grow-1" color="primary" @click="$emit('log-in')">
+          <v-btn
+            class="flex-grow-1"
+            color="primary"
+            @click="rememberInviteAndRedirectToLogin"
+          >
             Log in
           </v-btn>
         </template>
@@ -41,34 +45,15 @@
   </v-alert>
 </template>
 <script lang="ts">
-import { StreamInviteQuery } from '@/graphql/generated/graphql'
 import { vueWithMixins } from '@/helpers/typeHelpers'
-import { PropType } from 'vue'
 import UserAvatar from '@/main/components/common/UserAvatar.vue'
-import type { Get } from 'type-fest'
-import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
+import { UsersStreamInviteMixin } from '@/main/lib/stream/mixins/streamInviteMixin'
 
-type StreamInviteType = NonNullable<Get<StreamInviteQuery, 'streamInvite'>>
-
-export default vueWithMixins(IsLoggedInMixin).extend({
+export default vueWithMixins(UsersStreamInviteMixin).extend({
   // @vue/component
   name: 'StreamInviteBanner',
   components: {
     UserAvatar
-  },
-  props: {
-    streamInvite: {
-      type: Object as PropType<StreamInviteType>,
-      required: true
-    }
-  },
-  data: () => ({
-    closed: false
-  }),
-  computed: {
-    inviter(): NonNullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
-      return this.streamInvite.invitedBy
-    }
   }
 })
 </script>

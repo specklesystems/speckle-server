@@ -10,10 +10,9 @@
       <!-- Stream invite banner -->
       <stream-invite-banner
         v-if="hasInvite && !showInvitePlaceholder"
-        :stream-invite="streamInvite"
-        @accept="acceptInvite"
-        @decline="declineInvite"
-        @log-in="triggerInviteLoginRedirect"
+        :stream-id="streamId"
+        :invite-id="inviteId"
+        @invite-used="onInviteClosed"
       />
 
       <!-- Stream Child Routes -->
@@ -28,10 +27,9 @@
         </error-placeholder>
         <stream-invite-placeholder
           v-else
-          :stream-invite="streamInvite"
-          @accept="acceptInvite"
-          @decline="declineInvite"
-          @log-in="triggerInviteLoginRedirect"
+          :stream-id="streamId"
+          :invite-id="inviteId"
+          @invite-used="onInviteClosed"
         />
       </div>
     </v-col>
@@ -52,8 +50,7 @@ import {
   MainUserDataQuery,
   StreamQuery,
   StreamDocument,
-  StreamQueryVariables,
-  useStreamInviteMutation
+  StreamQueryVariables
 } from '@/graphql/generated/graphql'
 import type { ApolloQueryResult } from 'apollo-client'
 import type { Get } from 'type-fest'
@@ -210,49 +207,9 @@ export default Vue.extend({
     })
   },
   methods: {
-    acceptInvite() {
-      return this.processInvite(true)
-    },
-    declineInvite() {
-      return this.processInvite(false)
-    },
-    triggerInviteLoginRedirect() {
-      this.$loginAndSetRedirect()
-    },
-    async processInvite(accept: boolean) {
-      if (!this.streamInvite?.inviteId) return
-
-      const { data, errors } = await useStreamInviteMutation(this, {
-        variables: {
-          accept,
-          streamId: this.streamId,
-          inviteId: this.streamInvite.inviteId
-        },
-        refetchQueries: ['StreamInvite']
-      })
-
-      if (data?.streamInviteUse) {
-        this.$triggerNotification({
-          text: accept
-            ? "You've been successfully added as a stream contributor!"
-            : "You've declined the invite",
-          type: accept ? 'success' : 'primary'
-        })
-
-        // Refetch stream operations, if accepted
-        if (accept) {
-          this.$eventHub.$emit(StreamEvents.Refetch)
-        }
-
-        this.inviteClosed = true
-        this.error = null
-      } else {
-        const errMsg = errors?.[0].message || 'An unexpected issue occurred!'
-        this.$triggerNotification({
-          text: errMsg,
-          type: 'error'
-        })
-      }
+    onInviteClosed() {
+      this.inviteClosed = true
+      this.error = null
     }
   }
 })
