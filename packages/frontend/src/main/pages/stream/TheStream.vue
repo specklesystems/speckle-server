@@ -9,8 +9,11 @@
 
       <!-- Stream invite banner -->
       <stream-invite-banner
-        v-if="!isAccessError && streamInvite"
+        v-if="hasInvite && !showInvitePlaceholder"
         :stream-invite="streamInvite"
+        @accept="acceptInvite"
+        @decline="declineInvite"
+        @log-in="triggerInviteLoginRedirect"
       />
 
       <!-- Stream Child Routes -->
@@ -20,9 +23,16 @@
         </transition>
       </div>
       <div v-else style="width: 100%">
-        <error-placeholder :error-type="errorType">
+        <error-placeholder v-if="!showInvitePlaceholder" :error-type="errorType">
           <h2>{{ errorMsg }}</h2>
         </error-placeholder>
+        <stream-invite-placeholder
+          v-else
+          :stream-invite="streamInvite"
+          @accept="acceptInvite"
+          @decline="declineInvite"
+          @log-in="triggerInviteLoginRedirect"
+        />
       </div>
     </v-col>
   </v-row>
@@ -32,17 +42,22 @@
 import gql from 'graphql-tag'
 import StreamInviteBanner from '@/main/components/stream/StreamInviteBanner.vue'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
-import Vue, { defineComponent } from 'vue'
+import Vue from 'vue'
 import { Nullable, MaybeFalsy } from '@/helpers/typeHelpers'
 import { ApolloError } from 'vue-apollo-smart-ops'
 import {
   StreamInviteQuery,
   useStreamInviteQuery,
-  useStreamQuery,
   useMainUserDataQuery,
-  MainUserDataQuery
+  MainUserDataQuery,
+  StreamQuery,
+  StreamDocument,
+  StreamQueryVariables,
+  useStreamInviteMutation
 } from '@/graphql/generated/graphql'
+import type { ApolloQueryResult } from 'apollo-client'
 import type { Get } from 'type-fest'
+import StreamInvitePlaceholder from '@/main/components/stream/StreamInvitePlaceholder.vue'
 
 // Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
 type VueThis = Vue & {
@@ -51,13 +66,14 @@ type VueThis = Vue & {
   error: Nullable<Error>
 }
 
-export default defineComponent({
+export default Vue.extend({
   name: 'TheStream',
   components: {
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder.vue'),
     StreamNav: () => import('@/main/navigation/StreamNav.vue'),
     StreamToolbar: () => import('@/main/toolbars/StreamToolbar.vue'),
-    StreamInviteBanner
+    StreamInviteBanner,
+    StreamInvitePlaceholder
   },
   data() {
     return {
@@ -65,7 +81,8 @@ export default defineComponent({
       user: null as Nullable<Get<MainUserDataQuery, 'user'>>,
       streamInvite: null as Nullable<Get<StreamInviteQuery, 'streamInvite'>>,
       shareStream: false,
-      branchMenuOpen: false
+      branchMenuOpen: false,
+      inviteClosed: false
     }
   },
   computed: {
@@ -94,6 +111,12 @@ export default defineComponent({
     },
     isAccessError(): boolean {
       return this.errorType === 'access'
+    },
+    showInvitePlaceholder(): boolean {
+      return !!(this.hasInvite && this.isAccessError)
+    },
+    hasInvite(): boolean {
+      return !!(this.streamInvite && !this.inviteClosed)
     }
   },
   apollo: {
@@ -105,21 +128,22 @@ export default defineComponent({
         }
       }
     }),
-    stream: useStreamQuery<VueThis>({
-      variables() {
+    stream: {
+      query: StreamDocument,
+      variables(this: VueThis): StreamQueryVariables {
         return {
           id: this.streamId
         }
       },
-      error(err) {
+      error(this: VueThis, err): void {
         this.error = err
       },
-      result(res) {
+      result(this: VueThis, res: ApolloQueryResult<StreamQuery>): void {
         if (res.data?.stream) {
           this.error = null
         }
       }
-    }),
+    },
     user: useMainUserDataQuery(),
     $subscribe: {
       branchCreated: {
@@ -184,6 +208,52 @@ export default defineComponent({
     this.$eventHub.$on(StreamEvents.Refetch, () => {
       this.$apollo.queries.stream.refetch()
     })
+  },
+  methods: {
+    acceptInvite() {
+      return this.processInvite(true)
+    },
+    declineInvite() {
+      return this.processInvite(false)
+    },
+    triggerInviteLoginRedirect() {
+      this.$loginAndSetRedirect()
+    },
+    async processInvite(accept: boolean) {
+      if (!this.streamInvite?.inviteId) return
+
+      const { data, errors } = await useStreamInviteMutation(this, {
+        variables: {
+          accept,
+          streamId: this.streamId,
+          inviteId: this.streamInvite.inviteId
+        },
+        refetchQueries: ['StreamInvite']
+      })
+
+      if (data?.streamInviteUse) {
+        this.$triggerNotification({
+          text: accept
+            ? "You've been successfully added as a stream contributor!"
+            : "You've declined the invite",
+          type: accept ? 'success' : 'primary'
+        })
+
+        // Refetch stream operations, if accepted
+        if (accept) {
+          this.$eventHub.$emit(StreamEvents.Refetch)
+        }
+
+        this.inviteClosed = true
+        this.error = null
+      } else {
+        const errMsg = errors?.[0].message || 'An unexpected issue occurred!'
+        this.$triggerNotification({
+          text: errMsg,
+          type: 'error'
+        })
+      }
+    }
   }
 })
 </script>

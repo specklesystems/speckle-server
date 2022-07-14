@@ -19,28 +19,33 @@
           <v-btn
             color="success"
             class="mr-2 flex-grow-1 flex-md-grow-0"
-            @click="accept"
+            @click="$emit('accept')"
           >
             Accept
           </v-btn>
-          <v-btn color="error flex-grow-1 flex-md-grow-0" @click="decline">
+          <v-btn
+            color="error"
+            class="flex-grow-1 flex-md-grow-0"
+            @click="$emit('decline')"
+          >
             Decline
           </v-btn>
         </template>
         <template v-else>
-          <v-btn class="flex-grow-1" color="primary" @click="logIn">Log in</v-btn>
+          <v-btn class="flex-grow-1" color="primary" @click="$emit('log-in')">
+            Log in
+          </v-btn>
         </template>
       </div>
     </div>
   </v-alert>
 </template>
 <script lang="ts">
-import { StreamInviteQuery, useStreamInviteMutation } from '@/graphql/generated/graphql'
+import { StreamInviteQuery } from '@/graphql/generated/graphql'
 import { vueWithMixins } from '@/helpers/typeHelpers'
 import { PropType } from 'vue'
 import UserAvatar from '@/main/components/common/UserAvatar.vue'
 import type { Get } from 'type-fest'
-import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 
 type StreamInviteType = NonNullable<Get<StreamInviteQuery, 'streamInvite'>>
@@ -63,54 +68,6 @@ export default vueWithMixins(IsLoggedInMixin).extend({
   computed: {
     inviter(): NonNullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
       return this.streamInvite.invitedBy
-    },
-    streamId(): string {
-      return this.streamInvite.streamId
-    }
-  },
-  methods: {
-    accept() {
-      return this.processInvite(true)
-    },
-    decline() {
-      return this.processInvite(false)
-    },
-    logIn() {
-      if (this.isLoggedIn) return
-      this.$loginAndSetRedirect()
-    },
-    async processInvite(accept: boolean) {
-      if (!this.streamInvite?.inviteId) return
-
-      const { data, errors } = await useStreamInviteMutation(this, {
-        variables: {
-          accept,
-          streamId: this.streamId,
-          inviteId: this.streamInvite.inviteId
-        }
-      })
-
-      if (data?.streamInviteUse) {
-        this.$triggerNotification({
-          text: accept
-            ? "You've been successfully added as a stream contributor!"
-            : "You've declined the invite",
-          type: accept ? 'success' : 'primary'
-        })
-
-        // Refetch stream, if accepted
-        if (accept) {
-          this.$eventHub.$emit(StreamEvents.Refetch)
-        }
-
-        this.closed = true
-      } else {
-        const errMsg = errors?.[0].message || 'An unexpected issue occurred!'
-        this.$triggerNotification({
-          text: errMsg,
-          type: 'error'
-        })
-      }
     }
   }
 })

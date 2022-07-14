@@ -30,7 +30,7 @@ export default Vue.extend({
     item: {
       type: Object as PropType<AdminUsersListItem>,
       required: true,
-      validator(val): boolean {
+      validator(val: AdminUsersListItem): boolean {
         return !!(val.invitedUser || val.registeredUser)
       }
     },
