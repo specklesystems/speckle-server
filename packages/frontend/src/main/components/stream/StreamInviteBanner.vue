@@ -35,17 +35,15 @@
   </v-alert>
 </template>
 <script lang="ts">
-import {
-  StreamInviteQuery,
-  useStreamInviteMutation,
-  useStreamInviteQuery
-} from '@/graphql/generated/graphql'
-import { Nullable, vueWithMixins } from '@/helpers/typeHelpers'
-import Vue from 'vue'
+import { StreamInviteQuery, useStreamInviteMutation } from '@/graphql/generated/graphql'
+import { vueWithMixins } from '@/helpers/typeHelpers'
+import { PropType } from 'vue'
 import UserAvatar from '@/main/components/common/UserAvatar.vue'
 import type { Get } from 'type-fest'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
+
+type StreamInviteType = NonNullable<Get<StreamInviteQuery, 'streamInvite'>>
 
 export default vueWithMixins(IsLoggedInMixin).extend({
   // @vue/component
@@ -54,33 +52,20 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     UserAvatar
   },
   props: {
-    streamId: {
-      type: String,
+    streamInvite: {
+      type: Object as PropType<StreamInviteType>,
       required: true
     }
   },
   data: () => ({
-    streamInvite: null as Nullable<Get<StreamInviteQuery, 'streamInvite'>>,
     closed: false
   }),
-  apollo: {
-    streamInvite: useStreamInviteQuery<
-      Vue & { streamId: string; inviteId: Nullable<string> }
-    >({
-      variables() {
-        return {
-          streamId: this.streamId,
-          inviteId: this.inviteId
-        }
-      }
-    })
-  },
   computed: {
-    inviteId(): Nullable<string> {
-      return this.$route.query['inviteId'] as Nullable<string>
+    inviter(): NonNullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
+      return this.streamInvite.invitedBy
     },
-    inviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
-      return this.streamInvite?.invitedBy
+    streamId(): string {
+      return this.streamInvite.streamId
     }
   },
   methods: {
@@ -91,7 +76,7 @@ export default vueWithMixins(IsLoggedInMixin).extend({
       return this.processInvite(false)
     },
     logIn() {
-      if (!this.streamInvite || this.isLoggedIn) return
+      if (this.isLoggedIn) return
       this.$loginAndSetRedirect()
     },
     async processInvite(accept: boolean) {

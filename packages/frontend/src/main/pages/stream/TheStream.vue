@@ -8,7 +8,10 @@
       <stream-toolbar v-if="stream" :stream="stream" :user="user" />
 
       <!-- Stream invite banner -->
-      <stream-invite-banner v-if="!isAccessError" :stream-id="streamId" />
+      <stream-invite-banner
+        v-if="!isAccessError && streamInvite"
+        :stream-invite="streamInvite"
+      />
 
       <!-- Stream Child Routes -->
       <div v-if="!error">
@@ -41,8 +44,6 @@ import {
 } from '@/graphql/generated/graphql'
 import type { Get } from 'type-fest'
 
-// TODO: Move streamInvite from banner to here and feed it through props
-// TODO: Report subscription types being very borked for vue-apollo-smart-ops
 // Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
 type VueThis = Vue & {
   streamId: string
@@ -70,9 +71,6 @@ export default defineComponent({
   computed: {
     inviteId(): Nullable<string> {
       return this.$route.query['inviteId'] as Nullable<string>
-    },
-    inviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
-      return this.streamInvite?.invitedBy
     },
     streamId(): string {
       return this.$route.params.streamId

@@ -6,6 +6,7 @@ export const streamInviteQuery = gql`
     streamInvite(streamId: $streamId, inviteId: $inviteId) {
       id
       inviteId
+      streamId
       invitedBy {
         ...LimitedUserFields
       }

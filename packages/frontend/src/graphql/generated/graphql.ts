@@ -1532,7 +1532,7 @@ export type StreamInviteQueryVariables = Exact<{
 }>;
 
 
-export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
+export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
 
 export type UseStreamInviteMutationVariables = Exact<{
   accept: Scalars['Boolean'];
@@ -1912,6 +1912,7 @@ export const StreamInvite = gql`
   streamInvite(streamId: $streamId, inviteId: $inviteId) {
     id
     inviteId
+    streamId
     invitedBy {
       ...LimitedUserFields
     }
@@ -2526,6 +2527,7 @@ export const StreamInviteDocument = gql`
   streamInvite(streamId: $streamId, inviteId: $inviteId) {
     id
     inviteId
+    streamId
     invitedBy {
       ...LimitedUserFields
     }
