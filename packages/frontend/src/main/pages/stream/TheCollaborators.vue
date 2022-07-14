@@ -21,15 +21,6 @@
     </portal>
     <v-row v-if="stream" justify="center">
       <v-col v-if="serverInfo && stream" cols="12">
-        <!-- Leave stream panel -->
-        <v-row v-if="showLeaveStreamPanel">
-          <v-col cols="12">
-            <leave-stream-panel
-              :stream-id="streamId"
-              @removed="fullyReloadStreamQueries"
-            />
-          </v-col>
-        </v-row>
         <!-- Add contributors panel -->
         <v-row>
           <v-col v-if="isStreamOwner" cols="12">
@@ -115,6 +106,15 @@
               @update-user-role="setUserPermissions"
               @remove-user="removeUser"
               @cancel-invite="cancelInvite"
+            />
+          </v-col>
+        </v-row>
+        <!-- Leave stream panel -->
+        <v-row v-if="showLeaveStreamPanel">
+          <v-col cols="12">
+            <leave-stream-panel
+              :stream-id="streamId"
+              @removed="fullyReloadStreamQueries"
             />
           </v-col>
         </v-row>
@@ -327,6 +327,9 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     onInviteSent() {
       // Reload contributors only
       this.$eventHub.$emit(StreamEvents.RefetchCollaborators)
+
+      // Clear search field
+      this.search = ''
     },
     fullyReloadStreamQueries() {
       // Refetch all stream info

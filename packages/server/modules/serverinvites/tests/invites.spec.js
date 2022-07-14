@@ -29,12 +29,13 @@ const {
 } = require('@/test/graphql/serverInvites')
 const { truncateTables } = require('@/test/hooks')
 const { expect } = require('chai')
-const { createStream } = require('@/modules/core/services/streams')
+const {
+  createStream,
+  grantPermissionsStream
+} = require('@/modules/core/services/streams')
 const { getInvite: getInviteFromDB } = require('@/modules/serverinvites/repositories')
 const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
-
-// TODO: Tests for: Guest user registering with server & stream invite
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
@@ -132,6 +133,19 @@ describe('[Stream & Server Invites]', () => {
     describe('and inviting to server', () => {
       const createInvite = (input) => createServerInvite(apollo, input)
 
+      it("can't invite an already registered user", async () => {
+        const { errors, data } = await createInvite({
+          email: otherGuy.email,
+          message: 'hey dude'
+        })
+
+        expect(data?.serverInviteCreate).to.be.not.ok
+        expect(errors).to.be.ok
+        expect(errors.map((e) => e.message).join('|')).to.contain(
+          'email is already associated with an account'
+        )
+      })
+
       it('can invite new user', async () => {
         const targetEmail = 'randomguy@random.com'
 
@@ -194,7 +208,47 @@ describe('[Stream & Server Invites]', () => {
     })
 
     describe('and inviting to stream', () => {
+      const otherGuyAlreadyInvitedStream = {
+        name: 'Other guy is already here stream',
+        isPublic: false,
+        id: undefined
+      }
+
       const createInvite = (input) => createStreamInvite(apollo, input)
+
+      before(async () => {
+        // Create a stream and make sure otherGuy is already a contributor there
+        await createStream({ ...otherGuyAlreadyInvitedStream, ownerId: me.id }).then(
+          (id) => (otherGuyAlreadyInvitedStream.id = id)
+        )
+        await grantPermissionsStream({
+          streamId: otherGuyAlreadyInvitedStream.id,
+          role: Roles.Stream.Contributor,
+          userId: otherGuy.id
+        })
+      })
+
+      const alreadyInvitedUserDataSet = [
+        { display: 'by user id', userId: true },
+        { display: 'by email', userId: false }
+      ]
+
+      alreadyInvitedUserDataSet.forEach(({ display, userId }) => {
+        it(`can't invite an already added user ${display}`, async () => {
+          const { errors, data } = await createInvite({
+            email: userId ? null : otherGuy.email,
+            userId: userId ? otherGuy.id : null,
+            message: 'hey dude come to my stream',
+            streamId: otherGuyAlreadyInvitedStream.id
+          })
+
+          expect(data?.serverInviteCreate).to.be.not.ok
+          expect(errors).to.be.ok
+          expect(errors.map((e) => e.message).join('|')).to.contain(
+            'user is already a collaborator'
+          )
+        })
+      })
 
       const userTypesDataSet = [
         {

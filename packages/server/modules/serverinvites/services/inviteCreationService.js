@@ -5,9 +5,10 @@ const { InviteCreateValidationError } = require('@/modules/serverinvites/errors'
 const { authorizeResolver } = require('@/modules/shared')
 const {
   insertInviteAndDeleteOld,
-  getUserFromTarget
+  getUserFromTarget,
+  getResource
 } = require('@/modules/serverinvites/repositories')
-const { getStream } = require('@/modules/core/repositories/streams')
+const { getStreamCollaborator } = require('@/modules/core/repositories/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const sanitizeHtml = require('sanitize-html')
 const {
@@ -39,28 +40,16 @@ const { getUsers, getUser } = require('@/modules/core/repositories/users')
 
 /**
  * @param {InviteOrInputParams} params
+ * @param {Object | null} resource invite resource (e.g. stream)
  */
-async function validateAndResolveResourceName(params) {
-  if (isServerInvite(params)) return null
-  const { resourceId, resourceTarget } = params
-
-  if (!Object.values(ResourceTargets).includes(resourceTarget)) {
-    throw new InviteCreateValidationError('Unexpected resource target type')
-  }
+function resolveResourceName(params, resource) {
+  const { resourceTarget } = params
 
   if (resourceTarget === ResourceTargets.Streams) {
-    // Resolve stream name
-    const stream = await getStream({ streamId: resourceId })
-    if (!stream) {
-      throw new InviteCreateValidationError(
-        'Attempting to generate invite for a non-existant stream'
-      )
-    }
-
-    return stream.name
+    return resource.name
   }
 
-  throw new InviteCreateValidationError('Unexpected resource target type')
+  return null
 }
 
 /**
@@ -108,16 +97,50 @@ function validateTargetUser(params, targetUser) {
 }
 
 /**
+ * Validate the target resource
+ * @param {CreateInviteParams} params
+ * @param {Object | null} resource
+ * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser Target user, if one exists in our DB
+ */
+async function validateResource(params, resource, targetUser) {
+  const { resourceId, resourceTarget } = params
+
+  if (resourceId && !resource) {
+    throw new InviteCreateValidationError("Couldn't resolve invite resource")
+  }
+
+  if (resourceTarget === ResourceTargets.Streams) {
+    if (targetUser) {
+      // Check if user isn't already associated with the stream
+      const isStreamCollaborator = !!(await getStreamCollaborator(
+        resourceId,
+        targetUser.id
+      ))
+      if (isStreamCollaborator) {
+        throw new InviteCreateValidationError(
+          'The target user is already a collaborator of the specified stream'
+        )
+      }
+    }
+  }
+}
+
+/**
  * Validate invite creation input data
  * @param {CreateInviteParams} params
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter Inviter, resolved from DB
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser Target user, if one exists in our DB
+ * @param {Object | null} resource Invite resource (stream or null)
  */
-async function validateInput(params, inviter, targetUser) {
+async function validateInput(params, inviter, targetUser, resource) {
   const { message } = params
 
+  // validate inviter & invitee
   validateTargetUser(params, targetUser)
   await validateInviter(params, inviter)
+
+  // validate resource
+  await validateResource(params, resource, targetUser)
 
   // check if message too long
   if (message) {
@@ -262,13 +285,14 @@ function buildInviteLink(invite) {
  * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser
- * @param {string | null} resourceName
+ * @param {Object | null} resource
  * @returns {Promise<{to: string, subject: string, text: string, html: string}>}
  */
-async function buildEmailContents(invite, inviter, targetUser, resourceName) {
+async function buildEmailContents(invite, inviter, targetUser, resource) {
   const email = targetUser ? targetUser.email : invite.target
   const serverInfo = await getServerInfo()
   const inviteLink = buildInviteLink(invite)
+  const resourceName = resolveResourceName(invite, resource)
 
   const bodyText = buildEmailTextBody(
     invite,
@@ -305,13 +329,13 @@ async function createAndSendInvite(params) {
 
   const inviter = await getUser(inviterId)
   const targetUser = await getUserFromTarget(target)
+  const resource = await getResource(params)
 
   // if target user found, always use the user ID
   if (targetUser) target = buildUserTarget(targetUser.id)
 
   // validate inputs
-  await validateInput(params, inviter, targetUser)
-  const resourceName = await validateAndResolveResourceName(params)
+  await validateInput(params, inviter, targetUser, resource)
 
   // Sanitize msg
   // TODO: We should just use TipTap here
@@ -335,12 +359,7 @@ async function createAndSendInvite(params) {
   )
 
   // generate and send email
-  const emailParams = await buildEmailContents(
-    invite,
-    inviter,
-    targetUser,
-    resourceName
-  )
+  const emailParams = await buildEmailContents(invite, inviter, targetUser, resource)
   await sendEmail(emailParams)
 
   return invite.id
@@ -353,18 +372,13 @@ async function createAndSendInvite(params) {
 async function resendInviteEmail(invite) {
   const { inviterId, target } = invite
 
-  const [inviter, targetUser, resourceName] = await Promise.all([
+  const [inviter, targetUser, resource] = await Promise.all([
     getUser(inviterId),
     getUserFromTarget(target),
-    validateAndResolveResourceName(invite)
+    getResource(invite)
   ])
 
-  const emailParams = await buildEmailContents(
-    invite,
-    inviter,
-    targetUser,
-    resourceName
-  )
+  const emailParams = await buildEmailContents(invite, inviter, targetUser, resource)
   await sendEmail(emailParams)
 }
 

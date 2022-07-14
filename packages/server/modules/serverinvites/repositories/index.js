@@ -1,11 +1,14 @@
 const { ServerInvites } = require('@/modules/core/dbSchema')
 const { getUserByEmail, getUser } = require('@/modules/core/repositories/users')
+const { ResourceNotResolvableError } = require('@/modules/serverinvites/errors')
 const {
   resolveTarget,
   ResourceTargets,
-  buildUserTarget
+  buildUserTarget,
+  isServerInvite
 } = require('@/modules/serverinvites/helpers/inviteHelper')
 const { uniq, isArray } = require('lodash')
+const { getStream } = require('@/modules/core/repositories/streams')
 
 /**
  * @typedef {{
@@ -20,6 +23,22 @@ const { uniq, isArray } = require('lodash')
  *  role?: string
  * }} ServerInviteRecord
  */
+
+/**
+ * Resolve resource from invite
+ * @param {import('@/modules/serverinvites/helpers/inviteHelper').InviteResourceData} invite
+ * @returns {Promise<Object>}
+ */
+async function getResource(invite) {
+  if (isServerInvite(invite)) return null
+
+  const { resourceId, resourceTarget } = invite
+  if (resourceTarget === ResourceTargets.Streams) {
+    return await getStream({ streamId: resourceId })
+  } else {
+    throw new ResourceNotResolvableError('Unexpected invite resource type')
+  }
+}
 
 /**
  * Try to find a user using the target value
@@ -285,5 +304,6 @@ module.exports = {
   getInvite,
   deleteInvite,
   deleteInvitesByTarget,
-  deleteAllUserInvites
+  deleteAllUserInvites,
+  getResource
 }
