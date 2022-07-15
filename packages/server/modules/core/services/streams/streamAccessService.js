@@ -2,16 +2,16 @@ const {
   revokePermissionsStream,
   grantPermissionsStream
 } = require('@/modules/core/services/streams')
-const { pubsub, StreamPubsubEvents, authorizeResolver } = require(`@/modules/shared`)
-const {
-  saveActivity,
-  ResourceTypes,
-  ActionTypes
-} = require(`@/modules/activitystream/services`)
+const { authorizeResolver } = require(`@/modules/shared`)
+
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { LogicError } = require('@/modules/shared/errors')
 const { ForbiddenError } = require('apollo-server-express')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const {
+  addStreamPermissionsAddedActivity,
+  addStreamPermissionsRevokedActivity
+} = require('@/modules/activitystream/services/streamActivityService')
 
 /**
  * Validate that the user has the required permission level (or one above it) for the specified stream
@@ -66,35 +66,33 @@ async function removeStreamCollaborator(streamId, userId, removedById) {
 
   await revokePermissionsStream({ streamId, userId })
 
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsRemove,
-      userId,
-      info: { targetUser: removedById },
-      message: `Permission revoked for user ${userId}`
-    }),
-
-    pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
-      userStreamRemoved: {
-        id: streamId,
-        revokedBy: removedById
-      },
-      ownerId: userId
-    })
-  ])
+  await addStreamPermissionsRevokedActivity({
+    streamId,
+    activityUserId: removedById,
+    removedUserId: userId
+  })
 }
 
 /**
  * Add a new collaborator to the stream or update their access level
+ *
+ * Optional parameters:
+ * - fromInvite: Set to true, if user is being added as a result of accepting an invitation
  * @param {string} streamId
  * @param {string} userId ID of user who is being added
  * @param {string} role
  * @param {string} addedById ID of user who is adding the new collaborator
+ * @param {{
+ *  fromInvite?: boolean,
+ * }} param4
  */
-async function addOrUpdateStreamCollaborator(streamId, userId, role, addedById) {
+async function addOrUpdateStreamCollaborator(
+  streamId,
+  userId,
+  role,
+  addedById,
+  { fromInvite }
+) {
   const validRoles = Object.values(Roles.Stream)
   if (!validRoles.includes(role)) {
     throw new LogicError('Unexpected stream role')
@@ -114,24 +112,13 @@ async function addOrUpdateStreamCollaborator(streamId, userId, role, addedById) 
     role
   })
 
-  await Promise.all([
-    saveActivity({
-      streamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: streamId,
-      actionType: ActionTypes.Stream.PermissionsAdd,
-      userId: addedById,
-      info: { targetUser: userId, role },
-      message: `Permission granted to user ${userId} (${role})`
-    }),
-    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: {
-        id: streamId,
-        sharedBy: addedById
-      },
-      ownerId: userId
-    })
-  ])
+  await addStreamPermissionsAddedActivity({
+    streamId,
+    activityUserId: addedById,
+    targetUserId: userId,
+    role,
+    fromInvite: !!fromInvite
+  })
 }
 
 module.exports = {

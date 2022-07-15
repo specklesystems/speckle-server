@@ -16,10 +16,12 @@ const {
   deleteInvite: deleteInviteFromDb,
   deleteInvitesByTarget
 } = require('@/modules/serverinvites/repositories')
-const { grantPermissionsStream } = require('@/modules/core/services/streams')
 const {
   resendInviteEmail
 } = require('@/modules/serverinvites/services/inviteCreationService')
+const {
+  addOrUpdateStreamCollaborator
+} = require('@/modules/core/services/streams/streamAccessService')
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -103,8 +105,10 @@ async function finalizeStreamInvite(accept, streamId, inviteId, userId) {
   // Invite found - accept or decline
   if (accept) {
     // Add access for user
-    const { role = Roles.Stream.Contributor } = invite
-    await grantPermissionsStream({ streamId, role, userId })
+    const { role = Roles.Stream.Contributor, inviterId } = invite
+    await addOrUpdateStreamCollaborator(streamId, userId, role, inviterId, {
+      fromInvite: true
+    })
 
     // Delete all invites to this stream
     await deleteInvitesByTarget(
