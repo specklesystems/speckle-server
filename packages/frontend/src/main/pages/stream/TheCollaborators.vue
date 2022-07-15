@@ -137,7 +137,8 @@ import StreamRoleCollaborators from '@/main/components/stream/collaborators/Stre
 import {
   cancelStreamInviteMutation,
   useStreamWithCollaboratorsQuery,
-  StreamWithCollaboratorsDocument
+  StreamWithCollaboratorsDocument,
+  updateStreamPermissionMutation
 } from '@/graphql/generated/graphql'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { Roles } from '@/helpers/mainConstants'
@@ -369,32 +370,29 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     },
     async setUserPermissions({ user, role }) {
       this.loading = true
-      await this.grantPermissionUser(user.id, role.name)
+      await this.updateUserPermission(user.id, role.name)
       this.loading = false
 
       // refetch stream
       this.fullyReloadStreamQueries()
     },
-    async grantPermissionUser(userId, role) {
-      this.$mixpanel.track('Permission Action', { type: 'action', name: 'add' })
-      try {
-        await this.$apollo.mutate({
-          mutation: gql`
-            mutation grantPerm($params: StreamGrantPermissionInput!) {
-              streamGrantPermission(permissionParams: $params)
-            }
-          `,
-          variables: {
-            params: {
-              streamId: this.stream.id,
-              userId,
-              role
-            }
+    async updateUserPermission(userId, role) {
+      this.$mixpanel.track('Permission Action', { type: 'action', name: 'update' })
+      const { data, errors } = await updateStreamPermissionMutation(this, {
+        variables: {
+          params: {
+            streamId: this.stream.id,
+            userId,
+            role
           }
-        })
-      } catch (e) {
-        this.$eventHub.$emit('notification', {
-          text: e.message
+        }
+      })
+
+      if (!data?.streamUpdatePermission) {
+        const errMsg = errors?.[0]?.message || 'An unexpected issue occurred'
+        this.$triggerNotification({
+          text: errMsg,
+          type: 'error'
         })
       }
     },

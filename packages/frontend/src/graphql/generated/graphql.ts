@@ -458,8 +458,6 @@ export type Mutation = {
   streamDelete: Scalars['Boolean'];
   /** Favorite/unfavorite the given stream */
   streamFavorite?: Maybe<Stream>;
-  /** Grants permissions to a user on a given stream. */
-  streamGrantPermission?: Maybe<Scalars['Boolean']>;
   streamInviteBatchCreate: Scalars['Boolean'];
   /** Cancel a pending stream invite. Can only be invoked by a stream owner. */
   streamInviteCancel: Scalars['Boolean'];
@@ -473,6 +471,8 @@ export type Mutation = {
   streamRevokePermission?: Maybe<Scalars['Boolean']>;
   /** Updates an existing stream. */
   streamUpdate: Scalars['Boolean'];
+  /** Update permissions of a user on a given stream. */
+  streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
   /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
@@ -636,11 +636,6 @@ export type MutationStreamFavoriteArgs = {
 };
 
 
-export type MutationStreamGrantPermissionArgs = {
-  permissionParams: StreamGrantPermissionInput;
-};
-
-
 export type MutationStreamInviteBatchCreateArgs = {
   input: Array<StreamInviteCreateInput>;
 };
@@ -676,6 +671,11 @@ export type MutationStreamRevokePermissionArgs = {
 
 export type MutationStreamUpdateArgs = {
   stream: StreamUpdateInput;
+};
+
+
+export type MutationStreamUpdatePermissionArgs = {
+  permissionParams: StreamUpdatePermissionInput;
 };
 
 
@@ -1183,12 +1183,6 @@ export type StreamCreateInput = {
   withContributors?: InputMaybe<Array<Scalars['String']>>;
 };
 
-export type StreamGrantPermissionInput = {
-  role: Scalars['String'];
-  streamId: Scalars['String'];
-  userId: Scalars['String'];
-};
-
 export type StreamInviteCreateInput = {
   email?: InputMaybe<Scalars['String']>;
   message?: InputMaybe<Scalars['String']>;
@@ -1213,6 +1207,12 @@ export type StreamUpdateInput = {
   id: Scalars['String'];
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+};
+
+export type StreamUpdatePermissionInput = {
+  role: Scalars['String'];
+  streamId: Scalars['String'];
+  userId: Scalars['String'];
 };
 
 export type Subscription = {
@@ -1657,6 +1657,13 @@ export type LeaveStreamMutationVariables = Exact<{
 
 
 export type LeaveStreamMutation = { __typename?: 'Mutation', streamLeave: boolean };
+
+export type UpdateStreamPermissionMutationVariables = Exact<{
+  params: StreamUpdatePermissionInput;
+}>;
+
+
+export type UpdateStreamPermissionMutation = { __typename?: 'Mutation', streamUpdatePermission?: boolean | null };
 
 export type CommonUserFieldsFragment = { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null };
 
@@ -2113,6 +2120,11 @@ ${LimitedUserFields}`;
 export const LeaveStream = gql`
     mutation LeaveStream($streamId: String!) {
   streamLeave(streamId: $streamId)
+}
+    `;
+export const UpdateStreamPermission = gql`
+    mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
+  streamUpdatePermission(permissionParams: $params)
 }
     `;
 export const UserFavoriteStreams = gql`
@@ -3190,6 +3202,35 @@ export const leaveStreamMutation = createMutationFunction<
   LeaveStreamMutationVariables,
   ApolloError
 >(LeaveStreamDocument, handleApolloError);
+
+export const UpdateStreamPermissionDocument = gql`
+    mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
+  streamUpdatePermission(permissionParams: $params)
+}
+    `;
+
+/**
+ * __updateStreamPermissionMutation__
+ *
+ * To run a mutation, you call `updateStreamPermissionMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = updateStreamPermissionMutation(this, {
+ *   variables: {
+ *     params: // value for 'params'
+ *   },
+ * });
+ */
+export const updateStreamPermissionMutation = createMutationFunction<
+  UpdateStreamPermissionMutation,
+  UpdateStreamPermissionMutationVariables,
+  ApolloError
+>(UpdateStreamPermissionDocument, handleApolloError);
 
 export const UserFavoriteStreamsDocument = gql`
     query UserFavoriteStreams($cursor: String) {

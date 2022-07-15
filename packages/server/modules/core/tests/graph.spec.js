@@ -388,21 +388,21 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should grant some permissions', async () => {
         const res = await sendRequest(userA.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
         })
 
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
-        expect(res.body.data.streamGrantPermission).to.equal(true)
+        expect(res.body.data.streamUpdatePermission).to.equal(true)
 
         const res2 = await sendRequest(userB.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner"}) }`
         })
         expect(res2).to.be.json
         expect(res2.body.errors).to.not.exist
 
         const res3 = await sendRequest(userB.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner"}) }`
         })
         expect(res3).to.be.json
         expect(res3.body.errors).to.not.exist
@@ -410,7 +410,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should fail to grant permissions if not owner', async () => {
         const res = await sendRequest(userB.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
@@ -418,7 +418,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should fail to grant myself permissions', async () => {
         const res = await sendRequest(userA.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner"}) }`
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
@@ -435,11 +435,11 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should update permissions', async () => {
         const res = await sendRequest(userA.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:contributor"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:contributor"}) }`
         })
         expect(res).to.be.json
         expect(res.body.errors).to.not.exist
-        expect(res.body.data.streamGrantPermission).to.equal(true)
+        expect(res.body.data.streamUpdatePermission).to.equal(true)
       })
 
       it('Should revoke permissions', async () => {
@@ -860,7 +860,7 @@ describe('GraphQL API Core @core-api', () => {
       it('Should delete a branch', async () => {
         // give C some access permissions
         await sendRequest(userA.token, {
-          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}" role: "stream:contributor"}) }`
+          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}" role: "stream:contributor"}) }`
         })
 
         const payload = {
@@ -1678,9 +1678,9 @@ describe('GraphQL API Core @core-api', () => {
           'mutation { streamCreate( stream: { name: "Share this with poor Mark", description: "💩", isPublic:true } ) }'
       })
       const grantRes = await sendRequest(userA.token, {
-        query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${streamRes.body.data.streamCreate}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
+        query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${streamRes.body.data.streamCreate}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
       })
-      expect(grantRes.body.data.streamGrantPermission).to.equal(true)
+      expect(grantRes.body.data.streamUpdatePermission).to.equal(true)
 
       const res = await sendRequest(archivedUser.token, {
         query: `query { stream(id:"${streamRes.body.data.streamCreate}") { id name } }`
@@ -1717,10 +1717,10 @@ describe('GraphQL API Core @core-api', () => {
       })
       streamId = streamRes.body.data.streamCreate
       const grantRes = await sendRequest(userA.token, {
-        query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
+        query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${streamId}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
       })
 
-      expect(grantRes.body.data.streamGrantPermission).to.equal(true)
+      expect(grantRes.body.data.streamUpdatePermission).to.equal(true)
 
       let res = await sendRequest(archivedUser.token, {
         query: `query { stream(id:"${streamId}") { id name } }`
@@ -1880,9 +1880,9 @@ describe('GraphQL API Core @core-api', () => {
           'mutation { streamCreate( stream: { name: "Mark will read this", description: "🥔", isPublic:true } ) }'
       })
       const grantRes = await sendRequest(userA.token, {
-        query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${streamRes.body.data.streamCreate}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
+        query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${streamRes.body.data.streamCreate}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
       })
-      expect(grantRes.body.data.streamGrantPermission).to.equal(true)
+      expect(grantRes.body.data.streamUpdatePermission).to.equal(true)
       const objects = generateManyObjects(2)
       let res = await request(app)
         .post(`/objects/${streamRes.body.data.streamCreate}`)

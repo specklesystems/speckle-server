@@ -237,7 +237,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       await sleep(500)
 
       await sendRequest(userA.token, {
-        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
+        query: `mutation { streamUpdatePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
       })
         .expect(200)
         .expect(noErrors)
@@ -270,7 +270,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       await sleep(500)
 
       await sendRequest(userA.token, {
-        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
+        query: `mutation { streamUpdatePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
       })
         .expect(200)
         .expect(noErrors)

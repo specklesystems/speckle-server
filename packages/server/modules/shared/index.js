@@ -6,6 +6,13 @@ const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { buildRequestLoaders } = require('@/modules/core/loaders')
 const { validateToken } = require(`@/modules/core/services/tokens`)
 
+const StreamPubsubEvents = Object.freeze({
+  UserStreamAdded: 'USER_STREAM_ADDED',
+  UserStreamRemoved: 'USER_STREAM_REMOVED',
+  StreamUpdated: 'STREAM_UPDATED',
+  StreamDeleted: 'STREAM_DELETED'
+})
+
 const pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
@@ -208,5 +215,6 @@ module.exports = {
   validateScopes,
   authorizeResolver,
   pubsub,
-  getRoles
+  getRoles,
+  StreamPubsubEvents
 }

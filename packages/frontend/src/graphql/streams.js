@@ -83,3 +83,12 @@ export const leaveStreamMutation = gql`
     streamLeave(streamId: $streamId)
   }
 `
+
+/**
+ * Update a user's stream permission
+ */
+export const updateStreamPermissionMutation = gql`
+  mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
+    streamUpdatePermission(permissionParams: $params)
+  }
+`

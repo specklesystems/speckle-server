@@ -118,9 +118,9 @@ extend type Mutation {
 
   streamsDelete(ids: [String!]): Boolean! @hasRole(role: "server:admin")
   """
-  Grants permissions to a user on a given stream.
+  Update permissions of a user on a given stream.
   """
-  streamGrantPermission(permissionParams: StreamGrantPermissionInput!): Boolean
+  streamUpdatePermission(permissionParams: StreamUpdatePermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   """
@@ -200,7 +200,7 @@ input StreamUpdateInput {
   allowPublicComments: Boolean
 }
 
-input StreamGrantPermissionInput {
+input StreamUpdatePermissionInput {
   streamId: String!
   userId: String!
   role: String!

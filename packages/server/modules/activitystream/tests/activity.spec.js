@@ -145,7 +145,7 @@ describe('Activity @activity', () => {
 
     // add collaborator (iz4)
     const resCollab = await sendRequest(userIz.token, {
-      query: `mutation { streamGrantPermission( permissionParams: { streamId: "${streamPublic.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
+      query: `mutation { streamUpdatePermission( permissionParams: { streamId: "${streamPublic.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
     })
     expect(noErrors(resCollab))
 

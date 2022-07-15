@@ -137,9 +137,12 @@ module.exports = {
         role: 'stream:owner'
       })
       if (ownersCount === 1)
-        throw new StreamAccessUpdateError('Could not revoke permissions for user', {
-          info: { streamId, userId }
-        })
+        throw new StreamAccessUpdateError(
+          'Could not revoke permissions for last admin',
+          {
+            info: { streamId, userId }
+          }
+        )
       else {
         await StreamAcl.knex().where({ resourceId: streamId, userId }).del()
         return true

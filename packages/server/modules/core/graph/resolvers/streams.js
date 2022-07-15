@@ -15,8 +15,6 @@ const {
   getUserStreams,
   getUserStreamsCount,
   getStreamUsers,
-  grantPermissionsStream,
-  revokePermissionsStream,
   favoriteStream,
   getFavoriteStreamsCollection,
   getActiveUserStreamFavoriteDate,
@@ -28,7 +26,8 @@ const {
   authorizeResolver,
   validateScopes,
   validateServerRole,
-  pubsub
+  pubsub,
+  StreamPubsubEvents
 } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { respectsLimits } = require('@/modules/core/services/ratelimits')
@@ -36,12 +35,19 @@ const {
   getPendingStreamCollaborators
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
+const {
+  removeStreamCollaborator,
+  addOrUpdateStreamCollaborator,
+  validateStreamAccess
+} = require('@/modules/core/services/streams/streamAccessService')
+const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 
 // subscription events
-const USER_STREAM_ADDED = 'USER_STREAM_ADDED'
-const USER_STREAM_REMOVED = 'USER_STREAM_REMOVED'
-const STREAM_UPDATED = 'STREAM_UPDATED'
-const STREAM_DELETED = 'STREAM_DELETED'
+const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
+const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
+const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
+const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -273,43 +279,44 @@ module.exports = {
       return results.every((res) => res === true)
     },
 
-    async streamGrantPermission(parent, args, context) {
+    async streamUpdatePermission(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
         'stream:owner'
       )
 
-      if (context.userId === args.permissionParams.userId)
-        throw new Error('You cannot set roles for yourself.')
-
+      const smallestStreamRole = Roles.Stream.Reviewer
       const params = {
         streamId: args.permissionParams.streamId,
         userId: args.permissionParams.userId,
-        role: args.permissionParams.role.toLowerCase() || 'read'
-      }
-      const granted = await grantPermissionsStream(params)
-
-      if (granted) {
-        await saveActivity({
-          streamId: params.streamId,
-          resourceType: 'stream',
-          resourceId: params.streamId,
-          actionType: 'stream_permissions_add',
-          userId: context.userId,
-          info: { targetUser: params.userId, role: params.role },
-          message: `Permission granted to user ${params.userId} (${params.role})`
-        })
-        await pubsub.publish(USER_STREAM_ADDED, {
-          userStreamAdded: {
-            id: args.permissionParams.streamId,
-            sharedBy: context.userId
-          },
-          ownerId: args.permissionParams.userId
-        })
+        role: args.permissionParams.role.toLowerCase() || smallestStreamRole
       }
 
-      return granted
+      // We only allow changing roles, not adding access - for that the user must use stream invites
+      let isCollaboratorAlready = false
+      try {
+        await validateStreamAccess(params.userId, params.streamId, smallestStreamRole)
+        isCollaboratorAlready = true
+      } catch (e) {
+        if (!(e instanceof StreamInvalidAccessError)) {
+          throw e
+        }
+      }
+      if (!isCollaboratorAlready) {
+        throw new ForbiddenError(
+          "Cannot grant permissions to users who aren't collaborators already - invite the user to the stream first"
+        )
+      }
+
+      await addOrUpdateStreamCollaborator(
+        params.streamId,
+        params.userId,
+        params.role,
+        context.userId
+      )
+
+      return true
     },
 
     async streamRevokePermission(parent, args, context) {
@@ -319,31 +326,13 @@ module.exports = {
         'stream:owner'
       )
 
-      if (context.userId === args.permissionParams.userId)
-        throw new ApolloError('You cannot revoke your own access rights to a stream.')
+      await removeStreamCollaborator(
+        args.permissionParams.streamId,
+        args.permissionParams.userId,
+        context.userId
+      )
 
-      const revoked = await revokePermissionsStream({ ...args.permissionParams })
-
-      if (revoked) {
-        await saveActivity({
-          streamId: args.permissionParams.streamId,
-          resourceType: 'stream',
-          resourceId: args.permissionParams.streamId,
-          actionType: 'stream_permissions_remove',
-          userId: context.userId,
-          info: { targetUser: args.permissionParams.userId },
-          message: `Permission revoked for user ${args.permissionParams.userId}`
-        })
-        await pubsub.publish(USER_STREAM_REMOVED, {
-          userStreamRemoved: {
-            id: args.permissionParams.streamId,
-            revokedBy: context.userId
-          },
-          ownerId: args.permissionParams.userId
-        })
-      }
-
-      return revoked
+      return true
     },
 
     async streamFavorite(_parent, args, ctx) {
@@ -357,7 +346,8 @@ module.exports = {
       const { streamId } = args
       const { userId } = ctx
 
-      await revokePermissionsStream({ streamId, userId })
+      await removeStreamCollaborator(streamId, userId, userId)
+
       return true
     }
   },

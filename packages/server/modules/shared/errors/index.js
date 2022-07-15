@@ -6,6 +6,15 @@ class ForbiddenError extends BaseError {
 }
 
 /**
+ * Use this in logic branches that should never execute, and if they do - it means
+ * there's most definitely a bug in the code
+ */
+class LogicError extends BaseError {
+  static code = 'LOGIC_ERROR'
+  static defaultMessage = 'An unexpected issue occurred'
+}
+
+/**
  * Use this to throw when user tries to access data that he shouldn't have access to
  */
 class UnauthorizedError extends BaseError {
@@ -53,5 +62,6 @@ module.exports = {
   ResourceMismatch,
   InvalidArgumentError,
   RichTextParseError,
-  ContextError
+  ContextError,
+  LogicError
 }
