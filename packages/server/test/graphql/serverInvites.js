@@ -52,32 +52,50 @@ const deleteInviteMutation = gql`
   }
 `
 
+const streamInviteFragment = gql`
+  fragment StreamInviteData on PendingStreamCollaborator {
+    id
+    inviteId
+    streamId
+    title
+    role
+    invitedBy {
+      id
+      name
+      bio
+      company
+      avatar
+      verified
+    }
+    user {
+      id
+      name
+      bio
+      company
+      avatar
+      verified
+    }
+  }
+`
+
 const streamInviteQuery = gql`
   query ($streamId: String!, $inviteId: String) {
     streamInvite(streamId: $streamId, inviteId: $inviteId) {
-      id
-      inviteId
-      streamId
-      title
-      role
-      invitedBy {
-        id
-        name
-        bio
-        company
-        avatar
-        verified
-      }
-      user {
-        id
-        name
-        bio
-        company
-        avatar
-        verified
-      }
+      ...StreamInviteData
     }
   }
+
+  ${streamInviteFragment}
+`
+
+const streamInvitesQuery = gql`
+  query {
+    streamInvites {
+      ...StreamInviteData
+    }
+  }
+
+  ${streamInviteFragment}
 `
 
 const useStreamInviteMutation = gql`
@@ -195,6 +213,15 @@ module.exports = {
     return apollo.executeOperation({
       query: streamInviteQuery,
       variables: { streamId, inviteId }
+    })
+  },
+  /**
+   * streamInvites query
+   * @param {import('apollo-server-express').ApolloServer} apollo
+   */
+  getStreamInvites(apollo) {
+    return apollo.executeOperation({
+      query: streamInvitesQuery
     })
   },
   /**

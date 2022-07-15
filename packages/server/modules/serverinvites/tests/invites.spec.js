@@ -25,7 +25,8 @@ const {
   getStreamInvite,
   useUpStreamInvite,
   cancelStreamInvite,
-  getStreamPendingCollaborators
+  getStreamPendingCollaborators,
+  getStreamInvites
 } = require('@/test/graphql/serverInvites')
 const { truncateTables } = require('@/test/hooks')
 const { expect } = require('chai')
@@ -36,6 +37,7 @@ const {
 const { getInvite: getInviteFromDB } = require('@/modules/serverinvites/repositories')
 const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
+const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
@@ -685,6 +687,58 @@ describe('[Stream & Server Invites]', () => {
         expect(errors.map((e) => e.message).join('|')).to.contain(
           'You do not have access'
         )
+      })
+    })
+
+    describe('and they are looking at all of their stream invites', async () => {
+      /** @type {import('apollo-server-express').ApolloServer} */
+      let apollo
+
+      const ownInvitesGuy = {
+        name: "Some guy who's invited a lot",
+        email: 'mrinvitedguy111@gmail.com',
+        password: 'sn3aky-1337-b1m',
+        id: undefined
+      }
+
+      before(async () => {
+        // Create the user
+        await createUser(ownInvitesGuy).then((id) => (ownInvitesGuy.id = id))
+
+        // Invite him to a few streams
+        await Promise.all([
+          createInviteDirectly(
+            {
+              user: ownInvitesGuy,
+              stream: myPrivateStream
+            },
+            me.id
+          ),
+          createInviteDirectly(
+            {
+              user: ownInvitesGuy,
+              stream: otherGuysStream
+            },
+            otherGuy.id
+          )
+        ])
+
+        // Build authenticated apollo instance
+        apollo = buildAuthenticatedApolloServer(ownInvitesGuy.id)
+      })
+
+      it('all invites can be retrieved successfully', async () => {
+        const { data, errors } = await getStreamInvites(apollo)
+
+        expect(errors).to.be.not.ok
+        expect(data.streamInvites).to.be.ok
+        expect(data.streamInvites.length).to.eq(2)
+
+        const expectedStreamIds = [myPrivateStream.id, otherGuysStream.id]
+        const firstInvite = data.streamInvites[0]
+        const secondInvite = data.streamInvites[1]
+        expect(expectedStreamIds.includes(firstInvite.streamId)).to.be.ok
+        expect(expectedStreamIds.includes(secondInvite.streamId)).to.be.ok
       })
     })
   })
