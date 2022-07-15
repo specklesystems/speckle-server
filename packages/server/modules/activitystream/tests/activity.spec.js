@@ -8,7 +8,6 @@ const { getUserActivity } = require('../services')
 
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
-const { createStream } = require('@/modules/core/services/streams')
 const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
@@ -47,12 +46,12 @@ describe('Activity @activity', () => {
     id: undefined
   }
 
-  const collaboratorTestStream = {
-    name: 'a fun stream for testing collab stuff',
-    description: 'for all to see!',
-    isPublic: true,
-    id: undefined
-  }
+  // const collaboratorTestStream = {
+  //   name: 'a fun stream for testing collab stuff',
+  //   description: 'for all to see!',
+  //   isPublic: true,
+  //   id: undefined
+  // }
 
   const branchPublic = { name: '🍁maple branch' }
 
@@ -108,20 +107,12 @@ describe('Activity @activity', () => {
       createPersonalAccessToken(userX.id, 'no users:read test token', [
         'streams:read',
         'streams:write'
-      ]).then((token) => (userX.token = `Bearer ${token}`)),
+      ]).then((token) => (userX.token = `Bearer ${token}`))
       // streams
-      createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(
-        (id) => (collaboratorTestStream.id = id)
-      )
+      // createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(
+      //   (id) => (collaboratorTestStream.id = id)
+      // )
     ])
-
-    // Add stream collaborators
-    await addOrUpdateStreamCollaborator(
-      collaboratorTestStream.id,
-      userCr.id,
-      Roles.Stream.Reviewer,
-      userIz.id
-    )
 
     // It's definitely not great that there's a full on test case in the before() hook, but that's because
     // these tests were originally written incorrectly - they depend on each other. So this is a temporary fix that
@@ -166,9 +157,17 @@ describe('Activity @activity', () => {
     })
     expect(noErrors(resCommit2))
 
+    // Add stream collaborator directly
+    await addOrUpdateStreamCollaborator(
+      streamPublic.id,
+      userCr.id,
+      Roles.Stream.Reviewer,
+      userIz.id
+    )
+
     // update collaborator (iz4)
     const resCollab = await sendRequest(userIz.token, {
-      query: `mutation { streamUpdatePermission( permissionParams: { streamId: "${collaboratorTestStream.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
+      query: `mutation { streamUpdatePermission( permissionParams: { streamId: "${streamPublic.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
     })
     expect(noErrors(resCollab))
 
@@ -216,8 +215,8 @@ describe('Activity @activity', () => {
       query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
-    expect(res.body.data.user.timeline.items.length).to.equal(6) // sum of all actions in before hook
-    expect(res.body.data.user.timeline.totalCount).to.equal(6)
+    expect(res.body.data.user.timeline.items.length).to.equal(7) // sum of all actions in before hook
+    expect(res.body.data.user.timeline.totalCount).to.equal(7)
   })
 
   it("Should get a stream's activity", async () => {
@@ -226,8 +225,8 @@ describe('Activity @activity', () => {
     })
     expect(noErrors(res))
     const activity = res.body.data.stream.activity
-    expect(activity.items.length).to.equal(4)
-    expect(activity.totalCount).to.equal(4)
+    expect(activity.items.length).to.equal(5)
+    expect(activity.totalCount).to.equal(5)
     expect(activity.items[activity.totalCount - 1].actionType).to.equal('stream_create')
   })
 
