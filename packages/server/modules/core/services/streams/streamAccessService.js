@@ -10,7 +10,8 @@ const { ForbiddenError } = require('apollo-server-express')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const {
   addStreamPermissionsAddedActivity,
-  addStreamPermissionsRevokedActivity
+  addStreamPermissionsRevokedActivity,
+  addStreamInviteAcceptedActivity
 } = require('@/modules/activitystream/services/streamActivityService')
 
 /**
@@ -91,7 +92,7 @@ async function addOrUpdateStreamCollaborator(
   userId,
   role,
   addedById,
-  { fromInvite }
+  { fromInvite } = {}
 ) {
   const validRoles = Object.values(Roles.Stream)
   if (!validRoles.includes(role)) {
@@ -112,13 +113,21 @@ async function addOrUpdateStreamCollaborator(
     role
   })
 
-  await addStreamPermissionsAddedActivity({
-    streamId,
-    activityUserId: addedById,
-    targetUserId: userId,
-    role,
-    fromInvite: !!fromInvite
-  })
+  if (fromInvite) {
+    await addStreamInviteAcceptedActivity({
+      streamId,
+      inviterId: addedById,
+      inviteTargetId: userId,
+      role
+    })
+  } else {
+    await addStreamPermissionsAddedActivity({
+      streamId,
+      activityUserId: addedById,
+      targetUserId: userId,
+      role
+    })
+  }
 }
 
 module.exports = {

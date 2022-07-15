@@ -18,8 +18,11 @@ const ActionTypes = Object.freeze({
     Update: 'stream_update',
     PermissionsRemove: 'stream_permissions_remove',
     PermissionsAdd: 'stream_permissions_add',
+    InviteAccepted: 'stream_permissions_invite_accepted',
     Delete: 'stream_delete',
-    Create: 'stream_create'
+    Create: 'stream_create',
+    InviteSent: 'stream_invite_sent',
+    InviteDeclined: 'stream_invite_declined'
   }
 })
 

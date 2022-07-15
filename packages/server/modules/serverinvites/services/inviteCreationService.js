@@ -22,6 +22,9 @@ const {
   ResourceTargets
 } = require('@/modules/serverinvites/helpers/inviteHelper')
 const { getUsers, getUser } = require('@/modules/core/repositories/users')
+const {
+  addStreamInviteSentOutActivity
+} = require('@/modules/activitystream/services/streamActivityService')
 
 /**
  * @typedef {{
@@ -333,6 +336,7 @@ async function createAndSendInvite(params) {
 
   // if target user found, always use the user ID
   if (targetUser) target = buildUserTarget(targetUser.id)
+  const { userEmail, userId } = resolveTarget(target)
 
   // validate inputs
   await validateInput(params, inviter, targetUser, resource)
@@ -360,7 +364,21 @@ async function createAndSendInvite(params) {
 
   // generate and send email
   const emailParams = await buildEmailContents(invite, inviter, targetUser, resource)
-  await sendEmail(emailParams)
+
+  // send email and create activity stream item, if stream invite
+  await Promise.all([
+    sendEmail(emailParams),
+    ...(resourceTarget === ResourceTargets.Streams
+      ? [
+          addStreamInviteSentOutActivity({
+            streamId: resourceId,
+            inviterId,
+            inviteTargetEmail: userEmail,
+            inviteTargetId: userId
+          })
+        ]
+      : [])
+  ])
 
   return invite.id
 }

@@ -22,6 +22,9 @@ const {
 const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
+const {
+  addStreamInviteDeclinedActivity
+} = require('@/modules/activitystream/services/streamActivityService')
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -116,6 +119,12 @@ async function finalizeStreamInvite(accept, streamId, inviteId, userId) {
       ResourceTargets.Streams,
       streamId
     )
+  } else {
+    await addStreamInviteDeclinedActivity({
+      streamId,
+      inviteTargetId: userId,
+      inviterId: invite.inviterId
+    })
   }
 
   // Delete all invites to this stream

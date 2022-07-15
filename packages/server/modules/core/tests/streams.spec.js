@@ -23,9 +23,8 @@ const { createCommitByBranchName } = require('../services/commits')
 const { beforeEachContext } = require('@/test/hooks')
 const { sleep } = require('@/test/helpers')
 
-// TODO: Leave stream + Users invites tests
-// TODO: Activity items for new invites stuff? Fix: Grant not adding activity item
-// TODO: Test that permissions to stream can't be added automatically, without an invite
+// TODO: Leave stream + All users invites tests
+// TODO: Activity items for new invites stuff?
 
 describe('Streams @core-streams', () => {
   const userOne = {

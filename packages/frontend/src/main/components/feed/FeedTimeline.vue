@@ -158,7 +158,13 @@ export default {
     },
     groupSimilarActivities(data) {
       if (!data) return
+
+      const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
       const groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
+        if (skippableActionTypes.includes(curr.actionType)) {
+          return prev
+        }
+
         //first item
         if (!prev.length) {
           prev.push([curr])
@@ -166,6 +172,10 @@ export default {
         }
         const test = prev[prev.length - 1][0]
         let action = 'split' // split | combine | skip
+
+        if (skippableActionTypes.includes(curr.actionType)) {
+          action = 'skip'
+        }
 
         if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
           if (
@@ -188,6 +198,7 @@ export default {
           )
             action = 'combine'
         }
+
         if (action === 'combine') {
           prev[prev.length - 1].push(curr)
         } else if (action === 'split') {
