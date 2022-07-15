@@ -8,6 +8,11 @@ const { getUserActivity } = require('../services')
 
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { noErrors } = require('@/test/helpers')
+const { createStream } = require('@/modules/core/services/streams')
+const {
+  addOrUpdateStreamCollaborator
+} = require('@/modules/core/services/streams/streamAccessService')
+const { Roles } = require('@/modules/core/helpers/mainConstants')
 
 let sendRequest
 
@@ -17,25 +22,36 @@ describe('Activity @activity', () => {
   const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
-    password: 'sp0ckle sucks 9001'
+    password: 'sp0ckle sucks 9001',
+    id: undefined
   }
 
   const userCr = {
     name: 'Cristi Balas',
     email: 'cristib@speckle.systems',
-    password: 'hack3r man 666'
+    password: 'hack3r man 666',
+    id: undefined
   }
 
   const userX = {
     name: 'Mystery User',
     email: 'mysteriousDude@speckle.systems',
-    password: 'super $ecret pw0rd'
+    password: 'super $ecret pw0rd',
+    id: undefined
   }
 
   const streamPublic = {
     name: 'a fun stream for sharing',
     description: 'for all to see!',
-    isPublic: true
+    isPublic: true,
+    id: undefined
+  }
+
+  const collaboratorTestStream = {
+    name: 'a fun stream for testing collab stuff',
+    description: 'for all to see!',
+    isPublic: true,
+    id: undefined
   }
 
   const branchPublic = { name: '🍁maple branch' }
@@ -43,7 +59,8 @@ describe('Activity @activity', () => {
   const streamSecret = {
     name: 'a secret stream for me',
     description: 'for no one to see!',
-    isPublic: false
+    isPublic: false,
+    id: undefined
   }
 
   const testObj = {
@@ -61,9 +78,7 @@ describe('Activity @activity', () => {
     const { app } = await beforeEachContext()
     ;({ server, sendRequest } = await initializeTestServer(app))
 
-    // create users and tokens
-    userIz.id = await createUser(userIz)
-    const token = await createPersonalAccessToken(userIz.id, 'izz test token', [
+    const normalScopesList = [
       'streams:read',
       'streams:write',
       'users:read',
@@ -72,38 +87,46 @@ describe('Activity @activity', () => {
       'tokens:read',
       'profile:read',
       'profile:email'
+    ]
+
+    // create users
+    await Promise.all([
+      createUser(userIz).then((id) => (userIz.id = id)),
+      createUser(userCr).then((id) => (userCr.id = id)),
+      createUser(userX).then((id) => (userX.id = id))
     ])
-    userIz.token = `Bearer ${token}`
 
-    userCr.id = await createUser(userCr)
-    userCr.token = `Bearer ${await createPersonalAccessToken(
-      userCr.id,
-      'cristi test token',
-      [
+    // create tokens and streams
+    await Promise.all([
+      // tokens
+      createPersonalAccessToken(userIz.id, 'izz test token', normalScopesList).then(
+        (token) => (userIz.token = `Bearer ${token}`)
+      ),
+      createPersonalAccessToken(userCr.id, 'cristi test token', normalScopesList).then(
+        (token) => (userCr.token = `Bearer ${token}`)
+      ),
+      createPersonalAccessToken(userX.id, 'no users:read test token', [
         'streams:read',
-        'streams:write',
-        'users:read',
-        'users:email',
-        'tokens:write',
-        'tokens:read',
-        'profile:read',
-        'profile:email'
-      ]
-    )}`
+        'streams:write'
+      ]).then((token) => (userX.token = `Bearer ${token}`)),
+      // streams
+      createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(
+        (id) => (collaboratorTestStream.id = id)
+      )
+    ])
 
-    userX.id = await createUser(userX)
-    userX.token = `Bearer ${await createPersonalAccessToken(
-      userX.id,
-      'no users:read test token',
-      ['streams:read', 'streams:write']
-    )}`
-  })
+    // Add stream collaborators
+    await addOrUpdateStreamCollaborator(
+      collaboratorTestStream.id,
+      userCr.id,
+      Roles.Stream.Reviewer,
+      userIz.id
+    )
 
-  after(async () => {
-    await server.close()
-  })
+    // It's definitely not great that there's a full on test case in the before() hook, but that's because
+    // these tests were originally written incorrectly - they depend on each other. So this is a temporary fix that
+    // ensures tests can be ran in any order
 
-  it('Should create activity', async () => {
     // create stream (cr1)
     const resStream1 = await sendRequest(userCr.token, {
       query:
@@ -143,19 +166,27 @@ describe('Activity @activity', () => {
     })
     expect(noErrors(resCommit2))
 
-    // add collaborator (iz4)
+    // update collaborator (iz4)
     const resCollab = await sendRequest(userIz.token, {
-      query: `mutation { streamUpdatePermission( permissionParams: { streamId: "${streamPublic.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
+      query: `mutation { streamUpdatePermission( permissionParams: { streamId: "${collaboratorTestStream.id}", userId: "${userCr.id}", role: "stream:contributor" } ) }`
     })
     expect(noErrors(resCollab))
 
     const { items: activityC } = await getUserActivity({ userId: userCr.id })
+
+    // 1: user created, 2: stream created, 3: commit created
     expect(activityC.length).to.equal(3)
     expect(activityC[0].actionType).to.equal('commit_create')
 
     const { items: activityI } = await getUserActivity({ userId: userIz.id })
-    expect(activityI.length).to.equal(5)
+
+    // iz1 to iz4 + user created + user added as collaborator
+    expect(activityI.length).to.equal(6)
     expect(activityI[0].actionType).to.equal('stream_permissions_add')
+  })
+
+  after(async () => {
+    await server.close()
   })
 
   it("Should get a user's own activity", async () => {
@@ -165,8 +196,8 @@ describe('Activity @activity', () => {
     expect(noErrors(res))
     const activity = res.body.data.user.activity
 
-    expect(activity.items.length).to.equal(5)
-    expect(activity.totalCount).to.equal(5)
+    expect(activity.items.length).to.equal(6)
+    expect(activity.totalCount).to.equal(6)
     expect(activity.items[0].actionType).to.equal('stream_permissions_add')
     expect(activity.items[activity.totalCount - 1].actionType).to.equal('user_create')
   })
@@ -185,7 +216,7 @@ describe('Activity @activity', () => {
       query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
-    expect(res.body.data.user.timeline.items.length).to.equal(6) // sum of all actions in 'should create activity'
+    expect(res.body.data.user.timeline.items.length).to.equal(6) // sum of all actions in before hook
     expect(res.body.data.user.timeline.totalCount).to.equal(6)
   })
 
