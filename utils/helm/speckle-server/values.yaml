@@ -60,6 +60,10 @@ server:
     apollo:
       enabled: false
       graph_ref: ''
+      variant: ''
+      server_version: ''
+      server_id: ''
+      server_platform: ''
       # key: secret -> `apollo_key`
 
   # Sentry specific:

@@ -229,6 +229,14 @@ spec:
             value: {{ .Values.server.monitoring.apollo.graph_ref }}
           - name: APOLLO_SCHEMA_REPORTING
             value: "true"
+          - name: APOLLO_GRAPH_VARIANT
+            value: {{ .Values.server.monitoring.apollo.variant }}
+          - name: APOLLO_SERVER_USER_VERSION
+            value: {{ .Values.server.monitoring.apollo.server_version }}
+          - name: APOLLO_SERVER_ID
+            value: {{ .Values.server.monitoring.apollo.server_id }}
+          - name: APOLLO_SERVER_PLATFORM
+            value: {{ .Values.server.monitoring.apollo.server_platform }}
           - name: APOLLO_KEY
             valueFrom:
               secretKeyRef:
