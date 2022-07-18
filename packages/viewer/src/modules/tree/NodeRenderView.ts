@@ -162,7 +162,10 @@ export class NodeRenderView {
         this.geometryType !== GeometryType.POINT
       ? this.displayStyleToString()
       : ''
-    const geometry = this.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
+    let geometry = ''
+    if (this.renderData.geometry.attributes)
+      geometry = this.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
+
     const s = this.geometryType.toString() + geometry + mat
     return NodeRenderView.hashCode(s)
   }

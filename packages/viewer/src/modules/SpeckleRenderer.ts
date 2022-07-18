@@ -29,7 +29,7 @@ import { Intersections } from './Intersections'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { Viewer } from './Viewer'
 
-export default class SceneManager {
+export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
   public scene: Scene
@@ -101,6 +101,7 @@ export default class SceneManager {
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on('object-clicked', this.onObjectClick.bind(this))
+    this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on('object-doubleclicked', this.onObjectDoubleClick.bind(this))
   }
 
@@ -395,6 +396,45 @@ export default class SceneManager {
           camPos.z + dist
         )
       }
+    }
+  }
+
+  /** DEBUG */
+  public onObjectClickDebug(e) {
+    const result: Intersection = this.intersections.intersect(
+      this.scene,
+      this.viewer.cameraHandler.activeCam.camera,
+      e
+    )
+    if (!result) {
+      this.batcher.resetBatchesDrawRanges()
+      return
+    }
+
+    // console.warn(result)
+    const rv = this.batcher.getRenderView(
+      result.object.uuid,
+      result.faceIndex !== undefined ? result.faceIndex : result.index
+    )
+    const hitId = rv.renderData.id
+
+    // const hitNode = WorldTree.getInstance().findId(hitId)
+
+    this.batcher.resetBatchesDrawRanges()
+
+    this.batcher.isolateRenderViewBatch(hitId)
+  }
+
+  public debugShowBatches() {
+    this.batcher.resetBatchesDrawRanges()
+    for (const k in this.batcher.batches) {
+      this.batcher.batches[k].setDrawRanges({
+        offset: 0,
+        count: Infinity,
+        material: this.batcher.materials.getDebugBatchMaterial(
+          this.batcher.batches[k].getRenderView(0)
+        )
+      })
     }
   }
 }

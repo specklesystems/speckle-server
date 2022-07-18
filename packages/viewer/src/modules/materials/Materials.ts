@@ -1,4 +1,4 @@
-import { Color, DoubleSide, Material, Vector2 } from 'three'
+import { Color, DoubleSide, Material, MathUtils, Vector2 } from 'three'
 import { GeometryType } from '../batching/Batch'
 // import { getConversionFactor } from '../converter/Units'
 import { TreeNode } from '../tree/WorldTree'
@@ -224,23 +224,20 @@ export default class Materials {
   }
 
   private makeLineMaterial(materialData: DisplayStyle): Material {
-    const mat = new SpeckleLineMaterial({
+    const mat: SpeckleLineMaterial = new SpeckleLineMaterial({
       color: materialData.color,
       linewidth: materialData.lineWeight > 0 ? materialData.lineWeight : 1,
       worldUnits: materialData.lineWeight > 0 ? true : false,
       vertexColors: true,
       alphaToCoverage: false,
       resolution: new Vector2(1281, 1306)
-      // clippingPlanes: this.viewer.sectionBox.planes
     })
-    // Thank you prettier
-    ;(<SpeckleLineMaterial>mat).color = new Color(materialData.color)
-    ;(<SpeckleLineMaterial>mat).linewidth =
-      materialData.lineWeight > 0 ? materialData.lineWeight : 1
-    ;(<SpeckleLineMaterial>mat).worldUnits = materialData.lineWeight > 0 ? true : false
-    ;(<SpeckleLineMaterial>mat).vertexColors = true
-    ;(<SpeckleLineMaterial>mat).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>mat).resolution = new Vector2(1281, 1306)
+    mat.color = new Color(materialData.color)
+    mat.linewidth = materialData.lineWeight > 0 ? materialData.lineWeight : 1
+    mat.worldUnits = materialData.lineWeight > 0 ? true : false
+    mat.vertexColors = true
+    mat.pixelThreshold = 0.5
+    mat.resolution = new Vector2(1281, 1306)
 
     return mat
   }
@@ -308,6 +305,58 @@ export default class Materials {
         return this.meshGradientMaterial // TO DO
       case GeometryType.POINT_CLOUD:
         return this.meshGradientMaterial // TO DO
+    }
+  }
+
+  public getDebugBatchMaterial(renderView: NodeRenderView) {
+    const color = new Color(MathUtils.randInt(0, 0xffffff))
+    color.convertSRGBToLinear()
+
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        return new SpeckleStandardMaterial(
+          {
+            color,
+            emissive: 0x0,
+            roughness: 1,
+            metalness: 0,
+            opacity: 1,
+            side: DoubleSide // TBD
+            // clippingPlanes: this.viewer.sectionBox.planes
+          },
+          ['USE_RTE']
+        )
+      case GeometryType.LINE: {
+        const mat: SpeckleLineMaterial = new SpeckleLineMaterial({
+          color,
+          linewidth: 1,
+          worldUnits: false,
+          vertexColors: true,
+          alphaToCoverage: false,
+          resolution: new Vector2(1281, 1306)
+        })
+        mat.color = color
+        mat.linewidth = 1
+        mat.worldUnits = false
+        mat.vertexColors = true
+        mat.pixelThreshold = 0.5
+        mat.resolution = new Vector2(1281, 1306)
+        return mat
+      }
+      case GeometryType.POINT:
+        return new SpecklePointMaterial({
+          color,
+          vertexColors: false,
+          size: 2,
+          sizeAttenuation: false
+        })
+      case GeometryType.POINT_CLOUD:
+        return new SpecklePointMaterial({
+          color,
+          vertexColors: true,
+          size: 2,
+          sizeAttenuation: false
+        })
     }
   }
 

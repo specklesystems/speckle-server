@@ -87,6 +87,16 @@ export default class Sandbox {
     zoomExtents.on('click', () => {
       this.viewer.zoomExtents(undefined, true)
     })
+
+    this.tabs.pages[0].addSeparator()
+    this.tabs.pages[0].addSeparator()
+
+    const showBatches = this.tabs.pages[0].addButton({
+      title: 'ShowBatches'
+    })
+    showBatches.on('click', () => {
+      this.viewer.speckleRenderer.debugShowBatches()
+    })
   }
 
   makeSceneUI() {

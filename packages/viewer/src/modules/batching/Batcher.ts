@@ -12,7 +12,7 @@ import { FilterMaterial } from '../FilteringManager'
 import { Material } from 'three'
 
 export default class Batcher {
-  private materials: Materials
+  public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
   public constructor() {
@@ -172,6 +172,22 @@ export default class Batcher {
           this.batches[k].setDrawRanges(...drawRanges)
           this.batches[k].autoFillDrawRanges()
         }
+      }
+    }
+  }
+
+  public isolateRenderViewBatch(id: string) {
+    const rv = WorldTree.getRenderTree().getRenderViewForNodeId(id)
+    for (const k in this.batches) {
+      if (k !== rv.batchId) {
+        this.batches[k].setDrawRanges({
+          offset: 0,
+          count: Infinity,
+          material: this.materials.getFilterMaterial(
+            this.batches[k].renderViews[0],
+            FilterMaterial.GHOST
+          )
+        })
       }
     }
   }

@@ -135,6 +135,15 @@ export class RenderTree {
     return this.getRenderViewsForNode(node)
   }
 
+  public getRenderViewForNodeId(id: string): NodeRenderView {
+    const node = WorldTree.getInstance().findId(id)
+    if (!node) {
+      console.warn(`Id ${id} does not exist`)
+      return null
+    }
+    return node.model.renderView
+  }
+
   public purge() {
     this.root = null
   }

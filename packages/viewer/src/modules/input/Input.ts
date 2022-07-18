@@ -32,8 +32,9 @@ export default class Input extends EventEmitter {
       const delta = new Date().getTime() - mdTime
 
       if (delta > 250) return
-
-      this.emit('object-clicked', this._getNormalisedClickPosition(e))
+      if (e.ctrlKey)
+        this.emit('object-clicked-debug', this._getNormalisedClickPosition(e))
+      else this.emit('object-clicked', this._getNormalisedClickPosition(e))
     })
 
     // Doubleclicks on touch devices
