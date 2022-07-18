@@ -222,3 +222,16 @@ spec:
           - name: DISABLE_TRACKING
             value: "true"
           {{- end }}
+
+          # Monitoring - Apollo
+          {{- if .Values.server.monitoring.apollo.enabled }}
+          - name: APOLLO_GRAPH_REF
+            value: {{ .Values.server.monitoring.apollo.graph_ref }}
+          - name: APOLLO_SCHEMA_REPORTING
+            value: "true"
+          - name: APOLLO_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: apollo_key
+          {{- end }}
