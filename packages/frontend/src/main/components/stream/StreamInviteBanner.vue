@@ -22,7 +22,7 @@
       <div class="d-flex mt-2 mt-md-0" style="min-width: 210px; text-align: right">
         <template v-if="isLoggedIn">
           <v-btn
-            color="success"
+            color="primary"
             class="mr-2 flex-grow-1 flex-md-grow-0"
             @click="acceptInvite"
           >
@@ -30,6 +30,8 @@
           </v-btn>
           <v-btn
             color="error"
+            text
+            outlined
             class="flex-grow-1 flex-md-grow-0"
             @click="declineInvite"
           >
@@ -42,7 +44,7 @@
             color="primary"
             @click="rememberInviteAndRedirectToLogin"
           >
-            Log in
+            Sign in
           </v-btn>
         </template>
       </div>
