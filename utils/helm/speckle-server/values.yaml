@@ -56,6 +56,13 @@ server:
     cpu: 1000m
     memory: 3Gi
 
+  monitoring:
+    apollo:
+      enabled: false
+      graph_ref: ''
+      # key: secret -> `apollo_key`
+
+  # Sentry specific:
   sentry_dns: ''
   disable_tracking: false
   disable_tracing: false
