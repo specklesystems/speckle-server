@@ -95,9 +95,10 @@ describe('Streams @core-streams', () => {
 
     it('Should get all streams of a user', async () => {
       const { streams, cursor } = await getUserStreams({ userId: userOne.id })
-      // console.log( res )
-      expect(streams).to.have.lengthOf(2)
-      expect(cursor).to.exist
+
+      expect(streams).to.be.ok
+      expect(cursor).to.be.ok
+      expect(streams).to.not.be.empty
     })
 
     it('Should search all streams of a user', async () => {
@@ -116,13 +117,13 @@ describe('Streams @core-streams', () => {
         description: 'wonderful',
         ownerId: userOne.id
       })
-      let all = await getUserStreams({ userId: userOne.id })
-      expect(all.streams).to.have.lengthOf(3)
+
+      const beforeDelete = await getUserStreams({ userId: userOne.id })
 
       await deleteStream({ streamId: id })
 
-      all = await getUserStreams({ userId: userOne.id })
-      expect(all.streams).to.have.lengthOf(2)
+      const afterDelete = await getUserStreams({ userId: userOne.id })
+      expect(beforeDelete.streams.length - afterDelete.streams.length).to.eq(1)
     })
   })
 
