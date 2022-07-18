@@ -9,10 +9,7 @@
           :size="75"
         />
         <v-icon class="mx-4">mdi-plus</v-icon>
-        <user-avatar
-          :id="$userId()"
-          :size="75"
-        />
+        <user-avatar :id="$userId()" :size="75" />
       </div>
     </template>
     <template #default>
@@ -21,11 +18,20 @@
     </template>
     <template #actions>
       <template v-if="isLoggedIn">
-        <v-btn color="primary" block class="mb-2 rounded-xl" @click="acceptInvite">Accept</v-btn>
-        <v-btn color="error" block outlined class="rounded-xl" @click="declineInvite">Decline</v-btn>
+        <v-btn color="primary" block class="mb-2 rounded-xl" @click="acceptInvite">
+          Accept
+        </v-btn>
+        <v-btn color="error" block outlined class="rounded-xl" @click="declineInvite">
+          Decline
+        </v-btn>
       </template>
       <template v-else>
-        <v-btn block color="primary" class="rounded-xl" @click="rememberInviteAndRedirectToLogin">
+        <v-btn
+          block
+          color="primary"
+          class="rounded-xl"
+          @click="rememberInviteAndRedirectToLogin"
+        >
           Sign in
         </v-btn>
       </template>
