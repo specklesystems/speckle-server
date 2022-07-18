@@ -145,7 +145,7 @@ export default class Batcher {
   /** Conveniece method. This should also work as a filtering action
    *  Though, because the batches are not smart enough yet to group
    *  their draw ranges, it would be currently be inneficient to isolate
-   *  via filtering. Thid will change in the future
+   *  via filtering. This will change in the future
    */
   public isolateRenderView(id: string) {
     const rvs = WorldTree.getRenderTree().getRenderViewsForNodeId(id)

@@ -37,6 +37,9 @@ export class NodeRenderView {
   public static readonly NullRenderMaterialHash = this.hashCode(
     GeometryType.MESH.toString()
   )
+  public static readonly NullRenderMaterialVertexColorsHash = this.hashCode(
+    GeometryType.MESH.toString() + 'vertexColors'
+  )
   public static readonly NullDisplayStyleHash = this.hashCode(
     GeometryType.LINE.toString()
   )
@@ -159,7 +162,8 @@ export class NodeRenderView {
         this.geometryType !== GeometryType.POINT
       ? this.displayStyleToString()
       : ''
-    const s = this.geometryType.toString() + mat
+    const geometry = this.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
+    const s = this.geometryType.toString() + geometry + mat
     return NodeRenderView.hashCode(s)
   }
 }

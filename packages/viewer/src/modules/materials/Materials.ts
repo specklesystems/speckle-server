@@ -152,7 +152,20 @@ export default class Materials {
           emissive: 0x0,
           roughness: 1,
           metalness: 0,
-          side: DoubleSide // TBD
+          side: DoubleSide // TBD,
+          // clippingPlanes: this.viewer.sectionBox.planes
+        },
+        ['USE_RTE']
+      )
+    this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] =
+      new SpeckleStandardMaterial(
+        {
+          color: 0x7f7f7f,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide, // TBD
+          vertexColors: true
           // clippingPlanes: this.viewer.sectionBox.planes
         },
         ['USE_RTE']
@@ -239,7 +252,7 @@ export default class Materials {
   ): Material {
     // console.log(this.materialMap)
     if (this.materialMap[hash]) {
-      console.warn(`Duplicate material hash found: ${hash}`)
+      // console.warn(`Duplicate material hash found: ${hash}`)
       return this.materialMap[hash]
     }
 

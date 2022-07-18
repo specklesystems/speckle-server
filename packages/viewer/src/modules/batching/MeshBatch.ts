@@ -193,6 +193,8 @@ export default class MeshBatch implements Batch {
     ).length
     const indices = new Uint32Array(indicesCount)
     const position = new Float32Array(attributeCount)
+    const color = new Float32Array(this.batchMaterial.vertexColors ? attributeCount : 0)
+    color.fill(1)
     let offset = 0
     let arrayOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
@@ -202,6 +204,7 @@ export default class MeshBatch implements Batch {
         arrayOffset
       )
       position.set(geometry.attributes.POSITION, offset)
+      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
@@ -211,7 +214,11 @@ export default class MeshBatch implements Batch {
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
     }
-    this.makeMeshGeometry(indices, position)
+    this.makeMeshGeometry(
+      indices,
+      position,
+      this.batchMaterial.vertexColors ? color : null
+    )
     this.mesh = new Mesh(this.geometry, this.batchMaterial)
     this.mesh.uuid = this.id
   }
@@ -232,7 +239,8 @@ export default class MeshBatch implements Batch {
    */
   private makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
-    position: Float32Array
+    position: Float32Array,
+    color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
     if (position.length >= 65535 || indices.length >= 65535) {
@@ -245,12 +253,9 @@ export default class MeshBatch implements Batch {
       this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
-    // if (geometryData.attributes.COLOR) {
-    //   this.bufferGeometry.setAttribute(
-    //     'color',
-    //     new Float32BufferAttribute(geometryData.attributes.COLOR, 3)
-    //   )
-    // }
+    if (color) {
+      this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
+    }
 
     this.geometry.computeVertexNormals()
     this.geometry.computeBoundingSphere()

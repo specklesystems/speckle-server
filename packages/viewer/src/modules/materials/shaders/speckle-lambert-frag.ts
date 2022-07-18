@@ -1,4 +1,4 @@
-export const speckle_lambert_frag = /* glsl */ `
+export const speckleLambertFrag = /* glsl */ `
 uniform vec3 diffuse;
 uniform vec3 emissive;
 uniform float opacity;

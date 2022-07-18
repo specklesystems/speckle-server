@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckle_lambert_vert } from './shaders/speckle-lambert-vert'
-import { speckle_lambert_frag } from './shaders/speckle-lambert-frag'
+import { speckleLambertVert } from './shaders/speckle-lambert-vert'
+import { speckleLambertFrag } from './shaders/speckle-lambert-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshLambertMaterial } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -22,8 +22,8 @@ class SpeckleLambertMaterial extends MeshLambertMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
-    ;(this as any).vertProgram = speckle_lambert_vert
-    ;(this as any).fragProgram = speckle_lambert_frag
+    ;(this as any).vertProgram = speckleLambertVert
+    ;(this as any).fragProgram = speckleLambertFrag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {
