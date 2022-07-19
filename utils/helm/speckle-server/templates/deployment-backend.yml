@@ -225,10 +225,20 @@ spec:
 
           # Monitoring - Apollo
           {{- if .Values.server.monitoring.apollo.enabled }}
-          - name: APOLLO_GRAPH_REF
-            value: {{ .Values.server.monitoring.apollo.graph_ref }}
+          - name: APOLLO_GRAPH_ID
+            value: {{ .Values.server.monitoring.apollo.graph_id }}
           - name: APOLLO_SCHEMA_REPORTING
             value: "true"
+          - name: APOLLO_GRAPH_VARIANT
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: APOLLO_SERVER_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: APOLLO_SERVER_PLATFORM
+            value: "kubernetes/deployment"
           - name: APOLLO_KEY
             valueFrom:
               secretKeyRef:

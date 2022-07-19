@@ -59,7 +59,7 @@ server:
   monitoring:
     apollo:
       enabled: false
-      graph_ref: ''
+      graph_id: ''
       # key: secret -> `apollo_key`
 
   # Sentry specific:
