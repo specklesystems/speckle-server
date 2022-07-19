@@ -89,7 +89,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { isEmailValid } from '@/plugins/authHelpers'
 import { mainServerInfoQuery } from '@/graphql/server'
 import {
@@ -98,9 +98,10 @@ import {
 } from '@/main/utils/portalStateManager'
 import { maxLength, noXss } from '@/main/lib/common/vuetify/validators'
 import {
-  batchInviteToServerMutation,
-  batchInviteToStreamsMutation
+  BatchInviteToStreamsDocument,
+  BatchInviteToServerDocument
 } from '@/graphql/generated/graphql'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 export default {
   name: 'AdminInvites',
@@ -220,12 +221,18 @@ export default {
     },
     async sendInvites(paramsArray, streamId) {
       const { data, errors } = streamId
-        ? await batchInviteToStreamsMutation(this, {
-            variables: { paramsArray }
-          })
-        : await batchInviteToServerMutation(this, {
-            variables: { paramsArray }
-          })
+        ? await this.$apollo
+            .mutate({
+              mutation: BatchInviteToStreamsDocument,
+              variables: { paramsArray }
+            })
+            .catch(convertThrowIntoFetchResult)
+        : await this.$apollo
+            .mutate({
+              mutation: BatchInviteToServerDocument,
+              variables: { paramsArray }
+            })
+            .catch(convertThrowIntoFetchResult)
 
       if (!data?.serverInviteBatchCreate && !data?.streamInviteBatchCreate) {
         const errMsg =

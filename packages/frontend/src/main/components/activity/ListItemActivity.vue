@@ -284,7 +284,7 @@ import UserAvatar from '@/main/components/common/UserAvatar'
 import UserPill from '@/main/components/activity/UserPill'
 import SourceAppAvatar from '@/main/components/common/SourceAppAvatar'
 import PreviewImage from '@/main/components/common/PreviewImage'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import ListItemActivityDescription from '@/main/components/activity/ListItemActivityDescription.vue'
 
 export default {

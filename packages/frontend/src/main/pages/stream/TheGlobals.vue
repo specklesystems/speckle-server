@@ -147,7 +147,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import branchQuery from '@/graphql/branch.gql'
 import {
   STANDARD_PORTAL_KEYS,

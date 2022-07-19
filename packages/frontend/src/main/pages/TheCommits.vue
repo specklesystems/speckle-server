@@ -60,11 +60,13 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
 
 export default {
   name: 'TheCommits',
@@ -74,66 +76,51 @@ export default {
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'commits', 0)],
-  apollo: {
-    user: {
-      query: gql`
-        query ($cursor: String) {
-          user {
-            id
-            name
-            commits(limit: 10, cursor: $cursor) {
-              totalCount
-              cursor
-              items {
-                id
-                referencedObject
-                message
-                streamName
-                streamId
-                createdAt
-                sourceApplication
-                branchName
-                commentCount
-              }
+  setup() {
+    const { result, fetchMore: userFetchMore } = useQuery(gql`
+      query ($cursor: String) {
+        user {
+          id
+          name
+          commits(limit: 10, cursor: $cursor) {
+            totalCount
+            cursor
+            items {
+              id
+              referencedObject
+              message
+              streamName
+              streamId
+              createdAt
+              sourceApplication
+              branchName
+              commentCount
             }
           }
         }
-      `
+      }
+    `)
+    const user = computed(() => result.value?.user)
+
+    return {
+      user,
+      userFetchMore
     }
   },
   methods: {
-    infiniteHandler($state) {
-      this.$apollo.queries.user.fetchMore({
+    async infiniteHandler($state) {
+      const result = await this.userFetchMore({
         variables: {
           cursor: this.user.commits.cursor
-        },
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.user.commits.items
-          if (newItems.length === 0) $state.complete()
-          else $state.loaded()
-
-          const allItems = [...previousResult.user.commits.items]
-          for (const commit of newItems) {
-            if (allItems.findIndex((c) => c.id === commit.id) === -1)
-              allItems.push(commit)
-          }
-
-          return {
-            user: {
-              __typename: previousResult.user.__typename,
-              name: previousResult.user.name,
-              id: previousResult.user.id,
-              commits: {
-                __typename: previousResult.user.commits.__typename,
-                cursor: fetchMoreResult.user.commits.cursor,
-                totalCount: fetchMoreResult.user.commits.totalCount,
-                items: allItems
-              }
-            }
-          }
         }
       })
+
+      const newItems = result.data?.user?.commits?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 }

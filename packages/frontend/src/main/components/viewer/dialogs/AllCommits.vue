@@ -46,7 +46,10 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+
 export default {
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
@@ -62,9 +65,9 @@ export default {
       default: () => null
     }
   },
-  apollo: {
-    stream: {
-      query: gql`
+  setup(props) {
+    const { result: streamResult, fetchMore: streamFetchMore } = useQuery(
+      gql`
         query ($streamId: String!, $cursor: String) {
           stream(id: $streamId) {
             id
@@ -84,51 +87,31 @@ export default {
           }
         }
       `,
-      variables() {
-        return { streamId: this.streamId }
-      },
-      skip() {
-        return !this.streamId
-      }
+      () => ({ streamId: props.streamId }),
+      () => ({ enabled: !!props.streamId })
+    )
+    const stream = computed(() => streamResult.value?.stream)
+
+    return {
+      stream,
+      streamFetchMore
     }
   },
-  data() {
-    return {}
-  },
-  async mounted() {},
   methods: {
-    infiniteHandler($state) {
-      this.$apollo.queries.stream.fetchMore({
+    async infiniteHandler($state) {
+      const result = await this.streamFetchMore({
         variables: {
           cursor: this.stream.commits.cursor,
           streamId: this.streamId
-        },
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.stream.commits.items
-          if (newItems.length === 0) $state.complete()
-          else $state.loaded()
-
-          const allItems = [...previousResult.stream.commits.items]
-          for (const commit of newItems) {
-            if (allItems.findIndex((c) => c.id === commit.id) === -1)
-              allItems.push(commit)
-          }
-
-          return {
-            stream: {
-              __typename: previousResult.stream.__typename,
-              id: previousResult.stream.id,
-              commits: {
-                __typename: previousResult.stream.commits.__typename,
-                cursor: fetchMoreResult.stream.commits.cursor,
-                totalCount: fetchMoreResult.stream.commits.totalCount,
-                items: allItems
-              }
-            }
-          }
         }
       })
+
+      const newItems = result.data?.stream?.commits?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 }

@@ -92,6 +92,8 @@ import UserStreamInviteBanners from '@/main/components/stream/UserStreamInviteBa
 import InfiniteLoading from 'vue-infinite-loading'
 import StreamPreviewCard from '@/main/components/common/StreamPreviewCard.vue'
 import NoDataPlaceholder from '@/main/components/common/NoDataPlaceholder.vue'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
 
 export default {
   name: 'TheStreams',
@@ -103,11 +105,24 @@ export default {
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'streams', 0)],
   apollo: {
-    streams: {
-      query: streamsQuery
-    },
     user: {
       query: mainUserDataQuery
+    }
+  },
+  setup() {
+    const {
+      result,
+      fetchMore: streamsFetchMore,
+      refetch: streamsRefetch
+    } = useQuery(streamsQuery, {
+      cursor: null
+    })
+    const streams = computed(() => result.value?.streams)
+
+    return {
+      streams,
+      streamsFetchMore,
+      streamsRefetch
     }
   },
   data() {
@@ -142,14 +157,14 @@ export default {
   },
   mounted() {
     if (this.$route.query.refresh) {
-      this.$apollo.queries.streams.refetch()
+      this.streamsRefetch()
       this.$router.replace({ path: this.$route.path, query: null })
     }
   },
   methods: {
     onInviteUsed() {
       // Refetch streams
-      this.$apollo.queries.streams.refetch()
+      this.streamsRefetch()
     },
     checkFilter(role) {
       if (this.streamFilter === 1) return true
@@ -158,47 +173,25 @@ export default {
       if (this.streamFilter === 4 && role === 'stream:reviewer') return true
       return false
     },
-    // TODO: Prevent extra load if we've hit all items
-    infiniteHandler($state) {
+    async infiniteHandler($state) {
       if (this.allStreamsLoaded) {
         $state.loaded()
         $state.complete()
         return
       }
 
-      this.$apollo.queries.streams.fetchMore({
+      const result = await this.streamsFetchMore({
         variables: {
           cursor: this.streams?.cursor
-        },
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.streams.items
-          const allItems = [...previousResult.streams.items]
-          const newTotalCount = fetchMoreResult.streams.totalCount
-
-          for (const stream of newItems) {
-            if (allItems.findIndex((s) => s.id === stream.id) === -1)
-              allItems.push(stream)
-          }
-
-          // Update infinite loader state
-          if (newItems.length === 0) {
-            $state.complete()
-          } else {
-            $state.loaded()
-          }
-
-          return {
-            streams: {
-              __typename: previousResult.streams.__typename,
-              totalCount: newTotalCount,
-              cursor: fetchMoreResult.streams.cursor,
-              // Merging the new streams
-              items: allItems
-            }
-          }
         }
       })
+
+      const newItems = result?.data?.streams?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 }

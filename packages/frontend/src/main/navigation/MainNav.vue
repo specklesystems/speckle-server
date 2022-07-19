@@ -132,6 +132,7 @@
 <script>
 import { mainUserDataQuery } from '@/graphql/user'
 import InviteDialog from '@/main/dialogs/InviteDialog.vue'
+import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
   components: {
@@ -172,10 +173,8 @@ export default {
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem(
-        'darkModeEnabled',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
+      setDarkTheme(this.$vuetify.theme.dark, true)
+
       this.$mixpanel.people.set(
         'Theme Web',
         this.$vuetify.theme.dark ? 'dark' : 'light'

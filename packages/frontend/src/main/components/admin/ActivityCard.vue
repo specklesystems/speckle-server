@@ -19,8 +19,10 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { formatNumber } from '@/plugins/formatNumber.js'
+
+const EXCLUDED_SERVER_STATS_KEYS = ['__typename']
 
 export default {
   name: 'ActivityCard',
@@ -134,12 +136,7 @@ export default {
             streamHistory
           }
         }
-      `,
-      update(data) {
-        const stats = data.serverStats
-        delete stats.__typename
-        return stats
-      }
+      `
     }
   },
   computed: {
@@ -147,7 +144,10 @@ export default {
       let result = []
       const months = this.past12Months()
       if (this.serverStats) {
-        result = Object.keys(this.serverStats).map((key) => {
+        const statsKeys = Object.keys(this.serverStats).filter(
+          (k) => !EXCLUDED_SERVER_STATS_KEYS.includes(k)
+        )
+        result = statsKeys.map((key) => {
           const category = this.serverStats[key]
           const processed = []
           months?.forEach((month) => {

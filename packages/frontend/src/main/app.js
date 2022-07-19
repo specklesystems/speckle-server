@@ -6,7 +6,9 @@ import store from '@/main/store'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import * as MixpanelManager from '@/mixpanelManager'
 
-import { createProvider } from '@/vue-apollo'
+import { provide } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { createProvider, installVueApollo } from '@/config/apolloConfig'
 import {
   checkAccessCodeAndGetTokens,
   prefetchUserAndSetSuuid
@@ -26,6 +28,8 @@ Vue.use(VueFilterDateFormat)
 
 import PerfectScrollbar from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
+// adds various helper methods
+import '@/plugins/helpers'
 
 Vue.use(PerfectScrollbar)
 
@@ -46,13 +50,13 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
-// adds various helper methods
-import '@/plugins/helpers'
-
 const AuthToken = localStorage.getItem(LocalStorageKeys.AuthToken)
 const RefreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
-const apolloProvider = createProvider()
 
+const apolloProvider = createProvider()
+installVueApollo(apolloProvider)
+
+// TODO: Sort out error handling here, if something goes wrong it just goes into an infinite loop
 if (AuthToken) {
   prefetchUserAndSetSuuid(apolloProvider.defaultClient)
     .then(() => {
@@ -62,6 +66,7 @@ if (AuthToken) {
       if (RefreshToken) {
         // TODO: try to rotate token & prefetch user, etc.
       }
+
       window.location = `${window.location.origin}/authn/login`
     })
 } else {
@@ -88,7 +93,9 @@ function postAuthInit() {
     router,
     vuetify,
     store,
-    apolloProvider,
+    setup() {
+      provide(DefaultApolloClient, apolloProvider.defaultClient)
+    },
     render: (h) => h(App)
   }).$mount('#app')
 }

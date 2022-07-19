@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { mainServerInfoQuery } from '@/graphql/server'
 import pick from 'lodash/pick'
 import {
@@ -53,7 +53,7 @@ import {
 } from '@/main/utils/portalStateManager'
 
 export default {
-  name: 'ServerInfoAdminCard',
+  name: 'ServerSettings',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
@@ -95,10 +95,11 @@ export default {
   apollo: {
     serverInfo: {
       query: mainServerInfoQuery,
-      update(data) {
-        delete data.serverInfo.__typename
-        this.serverModifications = Object.assign({}, data.serverInfo)
-        return data.serverInfo
+      result({ data }) {
+        const newModifications = Object.assign({}, data.serverInfo)
+        delete newModifications.__typename
+
+        this.serverModifications = newModifications
       }
     }
   },

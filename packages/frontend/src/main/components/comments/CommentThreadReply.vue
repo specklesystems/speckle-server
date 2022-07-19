@@ -79,7 +79,7 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import CommentThreadReplyAttachments from '@/main/components/comments/CommentThreadReplyAttachments.vue'

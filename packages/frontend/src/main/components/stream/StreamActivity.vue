@@ -23,7 +23,7 @@
           <div slot="no-results">There are no activities to load</div>
         </infinite-loading>
       </v-timeline>
-      <v-timeline v-else-if="$apollo.loading" align-top dense>
+      <v-timeline v-else-if="isApolloLoading" align-top dense>
         <v-timeline-item v-for="i in 6" :key="i" medium>
           <v-skeleton-loader type="article"></v-skeleton-loader>
         </v-timeline-item>
@@ -37,7 +37,10 @@
   </v-row>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { StreamWithActivityDocument } from '@/graphql/generated/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { useRoute } from '@/main/lib/core/composables/router'
+import { computed } from 'vue'
 
 export default {
   name: 'StreamActivity',
@@ -45,56 +48,22 @@ export default {
     ListItemActivity: () => import('@/main/components/activity/ListItemActivity'),
     InfiniteLoading: () => import('vue-infinite-loading')
   },
-  data() {
-    return { groupedActivity: null }
-  },
-  apollo: {
-    stream: {
-      query: gql`
-        query Stream($id: String!, $cursor: DateTime) {
-          stream(id: $id) {
-            id
-            name
-            createdAt
-            commits {
-              totalCount
-            }
-            branches {
-              totalCount
-            }
-            activity(cursor: $cursor) {
-              totalCount
-              cursor
-              items {
-                actionType
-                userId
-                streamId
-                resourceId
-                resourceType
-                time
-                info
-                message
-              }
-            }
-          }
-        }
-      `,
-      variables() {
-        return {
-          id: this.$route.params.streamId
-        }
-      },
-      result({ data }) {
-        this.groupSimilarActivities(data)
-      }
-    }
-  },
-  methods: {
-    groupSimilarActivities(data) {
-      if (!data) return
+  setup() {
+    // Stream activity query & derived computeds
+    const route = useRoute()
+    const {
+      result,
+      fetchMore: activityFetchMore,
+      loading: activityLoading
+    } = useQuery(StreamWithActivityDocument, () => ({
+      id: route.params.streamId,
+      cursor: null
+    }))
+    const stream = computed(() => result.value?.stream || null)
 
-      const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
-      const groupedActivity = data.stream.activity.items.reduce(function (prev, curr) {
+    const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
+    const groupedActivity = computed(() =>
+      (stream.value?.activity?.items || []).reduce(function (prev, curr) {
         if (skippableActionTypes.includes(curr.actionType)) {
           return prev
         }
@@ -130,30 +99,35 @@ export default {
         }
         return prev
       }, [])
-      // console.log(groupedTimeline)
-      this.groupedActivity = groupedActivity
-    },
-    infiniteHandler($state) {
-      this.$apollo.queries.stream.fetchMore({
+    )
+
+    return {
+      stream,
+      groupedActivity,
+      activityFetchMore,
+      activityLoading
+    }
+  },
+  computed: {
+    isApolloLoading() {
+      return this.$apollo.loading || this.activityLoading
+    }
+  },
+  methods: {
+    async infiniteHandler($state) {
+      const result = await this.activityFetchMore({
         variables: {
+          id: this.$route.params.streamId,
           cursor: this.stream.activity.cursor
-        },
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.stream.activity.items
-
-          //set vue-infinite state
-          if (newItems.length === 0) $state.complete()
-          else $state.loaded()
-
-          fetchMoreResult.stream.activity.items = [
-            ...previousResult.stream.activity.items,
-            ...newItems
-          ]
-
-          return fetchMoreResult
         }
       })
+
+      const newItems = result.data?.stream?.activity?.items
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 }

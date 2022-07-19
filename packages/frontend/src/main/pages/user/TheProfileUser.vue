@@ -41,7 +41,7 @@
 </template>
 <script>
 import ListItemStream from '@/main/components/user/ListItemStream'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin

@@ -90,7 +90,7 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
@@ -171,7 +171,7 @@ export default {
         variables() {
           return { streamId: this.$route.params.streamId }
         },
-        updateQuery(prevResult, { subscriptionData }) {
+        updateQuery(_, { subscriptionData }) {
           const { comment } = subscriptionData.data.commentActivity
           if (this.localComments.findIndex((lc) => comment.id === lc.id) === -1) {
             this.localComments.push(comment)

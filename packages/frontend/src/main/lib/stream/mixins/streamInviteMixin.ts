@@ -1,11 +1,12 @@
 import {
   StreamInviteQuery,
-  useStreamInviteMutation,
   StreamInviteDocument,
   UserStreamInvitesQuery,
-  UserStreamInvitesDocument
+  UserStreamInvitesDocument,
+  UseStreamInviteDocument
 } from '@/graphql/generated/graphql'
 import { MaybeFalsy, Nullable, vueWithMixins } from '@/helpers/typeHelpers'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { Get } from 'type-fest'
@@ -68,76 +69,79 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
     async processInvite(accept: boolean) {
       if (!this.token) return
 
-      const { data, errors } = await useStreamInviteMutation(this, {
-        variables: {
-          accept,
-          streamId: this.streamId,
-          token: this.token
-        },
-        update: (cache, { data }) => {
-          if (!data?.streamInviteUse) return
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: UseStreamInviteDocument,
+          variables: {
+            accept,
+            streamId: this.streamId,
+            token: this.token
+          },
+          update: (cache, { data }) => {
+            if (!data?.streamInviteUse) return
 
-          // It's weird that i'm emitting from inside the update handler, but if I invoke the emit
-          // at the bottom of `processInvite()`, the event won't be fired because of a race condition
-          // between the cache updates below and the queries that rely on the cached invites in the parent
-          // component. Basically - I have to do it this way or the event won't be handled
-          this.$emit('invite-used', { accept })
+            // It's weird that i'm emitting from inside the update handler, but if I invoke the emit
+            // at the bottom of `processInvite()`, the event won't be fired because of a race condition
+            // between the cache updates below and the queries that rely on the cached invites in the parent
+            // component. Basically - I have to do it this way or the event won't be handled
+            this.$emit('invite-used', { accept })
 
-          // Remove invite from various cached queries we might have
-          // 1. Single stream invite query
-          const singleStreamInviteCacheFilter = {
-            query: StreamInviteDocument,
-            variables: { streamId: this.streamId, token: this.token }
-          }
-          let singleStreamInviteQueryData: MaybeFalsy<StreamInviteQuery> = undefined
-          try {
-            singleStreamInviteQueryData = cache.readQuery<StreamInviteQuery>(
-              singleStreamInviteCacheFilter
-            )
-          } catch (err) {
-            // suppressed
-          }
-
-          if (singleStreamInviteQueryData?.streamInvite) {
-            cache.writeQuery({
-              ...singleStreamInviteCacheFilter,
-              data: {
-                streamInvite: null
-              }
-            })
-          }
-
-          // 2. All user's stream invites query
-          let allUsersStreamInvitesQueryData: MaybeFalsy<UserStreamInvitesQuery> =
-            undefined
-          try {
-            allUsersStreamInvitesQueryData = cache.readQuery<UserStreamInvitesQuery>({
-              query: UserStreamInvitesDocument
-            })
-          } catch (err) {
-            // suppressed
-          }
-
-          if (allUsersStreamInvitesQueryData?.streamInvites) {
-            const removableInviteIdx =
-              allUsersStreamInvitesQueryData.streamInvites.findIndex(
-                (i) => i.inviteId === this.inviteId
+            // Remove invite from various cached queries we might have
+            // 1. Single stream invite query
+            const singleStreamInviteCacheFilter = {
+              query: StreamInviteDocument,
+              variables: { streamId: this.streamId, token: this.token }
+            }
+            let singleStreamInviteQueryData: MaybeFalsy<StreamInviteQuery> = undefined
+            try {
+              singleStreamInviteQueryData = cache.readQuery<StreamInviteQuery>(
+                singleStreamInviteCacheFilter
               )
-            if (removableInviteIdx !== -1) {
-              const newInvites = allUsersStreamInvitesQueryData.streamInvites.slice()
-              newInvites.splice(removableInviteIdx, 1)
+            } catch (err) {
+              // suppressed
+            }
 
-              cache.writeQuery<UserStreamInvitesQuery>({
-                query: UserStreamInvitesDocument,
+            if (singleStreamInviteQueryData?.streamInvite) {
+              cache.writeQuery({
+                ...singleStreamInviteCacheFilter,
                 data: {
-                  ...allUsersStreamInvitesQueryData,
-                  streamInvites: newInvites
+                  streamInvite: null
                 }
               })
             }
+
+            // 2. All user's stream invites query
+            let allUsersStreamInvitesQueryData: MaybeFalsy<UserStreamInvitesQuery> =
+              undefined
+            try {
+              allUsersStreamInvitesQueryData = cache.readQuery<UserStreamInvitesQuery>({
+                query: UserStreamInvitesDocument
+              })
+            } catch (err) {
+              // suppressed
+            }
+
+            if (allUsersStreamInvitesQueryData?.streamInvites) {
+              const removableInviteIdx =
+                allUsersStreamInvitesQueryData.streamInvites.findIndex(
+                  (i) => i.inviteId === this.inviteId
+                )
+              if (removableInviteIdx !== -1) {
+                const newInvites = allUsersStreamInvitesQueryData.streamInvites.slice()
+                newInvites.splice(removableInviteIdx, 1)
+
+                cache.writeQuery<UserStreamInvitesQuery>({
+                  query: UserStreamInvitesDocument,
+                  data: {
+                    ...allUsersStreamInvitesQueryData,
+                    streamInvites: newInvites
+                  }
+                })
+              }
+            }
           }
-        }
-      })
+        })
+        .catch(convertThrowIntoFetchResult)
 
       if (data?.streamInviteUse) {
         this.$triggerNotification({

@@ -77,7 +77,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import UserAvatar from '@/main/components/auth/UserAvatarAuthoriseApp'
 import UserAvatarIcon from '@/main/components/common/UserAvatarIcon'
 
