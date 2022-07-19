@@ -3,7 +3,7 @@ import SmartTextEditorMentionList from '@/main/components/common/text-editor/Sma
 import Popper from 'popper.js'
 import vuetify from '@/plugins/vuetify'
 import { apolloProvider } from '@/main/app'
-import userSearchQuery from '@/graphql/userSearch.gql'
+import { userSearchQuery } from '@/graphql/user'
 
 /**
  * @type {import('@tiptap/suggestion').SuggestionOptions}

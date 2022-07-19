@@ -19,5 +19,7 @@ export const Roles = Object.freeze({
  */
 export const LocalStorageKeys = Object.freeze({
   AuthToken: 'AuthToken',
-  RefreshToken: 'RefreshToken'
+  RefreshToken: 'RefreshToken',
+  Uuid: 'uuid',
+  ShouldRedirectTo: 'shouldRedirectTo'
 })

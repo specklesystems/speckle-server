@@ -2,6 +2,8 @@ const _ = require('lodash')
 
 /**
  * Speckle role constants
+ * - Stream - user roles in the context of a specific stream
+ * - Server - user roles in the context of the entire server
  */
 const Roles = Object.freeze({
   Stream: {
@@ -18,6 +20,7 @@ const Roles = Object.freeze({
 
 /**
  * Speckle scope constants
+ * - Scopes define what kind of access has a user approved for a specific access token
  */
 const Scopes = Object.freeze({
   Streams: {

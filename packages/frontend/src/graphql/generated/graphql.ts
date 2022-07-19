@@ -1,6 +1,7 @@
 import gql from 'graphql-tag';
 import { createMutationFunction, createSmartQueryOptionsFunction, createSmartSubscriptionOptionsFunction } from 'vue-apollo-smart-ops';
 import { ApolloError } from 'apollo-client';
+import { handleApolloError } from '@/config/vueApolloSmartOpsConfig';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -19,7 +20,7 @@ export type Scalars = {
   DateTime: any;
   EmailAddress: any;
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSONObject: any;
+  JSONObject: Record<string, unknown>;
   /** The `Upload` scalar type represents a file upload. */
   Upload: any;
 };
@@ -41,6 +42,23 @@ export type ActivityCollection = {
   cursor?: Maybe<Scalars['String']>;
   items?: Maybe<Array<Maybe<Activity>>>;
   totalCount: Scalars['Int'];
+};
+
+export type AdminUsersListCollection = {
+  __typename?: 'AdminUsersListCollection';
+  items: Array<AdminUsersListItem>;
+  totalCount: Scalars['Int'];
+};
+
+/**
+ * A representation of a registered or invited user in the admin users list. Either registeredUser
+ * or invitedUser will always be set, both values can't be null.
+ */
+export type AdminUsersListItem = {
+  __typename?: 'AdminUsersListItem';
+  id: Scalars['String'];
+  invitedUser?: Maybe<ServerInvite>;
+  registeredUser?: Maybe<User>;
 };
 
 export type ApiToken = {
@@ -100,6 +118,7 @@ export type AuthStrategy = {
 export type BlobMetadata = {
   __typename?: 'BlobMetadata';
   createdAt: Scalars['DateTime'];
+  fileHash?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize?: Maybe<Scalars['Int']>;
   fileType: Scalars['String'];
@@ -376,6 +395,20 @@ export type FileUpload = {
   userId: Scalars['String'];
 };
 
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUser = {
+  __typename?: 'LimitedUser';
+  avatar?: Maybe<Scalars['String']>;
+  bio?: Maybe<Scalars['String']>;
+  company?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  name?: Maybe<Scalars['String']>;
+  verified?: Maybe<Scalars['Boolean']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
@@ -410,22 +443,36 @@ export type Mutation = {
   commitDelete: Scalars['Boolean'];
   commitReceive: Scalars['Boolean'];
   commitUpdate: Scalars['Boolean'];
+  /** Delete a pending invite */
+  inviteDelete: Scalars['Boolean'];
+  /** Re-send a pending invite */
+  inviteResend: Scalars['Boolean'];
   objectCreate: Array<Maybe<Scalars['String']>>;
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
-  serverInviteCreate?: Maybe<Scalars['Boolean']>;
+  serverInviteBatchCreate: Scalars['Boolean'];
+  /** Invite a new user to the speckle server and return the invite ID */
+  serverInviteCreate: Scalars['Boolean'];
   /** Creates a new stream. */
   streamCreate?: Maybe<Scalars['String']>;
   /** Deletes an existing stream. */
   streamDelete: Scalars['Boolean'];
   /** Favorite/unfavorite the given stream */
   streamFavorite?: Maybe<Stream>;
-  /** Grants permissions to a user on a given stream. */
-  streamGrantPermission?: Maybe<Scalars['Boolean']>;
-  streamInviteCreate?: Maybe<Scalars['Boolean']>;
+  streamInviteBatchCreate: Scalars['Boolean'];
+  /** Cancel a pending stream invite. Can only be invoked by a stream owner. */
+  streamInviteCancel: Scalars['Boolean'];
+  /** Invite a new or registered user to the specified stream */
+  streamInviteCreate: Scalars['Boolean'];
+  /** Accept or decline a stream invite */
+  streamInviteUse: Scalars['Boolean'];
+  /** Remove yourself from stream collaborators (not possible for the owner) */
+  streamLeave: Scalars['Boolean'];
   /** Revokes the permissions of a user on a given stream. */
   streamRevokePermission?: Maybe<Scalars['Boolean']>;
   /** Updates an existing stream. */
   streamUpdate: Scalars['Boolean'];
+  /** Update permissions of a user on a given stream. */
+  streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
   /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
@@ -543,6 +590,16 @@ export type MutationCommitUpdateArgs = {
 };
 
 
+export type MutationInviteDeleteArgs = {
+  inviteId: Scalars['String'];
+};
+
+
+export type MutationInviteResendArgs = {
+  inviteId: Scalars['String'];
+};
+
+
 export type MutationObjectCreateArgs = {
   objectInput: ObjectCreateInput;
 };
@@ -550,6 +607,11 @@ export type MutationObjectCreateArgs = {
 
 export type MutationServerInfoUpdateArgs = {
   info: ServerInfoUpdateInput;
+};
+
+
+export type MutationServerInviteBatchCreateArgs = {
+  input: Array<ServerInviteCreateInput>;
 };
 
 
@@ -574,13 +636,31 @@ export type MutationStreamFavoriteArgs = {
 };
 
 
-export type MutationStreamGrantPermissionArgs = {
-  permissionParams: StreamGrantPermissionInput;
+export type MutationStreamInviteBatchCreateArgs = {
+  input: Array<StreamInviteCreateInput>;
+};
+
+
+export type MutationStreamInviteCancelArgs = {
+  inviteId: Scalars['String'];
+  streamId: Scalars['String'];
 };
 
 
 export type MutationStreamInviteCreateArgs = {
   input: StreamInviteCreateInput;
+};
+
+
+export type MutationStreamInviteUseArgs = {
+  accept: Scalars['Boolean'];
+  inviteId: Scalars['String'];
+  streamId: Scalars['String'];
+};
+
+
+export type MutationStreamLeaveArgs = {
+  streamId: Scalars['String'];
 };
 
 
@@ -591,6 +671,11 @@ export type MutationStreamRevokePermissionArgs = {
 
 export type MutationStreamUpdateArgs = {
   stream: StreamUpdateInput;
+};
+
+
+export type MutationStreamUpdatePermissionArgs = {
+  permissionParams: StreamUpdatePermissionInput;
 };
 
 
@@ -693,11 +778,30 @@ export type ObjectCreateInput = {
   streamId: Scalars['String'];
 };
 
+export type PendingStreamCollaborator = {
+  __typename?: 'PendingStreamCollaborator';
+  id: Scalars['String'];
+  inviteId: Scalars['String'];
+  invitedBy: LimitedUser;
+  role: Scalars['String'];
+  streamId: Scalars['String'];
+  streamName: Scalars['String'];
+  /** E-mail address or name of the invited user */
+  title: Scalars['String'];
+  /** Set only if user is registered */
+  user?: Maybe<LimitedUser>;
+};
+
 export type Query = {
   __typename?: 'Query';
   /** Stare into the void. */
   _?: Maybe<Scalars['String']>;
   adminStreams?: Maybe<StreamCollection>;
+  /**
+   * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
+   * The query looks for matches in name, company and email.
+   */
+  adminUsers?: Maybe<AdminUsersListCollection>;
   /** Gets a specific app from the server. */
   app?: Maybe<ServerApp>;
   /** Returns all the publicly available apps on this server. */
@@ -711,11 +815,24 @@ export type Query = {
   comments?: Maybe<CommentCollection>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
-  /** Returns a specific stream. */
+  /**
+   * Returns a specific stream. Will throw an authorization error if active user isn't authorized
+   * to see it.
+   */
   stream?: Maybe<Stream>;
+  /**
+   * Look for an invitation to a stream, for the current user (authed or not). If inviteId
+   * isn't specified, the server will look for any valid invite.
+   */
+  streamInvite?: Maybe<PendingStreamCollaborator>;
+  /** Get all invitations to streams that the active user has */
+  streamInvites: Array<PendingStreamCollaborator>;
   /** All the streams of the current user, pass in the `query` parameter to search by name, description or ID. */
   streams?: Maybe<StreamCollection>;
-  /** Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header). */
+  /**
+   * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
+   * If ID is provided, admin access is required
+   */
   user?: Maybe<User>;
   userPwdStrength?: Maybe<Scalars['JSONObject']>;
   /**
@@ -723,11 +840,6 @@ export type Query = {
    * The query looks for matches in name & email
    */
   userSearch?: Maybe<UserSearchResultCollection>;
-  /**
-   * Get all (or search for specific) users from the server in a paginated view, if you have the server:admin role.
-   * The query looks for matches in name, company and email.
-   */
-  users?: Maybe<UserCollection>;
 };
 
 
@@ -737,6 +849,13 @@ export type QueryAdminStreamsArgs = {
   orderBy?: InputMaybe<Scalars['String']>;
   query?: InputMaybe<Scalars['String']>;
   visibility?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryAdminUsersArgs = {
+  limit?: Scalars['Int'];
+  offset?: Scalars['Int'];
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -765,6 +884,12 @@ export type QueryStreamArgs = {
 };
 
 
+export type QueryStreamInviteArgs = {
+  inviteId?: InputMaybe<Scalars['String']>;
+  streamId: Scalars['String'];
+};
+
+
 export type QueryStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: InputMaybe<Scalars['Int']>;
@@ -787,13 +912,6 @@ export type QueryUserSearchArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
   query: Scalars['String'];
-};
-
-
-export type QueryUsersArgs = {
-  limit?: Scalars['Int'];
-  offset?: Scalars['Int'];
-  query?: InputMaybe<Scalars['String']>;
 };
 
 export type ReplyCreateInput = {
@@ -895,8 +1013,9 @@ export type ServerInfoUpdateInput = {
 
 export type ServerInvite = {
   __typename?: 'ServerInvite';
-  createdAt: Scalars['DateTime'];
+  email: Scalars['String'];
   id: Scalars['String'];
+  invitedBy: LimitedUser;
 };
 
 export type ServerInviteCreateInput = {
@@ -945,7 +1064,7 @@ export type Stream = {
   blobs?: Maybe<BlobMetadataCollection>;
   branch?: Maybe<Branch>;
   branches?: Maybe<BranchCollection>;
-  collaborators: Array<Maybe<StreamCollaborator>>;
+  collaborators: Array<StreamCollaborator>;
   /**
    * The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:
    *
@@ -973,6 +1092,8 @@ export type Stream = {
   isPublic: Scalars['Boolean'];
   name: Scalars['String'];
   object?: Maybe<Object>;
+  /** Collaborators who have been invited, but not yet accepted. */
+  pendingCollaborators?: Maybe<Array<PendingStreamCollaborator>>;
   /** Your role for this stream. `null` if request is not authenticated, or the stream is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   size?: Maybe<Scalars['String']>;
@@ -1058,18 +1179,15 @@ export type StreamCreateInput = {
   description?: InputMaybe<Scalars['String']>;
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
-};
-
-export type StreamGrantPermissionInput = {
-  role: Scalars['String'];
-  streamId: Scalars['String'];
-  userId: Scalars['String'];
+  /** Optionally specify user IDs of users that you want to invite to be contributors to this stream */
+  withContributors?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type StreamInviteCreateInput = {
-  email: Scalars['String'];
+  email?: InputMaybe<Scalars['String']>;
   message?: InputMaybe<Scalars['String']>;
-  streamId?: InputMaybe<Scalars['String']>;
+  streamId: Scalars['String'];
+  userId?: InputMaybe<Scalars['String']>;
 };
 
 export type StreamRevokePermissionInput = {
@@ -1077,12 +1195,24 @@ export type StreamRevokePermissionInput = {
   userId: Scalars['String'];
 };
 
+export enum StreamRole {
+  StreamContributor = 'STREAM_CONTRIBUTOR',
+  StreamOwner = 'STREAM_OWNER',
+  StreamReviewer = 'STREAM_REVIEWER'
+}
+
 export type StreamUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+};
+
+export type StreamUpdatePermissionInput = {
+  role: Scalars['String'];
+  streamId: Scalars['String'];
+  userId: Scalars['String'];
 };
 
 export type Subscription = {
@@ -1191,7 +1321,10 @@ export type SubscriptionUserViewerActivityArgs = {
   streamId: Scalars['String'];
 };
 
-/** Base user type. */
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type User = {
   __typename?: 'User';
   /** All the recent activity from this user in chronological order */
@@ -1206,6 +1339,10 @@ export type User = {
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<Maybe<ServerApp>>>;
+  /**
+   * E-mail can be null, if it's requested for a user other than the authenticated one
+   * and the user isn't an admin
+   */
   email?: Maybe<Scalars['String']>;
   /** All the streams that a user has favorited */
   favoriteStreams?: Maybe<StreamCollection>;
@@ -1223,7 +1360,10 @@ export type User = {
 };
 
 
-/** Base user type. */
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserActivityArgs = {
   actionType?: InputMaybe<Scalars['String']>;
   after?: InputMaybe<Scalars['DateTime']>;
@@ -1233,39 +1373,45 @@ export type UserActivityArgs = {
 };
 
 
-/** Base user type. */
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserCommitsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
 
 
-/** Base user type. */
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserFavoriteStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
 
 
-/** Base user type. */
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
 
 
-/** Base user type. */
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserTimelineArgs = {
   after?: InputMaybe<Scalars['DateTime']>;
   before?: InputMaybe<Scalars['DateTime']>;
   cursor?: InputMaybe<Scalars['DateTime']>;
   limit?: Scalars['Int'];
-};
-
-export type UserCollection = {
-  __typename?: 'UserCollection';
-  items?: Maybe<Array<Maybe<User>>>;
-  totalCount: Scalars['Int'];
 };
 
 export type UserDeleteInput = {
@@ -1277,20 +1423,10 @@ export type UserRoleInput = {
   role: Scalars['String'];
 };
 
-export type UserSearchResult = {
-  __typename?: 'UserSearchResult';
-  avatar?: Maybe<Scalars['String']>;
-  bio?: Maybe<Scalars['String']>;
-  company?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
-  verified?: Maybe<Scalars['Boolean']>;
-};
-
 export type UserSearchResultCollection = {
   __typename?: 'UserSearchResultCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<UserSearchResult>>>;
+  items?: Maybe<Array<Maybe<LimitedUser>>>;
 };
 
 export type UserUpdateInput = {
@@ -1372,7 +1508,14 @@ export type StreamWithBranchQueryVariables = Exact<{
 
 export type StreamWithBranchQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, branch?: { __typename?: 'Branch', id: string, name: string, description?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: any | null, commentCount: number } | null> | null } | null } | null } | null };
 
-export type CommentFullInfoFragment = { __typename?: 'Comment', id: string, archived: boolean, authorId: string, data?: any | null, screenshot?: string | null, createdAt?: any | null, updatedAt?: any | null, viewedAt?: any | null, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', totalCount: number } | null, resources: Array<{ __typename?: 'ResourceIdentifier', resourceId: string, resourceType: ResourceType } | null> };
+export type BranchCreatedSubscriptionVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type BranchCreatedSubscription = { __typename?: 'Subscription', branchCreated?: Record<string, unknown> | null };
+
+export type CommentFullInfoFragment = { __typename?: 'Comment', id: string, archived: boolean, authorId: string, data?: Record<string, unknown> | null, screenshot?: string | null, createdAt?: any | null, updatedAt?: any | null, viewedAt?: any | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string, fileType: string, fileSize?: number | null }> | null }, replies?: { __typename?: 'CommentCollection', totalCount: number } | null, resources: Array<{ __typename?: 'ResourceIdentifier', resourceId: string, resourceType: ResourceType } | null> };
 
 export type StreamCommitQueryQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -1382,13 +1525,77 @@ export type StreamCommitQueryQueryVariables = Exact<{
 
 export type StreamCommitQueryQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, commit?: { __typename?: 'Commit', id: string, message?: string | null, referencedObject: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, createdAt?: any | null, branchName?: string | null, sourceApplication?: string | null } | null } | null };
 
+export type LimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null };
+
+export type StreamCollaboratorFieldsFragment = { __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null };
+
+export type UsersOwnInviteFieldsFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } };
+
+export type StreamInviteQueryVariables = Exact<{
+  streamId: Scalars['String'];
+  inviteId?: InputMaybe<Scalars['String']>;
+}>;
+
+
+export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
+
+export type UserStreamInvitesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UserStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } }> };
+
+export type UseStreamInviteMutationVariables = Exact<{
+  accept: Scalars['Boolean'];
+  streamId: Scalars['String'];
+  inviteId: Scalars['String'];
+}>;
+
+
+export type UseStreamInviteMutation = { __typename?: 'Mutation', streamInviteUse: boolean };
+
+export type CancelStreamInviteMutationVariables = Exact<{
+  streamId: Scalars['String'];
+  inviteId: Scalars['String'];
+}>;
+
+
+export type CancelStreamInviteMutation = { __typename?: 'Mutation', streamInviteCancel: boolean };
+
+export type DeleteInviteMutationVariables = Exact<{
+  inviteId: Scalars['String'];
+}>;
+
+
+export type DeleteInviteMutation = { __typename?: 'Mutation', inviteDelete: boolean };
+
+export type ResendInviteMutationVariables = Exact<{
+  inviteId: Scalars['String'];
+}>;
+
+
+export type ResendInviteMutation = { __typename?: 'Mutation', inviteResend: boolean };
+
+export type BatchInviteToServerMutationVariables = Exact<{
+  paramsArray: Array<ServerInviteCreateInput> | ServerInviteCreateInput;
+}>;
+
+
+export type BatchInviteToServerMutation = { __typename?: 'Mutation', serverInviteBatchCreate: boolean };
+
+export type BatchInviteToStreamsMutationVariables = Exact<{
+  paramsArray: Array<StreamInviteCreateInput> | StreamInviteCreateInput;
+}>;
+
+
+export type BatchInviteToStreamsMutation = { __typename?: 'Mutation', streamInviteBatchCreate: boolean };
+
 export type StreamObjectQueryVariables = Exact<{
   streamId: Scalars['String'];
   id: Scalars['String'];
 }>;
 
 
-export type StreamObjectQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, object?: { __typename?: 'Object', totalChildrenCount?: number | null, id: string, speckleType?: string | null, data?: any | null } | null } | null };
+export type StreamObjectQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, object?: { __typename?: 'Object', totalChildrenCount?: number | null, id: string, speckleType?: string | null, data?: Record<string, unknown> | null } | null } | null };
 
 export type StreamObjectNoDataQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -1414,13 +1621,6 @@ export type FullServerInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type FullServerInfoQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', name: string, company?: string | null, description?: string | null, adminContact?: string | null, canonicalUrl?: string | null, termsOfService?: string | null, inviteOnly?: boolean | null, version?: string | null, roles: Array<{ __typename?: 'Role', name: string, description: string, resourceTarget: string } | null>, scopes: Array<{ __typename?: 'Scope', name: string, description: string } | null> } };
 
-export type StreamWithCollaboratorsQueryVariables = Exact<{
-  id: Scalars['String'];
-}>;
-
-
-export type StreamWithCollaboratorsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, isPublic: boolean, role?: string | null, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null } | null> } | null };
-
 export type StreamCommitsQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
@@ -1433,54 +1633,56 @@ export type StreamsQueryVariables = Exact<{
 }>;
 
 
-export type StreamsQuery = { __typename?: 'Query', streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: any | null, message?: string | null, authorId?: string | null, branchName?: string | null, authorName?: string | null, authorAvatar?: string | null, referencedObject: string } | null> | null } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null };
+export type StreamsQuery = { __typename?: 'Query', streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: any | null, message?: string | null, authorId?: string | null, branchName?: string | null, authorName?: string | null, authorAvatar?: string | null, referencedObject: string } | null> | null } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null };
 
-export type CommonStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null };
+export type CommonStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null };
 
 export type StreamQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
 
 
-export type StreamQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null } | null };
+export type StreamQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null } | null };
 
-export type CommonUserFieldsFragment = { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null };
+export type StreamWithCollaboratorsQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type StreamWithCollaboratorsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, isPublic: boolean, role?: string | null, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null }>, pendingCollaborators?: Array<{ __typename?: 'PendingStreamCollaborator', title: string, inviteId: string, role: string, user?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null }> | null } | null };
+
+export type LeaveStreamMutationVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type LeaveStreamMutation = { __typename?: 'Mutation', streamLeave: boolean };
+
+export type UpdateStreamPermissionMutationVariables = Exact<{
+  params: StreamUpdatePermissionInput;
+}>;
+
+
+export type UpdateStreamPermissionMutation = { __typename?: 'Mutation', streamUpdatePermission?: boolean | null };
+
+export type CommonUserFieldsFragment = { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null };
 
 export type UserFavoriteStreamsQueryVariables = Exact<{
   cursor?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type UserFavoriteStreamsQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, favoriteStreams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null } | null };
+export type UserFavoriteStreamsQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, favoriteStreams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, commentCount: number, favoritedDate?: any | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null } | null };
 
 export type MainUserDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MainUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null } | null };
+export type MainUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null } | null };
 
 export type ExtraUserDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ExtraUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', totalOwnedStreamsFavorites: number, id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null } | null };
-
-export type UserQueryVariables = Exact<{
-  id: Scalars['String'];
-}>;
-
-
-export type UserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, suuid?: string | null } | null };
-
-export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type Unnamed_1_Query = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: any | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string } | null>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, message?: string | null, streamId?: string | null, streamName?: string | null, createdAt?: any | null } | null> | null } | null } | null };
-
-export type UserProfileQueryVariables = Exact<{
-  id: Scalars['String'];
-}>;
-
-
-export type UserProfileQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
+export type ExtraUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', totalOwnedStreamsFavorites: number, id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: any | null } | null> | null } | null } | null };
 
 export type UserSearchQueryVariables = Exact<{
   query: Scalars['String'];
@@ -1490,7 +1692,40 @@ export type UserSearchQueryVariables = Exact<{
 }>;
 
 
-export type UserSearchQuery = { __typename?: 'Query', userSearch?: { __typename?: 'UserSearchResultCollection', cursor?: string | null, items?: Array<{ __typename?: 'UserSearchResult', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null> | null } | null };
+export type UserSearchQuery = { __typename?: 'Query', userSearch?: { __typename?: 'UserSearchResultCollection', cursor?: string | null, items?: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null> | null } | null };
+
+export type IsLoggedInQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type IsLoggedInQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string } | null };
+
+export type AdminUsersListQueryVariables = Exact<{
+  limit?: InputMaybe<Scalars['Int']>;
+  offset?: InputMaybe<Scalars['Int']>;
+  query?: InputMaybe<Scalars['String']>;
+}>;
+
+
+export type AdminUsersListQuery = { __typename?: 'Query', adminUsers?: { __typename?: 'AdminUsersListCollection', totalCount: number, items: Array<{ __typename?: 'AdminUsersListItem', id: string, registeredUser?: { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, authorizedApps?: Array<{ __typename?: 'ServerAppListItem', name: string } | null> | null } | null, invitedUser?: { __typename?: 'ServerInvite', id: string, email: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null }> } | null };
+
+export type UserQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type UserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, suuid?: string | null } | null };
+
+export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type Unnamed_1_Query = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, message?: string | null, streamId?: string | null, streamName?: string | null, createdAt?: any | null } | null> | null } | null } | null };
+
+export type UserProfileQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type UserProfileQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
 
 export type WebhookQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -1518,6 +1753,8 @@ export const CommentFullInfo = gql`
       id
       fileName
       streamId
+      fileType
+      fileSize
     }
   }
   data
@@ -1534,6 +1771,36 @@ export const CommentFullInfo = gql`
   viewedAt
 }
     `;
+export const StreamCollaboratorFields = gql`
+    fragment StreamCollaboratorFields on StreamCollaborator {
+  id
+  name
+  role
+  company
+  avatar
+}
+    `;
+export const LimitedUserFields = gql`
+    fragment LimitedUserFields on LimitedUser {
+  id
+  name
+  bio
+  company
+  avatar
+  verified
+}
+    `;
+export const UsersOwnInviteFields = gql`
+    fragment UsersOwnInviteFields on PendingStreamCollaborator {
+  id
+  inviteId
+  streamId
+  streamName
+  invitedBy {
+    ...LimitedUserFields
+  }
+}
+    ${LimitedUserFields}`;
 export const MainServerInfoFields = gql`
     fragment MainServerInfoFields on ServerInfo {
   name
@@ -1643,6 +1910,11 @@ export const StreamWithBranch = gql`
   }
 }
     `;
+export const BranchCreated = gql`
+    subscription BranchCreated($streamId: String!) {
+  branchCreated(streamId: $streamId)
+}
+    `;
 export const StreamCommitQuery = gql`
     query StreamCommitQuery($streamId: String!, $id: String!) {
   stream(id: $streamId) {
@@ -1661,6 +1933,50 @@ export const StreamCommitQuery = gql`
       sourceApplication
     }
   }
+}
+    `;
+export const StreamInvite = gql`
+    query StreamInvite($streamId: String!, $inviteId: String) {
+  streamInvite(streamId: $streamId, inviteId: $inviteId) {
+    ...UsersOwnInviteFields
+  }
+}
+    ${UsersOwnInviteFields}`;
+export const UserStreamInvites = gql`
+    query UserStreamInvites {
+  streamInvites {
+    ...UsersOwnInviteFields
+  }
+}
+    ${UsersOwnInviteFields}`;
+export const UseStreamInvite = gql`
+    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
+  streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+}
+    `;
+export const CancelStreamInvite = gql`
+    mutation CancelStreamInvite($streamId: String!, $inviteId: String!) {
+  streamInviteCancel(streamId: $streamId, inviteId: $inviteId)
+}
+    `;
+export const DeleteInvite = gql`
+    mutation DeleteInvite($inviteId: String!) {
+  inviteDelete(inviteId: $inviteId)
+}
+    `;
+export const ResendInvite = gql`
+    mutation ResendInvite($inviteId: String!) {
+  inviteResend(inviteId: $inviteId)
+}
+    `;
+export const BatchInviteToServer = gql`
+    mutation BatchInviteToServer($paramsArray: [ServerInviteCreateInput!]!) {
+  serverInviteBatchCreate(input: $paramsArray)
+}
+    `;
+export const BatchInviteToStreams = gql`
+    mutation BatchInviteToStreams($paramsArray: [StreamInviteCreateInput!]!) {
+  streamInviteBatchCreate(input: $paramsArray)
 }
     `;
 export const StreamObject = gql`
@@ -1707,23 +2023,6 @@ export const FullServerInfo = gql`
     ${MainServerInfoFields}
 ${ServerInfoRolesFields}
 ${ServerInfoScopesFields}`;
-export const StreamWithCollaborators = gql`
-    query StreamWithCollaborators($id: String!) {
-  stream(id: $id) {
-    id
-    name
-    isPublic
-    role
-    collaborators {
-      id
-      name
-      role
-      company
-      avatar
-    }
-  }
-}
-    `;
 export const StreamCommits = gql`
     query StreamCommits($id: String!) {
   stream(id: $id) {
@@ -1796,6 +2095,38 @@ export const Stream = gql`
   }
 }
     ${CommonStreamFields}`;
+export const StreamWithCollaborators = gql`
+    query StreamWithCollaborators($id: String!) {
+  stream(id: $id) {
+    id
+    name
+    isPublic
+    role
+    collaborators {
+      ...StreamCollaboratorFields
+    }
+    pendingCollaborators {
+      title
+      inviteId
+      role
+      user {
+        ...LimitedUserFields
+      }
+    }
+  }
+}
+    ${StreamCollaboratorFields}
+${LimitedUserFields}`;
+export const LeaveStream = gql`
+    mutation LeaveStream($streamId: String!) {
+  streamLeave(streamId: $streamId)
+}
+    `;
+export const UpdateStreamPermission = gql`
+    mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
+  streamUpdatePermission(permissionParams: $params)
+}
+    `;
 export const UserFavoriteStreams = gql`
     query UserFavoriteStreams($cursor: String) {
   user {
@@ -1826,6 +2157,56 @@ export const ExtraUserData = gql`
   }
 }
     ${CommonUserFields}`;
+export const UserSearch = gql`
+    query UserSearch($query: String!, $limit: Int!, $cursor: String, $archived: Boolean) {
+  userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
+    cursor
+    items {
+      ...LimitedUserFields
+    }
+  }
+}
+    ${LimitedUserFields}`;
+export const IsLoggedIn = gql`
+    query IsLoggedIn {
+  user {
+    id
+  }
+}
+    `;
+export const AdminUsersList = gql`
+    query AdminUsersList($limit: Int, $offset: Int, $query: String) {
+  adminUsers(limit: $limit, offset: $offset, query: $query) {
+    totalCount
+    items {
+      id
+      registeredUser {
+        id
+        suuid
+        email
+        name
+        bio
+        company
+        avatar
+        verified
+        profiles
+        role
+        authorizedApps {
+          name
+        }
+      }
+      invitedUser {
+        id
+        email
+        invitedBy {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+    `;
 export const User = gql`
     query User($id: String!) {
   user(id: $id) {
@@ -1852,21 +2233,6 @@ export const UserProfile = gql`
     company
     avatar
     verified
-  }
-}
-    `;
-export const UserSearch = gql`
-    query UserSearch($query: String!, $limit: Int!, $cursor: String, $archived: Boolean) {
-  userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
-    cursor
-    items {
-      id
-      name
-      bio
-      company
-      avatar
-      verified
-    }
   }
 }
     `;
@@ -1931,6 +2297,8 @@ export const CommentFullInfoFragmentDoc = gql`
       id
       fileName
       streamId
+      fileType
+      fileSize
     }
   }
   data
@@ -1947,6 +2315,36 @@ export const CommentFullInfoFragmentDoc = gql`
   viewedAt
 }
     `;
+export const StreamCollaboratorFieldsFragmentDoc = gql`
+    fragment StreamCollaboratorFields on StreamCollaborator {
+  id
+  name
+  role
+  company
+  avatar
+}
+    `;
+export const LimitedUserFieldsFragmentDoc = gql`
+    fragment LimitedUserFields on LimitedUser {
+  id
+  name
+  bio
+  company
+  avatar
+  verified
+}
+    `;
+export const UsersOwnInviteFieldsFragmentDoc = gql`
+    fragment UsersOwnInviteFields on PendingStreamCollaborator {
+  id
+  inviteId
+  streamId
+  streamName
+  invitedBy {
+    ...LimitedUserFields
+  }
+}
+    ${LimitedUserFieldsFragmentDoc}`;
 export const MainServerInfoFieldsFragmentDoc = gql`
     fragment MainServerInfoFields on ServerInfo {
   name
@@ -2084,7 +2482,42 @@ export const useStreamWithBranchQuery = createSmartQueryOptionsFunction<
   StreamWithBranchQuery,
   StreamWithBranchQueryVariables,
   ApolloError
->(StreamWithBranchDocument);
+>(StreamWithBranchDocument, handleApolloError);
+
+export const BranchCreatedDocument = gql`
+    subscription BranchCreated($streamId: String!) {
+  branchCreated(streamId: $streamId)
+}
+    `;
+
+/**
+ * __useBranchCreatedSubscription__
+ *
+ * To use a Smart Subscription within a Vue component, call `useBranchCreatedSubscription` as the value for a `$subscribe` key
+ * in the component's `apollo` config, passing any options required for the subscription.
+ *
+ * @param options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.subscribe
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     $subscribe: {
+ *       branchCreated: useBranchCreatedSubscription({
+ *         variables: {
+ *           streamId: // value for 'streamId'
+ *         },
+ *         loadingKey: 'loading',
+ *         fetchPolicy: 'no-cache',
+ *       }),
+ *     },
+ *   }
+ * }
+ */
+export const useBranchCreatedSubscription = createSmartSubscriptionOptionsFunction<
+  BranchCreatedSubscription,
+  BranchCreatedSubscriptionVariables,
+  ApolloError
+>(BranchCreatedDocument, handleApolloError);
 
 export const StreamCommitQueryDocument = gql`
     query StreamCommitQuery($streamId: String!, $id: String!) {
@@ -2133,7 +2566,253 @@ export const useStreamCommitQueryQuery = createSmartQueryOptionsFunction<
   StreamCommitQueryQuery,
   StreamCommitQueryQueryVariables,
   ApolloError
->(StreamCommitQueryDocument);
+>(StreamCommitQueryDocument, handleApolloError);
+
+export const StreamInviteDocument = gql`
+    query StreamInvite($streamId: String!, $inviteId: String) {
+  streamInvite(streamId: $streamId, inviteId: $inviteId) {
+    ...UsersOwnInviteFields
+  }
+}
+    ${UsersOwnInviteFieldsFragmentDoc}`;
+
+/**
+ * __useStreamInviteQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useStreamInviteQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     streamInvite: useStreamInviteQuery({
+ *       variables: {
+ *         streamId: // value for 'streamId'
+ *         inviteId: // value for 'inviteId'
+ *       },
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useStreamInviteQuery = createSmartQueryOptionsFunction<
+  StreamInviteQuery,
+  StreamInviteQueryVariables,
+  ApolloError
+>(StreamInviteDocument, handleApolloError);
+
+export const UserStreamInvitesDocument = gql`
+    query UserStreamInvites {
+  streamInvites {
+    ...UsersOwnInviteFields
+  }
+}
+    ${UsersOwnInviteFieldsFragmentDoc}`;
+
+/**
+ * __useUserStreamInvitesQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useUserStreamInvitesQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     userStreamInvites: useUserStreamInvitesQuery({
+ *       variables: {},
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useUserStreamInvitesQuery = createSmartQueryOptionsFunction<
+  UserStreamInvitesQuery,
+  UserStreamInvitesQueryVariables,
+  ApolloError
+>(UserStreamInvitesDocument, handleApolloError);
+
+export const UseStreamInviteDocument = gql`
+    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
+  streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+}
+    `;
+
+/**
+ * __useStreamInviteMutation__
+ *
+ * To run a mutation, you call `useStreamInviteMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = useStreamInviteMutation(this, {
+ *   variables: {
+ *     accept: // value for 'accept'
+ *     streamId: // value for 'streamId'
+ *     inviteId: // value for 'inviteId'
+ *   },
+ * });
+ */
+export const useStreamInviteMutation = createMutationFunction<
+  UseStreamInviteMutation,
+  UseStreamInviteMutationVariables,
+  ApolloError
+>(UseStreamInviteDocument, handleApolloError);
+
+export const CancelStreamInviteDocument = gql`
+    mutation CancelStreamInvite($streamId: String!, $inviteId: String!) {
+  streamInviteCancel(streamId: $streamId, inviteId: $inviteId)
+}
+    `;
+
+/**
+ * __cancelStreamInviteMutation__
+ *
+ * To run a mutation, you call `cancelStreamInviteMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = cancelStreamInviteMutation(this, {
+ *   variables: {
+ *     streamId: // value for 'streamId'
+ *     inviteId: // value for 'inviteId'
+ *   },
+ * });
+ */
+export const cancelStreamInviteMutation = createMutationFunction<
+  CancelStreamInviteMutation,
+  CancelStreamInviteMutationVariables,
+  ApolloError
+>(CancelStreamInviteDocument, handleApolloError);
+
+export const DeleteInviteDocument = gql`
+    mutation DeleteInvite($inviteId: String!) {
+  inviteDelete(inviteId: $inviteId)
+}
+    `;
+
+/**
+ * __deleteInviteMutation__
+ *
+ * To run a mutation, you call `deleteInviteMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = deleteInviteMutation(this, {
+ *   variables: {
+ *     inviteId: // value for 'inviteId'
+ *   },
+ * });
+ */
+export const deleteInviteMutation = createMutationFunction<
+  DeleteInviteMutation,
+  DeleteInviteMutationVariables,
+  ApolloError
+>(DeleteInviteDocument, handleApolloError);
+
+export const ResendInviteDocument = gql`
+    mutation ResendInvite($inviteId: String!) {
+  inviteResend(inviteId: $inviteId)
+}
+    `;
+
+/**
+ * __resendInviteMutation__
+ *
+ * To run a mutation, you call `resendInviteMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = resendInviteMutation(this, {
+ *   variables: {
+ *     inviteId: // value for 'inviteId'
+ *   },
+ * });
+ */
+export const resendInviteMutation = createMutationFunction<
+  ResendInviteMutation,
+  ResendInviteMutationVariables,
+  ApolloError
+>(ResendInviteDocument, handleApolloError);
+
+export const BatchInviteToServerDocument = gql`
+    mutation BatchInviteToServer($paramsArray: [ServerInviteCreateInput!]!) {
+  serverInviteBatchCreate(input: $paramsArray)
+}
+    `;
+
+/**
+ * __batchInviteToServerMutation__
+ *
+ * To run a mutation, you call `batchInviteToServerMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = batchInviteToServerMutation(this, {
+ *   variables: {
+ *     paramsArray: // value for 'paramsArray'
+ *   },
+ * });
+ */
+export const batchInviteToServerMutation = createMutationFunction<
+  BatchInviteToServerMutation,
+  BatchInviteToServerMutationVariables,
+  ApolloError
+>(BatchInviteToServerDocument, handleApolloError);
+
+export const BatchInviteToStreamsDocument = gql`
+    mutation BatchInviteToStreams($paramsArray: [StreamInviteCreateInput!]!) {
+  streamInviteBatchCreate(input: $paramsArray)
+}
+    `;
+
+/**
+ * __batchInviteToStreamsMutation__
+ *
+ * To run a mutation, you call `batchInviteToStreamsMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = batchInviteToStreamsMutation(this, {
+ *   variables: {
+ *     paramsArray: // value for 'paramsArray'
+ *   },
+ * });
+ */
+export const batchInviteToStreamsMutation = createMutationFunction<
+  BatchInviteToStreamsMutation,
+  BatchInviteToStreamsMutationVariables,
+  ApolloError
+>(BatchInviteToStreamsDocument, handleApolloError);
 
 export const StreamObjectDocument = gql`
     query StreamObject($streamId: String!, $id: String!) {
@@ -2175,7 +2854,7 @@ export const useStreamObjectQuery = createSmartQueryOptionsFunction<
   StreamObjectQuery,
   StreamObjectQueryVariables,
   ApolloError
->(StreamObjectDocument);
+>(StreamObjectDocument, handleApolloError);
 
 export const StreamObjectNoDataDocument = gql`
     query StreamObjectNoData($streamId: String!, $id: String!) {
@@ -2217,7 +2896,7 @@ export const useStreamObjectNoDataQuery = createSmartQueryOptionsFunction<
   StreamObjectNoDataQuery,
   StreamObjectNoDataQueryVariables,
   ApolloError
->(StreamObjectNoDataDocument);
+>(StreamObjectNoDataDocument, handleApolloError);
 
 export const MainServerInfoDocument = gql`
     query MainServerInfo {
@@ -2250,7 +2929,7 @@ export const useMainServerInfoQuery = createSmartQueryOptionsFunction<
   MainServerInfoQuery,
   MainServerInfoQueryVariables,
   ApolloError
->(MainServerInfoDocument);
+>(MainServerInfoDocument, handleApolloError);
 
 export const FullServerInfoDocument = gql`
     query FullServerInfo {
@@ -2287,52 +2966,7 @@ export const useFullServerInfoQuery = createSmartQueryOptionsFunction<
   FullServerInfoQuery,
   FullServerInfoQueryVariables,
   ApolloError
->(FullServerInfoDocument);
-
-export const StreamWithCollaboratorsDocument = gql`
-    query StreamWithCollaborators($id: String!) {
-  stream(id: $id) {
-    id
-    name
-    isPublic
-    role
-    collaborators {
-      id
-      name
-      role
-      company
-      avatar
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamWithCollaboratorsQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamWithCollaboratorsQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamWithCollaborators: useStreamWithCollaboratorsQuery({
- *       variables: {
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamWithCollaboratorsQuery = createSmartQueryOptionsFunction<
-  StreamWithCollaboratorsQuery,
-  StreamWithCollaboratorsQueryVariables,
-  ApolloError
->(StreamWithCollaboratorsDocument);
+>(FullServerInfoDocument, handleApolloError);
 
 export const StreamCommitsDocument = gql`
     query StreamCommits($id: String!) {
@@ -2382,7 +3016,7 @@ export const useStreamCommitsQuery = createSmartQueryOptionsFunction<
   StreamCommitsQuery,
   StreamCommitsQueryVariables,
   ApolloError
->(StreamCommitsDocument);
+>(StreamCommitsDocument, handleApolloError);
 
 export const StreamsDocument = gql`
     query Streams($cursor: String) {
@@ -2453,7 +3087,7 @@ export const useStreamsQuery = createSmartQueryOptionsFunction<
   StreamsQuery,
   StreamsQueryVariables,
   ApolloError
->(StreamsDocument);
+>(StreamsDocument, handleApolloError);
 
 export const StreamDocument = gql`
     query Stream($id: String!) {
@@ -2488,7 +3122,115 @@ export const useStreamQuery = createSmartQueryOptionsFunction<
   StreamQuery,
   StreamQueryVariables,
   ApolloError
->(StreamDocument);
+>(StreamDocument, handleApolloError);
+
+export const StreamWithCollaboratorsDocument = gql`
+    query StreamWithCollaborators($id: String!) {
+  stream(id: $id) {
+    id
+    name
+    isPublic
+    role
+    collaborators {
+      ...StreamCollaboratorFields
+    }
+    pendingCollaborators {
+      title
+      inviteId
+      role
+      user {
+        ...LimitedUserFields
+      }
+    }
+  }
+}
+    ${StreamCollaboratorFieldsFragmentDoc}
+${LimitedUserFieldsFragmentDoc}`;
+
+/**
+ * __useStreamWithCollaboratorsQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useStreamWithCollaboratorsQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     streamWithCollaborators: useStreamWithCollaboratorsQuery({
+ *       variables: {
+ *         id: // value for 'id'
+ *       },
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useStreamWithCollaboratorsQuery = createSmartQueryOptionsFunction<
+  StreamWithCollaboratorsQuery,
+  StreamWithCollaboratorsQueryVariables,
+  ApolloError
+>(StreamWithCollaboratorsDocument, handleApolloError);
+
+export const LeaveStreamDocument = gql`
+    mutation LeaveStream($streamId: String!) {
+  streamLeave(streamId: $streamId)
+}
+    `;
+
+/**
+ * __leaveStreamMutation__
+ *
+ * To run a mutation, you call `leaveStreamMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = leaveStreamMutation(this, {
+ *   variables: {
+ *     streamId: // value for 'streamId'
+ *   },
+ * });
+ */
+export const leaveStreamMutation = createMutationFunction<
+  LeaveStreamMutation,
+  LeaveStreamMutationVariables,
+  ApolloError
+>(LeaveStreamDocument, handleApolloError);
+
+export const UpdateStreamPermissionDocument = gql`
+    mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
+  streamUpdatePermission(permissionParams: $params)
+}
+    `;
+
+/**
+ * __updateStreamPermissionMutation__
+ *
+ * To run a mutation, you call `updateStreamPermissionMutation` within a Vue component and pass it
+ * your Vue app instance along with any options that fit your needs.
+ *
+ * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
+ * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
+ * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
+ *
+ * @example
+ * const { success, data, errors } = updateStreamPermissionMutation(this, {
+ *   variables: {
+ *     params: // value for 'params'
+ *   },
+ * });
+ */
+export const updateStreamPermissionMutation = createMutationFunction<
+  UpdateStreamPermissionMutation,
+  UpdateStreamPermissionMutationVariables,
+  ApolloError
+>(UpdateStreamPermissionDocument, handleApolloError);
 
 export const UserFavoriteStreamsDocument = gql`
     query UserFavoriteStreams($cursor: String) {
@@ -2531,7 +3273,7 @@ export const useUserFavoriteStreamsQuery = createSmartQueryOptionsFunction<
   UserFavoriteStreamsQuery,
   UserFavoriteStreamsQueryVariables,
   ApolloError
->(UserFavoriteStreamsDocument);
+>(UserFavoriteStreamsDocument, handleApolloError);
 
 export const MainUserDataDocument = gql`
     query MainUserData {
@@ -2564,7 +3306,7 @@ export const useMainUserDataQuery = createSmartQueryOptionsFunction<
   MainUserDataQuery,
   MainUserDataQueryVariables,
   ApolloError
->(MainUserDataDocument);
+>(MainUserDataDocument, handleApolloError);
 
 export const ExtraUserDataDocument = gql`
     query ExtraUserData {
@@ -2598,7 +3340,144 @@ export const useExtraUserDataQuery = createSmartQueryOptionsFunction<
   ExtraUserDataQuery,
   ExtraUserDataQueryVariables,
   ApolloError
->(ExtraUserDataDocument);
+>(ExtraUserDataDocument, handleApolloError);
+
+export const UserSearchDocument = gql`
+    query UserSearch($query: String!, $limit: Int!, $cursor: String, $archived: Boolean) {
+  userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
+    cursor
+    items {
+      ...LimitedUserFields
+    }
+  }
+}
+    ${LimitedUserFieldsFragmentDoc}`;
+
+/**
+ * __useUserSearchQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useUserSearchQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     userSearch: useUserSearchQuery({
+ *       variables: {
+ *         query: // value for 'query'
+ *         limit: // value for 'limit'
+ *         cursor: // value for 'cursor'
+ *         archived: // value for 'archived'
+ *       },
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useUserSearchQuery = createSmartQueryOptionsFunction<
+  UserSearchQuery,
+  UserSearchQueryVariables,
+  ApolloError
+>(UserSearchDocument, handleApolloError);
+
+export const IsLoggedInDocument = gql`
+    query IsLoggedIn {
+  user {
+    id
+  }
+}
+    `;
+
+/**
+ * __useIsLoggedInQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useIsLoggedInQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     isLoggedIn: useIsLoggedInQuery({
+ *       variables: {},
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useIsLoggedInQuery = createSmartQueryOptionsFunction<
+  IsLoggedInQuery,
+  IsLoggedInQueryVariables,
+  ApolloError
+>(IsLoggedInDocument, handleApolloError);
+
+export const AdminUsersListDocument = gql`
+    query AdminUsersList($limit: Int, $offset: Int, $query: String) {
+  adminUsers(limit: $limit, offset: $offset, query: $query) {
+    totalCount
+    items {
+      id
+      registeredUser {
+        id
+        suuid
+        email
+        name
+        bio
+        company
+        avatar
+        verified
+        profiles
+        role
+        authorizedApps {
+          name
+        }
+      }
+      invitedUser {
+        id
+        email
+        invitedBy {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useAdminUsersListQuery__
+ *
+ * To use a Smart Query within a Vue component, call `useAdminUsersListQuery` as the value for a query key
+ * in the component's `apollo` config, passing any options required for the query.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
+ *
+ * @example
+ * {
+ *   apollo: {
+ *     adminUsersList: useAdminUsersListQuery({
+ *       variables: {
+ *         limit: // value for 'limit'
+ *         offset: // value for 'offset'
+ *         query: // value for 'query'
+ *       },
+ *       loadingKey: 'loading',
+ *       fetchPolicy: 'no-cache',
+ *     }),
+ *   }
+ * }
+ */
+export const useAdminUsersListQuery = createSmartQueryOptionsFunction<
+  AdminUsersListQuery,
+  AdminUsersListQueryVariables,
+  ApolloError
+>(AdminUsersListDocument, handleApolloError);
 
 export const UserDocument = gql`
     query User($id: String!) {
@@ -2642,7 +3521,7 @@ export const useUserQuery = createSmartQueryOptionsFunction<
   UserQuery,
   UserQueryVariables,
   ApolloError
->(UserDocument);
+>(UserDocument, handleApolloError);
 
 export const Document = gql`
     {
@@ -2733,53 +3612,7 @@ export const useUserProfileQuery = createSmartQueryOptionsFunction<
   UserProfileQuery,
   UserProfileQueryVariables,
   ApolloError
->(UserProfileDocument);
-
-export const UserSearchDocument = gql`
-    query UserSearch($query: String!, $limit: Int!, $cursor: String, $archived: Boolean) {
-  userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
-    cursor
-    items {
-      id
-      name
-      bio
-      company
-      avatar
-      verified
-    }
-  }
-}
-    `;
-
-/**
- * __useUserSearchQuery__
- *
- * To use a Smart Query within a Vue component, call `useUserSearchQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     userSearch: useUserSearchQuery({
- *       variables: {
- *         query: // value for 'query'
- *         limit: // value for 'limit'
- *         cursor: // value for 'cursor'
- *         archived: // value for 'archived'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useUserSearchQuery = createSmartQueryOptionsFunction<
-  UserSearchQuery,
-  UserSearchQueryVariables,
-  ApolloError
->(UserSearchDocument);
+>(UserProfileDocument, handleApolloError);
 
 export const WebhookDocument = gql`
     query webhook($streamId: String!, $webhookId: String!) {
@@ -2832,7 +3665,7 @@ export const useWebhookQuery = createSmartQueryOptionsFunction<
   WebhookQuery,
   WebhookQueryVariables,
   ApolloError
->(WebhookDocument);
+>(WebhookDocument, handleApolloError);
 
 export const WebhooksDocument = gql`
     query webhooks($streamId: String!) {
@@ -2886,4 +3719,4 @@ export const useWebhooksQuery = createSmartQueryOptionsFunction<
   WebhooksQuery,
   WebhooksQueryVariables,
   ApolloError
->(WebhooksDocument);
+>(WebhooksDocument, handleApolloError);

@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 const expect = require('chai').expect
 const assert = require('assert')
 

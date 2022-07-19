@@ -16,12 +16,14 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import FeedTimeline from '@/main/components/feed/FeedTimeline.vue'
+import LatestBlogposts from '@/main/components/feed/LatestBlogposts.vue'
 
 export default {
   name: 'TheFeed',
   components: {
-    FeedTimeline: () => import('@/main/components/feed/FeedTimeline.vue'),
-    LatestBlogposts: () => import('@/main/components/feed/LatestBlogposts')
+    FeedTimeline,
+    LatestBlogposts
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'feed', 0)]
 }

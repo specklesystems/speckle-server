@@ -45,7 +45,7 @@
 
 <script>
 import gql from 'graphql-tag'
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainServerInfoQuery } from '@/graphql/server'
 import pick from 'lodash/pick'
 import {
   STANDARD_PORTAL_KEYS,
@@ -94,7 +94,7 @@ export default {
   },
   apollo: {
     serverInfo: {
-      query: MainServerInfoQuery,
+      query: mainServerInfoQuery,
       update(data) {
         delete data.serverInfo.__typename
         this.serverModifications = Object.assign({}, data.serverInfo)

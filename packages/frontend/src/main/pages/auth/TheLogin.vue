@@ -106,6 +106,7 @@ import gql from 'graphql-tag'
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { randomString } from '@/helpers/randomHelpers'
 import { isEmailValid } from '@/plugins/authHelpers'
+import { processSuccessfulAuth } from '@/main/lib/auth/services/authService'
 
 export default {
   name: 'TheLogin',
@@ -167,7 +168,8 @@ export default {
         query: {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
-          suuid: this.$route.query.suuid
+          suuid: this.$route.query.suuid,
+          inviteId: this.$route.query.inviteId
         }
       }
     }
@@ -215,9 +217,10 @@ export default {
           body: JSON.stringify(user)
         })
 
+        // A redirect status code means success
         if (res.redirected) {
           this.$mixpanel.track('Log In', { type: 'action' })
-          window.location = res.url
+          processSuccessfulAuth(res)
           return
         }
 

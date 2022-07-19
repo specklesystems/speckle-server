@@ -45,13 +45,13 @@ setDarkTheme
 </template>
 <script>
 import { signOut } from '@/plugins/authHelpers'
-import { MainUserDataQuery } from '@/graphql/user'
+import { mainUserDataQuery } from '@/graphql/user'
 import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
   apollo: {
     user: {
-      query: MainUserDataQuery,
+      query: mainUserDataQuery,
       skip() {
         return !this.loggedIn
       }

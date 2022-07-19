@@ -29,7 +29,7 @@
 </template>
 <script>
 import LoginBlurb from '@/main/components/auth/LoginBlurb.vue'
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainServerInfoQuery } from '@/graphql/server'
 
 export default {
   name: 'TheAuth',
@@ -56,7 +56,7 @@ export default {
   },
   apollo: {
     serverInfo: {
-      query: MainServerInfoQuery
+      query: mainServerInfoQuery
     }
   },
   mounted() {

@@ -14,6 +14,10 @@ const { beforeEachContext } = require(`@/test/hooks`)
 
 const { sleep, noErrors } = require('@/test/helpers')
 const { appRoot } = require('@/bootstrap')
+const {
+  addOrUpdateStreamCollaborator
+} = require('@/modules/core/services/streams/streamAccessService')
+const { Roles } = require('@/modules/core/helpers/mainConstants')
 
 let addr
 let wsAddr
@@ -236,11 +240,13 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      await sendRequest(userA.token, {
-        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
-      })
-        .expect(200)
-        .expect(noErrors)
+      // Add stream permission directly
+      await addOrUpdateStreamCollaborator(
+        streamId,
+        userB.id,
+        Roles.Stream.Contributor,
+        userA.id
+      )
 
       await sleep(1000) // we need to wait up a second here
       expect(eventNum).to.equal(1)
@@ -269,11 +275,14 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      await sendRequest(userA.token, {
-        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
-      })
-        .expect(200)
-        .expect(noErrors)
+      // Add stream permission directly
+      await addOrUpdateStreamCollaborator(
+        streamId,
+        userB.id,
+        Roles.Stream.Contributor,
+        userA.id
+      )
+
       await sendRequest(userA.token, {
         query: `mutation { streamRevokePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}"} ) }`
       })

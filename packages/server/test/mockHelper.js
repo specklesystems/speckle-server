@@ -7,7 +7,9 @@ const mock = require('mock-require')
  * with the '/index' suffix and sometimes don't you need to specify both options. Multiple options are required
  * because of a limitation of mock-require - it doesn't understand that all of these point to the same thing.
  * @param {string|string[]} dependencyPaths Paths to modules that use the mocked module and that you
- * want to re-require so that if they are already loaded in memory, they're re-required with the new mock
+ * want to re-require so that if they are already loaded in memory, they're re-required with the new mock. Basically,
+ * if you've mocked a module, but it's not being used, debug the test and see if the mocked module is maybe required
+ * by another module that you haven't specified in this list.
  */
 function mockRequireModule(modulePaths, dependencyPaths = []) {
   modulePaths = isArray(modulePaths) ? modulePaths : [modulePaths]

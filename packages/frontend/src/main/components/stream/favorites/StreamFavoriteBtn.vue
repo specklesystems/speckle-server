@@ -15,8 +15,8 @@
 <script>
 import gql from 'graphql-tag'
 import { canBeFavorited } from '@/helpers/streamHelpers'
-import { UserFavoriteStreamsQuery } from '@/graphql/user'
-import { COMMON_STREAM_FIELDS } from '@/graphql/streams'
+import { userFavoriteStreamsQuery } from '@/graphql/user'
+import { commonStreamFieldsFragment } from '@/graphql/streams'
 
 export default {
   name: 'StreamFavoriteBtn',
@@ -74,7 +74,7 @@ export default {
           // Check favoriteStreams cache
           let data
           try {
-            data = cache.readQuery({ query: UserFavoriteStreamsQuery })
+            data = cache.readQuery({ query: userFavoriteStreamsQuery })
           } catch (e) {
             // Cache isn't filled probably (sucks that this throws)
             return
@@ -91,7 +91,7 @@ export default {
             // Stream should be in the cache (how else are you favoriting it?)
             const stream = cache.readFragment({
               id: `Stream:${id}`,
-              fragment: COMMON_STREAM_FIELDS
+              fragment: commonStreamFieldsFragment
             })
 
             newStreams = streams.slice()
@@ -106,7 +106,7 @@ export default {
           }
 
           cache.writeQuery({
-            query: UserFavoriteStreamsQuery,
+            query: userFavoriteStreamsQuery,
             data: {
               user: {
                 ...data.user,

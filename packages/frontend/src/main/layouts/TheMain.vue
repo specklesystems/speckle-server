@@ -62,8 +62,8 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import { MainUserDataQuery } from '@/graphql/user'
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainUserDataQuery } from '@/graphql/user'
+import { mainServerInfoQuery } from '@/graphql/server'
 
 export default {
   name: 'TheMain',
@@ -78,10 +78,10 @@ export default {
   },
   apollo: {
     serverInfo: {
-      query: MainServerInfoQuery
+      query: mainServerInfoQuery
     },
     user: {
-      query: MainUserDataQuery,
+      query: mainUserDataQuery,
       skip() {
         return !this.$loggedIn()
       }

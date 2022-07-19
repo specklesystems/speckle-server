@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
-  <v-timeline-item v-show="!activityGroup[0].actionType.includes('comment_')" medium>
+  <v-timeline-item v-show="shouldShowComponent" medium>
     <template #icon>
       <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" />
     </template>
@@ -35,23 +35,15 @@
                 <v-col cols="12" md="10">
                   <user-pill
                     class="mr-3"
-                    :user-id="activityItem.info.targetUser"
-                    :color="
-                      lastActivity.actionType === 'stream_permissions_add'
-                        ? 'success'
-                        : 'error'
-                    "
+                    :user-id="activityItem.info.targetUser || activityItem.userId"
+                    :color="isUserAddedToStreamActivity ? 'success' : 'error'"
                   ></user-pill>
 
                   <span
                     v-if="$vuetify.breakpoint.smAndUp"
                     class="mr-3 body-2 font-italic"
                   >
-                    {{
-                      lastActivity.actionType === 'stream_permissions_add'
-                        ? 'user added as'
-                        : 'user removed'
-                    }}
+                    {{ isUserAddedToStreamActivity ? 'user added as' : 'user removed' }}
                   </span>
                   <v-chip v-if="activityItem.info.role" small outlined class="my-2">
                     <v-icon small left>mdi-account-key-outline</v-icon>
@@ -61,13 +53,16 @@
                 <v-col v-if="$vuetify.breakpoint.mdAndUp" cols="2" class="text-right">
                   <v-btn
                     v-if="
-                      activityItem.info.targetUser &&
-                      activityItem.actionType === `stream_permissions_add`
+                      (activityItem.info.targetUser || activityItem.userId) &&
+                      isUserAddedToStreamActivity
                     "
                     text
                     outlined
                     small
-                    :to="'/profile/' + activityItem.info.targetUser"
+                    :to="
+                      '/profile/' +
+                      (activityItem.info.targetUser || activityItem.userId)
+                    "
                     color="primary"
                   >
                     view
@@ -406,6 +401,21 @@ export default {
     }
   },
   computed: {
+    shouldShowComponent() {
+      if (this.lastActivity.actionType.includes('comment_')) return false
+      if (this.lastActivity.actionType.includes('stream_permissions') && !this.user)
+        return false
+
+      return true
+    },
+    isUserAddedToStreamActivity() {
+      const actionTypes = [
+        'stream_permissions_add',
+        'stream_permissions_invite_accepted'
+      ]
+
+      return actionTypes.includes(this.lastActivity?.actionType)
+    },
     lastActivity() {
       return this.activityGroup[0]
     },
@@ -464,14 +474,29 @@ export default {
                 : this.activityGroup.length + ' users'
             } to`
           }
-        case 'stream_permissions_remove':
+        case 'stream_permissions_invite_accepted':
           return {
-            captionText: `removed ${
-              this.activityGroup.length === 1
-                ? 'a user'
-                : this.activityGroup.length + ' users'
-            } from`
+            captionText: `accepted an invitation to become a collaborator on`
           }
+        case 'stream_permissions_remove': {
+          const removedCount = this.activityGroup.length
+          const removedSelf =
+            this.lastActivity.userId === this.lastActivity.info?.targetUser
+
+          if (removedCount > 1) {
+            return {
+              captionText: `removed ${removedCount} users from`
+            }
+          }
+
+          if (removedSelf) {
+            return {
+              captionText: `left the stream`
+            }
+          }
+
+          return { captionText: 'removed a user from' }
+        }
         case 'branch_create':
           return {
             icon: 'mdi-source-branch-plus',

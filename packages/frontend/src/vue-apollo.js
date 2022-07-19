@@ -59,7 +59,7 @@ function getDefaultOptions() {
       cacheRedirects: {
         Query: {
           user: (_, args, { getCacheKey }) =>
-            getCacheKey({ __typename: 'User', id: args.id }),
+            getCacheKey({ __typename: 'User', id: args?.id }),
           stream: (_, args, { getCacheKey }) =>
             getCacheKey({ __typename: 'Stream', id: args.id })
         }
