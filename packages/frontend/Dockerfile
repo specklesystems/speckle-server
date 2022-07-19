@@ -2,6 +2,7 @@
 
 # build stage
 FROM node:16.15-bullseye-slim as build-stage
+ARG SPECKLE_SERVER_VERSION=custom
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .

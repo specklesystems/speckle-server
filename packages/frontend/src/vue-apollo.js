@@ -14,12 +14,11 @@ Vue.use(VueApollo)
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
 // Http endpoint
-const httpEndpoint =
-  process.env.VUE_APP_GRAPHQL_HTTP || `${window.location.origin}/graphql`
+const httpEndpoint = `${window.location.origin}/graphql`
 // WS endpoint
-const wsEndpoint =
-  process.env.VUE_APP_GRAPHQL_WS ||
-  `${window.location.origin.replace('http', 'ws')}/graphql`
+const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
+// app version
+const appVersion = process.env.SPECKLE_SERVER_VERSION || 'unknown'
 
 function hasAuthToken() {
   return !!localStorage.getItem(AUTH_TOKEN)
@@ -64,6 +63,11 @@ function getDefaultOptions() {
             getCacheKey({ __typename: 'Stream', id: args.id })
         }
       }
+    },
+    // Extra ApolloClient ctor options
+    apollo: {
+      name: 'web',
+      version: appVersion
     }
   }
 }
