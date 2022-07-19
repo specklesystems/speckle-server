@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
-  <v-timeline-item v-show="!activityGroup[0].actionType.includes('comment_')" medium>
+  <v-timeline-item v-show="shouldShowComponent" medium>
     <template #icon>
       <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" />
     </template>
@@ -401,6 +401,13 @@ export default {
     }
   },
   computed: {
+    shouldShowComponent() {
+      if (this.lastActivity.actionType.includes('comment_')) return false
+      if (this.lastActivity.actionType.includes('stream_permissions') && !this.user)
+        return false
+
+      return true
+    },
     isUserAddedToStreamActivity() {
       const actionTypes = [
         'stream_permissions_add',
