@@ -225,8 +225,8 @@ spec:
 
           # Monitoring - Apollo
           {{- if .Values.server.monitoring.apollo.enabled }}
-          - name: APOLLO_GRAPH_REF
-            value: {{ .Values.server.monitoring.apollo.graph_ref }}
+          - name: APOLLO_GRAPH_ID
+            value: {{ .Values.server.monitoring.apollo.graph_id }}
           - name: APOLLO_SCHEMA_REPORTING
             value: "true"
           - name: APOLLO_GRAPH_VARIANT

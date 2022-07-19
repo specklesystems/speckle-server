@@ -59,7 +59,7 @@ server:
   monitoring:
     apollo:
       enabled: false
-      graph_ref: ''
+      graph_id: ''
       variant: ''
       server_version: ''
       server_id: ''
