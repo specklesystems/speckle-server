@@ -1,4 +1,5 @@
 import { Material, Object3D } from 'three'
+import { MaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
 export enum GeometryType {
@@ -29,6 +30,7 @@ export interface BatchUpdateRange {
   offset: number
   count: number
   material?: Material
+  materialOptions?: MaterialOptions
 }
 
 export const HideAllBatchUpdateRange = {

@@ -1,4 +1,4 @@
-export const speckleStandardFrag = /* glsl */ `
+export const speckleStandardGradientFrag = /* glsl */ `
 #define STANDARD
 
 #ifdef PHYSICAL
@@ -49,6 +49,9 @@ uniform float opacity;
 
 varying vec3 vViewPosition;
 
+varying float vGradientIndex;
+uniform sampler2D gradientRamp;
+
 #include <common>
 #include <packing>
 #include <dithering_pars_fragment>
@@ -83,7 +86,7 @@ void main() {
 
     #include <clipping_planes_fragment>
 
-    vec4 diffuseColor = vec4( diffuse, opacity );
+    vec4 diffuseColor = vec4( texture2D(gradientRamp, vec2(vGradientIndex, 0.)).rgb, opacity );
     ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
     vec3 totalEmissiveRadiance = emissive;
 
@@ -142,6 +145,5 @@ void main() {
     #include <fog_fragment>
     #include <premultiplied_alpha_fragment>
     #include <dithering_fragment>
-
 }
 `

@@ -1,4 +1,4 @@
-export const speckleStandardVert = /* glsl */ `
+export const speckleStandardGradientVert = /* glsl */ `
 #define STANDARD
 #ifdef USE_RTE
     attribute vec3 position_high;
@@ -28,7 +28,8 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
-
+attribute float gradientIndex;
+varying float vGradientIndex;
 
 void main() {
 
@@ -62,7 +63,7 @@ void main() {
 
     #endif
     mvPosition = modelViewMatrix * mvPosition;
-
+    vGradientIndex = gradientIndex;
     gl_Position = projectionMatrix * mvPosition;
 
 

@@ -8,8 +8,9 @@ import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
-import { FilterMaterial } from '../FilteringManager'
+import { FilterMaterialType } from '../FilteringManager'
 import { Material } from 'three'
+import { FilterMaterial } from '../FilteringManager'
 
 export default class Batcher {
   public materials: Materials
@@ -120,7 +121,8 @@ export default class Batcher {
           return {
             offset: rv.batchStart,
             count: rv.batchCount,
-            material: this.materials.getFilterMaterial(rv, filterMaterial)
+            material: this.materials.getFilterMaterial(rv, filterMaterial.filterType),
+            materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
           } as BatchUpdateRange
         })
       batch.setDrawRanges(...views)
@@ -163,7 +165,7 @@ export default class Batcher {
               count: this.batches[k].renderViews[i].batchCount,
               material: this.materials.getFilterMaterial(
                 this.batches[k].renderViews[i],
-                FilterMaterial.GHOST
+                FilterMaterialType.GHOST
               )
             })
           }
@@ -176,7 +178,7 @@ export default class Batcher {
     }
   }
 
-  public isolateRenderViewBatch(id: string) {
+  public async isolateRenderViewBatch(id: string) {
     const rv = WorldTree.getRenderTree().getRenderViewForNodeId(id)
     for (const k in this.batches) {
       if (k !== rv.batchId) {
@@ -185,7 +187,7 @@ export default class Batcher {
           count: Infinity,
           material: this.materials.getFilterMaterial(
             this.batches[k].renderViews[0],
-            FilterMaterial.GHOST
+            FilterMaterialType.GHOST
           )
         })
       }

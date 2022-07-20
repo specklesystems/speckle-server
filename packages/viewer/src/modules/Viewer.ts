@@ -16,6 +16,7 @@ import { World } from './World'
 import { Geometry } from './converter/Geometry'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
+import { FilterMaterialType } from './FilteringManager'
 
 export class Viewer extends EventEmitter implements IViewer {
   public speckleRenderer: SpeckleRenderer
@@ -89,7 +90,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.speckleRenderer = new SpeckleRenderer(this)
     this.speckleRenderer.create(this.container)
-    Viewer.Assets = new Assets(this.speckleRenderer.renderer)
+    new Assets(this.speckleRenderer.renderer)
 
     this.cameraHandler = new CameraHandler(this)
 
@@ -133,7 +134,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      Viewer.Assets.getEnvironment(this.startupParams.environmentSrc)
+      Assets.getEnvironment(this.startupParams.environmentSrc)
         .then((value: Texture) => {
           this.speckleRenderer.indirectIBL = value
         })
@@ -319,6 +320,52 @@ export class Viewer extends EventEmitter implements IViewer {
 
       propInfo[prop] = pinfo
     }
+  }
+
+  public debugGetVolumeNodes() {
+    const nodesGradient = []
+    const nodesGhost = []
+    const volumeValues = []
+    let minVolume = Infinity
+    let maxVolume = 0
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      const params = node.model.raw.parameters
+      if (params) {
+        for (const k in params) {
+          if (!(params[k] instanceof Object)) continue
+          if (params[k].name === 'Volume') {
+            minVolume = Math.min(minVolume, params[k].value)
+            maxVolume = Math.max(maxVolume, params[k].value)
+            nodesGradient.push(node)
+            volumeValues.push(params[k].value)
+          } else {
+            nodesGhost.push(node)
+          }
+        }
+      }
+      return true
+    })
+    this.speckleRenderer.clearFilter()
+    this.speckleRenderer.beginFilter()
+    for (let k = 0; k < nodesGhost.length; k++) {
+      const ghostIds = WorldTree.getRenderTree()
+        .getRenderViewsForNode(nodesGhost[k], nodesGhost[k])
+        .map((value) => value.renderData.id)
+      this.speckleRenderer.applyFilter(ghostIds, {
+        filterType: FilterMaterialType.GHOST
+      })
+    }
+    for (let k = 0; k < nodesGradient.length; k++) {
+      const ids = WorldTree.getRenderTree()
+        .getRenderViewsForNode(nodesGradient[k], nodesGradient[k])
+        .map((value) => value.renderData.id)
+      const t = (volumeValues[k] - minVolume) / (maxVolume - minVolume)
+      this.speckleRenderer.applyFilter(ids, {
+        filterType: FilterMaterialType.GRADIENT,
+        gradientIndex: t
+      })
+    }
+    this.speckleRenderer.endFilter()
   }
 
   public dispose() {

@@ -105,12 +105,12 @@ export class RenderTree {
    *  Currently it doesn't treat Blocks in a special way, but
    *  we might want to.
    */
-  public getRenderViewsForNode(node: TreeNode): NodeRenderView[] {
-    if (node.model.atomic) {
+  public getRenderViewsForNode(node: TreeNode, parent?: TreeNode): NodeRenderView[] {
+    if (node.model.atomic && node.model.renderView) {
       return [node.model.renderView]
     }
 
-    return node.parent
+    return (parent ? parent : node.parent)
       .all((_node: TreeNode): boolean => {
         return _node.model.renderView !== null && _node.model.renderView.hasGeometry
       })

@@ -299,7 +299,9 @@ export default class SpeckleRenderer {
     this.batcher.isolateRenderView(hitId)
     /** In case the above call has breaking bugs, just use this instead */
     // this.batcher.autoFillDrawRanges(
-    //   this.batcher.setObjectsFilterMaterial([hitNode.model.id], FilterMaterial.SELECT)
+    //   this.batcher.setObjectsFilterMaterial([hitNode.model.id], {
+    //     filterType: FilterMaterialType.SELECT
+    //   })
     // )
   }
 

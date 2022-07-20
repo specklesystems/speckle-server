@@ -1,5 +1,7 @@
 import {
+  BufferAttribute,
   BufferGeometry,
+  DynamicDrawUsage,
   Float32BufferAttribute,
   Material,
   Mesh,
@@ -18,6 +20,7 @@ export default class MeshBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Mesh
+  private gradientIndexBuffer: BufferAttribute
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
@@ -71,7 +74,24 @@ export default class MeshBatch implements Batch {
       return a.offset - b.offset
     })
     const newGroups = []
+    let minGradientIndex = Infinity
+    let maxGradientIndex = 0
     for (let k = 0; k < sortedRanges.length; k++) {
+      if (sortedRanges[k].materialOptions) {
+        if (sortedRanges[k].materialOptions.gradientIndex) {
+          const start = sortedRanges[k].offset
+          const len = sortedRanges[k].offset + sortedRanges[k].count
+          const minMaxIndices = this.updateGradientIndexBufferData(
+            start,
+            sortedRanges[k].count === Infinity
+              ? this.geometry.attributes['gradientIndex'].array.length
+              : len,
+            sortedRanges[k].materialOptions.gradientIndex
+          )
+          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+        }
+      }
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
       if (collidingGroup) {
         console.warn(`Draw range collision @ ${this.id} overwritting...`)
@@ -82,6 +102,9 @@ export default class MeshBatch implements Batch {
       }
       newGroups.push(sortedRanges[k])
     }
+    /** Should properly compute min, max buffer range. Current minGradientIndex and maxGradientIndex are incorrect */
+    this.updateGradientIndexBuffer()
+
     for (let i = 0; i < newGroups.length; i++) {
       this.geometry.addGroup(
         newGroups[i].offset,
@@ -257,6 +280,13 @@ export default class MeshBatch implements Batch {
       this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
     }
 
+    const buffer = new Float32Array(position.length / 3)
+    this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
+    this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
+    this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
+    this.updateGradientIndexBufferData(0, buffer.length, 0)
+    this.updateGradientIndexBuffer()
+
     this.geometry.computeVertexNormals()
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
@@ -268,6 +298,43 @@ export default class MeshBatch implements Batch {
     }
 
     return this.geometry
+  }
+
+  private updateGradientIndexBufferData(
+    start: number,
+    end: number,
+    value: number
+  ): { minIndex: number; maxIndex: number } {
+    const index = this.geometry.index.array as number[]
+    const data = this.gradientIndexBuffer.array as number[]
+    let minVertexIndex = Infinity
+    let maxVertexIndex = 0
+    for (let k = start; k < end; k++) {
+      const vIndex = index[k]
+      minVertexIndex = Math.min(minVertexIndex, vIndex)
+      maxVertexIndex = Math.max(maxVertexIndex, vIndex)
+      data[vIndex] = value
+    }
+    this.gradientIndexBuffer.updateRange = {
+      offset: minVertexIndex,
+      count: maxVertexIndex - minVertexIndex + 1
+    }
+    this.gradientIndexBuffer.needsUpdate = true
+    this.geometry.attributes['gradientIndex'].needsUpdate = true
+    return {
+      minIndex: minVertexIndex,
+      maxIndex: maxVertexIndex
+    }
+  }
+
+  private updateGradientIndexBuffer(rangeMin?: number, rangeMax?: number) {
+    this.gradientIndexBuffer.updateRange = {
+      offset: rangeMin !== undefined ? rangeMin : 0,
+      count:
+        rangeMin !== undefined && rangeMax !== undefined ? rangeMax - rangeMin + 1 : -1
+    }
+    this.gradientIndexBuffer.needsUpdate = true
+    this.geometry.attributes['gradientIndex'].needsUpdate = true
   }
 
   public purge() {

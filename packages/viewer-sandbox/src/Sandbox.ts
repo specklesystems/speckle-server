@@ -1,6 +1,6 @@
 import { SpeckleType } from '@speckle/viewer'
 import { GeometryConverter } from '@speckle/viewer'
-import { Viewer, IViewer, WorldTree, FilterMaterial } from '@speckle/viewer'
+import { Viewer, IViewer, WorldTree } from '@speckle/viewer'
 import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
 import { Object3D } from '@speckle/viewer/node_modules/@types/three'
 import { Pane } from 'tweakpane'
@@ -226,40 +226,26 @@ export default class Sandbox {
       title: 'Filtering',
       expanded: true
     })
-    filteringFolder
-      .addButton({
-        title: 'Select Random'
-      })
-      .on('click', () => {
-        this.viewer.speckleRenderer.clearFilter()
-        this.viewer.speckleRenderer.beginFilter()
-        this.viewer.speckleRenderer.applyFilter(
-          this.getRandomNodeIds(0.25),
-          FilterMaterial.SELECT
-        )
-        this.viewer.speckleRenderer.endFilter()
-      })
+    // filteringFolder
+    //   .addButton({
+    //     title: 'Select Random'
+    //   })
+    //   .on('click', () => {
+    //     this.viewer.speckleRenderer.clearFilter()
+    //     this.viewer.speckleRenderer.beginFilter()
+    //     this.viewer.speckleRenderer.applyFilter(
+    //       this.getRandomNodeIds(0.25),
+    //       FilterMaterial.GRADIENT
+    //     )
+    //     this.viewer.speckleRenderer.endFilter()
+    //   })
 
     filteringFolder
       .addButton({
-        title: 'Select&Ghost&Gradient Random'
+        title: 'Filter By Volume'
       })
       .on('click', () => {
-        this.viewer.speckleRenderer.clearFilter()
-        this.viewer.speckleRenderer.beginFilter()
-        this.viewer.speckleRenderer.applyFilter(
-          this.getRandomNodeIds(0.25),
-          FilterMaterial.SELECT
-        )
-        this.viewer.speckleRenderer.applyFilter(
-          this.getRandomNodeIds(0.25),
-          FilterMaterial.GHOST
-        )
-        this.viewer.speckleRenderer.applyFilter(
-          this.getRandomNodeIds(0.15),
-          FilterMaterial.GRADIENT
-        )
-        this.viewer.speckleRenderer.endFilter()
+        this.viewer.debugGetVolumeNodes()
       })
   }
 

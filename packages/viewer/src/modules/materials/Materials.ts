@@ -6,7 +6,15 @@ import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRender
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
+import { FilterMaterialType } from '../FilteringManager'
+import SpeckleStandardGradientMaterial from './SpeckleStandardGradientMaterial'
+import defaultGradient from '../../assets/gradient.png'
+import { Assets } from '../Assets'
 import { FilterMaterial } from '../FilteringManager'
+
+export interface MaterialOptions {
+  gradientIndex?: number
+}
 
 export default class Materials {
   private readonly materialMap: { [hash: number]: Material } = {}
@@ -56,7 +64,7 @@ export default class Materials {
     return displayStyle
   }
 
-  public createDefaultMaterials() {
+  public async createDefaultMaterials() {
     this.meshHighlightMaterial = new SpeckleStandardMaterial(
       {
         color: 0xff0000,
@@ -123,7 +131,7 @@ export default class Materials {
 
     this.meshGhostMaterial = new SpeckleStandardMaterial(
       {
-        color: 0x00ff00,
+        color: 0xffffff,
         // side: DoubleSide,
         transparent: true,
         opacity: 0.2,
@@ -133,7 +141,7 @@ export default class Materials {
     )
     this.meshGhostMaterial.depthWrite = false
 
-    this.meshGradientMaterial = new SpeckleStandardMaterial(
+    this.meshGradientMaterial = new SpeckleStandardGradientMaterial(
       {
         color: 0x0000ff,
         side: DoubleSide,
@@ -143,7 +151,9 @@ export default class Materials {
       },
       ['USE_RTE']
     )
-    this.meshGhostMaterial.depthWrite = false
+    ;(this.meshGradientMaterial as SpeckleStandardGradientMaterial).setGradientTexture(
+      await Assets.getTexture(defaultGradient)
+    )
 
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
@@ -360,15 +370,26 @@ export default class Materials {
     }
   }
 
-  public getFilterMaterial(renderView: NodeRenderView, filterMaterial: FilterMaterial) {
+  public getFilterMaterial(
+    renderView: NodeRenderView,
+    filterMaterial: FilterMaterialType
+  ) {
     switch (filterMaterial) {
-      case FilterMaterial.SELECT:
+      case FilterMaterialType.SELECT:
         return this.getHighlightMaterial(renderView)
-      case FilterMaterial.GHOST:
+      case FilterMaterialType.GHOST:
         return this.getGhostMaterial(renderView)
-      case FilterMaterial.GRADIENT:
+      case FilterMaterialType.GRADIENT:
         return this.getGradientMaterial(renderView)
     }
+  }
+
+  public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
+    return filterMaterial.gradientIndex
+      ? {
+          gradientIndex: filterMaterial.gradientIndex
+        }
+      : null
   }
 
   public purge() {
