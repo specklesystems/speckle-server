@@ -23,6 +23,7 @@ Please answer the following questions before submitting an issue.
 
 -->
 
+- [ ] I read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md)
 - [ ] I checked the [documentation](https://speckle.guide/) and found no answer.
 - [ ] I checked to make sure that this issue has not [already been filed](../../issues)
 - [ ] I checked the [community forum](https://speckle.community/) for related discussions.
