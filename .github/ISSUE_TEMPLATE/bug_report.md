@@ -25,8 +25,8 @@ Please answer the following questions before submitting an issue.
 
 - [ ] I read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md)
 - [ ] I checked the [documentation](https://speckle.guide/) and found no answer.
-- [ ] I checked to make sure that this issue has not [already been filed](../../issues)
-- [ ] I checked the [community forum](https://speckle.community/) for related discussions.
+- [ ] I checked [existing issues](../issues?q=is%3Aissue) and found no similar issue. <!-- If you do find an existing issue, please show your support by liking it :+1: instead of creating a new issue -->
+- [ ] I checked the [community forum](https://speckle.community/) for related discussions and found no answer.
 - [ ] I'm reporting the issue to the correct repository (see also [speckle-server](https://github.com/specklesystems/speckle-server), [speckle-sharp](https://github.com/specklesystems/speckle-sharp), [specklepy](https://github.com/specklesystems/specklepy), [speckle-docs](https://github.com/specklesystems/speckle-docs), and [others](https://github.com/orgs/specklesystems/repositories))
 
 ## What package are you referring to?
