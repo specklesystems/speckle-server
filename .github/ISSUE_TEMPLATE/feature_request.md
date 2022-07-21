@@ -52,6 +52,9 @@ A clear and concise description of any alternative solutions or features you've 
 ## Additional context
 <!---
 Add any other context or screenshots about the feature request here.
+
+Have you seen this feature implemented in any other software?  Can you provide screenshots or links to video or documentation?
+What works well about these existing features in other software?  What doesn't work well?
 -->
 
 ## Related issues or community discussions

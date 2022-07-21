@@ -79,8 +79,6 @@ If applicable, please fill in the below details - they help a lot!
 - Browser [e.g. stock browser, safari]
 - Version [e.g. 22]
 
-
-
 ## Failure Logs
 
 <!---
@@ -98,4 +96,15 @@ your log output here
 
 <!---
 Add any other context about the problem here.
+-->
+
+## Proposed Solution (if any)
+
+<!---
+Let us know what how you would solve this.
+-->
+
+#### Optional: Affected Projects
+<!---
+Does this issue propagate to other dependencies or dependents? If so, list them here with links!
 -->
