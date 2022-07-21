@@ -78,14 +78,9 @@ addressed, and remove any items that are not relevant to this PR.
 
 -->
 
-- [ ] My pull request follows the guidelines in the Contributing document?
-
+- [ ] My pull request follows the guidelines in the [Contributing guide](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md)?
 - [ ] My pull request does not duplicate any other open [Pull Requests](../../../pulls) for the same update/change?
-
 - [ ] My commits are related to the pull request and do not amend unrelated code or documentation.
-
 - [ ] My code follows a similar style to existing code.
-
 - [ ] I have added appropriate tests.
-
 - [ ] I have updated or added relevant documentation.
