@@ -322,7 +322,11 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public debugGetVolumeNodes(): { min: number; max: number; nodes: TreeNode[] } {
+  public debugGetFilterByPropetyNodes(propertyName: string): {
+    min: number
+    max: number
+    nodes: TreeNode[]
+  } {
     const volumeNodes = []
     let minVolume = Infinity
     let maxVolume = 0
@@ -331,7 +335,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (params) {
         for (const k in params) {
           if (!(params[k] instanceof Object)) continue
-          if (params[k].name === 'Volume') {
+          if (params[k].name === propertyName) {
             minVolume = Math.min(minVolume, params[k].value)
             maxVolume = Math.max(maxVolume, params[k].value)
             volumeNodes.push(node)
@@ -348,21 +352,23 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public debugApplyVolumeFilter(
+  public debugApplyByPropetyFilter(
     data: { min: number; max: number; nodes: TreeNode[] },
+    propertyName: string,
     min?: number,
     max?: number
   ) {
     const nodesGradient = []
     const nodesGhost = []
-    const volumeValues = []
+    const values = []
 
+    /** This is the lazy approach */
     WorldTree.getInstance().walk((node: TreeNode) => {
       const params = node.model.raw.parameters
       if (params) {
         for (const k in params) {
           if (!(params[k] instanceof Object)) continue
-          if (params[k].name === 'Volume') {
+          if (params[k].name === propertyName) {
             const volumeValue = params[k].value
             const pasMin = min !== undefined ? volumeValue >= min : true
             const pasMax = max !== undefined ? volumeValue <= max : true
@@ -373,7 +379,7 @@ export class Viewer extends EventEmitter implements IViewer {
               !nodesGradient.includes(node)
             ) {
               nodesGradient.push(node)
-              volumeValues.push(volumeValue)
+              values.push(volumeValue)
             }
           } else {
             if (!nodesGhost.includes(node)) nodesGhost.push(node)
@@ -397,10 +403,10 @@ export class Viewer extends EventEmitter implements IViewer {
       const ids = WorldTree.getRenderTree()
         .getRenderViewsForNode(nodesGradient[k], nodesGradient[k])
         .map((value) => value.renderData.id)
-      const t = (volumeValues[k] - data.min) / (data.max - data.min)
+      const t = (values[k] - data.min) / (data.max - data.min)
       this.speckleRenderer.applyFilter(ids, {
         filterType: FilterMaterialType.GRADIENT,
-        gradientIndex: t
+        rampIndex: t
       })
     }
 

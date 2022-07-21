@@ -1,4 +1,11 @@
-import { Texture, PMREMGenerator, WebGLRenderer, TextureLoader } from 'three'
+import {
+  Texture,
+  PMREMGenerator,
+  WebGLRenderer,
+  TextureLoader,
+  Color,
+  DataTexture
+} from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { Asset, AssetType } from '../IViewer'
@@ -95,5 +102,38 @@ export class Assets {
         reject(`Loading asset ${srcUrl} failed`)
       }
     })
+  }
+
+  public static generateGradientRampTexture(
+    fromColor: string,
+    toColor: string,
+    steps: number
+  ) {
+    fromColor
+    toColor
+    steps
+    // NOT NECESSARY AT THE MOMENT. USING STATIC GRADIENT RAMP
+  }
+
+  public static generateDiscreetRampTexture(hexColors: string[]): Texture {
+    const width = hexColors.length
+    const height = 1
+
+    const size = width * height
+    const data = new Uint8Array(4 * size)
+
+    for (let k = 0; k < hexColors.length; k++) {
+      const stride = k * 4
+      const color = new Color(hexColors[k])
+      color.convertSRGBToLinear()
+      data[stride] = Math.floor(color.r * 255)
+      data[stride + 1] = Math.floor(color.g * 255)
+      data[stride + 2] = Math.floor(color.b * 255)
+      data[stride + 3] = 255
+    }
+
+    const texture = new DataTexture(data, width, height)
+    texture.needsUpdate = true
+    return texture
   }
 }

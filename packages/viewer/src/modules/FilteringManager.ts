@@ -1,11 +1,16 @@
+import { Texture } from 'three'
+
 export enum FilterMaterialType {
   SELECT,
   GHOST,
-  GRADIENT
+  GRADIENT,
+  COLORED
 }
+
 export interface FilterMaterial {
   filterType: FilterMaterialType
-  gradientIndex?: number
+  rampIndex?: number
+  rampTexture?: Texture
 }
 
 export class FilteringManager {

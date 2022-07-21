@@ -385,9 +385,9 @@ export default class Materials {
   }
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
-    return filterMaterial.gradientIndex
+    return filterMaterial.rampIndex
       ? {
-          gradientIndex: filterMaterial.gradientIndex
+          gradientIndex: filterMaterial.rampIndex
         }
       : null
   }
