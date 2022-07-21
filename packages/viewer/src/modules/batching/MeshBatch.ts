@@ -94,7 +94,7 @@ export default class MeshBatch implements Batch {
       }
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
       if (collidingGroup) {
-        console.warn(`Draw range collision @ ${this.id} overwritting...`)
+        // console.warn(`Draw range collision @ ${this.id} overwritting...`)
         collidingGroup.materialIndex = this.mesh.material.indexOf(
           sortedRanges[k].material
         )

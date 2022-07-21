@@ -1,4 +1,4 @@
-export const speckleStandardGradientVert = /* glsl */ `
+export const speckleStandardColoredVert = /* glsl */ `
 #define STANDARD
 #ifdef USE_RTE
     attribute vec3 position_high;

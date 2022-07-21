@@ -3,12 +3,13 @@ import { GeometryConverter } from '@speckle/viewer'
 import { Viewer, IViewer, WorldTree } from '@speckle/viewer'
 import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
 import { Object3D } from '@speckle/viewer/node_modules/@types/three'
-import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 export default class Sandbox {
   private viewer: IViewer
   private pane: Pane
   private tabs
+  private minVolumeControl
+  private maxVolumeControl
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
@@ -25,6 +26,12 @@ export default class Sandbox {
     sunPhi: 0.5,
     sunTheta: 0.5,
     sunRadiusOffset: 0
+  }
+
+  public static filterParams = {
+    volumeData: {},
+    minVolume: 0,
+    maxVolume: 10000
   }
 
   public constructor(viewer: Viewer) {
@@ -245,7 +252,48 @@ export default class Sandbox {
         title: 'Filter By Volume'
       })
       .on('click', () => {
-        this.viewer.debugGetVolumeNodes()
+        Sandbox.filterParams.volumeData = this.viewer.debugGetVolumeNodes()
+        Sandbox.filterParams.minVolume = Sandbox.filterParams.volumeData.min
+        Sandbox.filterParams.maxVolume = Sandbox.filterParams.volumeData.max
+
+        this.viewer.debugApplyVolumeFilter(Sandbox.filterParams.volumeData)
+        this.minVolumeControl.controller_.valueController.value.constraint_.constraints[0].minValue =
+          Sandbox.filterParams.minVolume
+        this.minVolumeControl.controller_.valueController.value.constraint_.constraints[0].maxValue =
+          Sandbox.filterParams.maxVolume
+        this.maxVolumeControl.controller_.valueController.value.constraint_.constraints[0].minValue =
+          Sandbox.filterParams.minVolume
+        this.maxVolumeControl.controller_.valueController.value.constraint_.constraints[0].maxValue =
+          Sandbox.filterParams.maxVolume
+        this.maxVolumeControl.disabled = false
+        this.minVolumeControl.disabled = false
+        this.pane.refresh()
+      })
+    this.minVolumeControl = filteringFolder
+      .addInput(Sandbox.filterParams, 'minVolume', {
+        min: 0,
+        max: 100,
+        disabled: true
+      })
+      .on('change', () => {
+        this.viewer.debugApplyVolumeFilter(
+          Sandbox.filterParams.volumeData,
+          Sandbox.filterParams.minVolume,
+          Sandbox.filterParams.maxVolume
+        )
+      })
+    this.maxVolumeControl = filteringFolder
+      .addInput(Sandbox.filterParams, 'maxVolume', {
+        min: 0,
+        max: 100,
+        disabled: true
+      })
+      .on('change', () => {
+        this.viewer.debugApplyVolumeFilter(
+          Sandbox.filterParams.volumeData,
+          Sandbox.filterParams.minVolume,
+          Sandbox.filterParams.maxVolume
+        )
       })
   }
 

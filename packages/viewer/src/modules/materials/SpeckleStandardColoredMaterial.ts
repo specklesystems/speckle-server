@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleStandardGradientVert } from './shaders/speckle-standard-gradient-vert'
-import { speckleStandardGradientFrag } from './shaders/speckle-standard-gradient-frag'
+import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
+import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
 import {
   UniformsUtils,
   ShaderLib,
@@ -14,7 +14,7 @@ import {
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
-class SpeckleStandardGradientMaterial extends MeshStandardMaterial {
+class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
   private static readonly vecBuff0: Vector3 = new Vector3()
   private static readonly vecBuff1: Vector3 = new Vector3()
@@ -32,8 +32,8 @@ class SpeckleStandardGradientMaterial extends MeshStandardMaterial {
     this.userData.gradientRamp = {
       value: null
     }
-    ;(this as any).vertProgram = speckleStandardGradientVert
-    ;(this as any).fragProgram = speckleStandardGradientFrag
+    ;(this as any).vertProgram = speckleStandardColoredVert
+    ;(this as any).fragProgram = speckleStandardColoredFrag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {
@@ -92,30 +92,30 @@ class SpeckleStandardGradientMaterial extends MeshStandardMaterial {
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
     if (Geometry.USE_RTE) {
-      SpeckleStandardGradientMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleStandardGradientMaterial.matBuff.elements[12] = 0
-      SpeckleStandardGradientMaterial.matBuff.elements[13] = 0
-      SpeckleStandardGradientMaterial.matBuff.elements[14] = 0
-      SpeckleStandardGradientMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleStandardGradientMaterial.matBuff)
+      SpeckleStandardColoredMaterial.matBuff.copy(camera.matrixWorldInverse)
+      SpeckleStandardColoredMaterial.matBuff.elements[12] = 0
+      SpeckleStandardColoredMaterial.matBuff.elements[13] = 0
+      SpeckleStandardColoredMaterial.matBuff.elements[14] = 0
+      SpeckleStandardColoredMaterial.matBuff.multiply(object.matrixWorld)
+      object.modelViewMatrix.copy(SpeckleStandardColoredMaterial.matBuff)
 
-      SpeckleStandardGradientMaterial.vecBuff0.set(
+      SpeckleStandardColoredMaterial.vecBuff0.set(
         camera.matrixWorld.elements[12],
         camera.matrixWorld.elements[13],
         camera.matrixWorld.elements[14]
       )
 
       Geometry.DoubleToHighLowVector(
-        SpeckleStandardGradientMaterial.vecBuff0,
-        SpeckleStandardGradientMaterial.vecBuff1,
-        SpeckleStandardGradientMaterial.vecBuff2
+        SpeckleStandardColoredMaterial.vecBuff0,
+        SpeckleStandardColoredMaterial.vecBuff1,
+        SpeckleStandardColoredMaterial.vecBuff2
       )
 
-      this.userData.uViewer_low.value.copy(SpeckleStandardGradientMaterial.vecBuff1)
-      this.userData.uViewer_high.value.copy(SpeckleStandardGradientMaterial.vecBuff2)
+      this.userData.uViewer_low.value.copy(SpeckleStandardColoredMaterial.vecBuff1)
+      this.userData.uViewer_high.value.copy(SpeckleStandardColoredMaterial.vecBuff2)
       this.needsUpdate = true
     }
   }
 }
 
-export default SpeckleStandardGradientMaterial
+export default SpeckleStandardColoredMaterial

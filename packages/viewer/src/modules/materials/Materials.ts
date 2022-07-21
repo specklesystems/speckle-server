@@ -7,7 +7,7 @@ import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
 import { FilterMaterialType } from '../FilteringManager'
-import SpeckleStandardGradientMaterial from './SpeckleStandardGradientMaterial'
+import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
 import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { FilterMaterial } from '../FilteringManager'
@@ -141,7 +141,7 @@ export default class Materials {
     )
     this.meshGhostMaterial.depthWrite = false
 
-    this.meshGradientMaterial = new SpeckleStandardGradientMaterial(
+    this.meshGradientMaterial = new SpeckleStandardColoredMaterial(
       {
         color: 0x0000ff,
         side: DoubleSide,
@@ -151,7 +151,7 @@ export default class Materials {
       },
       ['USE_RTE']
     )
-    ;(this.meshGradientMaterial as SpeckleStandardGradientMaterial).setGradientTexture(
+    ;(this.meshGradientMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
       await Assets.getTexture(defaultGradient)
     )
 
