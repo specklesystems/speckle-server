@@ -6,7 +6,6 @@ import {
   UserStreamInvitesDocument
 } from '@/graphql/generated/graphql'
 import { MaybeFalsy, Nullable, vueWithMixins } from '@/helpers/typeHelpers'
-import { getInviteTokenFromRoute } from '@/main/lib/auth/services/authService'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { Get } from 'type-fest'
@@ -24,6 +23,10 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
     streamInvite: {
       type: Object as PropType<StreamInviteType>,
       required: true
+    },
+    inviteToken: {
+      type: String as PropType<Nullable<string>>,
+      default: null
     }
   },
   data: () => ({
@@ -37,7 +40,7 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
       return this.streamInvite.inviteId
     },
     token(): Nullable<string> {
-      return this.streamInvite.token || getInviteTokenFromRoute(this.$route) || null
+      return this.streamInvite.token || this.inviteToken || null
     },
     streamInviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
       return this.streamInvite.invitedBy

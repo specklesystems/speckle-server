@@ -11,6 +11,7 @@
       <stream-invite-banner
         v-if="hasInvite && !showInvitePlaceholder"
         :stream-invite="streamInvite"
+        :invite-token="inviteToken"
         @invite-used="onInviteClosed"
       />
 
@@ -27,6 +28,7 @@
         <stream-invite-placeholder
           v-else
           :stream-invite="streamInvite"
+          :invite-token="inviteToken"
           @invite-used="onInviteClosed"
         />
       </div>
