@@ -385,7 +385,10 @@ async function createAndSendInvite(params) {
       : [])
   ])
 
-  return invite.id
+  return {
+    inviteId: invite.id,
+    token: invite.token
+  }
 }
 
 /**

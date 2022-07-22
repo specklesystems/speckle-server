@@ -266,6 +266,16 @@ async function getInvite(inviteId) {
 }
 
 /**
+ * Retrieve a specific invite (irregardless of the type) by the token
+ * @param {string} inviteId
+ * @returns {Promise<ServerInviteRecord | null>}
+ */
+async function getInviteByToken(inviteToken) {
+  if (!inviteToken) return null
+  return await ServerInvites.knex().where(ServerInvites.col.token, inviteToken).first()
+}
+
+/**
  * Delete a specific invite (irregardless of the type)
  * @param {string} inviteId
  * @returns {Promise<boolean>}
@@ -342,5 +352,6 @@ module.exports = {
   deleteAllUserInvites,
   getResource,
   getAllUserStreamInvites,
-  getInvites
+  getInvites,
+  getInviteByToken
 }
