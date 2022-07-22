@@ -50,6 +50,16 @@ const ensureConditions = async () => {
   }
 }
 
+let fileLimit = null
+
+const getFileLimit = () => {
+  if (!fileLimit) {
+    //100Mb default
+    fileLimit = process.env.FILE_SIZE_LIMIT_BYTES || 1024 * 1024 * 100
+  }
+  return fileLimit
+}
+
 const errorHandler = async (req, res, callback) => {
   try {
     await callback(req, res)
@@ -82,8 +92,7 @@ exports.init = async (app) => {
       const finalizePromises = []
       const busboy = Busboy({
         headers: req.headers,
-        // this is 100 MB which matches the current frontend file size limit
-        limits: { fileSize: 104_857_600 }
+        limits: { fileSize: getFileLimit() }
       })
       const streamId = req.params.streamId
       busboy.on('file', (formKey, file, info) => {
