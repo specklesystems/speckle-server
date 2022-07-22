@@ -99,13 +99,17 @@ export default class Batcher {
     ids: string[],
     filterMaterial: FilterMaterial
   ): string[] {
-    let rvs = []
+    const rvs = []
     ids.forEach((val: string) => {
-      const views = WorldTree.getRenderTree().getRenderViewsForNodeId(val)
-      for (let k = 0; k < views.length; k++) {
-        if (rvs.includes(views[k])) return
-      }
-      rvs = rvs.concat(views)
+      rvs.push(WorldTree.getRenderTree().getRenderViewForNodeId(val))
+      /** The batcher should take the explicit IDs it's given and roll with them
+       *  It shouldn;t try to expand the list of render views on it's own
+       */
+      // const views = WorldTree.getRenderTree().getRenderViewsForNodeId(val)
+      // for (let k = 0; k < views.length; k++) {
+      //   if (rvs.includes(views[k])) return
+      // }
+      // rvs = rvs.concat(views)
     })
     // console.log(ids)
     // console.log(rvs)

@@ -8,7 +8,7 @@ import InteractionHandler from './legacy/InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Clock, Texture, Vector3 } from 'three'
+import { Clock, Color, Texture, Vector3 } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
@@ -322,22 +322,22 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public debugGetFilterByPropetyNodes(propertyName: string): {
+  public debugGetFilterByNumericPropetyData(propertyName: string): {
     min: number
     max: number
     nodes: TreeNode[]
   } {
     const volumeNodes = []
-    let minVolume = Infinity
-    let maxVolume = 0
+    let min = Infinity
+    let max = 0
     WorldTree.getInstance().walk((node: TreeNode) => {
       const params = node.model.raw.parameters
       if (params) {
         for (const k in params) {
           if (!(params[k] instanceof Object)) continue
           if (params[k].name === propertyName) {
-            minVolume = Math.min(minVolume, params[k].value)
-            maxVolume = Math.max(maxVolume, params[k].value)
+            min = Math.min(min, params[k].value)
+            max = Math.max(max, params[k].value)
             volumeNodes.push(node)
           }
         }
@@ -346,13 +346,13 @@ export class Viewer extends EventEmitter implements IViewer {
     })
 
     return {
-      min: minVolume,
-      max: maxVolume,
+      min,
+      max,
       nodes: volumeNodes
     }
   }
 
-  public debugApplyByPropetyFilter(
+  public debugApplyByNumericPropetyFilter(
     data: { min: number; max: number; nodes: TreeNode[] },
     propertyName: string,
     min?: number,
@@ -369,17 +369,17 @@ export class Viewer extends EventEmitter implements IViewer {
         for (const k in params) {
           if (!(params[k] instanceof Object)) continue
           if (params[k].name === propertyName) {
-            const volumeValue = params[k].value
-            const pasMin = min !== undefined ? volumeValue >= min : true
-            const pasMax = max !== undefined ? volumeValue <= max : true
+            const propertyValue = params[k].value
+            const passMin = min !== undefined ? propertyValue >= min : true
+            const passMax = max !== undefined ? propertyValue <= max : true
             if (
               data.nodes.includes(node) &&
-              pasMin &&
-              pasMax &&
+              passMin &&
+              passMax &&
               !nodesGradient.includes(node)
             ) {
               nodesGradient.push(node)
-              values.push(volumeValue)
+              values.push(propertyValue)
             }
           } else {
             if (!nodesGhost.includes(node)) nodesGhost.push(node)
@@ -412,6 +412,109 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.speckleRenderer.endFilter()
   }
+
+  public debugGetFilterByNonNumericPropetyData(propertyName: string): {
+    color?: { name: string; color: string; colorIndex: number; nodes: [] }
+  } {
+    // OG implementation
+    const getColorHash = (objValue) => {
+      const objValueAsString = '' + objValue
+      let hash = 0
+      for (let i = 0; i < objValueAsString.length; i++) {
+        const chr = objValueAsString.charCodeAt(i)
+        hash = (hash << 5) - hash + chr
+        hash |= 0 // Convert to 32bit integer
+      }
+      hash = Math.abs(hash)
+      const colorHue = hash % 360
+      const rgb = new Color(`hsl(${colorHue}, 50%, 30%)`)
+      return rgb.getHex()
+    }
+    const data: {
+      color?: { name: string; color: string; colorIndex: number; nodes: [] }
+    } = {}
+    let colorCount = 0
+    /** This is the lazy approach */
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      const propertyValue = node.model.raw[propertyName]
+      if (propertyValue !== null) {
+        const color = getColorHash(propertyValue.split('.').reverse()[0])
+        if (data[color] === undefined) {
+          data[color] = {
+            name: propertyValue.split('.').reverse()[0],
+            color,
+            colorIndex: colorCount,
+            nodes: []
+          }
+          colorCount++
+        }
+        if (!data[color].nodes.includes(node)) data[color].nodes.push(node)
+      }
+
+      return true
+    })
+
+    return data
+  }
+  public debugApplyByNonNumericPropetyFilter(data: {
+    color?: { name: string; color: string; colorIndex: number; nodes: [] }
+  }) {
+    const colors = Object.values(data)
+    colors.sort((a, b) => a.colorIndex - b.colorIndex)
+
+    const rampTexture = Assets.generateDiscreetRampTexture(
+      colors.map((val) => val.color)
+    )
+    this.speckleRenderer.clearFilter()
+    this.speckleRenderer.beginFilter()
+    for (let k = 0; k < colors.length; k++) {
+      if (colors[k].name === 'Mesh' || colors[k].name === 'Base') continue
+
+      const nodes = colors[k].nodes
+      let ids = []
+      for (let i = 0; i < nodes.length; i++) {
+        ids = ids.concat(
+          WorldTree.getRenderTree()
+            .getRenderViewsForNode(nodes[i], nodes[i])
+            .map((value) => value.renderData.id)
+        )
+      }
+      this.speckleRenderer.applyFilter(ids, {
+        filterType: FilterMaterialType.COLORED,
+        rampIndex: colors[k].colorIndex / colors.length,
+        rampTexture
+      })
+    }
+    this.speckleRenderer.endFilter()
+  }
+
+  // private isObject(value) {
+  //   return !!(value && typeof value === 'object' && !Array.isArray(value))
+  // }
+
+  // private findObjectProperty(object = {}, keyToMatch = '') {
+  //   if (this.isObject(object)) {
+  //     const entries = Object.entries(object)
+
+  //     for (let i = 0; i < entries.length; i += 1) {
+  //       const [objectKey, objectValue] = entries[i]
+
+  //       if (objectKey === keyToMatch) {
+  //         return object[objectKey]
+  //       }
+
+  //       if (this.isObject(objectValue)) {
+  //         const child = this.findObjectProperty(objectValue, keyToMatch)
+
+  //         if (child !== null) {
+  //           return child
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   return null
+  // }
 
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)

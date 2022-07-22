@@ -1,4 +1,4 @@
-import { Color, DoubleSide, Material, MathUtils, Vector2 } from 'three'
+import { Color, DoubleSide, Material, MathUtils, Texture, Vector2 } from 'three'
 import { GeometryType } from '../batching/Batch'
 // import { getConversionFactor } from '../converter/Units'
 import { TreeNode } from '../tree/WorldTree'
@@ -13,7 +13,8 @@ import { Assets } from '../Assets'
 import { FilterMaterial } from '../FilteringManager'
 
 export interface MaterialOptions {
-  gradientIndex?: number
+  rampIndex?: number
+  rampTexture?: Texture
 }
 
 export default class Materials {
@@ -25,6 +26,7 @@ export default class Materials {
   private pointCloudHighlightMaterial: Material = null
   private pointHighlightMaterial: Material = null
   private meshGradientMaterial: Material = null
+  private meshColoredMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -143,7 +145,6 @@ export default class Materials {
 
     this.meshGradientMaterial = new SpeckleStandardColoredMaterial(
       {
-        color: 0x0000ff,
         side: DoubleSide,
         transparent: false,
         opacity: 1,
@@ -153,6 +154,16 @@ export default class Materials {
     )
     ;(this.meshGradientMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
       await Assets.getTexture(defaultGradient)
+    )
+
+    this.meshColoredMaterial = new SpeckleStandardColoredMaterial(
+      {
+        side: DoubleSide,
+        transparent: false,
+        opacity: 1,
+        wireframe: false
+      },
+      ['USE_RTE']
     )
 
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
@@ -318,6 +329,19 @@ export default class Materials {
     }
   }
 
+  public getColoredMaterial(renderView: NodeRenderView): Material {
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        return this.meshColoredMaterial
+      case GeometryType.LINE:
+        return this.meshColoredMaterial // TO DO
+      case GeometryType.POINT:
+        return this.meshColoredMaterial // TO DO
+      case GeometryType.POINT_CLOUD:
+        return this.meshColoredMaterial // TO DO
+    }
+  }
+
   public getDebugBatchMaterial(renderView: NodeRenderView) {
     const color = new Color(MathUtils.randInt(0, 0xffffff))
     color.convertSRGBToLinear()
@@ -381,15 +405,16 @@ export default class Materials {
         return this.getGhostMaterial(renderView)
       case FilterMaterialType.GRADIENT:
         return this.getGradientMaterial(renderView)
+      case FilterMaterialType.COLORED:
+        return this.getColoredMaterial(renderView)
     }
   }
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
-    return filterMaterial.rampIndex
-      ? {
-          gradientIndex: filterMaterial.rampIndex
-        }
-      : null
+    return {
+      rampIndex: filterMaterial.rampIndex ? filterMaterial.rampIndex : undefined,
+      rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
+    }
   }
 
   public purge() {

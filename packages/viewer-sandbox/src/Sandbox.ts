@@ -9,8 +9,7 @@ export default class Sandbox {
   private viewer: IViewer
   private pane: Pane
   private tabs
-  private minVolumeControl
-  private maxVolumeControl
+  private filterControls
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
@@ -31,6 +30,7 @@ export default class Sandbox {
 
   public static filterParams = {
     filterBy: 'Volume',
+    numericProperty: true,
     data: {},
     minValue: 0,
     maxValue: 10000
@@ -235,58 +235,100 @@ export default class Sandbox {
       title: 'Filtering',
       expanded: true
     })
-    filteringFolder.addInput(Sandbox.filterParams, 'filterBy', {
-      options: {
-        Volume: 'Volume',
-        Area: 'Area',
-        SpeckleType: 'speckle_type'
-      }
-    })
+
+    filteringFolder
+      .addInput(Sandbox.filterParams, 'filterBy', {
+        options: {
+          Volume: 'Volume',
+          Area: 'Area',
+          SpeckleType: 'speckle_type'
+        }
+      })
+      .on('change', () => {
+        switch (Sandbox.filterParams.filterBy) {
+          case 'Volume':
+          case 'Area':
+            Sandbox.filterParams.numericProperty = true
+            break
+
+          case 'speckle_type':
+            Sandbox.filterParams.numericProperty = false
+        }
+      })
 
     filteringFolder
       .addButton({
         title: 'Apply Filter'
       })
       .on('click', () => {
-        Sandbox.filterParams.data = this.viewer.debugGetFilterByPropetyNodes(
-          Sandbox.filterParams.filterBy
-        )
-        Sandbox.filterParams.minValue = Sandbox.filterParams.data.min
-        Sandbox.filterParams.maxValue = Sandbox.filterParams.data.max
+        if (Sandbox.filterParams.numericProperty) {
+          Sandbox.filterParams.data = this.viewer.debugGetFilterByNumericPropetyData(
+            Sandbox.filterParams.filterBy
+          )
+          Sandbox.filterParams.minValue = Sandbox.filterParams.data.min
+          Sandbox.filterParams.maxValue = Sandbox.filterParams.data.max
+          this.viewer.debugApplyByNumericPropetyFilter(
+            Sandbox.filterParams.data,
+            Sandbox.filterParams.filterBy
+          )
 
-        this.viewer.debugApplyByPropetyFilter(
-          Sandbox.filterParams.data,
-          Sandbox.filterParams.filterBy
-        )
-        if (this.maxVolumeControl) this.maxVolumeControl.dispose()
-        if (this.minVolumeControl) this.minVolumeControl.dispose()
+          if (this.filterControls) this.filterControls.dispose()
+          this.filterControls = this.tabs.pages[2].addFolder({
+            title: 'Filter Options',
+            expanded: true
+          })
 
-        this.minVolumeControl = filteringFolder
-          .addInput(Sandbox.filterParams, 'minValue', {
-            min: Sandbox.filterParams.minValue,
-            max: Sandbox.filterParams.maxValue
+          this.filterControls
+            .addInput(Sandbox.filterParams, 'minValue', {
+              min: Sandbox.filterParams.minValue,
+              max: Sandbox.filterParams.maxValue
+            })
+            .on('change', () => {
+              this.viewer.debugApplyByNumericPropetyFilter(
+                Sandbox.filterParams.data,
+                Sandbox.filterParams.filterBy,
+                Sandbox.filterParams.minValue,
+                Sandbox.filterParams.maxValue
+              )
+            })
+          this.filterControls
+            .addInput(Sandbox.filterParams, 'maxValue', {
+              min: Sandbox.filterParams.minValue,
+              max: Sandbox.filterParams.maxValue
+            })
+            .on('change', () => {
+              this.viewer.debugApplyByNumericPropetyFilter(
+                Sandbox.filterParams.data,
+                Sandbox.filterParams.filterBy,
+                Sandbox.filterParams.minValue,
+                Sandbox.filterParams.maxValue
+              )
+            })
+        } else {
+          Sandbox.filterParams.data = this.viewer.debugGetFilterByNonNumericPropetyData(
+            Sandbox.filterParams.filterBy
+          )
+          this.viewer.debugApplyByNonNumericPropetyFilter(Sandbox.filterParams.data)
+          if (this.filterControls) this.filterControls.dispose()
+          this.filterControls = this.tabs.pages[2].addFolder({
+            title: 'Filter Options',
+            expanded: true
           })
-          .on('change', () => {
-            this.viewer.debugApplyByPropetyFilter(
-              Sandbox.filterParams.data,
-              Sandbox.filterParams.filterBy,
-              Sandbox.filterParams.minValue,
-              Sandbox.filterParams.maxValue
-            )
+          const categories = Object.values(Sandbox.filterParams.data)
+          categories.forEach((category) => {
+            this.filterControls
+              .addInput(category, 'color', {
+                view: 'color',
+                label: category.name
+              })
+              .on('change', () => {
+                this.viewer.debugApplyByNonNumericPropetyFilter(
+                  Sandbox.filterParams.data
+                )
+              })
           })
-        this.maxVolumeControl = filteringFolder
-          .addInput(Sandbox.filterParams, 'maxValue', {
-            min: Sandbox.filterParams.minValue,
-            max: Sandbox.filterParams.maxValue
-          })
-          .on('change', () => {
-            this.viewer.debugApplyByPropetyFilter(
-              Sandbox.filterParams.data,
-              Sandbox.filterParams.filterBy,
-              Sandbox.filterParams.minValue,
-              Sandbox.filterParams.maxValue
-            )
-          })
+        }
+
         this.pane.refresh()
       })
   }

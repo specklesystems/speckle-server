@@ -134,6 +134,17 @@ export class Assets {
 
     const texture = new DataTexture(data, width, height)
     texture.needsUpdate = true
+
+    /** In case we want to see what gets generated */
+    // const canvas = document.createElement('canvas')
+    // canvas.width = width
+    // canvas.height = height
+    // const context = canvas.getContext('2d')
+    // const imageData = new ImageData(width, height)
+    // imageData.data.set(data)
+    // context.putImageData(imageData, 0, 0)
+    // console.log('SRC:', canvas.toDataURL())
+
     return texture
   }
 }

@@ -10,6 +10,7 @@ import {
   Uint32BufferAttribute
 } from 'three'
 import { Geometry } from '../converter/Geometry'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
 import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
@@ -78,7 +79,7 @@ export default class MeshBatch implements Batch {
     let maxGradientIndex = 0
     for (let k = 0; k < sortedRanges.length; k++) {
       if (sortedRanges[k].materialOptions) {
-        if (sortedRanges[k].materialOptions.gradientIndex) {
+        if (sortedRanges[k].materialOptions.rampIndex) {
           const start = sortedRanges[k].offset
           const len = sortedRanges[k].offset + sortedRanges[k].count
           const minMaxIndices = this.updateGradientIndexBufferData(
@@ -86,10 +87,15 @@ export default class MeshBatch implements Batch {
             sortedRanges[k].count === Infinity
               ? this.geometry.attributes['gradientIndex'].array.length
               : len,
-            sortedRanges[k].materialOptions.gradientIndex
+            sortedRanges[k].materialOptions.rampIndex
           )
           minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
           maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+        }
+        if (sortedRanges[k].materialOptions.rampTexture) {
+          ;(
+            sortedRanges[k].material as SpeckleStandardColoredMaterial
+          ).setGradientTexture(sortedRanges[k].materialOptions.rampTexture)
         }
       }
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
