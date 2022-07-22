@@ -106,7 +106,7 @@ function validateTargetUser(params, targetUser) {
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser Target user, if one exists in our DB
  */
 async function validateResource(params, resource, targetUser) {
-  const { resourceId, resourceTarget } = params
+  const { resourceId, resourceTarget, role } = params
 
   if (resourceId && !resource) {
     throw new InviteCreateValidationError("Couldn't resolve invite resource")
@@ -124,6 +124,10 @@ async function validateResource(params, resource, targetUser) {
           'The target user is already a collaborator of the specified stream'
         )
       }
+    }
+
+    if (!Object.values(Roles.Stream).includes(role)) {
+      throw new InviteCreateValidationError('Unexpected stream invite role')
     }
   }
 }
@@ -264,18 +268,18 @@ function buildEmailSubject(invite, inviter, resourceName) {
  * @returns {string}
  */
 function buildInviteLink(invite) {
-  const { id, resourceTarget, resourceId } = invite
+  const { resourceTarget, resourceId, token } = invite
 
   if (isServerInvite(invite)) {
     return new URL(
-      `${getRegistrationRoute()}?inviteId=${id}`,
+      `${getRegistrationRoute()}?token=${token}`,
       process.env.CANONICAL_URL
     ).toString()
   }
 
   if (resourceTarget === 'streams') {
     return new URL(
-      `${getStreamRoute(resourceId)}?inviteId=${id}`,
+      `${getStreamRoute(resourceId)}?token=${token}`,
       process.env.CANONICAL_URL
     ).toString()
   } else {
@@ -355,7 +359,8 @@ async function createAndSendInvite(params) {
     message,
     resourceTarget,
     resourceId,
-    role
+    role,
+    token: crs({ length: 50 })
   }
   await insertInviteAndDeleteOld(
     invite,

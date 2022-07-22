@@ -57,6 +57,14 @@ async function validateInviteExistanceFromEmail(emailParams) {
   expect(invite).to.be.ok
 }
 
+// TODO: 1. Invite (batch also) - role + invalid role
+/**
+ * More:
+ * - Get token, only if u own it
+ * - Invite with both token and invite ID
+ * (check links with both)
+ */
+
 describe('[Stream & Server Invites]', () => {
   const me = {
     name: 'Authenticated server invites guy',

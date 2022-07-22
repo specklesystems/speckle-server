@@ -27,6 +27,7 @@ export const usersOwnInviteFieldsFragment = gql`
     inviteId
     streamId
     streamName
+    token
     invitedBy {
       ...LimitedUserFields
     }

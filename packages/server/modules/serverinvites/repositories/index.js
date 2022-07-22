@@ -20,7 +20,8 @@ const { getStream } = require('@/modules/core/repositories/streams')
  *  message?: string,
  *  resourceTarget?: string,
  *  resourceId?: string,
- *  role?: string
+ *  role?: string,
+ *  token: string
  * }} ServerInviteRecord
  */
 
@@ -79,19 +80,19 @@ async function insertInviteAndDeleteOld(invite, alternateTargets = []) {
 /**
  * Retrieve a valid server invite for the specified target
  * @param {string} email Email address
- * @param {string|undefined} inviteId Specify an invite ID, if you're looking for
- * a specific invite
+ * @param {string|undefined} token Specify an invite token, if you're looking for
+ * a specific invite. For backwards compatibility purposes, the token can also just be the invite ID.
  * @returns {ServerInviteRecord | null}
  */
-async function getServerInvite(email, inviteId = undefined) {
+async function getServerInvite(email, token = undefined) {
   if (!email) return null
 
   const q = ServerInvites.knex().where({
     [ServerInvites.col.target]: email.toLowerCase()
   })
 
-  if (inviteId) {
-    q.andWhere(ServerInvites.col.id, inviteId)
+  if (token) {
+    q.andWhere(ServerInvites.col.token, token)
   }
 
   return await q.first()
@@ -164,15 +165,19 @@ async function getAllUserStreamInvites(userId) {
 }
 
 /**
- * Retrieve a stream invite for the specified target, inviteId or both.
- * Note: Either the target or inviteId must be set
+ * Retrieve a stream invite for the specified target, token or both.
+ * Note: Either the target, inviteId or token must be set
  * @param {string} streamId
  * @param {string|null} target
+ * @param {string|null} token
  * @param {string|null} inviteId
  * @returns {Promise<ServerInviteRecord | null>}
  */
-async function getStreamInvite(streamId, target = null, inviteId = null) {
-  if (!target && !inviteId) return null
+async function getStreamInvite(
+  streamId,
+  { target = null, token = null, inviteId = null } = {}
+) {
+  if (!target && !token && !inviteId) return null
 
   const q = ServerInvites.knex().where({
     [ServerInvites.col.resourceTarget]: ResourceTargets.Streams,
@@ -186,6 +191,10 @@ async function getStreamInvite(streamId, target = null, inviteId = null) {
   } else if (inviteId) {
     q.andWhere({
       [ServerInvites.col.id]: inviteId
+    })
+  } else if (token) {
+    q.andWhere({
+      [ServerInvites.col.token]: token
     })
   }
 
@@ -307,6 +316,15 @@ async function deleteAllUserInvites(userId) {
   return true
 }
 
+/**
+ * Get all invites by IDs
+ * @returns {Promise<ServerInviteRecord[]>}
+ */
+async function getInvites(inviteIds) {
+  if (!inviteIds?.length) return []
+  return await ServerInvites.knex().whereIn(ServerInvites.col.id, inviteIds)
+}
+
 module.exports = {
   insertInviteAndDeleteOld,
   getServerInvite,
@@ -323,5 +341,6 @@ module.exports = {
   deleteInvitesByTarget,
   deleteAllUserInvites,
   getResource,
-  getAllUserStreamInvites
+  getAllUserStreamInvites,
+  getInvites
 }

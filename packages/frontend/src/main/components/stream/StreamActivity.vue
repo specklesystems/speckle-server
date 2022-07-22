@@ -91,7 +91,14 @@ export default {
   },
   methods: {
     groupSimilarActivities(data) {
+      if (!data) return
+
+      const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
       const groupedActivity = data.stream.activity.items.reduce(function (prev, curr) {
+        if (skippableActionTypes.includes(curr.actionType)) {
+          return prev
+        }
+
         //first item
         if (!prev.length) {
           prev.push([curr])

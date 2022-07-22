@@ -2,8 +2,8 @@ import gql from 'graphql-tag'
 import { usersOwnInviteFieldsFragment } from '@/graphql/fragments/user'
 
 export const streamInviteQuery = gql`
-  query StreamInvite($streamId: String!, $inviteId: String) {
-    streamInvite(streamId: $streamId, inviteId: $inviteId) {
+  query StreamInvite($streamId: String!, $token: String) {
+    streamInvite(streamId: $streamId, token: $token) {
       ...UsersOwnInviteFields
     }
   }
@@ -22,8 +22,8 @@ export const userStreamInvitesQuery = gql`
 `
 
 export const useStreamInviteMutation = gql`
-  mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-    streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+  mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
+    streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
   }
 `
 

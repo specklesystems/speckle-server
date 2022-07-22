@@ -12,7 +12,8 @@ const { gql } = require('apollo-server-express')
  *  email: string | null,
  *  userId: string | null,
  *  streamId: string,
- *  message: string
+ *  message: string,
+ *  role: string | null
  * }} StreamInviteCreateInput
  */
 
@@ -79,8 +80,8 @@ const streamInviteFragment = gql`
 `
 
 const streamInviteQuery = gql`
-  query ($streamId: String!, $inviteId: String) {
-    streamInvite(streamId: $streamId, inviteId: $inviteId) {
+  query ($streamId: String!, $token: String) {
+    streamInvite(streamId: $streamId, token: $token) {
       ...StreamInviteData
     }
   }
@@ -99,8 +100,8 @@ const streamInvitesQuery = gql`
 `
 
 const useStreamInviteMutation = gql`
-  mutation ($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-    streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+  mutation ($accept: Boolean!, $streamId: String!, $token: String!) {
+    streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
   }
 `
 
@@ -209,10 +210,10 @@ module.exports = {
    * streamInvite query
    * @param {import('apollo-server-express').ApolloServer} apollo
    */
-  getStreamInvite(apollo, { streamId, inviteId }) {
+  getStreamInvite(apollo, { streamId, token }) {
     return apollo.executeOperation({
       query: streamInviteQuery,
-      variables: { streamId, inviteId }
+      variables: { streamId, token }
     })
   },
   /**
@@ -228,10 +229,10 @@ module.exports = {
    * streamInviteUse mutation
    * @param {import('apollo-server-express').ApolloServer} apollo
    */
-  useUpStreamInvite(apollo, { accept, streamId, inviteId }) {
+  useUpStreamInvite(apollo, { accept, streamId, token }) {
     return apollo.executeOperation({
       query: useStreamInviteMutation,
-      variables: { accept, streamId, inviteId }
+      variables: { accept, streamId, token }
     })
   },
   /**
