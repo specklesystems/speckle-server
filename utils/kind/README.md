@@ -7,6 +7,7 @@
 - [Docker](https://docs.docker.com/get-docker/)
 - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - [Helm](https://helm.sh/docs/intro/install/)
+- [Skaffold](https://skaffold.dev/docs/install/#standalone-binary)
 - (optional, for observing network activity) [Cilium CLI](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/#install-the-cilium-cli) and [Hubble](https://github.com/cilium/hubble)
 
 ### Create the cluster
@@ -14,6 +15,10 @@
 1. To deploy a kind cluster and all dependencies, from the repository root directory run:
    ```shell
    yarn kind
+   ```
+1. To deploy Speckle server, run:
+   ```shell
+   yarn kind:skaffold
    ```
 
 ### Delete the cluster

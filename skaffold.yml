@@ -1,0 +1,26 @@
+apiVersion: skaffold/v2beta29
+kind: Config
+metadata:
+  name: speckle
+build:
+  artifacts:
+    - image: speckle/speckle-webhook-service
+      context: .
+      docker:
+        dockerfile: ./packages/webhook-service/Dockerfile
+        cacheFrom:
+          - 'speckle/speckle-webhook-service'
+    - image: speckle/speckle-fileimport-service
+      context: .
+      docker:
+        dockerfile: ./packages/fileimport-service/Dockerfile
+        cacheFrom:
+          - 'speckle/speckle-fileimport-service'
+    - image: speckle/speckle-monitor-deployment
+      context: .
+      docker:
+        dockerfile: ./utils/monitor-deployment/Dockerfile
+        cacheFrom:
+          - 'speckle/speckle-monitor-deployment'
+  local:
+    push: false

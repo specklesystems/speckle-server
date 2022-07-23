@@ -16,7 +16,8 @@ fi
 echo "Adding helm repos ☸️"
 helm repo add cilium https://helm.cilium.io/
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add bitnami https://charts.bitnami.com/bitnami # postgres, redis, minio
+helm repo add runix https://helm.runix.net # pgadmin4
 helm repo update
 
 echo "Deploying Cilium CNI to kind cluster 🕸️"
@@ -68,11 +69,31 @@ helm upgrade redis bitnami/redis \
 REDIS_PASSWORD=$(kubectl get secret --namespace speckle redis -o jsonpath="{.data.redis-password}" | base64 -d)
 
 echo "Deploying Blob Storage (minio) 🧱"
-helm upgrade minio bitnami/minio \
-    --namespace "${SPECKLE_NAMESPACE}" \
-    --create-namespace \
-    --install
+
+MINIO_ROOT_PASSWORD=$(kubectl get secret --namespace speckle minio -o jsonpath="{.data.root-password}" | base64 -d)
+if [ -z "${MINIO_ROOT_PASSWORD}" ]; then
+    helm upgrade minio bitnami/minio \
+        --namespace "${SPECKLE_NAMESPACE}" \
+        --create-namespace \
+        --install
+else
+    helm upgrade minio bitnami/minio \
+        --namespace "${SPECKLE_NAMESPACE}" \
+        --create-namespace \
+        --set auth.rootPassword="${MINIO_ROOT_PASSWORD}" \
+        --install
+fi
 
 # minio.speckle.svc.cluster.local
 MINIO_ROOT_USER=$(kubectl get secret --namespace speckle minio -o jsonpath="{.data.root-user}" | base64 -d)
 MINIO_ROOT_PASSWORD=$(kubectl get secret --namespace speckle minio -o jsonpath="{.data.root-password}" | base64 -d)
+
+echo "Deploying PGAdmin4 🔬"
+helm upgrade pgadmin runix/pgadmin4 \
+    --namespace "${SPECKLE_NAMESPACE}" \
+    --create-namespace \
+    --install
+
+#docker build -t speckle/speckle-frontend:local -f "${PWD}/packages/frontend/Dockerfile" "${PWD}" # fails due to farmhash
+#docker build -t speckle/speckle-server:local -f "${PWD}/packages/server/Dockerfile" "${PWD}" # fails due to bcrypt
+#docker build -t speckle/speckle-preview-service:local -f "${PWD}/packages/preview-service/Dockerfile" "${PWD}" # fails due to puppeteer & farmhash
