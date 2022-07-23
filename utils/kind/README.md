@@ -11,7 +11,7 @@
 
 ### Create the cluster
 
-1. From the root directory run:
+1. To deploy a kind cluster and all dependencies, from the repository root directory run:
    ```shell
    yarn kind
    ```
