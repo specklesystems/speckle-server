@@ -11,6 +11,8 @@
   "scripts": {
     "build": "yarn workspaces foreach -ptv run build",
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
+    "kind": "./utils/kind/deploy.sh",
+    "kind:delete": "kind delete cluster --name=speckle",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
