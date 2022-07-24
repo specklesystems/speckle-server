@@ -3,7 +3,30 @@ kind: Config
 metadata:
   name: speckle
 build:
+  platforms:
+    - 'linux/amd64'
   artifacts:
+    - image: speckle/speckle-frontend
+      context: .
+      custom:
+        buildCommand: sh ./utils/skaffold/buildx.sh ./packages/frontend/Dockerfile
+        dependencies:
+          dockerfile:
+            path: ./packages/frontend/Dockerfile
+    - image: speckle/speckle-server
+      context: .
+      custom:
+        buildCommand: sh ./utils/skaffold/buildx.sh ./packages/server/Dockerfile
+        dependencies:
+          dockerfile:
+            path: ./packages/server/Dockerfile
+    - image: speckle/speckle-preview-service
+      context: .
+      custom:
+        buildCommand: sh ./utils/skaffold/buildx.sh ./packages/preview-service/Dockerfile
+        dependencies:
+          dockerfile:
+            path: ./packages/preview-service/Dockerfile
     - image: speckle/speckle-webhook-service
       context: .
       docker:
@@ -24,3 +47,5 @@ build:
           - 'speckle/speckle-monitor-deployment'
   local:
     push: false
+    useBuildkit: true
+    concurrency: 10
