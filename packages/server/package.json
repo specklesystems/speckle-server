@@ -32,7 +32,7 @@
     "apollo-server-express": "^2.19.0",
     "apollo-server-testing": "^2.19.0",
     "auto-load": "^3.0.4",
-    "bcrypt": "^5.0.0",
+    "bcrypt": "5.0.0",
     "busboy": "^1.4.0",
     "compression": "^1.7.4",
     "connect-redis": "^6.1.1",

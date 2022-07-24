@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1075.0",
-    "bcrypt": "^5.0.1",
+    "bcrypt": "5.0.0",
     "crypto-random-string": "^3.3.1",
     "knex": "^2.0.0",
     "pg": "^8.7.3",
