@@ -71,8 +71,8 @@ Make sure to also check and ⭐️ these other Speckle repositories:
 - [`speckle-excel`](https://github.com/specklesystems/speckle-excel): Excel connector
 - [`speckle-unity`](https://github.com/specklesystems/speckle-unity): Unity 3D connector
 - [`speckle-blender`](https://github.com/specklesystems/speckle-blender): Blender connector
-- [`speckle-unreal`](https://github.com/specklesystems/speckle-unreal): Unreal Engine Connector
-- [`speckle-qgis`](https://github.com/specklesystems/speckle-qgis): QGIS connectod
+- [`speckle-unreal`](https://github.com/specklesystems/speckle-unreal): Unreal Engine connector
+- [`speckle-qgis`](https://github.com/specklesystems/speckle-qgis): QGIS connector
 - [`speckle-powerbi`](https://github.com/specklesystems/speckle-powerbi): PowerBi connector
 - and more [connectors & tooling](https://github.com/specklesystems/)!
 
