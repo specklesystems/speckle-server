@@ -48,6 +48,8 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
 export default {
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
@@ -67,52 +69,67 @@ export default {
       default: () => null
     }
   },
-  data() {
-    return {
-      skip: true,
-      cursor: new Date().toISOString(),
-      commits: []
-    }
-  },
-  async mounted() {
-    this.fetchBranchCommits()
-  },
-  methods: {
-    async fetchBranchCommits() {
-      const res = await this.$apollo.query({
-        query: gql`
-          query {
-            stream(id: "${this.streamId}") {
-              id
-              branch(name: "${this.branchName}") {
-                name
-                commits( cursor: "${this.cursor}", limit: 2) {
-                  totalCount
-                  cursor
-                  items {
-                    sourceApplication
-                    id
-                    createdAt
-                    authorId
-                    branchName
-                    message
-                    referencedObject
-                  }
+  setup(props) {
+    const { result: commitsResult, fetchMore: commitsFetchMore } = useQuery(
+      gql`
+        query BranchAllCommits($sid: String!, $branchName: String, $cursor: String) {
+          stream(id: $sid) {
+            id
+            branch(name: $branchName) {
+              name
+              commits(cursor: $cursor, limit: 6) {
+                totalCount
+                cursor
+                items {
+                  sourceApplication
+                  id
+                  createdAt
+                  authorId
+                  branchName
+                  message
+                  referencedObject
                 }
               }
             }
           }
-        `
+        }
+      `,
+      () => ({
+        sid: props.streamId,
+        branchName: props.branchName,
+        cursor: null
       })
-      const items = res.data.stream.branch.commits.items
-      this.cursor = res.data.stream.branch.commits.cursor
-      items.forEach((item) => this.commits.push(item))
-      return items
-    },
+    )
+    const commits = computed(
+      () => commitsResult.value?.stream?.branch?.commits?.items || []
+    )
+
+    const cursor = computed(
+      () => commitsResult?.value?.stream?.branch?.commits?.cursor || null
+    )
+
+    return {
+      commits,
+      cursor,
+      commitsFetchMore
+    }
+  },
+  methods: {
     async infiniteHandler($state) {
-      const items = await this.fetchBranchCommits()
-      if (items.length === 0) $state.complete()
-      else $state.loaded()
+      const result = await this.commitsFetchMore({
+        variables: {
+          sid: this.streamId,
+          branchName: this.branchName,
+          cursor: this.cursor
+        }
+      })
+
+      const newItems = result?.data?.stream?.branch?.commits?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 }

@@ -71,7 +71,7 @@ export default {
         query ($streamId: String!, $cursor: String) {
           stream(id: $streamId) {
             id
-            commits(cursor: $cursor, limit: 2) {
+            commits(cursor: $cursor, limit: 6) {
               totalCount
               cursor
               items {
