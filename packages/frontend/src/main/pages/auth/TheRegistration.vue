@@ -181,7 +181,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
 import { randomString } from '@/helpers/randomHelpers'
 

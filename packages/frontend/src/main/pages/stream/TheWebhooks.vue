@@ -108,8 +108,8 @@
                 style="cursor: default"
               >
                 <v-list-item-icon>
-                  <v-icon :color="wh.statusIcon.color" class="pt-2">
-                    {{ wh.statusIcon.icon }}
+                  <v-icon :color="getStatusIcon(wh).color" class="pt-2">
+                    {{ getStatusIcon(wh).icon }}
                   </v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
@@ -290,12 +290,6 @@ export default {
         return {
           streamId: this.$route.params.streamId
         }
-      },
-      update(data) {
-        data.stream.webhooks.items.forEach((wh) => {
-          wh.statusIcon = this.getStatusIcon(wh)
-        })
-        return data.stream
       },
       error(err) {
         if (err.message) this.error = err.message.replace('GraphQL error: ', '')

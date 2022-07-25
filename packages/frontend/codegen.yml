@@ -9,9 +9,7 @@ generates:
       - 'typescript'
       - 'typescript-operations'
       - 'typescript-document-nodes'
-      - 'typescript-vue-apollo-smart-ops'
+      - 'typed-document-node'
     config:
-      vueApolloErrorHandlerFunction: handleApolloError
-      vueApolloErrorHandlerFunctionImportFrom: '@/config/vueApolloSmartOpsConfig'
       scalars:
         JSONObject: Record<string, unknown>

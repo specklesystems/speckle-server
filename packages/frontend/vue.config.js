@@ -24,7 +24,7 @@ const config = {
     // Add plugin for injecting env vars
     config
       .plugin('speckle-env-vars')
-      .use(webpack.EnvironmentPlugin, [['SPECKLE_SERVER_VERSION']])
+      .use(webpack.EnvironmentPlugin, [{ SPECKLE_SERVER_VERSION: 'unknown' }])
 
     // Setting source map according to build env
     config.devtool(isProdBuild ? false : 'eval-source-map')

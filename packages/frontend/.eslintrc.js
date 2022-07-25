@@ -37,6 +37,13 @@ const config = {
       }
     },
     {
+      files: './build-config/**/*.{js, ts}',
+      env: {
+        node: true,
+        commonjs: true
+      }
+    },
+    {
       files: '*.ts',
       plugins: ['@typescript-eslint'],
       extends: [

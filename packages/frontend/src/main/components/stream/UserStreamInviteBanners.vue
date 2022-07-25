@@ -12,7 +12,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import StreamInviteBanner from '@/main/components/stream/StreamInviteBanner.vue'
-import { useUserStreamInvitesQuery } from '@/graphql/generated/graphql'
+import { UserStreamInvitesDocument } from '@/graphql/generated/graphql'
 import { StreamInviteType } from '@/main/lib/stream/mixins/streamInviteMixin'
 
 export default Vue.extend({
@@ -24,7 +24,9 @@ export default Vue.extend({
     streamInvites: [] as NonNullable<StreamInviteType[]>
   }),
   apollo: {
-    streamInvites: useUserStreamInvitesQuery()
+    streamInvites: {
+      query: UserStreamInvitesDocument
+    }
   },
   methods: {
     onInviteUsed({ accept }: { accept: boolean }, invite: StreamInviteType) {

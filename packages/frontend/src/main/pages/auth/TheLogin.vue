@@ -102,7 +102,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { randomString } from '@/helpers/randomHelpers'
 import { isEmailValid } from '@/plugins/authHelpers'

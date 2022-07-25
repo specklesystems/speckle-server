@@ -37,7 +37,7 @@ export async function checkAccessCodeAndGetTokens() {
 
 /**
  * Gets the user id and suuid, sets them in local storage
- * @param {import('apollo-client').ApolloClient} apolloClient
+ * @param {import('@apollo/client/core').ApolloClient} apolloClient
  * @return {Object} The full graphql response.
  */
 export async function prefetchUserAndSetSuuid(apolloClient) {

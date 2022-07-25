@@ -2,7 +2,7 @@
   <div>
     <user-stream-invite-banners @invite-used="onInviteUsed" />
     <v-row dense>
-      <v-col v-if="$apollo.loading && !timeline">
+      <v-col v-if="isApolloLoading && !timeline">
         <div class="my-5">
           <v-timeline align-top dense>
             <v-timeline-item v-for="i in 6" :key="i" medium>
@@ -73,11 +73,14 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import UserStreamInviteBanners from '@/main/components/stream/UserStreamInviteBanners.vue'
 import InfiniteLoading from 'vue-infinite-loading'
 import NoDataPlaceholder from '@/main/components/common/NoDataPlaceholder.vue'
 import ListItemActivity from '@/main/components/activity/ListItemActivity.vue'
+import { UserTimelineDocument } from '@/graphql/generated/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
 
 export default {
   name: 'FeedTimeline',
@@ -87,77 +90,26 @@ export default {
     NoDataPlaceholder,
     UserStreamInviteBanners
   },
-  data() {
-    return {
-      newStreamDialog: 0,
-      activityNav: true
-    }
-  },
-  apollo: {
-    quickUser: {
-      query: gql`
-        query {
-          quickUser: user {
-            id
-            name
-          }
-        }
-      `
-    },
-    timeline: {
-      query: gql`
-        query ($cursor: DateTime) {
-          user {
-            id
-            timeline(cursor: $cursor) {
-              totalCount
-              cursor
-              items {
-                actionType
-                userId
-                streamId
-                resourceId
-                resourceType
-                time
-                info
-                message
-              }
-            }
-          }
-        }
-      `,
-      fetchPolicy: 'cache-and-network',
-      update(data) {
-        return data.user.timeline
+  setup() {
+    // Timeline query
+    const {
+      result: timelineResult,
+      fetchMore: timelineFetchMore,
+      refetch: timelineRefetch,
+      loading: timelineLoading
+    } = useQuery(
+      UserTimelineDocument,
+      {
+        cursor: null
       },
-      result({ data }) {
-        this.groupSimilarActivities(data)
-      }
-    }
-  },
-  computed: {},
-  watch: {
-    timeline(val) {
-      if (val.totalCount === 0 && !localStorage.getItem('onboarding')) {
-        this.$router.push('/onboarding')
-      }
-    }
-  },
-  mounted() {
-    setTimeout(
-      function () {
-        this.activityNav = !this.$vuetify.breakpoint.smAndDown
-      }.bind(this),
-      10
+      { fetchPolicy: 'cache-and-network' }
     )
-  },
-  methods: {
-    onInviteUsed() {
-      // Refetch feed
-      this.$apollo.queries.timeline.refetch()
-    },
-    groupSimilarActivities(data) {
-      if (!data) return
+    const timeline = computed(() => {
+      return timelineResult.value?.user?.timeline || null
+    })
+    const groupedTimeline = computed(() => {
+      const data = timelineResult.value
+      if (!data) return []
 
       const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
       const groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
@@ -206,31 +158,76 @@ export default {
         }
         return prev
       }, [])
-      // console.log(groupedTimeline)
-      this.groupedTimeline = groupedTimeline
+
+      return groupedTimeline
+    })
+
+    // Quick user info
+    const { result: quickUserResult, loading: quickUserLoading } = useQuery(gql`
+      query {
+        quickUser: user {
+          id
+          name
+        }
+      }
+    `)
+    const quickUser = computed(() => quickUserResult.value?.quickUser || null)
+
+    return {
+      quickUser,
+      groupedTimeline,
+      timeline,
+      timelineFetchMore,
+      timelineRefetch,
+      quickUserLoading,
+      timelineLoading
+    }
+  },
+  data() {
+    return {
+      newStreamDialog: 0,
+      activityNav: true
+    }
+  },
+  computed: {
+    isApolloLoading() {
+      return this.$apollo.loading || this.quickUserLoading || this.timelineLoading
+    }
+  },
+  watch: {
+    timeline(val) {
+      if (val.totalCount === 0 && !localStorage.getItem('onboarding')) {
+        this.$router.push('/onboarding')
+      }
+    }
+  },
+  mounted() {
+    setTimeout(
+      function () {
+        this.activityNav = !this.$vuetify.breakpoint.smAndDown
+      }.bind(this),
+      10
+    )
+  },
+  methods: {
+    onInviteUsed() {
+      // Refetch feed
+      this.timelineRefetch()
     },
 
-    infiniteHandler($state) {
-      this.$apollo.queries.timeline.fetchMore({
+    async infiniteHandler($state) {
+      const result = await this.timelineFetchMore({
         variables: {
           cursor: this.timeline.cursor
-        },
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.user.timeline.items
-
-          //set vue-infinite state
-          if (newItems.length === 0) $state.complete()
-          else $state.loaded()
-
-          fetchMoreResult.user.timeline.items = [
-            ...previousResult.user.timeline.items,
-            ...newItems
-          ]
-
-          return fetchMoreResult
         }
       })
+
+      const newItems = result.data?.user?.timeline?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 }

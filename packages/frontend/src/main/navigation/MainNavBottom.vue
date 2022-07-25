@@ -1,4 +1,3 @@
-setDarkTheme
 <template>
   <div class="elevation-10">
     <portal-target name="nav-bottom">
@@ -45,18 +44,9 @@ setDarkTheme
 </template>
 <script>
 import { signOut } from '@/plugins/authHelpers'
-import { mainUserDataQuery } from '@/graphql/user'
 import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
-  apollo: {
-    user: {
-      query: mainUserDataQuery,
-      skip() {
-        return !this.loggedIn
-      }
-    }
-  },
   methods: {
     signOut() {
       this.$mixpanel.track('Log Out', { type: 'action' })

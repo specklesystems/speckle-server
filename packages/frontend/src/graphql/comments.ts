@@ -1,4 +1,4 @@
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
 export const COMMENT_FULL_INFO_FRAGMENT = gql`
   fragment CommentFullInfo on Comment {

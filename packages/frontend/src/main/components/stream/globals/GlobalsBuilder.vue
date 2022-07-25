@@ -94,9 +94,10 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { randomString } from '@/helpers/randomHelpers'
 import objectQuery from '@/graphql/objectSingle.gql'
+import { omit } from 'lodash'
 
 export default {
   name: 'GlobalsBuilder',
@@ -114,9 +115,12 @@ export default {
         }
       },
       update(data) {
-        delete data.stream.object.data.__closure
-        this.globalsArray = this.nestedGlobals(data.stream.object.data)
         return data.stream.object
+      },
+      result({ data }) {
+        this.globalsArray = this.nestedGlobals(
+          omit(data.stream.object.data, ['__closure'])
+        )
       },
       skip() {
         return !this.objectId
