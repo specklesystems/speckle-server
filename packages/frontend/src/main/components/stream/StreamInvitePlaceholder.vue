@@ -8,8 +8,10 @@
           :avatar="streamInviter.avatar"
           :size="75"
         />
-        <v-icon class="mx-4">mdi-plus</v-icon>
-        <user-avatar :id="$userId()" :size="75" />
+        <template v-if="$userId()">
+          <v-icon class="mx-4">mdi-plus</v-icon>
+          <user-avatar :id="$userId()" :size="75" />
+        </template>
       </div>
     </template>
     <template #default>

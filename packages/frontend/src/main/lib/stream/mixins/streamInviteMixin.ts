@@ -23,6 +23,10 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
     streamInvite: {
       type: Object as PropType<StreamInviteType>,
       required: true
+    },
+    inviteToken: {
+      type: String as PropType<Nullable<string>>,
+      default: null
     }
   },
   data: () => ({
@@ -34,6 +38,9 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
     },
     inviteId(): string {
       return this.streamInvite.inviteId
+    },
+    token(): Nullable<string> {
+      return this.streamInvite.token || this.inviteToken || null
     },
     streamInviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
       return this.streamInvite.invitedBy
@@ -59,13 +66,13 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
       this.$loginAndSetRedirect()
     },
     async processInvite(accept: boolean) {
-      if (!this.inviteId) return
+      if (!this.token) return
 
       const { data, errors } = await useStreamInviteMutation(this, {
         variables: {
           accept,
           streamId: this.streamId,
-          inviteId: this.inviteId
+          token: this.token
         },
         update: (cache, { data }) => {
           if (!data?.streamInviteUse) return
@@ -80,7 +87,7 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
           // 1. Single stream invite query
           const singleStreamInviteCacheFilter = {
             query: StreamInviteDocument,
-            variables: { streamId: this.streamId, inviteId: this.inviteId }
+            variables: { streamId: this.streamId, token: this.token }
           }
           let singleStreamInviteQueryData: MaybeFalsy<StreamInviteQuery> = undefined
           try {

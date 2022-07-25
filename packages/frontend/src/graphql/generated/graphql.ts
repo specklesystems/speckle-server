@@ -654,8 +654,8 @@ export type MutationStreamInviteCreateArgs = {
 
 export type MutationStreamInviteUseArgs = {
   accept: Scalars['Boolean'];
-  inviteId: Scalars['String'];
   streamId: Scalars['String'];
+  token: Scalars['String'];
 };
 
 
@@ -788,6 +788,8 @@ export type PendingStreamCollaborator = {
   streamName: Scalars['String'];
   /** E-mail address or name of the invited user */
   title: Scalars['String'];
+  /** Only available if the active user is the pending stream collaborator */
+  token?: Maybe<Scalars['String']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
 };
@@ -821,7 +823,7 @@ export type Query = {
    */
   stream?: Maybe<Stream>;
   /**
-   * Look for an invitation to a stream, for the current user (authed or not). If inviteId
+   * Look for an invitation to a stream, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
    */
   streamInvite?: Maybe<PendingStreamCollaborator>;
@@ -885,8 +887,8 @@ export type QueryStreamArgs = {
 
 
 export type QueryStreamInviteArgs = {
-  inviteId?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+  token?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1186,6 +1188,8 @@ export type StreamCreateInput = {
 export type StreamInviteCreateInput = {
   email?: InputMaybe<Scalars['String']>;
   message?: InputMaybe<Scalars['String']>;
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
   userId?: InputMaybe<Scalars['String']>;
 };
@@ -1529,25 +1533,25 @@ export type LimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string
 
 export type StreamCollaboratorFieldsFragment = { __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null };
 
-export type UsersOwnInviteFieldsFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } };
+export type UsersOwnInviteFieldsFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } };
 
 export type StreamInviteQueryVariables = Exact<{
   streamId: Scalars['String'];
-  inviteId?: InputMaybe<Scalars['String']>;
+  token?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
+export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
 
 export type UserStreamInvitesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type UserStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } }> };
+export type UserStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } }> };
 
 export type UseStreamInviteMutationVariables = Exact<{
   accept: Scalars['Boolean'];
   streamId: Scalars['String'];
-  inviteId: Scalars['String'];
+  token: Scalars['String'];
 }>;
 
 
@@ -1796,6 +1800,7 @@ export const UsersOwnInviteFields = gql`
   inviteId
   streamId
   streamName
+  token
   invitedBy {
     ...LimitedUserFields
   }
@@ -1936,8 +1941,8 @@ export const StreamCommitQuery = gql`
 }
     `;
 export const StreamInvite = gql`
-    query StreamInvite($streamId: String!, $inviteId: String) {
-  streamInvite(streamId: $streamId, inviteId: $inviteId) {
+    query StreamInvite($streamId: String!, $token: String) {
+  streamInvite(streamId: $streamId, token: $token) {
     ...UsersOwnInviteFields
   }
 }
@@ -1950,8 +1955,8 @@ export const UserStreamInvites = gql`
 }
     ${UsersOwnInviteFields}`;
 export const UseStreamInvite = gql`
-    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-  streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
+  streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
 }
     `;
 export const CancelStreamInvite = gql`
@@ -2340,6 +2345,7 @@ export const UsersOwnInviteFieldsFragmentDoc = gql`
   inviteId
   streamId
   streamName
+  token
   invitedBy {
     ...LimitedUserFields
   }
@@ -2569,8 +2575,8 @@ export const useStreamCommitQueryQuery = createSmartQueryOptionsFunction<
 >(StreamCommitQueryDocument, handleApolloError);
 
 export const StreamInviteDocument = gql`
-    query StreamInvite($streamId: String!, $inviteId: String) {
-  streamInvite(streamId: $streamId, inviteId: $inviteId) {
+    query StreamInvite($streamId: String!, $token: String) {
+  streamInvite(streamId: $streamId, token: $token) {
     ...UsersOwnInviteFields
   }
 }
@@ -2590,7 +2596,7 @@ export const StreamInviteDocument = gql`
  *     streamInvite: useStreamInviteQuery({
  *       variables: {
  *         streamId: // value for 'streamId'
- *         inviteId: // value for 'inviteId'
+ *         token: // value for 'token'
  *       },
  *       loadingKey: 'loading',
  *       fetchPolicy: 'no-cache',
@@ -2638,8 +2644,8 @@ export const useUserStreamInvitesQuery = createSmartQueryOptionsFunction<
 >(UserStreamInvitesDocument, handleApolloError);
 
 export const UseStreamInviteDocument = gql`
-    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-  streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
+  streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
 }
     `;
 
@@ -2658,7 +2664,7 @@ export const UseStreamInviteDocument = gql`
  *   variables: {
  *     accept: // value for 'accept'
  *     streamId: // value for 'streamId'
- *     inviteId: // value for 'inviteId'
+ *     token: // value for 'token'
  *   },
  * });
  */

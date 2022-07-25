@@ -37,7 +37,7 @@ module.exports = {
 
     async streamInviteCreate(_parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, Roles.Stream.Owner)
-      const { email, userId, message, streamId } = args.input
+      const { email, userId, message, streamId, role } = args.input
 
       if (!email && !userId) {
         throw new InviteCreateValidationError(
@@ -52,7 +52,7 @@ module.exports = {
         message,
         resourceTarget: ResourceTargets.Streams,
         resourceId: streamId,
-        role: Roles.Stream.Contributor
+        role: role || Roles.Stream.Contributor
       })
 
       return true
@@ -96,7 +96,7 @@ module.exports = {
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) => {
-            const { email, userId, message, streamId } = params
+            const { email, userId, message, streamId, role } = params
             const target = userId ? buildUserTarget(userId) : email
             return createAndSendInvite({
               target,
@@ -104,7 +104,7 @@ module.exports = {
               message,
               resourceTarget: ResourceTargets.Streams,
               resourceId: streamId,
-              role: Roles.Stream.Contributor
+              role: role || Roles.Stream.Contributor
             })
           })
         )
@@ -114,10 +114,10 @@ module.exports = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
-      const { accept, streamId, inviteId } = args
+      const { accept, streamId, token } = args
       const { userId } = ctx
 
-      await finalizeStreamInvite(accept, streamId, inviteId, userId)
+      await finalizeStreamInvite(accept, streamId, token, userId)
 
       return true
     },
@@ -150,9 +150,9 @@ module.exports = {
   },
   Query: {
     async streamInvite(_parent, args, context) {
-      const { streamId, inviteId } = args
+      const { streamId, token } = args
 
-      return await getUserPendingStreamInvite(streamId, context.userId, inviteId)
+      return await getUserPendingStreamInvite(streamId, context.userId, token)
     },
     async streamInvites(_parrent, _args, context) {
       const { userId } = context

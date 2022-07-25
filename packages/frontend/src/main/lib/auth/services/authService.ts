@@ -2,6 +2,7 @@ import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { Nullable } from '@/helpers/typeHelpers'
 import { getCurrentQueryParams } from '@/main/lib/common/web-apis/helpers/urlHelper'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { Route } from 'vue-router'
 
 /**
  * Process a successful authentication (from login page, registration page or elsewhere)
@@ -34,6 +35,16 @@ export function processSuccessfulAuth(res: Response): void {
 /**
  * Get invite id from URL query string
  */
-export function getInviteIdFromURL(): Nullable<string> {
-  return getCurrentQueryParams().get('inviteId')
+export function getInviteTokenFromURL(): Nullable<string> {
+  const query = getCurrentQueryParams()
+  return query.get('token') || query.get('inviteId')
+}
+
+/**
+ * Get invite id from VueRouter route, can be used instead of getInviteTokenFromURL()
+ * when you want the result to be reactive and dependant on the route object
+ */
+export function getInviteTokenFromRoute(route: Route): Nullable<string> {
+  const query = route.query
+  return (query.token as string) || (query.inviteId as string) || null
 }

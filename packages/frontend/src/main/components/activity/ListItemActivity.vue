@@ -152,7 +152,7 @@
                 <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
                 {{ stream.commits.totalCount }}
               </v-btn>
-              <v-chip small outlined class="ml-3 no-hover">
+              <v-chip v-if="stream.role" small outlined class="ml-3 no-hover">
                 <v-icon small left>mdi-account-key-outline</v-icon>
                 {{ stream.role.split(':')[1] }}
               </v-chip>

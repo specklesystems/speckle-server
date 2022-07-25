@@ -49,20 +49,20 @@ function resolveAuthRedirectPath(invite) {
 /**
  * Validate that the new user has a valid invite for registering to the server
  * @param {Object} email User's email address
- * @param {string} inviteId Invite ID
+ * @param {string} token Invite token
  * @returns {import('@/modules/serverinvites/repositories').ServerInviteRecord}
  */
-async function validateServerInvite(email, inviteId) {
-  const invite = await getServerInvite(email, inviteId)
+async function validateServerInvite(email, token) {
+  const invite = await getServerInvite(email, token)
   if (!invite) {
     throw new NoInviteFoundError(
-      inviteId
-        ? "Wrong e-mail address or invite ID. Make sure you're using the same e-mail address that received the invite."
+      token
+        ? "Wrong e-mail address or invite token. Make sure you're using the same e-mail address that received the invite."
         : "Wrong e-mail address. Make sure you're using the same e-mail address that received the invite.",
       {
         info: {
           email,
-          inviteId
+          token
         }
       }
     )
@@ -90,16 +90,19 @@ async function finalizeInvitedServerRegistration(email, userId) {
  * Accept or decline a stream invite
  * @param {boolean} accept
  * @param {string} streamId
- * @param {string} inviteId
+ * @param {string} token
  * @param {string} userId User who's accepting the invite
  */
-async function finalizeStreamInvite(accept, streamId, inviteId, userId) {
-  const invite = await getStreamInvite(streamId, buildUserTarget(userId), inviteId)
+async function finalizeStreamInvite(accept, streamId, token, userId) {
+  const invite = await getStreamInvite(streamId, {
+    token,
+    target: buildUserTarget(userId)
+  })
   if (!invite) {
     throw new NoInviteFoundError('Attempted to finalize nonexistant stream invite', {
       info: {
         streamId,
-        inviteId,
+        token,
         userId
       }
     })
@@ -141,7 +144,7 @@ async function finalizeStreamInvite(accept, streamId, inviteId, userId) {
  * @param {string} inviteId
  */
 async function cancelStreamInvite(streamId, inviteId) {
-  const invite = await getStreamInvite(streamId, null, inviteId)
+  const invite = await getStreamInvite(streamId, { inviteId })
   if (!invite) {
     throw new NoInviteFoundError('Attempted to process nonexistant stream invite', {
       info: {

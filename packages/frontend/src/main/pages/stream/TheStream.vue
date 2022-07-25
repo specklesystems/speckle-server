@@ -11,6 +11,7 @@
       <stream-invite-banner
         v-if="hasInvite && !showInvitePlaceholder"
         :stream-invite="streamInvite"
+        :invite-token="inviteToken"
         @invite-used="onInviteClosed"
       />
 
@@ -27,6 +28,7 @@
         <stream-invite-placeholder
           v-else
           :stream-invite="streamInvite"
+          :invite-token="inviteToken"
           @invite-used="onInviteClosed"
         />
       </div>
@@ -53,11 +55,12 @@ import type { ApolloQueryResult } from 'apollo-client'
 import type { Get } from 'type-fest'
 import StreamInvitePlaceholder from '@/main/components/stream/StreamInvitePlaceholder.vue'
 import { StreamInviteType } from '@/main/lib/stream/mixins/streamInviteMixin'
+import { getInviteTokenFromRoute } from '@/main/lib/auth/services/authService'
 
 // Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
 type VueThis = Vue & {
   streamId: string
-  inviteId: Nullable<string>
+  inviteToken: Nullable<string>
   error: Nullable<Error>
 }
 
@@ -81,8 +84,8 @@ export default Vue.extend({
     }
   },
   computed: {
-    inviteId(): Nullable<string> {
-      return this.$route.query['inviteId'] as Nullable<string>
+    inviteToken(): Nullable<string> {
+      return getInviteTokenFromRoute(this.$route)
     },
     streamId(): string {
       return this.$route.params.streamId
@@ -119,7 +122,7 @@ export default Vue.extend({
       variables() {
         return {
           streamId: this.streamId,
-          inviteId: this.inviteId
+          token: this.inviteToken
         }
       }
     }),
