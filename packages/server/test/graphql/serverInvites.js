@@ -60,6 +60,7 @@ const streamInviteFragment = gql`
     streamId
     title
     role
+    token
     invitedBy {
       id
       name
@@ -118,6 +119,7 @@ const streamPendingCollaboratorsQuery = gql`
       pendingCollaborators {
         inviteId
         title
+        token
         user {
           id
           name

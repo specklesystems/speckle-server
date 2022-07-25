@@ -58,15 +58,9 @@ async function validateInviteExistanceFromEmail(emailParams) {
   expect(token).to.be.ok
   const invite = await getInviteByToken(token)
   expect(invite).to.be.ok
-}
 
-// TODO: 1. Invite (batch also) - role + invalid role
-/**
- * More:
- * - Get token, only if u own it
- * - Invite with both token and invite ID
- * (check links with both)
- */
+  return invite
+}
 
 describe('[Stream & Server Invites]', () => {
   const me = {
@@ -263,23 +257,51 @@ describe('[Stream & Server Invites]', () => {
         })
       })
 
+      it("can't invite with an invalid role", async () => {
+        const result = await createInvite({
+          email: 'badroleguy@speckle.com',
+          streamId: myPrivateStream.id,
+          role: 'aaa'
+        })
+
+        expect(result.data?.streamInviteCreate).to.be.not.ok
+        expect(result.errors).to.be.ok
+        expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
+          'Unexpected stream invite role'
+        )
+      })
+
       const userTypesDataSet = [
         {
-          display: 'registered',
+          display: 'registered user',
           user: otherGuy,
           stream: myPrivateStream,
           email: null
         },
         {
-          display: 'unregistered',
+          display: 'registered user (with custom role)',
+          user: otherGuy,
+          stream: myPrivateStream,
+          email: null,
+          role: Roles.Stream.Owner
+        },
+        {
+          display: 'unregistered user',
           user: null,
           stream: myPrivateStream,
           email: 'randomer22@lool.com'
+        },
+        {
+          display: 'unregistered user (with custom role)',
+          user: null,
+          stream: myPrivateStream,
+          email: 'randomer22@lool.com',
+          Role: Roles.Stream.Reviewer
         }
       ]
 
-      userTypesDataSet.forEach(({ display, user, stream, email }) => {
-        it(`can invite a ${display} user`, async () => {
+      userTypesDataSet.forEach(({ display, user, stream, email, role }) => {
+        it(`can invite a ${display}`, async () => {
           const messagePart1 = '1234hiiiiduuuuude'
           const messagePart2 = 'yepppppp'
           const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
@@ -295,7 +317,8 @@ describe('[Stream & Server Invites]', () => {
             email,
             message: unsanitaryMessage,
             userId: user?.id || null,
-            streamId: stream?.id || null
+            streamId: stream?.id || null,
+            role: role || null
           })
 
           // Check that operation was successful
@@ -314,7 +337,8 @@ describe('[Stream & Server Invites]', () => {
           expect(emailParams.html).to.not.contain(messagePart2)
 
           // Validate that invite exists
-          await validateInviteExistanceFromEmail(emailParams)
+          const invite = await validateInviteExistanceFromEmail(emailParams)
+          expect(invite.role).to.eq(role || Roles.Stream.Contributor)
         })
       })
 
@@ -511,6 +535,12 @@ describe('[Stream & Server Invites]', () => {
             userId: otherGuy.id,
             message: 'waddup',
             streamId: myPrivateStream.id
+          },
+          {
+            email: 'someroleguy@asdasdad.com',
+            message: 'yoo bruh',
+            streamId: myPrivateStream.id,
+            role: Roles.Stream.Reviewer
           }
         ]
 
@@ -533,7 +563,9 @@ describe('[Stream & Server Invites]', () => {
           expect(emailParams).to.be.ok
           expect(emailParams.html).to.contain(inputData.message)
           expect(emailParams.text).to.contain(inputData.message)
-          await validateInviteExistanceFromEmail(emailParams)
+
+          const invite = await validateInviteExistanceFromEmail(emailParams)
+          expect(invite.role).to.eq(inputData.role || Roles.Stream.Contributor)
         }
       })
     })
@@ -572,6 +604,7 @@ describe('[Stream & Server Invites]', () => {
 
           const data = result.data.streamInvite
           expect(data.inviteId).to.eq(inviteFromOtherGuy.inviteId)
+          expect(data.token).to.eq(inviteFromOtherGuy.token)
           expect(data.streamId).to.eq(inviteFromOtherGuy.stream.id)
           expect(data.title).to.eq(me.name)
 
@@ -700,8 +733,15 @@ describe('[Stream & Server Invites]', () => {
         expect(errors).to.be.not.ok
         expect(data.stream).to.be.ok
         expect(data.stream.id).to.eq(streamId)
-        expect(data.stream.pendingCollaborators || []).to.have.length(1)
-        expect(data.stream.pendingCollaborators[0].user?.id).to.eq(otherGuy.id)
+
+        const pendingCollaborators = data.stream.pendingCollaborators || []
+        expect(pendingCollaborators).to.have.length(1)
+
+        const pendingCollaborator = pendingCollaborators[0]
+        expect(pendingCollaborator.user?.id).to.eq(otherGuy.id)
+
+        // tokens shouldn't be resolved, as they're for other people
+        expect(pendingCollaborator.token).to.be.null
       })
 
       it("a foreign stream's pending collaborators can't be retrieved", async () => {
