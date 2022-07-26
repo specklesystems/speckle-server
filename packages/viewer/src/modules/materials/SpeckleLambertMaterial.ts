@@ -71,7 +71,7 @@ class SpeckleLambertMaterial extends MeshLambertMaterial {
     SpeckleLambertMaterial.matBuff.elements[12] = 0
     SpeckleLambertMaterial.matBuff.elements[13] = 0
     SpeckleLambertMaterial.matBuff.elements[14] = 0
-    SpeckleLambertMaterial.matBuff.multiply(object.matrixWorld)
+    // SpeckleLambertMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleLambertMaterial.matBuff)
 
     SpeckleLambertMaterial.vecBuff0.set(

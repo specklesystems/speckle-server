@@ -1,4 +1,4 @@
-import { Texture } from 'three'
+import { Color, Texture } from 'three'
 
 export enum FilterMaterialType {
   SELECT,
@@ -10,6 +10,7 @@ export enum FilterMaterialType {
 export interface FilterMaterial {
   filterType: FilterMaterialType
   rampIndex?: number
+  rampIndexColor?: Color
   rampTexture?: Texture
 }
 

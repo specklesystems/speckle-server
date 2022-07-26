@@ -14,6 +14,7 @@ import { FilterMaterial } from '../FilteringManager'
 
 export interface MaterialOptions {
   rampIndex?: number
+  rampIndexColor?: Color
   rampTexture?: Texture
 }
 
@@ -23,6 +24,7 @@ export default class Materials {
   private meshGhostMaterial: Material = null
   private lineHighlightMaterial: Material = null
   private lineGhostMaterial: Material = null
+  private lineColoredMaterial: Material = null
   private pointCloudHighlightMaterial: Material = null
   private pointHighlightMaterial: Material = null
   private meshGradientMaterial: Material = null
@@ -107,6 +109,24 @@ export default class Materials {
       // clippingPlanes: this.viewer.sectionBox.planes
     })
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0x00ff00)
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2(
+      1281,
+      1306
+    )
+
+    this.lineColoredMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: false,
+      alphaToCoverage: false,
+      resolution: new Vector2(1281, 1306)
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0xffffff)
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
@@ -308,7 +328,7 @@ export default class Materials {
       case GeometryType.MESH:
         return this.meshGhostMaterial
       case GeometryType.LINE:
-        return this.lineGhostMaterial // TO DO
+        return this.lineGhostMaterial
       case GeometryType.POINT:
         return this.meshGhostMaterial // TO DO
       case GeometryType.POINT_CLOUD:
@@ -321,7 +341,7 @@ export default class Materials {
       case GeometryType.MESH:
         return this.meshGradientMaterial
       case GeometryType.LINE:
-        return this.meshGradientMaterial // TO DO
+        return this.lineGhostMaterial
       case GeometryType.POINT:
         return this.meshGradientMaterial // TO DO
       case GeometryType.POINT_CLOUD:
@@ -334,7 +354,7 @@ export default class Materials {
       case GeometryType.MESH:
         return this.meshColoredMaterial
       case GeometryType.LINE:
-        return this.meshColoredMaterial // TO DO
+        return this.lineColoredMaterial
       case GeometryType.POINT:
         return this.meshColoredMaterial // TO DO
       case GeometryType.POINT_CLOUD:
@@ -413,6 +433,7 @@ export default class Materials {
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
     return {
       rampIndex: filterMaterial.rampIndex ? filterMaterial.rampIndex : undefined,
+      rampIndexColor: filterMaterial.rampIndexColor,
       rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
     }
   }

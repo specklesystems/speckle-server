@@ -439,8 +439,6 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.clearFilter()
     this.speckleRenderer.beginFilter()
     for (let k = 0; k < colors.length; k++) {
-      if (colors[k].name === 'Mesh' || colors[k].name === 'Base') continue
-
       const nodes = colors[k].nodes
       let ids = []
       for (let i = 0; i < nodes.length; i++) {
@@ -453,6 +451,7 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.applyFilter(ids, {
         filterType: FilterMaterialType.COLORED,
         rampIndex: colors[k].colorIndex / colors.length,
+        rampIndexColor: new Color(colors[k].color),
         rampTexture
       })
     }

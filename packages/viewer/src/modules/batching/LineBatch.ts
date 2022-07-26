@@ -1,5 +1,6 @@
 import {
   BufferGeometry,
+  Color,
   DynamicDrawUsage,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
@@ -22,6 +23,7 @@ export default class LineBatch implements Batch {
   public batchMaterial: SpeckleLineMaterial
   private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
+  public static vectorBuffer: Vector4 = new Vector4()
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
@@ -66,14 +68,21 @@ export default class LineBatch implements Batch {
 
     for (let i = 0; i < ranges.length; i++) {
       const material = ranges[i].material as SpeckleLineMaterial
+      const materialOptions = ranges[i].materialOptions
+      const color: Color =
+        materialOptions && materialOptions.rampIndexColor
+          ? materialOptions.rampIndexColor
+          : material.color
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +
         ranges[i].count * this.colorBuffer.stride
+
+      LineBatch.vectorBuffer.set(color.r, color.g, color.b, 1)
       this.updateColorBuffer(
         start,
         ranges[i].count === Infinity ? this.colorBuffer.array.length : len,
-        new Vector4(material.color.r, material.color.g, material.color.b, 1)
+        LineBatch.vectorBuffer
       )
     }
     this.colorBuffer.updateRange = { offset: 0, count: data.length }

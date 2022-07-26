@@ -93,7 +93,7 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
     SpeckleStandardColoredMaterial.matBuff.elements[12] = 0
     SpeckleStandardColoredMaterial.matBuff.elements[13] = 0
     SpeckleStandardColoredMaterial.matBuff.elements[14] = 0
-    SpeckleStandardColoredMaterial.matBuff.multiply(object.matrixWorld)
+    // SpeckleStandardColoredMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleStandardColoredMaterial.matBuff)
 
     SpeckleStandardColoredMaterial.vecBuff0.set(
