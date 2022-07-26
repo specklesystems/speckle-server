@@ -1,18 +1,12 @@
 /* eslint-disable camelcase */
 import {
-  Box3,
   BufferGeometry,
   Float32BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
-  Uint16BufferAttribute,
-  Uint32BufferAttribute,
   Vector3
 } from 'three'
-import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
-import { World } from '../World'
-import ObjectWrapper from './ObjectWrapper'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -29,20 +23,6 @@ export interface GeometryData {
   transform: Matrix4
 }
 
-/**
- * TEMPORARY until I unifiy GeometryData
- */
-export interface LooseGeometryData {
-  attributes: Partial<
-    Record<GeometryAttributes, Uint16Array | Uint32Array | Float32Array>
-  >
-  bakeTransform: Matrix4
-  transform: Matrix4
-}
-
-/**
- * Implementation here will change once we start working on proper batching
- */
 export class Geometry {
   private static _USE_RTE = true
   private static _THICK_LINES = true
@@ -64,119 +44,15 @@ export class Geometry {
     console.warn(`THICK_LINES IS NOW ${Geometry._THICK_LINES}`)
   }
 
-  static makePointGeometry(geometryData: GeometryData): BufferGeometry {
-    const geometry = Geometry.makeMeshGeometry(geometryData)
-    World.expandWorld(geometry.boundingBox)
-    return geometry
-  }
-  static makePointCloudGeometry(geometryData: GeometryData): BufferGeometry {
-    const geometry = Geometry.makeMeshGeometry(geometryData)
-    World.expandWorld(geometry.boundingBox)
-    return geometry
-  }
-  static makeMeshGeometry(geometryData: GeometryData): BufferGeometry {
-    if (geometryData.bakeTransform) {
-      Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
-    }
-    const geometry = new BufferGeometry()
-
-    if (geometryData.attributes.INDEX) {
-      if (
-        geometryData.attributes.POSITION.length >= 65535 ||
-        geometryData.attributes.INDEX.length >= 65535
-      ) {
-        geometry.setIndex(new Uint32BufferAttribute(geometryData.attributes.INDEX, 1))
-      } else {
-        geometry.setIndex(new Uint16BufferAttribute(geometryData.attributes.INDEX, 1))
-      }
-    }
-
-    if (geometryData.attributes.POSITION) {
-      geometry.setAttribute(
-        'position',
-        new Float32BufferAttribute(geometryData.attributes.POSITION, 3)
-      )
-    }
-
-    if (geometryData.attributes.COLOR) {
-      geometry.setAttribute(
-        'color',
-        new Float32BufferAttribute(geometryData.attributes.COLOR, 3)
-      )
-    }
-
-    geometry.computeVertexNormals()
-    geometry.computeBoundingSphere()
-    geometry.computeBoundingBox()
-
-    World.expandWorld(geometry.boundingBox)
-
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(geometry)
-    }
-
-    return geometry
-  }
-
-  static makeLineGeometry(geometryData: GeometryData) {
-    if (geometryData.bakeTransform) {
-      Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
-    }
-    let geometry: { boundingBox: Box3 }
-    if (Geometry.THICK_LINES) {
-      geometry = this.makeLineGeometryTriangle(geometryData)
-    } else {
-      geometry = this.makeLineGeometryLine(geometryData)
-    }
-    World.expandWorld(geometry.boundingBox)
-
-    return geometry
-  }
-
-  static makeLineGeometryLine(geometryData: GeometryData) {
-    const geometry = new BufferGeometry()
-    if (geometryData.attributes.POSITION) {
-      geometry.setAttribute(
-        'position',
-        new Float32BufferAttribute(geometryData.attributes.POSITION, 3)
-      )
-    }
-    geometry.computeBoundingBox()
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(geometry)
-    }
-
-    return geometry
-  }
-
-  static makeLineGeometryTriangle(geometryData: GeometryData) {
-    const geometry = new LineGeometry()
-    geometry.setPositions(geometryData.attributes.POSITION)
-    if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
-    geometry.computeBoundingBox()
-
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(geometry)
-    }
-    return geometry
-  }
-
-  /**
-   *
-   * @param geometry TEMPORARY!!!
-   */
-  public static updateRTEGeometry(geometry: BufferGeometry) {
+  public static updateRTEGeometry(
+    geometry: BufferGeometry,
+    doublePositions: Float64Array
+  ) {
     if (Geometry.USE_RTE) {
       if (geometry.type === 'BufferGeometry') {
-        const position_low = new Float32Array(geometry.attributes.position.array.length)
-        const position_high = new Float32Array(
-          geometry.attributes.position.array.length
-        )
-        Geometry.DoubleToHighLowBuffer(
-          geometry.attributes.position.array,
-          position_low,
-          position_high
-        )
+        const position_low = new Float32Array(doublePositions.length)
+        const position_high = new Float32Array(doublePositions.length)
+        Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
         geometry.setAttribute(
           'position_low',
           new Float32BufferAttribute(position_low, 3)
@@ -189,18 +65,10 @@ export class Geometry {
         geometry.type === 'LineGeometry' ||
         geometry.type === 'LineSegmentsGeometry'
       ) {
-        const position_low = new Float32Array(
-          geometry.attributes.instanceStart.array.length
-        )
-        const position_high = new Float32Array(
-          geometry.attributes.instanceStart.array.length
-        )
+        const position_low = new Float32Array(doublePositions.length)
+        const position_high = new Float32Array(doublePositions.length)
 
-        Geometry.DoubleToHighLowBuffer(
-          geometry.attributes.instanceStart.array,
-          position_low,
-          position_high
-        )
+        Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
 
         const instanceBufferLow = new InstancedInterleavedBuffer(
           new Float32Array(position_low),
@@ -235,7 +103,7 @@ export class Geometry {
 
   static mergeGeometryAttribute(
     attributes: number[][],
-    target: Float32Array
+    target: Float32Array | Float64Array
   ): ArrayLike<number> {
     let offset = 0
     for (let k = 0; k < attributes.length; k++) {
@@ -295,7 +163,9 @@ export class Geometry {
         })
         mergedGeometry.attributes[k] = Geometry.mergeGeometryAttribute(
           attributes,
-          new Float32Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
+          k === GeometryAttributes.POSITION
+            ? new Float64Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
+            : new Float32Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
         )
       }
     }
@@ -307,33 +177,6 @@ export class Geometry {
     })
 
     return mergedGeometry
-  }
-
-  /**
-   *
-   * @param wrappers TEMPORARY!!!
-   * @returns
-   */
-  public static applyWorldTransform(wrappers: Array<ObjectWrapper>) {
-    const worldCenter = World.worldBox.getCenter(new Vector3())
-    worldCenter.negate()
-    const transform = new Matrix4().setPosition(worldCenter)
-    World.worldBox.makeEmpty()
-    for (let k = 0; k < wrappers.length; k++) {
-      const wrapper = wrappers[k]
-      if (Array.isArray(wrapper.bufferGeometry)) {
-        Geometry.applyWorldTransform(wrapper.bufferGeometry)
-        return
-      }
-      try {
-        wrapper.bufferGeometry.applyMatrix4(transform)
-        wrapper.bufferGeometry.computeBoundingBox()
-        World.expandWorld(wrapper.bufferGeometry.boundingBox)
-        Geometry.updateRTEGeometry(wrapper.bufferGeometry)
-      } catch (e) {
-        console.warn(e)
-      }
-    }
   }
 
   public static transformGeometryData(geometryData: GeometryData, m: Matrix4) {
@@ -419,22 +262,5 @@ export class Geometry {
         position_low[k] = doubleValue + doubleHigh
       }
     }
-  }
-
-  public static InterleaveBuffers(
-    input0: number[] | Float32Array,
-    input1: number[] | Float32Array
-  ) {
-    const out = new Array<number>(input0.length + input1.length)
-    for (let k = 0, l = 0; k < out.length; k += 6, l += 3) {
-      out[k] = input0[k]
-      out[k + 1] = input0[k + 1]
-      out[k + 2] = input0[k + 2]
-
-      out[k + 3] = input1[k]
-      out[k + 4] = input1[k + 1]
-      out[k + 5] = input1[k + 2]
-    }
-    return out
   }
 }

@@ -1,7 +1,6 @@
 import {
   BufferGeometry,
   DynamicDrawUsage,
-  Float32BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Line,
@@ -104,7 +103,7 @@ export default class LineBatch implements Batch {
           ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
           : val.renderData.geometry.attributes.POSITION.length)
     )
-    const position = new Float32Array(attributeCount)
+    const position = new Float64Array(attributeCount)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
@@ -136,16 +135,13 @@ export default class LineBatch implements Batch {
       offset += points.length
     }
     this.makeLineGeometry(position)
-    if (Geometry.THICK_LINES) {
-      this.mesh = new LineSegments2(
-        this.geometry as LineSegmentsGeometry,
-        this.batchMaterial as SpeckleLineMaterial
-      )
-      ;(this.mesh as LineSegments2).computeLineDistances()
-      this.mesh.scale.set(1, 1, 1)
-    } else {
-      this.mesh = new Line(this.geometry, this.batchMaterial)
-    }
+    this.mesh = new LineSegments2(
+      this.geometry as LineSegmentsGeometry,
+      this.batchMaterial as SpeckleLineMaterial
+    )
+    ;(this.mesh as LineSegments2).computeLineDistances()
+    this.mesh.scale.set(1, 1, 1)
+
     this.mesh.uuid = this.id
   }
 
@@ -160,23 +156,10 @@ export default class LineBatch implements Batch {
     }
   }
 
-  private makeLineGeometry(position: Float32Array) {
-    if (Geometry.THICK_LINES) {
-      this.geometry = this.makeLineGeometryTriangle(position)
-    } else {
-      this.geometry = this.makeLineGeometryLine(position)
-    }
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(this.geometry)
-    }
+  private makeLineGeometry(position: Float64Array) {
+    this.geometry = this.makeLineGeometryTriangle(new Float32Array(position))
+    Geometry.updateRTEGeometry(this.geometry, position)
     World.expandWorld(this.geometry.boundingBox)
-  }
-
-  private makeLineGeometryLine(position: Float32Array): BufferGeometry {
-    const geometry = new BufferGeometry()
-    geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
-    geometry.computeBoundingBox()
-    return geometry
   }
 
   private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {

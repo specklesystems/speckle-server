@@ -221,7 +221,7 @@ export default class MeshBatch implements Batch {
       (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
     ).length
     const indices = new Uint32Array(indicesCount)
-    const position = new Float32Array(attributeCount)
+    const position = new Float64Array(attributeCount)
     const color = new Float32Array(this.batchMaterial.vertexColors ? attributeCount : 0)
     color.fill(1)
     let offset = 0
@@ -263,12 +263,9 @@ export default class MeshBatch implements Batch {
     }
   }
 
-  /**
-   * DUPLICATE from Geometry. Will unify in the future
-   */
   private makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
-    position: Float32Array,
+    position: Float64Array,
     color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -299,9 +296,7 @@ export default class MeshBatch implements Batch {
 
     World.expandWorld(this.geometry.boundingBox)
 
-    if (Geometry.USE_RTE) {
-      Geometry.updateRTEGeometry(this.geometry)
-    }
+    Geometry.updateRTEGeometry(this.geometry, position)
 
     return this.geometry
   }
