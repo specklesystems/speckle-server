@@ -290,7 +290,7 @@ export default class MeshBatch implements Batch {
     this.updateGradientIndexBufferData(0, buffer.length, 0)
     this.updateGradientIndexBuffer()
 
-    this.geometry.computeVertexNormals()
+    Geometry.computeVertexNormals(this.geometry, position)
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
 

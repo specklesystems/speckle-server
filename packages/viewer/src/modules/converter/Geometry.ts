@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import {
+  BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
   InstancedInterleavedBuffer,
@@ -249,6 +250,90 @@ export class Geometry {
         position_high[k] = -doubleHigh
         position_low[k] = doubleValue + doubleHigh
       }
+    }
+  }
+
+  public static computeVertexNormals(
+    buffer: BufferGeometry,
+    doublePositions: Float64Array
+  ) {
+    const index = buffer.index
+    const positionAttribute = buffer.getAttribute('position')
+
+    if (positionAttribute !== undefined) {
+      let normalAttribute = buffer.getAttribute('normal')
+
+      if (normalAttribute === undefined) {
+        normalAttribute = new BufferAttribute(
+          new Float32Array(positionAttribute.count * 3),
+          3
+        )
+        buffer.setAttribute('normal', normalAttribute)
+      } else {
+        // reset existing normals to zero
+        for (let i = 0, il = normalAttribute.count; i < il; i++) {
+          normalAttribute.setXYZ(i, 0, 0, 0)
+        }
+      }
+
+      const pA = new Vector3(),
+        pB = new Vector3(),
+        pC = new Vector3()
+      const nA = new Vector3(),
+        nB = new Vector3(),
+        nC = new Vector3()
+      const cb = new Vector3(),
+        ab = new Vector3()
+
+      // indexed elements
+      if (index) {
+        for (let i = 0, il = index.count; i < il; i += 3) {
+          const vA = index.getX(i + 0)
+          const vB = index.getX(i + 1)
+          const vC = index.getX(i + 2)
+
+          pA.fromArray(doublePositions, vA * 3)
+          pB.fromArray(doublePositions, vB * 3)
+          pC.fromArray(doublePositions, vC * 3)
+
+          cb.subVectors(pC, pB)
+          ab.subVectors(pA, pB)
+          cb.cross(ab)
+
+          nA.fromBufferAttribute(normalAttribute, vA)
+          nB.fromBufferAttribute(normalAttribute, vB)
+          nC.fromBufferAttribute(normalAttribute, vC)
+
+          nA.add(cb)
+          nB.add(cb)
+          nC.add(cb)
+
+          normalAttribute.setXYZ(vA, nA.x, nA.y, nA.z)
+          normalAttribute.setXYZ(vB, nB.x, nB.y, nB.z)
+          normalAttribute.setXYZ(vC, nC.x, nC.y, nC.z)
+        }
+      } else {
+        // non-indexed elements (unconnected triangle soup)
+
+        for (let i = 0, il = positionAttribute.count; i < il; i += 3) {
+          /** This is done blind. Don't think speckle supports non-indexed geometry */
+          pA.fromArray(doublePositions, i * 3)
+          pB.fromArray(doublePositions, i * 3 + 1)
+          pC.fromArray(doublePositions, i * 3 + 2)
+
+          cb.subVectors(pC, pB)
+          ab.subVectors(pA, pB)
+          cb.cross(ab)
+
+          normalAttribute.setXYZ(i + 0, cb.x, cb.y, cb.z)
+          normalAttribute.setXYZ(i + 1, cb.x, cb.y, cb.z)
+          normalAttribute.setXYZ(i + 2, cb.x, cb.y, cb.z)
+        }
+      }
+
+      buffer.normalizeNormals()
+
+      normalAttribute.needsUpdate = true
     }
   }
 }
