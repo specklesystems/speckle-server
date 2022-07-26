@@ -49,8 +49,12 @@ void main() {
     #include <displacementmap_vertex>
     //#include <project_vertex> // EDITED CHUNK
     #ifdef USE_RTE
-        vec3 highDifference = vec3(position_high.xyz - uViewer_high);
-        vec3 lowDifference = vec3(position_low.xyz - uViewer_low);
+    /** Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl */
+        vec3 t1 = position_low.xyz - uViewer_low;
+        vec3 e = t1 - position_low.xyz;
+        vec3 t2 = ((-uViewer_low - e) + (position_low.xyz - (t1 - e))) + position_high.xyz - uViewer_high;
+        vec3 highDifference = t1 + t2;
+        vec3 lowDifference = t2 - (highDifference - t1);
         vec4 mvPosition = vec4(highDifference.xyz + lowDifference.xyz , 1.);
     #else
         vec4 mvPosition = vec4( transformed, 1.0 );

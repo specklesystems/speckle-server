@@ -103,12 +103,20 @@ export const speckleLineVert = /* glsl */ `
 
 			// camera space
             #ifdef USE_RTE
-                vec3 startHighDifference = vec3(instanceStartHigh.xyz - uViewer_high);
-                vec3 startLowDifference = vec3(instanceStartLow.xyz - uViewer_low);
-                vec3 endHighDifference = vec3(instanceEndHigh.xyz - uViewer_high);
-                vec3 endLowDifference = vec3(instanceEndLow.xyz - uViewer_low);
-                vec4 start = modelViewMatrix * vec4( startLowDifference + startHighDifference, 1.0 );
-                vec4 end = modelViewMatrix * vec4( endLowDifference + endHighDifference, 1.0 );
+			/** Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl */
+				vec3 t1 = instanceStartLow.xyz - uViewer_low;
+				vec3 e = t1 - instanceStartLow.xyz;
+				vec3 t2 = ((-uViewer_low - e) + (instanceStartLow.xyz - (t1 - e))) + instanceStartHigh.xyz - uViewer_high;
+				vec3 highDifference = t1 + t2;
+				vec3 lowDifference = t2 - (highDifference - t1);
+				vec4 start = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
+
+				t1 = instanceEndLow.xyz - uViewer_low;
+				e = t1 - instanceEndLow.xyz;
+				t2 = ((-uViewer_low - e) + (instanceEndLow.xyz - (t1 - e))) + instanceEndHigh.xyz - uViewer_high;
+				highDifference = t1 + t2;
+				lowDifference = t2 - (highDifference - t1);
+				vec4 end = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
             #else
                 vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
                 vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );

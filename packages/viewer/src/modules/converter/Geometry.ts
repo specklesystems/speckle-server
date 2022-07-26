@@ -24,6 +24,8 @@ export interface GeometryData {
 }
 
 export class Geometry {
+  private static readonly floatArrayBuff: Float32Array = new Float32Array(1)
+
   public static updateRTEGeometry(
     geometry: BufferGeometry,
     doublePositions: Float64Array
@@ -187,34 +189,43 @@ export class Geometry {
     return colors
   }
 
+  /** Please see https://speckle.systems/blog/improving-speckles-rte-implementation/ for additional details
+   *  regarding double -> float low; float high encoding.
+   */
   public static DoubleToHighLowVector(input: Vector3, low: Vector3, high: Vector3) {
     let doubleValue = input.x
     if (doubleValue >= 0.0) {
-      const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+      this.floatArrayBuff[0] = doubleValue
+      const doubleHigh = this.floatArrayBuff[0]
       high.x = doubleHigh
       low.x = doubleValue - doubleHigh
     } else {
-      const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+      this.floatArrayBuff[0] = -doubleValue
+      const doubleHigh = this.floatArrayBuff[0]
       high.x = -doubleHigh
       low.x = doubleValue + doubleHigh
     }
     doubleValue = input.y
     if (doubleValue >= 0.0) {
-      const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+      this.floatArrayBuff[0] = doubleValue
+      const doubleHigh = this.floatArrayBuff[0]
       high.y = doubleHigh
       low.y = doubleValue - doubleHigh
     } else {
-      const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+      this.floatArrayBuff[0] = -doubleValue
+      const doubleHigh = this.floatArrayBuff[0]
       high.y = -doubleHigh
       low.y = doubleValue + doubleHigh
     }
     doubleValue = input.z
     if (doubleValue >= 0.0) {
-      const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+      this.floatArrayBuff[0] = doubleValue
+      const doubleHigh = this.floatArrayBuff[0]
       high.z = doubleHigh
       low.z = doubleValue - doubleHigh
     } else {
-      const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+      this.floatArrayBuff[0] = -doubleValue
+      const doubleHigh = this.floatArrayBuff[0]
       high.z = -doubleHigh
       low.z = doubleValue + doubleHigh
     }
@@ -228,11 +239,13 @@ export class Geometry {
     for (let k = 0; k < input.length; k++) {
       const doubleValue = input[k]
       if (doubleValue >= 0.0) {
-        const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+        this.floatArrayBuff[0] = doubleValue
+        const doubleHigh = this.floatArrayBuff[0]
         position_high[k] = doubleHigh
         position_low[k] = doubleValue - doubleHigh
       } else {
-        const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+        this.floatArrayBuff[0] = -doubleValue
+        const doubleHigh = this.floatArrayBuff[0]
         position_high[k] = -doubleHigh
         position_low[k] = doubleValue + doubleHigh
       }
