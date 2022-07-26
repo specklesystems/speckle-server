@@ -27,6 +27,7 @@ export default class Materials {
   private lineColoredMaterial: Material = null
   private pointCloudHighlightMaterial: Material = null
   private pointHighlightMaterial: Material = null
+  private pointGhostMaterial: Material = null
   private meshGradientMaterial: Material = null
   private meshColoredMaterial: Material = null
 
@@ -52,7 +53,7 @@ export default class Materials {
       /** If there are no units specified, we ignore the line width value */
       const lineWeight = node.model.raw.displayStyle.lineweight || 0
       // const units = node.model.raw.displayStyle.units
-      // lineWeigth = units ? lineWeigth * getConversionFactor(units) : 0
+      // lineWeight = units ? lineWeight * getConversionFactor(units) : 0
       displayStyle = {
         id: node.model.raw.displayStyle.id,
         color: node.model.raw.displayStyle.diffuse || node.model.raw.displayStyle.color,
@@ -147,6 +148,15 @@ export default class Materials {
       color: 0xff0000,
       vertexColors: false,
       size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+
+    this.pointGhostMaterial = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: false,
+      size: 2,
+      opacity: 0.01,
       sizeAttenuation: false
       // clippingPlanes: this.viewer.sectionBox.planes
     })
@@ -330,9 +340,9 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineGhostMaterial
       case GeometryType.POINT:
-        return this.meshGhostMaterial // TO DO
+        return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
-        return this.meshGhostMaterial // TO DO
+        return this.pointGhostMaterial
     }
   }
 
@@ -343,9 +353,9 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineGhostMaterial
       case GeometryType.POINT:
-        return this.meshGradientMaterial // TO DO
+        return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
-        return this.meshGradientMaterial // TO DO
+        return this.pointGhostMaterial
     }
   }
 
@@ -356,9 +366,9 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
-        return this.meshColoredMaterial // TO DO
+        return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
-        return this.meshColoredMaterial // TO DO
+        return this.pointGhostMaterial
     }
   }
 
