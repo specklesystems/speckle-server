@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { generateUUID } from 'three/src/math/MathUtils'
-import ObjectWrapper from './ObjectWrapper'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
 
-export type ConverterResultDelegate = (
-  object: ObjectWrapper | undefined
-) => Promise<void>
+export type ConverterResultDelegate = (object) => Promise<void>
 
 export type ConverterNodeDelegate = (object, node) => Promise<void>
 /**
@@ -142,13 +139,7 @@ export default class Coverter {
           })
           await this.convertToNode(displayValue, nestedNode)
           WorldTree.getInstance().addNode(nestedNode, childNode)
-          await callback(
-            new ObjectWrapper(
-              null, //convertedElement?.bufferGeometry,
-              null, //obj,
-              null //convertedElement?.geometryType
-            )
-          ) // use the parent's metadata!
+          await callback({}) // use the parent's metadata!
         } catch (e) {
           console.warn(
             `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
@@ -166,13 +157,7 @@ export default class Coverter {
           })
           await this.convertToNode(val, nestedNode)
           WorldTree.getInstance().addNode(nestedNode, childNode)
-          await callback(
-            new ObjectWrapper(
-              null, //convertedElement?.bufferGeometry,
-              null, //{ renderMaterial: val.renderMaterial, ...obj },
-              null //convertedElement?.geometryType
-            )
-          )
+          await callback({})
         }
       }
 
