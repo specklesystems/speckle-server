@@ -13,7 +13,6 @@ import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
-import { Geometry } from './converter/Geometry'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilterMaterialType } from './FilteringManager'
@@ -30,7 +29,6 @@ export class Viewer extends EventEmitter implements IViewer {
   public sectionBox: SectionBox
   public interactions: InteractionHandler
   public cameraHandler: CameraHandler
-  private sceneURL = '' // Temporary
   private startupParams: ViewerParams
 
   public static Assets: Assets
@@ -48,32 +46,6 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public get worldOrigin() {
     return this._worldOrigin
-  }
-
-  public get RTE(): boolean {
-    return Geometry.USE_RTE
-  }
-
-  public set RTE(value: boolean) {
-    ;(async () => {
-      await this.unloadAll()
-      Geometry.USE_RTE = value
-      World.resetWorld()
-      await this.loadObject(this.sceneURL, undefined, undefined)
-    })()
-  }
-
-  public get thickLines(): boolean {
-    return Geometry.THICK_LINES
-  }
-
-  public set thickLines(value: boolean) {
-    ;(async () => {
-      await this.unloadAll()
-      Geometry.THICK_LINES = value
-      World.resetWorld()
-      await this.loadObject(this.sceneURL, undefined, undefined)
-    })()
   }
 
   public constructor(
@@ -218,7 +190,6 @@ export class Viewer extends EventEmitter implements IViewer {
       await loader.load()
     } finally {
       if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-      this.sceneURL = url
     }
   }
 

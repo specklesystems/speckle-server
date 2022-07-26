@@ -24,80 +24,55 @@ export interface GeometryData {
 }
 
 export class Geometry {
-  private static _USE_RTE = true
-  private static _THICK_LINES = true
-  static get USE_RTE(): boolean {
-    return Geometry._USE_RTE
-  }
-
-  static set USE_RTE(value: boolean) {
-    Geometry._USE_RTE = value
-    console.warn(`RTE RENDERING IS NOW ${Geometry._USE_RTE}`)
-  }
-
-  static get THICK_LINES(): boolean {
-    return Geometry._THICK_LINES
-  }
-
-  static set THICK_LINES(value: boolean) {
-    Geometry._THICK_LINES = value
-    console.warn(`THICK_LINES IS NOW ${Geometry._THICK_LINES}`)
-  }
-
   public static updateRTEGeometry(
     geometry: BufferGeometry,
     doublePositions: Float64Array
   ) {
-    if (Geometry.USE_RTE) {
-      if (geometry.type === 'BufferGeometry') {
-        const position_low = new Float32Array(doublePositions.length)
-        const position_high = new Float32Array(doublePositions.length)
-        Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
-        geometry.setAttribute(
-          'position_low',
-          new Float32BufferAttribute(position_low, 3)
-        )
-        geometry.setAttribute(
-          'position_high',
-          new Float32BufferAttribute(position_high, 3)
-        )
-      } else if (
-        geometry.type === 'LineGeometry' ||
-        geometry.type === 'LineSegmentsGeometry'
-      ) {
-        const position_low = new Float32Array(doublePositions.length)
-        const position_high = new Float32Array(doublePositions.length)
+    if (geometry.type === 'BufferGeometry') {
+      const position_low = new Float32Array(doublePositions.length)
+      const position_high = new Float32Array(doublePositions.length)
+      Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
+      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+      geometry.setAttribute(
+        'position_high',
+        new Float32BufferAttribute(position_high, 3)
+      )
+    } else if (
+      geometry.type === 'LineGeometry' ||
+      geometry.type === 'LineSegmentsGeometry'
+    ) {
+      const position_low = new Float32Array(doublePositions.length)
+      const position_high = new Float32Array(doublePositions.length)
 
-        Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
+      Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
 
-        const instanceBufferLow = new InstancedInterleavedBuffer(
-          new Float32Array(position_low),
-          6,
-          1
-        ) // xyz, xyz
-        geometry.setAttribute(
-          'instanceStartLow',
-          new InterleavedBufferAttribute(instanceBufferLow, 3, 0)
-        ) // xyz
-        geometry.setAttribute(
-          'instanceEndLow',
-          new InterleavedBufferAttribute(instanceBufferLow, 3, 3)
-        ) // xyz
+      const instanceBufferLow = new InstancedInterleavedBuffer(
+        new Float32Array(position_low),
+        6,
+        1
+      ) // xyz, xyz
+      geometry.setAttribute(
+        'instanceStartLow',
+        new InterleavedBufferAttribute(instanceBufferLow, 3, 0)
+      ) // xyz
+      geometry.setAttribute(
+        'instanceEndLow',
+        new InterleavedBufferAttribute(instanceBufferLow, 3, 3)
+      ) // xyz
 
-        const instanceBufferHigh = new InstancedInterleavedBuffer(
-          new Float32Array(position_high),
-          6,
-          1
-        ) // xyz, xyz
-        geometry.setAttribute(
-          'instanceStartHigh',
-          new InterleavedBufferAttribute(instanceBufferHigh, 3, 0)
-        ) // xyz
-        geometry.setAttribute(
-          'instanceEndHigh',
-          new InterleavedBufferAttribute(instanceBufferHigh, 3, 3)
-        ) // xyz
-      }
+      const instanceBufferHigh = new InstancedInterleavedBuffer(
+        new Float32Array(position_high),
+        6,
+        1
+      ) // xyz, xyz
+      geometry.setAttribute(
+        'instanceStartHigh',
+        new InterleavedBufferAttribute(instanceBufferHigh, 3, 0)
+      ) // xyz
+      geometry.setAttribute(
+        'instanceEndHigh',
+        new InterleavedBufferAttribute(instanceBufferHigh, 3, 3)
+      ) // xyz
     }
   }
 

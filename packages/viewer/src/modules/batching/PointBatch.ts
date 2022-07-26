@@ -228,10 +228,6 @@ export default class PointBatch implements Batch {
 
     World.expandWorld(this.geometry.boundingBox)
 
-    // if (Geometry.USE_RTE) {
-    //   Geometry.updateRTEGeometry(this.geometry)
-    // }
-
     return this.geometry
   }
 

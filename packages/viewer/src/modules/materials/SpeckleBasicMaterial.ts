@@ -61,39 +61,35 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
       value: new Vector3()
     }
 
-    if (Geometry.USE_RTE) {
-      this.defines['USE_RTE'] = ' '
-    }
+    this.defines['USE_RTE'] = ' '
 
     return this
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (Geometry.USE_RTE) {
-      SpeckleBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleBasicMaterial.matBuff.elements[12] = 0
-      SpeckleBasicMaterial.matBuff.elements[13] = 0
-      SpeckleBasicMaterial.matBuff.elements[14] = 0
-      SpeckleBasicMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleBasicMaterial.matBuff)
+    SpeckleBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleBasicMaterial.matBuff.elements[12] = 0
+    SpeckleBasicMaterial.matBuff.elements[13] = 0
+    SpeckleBasicMaterial.matBuff.elements[14] = 0
+    SpeckleBasicMaterial.matBuff.multiply(object.matrixWorld)
+    object.modelViewMatrix.copy(SpeckleBasicMaterial.matBuff)
 
-      SpeckleBasicMaterial.vecBuff0.set(
-        camera.matrixWorld.elements[12],
-        camera.matrixWorld.elements[13],
-        camera.matrixWorld.elements[14]
-      )
+    SpeckleBasicMaterial.vecBuff0.set(
+      camera.matrixWorld.elements[12],
+      camera.matrixWorld.elements[13],
+      camera.matrixWorld.elements[14]
+    )
 
-      Geometry.DoubleToHighLowVector(
-        SpeckleBasicMaterial.vecBuff0,
-        SpeckleBasicMaterial.vecBuff1,
-        SpeckleBasicMaterial.vecBuff2
-      )
+    Geometry.DoubleToHighLowVector(
+      SpeckleBasicMaterial.vecBuff0,
+      SpeckleBasicMaterial.vecBuff1,
+      SpeckleBasicMaterial.vecBuff2
+    )
 
-      this.userData.uViewer_low.value.copy(SpeckleBasicMaterial.vecBuff1)
-      this.userData.uViewer_high.value.copy(SpeckleBasicMaterial.vecBuff2)
+    this.userData.uViewer_low.value.copy(SpeckleBasicMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleBasicMaterial.vecBuff2)
 
-      this.needsUpdate = true
-    }
+    this.needsUpdate = true
   }
 }
 

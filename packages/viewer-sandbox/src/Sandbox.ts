@@ -1,8 +1,6 @@
 import { SpeckleType } from '@speckle/viewer'
 import { GeometryConverter } from '@speckle/viewer'
 import { Viewer, IViewer, WorldTree } from '@speckle/viewer'
-import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
-import { Object3D } from '@speckle/viewer/node_modules/@types/three'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 export default class Sandbox {
@@ -18,8 +16,6 @@ export default class Sandbox {
   public static sceneParams = {
     worldSize: { x: 0, y: 0, z: 0 },
     worldOrigin: { x: 0, y: 0, z: 0 },
-    useRTE: false,
-    thickLines: true,
     pixelThreshold: 0.5,
     exposure: 0.5,
     tonemapping: 'ACESFilmicToneMapping',
@@ -45,8 +41,6 @@ export default class Sandbox {
     this.tabs = this.pane.addTab({
       pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
-    Sandbox.sceneParams.useRTE = viewer.RTE
-    Sandbox.sceneParams.thickLines = viewer.thickLines
   }
 
   public refresh() {
@@ -142,35 +136,19 @@ export default class Sandbox {
       label: 'Origin-z'
     })
 
-    worldFolder
-      .addInput(Sandbox.sceneParams, 'useRTE', {
-        label: 'RTE'
-      })
-      .on('change', () => {
-        this.viewer.RTE = Sandbox.sceneParams.useRTE
-      })
-
-    worldFolder
-      .addInput(Sandbox.sceneParams, 'thickLines', {
-        label: 'Thick Lines'
-      })
-      .on('change', () => {
-        this.viewer.thickLines = Sandbox.sceneParams.thickLines
-      })
-
-    worldFolder
-      .addInput(Sandbox.sceneParams, 'pixelThreshold', {
-        min: 0,
-        max: 5
-      })
-      .on('change', () => {
-        this.viewer.scene.traverse((object: Object3D) => {
-          if (object.type === 'Line2') {
-            ;(object.material as SpeckleLineMaterial).pixelThreshold =
-              Sandbox.sceneParams.pixelThreshold
-          }
-        })
-      })
+    // worldFolder
+    //   .addInput(Sandbox.sceneParams, 'pixelThreshold', {
+    //     min: 0,
+    //     max: 5
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.scene.traverse((object: Object3D) => {
+    //       if (object.type === 'Line2') {
+    //         ;(object.material as SpeckleLineMaterial).pixelThreshold =
+    //           Sandbox.sceneParams.pixelThreshold
+    //       }
+    //     })
+    //   })
 
     this.tabs.pages[1].addSeparator()
     const postFolder = this.tabs.pages[1].addFolder({

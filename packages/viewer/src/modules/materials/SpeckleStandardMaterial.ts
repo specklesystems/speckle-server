@@ -61,39 +61,35 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       value: new Vector3()
     }
 
-    if (Geometry.USE_RTE) {
-      this.defines['USE_RTE'] = ' '
-    }
+    this.defines['USE_RTE'] = ' '
 
     return this
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (Geometry.USE_RTE) {
-      SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleStandardMaterial.matBuff.elements[12] = 0
-      SpeckleStandardMaterial.matBuff.elements[13] = 0
-      SpeckleStandardMaterial.matBuff.elements[14] = 0
-      SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
+    SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleStandardMaterial.matBuff.elements[12] = 0
+    SpeckleStandardMaterial.matBuff.elements[13] = 0
+    SpeckleStandardMaterial.matBuff.elements[14] = 0
+    SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
+    object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
 
-      SpeckleStandardMaterial.vecBuff0.set(
-        camera.matrixWorld.elements[12],
-        camera.matrixWorld.elements[13],
-        camera.matrixWorld.elements[14]
-      )
+    SpeckleStandardMaterial.vecBuff0.set(
+      camera.matrixWorld.elements[12],
+      camera.matrixWorld.elements[13],
+      camera.matrixWorld.elements[14]
+    )
 
-      Geometry.DoubleToHighLowVector(
-        SpeckleStandardMaterial.vecBuff0,
-        SpeckleStandardMaterial.vecBuff1,
-        SpeckleStandardMaterial.vecBuff2
-      )
+    Geometry.DoubleToHighLowVector(
+      SpeckleStandardMaterial.vecBuff0,
+      SpeckleStandardMaterial.vecBuff1,
+      SpeckleStandardMaterial.vecBuff2
+    )
 
-      this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
-      this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
+    this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
 
-      this.needsUpdate = true
-    }
+    this.needsUpdate = true
   }
 }
 

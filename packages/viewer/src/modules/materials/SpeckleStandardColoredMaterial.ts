@@ -75,9 +75,7 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
       value: new Vector3()
     }
 
-    if (Geometry.USE_RTE) {
-      this.defines['USE_RTE'] = ' '
-    }
+    this.defines['USE_RTE'] = ' '
 
     return this
   }
@@ -91,30 +89,28 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (Geometry.USE_RTE) {
-      SpeckleStandardColoredMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleStandardColoredMaterial.matBuff.elements[12] = 0
-      SpeckleStandardColoredMaterial.matBuff.elements[13] = 0
-      SpeckleStandardColoredMaterial.matBuff.elements[14] = 0
-      SpeckleStandardColoredMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleStandardColoredMaterial.matBuff)
+    SpeckleStandardColoredMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleStandardColoredMaterial.matBuff.elements[12] = 0
+    SpeckleStandardColoredMaterial.matBuff.elements[13] = 0
+    SpeckleStandardColoredMaterial.matBuff.elements[14] = 0
+    SpeckleStandardColoredMaterial.matBuff.multiply(object.matrixWorld)
+    object.modelViewMatrix.copy(SpeckleStandardColoredMaterial.matBuff)
 
-      SpeckleStandardColoredMaterial.vecBuff0.set(
-        camera.matrixWorld.elements[12],
-        camera.matrixWorld.elements[13],
-        camera.matrixWorld.elements[14]
-      )
+    SpeckleStandardColoredMaterial.vecBuff0.set(
+      camera.matrixWorld.elements[12],
+      camera.matrixWorld.elements[13],
+      camera.matrixWorld.elements[14]
+    )
 
-      Geometry.DoubleToHighLowVector(
-        SpeckleStandardColoredMaterial.vecBuff0,
-        SpeckleStandardColoredMaterial.vecBuff1,
-        SpeckleStandardColoredMaterial.vecBuff2
-      )
+    Geometry.DoubleToHighLowVector(
+      SpeckleStandardColoredMaterial.vecBuff0,
+      SpeckleStandardColoredMaterial.vecBuff1,
+      SpeckleStandardColoredMaterial.vecBuff2
+    )
 
-      this.userData.uViewer_low.value.copy(SpeckleStandardColoredMaterial.vecBuff1)
-      this.userData.uViewer_high.value.copy(SpeckleStandardColoredMaterial.vecBuff2)
-      this.needsUpdate = true
-    }
+    this.userData.uViewer_low.value.copy(SpeckleStandardColoredMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleStandardColoredMaterial.vecBuff2)
+    this.needsUpdate = true
   }
 }
 
