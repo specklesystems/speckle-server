@@ -24,7 +24,7 @@ export default class LineBatch implements Batch {
   public batchMaterial: SpeckleLineMaterial
   private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
-  public static vectorBuffer: Vector4 = new Vector4()
+  private static readonly vector4Buffer: Vector4 = new Vector4()
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
     this.id = id
@@ -87,11 +87,11 @@ export default class LineBatch implements Batch {
         ranges[i].offset * this.colorBuffer.stride +
         ranges[i].count * this.colorBuffer.stride
 
-      LineBatch.vectorBuffer.set(color.r, color.g, color.b, 1)
+      LineBatch.vector4Buffer.set(color.r, color.g, color.b, 1)
       this.updateColorBuffer(
         start,
         ranges[i].count === Infinity ? this.colorBuffer.array.length : len,
-        LineBatch.vectorBuffer
+        LineBatch.vector4Buffer
       )
     }
     this.colorBuffer.updateRange = { offset: 0, count: data.length }

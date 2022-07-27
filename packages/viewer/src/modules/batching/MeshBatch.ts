@@ -4,7 +4,6 @@ import {
   DynamicDrawUsage,
   Float32BufferAttribute,
   Material,
-  Mesh,
   Object3D,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
@@ -12,6 +11,7 @@ import {
 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
 import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
@@ -21,7 +21,7 @@ export default class MeshBatch implements Batch {
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry
   public batchMaterial: Material
-  public mesh: Mesh
+  public mesh: SpeckleMesh
   private gradientIndexBuffer: BufferAttribute
 
   public constructor(id: string, renderViews: NodeRenderView[]) {
@@ -257,7 +257,7 @@ export default class MeshBatch implements Batch {
       position,
       this.batchMaterial.vertexColors ? color : null
     )
-    this.mesh = new Mesh(this.geometry, this.batchMaterial)
+    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
     this.mesh.uuid = this.id
   }
 
@@ -285,6 +285,7 @@ export default class MeshBatch implements Batch {
     }
 
     if (position) {
+      /** When RTE enabled, we'll be storing the high component of the encoding here */
       this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 

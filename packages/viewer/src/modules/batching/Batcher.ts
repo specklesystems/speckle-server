@@ -9,7 +9,7 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
 import { FilterMaterialType } from '../FilteringManager'
-import { Material, WebGLRenderer } from 'three'
+import { WebGLRenderer } from 'three'
 import { FilterMaterial } from '../FilteringManager'
 
 export default class Batcher {
@@ -170,8 +170,14 @@ export default class Batcher {
     const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
     for (const k in this.batches) {
       if (!batchIds.includes(k)) {
-        ;(this.batches[k].renderObject as unknown as { material: Material }).material =
-          this.materials.getGhostMaterial(this.batches[k].renderViews[0])
+        this.batches[k].setDrawRanges({
+          offset: 0,
+          count: Infinity,
+          material: this.materials.getFilterMaterial(
+            this.batches[k].renderViews[0],
+            FilterMaterialType.GHOST
+          )
+        })
       } else {
         const drawRanges = []
         for (let i = 0; i < this.batches[k].renderViews.length; i++) {

@@ -33,13 +33,10 @@ export class Geometry {
   ) {
     if (geometry.type === 'BufferGeometry') {
       const position_low = new Float32Array(doublePositions.length)
-      const position_high = new Float32Array(doublePositions.length)
+      /** We'll store the high component of the encoding inside three's default `position` attribute */
+      const position_high = geometry.attributes.position.array as Float32Array
       Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
       geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-      geometry.setAttribute(
-        'position_high',
-        new Float32BufferAttribute(position_high, 3)
-      )
     } else if (
       geometry.type === 'LineGeometry' ||
       geometry.type === 'LineSegmentsGeometry'
@@ -191,7 +188,7 @@ export class Geometry {
   }
 
   /** Please see https://speckle.systems/blog/improving-speckles-rte-implementation/ for additional details
-   *  regarding double -> float low; float high encoding.
+   *  regarding double -> <float low; float high> encoding.
    */
   public static DoubleToHighLowVector(input: Vector3, low: Vector3, high: Vector3) {
     let doubleValue = input.x
