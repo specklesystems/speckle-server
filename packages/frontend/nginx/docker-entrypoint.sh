@@ -1,6 +1,5 @@
 #!/bin/sh
-set -e
-
+set -eu pipefail
 defined_envs=$(printf '${%s} ' $(env | cut -d= -f1))
 
 echo Starting nginx environment template rendering with $defined_envs
