@@ -25,6 +25,11 @@ const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
 let shouldExit = false
 
+let TIME_LIMIT = 10 * 60 * 1000
+
+const providedTimeLimit = parseInt(process.env.FILE_IMPORT_TIME_LIMIT_MIN)
+if (providedTimeLimit) TIME_LIMIT = providedTimeLimit * 60 * 1000
+
 async function startTask() {
   const { rows } = await knex.raw(`
     UPDATE file_uploads
@@ -91,7 +96,7 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        20 * 60 * 1000
+        TIME_LIMIT
       )
     } else if (info.fileType === 'stl') {
       await runProcessWithTimeout(
@@ -107,7 +112,7 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        10 * 60 * 1000
+        TIME_LIMIT
       )
     } else if (info.fileType === 'obj') {
       await objDependencies.downloadDependencies({
@@ -131,7 +136,7 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        10 * 60 * 1000
+        TIME_LIMIT
       )
     } else {
       throw new Error(`File type ${info.fileType} is not supported`)
