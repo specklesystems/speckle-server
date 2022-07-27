@@ -2,6 +2,7 @@ import {
   ACESFilmicToneMapping,
   Box3,
   Box3Helper,
+  Camera,
   CameraHelper,
   Color,
   DirectionalLight,
@@ -103,6 +104,15 @@ export default class SpeckleRenderer {
     this.input.on('object-clicked', this.onObjectClick.bind(this))
     this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on('object-doubleclicked', this.onObjectDoubleClick.bind(this))
+  }
+
+  public update(deltaTime: number) {
+    this.batcher.update(deltaTime)
+  }
+
+  public render(camera: Camera) {
+    this.batcher.render(this.renderer)
+    this.renderer.render(this.scene, camera)
   }
 
   public addRenderTree() {

@@ -6,7 +6,8 @@ import {
   InterleavedBufferAttribute,
   Line,
   Object3D,
-  Vector4
+  Vector4,
+  WebGLRenderer
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
@@ -40,6 +41,14 @@ export default class LineBatch implements Batch {
 
   public setBatchMaterial(material: SpeckleLineMaterial) {
     this.batchMaterial = material
+  }
+
+  public onUpdate(deltaTime: number) {
+    deltaTime
+  }
+
+  public onRender(renderer: WebGLRenderer) {
+    renderer.getDrawingBufferSize(this.batchMaterial.resolution)
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {

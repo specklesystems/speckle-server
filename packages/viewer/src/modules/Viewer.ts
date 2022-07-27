@@ -23,7 +23,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private container: HTMLElement
   private stats: Optional<Stats>
   private loaders: { [id: string]: ViewerObjectLoader } = {}
-  public needsRender: boolean
+  private _needsRender: boolean
   private inProgressOperations: number
 
   public sectionBox: SectionBox
@@ -32,6 +32,14 @@ export class Viewer extends EventEmitter implements IViewer {
   private startupParams: ViewerParams
 
   public static Assets: Assets
+
+  public get needsRender(): boolean {
+    return this._needsRender
+  }
+
+  public set needsRender(value: boolean) {
+    this._needsRender = value || this._needsRender
+  }
 
   private _worldOrigin: Vector3 = new Vector3()
   public get worldSize() {
@@ -83,7 +91,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.interactions = new InteractionHandler(this)
 
-    this.animate()
+    this.frame()
     this.onWindowResize()
     // this.interactions.zoomExtents()
     this.needsRender = true
@@ -125,32 +133,23 @@ export class Viewer extends EventEmitter implements IViewer {
     this.needsRender = true
   }
 
-  private animate() {
+  private frame() {
+    this.update()
+    this.render()
+  }
+
+  private update() {
     const delta = this.clock.getDelta()
-
-    const hasControlsUpdated = this.cameraHandler.controls.update(delta)
-
-    requestAnimationFrame(this.animate.bind(this))
-
-    // you can skip this condition to render though
-    if (hasControlsUpdated || this.needsRender) {
-      // this.needsRender = false
-      if (this.stats) this.stats.begin()
-      this.render()
-
-      const infoDrawsEl = document.getElementById('info-draws')
-      if (this.stats && infoDrawsEl) {
-        infoDrawsEl.textContent = '' + this.speckleRenderer.renderer.info.render.calls
-      }
-      if (this.stats) this.stats.end()
-    }
+    this.needsRender = this.cameraHandler.controls.update(delta)
+    this.speckleRenderer.update(delta)
+    this.stats.update()
+    requestAnimationFrame(this.frame.bind(this))
   }
 
   private render() {
-    this.speckleRenderer.renderer.render(
-      this.speckleRenderer.scene,
-      this.cameraHandler.activeCam.camera
-    )
+    if (this.needsRender) {
+      this.speckleRenderer.render(this.cameraHandler.activeCam.camera)
+    }
   }
 
   public toggleSectionBox() {

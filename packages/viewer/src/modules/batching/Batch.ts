@@ -1,4 +1,4 @@
-import { Material, Object3D } from 'three'
+import { Material, Object3D, WebGLRenderer } from 'three'
 import { MaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
@@ -23,6 +23,8 @@ export interface Batch {
   resetDrawRanges()
   buildBatch()
   getRenderView(index: number): NodeRenderView
+  onUpdate(deltaTime: number)
+  onRender(renderer: WebGLRenderer)
   purge()
 }
 

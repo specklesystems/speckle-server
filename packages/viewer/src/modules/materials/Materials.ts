@@ -88,17 +88,14 @@ export default class Materials {
       worldUnits: false,
       vertexColors: false,
       alphaToCoverage: false,
-      resolution: new Vector2(1281, 1306)
+      resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0xff0000)
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2(
-      1281,
-      1306
-    )
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
 
     this.lineGhostMaterial = new SpeckleLineMaterial({
       color: 0x00ff00,
@@ -106,17 +103,14 @@ export default class Materials {
       worldUnits: false,
       vertexColors: false,
       alphaToCoverage: false,
-      resolution: new Vector2(1281, 1306)
+      resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0x00ff00)
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2(
-      1281,
-      1306
-    )
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
 
     this.lineColoredMaterial = new SpeckleLineMaterial({
       color: 0xffffff,
@@ -124,17 +118,14 @@ export default class Materials {
       worldUnits: false,
       vertexColors: false,
       alphaToCoverage: false,
-      resolution: new Vector2(1281, 1306)
+      resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0xffffff)
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2(
-      1281,
-      1306
-    )
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
 
     this.pointCloudHighlightMaterial = new SpecklePointMaterial({
       color: 0xff0000,
@@ -229,14 +220,14 @@ export default class Materials {
       worldUnits: false,
       vertexColors: false,
       alphaToCoverage: false,
-      resolution: new Vector2(1281, 1306)
+      resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
     ;(<SpeckleLineMaterial>this.materialMap[hash]).color = new Color(0xff00ff)
     ;(<SpeckleLineMaterial>this.materialMap[hash]).linewidth = 1
     ;(<SpeckleLineMaterial>this.materialMap[hash]).worldUnits = false
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2(1281, 1306)
+    ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2()
 
     this.materialMap[NodeRenderView.NullPointMaterialHash] = new SpecklePointMaterial({
       color: 0x7f7f7f,
@@ -281,14 +272,14 @@ export default class Materials {
       worldUnits: materialData.lineWeight > 0 ? true : false,
       vertexColors: true,
       alphaToCoverage: false,
-      resolution: new Vector2(1281, 1306)
+      resolution: new Vector2()
     })
     mat.color = new Color(materialData.color)
     mat.linewidth = materialData.lineWeight > 0 ? materialData.lineWeight : 1
     mat.worldUnits = materialData.lineWeight > 0 ? true : false
     mat.vertexColors = true
     mat.pixelThreshold = 0.5
-    mat.resolution = new Vector2(1281, 1306)
+    mat.resolution = new Vector2()
 
     return mat
   }
@@ -397,14 +388,14 @@ export default class Materials {
           worldUnits: false,
           vertexColors: true,
           alphaToCoverage: false,
-          resolution: new Vector2(1281, 1306)
+          resolution: new Vector2()
         })
         mat.color = color
         mat.linewidth = 1
         mat.worldUnits = false
         mat.vertexColors = true
         mat.pixelThreshold = 0.5
-        mat.resolution = new Vector2(1281, 1306)
+        mat.resolution = new Vector2()
         return mat
       }
       case GeometryType.POINT:

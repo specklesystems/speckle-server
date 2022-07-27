@@ -9,7 +9,7 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
 import { FilterMaterialType } from '../FilteringManager'
-import { Material } from 'three'
+import { Material, WebGLRenderer } from 'three'
 import { FilterMaterial } from '../FilteringManager'
 
 export default class Batcher {
@@ -74,6 +74,18 @@ export default class Batcher {
       this.batches[batchID].setBatchMaterial(material as SpeckleLineMaterial)
       this.batches[batchID].buildBatch()
       console.warn(batch)
+    }
+  }
+
+  public update(deltaTime: number) {
+    for (const batchId in this.batches) {
+      this.batches[batchId].onUpdate(deltaTime)
+    }
+  }
+
+  public render(renderer: WebGLRenderer) {
+    for (const batchId in this.batches) {
+      this.batches[batchId].onRender(renderer)
     }
   }
 

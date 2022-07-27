@@ -3,7 +3,8 @@ import {
   Float32BufferAttribute,
   Material,
   Object3D,
-  Points
+  Points,
+  WebGLRenderer
 } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
@@ -31,6 +32,14 @@ export default class PointBatch implements Batch {
 
   public setBatchMaterial(material: Material) {
     this.batchMaterial = material
+  }
+
+  public onUpdate(deltaTime: number) {
+    deltaTime
+  }
+
+  public onRender(renderer: WebGLRenderer) {
+    renderer
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {

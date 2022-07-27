@@ -7,7 +7,8 @@ import {
   Mesh,
   Object3D,
   Uint16BufferAttribute,
-  Uint32BufferAttribute
+  Uint32BufferAttribute,
+  WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
@@ -38,6 +39,14 @@ export default class MeshBatch implements Batch {
 
   public setBatchMaterial(material: Material) {
     this.batchMaterial = material
+  }
+
+  public onUpdate(deltaTime: number) {
+    deltaTime
+  }
+
+  public onRender(renderer: WebGLRenderer) {
+    renderer
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
