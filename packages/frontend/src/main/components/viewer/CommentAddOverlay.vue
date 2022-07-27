@@ -17,7 +17,7 @@
   >
     <v-slide-x-transition>
       <div
-        v-show="visible && !$store.state.selectedComment"
+        v-show="visible && !viewerState.selectedCommentMetaData"
         ref="commentButton"
         class="new-comment-overlay absolute-pos"
       >
@@ -44,7 +44,7 @@
                 <comment-editor
                   ref="desktopEditor"
                   v-model="commentValue"
-                  :stream-id="$route.params.streamId"
+                  :stream-id="streamId"
                   adding-comment
                   style="width: 300px"
                   max-height="300px"
@@ -59,7 +59,7 @@
               >
                 <v-fade-transition group>
                   <template v-if="isCommentEmpty">
-                    <template v-for="reaction in $store.state.commentReactions">
+                    <template v-for="reaction in viewerState.commentReactions">
                       <v-btn
                         :key="reaction"
                         class="mr-2"
@@ -142,7 +142,7 @@
             <comment-editor
               ref="mobileEditor"
               v-model="commentValue"
-              :stream-id="$route.params.streamId"
+              :stream-id="streamId"
               adding-comment
               style="width: 100%"
               max-height="60vh"
@@ -169,7 +169,7 @@
             </v-btn>
             <v-fade-transition group>
               <template v-if="isCommentEmpty">
-                <template v-for="reaction in $store.state.commentReactions">
+                <template v-for="reaction in viewerState.commentReactions">
                   <v-btn
                     :key="reaction"
                     class="mr-2 elevation-4"
@@ -214,7 +214,7 @@
     <portal to="viewercontrols" :order="100">
       <v-slide-x-transition>
         <v-btn
-          v-show="!location && !$store.state.selectedComment"
+          v-show="!location && !viewerState.selectedCommentMetaData"
           v-tooltip="'Add a comment (ctrl + shift + c)'"
           icon
           dark
@@ -233,7 +233,6 @@
 import * as THREE from 'three'
 import { gql } from '@apollo/client/core'
 import { debounce, throttle } from 'lodash'
-import { getCamArray } from './viewerFrontendHelpers'
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import {
   basicStringToDocument,
@@ -245,6 +244,14 @@ import {
 } from '@/main/lib/viewer/comments/commentsHelper'
 import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
 import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import {
+  setIsAddingComment,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 /**
  * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
@@ -280,9 +287,27 @@ export default {
         }
       `,
       variables() {
-        return { streamId: this.$route.params.streamId }
+        return { streamId: this.streamId }
       }
     }
+  },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          selectedCommentMetaData
+          commentReactions
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState, streamId, resourceId }
   },
   data() {
     return {
@@ -308,14 +333,14 @@ export default {
   },
   mounted() {
     this.viewerSelectHandler = debounce(this.handleSelect, 10)
-    window.__viewer.on('select', this.viewerSelectHandler)
+    this.viewer.on('select', this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
     this.viewerControlsUpdateHandler = throttle(() => {
       this.updateCommentBubble()
     }, VIEWER_UPDATE_THROTTLE_TIME)
-    window.__viewer.cameraHandler.controls.addEventListener(
+    this.viewer.cameraHandler.controls.addEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -326,8 +351,8 @@ export default {
     document.addEventListener('keyup', this.docKeyUpHandler)
   },
   beforeDestroy() {
-    window.__viewer.removeListener('select', this.viewerSelectHandler)
-    window.__viewer.cameraHandler.controls.removeEventListener(
+    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -356,17 +381,17 @@ export default {
 
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'create' })
 
-      const camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
+      const camTarget = this.viewer.cameraHandler.activeCam.controls.getTarget()
 
       const blobIds = this.commentValue.attachments
         .filter(isSuccessfullyUploaded)
         .map((a) => a.result.blobId)
       const commentInput = {
-        streamId: this.$route.params.streamId,
+        streamId: this.streamId,
         resources: [
           {
             resourceType: this.$route.path.includes('object') ? 'object' : 'commit',
-            resourceId: this.$route.params.resourceId
+            resourceId: this.resourceId
           }
         ],
         text: this.commentValue.doc,
@@ -375,12 +400,12 @@ export default {
           location: this.location
             ? this.location
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
-          camPos: getCamArray(),
-          filters: this.$store.state.appliedFilter,
-          sectionBox: window.__viewer.sectionBox.getCurrentBox(),
+          camPos: getCamArray(this.viewer),
+          filters: this.viewerState.appliedFilter,
+          sectionBox: this.viewer.sectionBox.getCurrentBox(),
           selection: null // TODO for later, lazy now
         },
-        screenshot: window.__viewer.interactions.screenshot()
+        screenshot: this.viewer.interactions.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
@@ -419,8 +444,8 @@ export default {
       this.expand = false
       this.visible = false
       this.commentValue = { doc: null, attachments: [] }
-      this.$store.commit('setAddingCommentState', { addingCommentState: false })
-      window.__viewer.interactions.deselectObjects()
+      setIsAddingComment(false)
+      this.viewer.interactions.deselectObjects()
     },
     sendStatusUpdate() {
       // TODO: typing or not
@@ -436,7 +461,7 @@ export default {
 
       if (!this.location && !this.expand) this.visible = false
 
-      this.$store.commit('setAddingCommentState', { addingCommentState: this.expand })
+      setIsAddingComment(this.expand)
     },
     handleSelect(info) {
       this.expand = false
@@ -444,7 +469,7 @@ export default {
         // TODO: deselect event
         this.visible = false
         this.location = null
-        this.$store.commit('setAddingCommentState', { addingCommentState: false })
+        setIsAddingComment(false)
         return
       }
 
@@ -462,7 +487,7 @@ export default {
         info.location.z
       )
 
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
@@ -483,7 +508,7 @@ export default {
       // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       const projectedLocation = this.location.clone()
       projectedLocation.project(cam)

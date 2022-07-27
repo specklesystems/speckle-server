@@ -14,7 +14,7 @@
     class="d-flex align-center justify-center no-mouse"
   >
     <div
-      v-show="showComments && !$store.state.addingComment"
+      v-show="showComments && !viewerState.addingComment"
       style="
         width: 100%;
         height: 100vh;
@@ -175,6 +175,16 @@ import { VIEWER_UPDATE_THROTTLE_TIME } from '@/main/lib/viewer/comments/comments
 import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
 import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import {
+  resetFilter,
+  setFilterDirectly,
+  setPreventCommentCollapse,
+  setSelectedCommentMetaData,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
@@ -204,8 +214,8 @@ export default {
       variables() {
         const resourceArr = [
           {
-            resourceType: this.$resourceType(this.$route.params.resourceId),
-            resourceId: this.$route.params.resourceId
+            resourceType: this.$resourceType(this.resourceId),
+            resourceId: this.resourceId
           }
         ]
         if (this.$route.query.overlay) {
@@ -218,7 +228,7 @@ export default {
         }
 
         return {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           resources: resourceArr
         }
       },
@@ -255,11 +265,11 @@ export default {
           ${COMMENT_FULL_INFO_FRAGMENT}
         `,
         variables() {
-          let resIds = [this.$route.params.resourceId]
+          let resIds = [this.resourceId]
           if (this.$route.query.overlay)
             resIds = [...resIds, ...this.$route.query.overlay.split(',')]
           return {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             resourceIds: resIds
           }
         },
@@ -297,6 +307,25 @@ export default {
       }
     }
   },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          addingComment
+          viewerBusy
+          preventCommentCollapse
+          emojis
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState, streamId, resourceId }
+  },
   data() {
     return {
       localComments: [],
@@ -330,7 +359,7 @@ export default {
     if (this.$route.query.cId) {
       this.openCommentOnInit = this.$route.query.cId
       this.commentIntervalChecker = window.setInterval(() => {
-        if (this.$store.state.viewerBusy || this.$apollo.loading) return
+        if (this.viewerState.viewerBusy || this.$apollo.loading) return
         this.expandComment({ id: this.openCommentOnInit })
         this.openCommentOnInit = null
         const q = { ...this.$route.query }
@@ -345,15 +374,15 @@ export default {
 
     this.viewerSelectHandler = debounce(() => {
       // prevents comment collapse if filters are reset (that triggers a deselect event from the viewer)
-      if (this.$store.state.preventCommentCollapse) {
-        this.$store.commit('setPreventCommentCollapse', { value: false })
+      if (this.viewerState.preventCommentCollapse) {
+        setPreventCommentCollapse(false)
         return
       }
       for (const c of this.localComments) {
         this.collapseComment(c)
       }
     }, 10)
-    window.__viewer.on('select', this.viewerSelectHandler)
+    this.viewer.on('select', this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
@@ -361,7 +390,7 @@ export default {
       // console.log('cameraHandler.controls update')
       this.updateCommentBubbles()
     }, VIEWER_UPDATE_THROTTLE_TIME)
-    window.__viewer.cameraHandler.controls.addEventListener(
+    this.viewer.cameraHandler.controls.addEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -371,8 +400,8 @@ export default {
     }, 1000)
   },
   beforeDestroy() {
-    window.__viewer.removeListener('select', this.viewerSelectHandler)
-    window.__viewer.cameraHandler.controls.removeEventListener(
+    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -384,7 +413,7 @@ export default {
       this.updateCommentBubbles()
     },
     getLeadingEmoji(comment) {
-      const emojiWhitelist = this.$store.state.emojis
+      const emojiWhitelist = this.viewerState.emojis
       const commentPureText = documentToBasicString(comment.text.doc, 1)
       const emojiCandidate = commentPureText.split(' ')[0]
       return emojiWhitelist.includes(emojiCandidate) ? emojiCandidate : null
@@ -426,7 +455,7 @@ export default {
       for (const c of this.localComments) {
         if (c.id === comment.id) {
           c.preventAutoClose = true
-          this.$store.commit('setCommentSelection', { comment: c })
+          setSelectedCommentMetaData(c)
           this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
@@ -448,35 +477,38 @@ export default {
       for (const c of this.localComments) {
         if (c.id === comment.id && c.expanded) {
           c.expanded = false
-          if (c.data.filters) this.$store.commit('resetFilter')
-          if (c.data.sectionBox) window.__viewer.sectionBox.off()
-          this.$store.commit('setCommentSelection', { comment: null })
+          if (c.data.filters) resetFilter()
+          if (c.data.sectionBox) this.viewer.sectionBox.off()
+
+          setSelectedCommentMetaData(null)
         }
       }
     },
     setCommentPow(comment) {
       const camToSet = comment.data.camPos
       if (camToSet[6] === 1) {
-        window.__viewer.toggleCameraProjection()
+        this.viewer.toggleCameraProjection()
       }
-      window.__viewer.interactions.setLookAt(
+      this.viewer.interactions.setLookAt(
         { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
         { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
       )
       if (camToSet[6] === 1) {
-        window.__viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       }
       if (comment.data.filters) {
-        this.$store.commit('setFilterDirect', { filter: comment.data.filters })
+        setFilterDirectly({
+          filter: comment.data.filters
+        })
       } else {
-        this.$store.commit('resetFilter')
+        resetFilter()
       }
 
       if (comment.data.sectionBox) {
-        window.__viewer.sectionBox.setBox(comment.data.sectionBox, 0)
-        window.__viewer.sectionBox.on()
+        this.viewer.sectionBox.setBox(comment.data.sectionBox, 0)
+        this.viewer.sectionBox.on()
       } else {
-        window.__viewer.sectionBox.off()
+        this.viewer.sectionBox.off()
       }
     },
     async handleDeletion(comment) {
@@ -488,7 +520,7 @@ export default {
     updateCommentBubbles() {
       // console.log('updateCommentBubbles', new Date().toISOString())
       if (!this.comments) return
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       for (const comment of this.localComments) {
         // get html elements

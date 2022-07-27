@@ -63,6 +63,7 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   props: {
@@ -123,7 +124,7 @@ export default {
         `/api/stream/${this.$route.params.streamId}/blob/${this.fileId}`,
         {
           headers: {
-            Authorization: localStorage.getItem('AuthToken')
+            Authorization: AppLocalStorage.get('AuthToken')
           }
         }
       )

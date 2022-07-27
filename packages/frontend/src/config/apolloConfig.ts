@@ -1,6 +1,12 @@
 import Vue from 'vue'
 import { createApolloProvider, ApolloProvider } from '@vue/apollo-option'
-import { ApolloClient, ApolloLink, InMemoryCache, split } from '@apollo/client/core'
+import {
+  ApolloClient,
+  ApolloLink,
+  InMemoryCache,
+  split,
+  TypePolicies
+} from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -13,6 +19,8 @@ import {
   buildAbstractCollectionMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '@/main/lib/core/helpers/apolloSetupHelper'
+import { merge } from 'lodash'
+import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -38,88 +46,101 @@ function createCache(): InMemoryCache {
      *
      * Read more: https://www.apollographql.com/docs/react/caching/cache-field-behavior
      */
-    typePolicies: {
-      Query: {
-        fields: {
-          user: {
-            read(original, { args, toReference }) {
-              if (args?.id) {
-                return toReference({ __typename: 'User', id: args.id })
-              }
+    typePolicies: merge<TypePolicies, TypePolicies>(
+      {
+        Query: {
+          fields: {
+            user: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'User', id: args.id })
+                }
 
-              return original
-            }
-          },
-          stream: {
-            read(original, { args, toReference }) {
-              if (args?.id) {
-                return toReference({ __typename: 'Stream', id: args.id })
+                return original
               }
+            },
+            stream: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'Stream', id: args.id })
+                }
 
-              return original
+                return original
+              }
+            },
+            streams: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+                checkIdentity: true
+              })
             }
-          },
-          streams: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection')
           }
+        },
+        User: {
+          fields: {
+            timeline: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('ActivityCollection')
+            },
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollectionUser', {
+                checkIdentity: true
+              })
+            },
+            favoriteStreams: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        Stream: {
+          fields: {
+            activity: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('ActivityCollection')
+            },
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+                checkIdentity: true
+              })
+            },
+            pendingCollaborators: {
+              merge: incomingOverwritesExistingMergeFunction
+            }
+          }
+        },
+        Branch: {
+          fields: {
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        BranchCollection: {
+          merge: true
+        },
+        ServerStats: {
+          merge: true
+        },
+        WebhookEventCollection: {
+          merge: true
+        },
+        ServerInfo: {
+          merge: true
+        },
+        CommentThreadActivityMessage: {
+          merge: true
         }
       },
-      User: {
-        fields: {
-          timeline: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('ActivityCollection')
-          },
-          commits: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollectionUser')
-          },
-          favoriteStreams: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection')
-          }
-        }
-      },
-      Stream: {
-        fields: {
-          activity: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('ActivityCollection')
-          },
-          commits: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection')
-          },
-          pendingCollaborators: {
-            merge: incomingOverwritesExistingMergeFunction
-          }
-        }
-      },
-      Branch: {
-        fields: {
-          commits: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection')
-          }
-        }
-      },
-      BranchCollection: {
-        merge: true
-      },
-      ServerStats: {
-        merge: true
-      },
-      WebhookEventCollection: {
-        merge: true
-      },
-      ServerInfo: {
-        merge: true
-      },
-      CommentThreadActivityMessage: {
-        merge: true
-      }
-    }
+      commitObjectViewerStatePolicies
+    )
   })
 }
 

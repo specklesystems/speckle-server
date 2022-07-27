@@ -1,0 +1,30 @@
+extend type Query {
+  commitObjectViewerState: CommitObjectViewerState!
+}
+
+"""
+Local-only state used in CommitObjectViewer
+"""
+type CommitObjectViewerState {
+  viewerBusy: Boolean!
+  appliedFilter: JSONObject
+  isolateKey: String
+  isolateValues: [String!]!
+  hideKey: String
+  hideValues: [String!]!
+  colorLegend: JSONObject!
+  isolateCategoryKey: String
+  isolateCategoryValues: [String!]!
+  hideCategoryKey: String
+  hideCategoryValues: [String!]!
+  selectedCommentMetaData: SelectedCommentMetaData
+  addingComment: Boolean!
+  preventCommentCollapse: Boolean!
+  commentReactions: [String!]!
+  emojis: [String!]!
+}
+
+type SelectedCommentMetaData {
+  id: String!
+  selectionLocation: JSONObject!
+}

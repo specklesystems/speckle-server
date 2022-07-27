@@ -1,6 +1,6 @@
 <template>
   <div style="display: inline-block">
-    <v-menu v-if="$loggedIn()" offset-x open-on-hover :close-on-content-click="false">
+    <v-menu v-if="isLoggedIn" offset-x open-on-hover :close-on-content-click="false">
       <template #activator="{ on, attrs }">
         <div v-bind="attrs" v-on="on">
           <user-avatar-icon
@@ -72,6 +72,9 @@
 <script>
 import userByIdQuery from '@/graphql/userById.gql'
 import UserAvatarIcon from '@/main/components/common/UserAvatarIcon'
+import { AppLocalStorage } from '@/utils/localStorage'
+import { LocalStorageKeys } from '@/helpers/mainConstants'
+import { useIsLoggedIn } from '@/main/lib/core/composables/auth'
 
 export default {
   components: { UserAvatarIcon },
@@ -99,9 +102,13 @@ export default {
       default: null
     }
   },
+  setup() {
+    const { isLoggedIn } = useIsLoggedIn()
+    return { isLoggedIn }
+  },
   computed: {
     isSelf() {
-      return this.id === localStorage.getItem('uuid')
+      return this.id === AppLocalStorage.get(LocalStorageKeys.Uuid)
     }
   },
   apollo: {
@@ -113,7 +120,7 @@ export default {
         }
       },
       skip() {
-        return !this.$loggedIn
+        return !this.isLoggedIn
       },
       update: (data) => {
         return data.user

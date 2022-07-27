@@ -1,7 +1,7 @@
 <template>
   <div @mouseenter="hovered = true" @mouseleave="hovered = false">
     <v-card
-      class="mx-2 my-4 rounded-lg"
+      class="mx-2 rounded-lg"
       :elevation="`${hovered ? 10 : 2}`"
       style="transition: all 0.2s ease"
     >
@@ -22,7 +22,7 @@
         <source-app-avatar :application-name="commit.sourceApplication" />
         <v-spacer />
         <v-btn
-          v-if="$route.params.resourceId !== resource.id"
+          v-if="resourceId !== resource.id"
           v-tooltip="'Remove'"
           small
           icon
@@ -77,6 +77,16 @@
   </div>
 </template>
 <script>
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
+import {
+  hideObjects,
+  isolateObjects,
+  showObjects,
+  unisolateObjects,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
@@ -88,6 +98,22 @@ export default {
       type: Object,
       default: () => null
     }
+  },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          isolateValues
+          hideValues
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState, streamId, resourceId }
   },
   data() {
     return {
@@ -101,14 +127,14 @@ export default {
     },
     isolated() {
       return (
-        this.$store.state.isolateValues.indexOf(
+        this.viewerState.isolateValues.indexOf(
           this.resource.data.commit.referencedObject
         ) !== -1
       )
     },
     visible() {
       return (
-        this.$store.state.hideValues.indexOf(
+        this.viewerState.hideValues.indexOf(
           this.resource.data.commit.referencedObject
         ) === -1
       )
@@ -118,12 +144,12 @@ export default {
     isolate() {
       const id = this.resource.data.commit.referencedObject
       if (this.isolated)
-        this.$store.commit('unisolateObjects', {
+        unisolateObjects({
           filterKey: '__parents',
           filterValues: [id]
         })
       else
-        this.$store.commit('isolateObjects', {
+        isolateObjects({
           filterKey: '__parents',
           filterValues: [id]
         })
@@ -131,12 +157,12 @@ export default {
     toggleVisibility() {
       const id = this.resource.data.commit.referencedObject
       if (this.visible)
-        this.$store.commit('hideObjects', {
+        hideObjects({
           filterKey: '__parents',
           filterValues: [id]
         })
       else
-        this.$store.commit('showObjects', {
+        showObjects({
           filterKey: '__parents',
           filterValues: [id]
         })

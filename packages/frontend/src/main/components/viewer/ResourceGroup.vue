@@ -5,6 +5,7 @@
         <div v-for="(resource, index) in resources" :key="index">
           <commit-info-resource
             v-if="resource.type === 'commit'"
+            :class="[index === 0 ? 'my-2' : 'my-4']"
             :resource="resource"
             @remove="
               (e) => {
@@ -15,6 +16,7 @@
           ></commit-info-resource>
           <object-info-resource
             v-if="resource.type === 'object'"
+            :class="[index === 0 ? 'my-2' : 'my-4']"
             :resource="resource"
             @remove="
               (e) => {
@@ -24,7 +26,7 @@
             "
           ></object-info-resource>
         </div>
-        <div v-show="$loggedIn()" class="px-2 mb-2">
+        <div v-if="allowAdd && isLoggedIn" class="px-2 mb-2">
           <v-btn
             v-tooltip="'Overlay another commit or object'"
             block
@@ -71,13 +73,22 @@
   </div>
 </template>
 <script>
+import { useIsLoggedIn } from '@/main/lib/core/composables/auth'
 export default {
   components: {
     CommitInfoResource: () => import('@/main/components/viewer/CommitInfoResource'),
     ObjectInfoResource: () => import('@/main/components/viewer/ObjectInfoResource')
   },
   props: {
-    resources: { type: Array, default: () => [] }
+    resources: { type: Array, default: () => [] },
+    allowAdd: {
+      type: Boolean,
+      default: true
+    }
+  },
+  setup() {
+    const { isLoggedIn } = useIsLoggedIn()
+    return { isLoggedIn }
   },
   data() {
     return {
