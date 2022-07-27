@@ -53,8 +53,8 @@ const ensureConditions = async () => {
 const getFileLimit = () => {
   //100Mb default
   let sizeLimit = 100
-  const suppliedSize = process.env.FILE_SIZE_LIMIT_MB
-  if (suppliedSize) sizeLimit = parseInt(suppliedSize)
+  const suppliedSize = parseInt(process.env.FILE_SIZE_LIMIT_MB)
+  if (suppliedSize) sizeLimit = suppliedSize
 
   // convert to bytes
   return sizeLimit * 1024 * 1024
