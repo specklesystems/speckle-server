@@ -46,12 +46,8 @@ export const speckleLineVert = /* glsl */ `
 		#endif
 
         #ifdef USE_RTE
-            // attribute vec3 position_high;
-            // attribute vec3 position_low;
 			attribute vec3 instanceStartLow;
-            attribute vec3 instanceStartHigh;
 			attribute vec3 instanceEndLow;
-            attribute vec3 instanceEndHigh;
             uniform vec3 uViewer_high;
             uniform vec3 uViewer_low;
         #endif
@@ -106,14 +102,14 @@ export const speckleLineVert = /* glsl */ `
 			/** Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl */
 				vec3 t1 = instanceStartLow.xyz - uViewer_low;
 				vec3 e = t1 - instanceStartLow.xyz;
-				vec3 t2 = ((-uViewer_low - e) + (instanceStartLow.xyz - (t1 - e))) + instanceStartHigh.xyz - uViewer_high;
+				vec3 t2 = ((-uViewer_low - e) + (instanceStartLow.xyz - (t1 - e))) + instanceStart.xyz - uViewer_high;
 				vec3 highDifference = t1 + t2;
 				vec3 lowDifference = t2 - (highDifference - t1);
 				vec4 start = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
 
 				t1 = instanceEndLow.xyz - uViewer_low;
 				e = t1 - instanceEndLow.xyz;
-				t2 = ((-uViewer_low - e) + (instanceEndLow.xyz - (t1 - e))) + instanceEndHigh.xyz - uViewer_high;
+				t2 = ((-uViewer_low - e) + (instanceEndLow.xyz - (t1 - e))) + instanceEnd.xyz - uViewer_high;
 				highDifference = t1 + t2;
 				lowDifference = t2 - (highDifference - t1);
 				vec4 end = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);

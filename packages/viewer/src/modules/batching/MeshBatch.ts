@@ -285,7 +285,10 @@ export default class MeshBatch implements Batch {
     }
 
     if (position) {
-      /** When RTE enabled, we'll be storing the high component of the encoding here */
+      /** When RTE enabled, we'll be storing the high component of the encoding here,
+       * which considering our current encoding method is actually the original casted
+       * down float32 position!
+       */
       this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 

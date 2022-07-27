@@ -182,6 +182,7 @@ export default class LineBatch implements Batch {
 
   private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {
     const geometry = new LineSegmentsGeometry()
+    /** This will set the instanceStart and instanceEnd attributes. These will be our high parts */
     geometry.setPositions(position)
 
     const buffer = new Float32Array(position.length + position.length / 3)

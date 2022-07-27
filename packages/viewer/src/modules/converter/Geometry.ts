@@ -42,7 +42,11 @@ export class Geometry {
       geometry.type === 'LineSegmentsGeometry'
     ) {
       const position_low = new Float32Array(doublePositions.length)
-      const position_high = new Float32Array(doublePositions.length)
+      /** This is the default instanceStart + instanceEnd interleaved attribute buffer
+       *  We're not altering it in reality since the high part of our encoding is the
+       *  original position double value casted down to float
+       */
+      const position_high = geometry.attributes.instanceStart.array as Float32Array
 
       Geometry.DoubleToHighLowBuffer(doublePositions, position_low, position_high)
 
@@ -58,20 +62,6 @@ export class Geometry {
       geometry.setAttribute(
         'instanceEndLow',
         new InterleavedBufferAttribute(instanceBufferLow, 3, 3)
-      ) // xyz
-
-      const instanceBufferHigh = new InstancedInterleavedBuffer(
-        new Float32Array(position_high),
-        6,
-        1
-      ) // xyz, xyz
-      geometry.setAttribute(
-        'instanceStartHigh',
-        new InterleavedBufferAttribute(instanceBufferHigh, 3, 0)
-      ) // xyz
-      geometry.setAttribute(
-        'instanceEndHigh',
-        new InterleavedBufferAttribute(instanceBufferHigh, 3, 3)
       ) // xyz
     }
   }
