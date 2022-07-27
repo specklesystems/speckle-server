@@ -111,3 +111,4 @@ cert_manager_issuer: letsencrypt-staging
 helm_test_enabled: true
 
 create_namespace: false
+file_size_limit_mb: 100
