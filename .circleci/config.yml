@@ -179,6 +179,7 @@ jobs:
   docker-build-and-publish: &docker-job
     docker: &docker-image
       - image: cimg/node:16.15
+    resource_class: xlarge
     working_directory: *work-dir
     steps:
       - checkout
