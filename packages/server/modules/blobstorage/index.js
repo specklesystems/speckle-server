@@ -50,14 +50,14 @@ const ensureConditions = async () => {
   }
 }
 
-let fileLimit = null
-
 const getFileLimit = () => {
-  if (!fileLimit) {
-    //100Mb default
-    fileLimit = process.env.FILE_SIZE_LIMIT_BYTES || 1024 * 1024 * 100
-  }
-  return fileLimit
+  //100Mb default
+  let sizeLimit = 100
+  const suppliedSize = process.env.FILE_SIZE_LIMIT_MB
+  if (suppliedSize) sizeLimit = parseInt(suppliedSize)
+
+  // convert to bytes
+  return sizeLimit * 1024 * 1024
 }
 
 const errorHandler = async (req, res, callback) => {
