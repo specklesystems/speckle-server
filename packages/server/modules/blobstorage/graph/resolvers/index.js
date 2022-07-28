@@ -1,12 +1,18 @@
 const {
   getBlobMetadata,
   getBlobMetadataCollection,
-  blobCollectionSummary
+  blobCollectionSummary,
+  getFileSizeLimit
 } = require('@/modules/blobstorage/services')
 const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
 const { UserInputError } = require('apollo-server-errors')
 
 module.exports = {
+  ServerInfo: {
+    blobSizeLimitBytes() {
+      return getFileSizeLimit()
+    }
+  },
   Stream: {
     async blobs(parent, args) {
       const streamId = parent.id

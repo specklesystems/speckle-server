@@ -97,7 +97,8 @@
               <span class="primary--text">Drag and drop your file here!</span>
               <br />
               <span class="caption">
-                Maximum 5 files at a time. Size is restricted to 50mb each.
+                Maximum 5 files at a time. Size is restricted to
+                {{ fileSizeLimit }} mb each.
               </span>
             </div>
             <v-alert
@@ -143,6 +144,15 @@ export default {
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-uploads', 1)],
   apollo: {
+    serverInfo: {
+      query: gql`
+        query serverInfo {
+          serverInfo {
+            blobSizeLimitBytes
+          }
+        }
+      `
+    },
     stream: {
       query: gql`
         query stream($id: String!) {
@@ -194,6 +204,11 @@ export default {
       dragError: null
     }
   },
+  computed: {
+    fileSizeLimit() {
+      return this.serverInfo.blobSizeLimitBytes / 1024 / 1024
+    }
+  },
   methods: {
     onFileSelect(e) {
       this.parseFiles(e.target.files)
@@ -214,9 +229,8 @@ export default {
           return
         }
 
-        if (file.size > 104857600) {
-          this.dragError =
-            'Your files are too powerful (for now). Maximum upload size is 100mb!'
+        if (file.size > this.serverInfo.blobSizeLimitBytes) {
+          this.dragError = `Your files are too powerful (for now). Maximum upload size is ${this.fileSizeLimit} mb!`
           return
         }
 

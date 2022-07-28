@@ -3,7 +3,7 @@
     <file-upload-zone
       ref="uploadZone"
       v-slot="{ isFileDrag }"
-      :size-limit="fileSizeLimit"
+      :size-limit="serverInfo.blobSizeLimitBytes"
       :count-limit="countLimit"
       :accept="acceptValue"
       :disabled="disabled"
@@ -32,6 +32,7 @@
   </div>
 </template>
 <script lang="ts">
+import gql from 'graphql-tag'
 import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
 import {
   CommentEditorValue,
@@ -84,10 +85,21 @@ export default Vue.extend({
       default: true
     }
   },
+  apollo: {
+    serverInfo: {
+      query: gql`
+        query serverInfo {
+          serverInfo {
+            blobSizeLimitBytes
+          }
+        }
+      `
+    }
+  },
   data() {
     return {
       editorSchemaOptions: SMART_EDITOR_SCHEMA,
-      fileSizeLimit: 1024 * 1024 * 25, // 25MB
+      // fileSizeLimit: 1024 * 1024 * 25, // 25MB
       countLimit: 5, // if it's more than 5, just zip it up
       acceptValue: [
         UniqueFileTypeSpecifier.AnyImage,

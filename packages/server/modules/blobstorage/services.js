@@ -154,6 +154,16 @@ const updateBlobMetadata = async (streamId, blobId, updateCallback) => {
   return { blobId, fileName, ...updateData }
 }
 
+const getFileSizeLimit = () => {
+  //100Mb default
+  let sizeLimit = 100
+  const suppliedSize = parseInt(process.env.FILE_SIZE_LIMIT_MB)
+  if (suppliedSize) sizeLimit = suppliedSize
+
+  // convert to bytes
+  return sizeLimit * 1024 * 1024
+}
+
 module.exports = {
   cursorFromRows,
   decodeCursor,
@@ -167,5 +177,6 @@ module.exports = {
   getBlobMetadataCollection,
   blobCollectionSummary,
   getBlobs,
-  getBlob
+  getBlob,
+  getFileSizeLimit
 }
