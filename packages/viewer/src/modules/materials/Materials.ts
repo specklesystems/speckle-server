@@ -433,7 +433,8 @@ export default class Materials {
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
     return {
-      rampIndex: filterMaterial.rampIndex ? filterMaterial.rampIndex : undefined,
+      rampIndex:
+        filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
       rampIndexColor: filterMaterial.rampIndexColor,
       rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
     }
