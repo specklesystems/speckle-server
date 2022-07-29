@@ -190,7 +190,7 @@ describe('Activity @activity', () => {
 
   it("Should get a user's own activity", async () => {
     const res = await sendRequest(userIz.token, {
-      query: `query {user(id:"${userIz.id}") { name activity { totalCount items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {user(id:"${userIz.id}") { name activity { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
     const activity = res.body.data.user.activity
@@ -203,7 +203,7 @@ describe('Activity @activity', () => {
 
   it("Should get another user's activity", async () => {
     const res = await sendRequest(userIz.token, {
-      query: `query {user(id:"${userCr.id}") { name activity { totalCount items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {user(id:"${userCr.id}") { name activity { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
     expect(res.body.data.user.activity.items.length).to.equal(3)
@@ -212,7 +212,7 @@ describe('Activity @activity', () => {
 
   it("Should get a user's timeline", async () => {
     const res = await sendRequest(userIz.token, {
-      query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
     expect(res.body.data.user.timeline.items.length).to.equal(7) // sum of all actions in before hook
@@ -221,7 +221,7 @@ describe('Activity @activity', () => {
 
   it("Should get a stream's activity", async () => {
     const res = await sendRequest(userCr.token, {
-      query: `query { stream(id: "${streamPublic.id}") { activity { totalCount items {streamId resourceId actionType message} } } }`
+      query: `query { stream(id: "${streamPublic.id}") { activity { totalCount items {id streamId resourceId actionType message} } } }`
     })
     expect(noErrors(res))
     const activity = res.body.data.stream.activity
@@ -232,7 +232,7 @@ describe('Activity @activity', () => {
 
   it("Should get a branch's activity", async () => {
     const res = await sendRequest(userCr.token, {
-      query: `query { stream(id: "${streamPublic.id}") { branch(name: "${branchPublic.name}") { activity { totalCount items {streamId resourceId actionType message} } } } }`
+      query: `query { stream(id: "${streamPublic.id}") { branch(name: "${branchPublic.name}") { activity { totalCount items {id streamId resourceId actionType message} } } } }`
     })
     expect(noErrors(res))
     const activity = res.body.data.stream.branch.activity
@@ -243,28 +243,28 @@ describe('Activity @activity', () => {
 
   it("Should *not* get a stream's activity if you don't have access to it", async () => {
     const res = await sendRequest(userIz.token, {
-      query: `query {stream(id:"${streamSecret.id}") {name activity {items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {stream(id:"${streamSecret.id}") {name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(res.body.errors.length).to.equal(1)
   })
 
   it("Should *not* get a stream's activity if you are not a server user", async () => {
     const res = await sendRequest(null, {
-      query: `query {stream(id:"${streamPublic.id}") {name activity {items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {stream(id:"${streamPublic.id}") {name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(res.body.errors.length).to.equal(1)
   })
 
   it("Should *not* get a user's activity without the `users:read` scope", async () => {
     const res = await sendRequest(userX.token, {
-      query: `query {user(id:"${userCr.id}") { name activity {items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {user(id:"${userCr.id}") { name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(res.body.errors.length).to.equal(1)
   })
 
   it("Should *not* get a user's timeline without the `users:read` scope", async () => {
     const res = await sendRequest(userX.token, {
-      query: `query {user(id:"${userCr.id}") { name timeline {items {streamId resourceType resourceId actionType userId message time}}} }`
+      query: `query {user(id:"${userCr.id}") { name timeline {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(res.body.errors.length).to.equal(1)
   })
