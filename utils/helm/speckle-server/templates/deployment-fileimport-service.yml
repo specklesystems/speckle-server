@@ -90,5 +90,7 @@ spec:
                 name: {{ .Values.secretName }}
                 key: s3_secret_key
 
+          - name: FILE_IMPORT_TIME_LIMIT_MIN
+            value: {{ .Values.fileimport_service.time_limit_min }}
 
 {{- end }}

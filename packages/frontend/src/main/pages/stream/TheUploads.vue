@@ -97,7 +97,8 @@
               <span class="primary--text">Drag and drop your file here!</span>
               <br />
               <span class="caption">
-                Maximum 5 files at a time. Size is restricted to 50mb each.
+                Maximum 5 files at a time. Size is restricted to
+                {{ fileSizeLimit }} mb each.
               </span>
             </div>
             <v-alert
@@ -132,6 +133,10 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { ServerInfoBlobSizeLimitDocument } from '@/graphql/generated/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
 
 export default {
   name: 'TheUploads',
@@ -183,6 +188,13 @@ export default {
       }
     }
   },
+  setup() {
+    const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
+    const blobSizeLimitBytes = computed(
+      () => result.value?.serverInfo.blobSizeLimitBytes
+    )
+    return { blobSizeLimitBytes }
+  },
   data() {
     return {
       dragover: false,
@@ -214,9 +226,10 @@ export default {
           return
         }
 
-        if (file.size > 104857600) {
-          this.dragError =
-            'Your files are too powerful (for now). Maximum upload size is 100mb!'
+        if (file.size > this.blobSizeLimitBytes) {
+          this.dragError = `Your files are too powerful (for now). Maximum upload size is ${prettyFileSize(
+            this.blobSizeLimitBytes
+          )} mb!`
           return
         }
 

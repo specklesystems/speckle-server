@@ -25,7 +25,8 @@ const {
   markUploadOverFileSizeLimit,
   deleteBlob,
   getBlobMetadata,
-  getBlobMetadataCollection
+  getBlobMetadataCollection,
+  getFileSizeLimit
 } = require('@/modules/blobstorage/services')
 const {
   NotFoundError,
@@ -82,8 +83,7 @@ exports.init = async (app) => {
       const finalizePromises = []
       const busboy = Busboy({
         headers: req.headers,
-        // this is 100 MB which matches the current frontend file size limit
-        limits: { fileSize: 104_857_600 }
+        limits: { fileSize: getFileSizeLimit() }
       })
       const streamId = req.params.streamId
       busboy.on('file', (formKey, file, info) => {

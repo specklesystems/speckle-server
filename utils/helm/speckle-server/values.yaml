@@ -102,6 +102,7 @@ fileimport_service:
   limits:
     cpu: 1000m
     memory: 2Gi
+  time_limit_min: 10
 
 secretName: server-vars
 
@@ -111,3 +112,4 @@ cert_manager_issuer: letsencrypt-staging
 helm_test_enabled: true
 
 create_namespace: false
+file_size_limit_mb: 100

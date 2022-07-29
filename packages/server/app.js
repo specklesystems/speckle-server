@@ -22,7 +22,7 @@ const { buildContext } = require('./modules/shared')
 const knex = require('./db/knex')
 const { monitorActiveConnections } = require('./logging/httpServerMonitoring')
 const { buildErrorFormatter } = require('@/modules/core/graph/setup')
-const { isDevEnv, isTestEnv } = require('@/modules/core/helpers/envHelper')
+const { isDevEnv, isTestEnv } = require('@/modules/shared/helpers/envHelper')
 
 let graphqlServer
 

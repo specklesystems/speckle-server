@@ -110,7 +110,7 @@ server {
   location ~* ^/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)) {
     resolver 127.0.0.11 valid=30s;
     set $upstream_speckle_server speckle-server;
-    client_max_body_size 100m;
+    client_max_body_size ${FILE_SIZE_LIMIT_MB}m;
     proxy_pass http://$upstream_speckle_server:3000;
 
     proxy_buffering off;

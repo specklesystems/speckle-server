@@ -4,6 +4,7 @@ const {
   ResourceMismatch,
   BadRequestError
 } = require('@/modules/shared/errors')
+const { getFileSizeLimitMB } = require('@/modules/shared/helpers/envHelper')
 const BlobStorage = () => knex('blob_storage')
 
 const blobLookup = ({ blobId, streamId }) =>
@@ -154,6 +155,8 @@ const updateBlobMetadata = async (streamId, blobId, updateCallback) => {
   return { blobId, fileName, ...updateData }
 }
 
+const getFileSizeLimit = () => getFileSizeLimitMB() * 1024 * 1024
+
 module.exports = {
   cursorFromRows,
   decodeCursor,
@@ -167,5 +170,6 @@ module.exports = {
   getBlobMetadataCollection,
   blobCollectionSummary,
   getBlobs,
-  getBlob
+  getBlob,
+  getFileSizeLimit
 }

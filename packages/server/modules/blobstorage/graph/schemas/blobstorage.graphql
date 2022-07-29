@@ -1,3 +1,7 @@
+extend type ServerInfo {
+  blobSizeLimitBytes: Int!
+}
+
 extend type Stream {
   """
   Get the metadata collection of blobs stored for this stream.
