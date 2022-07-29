@@ -133,6 +133,10 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { serverInfoBlobSizeLimitQuery } from '@/graphql/server'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
 
 export default {
   name: 'TheUploads',
@@ -144,15 +148,6 @@ export default {
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-uploads', 1)],
   apollo: {
-    serverInfo: {
-      query: gql`
-        query serverInfo {
-          serverInfo {
-            blobSizeLimitBytes
-          }
-        }
-      `
-    },
     stream: {
       query: gql`
         query stream($id: String!) {
@@ -193,6 +188,13 @@ export default {
       }
     }
   },
+  setup() {
+    const { result } = useQuery(serverInfoBlobSizeLimitQuery)
+    const blobSizeLimitBytes = computed(
+      () => result.value?.serverInfo.blobSizeLimitBytes
+    )
+    return { blobSizeLimitBytes }
+  },
   data() {
     return {
       dragover: false,
@@ -202,11 +204,6 @@ export default {
       showUploadDialog: false,
       error: null,
       dragError: null
-    }
-  },
-  computed: {
-    fileSizeLimit() {
-      return this.serverInfo.blobSizeLimitBytes / 1024 / 1024
     }
   },
   methods: {
@@ -229,8 +226,10 @@ export default {
           return
         }
 
-        if (file.size > this.serverInfo.blobSizeLimitBytes) {
-          this.dragError = `Your files are too powerful (for now). Maximum upload size is ${this.fileSizeLimit} mb!`
+        if (file.size > this.blobSizeLimitBytes) {
+          this.dragError = `Your files are too powerful (for now). Maximum upload size is ${prettyFileSize(
+            this.blobSizeLimitBytes
+          )} mb!`
           return
         }
 

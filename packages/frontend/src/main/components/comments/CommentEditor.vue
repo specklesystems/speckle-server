@@ -3,7 +3,7 @@
     <file-upload-zone
       ref="uploadZone"
       v-slot="{ isFileDrag }"
-      :size-limit="serverInfo.blobSizeLimitBytes"
+      :size-limit="blobSizeLimitBytes"
       :count-limit="countLimit"
       :accept="acceptValue"
       :disabled="disabled"
@@ -32,7 +32,6 @@
   </div>
 </template>
 <script lang="ts">
-import gql from 'graphql-tag'
 import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
 import {
   CommentEditorValue,
@@ -49,8 +48,11 @@ import {
 import FileUploadProgress from '@/main/components/common/file-upload/FileUploadProgress.vue'
 import { UploadFileItem } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { differenceBy } from 'lodash'
+import { useQuery } from '@vue/apollo-composable'
+import { serverInfoBlobSizeLimitQuery } from '@/graphql/server'
 import { deleteBlob, uploadFiles } from '@/main/lib/common/file-upload/blobStorageApi'
 import { JSONContent } from '@tiptap/core'
+import { computed } from 'vue'
 
 // TODO: Styling for adding attachments & rendering them
 
@@ -85,16 +87,12 @@ export default Vue.extend({
       default: true
     }
   },
-  apollo: {
-    serverInfo: {
-      query: gql`
-        query serverInfo {
-          serverInfo {
-            blobSizeLimitBytes
-          }
-        }
-      `
-    }
+  setup() {
+    const { result } = useQuery(serverInfoBlobSizeLimitQuery)
+    const blobSizeLimitBytes = computed(
+      () => result.value?.serverInfo.blobSizeLimitBytes
+    )
+    return { blobSizeLimitBytes }
   },
   data() {
     return {
@@ -169,8 +167,8 @@ export default Vue.extend({
     },
     placeholder(): string {
       return this.addingComment
-        ? 'Your comment... (press enter to send)'
-        : 'Reply... (press enter to send)'
+        ? 'Your comment... (Enter sends it)'
+        : 'Reply... (Enter sends it)'
     },
     anyAttachmentsProcessing(): boolean {
       return this.currentFiles.some((a) => !isUploadProcessed(a))
