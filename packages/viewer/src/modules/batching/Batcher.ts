@@ -47,6 +47,10 @@ export default class Batcher {
         matRef = batch[0].renderData.renderMaterial
       } else if (batchType === GeometryType.LINE) {
         matRef = batch[0].renderData.displayStyle
+      } else if (batchType === GeometryType.POINT) {
+        matRef = batch[0].renderData.renderMaterial
+      } else if (batchType === GeometryType.POINT_CLOUD) {
+        matRef = batch[0].renderData.renderMaterial
       }
 
       const material = this.materials.updateMaterialMap(

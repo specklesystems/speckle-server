@@ -241,10 +241,18 @@ export default class Materials {
       sizeAttenuation: false
       // clippingPlanes: this.viewer.sectionBox.planes
     })
-    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] =
+    this.materialMap[NodeRenderView.NullPointCloudVertexColorsMaterialHash] =
       new SpecklePointMaterial({
         color: 0xffffff,
         vertexColors: true,
+        size: 2,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      })
+    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] =
+      new SpecklePointMaterial({
+        color: 0xffffff,
+        vertexColors: false,
         size: 2,
         sizeAttenuation: false
         // clippingPlanes: this.viewer.sectionBox.planes
@@ -289,6 +297,21 @@ export default class Materials {
     return mat
   }
 
+  private makePointMaterial(materialData: RenderMaterial): Material {
+    const mat = new SpecklePointMaterial({
+      color: materialData.color,
+      opacity: materialData.opacity,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+    mat.transparent = mat.opacity < 1 ? true : false
+    mat.depthWrite = mat.transparent ? false : true
+    mat.color.convertSRGBToLinear()
+    return mat
+  }
+
   public updateMaterialMap(
     hash: number,
     material: RenderMaterial | DisplayStyle,
@@ -309,7 +332,7 @@ export default class Materials {
           this.materialMap[hash] = this.makeLineMaterial(material as DisplayStyle)
           break
         case GeometryType.POINT:
-          console.error(`No material definition for points!`)
+          this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
           break
       }
     }

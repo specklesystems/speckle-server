@@ -46,8 +46,10 @@ export class NodeRenderView {
   public static readonly NullPointMaterialHash = this.hashCode(
     GeometryType.POINT.toString()
   )
-
   public static readonly NullPointCloudMaterialHash = this.hashCode(
+    GeometryType.POINT_CLOUD.toString()
+  )
+  public static readonly NullPointCloudVertexColorsMaterialHash = this.hashCode(
     GeometryType.POINT_CLOUD.toString() + 'vertexColors'
   )
 
