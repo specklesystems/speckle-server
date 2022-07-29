@@ -1,3 +1,4 @@
+import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import { limitedUserFieldsFragment } from '@/graphql/fragments/user'
 import { commonStreamFieldsFragment } from '@/graphql/streams'
 import { gql } from '@apollo/client/core'
@@ -148,16 +149,11 @@ export const userTimelineQuery = gql`
         totalCount
         cursor
         items {
-          actionType
-          userId
-          streamId
-          resourceId
-          resourceType
-          time
-          info
-          message
+          ...ActivityMainFields
         }
       }
     }
   }
+
+  ${activityMainFieldsFragment}
 `

@@ -11,14 +11,14 @@ interface AbstractCollection<T extends string> {
 /**
  * Build an Apollo merge function for a field that returns a collection like AbstractCollection
  * @param {{}} [param0]
- * @param {boolean} [param0.checkIdentity] Set to true if you want to double check that items with IDs
- * that already appear in old results, don't get added again
+ * @param {boolean} [param0.checkIdentity] Set to false if you want to merge incoming items without checking
+ * for duplicates. Usually you don't want to do this as you can introduce duplicates this way.
  * @param {string} [param0.identityProp] Optionally change the prop that should be used to compare
  * equality between items
  */
 export function buildAbstractCollectionMergeFunction<T extends string>(
   typeName: T,
-  { checkIdentity = false, identityProp = '__ref' } = {}
+  { checkIdentity = true, identityProp = '__ref' } = {}
 ): FieldMergeFunction<Optional<AbstractCollection<T>>, AbstractCollection<T>> {
   return (
     existing: Optional<AbstractCollection<T>>,
