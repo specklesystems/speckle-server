@@ -14,7 +14,7 @@ const {
   isApolloMonitoringEnabled,
   getApolloServerVersion,
   getServerVersion
-} = require('./modules/core/helpers/envHelper')
+} = require('./modules/shared/helpers/envHelper')
 
 if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
   process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()

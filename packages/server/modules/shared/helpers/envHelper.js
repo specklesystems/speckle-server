@@ -22,11 +22,19 @@ function getApolloServerVersion() {
   return process.env.APOLLO_SERVER_USER_VERSION
 }
 
+function getFileSizeLimitMB() {
+  let sizeLimit = 100
+  const suppliedSize = parseInt(process.env.FILE_SIZE_LIMIT_MB)
+  if (suppliedSize) sizeLimit = suppliedSize
+  return sizeLimit
+}
+
 module.exports = {
   isTestEnv,
   isDevEnv,
   isProdEnv,
   getServerVersion,
   isApolloMonitoringEnabled,
-  getApolloServerVersion
+  getApolloServerVersion,
+  getFileSizeLimitMB
 }
