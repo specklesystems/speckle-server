@@ -81,6 +81,7 @@ export class GeometryConverter {
 
   /** BLOCK INSTANCE */
   private static BlockInstanceToGeometryData(node: NodeData): GeometryData {
+    const conversionFactor = getConversionFactor(node.raw.units)
     /**
      * Speckle matrices are row major. Three's 'fromArray' function assumes
      * the matrix is in column major. That's why we transpose it here.
@@ -89,11 +90,25 @@ export class GeometryConverter {
       ? node.raw.transform
       : node.raw.transform.value
     const matrix = new Matrix4().fromArray(matrixData).transpose()
+    /** We need to scale the transform, but not propagate the scale towards the block's children
+     *  They do the scaling on their own. That's why we multiply with the inverse scale at the end
+     *  Not 100% sure on this if the original block matrix containts it's own scale + rotation
+     */
+    const transform: Matrix4 = new Matrix4()
+      .makeScale(conversionFactor, conversionFactor, conversionFactor)
+      .multiply(matrix)
+      .multiply(
+        new Matrix4().makeScale(
+          1 / conversionFactor,
+          1 / conversionFactor,
+          1 / conversionFactor
+        )
+      )
 
     return {
       attributes: null,
       bakeTransform: null,
-      transform: matrix
+      transform
     } as GeometryData
   }
 
@@ -252,7 +267,7 @@ export class GeometryConverter {
       node.raw.value.push(node.raw.value[0], node.raw.value[1], node.raw.value[2])
     return {
       attributes: {
-        POSITION: node.raw.value
+        POSITION: node.raw.value.slice(0)
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,
@@ -307,7 +322,14 @@ export class GeometryConverter {
    * CURVE
    */
   private static CurveToGeometryData(node) {
-    return this.PolylineToGeometryData(node.children[0])
+    const polylineGeometry = this.PolylineToGeometryData(node.children[0])
+    return {
+      attributes: {
+        POSITION: polylineGeometry.attributes.POSITION
+      },
+      bakeTransform: polylineGeometry.bakeTransform,
+      transform: null
+    } as GeometryData
   }
 
   /**
@@ -315,10 +337,12 @@ export class GeometryConverter {
    */
   private static CircleToGeometryData(node: NodeData) {
     const conversionFactor = getConversionFactor(node.raw.units)
-    const curveSegmentLength = 0.1
+    const curveSegmentLength = 0.1 * conversionFactor
     const points = this.getCircularCurvePoints(
       node.raw.plane,
       node.raw.radius * conversionFactor,
+      undefined,
+      undefined,
       curveSegmentLength
     )
     return {

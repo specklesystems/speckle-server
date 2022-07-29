@@ -7,7 +7,10 @@ export class Intersections {
     this.raycaster = new Raycaster()
     this.raycaster.params.Line = { threshold: 0.1 }
     ;(this.raycaster.params as { Line2? }).Line2 = {}
-    ;(this.raycaster.params as { Line2? }).Line2.threshold = 1
+    /** We need to set this dynamically according to the scene's relative size
+     *  Because it's in world space
+     */
+    ;(this.raycaster.params as { Line2? }).Line2.threshold = 0.1
   }
 
   public intersect(

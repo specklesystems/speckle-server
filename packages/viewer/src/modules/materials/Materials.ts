@@ -11,6 +11,7 @@ import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
 import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { FilterMaterial } from '../FilteringManager'
+import { getConversionFactor } from '../converter/Units'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -51,9 +52,9 @@ export default class Materials {
     let displayStyle: DisplayStyle = null
     if (node.model.raw.displayStyle) {
       /** If there are no units specified, we ignore the line width value */
-      const lineWeight = node.model.raw.displayStyle.lineweight || 0
-      // const units = node.model.raw.displayStyle.units
-      // lineWeight = units ? lineWeight * getConversionFactor(units) : 0
+      let lineWeight = node.model.raw.displayStyle.lineweight || 0
+      const units = node.model.raw.displayStyle.units
+      lineWeight = units ? lineWeight * getConversionFactor(units) : 0
       displayStyle = {
         id: node.model.raw.displayStyle.id,
         color: node.model.raw.displayStyle.diffuse || node.model.raw.displayStyle.color,

@@ -8,7 +8,7 @@ import InteractionHandler from './legacy/InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Clock, Color, Texture, Vector3 } from 'three'
+import { Clock, Color, MathUtils, Texture, Vector3 } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
@@ -412,7 +412,7 @@ export class Viewer extends EventEmitter implements IViewer {
         if (data[color] === undefined) {
           data[color] = {
             name: propertyValue.split('.').reverse()[0],
-            color,
+            color: new Color(MathUtils.randInt(0, 0xffffff)).getHex(),
             colorIndex: colorCount,
             nodes: []
           }

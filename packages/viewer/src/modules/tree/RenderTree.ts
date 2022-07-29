@@ -1,9 +1,9 @@
 import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
 import { GeometryConverter, SpeckleType } from '../converter/GeometryConverter'
 import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
+import { Geometry } from '../converter/Geometry'
 
 export class RenderTree {
   private root: TreeNode
@@ -18,7 +18,7 @@ export class RenderTree {
       if (node.model.renderView && node.model.renderView.hasGeometry) {
         const transform = this.computeTransform(node)
         if (rendeNode.geometry.bakeTransform) {
-          transform.premultiply(rendeNode.geometry.bakeTransform)
+          transform.multiply(rendeNode.geometry.bakeTransform)
         }
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
