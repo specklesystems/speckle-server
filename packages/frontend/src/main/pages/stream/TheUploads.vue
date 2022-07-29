@@ -133,7 +133,7 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
-import { serverInfoBlobSizeLimitQuery } from '@/graphql/server'
+import { ServerInfoBlobSizeLimitDocument } from '@/graphql/generated/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
@@ -189,7 +189,7 @@ export default {
     }
   },
   setup() {
-    const { result } = useQuery(serverInfoBlobSizeLimitQuery)
+    const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
     const blobSizeLimitBytes = computed(
       () => result.value?.serverInfo.blobSizeLimitBytes
     )

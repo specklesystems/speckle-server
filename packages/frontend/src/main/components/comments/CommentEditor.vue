@@ -49,7 +49,7 @@ import FileUploadProgress from '@/main/components/common/file-upload/FileUploadP
 import { UploadFileItem } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { differenceBy } from 'lodash'
 import { useQuery } from '@vue/apollo-composable'
-import { serverInfoBlobSizeLimitQuery } from '@/graphql/server'
+import { ServerInfoBlobSizeLimitDocument } from '@/graphql/generated/graphql'
 import { deleteBlob, uploadFiles } from '@/main/lib/common/file-upload/blobStorageApi'
 import { JSONContent } from '@tiptap/core'
 import { computed } from 'vue'
@@ -88,7 +88,7 @@ export default Vue.extend({
     }
   },
   setup() {
-    const { result } = useQuery(serverInfoBlobSizeLimitQuery)
+    const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
     const blobSizeLimitBytes = computed(
       () => result.value?.serverInfo.blobSizeLimitBytes
     )
