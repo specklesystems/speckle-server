@@ -87,46 +87,49 @@ export default class Materials {
       color: 0x7f7fff,
       linewidth: 1, // in world units with size attenuation, pixels otherwise
       worldUnits: false,
-      vertexColors: false,
+      vertexColors: true,
       alphaToCoverage: false,
       resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0xff0000)
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0x7f7fff)
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
+    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).vertexColors = true
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
 
     this.lineGhostMaterial = new SpeckleLineMaterial({
-      color: 0x00ff00,
+      color: 0xffffff,
       linewidth: 1, // in world units with size attenuation, pixels otherwise
       worldUnits: false,
-      vertexColors: false,
+      vertexColors: true,
       alphaToCoverage: false,
       resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0x00ff00)
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).color = new Color(0xffffff)
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).linewidth = 1
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).worldUnits = true
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).vertexColors = true
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).pixelThreshold = 0.5
+    ;(<SpeckleLineMaterial>this.lineGhostMaterial).resolution = new Vector2()
 
     this.lineColoredMaterial = new SpeckleLineMaterial({
       color: 0xffffff,
       linewidth: 1, // in world units with size attenuation, pixels otherwise
       worldUnits: false,
-      vertexColors: false,
+      vertexColors: true,
       alphaToCoverage: false,
       resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0xffffff)
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).color = new Color(0xffffff)
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).linewidth = 1
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).worldUnits = false
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).vertexColors = true
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).pixelThreshold = 0.5
+    ;(<SpeckleLineMaterial>this.lineColoredMaterial).resolution = new Vector2()
 
     this.pointCloudHighlightMaterial = new SpecklePointMaterial({
       color: 0xff0000,
@@ -216,17 +219,18 @@ export default class Materials {
 
     const hash = NodeRenderView.NullDisplayStyleHash // So prettier doesn't fuck up everything
     this.materialMap[hash] = new SpeckleLineMaterial({
-      color: 0xff00ff,
+      color: 0x7f7f7f,
       linewidth: 1, // in world units with size attenuation, pixels otherwise
       worldUnits: false,
-      vertexColors: false,
+      vertexColors: true,
       alphaToCoverage: false,
       resolution: new Vector2()
       // clippingPlanes: this.viewer.sectionBox.planes
     })
-    ;(<SpeckleLineMaterial>this.materialMap[hash]).color = new Color(0xff00ff)
+    ;(<SpeckleLineMaterial>this.materialMap[hash]).color = new Color(0x7f7f7f)
     ;(<SpeckleLineMaterial>this.materialMap[hash]).linewidth = 1
     ;(<SpeckleLineMaterial>this.materialMap[hash]).worldUnits = false
+    ;(<SpeckleLineMaterial>this.materialMap[hash]).vertexColors = true
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2()
 
