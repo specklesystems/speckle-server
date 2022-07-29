@@ -34,8 +34,6 @@ const uploadFileStream = async (
   { streamId, userId },
   { blobId, fileName, fileType, fileStream }
 ) => {
-  if (blobId.length !== 10)
-    throw new BadRequestError('The blob id has to be of length 10')
   if (streamId.length !== 10)
     throw new BadRequestError('The stream id has to be of length 10')
   if (userId.length !== 10)

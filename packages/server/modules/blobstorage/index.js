@@ -95,12 +95,20 @@ exports.init = async (app) => {
           )
         }
 
-        const blobId = crs({ length: 10 })
+        let blobId = crs({ length: 10 })
+        let clientHash = null
+        if (formKey.includes('hash:')) {
+          clientHash = formKey.split(':')[1]
+          if (clientHash && clientHash !== '') {
+            // console.log(`I have a client hash (${clientHash})`)
+            blobId = clientHash
+          }
+        }
 
         uploadOperations[blobId] = uploadFileStream(
           storeFileStream,
           { streamId, userId: req.context.userId },
-          { blobId, fileName, fileType, fileStream: file }
+          { blobId, fileName, fileType, fileStream: file, clientHash }
         )
 
         //this file level 'close' is fired when a single file upload finishes
