@@ -78,6 +78,7 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
 
 export default {
   components: {
@@ -111,15 +112,14 @@ export default {
               id
               activity(actionType: "commit_receive", limit: 200) {
                 items {
-                  info
-                  time
-                  userId
-                  message
+                  ...LimitedCommitActivityFields
                 }
               }
             }
           }
         }
+
+        ${limitedCommitActivityFieldsFragment}
       `,
       update: (data) => data.stream.commit.activity,
       variables() {

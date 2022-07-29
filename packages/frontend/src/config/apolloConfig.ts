@@ -61,9 +61,7 @@ function createCache(): InMemoryCache {
           },
           streams: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('StreamCollection')
           }
         }
       },
@@ -75,15 +73,11 @@ function createCache(): InMemoryCache {
           },
           commits: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollectionUser', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('CommitCollectionUser')
           },
           favoriteStreams: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('StreamCollection')
           }
         }
       },
@@ -95,9 +89,7 @@ function createCache(): InMemoryCache {
           },
           commits: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('CommitCollection')
           },
           pendingCollaborators: {
             merge: incomingOverwritesExistingMergeFunction
@@ -108,9 +100,7 @@ function createCache(): InMemoryCache {
         fields: {
           commits: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('CommitCollection')
           }
         }
       },

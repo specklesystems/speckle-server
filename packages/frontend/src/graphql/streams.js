@@ -1,3 +1,4 @@
+import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import {
   limitedUserFieldsFragment,
   streamCollaboratorFieldsFragment
@@ -91,18 +92,13 @@ export const streamWithActivityQuery = gql`
         totalCount
         cursor
         items {
-          actionType
-          userId
-          streamId
-          resourceId
-          resourceType
-          time
-          info
-          message
+          ...ActivityMainFields
         }
       }
     }
   }
+
+  ${activityMainFieldsFragment}
 `
 
 /**
