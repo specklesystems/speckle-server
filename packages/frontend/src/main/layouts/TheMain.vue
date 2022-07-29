@@ -61,9 +61,9 @@
   </v-app>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { mainUserDataQuery } from '@/graphql/user'
-import { mainServerInfoQuery } from '@/graphql/server'
+import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
   name: 'TheMain',
@@ -77,9 +77,6 @@ export default {
       import('@/main/components/user/EmailVerificationBanner')
   },
   apollo: {
-    serverInfo: {
-      query: mainServerInfoQuery
-    },
     user: {
       query: mainUserDataQuery,
       skip() {
@@ -148,10 +145,8 @@ export default {
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem(
-        'darkModeEnabled',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
+      setDarkTheme(this.$vuetify.theme.dark, true)
+
       this.$mixpanel.people.set(
         'Theme Web',
         this.$vuetify.theme.dark ? 'dark' : 'light'

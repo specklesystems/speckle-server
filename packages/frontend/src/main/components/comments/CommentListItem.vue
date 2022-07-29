@@ -115,7 +115,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 
@@ -178,6 +178,9 @@ export default {
         },
         result({ data }) {
           if (!data || !data.commentThreadActivity) return
+
+          // Note: This kind of direct apollo result mutation is only allowed, because
+          // of the 'no-cache' fetch policy, which means that there's no cache mutation actually happening
           if (data.commentThreadActivity.type === 'reply-added') {
             this.commentDetails.replies.totalCount++
             this.commentDetails.updatedAt = Date.now()

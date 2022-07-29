@@ -377,7 +377,7 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
 import CommentThreadReply from '@/main/components/comments/CommentThreadReply.vue'
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'

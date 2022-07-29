@@ -1,7 +1,5 @@
 import gql from 'graphql-tag';
-import { createMutationFunction, createSmartQueryOptionsFunction, createSmartSubscriptionOptionsFunction } from 'vue-apollo-smart-ops';
-import { ApolloError } from 'apollo-client';
-import { handleApolloError } from '@/config/vueApolloSmartOpsConfig';
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -654,8 +652,8 @@ export type MutationStreamInviteCreateArgs = {
 
 export type MutationStreamInviteUseArgs = {
   accept: Scalars['Boolean'];
-  inviteId: Scalars['String'];
   streamId: Scalars['String'];
+  token: Scalars['String'];
 };
 
 
@@ -788,6 +786,8 @@ export type PendingStreamCollaborator = {
   streamName: Scalars['String'];
   /** E-mail address or name of the invited user */
   title: Scalars['String'];
+  /** Only available if the active user is the pending stream collaborator */
+  token?: Maybe<Scalars['String']>;
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
 };
@@ -821,7 +821,7 @@ export type Query = {
    */
   stream?: Maybe<Stream>;
   /**
-   * Look for an invitation to a stream, for the current user (authed or not). If inviteId
+   * Look for an invitation to a stream, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
    */
   streamInvite?: Maybe<PendingStreamCollaborator>;
@@ -885,8 +885,8 @@ export type QueryStreamArgs = {
 
 
 export type QueryStreamInviteArgs = {
-  inviteId?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+  token?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1186,6 +1186,8 @@ export type StreamCreateInput = {
 export type StreamInviteCreateInput = {
   email?: InputMaybe<Scalars['String']>;
   message?: InputMaybe<Scalars['String']>;
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
   userId?: InputMaybe<Scalars['String']>;
 };
@@ -1529,25 +1531,25 @@ export type LimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string
 
 export type StreamCollaboratorFieldsFragment = { __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null };
 
-export type UsersOwnInviteFieldsFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } };
+export type UsersOwnInviteFieldsFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } };
 
 export type StreamInviteQueryVariables = Exact<{
   streamId: Scalars['String'];
-  inviteId?: InputMaybe<Scalars['String']>;
+  token?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
+export type StreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } } | null };
 
 export type UserStreamInvitesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type UserStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } }> };
+export type UserStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, streamName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } }> };
 
 export type UseStreamInviteMutationVariables = Exact<{
   accept: Scalars['Boolean'];
   streamId: Scalars['String'];
-  inviteId: Scalars['String'];
+  token: Scalars['String'];
 }>;
 
 
@@ -1651,6 +1653,14 @@ export type StreamWithCollaboratorsQueryVariables = Exact<{
 
 export type StreamWithCollaboratorsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, isPublic: boolean, role?: string | null, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, role: string, company?: string | null, avatar?: string | null }>, pendingCollaborators?: Array<{ __typename?: 'PendingStreamCollaborator', title: string, inviteId: string, role: string, user?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null }> | null } | null };
 
+export type StreamWithActivityQueryVariables = Exact<{
+  id: Scalars['String'];
+  cursor?: InputMaybe<Scalars['DateTime']>;
+}>;
+
+
+export type StreamWithActivityQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, createdAt: any, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null, activity?: { __typename?: 'ActivityCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Activity', actionType: string, userId: string, streamId?: string | null, resourceId: string, resourceType: string, time: any, info: Record<string, unknown>, message: string } | null> | null } | null } | null };
+
 export type LeaveStreamMutationVariables = Exact<{
   streamId: Scalars['String'];
 }>;
@@ -1708,17 +1718,19 @@ export type AdminUsersListQueryVariables = Exact<{
 
 export type AdminUsersListQuery = { __typename?: 'Query', adminUsers?: { __typename?: 'AdminUsersListCollection', totalCount: number, items: Array<{ __typename?: 'AdminUsersListItem', id: string, registeredUser?: { __typename?: 'User', id: string, suuid?: string | null, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, authorizedApps?: Array<{ __typename?: 'ServerAppListItem', name: string } | null> | null } | null, invitedUser?: { __typename?: 'ServerInvite', id: string, email: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null }> } | null };
 
+export type UserTimelineQueryVariables = Exact<{
+  cursor?: InputMaybe<Scalars['DateTime']>;
+}>;
+
+
+export type UserTimelineQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, timeline?: { __typename?: 'ActivityCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Activity', actionType: string, userId: string, streamId?: string | null, resourceId: string, resourceType: string, time: any, info: Record<string, unknown>, message: string } | null> | null } | null } | null };
+
 export type UserQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
 
 
 export type UserQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, suuid?: string | null } | null };
-
-export type Unnamed_1_QueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type Unnamed_1_Query = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, createdAt: any, updatedAt: any, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, message?: string | null, streamId?: string | null, streamName?: string | null, createdAt?: any | null } | null> | null } | null } | null };
 
 export type UserProfileQueryVariables = Exact<{
   id: Scalars['String'];
@@ -1796,6 +1808,7 @@ export const UsersOwnInviteFields = gql`
   inviteId
   streamId
   streamName
+  token
   invitedBy {
     ...LimitedUserFields
   }
@@ -1936,8 +1949,8 @@ export const StreamCommitQuery = gql`
 }
     `;
 export const StreamInvite = gql`
-    query StreamInvite($streamId: String!, $inviteId: String) {
-  streamInvite(streamId: $streamId, inviteId: $inviteId) {
+    query StreamInvite($streamId: String!, $token: String) {
+  streamInvite(streamId: $streamId, token: $token) {
     ...UsersOwnInviteFields
   }
 }
@@ -1950,8 +1963,8 @@ export const UserStreamInvites = gql`
 }
     ${UsersOwnInviteFields}`;
 export const UseStreamInvite = gql`
-    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-  streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
+  streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
 }
     `;
 export const CancelStreamInvite = gql`
@@ -2117,6 +2130,35 @@ export const StreamWithCollaborators = gql`
 }
     ${StreamCollaboratorFields}
 ${LimitedUserFields}`;
+export const StreamWithActivity = gql`
+    query StreamWithActivity($id: String!, $cursor: DateTime) {
+  stream(id: $id) {
+    id
+    name
+    createdAt
+    commits {
+      totalCount
+    }
+    branches {
+      totalCount
+    }
+    activity(cursor: $cursor) {
+      totalCount
+      cursor
+      items {
+        actionType
+        userId
+        streamId
+        resourceId
+        resourceType
+        time
+        info
+        message
+      }
+    }
+  }
+}
+    `;
 export const LeaveStream = gql`
     mutation LeaveStream($streamId: String!) {
   streamLeave(streamId: $streamId)
@@ -2207,6 +2249,27 @@ export const AdminUsersList = gql`
   }
 }
     `;
+export const UserTimeline = gql`
+    query UserTimeline($cursor: DateTime) {
+  user {
+    id
+    timeline(cursor: $cursor) {
+      totalCount
+      cursor
+      items {
+        actionType
+        userId
+        streamId
+        resourceId
+        resourceType
+        time
+        info
+        message
+      }
+    }
+  }
+}
+    `;
 export const User = gql`
     query User($id: String!) {
   user(id: $id) {
@@ -2223,7 +2286,6 @@ export const User = gql`
   }
 }
     `;
-
 export const UserProfile = gql`
     query UserProfile($id: String!) {
   user(id: $id) {
@@ -2286,1437 +2348,45 @@ export const Webhooks = gql`
   }
 }
     `;
-export const CommentFullInfoFragmentDoc = gql`
-    fragment CommentFullInfo on Comment {
-  id
-  archived
-  authorId
-  text {
-    doc
-    attachments {
-      id
-      fileName
-      streamId
-      fileType
-      fileSize
-    }
-  }
-  data
-  screenshot
-  replies {
-    totalCount
-  }
-  resources {
-    resourceId
-    resourceType
-  }
-  createdAt
-  updatedAt
-  viewedAt
-}
-    `;
-export const StreamCollaboratorFieldsFragmentDoc = gql`
-    fragment StreamCollaboratorFields on StreamCollaborator {
-  id
-  name
-  role
-  company
-  avatar
-}
-    `;
-export const LimitedUserFieldsFragmentDoc = gql`
-    fragment LimitedUserFields on LimitedUser {
-  id
-  name
-  bio
-  company
-  avatar
-  verified
-}
-    `;
-export const UsersOwnInviteFieldsFragmentDoc = gql`
-    fragment UsersOwnInviteFields on PendingStreamCollaborator {
-  id
-  inviteId
-  streamId
-  streamName
-  invitedBy {
-    ...LimitedUserFields
-  }
-}
-    ${LimitedUserFieldsFragmentDoc}`;
-export const MainServerInfoFieldsFragmentDoc = gql`
-    fragment MainServerInfoFields on ServerInfo {
-  name
-  company
-  description
-  adminContact
-  canonicalUrl
-  termsOfService
-  inviteOnly
-  version
-}
-    `;
-export const ServerInfoRolesFieldsFragmentDoc = gql`
-    fragment ServerInfoRolesFields on ServerInfo {
-  roles {
-    name
-    description
-    resourceTarget
-  }
-}
-    `;
-export const ServerInfoScopesFieldsFragmentDoc = gql`
-    fragment ServerInfoScopesFields on ServerInfo {
-  scopes {
-    name
-    description
-  }
-}
-    `;
-export const CommonStreamFieldsFragmentDoc = gql`
-    fragment CommonStreamFields on Stream {
-  id
-  name
-  description
-  role
-  isPublic
-  createdAt
-  updatedAt
-  commentCount
-  collaborators {
-    id
-    name
-    company
-    avatar
-    role
-  }
-  commits(limit: 1) {
-    totalCount
-  }
-  branches {
-    totalCount
-  }
-  favoritedDate
-  favoritesCount
-}
-    `;
-export const CommonUserFieldsFragmentDoc = gql`
-    fragment CommonUserFields on User {
-  id
-  suuid
-  email
-  name
-  bio
-  company
-  avatar
-  verified
-  profiles
-  role
-  suuid
-  streams {
-    totalCount
-  }
-  commits(limit: 1) {
-    totalCount
-    items {
-      id
-      createdAt
-    }
-  }
-}
-    `;
-export const StreamWithBranchDocument = gql`
-    query StreamWithBranch($streamId: String!, $branchName: String!, $cursor: String) {
-  stream(id: $streamId) {
-    id
-    name
-    branch(name: $branchName) {
-      id
-      name
-      description
-      commits(cursor: $cursor, limit: 4) {
-        totalCount
-        cursor
-        items {
-          id
-          authorName
-          authorId
-          authorAvatar
-          sourceApplication
-          message
-          referencedObject
-          createdAt
-          commentCount
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamWithBranchQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamWithBranchQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamWithBranch: useStreamWithBranchQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *         branchName: // value for 'branchName'
- *         cursor: // value for 'cursor'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamWithBranchQuery = createSmartQueryOptionsFunction<
-  StreamWithBranchQuery,
-  StreamWithBranchQueryVariables,
-  ApolloError
->(StreamWithBranchDocument, handleApolloError);
-
-export const BranchCreatedDocument = gql`
-    subscription BranchCreated($streamId: String!) {
-  branchCreated(streamId: $streamId)
-}
-    `;
-
-/**
- * __useBranchCreatedSubscription__
- *
- * To use a Smart Subscription within a Vue component, call `useBranchCreatedSubscription` as the value for a `$subscribe` key
- * in the component's `apollo` config, passing any options required for the subscription.
- *
- * @param options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.subscribe
- *
- * @example
- * {
- *   apollo: {
- *     $subscribe: {
- *       branchCreated: useBranchCreatedSubscription({
- *         variables: {
- *           streamId: // value for 'streamId'
- *         },
- *         loadingKey: 'loading',
- *         fetchPolicy: 'no-cache',
- *       }),
- *     },
- *   }
- * }
- */
-export const useBranchCreatedSubscription = createSmartSubscriptionOptionsFunction<
-  BranchCreatedSubscription,
-  BranchCreatedSubscriptionVariables,
-  ApolloError
->(BranchCreatedDocument, handleApolloError);
-
-export const StreamCommitQueryDocument = gql`
-    query StreamCommitQuery($streamId: String!, $id: String!) {
-  stream(id: $streamId) {
-    id
-    name
-    role
-    commit(id: $id) {
-      id
-      message
-      referencedObject
-      authorName
-      authorId
-      authorAvatar
-      createdAt
-      branchName
-      sourceApplication
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamCommitQueryQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamCommitQueryQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamCommitQuery: useStreamCommitQueryQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamCommitQueryQuery = createSmartQueryOptionsFunction<
-  StreamCommitQueryQuery,
-  StreamCommitQueryQueryVariables,
-  ApolloError
->(StreamCommitQueryDocument, handleApolloError);
-
-export const StreamInviteDocument = gql`
-    query StreamInvite($streamId: String!, $inviteId: String) {
-  streamInvite(streamId: $streamId, inviteId: $inviteId) {
-    ...UsersOwnInviteFields
-  }
-}
-    ${UsersOwnInviteFieldsFragmentDoc}`;
-
-/**
- * __useStreamInviteQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamInviteQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamInvite: useStreamInviteQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *         inviteId: // value for 'inviteId'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamInviteQuery = createSmartQueryOptionsFunction<
-  StreamInviteQuery,
-  StreamInviteQueryVariables,
-  ApolloError
->(StreamInviteDocument, handleApolloError);
-
-export const UserStreamInvitesDocument = gql`
-    query UserStreamInvites {
-  streamInvites {
-    ...UsersOwnInviteFields
-  }
-}
-    ${UsersOwnInviteFieldsFragmentDoc}`;
-
-/**
- * __useUserStreamInvitesQuery__
- *
- * To use a Smart Query within a Vue component, call `useUserStreamInvitesQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     userStreamInvites: useUserStreamInvitesQuery({
- *       variables: {},
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useUserStreamInvitesQuery = createSmartQueryOptionsFunction<
-  UserStreamInvitesQuery,
-  UserStreamInvitesQueryVariables,
-  ApolloError
->(UserStreamInvitesDocument, handleApolloError);
-
-export const UseStreamInviteDocument = gql`
-    mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-  streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
-}
-    `;
-
-/**
- * __useStreamInviteMutation__
- *
- * To run a mutation, you call `useStreamInviteMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = useStreamInviteMutation(this, {
- *   variables: {
- *     accept: // value for 'accept'
- *     streamId: // value for 'streamId'
- *     inviteId: // value for 'inviteId'
- *   },
- * });
- */
-export const useStreamInviteMutation = createMutationFunction<
-  UseStreamInviteMutation,
-  UseStreamInviteMutationVariables,
-  ApolloError
->(UseStreamInviteDocument, handleApolloError);
-
-export const CancelStreamInviteDocument = gql`
-    mutation CancelStreamInvite($streamId: String!, $inviteId: String!) {
-  streamInviteCancel(streamId: $streamId, inviteId: $inviteId)
-}
-    `;
-
-/**
- * __cancelStreamInviteMutation__
- *
- * To run a mutation, you call `cancelStreamInviteMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = cancelStreamInviteMutation(this, {
- *   variables: {
- *     streamId: // value for 'streamId'
- *     inviteId: // value for 'inviteId'
- *   },
- * });
- */
-export const cancelStreamInviteMutation = createMutationFunction<
-  CancelStreamInviteMutation,
-  CancelStreamInviteMutationVariables,
-  ApolloError
->(CancelStreamInviteDocument, handleApolloError);
-
-export const DeleteInviteDocument = gql`
-    mutation DeleteInvite($inviteId: String!) {
-  inviteDelete(inviteId: $inviteId)
-}
-    `;
-
-/**
- * __deleteInviteMutation__
- *
- * To run a mutation, you call `deleteInviteMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = deleteInviteMutation(this, {
- *   variables: {
- *     inviteId: // value for 'inviteId'
- *   },
- * });
- */
-export const deleteInviteMutation = createMutationFunction<
-  DeleteInviteMutation,
-  DeleteInviteMutationVariables,
-  ApolloError
->(DeleteInviteDocument, handleApolloError);
-
-export const ResendInviteDocument = gql`
-    mutation ResendInvite($inviteId: String!) {
-  inviteResend(inviteId: $inviteId)
-}
-    `;
-
-/**
- * __resendInviteMutation__
- *
- * To run a mutation, you call `resendInviteMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = resendInviteMutation(this, {
- *   variables: {
- *     inviteId: // value for 'inviteId'
- *   },
- * });
- */
-export const resendInviteMutation = createMutationFunction<
-  ResendInviteMutation,
-  ResendInviteMutationVariables,
-  ApolloError
->(ResendInviteDocument, handleApolloError);
-
-export const BatchInviteToServerDocument = gql`
-    mutation BatchInviteToServer($paramsArray: [ServerInviteCreateInput!]!) {
-  serverInviteBatchCreate(input: $paramsArray)
-}
-    `;
-
-/**
- * __batchInviteToServerMutation__
- *
- * To run a mutation, you call `batchInviteToServerMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = batchInviteToServerMutation(this, {
- *   variables: {
- *     paramsArray: // value for 'paramsArray'
- *   },
- * });
- */
-export const batchInviteToServerMutation = createMutationFunction<
-  BatchInviteToServerMutation,
-  BatchInviteToServerMutationVariables,
-  ApolloError
->(BatchInviteToServerDocument, handleApolloError);
-
-export const BatchInviteToStreamsDocument = gql`
-    mutation BatchInviteToStreams($paramsArray: [StreamInviteCreateInput!]!) {
-  streamInviteBatchCreate(input: $paramsArray)
-}
-    `;
-
-/**
- * __batchInviteToStreamsMutation__
- *
- * To run a mutation, you call `batchInviteToStreamsMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = batchInviteToStreamsMutation(this, {
- *   variables: {
- *     paramsArray: // value for 'paramsArray'
- *   },
- * });
- */
-export const batchInviteToStreamsMutation = createMutationFunction<
-  BatchInviteToStreamsMutation,
-  BatchInviteToStreamsMutationVariables,
-  ApolloError
->(BatchInviteToStreamsDocument, handleApolloError);
-
-export const StreamObjectDocument = gql`
-    query StreamObject($streamId: String!, $id: String!) {
-  stream(id: $streamId) {
-    id
-    object(id: $id) {
-      totalChildrenCount
-      id
-      speckleType
-      data
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamObjectQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamObjectQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamObject: useStreamObjectQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamObjectQuery = createSmartQueryOptionsFunction<
-  StreamObjectQuery,
-  StreamObjectQueryVariables,
-  ApolloError
->(StreamObjectDocument, handleApolloError);
-
-export const StreamObjectNoDataDocument = gql`
-    query StreamObjectNoData($streamId: String!, $id: String!) {
-  stream(id: $streamId) {
-    id
-    name
-    object(id: $id) {
-      totalChildrenCount
-      id
-      speckleType
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamObjectNoDataQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamObjectNoDataQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamObjectNoData: useStreamObjectNoDataQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamObjectNoDataQuery = createSmartQueryOptionsFunction<
-  StreamObjectNoDataQuery,
-  StreamObjectNoDataQueryVariables,
-  ApolloError
->(StreamObjectNoDataDocument, handleApolloError);
-
-export const MainServerInfoDocument = gql`
-    query MainServerInfo {
-  serverInfo {
-    ...MainServerInfoFields
-  }
-}
-    ${MainServerInfoFieldsFragmentDoc}`;
-
-/**
- * __useMainServerInfoQuery__
- *
- * To use a Smart Query within a Vue component, call `useMainServerInfoQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     mainServerInfo: useMainServerInfoQuery({
- *       variables: {},
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useMainServerInfoQuery = createSmartQueryOptionsFunction<
-  MainServerInfoQuery,
-  MainServerInfoQueryVariables,
-  ApolloError
->(MainServerInfoDocument, handleApolloError);
-
-export const FullServerInfoDocument = gql`
-    query FullServerInfo {
-  serverInfo {
-    ...MainServerInfoFields
-    ...ServerInfoRolesFields
-    ...ServerInfoScopesFields
-  }
-}
-    ${MainServerInfoFieldsFragmentDoc}
-${ServerInfoRolesFieldsFragmentDoc}
-${ServerInfoScopesFieldsFragmentDoc}`;
-
-/**
- * __useFullServerInfoQuery__
- *
- * To use a Smart Query within a Vue component, call `useFullServerInfoQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     fullServerInfo: useFullServerInfoQuery({
- *       variables: {},
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useFullServerInfoQuery = createSmartQueryOptionsFunction<
-  FullServerInfoQuery,
-  FullServerInfoQueryVariables,
-  ApolloError
->(FullServerInfoDocument, handleApolloError);
-
-export const StreamCommitsDocument = gql`
-    query StreamCommits($id: String!) {
-  stream(id: $id) {
-    id
-    role
-    commits {
-      totalCount
-      items {
-        id
-        authorId
-        authorName
-        authorAvatar
-        createdAt
-        message
-        referencedObject
-        branchName
-        sourceApplication
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamCommitsQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamCommitsQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamCommits: useStreamCommitsQuery({
- *       variables: {
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamCommitsQuery = createSmartQueryOptionsFunction<
-  StreamCommitsQuery,
-  StreamCommitsQueryVariables,
-  ApolloError
->(StreamCommitsDocument, handleApolloError);
-
-export const StreamsDocument = gql`
-    query Streams($cursor: String) {
-  streams(cursor: $cursor, limit: 10) {
-    totalCount
-    cursor
-    items {
-      id
-      name
-      description
-      role
-      isPublic
-      createdAt
-      updatedAt
-      commentCount
-      collaborators {
-        id
-        name
-        company
-        avatar
-        role
-      }
-      commits(limit: 1) {
-        totalCount
-        items {
-          id
-          createdAt
-          message
-          authorId
-          branchName
-          authorName
-          authorAvatar
-          referencedObject
-        }
-      }
-      branches {
-        totalCount
-      }
-      favoritedDate
-      favoritesCount
-    }
-  }
-}
-    `;
-
-/**
- * __useStreamsQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamsQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streams: useStreamsQuery({
- *       variables: {
- *         cursor: // value for 'cursor'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamsQuery = createSmartQueryOptionsFunction<
-  StreamsQuery,
-  StreamsQueryVariables,
-  ApolloError
->(StreamsDocument, handleApolloError);
-
-export const StreamDocument = gql`
-    query Stream($id: String!) {
-  stream(id: $id) {
-    ...CommonStreamFields
-  }
-}
-    ${CommonStreamFieldsFragmentDoc}`;
-
-/**
- * __useStreamQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     stream: useStreamQuery({
- *       variables: {
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamQuery = createSmartQueryOptionsFunction<
-  StreamQuery,
-  StreamQueryVariables,
-  ApolloError
->(StreamDocument, handleApolloError);
-
-export const StreamWithCollaboratorsDocument = gql`
-    query StreamWithCollaborators($id: String!) {
-  stream(id: $id) {
-    id
-    name
-    isPublic
-    role
-    collaborators {
-      ...StreamCollaboratorFields
-    }
-    pendingCollaborators {
-      title
-      inviteId
-      role
-      user {
-        ...LimitedUserFields
-      }
-    }
-  }
-}
-    ${StreamCollaboratorFieldsFragmentDoc}
-${LimitedUserFieldsFragmentDoc}`;
-
-/**
- * __useStreamWithCollaboratorsQuery__
- *
- * To use a Smart Query within a Vue component, call `useStreamWithCollaboratorsQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     streamWithCollaborators: useStreamWithCollaboratorsQuery({
- *       variables: {
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useStreamWithCollaboratorsQuery = createSmartQueryOptionsFunction<
-  StreamWithCollaboratorsQuery,
-  StreamWithCollaboratorsQueryVariables,
-  ApolloError
->(StreamWithCollaboratorsDocument, handleApolloError);
-
-export const LeaveStreamDocument = gql`
-    mutation LeaveStream($streamId: String!) {
-  streamLeave(streamId: $streamId)
-}
-    `;
-
-/**
- * __leaveStreamMutation__
- *
- * To run a mutation, you call `leaveStreamMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = leaveStreamMutation(this, {
- *   variables: {
- *     streamId: // value for 'streamId'
- *   },
- * });
- */
-export const leaveStreamMutation = createMutationFunction<
-  LeaveStreamMutation,
-  LeaveStreamMutationVariables,
-  ApolloError
->(LeaveStreamDocument, handleApolloError);
-
-export const UpdateStreamPermissionDocument = gql`
-    mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
-  streamUpdatePermission(permissionParams: $params)
-}
-    `;
-
-/**
- * __updateStreamPermissionMutation__
- *
- * To run a mutation, you call `updateStreamPermissionMutation` within a Vue component and pass it
- * your Vue app instance along with any options that fit your needs.
- *
- * @param app, a reference to your Vue app instance (which must have a `$apollo` property)
- * @param options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.mutate
- * @param client (optional), which can be an instance of `DollarApollo` or the `mutate()` function provided by an `<ApolloMutation>` component
- *
- * @example
- * const { success, data, errors } = updateStreamPermissionMutation(this, {
- *   variables: {
- *     params: // value for 'params'
- *   },
- * });
- */
-export const updateStreamPermissionMutation = createMutationFunction<
-  UpdateStreamPermissionMutation,
-  UpdateStreamPermissionMutationVariables,
-  ApolloError
->(UpdateStreamPermissionDocument, handleApolloError);
-
-export const UserFavoriteStreamsDocument = gql`
-    query UserFavoriteStreams($cursor: String) {
-  user {
-    ...CommonUserFields
-    favoriteStreams(cursor: $cursor, limit: 10) {
-      totalCount
-      cursor
-      items {
-        ...CommonStreamFields
-      }
-    }
-  }
-}
-    ${CommonUserFieldsFragmentDoc}
-${CommonStreamFieldsFragmentDoc}`;
-
-/**
- * __useUserFavoriteStreamsQuery__
- *
- * To use a Smart Query within a Vue component, call `useUserFavoriteStreamsQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     userFavoriteStreams: useUserFavoriteStreamsQuery({
- *       variables: {
- *         cursor: // value for 'cursor'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useUserFavoriteStreamsQuery = createSmartQueryOptionsFunction<
-  UserFavoriteStreamsQuery,
-  UserFavoriteStreamsQueryVariables,
-  ApolloError
->(UserFavoriteStreamsDocument, handleApolloError);
-
-export const MainUserDataDocument = gql`
-    query MainUserData {
-  user {
-    ...CommonUserFields
-  }
-}
-    ${CommonUserFieldsFragmentDoc}`;
-
-/**
- * __useMainUserDataQuery__
- *
- * To use a Smart Query within a Vue component, call `useMainUserDataQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     mainUserData: useMainUserDataQuery({
- *       variables: {},
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useMainUserDataQuery = createSmartQueryOptionsFunction<
-  MainUserDataQuery,
-  MainUserDataQueryVariables,
-  ApolloError
->(MainUserDataDocument, handleApolloError);
-
-export const ExtraUserDataDocument = gql`
-    query ExtraUserData {
-  user {
-    ...CommonUserFields
-    totalOwnedStreamsFavorites
-  }
-}
-    ${CommonUserFieldsFragmentDoc}`;
-
-/**
- * __useExtraUserDataQuery__
- *
- * To use a Smart Query within a Vue component, call `useExtraUserDataQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     extraUserData: useExtraUserDataQuery({
- *       variables: {},
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useExtraUserDataQuery = createSmartQueryOptionsFunction<
-  ExtraUserDataQuery,
-  ExtraUserDataQueryVariables,
-  ApolloError
->(ExtraUserDataDocument, handleApolloError);
-
-export const UserSearchDocument = gql`
-    query UserSearch($query: String!, $limit: Int!, $cursor: String, $archived: Boolean) {
-  userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
-    cursor
-    items {
-      ...LimitedUserFields
-    }
-  }
-}
-    ${LimitedUserFieldsFragmentDoc}`;
-
-/**
- * __useUserSearchQuery__
- *
- * To use a Smart Query within a Vue component, call `useUserSearchQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     userSearch: useUserSearchQuery({
- *       variables: {
- *         query: // value for 'query'
- *         limit: // value for 'limit'
- *         cursor: // value for 'cursor'
- *         archived: // value for 'archived'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useUserSearchQuery = createSmartQueryOptionsFunction<
-  UserSearchQuery,
-  UserSearchQueryVariables,
-  ApolloError
->(UserSearchDocument, handleApolloError);
-
-export const IsLoggedInDocument = gql`
-    query IsLoggedIn {
-  user {
-    id
-  }
-}
-    `;
-
-/**
- * __useIsLoggedInQuery__
- *
- * To use a Smart Query within a Vue component, call `useIsLoggedInQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     isLoggedIn: useIsLoggedInQuery({
- *       variables: {},
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useIsLoggedInQuery = createSmartQueryOptionsFunction<
-  IsLoggedInQuery,
-  IsLoggedInQueryVariables,
-  ApolloError
->(IsLoggedInDocument, handleApolloError);
-
-export const AdminUsersListDocument = gql`
-    query AdminUsersList($limit: Int, $offset: Int, $query: String) {
-  adminUsers(limit: $limit, offset: $offset, query: $query) {
-    totalCount
-    items {
-      id
-      registeredUser {
-        id
-        suuid
-        email
-        name
-        bio
-        company
-        avatar
-        verified
-        profiles
-        role
-        authorizedApps {
-          name
-        }
-      }
-      invitedUser {
-        id
-        email
-        invitedBy {
-          id
-          name
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useAdminUsersListQuery__
- *
- * To use a Smart Query within a Vue component, call `useAdminUsersListQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     adminUsersList: useAdminUsersListQuery({
- *       variables: {
- *         limit: // value for 'limit'
- *         offset: // value for 'offset'
- *         query: // value for 'query'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useAdminUsersListQuery = createSmartQueryOptionsFunction<
-  AdminUsersListQuery,
-  AdminUsersListQueryVariables,
-  ApolloError
->(AdminUsersListDocument, handleApolloError);
-
-export const UserDocument = gql`
-    query User($id: String!) {
-  user(id: $id) {
-    id
-    email
-    name
-    bio
-    company
-    avatar
-    verified
-    profiles
-    role
-    suuid
-  }
-}
-    `;
-
-/**
- * __useUserQuery__
- *
- * To use a Smart Query within a Vue component, call `useUserQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     user: useUserQuery({
- *       variables: {
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useUserQuery = createSmartQueryOptionsFunction<
-  UserQuery,
-  UserQueryVariables,
-  ApolloError
->(UserDocument, handleApolloError);
-
-export const Document = gql`
-    {
-  user {
-    id
-    email
-    name
-    bio
-    company
-    avatar
-    verified
-    profiles
-    role
-    streams(limit: 25) {
-      totalCount
-      cursor
-      items {
-        id
-        name
-        description
-        isPublic
-        createdAt
-        updatedAt
-        collaborators {
-          id
-          name
-          company
-          avatar
-          role
-        }
-        commits {
-          totalCount
-        }
-        branches {
-          totalCount
-        }
-      }
-    }
-    commits(limit: 25) {
-      totalCount
-      cursor
-      items {
-        id
-        message
-        streamId
-        streamName
-        createdAt
-      }
-    }
-  }
-}
-    `;
-export const UserProfileDocument = gql`
-    query UserProfile($id: String!) {
-  user(id: $id) {
-    id
-    name
-    bio
-    company
-    avatar
-    verified
-  }
-}
-    `;
-
-/**
- * __useUserProfileQuery__
- *
- * To use a Smart Query within a Vue component, call `useUserProfileQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     userProfile: useUserProfileQuery({
- *       variables: {
- *         id: // value for 'id'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useUserProfileQuery = createSmartQueryOptionsFunction<
-  UserProfileQuery,
-  UserProfileQueryVariables,
-  ApolloError
->(UserProfileDocument, handleApolloError);
-
-export const WebhookDocument = gql`
-    query webhook($streamId: String!, $webhookId: String!) {
-  stream(id: $streamId) {
-    id
-    role
-    webhooks(id: $webhookId) {
-      items {
-        id
-        streamId
-        url
-        description
-        triggers
-        enabled
-        history(limit: 1) {
-          items {
-            status
-            statusInfo
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useWebhookQuery__
- *
- * To use a Smart Query within a Vue component, call `useWebhookQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     webhook: useWebhookQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *         webhookId: // value for 'webhookId'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useWebhookQuery = createSmartQueryOptionsFunction<
-  WebhookQuery,
-  WebhookQueryVariables,
-  ApolloError
->(WebhookDocument, handleApolloError);
-
-export const WebhooksDocument = gql`
-    query webhooks($streamId: String!) {
-  stream(id: $streamId) {
-    id
-    name
-    role
-    webhooks {
-      items {
-        id
-        streamId
-        url
-        description
-        triggers
-        enabled
-        history(limit: 50) {
-          items {
-            status
-            statusInfo
-            lastUpdate
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useWebhooksQuery__
- *
- * To use a Smart Query within a Vue component, call `useWebhooksQuery` as the value for a query key
- * in the component's `apollo` config, passing any options required for the query.
- *
- * @param options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/core/ApolloClient/#ApolloClient.query
- *
- * @example
- * {
- *   apollo: {
- *     webhooks: useWebhooksQuery({
- *       variables: {
- *         streamId: // value for 'streamId'
- *       },
- *       loadingKey: 'loading',
- *       fetchPolicy: 'no-cache',
- *     }),
- *   }
- * }
- */
-export const useWebhooksQuery = createSmartQueryOptionsFunction<
-  WebhooksQuery,
-  WebhooksQueryVariables,
-  ApolloError
->(WebhooksDocument, handleApolloError);
+export const CommentFullInfoFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommentFullInfo"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"fileType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSize"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"data"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"resources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resourceId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceType"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}}]}}]} as unknown as DocumentNode<CommentFullInfoFragment, unknown>;
+export const StreamCollaboratorFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"StreamCollaboratorFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StreamCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]} as unknown as DocumentNode<StreamCollaboratorFieldsFragment, unknown>;
+export const LimitedUserFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedUserFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedUser"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"bio"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}}]}}]} as unknown as DocumentNode<LimitedUserFieldsFragment, unknown>;
+export const UsersOwnInviteFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"UsersOwnInviteFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"PendingStreamCollaborator"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"streamName"}},{"kind":"Field","name":{"kind":"Name","value":"token"}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserFields"}}]}}]}},...LimitedUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<UsersOwnInviteFieldsFragment, unknown>;
+export const MainServerInfoFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MainServerInfoFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"adminContact"}},{"kind":"Field","name":{"kind":"Name","value":"canonicalUrl"}},{"kind":"Field","name":{"kind":"Name","value":"termsOfService"}},{"kind":"Field","name":{"kind":"Name","value":"inviteOnly"}},{"kind":"Field","name":{"kind":"Name","value":"version"}}]}}]} as unknown as DocumentNode<MainServerInfoFieldsFragment, unknown>;
+export const ServerInfoRolesFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ServerInfoRolesFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"roles"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"resourceTarget"}}]}}]}}]} as unknown as DocumentNode<ServerInfoRolesFieldsFragment, unknown>;
+export const ServerInfoScopesFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ServerInfoScopesFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"scopes"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]}}]} as unknown as DocumentNode<ServerInfoScopesFieldsFragment, unknown>;
+export const CommonStreamFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommonStreamFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Stream"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"commentCount"}},{"kind":"Field","name":{"kind":"Name","value":"collaborators"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"branches"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"favoritedDate"}},{"kind":"Field","name":{"kind":"Name","value":"favoritesCount"}}]}}]} as unknown as DocumentNode<CommonStreamFieldsFragment, unknown>;
+export const CommonUserFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommonUserFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"suuid"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"bio"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"profiles"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"suuid"}},{"kind":"Field","name":{"kind":"Name","value":"streams"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]} as unknown as DocumentNode<CommonUserFieldsFragment, unknown>;
+export const StreamWithBranchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamWithBranch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"branch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"4"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"commentCount"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamWithBranchQuery, StreamWithBranchQueryVariables>;
+export const BranchCreatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"BranchCreated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"branchCreated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}]}]}}]} as unknown as DocumentNode<BranchCreatedSubscription, BranchCreatedSubscriptionVariables>;
+export const StreamCommitQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamCommitQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"commit"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"branchName"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}}]}}]}}]}}]} as unknown as DocumentNode<StreamCommitQueryQuery, StreamCommitQueryQueryVariables>;
+export const StreamInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInvite"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"UsersOwnInviteFields"}}]}}]}},...UsersOwnInviteFieldsFragmentDoc.definitions]} as unknown as DocumentNode<StreamInviteQuery, StreamInviteQueryVariables>;
+export const UserStreamInvitesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserStreamInvites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInvites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"UsersOwnInviteFields"}}]}}]}},...UsersOwnInviteFieldsFragmentDoc.definitions]} as unknown as DocumentNode<UserStreamInvitesQuery, UserStreamInvitesQueryVariables>;
+export const UseStreamInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UseStreamInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"accept"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInviteUse"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"accept"},"value":{"kind":"Variable","name":{"kind":"Name","value":"accept"}}},{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}]}]}}]} as unknown as DocumentNode<UseStreamInviteMutation, UseStreamInviteMutationVariables>;
+export const CancelStreamInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CancelStreamInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"inviteId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInviteCancel"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"inviteId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"inviteId"}}}]}]}}]} as unknown as DocumentNode<CancelStreamInviteMutation, CancelStreamInviteMutationVariables>;
+export const DeleteInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"inviteId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"inviteDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"inviteId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"inviteId"}}}]}]}}]} as unknown as DocumentNode<DeleteInviteMutation, DeleteInviteMutationVariables>;
+export const ResendInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ResendInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"inviteId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"inviteResend"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"inviteId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"inviteId"}}}]}]}}]} as unknown as DocumentNode<ResendInviteMutation, ResendInviteMutationVariables>;
+export const BatchInviteToServerDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BatchInviteToServer"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"paramsArray"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInviteCreateInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInviteBatchCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"paramsArray"}}}]}]}}]} as unknown as DocumentNode<BatchInviteToServerMutation, BatchInviteToServerMutationVariables>;
+export const BatchInviteToStreamsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BatchInviteToStreams"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"paramsArray"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StreamInviteCreateInput"}}}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInviteBatchCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"paramsArray"}}}]}]}}]} as unknown as DocumentNode<BatchInviteToStreamsMutation, BatchInviteToStreamsMutationVariables>;
+export const StreamObjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamObject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"object"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalChildrenCount"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"speckleType"}},{"kind":"Field","name":{"kind":"Name","value":"data"}}]}}]}}]}}]} as unknown as DocumentNode<StreamObjectQuery, StreamObjectQueryVariables>;
+export const StreamObjectNoDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamObjectNoData"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"object"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalChildrenCount"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"speckleType"}}]}}]}}]}}]} as unknown as DocumentNode<StreamObjectNoDataQuery, StreamObjectNoDataQueryVariables>;
+export const MainServerInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MainServerInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"MainServerInfoFields"}}]}}]}},...MainServerInfoFieldsFragmentDoc.definitions]} as unknown as DocumentNode<MainServerInfoQuery, MainServerInfoQueryVariables>;
+export const FullServerInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FullServerInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"MainServerInfoFields"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ServerInfoRolesFields"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ServerInfoScopesFields"}}]}}]}},...MainServerInfoFieldsFragmentDoc.definitions,...ServerInfoRolesFieldsFragmentDoc.definitions,...ServerInfoScopesFieldsFragmentDoc.definitions]} as unknown as DocumentNode<FullServerInfoQuery, FullServerInfoQueryVariables>;
+export const StreamCommitsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamCommits"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"branchName"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamCommitsQuery, StreamCommitsQueryVariables>;
+export const StreamsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Streams"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streams"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"commentCount"}},{"kind":"Field","name":{"kind":"Name","value":"collaborators"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"branchName"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"branches"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"favoritedDate"}},{"kind":"Field","name":{"kind":"Name","value":"favoritesCount"}}]}}]}}]}}]} as unknown as DocumentNode<StreamsQuery, StreamsQueryVariables>;
+export const StreamDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Stream"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonStreamFields"}}]}}]}},...CommonStreamFieldsFragmentDoc.definitions]} as unknown as DocumentNode<StreamQuery, StreamQueryVariables>;
+export const StreamWithCollaboratorsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamWithCollaborators"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"collaborators"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"StreamCollaboratorFields"}}]}},{"kind":"Field","name":{"kind":"Name","value":"pendingCollaborators"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"inviteId"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserFields"}}]}}]}}]}}]}},...StreamCollaboratorFieldsFragmentDoc.definitions,...LimitedUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<StreamWithCollaboratorsQuery, StreamWithCollaboratorsQueryVariables>;
+export const StreamWithActivityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamWithActivity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"branches"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"activity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"actionType"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceType"}},{"kind":"Field","name":{"kind":"Name","value":"time"}},{"kind":"Field","name":{"kind":"Name","value":"info"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamWithActivityQuery, StreamWithActivityQueryVariables>;
+export const LeaveStreamDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"LeaveStream"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamLeave"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}]}]}}]} as unknown as DocumentNode<LeaveStreamMutation, LeaveStreamMutationVariables>;
+export const UpdateStreamPermissionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateStreamPermission"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"params"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StreamUpdatePermissionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamUpdatePermission"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"permissionParams"},"value":{"kind":"Variable","name":{"kind":"Name","value":"params"}}}]}]}}]} as unknown as DocumentNode<UpdateStreamPermissionMutation, UpdateStreamPermissionMutationVariables>;
+export const UserFavoriteStreamsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserFavoriteStreams"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonUserFields"}},{"kind":"Field","name":{"kind":"Name","value":"favoriteStreams"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonStreamFields"}}]}}]}}]}}]}},...CommonUserFieldsFragmentDoc.definitions,...CommonStreamFieldsFragmentDoc.definitions]} as unknown as DocumentNode<UserFavoriteStreamsQuery, UserFavoriteStreamsQueryVariables>;
+export const MainUserDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MainUserData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonUserFields"}}]}}]}},...CommonUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<MainUserDataQuery, MainUserDataQueryVariables>;
+export const ExtraUserDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ExtraUserData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonUserFields"}},{"kind":"Field","name":{"kind":"Name","value":"totalOwnedStreamsFavorites"}}]}}]}},...CommonUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<ExtraUserDataQuery, ExtraUserDataQueryVariables>;
+export const UserSearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserSearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"query"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"archived"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"userSearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"query"},"value":{"kind":"Variable","name":{"kind":"Name","value":"query"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"archived"},"value":{"kind":"Variable","name":{"kind":"Name","value":"archived"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserFields"}}]}}]}}]}},...LimitedUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<UserSearchQuery, UserSearchQueryVariables>;
+export const IsLoggedInDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IsLoggedIn"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<IsLoggedInQuery, IsLoggedInQueryVariables>;
+export const AdminUsersListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AdminUsersList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"query"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"adminUsers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}},{"kind":"Argument","name":{"kind":"Name","value":"query"},"value":{"kind":"Variable","name":{"kind":"Name","value":"query"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"registeredUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"suuid"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"bio"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"profiles"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"authorizedApps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"invitedUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"invitedBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<AdminUsersListQuery, AdminUsersListQueryVariables>;
+export const UserTimelineDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserTimeline"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"DateTime"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"timeline"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"actionType"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceType"}},{"kind":"Field","name":{"kind":"Name","value":"time"}},{"kind":"Field","name":{"kind":"Name","value":"info"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UserTimelineQuery, UserTimelineQueryVariables>;
+export const UserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"User"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"bio"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"profiles"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"suuid"}}]}}]}}]} as unknown as DocumentNode<UserQuery, UserQueryVariables>;
+export const UserProfileDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserProfile"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"bio"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}}]}}]}}]} as unknown as DocumentNode<UserProfileQuery, UserProfileQueryVariables>;
+export const WebhookDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"webhook"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"webhookId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"webhooks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"webhookId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"triggers"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"history"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"statusInfo"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<WebhookQuery, WebhookQueryVariables>;
+export const WebhooksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"webhooks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"webhooks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"triggers"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"history"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"50"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"statusInfo"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdate"}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<WebhooksQuery, WebhooksQueryVariables>;

@@ -144,7 +144,7 @@ describe('[Admin users list]', () => {
 
     // Create a few more stream invites to registered users, which should not appear in
     // the users list
-    const inviteIds = await Promise.all(
+    const createdInvitesData = await Promise.all(
       times(3, () => {
         const { id: streamId, ownerId } = randomEl(streamData)
         const userId = randomEl(userIds.filter((i) => i !== ownerId))
@@ -158,7 +158,8 @@ describe('[Admin users list]', () => {
         )
       })
     )
-    if (!inviteIds.every((id) => !!id))
+
+    if (!createdInvitesData.every(({ inviteId, token }) => inviteId && token))
       throw new Error('Stream invite generation failed')
 
     // Resolve ordered ids

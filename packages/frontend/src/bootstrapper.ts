@@ -1,6 +1,3 @@
-// @see https://github.com/Akryum/vue-cli-plugin-apollo/issues/452
-import 'regenerator-runtime/runtime'
-
 import Vue from 'vue'
 import VTooltip from 'v-tooltip'
 import VueMixpanel from 'vue-mixpanel'

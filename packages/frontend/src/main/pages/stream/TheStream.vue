@@ -11,6 +11,7 @@
       <stream-invite-banner
         v-if="hasInvite && !showInvitePlaceholder"
         :stream-invite="streamInvite"
+        :invite-token="inviteToken"
         @invite-used="onInviteClosed"
       />
 
@@ -27,6 +28,7 @@
         <stream-invite-placeholder
           v-else
           :stream-invite="streamInvite"
+          :invite-token="inviteToken"
           @invite-used="onInviteClosed"
         />
       </div>
@@ -35,29 +37,30 @@
 </template>
 
 <script lang="ts">
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import StreamInviteBanner from '@/main/components/stream/StreamInviteBanner.vue'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import Vue from 'vue'
 import { Nullable, MaybeFalsy } from '@/helpers/typeHelpers'
-import { ApolloError } from 'vue-apollo-smart-ops'
 import {
-  useStreamInviteQuery,
-  useMainUserDataQuery,
+  StreamInviteDocument,
+  MainUserDataDocument,
   MainUserDataQuery,
   StreamQuery,
-  StreamDocument,
-  StreamQueryVariables
+  StreamQueryVariables,
+  StreamDocument
 } from '@/graphql/generated/graphql'
-import type { ApolloQueryResult } from 'apollo-client'
+import type { ApolloQueryResult, ApolloError } from '@apollo/client/core'
 import type { Get } from 'type-fest'
 import StreamInvitePlaceholder from '@/main/components/stream/StreamInvitePlaceholder.vue'
 import { StreamInviteType } from '@/main/lib/stream/mixins/streamInviteMixin'
+import { getInviteTokenFromRoute } from '@/main/lib/auth/services/authService'
 
-// Cause of a limitation of vue-apollo-smart-ops, this needs to be duplicated
+// Cause of a limitation of Vue Apollo Options API TS types, this needs to be duplicated
+// (the better option is to just use the Composition API)
 type VueThis = Vue & {
   streamId: string
-  inviteId: Nullable<string>
+  inviteToken: Nullable<string>
   error: Nullable<Error>
 }
 
@@ -81,8 +84,8 @@ export default Vue.extend({
     }
   },
   computed: {
-    inviteId(): Nullable<string> {
-      return this.$route.query['inviteId'] as Nullable<string>
+    inviteToken(): Nullable<string> {
+      return getInviteTokenFromRoute(this.$route)
     },
     streamId(): string {
       return this.$route.params.streamId
@@ -115,14 +118,15 @@ export default Vue.extend({
     }
   },
   apollo: {
-    streamInvite: useStreamInviteQuery<VueThis>({
-      variables() {
+    streamInvite: {
+      query: StreamInviteDocument,
+      variables(this: VueThis) {
         return {
           streamId: this.streamId,
-          inviteId: this.inviteId
+          token: this.inviteToken
         }
       }
-    }),
+    },
     stream: {
       query: StreamDocument,
       variables(this: VueThis): StreamQueryVariables {
@@ -139,7 +143,9 @@ export default Vue.extend({
         }
       }
     },
-    user: useMainUserDataQuery(),
+    user: {
+      query: MainUserDataDocument
+    },
     $subscribe: {
       branchCreated: {
         query: gql`

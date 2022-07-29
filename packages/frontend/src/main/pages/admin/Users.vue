@@ -102,20 +102,21 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 import {
-  deleteInviteMutation,
-  resendInviteMutation,
-  useAdminUsersListQuery
+  DeleteInviteDocument,
+  ResendInviteDocument,
+  AdminUsersListDocument
 } from '@/graphql/generated/graphql'
 import SectionCard from '@/main/components/common/SectionCard.vue'
 import UsersListItem from '@/main/components/admin/UsersListItem.vue'
 import { Roles } from '@/helpers/mainConstants'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 // TODO: This needs a redesign, it's pretty unusable on small screens
 
@@ -190,9 +191,12 @@ export default {
   },
   methods: {
     async deleteInvite({ inviteId }) {
-      const { data, errors } = await deleteInviteMutation(this, {
-        variables: { inviteId }
-      })
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: DeleteInviteDocument,
+          variables: { inviteId }
+        })
+        .catch(convertThrowIntoFetchResult)
 
       if (data?.inviteDelete) {
         this.refetch()
@@ -210,9 +214,12 @@ export default {
       }
     },
     async resendInvite({ inviteId }) {
-      const { data, errors } = await resendInviteMutation(this, {
-        variables: { inviteId }
-      })
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: ResendInviteDocument,
+          variables: { inviteId }
+        })
+        .catch(convertThrowIntoFetchResult)
 
       if (data?.inviteResend) {
         this.$triggerNotification({
@@ -311,7 +318,8 @@ export default {
     }
   },
   apollo: {
-    adminUsers: useAdminUsersListQuery({
+    adminUsers: {
+      query: AdminUsersListDocument,
       variables() {
         return {
           limit: this.queryLimit,
@@ -319,7 +327,7 @@ export default {
           query: this.q
         }
       }
-    })
+    }
   }
 }
 </script>

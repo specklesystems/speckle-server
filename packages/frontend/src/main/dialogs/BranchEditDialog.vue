@@ -81,7 +81,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import isNull from 'lodash/isNull'
 import isUndefined from 'lodash/isUndefined'
 import clone from 'lodash/clone'

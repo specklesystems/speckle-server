@@ -3,7 +3,7 @@ import { getMixpanelUserId, getMixpanelServerId } from '@/mixpanelManager'
 import { NotificationEventPayload } from '@/main/lib/core/helpers/eventHubHelper'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
-import { getInviteIdFromURL } from '@/main/lib/auth/services/authService'
+import { getInviteTokenFromURL } from '@/main/lib/auth/services/authService'
 
 Vue.prototype.$userId = function () {
   return AppLocalStorage.get(LocalStorageKeys.Uuid)
@@ -38,10 +38,8 @@ Vue.prototype.$loginAndSetRedirect = function () {
   AppLocalStorage.set(LocalStorageKeys.ShouldRedirectTo, relativePath)
 
   // Carry inviteId over
-  const inviteId = getInviteIdFromURL()
-  this.$router.push(
-    inviteId ? { path: '/authn/login', query: { inviteId } } : '/authn/login'
-  )
+  const token = getInviteTokenFromURL()
+  this.$router.push(token ? { path: '/authn/login', query: { token } } : '/authn/login')
 }
 
 /**

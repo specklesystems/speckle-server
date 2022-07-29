@@ -88,7 +88,7 @@
 </template>
 <script>
 import * as THREE from 'three'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash/debounce'
 

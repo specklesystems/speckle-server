@@ -63,13 +63,13 @@
   </div>
 </template>
 <script lang="ts">
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import Vue, { PropType } from 'vue'
 import { email, maxLength, noXss, required } from '@/main/lib/common/vuetify/validators'
 import { Nullable, Optional } from '@/helpers/typeHelpers'
 import { VFormInstance } from '@/helpers/vuetifyHelpers'
 import type { Get } from 'type-fest'
-import type { FetchResult } from 'apollo-link'
+import type { FetchResult } from '@apollo/client/core'
 import { UserSearchQuery } from '@/graphql/generated/graphql'
 import BasicUserInfoRow from '@/main/components/user/BasicUserInfoRow.vue'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'

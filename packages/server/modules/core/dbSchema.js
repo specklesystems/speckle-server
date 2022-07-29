@@ -99,7 +99,8 @@ module.exports = {
       message: 'server_invites.message',
       resourceTarget: 'server_invites.resourceTarget',
       resourceId: 'server_invites.resourceId',
-      role: 'server_invites.role'
+      role: 'server_invites.role',
+      token: 'server_invites.token'
     }
   },
   knex

@@ -413,6 +413,24 @@ module.exports = {
       const { streamId } = parent
       const stream = await ctx.loaders.streams.getStream.load(streamId)
       return stream.name
+    },
+    /**
+     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
+     * @param {Object} _args
+     * @param {import('@/modules/shared/index').GraphQLContext} ctx
+     */
+    async token(parent, _args, ctx) {
+      const authedUserId = ctx.userId
+      const targetUserId = parent.user?.id
+      const inviteId = parent.inviteId
+
+      // Only returning it for the user that is the pending stream collaborator
+      if (!authedUserId || !targetUserId || authedUserId !== targetUserId) {
+        return null
+      }
+
+      const invite = await ctx.loaders.invites.getInvite.load(inviteId)
+      return invite?.token || null
     }
   }
 }

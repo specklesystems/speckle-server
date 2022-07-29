@@ -170,7 +170,7 @@
 <script>
 import * as THREE from 'three'
 import { debounce, throttle } from 'lodash'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { VIEWER_UPDATE_THROTTLE_TIME } from '@/main/lib/viewer/comments/commentsHelper'
 import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
 import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
@@ -224,6 +224,10 @@ export default {
       },
       result({ data }) {
         if (!data) return
+
+        // Only reason why it's OK to mutate apollo results here, is because
+        // of the 'no-cache' fetchPolicy, which means that none of the data here is actually
+        // mutating the Apollo Cache
         for (const c of data.comments.items) {
           c.expanded = false
           c.hovered = false
@@ -262,7 +266,7 @@ export default {
         skip() {
           return !this.$loggedIn()
         },
-        updateQuery(prevResult, { subscriptionData }) {
+        updateQuery(_, { subscriptionData }) {
           if (!subscriptionData.data?.commentActivity) return
 
           const { comment: newComment, type } = subscriptionData.data.commentActivity
@@ -277,7 +281,7 @@ export default {
           newComment.archived = false
 
           if (type === 'comment-added') {
-            if (prevResult.comments.items.find((c) => c.id === newComment.id)) {
+            if (this.localComments.find((c) => c.id === newComment.id)) {
               return
             }
             if (!newComment.archived && newComment.data.location)

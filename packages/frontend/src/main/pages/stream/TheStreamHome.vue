@@ -130,7 +130,7 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 
 export default {

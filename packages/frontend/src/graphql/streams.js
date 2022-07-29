@@ -2,7 +2,7 @@ import {
   limitedUserFieldsFragment,
   streamCollaboratorFieldsFragment
 } from '@/graphql/fragments/user'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
 /**
  * Common stream fields when querying for streams
@@ -73,6 +73,36 @@ export const streamWithCollaboratorsQuery = gql`
   }
   ${limitedUserFieldsFragment}
   ${streamCollaboratorFieldsFragment}
+`
+
+export const streamWithActivityQuery = gql`
+  query StreamWithActivity($id: String!, $cursor: DateTime) {
+    stream(id: $id) {
+      id
+      name
+      createdAt
+      commits {
+        totalCount
+      }
+      branches {
+        totalCount
+      }
+      activity(cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          actionType
+          userId
+          streamId
+          resourceId
+          resourceType
+          time
+          info
+          message
+        }
+      }
+    }
+  }
 `
 
 /**

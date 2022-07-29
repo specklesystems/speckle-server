@@ -85,7 +85,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 export default {
   name: 'StreamOverlayViewer',

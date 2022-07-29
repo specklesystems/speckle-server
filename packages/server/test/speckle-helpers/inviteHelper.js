@@ -19,6 +19,8 @@ const {
  *  streamId?: string
  * }} invite
  * @param {string} creatorId
+ *
+ * @returns {Promise<{inviteId: string, token: string}>}
  */
 function createInviteDirectly(invite, creatorId) {
   const userId = invite.userId || invite.user?.id || null

@@ -123,7 +123,7 @@
   </v-container>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { fullServerInfoQuery } from '@/graphql/server'
 import {
   STANDARD_PORTAL_KEYS,
@@ -135,16 +135,16 @@ import InviteDialog from '@/main/dialogs/InviteDialog.vue'
 import { userSearchQuery } from '@/graphql/user'
 import StreamRoleCollaborators from '@/main/components/stream/collaborators/StreamRoleCollaborators.vue'
 import {
-  cancelStreamInviteMutation,
-  useStreamWithCollaboratorsQuery,
   StreamWithCollaboratorsDocument,
-  updateStreamPermissionMutation
+  CancelStreamInviteDocument,
+  UpdateStreamPermissionDocument
 } from '@/graphql/generated/graphql'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { Roles } from '@/helpers/mainConstants'
 import LeaveStreamPanel from '@/main/components/stream/collaborators/LeaveStreamPanel.vue'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { vueWithMixins } from '@/helpers/typeHelpers'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 export default vueWithMixins(IsLoggedInMixin).extend({
   // @vue/component
@@ -171,7 +171,8 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     inviteDialogUser: null
   }),
   apollo: {
-    stream: useStreamWithCollaboratorsQuery({
+    stream: {
+      query: StreamWithCollaboratorsDocument,
       // Custom error policy so that a failing pendingCollaborators resolver (due to access rights)
       // doesn't kill the entire query
       errorPolicy: 'all',
@@ -181,7 +182,7 @@ export default vueWithMixins(IsLoggedInMixin).extend({
           id: this.streamId
         }
       }
-    }),
+    },
     userSearch: {
       query: userSearchQuery,
       variables() {
@@ -277,40 +278,43 @@ export default vueWithMixins(IsLoggedInMixin).extend({
       const { streamId } = this
 
       this.loading = true
-      const { data, errors } = await cancelStreamInviteMutation(this, {
-        variables: {
-          streamId,
-          inviteId
-        },
-        update(store, result) {
-          if (!result.data?.streamInviteCancel) return
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: CancelStreamInviteDocument,
+          variables: {
+            streamId,
+            inviteId
+          },
+          update(store, result) {
+            if (!result.data?.streamInviteCancel) return
 
-          // Read current stream info
-          const cachedData = store.readQuery({
-            query: StreamWithCollaboratorsDocument,
-            variables: { id: streamId }
-          })
-          const pendingCollaborators = cachedData?.stream?.pendingCollaborators
-          if (!pendingCollaborators) return
+            // Read current stream info
+            const cachedData = store.readQuery({
+              query: StreamWithCollaboratorsDocument,
+              variables: { id: streamId }
+            })
+            const pendingCollaborators = cachedData?.stream?.pendingCollaborators
+            if (!pendingCollaborators) return
 
-          // Remove collaborator
-          const newPendingCollaborators = pendingCollaborators.filter(
-            (c) => c.inviteId !== inviteId
-          )
-          const newData = {
-            stream: {
-              ...cachedData.stream,
-              pendingCollaborators: newPendingCollaborators
+            // Remove collaborator
+            const newPendingCollaborators = pendingCollaborators.filter(
+              (c) => c.inviteId !== inviteId
+            )
+            const newData = {
+              stream: {
+                ...cachedData.stream,
+                pendingCollaborators: newPendingCollaborators
+              }
             }
-          }
 
-          store.writeQuery({
-            query: StreamWithCollaboratorsDocument,
-            variables: { id: streamId },
-            data: newData
-          })
-        }
-      })
+            store.writeQuery({
+              query: StreamWithCollaboratorsDocument,
+              variables: { id: streamId },
+              data: newData
+            })
+          }
+        })
+        .catch(convertThrowIntoFetchResult)
 
       if (!data?.streamInviteCancel) {
         const gqlError = errors?.[0]
@@ -378,15 +382,18 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     },
     async updateUserPermission(userId, role) {
       this.$mixpanel.track('Permission Action', { type: 'action', name: 'update' })
-      const { data, errors } = await updateStreamPermissionMutation(this, {
-        variables: {
-          params: {
-            streamId: this.stream.id,
-            userId,
-            role
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: UpdateStreamPermissionDocument,
+          variables: {
+            params: {
+              streamId: this.stream.id,
+              userId,
+              role
+            }
           }
-        }
-      })
+        })
+        .catch(convertThrowIntoFetchResult)
 
       if (!data?.streamUpdatePermission) {
         const errMsg = errors?.[0]?.message || 'An unexpected issue occurred'

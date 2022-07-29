@@ -27,7 +27,7 @@
   </section-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 export default {
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard'),

@@ -27,6 +27,13 @@ declare module 'vue/types/vue' {
      */
     $loggedIn: () => boolean
   }
+
+  export interface VueConfiguration {
+    /**
+     * To enable VueApollov4 to work
+     */
+    globalProperties?: Record<string, unknown>
+  }
 }
 
 export {}

@@ -1,6 +1,6 @@
 <template>
   <v-avatar :size="size" color="grey lighten-3">
-    <v-img v-if="avatar" :src="avatar" />
+    <v-img v-if="hasValidAvatar" :src="avatar" />
     <v-img v-else :src="`https://robohash.org/${seed}.png?size=${size}x${size}`" />
   </v-avatar>
 </template>
@@ -19,6 +19,18 @@ export default {
     avatar: {
       type: String,
       default: null
+    }
+  },
+  computed: {
+    hasValidAvatar() {
+      if (!this.avatar) return false
+
+      const validPrefixes = ['http', 'data:']
+      for (const validPrefix of validPrefixes) {
+        if (this.avatar.startsWith(validPrefix)) return true
+      }
+
+      return false
     }
   }
 }

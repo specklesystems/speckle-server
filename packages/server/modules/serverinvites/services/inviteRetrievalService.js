@@ -14,6 +14,9 @@ const {
 const { keyBy, uniq } = require('lodash')
 
 /**
+ * The token field is intentionally ommited from this and only managed through the .token resolver
+ * for extra security - so that no one accidentally returns it out from this service
+ *
  * @typedef {{
  *  id: string,
  *  inviteId: string,
@@ -21,7 +24,7 @@ const { keyBy, uniq } = require('lodash')
  *  title: string,
  *  role: string,
  *  invitedById: string,
- *  user: import('@/modules/core/helpers/userHelper').LimitedUserRecord | null
+ *  user: import('@/modules/core/helpers/userHelper').LimitedUserRecord | null,
  * }} PendingStreamCollaboratorGraphQLType
  */
 
@@ -100,17 +103,16 @@ async function getPendingStreamCollaborators(streamId) {
  * Either the user ID or invite ID must be set
  * @param {string} streamId
  * @param {string|null} userId
- * @param {string|null} inviteId
+ * @param {string|null} token
  * @returns {Promise<PendingStreamCollaboratorGraphQLType>}
  */
-async function getUserPendingStreamInvite(streamId, userId, inviteId) {
-  if (!userId && !inviteId) return null
+async function getUserPendingStreamInvite(streamId, userId, token) {
+  if (!userId && !token) return null
 
-  const invite = await getStreamInvite(
-    streamId,
-    userId ? buildUserTarget(userId) : null,
-    inviteId
-  )
+  const invite = await getStreamInvite(streamId, {
+    target: buildUserTarget(userId),
+    token
+  })
   if (!invite) return null
 
   const targetUser = userId ? await getUser(userId) : null

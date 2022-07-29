@@ -7,6 +7,7 @@ const {
 } = require('@/modules/core/repositories/streams')
 const { getUsers } = require('@/modules/core/repositories/users')
 const { keyBy } = require('lodash')
+const { getInvites } = require('@/modules/serverinvites/repositories')
 
 /**
  * All DataLoaders available on the GQL ctx object
@@ -20,6 +21,9 @@ const { keyBy } = require('lodash')
  * @property {{
  *  getUser: DataLoader<string, import('@/modules/core/helpers/userHelper').UserRecord>
  * }} users
+ * @property {{
+ *  getInvite: DataLoader<string, import('@/modules/serverinvites/repositories').ServerInviteRecord>
+ * }} invites
  */
 
 module.exports = {
@@ -79,6 +83,15 @@ module.exports = {
         getUser: new DataLoader(async (userIds) => {
           const results = keyBy(await getUsers(userIds), 'id')
           return userIds.map((i) => results[i])
+        })
+      },
+      invites: {
+        /**
+         * Get invite from DB
+         */
+        getInvite: new DataLoader(async (inviteIds) => {
+          const results = keyBy(await getInvites(inviteIds), 'id')
+          return inviteIds.map((i) => results[i])
         })
       }
     }

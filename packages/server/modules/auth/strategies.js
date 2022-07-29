@@ -40,8 +40,9 @@ module.exports = async (app) => {
       req.session.suuid = req.query.suuid
     }
 
-    if (req.query.inviteId) {
-      req.session.inviteId = req.query.inviteId
+    const token = req.query.token || req.query.inviteId
+    if (token) {
+      req.session.token = token
     }
 
     next()

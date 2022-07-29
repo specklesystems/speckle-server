@@ -98,14 +98,14 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         }
 
         // if the server is invite only and we have no invite id, throw.
-        if (serverInfo.inviteOnly && !req.session.inviteId) {
+        if (serverInfo.inviteOnly && !req.session.token) {
           throw new Error(
             'This server is invite only. Please authenticate yourself through a valid invite link.'
           )
         }
 
         // validate the invite
-        const validInvite = await validateServerInvite(user.email, req.session.inviteId)
+        const validInvite = await validateServerInvite(user.email, req.session.token)
 
         // create the user
         const myUser = await findOrCreateUser({ user, rawProfile: req.user._json })

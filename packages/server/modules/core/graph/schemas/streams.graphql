@@ -88,6 +88,10 @@ type PendingStreamCollaborator {
   Set only if user is registered
   """
   user: LimitedUser
+  """
+  Only available if the active user is the pending stream collaborator
+  """
+  token: String
 }
 
 type StreamCollection {

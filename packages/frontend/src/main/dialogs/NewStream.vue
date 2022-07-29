@@ -50,18 +50,14 @@
           placeholder="Search by name or by email"
         />
         <div v-if="$apollo.loading">Searching.</div>
-        <v-list v-if="userSearch && userSearch.items" one-line>
-          <v-list-item v-if="userSearch.items.length === 0">
+        <v-list v-if="userSearch && users" one-line>
+          <v-list-item v-if="users.length === 0">
             <v-list-item-content>
               <v-list-item-title>No users found.</v-list-item-title>
               <v-list-item-subtitle>Try a different search query.</v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item
-            v-for="item in userSearch.items"
-            :key="item.id"
-            @click="addCollab(item)"
-          >
+          <v-list-item v-for="item in users" :key="item.id" @click="addCollab(item)">
             <v-list-item-avatar>
               <user-avatar
                 :id="item.id"
@@ -116,7 +112,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { userSearchQuery } from '@/graphql/user'
 
 export default {
@@ -145,6 +141,9 @@ export default {
       skip() {
         return !this.search || this.search.length < 3
       },
+      result({ data }) {
+        this.users = [...data.userSearch.items]
+      },
       debounce: 300
     }
   },
@@ -157,14 +156,15 @@ export default {
       nameRules: [],
       isPublic: true,
       collabs: [],
-      isLoading: false
+      isLoading: false,
+      users: null
     }
   },
   watch: {
     open() {
       this.name = null
       this.search = null
-      if (this.userSearch) this.userSearch.items = null
+      this.users = null
       this.collabs = []
     }
   },
@@ -183,10 +183,10 @@ export default {
       if (user.id === localStorage.getItem('uuid')) return
       const indx = this.collabs.findIndex((u) => u.id === user.id)
       if (indx !== -1) return
-      user.role = 'stream:contributor'
+
       this.collabs.push(user)
       this.search = null
-      this.userSearch.items = null
+      this.users = null
     },
     removeCollab(user) {
       const indx = this.collabs.findIndex((u) => u.id === user.id)

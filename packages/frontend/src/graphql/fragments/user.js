@@ -1,4 +1,4 @@
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
 export const limitedUserFieldsFragment = gql`
   fragment LimitedUserFields on LimitedUser {
@@ -27,6 +27,7 @@ export const usersOwnInviteFieldsFragment = gql`
     inviteId
     streamId
     streamName
+    token
     invitedBy {
       ...LimitedUserFields
     }

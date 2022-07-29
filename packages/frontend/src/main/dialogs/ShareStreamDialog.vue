@@ -218,7 +218,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { commonStreamFieldsFragment } from '@/graphql/streams'
 import InviteDialog from '@/main/dialogs/InviteDialog.vue'
 import UserAvatar from '@/main/components/common/UserAvatar.vue'

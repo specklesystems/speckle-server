@@ -24,7 +24,7 @@ extend type Mutation {
   """
   Accept or decline a stream invite
   """
-  streamInviteUse(accept: Boolean!, streamId: String!, inviteId: String!): Boolean!
+  streamInviteUse(accept: Boolean!, streamId: String!, token: String!): Boolean!
     @hasRole(role: "server:user")
 
   """
@@ -51,10 +51,10 @@ extend type Mutation {
 
 extend type Query {
   """
-  Look for an invitation to a stream, for the current user (authed or not). If inviteId
+  Look for an invitation to a stream, for the current user (authed or not). If token
   isn't specified, the server will look for any valid invite.
   """
-  streamInvite(streamId: String!, inviteId: String): PendingStreamCollaborator
+  streamInvite(streamId: String!, token: String): PendingStreamCollaborator
 
   """
   Get all invitations to streams that the active user has
@@ -80,4 +80,8 @@ input StreamInviteCreateInput {
   userId: String
   streamId: String!
   message: String
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
 }
