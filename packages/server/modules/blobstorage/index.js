@@ -25,7 +25,8 @@ const {
   markUploadOverFileSizeLimit,
   deleteBlob,
   getBlobMetadata,
-  getBlobMetadataCollection
+  getBlobMetadataCollection,
+  blobQuery
 } = require('@/modules/blobstorage/services')
 const {
   NotFoundError,
@@ -86,6 +87,7 @@ exports.init = async (app) => {
         limits: { fileSize: 104_857_600 }
       })
       const streamId = req.params.streamId
+
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
         const fileType = fileName.split('.').pop().toLowerCase()
@@ -120,12 +122,14 @@ exports.init = async (app) => {
 
           registerUploadResult(markUploadSuccess(getObjectAttributes, streamId, blobId))
         })
+
         file.on('limit', async () => {
           await uploadOperations[blobId]
           registerUploadResult(
             markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
           )
         })
+
         file.on('error', (err) => {
           registerUploadResult(markUploadError(deleteObject, blobId, err.message))
         })
@@ -160,6 +164,28 @@ exports.init = async (app) => {
     }
   )
 
+  app.post(
+    '/api/stream/:streamId/blob/diff',
+    contextMiddleware,
+    authMiddlewareCreator([
+      ...streamReadPermissions,
+      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+      allowAnonymousUsersOnPublicStreams
+    ]),
+    async (req, res) => {
+      console.log(req.body.blobIds)
+      const bq = blobQuery({ streamId: req.params.streamId })
+      const ressss = await bq
+      console.log(ressss)
+      // TODO: diff
+      console.log('I should actually do a diff yo')
+      const notThereYetIds = [...req.body.blobIds]
+
+      res.end(notThereYetIds)
+    }
+  )
+
   app.get(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
@@ -188,6 +214,7 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
@@ -203,6 +230,7 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.get(
     '/api/stream/:streamId/blobs',
     contextMiddleware,
@@ -220,6 +248,7 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.delete(
     '/api/stream/:streamId/blobs',
     contextMiddleware,
