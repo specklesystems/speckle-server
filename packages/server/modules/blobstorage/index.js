@@ -17,6 +17,7 @@ const {
   getObjectAttributes
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
+
 const {
   uploadFileStream,
   getFileStream,
@@ -26,8 +27,9 @@ const {
   deleteBlob,
   getBlobMetadata,
   getBlobMetadataCollection,
-  blobQuery
+  getAllStreamBlobIds
 } = require('@/modules/blobstorage/services')
+
 const {
   NotFoundError,
   ResourceMismatch,
@@ -174,15 +176,14 @@ exports.init = async (app) => {
       allowAnonymousUsersOnPublicStreams
     ]),
     async (req, res) => {
-      console.log(req.body.blobIds)
-      const bq = blobQuery({ streamId: req.params.streamId })
-      const ressss = await bq
-      console.log(ressss)
-      // TODO: diff
-      console.log('I should actually do a diff yo')
-      const notThereYetIds = [...req.body.blobIds]
+      const clientBlobIds = [...req.body]
+      const bq = await getAllStreamBlobIds({ streamId: req.params.streamId })
+      const unknownBlobs = clientBlobIds.filter(
+        (id) => bq.findIndex((bInfo) => bInfo.id === id) === -1
+      )
+      console.log(unknownBlobs)
 
-      res.end(notThereYetIds)
+      res.send([...req.body]) // TODO: send unknownBlobs
     }
   )
 
