@@ -176,14 +176,11 @@ exports.init = async (app) => {
       allowAnonymousUsersOnPublicStreams
     ]),
     async (req, res) => {
-      const clientBlobIds = [...req.body]
       const bq = await getAllStreamBlobIds({ streamId: req.params.streamId })
-      const unknownBlobs = clientBlobIds.filter(
+      const unknownBlobIds = req.body.filter(
         (id) => bq.findIndex((bInfo) => bInfo.id === id) === -1
       )
-      console.log(unknownBlobs)
-
-      res.send([...req.body]) // TODO: send unknownBlobs
+      res.send(unknownBlobIds)
     }
   )
 
