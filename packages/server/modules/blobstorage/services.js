@@ -21,6 +21,11 @@ const getBlobs = async ({ streamId, blobIds }) => {
   return await q
 }
 
+const getAllStreamBlobIds = async ({ streamId }) => {
+  const res = await BlobStorage().where({ streamId }).select('id')
+  return res
+}
+
 /**
  * Get a single blob - use only internally, as this doesn't require a streamId
  */
@@ -49,7 +54,8 @@ const uploadFileStream = async (
   }
   // need to insert the upload data before starting otherwise the upload finished
   // even might fire faster, than the db insert, causing missing asset data in the db
-  await BlobStorage().insert(dbFile)
+  await BlobStorage().insert(dbFile).onConflict(['id', 'streamId']).ignore()
+
   const { fileHash } = await storeFileStream({ objectKey, fileStream })
   // here we should also update the blob db record with the fileHash
   await BlobStorage().where({ id: blobId }).update({ fileHash })
@@ -165,5 +171,6 @@ module.exports = {
   getBlobMetadataCollection,
   blobCollectionSummary,
   getBlobs,
-  getBlob
+  getBlob,
+  getAllStreamBlobIds
 }
