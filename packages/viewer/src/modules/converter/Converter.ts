@@ -14,7 +14,7 @@ export default class Coverter {
   private lastAsyncPause: number
   private activePromises: number
   private maxChildrenPromises: number
-  private spoofIDs = true
+  private spoofIDs = false
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -374,6 +374,9 @@ export default class Coverter {
       /** Not a big fan of this... */
       if (!this.directNodeConverterExists(element)) {
         element = this.getDisplayValue(element)
+        if (element.referencedId) {
+          element = await this.resolveReference(element)
+        }
       }
       const nestedNode: TreeNode = WorldTree.getInstance().parse({
         id: this.getNodeId(element),
