@@ -358,7 +358,6 @@ export type CommitDeleteInput = {
   streamId: Scalars['String'];
 };
 
-/** Local-only state used in CommitObjectViewer */
 export type CommitObjectViewerState = {
   __typename?: 'CommitObjectViewerState';
   addingComment: Scalars['Boolean'];
@@ -835,6 +834,7 @@ export type Query = {
    * - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
    */
   comments?: Maybe<CommentCollection>;
+  /** Commit/Object viewer state (local-only) */
   commitObjectViewerState: CommitObjectViewerState;
   serverInfo: ServerInfo;
   serverStats: ServerStats;

@@ -56,7 +56,7 @@
 import { Nullable } from '@/helpers/typeHelpers'
 import { computed, defineComponent, ref, onBeforeMount, watch, onMounted } from 'vue'
 import { useRoute } from '@/main/lib/core/composables/router'
-import { useMixpanel } from '@/main/lib/core/composables/tracking'
+import { useMixpanel } from '@/main/lib/core/composables/core'
 import { useApolloClient } from '@vue/apollo-composable'
 import {
   StreamBranchFirstCommitDocument,

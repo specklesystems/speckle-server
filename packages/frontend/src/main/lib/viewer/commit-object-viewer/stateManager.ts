@@ -3,7 +3,7 @@ import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/view
 import { makeVar, TypePolicies } from '@apollo/client/cache'
 import { DefaultViewerParams, Viewer } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { has, isArray } from 'lodash'
+import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -190,7 +190,13 @@ export function setSelectedCommentMetaData(
 ) {
   updateState({
     selectedCommentMetaData: comment
-      ? { id: comment.id, selectionLocation: comment.data.location }
+      ? {
+          id: comment.id,
+          // deep cloning to avoid cache mutation
+          selectionLocation: comment.data.location
+            ? cloneDeep(comment.data.location)
+            : {}
+        }
       : null
   })
 }

@@ -73,7 +73,7 @@
   </div>
 </template>
 <script>
-import { useIsLoggedIn } from '@/main/lib/core/composables/auth'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
 export default {
   components: {
     CommitInfoResource: () => import('@/main/components/viewer/CommitInfoResource'),

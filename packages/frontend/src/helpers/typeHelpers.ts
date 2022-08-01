@@ -48,7 +48,7 @@ export type VueWithMixins<
 
 /**
  * Create Vue base class with the specified mixins and correctly returned TypeScript types
- * TODO: Can this be re-written to accept an arbitrary amount of mixins?
+ * @deprecated Use Composition API instead
  * @returns
  */
 export function vueWithMixins<

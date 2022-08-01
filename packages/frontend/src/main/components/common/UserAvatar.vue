@@ -74,7 +74,7 @@ import userByIdQuery from '@/graphql/userById.gql'
 import UserAvatarIcon from '@/main/components/common/UserAvatarIcon'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
-import { useIsLoggedIn } from '@/main/lib/core/composables/auth'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
 
 export default {
   components: { UserAvatarIcon },

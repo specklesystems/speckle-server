@@ -1,10 +1,10 @@
 extend type Query {
+  """
+  Commit/Object viewer state (local-only)
+  """
   commitObjectViewerState: CommitObjectViewerState!
 }
 
-"""
-Local-only state used in CommitObjectViewer
-"""
 type CommitObjectViewerState {
   viewerBusy: Boolean!
   appliedFilter: JSONObject
