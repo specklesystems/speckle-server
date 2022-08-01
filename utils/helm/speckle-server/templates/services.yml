@@ -15,6 +15,7 @@ spec:
       name: web
       port: 3000
       targetPort: 3000
+
 ---
 apiVersion: v1
 kind: Service

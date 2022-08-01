@@ -24,5 +24,10 @@ repos:
     rev: 'v2.6.2' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
+
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: 'v0.1.17'
+    hooks:
+      - id: helmlint
 ci:
   autoupdate_schedule: quarterly
