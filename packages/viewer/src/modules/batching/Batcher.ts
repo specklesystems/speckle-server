@@ -4,7 +4,6 @@ import { SpeckleType } from '../converter/GeometryConverter'
 import { WorldTree } from '../tree/WorldTree'
 import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 import PointBatch from './PointBatch'
@@ -75,7 +74,7 @@ export default class Batcher {
           break
       }
 
-      this.batches[batchID].setBatchMaterial(material as SpeckleLineMaterial)
+      this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch()
       console.warn(batch)
     }

@@ -130,6 +130,8 @@ export class NodeRenderView {
     switch (this._renderData.speckleType) {
       case SpeckleType.Mesh:
         return GeometryType.MESH
+      case SpeckleType.Brep:
+        return GeometryType.MESH
       case SpeckleType.Point:
         return GeometryType.POINT
       case SpeckleType.Pointcloud:
