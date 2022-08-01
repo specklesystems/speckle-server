@@ -158,14 +158,21 @@ export class NodeRenderView {
     )
   }
 
+  /** Yeah, this needs a better approach after standardizing renderMaterial vs displayStyle
+   *  at the concept level. Currently it's more or less unclear who/when/how should a line/non-line
+   *  use either renderMaterial either displayStyle since all speckle types can use both
+   */
   private getMaterialHash() {
-    const mat = this.renderData.renderMaterial
-      ? this.renderMaterialToString()
-      : this.renderData.displayStyle &&
-        this.geometryType !== GeometryType.MESH &&
-        this.geometryType !== GeometryType.POINT
-      ? this.displayStyleToString()
-      : ''
+    const mat =
+      this.renderData.renderMaterial &&
+      (this.geometryType === GeometryType.MESH ||
+        this.geometryType === GeometryType.POINT)
+        ? this.renderMaterialToString()
+        : this.renderData.displayStyle &&
+          this.geometryType !== GeometryType.MESH &&
+          this.geometryType !== GeometryType.POINT
+        ? this.displayStyleToString()
+        : ''
     let geometry = ''
     if (this.renderData.geometry.attributes)
       geometry = this.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
