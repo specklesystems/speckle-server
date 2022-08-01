@@ -24,5 +24,11 @@ repos:
     rev: 'v2.6.2' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
+
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: 'v0.8.0'
+    hooks:
+      - id: shellcheck
+
 ci:
   autoupdate_schedule: quarterly
