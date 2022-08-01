@@ -1,9 +1,10 @@
 FROM node:16.15-bullseye-slim as node
 
 RUN apt-get update && apt-get install -y \
-  python3 \
-  python3-pip \
-  tini \
+  --no-install-recommends \
+  python3=3.9.2-3 \
+  python3-pip=20.3.4-4+deb11u1 \
+  tini=0.19.0-1 \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
@@ -23,7 +24,7 @@ COPY packages/fileimport-service/package.json ./
 RUN yarn workspaces focus --production
 
 COPY packages/fileimport-service/requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY packages/fileimport-service .
 

@@ -4,8 +4,10 @@ ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
 
 RUN apt-get update && apt-get install -y \
-  tini \
-  fonts-dejavu-core fontconfig \
+  --no-install-recommends \
+  tini=0.19.0-1 \
+  fonts-dejavu-core=2.37-2 \
+  fontconfig=2.13.1-4.2 \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait

@@ -1,7 +1,8 @@
 FROM node:16.15-bullseye-slim as node
 
 RUN apt-get update && apt-get install -y \
-  tini \
+  --no-install-recommends \
+  tini=0.19.0-1 \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait

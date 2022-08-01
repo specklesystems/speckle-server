@@ -1,6 +1,7 @@
 FROM python:3.8-slim
 
+WORKDIR /speckle
 COPY utils/test-deployment .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "./run_tests.py" ]
+CMD [ "/speckle/run_tests.py" ]
