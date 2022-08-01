@@ -149,7 +149,11 @@ export class GeometryConverter {
    * BREP
    */
   private static BrepToGeometryData(node) {
-    return this.MeshToGeometryData(node.children[0])
+    /** Breps don't (currently) have inherent geometryic description in the viewer. They are replaced
+     * by their mesh display values
+     */
+    node
+    return null
   }
 
   /**
