@@ -24,5 +24,10 @@ repos:
     rev: 'v2.6.2' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: 'v2.10.0'
+    hooks:
+      - id: hadolint
 ci:
   autoupdate_schedule: quarterly
