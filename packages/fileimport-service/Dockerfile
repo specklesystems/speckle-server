@@ -1,10 +1,12 @@
 FROM node:16.15-bullseye-slim as node
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
   python3=3.9.2-3 \
   python3-pip=20.3.4-4+deb11u1 \
   tini=0.19.0-1 \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait

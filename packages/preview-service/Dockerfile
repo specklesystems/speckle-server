@@ -32,11 +32,11 @@ RUN yarn workspaces foreach -pt run build
 
 FROM node:16.15-bullseye-slim as node
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
   tini=0.19.0-1 \
   # chromium dependencies \
-  # ca-certificates fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 lsb-release wget xdg-utils \
   ca-certificates=20210119 \
   fonts-liberation=1:1.07.4-11 \
   libasound2=1.2.4-1.1 \
@@ -63,6 +63,7 @@ RUN apt-get update && apt-get install -y \
   libxrandr2=2:1.5.1-1 \
   wget=1.21-1+deb11u1 \
   xdg-utils=1.1.3-4.1 \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
