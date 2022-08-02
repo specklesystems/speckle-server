@@ -1,6 +1,7 @@
 'use strict'
 
 const knex = require('@/db/knex')
+const { getStream } = require('@/modules/core/repositories/streams')
 const crs = require('crypto-random-string')
 
 const WebhooksConfig = () => knex('webhooks_config')
@@ -8,8 +9,6 @@ const WebhooksEvents = () => knex('webhooks_events')
 const Users = () => knex('users')
 
 const { getServerInfo } = require('../../core/services/generic')
-const { getStream } = require('../../core/services/streams')
-
 const MAX_STREAM_WEBHOOKS = 100
 
 module.exports = {

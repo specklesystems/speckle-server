@@ -22,6 +22,14 @@ const { createCommitByBranchName } = require('../services/commits')
 
 const { beforeEachContext } = require('@/test/hooks')
 const { sleep } = require('@/test/helpers')
+const {
+  addOrUpdateStreamCollaborator,
+  validateStreamAccess
+} = require('@/modules/core/services/streams/streamAccessService')
+const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
+const { leaveStream } = require('@/test/graphql/streams')
+const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 
 describe('Streams @core-streams', () => {
   const userOne = {
@@ -40,6 +48,13 @@ describe('Streams @core-streams', () => {
     await beforeEachContext()
 
     userOne.id = await createUser(userOne)
+    userTwo.id = await createUser(userTwo)
+
+    testStream.id = await createStream({ ...testStream, ownerId: userOne.id })
+    secondTestStream.id = await createStream({
+      ...secondTestStream,
+      ownerId: userOne.id
+    })
   })
 
   const testStream = {
@@ -52,15 +67,14 @@ describe('Streams @core-streams', () => {
 
   describe('Create, Read, Update, Delete Streams', () => {
     it('Should create a stream', async () => {
-      testStream.id = await createStream({ ...testStream, ownerId: userOne.id })
-      expect(testStream).to.have.property('id')
-      expect(testStream.id).to.not.be.null
+      const stream1Id = await createStream({ ...testStream, ownerId: userOne.id })
+      expect(stream1Id).to.not.be.null
 
-      secondTestStream.id = await createStream({
+      const stream2Id = await createStream({
         ...secondTestStream,
         ownerId: userOne.id
       })
-      expect(secondTestStream.id).to.not.be.null
+      expect(stream2Id).to.not.be.null
     })
 
     it('Should get a stream', async () => {
@@ -81,9 +95,10 @@ describe('Streams @core-streams', () => {
 
     it('Should get all streams of a user', async () => {
       const { streams, cursor } = await getUserStreams({ userId: userOne.id })
-      // console.log( res )
-      expect(streams).to.have.lengthOf(2)
-      expect(cursor).to.exist
+
+      expect(streams).to.be.ok
+      expect(cursor).to.be.ok
+      expect(streams).to.not.be.empty
     })
 
     it('Should search all streams of a user', async () => {
@@ -102,32 +117,24 @@ describe('Streams @core-streams', () => {
         description: 'wonderful',
         ownerId: userOne.id
       })
-      let all = await getUserStreams({ userId: userOne.id })
-      expect(all.streams).to.have.lengthOf(3)
+
+      const beforeDelete = await getUserStreams({ userId: userOne.id })
 
       await deleteStream({ streamId: id })
 
-      all = await getUserStreams({ userId: userOne.id })
-      expect(all.streams).to.have.lengthOf(2)
+      const afterDelete = await getUserStreams({ userId: userOne.id })
+      expect(beforeDelete.streams.length - afterDelete.streams.length).to.eq(1)
     })
   })
 
   describe('Sharing: Grant & Revoke permissions', () => {
     before(async () => {
-      userTwo.id = await createUser(userTwo)
-    })
-
-    it('Should share a stream with a user', async () => {
-      await grantPermissionsStream({
-        streamId: testStream.id,
-        userId: userTwo.id,
-        role: 'stream:reviewer'
-      })
-      await grantPermissionsStream({
-        streamId: testStream.id,
-        userId: userTwo.id,
-        role: 'stream:contributor'
-      }) // change perms
+      await addOrUpdateStreamCollaborator(
+        testStream.id,
+        userTwo.id,
+        Roles.Stream.Contributor,
+        userOne.id
+      )
     })
 
     it('Stream should show up in the other users` list', async () => {
@@ -159,6 +166,39 @@ describe('Streams @core-streams', () => {
         .catch((err) => {
           expect(err.message).to.include('cannot revoke permissions.')
         })
+    })
+
+    it('Collaborator can leave a stream on his own', async () => {
+      const streamId = await createStream({
+        name: 'test streammmmm',
+        description: 'ayy',
+        isPublic: false,
+        ownerId: userOne.id
+      })
+      await addOrUpdateStreamCollaborator(
+        streamId,
+        userTwo.id,
+        Roles.Stream.Reviewer,
+        userOne.id
+      )
+
+      const apollo = buildAuthenticatedApolloServer(userTwo.id)
+      const { data, errors } = await leaveStream(apollo, { streamId })
+
+      expect(errors).to.be.not.ok
+      expect(data?.streamLeave).to.be.ok
+
+      let accessNotFound = false
+      await validateStreamAccess(userTwo.id, streamId, Roles.Stream.Reviewer).catch(
+        (e) => {
+          if (e instanceof StreamInvalidAccessError) {
+            accessNotFound = true
+          } else {
+            throw e
+          }
+        }
+      )
+      expect(accessNotFound).to.be.ok
     })
   })
 

@@ -41,11 +41,12 @@
 </template>
 <script>
 import ListItemStream from '@/main/components/user/ListItemStream'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheProfileUser',
@@ -95,7 +96,7 @@ export default {
   },
   created() {
     // Move to self profile
-    if (this.$route.params.userId === localStorage.getItem('uuid')) {
+    if (this.$route.params.userId === AppLocalStorage.get('uuid')) {
       this.$router.replace({ path: '/profile' })
     }
   },

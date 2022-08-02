@@ -9,7 +9,16 @@ const appRoot = __dirname
 
 // Initializing env vars
 const dotenv = require('dotenv')
-const { isTestEnv } = require('./modules/core/helpers/envHelper')
+const {
+  isTestEnv,
+  isApolloMonitoringEnabled,
+  getApolloServerVersion,
+  getServerVersion
+} = require('./modules/shared/helpers/envHelper')
+
+if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
+  process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
+}
 
 // If running in test env, load .env.test first
 // (appRoot necessary, cause env files aren't loaded through require() calls)

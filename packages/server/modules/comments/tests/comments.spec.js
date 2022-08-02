@@ -1,8 +1,15 @@
-/* istanbul ignore file */
+// Hooking up comments/services/index.js mock
+const { mockRequireModule } = require('@/test/mockHelper')
+const commentsServiceMock = mockRequireModule(
+  ['@/modules/comments/services/index', require.resolve('../services/index')],
+  ['@/modules/comments/graph/resolvers/comments']
+)
+
+const path = require('path')
+const { appRoot } = require('@/bootstrap')
 const expect = require('chai').expect
 const crs = require('crypto-random-string')
-
-const { beforeEachContext } = require('@/test/hooks')
+const { beforeEachContext, truncateTables } = require('@/test/hooks')
 const { createUser } = require('@/modules/core/services/users')
 const { createStream } = require('@/modules/core/services/streams')
 const { createCommitByBranchName } = require('@/modules/core/services/commits')
@@ -18,9 +25,62 @@ const {
   archiveComment,
   getResourceCommentCount,
   getStreamCommentCount
-} = require('../services')
+} = require('../services/index')
+const {
+  convertBasicStringToDocument
+} = require('@/modules/core/services/richTextEditorService')
+const {
+  ensureCommentSchema,
+  buildCommentTextFromInput
+} = require('@/modules/comments/services/commentTextService')
+const { range } = require('lodash')
+const { buildApolloServer } = require('@/app')
+const { addLoadersToCtx } = require('@/modules/shared')
+const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
+const { gql } = require('apollo-server-core')
+const { createAuthTokenForUser } = require('@/test/authHelper')
+const { uploadBlob } = require('@/test/blobHelper')
+const { Comments } = require('@/modules/core/dbSchema')
+
+const CommentWithRepliesFragment = gql`
+  fragment CommentWithReplies on Comment {
+    id
+    text {
+      doc
+      attachments {
+        id
+        fileName
+        streamId
+      }
+    }
+    replies(limit: 10) {
+      items {
+        id
+        text {
+          doc
+          attachments {
+            id
+            fileName
+            streamId
+          }
+        }
+      }
+    }
+  }
+`
+
+function buildCommentInputFromString(textString) {
+  return convertBasicStringToDocument(textString)
+}
+
+function generateRandomCommentText() {
+  return buildCommentInputFromString(crs({ length: 10 }))
+}
 
 describe('Comments @comments', () => {
+  /** @type {import('express').Express} */
+  let app
+
   const user = {
     name: 'The comment wizard',
     email: 'comment@wizard.ry',
@@ -50,7 +110,8 @@ describe('Comments @comments', () => {
   let commitId1, commitId2
 
   before(async () => {
-    await beforeEachContext()
+    const { app: express } = await beforeEachContext()
+    app = express
 
     user.id = await createUser(user)
     otherUser.id = await createUser(otherUser)
@@ -78,20 +139,13 @@ describe('Comments @comments', () => {
     })
   })
 
-  it('Should not accept complex HTML in the comment text', async () => {
-    const commentId = await createComment({
-      userId: user.id,
-      input: {
-        streamId: stream.id,
-        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
-        text: 'Some <img src/onerror=alert(1)> <strong>epic</strong> <a href="javascript:alert(1)">cool</a> text!',
-        data: { justSome: crs({ length: 10 }) }
-      }
-    })
+  after(() => {
+    commentsServiceMock.destroy()
+  })
 
-    const comment = await getComment({ id: commentId })
-    expect(comment).to.be.ok
-    expect((comment.text.match(/alert/) || []).length).to.equal(0)
+  afterEach(() => {
+    commentsServiceMock.disable()
+    commentsServiceMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -115,6 +169,8 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be able to comment resources that do not belong to the input streamId', async () => {
+    const throwawayCommentText = buildCommentInputFromString('whatever')
+
     // Stream A belongs to user
     const streamA = { name: 'Stream A' }
     streamA.id = await createStream({ ...streamA, ownerId: user.id })
@@ -148,7 +204,8 @@ describe('Comments @comments', () => {
       userId: user.id,
       input: {
         streamId: streamA.id,
-        resources: [{ resourceId: objB.id, resourceType: 'object' }]
+        resources: [{ resourceId: objB.id, resourceType: 'object' }],
+        text: throwawayCommentText
       }
     })
       .then(() => {
@@ -161,7 +218,8 @@ describe('Comments @comments', () => {
       userId: user.id,
       input: {
         streamId: streamA.id,
-        resources: [{ resourceId: commB.id, resourceType: 'commit' }]
+        resources: [{ resourceId: commB.id, resourceType: 'commit' }],
+        text: throwawayCommentText
       }
     })
       .then(() => {
@@ -177,7 +235,8 @@ describe('Comments @comments', () => {
         resources: [
           { resourceId: commA.id, resourceType: 'commit' },
           { resourceId: commB.id, resourceType: 'commit' }
-        ]
+        ],
+        text: throwawayCommentText
       }
     })
       .then(() => {
@@ -186,15 +245,17 @@ describe('Comments @comments', () => {
       .catch((error) => expect(error.message).to.be.equal('Commit not found'))
 
     // correct this time, let's see this one not fail
-    const correctCommentId = await createComment({
+    const { id: correctCommentId } = await createComment({
       userId: user.id,
       input: {
         streamId: streamA.id,
         resources: [
           { resourceId: commA.id, resourceType: 'commit' },
           { resourceId: commA.id, resourceType: 'commit' }
-        ]
-      }
+        ],
+        text: throwawayCommentText
+      },
+      text: throwawayCommentText
     })
 
     // replies should also not be swappable
@@ -202,7 +263,7 @@ describe('Comments @comments', () => {
       authorId: user.id,
       parentCommentId: correctCommentId,
       streamId: streamB.id,
-      text: 'I am a 3l1t3 hack0r; - drop tables;'
+      text: buildCommentInputFromString('I am an 3l1t3 hack0r; - drop tables;')
     })
       .then(() => {
         throw new Error('This should have been rejected')
@@ -236,36 +297,36 @@ describe('Comments @comments', () => {
         await createComment({
           userId: user.id,
           input: {
-            text: 'bar',
+            text: buildCommentInputFromString('bar'),
             streamId: stream.id,
             resources: [
               { resourceId: commit.id, resourceType: 'commit' },
               { resourceId: obj.id, resourceType: 'object' }
             ]
           }
-        })
+        }).then((c) => c.id)
       )
       // creates 1 * commCount comments linked to commit only
       commentIds.push(
         await createComment({
           userId: user.id,
           input: {
-            text: 'baz',
+            text: buildCommentInputFromString('baz'),
             streamId: stream.id,
             resources: [{ resourceId: commit.id, resourceType: 'commit' }]
           }
-        })
+        }).then((c) => c.id)
       )
       // creates 1 * commCount comments linked to object only
       commentIds.push(
         await createComment({
           userId: user.id,
           input: {
-            text: 'qux',
+            text: buildCommentInputFromString('qux'),
             streamId: stream.id,
             resources: [{ resourceId: obj.id, resourceType: 'object' }]
           }
-        })
+        }).then((c) => c.id)
       )
     }
 
@@ -274,19 +335,19 @@ describe('Comments @comments', () => {
       authorId: user.id,
       parentCommentId: commentIds[0],
       streamId: stream.id,
-      input: { text: crs({ length: 10 }) }
+      text: generateRandomCommentText()
     })
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[1],
       streamId: stream.id,
-      input: { text: crs({ length: 10 }) }
+      text: generateRandomCommentText()
     })
     await createCommentReply({
       authorId: user.id,
       parentCommentId: commentIds[2],
       streamId: stream.id,
-      input: { text: crs({ length: 10 }) }
+      text: generateRandomCommentText()
     })
 
     // we archive one of the object only comments for fun and profit
@@ -336,12 +397,14 @@ describe('Comments @comments', () => {
   })
 
   it('Should create viewedAt entries for comments', async () => {
-    const id = await createComment({
+    const { id } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
         resources: [{ resourceId: commitId1, resourceType: 'commit' }],
-        text: 'https://tenor.com/view/gandalf-smoking-gif-21189890', // possibly NSFW
+        text: buildCommentInputFromString(
+          'https://tenor.com/view/gandalf-smoking-gif-21189890'
+        ), // possibly NSFW
         data: {
           someMore:
             'https://tenor.com/view/gandalf-old-man-naked-take-robe-off-funny-gif-17224126'
@@ -495,12 +558,12 @@ describe('Comments @comments', () => {
 
     // yeah i know, Promise.all, but this is easier to debug...
     for (const resources of resourceCombinations) {
-      const commentId = await createComment({
+      const { id: commentId } = await createComment({
         userId: user.id,
         input: {
           streamId: stream.id,
           resources,
-          text: crs({ length: 10 }),
+          text: generateRandomCommentText(),
           data: { justSome: crs({ length: 10 }) }
         }
       })
@@ -522,7 +585,7 @@ describe('Comments @comments', () => {
             { resourceId: commitId1, resourceType: 'commit' },
             { resourceId: localObjectId, resourceType: 'object' }
           ],
-          text: crs({ length: 10 }),
+          text: generateRandomCommentText(),
           data: { justSome: 'distinct test' + crs({ length: 10 }) }
         }
       })
@@ -566,10 +629,10 @@ describe('Comments @comments', () => {
               { resourceId: commitId1, resourceType: 'commit' },
               { resourceId: localObjectId, resourceType: 'object' }
             ],
-            text: crs({ length: 10 }),
+            text: generateRandomCommentText(),
             data: { justSome: crs({ length: 10 }) }
           }
-        })
+        }).then((c) => c.id)
       )
       await new Promise((resolve) => setTimeout(resolve, 50))
     }
@@ -602,34 +665,30 @@ describe('Comments @comments', () => {
   })
 
   it('Should properly return replies for a comment', async () => {
-    const streamCommentId1 = await createComment({
+    const { id: streamCommentId1 } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
         resources: [{ resourceId: stream.id, resourceType: 'stream' }],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
 
-    const commentId1 = await createCommentReply({
+    const { id: commentId1 } = await createCommentReply({
       authorId: user.id,
       parentCommentId: streamCommentId1,
       streamId: stream.id,
-      input: {
-        text: crs({ length: 10 }),
-        data: { justSome: crs({ length: 10 }) }
-      }
+      text: generateRandomCommentText(),
+      data: { justSome: crs({ length: 10 }) }
     })
 
-    const commentId2 = await createCommentReply({
+    const { id: commentId2 } = await createCommentReply({
       authorId: user.id,
       parentCommentId: streamCommentId1,
       streamId: stream.id,
-      input: {
-        text: crs({ length: 10 }),
-        data: { justSome: crs({ length: 10 }) }
-      }
+      text: generateRandomCommentText(),
+      data: { justSome: crs({ length: 10 }) }
     })
     const replies = await getComments({
       streamId: stream.id,
@@ -660,7 +719,7 @@ describe('Comments @comments', () => {
       input: {
         streamId: stream.id,
         resources: inputResources,
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
@@ -684,7 +743,7 @@ describe('Comments @comments', () => {
           { resourceId: stream.id, resourceType: 'stream' },
           { resourceId: localObjectId, resourceType: 'object' }
         ],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
@@ -709,7 +768,7 @@ describe('Comments @comments', () => {
     const localObjectId = await createObject(stream.id, {
       anotherTestObject: crs({ length: 10 })
     })
-    const commentId = await createComment({
+    const { id: commentId } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
@@ -717,15 +776,17 @@ describe('Comments @comments', () => {
           { resourceId: stream.id, resourceType: 'stream' },
           { resourceId: localObjectId, resourceType: 'object' }
         ],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
 
-    const properText = 'now thats what im talking about'
+    const properText = buildCommentInputFromString('now thats what im talking about')
     await editComment({ userId: user.id, input: { id: commentId, text: properText } })
     const comment = await getComment({ id: commentId })
-    expect(comment.text).to.be.equal(properText)
+    const commentTextSchema = ensureCommentSchema(comment.text)
+
+    expect(commentTextSchema.doc).to.deep.equal(properText)
   })
 
   it('Should not be allowed to edit a not existing comment', async () => {
@@ -743,7 +804,7 @@ describe('Comments @comments', () => {
     const localObjectId = await createObject(stream.id, {
       anotherTestObject: crs({ length: 10 })
     })
-    const commentId = await createComment({
+    const { id: commentId } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
@@ -751,14 +812,14 @@ describe('Comments @comments', () => {
           { resourceId: stream.id, resourceType: 'stream' },
           { resourceId: localObjectId, resourceType: 'object' }
         ],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
 
     await editComment({
       userId: otherUser.id,
-      input: { id: commentId, text: 'properText' },
+      input: { id: commentId, text: generateRandomCommentText() },
       matchUser: true
     })
       .then(() => {
@@ -767,21 +828,22 @@ describe('Comments @comments', () => {
       .catch((error) =>
         expect(error.message).to.be.equal("You cannot edit someone else's comments")
       )
-    const properText = 'fooood'
+    const properText = buildCommentInputFromString('fooood')
     await editComment({ userId: user.id, input: { id: commentId, text: properText } })
     const comment = await getComment({ id: commentId })
-    expect(comment.text).to.be.equal(properText)
+    const commentText = ensureCommentSchema(comment.text)
+    expect(commentText.doc).to.deep.equalInAnyOrder(properText)
   })
 
   it('Should be able to toggle reactions for a comment')
 
   it('Should be able to archive a comment', async () => {
-    const commentId = await createComment({
+    const { id: commentId } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
         resources: [{ resourceId: stream.id, resourceType: 'stream' }],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
@@ -822,12 +884,12 @@ describe('Comments @comments', () => {
   })
 
   it("Should be forbidden to archive someone else's comment, unless the person is a stream admin", async () => {
-    const commentId = await createComment({
+    const { id: commentId } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
         resources: [{ resourceId: stream.id, resourceType: 'stream' }],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
@@ -842,12 +904,12 @@ describe('Comments @comments', () => {
         )
       )
 
-    const otherUsersCommentId = await createComment({
+    const { id: otherUsersCommentId } = await createComment({
       userId: otherUser.id,
       input: {
         streamId: stream.id,
         resources: [{ resourceId: stream.id, resourceType: 'stream' }],
-        text: crs({ length: 10 }),
+        text: generateRandomCommentText(),
         data: { justSome: crs({ length: 10 }) }
       }
     })
@@ -865,17 +927,19 @@ describe('Comments @comments', () => {
     })
 
     const commentCount = 15
-    for (let i = 0; i < commentCount; i++) {
-      await createComment({
-        userId: user.id,
-        input: {
-          streamId: stream.id,
-          resources: [{ resourceId: localObjectId, resourceType: 'object' }],
-          text: crs({ length: 10 }),
-          data: { justSome: crs({ length: 10 }) }
-        }
-      })
-    }
+    await Promise.all(
+      range(commentCount).map(() =>
+        createComment({
+          userId: user.id,
+          input: {
+            streamId: stream.id,
+            resources: [{ resourceId: localObjectId, resourceType: 'object' }],
+            text: generateRandomCommentText(),
+            data: { justSome: crs({ length: 10 }) }
+          }
+        })
+      )
+    )
 
     const archiveCount = 3
     let comments = await getComments({
@@ -910,18 +974,443 @@ describe('Comments @comments', () => {
   })
 
   it('Should be able to write a short novel as comment text', async () => {
-    const commentId = await createComment({
+    const novelValue = buildCommentInputFromString(aShortNovel)
+    const { id: commentId } = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
         resources: [{ resourceId: stream.id, resourceType: 'stream' }],
-        text: aShortNovel,
+        text: novelValue,
         data: { justSome: crs({ length: 10 }) }
       }
     })
 
     const comment = await getComment({ id: commentId })
-    expect(comment.text).to.equal(aShortNovel)
+    const commentText = ensureCommentSchema(comment.text)
+
+    expect(commentText.doc).to.deep.equal(novelValue)
+  })
+
+  describe('when authenticated', () => {
+    /** @type {import('apollo-server-express').ApolloServer} */
+    let apollo
+    let userToken
+    let blob1
+
+    before(async () => {
+      const scopes = AllScopes
+
+      // Init apollo instance w/ authenticated context
+      apollo = buildApolloServer({
+        context: () =>
+          addLoadersToCtx({
+            auth: true,
+            userId: user.id,
+            role: Roles.Server.User,
+            token: 'asd',
+            scopes
+          })
+      })
+
+      // Init token for authenticating w/ REST API
+      userToken = await createAuthTokenForUser(user.id, scopes)
+
+      // Upload a small blob
+      blob1 = await uploadBlob(
+        app,
+        path.resolve(appRoot, './test/assets/testimage1.jpg'),
+        stream.id,
+        {
+          authToken: userToken
+        }
+      )
+    })
+
+    const createComment = (input = {}) =>
+      apollo.executeOperation({
+        query: gql`
+          mutation ($input: CommentCreateInput!) {
+            commentCreate(input: $input)
+          }
+        `,
+        variables: {
+          input: {
+            streamId: stream.id,
+            resources: [{ resourceId: commitId1, resourceType: 'commit' }],
+            data: {},
+            blobIds: [],
+            ...input
+          }
+        }
+      })
+
+    const createReply = (input = {}) =>
+      apollo.executeOperation({
+        query: gql`
+          mutation ($input: ReplyCreateInput!) {
+            commentReply(input: $input)
+          }
+        `,
+        variables: {
+          input: {
+            streamId: stream.id,
+            blobIds: [],
+            ...input
+          }
+        }
+      })
+
+    describe('when reading comments', () => {
+      let emptyCommentId
+
+      before(async () => {
+        // Truncate comments
+        truncateTables([Comments.name])
+
+        // Create a single comment with a blob
+        const createCommentResult = await createComment({
+          text: generateRandomCommentText(),
+          blobIds: [blob1.blobId]
+        })
+        const parentCommentId = createCommentResult.data.commentCreate
+        if (!parentCommentId) throw new Error('Comment creation failed!')
+
+        // Create a reply with a blob
+        await createReply({
+          text: generateRandomCommentText(),
+          blobIds: [blob1.blobId],
+          parentComment: parentCommentId
+        })
+
+        // Create a reply with a blob, but no text
+        const emptyCommentResult = await createReply({
+          blobIds: [blob1.blobId],
+          parentComment: parentCommentId
+        })
+        emptyCommentId = emptyCommentResult.data.commentReply
+        if (!emptyCommentId) throw new Error('Comment creation failed!')
+      })
+
+      const readComment = (input = {}) =>
+        apollo.executeOperation({
+          query: gql`
+            query ($id: String!, $streamId: String!) {
+              comment(id: $id, streamId: $streamId) {
+                ...CommentWithReplies
+              }
+            }
+
+            ${CommentWithRepliesFragment}
+          `,
+          variables: {
+            streamId: stream.id,
+            ...input
+          }
+        })
+
+      const readComments = (input = {}) =>
+        apollo.executeOperation({
+          query: gql`
+            query ($streamId: String!, $cursor: String) {
+              comments(streamId: $streamId, limit: 10, cursor: $cursor) {
+                totalCount
+                cursor
+                items {
+                  ...CommentWithReplies
+                }
+              }
+            }
+
+            ${CommentWithRepliesFragment}
+          `,
+          variables: {
+            cursor: null,
+            streamId: stream.id,
+            ...input
+          }
+        })
+
+      it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
+        commentsServiceMock.enable()
+        commentsServiceMock.mockFunction('getComments', () => {
+          return {
+            items: [
+              // Legacy
+              {
+                id: 'a',
+                text: 'hey dude! welcome to my legacy-type comment!'
+              },
+              // New
+              {
+                id: 'b',
+                text: JSON.stringify(
+                  buildCommentTextFromInput({
+                    doc: buildCommentInputFromString('new comment schema here')
+                  })
+                )
+              },
+              // New, but for some reason the text object is already deserialized
+              {
+                id: 'c',
+                text: buildCommentTextFromInput({
+                  doc: buildCommentInputFromString('another new comment schema here')
+                })
+              }
+            ],
+            cursor: new Date().toISOString(),
+            totalCount: 3
+          }
+        })
+
+        const { data, errors } = await readComments()
+
+        expect(data?.comments?.items?.length || 0).to.eq(3)
+        expect(errors?.length || 0).to.eq(0)
+      })
+
+      it('legacy comment with a single link is formatted correctly', async () => {
+        const item = {
+          id: '1',
+          text: 'https://aaa.com:3000/h3ll0-world/_?a=1&b=2#aaa'
+        }
+
+        commentsServiceMock.enable()
+        commentsServiceMock.mockFunction('getComments', () => ({
+          items: [item],
+          cursor: new Date().toISOString(),
+          totalCount: 1
+        }))
+
+        const { data, errors } = await readComments()
+
+        expect(data?.comments?.items?.length || 0).to.eq(1)
+        expect(errors?.length || 0).to.eq(0)
+
+        const textNode = data.comments.items[0].text.doc.content[0].content[0]
+        expect(textNode.text).to.eq(item.text)
+        expect(textNode.marks).to.deep.equalInAnyOrder([
+          {
+            type: 'link',
+            attrs: { href: item.text, target: '_blank' }
+          }
+        ])
+      })
+
+      it('legacy comment with multiple links formats them correctly', async () => {
+        const textParts = [
+          "Here's one ",
+          // The period and comma def shouldn't belong to the following URL, but we have a pretty basic
+          // URL regex and this only applies to legacy comments so that's acceptable IMO
+          'https://google.com:4123/a1-_zd/z?a=1&b=2#aaa.,',
+          ' oh and also - ',
+          'https://yahoo.com',
+          ' :D ',
+          'http://agag.com:3000'
+        ]
+
+        const item = {
+          id: '1',
+          text: textParts.join('')
+        }
+
+        commentsServiceMock.enable()
+        commentsServiceMock.mockFunction('getComments', () => ({
+          items: [item],
+          cursor: new Date().toISOString(),
+          totalCount: 1
+        }))
+
+        const { data, errors } = await readComments()
+
+        const runExpectationsOnTextNode = (idx, shouldBeLink) => {
+          expect(textNodes[idx].text).to.eq(textParts[idx])
+
+          if (shouldBeLink) {
+            expect(textNodes[idx].marks).to.deep.equalInAnyOrder([
+              {
+                type: 'link',
+                attrs: { href: textParts[idx], target: '_blank' }
+              }
+            ])
+          }
+        }
+
+        expect(data?.comments?.items?.length || 0).to.eq(1)
+        expect(errors?.length || 0).to.eq(0)
+
+        const textNodes = data.comments.items[0].text.doc.content[0].content
+        expect(textNodes.length).to.eq(textParts.length)
+
+        range(textParts.length).forEach((i) => {
+          runExpectationsOnTextNode(i, textParts[i].startsWith('http'))
+        })
+      })
+
+      it('returns uploaded attachment metadata correctly', async () => {
+        const expectedMetadata = {
+          fileName: blob1.fileName,
+          id: blob1.blobId,
+          streamId: stream.id
+        }
+
+        const { data, errors } = await readComments()
+
+        expect(errors?.length || 0).to.eq(0)
+
+        // Check first comment
+        expect(data?.comments?.items?.length || 0).to.eq(1)
+        expect(data.comments.items[0].text?.attachments?.length || 0).to.eq(1)
+        expect(data.comments.items[0].text.attachments[0]).to.deep.equalInAnyOrder(
+          expectedMetadata
+        )
+
+        // Check first reply
+        expect(data.comments.items[0].replies?.items?.length || 0).to.eq(2)
+        expect(
+          data.comments.items[0].replies.items[0].text?.attachments?.length || 0
+        ).to.eq(1)
+        expect(
+          data.comments.items[0].replies.items[0].text?.attachments[0]
+        ).to.deep.equalInAnyOrder(expectedMetadata)
+
+        // Check 2nd reply
+        expect(
+          data.comments.items[0].replies.items[1].text?.attachments?.length || 0
+        ).to.eq(1)
+        expect(
+          data.comments.items[0].replies.items[1].text?.attachments[0]
+        ).to.deep.equalInAnyOrder(expectedMetadata)
+      })
+
+      it('returns a blob comment without text correctly', async () => {
+        const { data, errors } = await readComment({
+          id: emptyCommentId
+        })
+
+        expect(errors?.length || 0).to.eq(0)
+        expect(data.comment).to.be.ok
+        expect(data.comment.text.doc).to.be.null
+        expect(data.comment.text.attachments.length).to.be.greaterThan(0)
+      })
+
+      const unexpectedValDataset = [
+        { display: 'number', value: 3 },
+        { display: 'random object', value: { a: 1, b: 2 } }
+      ]
+      unexpectedValDataset.forEach(({ display, value }) => {
+        it(`unexpected text value (${display}) in DB throw sanitized errors`, async () => {
+          const item = {
+            id: '1',
+            text: value
+          }
+
+          commentsServiceMock.enable()
+          commentsServiceMock.mockFunction('getComments', () => ({
+            items: [item],
+            cursor: new Date().toISOString(),
+            totalCount: 1
+          }))
+
+          const { data, errors } = await readComments()
+
+          expect(data?.comments).to.not.be.ok
+          expect((errors || []).map((e) => e.message).join(';')).to.contain(
+            'Unexpected comment schema format'
+          )
+        })
+      })
+    })
+
+    const creatingOrReplyingDataSet = [
+      { replying: true, display: 'replying to an existing thread' },
+      { creating: true, display: 'creating a new comment thread' }
+    ]
+    creatingOrReplyingDataSet.forEach(({ replying, creating, display }) => {
+      let parentCommentId
+
+      const createOrReplyComment = (input = {}) =>
+        creating
+          ? createComment(input)
+          : createReply({
+              parentComment: parentCommentId,
+              ...input
+            })
+
+      const getResult = (data) => (creating ? data?.commentCreate : data?.commentReply)
+
+      describe(`when ${display}`, () => {
+        before(async () => {
+          if (replying) {
+            // Create comment for attaching replies to
+            const { data } = await createComment({
+              text: generateRandomCommentText()
+            })
+
+            parentCommentId = data.commentCreate
+            if (!parentCommentId) {
+              throw new Error("Couldn't successfully create comment for tests!")
+            }
+          }
+        })
+
+        it('invalid blob ids get rejected', async () => {
+          const { data, errors } = await createOrReplyComment({
+            blobIds: ['idunno'],
+            text: generateRandomCommentText()
+          })
+
+          expect(getResult(data)).to.not.be.ok
+          expect((errors || []).map((e) => e.message).join(';')).to.contain(
+            'Attempting to attach invalid blobs to comment'
+          )
+        })
+
+        it('valid blob ids get properly attached', async () => {
+          const text = buildCommentInputFromString(
+            "here's a comment with a nice attachment!!"
+          )
+          const { data, errors } = await createOrReplyComment({
+            blobIds: [blob1.blobId],
+            text
+          })
+
+          expect(getResult(data)).to.be.ok
+          expect(errors || []).to.be.empty
+        })
+
+        const invalidInputDataSet = [
+          {
+            text: { invalid: { json: ['object'] } },
+            blobIds: [],
+            display: 'invalid input text'
+          },
+          { text: null, blobIds: [], display: 'no attachments & text' }
+        ]
+        invalidInputDataSet.forEach(({ text, blobIds, display }) => {
+          it(`input with ${display} throws an error`, async () => {
+            const { data, errors } = await createOrReplyComment({
+              text,
+              blobIds
+            })
+
+            expect(getResult(data)).to.not.be.ok
+            expect((errors || []).map((e) => e.message).join(';')).to.contain(
+              'Attempting to build comment text without document & attachments!'
+            )
+          })
+        })
+
+        it('an empty document with blobs attached can be successfully posted', async () => {
+          const { data, errors } = await createOrReplyComment({
+            blobIds: [blob1.blobId],
+            text: undefined
+          })
+
+          expect(getResult(data)).to.be.ok
+          expect(errors || []).to.be.empty
+        })
+      })
+    })
   })
 })
 

@@ -9,6 +9,7 @@ packages/objectloader/examples/browser/objectloader.web.js
 packages/viewer/example/speckleviewer.web.js
 package-lock.json
 yarn.lock
+.yarn
 
 # Profiler output
 events.json
@@ -18,3 +19,8 @@ utils/helm/speckle-server/templates
 
 # Optional eslint cache
 .eslintcache
+.venv
+venv
+
+.*.{ts,js,vue,tsx,jsx}
+**/generated/**/*

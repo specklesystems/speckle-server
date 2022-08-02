@@ -16,7 +16,7 @@
         <div class="text-truncate body-1 mr-auto">
           <div class="text-truncate">
             <router-link class="text-decoration-none" :to="link">
-              {{ commentDetails.text }}
+              {{ documentToBasicString(commentDetails.text.doc) }}
             </router-link>
           </div>
           <div class="text-truncate caption">
@@ -115,7 +115,11 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
+import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+
+// TODO: Stop polling each comment separately
 
 export default {
   components: {
@@ -128,6 +132,10 @@ export default {
       default: () => {
         return { role: null }
       }
+    },
+    streamId: {
+      type: String,
+      required: true
     }
   },
   apollo: {
@@ -135,29 +143,15 @@ export default {
       query: gql`
         query ($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
-            id
-            text
-            authorId
-            screenshot
-            createdAt
-            updatedAt
-            viewedAt
-            archived
-            resources {
-              resourceType
-              resourceId
-            }
-            data
-            replies {
-              totalCount
-            }
+            ...CommentFullInfo
           }
         }
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'no-cache',
       variables() {
         return {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           id: this.comment.id
         }
       },
@@ -172,12 +166,14 @@ export default {
       commentThreadActivity: {
         query: gql`
           subscription ($streamId: String!, $commentId: String!) {
-            commentThreadActivity(streamId: $streamId, commentId: $commentId)
+            commentThreadActivity(streamId: $streamId, commentId: $commentId) {
+              type
+            }
           }
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         },
@@ -186,12 +182,15 @@ export default {
         },
         result({ data }) {
           if (!data || !data.commentThreadActivity) return
-          if (data.commentThreadActivity.eventType === 'reply-added') {
+
+          // Note: This kind of direct apollo result mutation is only allowed, because
+          // of the 'no-cache' fetch policy, which means that there's no cache mutation actually happening
+          if (data.commentThreadActivity.type === 'reply-added') {
             this.commentDetails.replies.totalCount++
             this.commentDetails.updatedAt = Date.now()
             return
           }
-          if (data.commentThreadActivity.eventType === 'comment-archived') {
+          if (data.commentThreadActivity.type === 'comment-archived') {
             this.$emit('deleted', this.comment)
           }
         }
@@ -201,7 +200,8 @@ export default {
   data() {
     return {
       hovered: false,
-      showArchiveDialog: false
+      showArchiveDialog: false,
+      documentToBasicString
     }
   },
   computed: {
@@ -221,7 +221,7 @@ export default {
         (r) => r.resourceType !== 'stream'
       )
       const first = res.shift()
-      let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
+      let route = `/streams/${this.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
@@ -246,7 +246,7 @@ export default {
           }
         `,
         variables: {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           commentId: this.comment.id
         }
       })
@@ -260,7 +260,7 @@ export default {
             }
           `,
           variables: {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         })

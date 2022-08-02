@@ -43,8 +43,9 @@
     </v-alert>
   </transition>
 </template>
-
 <script>
+import { AppLocalStorage } from '@/utils/localStorage'
+
 export default {
   props: {
     user: {
@@ -67,7 +68,7 @@ export default {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: localStorage.getItem('AuthToken')
+          Authorization: AppLocalStorage.get('AuthToken')
         },
         body: JSON.stringify({ email: this.user.email })
       })

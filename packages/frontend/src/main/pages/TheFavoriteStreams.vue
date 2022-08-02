@@ -1,9 +1,10 @@
+usePortalState
 <template>
   <div>
     <portal v-if="canRenderToolbarPortal" to="toolbar">
       Favorite Streams
       <span v-if="streams.length" class="caption">
-        ({{ user.favoriteStreams.totalCount }})
+        ({{ user && user.favoriteStreams && user.favoriteStreams.totalCount }})
       </span>
     </portal>
     <!-- No streams -->
@@ -34,14 +35,19 @@
     </v-row>
   </div>
 </template>
-<script>
-import { UserFavoriteStreamsQuery } from '@/graphql/user'
+<script lang="ts">
+import { computed, defineComponent } from 'vue'
+import { STANDARD_PORTAL_KEYS, usePortalState } from '@/main/utils/portalStateManager'
 import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
+  UserFavoriteStreamsQuery,
+  UserFavoriteStreamsDocument
+} from '@/graphql/generated/graphql'
+import type { StateChanger } from 'vue-infinite-loading'
+import type { Get } from 'type-fest'
+import { useQuery } from '@vue/apollo-composable'
+import { Nullable } from '@/helpers/typeHelpers'
 
-export default {
+export default defineComponent({
   name: 'TheFavoriteStreams',
   components: {
     FavoriteStreamsPlaceholder: () =>
@@ -49,30 +55,38 @@ export default {
     InfiniteLoading: () => import('vue-infinite-loading'),
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue')
   },
-  mixins: [
-    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'favorite-streams', 0)
-  ],
-  apollo: {
-    user: {
-      query: UserFavoriteStreamsQuery
-    }
+  setup() {
+    const { canRenderToolbarPortal } = usePortalState(
+      [STANDARD_PORTAL_KEYS.Toolbar],
+      'favorite-streams',
+      0
+    )
+
+    const { result, fetchMore: userFetchMore } = useQuery(UserFavoriteStreamsDocument, {
+      cursor: null as Nullable<string>
+    })
+    const user = computed(() => result.value?.user)
+
+    return { canRenderToolbarPortal, user, userFetchMore }
   },
   computed: {
-    streams() {
+    streams(): NonNullable<
+      Get<UserFavoriteStreamsQuery, 'user.favoriteStreams.items'>
+    > {
       return this.user?.favoriteStreams?.items || []
     },
     /**
      * Whether or not there are more streams to load
      */
-    allStreamsLoaded() {
-      return (
+    allStreamsLoaded(): boolean {
+      return !!(
         this.streams.length &&
-        this.streams.length >= this.user.favoriteStreams.totalCount
+        this.streams.length >= (this.user?.favoriteStreams?.totalCount || 0)
       )
     }
   },
   methods: {
-    infiniteHandler($state) {
+    async infiniteHandler($state: StateChanger) {
       if (this.allStreamsLoaded) {
         $state.loaded()
         $state.complete()
@@ -80,37 +94,19 @@ export default {
       }
 
       // Fetch more favorites
-      this.$apollo.queries.user.fetchMore({
+      const result = await this.userFetchMore({
         variables: {
-          cursor: this.user.favoriteStreams.cursor
-        },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newFavorites = fetchMoreResult.user.favoriteStreams
-          const oldFavorites = previousResult.user.favoriteStreams
-
-          const { items: newItems } = newFavorites
-          const { items: allItems } = oldFavorites
-
-          for (const stream of newItems) {
-            if (allItems.findIndex((s) => s.id === stream.id) === -1)
-              allItems.push(stream)
-          }
-
-          // set vue-infinite state
-          newItems.length === 0 ? $state.complete() : $state.loaded()
-
-          return {
-            user: {
-              ...previousResult.user,
-              favoriteStreams: {
-                ...fetchMoreResult.user.favoriteStreams,
-                items: allItems
-              }
-            }
-          }
+          cursor: this.user?.favoriteStreams?.cursor || null
         }
       })
+
+      const newItems = result?.data?.user?.favoriteStreams?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
-}
+})
 </script>

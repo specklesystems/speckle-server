@@ -33,6 +33,10 @@ const config = {
           loader: 'babel-loader'
         },
         exclude: /(node_modules|bower_components)/
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource'
       }
     ]
   },

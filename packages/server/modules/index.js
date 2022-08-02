@@ -16,7 +16,8 @@ exports.init = async (app) => {
     './serverinvites',
     './previews',
     './fileuploads',
-    './comments'
+    './comments',
+    './blobstorage'
   ]
 
   // Stage 1: initialise all modules
@@ -39,6 +40,7 @@ exports.graph = () => {
       directive @hasScope(scope: String!) on FIELD_DEFINITION
       directive @hasScopes(scopes: [String]!) on FIELD_DEFINITION
       directive @hasRole(role: String!) on FIELD_DEFINITION
+      directive @hasStreamRole(role: StreamRole!) on FIELD_DEFINITION
 
       type Query {
       """

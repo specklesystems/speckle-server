@@ -1,14 +1,15 @@
-/* istanbul ignore file */
 const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
-const { createStream, getStream } = require('@/modules/core/services/streams')
+const { createUser } = require('@/modules/core/services/users')
+const { createStream } = require('@/modules/core/services/streams')
 
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
 const { LIMITS } = require('@/modules/core/services/ratelimits')
-const { createAndSendInvite } = require('@/modules/serverinvites/services')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
+const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
+const { getInvite } = require('@/modules/serverinvites/repositories')
 const expect = chai.expect
 
 let app
@@ -17,10 +18,33 @@ let server
 
 describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
+    const registeredUserEmail = 'registered@speckle.systems'
+
+    const me = {
+      name: 'dimitrie stefanescu',
+      company: 'speckle',
+      email: registeredUserEmail,
+      password: 'roll saving throws',
+      id: undefined
+    }
+
+    const myPrivateStream = {
+      name: 'My Private Stream 1',
+      isPublic: false,
+      id: undefined
+    }
+
     before(async () => {
-      console.log('before auth')
       ;({ app } = await beforeEachContext())
       ;({ server, sendRequest } = await initializeTestServer(app))
+
+      // Register a user for testing login flows
+      await createUser(me).then((id) => (me.id = id))
+
+      // Create a test stream for testing stream invites
+      await createStream({ ...myPrivateStream, ownerId: me.id }).then(
+        (id) => (myPrivateStream.id = id)
+      )
     })
 
     after(async () => {
@@ -46,86 +70,97 @@ describe('Auth @auth', () => {
         .expect(400)
     })
 
-    it('Should not register a new user without an invite id in an invite id only server', async () => {
-      await updateServerInfo({ inviteOnly: true })
+    const inviteTypeDataSet = [
+      { display: 'stream invite', streamInvite: true, withOldStyleParam: false },
+      { display: 'server invite', streamInvite: false, withOldStyleParam: false },
+      {
+        display: 'server invite (old style param)',
+        streamInvite: false,
+        withOldStyleParam: true
+      }
+    ]
+    inviteTypeDataSet.forEach(({ display, streamInvite, withOldStyleParam }) => {
+      it(`Allows registering with a ${display} in an invite-only server`, async () => {
+        await updateServerInfo({ inviteOnly: true })
+        const targetEmail = `invited.bunny.${streamInvite ? 'stream' : 'server'}.${
+          withOldStyleParam ? 'oldparam' : 'newparam'
+        }@speckle.systems`
 
-      // No invite
-      await request(app)
-        .post('/auth/local/register?challenge=test&suuid=test')
-        .send({
-          email: 'spam@speckle.systems',
-          name: 'dimitrie stefanescu',
-          company: 'speckle',
-          password: 'roll saving throws'
-        })
-        .expect(400)
+        const inviterUser = await getUserByEmail({ email: registeredUserEmail })
+        const { token, inviteId } = await createInviteDirectly(
+          streamInvite
+            ? {
+                email: targetEmail,
+                streamId: myPrivateStream.id
+              }
+            : {
+                email: targetEmail
+              },
+          inviterUser.id
+        )
 
-      const user = await getUserByEmail({ email: 'spam@speckle.systems' })
-      const inviteId = await createAndSendInvite({
-        email: 'bunny@speckle.systems',
-        inviterId: user.id
+        // No invite
+        await request(app)
+          .post('/auth/local/register?challenge=test&suuid=test')
+          .send({
+            email: 'spam@speckle.systems',
+            name: 'dimitrie stefanescu',
+            company: 'speckle',
+            password: 'roll saving throws'
+          })
+          .expect(400)
+
+        // Mismatched invite
+        await request(app)
+          .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
+          .send({
+            email: 'spam-super@speckle.systems',
+            name: 'dimitrie stefanescu',
+            company: 'speckle',
+            password: 'roll saving throws'
+          })
+          .expect(400)
+
+        // Invalid inviteId
+        await request(app)
+          .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + 'inviteId')
+          .send({
+            email: 'spam-super@speckle.systems',
+            name: 'dimitrie stefanescu',
+            company: 'speckle',
+            password: 'roll saving throws'
+          })
+          .expect(400)
+
+        // finally correct
+        await request(app)
+          .post(
+            '/auth/local/register?challenge=test&suuid=test&' +
+              (withOldStyleParam ? 'inviteId=' : 'token=') +
+              token
+          )
+          .send({
+            email: targetEmail,
+            name: 'dimitrie stefanescu',
+            company: 'speckle',
+            password: 'roll saving throws'
+          })
+          .expect(302)
+
+        // Check that user exists
+        const newUser = await getUserByEmail({ email: targetEmail })
+        expect(newUser).to.be.ok
+
+        // Check that in the case of a stream invite, it remainds valid post registration
+        const inviteRecord = await getInvite(inviteId)
+        if (streamInvite) {
+          expect(inviteRecord).to.be.ok
+        } else {
+          expect(inviteRecord).to.be.not.ok
+        }
+
+        await updateServerInfo({ inviteOnly: false })
       })
-
-      // Mismatched invite
-      await request(app)
-        .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
-        .send({
-          email: 'spam-super@speckle.systems',
-          name: 'dimitrie stefanescu',
-          company: 'speckle',
-          password: 'roll saving throws'
-        })
-        .expect(400)
-
-      // Invalid inviteId
-      await request(app)
-        .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + 'inviteId')
-        .send({
-          email: 'spam-super@speckle.systems',
-          name: 'dimitrie stefanescu',
-          company: 'speckle',
-          password: 'roll saving throws'
-        })
-        .expect(400)
-
-      // finally correct
-      await request(app)
-        .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
-        .send({
-          email: 'bunny@speckle.systems',
-          name: 'dimitrie stefanescu',
-          company: 'speckle',
-          password: 'roll saving throws'
-        })
-        .expect(302)
-
-      await updateServerInfo({ inviteOnly: false })
-    })
-
-    it('Should add resource access to newly registered user if the invite contains it', async () => {
-      const user = await getUserByEmail({ email: 'spam@speckle.systems' })
-      const streamId = await createStream({ ownerId: user.id })
-      const inviteId = await createAndSendInvite({
-        email: 'new@stream.collaborator',
-        inviterId: user.id,
-        resourceTarget: 'streams',
-        resourceId: streamId,
-        role: 'stream:reviewer'
-      })
-
-      await request(app)
-        .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
-        .send({
-          email: 'new@stream.collaborator',
-          name: 'dimitrie stefanescu',
-          company: 'speckle',
-          password: 'roll saving throws'
-        })
-        .expect(302)
-
-      const collaborator = await getUserByEmail({ email: 'new@stream.collaborator' })
-      const stream = await getStream({ streamId, userId: collaborator.id })
-      expect(stream.role).to.equal('stream:reviewer')
     })
 
     it('Should log in (speckle frontend)', async () => {

@@ -170,11 +170,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.toggleCameras()
   }
 
-  public async loadObject(
-    url: string,
-    token: string | undefined,
-    enableCaching = true
-  ) {
+  public async loadObject(url: string, token?: string, enableCaching = true) {
     try {
       if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
 

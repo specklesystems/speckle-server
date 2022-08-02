@@ -1,19 +1,22 @@
 <template>
-  <v-chip v-if="targetUser" pill :color="color">
-    <v-avatar left>
-      <user-avatar
-        :id="targetUser.id"
-        :avatar="targetUser.avatar"
-        :size="30"
-        :name="targetUser.name"
-      />
-    </v-avatar>
+  <v-chip pill :color="color">
+    <template v-if="targetUser">
+      <v-avatar left>
+        <user-avatar
+          :id="targetUser.id"
+          :avatar="targetUser.avatar"
+          :size="30"
+          :name="targetUser.name"
+        />
+      </v-avatar>
 
-    {{ targetUser.name }}
+      {{ targetUser.name }}
+    </template>
+    <template v-else>Deleted user</template>
   </v-chip>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import UserAvatar from '@/main/components/common/UserAvatar'
 
 export default {

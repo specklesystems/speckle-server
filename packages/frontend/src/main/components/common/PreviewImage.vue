@@ -1,7 +1,13 @@
 <template>
   <div
     :style="`position: relative; height: ${height}px;`"
-    :class="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
+    :class="`${
+      $route.query.transparent === 'true'
+        ? ''
+        : $vuetify.theme.dark
+        ? 'grey darken-4'
+        : 'grey lighten-4'
+    }`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
     @mousemove="setIndex"
@@ -37,6 +43,8 @@
   </div>
 </template>
 <script>
+import { AppLocalStorage } from '@/utils/localStorage'
+
 export default {
   props: {
     url: {
@@ -162,11 +170,10 @@ export default {
       this.imageIndex = index
     },
     async getPreviewImage(angle = 0) {
+      const authToken = AppLocalStorage.get('AuthToken')
       const res = await fetch(this.url + `/${angle}`, {
         signal: this.controller.signal,
-        headers: localStorage.getItem('AuthToken')
-          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
-          : {}
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
       })
 
       if (res.headers.has('X-Preview-Error')) {

@@ -16,6 +16,7 @@
 import { signOut } from '@/plugins/authHelpers'
 import userQuery from '@/graphql/userById.gql'
 import UserAvatarIcon from '@/main/components/common/UserAvatarIcon'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   components: { UserAvatarIcon },
@@ -26,15 +27,15 @@ export default {
     },
     id: {
       type: String,
-      default: () => localStorage.getItem('uuid')
+      default: () => AppLocalStorage.get('uuid')
     }
   },
   computed: {
     isSelf() {
-      return this.id === localStorage.getItem('uuid')
+      return this.id === AppLocalStorage.get('uuid')
     },
     loggedInUserId() {
-      return localStorage.getItem('uuid')
+      return AppLocalStorage.get('uuid')
     }
   },
   apollo: {

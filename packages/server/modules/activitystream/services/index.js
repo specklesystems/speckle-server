@@ -6,7 +6,29 @@ const { dispatchStreamEvent } = require('../../webhooks/services/webhooks')
 const StreamActivity = () => knex('stream_activity')
 const StreamAcl = () => knex('stream_acl')
 
+const ResourceTypes = Object.freeze({
+  User: 'user',
+  Stream: 'stream',
+  Commit: 'commit',
+  Branch: 'branch'
+})
+
+const ActionTypes = Object.freeze({
+  Stream: {
+    Update: 'stream_update',
+    PermissionsRemove: 'stream_permissions_remove',
+    PermissionsAdd: 'stream_permissions_add',
+    InviteAccepted: 'stream_permissions_invite_accepted',
+    Delete: 'stream_delete',
+    Create: 'stream_create',
+    InviteSent: 'stream_invite_sent',
+    InviteDeclined: 'stream_invite_declined'
+  }
+})
+
 module.exports = {
+  ActionTypes,
+  ResourceTypes,
   async saveActivity({
     streamId,
     resourceType,
@@ -122,13 +144,9 @@ module.exports = {
       sqlFilters += ' AND time > ?'
       sqlVariables.push(after)
     }
-    if (before) {
+    if (before || cursor) {
       sqlFilters += ' AND time < ?'
-      sqlVariables.push(before)
-    }
-    if (cursor) {
-      sqlFilters += ' AND time < ?'
-      sqlVariables.push(cursor)
+      sqlVariables.push(before || cursor)
     }
 
     const dbRawQuery = `

@@ -31,9 +31,32 @@
     </portal>
     <v-row v-if="localComments.length === 0">
       <v-col cols="12">
-        <no-data-placeholder>
-          <h2 class="space-grotesk">No comments here just yet!</h2>
-        </no-data-placeholder>
+        <div class="d-flex flex-column text-center justify-center mt-10">
+          <div class="d-flex justify-center">
+            <a
+              href="https://speckle.systems/tutorials/live-3d-comments-for-distributed-real-time-reviews/"
+              target="_blank"
+            >
+              <v-img
+                src="@/assets/comments.gif"
+                max-width="450"
+                class="rounded-xl elevation-5"
+              ></v-img>
+            </a>
+          </div>
+          <div class="ml-5 mt-10">
+            <span class="caption">There are no comments in this stream yet.</span>
+            <br />
+            <a
+              href="https://speckle.systems/tutorials/live-3d-comments-for-distributed-real-time-reviews/"
+              target="_blank"
+              class="font-weight-bold text-decoration-none"
+            >
+              Read more about Speckle's Live 3D Comments for Distributed Real Time
+              Reviews!
+            </a>
+          </div>
+        </div>
       </v-col>
     </v-row>
     <v-row v-else>
@@ -45,6 +68,7 @@
           v-if="c"
           :comment="c"
           :stream="stream"
+          :stream-id="$route.params.streamId"
           @deleted="handleDeletion"
         />
       </v-col>
@@ -67,17 +91,18 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { setSelectedCommentMetaData } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   name: 'TheComments',
   components: {
     CommentListItem: () => import('@/main/components/comments/CommentListItem.vue'),
-    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
     InfiniteLoading: () => import('vue-infinite-loading')
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-comments', 1)],
@@ -119,11 +144,12 @@ export default {
             totalCount
             cursor
             items {
-              id
-              archived
+              ...CommentFullInfo
             }
           }
         }
+
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'no-cache',
       variables() {
@@ -135,17 +161,22 @@ export default {
       subscribeToMore: {
         document: gql`
           subscription ($streamId: String!) {
-            commentActivity(streamId: $streamId)
+            commentActivity(streamId: $streamId) {
+              type
+              comment {
+                ...CommentFullInfo
+              }
+            }
           }
+          ${COMMENT_FULL_INFO_FRAGMENT}
         `,
         variables() {
           return { streamId: this.$route.params.streamId }
         },
-        updateQuery(prevResult, { subscriptionData }) {
-          if (
-            this.localComments.findIndex((lc) => subscriptionData.id === lc.id) === -1
-          ) {
-            this.localComments.push({ ...subscriptionData.data.commentActivity })
+        updateQuery(_, { subscriptionData }) {
+          const { comment } = subscriptionData.data.commentActivity
+          if (this.localComments.findIndex((lc) => comment.id === lc.id) === -1) {
+            this.localComments.push(comment)
           }
         },
         skip() {
@@ -164,7 +195,7 @@ export default {
   },
   methods: {
     handleDeletion(comment) {
-      this.$store.commit('setCommentSelection', { comment: null })
+      setSelectedCommentMetaData(null)
       const indx = this.localComments.findIndex((lc) => lc.id === comment.id)
       this.localComments.splice(indx, 1)
     },

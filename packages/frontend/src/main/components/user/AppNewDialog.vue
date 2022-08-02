@@ -83,8 +83,8 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
-import { FullServerInfoQuery } from '@/graphql/server'
+import { gql } from '@apollo/client/core'
+import { fullServerInfoQuery } from '@/graphql/server'
 
 export default {
   props: {
@@ -96,7 +96,7 @@ export default {
   apollo: {
     scopes: {
       prefetch: true,
-      query: FullServerInfoQuery,
+      query: fullServerInfoQuery,
       update: (data) => data.serverInfo.scopes
     },
     app: {
@@ -137,7 +137,7 @@ export default {
         (v) => {
           try {
             // eslint-disable-next-line no-unused-vars
-            const x = new URL(v)
+            new URL(v)
             return true
           } catch {
             return 'Url must be valid'

@@ -1,6 +1,11 @@
 <template>
   <div>
-    <div :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`">
+    <div
+      :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`"
+      :style="`transition: all 0.2s ease-in-out; ${
+        highlight ? 'outline: 0.2rem solid #047EFB;' : ''
+      }`"
+    >
       <div class="flex-shrink-0">
         <user-avatar :id="commit.authorId" :size="30" />
       </div>
@@ -51,7 +56,8 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
+import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
 
 export default {
   components: {
@@ -92,6 +98,10 @@ export default {
     links: {
       type: Boolean,
       default: true
+    },
+    highlight: {
+      type: Boolean,
+      default: false
     }
   },
   apollo: {
@@ -104,15 +114,14 @@ export default {
               id
               activity(actionType: "commit_receive", limit: 200) {
                 items {
-                  info
-                  time
-                  userId
-                  message
+                  ...LimitedCommitActivityFields
                 }
               }
             }
           }
         }
+
+        ${limitedCommitActivityFieldsFragment}
       `,
       update: (data) => data.stream.commit.activity,
       variables() {
@@ -160,15 +169,6 @@ export default {
       this.activity.items.forEach((item) => set.add(item.userId))
       return Array.from(set)
     }
-  },
-  watch: {
-    // activity(val) {
-    //   let set = new Set()
-    //   if (val && val.items && val.items.length > 0) {
-    //     val.items.forEach((item) => set.add(item.userId))
-    //     this.receivedUsersUnique = Array.from(set)
-    //   }
-    // }
   },
   methods: {
     goToBranch() {

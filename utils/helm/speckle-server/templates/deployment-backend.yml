@@ -94,6 +94,9 @@ spec:
                 name: "{{ .Values.secretName }}"
                 key: session_secret
 
+          - name: FILE_SIZE_LIMIT_MB
+            value: {{ .Values.file_size_limit_mb | quote }}
+
           # *** Redis ***
           - name: REDIS_URL
             valueFrom:
@@ -107,6 +110,8 @@ spec:
               secretKeyRef:
                 name: {{ .Values.secretName }}
                 key: postgres_url
+          - name: POSTGRES_MAX_CONNECTIONS_SERVER
+            value: {{ .Values.db.maxConnectionsServer | quote }}
 
           - name: PGSSLMODE
             value: "{{ .Values.db.PGSSLMODE }}"
@@ -219,4 +224,27 @@ spec:
           {{- if .Values.server.disable_tracking }}
           - name: DISABLE_TRACKING
             value: "true"
+          {{- end }}
+
+          # Monitoring - Apollo
+          {{- if .Values.server.monitoring.apollo.enabled }}
+          - name: APOLLO_GRAPH_ID
+            value: {{ .Values.server.monitoring.apollo.graph_id }}
+          - name: APOLLO_SCHEMA_REPORTING
+            value: "true"
+          - name: APOLLO_GRAPH_VARIANT
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: APOLLO_SERVER_ID
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: APOLLO_SERVER_PLATFORM
+            value: "kubernetes/deployment"
+          - name: APOLLO_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: apollo_key
           {{- end }}

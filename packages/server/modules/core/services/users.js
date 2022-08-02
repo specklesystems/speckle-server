@@ -2,13 +2,20 @@
 const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
+const {
+  ServerAcl: ServerAclSchema,
+  Users: UsersSchema
+} = require('@/modules/core/dbSchema')
+
 const { saveActivity } = require('@/modules/activitystream/services')
 
-const Users = () => knex('users')
-const Acl = () => knex('server_acl')
+const Users = () => UsersSchema.knex()
+const Acl = () => ServerAclSchema.knex()
 
 const debug = require('debug')
 const { deleteStream } = require('./streams')
+const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
+const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -27,6 +34,19 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
 }
 
 const userByEmailQuery = (email) => Users().whereRaw('lower(email) = lower(?)', [email])
+
+const getUsersBaseQuery = (searchQuery = null) => {
+  const query = Users()
+  if (searchQuery) {
+    query.where((queryBuilder) => {
+      queryBuilder
+        .where('email', 'ILIKE', `%${searchQuery}%`)
+        .orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        .orWhere('company', 'ILIKE', `%${searchQuery}%`)
+    })
+  }
+  return query
+}
 
 module.exports = {
   /*
@@ -84,9 +104,17 @@ module.exports = {
 
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?
-    return { id: await module.exports.createUser(user), email: user.email }
+    return {
+      id: await module.exports.createUser(user),
+      email: user.email,
+      isNewUser: true
+    }
   },
 
+  /**
+   * @param {{userId: string}} param0
+   * @returns {import('@/modules/core/helpers/userHelper').UserRecord | null}
+   */
   async getUserById({ userId }) {
     const user = await Users().where({ id: userId }).select('*').first()
     if (user) delete user.passwordDigest
@@ -108,7 +136,9 @@ module.exports = {
   },
 
   async getUserRole(id) {
-    const { role } = await Acl().where({ userId: id }).select('role').first()
+    const { role } = (await Acl().where({ userId: id }).select('role').first()) || {
+      role: null
+    }
     return role
   },
 
@@ -127,10 +157,13 @@ module.exports = {
     await Users().where({ id }).update({ passwordDigest })
   },
 
+  /**
+   * User search available for normal server users. It's more limited because of the lower access level.
+   */
   async searchUsers(searchQuery, limit, cursor, archived = false) {
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
-      .select('id', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt')
+      .select(...LIMITED_USER_FIELDS)
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
         queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
@@ -185,25 +218,26 @@ module.exports = {
       await deleteStream({ streamId: streams.rows[i].id })
     }
 
+    // Delete all invites (they don't have a FK, so we need to do this manually)
+    await deleteAllUserInvites(id)
+
     return await Users().where({ id }).del()
   },
 
+  /**
+   * Get all users or filter them with the specified searchQuery. This is meant for
+   * server admins, because it exposes the User object (& thus the email).
+   * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
+   */
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
     // sanitize limit
     const maxLimit = 200
     if (limit > maxLimit) limit = maxLimit
 
-    const query = Users()
+    const query = getUsersBaseQuery(searchQuery)
+    query.limit(limit).offset(offset)
 
-    if (searchQuery) {
-      query.where((queryBuilder) => {
-        queryBuilder
-          .where('email', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('name', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('company', 'ILIKE', `%${searchQuery}%`)
-      })
-    }
-    const users = await query.limit(limit).offset(offset)
+    const users = await query
     users.map((user) => delete user.passwordDigest)
     return users
   },
@@ -225,16 +259,7 @@ module.exports = {
   },
 
   async countUsers(searchQuery = null) {
-    const query = Users()
-    if (searchQuery) {
-      query.where((queryBuilder) => {
-        queryBuilder
-          .where('email', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('name', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('company', 'ILIKE', `%${searchQuery}%`)
-      })
-    }
-
+    const query = getUsersBaseQuery(searchQuery)
     const [userCount] = await query.count()
     return parseInt(userCount.count)
   }

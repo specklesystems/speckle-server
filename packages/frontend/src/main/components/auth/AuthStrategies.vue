@@ -19,7 +19,7 @@
             :color="s.color"
             :href="`${s.url}?appId=${appId}&challenge=${challenge}${
               suuid ? '&suuid=' + suuid : ''
-            }${inviteId ? '&inviteId=' + inviteId : ''}`"
+            }${token ? '&token=' + token : ''}`"
           >
             <v-icon small class="mr-5">{{ s.icon }}</v-icon>
             {{ s.name }}
@@ -30,6 +30,7 @@
   </div>
 </template>
 <script>
+import { getInviteTokenFromRoute } from '@/main/lib/auth/services/authService'
 export default {
   name: 'AuthStrategies',
   props: {
@@ -50,20 +51,15 @@ export default {
       default: () => null
     }
   },
-  data() {
-    return {
-      inviteId: null
+  computed: {
+    token() {
+      return getInviteTokenFromRoute(this.$route)
     }
-  },
-  mounted() {
-    const urlParams = new URLSearchParams(window.location.search)
-    const inviteId = urlParams.get('inviteId')
-    this.inviteId = inviteId
   },
   methods: {
     trackSignIn(strategyName) {
       this.$mixpanel.track('Log In', {
-        isInvite: this.inviteId !== null,
+        isInvite: this.token !== null,
         type: 'action',
         provider: strategyName
       })

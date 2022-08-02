@@ -13,6 +13,7 @@ const VERROR_TRASH_PROPS = ['jse_shortmsg', 'jse_cause', 'jse_info']
  * @returns {(e: import('graphql').GraphQLError) => import('graphql').GraphQLFormattedError}
  */
 function buildErrorFormatter(debug) {
+  // TODO: Add support for client-aware errors and obfuscate everything else
   return function (error) {
     const debugMode = debug
     const realError = error.originalError ? error.originalError : error

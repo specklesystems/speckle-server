@@ -7,7 +7,12 @@ const URL = require('url').URL
 const debug = require('debug')
 const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
-const { validateInvite, useInvite } = require('@/modules/serverinvites/services')
+const {
+  validateServerInvite,
+  finalizeInvitedServerRegistration,
+  resolveAuthRedirectPath
+} = require('@/modules/serverinvites/services/inviteProcessingService')
+const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = new OIDCStrategy(
@@ -38,16 +43,12 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     '/auth/azure',
     session,
     sessionStorage,
-    passport.authenticate('azuread-openidconnect', {
-      failureRedirect: '/error?message=Failed to authenticate.'
-    })
+    passportAuthenticate('azuread-openidconnect')
   )
   app.post(
     '/auth/azure/callback',
     session,
-    passport.authenticate('azuread-openidconnect', {
-      failureRedirect: '/error?message=Failed to authenticate.'
-    }),
+    passportAuthenticate('azuread-openidconnect'),
     async (req, res, next) => {
       const serverInfo = await getServerInfo()
 
@@ -87,28 +88,36 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           })
           // ID is used later for verifying access token
           req.user.id = myUser.id
+
+          // process invites
+          if (myUser.isNewUser) {
+            await finalizeInvitedServerRegistration(user.email, myUser.id)
+          }
+
           return next()
         }
 
         // if the server is invite only and we have no invite id, throw.
-        if (serverInfo.inviteOnly && !req.session.inviteId) {
-          throw new Error('This server is invite only. Please provide an invite id.')
+        if (serverInfo.inviteOnly && !req.session.token) {
+          throw new Error(
+            'This server is invite only. Please authenticate yourself through a valid invite link.'
+          )
         }
 
         // validate the invite
-        const validInvite = await validateInvite({
-          id: req.session.inviteId,
-          email: user.email
-        })
-        if (!validInvite) throw new Error('Invalid invite.')
+        const validInvite = await validateServerInvite(user.email, req.session.token)
 
         // create the user
         const myUser = await findOrCreateUser({ user, rawProfile: req.user._json })
+
         // ID is used later for verifying access token
         req.user.id = myUser.id
 
         // use the invite
-        await useInvite({ id: req.session.inviteId, email: user.email })
+        await finalizeInvitedServerRegistration(user.email, myUser.id)
+
+        // Resolve redirect path
+        req.authRedirectPath = resolveAuthRedirectPath(validInvite)
 
         // return to the auth flow
         return next()

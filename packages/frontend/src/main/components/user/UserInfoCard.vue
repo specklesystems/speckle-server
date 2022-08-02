@@ -110,7 +110,9 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
+import { AppLocalStorage } from '@/utils/localStorage'
+
 export default {
   components: {
     VImageInput: () => import('vuetify-image-input/a-la-carte'),
@@ -133,7 +135,7 @@ export default {
   computed: {
     isSelf() {
       if (!this.user) return false
-      return this.user.id === localStorage.getItem('uuid')
+      return this.user.id === AppLocalStorage.get('uuid')
     }
   },
   methods: {

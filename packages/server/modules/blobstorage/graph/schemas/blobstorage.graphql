@@ -1,0 +1,36 @@
+extend type ServerInfo {
+  blobSizeLimitBytes: Int!
+}
+
+extend type Stream {
+  """
+  Get the metadata collection of blobs stored for this stream.
+  """
+  blobs(
+    query: String = null
+    limit: Int = 25
+    cursor: String = null
+  ): BlobMetadataCollection
+
+  blob(id: String!): BlobMetadata
+}
+
+type BlobMetadataCollection {
+  totalCount: Int!
+  totalSize: Int!
+  cursor: String
+  items: [BlobMetadata!]
+}
+
+type BlobMetadata {
+  id: String!
+  streamId: String!
+  userId: String!
+  fileName: String!
+  fileType: String!
+  fileHash: String
+  fileSize: Int
+  uploadStatus: Int!
+  uploadError: String
+  createdAt: DateTime!
+}

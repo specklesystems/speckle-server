@@ -67,6 +67,7 @@ type ActivityCollection {
 }
 
 type Activity {
+  id: ID!
   actionType: String!
   info: JSONObject!
   userId: String!

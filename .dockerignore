@@ -12,6 +12,7 @@ ISSUE_TEMPLATE.md
 .mocharc.js
 readme.md
 **/Dockerfile
+**/.venv
 
 .pnp.*
 .yarn/*

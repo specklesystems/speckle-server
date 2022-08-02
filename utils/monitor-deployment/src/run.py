@@ -110,7 +110,10 @@ def main():
         cur = None
         try:
             t0 = time.time()
-            conn = psycopg2.connect(PG_CONNECTION_STRING)
+            conn = psycopg2.connect(
+                PG_CONNECTION_STRING, 
+                application_name='speckle_monitor_deployment',
+            )
             cur = conn.cursor()
             t1 = time.time()
             tick(cur)
@@ -124,7 +127,7 @@ def main():
             if conn:
                 conn.close()
 
-        time.sleep(60)
+        time.sleep(120)
 
 
 if __name__ == '__main__':

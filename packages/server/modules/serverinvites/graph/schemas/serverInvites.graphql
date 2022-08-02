@@ -1,16 +1,73 @@
-type ServerInvite {
-  id: String!
-  createdAt: DateTime!
+extend type Mutation {
+  """
+  Invite a new user to the speckle server and return the invite ID
+  """
+  serverInviteCreate(input: ServerInviteCreateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+
+  """
+  Invite a new or registered user to the specified stream
+  """
+  streamInviteCreate(input: StreamInviteCreateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+
+  serverInviteBatchCreate(input: [ServerInviteCreateInput!]!): Boolean!
+    @hasRole(role: "server:admin")
+    @hasScope(scope: "users:invite")
+
+  streamInviteBatchCreate(input: [StreamInviteCreateInput!]!): Boolean!
+    @hasRole(role: "server:admin")
+    @hasScope(scope: "users:invite")
+
+  """
+  Accept or decline a stream invite
+  """
+  streamInviteUse(accept: Boolean!, streamId: String!, token: String!): Boolean!
+    @hasRole(role: "server:user")
+
+  """
+  Cancel a pending stream invite. Can only be invoked by a stream owner.
+  """
+  streamInviteCancel(streamId: String!, inviteId: String!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+
+  """
+  Re-send a pending invite
+  """
+  inviteResend(inviteId: String!): Boolean!
+    @hasRole(role: "server:admin")
+    @hasScope(scope: "users:invite")
+
+  """
+  Delete a pending invite
+  """
+  inviteDelete(inviteId: String!): Boolean!
+    @hasRole(role: "server:admin")
+    @hasScope(scope: "users:invite")
 }
 
-extend type Mutation {
-  serverInviteCreate(input: ServerInviteCreateInput!): Boolean
-    @hasRole(role: "server:user")
-    @hasScope(scope: "users:invite")
+extend type Query {
+  """
+  Look for an invitation to a stream, for the current user (authed or not). If token
+  isn't specified, the server will look for any valid invite.
+  """
+  streamInvite(streamId: String!, token: String): PendingStreamCollaborator
 
-  streamInviteCreate(input: StreamInviteCreateInput!): Boolean
+  """
+  Get all invitations to streams that the active user has
+  """
+  streamInvites: [PendingStreamCollaborator!]!
     @hasRole(role: "server:user")
-    @hasScope(scope: "users:invite")
+    @hasScope(scope: "streams:read")
+}
+
+type ServerInvite {
+  id: String!
+  invitedBy: LimitedUser!
+  email: String!
 }
 
 input ServerInviteCreateInput {
@@ -19,7 +76,12 @@ input ServerInviteCreateInput {
 }
 
 input StreamInviteCreateInput {
-  email: String!
+  email: String
+  userId: String
+  streamId: String!
   message: String
-  streamId: String
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
 }

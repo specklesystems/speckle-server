@@ -15,13 +15,12 @@
         </v-col>
         <v-col cols="11" sm="8" md="6" lg="4" xl="3">
           <router-view></router-view>
+          <!-- Temporary revert of our no v-html policy: -->
           <p
             v-if="serverInfo"
             class="caption text-center mt-2"
             v-html="serverInfo.termsOfService"
-          >
-            <!-- Temporary revert of our no v-html policy -->
-          </p>
+          ></p>
         </v-col>
       </v-row>
     </v-container>
@@ -29,7 +28,9 @@
 </template>
 <script>
 import LoginBlurb from '@/main/components/auth/LoginBlurb.vue'
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainServerInfoQuery } from '@/graphql/server'
+
+// TODO: Need to fix the v-html usage ASAP
 
 export default {
   name: 'TheAuth',
@@ -56,7 +57,7 @@ export default {
   },
   apollo: {
     serverInfo: {
-      query: MainServerInfoQuery
+      query: mainServerInfoQuery
     }
   },
   mounted() {

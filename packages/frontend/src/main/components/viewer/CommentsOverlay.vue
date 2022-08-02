@@ -14,7 +14,7 @@
     class="d-flex align-center justify-center no-mouse"
   >
     <div
-      v-show="showComments && !$store.state.addingComment"
+      v-show="showComments && !viewerState.addingComment"
       style="
         width: 100%;
         height: 100vh;
@@ -28,12 +28,11 @@
       <div
         v-for="comment in activeComments"
         v-show="isVisible(comment)"
+        :id="`comment-${comment.id}`"
         :key="comment.id"
         :ref="`comment-${comment.id}`"
-        :class="`absolute-pos rounded-xl no-mouse `"
-        :style="`transition: opacity 0.2s ease; z-index:${
-          comment.expanded ? '20' : '10'
-        }; ${
+        :class="`comment-bubble absolute-pos rounded-xl no-mouse `"
+        :style="` z-index:${comment.expanded ? '20' : '10'}; ${
           hasExpandedComment &&
           !comment.expanded &&
           !comment.hovered &&
@@ -52,8 +51,7 @@
               small
               icon
               :class="`elevation-5 pa-0 ma-0 mouse ${
-                $store.state.emojis.indexOf(comment.text.split(' ')[0]) != -1 &&
-                !comment.expanded
+                getLeadingEmoji(comment) && !comment.expanded
                   ? 'emoji-btn transparent elevation-0'
                   : ''
               }
@@ -66,14 +64,12 @@
                 comment.expanded ? collapseComment(comment) : expandComment(comment)
               "
             >
-              <template
-                v-if="$store.state.emojis.indexOf(comment.text.split(' ')[0]) == -1"
-              >
+              <template v-if="!getLeadingEmoji(comment)">
                 <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
               </template>
               <template v-else-if="!comment.expanded">
                 <span class="text-h5">
-                  {{ comment.text.split(' ')[0] }}
+                  {{ getLeadingEmoji(comment) }}
                 </span>
               </template>
               <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
@@ -104,23 +100,27 @@
       <!-- Comment Threads -->
       <div
         v-for="comment in activeComments"
-        v-show="isVisible(comment)"
+        :id="`commentcard-${comment.id}`"
         :key="comment.id + '-card'"
         :ref="`commentcard-${comment.id}`"
-        :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
+        :class="`comment-thread simple-scrollbar hover-bg absolute-pos rounded-xl overflow-y-auto ${
           comment.hovered && false ? 'background elevation-5' : ''
         }`"
-        :style="`z-index:${comment.expanded ? '20' : '10'};`"
+        :style="{
+          zIndex: comment.expanded ? 20 : 10,
+          opacity: comment.expanded ? '1' : '0',
+          visibility: comment.expanded ? 'visible' : 'hidden'
+        }"
         @mouseenter="comment.hovered = true"
         @mouseleave="comment.hovered = false"
       >
         <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
         <v-fade-transition>
-          <div v-show="comment.expanded">
+          <div class="position:relative">
             <comment-thread-viewer
               :comment="comment"
               @bounce="bounceComment"
-              @refresh-layout="updateCommentBubbles()"
+              @refresh-layout="onThreadRefreshLayout"
               @close="collapseComment"
               @deleted="handleDeletion"
               @add-resources="(e) => $emit('add-resources', e)"
@@ -169,8 +169,22 @@
 </template>
 <script>
 import * as THREE from 'three'
-import debounce from 'lodash/debounce'
-import gql from 'graphql-tag'
+import { debounce, throttle } from 'lodash'
+import { gql } from '@apollo/client/core'
+import { VIEWER_UPDATE_THROTTLE_TIME } from '@/main/lib/viewer/comments/commentsHelper'
+import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
+import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
+import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import {
+  resetFilter,
+  setFilterDirectly,
+  setPreventCommentCollapse,
+  setSelectedCommentMetaData,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
@@ -178,6 +192,9 @@ export default {
     CommentsViewerNavbar: () =>
       import('@/main/components/comments/CommentsViewerNavbar')
   },
+  mixins: [
+    buildResizeHandlerMixin({ shouldThrottle: true, wait: VIEWER_UPDATE_THROTTLE_TIME })
+  ],
   apollo: {
     comments: {
       query: gql`
@@ -186,31 +203,19 @@ export default {
             totalCount
             cursor
             items {
-              id
-              authorId
-              text
-              createdAt
-              updatedAt
-              viewedAt
-              archived
-              data
-              resources {
-                resourceId
-                resourceType
-              }
-              replies {
-                totalCount
-              }
+              ...CommentFullInfo
             }
           }
         }
+
+        ${COMMENT_FULL_INFO_FRAGMENT}
       `,
       fetchPolicy: 'no-cache',
       variables() {
         const resourceArr = [
           {
-            resourceType: this.$resourceType(this.$route.params.resourceId),
-            resourceId: this.$route.params.resourceId
+            resourceType: this.$resourceType(this.resourceId),
+            resourceId: this.resourceId
           }
         ]
         if (this.$route.query.overlay) {
@@ -223,19 +228,24 @@ export default {
         }
 
         return {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           resources: resourceArr
         }
       },
       result({ data }) {
         if (!data) return
+
+        // Only reason why it's OK to mutate apollo results here, is because
+        // of the 'no-cache' fetchPolicy, which means that none of the data here is actually
+        // mutating the Apollo Cache
         for (const c of data.comments.items) {
           c.expanded = false
           c.hovered = false
           c.bouncing = false
           if (
             this.localComments.findIndex((lc) => c.id === lc.id) === -1 &&
-            !c.archived
+            !c.archived &&
+            c.data.location
           ) {
             this.localComments.push({ ...c })
           }
@@ -245,29 +255,31 @@ export default {
       subscribeToMore: {
         document: gql`
           subscription ($streamId: String!, $resourceIds: [String]) {
-            commentActivity(streamId: $streamId, resourceIds: $resourceIds)
+            commentActivity(streamId: $streamId, resourceIds: $resourceIds) {
+              type
+              comment {
+                ...CommentFullInfo
+              }
+            }
           }
+          ${COMMENT_FULL_INFO_FRAGMENT}
         `,
         variables() {
-          let resIds = [this.$route.params.resourceId]
+          let resIds = [this.resourceId]
           if (this.$route.query.overlay)
             resIds = [...resIds, ...this.$route.query.overlay.split(',')]
           return {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             resourceIds: resIds
           }
         },
         skip() {
           return !this.$loggedIn()
         },
-        updateQuery(prevResult, { subscriptionData }) {
-          if (
-            !subscriptionData ||
-            !subscriptionData.data ||
-            !subscriptionData.data.commentActivity
-          )
-            return
-          const newComment = subscriptionData.data.commentActivity
+        updateQuery(_, { subscriptionData }) {
+          if (!subscriptionData.data?.commentActivity) return
+
+          const { comment: newComment, type } = subscriptionData.data.commentActivity
 
           newComment.expanded = false
           newComment.hovered = false
@@ -278,13 +290,15 @@ export default {
 
           newComment.archived = false
 
-          if (subscriptionData.data.commentActivity.eventType === 'comment-added') {
-            if (prevResult.comments.items.find((c) => c.id === newComment.id)) {
+          if (type === 'comment-added') {
+            if (this.localComments.find((c) => c.id === newComment.id)) {
               return
             }
-            if (!newComment.archived) this.localComments.push(newComment)
+            if (!newComment.archived && newComment.data.location)
+              this.localComments.push(newComment)
 
             setTimeout(() => {
+              // console.log('updateQuery timeout')
               this.updateCommentBubbles()
               this.bounceComment(newComment.id)
             }, 10)
@@ -292,6 +306,25 @@ export default {
         }
       }
     }
+  },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          addingComment
+          viewerBusy
+          preventCommentCollapse
+          emojis
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState, streamId, resourceId }
   },
   data() {
     return {
@@ -326,7 +359,7 @@ export default {
     if (this.$route.query.cId) {
       this.openCommentOnInit = this.$route.query.cId
       this.commentIntervalChecker = window.setInterval(() => {
-        if (this.$store.state.viewerBusy || this.$apollo.loading) return
+        if (this.viewerState.viewerBusy || this.$apollo.loading) return
         this.expandComment({ id: this.openCommentOnInit })
         this.openCommentOnInit = null
         const q = { ...this.$route.query }
@@ -338,30 +371,57 @@ export default {
         window.clearInterval(this.commentIntervalChecker)
       }, 2000)
     }
-    window.__viewer.on(
-      'select',
-      debounce(
-        function () {
-          // prevents comment collapse if filters are reset (that triggers a deselect event from the viewer)
-          if (this.$store.state.preventCommentCollapse) {
-            this.$store.commit('setPreventCommentCollapse', { value: false })
-            return
-          }
-          for (const c of this.localComments) {
-            this.collapseComment(c)
-          }
-        }.bind(this),
-        10
-      )
-    )
-    window.__viewer.cameraHandler.controls.addEventListener('update', () =>
+
+    this.viewerSelectHandler = debounce(() => {
+      // prevents comment collapse if filters are reset (that triggers a deselect event from the viewer)
+      if (this.viewerState.preventCommentCollapse) {
+        setPreventCommentCollapse(false)
+        return
+      }
+      for (const c of this.localComments) {
+        this.collapseComment(c)
+      }
+    }, 10)
+    this.viewer.on('select', this.viewerSelectHandler)
+
+    // Throttling update, cause it happens way too often and triggers expensive DOM updates
+    // Smoothing out the animation with CSS transitions (check style)
+    this.viewerControlsUpdateHandler = throttle(() => {
+      // console.log('cameraHandler.controls update')
       this.updateCommentBubbles()
+    }, VIEWER_UPDATE_THROTTLE_TIME)
+    this.viewer.cameraHandler.controls.addEventListener(
+      'update',
+      this.viewerControlsUpdateHandler
     )
     setTimeout(() => {
+      // console.log('mounted timeout')
       this.updateCommentBubbles()
     }, 1000)
   },
+  beforeDestroy() {
+    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.cameraHandler.controls.removeEventListener(
+      'update',
+      this.viewerControlsUpdateHandler
+    )
+    window.clearInterval(this.commentIntervalChecker)
+  },
   methods: {
+    onThreadRefreshLayout() {
+      // console.log('thread refresh layout')
+      this.updateCommentBubbles()
+    },
+    getLeadingEmoji(comment) {
+      const emojiWhitelist = this.viewerState.emojis
+      const commentPureText = documentToBasicString(comment.text.doc, 1)
+      const emojiCandidate = commentPureText.split(' ')[0]
+      return emojiWhitelist.includes(emojiCandidate) ? emojiCandidate : null
+    },
+    onWindowResize() {
+      // console.log('on window resize')
+      this.updateCommentBubbles()
+    },
     isUnread(comment) {
       return new Date(comment.updatedAt) - new Date(comment.viewedAt) > 0
     },
@@ -395,14 +455,16 @@ export default {
       for (const c of this.localComments) {
         if (c.id === comment.id) {
           c.preventAutoClose = true
-          this.$store.commit('setCommentSelection', { comment: c })
+          setSelectedCommentMetaData(c)
           this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
+            // console.log('expandComment 200 setTimeout')
             this.updateCommentBubbles()
           }, 200)
           setTimeout(() => {
             // prevents auto closing from camera moving to comment pow
+            // console.log('expandComment 1000 setTimeout')
             c.preventAutoClose = false
             this.updateCommentBubbles()
           }, 1000)
@@ -415,35 +477,38 @@ export default {
       for (const c of this.localComments) {
         if (c.id === comment.id && c.expanded) {
           c.expanded = false
-          if (c.data.filters) this.$store.commit('resetFilter')
-          if (c.data.sectionBox) window.__viewer.sectionBox.off()
-          this.$store.commit('setCommentSelection', { comment: null })
+          if (c.data.filters) resetFilter()
+          if (c.data.sectionBox) this.viewer.sectionBox.off()
+
+          setSelectedCommentMetaData(null)
         }
       }
     },
     setCommentPow(comment) {
       const camToSet = comment.data.camPos
       if (camToSet[6] === 1) {
-        window.__viewer.toggleCameraProjection()
+        this.viewer.toggleCameraProjection()
       }
-      window.__viewer.interactions.setLookAt(
+      this.viewer.interactions.setLookAt(
         { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
         { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
       )
       if (camToSet[6] === 1) {
-        window.__viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       }
       if (comment.data.filters) {
-        this.$store.commit('setFilterDirect', { filter: comment.data.filters })
+        setFilterDirectly({
+          filter: comment.data.filters
+        })
       } else {
-        this.$store.commit('resetFilter')
+        resetFilter()
       }
 
       if (comment.data.sectionBox) {
-        window.__viewer.sectionBox.setBox(comment.data.sectionBox, 0)
-        window.__viewer.sectionBox.on()
+        this.viewer.sectionBox.setBox(comment.data.sectionBox, 0)
+        this.viewer.sectionBox.on()
       } else {
-        window.__viewer.sectionBox.off()
+        this.viewer.sectionBox.off()
       }
     },
     async handleDeletion(comment) {
@@ -453,8 +518,9 @@ export default {
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
+      // console.log('updateCommentBubbles', new Date().toISOString())
       if (!this.comments) return
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       for (const comment of this.localComments) {
         // get html elements
@@ -564,12 +630,13 @@ export default {
   }
 }
 </script>
-<style scoped>
->>> .emoji-btn {
+<style scoped lang="scss">
+:deep(.emoji-btn) {
   background-color: initial !important;
-}
->>> .emoji-btn .v-btn__content {
-  color: initial;
+
+  .v-btn__content {
+    color: initial;
+  }
 }
 
 .absolute-pos {
@@ -602,5 +669,15 @@ export default {
 }
 .mouse {
   pointer-events: auto;
+}
+
+.comment-bubble,
+.comment-thread {
+  $timing: 0.1s;
+  $visibilityTiming: 0.2s;
+
+  transition: left $timing linear, right $timing linear, top $timing linear,
+    bottom $timing linear, opacity $visibilityTiming ease,
+    visibility $visibilityTiming ease;
 }
 </style>
