@@ -14,7 +14,7 @@ export interface NodeData {
 
 export class WorldTree {
   private static instance: WorldTree
-  private static renderTreeInstance: RenderTree
+  private static renderTreeInstances: { [id: string]: RenderTree } = {}
 
   private constructor() {
     this.tree = new TreeModel()
@@ -23,21 +23,35 @@ export class WorldTree {
   public static getInstance(): WorldTree {
     if (!WorldTree.instance) {
       WorldTree.instance = new WorldTree()
+      WorldTree.instance._root = WorldTree.getInstance().parse({
+        id: 'MOTHERSHIP',
+        raw: {},
+        atomic: true,
+        children: [],
+        renderView: null
+      })
     }
 
     return WorldTree.instance
   }
 
-  public static getRenderTree(): RenderTree {
+  public static getRenderTree(subtreeId?: string): RenderTree {
     if (!WorldTree.getInstance()._root) {
       console.error(`WorldTree not initialised`)
       return null
     }
-    if (!WorldTree.renderTreeInstance) {
-      WorldTree.renderTreeInstance = new RenderTree(WorldTree.getInstance()._root)
+    if (!subtreeId) {
+      console.warn(`No subtree provided, using Root`)
     }
 
-    return WorldTree.renderTreeInstance
+    const id = subtreeId ? subtreeId : WorldTree.getInstance().root.model.id
+    if (!WorldTree.renderTreeInstances[id]) {
+      WorldTree.renderTreeInstances[id] = new RenderTree(
+        WorldTree.getInstance().findId(id)
+      )
+    }
+
+    return WorldTree.renderTreeInstances[id]
   }
 
   private tree: TreeModel
@@ -51,19 +65,30 @@ export class WorldTree {
     return this.tree.parse(model)
   }
 
+  public addSubtree(node: TreeNode) {
+    console.warn(`Adding subtree with id: ${node.model.id}`)
+    this._root.addChild(node)
+  }
+
   public addNode(node: TreeNode, parent: TreeNode) {
     if (parent === null) {
-      this._root = node
+      console.error(`Invalid parent node!`)
       return
     }
     parent.addChild(node)
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
+    if (!node) {
+      console.warn(`Root will be used for searching. You might not want that`)
+    }
     return (node ? node : this.root).all(predicate)
   }
 
   public findId(id: string, node?: TreeNode) {
+    if (!node) {
+      console.warn(`Root will be used for searching. You might not want that`)
+    }
     return (node ? node : this.root).first((_node: TreeNode) => {
       return _node.model.id === id
     })
@@ -73,14 +98,24 @@ export class WorldTree {
     return node.getPath().reverse().slice(1) // We skip the node itself
   }
 
-  public walk(predicate: SearchPredicate): void {
+  public walk(predicate: SearchPredicate, node?: TreeNode): void {
+    if (!node) {
+      console.warn(`Root will be used for searching. You might not want that`)
+    }
     this._root.walk(predicate)
   }
 
   public purge() {
-    WorldTree.renderTreeInstance = null
+    Object.keys(WorldTree.renderTreeInstances).forEach(
+      (key) => delete WorldTree.renderTreeInstances[key]
+    )
     this._root.children.length = 0
-    this._root = null
     this.tree = new TreeModel()
+    this._root = WorldTree.getInstance().parse({
+      id: 'MOTHERSHIP',
+      raw: {},
+      atomic: true,
+      children: []
+    })
   }
 }

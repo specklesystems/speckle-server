@@ -12,13 +12,15 @@ import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
 
 export default class PointBatch implements Batch {
   public id: string
+  public subtreeId: string
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Points
 
-  public constructor(id: string, renderViews: NodeRenderView[]) {
+  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
+    this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
 

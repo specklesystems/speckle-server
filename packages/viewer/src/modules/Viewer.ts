@@ -93,19 +93,13 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.frame()
     this.onWindowResize()
-    // this.interactions.zoomExtents()
     this.needsRender = true
 
     this.inProgressOperations = 0
 
     this.on('load-complete', (url) => {
-      WorldTree.getInstance().walk((node: TreeNode) => {
-        node.model.raw.__importedUrl = url
-        return true
-      })
-
-      WorldTree.getRenderTree().buildRenderTree()
-      this.speckleRenderer.addRenderTree()
+      WorldTree.getRenderTree(url).buildRenderTree()
+      this.speckleRenderer.addRenderTree(url)
       this.zoomExtents()
 
       console.warn('Built stuff')
@@ -217,8 +211,11 @@ export class Viewer extends EventEmitter implements IViewer {
     }
 
     await this.applyFilter(null)
-    this.speckleRenderer.removeRenderTree()
-    WorldTree.getRenderTree().purge()
+    WorldTree.getInstance().root.children.forEach((node) => {
+      this.speckleRenderer.removeRenderTree(node.model.id)
+      WorldTree.getRenderTree().purge()
+    })
+
     WorldTree.getInstance().purge()
 
     return

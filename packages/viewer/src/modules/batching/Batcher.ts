@@ -20,8 +20,12 @@ export default class Batcher {
     this.materials.createDefaultMaterials()
   }
 
-  public makeBatches(batchType: GeometryType, ...speckleType: SpeckleType[]) {
-    const rendeViews = WorldTree.getRenderTree()
+  public makeBatches(
+    subtreeId: string,
+    batchType: GeometryType,
+    ...speckleType: SpeckleType[]
+  ) {
+    const rendeViews = WorldTree.getRenderTree(subtreeId)
       .getAtomicRenderViews(...speckleType)
       .sort((a, b) => {
         if (a.renderMaterialHash === 0) return -1
@@ -61,16 +65,16 @@ export default class Batcher {
       const batchID = generateUUID()
       switch (batchType) {
         case GeometryType.MESH:
-          this.batches[batchID] = new MeshBatch(batchID, batch)
+          this.batches[batchID] = new MeshBatch(batchID, subtreeId, batch)
           break
         case GeometryType.LINE:
-          this.batches[batchID] = new LineBatch(batchID, batch)
+          this.batches[batchID] = new LineBatch(batchID, subtreeId, batch)
           break
         case GeometryType.POINT:
-          this.batches[batchID] = new PointBatch(batchID, batch)
+          this.batches[batchID] = new PointBatch(batchID, subtreeId, batch)
           break
         case GeometryType.POINT_CLOUD:
-          this.batches[batchID] = new PointBatch(batchID, batch)
+          this.batches[batchID] = new PointBatch(batchID, subtreeId, batch)
           break
       }
 
@@ -92,12 +96,13 @@ export default class Batcher {
     }
   }
 
-  public purgeBatches() {
+  public purgeBatches(subtreeId: string) {
     for (const k in this.batches) {
-      this.batches[k].purge()
-      delete this.batches[k]
+      if (this.batches[k].subtreeId === subtreeId) {
+        this.batches[k].purge()
+        delete this.batches[k]
+      }
     }
-    this.materials.purge()
   }
 
   public getRenderView(batchId: string, index: number) {

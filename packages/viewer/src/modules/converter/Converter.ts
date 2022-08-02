@@ -65,7 +65,12 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
    */
-  public async traverse(obj, callback: ConverterResultDelegate, node: TreeNode = null) {
+  public async traverse(
+    objectURL: string,
+    obj,
+    callback: ConverterResultDelegate,
+    node: TreeNode = null
+  ) {
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -79,9 +84,9 @@ export default class Coverter {
       for (const element of obj) {
         if (typeof element !== 'object') break // exit early for non-object based arrays
         if (this.activePromises >= this.maxChildrenPromises) {
-          await this.traverse(element, callback, node)
+          await this.traverse(objectURL, element, callback, node)
         } else {
-          const childPromise = this.traverse(element, callback, node)
+          const childPromise = this.traverse(objectURL, element, callback, node)
           childrenConversionPromisses.push(childPromise)
         }
       }
@@ -92,13 +97,14 @@ export default class Coverter {
     }
 
     const childNode: TreeNode = WorldTree.getInstance().parse({
-      id: this.getNodeId(obj),
+      id: !node ? objectURL : this.getNodeId(obj),
       raw: Object.assign({}, obj),
       atomic: true,
       children: []
     })
+
     if (node === null) {
-      WorldTree.getInstance().addNode(childNode, node)
+      WorldTree.getInstance().addSubtree(childNode)
       // console.warn(`Added root node with id ${obj.id}`)
     } else {
       WorldTree.getInstance().addNode(childNode, node)
@@ -165,7 +171,7 @@ export default class Coverter {
       if (obj.speckle_type.toLowerCase().includes('builtelements')) {
         if (obj['elements']) {
           childrenConversionPromisses.push(
-            this.traverse(obj['elements'], callback, childNode)
+            this.traverse(objectURL, obj['elements'], callback, childNode)
           )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
@@ -187,9 +193,9 @@ export default class Coverter {
       if (typeof target[prop] !== 'object' || target[prop] === null) continue
 
       if (this.activePromises >= this.maxChildrenPromises) {
-        await this.traverse(target[prop], callback, childNode)
+        await this.traverse(objectURL, target[prop], callback, childNode)
       } else {
-        const childPromise = this.traverse(target[prop], callback, childNode)
+        const childPromise = this.traverse(objectURL, target[prop], callback, childNode)
         childrenConversionPromisses.push(childPromise)
       }
     }

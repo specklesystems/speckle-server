@@ -19,6 +19,7 @@ import { Batch, BatchUpdateRange } from './Batch'
 
 export default class LineBatch implements Batch {
   public id: string
+  public subtreeId: string
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry | LineSegmentsGeometry
   public batchMaterial: SpeckleLineMaterial
@@ -26,8 +27,9 @@ export default class LineBatch implements Batch {
   public colorBuffer: InstancedInterleavedBuffer
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
-  public constructor(id: string, renderViews: NodeRenderView[]) {
+  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
+    this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
 

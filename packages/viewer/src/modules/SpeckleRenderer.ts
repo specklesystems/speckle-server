@@ -35,6 +35,7 @@ export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
   public scene: Scene
+  private rootGroup: Group
   private batcher: Batcher
   private intersections: Intersections
   private input: Input
@@ -71,11 +72,10 @@ export default class SpeckleRenderer {
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this.scene = new Scene()
-    if (this.SHOW_HELPERS) {
-      const helpers = new Group()
-      helpers.name = 'Helpers'
-      this.scene.add(helpers)
-    }
+    this.rootGroup = new Group()
+    this.rootGroup.name = 'ContentGroup'
+    this.scene.add(this.rootGroup)
+
     this.batcher = new Batcher()
     this.intersections = new Intersections()
     this.viewer = viewer
@@ -105,6 +105,25 @@ export default class SpeckleRenderer {
     this.input.on('object-clicked', this.onObjectClick.bind(this))
     this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on('object-doubleclicked', this.onObjectDoubleClick.bind(this))
+
+    this.addDirectLights()
+    if (this.SHOW_HELPERS) {
+      const helpers = new Group()
+      helpers.name = 'Helpers'
+      this.scene.add(helpers)
+
+      const sceneBoxHelper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
+      sceneBoxHelper.name = 'SceneBoxHelper'
+      helpers.add(sceneBoxHelper)
+
+      const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
+      dirLightHelper.name = 'DirLightHelper'
+      helpers.add(dirLightHelper)
+
+      const camHelper = new CameraHelper(this.sun.shadow.camera)
+      camHelper.name = 'CamHelper'
+      helpers.add(this.camHelper)
+    }
   }
 
   public update(deltaTime: number) {
@@ -116,9 +135,15 @@ export default class SpeckleRenderer {
     this.renderer.render(this.scene, camera)
   }
 
-  public addRenderTree() {
-    this.batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh, SpeckleType.Brep)
+  public addRenderTree(subtreeId: string) {
     this.batcher.makeBatches(
+      subtreeId,
+      GeometryType.MESH,
+      SpeckleType.Mesh,
+      SpeckleType.Brep
+    )
+    this.batcher.makeBatches(
+      subtreeId,
       GeometryType.LINE,
       SpeckleType.Line,
       SpeckleType.Curve,
@@ -128,17 +153,21 @@ export default class SpeckleRenderer {
       SpeckleType.Circle,
       SpeckleType.Ellipse
     )
-    this.batcher.makeBatches(GeometryType.POINT, SpeckleType.Point)
-    this.batcher.makeBatches(GeometryType.POINT, SpeckleType.Pointcloud)
+    this.batcher.makeBatches(
+      subtreeId,
+      GeometryType.POINT,
+      SpeckleType.Point,
+      SpeckleType.Pointcloud
+    )
 
-    const contentGroup = new Group()
-    contentGroup.name = 'ContentGroup'
-    this.scene.add(contentGroup)
+    const subtreeGroup = new Group()
+    subtreeGroup.name = subtreeId
+    this.rootGroup.add(subtreeGroup)
 
     for (const k in this.batcher.batches) {
       const batch = this.batcher.batches[k]
       const batchRenderable = batch.renderObject
-      contentGroup.add(this.batcher.batches[k].renderObject)
+      subtreeGroup.add(this.batcher.batches[k].renderObject)
       if ((batchRenderable as Mesh).isMesh) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
@@ -146,21 +175,18 @@ export default class SpeckleRenderer {
         batchRenderable.receiveShadow = true
       }
     }
-    if (this.SHOW_HELPERS) {
-      const helper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
-      this.scene.getObjectByName('Helpers').add(helper)
-    }
 
-    this.addDirectLights()
+    this.updateDirectLights(0.47, 0)
+    this.updateHelpers()
   }
 
-  public removeRenderTree() {
-    this.scene.remove(this.scene.getObjectByName('ContentGroup'))
-    this.batcher.purgeBatches()
+  public removeRenderTree(subtreeId: string) {
+    this.rootGroup.remove(this.scene.getObjectByName(subtreeId))
+    this.batcher.purgeBatches(subtreeId)
     this.scene.remove(this.sun, this.sunTarget)
-    if (this.SHOW_HELPERS) {
-      this.scene.remove(this.scene.getObjectByName('Helpers'))
-    }
+    // if (this.SHOW_HELPERS) {
+    //   this.scene.remove(this.scene.getObjectByName('Helpers'))
+    // }
   }
 
   public clearFilter() {
@@ -218,14 +244,6 @@ export default class SpeckleRenderer {
     this.scene.add(this.sunTarget)
     this.sunTarget.position.copy(this.sceneCenter)
     this.sun.target = this.sunTarget
-    if (this.SHOW_HELPERS) {
-      const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
-      this.scene.getObjectByName('Helpers').add(dirLightHelper)
-      this.camHelper = new CameraHelper(this.sun.shadow.camera)
-      this.scene.getObjectByName('Helpers').add(this.camHelper)
-    }
-
-    this.updateDirectLights(0.47, 0)
   }
 
   public updateDirectLights(phi: number, theta: number, radiusOffset = 0) {
@@ -279,8 +297,15 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
-    if (this.SHOW_HELPERS) this.camHelper.update()
-    // console.log(lightSpaceBox.min, lightSpaceBox.max)
+  }
+
+  private updateHelpers() {
+    if (this.SHOW_HELPERS) {
+      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+        this.sceneBox
+      )
+    }
   }
 
   private onObjectClick(e) {

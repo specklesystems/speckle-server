@@ -16,7 +16,7 @@ export default class ViewerObjectLoader {
 
   private emiter: EventEmitter
 
-  public objectUrl(): string {
+  public get objectUrl(): string {
     return this._objectUrl
   }
 
@@ -84,7 +84,7 @@ export default class ViewerObjectLoader {
       await this.converter.asyncPause()
       if (first) {
         // console.log(obj)
-        firstObjectPromise = this.converter.traverse(obj, async () => {
+        firstObjectPromise = this.converter.traverse(this.objectUrl, obj, async () => {
           await this.converter.asyncPause()
           // objectWrapper.meta.__importedUrl = this.objectUrl
           viewerLoads++

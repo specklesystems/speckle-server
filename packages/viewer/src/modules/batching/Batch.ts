@@ -11,6 +11,7 @@ export enum GeometryType {
 
 export interface Batch {
   id: string
+  subtreeId: string
   renderViews: NodeRenderView[]
   batchMaterial: Material
   renderObject: Object3D
