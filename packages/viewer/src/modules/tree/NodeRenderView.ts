@@ -7,6 +7,7 @@ export interface RenderMaterial {
   id: string
   color: number
   opacity: number
+  vertexColors: boolean
 }
 
 export interface DisplayStyle {

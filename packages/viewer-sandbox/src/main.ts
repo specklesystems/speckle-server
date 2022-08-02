@@ -39,4 +39,6 @@ sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 sandbox.makeFilteringUI()
 // Load demo object
-sandbox.loadUrl('https://speckle.xyz/streams/1ce562e99a/commits/6fa28a5a0f')
+sandbox.loadUrl(
+  'https://speckle.xyz/streams/1c17f17bec/commits/44c1d59787?c=%5B837.71176,649.65785,206.47337,16.8377,146.34869,-215.2331,0,1%5D'
+)

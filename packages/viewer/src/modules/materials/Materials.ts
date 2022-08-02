@@ -41,7 +41,8 @@ export default class Materials {
         color: node.model.raw.renderMaterial.diffuse,
         opacity: node.model.raw.renderMaterial.opacity
           ? node.model.raw.renderMaterial.opacity
-          : 1
+          : 1,
+        vertexColors: node.model.raw.colors && node.model.raw.colors.length > 0
       }
     }
     return renderMaterial
@@ -267,7 +268,8 @@ export default class Materials {
         roughness: 1,
         metalness: 0,
         opacity: materialData.opacity,
-        side: DoubleSide // TBD
+        side: DoubleSide, // TBD
+        vertexColors: materialData.vertexColors
         // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
