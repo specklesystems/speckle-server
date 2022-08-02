@@ -8,49 +8,21 @@ workflows:
       - test-server:
           filters:
             tags:
-              # run tests for any tags
+              # run tests for anything, including any tags
               only: /.*/
 
       - get-version:
-          filters: &filters-build-and-publish
+          filters:
             tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
-            branches:
-              only:
-                - main
-
-      - docker-build-server:
-          filters: &filters-build-only
-            tags:
-              # run tests for any tags
+              # get version for anything, including any tags
               only: /.*/
-            branches:
-              # for any branch except main, where we will instead run build & publish
-              ignore:
-                - main
-
-      - docker-build-frontend:
-          filters: *filters-build-only
-
-      - docker-build-webhooks:
-          filters: *filters-build-only
-
-      - docker-build-file-imports:
-          filters: *filters-build-only
-
-      - docker-build-previews:
-          filters: *filters-build-only
-
-      - docker-build-test-container:
-          filters: *filters-build-only
-
-      - docker-build-monitor-container:
-          filters: *filters-build-only
 
       - docker-build-and-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: *filters-build-and-publish
+          filters: &filters-build-and-publish
+            tags:
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
             - test-server
             - get-version
@@ -111,11 +83,49 @@ workflows:
       - publish-npm:
           filters:
             tags:
-              only: *filters-tag
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
               ignore: /.*/
           context:
             - npm-registry
+          requires:
+            - get-version
+
+      - docker-build-server:
+          filters: &filters-build-only
+            tags:
+              # do not run a build job if the build-and-publish job will instead be run
+              ignore: *filters-tag
+          requires:
+            - get-version
+
+      - docker-build-frontend:
+          filters: *filters-build-only
+          requires:
+            - get-version
+
+      - docker-build-webhooks:
+          filters: *filters-build-only
+          requires:
+            - get-version
+
+      - docker-build-file-imports:
+          filters: *filters-build-only
+          requires:
+            - get-version
+
+      - docker-build-previews:
+          filters: *filters-build-only
+          requires:
+            - get-version
+
+      - docker-build-test-container:
+          filters: *filters-build-only
+          requires:
+            - get-version
+
+      - docker-build-monitor-container:
+          filters: *filters-build-only
           requires:
             - get-version
 

@@ -15,14 +15,13 @@ echo "${IMAGE_VERSION_TAG}"
 
 export DOCKER_BUILDKIT=1
 
-docker build --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" -t "${DOCKER_IMAGE_TAG}:${CIRCLE_SHA1}" . --file "${FOLDER}/${SPECKLE_SERVER_PACKAGE}/Dockerfile"
+docker build --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" -t "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" . --file "${FOLDER}/${SPECKLE_SERVER_PACKAGE}/Dockerfile"
 
 if [[ "${PUBLISH_IMAGES}" == "true" ]]; then
-  docker tag "${DOCKER_IMAGE_TAG}:${CIRCLE_SHA1}" "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}"
-  docker tag "${DOCKER_IMAGE_TAG}:${CIRCLE_SHA1}" "${DOCKER_IMAGE_TAG}:latest"
+  docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:latest"
 
   if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    docker tag "${DOCKER_IMAGE_TAG}:${CIRCLE_SHA1}" "${DOCKER_IMAGE_TAG}:2"
+    docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:2"
   fi
 
   echo "${DOCKER_REG_PASS}" | docker login -u "${DOCKER_REG_USER}" --password-stdin "${DOCKER_REG_URL}"
