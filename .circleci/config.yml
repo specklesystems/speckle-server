@@ -10,8 +10,9 @@ workflows:
             tags:
               # run tests for all tags
               only: /.*/
+
       - get-version:
-          filters: &filters-build
+          filters: &filters-build-and-publish
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
@@ -19,55 +20,63 @@ workflows:
                 - main
 
       - docker-build-and-publish-server:
-          filters: *filters-build
           context: &docker-hub-context
             - docker-hub
+          environment: &publish-images
+            PUBLISH_IMAGES: 'true'
+          filters: *filters-build-and-publish
           requires:
             - test-server
             - get-version
 
       - docker-build-and-publish-frontend:
           context: *docker-hub-context
-          filters: *filters-build
+          environment: *publish-images
+          filters: *filters-build-and-publish
           requires:
             - get-version
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
-          filters: *filters-build
+          environment: *publish-images
+          filters: *filters-build-and-publish
           requires:
             - get-version
             - test-server
 
       - docker-build-and-publish-file-imports:
           context: *docker-hub-context
-          filters: *filters-build
+          environment: *publish-images
+          filters: *filters-build-and-publish
           requires:
             - get-version
             - test-server
 
       - docker-build-and-publish-previews:
           context: *docker-hub-context
-          filters: *filters-build
+          environment: *publish-images
+          filters: *filters-build-and-publish
           requires:
             - get-version
             - test-server
 
       - docker-build-and-publish-test-container:
           context: *docker-hub-context
-          filters: *filters-build
+          environment: *publish-images
+          filters: *filters-build-and-publish
           requires:
             - get-version
             - test-server
 
       - docker-build-and-publish-monitor-container:
           context: *docker-hub-context
-          filters: *filters-build
+          environment: *publish-images
+          filters: *filters-build-and-publish
           requires:
             - get-version
 
       - publish-helm-chart:
-          filters: *filters-build
+          filters: *filters-build-and-publish
           requires:
             - test-server
             - get-version
