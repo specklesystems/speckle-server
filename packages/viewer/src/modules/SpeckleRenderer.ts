@@ -32,7 +32,7 @@ import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 
 export default class SpeckleRenderer {
-  private readonly SHOW_HELPERS = false
+  private readonly SHOW_HELPERS = true
   private _renderer: WebGLRenderer
   public scene: Scene
   private rootGroup: Group
@@ -42,7 +42,6 @@ export default class SpeckleRenderer {
   private sun: DirectionalLight
   private sunTarget: Object3D
   public viewer: Viewer // TEMPORARY
-  private camHelper: CameraHelper
   private filterBatchRecording: string[]
 
   public get renderer(): WebGLRenderer {
@@ -122,7 +121,7 @@ export default class SpeckleRenderer {
 
       const camHelper = new CameraHelper(this.sun.shadow.camera)
       camHelper.name = 'CamHelper'
-      helpers.add(this.camHelper)
+      helpers.add(camHelper)
     }
   }
 
@@ -172,7 +171,7 @@ export default class SpeckleRenderer {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
         batchRenderable.castShadow = !material.transparent
-        batchRenderable.receiveShadow = true
+        batchRenderable.receiveShadow = !material.transparent
       }
     }
 
@@ -228,8 +227,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.mapSize.width = 2048
     this.sun.shadow.mapSize.height = 2048
 
-    const sceneSize = new Box3().setFromObject(this.allObjects).getSize(new Vector3())
-    const d = Math.max(sceneSize.x, sceneSize.y, sceneSize.z)
+    const d = 50
 
     this.sun.shadow.camera.left = -d
     this.sun.shadow.camera.right = d
@@ -247,6 +245,7 @@ export default class SpeckleRenderer {
   }
 
   public updateDirectLights(phi: number, theta: number, radiusOffset = 0) {
+    this.sunTarget.position.copy(this.sceneCenter)
     const spherical = new Spherical(this.sceneSphere.radius + radiusOffset, phi, theta)
     this.sun.position.setFromSpherical(spherical)
     this.sun.position.add(this.sunTarget.position)
