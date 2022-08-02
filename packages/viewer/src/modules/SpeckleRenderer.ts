@@ -142,10 +142,8 @@ export default class SpeckleRenderer {
       if ((batchRenderable as Mesh).isMesh) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
-        if (!material.transparent) {
-          batchRenderable.castShadow = true
-          batchRenderable.receiveShadow = true
-        }
+        batchRenderable.castShadow = !material.transparent
+        batchRenderable.receiveShadow = true
       }
     }
     if (this.SHOW_HELPERS) {
