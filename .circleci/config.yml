@@ -8,7 +8,7 @@ workflows:
       - test-server:
           filters:
             tags:
-              # run tests for all tags
+              # run tests for any tags
               only: /.*/
 
       - get-version:
@@ -19,11 +19,37 @@ workflows:
               only:
                 - main
 
+      - docker-build-server:
+          filters: &filters-build-only
+            tags:
+              # run tests for any tags
+              only: /.*/
+            branches:
+              # for any branch except main, where we will instead run build & publish
+              ignore:
+                - main
+
+      - docker-build-frontend:
+          filters: *filters-build-only
+
+      - docker-build-webhooks:
+          filters: *filters-build-only
+
+      - docker-build-file-imports:
+          filters: *filters-build-only
+
+      - docker-build-previews:
+          filters: *filters-build-only
+
+      - docker-build-test-container:
+          filters: *filters-build-only
+
+      - docker-build-monitor-container:
+          filters: *filters-build-only
+
       - docker-build-and-publish-server:
           context: &docker-hub-context
             - docker-hub
-          environment: &publish-images
-            PUBLISH_IMAGES: 'true'
           filters: *filters-build-and-publish
           requires:
             - test-server
@@ -31,14 +57,12 @@ workflows:
 
       - docker-build-and-publish-frontend:
           context: *docker-hub-context
-          environment: *publish-images
           filters: *filters-build-and-publish
           requires:
             - get-version
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
-          environment: *publish-images
           filters: *filters-build-and-publish
           requires:
             - get-version
@@ -46,7 +70,6 @@ workflows:
 
       - docker-build-and-publish-file-imports:
           context: *docker-hub-context
-          environment: *publish-images
           filters: *filters-build-and-publish
           requires:
             - get-version
@@ -54,7 +77,6 @@ workflows:
 
       - docker-build-and-publish-previews:
           context: *docker-hub-context
-          environment: *publish-images
           filters: *filters-build-and-publish
           requires:
             - get-version
@@ -62,7 +84,6 @@ workflows:
 
       - docker-build-and-publish-test-container:
           context: *docker-hub-context
-          environment: *publish-images
           filters: *filters-build-and-publish
           requires:
             - get-version
@@ -70,7 +91,6 @@ workflows:
 
       - docker-build-and-publish-monitor-container:
           context: *docker-hub-context
-          environment: *publish-images
           filters: *filters-build-and-publish
           requires:
             - get-version
@@ -208,38 +228,89 @@ jobs:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
+      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-frontend:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
+      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-previews:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: preview-service
+      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-webhooks:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: webhook-service
+      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-file-imports:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: fileimport-service
+      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-test-container:
     <<: *docker-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
+      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-monitor-container:
     <<: *docker-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
+      PUBLISH_IMAGES: 'true'
+
+  docker-build-server:
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: server
+      PUBLISH_IMAGES: 'false'
+
+  docker-build-frontend:
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend
+      PUBLISH_IMAGES: 'false'
+
+  docker-build-previews:
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: preview-service
+      PUBLISH_IMAGES: 'false'
+
+  docker-build-webhooks:
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: webhook-service
+      PUBLISH_IMAGES: 'false'
+
+  docker-build-file-imports:
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: fileimport-service
+      PUBLISH_IMAGES: 'false'
+
+  docker-build-test-container:
+    <<: *docker-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: test-deployment
+      PUBLISH_IMAGES: 'false'
+
+  docker-build-monitor-container:
+    <<: *docker-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: monitor-deployment
+      PUBLISH_IMAGES: 'false'
 
   publish-npm:
     docker: *docker-image
