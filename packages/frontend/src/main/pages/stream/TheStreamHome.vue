@@ -82,7 +82,7 @@
               :md="`${comments.items.length !== 1 ? '6' : '12'}`"
               :xl="`${comments.items.length !== 1 ? '6' : '12'}`"
             >
-              <comment-list-item :comment="c" :stream="stream" />
+              <comment-list-item :comment="c" :stream="stream" :stream-id="streamId" />
             </v-col>
             <v-col v-if="comments.totalCount === 0" class="mt-5">
               <div class="d-flex align-center">
@@ -132,6 +132,7 @@
 <script>
 import { gql } from '@apollo/client/core'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheStreamHome',
@@ -246,7 +247,7 @@ export default {
       return 12
     },
     loggedIn() {
-      return localStorage.getItem('uuid') !== null
+      return AppLocalStorage.get('uuid') !== null
     }
   },
   watch: {},

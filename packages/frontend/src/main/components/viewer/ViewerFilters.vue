@@ -86,6 +86,9 @@
   </v-list>
 </template>
 <script>
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
 export default {
   name: 'ViewerFilters',
   components: {
@@ -106,6 +109,20 @@ export default {
       type: Boolean,
       default: true
     }
+  },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState }
   },
   data() {
     return {
@@ -149,10 +166,10 @@ export default {
         this.parseAndSetFilters()
       }
     },
-    '$store.state.appliedFilter'() {
+    'viewerState.appliedFilter'() {
       if (this.trySetPresetFilter) return
-      if (this.$store.state.appliedFilter && this.$store.state.appliedFilter.filterBy) {
-        const key = Object.keys(this.$store.state.appliedFilter.filterBy)[0]
+      if (this.viewerState.appliedFilter?.filterBy) {
+        const key = Object.keys(this.viewerState.appliedFilter.filterBy)[0]
         const presetFilter = this.allFilters.find((f) => f.targetKey === key)
         if (presetFilter) this.activeFilter = presetFilter
         this.trySetPresetFilter = true

@@ -83,6 +83,7 @@ import { gql } from '@apollo/client/core'
 import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import CommentThreadReplyAttachments from '@/main/components/comments/CommentThreadReplyAttachments.vue'
+import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
@@ -95,6 +96,10 @@ export default {
     stream: { type: Object, default: () => null },
     index: { type: Number, default: 0 }
   },
+  setup() {
+    const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
+    return { streamId, resourceId, isEmbed }
+  },
   data() {
     return {
       hover: false,
@@ -104,6 +109,7 @@ export default {
   },
   computed: {
     canArchive() {
+      if (this.isEmbed) return false
       if (!this.reply || !this.stream) return false
       if (this.stream.role === 'stream:owner' || this.reply.authorId === this.$userId())
         return true
@@ -120,7 +126,7 @@ export default {
             }
           `,
           variables: {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.reply.id
           }
         })

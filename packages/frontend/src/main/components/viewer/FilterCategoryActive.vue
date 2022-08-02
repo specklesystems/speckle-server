@@ -48,7 +48,7 @@
           v-if="colorBy"
           class="d-inline-block rounded mr-3 mt-1 elevation-3"
           :style="`width: 8px; height: 8px; background:${
-            $store.state.colorLegend[type.fullName]
+            viewerState.colorLegend[type.fullName]
           };`"
         ></div>
         <v-btn
@@ -60,7 +60,7 @@
         >
           <v-icon class="grey--text" style="font-size: 11px">
             {{
-              $store.state.hideCategoryValues.indexOf(type.fullName) === -1
+              viewerState.hideCategoryValues.indexOf(type.fullName) === -1
                 ? 'mdi-eye'
                 : 'mdi-eye-off'
             }}
@@ -75,14 +75,14 @@
         >
           <v-icon
             :class="`${
-              $store.state.isolateCategoryValues.indexOf(type.fullName) !== -1
+              viewerState.isolateCategoryValues.indexOf(type.fullName) !== -1
                 ? 'primary--text'
                 : 'grey--text'
             }`"
             style="font-size: 11px"
           >
             {{
-              !$store.state.isolateCategoryValues.indexOf(type.fullName) !== -1
+              !viewerState.isolateCategoryValues.indexOf(type.fullName) !== -1
                 ? 'mdi-filter'
                 : 'mdi-filter'
             }}
@@ -93,12 +93,40 @@
   </div>
 </template>
 <script>
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
+import {
+  hideCategoryToggle,
+  isolateCategoryToggle,
+  resetFilter,
+  toggleColorByCategory
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {},
   props: {
     filter: {
       type: Object,
       default: () => null
+    }
+  },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          colorLegend
+          hideCategoryValues
+          isolateCategoryValues
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return {
+      viewerState
     }
   },
   data() {
@@ -112,7 +140,7 @@ export default {
   },
   computed: {
     colorBy() {
-      return this.$store.state.appliedFilter && this.$store.state.appliedFilter.colorBy
+      return this.viewerState.appliedFilter?.colorBy
     }
   },
   watch: {
@@ -124,7 +152,7 @@ export default {
     this.generateTypeMap(this.filter)
   },
   beforeDestroy() {
-    this.$store.commit('resetFilter')
+    resetFilter()
   },
   methods: {
     mashColorLegend(colorLegend) {
@@ -136,10 +164,10 @@ export default {
       }
     },
     async toggleColors() {
-      this.$store.commit('toggleColorByCategory', { filterKey: this.filter.targetKey })
+      toggleColorByCategory({ filterKey: this.filter.targetKey })
     },
     async toggleFilter(type) {
-      this.$store.commit('isolateCategoryToggle', {
+      isolateCategoryToggle({
         colorBy: this.colorBy,
         filterKey: this.filter.targetKey,
         filterValue: type,
@@ -147,7 +175,7 @@ export default {
       })
     },
     async toggleVisibility(type) {
-      this.$store.commit('hideCategoryToggle', {
+      hideCategoryToggle({
         colorBy: this.colorBy,
         filterKey: this.filter.targetKey,
         filterValue: type

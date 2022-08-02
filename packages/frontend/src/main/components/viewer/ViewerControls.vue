@@ -58,12 +58,32 @@
   </div>
 </template>
 <script>
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import gql from 'graphql-tag'
+import { resetFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     CanonicalViews: () => import('@/main/components/viewer/CanonicalViews')
   },
   props: {
     small: { type: Boolean, default: false }
+  },
+  setup() {
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState }
   },
   data() {
     return {
@@ -72,7 +92,7 @@ export default {
   },
   computed: {
     showVisReset() {
-      return !!this.$store.state.appliedFilter
+      return !!this.viewerState.appliedFilter
     }
   },
   mounted() {
@@ -80,16 +100,16 @@ export default {
   },
   methods: {
     toggleCamera() {
-      window.__viewer.toggleCameraProjection()
+      this.viewer.toggleCameraProjection()
     },
     resetVisibility() {
-      this.$store.commit('resetFilter')
+      resetFilter()
     },
     zoomEx() {
-      window.__viewer.zoomExtents()
+      this.viewer.zoomExtents()
     },
     sectionToggle() {
-      window.__viewer.toggleSectionBox()
+      this.viewer.toggleSectionBox()
     }
   }
 }

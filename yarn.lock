@@ -4855,11 +4855,11 @@ __metadata:
     "@vue/cli-plugin-babel": ~4.3.1
     "@vue/cli-plugin-router": ~4.3.1
     "@vue/cli-plugin-typescript": ~4.5.19
-    "@vue/cli-plugin-vuex": ~4.3.1
     "@vue/cli-service": ~4.3.1
     "@vue/eslint-config-typescript": ^11.0.0
     "@vuejs-community/vue-filter-date-format": ^1.6.3
     "@vuejs-community/vue-filter-date-parse": ^1.1.6
+    "@vueuse/core": ^9.0.0
     apexcharts: ^3.33.1
     apollo-upload-client: ^17.0.0
     babel-eslint: ^10.1.0
@@ -4903,7 +4903,6 @@ __metadata:
     vuetify: ^2.3.21
     vuetify-image-input: ^19.1.0
     vuetify-loader: ^1.9.1
-    vuex: ^3.6.2
     webpack: ^4.46.0
     webpack-bundle-analyzer: ^4.5.0
   languageName: unknown
@@ -6011,6 +6010,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/web-bluetooth@npm:^0.0.15":
+  version: 0.0.15
+  resolution: "@types/web-bluetooth@npm:0.0.15"
+  checksum: 4e3b3b1c0baf6735690ce0c5ffaac53de3dbd16362316cbc5e32970bcb1e1baf16dae0a9f30fe86256ad0ee22a4533423f443835273efc54b15235086ebda85b
+  languageName: node
+  linkType: hard
+
 "@types/webpack-env@npm:^1.15.2":
   version: 1.17.0
   resolution: "@types/webpack-env@npm:1.17.0"
@@ -6592,15 +6598,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/cli-plugin-vuex@npm:~4.3.1":
-  version: 4.3.1
-  resolution: "@vue/cli-plugin-vuex@npm:4.3.1"
-  peerDependencies:
-    "@vue/cli-service": ^3.0.0 || ^4.0.0-0
-  checksum: 0de3d1b4798793273527ffe6435a070c13376b058b009c6dbc53fa23eda64ac1a8ffed9f097a5334e863cb7dbd782d4112b918c30df34988e0c5ce916e3fa571
-  languageName: node
-  linkType: hard
-
 "@vue/cli-service@npm:~4.3.1":
   version: 4.3.1
   resolution: "@vue/cli-service@npm:4.3.1"
@@ -6923,6 +6920,34 @@ __metadata:
   peerDependencies:
     vue: ^2.0.0
   checksum: c0c03afeeb85981a1b92baf1e9309a71bb410af0d974b725da2eb177200fcc2de4403ec13665b8e0a05106e2de970259a0d428849a8fee6f900cc52fb315934f
+  languageName: node
+  linkType: hard
+
+"@vueuse/core@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@vueuse/core@npm:9.0.0"
+  dependencies:
+    "@types/web-bluetooth": ^0.0.15
+    "@vueuse/metadata": 9.0.0
+    "@vueuse/shared": 9.0.0
+    vue-demi: "*"
+  checksum: 2825bad3f90bf030a23e4f14d67018a9b3497e672fa61fc555da483488bb4df28d61e2141637d6ed97a3d0c8544f60e7474ebf94d7deb6933199727505cba08b
+  languageName: node
+  linkType: hard
+
+"@vueuse/metadata@npm:9.0.0":
+  version: 9.0.0
+  resolution: "@vueuse/metadata@npm:9.0.0"
+  checksum: 13404823d085df4d5221a7be4c8847915d7682888d9465aad3b257e511a509e1baf99575236cdfd2d3cc1abaaddf4180ab5e6e63fb54d6dfbf007c099e0020b3
+  languageName: node
+  linkType: hard
+
+"@vueuse/shared@npm:9.0.0":
+  version: 9.0.0
+  resolution: "@vueuse/shared@npm:9.0.0"
+  dependencies:
+    vue-demi: "*"
+  checksum: 4925d94e53d27174757e153ac3fc1f350633399faa2a8f4e6cf323b5ccb0d106e2415e050664c3fe325932464bfaaad7ea9d38afb2ffa219e35f6accd64b2ee6
   languageName: node
   linkType: hard
 
@@ -26774,6 +26799,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vue-demi@npm:*":
+  version: 0.13.6
+  resolution: "vue-demi@npm:0.13.6"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: 7712b1f8edad902a8ea99ac307f9dc276ca13cb4394fdc6753c27c32f16e5f4a6d3acaa752bf24d73be0ea972552ad7da4c61314b046fbc248bd9aa26afe2e59
+  languageName: node
+  linkType: hard
+
 "vue-demi@npm:^0.13.1":
   version: 0.13.5
   resolution: "vue-demi@npm:0.13.5"
@@ -27025,15 +27066,6 @@ __metadata:
   peerDependencies:
     vue: ^2.6.4
   checksum: 8aa4ffd7e8e7601bd7c4b0a723e1433ef2cf395f85526ab6ae8113e48d82ffdf7af3d48036c18393448d98dae7d35cf4922b99d05f8d158dfd1430ba5a4814ed
-  languageName: node
-  linkType: hard
-
-"vuex@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "vuex@npm:3.6.2"
-  peerDependencies:
-    vue: ^2.0.0
-  checksum: 37915741ba9557024ea42579e2c8d81847ec699d07d8ea3aa673929f26fceba8c59e7e1e6a875fd3962e50018bc30f782f5ace34d83307ef228ad46a4df343da
   languageName: node
   linkType: hard
 
