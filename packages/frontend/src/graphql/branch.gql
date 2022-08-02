@@ -1,4 +1,4 @@
-query Stream($streamId: String!, $branchName: String!, $cursor: String) {
+query StreamWithBranch($streamId: String!, $branchName: String!, $cursor: String) {
   stream(id: $streamId) {
     id
     name

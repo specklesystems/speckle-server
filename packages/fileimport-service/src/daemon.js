@@ -8,8 +8,9 @@ const {
   metricOperationErrors
 } = require('./prometheusMetrics')
 const knex = require('../knex')
+const FileUploads = () => knex('file_uploads')
 
-const { getFileStream } = require('./filesApi')
+const { downloadFile } = require('./filesApi')
 const fs = require('fs')
 const { spawn } = require('child_process')
 
@@ -23,6 +24,11 @@ const TMP_FILE_PATH = '/tmp/file_to_import/file'
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
 let shouldExit = false
+
+let TIME_LIMIT = 10 * 60 * 1000
+
+const providedTimeLimit = parseInt(process.env.FILE_IMPORT_TIME_LIMIT_MIN)
+if (providedTimeLimit) TIME_LIMIT = providedTimeLimit * 60 * 1000
 
 async function startTask() {
   const { rows } = await knex.raw(`
@@ -51,17 +57,7 @@ async function doTask(task) {
   const metricDurationEnd = metricDuration.startTimer()
   try {
     console.log('Doing task ', task)
-    const { rows } = await knex.raw(
-      `
-      SELECT 
-        id as "fileId", "streamId", "branchName", "userId", "fileName", "fileType", "fileSize"
-      FROM file_uploads
-      WHERE id = ?
-      LIMIT 1
-    `,
-      [task.id]
-    )
-    const info = rows[0]
+    const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
@@ -69,13 +65,6 @@ async function doTask(task) {
     fileSizeForMetric = Number(info.fileSize) || 0
 
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
-
-    const upstreamFileStream = await getFileStream({ fileId: info.fileId })
-    const diskFileStream = fs.createWriteStream(TMP_FILE_PATH)
-
-    upstreamFileStream.pipe(diskFileStream)
-
-    await new Promise((fulfill) => diskFileStream.on('finish', fulfill))
 
     serverApi = new ServerAPI({ streamId: info.streamId })
     const { token } = await serverApi.createToken({
@@ -85,6 +74,13 @@ async function doTask(task) {
       lifespan: 1000000
     })
     tempUserToken = token
+
+    await downloadFile({
+      fileId: info.id,
+      streamId: info.streamId,
+      token,
+      destination: TMP_FILE_PATH
+    })
 
     if (info.fileType === 'ifc') {
       await runProcessWithTimeout(
@@ -100,7 +96,7 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        20 * 60 * 1000
+        TIME_LIMIT
       )
     } else if (info.fileType === 'stl') {
       await runProcessWithTimeout(
@@ -116,13 +112,14 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        10 * 60 * 1000
+        TIME_LIMIT
       )
     } else if (info.fileType === 'obj') {
       await objDependencies.downloadDependencies({
         objFilePath: TMP_FILE_PATH,
         streamId: info.streamId,
-        destinationDir: TMP_INPUT_DIR
+        destinationDir: TMP_INPUT_DIR,
+        token: tempUserToken
       })
 
       await runProcessWithTimeout(
@@ -139,7 +136,7 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        10 * 60 * 1000
+        TIME_LIMIT
       )
     } else {
       throw new Error(`File type ${info.fileType} is not supported`)

@@ -1,36 +1,32 @@
 /* istanbul ignore file */
 'use strict'
-
-const S3 = require('aws-sdk/clients/s3')
-
-function getS3Config() {
-  // TODO: use ENV
-  return {
-    accessKeyId: process.env.S3_ACCESS_KEY || 'minioadmin',
-    secretAccessKey: process.env.S3_SECRET_KEY || 'minioadmin',
-    endpoint: process.env.S3_ENDPOINT || 'http://127.0.0.1:9000',
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4'
-  }
-}
+const fs = require('fs')
+const path = require('node:path')
+const { stream, fetch } = require('undici')
 
 module.exports = {
-  async getFileStream({ fileId }) {
-    const s3 = new S3(getS3Config())
-    const Bucket = process.env.S3_BUCKET
-    const Key = `files/${fileId}`
-
-    const fileStream = s3.getObject({ Key, Bucket }).createReadStream()
-    return fileStream
+  async downloadFile({ fileId, streamId, token, destination }) {
+    fs.mkdirSync(path.dirname(destination), { recursive: true })
+    await stream(
+      `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blob/${fileId}`,
+      {
+        opaque: fs.createWriteStream(destination),
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      },
+      ({ opaque }) => opaque
+    )
   },
-
-  async readFile({ fileId }) {
-    const s3 = new S3(getS3Config())
-    const Bucket = process.env.S3_BUCKET
-    const Key = `files/${fileId}`
-
-    const s3Data = await s3.getObject({ Key, Bucket }).promise()
-
-    return s3Data.Body
+  async getFileInfoByName({ fileName, streamId, token }) {
+    const response = await fetch(
+      `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blobs?fileName=${fileName}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+    return response.json()
   }
 }

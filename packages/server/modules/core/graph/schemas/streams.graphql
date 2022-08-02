@@ -1,6 +1,7 @@
 extend type Query {
   """
-  Returns a specific stream.
+  Returns a specific stream. Will throw an authorization error if active user isn't authorized
+  to see it.
   """
   stream(id: String!): Stream
 
@@ -31,7 +32,11 @@ type Stream {
   role: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  collaborators: [StreamCollaborator]!
+  collaborators: [StreamCollaborator!]!
+  """
+  Collaborators who have been invited, but not yet accepted.
+  """
+  pendingCollaborators: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_OWNER)
   size: String
   """
   Date when you favorited this stream. `null` if stream isn't viewed from a specific user's perspective or if it isn't favorited.
@@ -52,6 +57,7 @@ extend type User {
   """
   favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 
   """
   Total amount of favorites attached to streams owned by the user
@@ -67,10 +73,31 @@ type StreamCollaborator {
   avatar: String
 }
 
+type PendingStreamCollaborator {
+  id: String!
+  inviteId: String!
+  streamId: String!
+  streamName: String!
+  """
+  E-mail address or name of the invited user
+  """
+  title: String!
+  role: String!
+  invitedBy: LimitedUser!
+  """
+  Set only if user is registered
+  """
+  user: LimitedUser
+  """
+  Only available if the active user is the pending stream collaborator
+  """
+  token: String
+}
+
 type StreamCollection {
   totalCount: Int!
   cursor: String
-  items: [Stream]
+  items: [Stream!]
 }
 
 extend type Mutation {
@@ -95,9 +122,9 @@ extend type Mutation {
 
   streamsDelete(ids: [String!]): Boolean! @hasRole(role: "server:admin")
   """
-  Grants permissions to a user on a given stream.
+  Update permissions of a user on a given stream.
   """
-  streamGrantPermission(permissionParams: StreamGrantPermissionInput!): Boolean
+  streamUpdatePermission(permissionParams: StreamUpdatePermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   """
@@ -110,6 +137,11 @@ extend type Mutation {
   # Favorite/unfavorite the given stream
   streamFavorite(streamId: String!, favorited: Boolean!): Stream
     @hasRole(role: "server:user")
+
+  """
+  Remove yourself from stream collaborators (not possible for the owner)
+  """
+  streamLeave(streamId: String!): Boolean! @hasRole(role: "server:user")
 }
 
 extend type Subscription {
@@ -158,6 +190,10 @@ input StreamCreateInput {
   name: String
   description: String
   isPublic: Boolean
+  """
+  Optionally specify user IDs of users that you want to invite to be contributors to this stream
+  """
+  withContributors: [String!]
 }
 
 input StreamUpdateInput {
@@ -168,7 +204,7 @@ input StreamUpdateInput {
   allowPublicComments: Boolean
 }
 
-input StreamGrantPermissionInput {
+input StreamUpdatePermissionInput {
   streamId: String!
   userId: String!
   role: String!

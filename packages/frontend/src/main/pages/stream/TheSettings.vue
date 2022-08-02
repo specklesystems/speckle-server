@@ -22,8 +22,8 @@
     <v-row v-if="stream">
       <v-col v-if="stream.role !== 'stream:owner'" cols="12">
         <v-alert type="warning">
-          Your permission level ({{ stream.role }}) is not high enough to edit this
-          stream's details.
+          Your permission level ({{ stream.role ? stream.role : 'none' }}) is not high
+          enough to edit this stream's details.
         </v-alert>
       </v-col>
       <v-col cols="12">
@@ -55,7 +55,7 @@
                 v-model="isPublic"
                 inset
                 class="mt-5"
-                :label="isPublic ? 'Public (Link Sharing)' : 'Private'"
+                :label="isPublic ? 'Link Sharing On' : 'Link Sharing Off'"
                 :hint="
                   isPublic
                     ? 'Anyone with the link can view this stream. It is also visible on your profile page. Only collaborators can push data to it.'
@@ -174,7 +174,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin

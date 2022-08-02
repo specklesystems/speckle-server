@@ -1,10 +1,11 @@
 import { SpeckleType } from '@speckle/viewer'
 import { GeometryConverter } from '@speckle/viewer'
-import { Viewer, IViewer, WorldTree } from '@speckle/viewer'
+import { Viewer, WorldTree } from '@speckle/viewer'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
+
 export default class Sandbox {
-  private viewer: IViewer
+  private viewer: Viewer
   private pane: Pane
   private tabs
   private filterControls

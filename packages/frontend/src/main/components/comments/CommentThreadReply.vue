@@ -1,66 +1,43 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
   <div
-    class="d-flex align-center"
+    class="d-flex align-center comment-thread-reply"
     @mouseenter="hover = true"
     @mouseleave="hover = false"
   >
     <div
-      v-if="!link"
-      :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
+      :class="`flex-grow-1 d-flex flex-column px-2 py-1 mb-2 rounded-xl elevation-2 ${
         $userId() === reply.authorId ? 'primary white--text' : 'background'
       }`"
       style="width: 290px"
     >
-      <div
-        :class="`d-inline-block ${
-          $userId() === reply.authorId ? 'xxx-order-last' : ''
-        }`"
-      >
-        <user-avatar :id="reply.authorId" :size="30" />
-      </div>
-      <div
-        :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`"
-        v-html="linkifiedText"
-      ></div>
-    </div>
-    <div
-      v-else
-      style="width: 300px"
-      :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center`"
-    >
-      <div
-        :class="`d-inline-block ${
-          $userId() === reply.authorId ? 'xxx-order-last' : ''
-        }`"
-      >
-        <user-avatar :id="reply.authorId" :size="30" />
-      </div>
-      <div
-        :class="`reply-box d-inline-block py-2 flex-grow-1 float-left caption ${
-          $userId() === reply.authorId ? 'pr-3' : 'pl-1'
-        }`"
-      >
-        <div class="d-block">
-          <v-btn
-            v-tooltip="reply.text"
-            block
-            rounded
-            :href="reply.text"
-            target="_blank"
-            :class="`reply-box overflow-hidden ${
-              $userId() === reply.authorId ? 'primary white--text' : 'background'
-            }`"
-          >
-            <span class="caption">
-              {{ link.host.substring(0, 18) }} {{ link.host.length > 20 ? '...' : '' }}
-            </span>
-            <v-icon small class="ml-2">mdi-open-in-new</v-icon>
-          </v-btn>
+      <div class="d-flex">
+        <div
+          :class="`d-inline-block ${
+            $userId() === reply.authorId ? 'xxx-order-last' : ''
+          }`"
+        >
+          <user-avatar :id="reply.authorId" :size="30" />
+        </div>
+        <div
+          :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`"
+        >
+          <smart-text-editor
+            v-if="reply.text.doc"
+            min-width
+            read-only
+            :schema-options="richTextSchema"
+            :value="reply.text.doc"
+          />
+          <comment-thread-reply-attachments
+            v-if="reply.text.attachments && reply.text.attachments.length"
+            :attachments="reply.text.attachments"
+            :primary="$userId() === reply.authorId"
+          />
         </div>
       </div>
     </div>
-    <div style="width: 20px; overflow: hidden">
+    <div style="width: 20px; overflow: hidden; position: relative; top: -5px">
       <v-scroll-x-transition>
         <v-btn
           v-show="hover && canArchive"
@@ -102,50 +79,41 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
-import linkifyUrls from 'linkify-urls'
+import { gql } from '@apollo/client/core'
+import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEditor.vue'
+import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
+import CommentThreadReplyAttachments from '@/main/components/comments/CommentThreadReplyAttachments.vue'
+import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar'),
+    SmartTextEditor,
+    CommentThreadReplyAttachments
   },
   props: {
     reply: { type: Object, default: () => null },
     stream: { type: Object, default: () => null },
     index: { type: Number, default: 0 }
   },
+  setup() {
+    const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
+    return { streamId, resourceId, isEmbed }
+  },
   data() {
     return {
       hover: false,
-      showArchiveDialog: false
+      showArchiveDialog: false,
+      richTextSchema: SMART_EDITOR_SCHEMA
     }
   },
   computed: {
     canArchive() {
+      if (this.isEmbed) return false
       if (!this.reply || !this.stream) return false
       if (this.stream.role === 'stream:owner' || this.reply.authorId === this.$userId())
         return true
       return false
-    },
-    link() {
-      if (!this.reply) return false
-      try {
-        const url = new URL(this.reply.text)
-        return url
-      } catch {
-        return null
-      }
-    },
-    linkifiedText() {
-      return linkifyUrls(this.reply.text, {
-        attributes: {
-          target: '_blank',
-          class:
-            this.reply.authorId === this.$userId()
-              ? 'comment-link white--text font-weight-bold text-decoration-none'
-              : 'comment-link font-weight-bold text-decoration-none'
-        }
-      })
     }
   },
   methods: {
@@ -158,7 +126,7 @@ export default {
             }
           `,
           variables: {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.reply.id
           }
         })
@@ -177,13 +145,20 @@ export default {
   }
 }
 </script>
-<style scoped>
->>> .comment-link:after {
-  content: ' ↗ ';
+<style scoped lang="scss">
+:deep(.smart-text-editor),
+:deep(.comment-attachments) {
+  a {
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    word-break: break-all;
+  }
 }
 
-.reply-box {
-  white-space: pre-wrap;
-  word-break: break-word;
+:deep(.smart-text-editor) {
+  a:after {
+    content: ' ↗ ';
+  }
 }
 </style>

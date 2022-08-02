@@ -43,3 +43,7 @@ spec:
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
+        
+        env: 
+          - name: FILE_SIZE_LIMIT_MB
+            value: {{ .Values.file_size_limit_mb | quote }}

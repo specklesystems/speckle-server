@@ -1,8 +1,11 @@
 'use strict'
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
-const { Forbidden } = require('@/modules/shared/errors')
-const sanitizeHtml = require('sanitize-html')
+const { ForbiddenError } = require('@/modules/shared/errors')
+const {
+  buildCommentTextFromInput,
+  validateInputAttachments
+} = require('@/modules/comments/services/commentTextService')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -51,15 +54,6 @@ const resourceCheck = async (res, streamId) => {
 }
 
 module.exports = {
-  /**
-   * Format comment text field (e.g. for returning to frontend or saving to DB)
-   * @param {Object} comment
-   * @returns {string}
-   */
-  formatCommentText(comment) {
-    if (!comment || !comment.text) return ''
-    return sanitizeHtml(comment.text)
-  },
   async streamResourceCheck({ streamId, resources }) {
     // this itches - a for loop with queries... but okay let's hit the road now
     await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
@@ -81,13 +75,21 @@ module.exports = {
     if (stream && stream.resourceId !== input.streamId)
       throw Error("Input streamId doesn't match the stream resource.resourceId")
 
-    const comment = { ...input }
-
-    delete comment.resources
+    const comment = {
+      streamId: input.streamId,
+      text: input.text,
+      data: input.data,
+      screenshot: input.screenshot
+    }
 
     comment.id = crs({ length: 10 })
     comment.authorId = userId
-    comment.text = module.exports.formatCommentText(comment)
+
+    await validateInputAttachments(input.streamId, input.blobIds)
+    comment.text = buildCommentTextFromInput({
+      doc: input.text,
+      blobIds: input.blobIds
+    })
 
     await Comments().insert(comment)
     try {
@@ -107,19 +109,29 @@ module.exports = {
       throw e // pass on to resolver
     }
     await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
-    return comment.id
+
+    // Get new comment from DB, that way we don't have to mock/fill in the missing
+    // values
+    return module.exports.getComment({ id: comment.id, userId })
   },
 
-  async createCommentReply({ authorId, parentCommentId, streamId, text, data }) {
+  async createCommentReply({
+    authorId,
+    parentCommentId,
+    streamId,
+    text,
+    data,
+    blobIds
+  }) {
+    await validateInputAttachments(streamId, blobIds)
     const comment = {
       id: crs({ length: 10 }),
       authorId,
-      text,
+      text: buildCommentTextFromInput({ doc: text, blobIds }),
       data,
       streamId,
       parentComment: parentCommentId
     }
-    comment.text = module.exports.formatCommentText(comment)
 
     await Comments().insert(comment)
     try {
@@ -135,16 +147,27 @@ module.exports = {
     }
     await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
 
-    return comment.id
+    // Get new comment from DB, that way we don't have to mock/fill in the missing
+    // values
+    return module.exports.getComment({ id: comment.id, userId: authorId })
   },
 
   async editComment({ userId, input, matchUser = false }) {
     const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error("The comment doesn't exist")
     if (matchUser && editedComment.authorId !== userId)
-      throw new Forbidden("You cannot edit someone else's comments")
+      throw new ForbiddenError("You cannot edit someone else's comments")
 
-    await Comments().where({ id: input.id }).update({ text: input.text })
+    await validateInputAttachments(input.streamId, input.blobIds)
+    const newText = buildCommentTextFromInput({
+      doc: input.text,
+      blobIds: input.blobIds
+    })
+    await Comments().where({ id: input.id }).update({ text: newText })
+
+    // Get new comment from DB, that way we don't have to mock/fill in the missing
+    // values
+    return module.exports.getComment({ id: input.id, userId })
   },
 
   async viewComment({ userId, commentId }) {
@@ -188,7 +211,7 @@ module.exports = {
 
     if (comment.authorId !== userId) {
       if (!aclEntry || aclEntry.role !== 'stream:owner')
-        throw new Forbidden("You don't have permission to archive the comment")
+        throw new ForbiddenError("You don't have permission to archive the comment")
     }
 
     await Comments().where({ id: commentId }).update({ archived })

@@ -57,8 +57,8 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
-import { FullServerInfoQuery } from '@/graphql/server'
+import { gql } from '@apollo/client/core'
+import { fullServerInfoQuery } from '@/graphql/server'
 
 export default {
   props: {
@@ -69,7 +69,7 @@ export default {
   },
   apollo: {
     scopes: {
-      query: FullServerInfoQuery,
+      query: fullServerInfoQuery,
       update: (data) => data.serverInfo.scopes
     }
   },

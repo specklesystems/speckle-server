@@ -4,6 +4,14 @@ const knex = require('@/db/knex')
  * Single source of truth for DB schema in the codebase
  */
 
+/**
+ * TODO:
+ * ServerInvites:
+ *  - Get rid of the 'used' field, it's not used anymore
+ *
+ * TODO: Redo this when we have TS support with nice typing, ability to get columns with/without aliases
+ */
+
 module.exports = {
   Streams: {
     name: 'streams',
@@ -53,6 +61,46 @@ module.exports = {
       profiles: 'users.profiles',
       passwordDigest: 'users.passwordDigest',
       ip: 'users.ip'
+    }
+  },
+  ServerAcl: {
+    name: 'server_acl',
+    knex: () => knex('server_acl'),
+    col: {
+      userId: 'server_acl.userId',
+      role: 'server_acl.role'
+    }
+  },
+  Comments: {
+    name: 'comments',
+    knex: () => knex('comments'),
+    col: {
+      id: 'comments.id',
+      streamId: 'comments.streamId',
+      authorId: 'comments.authorId',
+      createdAt: 'comments.createdAt',
+      updatedAt: 'comments.updatedAt',
+      text: 'comments.text',
+      screenshot: 'comments.screenshot',
+      data: 'comments.data',
+      archived: 'comments.archived',
+      parentComment: 'comments.parentComment'
+    }
+  },
+  ServerInvites: {
+    name: 'server_invites',
+    knex: () => knex('server_invites'),
+    col: {
+      id: 'server_invites.id',
+      target: 'server_invites.target',
+      inviterId: 'server_invites.inviterId',
+      createdAt: 'server_invites.createdAt',
+      used: 'server_invites.used',
+      message: 'server_invites.message',
+      resourceTarget: 'server_invites.resourceTarget',
+      resourceId: 'server_invites.resourceId',
+      role: 'server_invites.role',
+      token: 'server_invites.token'
     }
   },
   knex

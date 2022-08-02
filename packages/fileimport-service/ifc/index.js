@@ -1,4 +1,4 @@
-const fetch = require('node-fetch')
+const { fetch } = require('undici')
 const Parser = require('./parser')
 const ServerAPI = require('./api.js')
 

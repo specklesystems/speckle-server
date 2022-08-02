@@ -62,7 +62,8 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   props: {
@@ -119,11 +120,14 @@ export default {
   },
   methods: {
     async downloadOriginalFile() {
-      const res = await fetch(`/api/file/${this.fileId}`, {
-        headers: {
-          Authorization: localStorage.getItem('AuthToken')
+      const res = await fetch(
+        `/api/stream/${this.$route.params.streamId}/blob/${this.fileId}`,
+        {
+          headers: {
+            Authorization: AppLocalStorage.get('AuthToken')
+          }
         }
-      })
+      )
       const blob = await res.blob()
       const file = window.URL.createObjectURL(blob)
 

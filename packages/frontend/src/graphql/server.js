@@ -1,6 +1,12 @@
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
-export const MAIN_SERVER_INFO_FIELDS = gql`
+export const serverInfoBlobSizeFragment = gql`
+  fragment ServerInfoBlobSizeFields on ServerInfo {
+    blobSizeLimitBytes
+  }
+`
+
+export const mainServerInfoFieldsFragment = gql`
   fragment MainServerInfoFields on ServerInfo {
     name
     company
@@ -13,7 +19,7 @@ export const MAIN_SERVER_INFO_FIELDS = gql`
   }
 `
 
-export const SERVER_INFO_ROLES_FIELDS = gql`
+export const serverInfoRolesFieldsFragment = gql`
   fragment ServerInfoRolesFields on ServerInfo {
     roles {
       name
@@ -23,7 +29,7 @@ export const SERVER_INFO_ROLES_FIELDS = gql`
   }
 `
 
-export const SERVER_INFO_SCOPES_FIELDS = gql`
+export const serverInfoScopesFieldsFragment = gql`
   fragment ServerInfoScopesFields on ServerInfo {
     scopes {
       name
@@ -35,26 +41,37 @@ export const SERVER_INFO_SCOPES_FIELDS = gql`
 /**
  * Get main server info
  */
-export const MainServerInfoQuery = gql`
+export const mainServerInfoQuery = gql`
   query MainServerInfo {
     serverInfo {
       ...MainServerInfoFields
     }
   }
 
-  ${MAIN_SERVER_INFO_FIELDS}
+  ${mainServerInfoFieldsFragment}
 `
 
-export const FullServerInfoQuery = gql`
+export const fullServerInfoQuery = gql`
   query FullServerInfo {
     serverInfo {
       ...MainServerInfoFields
       ...ServerInfoRolesFields
       ...ServerInfoScopesFields
+      ...ServerInfoBlobSizeFields
     }
   }
 
-  ${MAIN_SERVER_INFO_FIELDS}
-  ${SERVER_INFO_ROLES_FIELDS}
-  ${SERVER_INFO_SCOPES_FIELDS}
+  ${mainServerInfoFieldsFragment}
+  ${serverInfoRolesFieldsFragment}
+  ${serverInfoScopesFieldsFragment}
+  ${serverInfoBlobSizeFragment}
+`
+
+export const serverInfoBlobSizeLimitQuery = gql`
+  query ServerInfoBlobSizeLimit {
+    serverInfo {
+      ...ServerInfoBlobSizeFields
+    }
+  }
+  ${serverInfoBlobSizeFragment}
 `

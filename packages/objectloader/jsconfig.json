@@ -1,7 +1,5 @@
 {
   "extends": "../../jsconfig.base.json",
-  "compilerOptions": {
-    "module": "es2020"
-  },
+  "compilerOptions": {},
   "include": ["src/**", "examples"]
 }

@@ -75,7 +75,7 @@ type Comment {
   authorId: String!
   archived: Boolean!
   screenshot: String
-  text: String!
+  text: SmartTextEditorValue!
   data: JSONObject
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
@@ -100,7 +100,7 @@ type Comment {
 type CommentCollection {
   totalCount: Int!
   cursor: DateTime
-  items: [Comment]!
+  items: [Comment!]!
 }
 
 type ResourceIdentifier {
@@ -129,22 +129,43 @@ input CommentCreateInput {
   - a comment targets only a stream
   """
   resources: [ResourceIdentifierInput]!
-  text: String!
+  """
+  ProseMirror document object
+  """
+  text: JSONObject
   data: JSONObject!
+  """
+  IDs of uploaded blobs that should be attached to this comment
+  """
+  blobIds: [String!]!
   screenshot: String
 }
 
 input ReplyCreateInput {
   streamId: String!
   parentComment: String!
-  text: String!
+  """
+  ProseMirror document object
+  """
+  text: JSONObject
+  """
+  IDs of uploaded blobs that should be attached to this reply
+  """
+  blobIds: [String!]!
   data: JSONObject
 }
 
 input CommentEditInput {
   streamId: String!
   id: String!
-  text: String!
+  """
+  ProseMirror document object
+  """
+  text: JSONObject
+  """
+  IDs of uploaded blobs that should be attached to this comment
+  """
+  blobIds: [String!]!
 }
 
 extend type Mutation {
@@ -204,6 +225,17 @@ extend type Mutation {
     @hasScope(scope: "streams:read")
 }
 
+type CommentActivityMessage {
+  type: String!
+  comment: Comment!
+}
+
+type CommentThreadActivityMessage {
+  type: String!
+  data: JSONObject
+  reply: Comment
+}
+
 extend type Subscription {
   """
   Broadcasts "real-time" location data for viewer users.
@@ -211,11 +243,11 @@ extend type Subscription {
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
 
   """
-  Subscribe to comment events. There's two ways to use this subscription:
+  Subscribe to new comment events. There's two ways to use this subscription:
   - for a whole stream: do not pass in any resourceIds; this sub will get called whenever a comment (not reply) is added to any of the stream's resources.
   - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
   """
-  commentActivity(streamId: String!, resourceIds: [String]): JSONObject
+  commentActivity(streamId: String!, resourceIds: [String]): CommentActivityMessage!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -224,7 +256,10 @@ extend type Subscription {
   - a top level comment is deleted (trigger a deletion event outside)
   - a top level comment receives a reply.
   """
-  commentThreadActivity(streamId: String!, commentId: String!): JSONObject
+  commentThreadActivity(
+    streamId: String!
+    commentId: String!
+  ): CommentThreadActivityMessage!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 }

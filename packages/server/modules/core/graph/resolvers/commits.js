@@ -141,20 +141,27 @@ module.exports = {
     },
 
     async commitUpdate(parent, args, context) {
-      await authorizeResolver(
+      const role = await authorizeResolver(
         context.userId,
         args.commit.streamId,
         'stream:contributor'
       )
 
+      if (!args.commit.message && !args.commit.newBranchName)
+        throw new UserInputError('Please provide a message and/or a new branch name.')
+
       const commit = await getCommitById({
         streamId: args.commit.streamId,
         id: args.commit.id
       })
-      if (commit.authorId !== context.userId)
-        throw new ForbiddenError('Only the author of a commit may update it.')
+
+      if (commit.authorId !== context.userId && role !== 'stream:owner')
+        throw new ForbiddenError(
+          'Only the author of a commit or a stream owner may update it.'
+        )
 
       const updated = await updateCommit({ ...args.commit })
+
       if (updated) {
         await saveActivity({
           streamId: args.commit.streamId,

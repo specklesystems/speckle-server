@@ -2,7 +2,7 @@
   <div
     ref="parent"
     :style="`width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden; opacity: ${
-      $store.state.selectedComment || $store.state.addingComment ? '0.2' : '1'
+      viewerState.selectedCommentMetaData || viewerState.addingComment ? '0.2' : '1'
     };`"
   >
     <div v-show="showBubbles">
@@ -88,9 +88,17 @@
 </template>
 <script>
 import * as THREE from 'three'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash/debounce'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import {
+  resetFilter,
+  setFilterDirectly,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   name: 'ViewerBubbles',
@@ -121,12 +129,12 @@ export default {
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId,
-            resourceId: this.$route.params.resourceId
+            streamId: this.streamId,
+            resourceId: this.resourceId
           }
         },
         skip() {
-          return !this.$route.params.resourceId || !this.$loggedIn()
+          return !this.resourceId || !this.$loggedIn()
         },
         result(res) {
           const data = res.data
@@ -177,6 +185,24 @@ export default {
       }
     }
   },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          selectedCommentMetaData
+          addingComment
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState, streamId, resourceId }
+  },
   data() {
     return {
       uuid: uuid(),
@@ -198,7 +224,7 @@ export default {
     this.uuid = window.__bubblesId
 
     this.raycaster = new THREE.Raycaster()
-    window.__viewer.cameraHandler.controls.addEventListener('update', () =>
+    this.viewer.cameraHandler.controls.addEventListener('update', () =>
       this.updateBubbles(false)
     )
 
@@ -206,9 +232,7 @@ export default {
     window.addEventListener('beforeunload', async () => {
       await this.sendDisconnect()
     })
-    this.resourceId = this.$route.params.resourceId
-    window.__resourceId = this.$route.params.resourceId
-    window.__viewer.on(
+    this.viewer.on(
       'select',
       debounce((selectionInfo) => {
         this.selectedIds = selectionInfo.userData.map((o) => o.id)
@@ -217,7 +241,7 @@ export default {
         this.sendUpdateAndPrune()
       }, 50)
     )
-    window.__viewer.on('object-doubleclicked', () => {})
+    this.viewer.on('object-doubleclicked', () => {})
   },
   async beforeDestroy() {
     await this.sendDisconnect()
@@ -227,26 +251,27 @@ export default {
     setUserPow(user) {
       const camToSet = user.camera
       if (camToSet[6] === 1) {
-        window.__viewer.toggleCameraProjection()
+        this.viewer.toggleCameraProjection()
       }
-      window.__viewer.interactions.setLookAt(
+      this.viewer.interactions.setLookAt(
         { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
         { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
       )
       if (camToSet[6] === 1) {
-        window.__viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       }
-      if (user.filter) this.$store.commit('setFilterDirect', { filter: user.filter })
-      else this.$store.commit('resetFilter')
+
+      if (user.filter) setFilterDirectly({ filter: user.filter })
+      else resetFilter()
 
       if (user.sectionBox) {
-        window.__viewer.sectionBox.on()
-        window.__viewer.sectionBox.setBox(user.sectionBox, 0)
+        this.viewer.sectionBox.on()
+        this.viewer.sectionBox.setBox(user.sectionBox, 0)
       }
       this.$mixpanel.track('Bubbles Action', { type: 'action', name: 'avatar-click' })
     },
     async sendUpdateAndPrune() {
-      if (!this.$route.params.resourceId) return
+      if (!this.resourceId) return
       for (const user of this.users) {
         const delta = Date.now() - user.lastUpdate
         if (delta > 20000) {
@@ -262,7 +287,7 @@ export default {
 
       if (!this.$loggedIn()) return
 
-      const controls = window.__viewer.cameraHandler.activeCam.controls
+      const controls = this.viewer.cameraHandler.activeCam.controls
       const pos = controls.getPosition()
       const target = controls.getTarget()
       const c = [
@@ -272,20 +297,20 @@ export default {
         parseFloat(target.x.toFixed(5)),
         parseFloat(target.y.toFixed(5)),
         parseFloat(target.z.toFixed(5)),
-        window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
+        this.viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
         controls._zoom
       ]
 
       let selectionLocation = this.selectionLocation
-      if (this.$store.state.selectedComment) {
-        selectionLocation = this.$store.state.selectedComment.data.location
+      if (this.viewerState.selectedCommentMetaData) {
+        selectionLocation = this.viewerState.selectedCommentMetaData.selectionLocation
       }
 
       const data = {
-        filter: this.$store.state.appliedFilter,
+        filter: this.viewerState.appliedFilter,
         selection: this.selectedIds,
         selectionLocation,
-        sectionBox: window.__viewer.sectionBox.getCurrentBox(),
+        sectionBox: this.viewer.sectionBox.getCurrentBox(),
         selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
@@ -294,6 +319,7 @@ export default {
         status: 'viewing'
       }
 
+      if (!this.streamId) return
       await this.$apollo.mutate({
         mutation: gql`
           mutation userViewerActivityBroadcast(
@@ -309,14 +335,16 @@ export default {
           }
         `,
         variables: {
-          streamId: this.$route.params.streamId,
-          resourceId: this.$route.params.resourceId,
+          streamId: this.streamId,
+          resourceId: this.resourceId,
           data
         }
       })
     },
     async sendDisconnect() {
       if (!this.$loggedIn()) return
+      if (!this.streamId) return
+
       await this.$apollo.mutate({
         mutation: gql`
           mutation userViewerActivityBroadcast(
@@ -332,17 +360,16 @@ export default {
           }
         `,
         variables: {
-          streamId: this.$route.params.streamId,
-          resourceId: this.resourceId || window.__resourceId,
+          streamId: this.streamId,
+          resourceId: this.resourceId,
           data: { userId: this.$userId(), uuid: this.uuid, status: 'disconnect' }
         }
       })
-      delete window.__resourceId
     },
     updateBubbles(transition = true) {
       if (!this.$refs.parent) return
 
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       const selectedObjects = []
       for (const user of this.users) {
@@ -439,7 +466,7 @@ export default {
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
 
-      window.__viewer.interactions.overlayObjects(selectedObjects)
+      this.viewer.interactions.overlayObjects(selectedObjects)
     }
   }
 }

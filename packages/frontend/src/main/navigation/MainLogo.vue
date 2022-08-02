@@ -33,13 +33,13 @@
   </v-card>
 </template>
 <script>
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainServerInfoQuery } from '@/graphql/server'
 
 export default {
   props: { shadow: { type: Boolean, default: false } },
   apollo: {
     serverInfo: {
-      query: MainServerInfoQuery
+      query: mainServerInfoQuery
     }
   }
 }

@@ -1,0 +1,8 @@
+version: '3'
+services:
+  # Useful containers for development
+  maildev:
+    image: maildev/maildev
+    ports:
+      - 1080:1080
+      - 1025:1025

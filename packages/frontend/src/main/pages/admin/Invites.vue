@@ -7,10 +7,10 @@
           Great! All invites were sent.
         </v-alert>
         <v-alert v-show="errors.length !== 0" prominent dismissible type="error">
-          <p>Invite send failed for addresses:</p>
+          <p>Invite send failed:</p>
           <ul>
-            <li v-for="error in errors" :key="error.email">
-              {{ error.email }}: {{ error.reason }}
+            <li v-for="error in errors" :key="error.message">
+              {{ error.message }}
             </li>
           </ul>
         </v-alert>
@@ -89,14 +89,19 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
-import DOMPurify from 'dompurify'
+import { gql } from '@apollo/client/core'
 import { isEmailValid } from '@/plugins/authHelpers'
-import { MainServerInfoQuery } from '@/graphql/server'
+import { mainServerInfoQuery } from '@/graphql/server'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { maxLength, noXss } from '@/main/lib/common/vuetify/validators'
+import {
+  BatchInviteToStreamsDocument,
+  BatchInviteToServerDocument
+} from '@/graphql/generated/graphql'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 export default {
   name: 'AdminInvites',
@@ -120,15 +125,8 @@ export default {
       selectedStream: null,
       validation: {
         messageRules: [
-          (v) => {
-            if (v.length >= 1024) return 'Message too long!'
-            return true
-          },
-          (v) => {
-            const pure = DOMPurify.sanitize(v)
-            if (pure !== v) return 'No crazy hacks please.'
-            else return true
-          }
+          maxLength(1024, "Message can't be longer than 1024 characters"),
+          noXss()
         ]
       }
     }
@@ -151,7 +149,7 @@ export default {
       prefetch: true
     },
     serverInfo: {
-      query: MainServerInfoQuery
+      query: mainServerInfoQuery
     }
   },
   methods: {
@@ -192,18 +190,26 @@ export default {
       this.submitting = true
       this.errors = []
       this.sentToEmails = []
-      for (const chip of this.chips) {
-        if (!chip || chip.length === 0) continue
-        try {
-          await this.sendInvite(
-            chip,
-            this.createInviteMessage(),
-            this.selectedStream?.id
-          )
-          this.sentToEmails.push(chip)
-        } catch (err) {
-          this.errors.push({ email: chip, reason: err.graphQLErrors[0].message })
-        }
+
+      const targetEmails = this.chips.filter((c) => c.length)
+      const streamId = this.selectedStream?.id
+      const message = this.createInviteMessage()
+      const paramsArray = streamId
+        ? targetEmails.map((e) => ({
+            email: e,
+            streamId,
+            message
+          }))
+        : targetEmails.map((e) => ({
+            email: e,
+            message
+          }))
+
+      try {
+        await this.sendInvites(paramsArray, streamId)
+        this.sentToEmails = targetEmails
+      } catch (err) {
+        this.errors.push(err)
       }
 
       this.submitting = false
@@ -213,29 +219,26 @@ export default {
         this.dismiss()
       }
     },
-    async sendInvite(email, message, streamId) {
-      const input = {
-        email,
-        message
-      }
+    async sendInvites(paramsArray, streamId) {
+      const { data, errors } = streamId
+        ? await this.$apollo
+            .mutate({
+              mutation: BatchInviteToStreamsDocument,
+              variables: { paramsArray }
+            })
+            .catch(convertThrowIntoFetchResult)
+        : await this.$apollo
+            .mutate({
+              mutation: BatchInviteToServerDocument,
+              variables: { paramsArray }
+            })
+            .catch(convertThrowIntoFetchResult)
 
-      const query = gql`
-        mutation($input: ${
-          streamId ? 'StreamInviteCreateInput!' : 'ServerInviteCreateInput!'
-        }) {
-          ${streamId ? 'streamInviteCreate' : 'serverInviteCreate'}(input: $input)
-        }
-      `
-      if (streamId) {
-        input.streamId = streamId
+      if (!data?.serverInviteBatchCreate && !data?.streamInviteBatchCreate) {
+        const errMsg =
+          errors?.[0].message || 'Invitation processing unexpectedly failed'
+        throw new Error(errMsg)
       }
-
-      await this.$apollo.mutate({
-        mutation: query,
-        variables: {
-          input
-        }
-      })
 
       this.$mixpanel.track('Invite Send', {
         type: 'action',

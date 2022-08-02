@@ -1,7 +1,9 @@
-import { COMMON_STREAM_FIELDS } from '@/graphql/streams'
-import gql from 'graphql-tag'
+import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
+import { limitedUserFieldsFragment } from '@/graphql/fragments/user'
+import { commonStreamFieldsFragment } from '@/graphql/streams'
+import { gql } from '@apollo/client/core'
 
-export const COMMON_USER_FIELDS = gql`
+export const commonUserFieldsFragment = gql`
   fragment CommonUserFields on User {
     id
     suuid
@@ -30,7 +32,7 @@ export const COMMON_USER_FIELDS = gql`
 /**
  * User data with favorite streams
  */
-export const UserFavoriteStreamsQuery = gql`
+export const userFavoriteStreamsQuery = gql`
   query UserFavoriteStreams($cursor: String) {
     user {
       ...CommonUserFields
@@ -44,33 +46,114 @@ export const UserFavoriteStreamsQuery = gql`
     }
   }
 
-  ${COMMON_USER_FIELDS}
-  ${COMMON_STREAM_FIELDS}
+  ${commonUserFieldsFragment}
+  ${commonStreamFieldsFragment}
 `
 
 /**
  * Get main user metadata
  */
-export const MainUserDataQuery = gql`
+export const mainUserDataQuery = gql`
   query MainUserData {
     user {
       ...CommonUserFields
     }
   }
 
-  ${COMMON_USER_FIELDS}
+  ${commonUserFieldsFragment}
 `
 
 /**
  * Main metadata + extra info shown on profile page
  */
-export const ProfileSelfQuery = gql`
-  query MainUserData {
+export const profileSelfQuery = gql`
+  query ExtraUserData {
     user {
       ...CommonUserFields
       totalOwnedStreamsFavorites
     }
   }
 
-  ${COMMON_USER_FIELDS}
+  ${commonUserFieldsFragment}
+`
+
+/**
+ * (Limited, not admin) User search
+ */
+export const userSearchQuery = gql`
+  query UserSearch($query: String!, $limit: Int!, $cursor: String, $archived: Boolean) {
+    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {
+      cursor
+      items {
+        ...LimitedUserFields
+      }
+    }
+  }
+
+  ${limitedUserFieldsFragment}
+`
+
+/**
+ * Basic query for checking if user is logged in
+ */
+export const isLoggedInQuery = gql`
+  query IsLoggedIn {
+    user {
+      id
+    }
+  }
+`
+
+/**
+ * Admin panel (invited/registered) users list
+ */
+export const adminUsersListQuery = gql`
+  query AdminUsersList($limit: Int, $offset: Int, $query: String) {
+    adminUsers(limit: $limit, offset: $offset, query: $query) {
+      totalCount
+      items {
+        id
+        registeredUser {
+          id
+          suuid
+          email
+          name
+          bio
+          company
+          avatar
+          verified
+          profiles
+          role
+          authorizedApps {
+            name
+          }
+        }
+        invitedUser {
+          id
+          email
+          invitedBy {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`
+
+export const userTimelineQuery = gql`
+  query UserTimeline($cursor: DateTime) {
+    user {
+      id
+      timeline(cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...ActivityMainFields
+        }
+      }
+    }
+  }
+
+  ${activityMainFieldsFragment}
 `

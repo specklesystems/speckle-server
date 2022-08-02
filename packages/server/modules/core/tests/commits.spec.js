@@ -100,7 +100,7 @@ describe('Commits @core-commits', () => {
 
   it('Should update a commit', async () => {
     const res = await updateCommit({ id: commitId1, message: 'FIRST COMMIT YOOOOOO' })
-    expect(res).to.equal(1)
+    expect(res).to.equal(true)
   })
 
   it('Should delete a commit', async () => {

@@ -13,18 +13,15 @@
       overflow: hidden;
       z-index: 25;
     "
-    class="no-mouse"
+    class="comment-add-overlay no-mouse"
   >
     <v-slide-x-transition>
       <div
-        v-show="visible && !$store.state.selectedComment"
+        v-show="visible && !viewerState.selectedCommentMetaData"
         ref="commentButton"
-        class="absolute-pos"
+        class="new-comment-overlay absolute-pos"
       >
-        <div
-          class="d-flex"
-          :style="`height: 48px; width: ${$vuetify.breakpoint.xs ? '90vw' : '320px'}`"
-        >
+        <div class="d-flex">
           <v-btn
             v-tooltip="!expand ? 'Add a comment (ctrl + shift + c)' : 'Cancel'"
             small
@@ -43,52 +40,66 @@
               style="width: 100%; top: -10px; position: relative"
               class=""
             >
-              <div class="d-flex">
-                <v-textarea
-                  v-if="$loggedIn() && canComment"
-                  v-model="commentText"
-                  :disabled="loading"
-                  solo
-                  hide-details
-                  autofocus
-                  auto-grow
-                  rows="1"
-                  placeholder="Your comment..."
-                  class="mouse rounded-xl caption elevation-15"
-                  append-icon="mdi-send"
-                  @keydown.enter.exact.prevent="addComment()"
-                ></v-textarea>
+              <div v-if="$loggedIn() && canComment" class="d-flex mouse">
+                <comment-editor
+                  ref="desktopEditor"
+                  v-model="commentValue"
+                  :stream-id="streamId"
+                  adding-comment
+                  style="width: 300px"
+                  max-height="300px"
+                  :disabled="isSubmitDisabled"
+                  @attachments-processing="anyAttachmentsProcessing = $event"
+                  @submit="addComment()"
+                />
+              </div>
+              <div
+                v-if="$loggedIn() && canComment"
+                class="d-flex mt-2 mouse justify-end"
+              >
+                <v-fade-transition group>
+                  <template v-if="isCommentEmpty">
+                    <template v-for="reaction in viewerState.commentReactions">
+                      <v-btn
+                        :key="reaction"
+                        class="mr-2"
+                        fab
+                        small
+                        @click="addCommentDirect(reaction)"
+                      >
+                        <span
+                          class="text-h5"
+                          style="position: relative; top: 1px; left: -1px"
+                        >
+                          {{ reaction }}
+                        </span>
+                      </v-btn>
+                    </template>
+                  </template>
+                </v-fade-transition>
                 <v-btn
-                  v-if="$loggedIn() && canComment"
+                  v-tooltip="'Add attachments'"
+                  :disabled="loading"
+                  fab
+                  small
+                  class="mx-2 elevation-10"
+                  @click="addAttachments()"
+                >
+                  <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+                  <v-icon v-else small>mdi-paperclip</v-icon>
+                </v-btn>
+                <v-btn
                   v-tooltip="'Send comment (press enter)'"
                   :disabled="loading"
                   icon
                   dark
-                  large
-                  class="mouse elevation-0 primary pa-0 ma-o"
-                  style="left: -47px; top: 1px; height: 48px; width: 48px"
+                  fab
+                  small
+                  class="primary mr-2 elevation-10"
                   @click="addComment()"
                 >
                   <v-icon dark small>mdi-send</v-icon>
                 </v-btn>
-              </div>
-              <div v-if="$loggedIn() && canComment" class="d-flex mt-2 mouse">
-                <template v-for="reaction in $store.state.commentReactions">
-                  <v-btn
-                    :key="reaction"
-                    class="mr-2"
-                    fab
-                    small
-                    @click="addCommentDirect(reaction)"
-                  >
-                    <span
-                      class="text-h5"
-                      style="position: relative; top: 1px; left: -1px"
-                    >
-                      {{ reaction }}
-                    </span>
-                  </v-btn>
-                </template>
               </div>
               <div
                 v-if="!canComment && $loggedIn()"
@@ -101,7 +112,7 @@
                 block
                 depressed
                 color="primary"
-                class="rounded-xl mouse"
+                class="rounded-xl mouse mt-2"
                 to="/authn/login"
               >
                 <v-icon small class="mr-1">mdi-account</v-icon>
@@ -110,10 +121,11 @@
             </div>
           </v-slide-x-transition>
         </div>
+
         <v-dialog
           v-if="$vuetify.breakpoint.xs"
           v-model="expand"
-          class="elevation-0 flat"
+          content-class="elevation-0 flat px-2"
           @click:outside="toggleExpand()"
         >
           <div
@@ -125,59 +137,76 @@
           <div
             v-if="$loggedIn() && canComment"
             class="d-flex justify-center"
-            style="position: relative; left: 24px"
+            style="position: relative"
           >
-            <v-textarea
-              v-model="commentText"
-              solo
+            <comment-editor
+              ref="mobileEditor"
+              v-model="commentValue"
+              :stream-id="streamId"
+              adding-comment
+              style="width: 100%"
+              max-height="60vh"
+              :disabled="isSubmitDisabled"
+              @submit="addComment()"
+              @attachments-processing="anyAttachmentsProcessing = $event"
+            />
+          </div>
+          <div
+            v-if="$loggedIn() && canComment"
+            class="my-2 d-flex justify-end"
+            style="position: relative"
+          >
+            <v-btn
+              v-if="!$loggedIn()"
+              block
+              depressed
+              color="primary"
+              class="rounded-xl"
+              to="/authn/login"
+            >
+              <v-icon small class="mr-1">mdi-account</v-icon>
+              Sign in to comment
+            </v-btn>
+            <v-fade-transition group>
+              <template v-if="isCommentEmpty">
+                <template v-for="reaction in viewerState.commentReactions">
+                  <v-btn
+                    :key="reaction"
+                    class="mr-2 elevation-4"
+                    fab
+                    small
+                    @click="addCommentDirect(reaction)"
+                  >
+                    <span class="text-h5">
+                      {{ reaction }}
+                    </span>
+                  </v-btn>
+                </template>
+              </template>
+            </v-fade-transition>
+            <v-btn
+              v-tooltip="'Add attachments'"
               :disabled="loading"
-              hide-details
-              autofocus
-              auto-grow
-              rows="1"
-              placeholder="Your comment..."
-              class="mouse rounded-xl caption elevation-15"
-              append-icon="mdi-send"
-              @keydown.enter.exact.prevent="addComment()"
-            ></v-textarea>
+              fab
+              small
+              class="mx-2 elevation-4"
+              @click="addAttachments()"
+            >
+              <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+              <v-icon v-else small>mdi-paperclip</v-icon>
+            </v-btn>
             <v-btn
               v-tooltip="'Send comment (press enter)'"
               :disabled="loading"
               icon
               dark
-              large
-              class="mouse elevation-0 primary pa-0 ma-o"
-              style="left: -47px; top: 1px; height: 48px; width: 48px"
+              fab
+              small
+              class="primary elevation-4"
               @click="addComment()"
             >
               <v-icon dark small>mdi-send</v-icon>
             </v-btn>
-          </div>
-          <v-btn
-            v-if="!$loggedIn()"
-            block
-            depressed
-            color="primary"
-            class="rounded-xl"
-            to="/authn/login"
-          >
-            <v-icon small class="mr-1">mdi-account</v-icon>
-            Sign in to comment
-          </v-btn>
-          <div class="my-2 d-flex justify-center" style="position: relative">
-            <template v-for="reaction in $store.state.commentReactions">
-              <v-btn
-                :key="reaction"
-                class="mr-2"
-                fab
-                small
-                @click="addCommentDirect(reaction)"
-              >
-                <span class="text-h5" style="position: relative; top: 1px; left: -1px">
-                  {{ reaction }}
-                </span>
-              </v-btn>
-            </template>
           </div>
         </v-dialog>
       </div>
@@ -185,7 +214,7 @@
     <portal to="viewercontrols" :order="100">
       <v-slide-x-transition>
         <v-btn
-          v-show="!location && !$store.state.selectedComment"
+          v-show="!location && !viewerState.selectedCommentMetaData"
           v-tooltip="'Add a comment (ctrl + shift + c)'"
           icon
           dark
@@ -202,11 +231,37 @@
 </template>
 <script>
 import * as THREE from 'three'
-import gql from 'graphql-tag'
-import debounce from 'lodash/debounce'
+import { gql } from '@apollo/client/core'
+import { debounce, throttle } from 'lodash'
+import CommentEditor from '@/main/components/comments/CommentEditor.vue'
+import {
+  basicStringToDocument,
+  isDocEmpty
+} from '@/main/lib/common/text-editor/documentHelper'
+import {
+  VIEWER_UPDATE_THROTTLE_TIME,
+  SMART_EDITOR_SCHEMA
+} from '@/main/lib/viewer/comments/commentsHelper'
+import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
+import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import {
+  setIsAddingComment,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
-import { getCamArray } from './viewerFrontendHelpers'
+/**
+ * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
+ */
+
 export default {
+  components: { CommentEditor },
+  mixins: [
+    buildResizeHandlerMixin({ shouldThrottle: true, wait: VIEWER_UPDATE_THROTTLE_TIME })
+  ],
   apollo: {
     user: {
       query: gql`
@@ -232,9 +287,27 @@ export default {
         }
       `,
       variables() {
-        return { streamId: this.$route.params.streamId }
+        return { streamId: this.streamId }
       }
     }
+  },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          selectedCommentMetaData
+          commentReactions
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState, streamId, resourceId }
   },
   data() {
     return {
@@ -242,37 +315,64 @@ export default {
       expand: false,
       visible: true,
       loading: false,
-      commentText: null
+      commentValue: { doc: null, attachments: [] },
+      editorSchemaOptions: SMART_EDITOR_SCHEMA,
+      anyAttachmentsProcessing: false
     }
   },
   computed: {
     canComment() {
       return !!this.stream?.role || this.stream?.allowPublicComments
+    },
+    isCommentEmpty() {
+      return isDocEmpty(this.commentValue.doc) && !this.commentValue.attachments.length
+    },
+    isSubmitDisabled() {
+      return this.loading || this.anyAttachmentsProcessing
     }
   },
   mounted() {
-    window.__viewer.on('select', debounce(this.handleSelect, 10))
-    window.__viewer.cameraHandler.controls.addEventListener(
+    this.viewerSelectHandler = debounce(this.handleSelect, 10)
+    this.viewer.on('select', this.viewerSelectHandler)
+
+    // Throttling update, cause it happens way too often and triggers expensive DOM updates
+    // Smoothing out the animation with CSS transitions (check style)
+    this.viewerControlsUpdateHandler = throttle(() => {
+      this.updateCommentBubble()
+    }, VIEWER_UPDATE_THROTTLE_TIME)
+    this.viewer.cameraHandler.controls.addEventListener(
       'update',
-      this.updateCommentBubble
+      this.viewerControlsUpdateHandler
     )
-    // this.$refs.commentTextArea.calculateInputHeight()
-    document.addEventListener(
-      'keyup',
-      function (e) {
-        // console.log(e)
-        if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
-      }.bind(this)
+
+    this.docKeyUpHandler = (e) => {
+      if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
+    }
+    document.addEventListener('keyup', this.docKeyUpHandler)
+  },
+  beforeDestroy() {
+    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.cameraHandler.controls.removeEventListener(
+      'update',
+      this.viewerControlsUpdateHandler
     )
+    document.removeEventListener('keyup', this.docKeyUpHandler)
   },
   methods: {
+    onWindowResize() {
+      this.updateCommentBubble()
+    },
     async addCommentDirect(emoji) {
-      this.commentText = emoji
+      this.commentValue.doc = basicStringToDocument(emoji, this.editorSchemaOptions)
       await this.addComment()
+    },
+    addAttachments() {
+      const editor = this.$refs.desktopEditor || this.$refs.mobileEditor
+      editor.addAttachments()
     },
     async addComment() {
       if (this.loading) return
-      if (!this.commentText || this.commentText.length < 1) {
+      if (this.isCommentEmpty) {
         this.$eventHub.$emit('notification', {
           text: `Comment cannot be empty.`
         })
@@ -281,26 +381,31 @@ export default {
 
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'create' })
 
-      const camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
+      const camTarget = this.viewer.cameraHandler.activeCam.controls.getTarget()
+
+      const blobIds = this.commentValue.attachments
+        .filter(isSuccessfullyUploaded)
+        .map((a) => a.result.blobId)
       const commentInput = {
-        streamId: this.$route.params.streamId,
+        streamId: this.streamId,
         resources: [
           {
             resourceType: this.$route.path.includes('object') ? 'object' : 'commit',
-            resourceId: this.$route.params.resourceId
+            resourceId: this.resourceId
           }
         ],
-        text: this.commentText,
+        text: this.commentValue.doc,
+        blobIds,
         data: {
           location: this.location
             ? this.location
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
-          camPos: getCamArray(),
-          filters: this.$store.state.appliedFilter,
-          sectionBox: window.__viewer.sectionBox.getCurrentBox(),
+          camPos: getCamArray(this.viewer),
+          filters: this.viewerState.appliedFilter,
+          sectionBox: this.viewer.sectionBox.getCurrentBox(),
           selection: null // TODO for later, lazy now
         },
-        screenshot: window.__viewer.interactions.screenshot()
+        screenshot: this.viewer.interactions.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
@@ -309,9 +414,11 @@ export default {
             .map((res) => ({ resourceId: res, resourceType: this.$resourceType(res) }))
         )
       }
+
+      let success = false
       this.loading = true
       try {
-        await this.$apollo.mutate({
+        const { data } = await this.$apollo.mutate({
           mutation: gql`
             mutation commentCreate($input: CommentCreateInput!) {
               commentCreate(input: $input)
@@ -319,17 +426,26 @@ export default {
           `,
           variables: { input: commentInput }
         })
+        success = !!data.commentCreate
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: e.message
         })
       }
+
+      // On success, mark uploads as in use, to prevent cleanup
+      if (success) {
+        this.commentValue.attachments.forEach((a) => {
+          a.inUse = true
+        })
+      }
+
       this.loading = false
       this.expand = false
       this.visible = false
-      this.commentText = null
-      this.$store.commit('setAddingCommentState', { addingCommentState: false })
-      window.__viewer.interactions.deselectObjects()
+      this.commentValue = { doc: null, attachments: [] }
+      setIsAddingComment(false)
+      this.viewer.interactions.deselectObjects()
     },
     sendStatusUpdate() {
       // TODO: typing or not
@@ -345,7 +461,7 @@ export default {
 
       if (!this.location && !this.expand) this.visible = false
 
-      this.$store.commit('setAddingCommentState', { addingCommentState: this.expand })
+      setIsAddingComment(this.expand)
     },
     handleSelect(info) {
       this.expand = false
@@ -353,7 +469,7 @@ export default {
         // TODO: deselect event
         this.visible = false
         this.location = null
-        this.$store.commit('setAddingCommentState', { addingCommentState: false })
+        setIsAddingComment(false)
         return
       }
 
@@ -371,7 +487,7 @@ export default {
         info.location.z
       )
 
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
@@ -392,7 +508,7 @@ export default {
       // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       const projectedLocation = this.location.clone()
       projectedLocation.project(cam)
@@ -413,8 +529,8 @@ export default {
   }
 }
 </script>
-<style scoped>
-::v-deep .v-dialog {
+<style scoped lang="scss">
+:deep(.v-dialog) {
   box-shadow: none;
   overflow-y: hidden;
   overflow-x: hidden;
@@ -435,5 +551,11 @@ export default {
 
 .transition {
   transition: all 0.2s ease;
+}
+
+.new-comment-overlay {
+  $timing: 0.1s;
+  transition: left $timing linear, right $timing linear, top $timing linear,
+    bottom $timing linear;
 }
 </style>

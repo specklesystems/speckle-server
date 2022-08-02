@@ -67,7 +67,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import AppEditDialog from '@/main/components/user/AppEditDialog'
 
 export default {

@@ -18,6 +18,8 @@ async function pageFunction(objectUrl) {
 
   const t0 = Date.now()
 
+  await window.v.init()
+
   try {
     await v.loadObject(objectUrl, '')
   } catch (error) {

@@ -59,7 +59,7 @@
           v-if="
             stream &&
             stream.role !== 'stream:reviewer' &&
-            stream.commit.authorId === $userId()
+            (stream.commit.authorId === $userId() || stream.role === 'stream:owner')
           "
           v-tooltip="'Edit commit'"
           text

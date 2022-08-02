@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 'use strict'
 
@@ -35,30 +36,51 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
   connectionUri = env.POSTGRES_URL
 }
 
+// NOTE: fixes time pagination, breaks graphql DateTime parsing :/
+// The pg driver (& knex?) parses dates for us and it breaks precision. This
+// disables any date parsing and we guarantee values are returned as strings.
+// const types = require('pg').types
+// const TIMESTAMPTZ_OID = 1184
+// const TIMESTAMP_OID = 1114
+// types.setTypeParser(TIMESTAMPTZ_OID, (val) => val)
+// types.setTypeParser(TIMESTAMP_OID, (val) => val)
+
+// Another NOTE:
+// this is why the new datetime columns are created like this
+// table.specificType('createdAt', 'TIMESTAMPTZ(3)').defaultTo(knex.fn.now())
+
+const postgresMaxConnections = parseInt(env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
+
+const commonConfig = {
+  client: 'pg',
+  migrations: {
+    directory: migrationDirs
+  },
+  pool: { min: 0, max: postgresMaxConnections }
+}
+
 /** @type {Object<string, import('knex').Knex.Config>} */
 const config = {
   test: {
-    client: 'pg',
-    connection: connectionUri || 'postgres://localhost/speckle2_test',
-    migrations: {
-      directory: migrationDirs
+    ...commonConfig,
+    connection: {
+      connectionString: connectionUri || 'postgres://localhost/speckle2_test',
+      application_name: 'speckle_server'
     }
   },
   development: {
-    client: 'pg',
-    connection: connectionUri || 'postgres://localhost/speckle2_dev',
-    migrations: {
-      directory: migrationDirs
-    },
-    pool: { min: 2, max: 4 }
+    ...commonConfig,
+    connection: {
+      connectionString: connectionUri || 'postgres://localhost/speckle2_dev',
+      application_name: 'speckle_server'
+    }
   },
   production: {
-    client: 'pg',
-    connection: connectionUri,
-    migrations: {
-      directory: migrationDirs
-    },
-    pool: { min: 2, max: 4 }
+    ...commonConfig,
+    connection: {
+      connectionString: connectionUri,
+      application_name: 'speckle_server'
+    }
   }
 }
 

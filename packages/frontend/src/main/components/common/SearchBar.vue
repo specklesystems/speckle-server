@@ -4,7 +4,7 @@
       <v-autocomplete
         v-model="selectedSearchResult"
         :loading="$apollo.loading"
-        :items="streams.items"
+        :items="items"
         :search-input.sync="search"
         no-filter
         counter="3"
@@ -78,7 +78,7 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
 export default {
   components: {
@@ -91,7 +91,7 @@ export default {
     search: '',
     hasSearched: false,
     liff: false,
-    streams: { items: [] },
+    items: [],
     selectedSearchResult: null
   }),
   apollo: {
@@ -117,15 +117,18 @@ export default {
       skip() {
         return !this.search || this.search.length < 3
       },
+      result({ data }) {
+        this.items = [...data.streams.items]
+      },
       debounce: 300
     }
   },
   watch: {
     selectedSearchResult(val) {
-      const myStream = this.streams.items.find((s) => s.id === val.id)
+      const myStream = this.items.find((s) => s.id === val.id)
       this.$emit('select', myStream)
 
-      this.streams.items = []
+      this.items = []
       this.search = ''
 
       if (val && this.gotostreamonclick) this.$router.push(`/streams/${val.id}`)
@@ -133,7 +136,7 @@ export default {
     search(val) {
       this.hasSearched = true
       if (val === '42') this.liff = true
-      if (!val || val === '') this.streams.items = []
+      if (!val || val === '') this.items = []
     }
   },
   methods: {}

@@ -23,6 +23,8 @@ packages/frontend/schema.graphql
 packages/server/reports*
 
 **/venv/**
+**/.venv/**
+*.pyc
 **/start/
 
 # Profiler output
@@ -40,3 +42,6 @@ events.json
 !.yarn/versions
 
 *yarn-error.log
+
+# VSCode log files
+packages/server/.vscode/*.log

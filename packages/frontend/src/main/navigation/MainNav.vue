@@ -118,7 +118,6 @@
     </portal-target>
 
     <!-- Dialogs  -->
-
     <v-dialog
       v-model="newStreamDialog"
       max-width="500"
@@ -127,23 +126,19 @@
       <new-stream @created="newStreamDialog = false" @close="newStreamDialog = false" />
     </v-dialog>
 
-    <v-dialog
-      v-model="inviteUsersDialog"
-      max-width="500"
-      :fullscreen="$vuetify.breakpoint.xsOnly"
-    >
-      <server-invites @close="inviteUsersDialog = false" />
-    </v-dialog>
+    <invite-dialog :visible.sync="inviteUsersDialog" />
   </div>
 </template>
 <script>
-import { MainUserDataQuery } from '@/graphql/user'
+import { mainUserDataQuery } from '@/graphql/user'
+import InviteDialog from '@/main/dialogs/InviteDialog.vue'
+import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
   components: {
     MainLogo: () => import('@/main/navigation/MainLogo'),
     NewStream: () => import('@/main/dialogs/NewStream'),
-    ServerInvites: () => import('@/main/dialogs/ServerInvites'),
+    InviteDialog,
     UserAvatarIcon: () => import('@/main/components/common/UserAvatarIcon')
   },
   props: {
@@ -152,7 +147,7 @@ export default {
   },
   apollo: {
     user: {
-      query: MainUserDataQuery,
+      query: mainUserDataQuery,
       skip() {
         return !this.$loggedIn()
       }
@@ -178,10 +173,8 @@ export default {
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem(
-        'darkModeEnabled',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
+      setDarkTheme(this.$vuetify.theme.dark, true)
+
       this.$mixpanel.people.set(
         'Theme Web',
         this.$vuetify.theme.dark ? 'dark' : 'light'

@@ -12,7 +12,7 @@
       <v-icon small>mdi-shield-alert-outline</v-icon>
       This Speckle server is invite only.
     </div>
-    <v-alert v-if="serverInfo.inviteOnly && !inviteId" type="info">
+    <v-alert v-if="serverInfo.inviteOnly && !token" type="info">
       This server is invite only. If you have received an invitation email, please
       follow the instructions in it.
     </v-alert>
@@ -171,9 +171,7 @@
       </v-card-text>
     </div>
     <v-card-title
-      :class="`justify-center caption ${
-        serverInfo.inviteOnly && !inviteId ? 'pt-0' : ''
-      }`"
+      :class="`justify-center caption ${serverInfo.inviteOnly && !token ? 'pt-0' : ''}`"
     >
       <div class="mx-4 align-self-center">Already have an account?</div>
       <div class="mx-4 align-self-center">
@@ -183,12 +181,17 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
 import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
+import {
+  getInviteTokenFromRoute,
+  processSuccessfulAuth
+} from '@/main/lib/auth/services/authService'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheRegistration',
@@ -252,13 +255,17 @@ export default {
     }
   },
   computed: {
+    token() {
+      return getInviteTokenFromRoute(this.$route)
+    },
     loginRoute() {
       return {
         name: 'Login',
         query: {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
-          suuid: this.$route.query.suuid
+          suuid: this.$route.query.suuid,
+          token: this.token
         }
       }
     },
@@ -275,8 +282,6 @@ export default {
     const challenge = urlParams.get('challenge')
     const suuid = urlParams.get('suuid')
     this.suuid = suuid
-    const inviteId = urlParams.get('inviteId')
-    this.inviteId = inviteId
 
     this.$mixpanel.track('Visit Sign Up')
 
@@ -285,7 +290,7 @@ export default {
 
     if (!challenge && this.appId === 'spklwebapp') {
       this.challenge = randomString({ length: 10 })
-      localStorage.setItem('appChallenge', this.challenge)
+      AppLocalStorage.set('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge
     }
@@ -317,7 +322,7 @@ export default {
 
         const res = await fetch(
           `/auth/local/register?challenge=${this.challenge}${
-            this.inviteId ? '&inviteId=' + this.inviteId : ''
+            this.token ? '&token=' + this.token : ''
           }`,
           {
             method: 'POST',
@@ -331,10 +336,10 @@ export default {
 
         if (res.redirected) {
           this.$mixpanel.track('Sign Up', {
-            isInvite: this.inviteId !== null,
+            isInvite: this.token !== null,
             type: 'action'
           })
-          window.location = res.url
+          processSuccessfulAuth(res)
           return
         }
 

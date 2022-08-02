@@ -1,81 +1,74 @@
 <template>
-  <v-container>
-    <v-row justify="center" style="margin-top: 50px" dense>
-      <v-col
-        cols="12"
-        lg="6"
-        md="6"
-        xl="6"
-        class="d-flex flex-column justify-center align-center"
-      >
-        <v-card flat tile color="transparent" class="pa-0">
-          <div class="d-flex flex-column justify-space-between align-center mb-10">
-            <v-img
-              v-if="!errorType"
-              contain
-              max-height="200"
-              src="@/assets/emptybox.png"
-            ></v-img>
-            <v-img
-              v-else-if="errorType == 'access'"
-              contain
-              max-height="200"
-              src="@/assets/lockbox.png"
-            ></v-img>
-            <v-img
-              v-else-if="errorType == '404'"
-              contain
-              max-height="200"
-              src="@/assets/404box.png"
-            ></v-img>
-          </div>
-          <div class="text-center mb-2 space-grotesk">
-            <slot name="default"></slot>
-          </div>
-          <v-container style="max-width: 500px">
-            <slot name="actions">
-              <v-list rounded class="transparent">
-                <v-list-item
-                  link
-                  class="primary mb-4 no-overlay"
-                  dark
-                  :to="`${
-                    $route.params.streamId &&
-                    errorType !== '404' &&
-                    errorType !== 'access'
-                      ? '/streams/' + $route.params.streamId
-                      : '/'
-                  }`"
-                >
-                  <v-list-item-icon>
-                    <v-icon>mdi-home</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Home</v-list-item-title>
-                    <v-list-item-subtitle class="caption">
-                      Go to the homepage
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </slot>
-          </v-container>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+  <page-placeholder>
+    <template #image>
+      <v-img
+        v-if="!errorType"
+        contain
+        max-height="200"
+        src="@/assets/emptybox.png"
+      ></v-img>
+      <v-img
+        v-else-if="errorType == 'access'"
+        contain
+        max-height="200"
+        src="@/assets/lockbox.png"
+      ></v-img>
+      <v-img
+        v-else-if="errorType == '404'"
+        contain
+        max-height="200"
+        src="@/assets/404box.png"
+      ></v-img>
+    </template>
+    <template #actions>
+      <slot name="actions">
+        <v-list rounded class="transparent">
+          <v-list-item
+            link
+            class="primary mb-4 no-overlay"
+            dark
+            :to="`${
+              $route.params.streamId && errorType !== '404' && errorType !== 'access'
+                ? '/streams/' + $route.params.streamId
+                : '/'
+            }`"
+          >
+            <v-list-item-icon>
+              <v-icon>mdi-home</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Home</v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                Go to the homepage
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </slot>
+    </template>
+    <template #default>
+      <slot name="default" />
+    </template>
+  </page-placeholder>
 </template>
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, PropType } from 'vue'
+import PagePlaceholder from '@/main/components/common/PagePlaceholder.vue'
+
+type ErrorType = 'access' | '404' | null
+
+export default defineComponent({
+  name: 'ErrorPlaceholder',
+  components: {
+    PagePlaceholder
+  },
   props: {
     errorType: {
-      type: String,
+      type: String as PropType<ErrorType>,
       default: null
     }
-  },
-  computed: {},
-  methods: {}
-}
+  }
+})
 </script>
 <style scoped>
 .no-overlay.v-list-item--active::before {

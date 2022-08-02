@@ -2,16 +2,7 @@
   <router-view></router-view>
 </template>
 <script>
-import { MainServerInfoQuery } from '@/graphql/server'
-
-export default {
-  components: {},
-  apollo: {
-    serverInfo: {
-      query: MainServerInfoQuery
-    }
-  }
-}
+export default {}
 </script>
 <style lang="css">
 .v-timeline:before {

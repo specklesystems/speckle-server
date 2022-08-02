@@ -1,4 +1,4 @@
-query Object($streamId: String!, $id: String!) {
+query StreamObject($streamId: String!, $id: String!) {
   stream(id: $streamId) {
     id
     object(id: $id) {

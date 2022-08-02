@@ -44,17 +44,9 @@
 </template>
 <script>
 import { signOut } from '@/plugins/authHelpers'
-import { MainUserDataQuery } from '@/graphql/user'
+import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
-  apollo: {
-    user: {
-      query: MainUserDataQuery,
-      skip() {
-        return !this.loggedIn
-      }
-    }
-  },
   methods: {
     signOut() {
       this.$mixpanel.track('Log Out', { type: 'action' })
@@ -62,10 +54,8 @@ export default {
     },
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem(
-        'darkModeEnabled',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
+      setDarkTheme(this.$vuetify.theme.dark, true)
+
       this.$mixpanel.people.set(
         'Theme Web',
         this.$vuetify.theme.dark ? 'dark' : 'light'

@@ -8,6 +8,7 @@ docker_image_tag: v2.3.3
 db:
   # postgres_url: secret -> postgres_url
   useCertificate: false
+  maxConnectionsServer: 4
   certificate: '' # Multi-line string with the contents of `ca-certificate.crt`
   PGSSLMODE: require
 
@@ -55,6 +56,13 @@ server:
     cpu: 1000m
     memory: 3Gi
 
+  monitoring:
+    apollo:
+      enabled: false
+      graph_id: ''
+      # key: secret -> `apollo_key`
+
+  # Sentry specific:
   sentry_dns: ''
   disable_tracking: false
   disable_tracing: false
@@ -94,6 +102,7 @@ fileimport_service:
   limits:
     cpu: 1000m
     memory: 2Gi
+  time_limit_min: 10
 
 secretName: server-vars
 
@@ -103,3 +112,4 @@ cert_manager_issuer: letsencrypt-staging
 helm_test_enabled: true
 
 create_namespace: false
+file_size_limit_mb: 100
