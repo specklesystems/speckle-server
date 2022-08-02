@@ -28,6 +28,7 @@ import { FilterMaterial } from './FilteringManager'
 import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
+import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 
 export default class SpeckleRenderer {
@@ -169,7 +170,7 @@ export default class SpeckleRenderer {
     this.filterBatchRecording = []
   }
 
-  public applyFilter(ids: string[], filterMaterial: FilterMaterial) {
+  public applyFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
     )

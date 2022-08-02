@@ -111,21 +111,21 @@ export default class Batcher {
   }
 
   public setObjectsFilterMaterial(
-    ids: string[],
+    rvs: NodeRenderView[],
     filterMaterial: FilterMaterial
   ): string[] {
-    const rvs = []
-    ids.forEach((val: string) => {
-      rvs.push(WorldTree.getRenderTree().getRenderViewForNodeId(val))
-      /** The batcher should take the explicit IDs it's given and roll with them
-       *  It shouldn;t try to expand the list of render views on it's own
-       */
-      // const views = WorldTree.getRenderTree().getRenderViewsForNodeId(val)
-      // for (let k = 0; k < views.length; k++) {
-      //   if (rvs.includes(views[k])) return
-      // }
-      // rvs = rvs.concat(views)
-    })
+    // const rvs = []
+    // ids.forEach((val: string) => {
+    //   rvs.push(WorldTree.getRenderTree().getRenderViewForNodeId(val))
+    //   /** The batcher should take the explicit IDs it's given and roll with them
+    //    *  It shouldn;t try to expand the list of render views on it's own
+    //    */
+    //   // const views = WorldTree.getRenderTree().getRenderViewsForNodeId(val)
+    //   // for (let k = 0; k < views.length; k++) {
+    //   //   if (rvs.includes(views[k])) return
+    //   // }
+    //   // rvs = rvs.concat(views)
+    // })
     // console.log(ids)
     // console.log(rvs)
     const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]

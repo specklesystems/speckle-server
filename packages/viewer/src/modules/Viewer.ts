@@ -328,6 +328,7 @@ export class Viewer extends EventEmitter implements IViewer {
     min?: number,
     max?: number
   ) {
+    const start = performance.now()
     const nodesGradient = []
     const nodesGhost = []
     const values = []
@@ -360,27 +361,31 @@ export class Viewer extends EventEmitter implements IViewer {
     })
     this.speckleRenderer.clearFilter()
     this.speckleRenderer.beginFilter()
-
+    const ghostRvs = []
     for (let k = 0; k < nodesGhost.length; k++) {
-      const ghostIds = WorldTree.getRenderTree()
-        .getRenderViewsForNode(nodesGhost[k], nodesGhost[k])
-        .map((value) => value.renderData.id)
-      this.speckleRenderer.applyFilter(ghostIds, {
-        filterType: FilterMaterialType.GHOST
-      })
+      ghostRvs.push(
+        ...WorldTree.getRenderTree().getRenderViewsForNode(nodesGhost[k], nodesGhost[k])
+      )
     }
+    this.speckleRenderer.applyFilter(ghostRvs, {
+      filterType: FilterMaterialType.GHOST
+    })
+
     for (let k = 0; k < nodesGradient.length; k++) {
-      const ids = WorldTree.getRenderTree()
-        .getRenderViewsForNode(nodesGradient[k], nodesGradient[k])
-        .map((value) => value.renderData.id)
+      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(
+        nodesGradient[k],
+        nodesGradient[k]
+      )
+      // .map((value) => value.renderData.id)
       const t = (values[k] - data.min) / (data.max - data.min)
-      this.speckleRenderer.applyFilter(ids, {
+      this.speckleRenderer.applyFilter(rvs, {
         filterType: FilterMaterialType.GRADIENT,
         rampIndex: t
       })
     }
 
     this.speckleRenderer.endFilter()
+    console.warn(`Filter time: ${performance.now() - start}`)
   }
 
   public debugGetFilterByNonNumericPropetyData(propertyName: string): {
@@ -429,6 +434,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public debugApplyByNonNumericPropetyFilter(data: {
     color?: { name: string; color: string; colorIndex: number; nodes: [] }
   }) {
+    const start = performance.now()
     const colors = Object.values(data)
     colors.sort((a, b) => a.colorIndex - b.colorIndex)
 
@@ -437,17 +443,16 @@ export class Viewer extends EventEmitter implements IViewer {
     )
     this.speckleRenderer.clearFilter()
     this.speckleRenderer.beginFilter()
+
     for (let k = 0; k < colors.length; k++) {
       const nodes = colors[k].nodes
-      let ids = []
+      let rvs = []
       for (let i = 0; i < nodes.length; i++) {
-        ids = ids.concat(
-          WorldTree.getRenderTree()
-            .getRenderViewsForNode(nodes[i], nodes[i])
-            .map((value) => value.renderData.id)
+        rvs = rvs.concat(
+          WorldTree.getRenderTree().getRenderViewsForNode(nodes[i], nodes[i])
         )
       }
-      this.speckleRenderer.applyFilter(ids, {
+      this.speckleRenderer.applyFilter(rvs, {
         filterType: FilterMaterialType.COLORED,
         rampIndex: colors[k].colorIndex / colors.length,
         rampIndexColor: new Color(colors[k].color),
@@ -455,6 +460,7 @@ export class Viewer extends EventEmitter implements IViewer {
       })
     }
     this.speckleRenderer.endFilter()
+    console.warn(`Filter time: ${performance.now() - start}`)
   }
 
   // private isObject(value) {

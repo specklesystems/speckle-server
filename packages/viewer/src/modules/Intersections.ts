@@ -21,7 +21,10 @@ export class Intersections {
   ): Intersection {
     this.raycaster.setFromCamera(point, camera)
     const target = scene.getObjectByName('ContentGroup')
-    const results = this.raycaster.intersectObjects(target.children)
+    let results = []
+    if (target) {
+      results = this.raycaster.intersectObjects(target.children)
+    }
 
     if (results.length === 0) return null
     if (nearest) results.sort((value) => value.distance)
