@@ -18,6 +18,7 @@ export DOCKER_BUILDKIT=1
 docker build --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" -t "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" . --file "${FOLDER}/${SPECKLE_SERVER_PACKAGE}/Dockerfile"
 
 if [[ "${PUBLISH_IMAGES}" == "true" ]]; then
+  echo "publishing images"
   docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:latest"
 
   if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then

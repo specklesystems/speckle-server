@@ -21,6 +21,9 @@ workflows:
           context: &docker-hub-context
             - docker-hub
           filters: &filters-build-and-publish
+            branches:
+              only:
+                - main
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
