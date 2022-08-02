@@ -42,3 +42,6 @@ events.json
 !.yarn/versions
 
 *yarn-error.log
+
+# VSCode log files
+packages/server/.vscode/*.log
