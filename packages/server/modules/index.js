@@ -1,10 +1,29 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
-const { appRoot } = require('@/bootstrap')
-const autoload = require('auto-load')
-const { values, merge } = require('lodash')
-const { scalarResolvers, scalarSchemas } = require('./core/graph/scalars')
+const { appRoot, repoRoot } = require('@/bootstrap')
+const { values, merge, camelCase } = require('lodash')
+const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
+const { scalarResolvers } = require('./core/graph/scalars')
+
+function autoloadFromDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) return
+
+  const results = {}
+  fs.readdirSync(dirPath).forEach((file) => {
+    const pathToFile = path.join(dirPath, file)
+    const stat = fs.statSync(pathToFile)
+    if (stat.isFile()) {
+      const ext = path.extname(file)
+      if (['.js', '.ts'].includes(ext)) {
+        const name = camelCase(path.basename(file, ext))
+        results[name] = require(pathToFile)
+      }
+    }
+  })
+
+  return results
+}
 
 exports.init = async (app) => {
   const moduleDirs = [
@@ -31,66 +50,43 @@ exports.init = async (app) => {
   }
 }
 
+/**
+ * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs' | 'schemaDirectives'>}
+ */
 exports.graph = () => {
-  const dirs = fs.readdirSync(`${appRoot}/modules`)
   // Base query and mutation to allow for type extension by modules.
-  const typeDefs = [
-    `
-      ${scalarSchemas}
-      directive @hasScope(scope: String!) on FIELD_DEFINITION
-      directive @hasScopes(scopes: [String]!) on FIELD_DEFINITION
-      directive @hasRole(role: String!) on FIELD_DEFINITION
-      directive @hasStreamRole(role: StreamRole!) on FIELD_DEFINITION
-
-      type Query {
-      """
-      Stare into the void.
-      """
-        _: String
-      }
-      type Mutation{
-      """
-      The void stares back.
-      """
-      _: String
-      }
-      type Subscription{
-        """
-        It's lonely in the void.
-        """
-        _: String
-      }`
-  ]
+  const typeDefs = [baseTypeDefs]
 
   let resolverObjs = []
   let schemaDirectives = {}
 
-  dirs.forEach((file) => {
-    const fullPath = path.join(`${appRoot}/modules`, file)
-
-    // load and merge the type definitions
-    if (fs.existsSync(path.join(fullPath, 'graph', 'schemas'))) {
-      const moduleSchemas = fs.readdirSync(path.join(fullPath, 'graph', 'schemas'))
+  // load typedefs from /assets
+  const assetModuleDirs = fs.readdirSync(`${repoRoot}/assets`)
+  assetModuleDirs.forEach((dir) => {
+    const typeDefDirPath = path.join(`${repoRoot}/assets`, dir, 'typedefs')
+    if (fs.existsSync(typeDefDirPath)) {
+      const moduleSchemas = fs.readdirSync(typeDefDirPath)
       moduleSchemas.forEach((schema) => {
-        typeDefs.push(
-          fs.readFileSync(path.join(fullPath, 'graph', 'schemas', schema), 'utf8')
-        )
+        typeDefs.push(fs.readFileSync(path.join(typeDefDirPath, schema), 'utf8'))
       })
     }
+  })
+
+  // load code modules from /modules
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  codeModuleDirs.forEach((file) => {
+    const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
-    if (fs.existsSync(path.join(fullPath, 'graph', 'resolvers'))) {
-      resolverObjs = [
-        ...resolverObjs,
-        ...values(autoload(path.join(fullPath, 'graph', 'resolvers')))
-      ]
+    const resolversPath = path.join(fullPath, 'graph', 'resolvers')
+    if (fs.existsSync(resolversPath)) {
+      resolverObjs = [...resolverObjs, ...values(autoloadFromDirectory(resolversPath))]
     }
 
     // load directives
-    if (fs.existsSync(path.join(fullPath, 'graph', 'directives'))) {
-      schemaDirectives = Object.assign(
-        ...values(autoload(path.join(fullPath, 'graph', 'directives')))
-      )
+    const directivesPath = path.join(fullPath, 'graph', 'directives')
+    if (fs.existsSync(directivesPath)) {
+      schemaDirectives = Object.assign(...values(autoloadFromDirectory(directivesPath)))
     }
   })
 

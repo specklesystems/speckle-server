@@ -1,6 +1,5 @@
-FROM node:16.15-bullseye-slim as node
+FROM node:16.15-bullseye-slim as build-stage
 ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
 
 RUN apt-get update && apt-get install -y \
@@ -19,9 +18,30 @@ COPY package.json yarn.lock ./
 
 WORKDIR /speckle-server/packages/server
 COPY packages/server/package.json .
-RUN yarn workspaces focus --production
+RUN yarn workspaces focus
 
 COPY packages/server .
+
+RUN yarn build
+RUN yarn workspaces focus --production
+
+FROM node:16.15-bullseye-slim as production-stage
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+ARG SPECKLE_SERVER_VERSION=custom
+
+WORKDIR /speckle-server
+
+COPY --from=build-stage /speckle-server/.yarnrc.yml .
+COPY --from=build-stage /speckle-server/.yarn ./.yarn
+COPY --from=build-stage /speckle-server/package.json /speckle-server/yarn.lock ./
+COPY --from=build-stage /speckle-server/node_modules ./node_modules
+
+WORKDIR /speckle-server/packages/server
+
+COPY --from=build-stage /speckle-server/packages/server/dist ./dist
+COPY --from=build-stage /speckle-server/packages/server/assets ./assets
+COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
 ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 CMD ["yarn", "node", "bin/www"]

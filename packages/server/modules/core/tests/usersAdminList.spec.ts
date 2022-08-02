@@ -1,16 +1,17 @@
-const { ServerInvites, Streams, Users } = require('@/modules/core/dbSchema')
-const { truncateTables } = require('@/test/hooks')
-const { createUser } = require('@/modules/core/services/users')
-const { createStream } = require('@/modules/core/services/streams')
-const { times, clamp } = require('lodash')
-const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
-const { getAdminUsersList } = require('@/test/graphql/users')
-const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared')
-const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
-const { expect } = require('chai')
+import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
+import { truncateTables } from '@/test/hooks'
+import { createUser } from '@/modules/core/services/users'
+import { createStream } from '@/modules/core/services/streams'
+import { times, clamp } from 'lodash'
+import { createInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
+import { getAdminUsersList } from '@/test/graphql/users'
+import { buildApolloServer } from '@/app'
+import { addLoadersToCtx } from '@/modules/shared'
+import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
+import { expect } from 'chai'
+import { ApolloServer } from 'apollo-server-express'
 
-function randomEl(array) {
+function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
 }
 
@@ -51,10 +52,9 @@ describe('[Admin users list]', () => {
   const totalCount = USER_COUNT + SERVER_INVITE_COUNT + STREAM_INVITE_COUNT
   const totalInviteCount = SERVER_INVITE_COUNT + STREAM_INVITE_COUNT
 
-  /** @type {import('apollo-server-express').ApolloServer} */
-  let apollo
-  let orderedUserIds = []
-  let orderedInviteIds = []
+  let apollo: ApolloServer
+  let orderedUserIds: string[] = []
+  let orderedInviteIds: string[] = []
 
   before(async () => {
     if (SEARCH_QUERY_RESULT_COUNT >= totalInviteCount)
@@ -81,7 +81,7 @@ describe('[Admin users list]', () => {
 
     await createUser(me).then((id) => (me.id = id))
 
-    const userIds = []
+    const userIds: string[] = []
     let remainingSearchQueryUserCount = SEARCH_QUERY_RESULT_COUNT
     let remainingSearchQueryInviteCount = SEARCH_QUERY_RESULT_COUNT
 
@@ -100,7 +100,7 @@ describe('[Admin users list]', () => {
     )
 
     // Create streams
-    const streamData = []
+    const streamData: { id: string; ownerId: string }[] = []
     await Promise.all(
       times(STREAM_INVITE_COUNT, (i) => {
         const ownerId = randomEl(userIds)
@@ -203,13 +203,13 @@ describe('[Admin users list]', () => {
         offset
       })
 
-      expect(data.adminUsers).to.be.ok
+      expect(data?.adminUsers).to.be.ok
       expect(errors).to.be.not.ok
 
-      expect(data.adminUsers.totalCount).to.eq(totalCount)
-      expect(data.adminUsers.items).to.have.length(expectedItemCount)
+      expect(data?.adminUsers?.totalCount).to.eq(totalCount)
+      expect(data?.adminUsers?.items).to.have.length(expectedItemCount)
 
-      const items = [...data.adminUsers.items]
+      const items = [...(data?.adminUsers?.items || [])]
 
       // Should always start with invites first
       const inviteItems = items.splice(0, expectedInviteCount)
@@ -219,9 +219,9 @@ describe('[Admin users list]', () => {
         expect(inviteItem.invitedUser).to.be.ok
         expect(inviteItem.registeredUser).to.be.not.ok
 
-        expect(inviteItem.invitedUser.email).to.contain('randominvitee')
-        expect(inviteItem.invitedUser.invitedBy.name).to.contain('User #')
-        expect(inviteItem.invitedUser.id).to.eq(expectedInviteId)
+        expect(inviteItem.invitedUser?.email).to.contain('randominvitee')
+        expect(inviteItem.invitedUser?.invitedBy.name).to.contain('User #')
+        expect(inviteItem.invitedUser?.id).to.eq(expectedInviteId)
       }
 
       // And users only afterwards
@@ -231,9 +231,9 @@ describe('[Admin users list]', () => {
 
         expect(userItem.invitedUser).to.be.not.ok
         expect(userItem.registeredUser).to.be.ok
-        expect(userItem.registeredUser.id).to.eq(expectedUserId)
+        expect(userItem.registeredUser?.id).to.eq(expectedUserId)
 
-        if (userItem.registeredUser.id !== me.id) {
+        if (userItem.registeredUser?.id !== me.id) {
           expect(userItem.registeredUser.name).to.contain('User #')
           expect(userItem.registeredUser.email).to.contain('speckleuser')
         }
@@ -270,26 +270,26 @@ describe('[Admin users list]', () => {
         query: SEARCH_QUERY
       })
 
-      expect(data.adminUsers).to.be.ok
+      expect(data?.adminUsers).to.be.ok
       expect(errors).to.be.not.ok
 
-      expect(data.adminUsers.totalCount).to.eq(totalCount)
-      expect(data.adminUsers.items).to.have.length(expectedItemCount)
+      expect(data?.adminUsers?.totalCount).to.eq(totalCount)
+      expect(data?.adminUsers?.items).to.have.length(expectedItemCount)
 
-      const items = [...data.adminUsers.items]
+      const items = [...(data?.adminUsers?.items || [])]
 
       // Should always start with invites first
       const inviteItems = items.splice(0, expectedInviteCount)
       for (const inviteItem of inviteItems) {
         expect(inviteItem.invitedUser).to.be.ok
         expect(inviteItem.registeredUser).to.be.not.ok
-        expect(inviteItem.invitedUser.email).to.contain(SEARCH_QUERY)
+        expect(inviteItem.invitedUser?.email).to.contain(SEARCH_QUERY)
 
         // Make sure invite IDs follow the correct order
         let correctlyOrderedInviteId = false
         while (inviteIds.length > 0) {
           const candidateInviteId = inviteIds.shift()
-          if (candidateInviteId === inviteItem.invitedUser.id) {
+          if (candidateInviteId === inviteItem.invitedUser?.id) {
             correctlyOrderedInviteId = true
             break
           }
@@ -308,7 +308,7 @@ describe('[Admin users list]', () => {
         let correctlyOrderedUserId = false
         while (inviteIds.length > 0) {
           const candidateUserId = userIds.shift()
-          if (candidateUserId === userItem.registeredUser.id) {
+          if (candidateUserId === userItem.registeredUser?.id) {
             correctlyOrderedUserId = true
             break
           }

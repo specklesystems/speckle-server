@@ -162,6 +162,11 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
+          name: 'Lint with TypeScript Compiler'
+          command: yarn lint:tsc
+          working_directory: 'packages/server'
+
+      - run:
           command: yarn test:report
           working_directory: 'packages/server'
 

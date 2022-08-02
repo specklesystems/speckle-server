@@ -93,6 +93,15 @@ const decodeCursor = (cursor) => {
   return decoded
 }
 
+/**
+ * @param {{
+ *   streamId: string,
+ *   query?: string | null,
+ *   limit?: number | null,
+ *   cursor?: string | null
+ * }} param0
+ * @returns
+ */
 const getBlobMetadataCollection = async ({
   streamId,
   query = null,
