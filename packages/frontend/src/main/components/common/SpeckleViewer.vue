@@ -14,20 +14,17 @@
   </div>
 </template>
 <script>
-import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 import throttle from 'lodash/throttle'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 
 export default {
   name: 'SpeckleViewer',
-  data() {
-    return {}
-  },
-  watch: {
-    fullScreen() {
-      setTimeout(() => {
-        window.__viewer.onWindowResize()
-        window.__viewer.cameraHandler.onWindowResize()
-      }, 20)
+  setup() {
+    const { viewer, container, isInitializedPromise } = useInjectedViewer()
+    return {
+      viewer,
+      viewerContainer: container,
+      isViewerInitializedPromise: isInitializedPromise
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
@@ -41,29 +38,26 @@ export default {
     // - juggle the container div back in of this component's dom when it's back.
 
     this.$mixpanel.track('Viewer Action', { type: 'action', name: 'load' })
-    let renderDomElement = document.getElementById('renderer')
-    if (!renderDomElement) {
-      renderDomElement = document.createElement('div')
-      renderDomElement.id = 'renderer'
-    }
-    if (!window.__viewer) {
-      window.__viewer = new Viewer(renderDomElement, DefaultViewerParams)
-      await window.__viewer.init()
+
+    if (!this.viewer || !this.viewerContainer || !this.isViewerInitializedPromise) {
+      throw new Error('Viewer or its container not properly injected!')
     }
 
-    this.domElement = renderDomElement
+    await this.isViewerInitializedPromise
+
+    this.domElement = this.viewerContainer
     this.domElement.style.display = 'inline-block'
-    this.$refs.rendererparent.appendChild(renderDomElement)
+    this.$refs.rendererparent.appendChild(this.domElement)
 
-    await window.__viewer.unloadAll()
+    await this.viewer.unloadAll()
 
-    window.__viewer.onWindowResize()
-    window.__viewer.cameraHandler.onWindowResize()
+    this.viewer.onWindowResize()
+    this.viewer.cameraHandler.onWindowResize()
     this.setupEvents()
     this.$emit('viewer-init')
     this.$eventHub.$on('resize-viewer', () => {
-      window.__viewer.onWindowResize()
-      window.__viewer.cameraHandler.onWindowResize()
+      this.viewer.onWindowResize()
+      this.viewer.cameraHandler.onWindowResize()
     })
   },
   beforeDestroy() {
@@ -73,21 +67,21 @@ export default {
     this.domElement.style.display = 'none'
     // move renderer dom element outside this component so it doesn't get deleted.
     document.body.appendChild(this.domElement)
-    window.__viewer.unloadAll()
+    this.viewer.unloadAll()
   },
   methods: {
     setupEvents() {
-      window.__viewer.on('load-warning', ({ message }) => {
+      this.viewer.on('load-warning', ({ message }) => {
         this.$eventHub.$emit('notification', {
           text: message
         })
       })
 
-      window.__viewer.on(
+      this.viewer.on(
         'load-progress',
         throttle((args) => this.$emit('load-progress', args), 250)
       )
-      window.__viewer.on('select', (objects) => this.$emit('selection', objects))
+      this.viewer.on('select', (objects) => this.$emit('selection', objects))
     }
   }
 }

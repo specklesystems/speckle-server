@@ -79,7 +79,23 @@
   </div>
 </template>
 <script>
+import {
+  resetFilter,
+  setNumericFilter
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+
 export default {
+  components: {
+    HistogramSlider: async () => {
+      await import(
+        /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider/dist/histogram-slider.css'
+      )
+      const component = await import(
+        /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider'
+      )
+      return component
+    }
+  },
   props: {
     filter: {
       type: Object,
@@ -109,13 +125,13 @@ export default {
     this.$set(this.range, 0, this.filter.data.minValue)
     this.$set(this.range, 1, this.filter.data.maxValue)
     this.setFilter()
-    this.width = this.$refs.parent.clientWidth - 24
+    this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
-      this.width = this.$refs.parent?.clientWidth - 24
+      this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     })
   },
   beforeDestroy() {
-    this.$store.commit('resetFilter')
+    resetFilter()
   },
   methods: {
     async setFilterHistogram(e) {
@@ -123,7 +139,8 @@ export default {
         this.preventFirstSetInternal = false
         return
       }
-      this.$store.commit('setNumericFilter', {
+
+      setNumericFilter({
         filterKey: this.filter.targetKey,
         minValue: e.from,
         maxValue: e.to
@@ -134,7 +151,8 @@ export default {
         this.preventFirstSetInternal = false
         return
       }
-      this.$store.commit('setNumericFilter', {
+
+      setNumericFilter({
         filterKey: this.filter.targetKey,
         minValue: this.range[0],
         maxValue: this.range[1]

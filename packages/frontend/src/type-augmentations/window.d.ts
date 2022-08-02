@@ -3,8 +3,8 @@ export {}
 declare global {
   interface Window {
     /**
-     * Initialized in SpeckleViewer.vue
+     * Used in some layout components
      */
-    __viewer?: import('@speckle/viewer').Viewer
+    __lastNavSize?: number
   }
 }

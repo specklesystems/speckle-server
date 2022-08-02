@@ -57,6 +57,7 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
 
 export default {
   components: {
@@ -113,15 +114,14 @@ export default {
               id
               activity(actionType: "commit_receive", limit: 200) {
                 items {
-                  info
-                  time
-                  userId
-                  message
+                  ...LimitedCommitActivityFields
                 }
               }
             }
           }
         }
+
+        ${limitedCommitActivityFieldsFragment}
       `,
       update: (data) => data.stream.commit.activity,
       variables() {
@@ -169,15 +169,6 @@ export default {
       this.activity.items.forEach((item) => set.add(item.userId))
       return Array.from(set)
     }
-  },
-  watch: {
-    // activity(val) {
-    //   let set = new Set()
-    //   if (val && val.items && val.items.length > 0) {
-    //     val.items.forEach((item) => set.add(item.userId))
-    //     this.receivedUsersUnique = Array.from(set)
-    //   }
-    // }
   },
   methods: {
     goToBranch() {

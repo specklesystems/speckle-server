@@ -2,7 +2,6 @@ import '@/bootstrapper'
 import Vue from 'vue'
 
 import App from '@/main/App.vue'
-import store from '@/main/store'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import * as MixpanelManager from '@/mixpanelManager'
 
@@ -30,6 +29,7 @@ import PerfectScrollbar from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 // adds various helper methods
 import '@/plugins/helpers'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 Vue.use(PerfectScrollbar)
 
@@ -50,8 +50,8 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
-const AuthToken = localStorage.getItem(LocalStorageKeys.AuthToken)
-const RefreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
+const AuthToken = AppLocalStorage.get(LocalStorageKeys.AuthToken)
+const RefreshToken = AppLocalStorage.get(LocalStorageKeys.RefreshToken)
 
 const apolloProvider = createProvider()
 installVueApollo(apolloProvider)
@@ -92,7 +92,6 @@ function postAuthInit() {
   new Vue({
     router,
     vuetify,
-    store,
     setup() {
       provide(DefaultApolloClient, apolloProvider.defaultClient)
     },

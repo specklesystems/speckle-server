@@ -52,103 +52,105 @@
           @deleted="handleReplyDeleteEvent"
         />
       </template>
-      <div v-if="$loggedIn()" class="px-0 mb-4">
-        <v-slide-y-transition>
+      <template v-if="!isEmbed">
+        <div v-if="$loggedIn()" class="px-0 mb-4">
+          <v-slide-y-transition>
+            <div
+              v-show="whoIsTyping.length > 0"
+              class="px-4 py-2 caption mb-2 background rounded-xl"
+            >
+              {{ typingStatusText }}
+            </div>
+          </v-slide-y-transition>
+          <div v-if="canReply" class="d-flex mr-2">
+            <comment-editor
+              ref="commentEditor"
+              v-model="replyValue"
+              :stream-id="streamId"
+              adding-comment
+              max-height="300px"
+              class="mb-2"
+              :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
+              :disabled="loadingReply"
+              @input="debTypingUpdate"
+              @attachments-processing="anyAttachmentsProcessing = $event"
+              @submit="addReply()"
+            />
+          </div>
+          <div v-else class="caption background rounded-xl py-2 px-4 mr-4 elevation-2">
+            You do not have sufficient permissions to reply to comments in this stream.
+          </div>
+          <div v-show="loadingReply" class="px-2 mb-2">
+            <v-progress-linear indeterminate />
+          </div>
           <div
-            v-show="whoIsTyping.length > 0"
-            class="px-4 py-2 caption mb-2 background rounded-xl"
+            v-if="canReply"
+            ref="replyinput"
+            class="d-flex justify-space-between align-center comment-actions"
           >
-            {{ typingStatusText }}
+            <v-btn
+              v-show="canArchiveThread"
+              v-tooltip="'Marks this thread as archived.'"
+              class="white--text ml-2"
+              small
+              icon
+              depressed
+              color="error"
+              @click="showArchiveDialog = true"
+            >
+              <v-icon small>mdi-delete-outline</v-icon>
+            </v-btn>
+            <div class="pr-5">
+              <v-btn
+                v-tooltip="'Copy comment url to clipboard'"
+                :disabled="loadingReply"
+                class="mouse elevation-5 background mr-3"
+                icon
+                large
+                @click="copyCommentLinkToClip()"
+              >
+                <v-icon dark small>mdi-share-variant</v-icon>
+              </v-btn>
+              <v-btn
+                v-tooltip="'Add attachments'"
+                :disabled="loadingReply"
+                icon
+                large
+                class="mouse elevation-5 background mr-3"
+                @click="addAttachments()"
+              >
+                <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
+                <v-icon v-else small>mdi-paperclip</v-icon>
+              </v-btn>
+              <v-btn
+                v-tooltip="'Send comment (press enter)'"
+                :disabled="isSubmitDisabled"
+                class="mouse elevation-5 primary"
+                icon
+                dark
+                large
+                @click="addReply()"
+              >
+                <v-icon dark small>mdi-send</v-icon>
+              </v-btn>
+            </div>
           </div>
-        </v-slide-y-transition>
-        <div v-if="canReply" class="d-flex mr-2">
-          <comment-editor
-            ref="commentEditor"
-            v-model="replyValue"
-            :stream-id="$route.params.streamId"
-            adding-comment
-            max-height="300px"
-            class="mb-2"
-            :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
-            :disabled="loadingReply"
-            @input="debTypingUpdate"
-            @attachments-processing="anyAttachmentsProcessing = $event"
-            @submit="addReply()"
-          />
         </div>
-        <div v-else class="caption background rounded-xl py-2 px-4 mr-4 elevation-2">
-          You do not have sufficient permissions to reply to comments in this stream.
-        </div>
-        <div v-show="loadingReply" class="px-2 mb-2">
-          <v-progress-linear indeterminate />
-        </div>
-        <div
-          v-if="canReply"
-          ref="replyinput"
-          class="d-flex justify-space-between align-center comment-actions"
-        >
+        <div v-else class="pr-5">
           <v-btn
-            v-show="canArchiveThread"
-            v-tooltip="'Marks this thread as archived.'"
-            class="white--text ml-2"
-            small
-            icon
+            block
             depressed
-            color="error"
-            @click="showArchiveDialog = true"
+            color="primary"
+            rounded
+            class="elevation-5"
+            large
+            @click="$loginAndSetRedirect()"
           >
-            <v-icon small>mdi-delete-outline</v-icon>
+            <v-icon small class="mr-1">mdi-account</v-icon>
+            Sign in to reply
           </v-btn>
-          <div class="pr-5">
-            <v-btn
-              v-tooltip="'Copy comment url to clipboard'"
-              :disabled="loadingReply"
-              class="mouse elevation-5 background mr-3"
-              icon
-              large
-              @click="copyCommentLinkToClip()"
-            >
-              <v-icon dark small>mdi-share-variant</v-icon>
-            </v-btn>
-            <v-btn
-              v-tooltip="'Add attachments'"
-              :disabled="loadingReply"
-              icon
-              large
-              class="mouse elevation-5 background mr-3"
-              @click="addAttachments()"
-            >
-              <v-icon v-if="$vuetify.breakpoint.smAndDown" small>mdi-camera</v-icon>
-              <v-icon v-else small>mdi-paperclip</v-icon>
-            </v-btn>
-            <v-btn
-              v-tooltip="'Send comment (press enter)'"
-              :disabled="isSubmitDisabled"
-              class="mouse elevation-5 primary"
-              icon
-              dark
-              large
-              @click="addReply()"
-            >
-              <v-icon dark small>mdi-send</v-icon>
-            </v-btn>
-          </div>
         </div>
-      </div>
-      <div v-else class="pr-5">
-        <v-btn
-          block
-          depressed
-          color="primary"
-          rounded
-          class="elevation-5"
-          large
-          @click="$loginAndSetRedirect()"
-        >
-          <v-icon small class="mr-1">mdi-account</v-icon>
-          Sign in to reply
-        </v-btn>
-      </div>
+      </template>
     </div>
   </div>
   <!-- 
@@ -159,8 +161,10 @@
   <div v-else-if="comment.expanded">
     <portal to="mobile-comment-thread">
       <div
-        :class="`mobile-thread mouse background ${mobileExpanded ? 'expanded' : ''}`"
-        style="overflow-y: scroll"
+        :class="`mobile-thread mouse background ${
+          mobileExpanded ? 'expanded' : ''
+        } simple-scrollbar`"
+        style="overflow-y: auto"
       >
         <v-card class="elevation-0" style="height: 100vh">
           <v-toolbar
@@ -168,6 +172,7 @@
             @click.stop="mobileExpanded = !mobileExpanded"
           >
             <v-btn
+              v-if="$loggedIn() && canReply && !isEmbed"
               v-tooltip="'Add attachments'"
               :disabled="loadingReply"
               icon
@@ -244,110 +249,112 @@
                 @deleted="handleReplyDeleteEvent"
               />
             </template>
-            <div v-if="$loggedIn()" class="px-0 mb-4">
-              <v-slide-y-transition>
+            <template v-if="!isEmbed">
+              <div v-if="$loggedIn()" class="px-0 mb-4">
+                <v-slide-y-transition>
+                  <div
+                    v-show="whoIsTyping.length > 0"
+                    class="px-4 py-2 caption mb-2 background rounded-xl"
+                  >
+                    {{ typingStatusText }}
+                  </div>
+                </v-slide-y-transition>
+                <div v-if="canReply" class="d-flex pr-5">
+                  <comment-editor
+                    ref="commentEditor"
+                    v-model="replyValue"
+                    :stream-id="streamId"
+                    :autofocus="false"
+                    adding-comment
+                    max-height="300px"
+                    class="mb-2"
+                    :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
+                    :disabled="loadingReply"
+                    @input="debTypingUpdate"
+                    @attachments-processing="anyAttachmentsProcessing = $event"
+                    @submit="addReply()"
+                  />
+                </div>
                 <div
-                  v-show="whoIsTyping.length > 0"
-                  class="px-4 py-2 caption mb-2 background rounded-xl"
+                  v-else
+                  class="caption background rounded-xl py-2 px-4 mr-4 elevation-2"
                 >
-                  {{ typingStatusText }}
+                  You do not have sufficient permissions to reply to comments in this
+                  stream.
                 </div>
-              </v-slide-y-transition>
-              <div v-if="canReply" class="d-flex pr-5">
-                <comment-editor
-                  ref="commentEditor"
-                  v-model="replyValue"
-                  :stream-id="$route.params.streamId"
-                  :autofocus="false"
-                  adding-comment
-                  max-height="300px"
-                  class="mb-2"
-                  :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
-                  :disabled="loadingReply"
-                  @input="debTypingUpdate"
-                  @attachments-processing="anyAttachmentsProcessing = $event"
-                  @submit="addReply()"
-                />
+                <div v-show="loadingReply" class="px-2 mb-2">
+                  <v-progress-linear indeterminate />
+                </div>
+                <div
+                  v-if="canReply"
+                  ref="replyinput"
+                  class="pb-10 mb-10 d-flex justify-space-between align-center comment-actions"
+                >
+                  <v-btn
+                    v-show="canArchiveThread"
+                    v-tooltip="'Marks this thread as archived.'"
+                    class="white--text ml-2"
+                    small
+                    icon
+                    depressed
+                    color="error"
+                    @click="showArchiveDialog = true"
+                  >
+                    <v-icon small>mdi-delete-outline</v-icon>
+                  </v-btn>
+                  <div class="pr-5">
+                    <v-btn
+                      v-tooltip="'Copy comment url to clipboard'"
+                      :disabled="loadingReply"
+                      class="mouse elevation-5 background mr-3"
+                      icon
+                      large
+                      @click="copyCommentLinkToClip()"
+                    >
+                      <v-icon dark small>mdi-share-variant</v-icon>
+                    </v-btn>
+                    <v-btn
+                      v-tooltip="'Add attachments'"
+                      :disabled="loadingReply"
+                      icon
+                      large
+                      class="mouse elevation-5 background mr-3"
+                      @click.stop="addAttachments()"
+                    >
+                      <v-icon v-if="$vuetify.breakpoint.smAndDown" small>
+                        mdi-camera-plus
+                      </v-icon>
+                      <v-icon v-else small>mdi-paperclip</v-icon>
+                    </v-btn>
+                    <v-btn
+                      v-tooltip="'Send comment (press enter)'"
+                      :disabled="isSubmitDisabled"
+                      class="mouse elevation-5 primary"
+                      icon
+                      dark
+                      large
+                      @click="addReply()"
+                    >
+                      <v-icon dark small>mdi-send</v-icon>
+                    </v-btn>
+                  </div>
+                </div>
               </div>
-              <div
-                v-else
-                class="caption background rounded-xl py-2 px-4 mr-4 elevation-2"
-              >
-                You do not have sufficient permissions to reply to comments in this
-                stream.
-              </div>
-              <div v-show="loadingReply" class="px-2 mb-2">
-                <v-progress-linear indeterminate />
-              </div>
-              <div
-                v-if="canReply"
-                ref="replyinput"
-                class="pb-10 mb-10 d-flex justify-space-between align-center comment-actions"
-              >
+              <div v-else class="pr-5">
                 <v-btn
-                  v-show="canArchiveThread"
-                  v-tooltip="'Marks this thread as archived.'"
-                  class="white--text ml-2"
-                  small
-                  icon
+                  block
                   depressed
-                  color="error"
-                  @click="showArchiveDialog = true"
+                  color="primary"
+                  rounded
+                  class="elevation-5"
+                  large
+                  @click="$loginAndSetRedirect()"
                 >
-                  <v-icon small>mdi-delete-outline</v-icon>
+                  <v-icon small class="mr-1">mdi-account</v-icon>
+                  Sign in to reply
                 </v-btn>
-                <div class="pr-5">
-                  <v-btn
-                    v-tooltip="'Copy comment url to clipboard'"
-                    :disabled="loadingReply"
-                    class="mouse elevation-5 background mr-3"
-                    icon
-                    large
-                    @click="copyCommentLinkToClip()"
-                  >
-                    <v-icon dark small>mdi-share-variant</v-icon>
-                  </v-btn>
-                  <v-btn
-                    v-tooltip="'Add attachments'"
-                    :disabled="loadingReply"
-                    icon
-                    large
-                    class="mouse elevation-5 background mr-3"
-                    @click.stop="addAttachments()"
-                  >
-                    <v-icon v-if="$vuetify.breakpoint.smAndDown" small>
-                      mdi-camera-plus
-                    </v-icon>
-                    <v-icon v-else small>mdi-paperclip</v-icon>
-                  </v-btn>
-                  <v-btn
-                    v-tooltip="'Send comment (press enter)'"
-                    :disabled="isSubmitDisabled"
-                    class="mouse elevation-5 primary"
-                    icon
-                    dark
-                    large
-                    @click="addReply()"
-                  >
-                    <v-icon dark small>mdi-send</v-icon>
-                  </v-btn>
-                </div>
               </div>
-            </div>
-            <div v-else class="pr-5">
-              <v-btn
-                block
-                depressed
-                color="primary"
-                rounded
-                class="elevation-5"
-                large
-                @click="$loginAndSetRedirect()"
-              >
-                <v-icon small class="mr-1">mdi-account</v-icon>
-                Sign in to reply
-              </v-btn>
-            </div>
+            </template>
           </div>
         </v-card>
       </div>
@@ -385,6 +392,9 @@ import { isDocEmpty } from '@/main/lib/common/text-editor/documentHelper'
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+
+// TODO: The template is a WET mess, need to refactor it
 
 export default {
   components: {
@@ -419,7 +429,7 @@ export default {
         }
       `,
       variables() {
-        return { streamId: this.$route.params.streamId }
+        return { streamId: this.streamId }
       }
     },
     replyQuery: {
@@ -443,7 +453,7 @@ export default {
       fetchPolicy: 'cache-and-network',
       variables() {
         return {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           id: this.comment.id
         }
       },
@@ -472,7 +482,7 @@ export default {
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         },
@@ -489,7 +499,7 @@ export default {
               }, 100)
             }
             this.localReplies.push(data.commentThreadActivity.reply)
-            this.$refs.replyinput.scrollIntoView({ behaviour: 'smooth', block: 'end' })
+            this.$refs.replyinput?.scrollIntoView({ behaviour: 'smooth', block: 'end' })
             return
           }
           if (data.commentThreadActivity.type === 'comment-archived') {
@@ -515,6 +525,14 @@ export default {
           }
         }
       }
+    }
+  },
+  setup() {
+    const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
+    return {
+      streamId,
+      resourceId,
+      isEmbed
     }
   },
   data() {
@@ -557,7 +575,7 @@ export default {
       return [this.comment, ...sorted]
     },
     isComplete() {
-      const res = [this.$route.params.resourceId]
+      const res = [this.resourceId]
       if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
       const commRes = this.comment.resources
         .filter((r) => r.resourceType !== 'stream')
@@ -572,7 +590,7 @@ export default {
       if (!this.comment) return
       const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
       const first = res.shift()
-      let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
+      let route = `/streams/${this.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
@@ -600,7 +618,7 @@ export default {
             }
           `,
           variables: {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         })
@@ -667,7 +685,7 @@ export default {
           }
         `,
         variables: {
-          sId: this.$route.params.streamId,
+          sId: this.streamId,
           cId: this.comment.id,
           d: {
             userId: this.$userId(),
@@ -680,7 +698,7 @@ export default {
     copyCommentLinkToClip() {
       const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
       const first = res.shift()
-      let route = `${window.origin}/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
+      let route = `${window.origin}/streams/${this.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
@@ -691,7 +709,7 @@ export default {
       })
     },
     addMissingResources() {
-      const res = [this.$route.params.resourceId]
+      const res = [this.resourceId]
       if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
       const commRes = this.comment.resources
         .filter((r) => r.resourceType !== 'stream')
@@ -725,7 +743,7 @@ export default {
         .filter(isSuccessfullyUploaded)
         .map((a) => a.result.blobId)
       const replyInput = {
-        streamId: this.$route.params.streamId,
+        streamId: this.streamId,
         parentComment: this.comment.id,
         text: this.replyValue.doc,
         blobIds
@@ -787,7 +805,7 @@ export default {
             }
           `,
           variables: {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         })

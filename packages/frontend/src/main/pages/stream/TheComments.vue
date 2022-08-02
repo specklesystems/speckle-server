@@ -68,6 +68,7 @@
           v-if="c"
           :comment="c"
           :stream="stream"
+          :stream-id="$route.params.streamId"
           @deleted="handleDeletion"
         />
       </v-col>
@@ -96,6 +97,7 @@ import {
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { setSelectedCommentMetaData } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   name: 'TheComments',
@@ -193,7 +195,7 @@ export default {
   },
   methods: {
     handleDeletion(comment) {
-      this.$store.commit('setCommentSelection', { comment: null })
+      setSelectedCommentMetaData(null)
       const indx = this.localComments.findIndex((lc) => lc.id === comment.id)
       this.localComments.splice(indx, 1)
     },

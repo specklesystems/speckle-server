@@ -40,6 +40,8 @@
   </v-card>
 </template>
 <script>
+import { AppLocalStorage } from '@/utils/localStorage'
+
 export default {
   props: {
     file: {
@@ -71,7 +73,7 @@ export default {
       )
       request.setRequestHeader(
         'Authorization',
-        `Bearer ${localStorage.getItem('AuthToken')}`
+        `Bearer ${AppLocalStorage.get('AuthToken')}`
       )
 
       request.upload.addEventListener(

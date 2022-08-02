@@ -82,12 +82,6 @@ server {
     expires 1y;
   }
 
-  location /embed { 
-    default_type text/html;
-    alias /usr/share/nginx/html/embedApp.html;
-    add_header Cache-Control "no-store, no-cache, must-revalidate";    
-  }
-
   location ~ ^/streams/.* {
     default_type text/html;
     content_by_lua_block {
