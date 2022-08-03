@@ -22,10 +22,6 @@ workflows:
             tags:
               # determine whether to publish for any commit on any branch, including any tags
               only: /.*/
-          environment:
-            # £ delimited strings of regex for matches which should be published
-            PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
-            PUBLISHABLE_BRANCHES: '^main$£^hotfix.*'
 
       - docker-build-and-publish-server:
           context: &docker-hub-context
@@ -139,6 +135,10 @@ jobs:
     docker:
       - image: cimg/python:3.9
     working_directory: &work-dir /tmp/ci
+    environment:
+      # £ delimited strings of regex for matches which should be published
+      PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
+      PUBLISHABLE_BRANCHES: '^main$£^hotfix.*'
     steps:
       - checkout
       - run: pwd
