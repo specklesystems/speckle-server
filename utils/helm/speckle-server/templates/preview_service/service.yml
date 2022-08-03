@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: speckle-preview-service-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-preview-service-metrics
+    project: speckle-server
+spec:
+  selector:
+    app: speckle-preview-service
+    project: speckle-server
+  ports:
+    - protocol: TCP
+      name: web
+      port: 9094
+      targetPort: metrics
