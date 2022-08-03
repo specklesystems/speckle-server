@@ -204,12 +204,14 @@ export default defineComponent({
     })
 
     const updateTransparency = () => {
-      const classList = document.getElementById('app')!.classList
+      const appEl = document.getElementById('app')
+      const classList = appEl!.classList
       if (transparent.value) {
         document.body.style.background = 'none'
         document.body.style.backgroundColor = 'none'
-        classList.remove('theme--dark')
-        classList.remove('theme--light')
+        appEl!.style.background = 'none'
+        // classList.remove('theme--dark')
+        // classList.remove('theme--light')
       } else {
         const isDarkMode = isDarkTheme()
         classList.add(`theme--${isDarkMode ? 'dark' : 'light'}`)

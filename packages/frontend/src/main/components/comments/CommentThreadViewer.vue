@@ -151,6 +151,21 @@
           </v-btn>
         </div>
       </template>
+      <template v-else>
+        <div class="pr-5">
+          <v-btn
+            small
+            color="primary"
+            block
+            rounded
+            :href="getCommentLink()"
+            target="_blank"
+          >
+            reply in speckle
+            <v-icon small>mdi-arrow-top-right</v-icon>
+          </v-btn>
+        </div>
+      </template>
     </div>
   </div>
   <!-- 
@@ -695,13 +710,17 @@ export default {
         }
       })
     },
-    copyCommentLinkToClip() {
+    getCommentLink() {
       const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
       const first = res.shift()
       let route = `${window.origin}/streams/${this.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
+      return route
+    },
+    copyCommentLinkToClip() {
+      const route = this.getCommentLink()
       navigator.clipboard.writeText(route)
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'share' })
       this.$eventHub.$emit('notification', {

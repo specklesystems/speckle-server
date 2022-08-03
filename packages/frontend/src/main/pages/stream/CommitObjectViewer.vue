@@ -168,7 +168,7 @@
         `"
         class=""
       >
-        <viewer-bubbles key="a" />
+        <viewer-bubbles v-if="!isEmbed" key="a" />
         <comments-overlay key="c" @add-resources="addResources" />
         <comment-add-overlay v-if="!isEmbed" key="b" />
       </div>
@@ -419,6 +419,7 @@ export default defineComponent({
   },
   watch: {
     'viewerState.appliedFilter'(val) {
+      if (this.isEmbed) return
       if (!val) {
         const fullQuery = { ...this.$route.query }
         delete fullQuery.filter
@@ -545,6 +546,7 @@ export default defineComponent({
       this.viewer.cameraHandler.controls.addEventListener(
         'rest',
         debounce(() => {
+          if (this.isEmbed) return
           if (!(this.$route.name === 'commit' || this.$route.name === 'object')) {
             return
           }
