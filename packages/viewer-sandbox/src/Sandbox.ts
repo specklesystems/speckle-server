@@ -59,6 +59,17 @@ export default class Sandbox {
       title: 'URL',
       disabled: true
     })
+    const position = { value: { x: 0, y: 0, z: 0 } }
+    const positionInput = this.steamsFolder
+      .addInput(position, 'value', { label: 'Position' })
+      .on('change', () => {
+        this.viewer.speckleRenderer
+          .subtree(url)
+          .position.set(position.value.x, position.value.y, position.value.z)
+        this.viewer.speckleRenderer.updateDirectLights(0.47, 0)
+        this.viewer.speckleRenderer.updateHelpers()
+      })
+
     const button = this.steamsFolder
       .addButton({
         title: 'Unload'
@@ -67,13 +78,14 @@ export default class Sandbox {
         this.removeStreamControls(url)
       })
     this.streams[url] = []
-    this.streams[url].push(label, button)
+    this.streams[url].push(label, positionInput, button)
   }
 
   private removeStreamControls(url: string) {
     this.viewer.unloadObject(url)
     ;(this.streams[url][0] as { dispose: () => void }).dispose()
     ;(this.streams[url][1] as { dispose: () => void }).dispose()
+    delete this.streams[url]
   }
 
   public makeGenericUI() {
@@ -102,6 +114,7 @@ export default class Sandbox {
       expanded: true
     })
 
+    this.tabs.pages[0].addSeparator()
     this.tabs.pages[0].addSeparator()
 
     const toggleSectionBox = this.tabs.pages[0].addButton({

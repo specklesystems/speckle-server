@@ -57,6 +57,10 @@ export default class SpeckleRenderer {
     return this.scene.getObjectByName('ContentGroup')
   }
 
+  public subtree(subtreeId: string) {
+    return this.scene.getObjectByName(subtreeId)
+  }
+
   public get sceneBox() {
     return new Box3().setFromObject(this.allObjects)
   }
@@ -296,7 +300,7 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.needsUpdate = true
   }
 
-  private updateHelpers() {
+  public updateHelpers() {
     if (this.SHOW_HELPERS) {
       ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
       ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(

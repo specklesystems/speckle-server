@@ -71,7 +71,7 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     SpeckleBasicMaterial.matBuff.elements[12] = 0
     SpeckleBasicMaterial.matBuff.elements[13] = 0
     SpeckleBasicMaterial.matBuff.elements[14] = 0
-    // SpeckleBasicMaterial.matBuff.multiply(object.matrixWorld)
+    SpeckleBasicMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleBasicMaterial.matBuff)
 
     SpeckleBasicMaterial.vecBuff0.set(
