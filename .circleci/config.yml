@@ -8,73 +8,94 @@ workflows:
       - test-server:
           filters:
             tags:
-              # run tests for anything, including any tags
+              # run tests for any commit on any branch, including any tags
               only: /.*/
 
       - get-version:
           filters:
             tags:
-              # get version for anything, including any tags
+              # get version for  any commit on any branch, including any tags
               only: /.*/
+
+      - should-publish:
+          filters:
+            tags:
+              # determine whether to publish for any commit on any branch, including any tags
+              only: /.*/
+          environment:
+            # £ delimited strings of regex for matches which should be published
+            PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
+            PUBLISHABLE_BRANCHES: '^main$£^hotfix.*'
 
       - docker-build-and-publish-server:
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-build-and-publish
+          filters: &filters-build
+            tags:
+              only: /.*/
+          requires:
+            - test-server
+            - get-version
+            - should-publish
+
+      - docker-build-and-publish-frontend:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+            - should-publish
+
+      - docker-build-and-publish-webhooks:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+            - test-server
+            - should-publish
+
+      - docker-build-and-publish-file-imports:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+            - test-server
+            - should-publish
+
+      - docker-build-and-publish-previews:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+            - test-server
+            - should-publish
+
+      - docker-build-and-publish-test-container:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+            - test-server
+            - should-publish
+
+      - docker-build-and-publish-monitor-container:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+            - should-publish
+
+      - publish-helm-chart:
+          filters: &filters-publish
             branches:
               only:
                 - main
+                - hotfix*
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
             - test-server
             - get-version
-
-      - docker-build-and-publish-frontend:
-          context: *docker-hub-context
-          filters: *filters-build-and-publish
-          requires:
-            - get-version
-
-      - docker-build-and-publish-webhooks:
-          context: *docker-hub-context
-          filters: *filters-build-and-publish
-          requires:
-            - get-version
-            - test-server
-
-      - docker-build-and-publish-file-imports:
-          context: *docker-hub-context
-          filters: *filters-build-and-publish
-          requires:
-            - get-version
-            - test-server
-
-      - docker-build-and-publish-previews:
-          context: *docker-hub-context
-          filters: *filters-build-and-publish
-          requires:
-            - get-version
-            - test-server
-
-      - docker-build-and-publish-test-container:
-          context: *docker-hub-context
-          filters: *filters-build-and-publish
-          requires:
-            - get-version
-            - test-server
-
-      - docker-build-and-publish-monitor-container:
-          context: *docker-hub-context
-          filters: *filters-build-and-publish
-          requires:
-            - get-version
-
-      - publish-helm-chart:
-          filters: *filters-build-and-publish
-          requires:
-            - test-server
-            - get-version
+            - should-publish
             - docker-build-and-publish-server
             - docker-build-and-publish-frontend
             - docker-build-and-publish-webhooks
@@ -86,49 +107,11 @@ workflows:
       - publish-npm:
           filters:
             tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+              only: *filters-tag
             branches:
               ignore: /.*/
           context:
             - npm-registry
-          requires:
-            - get-version
-
-      - docker-build-server:
-          filters: &filters-build-only
-            tags:
-              # do not run a build job if the build-and-publish job will instead be run
-              ignore: *filters-tag
-          requires:
-            - get-version
-
-      - docker-build-frontend:
-          filters: *filters-build-only
-          requires:
-            - get-version
-
-      - docker-build-webhooks:
-          filters: *filters-build-only
-          requires:
-            - get-version
-
-      - docker-build-file-imports:
-          filters: *filters-build-only
-          requires:
-            - get-version
-
-      - docker-build-previews:
-          filters: *filters-build-only
-          requires:
-            - get-version
-
-      - docker-build-test-container:
-          filters: *filters-build-only
-          requires:
-            - get-version
-
-      - docker-build-monitor-container:
-          filters: *filters-build-only
           requires:
             - get-version
 
@@ -146,12 +129,30 @@ jobs:
           command: |
             echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: echo $IMAGE_VERSION_TAG
-      # - run: sleep 3m
+      - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
       - persist_to_workspace:
           root: workspace
           paths:
             - env-vars
+
+  should-publish:
+    docker:
+      - image: cimg/python:3.9
+    working_directory: &work-dir /tmp/ci
+    steps:
+      - checkout
+      - run: pwd
+      - run: mkdir -p workspace
+      - run:
+          name: determine whether to publish
+          command: |
+            echo "export SHOULD_PUBLISH=$(.circleci/should_publish.sh)" >> workspace/should-publish
+      - run: cat workspace/should-publish >> $BASH_ENV
+      - run: echo "SHOULD_PUBLISH=${SHOULD_PUBLISH}"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - should-publish
 
   test-server:
     docker:
@@ -228,6 +229,7 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat workspace/should-publish >> $BASH_ENV
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it
@@ -241,89 +243,38 @@ jobs:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
-      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-frontend:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
-      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-previews:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: preview-service
-      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-webhooks:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: webhook-service
-      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-file-imports:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: fileimport-service
-      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-test-container:
     <<: *docker-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
-      PUBLISH_IMAGES: 'true'
 
   docker-build-and-publish-monitor-container:
     <<: *docker-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
-      PUBLISH_IMAGES: 'true'
-
-  docker-build-server:
-    <<: *docker-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: server
-      PUBLISH_IMAGES: 'false'
-
-  docker-build-frontend:
-    <<: *docker-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
-      PUBLISH_IMAGES: 'false'
-
-  docker-build-previews:
-    <<: *docker-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: preview-service
-      PUBLISH_IMAGES: 'false'
-
-  docker-build-webhooks:
-    <<: *docker-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: webhook-service
-      PUBLISH_IMAGES: 'false'
-
-  docker-build-file-imports:
-    <<: *docker-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: fileimport-service
-      PUBLISH_IMAGES: 'false'
-
-  docker-build-test-container:
-    <<: *docker-job
-    environment:
-      FOLDER: utils
-      SPECKLE_SERVER_PACKAGE: test-deployment
-      PUBLISH_IMAGES: 'false'
-
-  docker-build-monitor-container:
-    <<: *docker-job
-    environment:
-      FOLDER: utils
-      SPECKLE_SERVER_PACKAGE: monitor-deployment
-      PUBLISH_IMAGES: 'false'
 
   publish-npm:
     docker: *docker-image

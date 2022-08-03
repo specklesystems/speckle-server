@@ -4,7 +4,7 @@ set -eo pipefail
 # enables building the test-deployment container with the same script
 # defaults to packages for minimal intervention in the ci config
 FOLDER="${FOLDER:-packages}"
-PUBLISH_IMAGES="${PUBLISH_IMAGES:-false}"
+SHOULD_PUBLISH="${SHOULD_PUBLISH:-false}"
 
 DOCKER_IMAGE_TAG="speckle/speckle-${SPECKLE_SERVER_PACKAGE}"
 
@@ -17,7 +17,7 @@ export DOCKER_BUILDKIT=1
 
 docker build --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" -t "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" . --file "${FOLDER}/${SPECKLE_SERVER_PACKAGE}/Dockerfile"
 
-if [[ "${PUBLISH_IMAGES}" == "true" ]]; then
+if [[ "${SHOULD_PUBLISH}" == "true" ]]; then
   echo "publishing images"
   docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:latest"
 
