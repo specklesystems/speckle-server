@@ -18,17 +18,6 @@ spec:
         app: speckle-monitoring
         project: speckle-server
     spec:
-      priorityClassName: low-priority
-
-      {{- if .Values.db.useCertificate }}
-      volumes:
-        - name: postgres-certificate
-          configMap:
-            name: postgres-certificate
-      {{- end }}
-
-      terminationGracePeriodSeconds: 10
-
       containers:
       - name: main
         image: speckle/speckle-monitor-deployment:{{ .Values.docker_image_tag }}
@@ -64,3 +53,14 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+      imagePullPolicy: {{ .Values.imagePullPolicy }}
+      priorityClassName: low-priority
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+
+      terminationGracePeriodSeconds: 10

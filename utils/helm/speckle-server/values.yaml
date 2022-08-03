@@ -113,3 +113,4 @@ helm_test_enabled: true
 
 create_namespace: false
 file_size_limit_mb: 100
+imagePullPolicy: IfNotPresent
