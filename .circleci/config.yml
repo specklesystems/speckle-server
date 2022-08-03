@@ -68,7 +68,7 @@ workflows:
           requires:
             - test-server
             - get-version
-            - docker-builder-server
+            - docker-build-server
 
       - docker-publish-frontend:
           context: *docker-hub-context
