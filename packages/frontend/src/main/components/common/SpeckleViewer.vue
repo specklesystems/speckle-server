@@ -19,6 +19,12 @@ import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 
 export default {
   name: 'SpeckleViewer',
+  props: {
+    noScroll: {
+      type: Boolean,
+      default: false
+    }
+  },
   setup() {
     const { viewer, container, isInitializedPromise } = useInjectedViewer()
     return {
@@ -50,7 +56,11 @@ export default {
     this.$refs.rendererparent.appendChild(this.domElement)
 
     await this.viewer.unloadAll()
-
+    console.log(this.viewer)
+    console.log(this.noScroll)
+    if (this.noScroll) {
+      this.viewer.cameraHandler.controls.mouseButtons.wheel = 0
+    }
     this.viewer.onWindowResize()
     this.viewer.cameraHandler.onWindowResize()
     this.setupEvents()

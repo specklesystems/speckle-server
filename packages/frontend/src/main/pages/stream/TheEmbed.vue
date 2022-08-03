@@ -16,7 +16,7 @@
 
     <!-- Play button -->
     <div
-      v-if="!isModelLoaded && !error"
+      v-if="!isModelLoaded && !error && !autoload"
       class="viewer-play d-flex fullscreen align-center justify-center no-mouse"
     >
       <v-btn
@@ -104,7 +104,7 @@ export default defineComponent({
 
     const { height } = useWindowSize()
 
-    const { streamId, branchName, commitId, objectId, transparent } =
+    const { streamId, branchName, commitId, objectId, transparent, autoload } =
       useEmbedViewerQuery()
 
     const previewUrl = computed(() => {
@@ -205,8 +205,9 @@ export default defineComponent({
 
     const updateTransparency = () => {
       const classList = document.getElementById('app')!.classList
-
       if (transparent.value) {
+        document.body.style.background = 'none'
+        document.body.style.backgroundColor = 'none'
         classList.remove('theme--dark')
         classList.remove('theme--light')
       } else {
@@ -215,8 +216,21 @@ export default defineComponent({
       }
     }
 
+    const load = () => {
+      if (!isInitialized.value || shouldLoadHeavyDeps.value || isModelLoaded.value)
+        return
+
+      shouldLoadHeavyDeps.value = true
+      mixpanel.track('Embedded Model Load', {
+        type: 'action'
+      })
+    }
+
     watch(() => transparent, updateTransparency)
-    onMounted(() => updateTransparency())
+    onMounted(() => {
+      updateTransparency()
+      if (autoload.value) load()
+    })
 
     return {
       displayType,
@@ -233,21 +247,14 @@ export default defineComponent({
       transparent,
       previewUrl,
       showPlayLoader,
+      autoload,
       onError: (e: unknown) => {
         error.value = e instanceof Error ? e : new Error('Unexpected error')
       },
       onModelsLoaded: () => {
         isModelLoaded.value = true
       },
-      load: () => {
-        if (!isInitialized.value || shouldLoadHeavyDeps.value || isModelLoaded.value)
-          return
-
-        shouldLoadHeavyDeps.value = true
-        mixpanel.track('Embedded Model Load', {
-          type: 'action'
-        })
-      }
+      load
     }
   }
 })

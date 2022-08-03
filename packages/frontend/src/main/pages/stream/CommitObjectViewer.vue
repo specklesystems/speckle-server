@@ -113,9 +113,15 @@
       </v-fade-transition>
 
       <div
+        id="renderParent"
+        ref="renderParent"
         :style="`height: 100vh; width: 100%; ${topOffsetStyle} left: 0px; position: absolute`"
       >
-        <speckle-viewer @load-progress="captureProgress" @selection="captureSelect" />
+        <speckle-viewer
+          :no-scroll="noScroll"
+          @load-progress="captureProgress"
+          @selection="captureSelect"
+        />
       </div>
 
       <div
@@ -129,7 +135,7 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="selectionData.length !== 0"
+          v-show="selectionData.length !== 0 && !hideSelectionInfo"
           :key="'one'"
           :objects="selectionData"
           :stream-id="streamId"
@@ -144,7 +150,10 @@
         }; z-index: 20`"
         :class="`d-flex justify-center`"
       >
-        <viewer-controls @show-add-overlay="showAddOverlay = true" />
+        <viewer-controls
+          v-show="!hideControls"
+          @show-add-overlay="showAddOverlay = true"
+        />
       </div>
       <div
         :style="`
@@ -330,6 +339,18 @@ export default defineComponent({
     isEmbed: {
       type: Boolean,
       default: false
+    },
+    hideControls: {
+      type: Boolean,
+      default: false
+    },
+    hideSelectionInfo: {
+      type: Boolean,
+      default: false
+    },
+    noScroll: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props) {
@@ -472,6 +493,9 @@ export default defineComponent({
     }
 
     setTimeout(() => {
+      if (this.noScroll) {
+        this.disableScroll()
+      }
       for (const resource of this.resources) {
         if (isErrorResource(resource)) continue
 
@@ -546,6 +570,9 @@ export default defineComponent({
     }, 300)
   },
   methods: {
+    disableScroll() {
+      // TODO
+    },
     resolveResourceType(resourceId: string): ResourceTypeValue {
       return resourceId.length === 10 ? 'commit' : 'object'
     },

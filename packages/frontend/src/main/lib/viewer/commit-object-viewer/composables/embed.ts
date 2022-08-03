@@ -11,6 +11,24 @@ export function useEmbedViewerQuery() {
   const commitId = computed(() => (route.query.commit as string) || null)
   const objectId = computed(() => (route.query.object as string) || null)
   const transparent = computed(() => route.query.transparent === 'true')
+  const autoload = computed(() => route.query.autoload === 'true')
+  const hideControls = computed(() => route.query.hidecontrols === 'true')
+  const noScroll = computed(() => route.query.noscroll === 'true')
+  const hideSidebar = computed(() => route.query.hidesidebar === 'true')
+  const hideSelectionInfo = computed(() => route.query.hideselectioninfo === 'true')
+  const hideLogo = computed(() => route.query.ilovespeckleanyway === 'true')
 
-  return { streamId, branchName, commitId, objectId, transparent }
+  return {
+    streamId,
+    branchName,
+    commitId,
+    objectId,
+    transparent,
+    autoload,
+    noScroll,
+    hideControls,
+    hideSidebar,
+    hideSelectionInfo,
+    hideLogo
+  }
 }
