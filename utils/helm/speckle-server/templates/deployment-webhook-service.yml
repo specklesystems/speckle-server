@@ -21,6 +21,7 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -65,7 +66,6 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-      imagePullPolicy: {{ .Values.imagePullPolicy }}
       priorityClassName: low-priority
 
       # Should be > webhook max call time ( ~= 10 seconds )

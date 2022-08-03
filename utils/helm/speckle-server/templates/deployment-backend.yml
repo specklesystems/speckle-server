@@ -21,6 +21,7 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-server:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: http
@@ -242,7 +243,6 @@ spec:
                 name: {{ .Values.secretName }}
                 key: apollo_key
           {{- end }}
-      imagePullPolicy: {{ .Values.imagePullPolicy }}
       priorityClassName: high-priority
       terminationGracePeriodSeconds: 310
       {{- if .Values.db.useCertificate }}

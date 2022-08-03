@@ -21,6 +21,7 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: www
@@ -52,5 +53,4 @@ spec:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
-      imagePullPolicy: {{ .Values.imagePullPolicy }}
       priorityClassName: high-priority

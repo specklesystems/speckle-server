@@ -23,6 +23,7 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -86,7 +87,6 @@ spec:
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
 
-      imagePullPolicy: {{ .Values.imagePullPolicy }}
       priorityClassName: low-priority
 
       {{- if .Values.db.useCertificate }}

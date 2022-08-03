@@ -21,6 +21,7 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-monitor-deployment:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -53,7 +54,6 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-      imagePullPolicy: {{ .Values.imagePullPolicy }}
       priorityClassName: low-priority
 
       {{- if .Values.db.useCertificate }}

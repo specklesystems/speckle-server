@@ -21,6 +21,7 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -65,7 +66,6 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-      imagePullPolicy: {{ .Values.imagePullPolicy }}
       priorityClassName: low-priority
 
       # Should be > preview generation time ( 1 hour for good measure )
