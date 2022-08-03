@@ -121,13 +121,13 @@ workflows:
           requires:
             - test-server
             - get-version
-            - docker-build-and-publish-server
-            - docker-build-and-publish-frontend
-            - docker-build-and-publish-webhooks
-            - docker-build-and-publish-file-imports
-            - docker-build-and-publish-previews
-            - docker-build-and-publish-monitor-container
-            - docker-build-and-publish-test-container
+            - docker-publish-server
+            - docker-publish-frontend
+            - docker-publish-webhooks
+            - docker-publish-file-imports
+            - docker-publish-previews
+            - docker-publish-monitor-container
+            - docker-publish-test-container
 
       - publish-npm:
           filters:
