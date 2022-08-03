@@ -3,10 +3,8 @@ import {
   Box3,
   Box3Helper,
   Camera,
-  CameraHelper,
   Color,
   DirectionalLight,
-  DirectionalLightHelper,
   Group,
   Intersection,
   Mesh,
@@ -119,13 +117,13 @@ export default class SpeckleRenderer {
       sceneBoxHelper.name = 'SceneBoxHelper'
       helpers.add(sceneBoxHelper)
 
-      const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
-      dirLightHelper.name = 'DirLightHelper'
-      helpers.add(dirLightHelper)
+      // const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
+      // dirLightHelper.name = 'DirLightHelper'
+      // helpers.add(dirLightHelper)
 
-      const camHelper = new CameraHelper(this.sun.shadow.camera)
-      camHelper.name = 'CamHelper'
-      helpers.add(camHelper)
+      // const camHelper = new CameraHelper(this.sun.shadow.camera)
+      // camHelper.name = 'CamHelper'
+      // helpers.add(camHelper)
     }
   }
 
@@ -302,7 +300,7 @@ export default class SpeckleRenderer {
 
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
-      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      // ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
       ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
         this.sceneBox
       )
@@ -358,7 +356,9 @@ export default class SpeckleRenderer {
         result.object.uuid,
         result.faceIndex !== undefined ? result.faceIndex : result.index
       )
-      this.zoomToBox(rv.aabb, 1.2, true)
+      const transformedBox = new Box3().copy(rv.aabb)
+      transformedBox.applyMatrix4(result.object.matrixWorld)
+      this.zoomToBox(transformedBox, 1.2, true)
     }
 
     this.viewer.needsRender = true

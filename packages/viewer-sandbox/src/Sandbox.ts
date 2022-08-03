@@ -85,6 +85,7 @@ export default class Sandbox {
     this.viewer.unloadObject(url)
     ;(this.streams[url][0] as { dispose: () => void }).dispose()
     ;(this.streams[url][1] as { dispose: () => void }).dispose()
+    ;(this.streams[url][2] as { dispose: () => void }).dispose()
     delete this.streams[url]
   }
 
