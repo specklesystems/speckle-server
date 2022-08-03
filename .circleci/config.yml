@@ -275,13 +275,13 @@ jobs:
     environment:
       SPECKLE_SERVER_PACKAGE: fileimport-service
 
-  docker-build-and-publish-test-container:
+  docker-build-test-container:
     <<: *docker-build-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
 
-  docker-build-and-publish-monitor-container:
+  docker-build-monitor-container:
     <<: *docker-build-job
     environment:
       FOLDER: utils
