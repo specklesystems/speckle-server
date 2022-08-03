@@ -17,7 +17,14 @@ export DOCKER_BUILDKIT=1
 
 docker build --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" -t "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" . --file "${FOLDER}/${SPECKLE_SERVER_PACKAGE}/Dockerfile"
 
-SANITIZED_FILENAME="$(echo "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" | sed -e 's/[^A-Za-z0-9._-]/_/g')"
+if [[ "${PUBLISH_IMAGES}" == "true" ]]; then
+  echo "publishing images"
+  docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:latest"
 
-mkdir -p "/tmp/ci/workspace/images"
-docker save "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" --output "/tmp/ci/workspace/images/${SANITIZED_FILENAME}"
+  if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:2"
+  fi
+
+  echo "${DOCKER_REG_PASS}" | docker login -u "${DOCKER_REG_USER}" --password-stdin "${DOCKER_REG_URL}"
+  docker push --all-tags "${DOCKER_IMAGE_TAG}"
+fi
