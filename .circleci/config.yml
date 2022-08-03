@@ -252,6 +252,7 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat workspace/should-build >> $BASH_ENV
       - run: cat workspace/should-publish >> $BASH_ENV
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
