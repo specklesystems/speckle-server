@@ -1,6 +1,12 @@
 #!/bin/bash
 set -eo pipefail
 
+SHOULD_BUILD="${SHOULD_BUILD:-false}"
+if [[ "${SHOULD_BUILD}" != "true" ]]; then
+  echo "Not building as the SHOULD_BUILD environment variable is not 'true'."
+  exit 0
+fi
+
 # enables building the test-deployment container with the same script
 # defaults to packages for minimal intervention in the ci config
 FOLDER="${FOLDER:-packages}"
