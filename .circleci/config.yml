@@ -137,7 +137,7 @@ jobs:
 
   should-publish:
     docker:
-      - image: bash@486ee76e83af2b1560b173d5b34a238d07ccdacc655ea7b2638e7293d7d1c01f
+      - image: cimg/base:2022.08
     working_directory: *work-dir
     environment:
       # £ delimited strings of regex for matches which should be published
@@ -160,7 +160,7 @@ jobs:
 
   should-build:
     docker:
-      - image: bash@486ee76e83af2b1560b173d5b34a238d07ccdacc655ea7b2638e7293d7d1c01f
+      - image: cimg/base:2022.08
     working_directory: *work-dir
     steps:
       - checkout
