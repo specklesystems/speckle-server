@@ -33,6 +33,11 @@ spec:
       - name: main
         image: speckle/speckle-monitor-deployment:{{ .Values.docker_image_tag }}
 
+        ports:
+          - name: metrics
+            containerPort: 9092
+            protocol: TCP
+
         resources:
           requests:
             cpu: 100m

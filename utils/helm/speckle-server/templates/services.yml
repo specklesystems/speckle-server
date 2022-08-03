@@ -14,7 +14,7 @@ spec:
     - protocol: TCP
       name: web
       port: 3000
-      targetPort: 3000
+      targetPort: http
 ---
 apiVersion: v1
 kind: Service
@@ -32,7 +32,7 @@ spec:
     - protocol: TCP
       name: www
       port: 80
-      targetPort: 80
+      targetPort: www
 ---
 apiVersion: v1
 kind: Service
@@ -50,7 +50,7 @@ spec:
     - protocol: TCP
       name: web
       port: 9094
-      targetPort: 9094
+      targetPort: metrics
 ---
 apiVersion: v1
 kind: Service
@@ -68,7 +68,7 @@ spec:
     - protocol: TCP
       name: web
       port: 9093
-      targetPort: 9093
+      targetPort: metrics
 ---
 apiVersion: v1
 kind: Service
@@ -86,7 +86,7 @@ spec:
     - protocol: TCP
       name: web
       port: 9095
-      targetPort: 9095
+      targetPort: metrics
 ---
 apiVersion: v1
 kind: Service
@@ -104,4 +104,4 @@ spec:
     - protocol: TCP
       name: web
       port: 9092
-      targetPort: 9092
+      targetPort: metrics

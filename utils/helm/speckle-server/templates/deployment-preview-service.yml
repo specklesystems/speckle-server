@@ -34,6 +34,11 @@ spec:
       - name: main
         image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
 
+        ports:
+          - name: metrics
+            containerPort: 9094
+            protocol: TCP
+
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60

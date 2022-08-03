@@ -23,6 +23,12 @@ spec:
       containers:
       - name: main
         image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
+
+        ports:
+          - name: www
+            containerPort: 80
+            protocol: TCP
+
         resources:
           requests:
             cpu: {{ .Values.frontend.requests.cpu }}
