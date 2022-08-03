@@ -21,7 +21,7 @@ import {
   VSMShadowMap,
   WebGLRenderer
 } from 'three'
-import { GeometryType } from './batching/Batch'
+import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { SpeckleType } from './converter/GeometryConverter'
 import { FilterMaterial } from './FilteringManager'
@@ -163,29 +163,27 @@ export default class SpeckleRenderer {
     subtreeGroup.name = subtreeId
     this.rootGroup.add(subtreeGroup)
 
-    for (const k in this.batcher.batches) {
-      const batch = this.batcher.batches[k]
+    const batches = this.batcher.getBatches(subtreeId)
+    batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
-      subtreeGroup.add(this.batcher.batches[k].renderObject)
+      subtreeGroup.add(batch.renderObject)
       if ((batchRenderable as Mesh).isMesh) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
         batchRenderable.castShadow = !material.transparent
         batchRenderable.receiveShadow = !material.transparent
       }
-    }
+    })
 
     this.updateDirectLights(0.47, 0)
     this.updateHelpers()
   }
 
   public removeRenderTree(subtreeId: string) {
-    this.rootGroup.remove(this.scene.getObjectByName(subtreeId))
+    this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
     this.batcher.purgeBatches(subtreeId)
-    this.scene.remove(this.sun, this.sunTarget)
-    // if (this.SHOW_HELPERS) {
-    //   this.scene.remove(this.scene.getObjectByName('Helpers'))
-    // }
+    this.updateDirectLights(0.47, 0)
+    this.updateHelpers()
   }
 
   public clearFilter() {

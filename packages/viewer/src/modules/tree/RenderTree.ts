@@ -7,6 +7,7 @@ import { Geometry } from '../converter/Geometry'
 
 export class RenderTree {
   private root: TreeNode
+
   public constructor(root: TreeNode) {
     this.root = root
   }

@@ -191,30 +191,39 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public async unloadObject(url: string) {
-    url
-    // try {
-    //   if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
-    //   await this.loaders[url].unload()
-    //   delete this.loaders[url]
-    // } finally {
-    //   if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-    // }
+    try {
+      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
+      delete this.loaders[url]
+      this.speckleRenderer.removeRenderTree(url)
+      WorldTree.getRenderTree(url).purge()
+      WorldTree.getInstance().purge(url)
+    } finally {
+      if (--this.inProgressOperations === 0) {
+        ;(this as EventEmitter).emit('busy', false)
+        console.warn(`Removed subtree ${url}`)
+      }
+    }
   }
 
   public async unloadAll() {
-    for (const key of Object.keys(this.loaders)) {
-      delete this.loaders[key]
+    try {
+      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
+      for (const key of Object.keys(this.loaders)) {
+        delete this.loaders[key]
+      }
+      await this.applyFilter(null)
+      WorldTree.getInstance().root.children.forEach((node) => {
+        this.speckleRenderer.removeRenderTree(node.model.id)
+        WorldTree.getRenderTree().purge()
+      })
+
+      WorldTree.getInstance().purge()
+    } finally {
+      if (--this.inProgressOperations === 0) {
+        ;(this as EventEmitter).emit('busy', false)
+        console.warn(`Removed all subtrees`)
+      }
     }
-
-    await this.applyFilter(null)
-    WorldTree.getInstance().root.children.forEach((node) => {
-      this.speckleRenderer.removeRenderTree(node.model.id)
-      WorldTree.getRenderTree().purge()
-    })
-
-    WorldTree.getInstance().purge()
-
-    return
   }
 
   public async applyFilter(filter: unknown) {

@@ -268,12 +268,12 @@ export default class Materials {
         roughness: 1,
         metalness: 0,
         opacity: materialData.opacity,
-        side: DoubleSide, // TBD
-        vertexColors: materialData.vertexColors
+        side: DoubleSide // TBD
         // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
+    mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.color.convertSRGBToLinear()

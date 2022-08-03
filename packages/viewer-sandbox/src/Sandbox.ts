@@ -9,9 +9,11 @@ export default class Sandbox {
   private pane: Pane
   private tabs
   private filterControls
+  private steamsFolder
+  private streams: { [url: string]: Array<unknown> } = {}
 
   public static urlParams = {
-    url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
+    url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
   }
 
   public static sceneParams = {
@@ -42,10 +44,36 @@ export default class Sandbox {
     this.tabs = this.pane.addTab({
       pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
+
+    viewer.on('load-complete', (url: string) => {
+      this.addStreamControls(url)
+    })
   }
 
   public refresh() {
     this.pane.refresh()
+  }
+
+  private addStreamControls(url: string) {
+    const label = this.steamsFolder.addInput({ url }, 'url', {
+      title: 'URL',
+      disabled: true
+    })
+    const button = this.steamsFolder
+      .addButton({
+        title: 'Unload'
+      })
+      .on('click', () => {
+        this.removeStreamControls(url)
+      })
+    this.streams[url] = []
+    this.streams[url].push(label, button)
+  }
+
+  private removeStreamControls(url: string) {
+    this.viewer.unloadObject(url)
+    ;(this.streams[url][0] as { dispose: () => void }).dispose()
+    ;(this.streams[url][1] as { dispose: () => void }).dispose()
   }
 
   public makeGenericUI() {
@@ -67,6 +95,11 @@ export default class Sandbox {
 
     clearButton.on('click', () => {
       this.viewer.unloadAll()
+    })
+
+    this.steamsFolder = this.tabs.pages[0].addFolder({
+      title: 'Active Streams',
+      expanded: true
     })
 
     this.tabs.pages[0].addSeparator()

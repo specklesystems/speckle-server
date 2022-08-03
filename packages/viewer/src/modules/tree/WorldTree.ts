@@ -78,6 +78,10 @@ export class WorldTree {
     parent.addChild(node)
   }
 
+  public removeNode(node: TreeNode) {
+    node.drop()
+  }
+
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
     if (!node) {
       console.warn(`Root will be used for searching. You might not want that`)
@@ -105,10 +109,17 @@ export class WorldTree {
     this._root.walk(predicate)
   }
 
-  public purge() {
+  public purge(subtreeId?: string) {
+    if (subtreeId) {
+      delete WorldTree.renderTreeInstances[subtreeId]
+      this.removeNode(this.findId(subtreeId))
+      return
+    }
+
     Object.keys(WorldTree.renderTreeInstances).forEach(
       (key) => delete WorldTree.renderTreeInstances[key]
     )
+    this._root.drop()
     this._root.children.length = 0
     this.tree = new TreeModel()
     this._root = WorldTree.getInstance().parse({
