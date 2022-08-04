@@ -33,6 +33,10 @@
       "name": "🌐 objectloader"
     },
     {
+      "path": "utils/helm",
+      "name": "⛵ helm"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }

@@ -28,6 +28,11 @@ spec:
             containerPort: 9094
             protocol: TCP
 
+        ports:
+          - name: metrics
+            containerPort: 9094
+            protocol: TCP
+
         livenessProbe:
           initialDelaySeconds: 60
           periodSeconds: 60
