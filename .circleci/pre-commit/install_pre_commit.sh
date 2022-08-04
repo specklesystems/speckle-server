@@ -22,7 +22,7 @@ python3 -m pip --version || {
         sudo apt-get -y install --no-install-recommends --download-only python3-pip=20.0.2-5ubuntu1.6
         # Then move the downloaded packages to our cache directory
         sudo cp -R /var/cache/apt /tmp/vendor/
-        sudo chmod -R 777 /tmp/vendor/apt
+        sudo chmod -R 766 /tmp/vendor/apt
     fi
 
     # Install all packages in the cache
