@@ -123,23 +123,32 @@ jobs:
         default: ./.pre-commit-config.yaml
         description: Optional, path to pre-commit config file.
         type: string
+      cache_prefix:
+        default: ''
+        description: |
+          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
+        type: string
     docker:
       - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
     resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit
-          command: |
-            #!/usr/bin/env bash
-            set -eo pipefail
-            sudo apt-get update
-            DEBIAN_FRONTEND=noninteractive sudo apt-get -y install --no-install-recommends python3-pip
-            python3 -m pip install --progress-bar=off pre-commit
+          command: ./.circleci/pre-commit/install_pre_commit.sh
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
+      - save_cache:
+          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          paths:
+            - /vendor/apt
+            - ~/.cache/pip
+            - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
           command: pre-commit run --all-files --config <<parameters.config_file>>
