@@ -125,6 +125,7 @@ jobs:
         type: string
     docker:
       - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
@@ -138,8 +139,10 @@ jobs:
             python3 -m pip install --progress-bar=off pre-commit
       - run:
           name: Install pre-commit hooks
-          command: pre-commit install-hooks -c <<parameters.config_file>>
-      - run: pre-commit run --all-files -c <<parameters.config_file>>
+          command: pre-commit install-hooks --config <<parameters.config_file>>
+      - run:
+          name: Run pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
