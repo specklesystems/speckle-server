@@ -16,15 +16,24 @@
 <script>
 import throttle from 'lodash/throttle'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   name: 'SpeckleViewer',
+  props: {
+    noScroll: {
+      type: Boolean,
+      default: false
+    }
+  },
   setup() {
     const { viewer, container, isInitializedPromise } = useInjectedViewer()
+    const { isEmbed } = useCommitObjectViewerParams()
     return {
       viewer,
       viewerContainer: container,
-      isViewerInitializedPromise: isInitializedPromise
+      isViewerInitializedPromise: isInitializedPromise,
+      isEmbed
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
@@ -50,6 +59,12 @@ export default {
     this.$refs.rendererparent.appendChild(this.domElement)
 
     await this.viewer.unloadAll()
+
+    if (this.noScroll && this.isEmbed) {
+      this.viewer.cameraHandler.controls.mouseButtons.wheel = 0
+    } else {
+      // this.viewer.cameraHandler.controls.mouseButtons.wheel = 8
+    }
 
     this.viewer.onWindowResize()
     this.viewer.cameraHandler.onWindowResize()

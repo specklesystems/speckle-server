@@ -5,21 +5,30 @@
       class="embed-viewer-core__top-bar top-left bottom-left pa-4 d-flex justify-space-between"
       style="right: 0px; position: fixed; z-index: 5; width: 100%"
     >
-      <v-btn fab small style="z-index=1000" @click="drawer = !drawer">
+      <v-btn
+        v-if="!hideSidebar"
+        fab
+        small
+        style="z-index=1000"
+        @click="drawer = !drawer"
+      >
         <v-icon>mdi-menu</v-icon>
       </v-btn>
-      <span v-show="!drawer" class="caption d-inline-flex align-center">
-        <img src="@/assets/logo.svg" height="18" />
-        <span style="margin-top: 2px" class="primary--text">
-          <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
-            <b>Powered by Speckle</b>
-          </a>
+      <v-fade-transition>
+        <span v-if="!drawer && !hideLogo" class="caption d-inline-flex align-center">
+          <img src="@/assets/logo.svg" height="18" />
+          <span style="margin-top: 2px" class="primary--text">
+            <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
+              <b>Powered by Speckle</b>
+            </a>
+          </span>
         </span>
-      </span>
+      </v-fade-transition>
     </div>
 
     <!-- Viewer filters panel / sidebar -->
     <v-navigation-drawer
+      v-show="!hideSidebar"
       ref="drawerRef"
       v-model="drawer"
       class="viewer-controls-drawer"
@@ -47,6 +56,9 @@
         :stream-id="streamId"
         :resource-id="resourceId"
         :is-embed="true"
+        :hide-controls="hideControls"
+        :hide-selection-info="hideSelectionInfo"
+        :no-scroll="noScroll"
         @models-loaded="onModelsLoaded"
       />
     </div>
@@ -97,7 +109,18 @@ export default defineComponent({
       drawerRef
     })
 
-    const { streamId, commitId, objectId, branchName } = useEmbedViewerQuery()
+    const {
+      streamId,
+      commitId,
+      objectId,
+      branchName,
+      hideControls,
+      hideSidebar,
+      hideSelectionInfo,
+      hideLogo,
+      noScroll
+    } = useEmbedViewerQuery()
+
     const goToServerUrl = computed(() => {
       const base = `${window.location.origin}/streams/${streamId.value}/`
 
@@ -107,6 +130,7 @@ export default defineComponent({
 
       return base
     })
+
     return {
       goToServerUrl,
       loadedModel,
@@ -114,6 +138,11 @@ export default defineComponent({
       // drawer ref must be returned, for it to be filled
       drawerRef,
       navWidth,
+      hideControls,
+      hideSidebar,
+      hideSelectionInfo,
+      noScroll,
+      hideLogo,
       onModelsLoaded: () => {
         loadedModel.value = true
         emit('models-loaded')
