@@ -18,21 +18,10 @@ spec:
         app: speckle-webhook-service
         project: speckle-server
     spec:
-      priorityClassName: low-priority
-
-      {{- if .Values.db.useCertificate }}
-      volumes:
-        - name: postgres-certificate
-          configMap:
-            name: postgres-certificate
-      {{- end }}
-
-      # Should be > webhook max call time ( ~= 10 seconds )
-      terminationGracePeriodSeconds: 30
-
       containers:
       - name: main
         image: speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -77,3 +66,14 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+      priorityClassName: low-priority
+
+      # Should be > webhook max call time ( ~= 10 seconds )
+      terminationGracePeriodSeconds: 30
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}

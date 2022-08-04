@@ -18,21 +18,10 @@ spec:
         app: speckle-preview-service
         project: speckle-server
     spec:
-      priorityClassName: low-priority
-
-      {{- if .Values.db.useCertificate }}
-      volumes:
-        - name: postgres-certificate
-          configMap:
-            name: postgres-certificate
-      {{- end }}
-
-      # Should be > preview generation time ( 1 hour for good measure )
-      terminationGracePeriodSeconds: 3600
-
       containers:
       - name: main
         image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -77,3 +66,14 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+      priorityClassName: low-priority
+
+      # Should be > preview generation time ( 1 hour for good measure )
+      terminationGracePeriodSeconds: 3600
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}

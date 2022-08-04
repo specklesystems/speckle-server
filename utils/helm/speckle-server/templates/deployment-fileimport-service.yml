@@ -20,21 +20,10 @@ spec:
         app: speckle-fileimport-service
         project: speckle-server
     spec:
-      priorityClassName: low-priority
-
-      {{- if .Values.db.useCertificate }}
-      volumes:
-        - name: postgres-certificate
-          configMap:
-            name: postgres-certificate
-      {{- end }}
-
-      # Should be > File import timeout to allow finishing up imports
-      terminationGracePeriodSeconds: 610
-
       containers:
       - name: main
         image: speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: metrics
@@ -98,4 +87,15 @@ spec:
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
 
+      priorityClassName: low-priority
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+
+      # Should be > File import timeout to allow finishing up imports
+      terminationGracePeriodSeconds: 610
 {{- end }}

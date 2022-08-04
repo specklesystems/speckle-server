@@ -18,20 +18,10 @@ spec:
         app: speckle-server
         project: speckle-server
     spec:
-      priorityClassName: high-priority
-
-      {{- if .Values.db.useCertificate }}
-      volumes:
-        - name: postgres-certificate
-          configMap:
-            name: postgres-certificate
-      {{- end }}
-
-      terminationGracePeriodSeconds: 310
-
       containers:
       - name: main
         image: speckle/speckle-server:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
           - name: http
@@ -253,3 +243,11 @@ spec:
                 name: {{ .Values.secretName }}
                 key: apollo_key
           {{- end }}
+      priorityClassName: high-priority
+      terminationGracePeriodSeconds: 310
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
