@@ -121,7 +121,7 @@ export default class PointBatch implements Batch {
         return a.start - b.start
       })
       .slice()
-    console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
+    // console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
     for (let k = 0; k < sortedRanges.length; k++) {
       if (k === 0) {
         if (sortedRanges[k].start > 0) {
@@ -174,9 +174,9 @@ export default class PointBatch implements Batch {
       console.error(`DrawRange autocomplete failed! ${count}vs${this.getCount()}`)
     }
 
-    console.warn(
-      `Batch ID ${this.id} Group count ${this.geometry.groups.length} AUTOCOMPLETE`
-    )
+    // console.warn(
+    //   `Batch ID ${this.id} Group count ${this.geometry.groups.length} AUTOCOMPLETE`
+    // )
   }
 
   public resetDrawRanges() {

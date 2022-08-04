@@ -84,12 +84,13 @@ export default class LineBatch implements Batch {
         materialOptions && materialOptions.rampIndexColor
           ? materialOptions.rampIndexColor
           : material.color
+      const alpha: number = material.visible ? 1 : 0
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +
         ranges[i].count * this.colorBuffer.stride
 
-      LineBatch.vector4Buffer.set(color.r, color.g, color.b, 1)
+      LineBatch.vector4Buffer.set(color.r, color.g, color.b, alpha)
       this.updateColorBuffer(
         start,
         ranges[i].count === Infinity ? this.colorBuffer.array.length : len,

@@ -193,7 +193,7 @@ export default class Batcher {
           count: Infinity,
           material: this.materials.getFilterMaterial(
             this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
+            FilterMaterialType.HIDDEN
           )
         })
       } else {
@@ -205,7 +205,7 @@ export default class Batcher {
               count: this.batches[k].renderViews[i].batchCount,
               material: this.materials.getFilterMaterial(
                 this.batches[k].renderViews[i],
-                FilterMaterialType.GHOST
+                FilterMaterialType.HIDDEN
               )
             })
           }

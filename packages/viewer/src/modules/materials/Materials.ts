@@ -31,6 +31,8 @@ export default class Materials {
   private pointGhostMaterial: Material = null
   private meshGradientMaterial: Material = null
   private meshColoredMaterial: Material = null
+  private meshHiddenMaterial: Material = null
+  private lineHiddenMaterial: Material = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
@@ -191,6 +193,34 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+
+    this.meshHiddenMaterial = new SpeckleStandardMaterial(
+      {
+        side: DoubleSide,
+        transparent: false,
+        opacity: 1,
+        wireframe: false
+      },
+      ['USE_RTE']
+    )
+    this.meshHiddenMaterial.visible = false
+
+    this.lineHiddenMaterial = new SpeckleLineMaterial({
+      color: 0xffffff,
+      linewidth: 1, // in world units with size attenuation, pixels otherwise
+      worldUnits: false,
+      vertexColors: true,
+      alphaToCoverage: false,
+      resolution: new Vector2()
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+    ;(<SpeckleLineMaterial>this.lineHiddenMaterial).color = new Color(0xff0000)
+    ;(<SpeckleLineMaterial>this.lineHiddenMaterial).linewidth = 1
+    ;(<SpeckleLineMaterial>this.lineHiddenMaterial).worldUnits = false
+    ;(<SpeckleLineMaterial>this.lineHiddenMaterial).vertexColors = true
+    ;(<SpeckleLineMaterial>this.lineHiddenMaterial).pixelThreshold = 0.5
+    ;(<SpeckleLineMaterial>this.lineHiddenMaterial).resolution = new Vector2()
+    this.lineHiddenMaterial.visible = false
 
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
@@ -393,6 +423,19 @@ export default class Materials {
     }
   }
 
+  public getHiddenMaterial(renderView: NodeRenderView): Material {
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        return this.meshHiddenMaterial
+      case GeometryType.LINE:
+        return this.lineHiddenMaterial
+      case GeometryType.POINT:
+        return this.meshHiddenMaterial
+      case GeometryType.POINT_CLOUD:
+        return this.meshHiddenMaterial
+    }
+  }
+
   public getDebugBatchMaterial(renderView: NodeRenderView) {
     const color = new Color(MathUtils.randInt(0, 0xffffff))
     color.convertSRGBToLinear()
@@ -458,6 +501,8 @@ export default class Materials {
         return this.getGradientMaterial(renderView)
       case FilterMaterialType.COLORED:
         return this.getColoredMaterial(renderView)
+      case FilterMaterialType.HIDDEN:
+        return this.getHiddenMaterial(renderView)
     }
   }
 

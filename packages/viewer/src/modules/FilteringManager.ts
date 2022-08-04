@@ -4,7 +4,8 @@ export enum FilterMaterialType {
   SELECT,
   GHOST,
   GRADIENT,
-  COLORED
+  COLORED,
+  HIDDEN
 }
 
 export interface FilterMaterial {
