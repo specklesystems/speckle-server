@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -eox pipefail
 
-# Update to take effect sources repository database
-sudo apt-get -q update
-
 # Make the cache dir if it doesn't exist
 if ! [[ -d vendor/apt ]]; then
     mkdir -p vendor/apt
@@ -17,6 +14,9 @@ python3 -m pip --version || {
     # First check for archives cache
     if ! [[ -d vendor/apt/archives ]]; then
         export DEBIAN_FRONTEND=noninteractive
+
+        # Update to take effect sources repository database
+        sudo apt-get -q update
 
         # It doesn't so download the packages
         sudo apt-get -y install --no-install-recommends --download-only python3-pip=20.0.2-5ubuntu1.6
