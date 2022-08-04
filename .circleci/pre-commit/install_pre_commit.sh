@@ -9,8 +9,10 @@ if ! [[ -d vendor/apt ]]; then
     mkdir -p vendor/apt
 fi
 
+whoami
+
 # Making sure our user has ownership, in order to cache
-sudo chown -R ubuntu:ubuntu vendor/apt
+sudo chown -R root:root vendor/apt
 
 # if pip is not already installed, checking the version will return a non-zero exit code and then we will install it
 python3 -m pip --version || {
