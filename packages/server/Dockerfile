@@ -43,5 +43,6 @@ COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
+ENV FILE_SIZE_LIMIT_MB=100
 ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 CMD ["yarn", "node", "bin/www"]

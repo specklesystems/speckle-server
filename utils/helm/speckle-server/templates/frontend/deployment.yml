@@ -18,11 +18,16 @@ spec:
         app: speckle-frontend
         project: speckle-server
     spec:
-      priorityClassName: high-priority
-
       containers:
       - name: main
         image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+
+        ports:
+          - name: www
+            containerPort: 80
+            protocol: TCP
+
         resources:
           requests:
             cpu: {{ .Values.frontend.requests.cpu }}
@@ -47,3 +52,5 @@ spec:
         env: 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
+
+      priorityClassName: high-priority
