@@ -130,6 +130,7 @@ jobs:
         type: string
     docker:
       - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
+        user: ubuntu
     resource_class: large
     working_directory: *work-dir
     steps:
