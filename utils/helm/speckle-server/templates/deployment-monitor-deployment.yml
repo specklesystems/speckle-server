@@ -28,11 +28,6 @@ spec:
             containerPort: 9092
             protocol: TCP
 
-        ports:
-          - name: metrics
-            containerPort: 9092
-            protocol: TCP
-
         resources:
           requests:
             cpu: 100m
