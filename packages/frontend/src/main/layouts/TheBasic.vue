@@ -1,11 +1,9 @@
 <template>
-  <v-app id="speckle">
-    <v-main class="background">
-      <router-view></router-view>
-    </v-main>
+  <div>
+    <router-view></router-view>
     <global-toast />
     <global-loading />
-  </v-app>
+  </div>
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'

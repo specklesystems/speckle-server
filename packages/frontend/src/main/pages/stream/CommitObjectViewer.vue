@@ -113,9 +113,15 @@
       </v-fade-transition>
 
       <div
+        id="renderParent"
+        ref="renderParent"
         :style="`height: 100vh; width: 100%; ${topOffsetStyle} left: 0px; position: absolute`"
       >
-        <speckle-viewer @load-progress="captureProgress" @selection="captureSelect" />
+        <speckle-viewer
+          :no-scroll="noScroll"
+          @load-progress="captureProgress"
+          @selection="captureSelect"
+        />
       </div>
 
       <div
@@ -129,7 +135,7 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="selectionData.length !== 0"
+          v-show="selectionData.length !== 0 && !hideSelectionInfo"
           :key="'one'"
           :objects="selectionData"
           :stream-id="streamId"
@@ -144,7 +150,10 @@
         }; z-index: 20`"
         :class="`d-flex justify-center`"
       >
-        <viewer-controls @show-add-overlay="showAddOverlay = true" />
+        <viewer-controls
+          v-show="!hideControls"
+          @show-add-overlay="showAddOverlay = true"
+        />
       </div>
       <div
         :style="`
@@ -159,7 +168,7 @@
         `"
         class=""
       >
-        <viewer-bubbles key="a" />
+        <viewer-bubbles v-if="!isEmbed" key="a" />
         <comments-overlay key="c" @add-resources="addResources" />
         <comment-add-overlay v-if="!isEmbed" key="b" />
       </div>
@@ -330,6 +339,18 @@ export default defineComponent({
     isEmbed: {
       type: Boolean,
       default: false
+    },
+    hideControls: {
+      type: Boolean,
+      default: false
+    },
+    hideSelectionInfo: {
+      type: Boolean,
+      default: false
+    },
+    noScroll: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props) {
@@ -398,6 +419,7 @@ export default defineComponent({
   },
   watch: {
     'viewerState.appliedFilter'(val) {
+      if (this.isEmbed) return
       if (!val) {
         const fullQuery = { ...this.$route.query }
         delete fullQuery.filter
@@ -521,6 +543,7 @@ export default defineComponent({
       this.viewer.cameraHandler.controls.addEventListener(
         'rest',
         debounce(() => {
+          if (this.isEmbed) return
           if (!(this.$route.name === 'commit' || this.$route.name === 'object')) {
             return
           }
