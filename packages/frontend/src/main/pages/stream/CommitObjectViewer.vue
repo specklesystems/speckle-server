@@ -494,9 +494,6 @@ export default defineComponent({
     }
 
     setTimeout(() => {
-      if (this.noScroll) {
-        this.disableScroll()
-      }
       for (const resource of this.resources) {
         if (isErrorResource(resource)) continue
 
@@ -572,9 +569,6 @@ export default defineComponent({
     }, 300)
   },
   methods: {
-    disableScroll() {
-      // TODO
-    },
     resolveResourceType(resourceId: string): ResourceTypeValue {
       return resourceId.length === 10 ? 'commit' : 'object'
     },

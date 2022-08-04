@@ -56,11 +56,13 @@ export default {
     this.$refs.rendererparent.appendChild(this.domElement)
 
     await this.viewer.unloadAll()
-    console.log(this.viewer)
-    console.log(this.noScroll)
+
     if (this.noScroll) {
       this.viewer.cameraHandler.controls.mouseButtons.wheel = 0
+    } else {
+      this.viewer.cameraHandler.controls.mouseButtons.wheel = 8
     }
+
     this.viewer.onWindowResize()
     this.viewer.cameraHandler.onWindowResize()
     this.setupEvents()
