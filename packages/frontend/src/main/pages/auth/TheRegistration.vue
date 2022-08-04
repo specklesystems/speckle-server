@@ -106,7 +106,6 @@
                 single-line
                 style="margin-top: -12px"
                 prepend-icon="mdi-form-textbox-password"
-                @keydown="debouncedPwdTest"
               />
             </v-col>
             <v-col cols="12" sm="6">
@@ -182,7 +181,6 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import debounce from 'lodash/debounce'
 import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
@@ -296,19 +294,27 @@ export default {
     }
   },
   methods: {
-    debouncedPwdTest: debounce(async function () {
+    async validatePasswordStrength() {
       const result = await this.$apollo.query({
-        query: gql` query{ userPwdStrength(pwd:"${this.form.password}")}`
+        query: gql`
+          query ($pwd: String!) {
+            userPwdStrength(pwd: $pwd)
+          }
+        `,
+        variables: { pwd: this.form.password }
       })
       this.passwordStrength = result.data.userPwdStrength.score * 25
       this.pwdSuggestions = result.data.userPwdStrength.feedback.suggestions[0]
-    }, 1000),
+    },
     async registerUser() {
       try {
         const valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf)
           throw new Error('Passwords do not match')
+
+        // Validate password strength
+        await this.validatePasswordStrength()
         if (this.passwordStrength < 3) throw new Error('Password too weak')
 
         const user = {
