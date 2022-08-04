@@ -25,6 +25,9 @@ const { getUsers, getUser } = require('@/modules/core/repositories/users')
 const {
   addStreamInviteSentOutActivity
 } = require('@/modules/activitystream/services/streamActivityService')
+const {
+  buildBasicTemplateEmail
+} = require('@/modules/emails/services/templateFormatting')
 
 /**
  * @typedef {{
@@ -162,83 +165,10 @@ async function validateInput(params, inviter, targetUser, resource) {
  * @param {string} message
  * @returns {string}
  */
-function sanitizeMessage(message) {
+function sanitizeMessage(message, stripAll = false) {
   return sanitizeHtml(message, {
-    allowedTags: ['b', 'i', 'em', 'strong']
+    allowedTags: stripAll ? [] : [('b', 'i', 'em', 'strong')]
   })
-}
-
-/**
- * Build email text version body
- */
-function buildEmailTextBody(invite, inviter, serverInfo, inviteLink, resourceName) {
-  const { message } = invite
-  const forServer = isServerInvite(invite)
-
-  const dynamicText = forServer
-    ? `join the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL})`
-    : `become a collaborator on the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL}) stream - "${resourceName}"`
-
-  return `
-Hello!
-
-${
-  inviter.name
-} has just sent you this invitation to ${dynamicText}! To accept the invitation, open the following URL in your browser:
-${inviteLink}
-
-${message ? inviter.name + ' said: "' + message + '"' : ''}
-
-Warm regards,
-Speckle
----
-This email was sent from ${serverInfo.name} at ${
-    process.env.CANONICAL_URL
-  }, deployed and managed by ${serverInfo.company}. Your admin contact is ${
-    serverInfo.adminContact ? serverInfo.adminContact : '[not provided]'
-  }.
-      `
-}
-
-/**
- * Build email HTML version body
- */
-function buildEmailHtmlBody(invite, inviter, serverInfo, inviteLink, resourceName) {
-  const { message } = invite
-  const forServer = isServerInvite(invite)
-
-  const dynamicText = forServer
-    ? `join the <a href="${process.env.CANONICAL_URL}" rel="notrack">${serverInfo.name} Speckle Server</a>`
-    : `become a collaborator on the <a href="${process.env.CANONICAL_URL}" rel="notrack">${serverInfo.name} Speckle Server</a> stream - "${resourceName}"`
-
-  return `
-Hello!
-<br>
-<br>
-${inviter.name} has just sent you this invitation to ${dynamicText}!
-To accept the invitation, <a href="${inviteLink}" rel="notrack">click here</a>!
-
-<br>
-<br>
-${message ? inviter.name + ' said: <em>"' + message + '"</em><br><br>' : ''}
-
-Warm regards,
-<br>
-Speckle (on behalf of ${inviter.name})
-<br>
-<img src="https://speckle.systems/content/images/2021/02/logo_big-1.png" style="width:30px; height:30px;">
-<br>
-<br>
-<caption style="size:8px; color:#7F7F7F; width:400px; text-align: left;">
-This email was sent from ${serverInfo.name} at <a href="${
-    process.env.CANONICAL_URL
-  }" rel="notrack">${process.env.CANONICAL_URL}</a>, deployed and managed by ${
-    serverInfo.company
-  }. Your admin contact is ${
-    serverInfo.adminContact ? serverInfo.adminContact : '[not provided]'
-  }.
-</caption>
-`
 }
 
 /**
@@ -287,6 +217,77 @@ function buildInviteLink(invite) {
   }
 }
 
+function buildHtmlPreamble(invite, inviter, serverInfo, resourceName) {
+  const { message } = invite
+  const forServer = isServerInvite(invite)
+
+  const dynamicText = forServer
+    ? `join the <a href="${process.env.CANONICAL_URL}" rel="notrack">${serverInfo.name} Speckle Server</a>`
+    : `become a collaborator on the <a href="${process.env.CANONICAL_URL}" rel="notrack">${serverInfo.name} Speckle Server</a> stream - "${resourceName}"`
+
+  const bodyStart = `
+  Hello!
+  <br />
+  <br />
+  ${inviter.name} has just sent you this invitation to ${dynamicText}!<br/><br/>
+  ${message ? inviter.name + ' said: <em>"' + message + '"</em>' : ''}`
+
+  return {
+    bodyStart,
+    bodyEnd: undefined
+  }
+}
+
+function buildTextPreamble(invite, inviter, serverInfo, resourceName) {
+  const { message } = invite
+  const forServer = isServerInvite(invite)
+
+  const dynamicText = forServer
+    ? `join the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL})`
+    : `become a collaborator on the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL}) stream - "${resourceName}"`
+
+  const bodyStart = `Hello!
+
+${inviter.name} has just sent you this invitation to ${dynamicText}!
+
+${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : ''}`
+
+  return {
+    bodyStart,
+    bodyEnd: undefined
+  }
+}
+
+/**
+ * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
+ * @param {{name: string, company: string, adminContact: string}} serverInfo
+ * @param {string} resourceName
+ * @returns {import('@/modules/emails/services/templateFormatting').BasicEmailTemplateParams}
+ */
+function buildEmailTemplateParams(
+  invite,
+  inviter,
+  serverInfo,
+  inviteLink,
+  resourceName
+) {
+  return {
+    html: buildHtmlPreamble(invite, inviter, serverInfo, resourceName),
+    text: buildTextPreamble(invite, inviter, serverInfo, resourceName),
+    cta: {
+      title: 'Accept the invitation',
+      url: inviteLink
+    },
+    server: {
+      name: serverInfo.name,
+      url: process.env.CANONICAL_URL,
+      company: serverInfo.company,
+      contact: serverInfo.adminContact
+    }
+  }
+}
+
 /**
  * Build invite email contents
  * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
@@ -301,27 +302,21 @@ async function buildEmailContents(invite, inviter, targetUser, resource) {
   const inviteLink = buildInviteLink(invite)
   const resourceName = resolveResourceName(invite, resource)
 
-  const bodyText = buildEmailTextBody(
+  const templateParams = buildEmailTemplateParams(
     invite,
     inviter,
     serverInfo,
     inviteLink,
     resourceName
   )
-  const bodyHtml = buildEmailHtmlBody(
-    invite,
-    inviter,
-    serverInfo,
-    inviteLink,
-    resourceName
-  )
+  const { html, text } = await buildBasicTemplateEmail(templateParams)
   const subject = buildEmailSubject(invite, inviter, resourceName)
 
   return {
     to: email,
     subject,
-    text: bodyText,
-    html: bodyHtml
+    text,
+    html
   }
 }
 
