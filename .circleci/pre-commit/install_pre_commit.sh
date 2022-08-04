@@ -3,7 +3,7 @@ set -eox pipefail
 
 # Make the cache dir if it doesn't exist
 if ! [[ -d vendor/apt ]]; then
-    mkdir -p vendor/apt
+    mkdir -p /tmp/vendor/apt
 fi
 
 # Making sure our user has ownership, in order to cache
@@ -21,11 +21,11 @@ python3 -m pip --version || {
         # It doesn't so download the packages
         sudo apt-get -y install --no-install-recommends --download-only python3-pip=20.0.2-5ubuntu1.6
         # Then move the downloaded packages to our cache directory
-        sudo cp -R /var/cache/apt vendor/
+        sudo cp -R /var/cache/apt /tmp/vendor/
     fi
 
     # Install all packages in the cache
-    sudo dpkg -i vendor/apt/archives/*.deb
+    sudo dpkg -i /tmp/vendor/apt/archives/*.deb
 }
 
 # if pre-commit is not already installed, checking the version will return a non-zero exit code and then we will install it

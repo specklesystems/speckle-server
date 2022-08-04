@@ -143,16 +143,16 @@ jobs:
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
+      - run:
+          name: Run pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
       - save_cache:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
             - /tmp/.eslintcache/
-            - /vendor/apt/archives
+            - /tmp/vendor/apt/archives
             - ~/.cache/pip
             - ~/.cache/pre-commit
-      - run:
-          name: Run pre-commit
-          command: pre-commit run --all-files --config <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
