@@ -501,21 +501,25 @@ export default {
         }
       }
     },
-    nextComment(comment) {
-      const index = this.activeComments.findIndex((c) => c.id === comment.id)
-      let nextComment = null
+    nextComment(comment, increment = 1) {
+      let index = this.activeComments.findIndex((c) => c.id === comment.id)
       if (index === -1) return
-      if (index === this.activeComments.length - 1) nextComment = this.activeComments[0]
-      else nextComment = this.activeComments[index + 1]
+
+      index += increment
+      if (index === this.activeComments.length - 1) index = 0
+      if (index === -1) index = this.activeComments.length - 1
+
       this.collapseComment(comment)
-      this.expandComment(nextComment)
+      this.expandComment(this.activeComments[index])
     },
     prevComment(comment) {
       const index = this.activeComments.findIndex((c) => c.id === comment.id)
       let nextComment = null
       if (index === -1) return
+
       if (index === 0) nextComment = this.activeComments[this.activeComments.length - 1]
       else nextComment = this.activeComments[index - 1]
+
       this.collapseComment(comment)
       this.expandComment(nextComment)
     },

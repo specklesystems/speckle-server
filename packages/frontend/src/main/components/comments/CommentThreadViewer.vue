@@ -169,7 +169,7 @@
             icon
             class="primary elevation-1 mr-2"
             small
-            @click="$emit('prev', comment)"
+            @click="$emit('next', comment, -1)"
           >
             <v-icon small class="white--text">mdi-chevron-left</v-icon>
           </v-btn>
@@ -177,7 +177,7 @@
             rounded
             color="primary"
             class="elevation-5 px-5"
-            @click="$emit('next', comment)"
+            @click="$emit('next', comment, 1)"
           >
             <span class="caption">next</span>
             <v-icon small>mdi-chevron-right</v-icon>
