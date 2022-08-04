@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-
 sudo mv /etc/apt/sources.list.d /etc/apt/sources.list.d.save
-udo mkdir /etc/apt/sources.list.d
+sudo mkdir /etc/apt/sources.list.d
 
-# Copy the repository list from source tree to replace default
-sudo cp sources.list /etc/apt/sources.list
 # Update to take effect sources repository database
 sudo apt-get update
 
@@ -25,7 +22,7 @@ python3 -m pip --version || {
         export DEBIAN_FRONTEND=noninteractive
 
         # It doesn't so download the packages
-        sudo apt-get -y install  --no-install-recommends --download-only python3-pip
+        sudo apt-get -y install  --no-install-recommends --download-only python3-pip=22.0.2+dfsg-1
         # Then move them to our cache directory
         sudo cp -R /var/cache/apt vendor/
     fi
