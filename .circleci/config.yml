@@ -136,8 +136,8 @@ jobs:
             sudo rm -rf /var/lib/apt/lists/*
       - run:
           name: Install pre-commit hooks
-          command: pre-commit install-hooks -c ./pre-commit-config.yaml
-      - run: pre-commit run --all-files -c ./pre-commit-config.yaml
+          command: pre-commit install-hooks -c ./.pre-commit-config.yaml
+      - run: pre-commit run --all-files -c ./.pre-commit-config.yaml
       - run:
           command: git --no-pager diff
           name: git diff
