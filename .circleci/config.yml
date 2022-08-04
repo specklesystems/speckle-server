@@ -20,7 +20,6 @@ workflows:
                 - main
 
       - pre-commit:
-          cache_prefix: '6'
           filters:
             tags:
               only: /.*/
@@ -130,6 +129,7 @@ jobs:
           Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
         type: string
     docker:
+      # to add additional binaries to the pre-commit-runner image, modify https://github.com/specklesystems/pre-commit-runner-image
       - image: speckle/pre-commit-runner:latest
     resource_class: large
     working_directory: *work-dir
