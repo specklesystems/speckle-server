@@ -171,7 +171,7 @@
             small
             @click="$emit('prev', comment)"
           >
-            <v-icon small>mdi-chevron-left</v-icon>
+            <v-icon small class="white--text">mdi-chevron-left</v-icon>
           </v-btn>
           <v-btn
             rounded
