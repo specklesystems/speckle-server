@@ -6,6 +6,7 @@ metadata:
   labels:
     app: speckle-preview-service
     project: speckle-server
+{{ include "preview_service.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.preview_service.replicas }}
   selector:
@@ -17,6 +18,7 @@ spec:
       labels:
         app: speckle-preview-service
         project: speckle-server
+{{ include "preview_service.labels" . | indent 8 }}
     spec:
       containers:
       - name: main

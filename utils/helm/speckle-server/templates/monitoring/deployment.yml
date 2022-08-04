@@ -6,8 +6,9 @@ metadata:
   labels:
     app: speckle-monitoring
     project: speckle-server
+{{ include "monitoring.labels" . | indent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.monitoring.replicas }}
   selector:
     matchLabels:
       app: speckle-monitoring
@@ -17,6 +18,7 @@ spec:
       labels:
         app: speckle-monitoring
         project: speckle-server
+{{ include "monitoring.labels" . | indent 8 }}
     spec:
       containers:
       - name: main
@@ -30,11 +32,12 @@ spec:
 
         resources:
           requests:
-            cpu: 100m
-            memory: 64Mi
+            cpu: {{ .Values.monitoring.requests.cpu }}
+            memory: {{ .Values.monitoring.requests.memory }}
           limits:
-            cpu: 200m
-            memory: 512Mi
+            cpu: {{ .Values.monitoring.limits.cpu }}
+            memory: {{ .Values.monitoring.limits.memory }}
+
 
         {{- if .Values.db.useCertificate }}
         volumeMounts:

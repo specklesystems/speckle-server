@@ -6,6 +6,7 @@ metadata:
   labels:
     app: speckle-server
     project: speckle-server
+{{ include "server.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.server.replicas }}
   selector:
@@ -17,6 +18,7 @@ spec:
       labels:
         app: speckle-server
         project: speckle-server
+{{ include "server.labels" . | indent 8 }}
     spec:
       containers:
       - name: main

@@ -6,6 +6,7 @@ metadata:
   labels:
     app: speckle-server
     project: speckle-server
+{{ include "server.labels" . | indent 4 }}
 spec:
   selector:
     app: speckle-server

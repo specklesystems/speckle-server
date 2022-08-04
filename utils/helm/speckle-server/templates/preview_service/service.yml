@@ -6,6 +6,7 @@ metadata:
   labels:
     app: speckle-preview-service-metrics
     project: speckle-server
+{{ include "preview_service.labels" . | indent 4 }}
 spec:
   selector:
     app: speckle-preview-service
