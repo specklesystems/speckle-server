@@ -124,7 +124,16 @@ jobs:
       - checkout
       - run:
           name: Install pre-commit
-          command: python3 -m pip install --progress-bar=off pre-commit
+          command: |
+            #!/usr/bin/env bash
+            set -eo pipefail
+            sudo apt-get update
+            DEBIAN_FRONTEND=noninteractive sudo apt-get -y install --no-install-recommends python3-pip
+            python3 -m pip install --progress-bar=off pre-commit
+            sudo apt-get purge python3-pip
+            sudo apt autoremove
+            sudo apt-get clean
+            sudo rm -rf /var/lib/apt/lists/*
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks -c ./pre-commit-config.yaml
