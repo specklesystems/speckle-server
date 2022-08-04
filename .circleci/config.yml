@@ -18,6 +18,11 @@ workflows:
               only:
                 - main
 
+      - pre-commit:
+          filters:
+            tags:
+              only: /.*/
+
       - docker-build-and-publish-server:
           filters: *filters-build
           context: &docker-hub-context
@@ -110,6 +115,24 @@ jobs:
           root: workspace
           paths:
             - env-vars
+
+  pre-commit:
+    docker:
+      - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
+    working_directory: *work-dir
+    steps:
+      - run:
+          name: Install pre-commit
+          command: python -m pip install --progress-bar=off pre-commit
+      - checkout
+      - run:
+          name: Install pre-commit hooks
+          command: pre-commit install-hooks -c ./pre-commit-config.yaml
+      - run: pre-commit run --all-files -c ./pre-commit-config.yaml
+      - run:
+          command: git --no-pager diff
+          name: git diff
+          when: on_fail
 
   test-server:
     docker:
