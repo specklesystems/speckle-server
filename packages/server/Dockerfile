@@ -23,5 +23,6 @@ RUN yarn workspaces focus --production
 
 COPY packages/server .
 
+ENV FILE_SIZE_LIMIT_MB=100
 ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 CMD ["yarn", "node", "bin/www"]
