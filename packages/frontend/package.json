@@ -113,7 +113,6 @@
   },
   "vuePlugins": {
     "service": [
-      "./build-config/esbuildPlugin.js",
       "./build-config/gqlPlugin.js"
     ]
   }

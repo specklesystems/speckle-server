@@ -24,7 +24,8 @@
       "@types/node",
       "@types/mixpanel-browser",
       "vuetify",
-      "@types/dompurify"
+      "@types/dompurify",
+      "@speckle/viewer"
     ]
   },
   "include": [
