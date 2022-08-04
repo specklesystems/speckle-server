@@ -1,6 +1,7 @@
 apiVersion: v2
 name: speckle-server
 description: Speckle Server
+icon: 'https://speckle.xyz/logo.svg'
 
 type: application
 # This is the chart version. This version number should be incremented each time you make changes
