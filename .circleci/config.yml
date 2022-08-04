@@ -10,6 +10,7 @@ workflows:
             tags:
               # run tests for all tags
               only: /.*/
+
       - get-version:
           filters: &filters-build
             tags:
@@ -117,6 +118,11 @@ jobs:
             - env-vars
 
   pre-commit:
+    parameters:
+      config_file:
+        default: ./.pre-commit-config.yaml
+        description: Optional, path to pre-commit config file.
+        type: string
     docker:
       - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
     working_directory: *work-dir
@@ -130,14 +136,10 @@ jobs:
             sudo apt-get update
             DEBIAN_FRONTEND=noninteractive sudo apt-get -y install --no-install-recommends python3-pip
             python3 -m pip install --progress-bar=off pre-commit
-            sudo apt-get purge python3-pip
-            sudo apt autoremove
-            sudo apt-get clean
-            sudo rm -rf /var/lib/apt/lists/*
       - run:
           name: Install pre-commit hooks
-          command: pre-commit install-hooks -c ./.pre-commit-config.yaml
-      - run: pre-commit run --all-files -c ./.pre-commit-config.yaml
+          command: pre-commit install-hooks -c <<parameters.config_file>>
+      - run: pre-commit run --all-files -c <<parameters.config_file>>
       - run:
           command: git --no-pager diff
           name: git diff
