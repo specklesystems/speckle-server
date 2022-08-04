@@ -44,6 +44,16 @@ function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
 }
 
 module.exports = {
+  /**
+   * @param {{
+   *  name?: string,
+   *  description?: string,
+   *  isPublic?: boolean,
+   *  ownerId: string,
+   *  withContributors?: string[]
+   * }} param0
+   * @returns
+   */
   async createStream({ name, description, isPublic, ownerId, withContributors }) {
     const stream = {
       id: crs({ length: 10 }),

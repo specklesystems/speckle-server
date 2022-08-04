@@ -1,13 +1,11 @@
-#!/usr/bin/env node
-'use strict'
 const path = require('path')
 const yargs = require('yargs')
-require('../bootstrap')
+require('../../bootstrap')
 
 const execution = yargs
   .scriptName('yarn cli')
   .usage('$0 <cmd> [args]')
-  .commandDir(path.resolve(__dirname, '../modules/cli/commands'))
+  .commandDir(path.resolve(__dirname, './commands'), { extensions: ['js', 'ts'] })
   .demandCommand()
   .fail((msg, err, yargs) => {
     if (!err) {

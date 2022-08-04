@@ -1,13 +1,14 @@
-const {
+import {
   getBlobMetadata,
   getBlobMetadataCollection,
   blobCollectionSummary,
   getFileSizeLimit
-} = require('@/modules/blobstorage/services')
-const { NotFoundError, ResourceMismatch } = require('@/modules/shared/errors')
-const { UserInputError } = require('apollo-server-errors')
+} from '@/modules/blobstorage/services'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { NotFoundError, ResourceMismatch } from '@/modules/shared/errors'
+import { UserInputError } from 'apollo-server-errors'
 
-module.exports = {
+export = {
   ServerInfo: {
     blobSizeLimitBytes() {
       return getFileSizeLimit()
@@ -38,11 +39,11 @@ module.exports = {
     async blob(parent, args) {
       try {
         return await getBlobMetadata({ streamId: parent.id, blobId: args.id })
-      } catch (err) {
+      } catch (err: unknown) {
         if (err instanceof NotFoundError) return null
         if (err instanceof ResourceMismatch) throw new UserInputError(err.message)
         throw err
       }
     }
   }
-}
+} as Resolvers

@@ -41,6 +41,25 @@ The server consists of several semi-related components, or modules. These can be
 - an `index.js` file that exposes two functions, `init` and `finalize` (mandatory)
 - a `graph` folder, with two subfolders, namely `resolvers` and `schemas` (optional - these will be picked up and merged).
 
+### TypeScript
+
+This package has TypeScript support and you can use TS everywhere in it - modules, tests, migrations (read note about migrations below).
+
+To run the app, build it first into `/dist` and then run it through `./bin/www`. Or just run - `yarn dev` which will run the TS compiler in watch mode and also run the build app through `nodemon`.
+
+Tests and the CLI, however, do not need an explicit build inside the `/dist` folder as they use `ts-node` to execute TS files directly. This is to improve the DX and allow you to iterate on tests faster, without having to run the TS compiler.
+
+#### GraphQL types
+
+Whenever a schema changes you can run `yarn gqlgen` to regenerate GraphQL types at `@/modules/core/graph/generated/graphql.ts`. This file will hold types for scalars, variables and most importantly - resolvers.
+
+You can get the best DX by typing your resolvers with the `Resolvers` type and then you will get proper type checking for parent, arguments and so on in your resolvers.
+
+### Migrations
+
+To create new migrations use `yarn migrate create`. Note that migrations are only ever read from the `./dist` folder to avoid scenarious when both the TS and JS version of the same migration is executed, so if you ever create a new migration make sure
+you build the app into `/dist` if you want it to be applied.
+
 ## Server & Apps
 
 ### Frontend
@@ -67,6 +86,16 @@ If you really want to run specific tests from a terminal, use the `mocha --grep 
 
 - `mocha --grep @auth --watch` to run tests pertaning to the auth module only in watch mode.
 - `mocha --grep @core-streams --watch` to run tests pertaining to stream related services.
+
+It's suggested to just run tests from the VSCode test explorer, however.
+
+### Integration tests with GraphQL
+
+The best way to do integration tests is to actually invoke queries against an `ApolloServer` instance. To make this process even better you can rely on GraphQL Code Generator to properly generate types for the queries you write in your tests.
+
+Put your test-specific queries/mutations in `@/test/graphql` and then run `yarn gqlgen`. This will generate a typings file at `@/test/graphql/generated/graphql.ts` which will contain query & variable types for the operations you've created.
+
+You can then specify these types when running operations through `executeOperation` from `@/test/graphqlHelper.ts` (through the generic arguments), and then inside your TS test file you'll get properly typed response structures. Awesome!
 
 ## Community
 

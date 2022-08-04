@@ -1,39 +1,48 @@
 /* istanbul ignore file */
-'use strict'
+import './bootstrap'
+import http from 'http'
+import express, { Express } from 'express'
 
-require('./bootstrap')
-const http = require('http')
-const express = require('express')
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
-require('express-async-errors')
-const compression = require('compression')
-const logger = require('morgan-debug')
-const debug = require('debug')
-const { createTerminus } = require('@godaddy/terminus')
+import 'express-async-errors'
+import compression from 'compression'
+import logger from 'morgan-debug'
+import debug from 'debug'
 
-const Sentry = require('@sentry/node')
-const Logging = require('@/logging')
-const { errorLoggingMiddleware } = require('@/logging/errorLogging')
-const prometheusClient = require('prom-client')
+import { createTerminus } from '@godaddy/terminus'
+import * as Sentry from '@sentry/node'
+import Logging from '@/logging'
 
-const { ApolloServer, ForbiddenError } = require('apollo-server-express')
+import { errorLoggingMiddleware } from '@/logging/errorLogging'
+import prometheusClient from 'prom-client'
 
-const { buildContext } = require('./modules/shared')
-const knex = require('./db/knex')
-const { monitorActiveConnections } = require('./logging/httpServerMonitoring')
-const { buildErrorFormatter } = require('@/modules/core/graph/setup')
-const { isDevEnv, isTestEnv } = require('@/modules/shared/helpers/envHelper')
+import {
+  ApolloServer,
+  ForbiddenError,
+  ApolloServerExpressConfig
+} from 'apollo-server-express'
 
-let graphqlServer
+import { buildContext } from '@/modules/shared'
+import knex from '@/db/knex'
+import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
+import { buildErrorFormatter } from '@/modules/core/graph/setup'
+import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import * as ModulesSetup from '@/modules'
+import { Optional } from '@/modules/shared/helpers/typeHelper'
+import apolloPlugin from '@/logging/apolloPlugin'
+
+import { get, has, isString, toNumber } from 'lodash'
+
+let graphqlServer: ApolloServer
 
 /**
  * Create Apollo Server instance
- * @param {Partial<import('apollo-server-express').ApolloServerExpressConfig>} optionOverrides Optionally override ctor options
- * @returns {import('apollo-server-express').ApolloServer}
+ * @param optionOverrides Optionally override ctor options
  */
-exports.buildApolloServer = (optionOverrides) => {
+export function buildApolloServer(
+  optionOverrides?: Partial<ApolloServerExpressConfig>
+): ApolloServer {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
-  const { graph } = require('./modules')
 
   // Init metrics
   prometheusClient.register.removeSingleMetric('speckle_server_apollo_connect')
@@ -47,26 +56,42 @@ exports.buildApolloServer = (optionOverrides) => {
     help: 'Number of currently connected clients'
   })
 
+  const resolvedGraph = ModulesSetup.graph()
   return new ApolloServer({
-    ...graph(),
+    ...resolvedGraph,
     context: buildContext,
     subscriptions: {
       onConnect: (connectionParams) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
+
         try {
-          if (
-            connectionParams.Authorization ||
-            connectionParams.authorization ||
-            connectionParams.headers.Authorization
-          ) {
-            const header =
-              connectionParams.Authorization ||
-              connectionParams.authorization ||
-              connectionParams.headers.Authorization
-            const token = header.split(' ')[1]
-            return { token }
+          let header: Optional<string>
+
+          const possiblePaths = [
+            'Authorization',
+            'authorization',
+            'headers.Authorization',
+            'headers.authorization'
+          ]
+
+          for (const possiblePath of possiblePaths) {
+            if (has(connectionParams, possiblePath)) {
+              header = get(connectionParams, possiblePath)
+              if (header) break
+            }
           }
+
+          if (!header) {
+            throw new Error("Couldn't resolve auth header for subscription")
+          }
+
+          const token = header.split(' ')[1]
+          if (!token) {
+            throw new Error("Couldn't resolve token from auth header")
+          }
+
+          return { token }
         } catch (e) {
           throw new ForbiddenError('You need a token to subscribe')
         }
@@ -75,7 +100,7 @@ exports.buildApolloServer = (optionOverrides) => {
         metricConnectedClients.dec()
       }
     },
-    plugins: [require('@/logging/apolloPlugin')],
+    plugins: [apolloPlugin],
     tracing: debug,
     introspection: true,
     playground: true,
@@ -88,7 +113,7 @@ exports.buildApolloServer = (optionOverrides) => {
 /**
  * Initialises the express application together with the graphql server middleware.
  */
-exports.init = async () => {
+export async function init() {
   const app = express()
 
   Logging(app)
@@ -108,10 +133,8 @@ exports.init = async () => {
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
 
-  const { init } = require('./modules')
-
   // Initialize default modules, including rest api handlers
-  await init(app)
+  await ModulesSetup.init(app)
 
   // Initialize graphql server
   graphqlServer = module.exports.buildApolloServer()
@@ -122,8 +145,8 @@ exports.init = async () => {
     try {
       res.set('Content-Type', prometheusClient.register.contentType)
       res.end(await prometheusClient.register.metrics())
-    } catch (ex) {
-      res.status(500).end(ex.message)
+    } catch (ex: unknown) {
+      res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
     }
   })
 
@@ -138,12 +161,10 @@ exports.init = async () => {
 
 /**
  * Starts a http server, hoisting the express app to it.
- * @param  {[type]} app [description]
- * @return {[type]}     [description]
  */
-exports.startHttp = async (app, customPortOverride) => {
+export async function startHttp(app: Express, customPortOverride?: number) {
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
-  let port = process.env.PORT || 3000
+  let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
   const frontendHost = process.env.FRONTEND_HOST || 'localhost'
   const frontendPort = process.env.FRONTEND_PORT || 8080
@@ -151,7 +172,8 @@ exports.startHttp = async (app, customPortOverride) => {
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
   if (process.env.NODE_ENV === 'development') {
-    const { createProxyMiddleware } = require('http-proxy-middleware')
+    const { createProxyMiddleware } = await import('http-proxy-middleware')
+
     const frontendProxy = createProxyMiddleware({
       target: `http://${frontendHost}:${frontendPort}`,
       changeOrigin: true,
@@ -185,10 +207,10 @@ exports.startHttp = async (app, customPortOverride) => {
   createTerminus(server, {
     signals: ['SIGTERM', 'SIGINT'],
     timeout: 5 * 60 * 1000,
-    beforeShutdown: () => {
+    beforeShutdown: async () => {
       debug('speckle:shutdown')('Shutting down (signal received)...')
     },
-    onSignal: () => {
+    onSignal: async () => {
       // Other custom cleanup after connections are finished
     },
     onShutdown: () => {
@@ -198,10 +220,12 @@ exports.startHttp = async (app, customPortOverride) => {
   })
 
   server.on('listening', () => {
+    const address = server.address()
+    const addressString = isString(address) ? address : address?.address
+    const port = isString(address) ? null : address?.port
+
     debug('speckle:startup')(
-      `🚀 My name is Speckle Server, and I'm running at ${server.address().address}:${
-        server.address().port
-      }`
+      `🚀 My name is Speckle Server, and I'm running at ${addressString}:${port}`
     )
     app.emit('appStarted')
   })
