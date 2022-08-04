@@ -27,14 +27,9 @@ If release name contains chart name it will be used as a full name.
 Common labels
 */}}
 {{- define "test.labels" -}}
-helm.sh/chart: {{ include "speckle.chart" . }}
+{{ include "speckle.commonLabels" . }}
 {{ include "test.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/component: {{ include "test.name" . }}
-app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
 
 {{/*
@@ -42,7 +37,7 @@ Selector labels
 */}}
 {{- define "test.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "test.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "speckle.labels.instance" . }}
 {{- end }}
 
 {{/*
