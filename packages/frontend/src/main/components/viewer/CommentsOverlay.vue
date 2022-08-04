@@ -505,7 +505,7 @@ export default {
       if (index === -1) return
 
       index += increment
-      if (index === this.activeComments.length - 1) index = 0
+      if (index === this.activeComments.length) index = 0
       if (index === -1) index = this.activeComments.length - 1
 
       this.collapseComment(comment)
