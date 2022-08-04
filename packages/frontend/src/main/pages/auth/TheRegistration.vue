@@ -160,7 +160,13 @@
               </v-row>
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" @click="registerUser">
+              <v-btn
+                block
+                large
+                color="primary"
+                :disabled="loading"
+                @click="registerUser"
+              >
                 Create Account
               </v-btn>
               <p class="text-center"></p>
@@ -249,7 +255,8 @@ export default {
       pwdSuggestions: null,
       appId: null,
       challenge: null,
-      suuid: null
+      suuid: null,
+      loading: false
     }
   },
   computed: {
@@ -307,11 +314,15 @@ export default {
       this.pwdSuggestions = result.data.userPwdStrength.feedback.suggestions[0]
     },
     async registerUser() {
+      if (this.loading) return
+
       try {
         const valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf)
           throw new Error('Passwords do not match')
+
+        this.loading = true
 
         // Validate password strength
         await this.validatePasswordStrength()
@@ -354,6 +365,8 @@ export default {
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true
+      } finally {
+        this.loading = false
       }
     }
   }
