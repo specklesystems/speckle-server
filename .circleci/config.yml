@@ -20,7 +20,7 @@ workflows:
                 - main
 
       - pre-commit:
-          cache_prefix: ''
+          cache_prefix: '4'
           filters:
             tags:
               only: /.*/
