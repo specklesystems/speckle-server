@@ -56,7 +56,8 @@
                   : ''
               }
               ${
-                comment.expanded || comment.bouncing || isUnread(comment)
+                (comment.expanded || comment.bouncing || isUnread(comment)) &&
+                !commentSlideShow
                   ? 'dark white--text primary'
                   : 'background'
               }`"
@@ -95,6 +96,14 @@
               </div>
             </v-slide-x-transition>
           </div>
+          <!-- <v-btn
+            v-if="comment.expanded && commentSlideShow"
+            small
+            icon
+            class="pa-0 ma-0 mouse background"
+          >
+            <v-icon x-small>mdi-arrow-right</v-icon>
+          </v-btn> -->
         </div>
       </div>
       <!-- Comment Threads -->
@@ -124,6 +133,7 @@
               @close="collapseComment"
               @deleted="handleDeletion"
               @add-resources="(e) => $emit('add-resources', e)"
+              @next="nextComment"
             />
           </div>
         </v-fade-transition>
@@ -185,7 +195,7 @@ import {
   setSelectedCommentMetaData,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 export default {
   components: {
     CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer'),
@@ -309,6 +319,8 @@ export default {
   },
   setup() {
     const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { commentSlideShow } = useEmbedViewerQuery()
+
     const { viewer } = useInjectedViewer()
     const { result: viewerStateResult } = useQuery(gql`
       query {
@@ -324,7 +336,7 @@ export default {
       () => viewerStateResult.value?.commitObjectViewerState || {}
     )
 
-    return { viewer, viewerState, streamId, resourceId }
+    return { viewer, viewerState, streamId, resourceId, commentSlideShow }
   },
   data() {
     return {
@@ -336,7 +348,11 @@ export default {
   },
   computed: {
     activeComments() {
-      return this.localComments.filter((c) => !c.archived)
+      if (!this.commentSlideShow) return this.localComments.filter((c) => !c.archived)
+      else
+        return this.localComments
+          .filter((c) => !c.archived)
+          .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
     },
     hasExpandedComment() {
       return this.localComments.filter((c) => c.expanded).length !== 0
@@ -484,6 +500,16 @@ export default {
         }
       }
     },
+    nextComment(comment) {
+      const index = this.activeComments.findIndex((c) => c.id === comment.id)
+      let nextComment = null
+      if (index === -1) return
+      if (index === this.activeComments.length - 1) nextComment = this.activeComments[0]
+      else nextComment = this.activeComments[index + 1]
+      this.collapseComment(comment)
+      this.expandComment(nextComment)
+      console.log(nextComment)
+    },
     setCommentPow(comment) {
       const camToSet = comment.data.camPos
       if (camToSet[6] === 1) {
@@ -597,7 +623,7 @@ export default {
         if (card.scrollHeight > maxHeight) {
           card.style.top = `${cardTop}px`
         } else {
-          cardTop = tY - card.scrollHeight / 2
+          cardTop = tY - card.scrollHeight / 2 + 15
 
           // top clip
           if (cardTop < paddingYTop) cardTop = paddingYTop
@@ -611,7 +637,8 @@ export default {
             cardTop = this.$refs.parent.clientHeight - card.clientHeight - 45
           }
 
-          if (this.$vuetify.breakpoint.xs) cardTop = paddingYTop
+          if (this.$vuetify.breakpoint.xs && !this.commentSlideShow)
+            cardTop = paddingYTop
           card.style.top = `${cardTop}px`
         }
       }

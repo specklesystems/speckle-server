@@ -1,12 +1,9 @@
 <template>
   <div
-    v-if="!$vuetify.breakpoint.xs"
+    v-if="!$vuetify.breakpoint.xs || (isEmbed && commentSlideShow)"
     class="no-mouse py-2"
-    :style="`${
-      $vuetify.breakpoint.xs
-        ? 'width: 90vw; padding-right:30px;'
-        : 'max-width: 350px; padding-right:30px;'
-    } ${
+    :style="`max-width: 350px; padding-right:30px;
+    ${
       hovered ? 'opacity: 1;' : 'opacity: 1;'
     } transition: opacity 0.2s ease; padding-left: 6px;`"
     @mouseenter="hovered = true"
@@ -33,7 +30,7 @@
       </div>
       <template v-for="(reply, index) in thread">
         <div
-          v-if="showTime(index)"
+          v-if="showTime(index) && !commentSlideShow"
           :key="index + 'date'"
           class="d-flex justify-center mouse"
         >
@@ -151,7 +148,7 @@
           </v-btn>
         </div>
       </template>
-      <template v-else>
+      <template v-else-if="!commentSlideShow">
         <div class="pr-5">
           <v-btn
             small
@@ -163,6 +160,20 @@
           >
             reply in speckle
             <v-icon small>mdi-arrow-top-right</v-icon>
+          </v-btn>
+        </div>
+      </template>
+      <template v-if="isEmbed && commentSlideShow">
+        <div class="pr-5 text-right" xxxstyle="position: absolute; top: 50%; right: 0">
+          <v-btn
+            rounded
+            color="primary"
+            class="elevation-5 px-5"
+            xxxstyle="width: 50%"
+            @click="$emit('next', comment)"
+          >
+            <span class="caption">next</span>
+            <v-icon small>mdi-arrow-right</v-icon>
           </v-btn>
         </div>
       </template>
@@ -408,7 +419,7 @@ import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 // TODO: The template is a WET mess, need to refactor it
 
 export default {
@@ -544,10 +555,12 @@ export default {
   },
   setup() {
     const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
+    const { commentSlideShow } = useEmbedViewerQuery()
     return {
       streamId,
       resourceId,
-      isEmbed
+      isEmbed,
+      commentSlideShow
     }
   },
   data() {
