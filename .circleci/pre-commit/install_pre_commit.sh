@@ -19,7 +19,7 @@ python3 -m pip --version || {
         export DEBIAN_FRONTEND=noninteractive
 
         # It doesn't so download the packages
-        sudo apt-get -y install  --no-install-recommends --download-only python3-pip=20.0.2-5ubuntu1.6
+        sudo apt-get -y install --no-install-recommends --download-only python3-pip=20.0.2-5ubuntu1.6
         # Then move the downloaded packages to our cache directory
         sudo cp -R /var/cache/apt vendor/
     fi

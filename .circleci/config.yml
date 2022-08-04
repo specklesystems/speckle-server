@@ -146,7 +146,7 @@ jobs:
       - save_cache:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
-            - /vendor/apt
+            - /vendor/apt/archives
             - ~/.cache/pip
             - ~/.cache/pre-commit
       - run:
