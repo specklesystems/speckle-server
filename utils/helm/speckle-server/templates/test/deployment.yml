@@ -9,6 +9,7 @@ metadata:
   labels:
     app: speckle-test-deployment
     project: speckle-server
+{{ include "test.labels" . | indent 4 }}
 spec:
   containers:
     - name: test-deployment
@@ -18,5 +19,12 @@ spec:
           value: https://{{ .Values.domain }}
         - name: SERVER_VERSION
           value: {{ .Values.docker_image_tag }}
+      resources:
+        requests:
+          cpu: {{ .Values.test.requests.cpu }}
+          memory: {{ .Values.test.requests.memory }}
+        limits:
+          cpu: {{ .Values.test.limits.cpu }}
+          memory: {{ .Values.test.limits.memory }}
   restartPolicy: Never
 {{- end }}

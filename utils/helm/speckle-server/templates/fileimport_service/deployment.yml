@@ -7,6 +7,7 @@ metadata:
   labels:
     app: speckle-fileimport-service
     project: speckle-server
+{{ include "fileimport_service.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.fileimport_service.replicas }}
   selector:
@@ -18,6 +19,7 @@ spec:
       labels:
         app: speckle-fileimport-service
         project: speckle-server
+{{ include "fileimport_service.labels" . | indent 8 }}
     spec:
       containers:
       - name: main
