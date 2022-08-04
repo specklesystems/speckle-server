@@ -2,17 +2,15 @@
 set -eox pipefail
 
 # Update to take effect sources repository database
-sudo apt-get update
+sudo apt-get -q update
 
 # Make the cache dir if it doesn't exist
 if ! [[ -d vendor/apt ]]; then
     mkdir -p vendor/apt
 fi
 
-whoami
-
 # Making sure our user has ownership, in order to cache
-sudo chown -R root:root vendor/apt
+sudo chown -R circleci:circleci vendor/apt
 
 # if pip is not already installed, checking the version will return a non-zero exit code and then we will install it
 python3 -m pip --version || {
@@ -21,8 +19,8 @@ python3 -m pip --version || {
         export DEBIAN_FRONTEND=noninteractive
 
         # It doesn't so download the packages
-        sudo apt-get -y install  --no-install-recommends --download-only python3-pip
-        # Then move them to our cache directory
+        sudo apt-get -y install  --no-install-recommends --download-only python3-pip=20.0.2-5ubuntu1.6
+        # Then move the downloaded packages to our cache directory
         sudo cp -R /var/cache/apt vendor/
     fi
 
