@@ -121,10 +121,10 @@ jobs:
       - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
     working_directory: *work-dir
     steps:
+      - checkout
       - run:
           name: Install pre-commit
-          command: python -m pip install --progress-bar=off pre-commit
-      - checkout
+          command: python3 -m pip install --progress-bar=off pre-commit
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks -c ./pre-commit-config.yaml
