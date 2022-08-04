@@ -134,7 +134,6 @@
               @deleted="handleDeletion"
               @add-resources="(e) => $emit('add-resources', e)"
               @next="nextComment"
-              @prev="prevComment"
             />
           </div>
         </v-fade-transition>
@@ -511,17 +510,6 @@ export default {
 
       this.collapseComment(comment)
       this.expandComment(this.activeComments[index])
-    },
-    prevComment(comment) {
-      const index = this.activeComments.findIndex((c) => c.id === comment.id)
-      let nextComment = null
-      if (index === -1) return
-
-      if (index === 0) nextComment = this.activeComments[this.activeComments.length - 1]
-      else nextComment = this.activeComments[index - 1]
-
-      this.collapseComment(comment)
-      this.expandComment(nextComment)
     },
     setCommentPow(comment) {
       const camToSet = comment.data.camPos
