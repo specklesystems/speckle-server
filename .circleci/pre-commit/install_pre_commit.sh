@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
-
-sudo mv /etc/apt/sources.list.d /etc/apt/sources.list.d.save
-sudo mkdir /etc/apt/sources.list.d
+set -eox pipefail
 
 # Update to take effect sources repository database
 sudo apt-get update
