@@ -164,16 +164,23 @@
         </div>
       </template>
       <template v-if="isEmbed && commentSlideShow">
-        <div class="pr-5 text-right" xxxstyle="position: absolute; top: 50%; right: 0">
+        <div class="d-flex align-center justify-center pr-5 text-right">
+          <v-btn
+            icon
+            class="primary elevation-1 mr-2"
+            small
+            @click="$emit('prev', comment)"
+          >
+            <v-icon small>mdi-chevron-left</v-icon>
+          </v-btn>
           <v-btn
             rounded
             color="primary"
             class="elevation-5 px-5"
-            xxxstyle="width: 50%"
             @click="$emit('next', comment)"
           >
             <span class="caption">next</span>
-            <v-icon small>mdi-arrow-right</v-icon>
+            <v-icon small>mdi-chevron-right</v-icon>
           </v-btn>
         </div>
       </template>
