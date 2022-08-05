@@ -23,8 +23,7 @@ RUN yarn workspaces focus
 
 COPY packages/server .
 
-RUN yarn build
-RUN yarn workspaces focus --production
+RUN yarn build && yarn workspaces focus --production
 
 FROM node:16.15-bullseye-slim as production-stage
 ARG NODE_ENV=production
