@@ -20,7 +20,7 @@ workflows:
                 - main
 
       - pre-commit:
-          cache_prefix: '5'
+          cache_prefix: '6'
           filters:
             tags:
               only: /.*/
@@ -130,7 +130,7 @@ jobs:
           Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
         type: string
     docker:
-      - image: cimg/node:16.15 # assumed to also have python as it's built upon ubuntu 22.04
+      - image: cimg/python:3.10.6-node
     resource_class: large
     working_directory: *work-dir
     steps:
@@ -140,7 +140,7 @@ jobs:
             - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit
-          command: ./.circleci/pre-commit/install_pre_commit.sh
+          command: pre-commit --version || python3 -m pip install --progress-bar=off pre-commit
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
@@ -150,8 +150,6 @@ jobs:
       - save_cache:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
-            - /tmp/.eslintcache/
-            - /tmp/vendor/apt/archives
             - ~/.cache/pip
             - ~/.cache/pre-commit
       - run:
