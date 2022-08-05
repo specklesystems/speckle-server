@@ -28,7 +28,6 @@ repos:
   - repo: https://github.com/hadolint/hadolint
     rev: 'v2.10.0'
     hooks:
-      - id: hadolint-docker
-        entry: hadolint/hadolint:v2.10.0 hadolint
+      - id: hadolint
 ci:
   autoupdate_schedule: quarterly
