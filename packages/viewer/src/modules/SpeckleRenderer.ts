@@ -28,6 +28,7 @@ import { Intersections } from './Intersections'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
+import { WorldTree } from './tree/WorldTree'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = true
@@ -455,7 +456,8 @@ export default class SpeckleRenderer {
     )
     const hitId = rv.renderData.id
 
-    // const hitNode = WorldTree.getInstance().findId(hitId)
+    const hitNode = WorldTree.getInstance().findId(hitId)
+    console.log(hitNode.model.raw.id)
 
     this.batcher.resetBatchesDrawRanges()
 

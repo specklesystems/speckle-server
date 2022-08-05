@@ -15,7 +15,7 @@ import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilterMaterialType } from './FilteringManager'
+import { FilteringManager, FilterMaterialType } from './FilteringManager'
 
 export class Viewer extends EventEmitter implements IViewer {
   public speckleRenderer: SpeckleRenderer
@@ -32,6 +32,8 @@ export class Viewer extends EventEmitter implements IViewer {
   private startupParams: ViewerParams
 
   public static Assets: Assets
+
+  public FilterManager: any
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -104,6 +106,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
       console.warn('Built stuff')
     })
+
+    this.FilterManager = new FilteringManager(this.speckleRenderer)
+    ;(window as any).WorldTree = WorldTree
+    ;(window as any).FilterManager = this.FilterManager
   }
 
   public async init(): Promise<void> {

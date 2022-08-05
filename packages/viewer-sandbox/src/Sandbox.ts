@@ -38,9 +38,9 @@ export default class Sandbox {
   public constructor(viewer: Viewer) {
     this.viewer = viewer
     this.pane = new Pane({ title: 'Sandbox', expanded: true })
-    this.pane['containerElem_'].style.width = '300px'
-    const t = `matrix(1.2, 0, 0, 1.2, -25, 16)`
-    this.pane['containerElem_'].style.transform = t
+    this.pane['containerElem_'].style =
+      'position:fixed; top: 5px; right: 5px; width: 300px;'
+
     this.tabs = this.pane.addTab({
       pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
@@ -147,6 +147,13 @@ export default class Sandbox {
     })
     showBatches.on('click', () => {
       this.viewer.speckleRenderer.debugShowBatches()
+    })
+
+    const darkModeToggle = this.tabs.pages[0].addButton({
+      title: '🌞 / 🌛'
+    })
+    darkModeToggle.on('click', () => {
+      document.getElementById('renderer')?.classList.toggle('background-dark')
     })
   }
 
