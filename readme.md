@@ -129,6 +129,7 @@ When pushing commits to this repo, please follow the following guidelines:
   - [`pre-commit`](https://pre-commit.com/#install)
   - [`hadolint`](https://github.com/hadolint/hadolint#install)
   - [`shellcheck`](https://github.com/koalaman/shellcheck#installing)
+  - [`helm`](https://helm.sh/docs/intro/install/)
 - When ready to commit, `$ yarn cz` & follow the prompts.
 - Please use the name of the package as the scope of your commit.
 
