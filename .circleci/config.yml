@@ -6,7 +6,7 @@ workflows:
   test-build:
     jobs:
       - test-server:
-          filters:
+          filters: &filters-test
             tags:
               # run tests for all tags
               only: /.*/
@@ -20,10 +20,7 @@ workflows:
                 - main
 
       - pre-commit:
-          cache_prefix: '7'
-          filters:
-            tags:
-              only: /.*/
+          filters: *filters-test
 
       - docker-build-and-publish-server:
           filters: *filters-build
@@ -130,7 +127,7 @@ jobs:
           Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
         type: string
     docker:
-      - image: cimg/python:3.10.6-node
+      - image: speckle/pre-commit-runner:latest
     resource_class: large
     working_directory: *work-dir
     steps:
@@ -139,15 +136,11 @@ jobs:
           keys:
             - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
       - run:
-          name: Install pre-commit
-          command: pre-commit --version || pip install --progress-bar=off pre-commit
-      - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
       - save_cache:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
-            - ~/.cache/pip
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit

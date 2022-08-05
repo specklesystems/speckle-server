@@ -25,9 +25,21 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/hadolint/hadolint
+    rev: 'v2.10.0'
+    hooks:
+      - id: hadolint
+
+  # Cannot use official repo as it relies on Docker, which cannot be supported by either pre-commit.ci or CircleCI
+  - repo: https://github.com/Jarmos-san/shellcheck-precommit
+    rev: 'v0.2.0'
+    hooks:
+      - id: shellcheck-system
+
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: 'v0.1.17'
     hooks:
       - id: helmlint
+
 ci:
   autoupdate_schedule: quarterly

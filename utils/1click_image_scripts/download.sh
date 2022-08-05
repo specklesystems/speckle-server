@@ -1,9 +1,10 @@
 #!/bin/bash
+set -euo pipefail
 
 echo "* Getting latest version of SpeckleServer Setup files..."
 
 mkdir -p /opt/speckle-server
-cd /opt/speckle-server
+cd /opt/speckle-server || exit 1
 
 wget https://raw.githubusercontent.com/specklesystems/speckle-server/main/utils/1click_image_scripts/setup.py -O setup.py
 wget https://raw.githubusercontent.com/specklesystems/speckle-server/main/utils/1click_image_scripts/template-nginx-site.conf -O template-nginx-site.conf
