@@ -20,7 +20,7 @@ workflows:
                 - main
 
       - pre-commit:
-          cache_prefix: '6'
+          cache_prefix: '7'
           filters:
             tags:
               only: /.*/
@@ -140,7 +140,7 @@ jobs:
             - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
       - run:
           name: Install pre-commit
-          command: pre-commit --version || python3 -m pip install --progress-bar=off pre-commit
+          command: pre-commit --version || pip install --progress-bar=off pre-commit
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
