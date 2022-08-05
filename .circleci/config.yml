@@ -142,9 +142,6 @@ jobs:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
-      - setup_remote_docker:
-          version: 20.10.12
-          docker_layer_caching: true
       - run:
           name: Run pre-commit
           command: pre-commit run --all-files --config <<parameters.config_file>>
