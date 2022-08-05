@@ -36,8 +36,9 @@ app.kubernetes.io/component: {{ include "preview_service.name" . }}
 Selector labels
 */}}
 {{- define "preview_service.selectorLabels" -}}
+app: {{ include "preview_service.name" . }}
 app.kubernetes.io/name: {{ include "preview_service.name" . }}
-{{ include "speckle.labels.instance" . }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*

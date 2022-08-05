@@ -36,8 +36,9 @@ app.kubernetes.io/component: {{ include "fileimport_service.name" . }}
 Selector labels
 */}}
 {{- define "fileimport_service.selectorLabels" -}}
+app: {{ include "fileimport_service.name" . }}
 app.kubernetes.io/name: {{ include "fileimport_service.name" . }}
-{{ include "speckle.labels.instance" . }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*

@@ -4,8 +4,6 @@ metadata:
   name: speckle-frontend
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-frontend
-    project: speckle-server
 {{ include "frontend.labels" . | indent 4 }}
 spec:
   selector:

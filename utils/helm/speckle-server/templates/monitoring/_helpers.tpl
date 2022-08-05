@@ -36,8 +36,9 @@ app.kubernetes.io/component: {{ include "monitoring.name" . }}
 Selector labels
 */}}
 {{- define "monitoring.selectorLabels" -}}
+app: {{ include "monitoring.name" . }}
 app.kubernetes.io/name: {{ include "monitoring.name" . }}
-{{ include "speckle.labels.instance" . }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*

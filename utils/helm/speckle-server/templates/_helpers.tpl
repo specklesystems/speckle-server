@@ -53,7 +53,15 @@ Selector labels
 */}}
 {{- define "speckle.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "speckle.name" . }}
-{{ include "speckle.labels.instance" . }}
+{{ include "speckle.commonSelectorLabels" . }}
+{{- end }}
+
+{{/*
+Common selector labels
+*/}}
+{{- define "speckle.commonSelectorLabels" -}}
+app.kubernetes.io/instance: {{ .Release.Name }}
+project: speckle-server
 {{- end }}
 
 {{/*
@@ -84,11 +92,4 @@ Part-of label
 */}}
 {{- define "speckle.labels.part-of" -}}
 app.kubernetes.io/part-of: {{ include "speckle.name" . }}
-{{- end }}
-
-{{/*
-Instance label
-*/}}
-{{- define "speckle.labels.instance" -}}
-app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

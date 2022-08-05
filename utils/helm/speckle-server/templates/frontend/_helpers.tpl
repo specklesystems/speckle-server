@@ -36,8 +36,9 @@ app.kubernetes.io/component: {{ include "frontend.name" . }}
 Selector labels
 */}}
 {{- define "frontend.selectorLabels" -}}
+app: {{ include "frontend.name" . }}
 app.kubernetes.io/name: {{ include "frontend.name" . }}
-{{ include "speckle.labels.instance" . }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*

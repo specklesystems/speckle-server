@@ -36,8 +36,9 @@ app.kubernetes.io/component: {{ include "webhook_service.name" . }}
 Selector labels
 */}}
 {{- define "webhook_service.selectorLabels" -}}
+app: {{ include "webhook_service.name" . }}
 app.kubernetes.io/name: {{ include "webhook_service.name" . }}
-{{ include "speckle.labels.instance" . }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*
