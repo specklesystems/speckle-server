@@ -146,6 +146,9 @@ jobs:
           paths:
             - ~/.cache/pip
             - ~/.cache/pre-commit
+      - setup_remote_docker:
+          version: 20.10.14
+          docker_layer_caching: true
       - run:
           name: Run pre-commit
           command: pre-commit run --all-files --config <<parameters.config_file>>
