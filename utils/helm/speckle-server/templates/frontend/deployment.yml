@@ -9,8 +9,7 @@ spec:
   replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels:
-      app: speckle-frontend
-      project: speckle-server
+{{ include "frontend.selectorLabels" . | indent 6 }}
   template:
     metadata:
       labels:

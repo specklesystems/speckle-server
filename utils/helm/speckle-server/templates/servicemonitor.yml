@@ -1,5 +1,4 @@
 {{ if .Values.enable_prometheus_monitoring }}
-
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -12,8 +11,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      project: speckle-server
+{{ include "speckle.commonSelectorLabels" . | indent 6 }}
   endpoints:
   - port: web
-
 {{ end }}

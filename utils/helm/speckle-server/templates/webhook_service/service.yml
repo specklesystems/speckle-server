@@ -7,10 +7,9 @@ metadata:
 {{ include "webhook_service.labels" . | indent 4 }}
 spec:
   selector:
-    app: speckle-webhook-service
-    project: speckle-server
+{{ include "webhook_service.selectorLabels" . | indent 4 }}
   ports:
-    - protocol: TCP
-      name: web
+    - name: web
       port: 9095
+      protocol: TCP
       targetPort: metrics

@@ -7,10 +7,9 @@ metadata:
 {{ include "preview_service.labels" . | indent 4 }}
 spec:
   selector:
-    app: speckle-preview-service
-    project: speckle-server
+{{ include "preview_service.selectorLabels" . | indent 4 }}
   ports:
-    - protocol: TCP
-      name: web
+    - name: web
       port: 9094
+      protocol: TCP
       targetPort: metrics

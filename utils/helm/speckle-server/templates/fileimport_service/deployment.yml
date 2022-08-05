@@ -10,8 +10,7 @@ spec:
   replicas: {{ .Values.fileimport_service.replicas }}
   selector:
     matchLabels:
-      app: speckle-fileimport-service
-      project: speckle-server
+{{ include "fileimport_service.selectorLabels" . | indent 6 }}
   template:
     metadata:
       labels:

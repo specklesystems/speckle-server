@@ -1,16 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: speckle-frontend
+  name: {{ include "frontend.name" . }}
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "frontend.labels" . | indent 4 }}
 spec:
   selector:
-    app: speckle-frontend
-    project: speckle-server
+{{ include "frontend.selectorLabels" . | indent 4 }}
   ports:
-    - protocol: TCP
-      name: www
+    - name: www
       port: 80
+      protocol: TCP
       targetPort: www

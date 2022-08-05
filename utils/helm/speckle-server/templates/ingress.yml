@@ -28,13 +28,13 @@ spec:
         path: "/"
         backend:
           service:
-            name: speckle-frontend
+            name: {{ include "frontend.name" . }}
             port:
               number: 80
       - pathType: Exact
         path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
         backend:
           service:
-            name: speckle-server
+            name: {{ include "server.name" . }}
             port:
               number: 3000

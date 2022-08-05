@@ -8,8 +8,7 @@ metadata:
 {{ include "fileimport_service.labels" . | indent 4 }}
 spec:
   selector:
-    app: speckle-fileimport-service
-    project: speckle-server
+{{ include "fileimport_service.selectorLabels" . | indent 4 }}
   ports:
     - protocol: TCP
       name: web

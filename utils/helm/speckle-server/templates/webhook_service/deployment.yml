@@ -9,8 +9,7 @@ spec:
   replicas: {{ .Values.webhook_service.replicas }}
   selector:
     matchLabels:
-      app: speckle-webhook-service
-      project: speckle-server
+{{ include "webhook_service.selectorLabels" . | indent 6 }}
   template:
     metadata:
       labels:
