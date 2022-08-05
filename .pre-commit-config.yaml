@@ -8,6 +8,9 @@ repos:
         exclude: '(\/|^)((generated\/.*)|(\..*\.([jt]sx?|vue)))$'
         args:
           - '--max-warnings=0'
+          - '--cache'
+          - '--cache-location="/tmp/.eslintcache/"'
+          - '--cache-strategy=content'
         additional_dependencies:
           - eslint@8.11.0
           - eslint-config-prettier@8.5.0
