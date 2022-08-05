@@ -124,6 +124,15 @@
 </template>
 <script>
 import { v4 as uuidv4 } from 'uuid'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import gql from 'graphql-tag'
+import {
+  hideObjects,
+  isolateObjects,
+  showObjects,
+  unisolateObjects
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
@@ -147,6 +156,21 @@ export default {
       default: () => null
     }
   },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          isolateValues
+          hideValues
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState }
+  },
   data() {
     return {
       expanded: false,
@@ -168,11 +192,11 @@ export default {
     },
     visible() {
       if (this.prop.type === 'object') {
-        return this.$store.state.hideValues.indexOf(this.prop.value.referencedId) === -1
+        return this.viewerState.hideValues.indexOf(this.prop.value.referencedId) === -1
       }
       if (this.prop.type === 'array') {
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds = this.$store.state.hideValues.filter(
+        const targetIds = this.viewerState.hideValues.filter(
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return true
@@ -183,12 +207,12 @@ export default {
     isolated() {
       if (this.prop.type === 'object') {
         return (
-          this.$store.state.isolateValues.indexOf(this.prop.value.referencedId) !== -1
+          this.viewerState.isolateValues.indexOf(this.prop.value.referencedId) !== -1
         )
       }
       if (this.prop.type === 'array') {
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds = this.$store.state.isolateValues.filter(
+        const targetIds = this.viewerState.isolateValues.filter(
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return false
@@ -207,12 +231,12 @@ export default {
       }
 
       if (this.visible)
-        this.$store.commit('hideObjects', {
+        hideObjects({
           filterKey: '__parents',
           filterValues: targetIds
         })
       else
-        this.$store.commit('showObjects', {
+        showObjects({
           filterKey: '__parents',
           filterValues: targetIds
         })
@@ -225,12 +249,12 @@ export default {
       }
 
       if (this.isolated)
-        this.$store.commit('unisolateObjects', {
+        unisolateObjects({
           filterKey: '__parents',
           filterValues: targetIds
         })
       else
-        this.$store.commit('isolateObjects', {
+        isolateObjects({
           filterKey: '__parents',
           filterValues: targetIds
         })

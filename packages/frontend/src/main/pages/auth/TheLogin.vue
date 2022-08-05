@@ -110,6 +110,7 @@ import {
   getInviteTokenFromRoute,
   processSuccessfulAuth
 } from '@/main/lib/auth/services/authService'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheLogin',
@@ -193,7 +194,7 @@ export default {
 
     if (!challenge && this.appId === 'spklwebapp') {
       this.challenge = randomString(10)
-      localStorage.setItem('appChallenge', this.challenge)
+      AppLocalStorage.set('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge
     }

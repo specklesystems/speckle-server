@@ -43,6 +43,7 @@ import {
   getBlobUrl,
   downloadBlobWithUrl
 } from '@/main/lib/common/file-upload/blobStorageApi'
+import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default Vue.extend({
   name: 'CommentThreadAttachmentPreview',
@@ -53,6 +54,10 @@ export default Vue.extend({
       required: true
     },
     isOpen: { type: Boolean, required: true }
+  },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    return { streamId, resourceId }
   },
   data: () => ({
     prettyFileSize,
@@ -83,7 +88,7 @@ export default Vue.extend({
     try {
       if (this.isImage) {
         this.blobUrl = await getBlobUrl(this.attachment.id, {
-          streamId: this.$route.params.streamId
+          streamId: this.streamId
         })
       }
     } catch (e) {

@@ -32,7 +32,8 @@ const command = {
 
     console.log('Creating migration...')
     await knex.migrate.make(name, {
-      directory: migrationDir
+      directory: migrationDir,
+      extension: 'ts'
     })
     console.log('...done')
   }

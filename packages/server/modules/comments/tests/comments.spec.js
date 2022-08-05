@@ -6,7 +6,7 @@ const commentsServiceMock = mockRequireModule(
 )
 
 const path = require('path')
-const { appRoot } = require('@/bootstrap')
+const { repoRoot } = require('@/bootstrap')
 const expect = require('chai').expect
 const crs = require('crypto-random-string')
 const { beforeEachContext, truncateTables } = require('@/test/hooks')
@@ -1018,7 +1018,7 @@ describe('Comments @comments', () => {
       // Upload a small blob
       blob1 = await uploadBlob(
         app,
-        path.resolve(appRoot, './test/assets/testimage1.jpg'),
+        path.resolve(repoRoot, './test/assets/testimage1.jpg'),
         stream.id,
         {
           authToken: userToken

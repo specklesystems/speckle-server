@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-frontend
+    project: speckle-server
+{{ include "frontend.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-frontend
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-frontend
+        project: speckle-server
+{{ include "frontend.labels" . | indent 8 }}
+    spec:
+      containers:
+      - name: main
+        image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+
+        ports:
+          - name: www
+            containerPort: 80
+            protocol: TCP
+
+        resources:
+          requests:
+            cpu: {{ .Values.frontend.requests.cpu }}
+            memory: {{ .Values.frontend.requests.memory }}
+          limits:
+            cpu: {{ .Values.frontend.limits.cpu }}
+            memory: {{ .Values.frontend.limits.memory }}
+
+        # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        
+        env: 
+          - name: FILE_SIZE_LIMIT_MB
+            value: {{ .Values.file_size_limit_mb | quote }}
+
+      priorityClassName: high-priority

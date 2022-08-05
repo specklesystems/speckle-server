@@ -114,6 +114,7 @@
 <script>
 import { gql } from '@apollo/client/core'
 import { userSearchQuery } from '@/graphql/user'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   components: {
@@ -180,7 +181,7 @@ export default {
   },
   methods: {
     addCollab(user) {
-      if (user.id === localStorage.getItem('uuid')) return
+      if (user.id === AppLocalStorage.get('uuid')) return
       const indx = this.collabs.findIndex((u) => u.id === user.id)
       if (indx !== -1) return
 

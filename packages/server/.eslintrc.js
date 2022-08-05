@@ -6,18 +6,32 @@
 /** @type {import("eslint").Linter.Config} */
 const config = {
   env: {
-    browser: true,
+    node: true,
     es2022: true
   },
   parserOptions: {
     ecmaVersion: 13
   },
+  ignorePatterns: ['node_modules', 'dist', 'generated/**/*'],
   overrides: [
     {
       files: '*.spec.{js,ts}',
       env: {
         mocha: true
       }
+    },
+    {
+      files: '*.ts',
+      plugins: ['@typescript-eslint'],
+      parserOptions: {
+        sourceType: 'module'
+      },
+      extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        'prettier'
+      ],
+      parser: '@typescript-eslint/parser'
     }
   ]
 }

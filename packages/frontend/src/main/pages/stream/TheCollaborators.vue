@@ -145,6 +145,7 @@ import LeaveStreamPanel from '@/main/components/stream/collaborators/LeaveStream
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { vueWithMixins } from '@/helpers/typeHelpers'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default vueWithMixins(IsLoggedInMixin).extend({
   // @vue/component
@@ -265,7 +266,7 @@ export default vueWithMixins(IsLoggedInMixin).extend({
       return users
     },
     myId() {
-      return localStorage.getItem('uuid')
+      return AppLocalStorage.get('uuid')
     }
   },
   mounted() {

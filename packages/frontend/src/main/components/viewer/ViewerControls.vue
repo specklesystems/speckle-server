@@ -16,9 +16,22 @@
         <v-icon small class="mr-2">mdi-eye</v-icon>
         Reset Filters
       </v-btn>
+      <v-btn
+        v-tooltip="'Viewer Help'"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="helpDialog = true"
+      >
+        <v-icon small>mdi-help</v-icon>
+      </v-btn>
+      <v-dialog v-model="helpDialog" max-width="600">
+        <viewer-help @close="helpDialog = false" />
+      </v-dialog>
       <!-- disabling ortho mode because comment intersection are f*ed. -->
       <!-- <v-btn
-        v-tooltip="`Toggle between perspective or ortho camera.`"
+        v-tooltip=" between perspective or ortho camera.`"
         :small="small"
         rounded
         icon
@@ -58,12 +71,34 @@
   </div>
 </template>
 <script>
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useQuery } from '@vue/apollo-composable'
+import { computed, ref } from 'vue'
+import gql from 'graphql-tag'
+import { resetFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
-    CanonicalViews: () => import('@/main/components/viewer/CanonicalViews')
+    CanonicalViews: () => import('@/main/components/viewer/CanonicalViews'),
+    ViewerHelp: () => import('@/main/components/viewer/dialogs/ViewerHelp.vue')
   },
   props: {
     small: { type: Boolean, default: false }
+  },
+  setup() {
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          appliedFilter
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    const helpDialog = ref(false)
+    return { viewer, viewerState, helpDialog }
   },
   data() {
     return {
@@ -72,7 +107,7 @@ export default {
   },
   computed: {
     showVisReset() {
-      return !!this.$store.state.appliedFilter
+      return !!this.viewerState.appliedFilter
     }
   },
   mounted() {
@@ -80,16 +115,16 @@ export default {
   },
   methods: {
     toggleCamera() {
-      window.__viewer.toggleCameraProjection()
+      this.viewer.toggleCameraProjection()
     },
     resetVisibility() {
-      this.$store.commit('resetFilter')
+      resetFilter()
     },
     zoomEx() {
-      window.__viewer.zoomExtents()
+      this.viewer.zoomExtents()
     },
     sectionToggle() {
-      window.__viewer.toggleSectionBox()
+      this.viewer.toggleSectionBox()
     }
   }
 }
