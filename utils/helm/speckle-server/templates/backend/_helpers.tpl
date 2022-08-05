@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "server.name" -}}
-{{- default "speckle-server" .Values.server.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default "speckle-backend" .Values.server.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -14,7 +14,7 @@ If release name contains chart name it will be used as a full name.
 {{- if .Values.server.fullnameOverride }}
 {{- .Values.server.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default "speckle-server" .Values.server.nameOverride }}
+{{- $name := default "speckle-backend" .Values.server.nameOverride }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}

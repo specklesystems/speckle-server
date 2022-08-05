@@ -35,6 +35,6 @@ spec:
         path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
         backend:
           service:
-            name: speckle-server
+            name: speckle-backend
             port:
               number: 3000

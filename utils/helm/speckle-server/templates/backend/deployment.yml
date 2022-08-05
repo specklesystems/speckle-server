@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: speckle-server
+  name: speckle-backend
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-server
+    app: speckle-backend
     project: speckle-server
 {{ include "server.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.server.replicas }}
   selector:
     matchLabels:
-      app: speckle-server
+      app: speckle-backend
       project: speckle-server
   template:
     metadata:
       labels:
-        app: speckle-server
+        app: speckle-backend
         project: speckle-server
 {{ include "server.labels" . | indent 8 }}
     spec:
