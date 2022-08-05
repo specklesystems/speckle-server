@@ -7,9 +7,6 @@ RUN apt-get update && apt-get install -y \
   fonts-dejavu-core fontconfig \
   && rm -rf /var/lib/apt/lists/*
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
-
 WORKDIR /speckle-server
 
 COPY .yarnrc.yml .
@@ -29,6 +26,9 @@ FROM node:16.15-bullseye-slim as production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
+
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
+RUN chmod +x /wait
 
 WORKDIR /speckle-server
 
