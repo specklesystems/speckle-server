@@ -6,7 +6,7 @@ workflows:
   test-build:
     jobs:
       - test-server:
-          filters:
+          filters: &filters-test
             tags:
               # run tests for all tags
               only: /.*/
@@ -20,10 +20,7 @@ workflows:
                 - main
 
       - pre-commit:
-          cache_prefix: '7'
-          filters:
-            tags:
-              only: /.*/
+          filters: *filters-test
 
       - docker-build-and-publish-server:
           filters: *filters-build
