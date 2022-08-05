@@ -128,6 +128,7 @@ When pushing commits to this repo, please follow the following guidelines:
 - Before commiting, make sure `yarn pre-commit` checks pass, othewise the pre-commit hook fails when committing. This requires the following dependencies to be installed, these dependencies are not installed by `yarn`:
   - [`pre-commit`](https://pre-commit.com/#install)
   - [`hadolint`](https://github.com/hadolint/hadolint#install)
+  - [`shellcheck`](https://github.com/koalaman/shellcheck#installing)
 - When ready to commit, `$ yarn cz` & follow the prompts.
 - Please use the name of the package as the scope of your commit.
 
