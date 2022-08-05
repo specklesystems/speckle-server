@@ -30,11 +30,11 @@ spec:
           service:
             name: {{ include "frontend.name" . }}
             port:
-              number: 80
+              name: www
       - pathType: Exact
         path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
         backend:
           service:
             name: {{ include "server.name" . }}
             port:
-              number: 3000
+              name: web
