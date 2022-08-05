@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "server.name" -}}
+{{- define "backend.name" -}}
 {{- default "speckle-backend" .Values.server.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "server.fullname" -}}
+{{- define "backend.fullname" -}}
 {{- if .Values.server.fullnameOverride }}
 {{- .Values.server.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,31 +26,31 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Common labels
 */}}
-{{- define "server.labels" -}}
+{{- define "backend.labels" -}}
 helm.sh/chart: {{ include "speckle.chart" . }}
-{{ include "server.selectorLabels" . }}
+{{ include "backend.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/component: {{ include "server.name" . }}
+app.kubernetes.io/component: {{ include "backend.name" . }}
 app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
-{{- define "server.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "server.name" . }}
+{{- define "backend.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "backend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "server.serviceAccountName" -}}
+{{- define "backend.serviceAccountName" -}}
 {{- if .Values.server.serviceAccount.create }}
-{{- default (include "server.fullname" .) .Values.server.serviceAccount.name }}
+{{- default (include "backend.fullname" .) .Values.server.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.server.serviceAccount.name }}
 {{- end }}

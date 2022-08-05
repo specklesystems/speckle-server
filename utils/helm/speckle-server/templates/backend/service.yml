@@ -6,7 +6,7 @@ metadata:
   labels:
     app: speckle-backend
     project: speckle-server
-{{ include "server.labels" . | indent 4 }}
+{{ include "backend.labels" . | indent 4 }}
 spec:
   selector:
     app: speckle-backend
