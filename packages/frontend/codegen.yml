@@ -1,5 +1,7 @@
 overwrite: true
-schema: 'http://localhost:3000/graphql'
+schema:
+  - 'http://localhost:3000/graphql'
+  - 'src/graphql/local-only/schema.gql'
 documents:
   - 'src/graphql/**/*.gql'
   - 'src/**/*.{ts,tsx,js,jsx,vue}'

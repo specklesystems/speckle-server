@@ -64,6 +64,13 @@
   </div>
 </template>
 <script>
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import gql from 'graphql-tag'
+import {
+  isolateObjects,
+  unisolateObjects
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
@@ -77,6 +84,20 @@ export default {
       type: String,
       default: null
     }
+  },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          isolateValues
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState }
   },
   data() {
     return {
@@ -101,7 +122,7 @@ export default {
     isolated() {
       const ids = this.objects.map((o) => o.id)
       ids.forEach((val) => {
-        if (this.$store.state.isolateValues.indexOf(val) === -1) return false
+        if (this.viewerState.isolateValues.indexOf(val) === -1) return false
       })
       return true
     }
@@ -110,12 +131,12 @@ export default {
     isolateSelection() {
       const ids = this.objects.map((o) => o.id)
       if (!this.isolated)
-        this.$store.commit('unisolateObjects', {
+        unisolateObjects({
           filterKey: '__parents',
           filterValues: ids
         })
       else
-        this.$store.commit('isolateObjects', {
+        isolateObjects({
           filterKey: '__parents',
           filterValues: ids
         })

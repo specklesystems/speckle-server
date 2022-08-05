@@ -107,6 +107,7 @@ import {
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { useRoute } from '@/main/lib/core/composables/router'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheBranch',
@@ -207,7 +208,7 @@ export default {
       return this.$apollo.loading || this.streamLoading
     },
     loggedInUserId() {
-      return localStorage.getItem('uuid')
+      return AppLocalStorage.get('uuid')
     },
     streamId() {
       return this.$route.params.streamId

@@ -9,6 +9,7 @@ const metricCallCount = new prometheusClient.Counter({
   labelNames: ['actionName']
 })
 
+/** @type {import('apollo-server-core').PluginDefinition} */
 module.exports = {
   // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
