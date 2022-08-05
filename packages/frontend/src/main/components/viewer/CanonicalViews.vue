@@ -28,10 +28,17 @@
     </v-list>
   </v-menu>
 </template>
-<script>
-export default {
+<script lang="ts">
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { defineComponent } from 'vue'
+
+export default defineComponent({
   props: {
     small: { type: Boolean, default: false }
+  },
+  setup() {
+    const { viewer } = useInjectedViewer()
+    return { viewer }
   },
   data() {
     return {
@@ -45,11 +52,11 @@ export default {
     }
   },
   methods: {
-    setView(view) {
-      window.__viewer.interactions.rotateTo(view.toLowerCase())
+    setView(view: string) {
+      this.viewer.interactions.rotateTo(view.toLowerCase())
     }
   }
-}
+})
 </script>
 <style scoped>
 .test {

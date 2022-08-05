@@ -104,6 +104,23 @@ fileimport_service:
     memory: 2Gi
   time_limit_min: 10
 
+monitoring:
+  replicas: 1
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+test:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
 secretName: server-vars
 
 enable_prometheus_monitoring: false
@@ -113,3 +130,4 @@ helm_test_enabled: true
 
 create_namespace: false
 file_size_limit_mb: 100
+imagePullPolicy: IfNotPresent

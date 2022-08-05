@@ -106,7 +106,6 @@
                 single-line
                 style="margin-top: -12px"
                 prepend-icon="mdi-form-textbox-password"
-                @keydown="debouncedPwdTest"
               />
             </v-col>
             <v-col cols="12" sm="6">
@@ -161,7 +160,13 @@
               </v-row>
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" @click="registerUser">
+              <v-btn
+                block
+                large
+                color="primary"
+                :disabled="loading"
+                @click="registerUser"
+              >
                 Create Account
               </v-btn>
               <p class="text-center"></p>
@@ -182,7 +187,6 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import debounce from 'lodash/debounce'
 import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
@@ -191,6 +195,7 @@ import {
   getInviteTokenFromRoute,
   processSuccessfulAuth
 } from '@/main/lib/auth/services/authService'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheRegistration',
@@ -250,7 +255,8 @@ export default {
       pwdSuggestions: null,
       appId: null,
       challenge: null,
-      suuid: null
+      suuid: null,
+      loading: false
     }
   },
   computed: {
@@ -289,25 +295,37 @@ export default {
 
     if (!challenge && this.appId === 'spklwebapp') {
       this.challenge = randomString({ length: 10 })
-      localStorage.setItem('appChallenge', this.challenge)
+      AppLocalStorage.set('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge
     }
   },
   methods: {
-    debouncedPwdTest: debounce(async function () {
+    async validatePasswordStrength() {
       const result = await this.$apollo.query({
-        query: gql` query{ userPwdStrength(pwd:"${this.form.password}")}`
+        query: gql`
+          query ($pwd: String!) {
+            userPwdStrength(pwd: $pwd)
+          }
+        `,
+        variables: { pwd: this.form.password }
       })
       this.passwordStrength = result.data.userPwdStrength.score * 25
       this.pwdSuggestions = result.data.userPwdStrength.feedback.suggestions[0]
-    }, 1000),
+    },
     async registerUser() {
+      if (this.loading) return
+
       try {
         const valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf)
           throw new Error('Passwords do not match')
+
+        this.loading = true
+
+        // Validate password strength
+        await this.validatePasswordStrength()
         if (this.passwordStrength < 3) throw new Error('Password too weak')
 
         const user = {
@@ -347,6 +365,8 @@ export default {
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true
+      } finally {
+        this.loading = false
       }
     }
   }

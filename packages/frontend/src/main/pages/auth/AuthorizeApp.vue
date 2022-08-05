@@ -80,6 +80,7 @@
 import { gql } from '@apollo/client/core'
 import UserAvatar from '@/main/components/auth/UserAvatarAuthoriseApp'
 import UserAvatarIcon from '@/main/components/common/UserAvatarIcon'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'AuthorizeApp',
@@ -124,7 +125,7 @@ export default {
       return `${this.app.redirectUrl}?denied=true`
     },
     selfUserId() {
-      return localStorage.getItem('uuid')
+      return AppLocalStorage.get('uuid')
     }
   },
   watch: {
@@ -146,7 +147,7 @@ export default {
       window.location.replace(
         `${window.location.origin}/auth/accesscode?appId=${this.app.id}&challenge=${
           this.$route.params.challenge
-        }&token=${localStorage.getItem('AuthToken')}&suuid=${this.$route.query.suuid}`
+        }&token=${AppLocalStorage.get('AuthToken')}&suuid=${this.$route.query.suuid}`
       )
     }
   }

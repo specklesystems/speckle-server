@@ -132,6 +132,10 @@ export default {
       default: () => {
         return { role: null }
       }
+    },
+    streamId: {
+      type: String,
+      required: true
     }
   },
   apollo: {
@@ -147,7 +151,7 @@ export default {
       fetchPolicy: 'no-cache',
       variables() {
         return {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           id: this.comment.id
         }
       },
@@ -169,7 +173,7 @@ export default {
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         },
@@ -217,7 +221,7 @@ export default {
         (r) => r.resourceType !== 'stream'
       )
       const first = res.shift()
-      let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
+      let route = `/streams/${this.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
@@ -242,7 +246,7 @@ export default {
           }
         `,
         variables: {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           commentId: this.comment.id
         }
       })
@@ -256,7 +260,7 @@ export default {
             }
           `,
           variables: {
-            streamId: this.$route.params.streamId,
+            streamId: this.streamId,
             commentId: this.comment.id
           }
         })

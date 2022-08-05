@@ -23,7 +23,7 @@ declare module 'vue/types/vue' {
 
     /**
      * Check if auth token is stored in localStorage
-     * @deprecated Use `isLoggedInQuery`/`isLoggedInMixin` instead
+     * @deprecated Use `isLoggedInQuery`/`isLoggedInMixin`/`useIsLoggedIn` instead
      */
     $loggedIn: () => boolean
   }
