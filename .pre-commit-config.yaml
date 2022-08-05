@@ -25,6 +25,11 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/hadolint/hadolint
+    rev: 'v2.10.0'
+    hooks:
+      - id: hadolint
+
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: 'v0.8.0'
     hooks:
