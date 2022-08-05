@@ -11,7 +11,7 @@ const isProd = process.env.NODE_ENV === 'production'
 const sourcemap = isProd ? false : 'inline'
 
 /** @returns {import('rollup').RollupOptions} */
-const config = (file, format) => ({
+const config = (file, format, firstOne = false) => ({
   input: 'src/index.ts',
   output: [
     {
@@ -21,7 +21,7 @@ const config = (file, format) => ({
     }
   ],
   plugins: [
-    ...(isProd ? [clean({ targets: 'dist/*' })] : []),
+    ...(isProd && firstOne ? [clean({ targets: 'dist/*' })] : []),
     rebasePlugin({ keepName: true }),
     copyPlugin({
       targets: [{ src: './always-bundled-assets/**/*', dest: 'dist/assets' }]
@@ -42,6 +42,6 @@ const config = (file, format) => ({
 })
 
 export default [
-  config('dist/speckleviewer.esm.js', 'esm'),
+  config('dist/speckleviewer.esm.js', 'esm', true),
   config('dist/speckleviewer.js', 'cjs')
 ]
