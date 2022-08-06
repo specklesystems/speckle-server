@@ -42,7 +42,7 @@ export class FilteringManager {
 
     if (this.hiddenObjectsState.enabled) {
       this.renderer.applyFilter(this.hiddenObjectsState.hiddenRvs, {
-        filterType: FilterMaterialType.HIDDEN
+        filterType: this.hiddenObjectsState.ghost ? FilterMaterialType.GHOST : FilterMaterialType.HIDDEN
       })
       returnFilter = this.hiddenObjectsState
     } else if (this.isolateObjectsState.enabled) {
@@ -64,6 +64,7 @@ export class FilteringManager {
 
   private hiddenObjectsState = {
     enabled: false,
+    ghost: false,
     filterKey: null,
     ids: [],
     hiddenRvs: [],
@@ -85,8 +86,8 @@ export class FilteringManager {
     }
   }
 
-  public hideObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
-    return this.toggleObjectsVisibility(objectIds, VisibilityCommand.HIDE, filterKey, resourceUrl)
+  public hideObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = false) {
+    return this.toggleObjectsVisibility(objectIds, VisibilityCommand.HIDE, filterKey, resourceUrl, ghost)
   }
 
   public showObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
@@ -97,7 +98,8 @@ export class FilteringManager {
     objectIds: string[],
     command = VisibilityCommand.HIDE,
     filterKey: string = null,
-    resourceUrl: string = null
+    resourceUrl: string = null,
+    ghost = false
   ) {
     this.isolateObjectsState.reset()
     this.hiddenObjectsState.purgeRenderViews()
@@ -115,6 +117,7 @@ export class FilteringManager {
     }
 
     this.hiddenObjectsState.enabled = this.hiddenObjectsState.ids.length !== 0
+    this.hiddenObjectsState.ghost = ghost
 
     if (this.hiddenObjectsState.enabled) {
       WorldTree.getInstance().walk((node: TreeNode) => {
@@ -162,8 +165,8 @@ export class FilteringManager {
   public isolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = true) {
     return this.toggleObjectsIsolation(objectIds, IsolateCommand.ISOLATE, filterKey, resourceUrl, ghost)
   }
-  public unIsolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = true) {
-    return this.toggleObjectsIsolation(objectIds, IsolateCommand.UNISOLATE, filterKey, resourceUrl, ghost)
+  public unIsolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
+    return this.toggleObjectsIsolation(objectIds, IsolateCommand.UNISOLATE, filterKey, resourceUrl)
   }
 
   private toggleObjectsIsolation(
