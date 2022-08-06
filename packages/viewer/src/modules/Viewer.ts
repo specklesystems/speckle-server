@@ -104,9 +104,11 @@ export class Viewer extends EventEmitter implements IViewer {
       console.warn('Built stuff')
     })
 
-    this.FilterManager = new FilteringManager(this.speckleRenderer)
-    ;(window as any).WorldTree = WorldTree
+    this.FilterManager = new FilteringManager(this)
+    ;(window as any).WT = WorldTree
     ;(window as any).FilterManager = this.FilterManager
+    ;(window as any).FM = this.FilterManager
+    ;(window as any).R = this
   }
 
   public async init(): Promise<void> {
@@ -261,8 +263,8 @@ export class Viewer extends EventEmitter implements IViewer {
 
     WorldTree.getInstance().walk((node: TreeNode) => {
       if (!node.model.atomic) return true
-      console.log(node)
       const obj = flattenObject(node.model.raw)
+
       for (const prop of Object.keys(obj)) {
         if (!(prop in propValues)) {
           propValues[prop] = []
@@ -272,7 +274,7 @@ export class Viewer extends EventEmitter implements IViewer {
       return true
     })
 
-    const propInfo = {}
+    const propInfo = []
     for (const prop in propValues) {
       const pinfo = {
         type: typeof propValues[prop][0],
@@ -280,7 +282,8 @@ export class Viewer extends EventEmitter implements IViewer {
         allValues: propValues[prop],
         uniqueValues: {},
         minValue: propValues[prop][0],
-        maxValue: propValues[prop][0]
+        maxValue: propValues[prop][0],
+        key: null as string
       }
       for (const v of propValues[prop]) {
         if (v < pinfo.minValue) pinfo.minValue = v
@@ -290,9 +293,11 @@ export class Viewer extends EventEmitter implements IViewer {
         }
         pinfo.uniqueValues[v] += 1
       }
-
-      propInfo[prop] = pinfo
+      pinfo.key = prop
+      propInfo.push(pinfo)
     }
+
+    return propInfo
   }
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {
@@ -398,9 +403,11 @@ export class Viewer extends EventEmitter implements IViewer {
       const rgb = new Color(`hsl(${colorHue}, 50%, 30%)`)
       return rgb.getHex()
     }
+
     const data: {
       color?: { name: string; color: string; colorIndex: number; nodes: [] }
     } = {}
+
     let colorCount = 0
     /** This is the lazy approach */
     WorldTree.getInstance().walk((node: TreeNode) => {
@@ -452,34 +459,6 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.endFilter()
     console.warn(`Filter time: ${performance.now() - start}`)
   }
-
-  // private isObject(value) {
-  //   return !!(value && typeof value === 'object' && !Array.isArray(value))
-  // }
-
-  // private findObjectProperty(object = {}, keyToMatch = '') {
-  //   if (this.isObject(object)) {
-  //     const entries = Object.entries(object)
-
-  //     for (let i = 0; i < entries.length; i += 1) {
-  //       const [objectKey, objectValue] = entries[i]
-
-  //       if (objectKey === keyToMatch) {
-  //         return object[objectKey]
-  //       }
-
-  //       if (this.isObject(objectValue)) {
-  //         const child = this.findObjectProperty(objectValue, keyToMatch)
-
-  //         if (child !== null) {
-  //           return child
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   return null
-  // }
 
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)

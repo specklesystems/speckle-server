@@ -41,9 +41,7 @@ export default class Materials {
       renderMaterial = {
         id: node.model.raw.renderMaterial.id,
         color: node.model.raw.renderMaterial.diffuse,
-        opacity: node.model.raw.renderMaterial.opacity
-          ? node.model.raw.renderMaterial.opacity
-          : 1,
+        opacity: node.model.raw.renderMaterial.opacity ? node.model.raw.renderMaterial.opacity : 1,
         vertexColors: node.model.raw.colors && node.model.raw.colors.length > 0
       }
     }
@@ -222,31 +220,29 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).resolution = new Vector2()
     this.lineHiddenMaterial.visible = false
 
-    this.materialMap[NodeRenderView.NullRenderMaterialHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0x7f7f7f,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide // TBD,
-          // clippingPlanes: this.viewer.sectionBox.planes
-        },
-        ['USE_RTE']
-      )
-    this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0x7f7f7f,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide, // TBD
-          vertexColors: true
-          // clippingPlanes: this.viewer.sectionBox.planes
-        },
-        ['USE_RTE']
-      )
+    this.materialMap[NodeRenderView.NullRenderMaterialHash] = new SpeckleStandardMaterial(
+      {
+        color: 0x7f7f7f,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide // TBD,
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
+    this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] = new SpeckleStandardMaterial(
+      {
+        color: 0x7f7f7f,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide, // TBD
+        vertexColors: true
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
 
     const hash = NodeRenderView.NullDisplayStyleHash // So prettier doesn't fuck up everything
     this.materialMap[hash] = new SpeckleLineMaterial({
@@ -272,22 +268,20 @@ export default class Materials {
       sizeAttenuation: false
       // clippingPlanes: this.viewer.sectionBox.planes
     })
-    this.materialMap[NodeRenderView.NullPointCloudVertexColorsMaterialHash] =
-      new SpecklePointMaterial({
-        color: 0xffffff,
-        vertexColors: true,
-        size: 2,
-        sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
-      })
-    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] =
-      new SpecklePointMaterial({
-        color: 0xffffff,
-        vertexColors: false,
-        size: 2,
-        sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
-      })
+    this.materialMap[NodeRenderView.NullPointCloudVertexColorsMaterialHash] = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
+    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] = new SpecklePointMaterial({
+      color: 0xffffff,
+      vertexColors: false,
+      size: 2,
+      sizeAttenuation: false
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
@@ -344,11 +338,7 @@ export default class Materials {
     return mat
   }
 
-  public updateMaterialMap(
-    hash: number,
-    material: RenderMaterial | DisplayStyle,
-    type: GeometryType
-  ): Material {
+  public updateMaterialMap(hash: number, material: RenderMaterial | DisplayStyle, type: GeometryType): Material {
     // console.log(this.materialMap)
     if (this.materialMap[hash]) {
       // console.warn(`Duplicate material hash found: ${hash}`)
@@ -488,10 +478,7 @@ export default class Materials {
     }
   }
 
-  public getFilterMaterial(
-    renderView: NodeRenderView,
-    filterMaterial: FilterMaterialType
-  ) {
+  public getFilterMaterial(renderView: NodeRenderView, filterMaterial: FilterMaterialType) {
     switch (filterMaterial) {
       case FilterMaterialType.SELECT:
         return this.getHighlightMaterial(renderView)
@@ -508,8 +495,7 @@ export default class Materials {
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
     return {
-      rampIndex:
-        filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
+      rampIndex: filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
       rampIndexColor: filterMaterial.rampIndexColor,
       rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
     }

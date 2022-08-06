@@ -151,8 +151,19 @@ export default class Sandbox {
     const darkModeToggle = this.tabs.pages[0].addButton({
       title: '🌞 / 🌛'
     })
+    const dark = localStorage.getItem('dark') === 'dark'
+    if (dark) {
+      const dark = document
+        .getElementById('renderer')
+        ?.classList.toggle('background-dark')
+    }
+
     darkModeToggle.on('click', () => {
-      document.getElementById('renderer')?.classList.toggle('background-dark')
+      const dark = document
+        .getElementById('renderer')
+        ?.classList.toggle('background-dark')
+
+      localStorage.setItem('dark', dark ? `dark` : `light`)
     })
   }
 

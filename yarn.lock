@@ -5088,7 +5088,7 @@ __metadata:
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
     hold-event: ^0.1.0
-    lodash.debounce: ^4.0.8
+    lodash-es: ^4.17.21
     prettier: ^2.5.1
     rainbowvis.js: ^1.0.1
     regenerator-runtime: ^0.13.7
@@ -18160,6 +18160,13 @@ __metadata:
   dependencies:
     p-locate: ^5.0.0
   checksum: 72eb661788a0368c099a184c59d2fee760b3831c9c1c33955e8a19ae4a21b4116e53fa736dc086cdeb9fce9f7cc508f2f92d2d3aae516f133e16a2bb59a39f5a
+  languageName: node
+  linkType: hard
+
+"lodash-es@npm:^4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 05cbffad6e2adbb331a4e16fbd826e7faee403a1a04873b82b42c0f22090f280839f85b95393f487c1303c8a3d2a010048bf06151a6cbe03eee4d388fb0a12d2
   languageName: node
   linkType: hard
 

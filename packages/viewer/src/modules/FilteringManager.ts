@@ -1,4 +1,5 @@
-import { Color, Texture } from 'three'
+import { get } from 'lodash'
+import { Color, Texture, MathUtils } from 'three'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 
 export enum FilterMaterialType {
@@ -27,10 +28,12 @@ enum IsolateCommand {
 }
 
 export class FilteringManager {
+  private viewer: any
   private renderer: any
 
-  constructor(renderer: any) {
-    this.renderer = renderer
+  constructor(viewer: any) {
+    this.viewer = viewer
+    this.renderer = viewer.speckleRenderer
   }
 
   private setFilters() {
@@ -86,12 +89,50 @@ export class FilteringManager {
     }
   }
 
+  /**
+   * Hides a bunch of objects. The opposite of `showObjects`.
+   * @param objectIds objects to hide.
+   * @param filterKey the "ui scope" this command is coming from.
+   * @param resourceUrl the resource url to limit searching to.
+   * @param ghost whether to ghost instead of completely hide the objects.
+   * @returns the current applied filter state.
+   */
   public hideObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = false) {
     return this.toggleObjectsVisibility(objectIds, VisibilityCommand.HIDE, filterKey, resourceUrl, ghost)
   }
 
+  /**
+   * Shows a bunch of objects. The opposite of `hideObjects`.
+   * @param objectIds objects to hide.
+   * @param filterKey the "ui scope" this command is coming from.
+   * @param resourceUrl the resource url to limit searching to.
+   * @returns the current applied filter state.
+   */
   public showObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
     return this.toggleObjectsVisibility(objectIds, VisibilityCommand.SHOW, filterKey, resourceUrl)
+  }
+
+  /**
+   * Hides all the descendants of the provided object's id. The opposite of `showTree`.
+   * @param objectId the root object id.
+   * @param resourceUrl the resource url to limit searching to.
+   * @param ghost whether to ghost instead of completely hide the objects.
+   * @returns the current applied filter state.
+   */
+  public hideTree(objectId: string, resourceUrl: string = null, ghost = false) {
+    const ids = this.getDescendantIds(objectId)
+    return this.hideObjects(ids, null, resourceUrl, ghost)
+  }
+
+  /**
+   * Shows all the descendants of the provided object's id. The opposite of `hideTree`.
+   * @param objectId the root object id.
+   * @param resourceUrl the resource url to limit searching to.
+   * @returns the current applied filter state.
+   */
+  public showTree(objectId: string, resourceUrl: string = null) {
+    const ids = this.getDescendantIds(objectId)
+    return this.showObjects(ids, null, resourceUrl)
   }
 
   private toggleObjectsVisibility(
@@ -162,11 +203,54 @@ export class FilteringManager {
     }
   }
 
+  /**
+   * Isolates a bunch of objects - all other objects in the scene, besides the ones provided, are ghosted or hidden. The opposite of `unIsolateObjects`.
+   * @param objectIds objects to isolate.
+   * @param filterKey the "ui scope" this command is coming from.
+   * @param resourceUrl the resource url to limit searching to.
+   * @param ghost whether to ghost instead of completely hide the objects.
+   * @returns the current applied filter state.
+   */
   public isolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = true) {
     return this.toggleObjectsIsolation(objectIds, IsolateCommand.ISOLATE, filterKey, resourceUrl, ghost)
   }
+
+  /**
+   * Unisolates a bunch of objects - if previously isolated, the provided objects will be either hidden or ghosted. The opposite of `isolateObjects`.
+   * @param objectIds objects to unisolate.
+   * @param filterKey the "ui scope" this command is coming from.
+   * @param resourceUrl the resource url to limit searching to.
+   * @param ghost whether to ghost instead of completely hide the objects.
+   * @returns the current applied filter state.
+   */
   public unIsolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
     return this.toggleObjectsIsolation(objectIds, IsolateCommand.UNISOLATE, filterKey, resourceUrl)
+  }
+
+  /**
+   * Isolates the descendants of the provided object. All other objects in the scene, besides the descendants of the one provided, are ghosted or hidden. The opposite of `unIsolateTree`.
+   * @param objectId the parent object's id.
+   * @param filterKey the "ui scope" this command is coming from.
+   * @param resourceUrl the resource url to limit searching to.
+   * @param ghost whether to ghost instead of completely hide the objects.
+   * @returns the current applied filter state.
+   */
+  public isolateTree(objectId: string, resourceUrl: string = null, ghost = true) {
+    const ids = this.getDescendantIds(objectId)
+    return this.isolateObjects(ids, null, resourceUrl, ghost)
+  }
+
+  /**
+   * Unisolates the descendants of the provided object. All other objects in the scene, besides the descendants of the one provided, are ghosted or hidden. The opposite of `isolateTree`.
+   * @param objectId the parent object's id.
+   * @param filterKey the "ui scope" this command is coming from.
+   * @param resourceUrl the resource url to limit searching to.
+   * @param ghost whether to ghost instead of completely hide the objects.
+   * @returns the current applied filter state.
+   */
+  public unIsolateTree(objectId: string, resourceUrl: string = null) {
+    const ids = this.getDescendantIds(objectId)
+    return this.unIsolateObjects(ids, null, resourceUrl)
   }
 
   private toggleObjectsIsolation(
@@ -210,24 +294,43 @@ export class FilteringManager {
     return this.setFilters()
   }
 
-  public showTree(objectId: string, resourceUrl: string = null) {
-    const ids = this.getDescendantIds(objectId)
-    return this.showObjects(ids, null, resourceUrl)
+  public setColorFilter(property: any, resourceUrl: string = null) {
+    if (property.type === 'numeric') {
+      // do something
+    }
+    if (property.type === 'string') {
+      // do something else
+      console.log(Object.keys(property.uniqueValues))
+      const keys = Object.keys(property.uniqueValues)
+
+      const colors: { value: string; color: any; rvs: any[] }[] = []
+
+      for (const key of keys) {
+        colors.push({
+          color: new Color(MathUtils.randInt(0, 0xffffff)).getHex(),
+          value: key,
+          rvs: []
+        })
+      }
+
+      WorldTree.getInstance().walk((node: TreeNode) => {
+        if (!node.model.atomic) return true
+
+        const propertyValue = get(node.model.raw, property.key, null)
+        if (!propertyValue) return true
+
+        const colorData = colors.find((c) => c.value === propertyValue)
+        if (!colorData) return true
+
+        const rvs = WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(node)
+        colorData.rvs.push(...rvs)
+      })
+      console.log(colors)
+    }
   }
 
-  public hideTree(objectId: string, resourceUrl: string = null) {
-    const ids = this.getDescendantIds(objectId)
-    return this.hideObjects(ids, null, resourceUrl)
-  }
-
-  public isolateTree(objectId: string, resourceUrl: string = null, ghost = true) {
-    const ids = this.getDescendantIds(objectId)
-    return this.isolateObjects(ids, null, resourceUrl, ghost)
-  }
-
-  public unIsolateTree(objectId: string, resourceUrl: string = null, ghost = true) {
-    const ids = this.getDescendantIds(objectId)
-    return this.unIsolateObjects(ids, null, resourceUrl, ghost)
+  public removeColorFilter() {
+    // TODO
   }
 
   private lookupCache = {}
