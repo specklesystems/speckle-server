@@ -36,22 +36,24 @@ export class FilteringManager {
   private setFilters() {
     this.renderer.clearFilter()
     this.renderer.beginFilter()
+    let returnFilter
 
-    // TODO re-apply any color filter?
+    // TODO apply any color filter?
 
     if (this.hiddenObjectsState.enabled) {
-      console.log('hiding', this.hiddenObjectsState)
       this.renderer.applyFilter(this.hiddenObjectsState.hiddenRvs, {
         filterType: FilterMaterialType.HIDDEN
       })
+      returnFilter = this.hiddenObjectsState
     } else if (this.isolateObjectsState.enabled) {
-      console.log('isolating', this.isolateObjectsState)
       this.renderer.applyFilter(this.isolateObjectsState.ghostedRvs, {
-        filterType: FilterMaterialType.GHOST
+        filterType: this.isolateObjectsState.ghost ? FilterMaterialType.GHOST : FilterMaterialType.HIDDEN
       })
+      returnFilter = this.isolateObjectsState
     }
 
     this.renderer.endFilter()
+    return returnFilter
   }
 
   public reset() {
@@ -69,6 +71,7 @@ export class FilteringManager {
      * Fully resets the state.
      */
     reset() {
+      console.log('Hide state was reset')
       this.enabled = false
       this.filterKey = null
       this.ids = []
@@ -83,11 +86,11 @@ export class FilteringManager {
   }
 
   public hideObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
-    this.toggleObjectsVisibility(objectIds, VisibilityCommand.HIDE, filterKey, resourceUrl)
+    return this.toggleObjectsVisibility(objectIds, VisibilityCommand.HIDE, filterKey, resourceUrl)
   }
 
   public showObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
-    this.toggleObjectsVisibility(objectIds, VisibilityCommand.SHOW, filterKey, resourceUrl)
+    return this.toggleObjectsVisibility(objectIds, VisibilityCommand.SHOW, filterKey, resourceUrl)
   }
 
   private toggleObjectsVisibility(
@@ -125,11 +128,12 @@ export class FilteringManager {
       })
     }
 
-    this.setFilters()
+    return this.setFilters()
   }
 
   private isolateObjectsState = {
     enabled: false,
+    ghost: true,
     filterKey: null,
     ids: [],
     ghostedRvs: [],
@@ -138,7 +142,9 @@ export class FilteringManager {
      * Fully resets the state.
      */
     reset() {
+      console.log('Isolate state was reset')
       this.enabled = false
+      this.ghost = true
       this.filterKey = null
       this.ids = []
       this.ghostedRvs = []
@@ -153,18 +159,19 @@ export class FilteringManager {
     }
   }
 
-  public isolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
-    this.toggleObjectsIsolation(objectIds, IsolateCommand.ISOLATE, filterKey, resourceUrl)
+  public isolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = true) {
+    return this.toggleObjectsIsolation(objectIds, IsolateCommand.ISOLATE, filterKey, resourceUrl, ghost)
   }
-  public unIsolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null) {
-    this.toggleObjectsIsolation(objectIds, IsolateCommand.UNISOLATE, filterKey, resourceUrl)
+  public unIsolateObjects(objectIds: string[], filterKey: string = null, resourceUrl: string = null, ghost = true) {
+    return this.toggleObjectsIsolation(objectIds, IsolateCommand.UNISOLATE, filterKey, resourceUrl, ghost)
   }
 
   private toggleObjectsIsolation(
     objectIds: string[],
     command = IsolateCommand.ISOLATE,
     filterKey: string = null,
-    resourceUrl: string = null
+    resourceUrl: string = null,
+    ghost = true
   ) {
     this.hiddenObjectsState.reset()
     this.isolateObjectsState.purgeRenderViews()
@@ -181,6 +188,7 @@ export class FilteringManager {
     }
 
     this.isolateObjectsState.enabled = this.isolateObjectsState.ids.length !== 0
+    this.isolateObjectsState.ghost = ghost
 
     if (this.isolateObjectsState.enabled) {
       WorldTree.getInstance().walk((node: TreeNode) => {
@@ -189,33 +197,49 @@ export class FilteringManager {
         if (this.isolateObjectsState.ids.indexOf(node.model.raw.id) === -1) {
           this.isolateObjectsState.ghostedRvs.push(...rvs)
         } else {
-          this.isolateObjectsState.visibleRvs.push(node)
+          // take out rvs ?
+          this.isolateObjectsState.ghostedRvs = this.isolateObjectsState.ghostedRvs.filter((rv) => !rvs.includes(rv))
         }
         return true
       })
     }
 
-    this.setFilters()
+    return this.setFilters()
   }
 
-  public showTree() {
-    // TODO
+  public showTree(objectId: string, resourceUrl: string = null) {
+    const ids = this.getDescendantIds(objectId)
+    return this.showObjects(ids, null, resourceUrl)
   }
 
-  public hideTree(objectId: string) {
+  public hideTree(objectId: string, resourceUrl: string = null) {
+    const ids = this.getDescendantIds(objectId)
+    return this.hideObjects(ids, null, resourceUrl)
+  }
+
+  public isolateTree(objectId: string, resourceUrl: string = null, ghost = true) {
+    const ids = this.getDescendantIds(objectId)
+    return this.isolateObjects(ids, null, resourceUrl, ghost)
+  }
+
+  public unIsolateTree(objectId: string, resourceUrl: string = null, ghost = true) {
+    const ids = this.getDescendantIds(objectId)
+    return this.unIsolateObjects(ids, null, resourceUrl, ghost)
+  }
+
+  private lookupCache = {}
+  private getDescendantIds(objectId: string) {
+    if (this.lookupCache[objectId]) return this.lookupCache[objectId]
     let rootNode = null
     WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model.atomic) return true
       if (node.model.raw.id === objectId) {
         rootNode = node
         return false
       }
       return true
     })
-
-    console.log(rootNode.model.raw.__closure)
+    this.lookupCache[objectId] = Object.keys(rootNode.model.raw.__closure)
+    return this.lookupCache[objectId]
   }
-
-  public isolateTree() {}
-
-  public unIsolateTree() {}
 }

@@ -316,7 +316,7 @@ export default class SpeckleRenderer {
       parentNode = parentNode.parent
     }
 
-    console.log(parentNode.model.raw.id, parentNode)
+    console.log(parentNode.model.raw.id, parentNode.model.raw)
 
     this.batcher.resetBatchesDrawRanges()
 

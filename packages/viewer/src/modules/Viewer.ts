@@ -260,6 +260,8 @@ export class Viewer extends EventEmitter implements IViewer {
     const propValues = {}
 
     WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model.atomic) return true
+      console.log(node)
       const obj = flattenObject(node.model.raw)
       for (const prop of Object.keys(obj)) {
         if (!(prop in propValues)) {
@@ -402,6 +404,7 @@ export class Viewer extends EventEmitter implements IViewer {
     let colorCount = 0
     /** This is the lazy approach */
     WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model.atomic) return true
       const propertyValue = node.model.raw[propertyName]
       if (propertyValue !== null && propertyValue !== undefined) {
         const color = getColorHash(propertyValue.split('.').reverse()[0])
