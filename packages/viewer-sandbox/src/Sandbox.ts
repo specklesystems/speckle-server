@@ -37,7 +37,7 @@ export default class Sandbox {
 
   public constructor(viewer: Viewer) {
     this.viewer = viewer
-    this.pane = new Pane({ title: 'Sandbox', expanded: true })
+    this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     this.pane['containerElem_'].style =
       'position:fixed; top: 5px; right: 5px; width: 300px;'
 
@@ -55,12 +55,16 @@ export default class Sandbox {
   }
 
   private addStreamControls(url: string) {
-    const label = this.steamsFolder.addInput({ url }, 'url', {
+    const folder = this.pane.addFolder({
+      title: `Object: ${url.split('/').reverse()[0]}`
+    })
+
+    const label = folder.addInput({ url }, 'url', {
       title: 'URL',
       disabled: true
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
-    const positionInput = this.steamsFolder
+    const positionInput = folder
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
         this.viewer.speckleRenderer
@@ -70,7 +74,7 @@ export default class Sandbox {
         this.viewer.speckleRenderer.updateHelpers()
       })
 
-    const button = this.steamsFolder
+    const button = folder
       .addButton({
         title: 'Unload'
       })
@@ -78,7 +82,7 @@ export default class Sandbox {
         this.removeStreamControls(url)
       })
     this.streams[url] = []
-    this.streams[url].push(label, positionInput, button)
+    this.streams[url].push(folder)
   }
 
   private removeStreamControls(url: string) {
@@ -108,11 +112,6 @@ export default class Sandbox {
 
     clearButton.on('click', () => {
       this.viewer.unloadAll()
-    })
-
-    this.steamsFolder = this.tabs.pages[0].addFolder({
-      title: 'Active Streams',
-      expanded: true
     })
 
     this.tabs.pages[0].addSeparator()
