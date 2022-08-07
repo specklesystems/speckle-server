@@ -22,19 +22,18 @@ COPY packages/server .
 RUN yarn build
 RUN yarn workspaces focus --production
 
-FROM node:16.15-bullseye-slim as production-stage
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
+RUN chmod +x /wait
+
+FROM gcr.io/distroless/nodejs:16 as production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
+COPY --from=build-stage /wait /wait
 
 WORKDIR /speckle-server
 
-COPY --from=build-stage /speckle-server/.yarnrc.yml .
-COPY --from=build-stage /speckle-server/.yarn ./.yarn
-COPY --from=build-stage /speckle-server/package.json /speckle-server/yarn.lock ./
 COPY --from=build-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
@@ -45,4 +44,4 @@ COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
 ENV FILE_SIZE_LIMIT_MB=100
 ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
-CMD ["yarn", "node", "bin/www"]
+CMD ["bin/www"]

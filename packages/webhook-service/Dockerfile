@@ -1,4 +1,4 @@
-FROM node:16.15-bullseye-slim as node
+FROM node:16.15-bullseye-slim as build-stage
 
 RUN apt-get update && apt-get install -y \
   tini \
@@ -20,6 +20,12 @@ WORKDIR /speckle-server/packages/webhook-service
 COPY packages/webhook-service/package.json .
 RUN yarn workspaces focus --production
 
+FROM gcr.io/distroless/nodejs:16 as production-stage
+
+WORKDIR /speckle-server/packages/webhook-service
 COPY packages/webhook-service/src .
 
-CMD ["yarn", "node", "main.js"]
+COPY --from=build-stage /wait /wait
+COPY --from=build-stage /speckle-server/node_modules ./node_modules
+
+CMD ["main.js"]
