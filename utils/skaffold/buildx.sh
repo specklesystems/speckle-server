@@ -37,7 +37,7 @@ echo "BUILD_CONTEXT: ${BUILD_CONTEXT}"
 CACHE_DIR="/tmp/speckle_skaffold_buildx_cache"
 mkdir -p "${CACHE_DIR}"
 
-docker buildx build \
+DOCKER_BUILDKIT=1 docker buildx build \
     --builder skaffold-builder \
     --cache-from type=local,src=${CACHE_DIR} \
     --cache-to   type=local,dest=${CACHE_DIR},mode=max \

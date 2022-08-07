@@ -70,8 +70,10 @@ REDIS_PASSWORD=$(kubectl get secret --namespace speckle redis -o jsonpath="{.dat
 
 echo "Deploying Blob Storage (minio) 🧱"
 
-MINIO_ROOT_PASSWORD=$(kubectl get secret --namespace speckle minio -o jsonpath="{.data.root-password}" | base64 -d)
-if [ -z "${MINIO_ROOT_PASSWORD}" ]; then
+set +e
+MINIO_ROOT_PASSWORD="$(kubectl get secret --namespace speckle minio -o jsonpath='{.data.root-password}' | base64 -d)"
+set -e
+if [[ -z "${MINIO_ROOT_PASSWORD}" ]]; then
     helm upgrade minio bitnami/minio \
         --namespace "${SPECKLE_NAMESPACE}" \
         --create-namespace \
@@ -93,7 +95,3 @@ helm upgrade pgadmin runix/pgadmin4 \
     --namespace "${SPECKLE_NAMESPACE}" \
     --create-namespace \
     --install
-
-#docker build -t speckle/speckle-frontend:local -f "${PWD}/packages/frontend/Dockerfile" "${PWD}" # fails due to farmhash
-#docker build -t speckle/speckle-server:local -f "${PWD}/packages/server/Dockerfile" "${PWD}" # fails due to bcrypt
-#docker build -t speckle/speckle-preview-service:local -f "${PWD}/packages/preview-service/Dockerfile" "${PWD}" # fails due to puppeteer & farmhash
