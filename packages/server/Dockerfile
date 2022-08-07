@@ -2,13 +2,19 @@ FROM node:16.15-bullseye-slim as build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-RUN apt-get update && apt-get install -y \
-  tini \
-  fonts-dejavu-core fontconfig \
-  && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /speckle-server
 
+# install wait
+ENV WAIT_VERSION 2.8.0
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
+RUN chmod +x ./wait
+
+# install tini
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
+RUN chmod +x ./tini
+
+# install node packages
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
@@ -22,26 +28,23 @@ COPY packages/server .
 RUN yarn build
 RUN yarn workspaces focus --production
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
-
 FROM gcr.io/distroless/nodejs:16 as production-stage
+ARG FILE_SIZE_LIMIT_MB=100
 ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
 
-COPY --from=build-stage /wait /wait
+ENV FILE_SIZE_LIMIT_MB=${FILE_SIZE_LIMIT_MB}
+ENV NODE_ENV=${NODE_ENV}
+ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
 WORKDIR /speckle-server
-
+COPY --from=build-stage /speckle-server/wait /wait
+COPY --from=build-stage /speckle-server/tini /tini
 COPY --from=build-stage /speckle-server/node_modules ./node_modules
 
 WORKDIR /speckle-server/packages/server
-
 COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
-ENV FILE_SIZE_LIMIT_MB=100
-ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
-CMD ["bin/www"]
+ENTRYPOINT ["/tini", "--", "/nodejs/bin/node", "./bin/www"]
