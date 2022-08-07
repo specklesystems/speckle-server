@@ -106,7 +106,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
 import {
   STANDARD_PORTAL_KEYS,

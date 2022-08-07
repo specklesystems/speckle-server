@@ -24,10 +24,18 @@ const config = {
     // Add plugin for injecting env vars
     config
       .plugin('speckle-env-vars')
-      .use(webpack.EnvironmentPlugin, [['SPECKLE_SERVER_VERSION']])
+      .use(webpack.EnvironmentPlugin, [{ SPECKLE_SERVER_VERSION: 'unknown' }])
 
     // Setting source map according to build env
     config.devtool(isProdBuild ? false : 'eval-source-map')
+
+    // Enable .mjs support
+    config.module
+      .rule('mjs-support')
+      .test(/\.mjs$/)
+      .type('javascript/auto')
+      .include.add(/node_modules/)
+      .end()
   },
   productionSourceMap: false,
   pages: {
@@ -36,12 +44,6 @@ const config = {
       title: 'Speckle',
       template: 'public/app.html',
       filename: 'app.html'
-    },
-    embedApp: {
-      entry: 'src/embed/embedApp.js',
-      title: 'Speckle Embed Viewer',
-      template: 'public/embedApp.html',
-      filename: 'embedApp.html'
     }
   },
   devServer: {
@@ -50,7 +52,6 @@ const config = {
     historyApiFallback: {
       rewrites: [
         { from: /^\/$/, to: '/app.html' },
-        { from: /\/embed(.*)/, to: '/embedApp.html' },
         { from: /./, to: '/app.html' }
       ]
     }

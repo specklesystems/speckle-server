@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { canBeFavorited } from '@/helpers/streamHelpers'
 import { userFavoriteStreamsQuery } from '@/graphql/user'
 import { commonStreamFieldsFragment } from '@/graphql/streams'

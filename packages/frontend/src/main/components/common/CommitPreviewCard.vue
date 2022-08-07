@@ -94,7 +94,9 @@ export default {
   },
   computed: {
     streamId() {
-      return this.commit.streamId ?? this.$route.params.streamId
+      return (
+        this.commit.streamId ?? this.$route.params.streamId ?? this.$route.query.stream
+      )
     }
   }
 }

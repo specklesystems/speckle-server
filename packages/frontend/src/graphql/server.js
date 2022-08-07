@@ -1,4 +1,10 @@
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
+
+export const serverInfoBlobSizeFragment = gql`
+  fragment ServerInfoBlobSizeFields on ServerInfo {
+    blobSizeLimitBytes
+  }
+`
 
 export const mainServerInfoFieldsFragment = gql`
   fragment MainServerInfoFields on ServerInfo {
@@ -51,10 +57,21 @@ export const fullServerInfoQuery = gql`
       ...MainServerInfoFields
       ...ServerInfoRolesFields
       ...ServerInfoScopesFields
+      ...ServerInfoBlobSizeFields
     }
   }
 
   ${mainServerInfoFieldsFragment}
   ${serverInfoRolesFieldsFragment}
   ${serverInfoScopesFieldsFragment}
+  ${serverInfoBlobSizeFragment}
+`
+
+export const serverInfoBlobSizeLimitQuery = gql`
+  query ServerInfoBlobSizeLimit {
+    serverInfo {
+      ...ServerInfoBlobSizeFields
+    }
+  }
+  ${serverInfoBlobSizeFragment}
 `

@@ -71,18 +71,23 @@ describe('Auth @auth', () => {
     })
 
     const inviteTypeDataSet = [
-      { display: 'stream invite', streamInvite: true },
-      { display: 'server invite', streamInvite: false }
+      { display: 'stream invite', streamInvite: true, withOldStyleParam: false },
+      { display: 'server invite', streamInvite: false, withOldStyleParam: false },
+      {
+        display: 'server invite (old style param)',
+        streamInvite: false,
+        withOldStyleParam: true
+      }
     ]
-    inviteTypeDataSet.forEach(({ display, streamInvite }) => {
+    inviteTypeDataSet.forEach(({ display, streamInvite, withOldStyleParam }) => {
       it(`Allows registering with a ${display} in an invite-only server`, async () => {
         await updateServerInfo({ inviteOnly: true })
-        const targetEmail = `invited.bunny.${
-          streamInvite ? 'stream' : 'server'
+        const targetEmail = `invited.bunny.${streamInvite ? 'stream' : 'server'}.${
+          withOldStyleParam ? 'oldparam' : 'newparam'
         }@speckle.systems`
 
         const inviterUser = await getUserByEmail({ email: registeredUserEmail })
-        const inviteId = await createInviteDirectly(
+        const { token, inviteId } = await createInviteDirectly(
           streamInvite
             ? {
                 email: targetEmail,
@@ -129,7 +134,11 @@ describe('Auth @auth', () => {
 
         // finally correct
         await request(app)
-          .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
+          .post(
+            '/auth/local/register?challenge=test&suuid=test&' +
+              (withOldStyleParam ? 'inviteId=' : 'token=') +
+              token
+          )
           .send({
             email: targetEmail,
             name: 'dimitrie stefanescu',

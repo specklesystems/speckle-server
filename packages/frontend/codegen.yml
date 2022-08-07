@@ -1,5 +1,7 @@
 overwrite: true
-schema: 'http://localhost:3000/graphql'
+schema:
+  - 'http://localhost:3000/graphql'
+  - 'src/graphql/local-only/schema.gql'
 documents:
   - 'src/graphql/**/*.gql'
   - 'src/**/*.{ts,tsx,js,jsx,vue}'
@@ -9,9 +11,7 @@ generates:
       - 'typescript'
       - 'typescript-operations'
       - 'typescript-document-nodes'
-      - 'typescript-vue-apollo-smart-ops'
+      - 'typed-document-node'
     config:
-      vueApolloErrorHandlerFunction: handleApolloError
-      vueApolloErrorHandlerFunctionImportFrom: '@/config/vueApolloSmartOpsConfig'
       scalars:
         JSONObject: Record<string, unknown>

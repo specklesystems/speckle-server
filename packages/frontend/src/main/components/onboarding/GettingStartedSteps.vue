@@ -294,6 +294,8 @@
   </div>
 </template>
 <script>
+import { AppLocalStorage } from '@/utils/localStorage'
+
 export default {
   data: () => ({
     length: 5,
@@ -356,11 +358,11 @@ export default {
   },
   methods: {
     skip() {
-      localStorage.setItem('onboarding', 'skipped')
+      AppLocalStorage.set('onboarding', 'skipped')
       this.$router.push('/')
     },
     finish() {
-      localStorage.setItem('onboarding', 'complete')
+      AppLocalStorage.set('onboarding', 'complete')
       this.$router.push('/')
     },
     prev() {

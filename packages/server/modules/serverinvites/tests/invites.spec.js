@@ -34,7 +34,10 @@ const {
   createStream,
   grantPermissionsStream
 } = require('@/modules/core/services/streams')
-const { getInvite: getInviteFromDB } = require('@/modules/serverinvites/repositories')
+const {
+  getInviteByToken,
+  getInvite: getInviteFromDB
+} = require('@/modules/serverinvites/repositories')
 const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
@@ -43,18 +46,20 @@ async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
 }
 
-function getInviteIdFromEmailParams(emailParams) {
+function getInviteTokenFromEmailParams(emailParams) {
   const { text } = emailParams
-  const [, inviteId] = text.match(/\?inviteId=(.*)\s/i)
+  const [, inviteId] = text.match(/\?token=(.*)\s/i)
   return inviteId
 }
 
 async function validateInviteExistanceFromEmail(emailParams) {
   // Validate that invite exists
-  const inviteId = getInviteIdFromEmailParams(emailParams)
-  expect(inviteId).to.be.ok
-  const invite = await getInviteFromDB(inviteId)
+  const token = getInviteTokenFromEmailParams(emailParams)
+  expect(token).to.be.ok
+  const invite = await getInviteByToken(token)
   expect(invite).to.be.ok
+
+  return invite
 }
 
 describe('[Stream & Server Invites]', () => {
@@ -252,23 +257,51 @@ describe('[Stream & Server Invites]', () => {
         })
       })
 
+      it("can't invite with an invalid role", async () => {
+        const result = await createInvite({
+          email: 'badroleguy@speckle.com',
+          streamId: myPrivateStream.id,
+          role: 'aaa'
+        })
+
+        expect(result.data?.streamInviteCreate).to.be.not.ok
+        expect(result.errors).to.be.ok
+        expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
+          'Unexpected stream invite role'
+        )
+      })
+
       const userTypesDataSet = [
         {
-          display: 'registered',
+          display: 'registered user',
           user: otherGuy,
           stream: myPrivateStream,
           email: null
         },
         {
-          display: 'unregistered',
+          display: 'registered user (with custom role)',
+          user: otherGuy,
+          stream: myPrivateStream,
+          email: null,
+          role: Roles.Stream.Owner
+        },
+        {
+          display: 'unregistered user',
           user: null,
           stream: myPrivateStream,
           email: 'randomer22@lool.com'
+        },
+        {
+          display: 'unregistered user (with custom role)',
+          user: null,
+          stream: myPrivateStream,
+          email: 'randomer22@lool.com',
+          Role: Roles.Stream.Reviewer
         }
       ]
 
-      userTypesDataSet.forEach(({ display, user, stream, email }) => {
-        it(`can invite a ${display} user`, async () => {
+      userTypesDataSet.forEach(({ display, user, stream, email, role }) => {
+        it(`can invite a ${display}`, async () => {
           const messagePart1 = '1234hiiiiduuuuude'
           const messagePart2 = 'yepppppp'
           const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
@@ -284,7 +317,8 @@ describe('[Stream & Server Invites]', () => {
             email,
             message: unsanitaryMessage,
             userId: user?.id || null,
-            streamId: stream?.id || null
+            streamId: stream?.id || null,
+            role: role || null
           })
 
           // Check that operation was successful
@@ -303,7 +337,8 @@ describe('[Stream & Server Invites]', () => {
           expect(emailParams.html).to.not.contain(messagePart2)
 
           // Validate that invite exists
-          await validateInviteExistanceFromEmail(emailParams)
+          const invite = await validateInviteExistanceFromEmail(emailParams)
+          expect(invite.role).to.eq(role || Roles.Stream.Contributor)
         })
       })
 
@@ -348,21 +383,24 @@ describe('[Stream & Server Invites]', () => {
       const serverInvite1 = {
         message: 'some server invite1',
         email: 'serverinvite1recipient@google.com',
-        inviteId: undefined
+        inviteId: undefined,
+        token: undefined
       }
 
       const streamInvite1 = {
         message: 'some stream invite1',
         email: 'somestreaminvite1recipient@google.com',
         stream: myPrivateStream,
-        inviteId: undefined
+        inviteId: undefined,
+        token: undefined
       }
 
       const streamInvite2 = {
         message: 'some stream invite2',
         user: otherGuy,
         stream: myPrivateStream,
-        inviteId: undefined
+        inviteId: undefined,
+        token: undefined
       }
 
       const invites = [serverInvite1, streamInvite1, streamInvite2]
@@ -382,7 +420,10 @@ describe('[Stream & Server Invites]', () => {
         // Creating some invites
         await Promise.all(
           invites.map((i) =>
-            createInviteDirectly(i, me.id).then((id) => (i.inviteId = id))
+            createInviteDirectly(i, me.id).then((o) => {
+              i.inviteId = o.inviteId
+              i.token = o.token
+            })
           )
         )
       })
@@ -414,18 +455,23 @@ describe('[Stream & Server Invites]', () => {
           {
             message: 'some server invite1',
             email: 'serverinvite1recipient@google.com',
-            inviteId: undefined
+            inviteId: undefined,
+            token: undefined
           },
           {
             message: 'some stream invite1',
             email: 'somestreaminvite1recipient@google.com',
             stream: myPrivateStream,
-            inviteId: undefined
+            inviteId: undefined,
+            token: undefined
           }
         ]
         await Promise.all(
           deletableInvites.map((i) =>
-            createInviteDirectly(i, me.id).then((id) => (i.inviteId = id))
+            createInviteDirectly(i, me.id).then((o) => {
+              i.inviteId = o.inviteId
+              i.token = o.token
+            })
           )
         )
 
@@ -489,6 +535,12 @@ describe('[Stream & Server Invites]', () => {
             userId: otherGuy.id,
             message: 'waddup',
             streamId: myPrivateStream.id
+          },
+          {
+            email: 'someroleguy@asdasdad.com',
+            message: 'yoo bruh',
+            streamId: myPrivateStream.id,
+            role: Roles.Stream.Reviewer
           }
         ]
 
@@ -511,7 +563,9 @@ describe('[Stream & Server Invites]', () => {
           expect(emailParams).to.be.ok
           expect(emailParams.html).to.contain(inputData.message)
           expect(emailParams.text).to.contain(inputData.message)
-          await validateInviteExistanceFromEmail(emailParams)
+
+          const invite = await validateInviteExistanceFromEmail(emailParams)
+          expect(invite.role).to.eq(inputData.role || Roles.Stream.Contributor)
         }
       })
     })
@@ -521,26 +575,28 @@ describe('[Stream & Server Invites]', () => {
         message: 'some stream invite3',
         user: me,
         stream: otherGuysStream,
-        inviteId: undefined
+        inviteId: undefined,
+        token: undefined
       }
 
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
-        await createInviteDirectly(inviteFromOtherGuy, otherGuy.id).then(
-          (id) => (inviteFromOtherGuy.inviteId = id)
-        )
+        await createInviteDirectly(inviteFromOtherGuy, otherGuy.id).then((o) => {
+          inviteFromOtherGuy.inviteId = o.inviteId
+          inviteFromOtherGuy.token = o.token
+        })
       })
 
       const inviteRetrievalDataset = [
-        { display: 'by id', withId: true },
-        { display: 'without an invite ID', withId: false }
+        { display: 'by token', withId: true },
+        { display: 'without a token', withId: false }
       ]
       inviteRetrievalDataset.forEach(({ display, withId }) => {
         it(`the invite can be retrieved ${display}`, async () => {
           const result = await getStreamInvite(apollo, {
             streamId: inviteFromOtherGuy.stream.id,
-            inviteId: withId ? inviteFromOtherGuy.inviteId : null
+            token: withId ? inviteFromOtherGuy.token : null
           })
 
           expect(result.data?.streamInvite).to.be.ok
@@ -548,6 +604,7 @@ describe('[Stream & Server Invites]', () => {
 
           const data = result.data.streamInvite
           expect(data.inviteId).to.eq(inviteFromOtherGuy.inviteId)
+          expect(data.token).to.eq(inviteFromOtherGuy.token)
           expect(data.streamId).to.eq(inviteFromOtherGuy.stream.id)
           expect(data.title).to.eq(me.name)
 
@@ -565,12 +622,13 @@ describe('[Stream & Server Invites]', () => {
       ]
       useUpDataSet.forEach(({ display, accept }) => {
         it(`the invite can be ${display}`, async () => {
+          const token = inviteFromOtherGuy.token
           const inviteId = inviteFromOtherGuy.inviteId
           const streamId = inviteFromOtherGuy.stream.id
 
           const { data, errors } = await useUpStreamInvite(apollo, {
             accept,
-            inviteId,
+            token,
             streamId
           })
 
@@ -633,19 +691,24 @@ describe('[Stream & Server Invites]', () => {
 
         // Create a couple of static invites that shouldn't be mutated in tests
         await Promise.all([
-          createInviteDirectly(myInvite, me.id).then((id) => (myInvite.inviteId = id)),
-          createInviteDirectly(otherGuysInvite, otherGuy.id).then(
-            (id) => (otherGuysInvite.inviteId = id)
-          )
+          createInviteDirectly(myInvite, me.id).then((o) => {
+            myInvite.inviteId = o.inviteId
+            myInvite.token = o.token
+          }),
+          createInviteDirectly(otherGuysInvite, otherGuy.id).then((o) => {
+            otherGuysInvite.inviteId = o.inviteId
+            otherGuysInvite.token = o.token
+          })
         ])
       })
 
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
-        await createInviteDirectly(dynamicInvite, me.id).then(
-          (id) => (dynamicInvite.inviteId = id)
-        )
+        await createInviteDirectly(dynamicInvite, me.id).then((o) => {
+          dynamicInvite.inviteId = o.inviteId
+          dynamicInvite.token = o.token
+        })
       })
 
       it('a pending invite can be deleted', async () => {
@@ -670,8 +733,15 @@ describe('[Stream & Server Invites]', () => {
         expect(errors).to.be.not.ok
         expect(data.stream).to.be.ok
         expect(data.stream.id).to.eq(streamId)
-        expect(data.stream.pendingCollaborators || []).to.have.length(1)
-        expect(data.stream.pendingCollaborators[0].user?.id).to.eq(otherGuy.id)
+
+        const pendingCollaborators = data.stream.pendingCollaborators || []
+        expect(pendingCollaborators).to.have.length(1)
+
+        const pendingCollaborator = pendingCollaborators[0]
+        expect(pendingCollaborator.user?.id).to.eq(otherGuy.id)
+
+        // tokens shouldn't be resolved, as they're for other people
+        expect(pendingCollaborator.token).to.be.null
       })
 
       it("a foreign stream's pending collaborators can't be retrieved", async () => {

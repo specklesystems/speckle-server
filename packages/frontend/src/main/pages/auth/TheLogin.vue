@@ -102,11 +102,15 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { randomString } from '@/helpers/randomHelpers'
 import { isEmailValid } from '@/plugins/authHelpers'
-import { processSuccessfulAuth } from '@/main/lib/auth/services/authService'
+import {
+  getInviteTokenFromRoute,
+  processSuccessfulAuth
+} from '@/main/lib/auth/services/authService'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheLogin',
@@ -152,8 +156,7 @@ export default {
     serverApp: null,
     appId: null,
     suuid: null,
-    challenge: null,
-    inviteId: null
+    challenge: null
   }),
   computed: {
     strategies() {
@@ -162,6 +165,9 @@ export default {
     hasLocalStrategy() {
       return this.serverInfo.authStrategies.findIndex((s) => s.id === 'local') !== -1
     },
+    token() {
+      return getInviteTokenFromRoute(this.$route)
+    },
     registerRoute() {
       return {
         name: 'Register',
@@ -169,7 +175,7 @@ export default {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
           suuid: this.$route.query.suuid,
-          inviteId: this.$route.query.inviteId
+          token: this.token
         }
       }
     }
@@ -180,8 +186,6 @@ export default {
     const challenge = urlParams.get('challenge')
     const suuid = urlParams.get('suuid')
     this.suuid = suuid
-    const inviteId = urlParams.get('inviteId')
-    this.inviteId = inviteId
 
     this.$mixpanel.track('Visit Log In')
 
@@ -190,7 +194,7 @@ export default {
 
     if (!challenge && this.appId === 'spklwebapp') {
       this.challenge = randomString(10)
-      localStorage.setItem('appChallenge', this.challenge)
+      AppLocalStorage.set('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge
     }

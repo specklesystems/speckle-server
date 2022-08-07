@@ -144,13 +144,9 @@ module.exports = {
       sqlFilters += ' AND time > ?'
       sqlVariables.push(after)
     }
-    if (before) {
+    if (before || cursor) {
       sqlFilters += ' AND time < ?'
-      sqlVariables.push(before)
-    }
-    if (cursor) {
-      sqlFilters += ' AND time < ?'
-      sqlVariables.push(cursor)
+      sqlVariables.push(before || cursor)
     }
 
     const dbRawQuery = `

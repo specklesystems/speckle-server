@@ -74,7 +74,7 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import webhookQuery from '@/graphql/webhook.gql'
 
 export default {

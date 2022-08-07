@@ -16,7 +16,7 @@
   </v-chip>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import UserAvatar from '@/main/components/common/UserAvatar'
 
 export default {

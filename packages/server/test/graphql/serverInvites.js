@@ -12,42 +12,43 @@ const { gql } = require('apollo-server-express')
  *  email: string | null,
  *  userId: string | null,
  *  streamId: string,
- *  message: string
+ *  message: string,
+ *  role: string | null
  * }} StreamInviteCreateInput
  */
 
 const createServerInviteMutation = gql`
-  mutation ($input: ServerInviteCreateInput!) {
+  mutation CreateServerInvite($input: ServerInviteCreateInput!) {
     serverInviteCreate(input: $input)
   }
 `
 
 const createStreamInviteMutation = gql`
-  mutation ($input: StreamInviteCreateInput!) {
+  mutation CreateStreamInvite($input: StreamInviteCreateInput!) {
     streamInviteCreate(input: $input)
   }
 `
 
 const resendInviteMutation = gql`
-  mutation ($inviteId: String!) {
+  mutation ResendInvite($inviteId: String!) {
     inviteResend(inviteId: $inviteId)
   }
 `
 
 const batchCreateServerInviteMutation = gql`
-  mutation ($input: [ServerInviteCreateInput!]!) {
+  mutation BatchCreateServerInvite($input: [ServerInviteCreateInput!]!) {
     serverInviteBatchCreate(input: $input)
   }
 `
 
 const batchCreateStreamInviteMutation = gql`
-  mutation ($input: [StreamInviteCreateInput!]!) {
+  mutation BatchCreateStreamInvite($input: [StreamInviteCreateInput!]!) {
     streamInviteBatchCreate(input: $input)
   }
 `
 
 const deleteInviteMutation = gql`
-  mutation ($inviteId: String!) {
+  mutation DeleteInvite($inviteId: String!) {
     inviteDelete(inviteId: $inviteId)
   }
 `
@@ -59,6 +60,7 @@ const streamInviteFragment = gql`
     streamId
     title
     role
+    token
     invitedBy {
       id
       name
@@ -79,8 +81,8 @@ const streamInviteFragment = gql`
 `
 
 const streamInviteQuery = gql`
-  query ($streamId: String!, $inviteId: String) {
-    streamInvite(streamId: $streamId, inviteId: $inviteId) {
+  query GetStreamInvite($streamId: String!, $token: String) {
+    streamInvite(streamId: $streamId, token: $token) {
       ...StreamInviteData
     }
   }
@@ -89,7 +91,7 @@ const streamInviteQuery = gql`
 `
 
 const streamInvitesQuery = gql`
-  query {
+  query GetStreamInvites {
     streamInvites {
       ...StreamInviteData
     }
@@ -99,24 +101,25 @@ const streamInvitesQuery = gql`
 `
 
 const useStreamInviteMutation = gql`
-  mutation ($accept: Boolean!, $streamId: String!, $inviteId: String!) {
-    streamInviteUse(accept: $accept, streamId: $streamId, inviteId: $inviteId)
+  mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
+    streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
   }
 `
 
 const cancelStreamInviteMutation = gql`
-  mutation ($streamId: String!, $inviteId: String!) {
+  mutation CancelStreamInvite($streamId: String!, $inviteId: String!) {
     streamInviteCancel(streamId: $streamId, inviteId: $inviteId)
   }
 `
 
 const streamPendingCollaboratorsQuery = gql`
-  query ($streamId: String!) {
+  query GetStreamPendingCollaborators($streamId: String!) {
     stream(id: $streamId) {
       id
       pendingCollaborators {
         inviteId
         title
+        token
         user {
           id
           name
@@ -209,10 +212,10 @@ module.exports = {
    * streamInvite query
    * @param {import('apollo-server-express').ApolloServer} apollo
    */
-  getStreamInvite(apollo, { streamId, inviteId }) {
+  getStreamInvite(apollo, { streamId, token }) {
     return apollo.executeOperation({
       query: streamInviteQuery,
-      variables: { streamId, inviteId }
+      variables: { streamId, token }
     })
   },
   /**
@@ -228,10 +231,10 @@ module.exports = {
    * streamInviteUse mutation
    * @param {import('apollo-server-express').ApolloServer} apollo
    */
-  useUpStreamInvite(apollo, { accept, streamId, inviteId }) {
+  useUpStreamInvite(apollo, { accept, streamId, token }) {
     return apollo.executeOperation({
       query: useStreamInviteMutation,
-      variables: { accept, streamId, inviteId }
+      variables: { accept, streamId, token }
     })
   },
   /**

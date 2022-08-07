@@ -27,7 +27,7 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import UserDeleteDialog from '@/main/dialogs/UserDeleteDialog'
 import { signOut } from '@/plugins/authHelpers'
 

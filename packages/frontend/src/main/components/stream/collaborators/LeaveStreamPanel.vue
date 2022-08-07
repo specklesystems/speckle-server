@@ -45,7 +45,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import SectionCard from '@/main/components/common/SectionCard.vue'
-import { leaveStreamMutation } from '@/graphql/generated/graphql'
+import { LeaveStreamDocument } from '@/graphql/generated/graphql'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 export default Vue.extend({
   name: 'LeaveStreamPanel',
@@ -65,9 +66,14 @@ export default Vue.extend({
     async leaveStream() {
       const { streamId } = this
 
-      const { data, errors } = await leaveStreamMutation(this, {
-        variables: { streamId }
-      })
+      const results = await this.$apollo
+        .mutate({
+          mutation: LeaveStreamDocument,
+          variables: { streamId }
+        })
+        .catch(convertThrowIntoFetchResult)
+
+      const { data, errors } = results
 
       if (data?.streamLeave) {
         this.$triggerNotification({

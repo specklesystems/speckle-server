@@ -2,11 +2,12 @@ import '@/bootstrapper'
 import Vue from 'vue'
 
 import App from '@/main/App.vue'
-import store from '@/main/store'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import * as MixpanelManager from '@/mixpanelManager'
 
-import { createProvider } from '@/vue-apollo'
+import { provide } from 'vue'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { createProvider, installVueApollo } from '@/config/apolloConfig'
 import {
   checkAccessCodeAndGetTokens,
   prefetchUserAndSetSuuid
@@ -26,6 +27,9 @@ Vue.use(VueFilterDateFormat)
 
 import PerfectScrollbar from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
+// adds various helper methods
+import '@/plugins/helpers'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 Vue.use(PerfectScrollbar)
 
@@ -46,13 +50,13 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
-// adds various helper methods
-import '@/plugins/helpers'
+const AuthToken = AppLocalStorage.get(LocalStorageKeys.AuthToken)
+const RefreshToken = AppLocalStorage.get(LocalStorageKeys.RefreshToken)
 
-const AuthToken = localStorage.getItem(LocalStorageKeys.AuthToken)
-const RefreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
 const apolloProvider = createProvider()
+installVueApollo(apolloProvider)
 
+// TODO: Sort out error handling here, if something goes wrong it just goes into an infinite loop
 if (AuthToken) {
   prefetchUserAndSetSuuid(apolloProvider.defaultClient)
     .then(() => {
@@ -62,6 +66,7 @@ if (AuthToken) {
       if (RefreshToken) {
         // TODO: try to rotate token & prefetch user, etc.
       }
+
       window.location = `${window.location.origin}/authn/login`
     })
 } else {
@@ -87,8 +92,9 @@ function postAuthInit() {
   new Vue({
     router,
     vuetify,
-    store,
-    apolloProvider,
+    setup() {
+      provide(DefaultApolloClient, apolloProvider.defaultClient)
+    },
     render: (h) => h(App)
   }).$mount('#app')
 }

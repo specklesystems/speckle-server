@@ -12,7 +12,7 @@
       <v-icon small>mdi-shield-alert-outline</v-icon>
       This Speckle server is invite only.
     </div>
-    <v-alert v-if="serverInfo.inviteOnly && !inviteId" type="info">
+    <v-alert v-if="serverInfo.inviteOnly && !token" type="info">
       This server is invite only. If you have received an invitation email, please
       follow the instructions in it.
     </v-alert>
@@ -106,7 +106,6 @@
                 single-line
                 style="margin-top: -12px"
                 prepend-icon="mdi-form-textbox-password"
-                @keydown="debouncedPwdTest"
               />
             </v-col>
             <v-col cols="12" sm="6">
@@ -161,7 +160,13 @@
               </v-row>
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" @click="registerUser">
+              <v-btn
+                block
+                large
+                color="primary"
+                :disabled="loading"
+                @click="registerUser"
+              >
                 Create Account
               </v-btn>
               <p class="text-center"></p>
@@ -171,9 +176,7 @@
       </v-card-text>
     </div>
     <v-card-title
-      :class="`justify-center caption ${
-        serverInfo.inviteOnly && !inviteId ? 'pt-0' : ''
-      }`"
+      :class="`justify-center caption ${serverInfo.inviteOnly && !token ? 'pt-0' : ''}`"
     >
       <div class="mx-4 align-self-center">Already have an account?</div>
       <div class="mx-4 align-self-center">
@@ -183,13 +186,16 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
-import debounce from 'lodash/debounce'
+import { gql } from '@apollo/client/core'
 import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
-import { processSuccessfulAuth } from '@/main/lib/auth/services/authService'
+import {
+  getInviteTokenFromRoute,
+  processSuccessfulAuth
+} from '@/main/lib/auth/services/authService'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheRegistration',
@@ -250,10 +256,13 @@ export default {
       appId: null,
       challenge: null,
       suuid: null,
-      inviteId: null
+      loading: false
     }
   },
   computed: {
+    token() {
+      return getInviteTokenFromRoute(this.$route)
+    },
     loginRoute() {
       return {
         name: 'Login',
@@ -261,7 +270,7 @@ export default {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
           suuid: this.$route.query.suuid,
-          inviteId: this.$route.query.inviteId
+          token: this.token
         }
       }
     },
@@ -278,8 +287,6 @@ export default {
     const challenge = urlParams.get('challenge')
     const suuid = urlParams.get('suuid')
     this.suuid = suuid
-    const inviteId = urlParams.get('inviteId')
-    this.inviteId = inviteId
 
     this.$mixpanel.track('Visit Sign Up')
 
@@ -288,25 +295,37 @@ export default {
 
     if (!challenge && this.appId === 'spklwebapp') {
       this.challenge = randomString({ length: 10 })
-      localStorage.setItem('appChallenge', this.challenge)
+      AppLocalStorage.set('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge
     }
   },
   methods: {
-    debouncedPwdTest: debounce(async function () {
+    async validatePasswordStrength() {
       const result = await this.$apollo.query({
-        query: gql` query{ userPwdStrength(pwd:"${this.form.password}")}`
+        query: gql`
+          query ($pwd: String!) {
+            userPwdStrength(pwd: $pwd)
+          }
+        `,
+        variables: { pwd: this.form.password }
       })
       this.passwordStrength = result.data.userPwdStrength.score * 25
       this.pwdSuggestions = result.data.userPwdStrength.feedback.suggestions[0]
-    }, 1000),
+    },
     async registerUser() {
+      if (this.loading) return
+
       try {
         const valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf)
           throw new Error('Passwords do not match')
+
+        this.loading = true
+
+        // Validate password strength
+        await this.validatePasswordStrength()
         if (this.passwordStrength < 3) throw new Error('Password too weak')
 
         const user = {
@@ -320,7 +339,7 @@ export default {
 
         const res = await fetch(
           `/auth/local/register?challenge=${this.challenge}${
-            this.inviteId ? '&inviteId=' + this.inviteId : ''
+            this.token ? '&token=' + this.token : ''
           }`,
           {
             method: 'POST',
@@ -334,7 +353,7 @@ export default {
 
         if (res.redirected) {
           this.$mixpanel.track('Sign Up', {
-            isInvite: this.inviteId !== null,
+            isInvite: this.token !== null,
             type: 'action'
           })
           processSuccessfulAuth(res)
@@ -346,6 +365,8 @@ export default {
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true
+      } finally {
+        this.loading = false
       }
     }
   }

@@ -23,9 +23,16 @@ declare module 'vue/types/vue' {
 
     /**
      * Check if auth token is stored in localStorage
-     * @deprecated Use `isLoggedInQuery`/`isLoggedInMixin` instead
+     * @deprecated Use `isLoggedInQuery`/`isLoggedInMixin`/`useIsLoggedIn` instead
      */
     $loggedIn: () => boolean
+  }
+
+  export interface VueConfiguration {
+    /**
+     * To enable VueApollov4 to work
+     */
+    globalProperties?: Record<string, unknown>
   }
 }
 

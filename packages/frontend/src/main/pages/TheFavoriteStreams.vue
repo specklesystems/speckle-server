@@ -36,16 +36,16 @@ usePortalState
   </div>
 </template>
 <script lang="ts">
-import Vue, { defineComponent } from 'vue'
+import { computed, defineComponent } from 'vue'
 import { STANDARD_PORTAL_KEYS, usePortalState } from '@/main/utils/portalStateManager'
 import {
   UserFavoriteStreamsQuery,
-  UserFavoriteStreamsQueryVariables,
-  useUserFavoriteStreamsQuery
+  UserFavoriteStreamsDocument
 } from '@/graphql/generated/graphql'
 import type { StateChanger } from 'vue-infinite-loading'
 import type { Get } from 'type-fest'
-import type { SmartQuery } from 'vue-apollo/types/vue-apollo'
+import { useQuery } from '@vue/apollo-composable'
+import { Nullable } from '@/helpers/typeHelpers'
 
 export default defineComponent({
   name: 'TheFavoriteStreams',
@@ -61,15 +61,13 @@ export default defineComponent({
       'favorite-streams',
       0
     )
-    return { canRenderToolbarPortal }
-  },
-  data() {
-    return {
-      user: undefined as UserFavoriteStreamsQuery['user']
-    }
-  },
-  apollo: {
-    user: useUserFavoriteStreamsQuery()
+
+    const { result, fetchMore: userFetchMore } = useQuery(UserFavoriteStreamsDocument, {
+      cursor: null as Nullable<string>
+    })
+    const user = computed(() => result.value?.user)
+
+    return { canRenderToolbarPortal, user, userFetchMore }
   },
   computed: {
     streams(): NonNullable<
@@ -88,7 +86,7 @@ export default defineComponent({
     }
   },
   methods: {
-    infiniteHandler($state: StateChanger) {
+    async infiniteHandler($state: StateChanger) {
       if (this.allStreamsLoaded) {
         $state.loaded()
         $state.complete()
@@ -96,44 +94,18 @@ export default defineComponent({
       }
 
       // Fetch more favorites
-      const userQuery: SmartQuery<
-        Vue,
-        UserFavoriteStreamsQuery,
-        UserFavoriteStreamsQueryVariables
-      > = this.$apollo.queries.user
-      userQuery.fetchMore({
+      const result = await this.userFetchMore({
         variables: {
           cursor: this.user?.favoriteStreams?.cursor || null
-        },
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newFavorites = fetchMoreResult?.user?.favoriteStreams
-          const oldFavorites = previousResult.user?.favoriteStreams
-
-          let { items: newItems } = newFavorites || {}
-          let { items: allItems } = oldFavorites || {}
-          newItems ||= []
-          allItems ||= []
-
-          for (const stream of newItems) {
-            if (allItems.findIndex((s) => s.id === stream.id) === -1)
-              allItems.push(stream)
-          }
-
-          // set vue-infinite state
-          newItems.length === 0 ? $state.complete() : $state.loaded()
-
-          return {
-            ...previousResult,
-            user: {
-              ...previousResult.user,
-              favoriteStreams: {
-                ...(fetchMoreResult?.user?.favoriteStreams || {}),
-                items: allItems
-              }
-            }
-          } as UserFavoriteStreamsQuery
         }
       })
+
+      const newItems = result?.data?.user?.favoriteStreams?.items || []
+      if (!newItems.length) {
+        $state.complete()
+      } else {
+        $state.loaded()
+      }
     }
   }
 })

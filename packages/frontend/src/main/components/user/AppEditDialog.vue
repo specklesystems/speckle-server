@@ -87,7 +87,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { fullServerInfoQuery } from '@/graphql/server'
 
 export default {

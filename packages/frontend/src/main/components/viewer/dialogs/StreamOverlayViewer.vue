@@ -85,7 +85,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 export default {
   name: 'StreamOverlayViewer',
@@ -100,7 +100,6 @@ export default {
       default: () => null
     }
   },
-  apollo: {},
   data() {
     return {
       items: ['All Commits'],
@@ -158,7 +157,7 @@ export default {
       }
       if (pcs.length !== 1) {
         const streamId = pcs[2]
-        if (streamId !== this.$route.params.streamId) {
+        if (streamId !== this.streamId) {
           this.objectIdError = 'Objects do not belong to the same stream.'
           this.objectId = null
           return

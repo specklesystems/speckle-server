@@ -8,6 +8,7 @@ metadata:
   labels:
     app: speckle-server
     release: kube-prometheus-stack
+{{ include "speckle.labels" . | indent 4 }}
 spec:
   selector:
     matchLabels:

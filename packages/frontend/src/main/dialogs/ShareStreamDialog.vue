@@ -89,19 +89,56 @@
               rounded
               @focus="copyToClipboard"
             ></v-text-field>
-            <div style="position: relative; top: -12px" class="d-flex align-center">
-              <v-checkbox
-                v-model="transparentBg"
-                class="ml-2 caption"
-                label=""
-              ></v-checkbox>
-              <span class="caption grey--text">
-                Transparent
-                <br />
-                background
-              </span>
-            </div>
           </div>
+          <v-expansion-panels>
+            <v-expansion-panel>
+              <v-expansion-panel-header>Embed Options</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-checkbox
+                  v-model="transparentBg"
+                  class="ml-2 caption"
+                  label="Transparent background"
+                  dense
+                ></v-checkbox>
+                <v-checkbox
+                  v-model="hideControls"
+                  class="ml-2 caption"
+                  label="Hide viewer controls"
+                  dense
+                ></v-checkbox>
+                <v-checkbox
+                  v-model="hideSidebar"
+                  dense
+                  class="ml-2 caption"
+                  label="Hide viewer sidebar (filters, views, etc.)"
+                ></v-checkbox>
+                <v-checkbox
+                  v-model="hideSelectionInfo"
+                  dense
+                  class="ml-2 caption"
+                  label="Hide object selection info"
+                ></v-checkbox>
+                <v-checkbox
+                  v-model="preventScroll"
+                  dense
+                  class="ml-2 caption"
+                  label="Prevent scrolling (zooming)"
+                ></v-checkbox>
+                <v-checkbox
+                  v-model="autoload"
+                  dense
+                  class="ml-2 caption"
+                  label="Load model automatically"
+                ></v-checkbox>
+                <v-checkbox
+                  v-model="slideshow"
+                  dense
+                  class="ml-2 caption"
+                  label="Comment slideshow mode"
+                ></v-checkbox>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
         </v-card-text>
       </div>
     </v-sheet>
@@ -218,7 +255,7 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import { commonStreamFieldsFragment } from '@/graphql/streams'
 import InviteDialog from '@/main/dialogs/InviteDialog.vue'
 import UserAvatar from '@/main/components/common/UserAvatar.vue'
@@ -239,6 +276,12 @@ export default {
     return {
       swapPermsLoading: false,
       transparentBg: false,
+      hideControls: false,
+      hideSidebar: false,
+      hideSelectionInfo: false,
+      preventScroll: false,
+      autoload: false,
+      slideshow: false,
       inviteDialogVisible: false
     }
   },
@@ -306,6 +349,14 @@ export default {
       if (this.transparentBg) {
         url += `&transparent=true`
       }
+
+      if (this.hideControls) url += `&hidecontrols=true`
+      if (this.hideSidebar) url += `&hidesidebar=true`
+      if (this.hideSelectionInfo) url += `&hideselectioninfo=true`
+      if (this.autoload) url += `&autoload=true`
+      if (this.preventScroll) url += `&noscroll=true`
+      if (this.slideshow) url += `&commentslideshow=true`
+
       return `<iframe src="${url}" width="600" height="400" frameborder="0"></iframe>`
     },
     async changeVisibility() {

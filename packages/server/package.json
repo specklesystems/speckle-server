@@ -15,13 +15,19 @@
     "node": "^16.0.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development DEBUG='speckle:*' nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env,gql",
-    "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
+    "build": "tsc -p ./tsconfig.build.json",
+    "build:watch": "tsc -p ./tsconfig.build.json -w",
+    "run:watch": "cross-env NODE_ENV=development DEBUG='speckle:*' nodemon ./bin/www --watch ./dist --watch ./assets --watch ./bin/www -e js,ts,graphql,env,gql",
+    "dev": "concurrently -r \"npm:build:watch\" \"npm:run:watch\"",
+    "dev:server:test": "cross-env NODE_ENV=test DEBUG='speckle:*' node ./bin/ts-www",
     "test": "cross-env NODE_ENV=test mocha",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter lcov mocha",
     "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "eslint . --ext .js,.ts",
-    "cli": "./bin/cli"
+    "lint:tsc": "tsc --noEmit",
+    "cli": "ts-node ./modules/cli/index.js",
+    "migrate": "yarn cli db migrate",
+    "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.100.0",
@@ -31,8 +37,7 @@
     "@sentry/tracing": "^6.17.9",
     "apollo-server-express": "^2.19.0",
     "apollo-server-testing": "^2.19.0",
-    "auto-load": "^3.0.4",
-    "bcrypt": "5.0.0",
+    "bcrypt": "^5.0.0",
     "busboy": "^1.4.0",
     "compression": "^1.7.4",
     "connect-redis": "^6.1.1",
@@ -80,10 +85,21 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^7.1.0",
+    "@graphql-codegen/cli": "2.11.3",
+    "@graphql-codegen/typescript": "2.7.2",
+    "@graphql-codegen/typescript-operations": "^2.5.2",
+    "@graphql-codegen/typescript-resolvers": "2.7.2",
+    "@swc/core": "^1.2.222",
+    "@types/compression": "^1.7.2",
+    "@types/debug": "^4.1.7",
+    "@types/express": "^4.17.13",
     "@types/lodash": "^4.14.180",
     "@types/mocha": "^7.0.2",
     "@types/module-alias": "^2.0.1",
+    "@types/verror": "^1.10.6",
     "@types/yargs": "^17.0.10",
+    "@typescript-eslint/eslint-plugin": "^5.32.0",
+    "@typescript-eslint/parser": "^5.32.0",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
     "apollo-link": "^1.2.14",
@@ -105,6 +121,9 @@
     "nyc": "^15.0.1",
     "prettier": "^2.5.1",
     "supertest": "^4.0.2",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.0.0",
+    "typescript": "^4.6.4",
     "ws": "^7.5.7",
     "yargs": "^17.3.1"
   },
@@ -112,8 +131,5 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
-  },
-  "_moduleAliases": {
-    "@": "."
   }
 }

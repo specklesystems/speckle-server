@@ -1,6 +1,7 @@
+import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import { limitedUserFieldsFragment } from '@/graphql/fragments/user'
 import { commonStreamFieldsFragment } from '@/graphql/streams'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
 export const commonUserFieldsFragment = gql`
   fragment CommonUserFields on User {
@@ -138,4 +139,21 @@ export const adminUsersListQuery = gql`
       }
     }
   }
+`
+
+export const userTimelineQuery = gql`
+  query UserTimeline($cursor: DateTime) {
+    user {
+      id
+      timeline(cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...ActivityMainFields
+        }
+      }
+    }
+  }
+
+  ${activityMainFieldsFragment}
 `

@@ -68,6 +68,7 @@
           v-if="c"
           :comment="c"
           :stream="stream"
+          :stream-id="$route.params.streamId"
           @deleted="handleDeletion"
         />
       </v-col>
@@ -90,12 +91,13 @@
   </div>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
+import { setSelectedCommentMetaData } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   name: 'TheComments',
@@ -171,7 +173,7 @@ export default {
         variables() {
           return { streamId: this.$route.params.streamId }
         },
-        updateQuery(prevResult, { subscriptionData }) {
+        updateQuery(_, { subscriptionData }) {
           const { comment } = subscriptionData.data.commentActivity
           if (this.localComments.findIndex((lc) => comment.id === lc.id) === -1) {
             this.localComments.push(comment)
@@ -193,7 +195,7 @@ export default {
   },
   methods: {
     handleDeletion(comment) {
-      this.$store.commit('setCommentSelection', { comment: null })
+      setSelectedCommentMetaData(null)
       const indx = this.localComments.findIndex((lc) => lc.id === comment.id)
       this.localComments.splice(indx, 1)
     },

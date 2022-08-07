@@ -5,6 +5,8 @@ kind: ConfigMap
 metadata:
   name: postgres-certificate
   namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
 data:
   ca-certificate.crt: |
 {{ .Values.db.certificate | indent 4 }}

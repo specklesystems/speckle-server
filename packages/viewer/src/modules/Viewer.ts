@@ -303,12 +303,11 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public async unloadAll() {
-    for (const key of Object.keys(this.loaders)) {
-      await this.loaders[key].unload()
-      delete this.loaders[key]
-    }
+    const loaders = Object.values(this.loaders)
+    this.loaders = {}
+
+    await Promise.all(loaders.map((l) => l.unload()))
     await this.applyFilter(null)
-    return
   }
 
   public async applyFilter(filter: unknown) {

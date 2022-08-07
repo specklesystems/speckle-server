@@ -1,8 +1,9 @@
+import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import {
   limitedUserFieldsFragment,
   streamCollaboratorFieldsFragment
 } from '@/graphql/fragments/user'
-import gql from 'graphql-tag'
+import { gql } from '@apollo/client/core'
 
 /**
  * Common stream fields when querying for streams
@@ -75,6 +76,31 @@ export const streamWithCollaboratorsQuery = gql`
   ${streamCollaboratorFieldsFragment}
 `
 
+export const streamWithActivityQuery = gql`
+  query StreamWithActivity($id: String!, $cursor: DateTime) {
+    stream(id: $id) {
+      id
+      name
+      createdAt
+      commits {
+        totalCount
+      }
+      branches {
+        totalCount
+      }
+      activity(cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...ActivityMainFields
+        }
+      }
+    }
+  }
+
+  ${activityMainFieldsFragment}
+`
+
 /**
  * Remove authenticated user from the collaborators list
  */
@@ -90,5 +116,43 @@ export const leaveStreamMutation = gql`
 export const updateStreamPermissionMutation = gql`
   mutation UpdateStreamPermission($params: StreamUpdatePermissionInput!) {
     streamUpdatePermission(permissionParams: $params)
+  }
+`
+
+/**
+ * Get a stream's first commit
+ */
+export const streamFirstCommitQuery = gql`
+  query StreamFirstCommit($id: String!) {
+    stream(id: $id) {
+      id
+      commits(limit: 1) {
+        totalCount
+        items {
+          id
+          referencedObject
+        }
+      }
+    }
+  }
+`
+
+/**
+ * Get a stream branch's first commit
+ */
+export const streamBranchFirstCommitQuery = gql`
+  query StreamBranchFirstCommit($id: String!, $branch: String!) {
+    stream(id: $id) {
+      id
+      branch(name: $branch) {
+        commits(limit: 1) {
+          totalCount
+          items {
+            id
+            referencedObject
+          }
+        }
+      }
+    }
   }
 `

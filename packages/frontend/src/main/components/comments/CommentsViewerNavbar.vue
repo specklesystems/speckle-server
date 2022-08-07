@@ -64,8 +64,8 @@
           :key="comment.id + '-card-sidebar'"
           no-gutters
           :class="`${isUnread(comment) ? 'border' : ''} my-2 property-row rounded-lg ${
-            $store.state.selectedComment &&
-            $store.state.selectedComment.id === comment.id
+            viewerState.selectedCommentMetaData &&
+            viewerState.selectedCommentMetaData.id === comment.id
               ? 'elevation-5 selected'
               : ''
           }`"
@@ -109,10 +109,11 @@
           </v-col>
         </v-row>
         <v-btn
+          v-if="!isEmbed"
           small
           block
           class="rounded-xl"
-          :to="`/streams/${$route.params.streamId}/comments`"
+          :to="`/streams/${streamId}/comments`"
         >
           all stream comments
         </v-btn>
@@ -122,6 +123,10 @@
 </template>
 <script>
 import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
+import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
@@ -136,6 +141,21 @@ export default {
       type: String,
       default: 'all'
     }
+  },
+  setup() {
+    const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          selectedCommentMetaData
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState, streamId, resourceId, isEmbed }
   },
   data() {
     return {

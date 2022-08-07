@@ -1,5 +1,6 @@
 *node_modules
 packages/server/.env
+packages/server/dist
 packages/frontend/dist
 packages/viewer/dist
 packages/objectloader/dist
@@ -42,3 +43,6 @@ events.json
 !.yarn/versions
 
 *yarn-error.log
+
+# VSCode log files
+packages/server/.vscode/*.log

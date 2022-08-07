@@ -1,4 +1,5 @@
 'use strict'
+const { md5 } = require('@/modules/shared/helpers/cryptoHelper')
 const {
   getUserActivity,
   getStreamActivity,
@@ -112,6 +113,24 @@ module.exports = {
       })
 
       return { items, cursor, totalCount }
+    }
+  },
+
+  Activity: {
+    /**
+     * We need a unique ID to be able to properly cache stuff on the clientside
+     */
+    id(parent) {
+      if (!parent) return null
+      const { streamId, resourceId, userId, time } = parent
+      const plainIdentity = JSON.stringify({
+        streamId,
+        resourceId,
+        userId,
+        time
+      })
+
+      return md5(plainIdentity)
     }
   }
 }

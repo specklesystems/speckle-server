@@ -18,8 +18,6 @@
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
     "types": [
-      "vue-apollo",
-      "vue-apollo-smart-ops",
       "vue-infinite-loading",
       "type-fest",
       "vue",
