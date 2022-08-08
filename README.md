@@ -49,7 +49,7 @@ The Speckle Community hangs out on [the forum](https://discourse.speckle.works),
 
 ## Security
 
-For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems. 
+For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems.
 
 ## License
 

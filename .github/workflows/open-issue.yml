@@ -32,7 +32,7 @@ jobs:
 
           echo 'PROJECT_ID='$(jq '.data.organization.projectNext.id' project_data.json) >> $GITHUB_ENV
           echo 'STATUS_FIELD_ID='$(jq '.data.organization.projectNext.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
-     
+
       - name: Add Issue to project
         env:
           GITHUB_TOKEN: ${{secrets.GHPROJECT_TOKEN}}
@@ -46,5 +46,5 @@ jobs:
                 }
               }
             }' -f project=$PROJECT_ID -f id=$ISSUE_ID --jq '.data.addProjectNextItem.projectNextItem.id')"
-          
+
           echo 'ITEM_ID='$item_id >> $GITHUB_ENV

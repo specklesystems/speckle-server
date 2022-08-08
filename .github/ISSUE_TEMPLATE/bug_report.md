@@ -59,11 +59,13 @@ A clear and concise description of what you expected to happen.
 -->
 
 ## Screenshots
+
 <!---
 If applicable, add screenshots to help explain your problem.
 -->
 
 ## System Info
+
 If applicable, please fill in the below details - they help a lot!
 
 ### Desktop (please complete the following information):
@@ -105,6 +107,7 @@ Let us know what how you would solve this.
 -->
 
 #### Optional: Affected Projects
+
 <!---
 Does this issue propagate to other dependencies or dependents? If so, list them here with links!
 -->
