@@ -26,7 +26,7 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Common labels
 */}}
-{{- define "server.labels" -}}
+{{- define "backend.labels" -}}
 {{ include "speckle.commonLabels" . }}
 {{ include "backend.selectorLabels" . }}
 app.kubernetes.io/component: {{ include "backend.name" . }}
