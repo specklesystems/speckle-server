@@ -75,12 +75,12 @@ MINIO_ROOT_PASSWORD="$(kubectl get secret --namespace speckle minio -o jsonpath=
 set -e
 if [[ -z "${MINIO_ROOT_PASSWORD}" ]]; then
     helm upgrade minio bitnami/minio \
-        --namespace "${SPECKLE_NAMESPACE}" \
+        --namespace minio \
         --create-namespace \
         --install
 else
     helm upgrade minio bitnami/minio \
-        --namespace "${SPECKLE_NAMESPACE}" \
+        --namespace minio \
         --create-namespace \
         --set auth.rootPassword="${MINIO_ROOT_PASSWORD}" \
         --install
@@ -95,3 +95,29 @@ helm upgrade pgadmin runix/pgadmin4 \
     --namespace "${SPECKLE_NAMESPACE}" \
     --create-namespace \
     --install
+
+cat <<'EOF' | kubectl create --namespace ${SPECKLE_NAMESPACE} --filename -
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 100
+globalDefault: false
+description: "High priority (100) for business-critical services"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: medium-priority
+value: 50
+globalDefault: true
+description: "Medium priority (50) - dev/test services"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: low-priority
+value: -100
+globalDefault: false
+description: "Low priority (-100) - Non-critical microservices"
+EOF

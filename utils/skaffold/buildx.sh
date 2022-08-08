@@ -37,12 +37,12 @@ echo "BUILD_CONTEXT: ${BUILD_CONTEXT}"
 CACHE_DIR="/tmp/speckle_skaffold_buildx_cache"
 mkdir -p "${CACHE_DIR}"
 
-DOCKER_BUILDKIT=1 docker buildx build \
-    --builder skaffold-builder \
+docker buildx build \
+    --builder    skaffold-builder \
     --cache-from type=local,src=${CACHE_DIR} \
     --cache-to   type=local,dest=${CACHE_DIR},mode=max \
-    --platform ${PLATFORMS} \
-    --file "${DOCKERFILE}" \
-    --tag "${IMAGE}" \
+    --platform   ${PLATFORMS} \
+    --file       "${DOCKERFILE}" \
+    --tag        "${IMAGE}" \
     $args \
     ${BUILD_CONTEXT}

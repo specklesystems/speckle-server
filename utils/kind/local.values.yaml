@@ -1,0 +1,41 @@
+namespace: speckle
+
+domain: speckle.kind
+ssl_canonical_url: false
+
+db:
+  # postgres_url: secret -> postgres_url
+  useCertificate: false
+  certificate: '' # Multi-line string with the contents of `ca-certificate.crt`
+
+s3:
+  endpoint: ''
+  bucket: ''
+  access_key: ''
+  create_bucket: 'false'
+  # secret_key: secret -> s3_secret_key
+
+#redis:
+# redis_url: secret -> redis_url
+
+server:
+  # session_secret: secret -> `session_secret`
+  email:
+    enabled: false
+    host: ''
+    port: ''
+    username: ''
+    # password: secret -> `email_password`
+
+fileimport_service:
+  time_limit_min: 10
+
+secretName: server-vars
+
+enable_prometheus_monitoring: true
+
+helm_test_enabled: true
+
+create_namespace: false
+file_size_limit_mb: 100
+imagePullPolicy: IfNotPresent

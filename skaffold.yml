@@ -48,4 +48,20 @@ build:
   local:
     push: false
     useBuildkit: true
-    concurrency: 10
+    concurrency: 20
+deploy:
+  kubeContext: kind-speckle
+  helm:
+    releases:
+      - name: speckle-server
+        chartPath: ./utils/helm/speckle-server
+        artifactOverrides:
+          docker_image_tag: speckle/speckle-frontend
+          frontend: speckle/speckle-frontend
+          preview-service: speckle/speckle-preview-service
+        imageStrategy:
+          helm: {}
+        setValueTemplates:
+          docker_image_tag: '{{.IMAGE_TAG}}'
+        valuesFiles:
+          - utils/kind/local.values.yaml
