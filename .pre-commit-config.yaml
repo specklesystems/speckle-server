@@ -1,3 +1,4 @@
+# default pre-commit file, checks node.js code and basic file formatting
 repos:
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: 'v8.19.0' # Use the sha / tag you want to point at
@@ -24,10 +25,5 @@ repos:
     rev: 'v2.7.1' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
-
-  - repo: https://github.com/hadolint/hadolint
-    rev: 'v2.10.0'
-    hooks:
-      - id: hadolint
 ci:
   autoupdate_schedule: quarterly
