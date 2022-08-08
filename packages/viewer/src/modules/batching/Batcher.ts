@@ -127,7 +127,8 @@ export default class Batcher {
 
   public setObjectsFilterMaterial(
     rvs: NodeRenderView[],
-    filterMaterial: FilterMaterial
+    filterMaterial: FilterMaterial,
+    uniqueRvsOnly = true
   ): string[] {
     // const rvs = []
     // ids.forEach((val: string) => {
@@ -143,13 +144,15 @@ export default class Batcher {
     // })
     // console.log(ids)
     // console.log(rvs)
-    const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
+    let renderViews = rvs
+    if (uniqueRvsOnly) renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
+    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
     for (let i = 0; i < batchIds.length; i++) {
       if (!batchIds[i]) {
         continue
       }
       const batch = this.batches[batchIds[i]]
-      const views = rvs
+      const views = renderViews
         .filter((value) => value.batchId === batchIds[i])
         .map((rv: NodeRenderView) => {
           return {

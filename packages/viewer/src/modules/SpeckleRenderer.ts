@@ -324,7 +324,6 @@ export default class SpeckleRenderer {
       result.faceIndex !== undefined ? result.faceIndex : result.index
     )
     const hitId = rv.renderData.id
-
     // const hitNode = WorldTree.getInstance().findId(hitId)
 
     this.batcher.resetBatchesDrawRanges()

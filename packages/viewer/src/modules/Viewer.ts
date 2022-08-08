@@ -414,7 +414,7 @@ export class Viewer extends EventEmitter implements IViewer {
     /** This is the lazy approach */
     WorldTree.getInstance().walk((node: TreeNode) => {
       const propertyValue = node.model.raw[propertyName]
-      if (propertyValue !== null) {
+      if (propertyValue !== undefined) {
         const color = getColorHash(propertyValue.split('.').reverse()[0])
         if (data[color] === undefined) {
           data[color] = {
