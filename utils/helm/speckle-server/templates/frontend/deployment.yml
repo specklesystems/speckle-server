@@ -4,8 +4,6 @@ metadata:
   name: speckle-frontend
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-frontend
-    project: speckle-server
 {{ include "frontend.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicas }}
@@ -16,8 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        app: speckle-frontend
-        project: speckle-server
 {{ include "frontend.labels" . | indent 8 }}
     spec:
       containers:
@@ -47,7 +43,7 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 80
+            port: www
           initialDelaySeconds: 5
           periodSeconds: 5
         
