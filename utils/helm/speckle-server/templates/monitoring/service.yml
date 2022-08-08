@@ -4,8 +4,6 @@ metadata:
   name: speckle-monitoring-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-monitoring
-    project: speckle-server
 {{ include "monitoring.labels" . | indent 4 }}
 spec:
   selector:
