@@ -41,7 +41,7 @@ This doesn't make sense here, but in general, we should try to provide a small "
 
 ## Contributing
 
-Please make sure you read the [contribution guidelines](.github/CONTRIBUTING.md) for an overview of the best practices we try to follow.
+Please make sure you read the [contribution guidelines](.github/CONTRIBUTING.md) and [code of conduct](.github/CODE_OF_CONDUCT.md) for an overview of the practices we try to follow.
 
 ## Community
 
