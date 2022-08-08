@@ -145,7 +145,7 @@ jobs:
     environment:
       # £ delimited strings of regex for matches which should be published
       PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
-      PUBLISHABLE_BRANCHES: '^main$£^hotfix.*'
+      PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
     steps:
       - checkout
       - run: pwd
