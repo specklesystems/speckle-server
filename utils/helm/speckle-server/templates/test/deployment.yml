@@ -7,8 +7,6 @@ metadata:
   annotations:
     "helm.sh/hook": test
   labels:
-    app: speckle-test-deployment
-    project: speckle-server
 {{ include "test.labels" . | indent 4 }}
 spec:
   containers:

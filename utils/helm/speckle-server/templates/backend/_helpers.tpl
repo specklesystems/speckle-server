@@ -26,23 +26,19 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Common labels
 */}}
-{{- define "backend.labels" -}}
-helm.sh/chart: {{ include "speckle.chart" . }}
+{{- define "server.labels" -}}
+{{ include "speckle.commonLabels" . }}
 {{ include "backend.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/component: {{ include "backend.name" . }}
-app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
 {{- define "backend.selectorLabels" -}}
+app: {{ include "backend.name" . }}
 app.kubernetes.io/name: {{ include "backend.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*

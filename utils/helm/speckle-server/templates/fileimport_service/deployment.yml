@@ -5,8 +5,6 @@ metadata:
   name: speckle-fileimport-service
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-fileimport-service
-    project: speckle-server
 {{ include "fileimport_service.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.fileimport_service.replicas }}
@@ -17,8 +15,6 @@ spec:
   template:
     metadata:
       labels:
-        app: speckle-fileimport-service
-        project: speckle-server
 {{ include "fileimport_service.labels" . | indent 8 }}
     spec:
       containers:

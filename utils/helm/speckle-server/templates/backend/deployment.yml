@@ -4,8 +4,6 @@ metadata:
   name: speckle-backend
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-backend
-    project: speckle-server
 {{ include "backend.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.server.replicas }}
@@ -16,8 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        app: speckle-backend
-        project: speckle-server
 {{ include "backend.labels" . | indent 8 }}
     spec:
       containers:

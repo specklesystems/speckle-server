@@ -4,9 +4,7 @@ metadata:
   name: speckle-frontend
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-frontend
-    project: speckle-server
-{{ include "fileimport_service.labels" . | indent 4 }}
+{{ include "frontend.labels" . | indent 4 }}
 spec:
   selector:
     app: speckle-frontend
