@@ -31,15 +31,21 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+All labels
 */}}
 {{- define "speckle.labels" -}}
-helm.sh/chart: {{ include "speckle.chart" . }}
+{{ include "speckle.commonLabels" . }}
 {{ include "speckle.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+
+{{/*
+Common labels
+*/}}
+{{- define "speckle.commonLabels" -}}
+{{ include "speckle.labels.chart" . }}
+{{ include "speckle.labels.app-version" . }}
+{{ include "speckle.labels.managed-by" . }}
+{{ include "speckle.labels.part-of" . }}
 {{- end }}
 
 {{/*
@@ -47,5 +53,43 @@ Selector labels
 */}}
 {{- define "speckle.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "speckle.name" . }}
+{{ include "speckle.commonSelectorLabels" . }}
+{{- end }}
+
+{{/*
+Common selector labels
+*/}}
+{{- define "speckle.commonSelectorLabels" -}}
 app.kubernetes.io/instance: {{ .Release.Name }}
+project: speckle-server
+{{- end }}
+
+{{/*
+Chart label
+*/}}
+{{- define "speckle.labels.chart" -}}
+helm.sh/chart: {{ include "speckle.chart" . }}
+{{- end }}
+
+{{/*
+Managed-by label
+*/}}
+{{- define "speckle.labels.managed-by" -}}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+App Version label
+*/}}
+{{- define "speckle.labels.app-version" -}}
+{{- if .Chart.AppVersion -}}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Part-of label
+*/}}
+{{- define "speckle.labels.part-of" -}}
+app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
