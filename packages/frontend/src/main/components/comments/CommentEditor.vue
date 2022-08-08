@@ -166,9 +166,7 @@ export default Vue.extend({
       }
     },
     placeholder(): string {
-      return this.addingComment
-        ? 'Your comment... (Enter sends it)'
-        : 'Reply... (Enter sends it)'
+      return 'Press enter to send'
     },
     anyAttachmentsProcessing(): boolean {
       return this.currentFiles.some((a) => !isUploadProcessed(a))

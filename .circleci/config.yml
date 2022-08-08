@@ -20,6 +20,9 @@ workflows:
       - should-publish:
           filters: *filters-everything
 
+      - pre-commit:
+          filters: *filters-everything
+
       - docker-build-and-publish-server:
           context: &docker-hub-context
             - docker-hub
@@ -177,6 +180,45 @@ jobs:
           paths:
             - should-build
 
+  pre-commit:
+    parameters:
+      config_file:
+        default: ./.pre-commit-config.yaml
+        description: Optional, path to pre-commit config file.
+        type: string
+      cache_prefix:
+        default: ''
+        description: |
+          Optional cache prefix to be used on CircleCI. Can be used for cache busting or to ensure multiple jobs use different caches.
+        type: string
+    docker:
+      - image: cimg/python:3.10.6-node
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+      - run:
+          name: Install pre-commit
+          command: pre-commit --version || pip install --progress-bar=off pre-commit
+      - run:
+          name: Install pre-commit hooks
+          command: pre-commit install-hooks --config <<parameters.config_file>>
+      - save_cache:
+          key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+          paths:
+            - ~/.cache/pip
+            - ~/.cache/pre-commit
+      - run:
+          name: Run pre-commit
+          command: pre-commit run --all-files --config <<parameters.config_file>>
+      - run:
+          command: git --no-pager diff
+          name: git diff
+          when: on_fail
+
   test-server:
     docker:
       - image: cimg/node:16.15
@@ -225,6 +267,11 @@ jobs:
 
       - run:
           command: touch .env.test
+          working_directory: 'packages/server'
+
+      - run:
+          name: 'Lint with TypeScript Compiler'
+          command: yarn lint:tsc
           working_directory: 'packages/server'
 
       - run:
@@ -363,7 +410,7 @@ jobs:
       - run: cat workspace/env-vars >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
-            - '18:74:c4:b9:dc:66:b2:66:1d:81:56:0d:0a:87:9b:b1'
+            - '9a:57:23:d4:c9:5f:4d:83:d6:fa:b2:00:6b:8d:86:31'
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh

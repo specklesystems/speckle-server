@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-monitoring
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "monitoring.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.monitoring.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-monitoring
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+{{ include "monitoring.labels" . | indent 8 }}
+    spec:
+      containers:
+      - name: main
+        image: speckle/speckle-monitor-deployment:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+
+        ports:
+          - name: metrics
+            containerPort: 9092
+            protocol: TCP
+
+        resources:
+          requests:
+            cpu: {{ .Values.monitoring.requests.cpu }}
+            memory: {{ .Values.monitoring.requests.memory }}
+          limits:
+            cpu: {{ .Values.monitoring.limits.cpu }}
+            memory: {{ .Values.monitoring.limits.memory }}
+
+
+        {{- if .Values.db.useCertificate }}
+        volumeMounts:
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: PG_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: postgres_url
+
+          {{- if .Values.db.useCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+      priorityClassName: low-priority
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+
+      terminationGracePeriodSeconds: 10

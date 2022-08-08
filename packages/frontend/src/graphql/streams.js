@@ -118,3 +118,41 @@ export const updateStreamPermissionMutation = gql`
     streamUpdatePermission(permissionParams: $params)
   }
 `
+
+/**
+ * Get a stream's first commit
+ */
+export const streamFirstCommitQuery = gql`
+  query StreamFirstCommit($id: String!) {
+    stream(id: $id) {
+      id
+      commits(limit: 1) {
+        totalCount
+        items {
+          id
+          referencedObject
+        }
+      }
+    }
+  }
+`
+
+/**
+ * Get a stream branch's first commit
+ */
+export const streamBranchFirstCommitQuery = gql`
+  query StreamBranchFirstCommit($id: String!, $branch: String!) {
+    stream(id: $id) {
+      id
+      branch(name: $branch) {
+        commits(limit: 1) {
+          totalCount
+          items {
+            id
+            referencedObject
+          }
+        }
+      }
+    }
+  }
+`

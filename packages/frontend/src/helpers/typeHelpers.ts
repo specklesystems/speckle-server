@@ -1,3 +1,4 @@
+import { ReactiveVar } from '@apollo/client/core'
 import Vue, { VueConstructor } from 'vue'
 
 export type Nullable<T> = T | null
@@ -5,6 +6,13 @@ export type Nullable<T> = T | null
 export type Optional<T> = T | undefined
 
 export type MaybeFalsy<T> = T | null | undefined | false | '' | 0
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GetReactiveVarType<V extends ReactiveVar<any>> = V extends ReactiveVar<
+  infer T
+>
+  ? T
+  : unknown
 
 // Copied from Vue typings & improved ergonomics
 export type CombinedVueInstance<
@@ -40,7 +48,7 @@ export type VueWithMixins<
 
 /**
  * Create Vue base class with the specified mixins and correctly returned TypeScript types
- * TODO: Can this be re-written to accept an arbitrary amount of mixins?
+ * @deprecated Use Composition API instead
  * @returns
  */
 export function vueWithMixins<
