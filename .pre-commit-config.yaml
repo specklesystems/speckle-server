@@ -1,3 +1,4 @@
+# default pre-commit file, checks node.js code and basic file formatting
 repos:
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: 'v8.19.0' # Use the sha / tag you want to point at
@@ -24,22 +25,5 @@ repos:
     rev: 'v2.7.1' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
-
-  - repo: https://github.com/hadolint/hadolint
-    rev: 'v2.10.0'
-    hooks:
-      - id: hadolint
-
-  # Cannot use official repo as it relies on Docker, which cannot be supported by either pre-commit.ci or CircleCI
-  - repo: https://github.com/Jarmos-san/shellcheck-precommit
-    rev: 'v0.2.0'
-    hooks:
-      - id: shellcheck-system
-
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: 'v0.1.17'
-    hooks:
-      - id: helmlint
-
 ci:
   autoupdate_schedule: quarterly
