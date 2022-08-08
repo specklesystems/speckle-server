@@ -1,16 +1,4 @@
 apiVersion: v2
-name: speckle-server
-description: Speckle Server
-icon: 'https://speckle.xyz/logo.svg'
-
-type: application
-# This is the chart version. This version number should be incremented each time you make changes
-# to the chart and its templates, including the app version.
-# Versions are expected to follow Semantic Versioning (https://semver.org/)
-
-# Set by the build process to the correct value
-version: 0.1.0-local
-
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
@@ -18,3 +6,19 @@ version: 0.1.0-local
 
 # Set by the build process to the correct value
 appVersion: '0.1.0-local'
+description: Speckle Server
+home: 'https://speckle.systems/'
+icon: 'https://speckle.xyz/logo.svg'
+maintainers:
+  - name: Speckle Systems
+    url: 'https://speckle.systems/'
+name: speckle-server
+sources:
+  - 'https://github.com/specklesystems/speckle-server'
+type: application
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+
+# Set by the build process to the correct value
+version: 0.1.0-local

@@ -4,4 +4,4 @@ WORKDIR /speckle
 COPY utils/test-deployment .
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD [ "/speckle/run_tests.py" ]
+CMD [ "./run_tests.py" ]
