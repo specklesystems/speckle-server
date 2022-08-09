@@ -12,5 +12,10 @@ repos:
     hooks:
       - id: shellcheck-system
 
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: 'v0.1.17'
+    hooks:
+      - id: helmlint
+
 ci:
   autoupdate_schedule: quarterly
