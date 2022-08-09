@@ -46,8 +46,6 @@ export interface StringPropertyInfo extends PropertyInfo {
   valueGroups: [{ value: string; ids: string[] }]
 }
 
-// export type AnyPropInfo = NumericPropertyInfo | StringPropertyInfo
-
 export class FilteringManager {
   private viewer: any
   private renderer: any
@@ -105,11 +103,18 @@ export class FilteringManager {
           : FilterMaterialType.HIDDEN
       })
 
-      if (this.colorFilterState.enabled) {
-        // TODO: ghost/hide nonmatchin rvs
-      }
-
       returnFilter.visibilityState = this.isolateObjectsState
+    }
+
+    // The color filter state gets a last pass as we always want to hide/ghost
+    // elements that do not match.
+    if (
+      this.colorFilterState.enabled &&
+      this.colorFilterState.ghostNonMatchingObjects
+    ) {
+      this.renderer.applyFilter(this.colorFilterState.nonMatchingRvs, {
+        filterType: FilterMaterialType.HIDDEN
+      })
     }
 
     this.renderer.endFilter()
@@ -414,6 +419,7 @@ export class FilteringManager {
     colors: [],
     rampTexture: null as Texture,
     nonMatchingRvs: [],
+    ghostNonMatchingObjects: true,
     reset() {
       this.enabled = false
       this.type = null
@@ -421,11 +427,16 @@ export class FilteringManager {
       this.colors = []
       this.nonMatchingRvs = []
       this.rampTexture = null
+      this.ghostNonMatchingObjects = true
       console.log('Color filter state was reset')
     }
   }
 
-  public setColorFilter(property: any, resourceUrl: string = null) {
+  public setColorFilter(
+    property: any,
+    resourceUrl: string = null,
+    ghostNonMatchingObjects = true
+  ) {
     this.colorFilterState.reset() // debugging only
     if (this.colorFilterState.key === property.key) return
     // TODO: reset states etc.
@@ -445,7 +456,8 @@ export class FilteringManager {
       const matchingRvs = []
       // const valueGroupColors = ]
       WorldTree.getInstance().walk((node: TreeNode) => {
-        if (!node.model.atomic) return true
+        if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
+          return true
         const rvs = WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(
           node,
           node
@@ -465,7 +477,6 @@ export class FilteringManager {
 
       this.colorFilterState.nonMatchingRvs = nonMatchingRvs
       this.colorFilterState.colors = matchingRvs
-      console.log(this.colorFilterState)
     }
     if (property.type === 'string') {
       const valueGroupColors = []
@@ -484,7 +495,8 @@ export class FilteringManager {
       // TODO: keep track of the non-matching elements?
       const nonMatchingRvs = []
       WorldTree.getInstance().walk((node: TreeNode) => {
-        if (!node.model.atomic) return true
+        if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
+          return true
         const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
         const rvs = WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(
           node,
@@ -505,6 +517,7 @@ export class FilteringManager {
     }
     this.colorFilterState.key = property.key
     this.colorFilterState.type = property.type
+    this.colorFilterState.ghostNonMatchingObjects = ghostNonMatchingObjects
 
     return this.setFilters()
   }
