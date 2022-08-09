@@ -5,7 +5,7 @@ import { WorldTree } from '../tree/WorldTree'
 import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Batch, BatchUpdateRange, GeometryType } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 import PointBatch from './PointBatch'
 import { FilterMaterialType } from '../FilteringManager'
 import { WebGLRenderer } from 'three'
@@ -199,6 +199,7 @@ export default class Batcher {
             FilterMaterialType.HIDDEN
           )
         })
+        this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
       } else {
         const drawRanges = []
         for (let i = 0; i < this.batches[k].renderViews.length; i++) {
@@ -208,7 +209,7 @@ export default class Batcher {
               count: this.batches[k].renderViews[i].batchCount,
               material: this.materials.getFilterMaterial(
                 this.batches[k].renderViews[i],
-                FilterMaterialType.HIDDEN
+                FilterMaterialType.GHOST
               )
             })
           }

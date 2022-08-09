@@ -245,6 +245,16 @@ export default class MeshBatch implements Batch {
     }
     this.geometry.setIndex(targetIBO)
     this.geometry.index.needsUpdate = true
+
+    const hiddenGroup = this.geometry.groups.find((value) => {
+      return this.mesh.material[value.materialIndex].visible === false
+    })
+    if (hiddenGroup) {
+      this.setVisibleRange({
+        offset: 0,
+        count: hiddenGroup.start
+      })
+    }
   }
 
   /** This is the initial basic way of dealing with auto-completing draw groups

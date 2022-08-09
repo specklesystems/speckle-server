@@ -170,7 +170,9 @@ export default class LineBatch implements Batch {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
-        index < this.renderViews[k].batchEnd
+        index < this.renderViews[k].batchEnd &&
+        /** A bit cheaty, but ok for now */
+        this.colorBuffer.array[index * this.colorBuffer.stride + 3] !== 0
       ) {
         return this.renderViews[k]
       }

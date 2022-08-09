@@ -205,6 +205,7 @@ export default class SpeckleRenderer {
 
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
+    this.renderer.shadowMap.needsUpdate = true
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -315,6 +316,7 @@ export default class SpeckleRenderer {
     )
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
+      this.renderer.shadowMap.needsUpdate = true
       return
     }
 
@@ -323,12 +325,20 @@ export default class SpeckleRenderer {
       result.object.uuid,
       result.faceIndex !== undefined ? result.faceIndex : result.index
     )
+    /** Batch rejected picking. This only happens with hidden lines */
+    if (!rv) {
+      this.batcher.resetBatchesDrawRanges()
+      this.renderer.shadowMap.needsUpdate = true
+      return
+    }
+
     const hitId = rv.renderData.id
     // const hitNode = WorldTree.getInstance().findId(hitId)
 
     this.batcher.resetBatchesDrawRanges()
 
     this.batcher.isolateRenderView(hitId)
+    this.renderer.shadowMap.needsUpdate = true
     /** In case the above call has breaking bugs, just use this instead */
     // this.batcher.autoFillDrawRanges(
     //   this.batcher.setObjectsFilterMaterial([hitNode.model.id], {
@@ -355,17 +365,24 @@ export default class SpeckleRenderer {
         result.object.uuid,
         result.faceIndex !== undefined ? result.faceIndex : result.index
       )
-      const transformedBox = new Box3().copy(rv.aabb)
-      transformedBox.applyMatrix4(result.object.matrixWorld)
-      this.zoomToBox(transformedBox, 1.2, true)
+      if (rv) {
+        const transformedBox = new Box3().copy(rv.aabb)
+        transformedBox.applyMatrix4(result.object.matrixWorld)
+        this.zoomToBox(transformedBox, 1.2, true)
+        this.viewer.needsRender = true
+        this.viewer.emit(
+          'object-doubleclicked',
+          result ? rv.renderData.id : null,
+          result ? result.point : null
+        )
+      } else {
+        if (this.viewer.sectionBox.display.visible) {
+          this.zoomToBox(this.viewer.sectionBox.cube, 1.2, true)
+        } else {
+          this.zoomExtents()
+        }
+      }
     }
-
-    this.viewer.needsRender = true
-    this.viewer.emit(
-      'object-doubleclicked',
-      result ? rv.renderData.id : null,
-      result ? result.point : null
-    )
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
