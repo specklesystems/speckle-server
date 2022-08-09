@@ -28,8 +28,7 @@ RUN yarn workspaces focus
 
 COPY packages/server .
 
-RUN yarn build
-RUN yarn workspaces focus --production
+RUN yarn build && yarn workspaces focus --production
 
 FROM gcr.io/distroless/nodejs:16 as production-stage
 
