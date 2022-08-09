@@ -121,10 +121,6 @@ jobs:
         default: ./.pre-commit-config.yaml
         description: Optional, path to pre-commit config file.
         type: string
-      deployment_config_file:
-        default: ./.pre-commit-config.deployment.yaml
-        description: Optional, path to additional pre-commit config file.
-        type: string
       cache_prefix:
         default: ''
         description: |
@@ -148,10 +144,7 @@ jobs:
             - ~/.cache/pre-commit
       - run:
           name: Run pre-commit
-          command: pre-commit run --all-files --config <<parameters.config_file>>
-      - run:
-          name: Run deployment pre-commit
-          command: pre-commit run --all-files --config <<parameters.deployment_config_file>>
+          command: ./.husky/pre-commit
       - run:
           command: git --no-pager diff
           name: git diff

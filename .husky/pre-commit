@@ -1,15 +1,24 @@
-#!/usr/bin/env bash
-set -eo pipefail
+#!/usr/bin/env sh
+set -e
 [ -n "$CI" ] && exit 0
 
 . "$(dirname "$0")/_/husky.sh"
 
 yarn lint-staged
 
-if ! command -v pre-commit &> /dev/null; then exit 0; fi
-echo "🔍 Detected pre-commit on this system.  Running pre-commit checks..."
-pre-commit run --all-files --config .pre-commit-config.yaml
+echo "🔍 looking for additional linter dependencies"
 
-if ! command -v hadolint &> /dev/null || ! command -v helm &> /dev/null || ! command -v shellcheck &> /dev/null; then exit 0; fi
-echo "🔍 Detected additional dependencies (hadolint, helm, and shellcheck) on this system.  Running additional pre-commit checks..."
-pre-commit run --all-files --config .pre-commit-config.deployment.yaml
+check_dependencies_available() {
+  for i in "${@}"
+  do
+    if ! command -v "${i}"; then
+      echo "No ${i} executable found skipping additional checks" >&2
+      exit 0
+    fi
+  done
+}
+
+check_dependencies_available pre-commit hadolint helm shellcheck 
+
+echo "All systems functional, running additional pre-commit checks..."
+pre-commit run --all-files
