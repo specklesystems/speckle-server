@@ -1,3 +1,6 @@
+ARG PG_CONNECTION_STRING
+ARG NODE_EXTRA_CA_CERTS
+
 FROM debian:11-slim AS build-stage
 
 WORKDIR /build
@@ -19,10 +22,8 @@ RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirement
 
 FROM gcr.io/distroless/python3-debian11 as production-stage
 
-ARG PG_CONNECTION_STRING
-ARG NODE_EXTRA_CA_CERTS
-ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING}
-ENV NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS}
+ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING}, \
+    NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS}
 
 COPY --from=build-stage /venv /venv
 WORKDIR /app

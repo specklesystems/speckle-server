@@ -1,3 +1,5 @@
+ARG NODE_ENV=production
+
 FROM node:16.15-bullseye-slim as build-stage
 
 WORKDIR /speckle-server
@@ -26,7 +28,6 @@ RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirement
 
 # yarn install
 WORKDIR /speckle-server
-ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn

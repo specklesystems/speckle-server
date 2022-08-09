@@ -1,6 +1,9 @@
-FROM node:16.15-bullseye-slim as build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
+ARG FILE_SIZE_LIMIT_MB=100
+ARG NODE_ENV=production
+
+FROM node:16.15-bullseye-slim as build-stage
 
 WORKDIR /speckle-server
 
@@ -29,13 +32,10 @@ RUN yarn build
 RUN yarn workspaces focus --production
 
 FROM gcr.io/distroless/nodejs:16 as production-stage
-ARG FILE_SIZE_LIMIT_MB=100
-ARG NODE_ENV=production
-ARG SPECKLE_SERVER_VERSION=custom
 
-ENV FILE_SIZE_LIMIT_MB=${FILE_SIZE_LIMIT_MB}
-ENV NODE_ENV=${NODE_ENV}
-ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
+ENV FILE_SIZE_LIMIT_MB=${FILE_SIZE_LIMIT_MB}, \
+    NODE_ENV=${NODE_ENV}, \
+    SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 
 WORKDIR /speckle-server
 COPY --from=build-stage /speckle-server/wait /wait

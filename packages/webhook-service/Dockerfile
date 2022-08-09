@@ -1,3 +1,5 @@
+ARG NODE_ENV=production
+
 FROM node:16.15-bullseye-slim as build-stage
 
 WORKDIR /speckle-server
@@ -14,7 +16,6 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tin
 RUN chmod +x ./tini
 
 # yarn install
-ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 COPY .yarnrc.yml .
