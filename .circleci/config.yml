@@ -6,35 +6,42 @@ workflows:
   test-build:
     jobs:
       - test-server:
-          filters: &filters-test
+          filters: &filters-everything
             tags:
-              # run tests for all tags
+              # run tests for any commit on any branch, including any tags
               only: /.*/
 
       - get-version:
-          filters: &filters-build
-            tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
-            branches:
-              only:
-                - main
+          filters: *filters-everything
+
+      - should-build:
+          filters: *filters-everything
+
+      - should-publish:
+          filters: *filters-everything
 
       - pre-commit:
-          filters: *filters-test
+          filters: *filters-everything
 
       - docker-build-and-publish-server:
-          filters: *filters-build
           context: &docker-hub-context
             - docker-hub
+          filters: &filters-build
+            tags:
+              only: /.*/
           requires:
             - test-server
             - get-version
+            - should-build
+            - should-publish
 
       - docker-build-and-publish-frontend:
           context: *docker-hub-context
           filters: *filters-build
           requires:
             - get-version
+            - should-build
+            - should-publish
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
@@ -42,6 +49,8 @@ workflows:
           requires:
             - get-version
             - test-server
+            - should-build
+            - should-publish
 
       - docker-build-and-publish-file-imports:
           context: *docker-hub-context
@@ -49,6 +58,8 @@ workflows:
           requires:
             - get-version
             - test-server
+            - should-build
+            - should-publish
 
       - docker-build-and-publish-previews:
           context: *docker-hub-context
@@ -56,6 +67,8 @@ workflows:
           requires:
             - get-version
             - test-server
+            - should-build
+            - should-publish
 
       - docker-build-and-publish-test-container:
           context: *docker-hub-context
@@ -63,18 +76,29 @@ workflows:
           requires:
             - get-version
             - test-server
+            - should-build
+            - should-publish
 
       - docker-build-and-publish-monitor-container:
           context: *docker-hub-context
           filters: *filters-build
           requires:
             - get-version
+            - should-build
+            - should-publish
 
       - publish-helm-chart:
-          filters: *filters-build
+          filters: &filters-publish
+            branches:
+              only:
+                - main
+                - hotfix*
+            tags:
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
             - test-server
             - get-version
+            - should-publish
             - docker-build-and-publish-server
             - docker-build-and-publish-frontend
             - docker-build-and-publish-webhooks
@@ -108,12 +132,53 @@ jobs:
           command: |
             echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: echo $IMAGE_VERSION_TAG
-      # - run: sleep 3m
+      - run: echo "IMAGE_VERSION_TAG=${IMAGE_VERSION_TAG}"
       - persist_to_workspace:
           root: workspace
           paths:
             - env-vars
+
+  should-publish:
+    docker:
+      - image: cimg/base:2022.08
+    working_directory: *work-dir
+    environment:
+      # £ delimited strings of regex for matches which should be published
+      PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
+      PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
+    steps:
+      - checkout
+      - run: pwd
+      - run: mkdir -p workspace
+      - run:
+          name: determine whether to publish
+          command: |
+            echo "export SHOULD_PUBLISH=$(.circleci/should_publish.sh)" >> workspace/should-publish
+      - run: cat workspace/should-publish >> $BASH_ENV
+      - run: echo "SHOULD_PUBLISH=${SHOULD_PUBLISH}"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - should-publish
+
+  should-build:
+    docker:
+      - image: cimg/base:2022.08
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - run: pwd
+      - run: mkdir -p workspace
+      - run:
+          name: determine whether to build
+          command: |
+            echo "export SHOULD_BUILD=$(.circleci/should_build.sh)" >> workspace/should-build
+      - run: cat workspace/should-build >> $BASH_ENV
+      - run: echo "SHOULD_BUILD=${SHOULD_BUILD}"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - should-build
 
   pre-commit:
     parameters:
@@ -237,6 +302,8 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat workspace/should-build >> $BASH_ENV
+      - run: cat workspace/should-publish >> $BASH_ENV
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it
