@@ -132,6 +132,7 @@ When committing to git, an automated script will run. This will check that your 
 - To enable additional checks, you may wish to _optionally_ install the following:
   - [`pre-commit`](https://pre-commit.com/#install)
   - [`hadolint`](https://github.com/hadolint/hadolint#install)
+  - [`shellcheck`](https://github.com/koalaman/shellcheck#installing)
 - Please note that these additional checks will be run by Speckle's automated CI environment and non-conformances, if any, may prevent your Pull Request from being merged.
 - Please use the name of the package as the scope of your commit.
 
