@@ -2,9 +2,13 @@ FROM node:16.15-bullseye-slim as build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-RUN apt-get update && apt-get install -y \
-  tini \
-  fonts-dejavu-core fontconfig \
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  --no-install-recommends \
+  tini=0.19.0-1 \
+  fonts-dejavu-core=2.37-2 \
+  fontconfig=2.13.1-4.2 \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /speckle-server
@@ -19,8 +23,7 @@ RUN yarn workspaces focus
 
 COPY packages/server .
 
-RUN yarn build
-RUN yarn workspaces focus --production
+RUN yarn build && yarn workspaces focus --production
 
 FROM node:16.15-bullseye-slim as production-stage
 ARG NODE_ENV=production
