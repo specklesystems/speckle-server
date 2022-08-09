@@ -5,6 +5,11 @@ const commentsServiceMock = mockRequireModule(
   ['@/modules/comments/graph/resolvers/comments']
 )
 
+const mailerMock = mockRequireModule(
+  ['@/modules/emails/services/sending'],
+  ['@/modules/notifications/index']
+)
+
 const path = require('path')
 const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
@@ -37,37 +42,15 @@ const { range } = require('lodash')
 const { buildApolloServer } = require('@/app')
 const { addLoadersToCtx } = require('@/modules/shared')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
-const { gql } = require('apollo-server-core')
 const { createAuthTokenForUser } = require('@/test/authHelper')
 const { uploadBlob } = require('@/test/blobHelper')
 const { Comments } = require('@/modules/core/dbSchema')
-
-const CommentWithRepliesFragment = gql`
-  fragment CommentWithReplies on Comment {
-    id
-    text {
-      doc
-      attachments {
-        id
-        fileName
-        streamId
-      }
-    }
-    replies(limit: 10) {
-      items {
-        id
-        text {
-          doc
-          attachments {
-            id
-            fileName
-            streamId
-          }
-        }
-      }
-    }
-  }
-`
+const CommentsGraphQLClient = require('@/test/graphql/comments')
+const {
+  waitForAcknowledged,
+  purgeNotifications
+} = require('@/test/notificationsHelper')
+const { NotificationType } = require('@/modules/notifications/helpers/types')
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -141,11 +124,15 @@ describe('Comments @comments', () => {
 
   after(() => {
     commentsServiceMock.destroy()
+    mailerMock.destroy()
   })
 
   afterEach(() => {
     commentsServiceMock.disable()
     commentsServiceMock.resetMockedFunctions()
+
+    mailerMock.disable()
+    mailerMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -1027,36 +1014,22 @@ describe('Comments @comments', () => {
     })
 
     const createComment = (input = {}) =>
-      apollo.executeOperation({
-        query: gql`
-          mutation ($input: CommentCreateInput!) {
-            commentCreate(input: $input)
-          }
-        `,
-        variables: {
-          input: {
-            streamId: stream.id,
-            resources: [{ resourceId: commitId1, resourceType: 'commit' }],
-            data: {},
-            blobIds: [],
-            ...input
-          }
+      CommentsGraphQLClient.createComment(apollo, {
+        input: {
+          streamId: stream.id,
+          resources: [{ resourceId: commitId1, resourceType: 'commit' }],
+          data: {},
+          blobIds: [],
+          ...input
         }
       })
 
     const createReply = (input = {}) =>
-      apollo.executeOperation({
-        query: gql`
-          mutation ($input: ReplyCreateInput!) {
-            commentReply(input: $input)
-          }
-        `,
-        variables: {
-          input: {
-            streamId: stream.id,
-            blobIds: [],
-            ...input
-          }
+      CommentsGraphQLClient.createReply(apollo, {
+        input: {
+          streamId: stream.id,
+          blobIds: [],
+          ...input
         }
       })
 
@@ -1092,42 +1065,16 @@ describe('Comments @comments', () => {
       })
 
       const readComment = (input = {}) =>
-        apollo.executeOperation({
-          query: gql`
-            query ($id: String!, $streamId: String!) {
-              comment(id: $id, streamId: $streamId) {
-                ...CommentWithReplies
-              }
-            }
-
-            ${CommentWithRepliesFragment}
-          `,
-          variables: {
-            streamId: stream.id,
-            ...input
-          }
+        CommentsGraphQLClient.getComment(apollo, {
+          streamId: stream.id,
+          ...input
         })
 
       const readComments = (input = {}) =>
-        apollo.executeOperation({
-          query: gql`
-            query ($streamId: String!, $cursor: String) {
-              comments(streamId: $streamId, limit: 10, cursor: $cursor) {
-                totalCount
-                cursor
-                items {
-                  ...CommentWithReplies
-                }
-              }
-            }
-
-            ${CommentWithRepliesFragment}
-          `,
-          variables: {
-            cursor: null,
-            streamId: stream.id,
-            ...input
-          }
+        CommentsGraphQLClient.getComments(apollo, {
+          cursor: null,
+          streamId: stream.id,
+          ...input
         })
 
       it('both legacy (string) comments and new (ProseMirror) documents are formatted as SmartTextEditorValue values', async () => {
@@ -1408,6 +1355,60 @@ describe('Comments @comments', () => {
 
           expect(getResult(data)).to.be.ok
           expect(errors || []).to.be.empty
+        })
+
+        describe('and mentioning a user', () => {
+          // TODO
+          const createOrReplyCommentWithMention = (targetUserId, input = {}) =>
+            createOrReplyComment({
+              text: {
+                type: 'doc',
+                content: [
+                  {
+                    type: 'paragraph',
+                    content: [
+                      { type: 'text', text: 'Hello ' },
+                      {
+                        type: 'mention',
+                        attrs: { id: targetUserId, label: 'SOME GUY' }
+                      },
+                      { type: 'text', text: '!' }
+                    ]
+                  }
+                ]
+              },
+              ...input
+            })
+
+          before(async () => {
+            await purgeNotifications()
+          })
+
+          it('a valid mention triggers a notification', async () => {
+            /** @type {import('@/modules/emails/services/sending').SendEmailParams | undefined} */
+            let emailParams
+            mailerMock.enable()
+            mailerMock.mockFunction('sendEmail', (params) => {
+              emailParams = params
+            })
+
+            const waitForAck = waitForAcknowledged(
+              (msg) => msg.type === NotificationType.MentionedInComment
+            )
+
+            const { data, errors } = await createOrReplyCommentWithMention(otherUser.id)
+            const result = getResult(data)
+
+            expect(errors).to.be.not.ok
+            expect(result).to.be.ok
+
+            // Wait for
+            await waitForAck
+
+            expect(emailParams).to.be.ok
+            expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
+            expect(emailParams.to).to.eq(otherUser.email)
+          })
         })
       })
     })

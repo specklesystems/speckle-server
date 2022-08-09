@@ -19,9 +19,9 @@ class BaseError extends VError {
 
   /**
    * @param {string | null} message
-   * @param {import('verror').Options | Error} options
+   * @param {import('verror').Options | Error | undefined} options
    */
-  constructor(message, options) {
+  constructor(message, options = undefined) {
     // Resolve options correctly
     if (options) {
       const cause = options instanceof Error ? options : options.cause

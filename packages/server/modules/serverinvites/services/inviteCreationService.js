@@ -26,7 +26,8 @@ const {
   addStreamInviteSentOutActivity
 } = require('@/modules/activitystream/services/streamActivityService')
 const {
-  buildBasicTemplateEmail
+  buildBasicTemplateEmail,
+  buildBasicTemplateServerInfo
 } = require('@/modules/emails/services/templateFormatting')
 
 /**
@@ -261,7 +262,7 @@ ${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : '
 /**
  * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
- * @param {{name: string, company: string, adminContact: string}} serverInfo
+ * @param {import('@/modules/core/helpers/types').ServerInfo} serverInfo
  * @param {string} resourceName
  * @returns {import('@/modules/emails/services/templateFormatting').BasicEmailTemplateParams}
  */
@@ -279,12 +280,7 @@ function buildEmailTemplateParams(
       title: 'Accept the invitation',
       url: inviteLink
     },
-    server: {
-      name: serverInfo.name,
-      url: process.env.CANONICAL_URL,
-      company: serverInfo.company,
-      contact: serverInfo.adminContact
-    }
+    server: buildBasicTemplateServerInfo(serverInfo)
   }
 }
 

@@ -1,3 +1,5 @@
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
 }
@@ -24,4 +26,23 @@ export function getApolloServerVersion() {
 
 export function getFileSizeLimitMB() {
   return parseInt(process.env.FILE_SIZE_LIMIT_MB || '100')
+}
+
+export function getRedisUrl() {
+  if (!process.env.REDIS_URL) {
+    throw new MisconfiguredEnvironmentError('REDIS_URL env var not configured')
+  }
+
+  return process.env.REDIS_URL
+}
+
+/**
+ * Get app base url / canonical url / origin
+ */
+export function getBaseUrl() {
+  if (!process.env.CANONICAL_URL) {
+    throw new MisconfiguredEnvironmentError('CANONICAL_URL env var not configured')
+  }
+
+  return process.env.CANONICAL_URL
 }

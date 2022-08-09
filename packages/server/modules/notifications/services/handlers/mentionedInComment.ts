@@ -1,0 +1,201 @@
+import { ExtendedComment, getComment } from '@/modules/comments/repositories/comments'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
+import { ServerInfo } from '@/modules/core/helpers/types'
+import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  BasicEmailTemplateParams,
+  buildBasicTemplateEmail,
+  buildBasicTemplateServerInfo
+} from '@/modules/emails/services/templateFormatting'
+import { NotificationValidationError } from '@/modules/notifications/errors'
+import {
+  NotificationHandler,
+  MentionedInCommentMessage
+} from '@/modules/notifications/helpers/types'
+import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'
+
+type ValidatedNotificationState = {
+  msg: MentionedInCommentMessage
+  targetUser: UserWithOptionalRole
+  author: UserWithOptionalRole
+  stream: StreamWithOptionalRole
+  threadComment: ExtendedComment
+  mentionComment: ExtendedComment
+  commitOrObjectId: { commitId: Nullable<string>; objectId: Nullable<string> }
+  serverInfo: ServerInfo
+}
+
+function validate(state: {
+  msg: MentionedInCommentMessage
+  targetUser: MaybeFalsy<UserWithOptionalRole>
+  author: MaybeFalsy<UserWithOptionalRole>
+  stream: MaybeFalsy<StreamWithOptionalRole>
+  threadComment: MaybeFalsy<ExtendedComment>
+  mentionComment: MaybeFalsy<ExtendedComment>
+  serverInfo: ServerInfo
+}): ValidatedNotificationState {
+  const { targetUser, author, stream, threadComment, mentionComment, msg, serverInfo } =
+    state
+
+  if (
+    !targetUser ||
+    targetUser.role === Roles.Server.ArchivedUser ||
+    !targetUser.email
+  ) {
+    throw new NotificationValidationError('Invalid mention target user')
+  }
+
+  if (!author || author.role === Roles.Server.ArchivedUser) {
+    throw new NotificationValidationError('Invalid mention author user')
+  }
+
+  if (!stream) {
+    throw new NotificationValidationError('Invalid mention stream')
+  }
+
+  if (!threadComment || threadComment.streamId !== stream.id) {
+    throw new NotificationValidationError('Invalid mention thread comment')
+  }
+
+  if (!mentionComment || mentionComment.streamId !== stream.id) {
+    throw new NotificationValidationError('Invalid mention comment')
+  }
+
+  const commitOrObjectResource = threadComment.resources.find((r) =>
+    ['commit', 'object'].includes(r.resourceType)
+  )
+  if (!commitOrObjectResource) {
+    // This will only happen if threadComment is actually a reply, so if the notification
+    // was emitted with wrong parameters
+    throw new NotificationValidationError(
+      "Couldn't resolve the comment's associated resource - the comment might be a reply"
+    )
+  }
+
+  const commitId =
+    commitOrObjectResource.resourceType === 'commit'
+      ? commitOrObjectResource.resourceId
+      : null
+  const objectId =
+    commitOrObjectResource.resourceType === 'object'
+      ? commitOrObjectResource.resourceId
+      : null
+
+  return {
+    msg,
+    targetUser,
+    author,
+    stream,
+    threadComment,
+    mentionComment,
+    commitOrObjectId: { commitId, objectId },
+    serverInfo
+  }
+}
+
+function buildEmailTemplateHtml(
+  state: ValidatedNotificationState
+): BasicEmailTemplateParams['html'] {
+  const { author, stream } = state
+
+  return {
+    bodyStart: `Hello,<br/>
+  <br/>
+  <b>${author.name}</b> has just mentioned you in a comment on the <b>${stream.name}</b> stream.
+  Please click on the button below to see the comment. 
+  `,
+    bodyEnd: undefined
+  }
+}
+
+function buildEmailTemplateText(
+  state: ValidatedNotificationState
+): BasicEmailTemplateParams['text'] {
+  const { author, stream } = state
+
+  return {
+    bodyStart: `Hello
+  
+${author.name} has just mentioned you in a comment on the ${stream.name} stream.
+Please open the link below to see the comment.`,
+    bodyEnd: undefined
+  }
+}
+
+function buildEmailTemplateParams(
+  state: ValidatedNotificationState
+): BasicEmailTemplateParams {
+  const {
+    commitOrObjectId: { objectId, commitId },
+    stream,
+    threadComment,
+    serverInfo
+  } = state
+
+  const commentRoute = getCommentRoute(stream.id, threadComment.id, {
+    objectId,
+    commitId
+  })
+  const url = new URL(commentRoute, getBaseUrl()).toString()
+
+  return {
+    html: buildEmailTemplateHtml(state),
+    text: buildEmailTemplateText(state),
+    cta: {
+      url,
+      title: 'View comment thread'
+    },
+    server: buildBasicTemplateServerInfo(serverInfo)
+  }
+}
+
+/**
+ * Notification that is triggered when a user is mentioned in a comment
+ */
+const handler: NotificationHandler<MentionedInCommentMessage> = async (msg) => {
+  const {
+    targetUserId,
+    data: { threadId, authorId, streamId, commentId }
+  } = msg
+
+  const isCommentAndThreadTheSame = threadId === commentId
+
+  const [targetUser, author, stream, threadComment, comment, serverInfo] =
+    await Promise.all([
+      getUser(targetUserId),
+      getUser(authorId),
+      getStream({ streamId }),
+      getComment({ id: threadId }),
+      isCommentAndThreadTheSame ? null : getComment({ id: commentId }),
+      getServerInfo()
+    ])
+
+  const mentionComment = isCommentAndThreadTheSame ? threadComment : comment
+
+  // Validate message
+  const state = validate({
+    targetUser,
+    author,
+    stream,
+    threadComment,
+    mentionComment,
+    msg,
+    serverInfo
+  })
+
+  const templateParams = buildEmailTemplateParams(state)
+  const { text, html } = await buildBasicTemplateEmail(templateParams)
+  await sendEmail({
+    to: state.targetUser.email,
+    text,
+    html,
+    subject: "You've just been mentioned in a Speckle comment"
+  })
+}
+
+export default handler
