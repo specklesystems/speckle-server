@@ -81,6 +81,12 @@ export class FilteringManager {
       //todo
       if (this.colorFilterState.type === 'number') {
         // TODO
+        for (const group of this.colorFilterState.colors) {
+          this.renderer.applyFilter(group.rvs, {
+            filterType: FilterMaterialType.GRADIENT,
+            rampIndex: group.value
+          })
+        }
       }
       returnFilter.coloringState = this.colorFilterState
     }
@@ -98,6 +104,11 @@ export class FilteringManager {
           ? FilterMaterialType.GHOST
           : FilterMaterialType.HIDDEN
       })
+
+      if (this.colorFilterState.enabled) {
+        // TODO: ghost/hide nonmatchin rvs
+      }
+
       returnFilter.visibilityState = this.isolateObjectsState
     }
 
@@ -402,13 +413,15 @@ export class FilteringManager {
     key: null as string,
     colors: [],
     rampTexture: null as Texture,
+    nonMatchingRvs: [],
     reset() {
       this.enabled = false
       this.type = null
       this.key = null
       this.colors = []
+      this.nonMatchingRvs = []
       this.rampTexture = null
-      console.log('Isolate state was reset')
+      console.log('Color filter state was reset')
     }
   }
 
@@ -418,11 +431,43 @@ export class FilteringManager {
     // TODO: reset states etc.
     this.colorFilterState.enabled = true
 
-    if (property.type === 'numeric') {
-      // do something yo
+    if (property.type === 'number') {
+      const passMin = property.passMin || property.min
+      const passMax = property.passMax || property.max
+      const matchingIds = property.valueGroups
+        .filter((p) => p.value >= passMin && p.value <= passMax)
+        .map((v) => v.id)
+      const matchingValues = property.valueGroups
+        .filter((p) => p.value >= passMin && p.value <= passMax)
+        .map((v) => v.value)
+
+      const nonMatchingRvs = []
+      const matchingRvs = []
+      // const valueGroupColors = ]
+      WorldTree.getInstance().walk((node: TreeNode) => {
+        if (!node.model.atomic) return true
+        const rvs = WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(
+          node,
+          node
+        )
+        const idx = matchingIds.indexOf(node.model.raw.id)
+        if (idx === -1) {
+          nonMatchingRvs.push(...rvs)
+        } else {
+          //TODO
+          const t = (matchingValues[idx] - passMin) / (passMax - passMin)
+          matchingRvs.push({
+            rvs,
+            value: t
+          })
+        }
+      })
+
+      this.colorFilterState.nonMatchingRvs = nonMatchingRvs
+      this.colorFilterState.colors = matchingRvs
+      console.log(this.colorFilterState)
     }
     if (property.type === 'string') {
-      // do something else
       const valueGroupColors = []
       for (const valueGroup of property.valueGroups) {
         valueGroupColors.push({
@@ -435,25 +480,31 @@ export class FilteringManager {
       const rampTexture = Assets.generateDiscreetRampTexture(
         valueGroupColors.map((v) => v.color)
       )
-      console.log(valueGroupColors)
 
+      // TODO: keep track of the non-matching elements?
+      const nonMatchingRvs = []
       WorldTree.getInstance().walk((node: TreeNode) => {
         if (!node.model.atomic) return true
         const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
-        if (!vg) return true
-        vg.rvs.push(
-          ...WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(node, node)
+        const rvs = WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(
+          node,
+          node
         )
+        if (!vg) {
+          nonMatchingRvs.push(...rvs)
+          return true
+        }
+        vg.rvs.push(...rvs)
         return true
       })
 
-      console.log(valueGroupColors)
       this.colorFilterState.colors = valueGroupColors
-      this.colorFilterState.key = property.key
       this.colorFilterState.rampTexture = rampTexture
-      this.colorFilterState.type = property.type
+      this.colorFilterState.nonMatchingRvs = nonMatchingRvs
       // return valueGroupColors
     }
+    this.colorFilterState.key = property.key
+    this.colorFilterState.type = property.type
 
     return this.setFilters()
   }
