@@ -55,4 +55,15 @@ export class ContextError extends BaseError {
   static defaultMessage = 'The context is missing from the request'
 }
 
+export class MisconfiguredEnvironmentError extends BaseError {
+  static code = 'MISCONFIGURED_ENVIRONMENT_ERROR'
+  static defaultMessage =
+    'An error occurred due to the server environment being misconfigured'
+}
+
+export class UninitializedResourceAccessError extends BaseError {
+  static code = 'UNINITIALIZED_RESOURCE_ACCESS_ERROR'
+  static defaultMessage = 'Attempted to use uninitialized resources'
+}
+
 export { BaseError }

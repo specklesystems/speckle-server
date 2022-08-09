@@ -2,6 +2,7 @@ overwrite: true
 schema:
   - 'modules/core/graph/schema/baseTypeDefs.js'
   - 'assets/**/*.graphql'
+  - 'assets/**/*.gql'
 documents: null
 generates:
   modules/core/graph/generated/graphql.ts:

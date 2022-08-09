@@ -183,6 +183,78 @@ export type BranchUpdateInput = {
   streamId: Scalars['String'];
 };
 
+export type Comment = {
+  __typename?: 'Comment';
+  archived: Scalars['Boolean'];
+  authorId: Scalars['String'];
+  createdAt?: Maybe<Scalars['DateTime']>;
+  data?: Maybe<Scalars['JSONObject']>;
+  id: Scalars['String'];
+  reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
+  /** Gets the replies to this comment. */
+  replies?: Maybe<CommentCollection>;
+  /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
+  resources: Array<Maybe<ResourceIdentifier>>;
+  screenshot?: Maybe<Scalars['String']>;
+  text: SmartTextEditorValue;
+  /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
+  updatedAt?: Maybe<Scalars['DateTime']>;
+  /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
+  viewedAt?: Maybe<Scalars['DateTime']>;
+};
+
+
+export type CommentRepliesArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+export type CommentActivityMessage = {
+  __typename?: 'CommentActivityMessage';
+  comment: Comment;
+  type: Scalars['String'];
+};
+
+export type CommentCollection = {
+  __typename?: 'CommentCollection';
+  cursor?: Maybe<Scalars['DateTime']>;
+  items: Array<Comment>;
+  totalCount: Scalars['Int'];
+};
+
+export type CommentCreateInput = {
+  /** IDs of uploaded blobs that should be attached to this comment */
+  blobIds: Array<Scalars['String']>;
+  data: Scalars['JSONObject'];
+  /**
+   * Specifies the resources this comment is linked to. There are several use cases:
+   * - a comment targets only one resource (commit or object)
+   * - a comment targets one or more resources (commits or objects)
+   * - a comment targets only a stream
+   */
+  resources: Array<InputMaybe<ResourceIdentifierInput>>;
+  screenshot?: InputMaybe<Scalars['String']>;
+  streamId: Scalars['String'];
+  /** ProseMirror document object */
+  text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentEditInput = {
+  /** IDs of uploaded blobs that should be attached to this comment */
+  blobIds: Array<Scalars['String']>;
+  id: Scalars['String'];
+  streamId: Scalars['String'];
+  /** ProseMirror document object */
+  text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentThreadActivityMessage = {
+  __typename?: 'CommentThreadActivityMessage';
+  data?: Maybe<Scalars['JSONObject']>;
+  reply?: Maybe<Comment>;
+  type: Scalars['String'];
+};
+
 export type Commit = {
   __typename?: 'Commit';
   /** All the recent activity on this commit in chronological order */
@@ -191,6 +263,17 @@ export type Commit = {
   authorId?: Maybe<Scalars['String']>;
   authorName?: Maybe<Scalars['String']>;
   branchName?: Maybe<Scalars['String']>;
+  /**
+   * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
+   * E.g.,
+   * ```
+   * query{
+   *   comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
+   *     ...
+   *   }
+   * ```
+   */
+  commentCount: Scalars['Int'];
   createdAt?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   message?: Maybe<Scalars['String']>;
@@ -226,6 +309,17 @@ export type CommitCollectionUser = {
 export type CommitCollectionUserNode = {
   __typename?: 'CommitCollectionUserNode';
   branchName?: Maybe<Scalars['String']>;
+  /**
+   * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
+   * E.g.,
+   * ```
+   * query{
+   *   comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
+   *     ...
+   *   }
+   * ```
+   */
+  commentCount: Scalars['Int'];
   createdAt?: Maybe<Scalars['DateTime']>;
   id: Scalars['String'];
   message?: Maybe<Scalars['String']>;
@@ -324,6 +418,16 @@ export type Mutation = {
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
   branchUpdate: Scalars['Boolean'];
+  /** Archives a comment. */
+  commentArchive: Scalars['Boolean'];
+  /** Creates a comment */
+  commentCreate: Scalars['String'];
+  /** Edits a comment. */
+  commentEdit: Scalars['Boolean'];
+  /** Adds a reply to a comment. */
+  commentReply: Scalars['String'];
+  /** Flags a comment as viewed by you (the logged in user). */
+  commentView: Scalars['Boolean'];
   commitCreate: Scalars['String'];
   commitDelete: Scalars['Boolean'];
   commitReceive: Scalars['Boolean'];
@@ -358,11 +462,15 @@ export type Mutation = {
   /** Update permissions of a user on a given stream. */
   streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
+  /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
+  userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
   userDelete: Scalars['Boolean'];
   userRoleChange: Scalars['Boolean'];
   /** Edits a user's profile. */
   userUpdate: Scalars['Boolean'];
+  /** Used for broadcasting real time chat head bubbles and status. Does not persist any info. */
+  userViewerActivityBroadcast: Scalars['Boolean'];
   /** Creates a new webhook on a stream */
   webhookCreate: Scalars['String'];
   /** Deletes an existing webhook */
@@ -419,6 +527,34 @@ export type MutationBranchDeleteArgs = {
 
 export type MutationBranchUpdateArgs = {
   branch: BranchUpdateInput;
+};
+
+
+export type MutationCommentArchiveArgs = {
+  archived?: Scalars['Boolean'];
+  commentId: Scalars['String'];
+  streamId: Scalars['String'];
+};
+
+
+export type MutationCommentCreateArgs = {
+  input: CommentCreateInput;
+};
+
+
+export type MutationCommentEditArgs = {
+  input: CommentEditInput;
+};
+
+
+export type MutationCommentReplyArgs = {
+  input: ReplyCreateInput;
+};
+
+
+export type MutationCommentViewArgs = {
+  commentId: Scalars['String'];
+  streamId: Scalars['String'];
 };
 
 
@@ -536,6 +672,13 @@ export type MutationStreamsDeleteArgs = {
 };
 
 
+export type MutationUserCommentThreadActivityBroadcastArgs = {
+  commentId: Scalars['String'];
+  data?: InputMaybe<Scalars['JSONObject']>;
+  streamId: Scalars['String'];
+};
+
+
 export type MutationUserDeleteArgs = {
   userConfirmation: UserDeleteInput;
 };
@@ -548,6 +691,13 @@ export type MutationUserRoleChangeArgs = {
 
 export type MutationUserUpdateArgs = {
   user: UserUpdateInput;
+};
+
+
+export type MutationUserViewerActivityBroadcastArgs = {
+  data?: InputMaybe<Scalars['JSONObject']>;
+  resourceId: Scalars['String'];
+  streamId: Scalars['String'];
 };
 
 
@@ -573,6 +723,17 @@ export type Object = {
    * **NOTE**: Providing any of the two last arguments ( `query`, `orderBy` ) will trigger a different code branch that executes a much more expensive SQL query. It is not recommended to do so for basic clients that are interested in purely getting all the objects of a given commit.
    */
   children: ObjectCollection;
+  /**
+   * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this object's id.
+   * E.g.,
+   * ```
+   * query{
+   *   comments(streamId:"streamId" resources:[{resourceType: object, resourceId:"objectId"}] ){
+   *     ...
+   *   }
+   * ```
+   */
+  commentCount: Scalars['Int'];
   createdAt?: Maybe<Scalars['DateTime']>;
   /** The full object, with all its props & other things. **NOTE:** If you're requesting objects for the purpose of recreating & displaying, you probably only want to request this specific field. */
   data?: Maybe<Scalars['JSONObject']>;
@@ -635,7 +796,15 @@ export type Query = {
   app?: Maybe<ServerApp>;
   /** Returns all the publicly available apps on this server. */
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  comment?: Maybe<Comment>;
+  /**
+   * This query can be used in the following ways:
+   * - get all the comments for a stream: **do not pass in any resource identifiers**.
+   * - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
+   */
+  comments?: Maybe<CommentCollection>;
   serverInfo: ServerInfo;
+  serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
    * to see it.
@@ -685,6 +854,21 @@ export type QueryAppArgs = {
 };
 
 
+export type QueryCommentArgs = {
+  id: Scalars['String'];
+  streamId: Scalars['String'];
+};
+
+
+export type QueryCommentsArgs = {
+  archived?: Scalars['Boolean'];
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
+  streamId: Scalars['String'];
+};
+
+
 export type QueryStreamArgs = {
   id: Scalars['String'];
 };
@@ -719,6 +903,34 @@ export type QueryUserSearchArgs = {
   limit?: Scalars['Int'];
   query: Scalars['String'];
 };
+
+export type ReplyCreateInput = {
+  /** IDs of uploaded blobs that should be attached to this reply */
+  blobIds: Array<Scalars['String']>;
+  data?: InputMaybe<Scalars['JSONObject']>;
+  parentComment: Scalars['String'];
+  streamId: Scalars['String'];
+  /** ProseMirror document object */
+  text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type ResourceIdentifier = {
+  __typename?: 'ResourceIdentifier';
+  resourceId: Scalars['String'];
+  resourceType: ResourceType;
+};
+
+export type ResourceIdentifierInput = {
+  resourceId: Scalars['String'];
+  resourceType: ResourceType;
+};
+
+export enum ResourceType {
+  Comment = 'comment',
+  Commit = 'commit',
+  Object = 'object',
+  Stream = 'stream'
+}
 
 /** Available roles. */
 export type Role = {
@@ -802,6 +1014,22 @@ export type ServerInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
 };
 
+export type ServerStats = {
+  __typename?: 'ServerStats';
+  /** An array of objects currently structured as { created_month: Date, count: int }. */
+  commitHistory?: Maybe<Array<Maybe<Scalars['JSONObject']>>>;
+  /** An array of objects currently structured as { created_month: Date, count: int }. */
+  objectHistory?: Maybe<Array<Maybe<Scalars['JSONObject']>>>;
+  /** An array of objects currently structured as { created_month: Date, count: int }. */
+  streamHistory?: Maybe<Array<Maybe<Scalars['JSONObject']>>>;
+  totalCommitCount: Scalars['Int'];
+  totalObjectCount: Scalars['Int'];
+  totalStreamCount: Scalars['Int'];
+  totalUserCount: Scalars['Int'];
+  /** An array of objects currently structured as { created_month: Date, count: int }. */
+  userHistory?: Maybe<Array<Maybe<Scalars['JSONObject']>>>;
+};
+
 export type SmartTextEditorValue = {
   __typename?: 'SmartTextEditorValue';
   /** File attachments, if any */
@@ -828,6 +1056,17 @@ export type Stream = {
   branch?: Maybe<Branch>;
   branches?: Maybe<BranchCollection>;
   collaborators: Array<StreamCollaborator>;
+  /**
+   * The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:
+   *
+   * ```
+   * query{
+   *   comments(streamId:"streamId"){
+   *     ...
+   *   }
+   * ```
+   */
+  commentCount: Scalars['Int'];
   commit?: Maybe<Commit>;
   commits?: Maybe<CommitCollection>;
   createdAt: Scalars['DateTime'];
@@ -978,6 +1217,18 @@ export type Subscription = {
   branchDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribe to branch updated event. */
   branchUpdated?: Maybe<Scalars['JSONObject']>;
+  /**
+   * Subscribe to new comment events. There's two ways to use this subscription:
+   * - for a whole stream: do not pass in any resourceIds; this sub will get called whenever a comment (not reply) is added to any of the stream's resources.
+   * - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
+   */
+  commentActivity: CommentActivityMessage;
+  /**
+   * Subscribes to events on a specific comment. Use to find out when:
+   * - a top level comment is deleted (trigger a deletion event outside)
+   * - a top level comment receives a reply.
+   */
+  commentThreadActivity: CommentThreadActivityMessage;
   /** Subscribe to commit created event */
   commitCreated?: Maybe<Scalars['JSONObject']>;
   /** Subscribe to commit deleted event */
@@ -998,6 +1249,8 @@ export type Subscription = {
    * **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
    */
   userStreamRemoved?: Maybe<Scalars['JSONObject']>;
+  /** Broadcasts "real-time" location data for viewer users. */
+  userViewerActivity?: Maybe<Scalars['JSONObject']>;
 };
 
 
@@ -1013,6 +1266,18 @@ export type SubscriptionBranchDeletedArgs = {
 
 export type SubscriptionBranchUpdatedArgs = {
   branchId?: InputMaybe<Scalars['String']>;
+  streamId: Scalars['String'];
+};
+
+
+export type SubscriptionCommentActivityArgs = {
+  resourceIds?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
+  streamId: Scalars['String'];
+};
+
+
+export type SubscriptionCommentThreadActivityArgs = {
+  commentId: Scalars['String'];
   streamId: Scalars['String'];
 };
 
@@ -1040,6 +1305,12 @@ export type SubscriptionStreamDeletedArgs = {
 
 export type SubscriptionStreamUpdatedArgs = {
   streamId?: InputMaybe<Scalars['String']>;
+};
+
+
+export type SubscriptionUserViewerActivityArgs = {
+  resourceId: Scalars['String'];
+  streamId: Scalars['String'];
 };
 
 /**
@@ -1307,6 +1578,12 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  Comment: ResolverTypeWrapper<Comment>;
+  CommentActivityMessage: ResolverTypeWrapper<CommentActivityMessage>;
+  CommentCollection: ResolverTypeWrapper<CommentCollection>;
+  CommentCreateInput: CommentCreateInput;
+  CommentEditInput: CommentEditInput;
+  CommentThreadActivityMessage: ResolverTypeWrapper<CommentThreadActivityMessage>;
   Commit: ResolverTypeWrapper<Commit>;
   CommitCollection: ResolverTypeWrapper<CommitCollection>;
   CommitCollectionUser: ResolverTypeWrapper<CommitCollectionUser>;
@@ -1328,6 +1605,10 @@ export type ResolversTypes = {
   ObjectCreateInput: ObjectCreateInput;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaborator>;
   Query: ResolverTypeWrapper<{}>;
+  ReplyCreateInput: ReplyCreateInput;
+  ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
+  ResourceIdentifierInput: ResourceIdentifierInput;
+  ResourceType: ResourceType;
   Role: ResolverTypeWrapper<Role>;
   Scope: ResolverTypeWrapper<Scope>;
   ServerApp: ResolverTypeWrapper<ServerApp>;
@@ -1336,6 +1617,7 @@ export type ResolversTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInvite>;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   Stream: ResolverTypeWrapper<Stream>;
   StreamCollaborator: ResolverTypeWrapper<StreamCollaborator>;
@@ -1383,6 +1665,12 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  Comment: Comment;
+  CommentActivityMessage: CommentActivityMessage;
+  CommentCollection: CommentCollection;
+  CommentCreateInput: CommentCreateInput;
+  CommentEditInput: CommentEditInput;
+  CommentThreadActivityMessage: CommentThreadActivityMessage;
   Commit: Commit;
   CommitCollection: CommitCollection;
   CommitCollectionUser: CommitCollectionUser;
@@ -1404,6 +1692,9 @@ export type ResolversParentTypes = {
   ObjectCreateInput: ObjectCreateInput;
   PendingStreamCollaborator: PendingStreamCollaborator;
   Query: {};
+  ReplyCreateInput: ReplyCreateInput;
+  ResourceIdentifier: ResourceIdentifier;
+  ResourceIdentifierInput: ResourceIdentifierInput;
   Role: Role;
   Scope: Scope;
   ServerApp: ServerApp;
@@ -1412,6 +1703,7 @@ export type ResolversParentTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInvite;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerStats: ServerStats;
   SmartTextEditorValue: SmartTextEditorValue;
   Stream: Stream;
   StreamCollaborator: StreamCollaborator;
@@ -1565,12 +1857,49 @@ export type BranchCollectionResolvers<ContextType = any, ParentType extends Reso
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type CommentResolvers<ContextType = any, ParentType extends ResolversParentTypes['Comment'] = ResolversParentTypes['Comment']> = {
+  archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  authorId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  reactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  replies?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
+  resources?: Resolver<Array<Maybe<ResolversTypes['ResourceIdentifier']>>, ParentType, ContextType>;
+  screenshot?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  text?: Resolver<ResolversTypes['SmartTextEditorValue'], ParentType, ContextType>;
+  updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  viewedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentActivityMessageResolvers<ContextType = any, ParentType extends ResolversParentTypes['CommentActivityMessage'] = ResolversParentTypes['CommentActivityMessage']> = {
+  comment?: Resolver<ResolversTypes['Comment'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentCollectionResolvers<ContextType = any, ParentType extends ResolversParentTypes['CommentCollection'] = ResolversParentTypes['CommentCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Comment']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentThreadActivityMessageResolvers<ContextType = any, ParentType extends ResolversParentTypes['CommentThreadActivityMessage'] = ResolversParentTypes['CommentThreadActivityMessage']> = {
+  data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  reply?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type CommitResolvers<ContextType = any, ParentType extends ResolversParentTypes['Commit'] = ResolversParentTypes['Commit']> = {
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<CommitActivityArgs, 'limit'>>;
   authorAvatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authorId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   branchName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  commentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1597,6 +1926,7 @@ export type CommitCollectionUserResolvers<ContextType = any, ParentType extends 
 
 export type CommitCollectionUserNodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['CommitCollectionUserNode'] = ResolversParentTypes['CommitCollectionUserNode']> = {
   branchName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  commentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -1660,6 +1990,11 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   branchCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationBranchCreateArgs, 'branch'>>;
   branchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchDeleteArgs, 'branch'>>;
   branchUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchUpdateArgs, 'branch'>>;
+  commentArchive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentArchiveArgs, 'archived' | 'commentId' | 'streamId'>>;
+  commentCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommentCreateArgs, 'input'>>;
+  commentEdit?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentEditArgs, 'input'>>;
+  commentReply?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommentReplyArgs, 'input'>>;
+  commentView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentViewArgs, 'commentId' | 'streamId'>>;
   commitCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommitCreateArgs, 'commit'>>;
   commitDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitDeleteArgs, 'commit'>>;
   commitReceive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitReceiveArgs, 'input'>>;
@@ -1682,9 +2017,11 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   streamUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationStreamUpdateArgs, 'stream'>>;
   streamUpdatePermission?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationStreamUpdatePermissionArgs, 'permissionParams'>>;
   streamsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<MutationStreamsDeleteArgs>>;
+  userCommentThreadActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserCommentThreadActivityBroadcastArgs, 'commentId' | 'streamId'>>;
   userDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserDeleteArgs, 'userConfirmation'>>;
   userRoleChange?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserRoleChangeArgs, 'userRoleInput'>>;
   userUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserUpdateArgs, 'user'>>;
+  userViewerActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserViewerActivityBroadcastArgs, 'resourceId' | 'streamId'>>;
   webhookCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookCreateArgs, 'webhook'>>;
   webhookDelete?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookDeleteArgs, 'webhook'>>;
   webhookUpdate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookUpdateArgs, 'webhook'>>;
@@ -1693,6 +2030,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
 export type ObjectResolvers<ContextType = any, ParentType extends ResolversParentTypes['Object'] = ResolversParentTypes['Object']> = {
   applicationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   children?: Resolver<ResolversTypes['ObjectCollection'], ParentType, ContextType, RequireFields<ObjectChildrenArgs, 'depth' | 'limit'>>;
+  commentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1727,7 +2065,10 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   adminUsers?: Resolver<Maybe<ResolversTypes['AdminUsersListCollection']>, ParentType, ContextType, RequireFields<QueryAdminUsersArgs, 'limit' | 'offset' | 'query'>>;
   app?: Resolver<Maybe<ResolversTypes['ServerApp']>, ParentType, ContextType, RequireFields<QueryAppArgs, 'id'>>;
   apps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
+  comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<QueryCommentArgs, 'id' | 'streamId'>>;
+  comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
+  serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
   streamInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryStreamInviteArgs, 'streamId'>>;
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
@@ -1735,6 +2076,12 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
   userPwdStrength?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<Maybe<ResolversTypes['UserSearchResultCollection']>, ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'limit' | 'query'>>;
+};
+
+export type ResourceIdentifierResolvers<ContextType = any, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {
+  resourceId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  resourceType?: Resolver<ResolversTypes['ResourceType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type RoleResolvers<ContextType = any, ParentType extends ResolversParentTypes['Role'] = ResolversParentTypes['Role']> = {
@@ -1801,6 +2148,18 @@ export type ServerInviteResolvers<ContextType = any, ParentType extends Resolver
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ServerStatsResolvers<ContextType = any, ParentType extends ResolversParentTypes['ServerStats'] = ResolversParentTypes['ServerStats']> = {
+  commitHistory?: Resolver<Maybe<Array<Maybe<ResolversTypes['JSONObject']>>>, ParentType, ContextType>;
+  objectHistory?: Resolver<Maybe<Array<Maybe<ResolversTypes['JSONObject']>>>, ParentType, ContextType>;
+  streamHistory?: Resolver<Maybe<Array<Maybe<ResolversTypes['JSONObject']>>>, ParentType, ContextType>;
+  totalCommitCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalObjectCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalStreamCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalUserCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  userHistory?: Resolver<Maybe<Array<Maybe<ResolversTypes['JSONObject']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type SmartTextEditorValueResolvers<ContextType = any, ParentType extends ResolversParentTypes['SmartTextEditorValue'] = ResolversParentTypes['SmartTextEditorValue']> = {
   attachments?: Resolver<Maybe<Array<ResolversTypes['BlobMetadata']>>, ParentType, ContextType>;
   doc?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
@@ -1817,6 +2176,7 @@ export type StreamResolvers<ContextType = any, ParentType extends ResolversParen
   branch?: Resolver<Maybe<ResolversTypes['Branch']>, ParentType, ContextType, RequireFields<StreamBranchArgs, 'name'>>;
   branches?: Resolver<Maybe<ResolversTypes['BranchCollection']>, ParentType, ContextType, RequireFields<StreamBranchesArgs, 'limit'>>;
   collaborators?: Resolver<Array<ResolversTypes['StreamCollaborator']>, ParentType, ContextType>;
+  commentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   commit?: Resolver<Maybe<ResolversTypes['Commit']>, ParentType, ContextType, Partial<StreamCommitArgs>>;
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<StreamCommitsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -1858,6 +2218,8 @@ export type SubscriptionResolvers<ContextType = any, ParentType extends Resolver
   branchCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "branchCreated", ParentType, ContextType, RequireFields<SubscriptionBranchCreatedArgs, 'streamId'>>;
   branchDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "branchDeleted", ParentType, ContextType, RequireFields<SubscriptionBranchDeletedArgs, 'streamId'>>;
   branchUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "branchUpdated", ParentType, ContextType, RequireFields<SubscriptionBranchUpdatedArgs, 'streamId'>>;
+  commentActivity?: SubscriptionResolver<ResolversTypes['CommentActivityMessage'], "commentActivity", ParentType, ContextType, RequireFields<SubscriptionCommentActivityArgs, 'streamId'>>;
+  commentThreadActivity?: SubscriptionResolver<ResolversTypes['CommentThreadActivityMessage'], "commentThreadActivity", ParentType, ContextType, RequireFields<SubscriptionCommentThreadActivityArgs, 'commentId' | 'streamId'>>;
   commitCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitCreated", ParentType, ContextType, RequireFields<SubscriptionCommitCreatedArgs, 'streamId'>>;
   commitDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitDeleted", ParentType, ContextType, RequireFields<SubscriptionCommitDeletedArgs, 'streamId'>>;
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
@@ -1865,6 +2227,7 @@ export type SubscriptionResolvers<ContextType = any, ParentType extends Resolver
   streamUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "streamUpdated", ParentType, ContextType, Partial<SubscriptionStreamUpdatedArgs>>;
   userStreamAdded?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamAdded", ParentType, ContextType>;
   userStreamRemoved?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamRemoved", ParentType, ContextType>;
+  userViewerActivity?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userViewerActivity", ParentType, ContextType, RequireFields<SubscriptionUserViewerActivityArgs, 'resourceId' | 'streamId'>>;
 };
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
@@ -1942,6 +2305,10 @@ export type Resolvers<ContextType = any> = {
   BlobMetadataCollection?: BlobMetadataCollectionResolvers<ContextType>;
   Branch?: BranchResolvers<ContextType>;
   BranchCollection?: BranchCollectionResolvers<ContextType>;
+  Comment?: CommentResolvers<ContextType>;
+  CommentActivityMessage?: CommentActivityMessageResolvers<ContextType>;
+  CommentCollection?: CommentCollectionResolvers<ContextType>;
+  CommentThreadActivityMessage?: CommentThreadActivityMessageResolvers<ContextType>;
   Commit?: CommitResolvers<ContextType>;
   CommitCollection?: CommitCollectionResolvers<ContextType>;
   CommitCollectionUser?: CommitCollectionUserResolvers<ContextType>;
@@ -1956,12 +2323,14 @@ export type Resolvers<ContextType = any> = {
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  ResourceIdentifier?: ResourceIdentifierResolvers<ContextType>;
   Role?: RoleResolvers<ContextType>;
   Scope?: ScopeResolvers<ContextType>;
   ServerApp?: ServerAppResolvers<ContextType>;
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
+  ServerStats?: ServerStatsResolvers<ContextType>;
   SmartTextEditorValue?: SmartTextEditorValueResolvers<ContextType>;
   Stream?: StreamResolvers<ContextType>;
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
