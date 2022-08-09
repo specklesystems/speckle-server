@@ -20,7 +20,7 @@ RUN apt-get update && \
 COPY utils/monitor-deployment/requirements.txt /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirements.txt
 
-FROM gcr.io/distroless/python3-debian11 as production-stage
+FROM gcr.io/distroless/python3-debian11:nonroot as production-stage
 
 ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING}, \
     NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS}
