@@ -44,12 +44,12 @@ COPY packages/fileimport-service .
 COPY --from=build-stage /speckle-server/wait /wait
 COPY --from=build-stage /speckle-server/tini /tini
 COPY --from=build-stage /venv /venv
-COPY --from=build-stage /speckle-server/node_modules ./node_modules
+COPY --from=build-stage /speckle-server/node_modules/ ./node_modules/
 
-# HACK
-# the node script calls 'python3', which works when running locally.
-# Force use of the python virtual environment in the image,
-# as this has the pip requirements installed.
-ENV python3="/venv/bin/python3"
+# Prefixing PATH with our virtual environment should seek required binaries
+# from virtual environment first.
+# Unsetting python home
+ENV PATH=/venv/bin:${PATH}, \
+    PYTHONHOME=
 
 ENTRYPOINT ["/tini", "--", "/nodejs/bin/node", "src/daemon.js"]
