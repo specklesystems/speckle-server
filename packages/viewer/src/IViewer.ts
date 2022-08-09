@@ -54,7 +54,7 @@ export interface IViewer {
   unloadAll(): Promise<void>
 
   applyFilter(filter: unknown): Promise<unknown>
-  getObjectsProperties(includeAll?: boolean): unknown
+  // getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void
 }

@@ -66,7 +66,12 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
    */
-  public async traverse(objectURL: string, obj, callback: ConverterResultDelegate, node: TreeNode = null) {
+  public async traverse(
+    objectURL: string,
+    obj,
+    callback: ConverterResultDelegate,
+    node: TreeNode = null
+  ) {
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -118,7 +123,10 @@ export default class Coverter {
         await callback(null /*await this.directConvert(obj.data || obj, scale)*/)
         return
       } catch (e) {
-        console.warn(`(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`, e)
+        console.warn(
+          `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`,
+          e
+        )
       }
     }
 
@@ -129,7 +137,9 @@ export default class Coverter {
 
     if (displayValue) {
       childNode.model.atomic = true
-    } else childNode.model.atomic = false
+    } else {
+      childNode.model.atomic = false
+    }
 
     if (displayValue) {
       if (!Array.isArray(displayValue)) {
@@ -146,7 +156,9 @@ export default class Coverter {
           WorldTree.getInstance().addNode(nestedNode, childNode)
           await callback({}) // use the parent's metadata!
         } catch (e) {
-          console.warn(`(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`)
+          console.warn(
+            `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
+          )
         }
       } else {
         for (const element of displayValue) {
@@ -167,7 +179,9 @@ export default class Coverter {
       // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
       if (obj.speckle_type.toLowerCase().includes('builtelements')) {
         if (obj['elements']) {
-          childrenConversionPromisses.push(this.traverse(objectURL, obj['elements'], callback, childNode))
+          childrenConversionPromisses.push(
+            this.traverse(objectURL, obj['elements'], callback, childNode)
+          )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
           this.activePromises -= childrenConversionPromisses.length
@@ -181,7 +195,10 @@ export default class Coverter {
     // traverses the object in case there's any sub-objects we can convert.
     for (const prop in target) {
       if (prop === '__parents' || prop === 'bbox' || prop === '__closure') continue
-      if (['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)) continue
+      if (
+        ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)
+      )
+        continue
       if (typeof target[prop] !== 'object' || target[prop] === null) continue
 
       if (this.activePromises >= this.maxChildrenPromises) {
@@ -242,7 +259,10 @@ export default class Coverter {
    */
   private getSpeckleType(obj): string {
     let type = 'Base'
-    if (obj.data) type = obj.data.speckle_type ? obj.data.speckle_type.split('.').reverse()[0] : type
+    if (obj.data)
+      type = obj.data.speckle_type
+        ? obj.data.speckle_type.split('.').reverse()[0]
+        : type
     else type = obj.speckle_type ? obj.speckle_type.split('.').reverse()[0] : type
     return type
   }
@@ -265,7 +285,12 @@ export default class Coverter {
   }
 
   private getDisplayValue(obj) {
-    return obj['displayValue'] || obj['@displayValue'] || obj['displayMesh'] || obj['@displayMesh']
+    return (
+      obj['displayValue'] ||
+      obj['@displayValue'] ||
+      obj['displayMesh'] ||
+      obj['@displayMesh']
+    )
   }
 
   /**

@@ -5080,6 +5080,7 @@ __metadata:
     "@babel/eslint-parser": ^7.18.2
     "@rollup/plugin-babel": ^5.3.1
     "@speckle/objectloader": "workspace:^"
+    "@types/flat": ^5.0.2
     "@types/three": ^0.136.0
     "@typescript-eslint/eslint-plugin": ^5.21.0
     "@typescript-eslint/parser": ^5.21.0
@@ -5087,6 +5088,7 @@ __metadata:
     core-js: ^3.21.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
+    flat: ^5.0.2
     hold-event: ^0.1.0
     lodash-es: ^4.17.21
     prettier: ^2.5.1
@@ -5577,6 +5579,13 @@ __metadata:
   version: 8.1.1
   resolution: "@types/extract-files@npm:8.1.1"
   checksum: cc26ced9c199b787cf833121247c084b41a5f9058da6947a3368947e5d85a34328752234ab6a04c950579ba91ae7800a0735bc10380225f131b868c25ab89899
+  languageName: node
+  linkType: hard
+
+"@types/flat@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "@types/flat@npm:5.0.2"
+  checksum: e21d51d872e788bdb381887c2880f717ba4377beb4055078136127134858efd15044655610f1fce4832d9a103ded468a25335203fc53f36db08edd5ab5a8b3db
   languageName: node
   linkType: hard
 
@@ -14102,6 +14111,15 @@ __metadata:
   bin:
     flat: cli.js
   checksum: 398be12185eb0f3c59797c3670a8c35d07020b673363175676afbaf53d6b213660e060488554cf82c25504986e1a6059bdbcc5d562e87ca3e972e8a33148e3ae
+  languageName: node
+  linkType: hard
+
+"flat@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "flat@npm:5.0.2"
+  bin:
+    flat: cli.js
+  checksum: 12a1536ac746db74881316a181499a78ef953632ddd28050b7a3a43c62ef5462e3357c8c29d76072bb635f147f7a9a1f0c02efef6b4be28f8db62ceb3d5c7f5d
   languageName: node
   linkType: hard
 

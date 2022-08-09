@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-
+// import flat from 'flat'
+import flatten from '../helpers/flatten'
 import Stats from 'three/examples/jsm/libs/stats.module'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
@@ -58,7 +59,10 @@ export class Viewer extends EventEmitter implements IViewer {
     return this._worldOrigin
   }
 
-  public constructor(container: HTMLElement, params: ViewerParams = DefaultViewerParams) {
+  public constructor(
+    container: HTMLElement,
+    params: ViewerParams = DefaultViewerParams
+  ) {
     super()
 
     window.THREE = THREE // Do we really need this?
@@ -125,7 +129,10 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   onWindowResize() {
-    this.speckleRenderer.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
+    this.speckleRenderer.renderer.setSize(
+      this.container.offsetWidth,
+      this.container.offsetHeight
+    )
     this.needsRender = true
   }
 
@@ -239,67 +246,6 @@ export class Viewer extends EventEmitter implements IViewer {
     // }
   }
 
-  public getObjectsProperties() {
-    // return this.spceneManager.sceneObjects.getObjectsProperties(includeAll)
-    // const props = []
-    const flattenObject = function (obj) {
-      const flatten = {}
-      for (const k in obj) {
-        if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k)) continue
-        const v = obj[k]
-        if (v === null || v === undefined || Array.isArray(v)) continue
-        if (v.constructor === Object) {
-          const flattenProp = flattenObject(v)
-          for (const pk in flattenProp) {
-            flatten[`${k}.${pk}`] = flattenProp[pk]
-          }
-          continue
-        }
-        if (['string', 'number', 'boolean'].includes(typeof v)) flatten[k] = v
-      }
-      return flatten
-    }
-    const propValues = {}
-
-    WorldTree.getInstance().walk((node: TreeNode) => {
-      if (!node.model.atomic) return true
-      const obj = flattenObject(node.model.raw)
-
-      for (const prop of Object.keys(obj)) {
-        if (!(prop in propValues)) {
-          propValues[prop] = []
-        }
-        propValues[prop].push(obj[prop])
-      }
-      return true
-    })
-
-    const propInfo = []
-    for (const prop in propValues) {
-      const pinfo = {
-        type: typeof propValues[prop][0],
-        objectCount: propValues[prop].length,
-        allValues: propValues[prop],
-        uniqueValues: {},
-        minValue: propValues[prop][0],
-        maxValue: propValues[prop][0],
-        key: null as string
-      }
-      for (const v of propValues[prop]) {
-        if (v < pinfo.minValue) pinfo.minValue = v
-        if (v > pinfo.maxValue) pinfo.maxValue = v
-        if (!(v in pinfo.uniqueValues)) {
-          pinfo.uniqueValues[v] = 0
-        }
-        pinfo.uniqueValues[v] += 1
-      }
-      pinfo.key = prop
-      propInfo.push(pinfo)
-    }
-
-    return propInfo
-  }
-
   public debugGetFilterByNumericPropetyData(propertyName: string): {
     min: number
     max: number
@@ -351,7 +297,12 @@ export class Viewer extends EventEmitter implements IViewer {
             const propertyValue = params[k].value
             const passMin = min !== undefined ? propertyValue >= min : true
             const passMax = max !== undefined ? propertyValue <= max : true
-            if (data.nodes.includes(node) && passMin && passMax && !nodesGradient.includes(node)) {
+            if (
+              data.nodes.includes(node) &&
+              passMin &&
+              passMax &&
+              !nodesGradient.includes(node)
+            ) {
               nodesGradient.push(node)
               values.push(propertyValue)
             }
@@ -366,14 +317,19 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.beginFilter()
     const ghostRvs = []
     for (let k = 0; k < nodesGhost.length; k++) {
-      ghostRvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(nodesGhost[k], nodesGhost[k]))
+      ghostRvs.push(
+        ...WorldTree.getRenderTree().getRenderViewsForNode(nodesGhost[k], nodesGhost[k])
+      )
     }
     this.speckleRenderer.applyFilter(ghostRvs, {
       filterType: FilterMaterialType.GHOST
     })
 
     for (let k = 0; k < nodesGradient.length; k++) {
-      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(nodesGradient[k], nodesGradient[k])
+      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(
+        nodesGradient[k],
+        nodesGradient[k]
+      )
       // .map((value) => value.renderData.id)
       const t = (values[k] - data.min) / (data.max - data.min)
       this.speckleRenderer.applyFilter(rvs, {
@@ -409,6 +365,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } = {}
 
     let colorCount = 0
+
     /** This is the lazy approach */
     WorldTree.getInstance().walk((node: TreeNode) => {
       if (!node.model.atomic) return true
@@ -432,6 +389,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     return data
   }
+
   public debugApplyByNonNumericPropetyFilter(data: {
     color?: { name: string; color: string; colorIndex: number; nodes: [] }
   }) {
@@ -439,7 +397,9 @@ export class Viewer extends EventEmitter implements IViewer {
     const colors = Object.values(data)
     colors.sort((a, b) => a.colorIndex - b.colorIndex)
 
-    const rampTexture = Assets.generateDiscreetRampTexture(colors.map((val) => val.color))
+    const rampTexture = Assets.generateDiscreetRampTexture(
+      colors.map((val) => val.color)
+    )
     this.speckleRenderer.clearFilter()
     this.speckleRenderer.beginFilter()
 
@@ -447,8 +407,13 @@ export class Viewer extends EventEmitter implements IViewer {
       const nodes = colors[k].nodes
       let rvs = []
       for (let i = 0; i < nodes.length; i++) {
-        rvs = rvs.concat(WorldTree.getRenderTree().getRenderViewsForNode(nodes[i], nodes[i]))
+        rvs = rvs.concat(
+          WorldTree.getRenderTree().getRenderViewsForNode(nodes[i], nodes[i])
+        )
       }
+      // console.log(colors[k].colorIndex / colors.length)
+      // console.log(rvs.length, colors[k].name)
+      console.log(colors[k])
       this.speckleRenderer.applyFilter(rvs, {
         filterType: FilterMaterialType.COLORED,
         rampIndex: colors[k].colorIndex / colors.length,

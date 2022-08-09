@@ -43,9 +43,11 @@ sandbox.makeFilteringUI()
 
 sandbox.loadUrl(
   // Revit sample house (good for bim-like stuff with many display meshes)
-  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'Super' heavy revit shit
+  // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
-  'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
   // IFC story, a subtree of the above
   // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
 )
