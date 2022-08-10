@@ -3,10 +3,11 @@ set -e
 
 if [ -n "$CI" ] 
 then
+  echo "running eslint"
   yarn lint
   yarn prettier:check
 else
-  # shellcheck disable=SC1091
+# shellcheck disable=SC1091
   . "$(dirname "$0")/_/husky.sh"
   yarn lint-staged
 fi
