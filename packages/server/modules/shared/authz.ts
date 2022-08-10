@@ -1,4 +1,9 @@
-import { Scopes } from '@/modules/core/helpers/mainConstants'
+import {
+  Scopes,
+  Roles,
+  ServerRoles,
+  StreamRoles
+} from '@/modules/core/helpers/mainConstants'
 import { getRoles } from '@/modules/shared'
 import { getStream } from '@/modules/core/services/streams'
 
@@ -63,17 +68,6 @@ export const authSuccess = (context: AuthContext): AuthData => ({
   authResult: { authorized: true }
 })
 
-enum ServerRoles {
-  Admin = 'server:admin',
-  User = 'server:user',
-  ArchivedUser = 'server:archived-user'
-}
-
-enum StreamRoles {
-  Owner = 'stream:owner',
-  Contributor = 'stream:contributor',
-  Reviewer = 'stream:reviewer'
-}
 type AvailableRoles = ServerRoles | StreamRoles
 
 interface RoleData<T extends AvailableRoles> {
@@ -139,7 +133,7 @@ export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles
   validateRole({
     requiredRole,
     rolesLookup: getRoles,
-    iddqd: ServerRoles.Admin,
+    iddqd: Roles.Server.Admin,
     roleGetter: (context) => context.role || null
   })
 
@@ -147,7 +141,7 @@ export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles
   validateRole({
     requiredRole,
     rolesLookup: getRoles,
-    iddqd: StreamRoles.Owner,
+    iddqd: Roles.Stream.Owner,
     roleGetter: (context) => context?.stream?.role || null
   })
 
@@ -280,14 +274,14 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
 }
 
 export const streamWritePermissions = [
-  validateServerRole({ requiredRole: ServerRoles.User }),
+  validateServerRole({ requiredRole: Roles.Server.User }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
   contextRequiresStream(getStream as StreamGetter),
-  validateStreamRole({ requiredRole: StreamRoles.Contributor })
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
 ]
 export const streamReadPermissions = [
-  validateServerRole({ requiredRole: ServerRoles.User }),
+  validateServerRole({ requiredRole: Roles.Server.User }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
   contextRequiresStream(getStream as StreamGetter),
-  validateStreamRole({ requiredRole: StreamRoles.Contributor })
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
 ]
