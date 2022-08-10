@@ -1,11 +1,17 @@
 #!/usr/bin/env sh
 set -e
-[ -n "$CI" ] && exit 0
 
-#shellcheck source=/dev/null
+# shellcheck disable=SC1091
 . "$(dirname "$0")/_/husky.sh"
 
-yarn lint-staged
+if [ -n "$CI" ] 
+then
+  yarn lint
+  yarn prettier:check
+else
+  yarn lint-staged
+fi
+
 
 echo "🔍 looking for additional linter dependencies"
 
