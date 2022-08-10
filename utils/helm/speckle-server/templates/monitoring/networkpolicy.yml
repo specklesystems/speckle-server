@@ -1,26 +1,28 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "server.name" $ }}
+  name: {{ include "monitoring.name" $ }}
   namespace: {{ .Values.namespace }}
   labels:
-{{ include "server.labels" . | indent 4 }}
+{{ include "monitoring.labels" . | indent 4 }}
 spec:
   podSelector:
     matchLabels:
-{{ include "server.selectorLabels" . | indent 6 }}
+{{ include "monitoring.selectorLabels" . | indent 6 }}
   policyTypes:
-    - Ingress
     - Egress
+    - Ingress
   ingress:
-    # only allow ingress from within the cluster, which should be the ingress (loadbalancer)
     - from:
         - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              release: kube-prometheus-stack
       ports:
-        - port: http
+        - port: metrics
   egress:
-    # postgres, redis, and blob storage can be anywhere external or within the cluster
-    # TODO: parse provided postgres, redis, and blob storage data and template to restrict egress accordingly
+    # postgres can be anywhere external or within the cluster
+    # TODO: parse provided postgres and blob storage data and template to restrict egress accordingly
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0

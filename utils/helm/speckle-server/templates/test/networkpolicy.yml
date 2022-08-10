@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "server.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "test.labels" $ | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+{{ include "test.selectorLabels" $ | indent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  # all ingress is blocked
+  ingress: []
+
+  egress:
+    # allow egress to speckle-server
+    - to:
+        - podSelector:
+            matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
+      ports:
+        - port: 3000
+    # allow access to DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP

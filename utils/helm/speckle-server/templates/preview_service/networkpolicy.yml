@@ -21,11 +21,13 @@ spec:
       ports:
         - port: metrics
   egress:
-    # postgres and blob storage can be anywhere external
+    # postgres and blob storage can be anywhere external or within the cluster
     # TODO: parse provided postgres and blob storage data and template to restrict egress accordingly
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
+    - to:
+        - namespaceSelector: {}
     # allow access to DNS
     - to:
         - namespaceSelector: {}
@@ -35,7 +37,3 @@ spec:
       ports:
         - port: 53
           protocol: UDP
-    # postgres and blob storage may be within the same cluster
-    # TODO: parse provided postgres and blob storage data and template to restrict egress accordingly
-    - to:
-        - namespaceSelector: {}
