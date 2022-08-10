@@ -15,7 +15,7 @@ if [[ "${CIRCLE_BRANCH}" == "main" ]]; then
     exit 0
 fi
 
-BRANCH_NAME_TRUNCATED="$(echo "${CIRCLE_BRANCH}" | cut -c -50)" # docker has a 128 character tag limit, so ensuring the branch name will be short enough
+BRANCH_NAME_TRUNCATED="$(echo "${CIRCLE_BRANCH}" | cut -c -50 | sed 's/[^a-zA-Z0-9_.-]/_/g')" # docker has a 128 character tag limit, so ensuring the branch name will be short enough
 COMMIT_SHA1_TRUNCATED="$(echo "${CIRCLE_SHA1}" | cut -c -7)"
 echo "$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}.${COMMIT_SHA1_TRUNCATED}.${CIRCLE_BUILD_NUM}"
 exit 0
