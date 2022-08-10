@@ -1,0 +1,293 @@
+import { Scopes } from '@/modules/core/helpers/mainConstants'
+import { getRoles } from '@/modules/shared'
+import { getStream } from '@/modules/core/services/streams'
+
+import {
+  BaseError,
+  ForbiddenError as FE,
+  UnauthorizedError as UE,
+  ContextError as CE,
+  BadRequestError as BRE
+} from '@/modules/shared/errors'
+// import { getbAllRoles } from '../core/services/generic'
+
+interface AuthResult {
+  authorized: boolean
+}
+
+interface AuthFailedResult extends AuthResult {
+  authorized: false
+  error: BaseError | null
+  fatal?: boolean
+}
+
+interface Stream {
+  role?: StreamRoles
+  isPublic: boolean
+  allowPublicComments: boolean
+}
+
+interface AuthContext {
+  auth: boolean
+  role?: ServerRoles
+  stream?: Stream
+  userId?: string
+  scopes?: string[]
+}
+
+interface AuthParams {
+  streamId?: string
+}
+
+interface AuthData {
+  context: AuthContext
+  authResult: AuthResult
+  params?: AuthParams
+}
+
+interface AuthFailedData extends AuthData {
+  authResult: AuthFailedResult
+}
+
+export const authFailed = (
+  context: AuthContext,
+  error: BaseError | null,
+  fatal = false
+): AuthFailedData => ({
+  context,
+  authResult: { authorized: false, error, fatal }
+})
+
+export const authSuccess = (context: AuthContext): AuthData => ({
+  context,
+  authResult: { authorized: true }
+})
+
+enum ServerRoles {
+  Admin = 'server:admin',
+  User = 'server:user',
+  ArchivedUser = 'server:archived-user'
+}
+
+enum StreamRoles {
+  Owner = 'stream:owner',
+  Contributor = 'stream:contributor',
+  Reviewer = 'stream:reviewer'
+}
+type AvailableRoles = ServerRoles | StreamRoles
+
+interface RoleData<T extends AvailableRoles> {
+  weight: number
+  name: T
+}
+
+type AuthPipelineFunction = ({
+  context,
+  authResult,
+  params
+}: AuthData) => Promise<AuthData>
+
+const authHasFailed = (authResult: AuthResult): authResult is AuthFailedResult =>
+  'error' in authResult
+
+interface RoleValidationInput<T extends AvailableRoles> {
+  requiredRole: T
+  rolesLookup: () => Promise<RoleData<T>[]>
+  iddqd: T
+  roleGetter: (context: AuthContext) => T | null
+}
+
+// interface StreamRoleValidationInput {
+// requiredRole: StreamRoles
+// rolesLookup: () => Promise<StreamRoleData[]>
+// iddqd: StreamRoles
+// roleGetter: (AuthContext) => StreamRoles
+// }
+
+export function validateRole<T extends AvailableRoles>({
+  requiredRole,
+  rolesLookup,
+  iddqd,
+  roleGetter
+}: RoleValidationInput<T>): AuthPipelineFunction {
+  return async ({ context, authResult }): Promise<AuthData> => {
+    const roles = await rolesLookup()
+    //having the required role doesn't rescue from authResult failure
+    if (authHasFailed(authResult)) return { context, authResult }
+
+    // role validation has nothing to do with auth...
+    //this check doesn't belong here, move it out to the auth pipeline
+    if (!context.auth)
+      return authFailed(context, new UE('Cannot validate role without auth'))
+
+    const contextRole = roleGetter(context)
+    if (!contextRole)
+      return authFailed(context, new FE('You do not have the required role'))
+
+    const role = roles.find((r) => r.name === requiredRole)
+    const myRole = roles.find((r) => r.name === contextRole)
+
+    if (!role) return authFailed(context, new FE('Invalid role requirement specified'))
+    if (!myRole) return authFailed(context, new FE('Your role is not valid'))
+    if (myRole.name === iddqd || myRole.weight >= role.weight)
+      return authSuccess(context)
+    return authFailed(context, new FE('You do not have the required role'))
+  }
+}
+
+export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles }) =>
+  validateRole({
+    requiredRole,
+    rolesLookup: getRoles,
+    iddqd: ServerRoles.Admin,
+    roleGetter: (context) => context.role || null
+  })
+
+export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles }) =>
+  validateRole({
+    requiredRole,
+    rolesLookup: getRoles,
+    iddqd: StreamRoles.Owner,
+    roleGetter: (context) => context?.stream?.role || null
+  })
+
+export const validateScope =
+  ({ requiredScope }: { requiredScope: string }): AuthPipelineFunction =>
+  async ({ context, authResult }) => {
+    // having the required role doesn't rescue from authResult failure
+    if (authHasFailed(authResult)) return { context, authResult }
+    if (!context.scopes)
+      return authFailed(context, new FE('You do not have the required privileges.'))
+    if (
+      context.scopes.indexOf(requiredScope) === -1 &&
+      context.scopes.indexOf('*') === -1
+    )
+      return authFailed(context, new FE('You do not have the required privileges.'))
+    return authSuccess(context)
+  }
+
+type StreamGetter = ({
+  streamId,
+  userId
+}: {
+  streamId: string
+  userId?: string
+}) => Promise<Stream>
+
+// this doesn't do any checks  on the scopes, its sole responsibility is to add the
+// stream object to the pipeline context
+export const contextRequiresStream =
+  (streamGetter: StreamGetter): AuthPipelineFunction =>
+  // stream getter is an async func over { streamId, userId } returning a stream object
+  // IoC baby...
+  async ({ context, authResult, params }) => {
+    if (!params?.streamId)
+      return authFailed(context, new CE("The context doesn't have a streamId"))
+    // because we're assigning to the context, it would raise if it would be null
+    // its probably?? safer than returning a new context
+    if (!context) return authFailed(context, new CE('The context is not defined'))
+
+    // cause stream getter could throw, its not a safe function if we want to
+    // keep the pipeline rolling
+    try {
+      const stream = await streamGetter({
+        streamId: params.streamId,
+        userId: context?.userId
+      })
+      if (!stream)
+        return authFailed(context, new BRE('Stream inputs are malformed'), true)
+      context.stream = stream
+      return { context, authResult }
+    } catch (err) {
+      // this prob needs some more detailing to not leak internal errors
+      const error = err as Error
+      return authFailed(context, new CE(error.message))
+    }
+  }
+
+export const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole: AuthPipelineFunction =
+  async ({ context, authResult }) =>
+    context.auth && context.stream?.isPublic
+      ? authSuccess(context)
+      : { context, authResult }
+
+export const allowForAllRegisteredUsersOnPublicStreamsWithPublicComments: AuthPipelineFunction =
+  async ({ context, authResult }) =>
+    context.auth && context.stream?.isPublic && context.stream?.allowPublicComments
+      ? authSuccess(context)
+      : { context, authResult }
+
+export const allowAnonymousUsersOnPublicStreams: AuthPipelineFunction = async ({
+  context,
+  authResult
+}) => (context.stream?.isPublic ? authSuccess(context) : { context, authResult })
+
+export const authPipelineCreator = (
+  steps: AuthPipelineFunction[]
+): AuthPipelineFunction => {
+  const pipeline: AuthPipelineFunction = async ({
+    context,
+    params,
+    authResult = { authorized: false }
+  }) => {
+    for (const step of steps) {
+      ;({ context, authResult } = await step({ context, authResult, params }))
+      if (authHasFailed(authResult) && authResult?.fatal) break
+    }
+    // validate auth result a bit...
+    if (authResult.authorized && authHasFailed(authResult))
+      throw new Error('Auth failure')
+    return { context, authResult }
+  }
+  return pipeline
+}
+
+import Express from 'express'
+
+interface RequestWithContext extends Express.Request {
+  context: AuthContext
+}
+
+//we could even add an auth middleware creator
+// todo move this to a webserver related module, it has no place here
+export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
+  const pipeline = authPipelineCreator(steps)
+
+  const middleware = async (
+    req: RequestWithContext,
+    res: Express.Response,
+    next: Express.NextFunction
+  ) => {
+    const { authResult } = await pipeline({
+      context: req.context as AuthContext,
+      params: req.params as AuthParams,
+      authResult: { authorized: false }
+    })
+    if (!authResult.authorized) {
+      let message = 'Unknown AuthZ error'
+      let status = 500
+      if (authHasFailed(authResult)) {
+        message = authResult.error?.message || message
+        if (authResult.error instanceof UE) status = 401
+        if (authResult.error instanceof FE) status = 403
+      }
+
+      return res.status(status).json({ error: message })
+    }
+    next()
+  }
+  return middleware
+}
+
+export const streamWritePermissions = [
+  validateServerRole({ requiredRole: ServerRoles.User }),
+  validateScope({ requiredScope: Scopes.Streams.Write }),
+  contextRequiresStream(getStream as StreamGetter),
+  validateStreamRole({ requiredRole: StreamRoles.Contributor })
+]
+export const streamReadPermissions = [
+  validateServerRole({ requiredRole: ServerRoles.User }),
+  validateScope({ requiredScope: Scopes.Streams.Read }),
+  contextRequiresStream(getStream as StreamGetter),
+  validateStreamRole({ requiredRole: StreamRoles.Contributor })
+]

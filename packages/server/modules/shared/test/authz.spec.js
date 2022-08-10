@@ -6,7 +6,6 @@ const {
   validateRole,
   validateScope,
   contextRequiresStream,
-  ContextError,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole
 } = require('@/modules/shared/authz')
@@ -14,7 +13,8 @@ const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
   BadRequestError,
-  UnauthorizedError
+  UnauthorizedError,
+  ContextError
 } = require('@/modules/shared/errors')
 
 describe('AuthZ @shared', () => {
@@ -45,7 +45,11 @@ describe('AuthZ @shared', () => {
     })
     it('Pipeline throws Error if authorized but has error', async () => {
       const borkedStep = async () => ({
-        authResult: { authorized: true, error: new UnauthorizedError('Weird stuff') }
+        authResult: {
+          authorized: true,
+          error: new UnauthorizedError('Weird stuff'),
+          fatal: false
+        }
       })
       const pipeline = authPipelineCreator([borkedStep])
       try {
