@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "server.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "server.labels" . | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+{{ include "server.selectorLabels" . | indent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # only allow ingress from within the cluster, which should be the ingress (loadbalancer)
+    - from:
+        - namespaceSelector: {}
+      ports:
+        - port: http
+  egress:
+    # postgres, redis, and blob storage can be anywhere external
+    # TODO: parse provided postgres, redis, and blob storage data and template to restrict egress accordingly
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+    # allow access to DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    # postgres, redis, and blob storage may be within the same cluster
+    # TODO: parse provided postgres, redis, and blob storage data and template to restrict egress accordingly
+    - to:
+        - namespaceSelector: {}
