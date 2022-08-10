@@ -22,13 +22,6 @@ spec:
       ports:
         - port: metrics
   egress:
-    # postgres and blob storage can be anywhere external or within the cluster
-    # TODO: parse provided postgres and blob storage data and template to restrict egress accordingly
-    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-    - to:
-        - namespaceSelector: {}
     # allow access to DNS
     - to:
         - namespaceSelector: {}
@@ -38,4 +31,8 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
+    # blob storage
+{{ include "speckle.networkpolicy.egress.blob_storage" $ | indent 4 }}
 {{- end -}}

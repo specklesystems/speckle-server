@@ -26,6 +26,8 @@ spec:
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
     # allow access to DNS
     - to:
         - namespaceSelector: {}

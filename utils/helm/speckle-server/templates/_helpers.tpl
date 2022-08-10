@@ -106,15 +106,58 @@ If they are we assume that Cilium is installed.
 Creates a network policy egress definition for connecting to Redis
 */}}
 {{- define "speckle.networkpolicy.egress.redis" -}}
-{{- $redisPort := "6379" -}}
-{{- $secretKey := "redis_url" -}}
-{{- $urlFromSecret := (include "speckle.secrets.existing.get" (dict "secret" .Values.secretName "key" $secretKey "context" .) | b64dec ) -}}
-{{- $urlHost := (urlParse $urlFromSecret).host -}}
+{{ include "speckle.networkpolicy.egressfromsecret" (dict "secret_key" "redis_url" "default_port" "6379" "context" .) }}
+{{- end }}
+
+{{/*
+Creates a network policy egress definition for connecting to Postgres
+*/}}
+{{- define "speckle.networkpolicy.egress.postgres" -}}
+{{ include "speckle.networkpolicy.egressfromsecret" (dict "secret_key" "postgres_url" "default_port" "5432" "context" .) }}
+{{- end }}
+
+{{/*
+Creates a network policy egress definition for connecting to Postgres
+*/}}
+{{- define "speckle.networkpolicy.egress.blob_storage" -}}
+{{ include "speckle.networkpolicy.egress" (dict "url" .Values.s3.endpoint "default_port" "443" "context" .) }}
+{{- end }}
+
+{{/*
+Creates a network policy egress definition for connecting to a url(:port)
+The url is stored in a secret at .Values.secretName
+
+Usage:
+{{ include "speckle.networkpolicy.egressfromsecret" (dict "secret_key" "redis_url" "default_port" "6379" "context" $) }}
+
+Params:
+  - secret_key - String - Required - Name of the key within the secret (.Values.secretName) where the url is stored.
+  - default_port - String - Required - If the port is not defined in the url, the default port to use (e.g. 443 for https).
+  - context - Dictionary - Required - Please ensure the global context "$" is passed from the calling yaml file
+*/}}
+{{- define "speckle.networkpolicy.egressfromsecret" -}}
+{{- $urlFromSecret := (include "speckle.secrets.existing.get" (dict "secret" .context.Values.secretName "key" .secret_key "context" .context) | b64dec ) -}}
+{{ include "speckle.networkpolicy.egress" (dict "url" $urlFromSecret "default_port" .default_port "context" .context ) }}
+{{- end -}}
+
+{{/*
+Creates a network policy egress definition for connecting to a url(:port)
+
+Usage:
+{{ include "speckle.networkpolicy.egressfromsecret" (dict "url" "https://user:name@myurl.com:123/?query=params" "default_port" "6379" "context" $) }}
+
+Params:
+  - url - String - Required - Url. Protocol and host are required. Port is optional. User details, path, and query parameters are optional and ignored.
+  - default_port - String - Required - If the port is not defined in the url, the default port to use (e.g. 443 for https).
+  - context - Dictionary - Required - Please ensure the global context "$" is passed from the calling yaml file
+*/}}
+{{- define "speckle.networkpolicy.egress" -}}
+{{- $parsedPort := default "443" .default_port -}}
+{{- $urlHost := (urlParse .url).host -}}
 {{- if not $urlHost -}}
     {{- printf "\nNETWORKPOLICY ERROR: The url \"%s\" was not in the expected format and does not contain a valid host.\n" $urlHost | fail -}}
 {{- end -}}
 {{- $hostDomain := $urlHost -}}
-{{- $parsedPort := $redisPort -}}
 {{- if contains ":" $urlHost -}}
     {{- $parsedUrl := mustRegexSplit ":" $urlHost -1 -}}
     {{- $parsedUrlLen := len $parsedUrl -}}
