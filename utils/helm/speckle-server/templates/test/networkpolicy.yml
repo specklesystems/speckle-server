@@ -1,7 +1,8 @@
+{{- if .Values.test.networkPolicy.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "server.name" $ }}
+  name: {{ include "test.name" $ }}
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "test.labels" $ | indent 4 }}
@@ -32,3 +33,4 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+{{- end -}}

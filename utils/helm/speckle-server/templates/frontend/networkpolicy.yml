@@ -1,3 +1,4 @@
+{{- if .Values.frontend.networkPolicy.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -19,3 +20,4 @@ spec:
       ports:
         - port: www
   egress: [] # block all egress
+{{- end -}}
