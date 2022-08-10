@@ -150,6 +150,11 @@ Params:
   - url - String - Required - Url. Protocol and host are required. Port is optional. User details, path, and query parameters are optional and ignored.
   - default_port - String - Required - If the port is not defined in the url, the default port to use (e.g. 443 for https).
   - context - Dictionary - Required - Please ensure the global context "$" is passed from the calling yaml file
+
+Limitations:
+    - does not yet handle IPv6
+    - If a domain name is provided, then egress to any non-k8s (10.*) IP addresses are allowed (though port is restricted)
+
 */}}
 {{- define "speckle.networkpolicy.egress" -}}
 {{- $parsedPort := default "443" .default_port -}}
