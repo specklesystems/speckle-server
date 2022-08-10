@@ -38,4 +38,6 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+    # redis
+{{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
 {{- end -}}

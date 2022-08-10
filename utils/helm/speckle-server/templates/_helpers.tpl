@@ -93,3 +93,96 @@ Part-of label
 {{- define "speckle.labels.part-of" -}}
 app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
+
+{{/*
+Connects to kube api-server to determine if Cilium CRD are present.
+If they are we assume that Cilium is installed.
+*/}}
+{{- define "speckle.networkpolicy.ciliumIsPresent" -}}
+
+{{- end }}
+
+{{/*
+Creates a network policy egress definition for connecting to Redis
+*/}}
+{{- define "speckle.networkpolicy.egress.redis" -}}
+{{- $redisPort := "6379" -}}
+{{- $secretKey := "redis_url" -}}
+{{- $urlFromSecret := (include "speckle.secrets.existing.get" (dict "secret" .Values.secretName "key" $secretKey "context" .) | b64dec ) -}}
+{{- $urlHost := (urlParse $urlFromSecret).host -}}
+{{- if not $urlHost -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The url \"%s\" was not in the expected format and does not contain a valid host.\n" $urlHost | fail -}}
+{{- end -}}
+{{- $hostDomain := $urlHost -}}
+{{- $parsedPort := $redisPort -}}
+{{- if contains ":" $urlHost -}}
+    {{- $parsedUrl := mustRegexSplit ":" $urlHost -1 -}}
+    {{- $parsedUrlLen := len $parsedUrl -}}
+    {{- if or (lt $parsedUrlLen 1) (gt $parsedUrlLen 2) -}}
+        {{- printf "\nNETWORKPOLICY ERROR: The url \"%s\" was not in the expected format\n" $parsedUrl | fail -}}
+    {{- end -}}
+    {{- $hostDomain = mustFirst $parsedUrl -}}
+    {{- if eq $parsedUrlLen 2 -}}
+        {{- $parsedPort = mustLast $parsedUrl -}}
+    {{- end -}}
+{{- end -}}
+- to:
+    - ipBlock:
+    {{- if eq (include "speckle.isIPv4" $hostDomain) "true" }}
+        cidr: {{ printf "%s/32" $hostDomain }}
+    {{- else }}
+        # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
+        cidr: 0.0.0.0/0
+        # except to kubernetes pods or services
+        except:
+          - 10.0.0.0/8
+    {{- end }}
+  ports:
+    - port: {{ printf "%s" $parsedPort }}
+{{- end }}
+
+{{/*
+Uses kubernetes api-server to get the value of an existing secret in the cluster.
+Expects the secret to be in the same namespace as the Helm Release.
+
+Usage:
+{{ include "speckle.secrets.existing.get" (dict "secret" "secret-name" "key" "keyName" "context" $) }}
+
+Params:
+  - secret - String - Required - Name of the 'Secret' resource where the password is stored.
+  - key - String - Required - Name of the key in the secret.
+
+*/}}
+{{- define "speckle.secrets.existing.get" -}}
+{{- $password := "" -}}
+{{- $secretData := (lookup "v1" "Secret" $.context.Release.Namespace .secret).data -}}
+{{- if $secretData -}}
+  {{- if hasKey $secretData .key -}}
+    {{- $password = index $secretData .key -}}
+  {{- else -}}
+    {{- printf "\nSECRETS ERROR: The secret \"%s\" does not contain the key \"%s\"\n" .secret .key | fail -}}
+  {{- end -}}
+{{- else -}}
+    {{- printf "\nSECRETS ERROR: The secret \"%s\" cannot be found in namespace \"%s\"\n" .secret $.context.Release.Namespace | fail -}}
+{{- end -}}
+{{- printf "%s" $password }}
+{{- end -}}
+
+{{/*
+Tries to determine if a given string is a valid IP address
+
+Usage:
+{{ include "speckle.isIP" "123.45.67.89" }}
+
+Params:
+  - host - String - Required - The string which we will try to determine is a valid IP address
+{{- if regexMatch "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$" . -}}
+  "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+*/}}
+{{- define "speckle.isIPv4" -}}
+{{- if regexMatch "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" . -}}
+{{- printf "true" -}}
+{{- else -}}
+{{- printf "false" -}}
+{{- end -}}
+{{- end -}}
