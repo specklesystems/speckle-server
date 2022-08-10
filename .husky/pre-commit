@@ -1,14 +1,13 @@
 #!/usr/bin/env sh
 set -e
 
-# shellcheck disable=SC1091
-. "$(dirname "$0")/_/husky.sh"
-
 if [ -n "$CI" ] 
 then
   yarn lint
   yarn prettier:check
 else
+  # shellcheck disable=SC1091
+  . "$(dirname "$0")/_/husky.sh"
   yarn lint-staged
 fi
 
