@@ -46,3 +46,7 @@ events.json
 
 # VSCode log files
 packages/server/.vscode/*.log
+
+# ST workspace files
+./speckle.sublime-project
+./speckle.sublime-workspace

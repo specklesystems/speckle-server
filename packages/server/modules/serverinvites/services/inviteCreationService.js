@@ -222,19 +222,19 @@ function buildHtmlPreamble(invite, inviter, serverInfo, resourceName) {
   const forServer = isServerInvite(invite)
 
   const dynamicText = forServer
-    ? `join the <a href="${process.env.CANONICAL_URL}" rel="notrack">${serverInfo.name} Speckle Server</a>`
-    : `become a collaborator on the <a href="${process.env.CANONICAL_URL}" rel="notrack">${serverInfo.name} Speckle Server</a> stream - "${resourceName}"`
+    ? `join the <b>${serverInfo.name}</b> Speckle Server`
+    : `become a collaborator on the <b>${resourceName}</b> stream`
 
   const bodyStart = `
   Hello!
   <br />
   <br />
-  ${inviter.name} has just sent you this invitation to ${dynamicText}!<br/><br/>
+  ${inviter.name} has just sent you this invitation to ${dynamicText}! 
   ${message ? inviter.name + ' said: <em>"' + message + '"</em>' : ''}`
 
   return {
     bodyStart,
-    bodyEnd: undefined
+    bodyEnd: 'Feel free to ignore this invite if you do not know the person sending it.'
   }
 }
 
@@ -243,8 +243,8 @@ function buildTextPreamble(invite, inviter, serverInfo, resourceName) {
   const forServer = isServerInvite(invite)
 
   const dynamicText = forServer
-    ? `join the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL})`
-    : `become a collaborator on the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL}) stream - "${resourceName}"`
+    ? `join the ${serverInfo.name} Speckle Server`
+    : `become a collaborator on the "${resourceName}" stream`
 
   const bodyStart = `Hello!
 
@@ -254,7 +254,7 @@ ${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : '
 
   return {
     bodyStart,
-    bodyEnd: undefined
+    bodyEnd: 'Feel free to ignore this invite if you do not know the person sending it.'
   }
 }
 
