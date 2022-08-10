@@ -23,7 +23,7 @@ spec:
             matchLabels:
 {{ include "server.selectorLabels" $ | indent 16 }}
       ports:
-        - port: 3000
+        - port: http
     # allow access to DNS
     - to:
         - namespaceSelector: {}
