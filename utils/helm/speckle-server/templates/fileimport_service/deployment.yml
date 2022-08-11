@@ -44,6 +44,12 @@ spec:
             cpu: {{ .Values.fileimport_service.limits.cpu }}
             memory: {{ .Values.fileimport_service.limits.memory }}
 
+        securityContext:
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+              - ALL
+
         {{- if .Values.db.useCertificate }}
         volumeMounts:
           - name: postgres-certificate
@@ -83,6 +89,13 @@ spec:
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 3000
+        seccompProfile:
+          type: RuntimeDefault
 
       priorityClassName: low-priority
 
