@@ -57,6 +57,9 @@
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "search.useParentIgnoreFiles": true,
+    "[html]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

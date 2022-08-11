@@ -39,9 +39,11 @@ async function initializeTransporter() {
   if (process.env.NODE_ENV === 'test') newTransporter = createJsonEchoTransporter()
   if (process.env.EMAIL === 'true') newTransporter = await initSmtpTransporter()
 
-  modulesDebug(
-    '📧 Email provider is not configured. Server functionality will be limited.'
-  )
+  if (!newTransporter) {
+    modulesDebug(
+      '📧 Email provider is not configured. Server functionality will be limited.'
+    )
+  }
 
   transporter = newTransporter
   return newTransporter
