@@ -23,6 +23,14 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+{{- if .Values.server.sentry_dns }}
+    # sentry.io https://docs.sentry.io/product/security/ip-ranges/#event-ingestion
+    - to:
+      - ipBlock:
+          cidr: 34.120.195.249/32
+      ports:
+        - port: 443
+{{- end }}
     # redis
 {{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
     # postgres

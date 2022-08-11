@@ -38,8 +38,6 @@ spec:
 {{ include "server.selectorLabels" $ | indent 16 }}
       ports:
         - port: 3000
-    # redis
-{{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
     # blob storage

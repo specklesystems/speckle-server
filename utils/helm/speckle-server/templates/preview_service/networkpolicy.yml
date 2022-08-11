@@ -33,6 +33,4 @@ spec:
           protocol: UDP
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
-    # blob storage
-{{ include "speckle.networkpolicy.egress.blob_storage" $ | indent 4 }}
 {{- end -}}
