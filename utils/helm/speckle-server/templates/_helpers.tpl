@@ -175,8 +175,8 @@ Limitations:
         # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
         cidr: 0.0.0.0/0
         # except to kubernetes pods or services
-        # except:
-        #   - 10.0.0.0/8
+        except:
+          - 10.0.0.0/8
     {{- end }}
   ports:
     - port: {{ printf "%s" .port }}
