@@ -14,9 +14,14 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # only allow ingress from our within our cluster, i.e. the ingress (loadbalancer)
+    # allow ingress from the loadbalancer
     - from:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.ingress.namespace }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
       ports:
         - port: www
   egress: [] # block all egress
