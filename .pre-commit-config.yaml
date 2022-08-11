@@ -25,5 +25,12 @@ repos:
     rev: 'v2.7.1' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
+
+  - repo: https://github.com/gitguardian/ggshield
+    rev: 'v1.13.0'
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [commit]
 ci:
   autoupdate_schedule: quarterly
