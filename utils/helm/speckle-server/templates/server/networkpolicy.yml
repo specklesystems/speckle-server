@@ -30,9 +30,23 @@ spec:
     # blob storage
 {{ include "speckle.networkpolicy.egress.blob_storage" $ | indent 4 }}
   ingress:
-    # only allow ingress from within the cluster, which should be the ingress (loadbalancer)
+    # allow ingress from the loadbalancer (nginx ingress)
     - from:
         - namespaceSelector: {}
       ports:
         - port: http
+    # allow ingress from the fileimport service
+    - from:
+        - podSelector:
+            matchLabels:
+{{ include "fileimport_service.selectorLabels" $ | indent 14}}
+      ports:
+        - port: http
+{{- if .Values.helm_test_enabled }}
+    # allow ingress from the test
+    - from:
+        - podSelector:
+            matchLabels:
+{{ include "test.selectorLabels" $ | indent 14}}
+{{- end }}
 {{- end -}}
