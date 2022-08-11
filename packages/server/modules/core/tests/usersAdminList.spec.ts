@@ -1,4 +1,9 @@
-import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
+import {
+  ServerInviteRecord,
+  ServerInvites,
+  Streams,
+  Users
+} from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
 import { createStream } from '@/modules/core/services/streams'
@@ -25,11 +30,13 @@ async function getOrderedInviteIds() {
     await ServerInvites.knex()
       .select(ServerInvites.col.id)
       .where(ServerInvites.col.target, 'NOT ILIKE', `@%`)
-  ).map((o) => o.id)
+  ).map((o: Pick<ServerInviteRecord, 'id'>) => o.id)
 }
 
 async function getOrderedUserIds() {
-  return (await Users.knex().select(Users.col.id)).map((o) => o.id)
+  return (await Users.knex().select(Users.col.id)).map(
+    (o: Pick<ServerInviteRecord, 'id'>) => o.id
+  )
 }
 
 describe('[Admin users list]', () => {

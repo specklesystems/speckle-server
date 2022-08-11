@@ -1,7 +1,7 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
-const { appRoot, repoRoot } = require('@/bootstrap')
+const { appRoot, packageRoot } = require('@/bootstrap')
 const { values, merge, camelCase } = require('lodash')
 const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
@@ -61,9 +61,9 @@ exports.graph = () => {
   let schemaDirectives = {}
 
   // load typedefs from /assets
-  const assetModuleDirs = fs.readdirSync(`${repoRoot}/assets`)
+  const assetModuleDirs = fs.readdirSync(`${packageRoot}/assets`)
   assetModuleDirs.forEach((dir) => {
-    const typeDefDirPath = path.join(`${repoRoot}/assets`, dir, 'typedefs')
+    const typeDefDirPath = path.join(`${packageRoot}/assets`, dir, 'typedefs')
     if (fs.existsSync(typeDefDirPath)) {
       const moduleSchemas = fs.readdirSync(typeDefDirPath)
       moduleSchemas.forEach((schema) => {
