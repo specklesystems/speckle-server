@@ -38,9 +38,24 @@ spec:
     # blob storage
 {{ include "speckle.networkpolicy.egress.blob_storage" $ | indent 4 }}
   ingress:
-    # allow ingress from the loadbalancer (nginx ingress)
+    # allow ingress from the loadbalancer
     - from:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.ingress.namespace }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
+      ports:
+        - port: http
+    # allow ingress from servicemonitor/prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+          podSelector:
+            matchLabels:
+              prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
       ports:
         - port: http
     # allow ingress from the fileimport service
