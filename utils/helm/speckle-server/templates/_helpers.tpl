@@ -104,126 +104,119 @@ If they are we assume that Cilium is installed.
 
 {{/*
 Creates a network policy egress definition for connecting to Redis
+
+Expects the global context "$" to be passed as the parameter
 */}}
 {{- define "speckle.networkpolicy.egress.redis" -}}
-{{ include "speckle.networkpolicy.egressfromsecret" (dict "secret_key" "redis_url" "default_port" "6379" "context" .) }}
+{{- $port := (default "6379" .Values.redis.networkPolicy.port ) -}}
+{{- if .Values.redis.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.redis.networkPolicy.inCluster.podSelector "namespaceSelector" .Values.redis.networkPolicy.inCluster.namespaceSelector "port" $port) }}
+{{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" .Values.redis.networkPolicy.externalToCluster.ipv4 "port" $port) }}
+{{- end -}}
 {{- end }}
 
 {{/*
 Creates a network policy egress definition for connecting to Postgres
 */}}
 {{- define "speckle.networkpolicy.egress.postgres" -}}
-{{ include "speckle.networkpolicy.egressfromsecret" (dict "secret_key" "postgres_url" "default_port" "5432" "context" .) }}
+{{- $port := (default "5432" .Values.db.networkPolicy.port ) -}}
+{{- if .Values.db.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.db.networkPolicy.inCluster.podSelector "namespaceSelector" .Values.db.networkPolicy.inCluster.namespaceSelector "port" $port) }}
+{{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" .Values.db.networkPolicy.externalToCluster.ipv4 "port" $port) }}
+{{- end -}}
 {{- end }}
 
 {{/*
 Creates a network policy egress definition for connecting to Postgres
 */}}
 {{- define "speckle.networkpolicy.egress.blob_storage" -}}
-{{ include "speckle.networkpolicy.egress" (dict "url" .Values.s3.endpoint "default_port" "443" "context" .) }}
+{{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
+{{- if .Values.s3.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.s3.networkPolicy.inCluster.podSelector "namespaceSelector" .Values.s3.networkPolicy.inCluster.namespaceSelector "port" $port) }}
+{{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
+  {{- $host := (urlParse .Values.s3.endpoint).host -}}
+  {{- $ip := "" -}}
+  {{- if eq (include "speckle.isIPv4" $host) "true" -}}
+    {{- $ip = $host -}}
+  {{- end -}}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" $ip "port" $port) }}
+{{- end -}}
 {{- end }}
 
 {{/*
-Creates a network policy egress definition for connecting to a url(:port)
-The url is stored in a secret at .Values.secretName
+Creates a network policy egress definition for connecting to an external url:port or ip:port
 
 Usage:
-{{ include "speckle.networkpolicy.egressfromsecret" (dict "secret_key" "redis_url" "default_port" "6379" "context" $) }}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" "" "port" "6379") }}
 
 Params:
-  - secret_key - String - Required - Name of the key within the secret (.Values.secretName) where the url is stored.
-  - default_port - String - Required - If the port is not defined in the url, the default port to use (e.g. 443 for https).
-  - context - Dictionary - Required - Please ensure the global context "$" is passed from the calling yaml file
-*/}}
-{{- define "speckle.networkpolicy.egressfromsecret" -}}
-{{- $urlFromSecret := (include "speckle.secrets.existing.get" (dict "secret" .context.Values.secretName "key" .secret_key "context" .context) | b64dec ) -}}
-{{ include "speckle.networkpolicy.egress" (dict "url" $urlFromSecret "default_port" .default_port "context" .context ) }}
-{{- end -}}
-
-{{/*
-Creates a network policy egress definition for connecting to a url(:port)
-
-Usage:
-{{ include "speckle.networkpolicy.egressfromsecret" (dict "url" "https://user:name@myurl.com:123/?query=params" "default_port" "6379" "context" $) }}
-
-Params:
-  - url - String - Required - Url. Protocol and host are required. Port is optional. User details, path, and query parameters are optional and ignored.
-  - default_port - String - Required - If the port is not defined in the url, the default port to use (e.g. 443 for https).
-  - context - Dictionary - Required - Please ensure the global context "$" is passed from the calling yaml file
+  - ip - String - Optional - If the IP is not known, then egress is allowed to 0.0.0.0/0.
+  - port - String - Required
 
 Limitations:
-    - does not yet handle IPv6
-    - If a domain name is provided, then egress to any non-k8s (10.*) IP addresses are allowed (though port is restricted)
+    - IP is limited to IPv4 due to Kubernetes use of IPv4 CIDR
+    - Kubernetes network policies do not support FQDN, hence if IP is not known egress is allowed to 0.0.0.0/0
 
 */}}
-{{- define "speckle.networkpolicy.egress" -}}
-{{- $parsedPort := default "443" .default_port -}}
-{{- $urlHost := (urlParse .url).host -}}
-{{- if not $urlHost -}}
-    {{- printf "\nNETWORKPOLICY ERROR: The url \"%s\" was not in the expected format and does not contain a valid host.\n" $urlHost | fail -}}
-{{- end -}}
-{{- $hostDomain := $urlHost -}}
-{{- if contains ":" $urlHost -}}
-    {{- $parsedUrl := mustRegexSplit ":" $urlHost -1 -}}
-    {{- $parsedUrlLen := len $parsedUrl -}}
-    {{- if or (lt $parsedUrlLen 1) (gt $parsedUrlLen 2) -}}
-        {{- printf "\nNETWORKPOLICY ERROR: The url \"%s\" was not in the expected format\n" $parsedUrl | fail -}}
-    {{- end -}}
-    {{- $hostDomain = mustFirst $parsedUrl -}}
-    {{- if eq $parsedUrlLen 2 -}}
-        {{- $parsedPort = mustLast $parsedUrl -}}
-    {{- end -}}
+{{- define "speckle.networkpolicy.egress.external" -}}
+{{- if not .port -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The port was not provided \"%s\"\n" .port | fail -}}
 {{- end -}}
 - to:
     - ipBlock:
-    {{- if eq (include "speckle.isIPv4" $hostDomain) "true" }}
-        cidr: {{ printf "%s/32" $hostDomain }}
+    {{- if .ip }}
+        cidr: {{ printf "%s/32" .ip }}
     {{- else }}
         # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
         cidr: 0.0.0.0/0
         # except to kubernetes pods or services
-        except:
-          - 10.0.0.0/8
+        # except:
+        #   - 10.0.0.0/8
     {{- end }}
   ports:
-    - port: {{ printf "%s" $parsedPort }}
+    - port: {{ printf "%s" .port }}
 {{- end }}
 
 {{/*
-Uses kubernetes api-server to get the value of an existing secret in the cluster.
-Expects the secret to be in the same namespace as the Helm Release.
+Creates a network policy egress definition for connecting to a pod within the cluster
 
 Usage:
-{{ include "speckle.secrets.existing.get" (dict "secret" "secret-name" "key" "keyName" "context" $) }}
+{{ include "speckle.networkpolicy.egress.internal" (dict "podSelectorLabels" {matchLabels.name=redis} "namespaceSelector" {matchLabels.name=redis} "port" "6379") }}
 
 Params:
-  - secret - String - Required - Name of the 'Secret' resource where the password is stored.
-  - key - String - Required - Name of the key in the secret.
+  - podSelector - Object - Required
+  - namespaceSelector - Object - Required
+  - port - String - Required
 
 */}}
-{{- define "speckle.secrets.existing.get" -}}
-{{- $password := "" -}}
-{{- $secretData := (lookup "v1" "Secret" $.context.Release.Namespace .secret).data -}}
-{{- if $secretData -}}
-  {{- if hasKey $secretData .key -}}
-    {{- $password = index $secretData .key -}}
-  {{- else -}}
-    {{- printf "\nSECRETS ERROR: The secret \"%s\" does not contain the key \"%s\"\n" .secret .key | fail -}}
-  {{- end -}}
-{{- else -}}
-    {{- printf "\nSECRETS ERROR: The secret \"%s\" cannot be found in namespace \"%s\"\n" .secret $.context.Release.Namespace | fail -}}
+{{- define "speckle.networkpolicy.egress.internal" -}}
+{{- if not .podSelector -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The pod selector was not provided\n" | fail -}}
 {{- end -}}
-{{- printf "%s" $password }}
+{{- if not .namespaceSelector -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The namespace selector was not provided\n" | fail -}}
 {{- end -}}
+{{- if not .port -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The port was not provided \"%s\"\n" .port | fail -}}
+{{- end -}}
+- to:
+    - namespaceSelector:
+{{ .namespaceSelector | toYaml | indent 8 }}
+      podSelector:
+{{ .podSelector | toYaml | indent 8 }}
+  ports:
+    - port: {{ printf "%s" .port }}
+{{- end }}
 
 {{/*
 Tries to determine if a given string is a valid IP address
-
 Usage:
-{{ include "speckle.isIP" "123.45.67.89" }}
+{{ include "speckle.isIPv4" "123.45.67.89" }}
 
 Params:
-  - host - String - Required - The string which we will try to determine is a valid IP address
+  - ip - String - Required - The string which we will try to determine is a valid IP address
 {{- if regexMatch "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$" . -}}
   "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
 */}}

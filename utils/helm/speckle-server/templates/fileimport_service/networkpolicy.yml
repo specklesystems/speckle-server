@@ -31,6 +31,13 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+    # allow egress to speckle-server
+    - to:
+        - podSelector:
+            matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
+      ports:
+        - port: 3000
     # redis
 {{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
     # postgres
