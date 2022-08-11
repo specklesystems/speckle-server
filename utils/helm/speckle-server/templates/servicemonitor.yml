@@ -12,7 +12,7 @@ spec:
   selector:
     matchLabels:
       project: speckle-server
-{{- if ne .Values.namespace .Values.prometheusMonitoring.namespace }}
+{{- if and .Values.prometheusMonitoring.namespace (ne .Values.namespace .Values.prometheusMonitoring.namespace) }}
   namespaceSelector:
     matchNames:
     - {{ .Values.namespace }}
