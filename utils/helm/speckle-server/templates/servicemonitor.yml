@@ -4,10 +4,10 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: speckle-server
-  namespace: {{ .Values.namespace }}
+  namespace: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
   labels:
     app: speckle-server
-    release: kube-prometheus-stack
+    release: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}
 {{ include "speckle.labels" . | indent 4 }}
 spec:
   selector:
@@ -15,5 +15,4 @@ spec:
       project: speckle-server
   endpoints:
   - port: web
-
 {{ end }}
