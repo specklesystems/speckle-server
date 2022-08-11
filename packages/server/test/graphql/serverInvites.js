@@ -18,37 +18,37 @@ const { gql } = require('apollo-server-express')
  */
 
 const createServerInviteMutation = gql`
-  mutation ($input: ServerInviteCreateInput!) {
+  mutation CreateServerInvite($input: ServerInviteCreateInput!) {
     serverInviteCreate(input: $input)
   }
 `
 
 const createStreamInviteMutation = gql`
-  mutation ($input: StreamInviteCreateInput!) {
+  mutation CreateStreamInvite($input: StreamInviteCreateInput!) {
     streamInviteCreate(input: $input)
   }
 `
 
 const resendInviteMutation = gql`
-  mutation ($inviteId: String!) {
+  mutation ResendInvite($inviteId: String!) {
     inviteResend(inviteId: $inviteId)
   }
 `
 
 const batchCreateServerInviteMutation = gql`
-  mutation ($input: [ServerInviteCreateInput!]!) {
+  mutation BatchCreateServerInvite($input: [ServerInviteCreateInput!]!) {
     serverInviteBatchCreate(input: $input)
   }
 `
 
 const batchCreateStreamInviteMutation = gql`
-  mutation ($input: [StreamInviteCreateInput!]!) {
+  mutation BatchCreateStreamInvite($input: [StreamInviteCreateInput!]!) {
     streamInviteBatchCreate(input: $input)
   }
 `
 
 const deleteInviteMutation = gql`
-  mutation ($inviteId: String!) {
+  mutation DeleteInvite($inviteId: String!) {
     inviteDelete(inviteId: $inviteId)
   }
 `
@@ -81,7 +81,7 @@ const streamInviteFragment = gql`
 `
 
 const streamInviteQuery = gql`
-  query ($streamId: String!, $token: String) {
+  query GetStreamInvite($streamId: String!, $token: String) {
     streamInvite(streamId: $streamId, token: $token) {
       ...StreamInviteData
     }
@@ -91,7 +91,7 @@ const streamInviteQuery = gql`
 `
 
 const streamInvitesQuery = gql`
-  query {
+  query GetStreamInvites {
     streamInvites {
       ...StreamInviteData
     }
@@ -101,19 +101,19 @@ const streamInvitesQuery = gql`
 `
 
 const useStreamInviteMutation = gql`
-  mutation ($accept: Boolean!, $streamId: String!, $token: String!) {
+  mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
     streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
   }
 `
 
 const cancelStreamInviteMutation = gql`
-  mutation ($streamId: String!, $inviteId: String!) {
+  mutation CancelStreamInvite($streamId: String!, $inviteId: String!) {
     streamInviteCancel(streamId: $streamId, inviteId: $inviteId)
   }
 `
 
 const streamPendingCollaboratorsQuery = gql`
-  query ($streamId: String!) {
+  query GetStreamPendingCollaborators($streamId: String!) {
     stream(id: $streamId) {
       id
       pendingCollaborators {

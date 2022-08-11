@@ -33,6 +33,10 @@
       "name": "🌐 objectloader"
     },
     {
+      "path": "utils/helm",
+      "name": "⛵ helm"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }
@@ -52,7 +56,7 @@
       "source.fixAll.eslint": true
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "search.useParentIgnoreFiles": true
+    "search.useParentIgnoreFiles": true,
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

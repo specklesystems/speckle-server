@@ -21,6 +21,8 @@ Vue.use(VTooltip, {
   defaultHtml: false
 })
 
+// RANDOM CHANGE! (testing out gitguardian)
+
 // In highly restrictive sandboxed environments mixpanel init might fail due to document.cookie access
 Vue.use(VueMixpanel, {
   token: 'acd87c5a50b56df91a795e999812a3a4',

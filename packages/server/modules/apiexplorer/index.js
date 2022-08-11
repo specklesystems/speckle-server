@@ -7,7 +7,7 @@ exports.init = (app) => {
 
   // sweet and simple
   app.get('/explorer', (req, res) => {
-    res.sendFile(require.resolve('@/modules/apiexplorer/explorer.html'))
+    res.sendFile(require.resolve('#/assets/apiexplorer/templates/explorer.html'))
   })
 }
 

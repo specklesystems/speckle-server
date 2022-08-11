@@ -1,12 +1,9 @@
 <template>
   <div
-    v-if="!$vuetify.breakpoint.xs"
+    v-if="!$vuetify.breakpoint.xs || (isEmbed && commentSlideShow)"
     class="no-mouse py-2"
-    :style="`${
-      $vuetify.breakpoint.xs
-        ? 'width: 90vw; padding-right:30px;'
-        : 'max-width: 350px; padding-right:30px;'
-    } ${
+    :style="`max-width: 350px; padding-right:30px;
+    ${
       hovered ? 'opacity: 1;' : 'opacity: 1;'
     } transition: opacity 0.2s ease; padding-left: 6px;`"
     @mouseenter="hovered = true"
@@ -33,7 +30,7 @@
       </div>
       <template v-for="(reply, index) in thread">
         <div
-          v-if="showTime(index)"
+          v-if="showTime(index) && !commentSlideShow"
           :key="index + 'date'"
           class="d-flex justify-center mouse"
         >
@@ -151,7 +148,65 @@
           </v-btn>
         </div>
       </template>
+      <template v-else-if="!commentSlideShow">
+        <div class="pr-5">
+          <v-btn
+            small
+            color="primary"
+            block
+            rounded
+            :href="getCommentLink()"
+            target="_blank"
+          >
+            reply in speckle
+            <v-icon small>mdi-arrow-top-right</v-icon>
+          </v-btn>
+        </div>
+      </template>
+      <template v-if="isEmbed && commentSlideShow">
+        <div class="d-flex align-center justify-center pr-5 text-right">
+          <v-btn
+            icon
+            class="primary elevation-1 mr-2"
+            small
+            @click="$emit('next', comment, -1)"
+          >
+            <v-icon small class="white--text">mdi-chevron-left</v-icon>
+          </v-btn>
+          <v-btn
+            rounded
+            color="primary"
+            class="elevation-5 px-5"
+            @click="$emit('next', comment, 1)"
+          >
+            <span class="caption">next</span>
+            <v-icon small>mdi-chevron-right</v-icon>
+          </v-btn>
+        </div>
+      </template>
     </div>
+    <v-dialog v-model="showArchiveDialog" max-width="500">
+      <v-card>
+        <v-toolbar color="error" dark flat>
+          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-icon>mdi-pencil</v-icon>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="showArchiveDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="mt-4">
+          This comment thread will be archived. Are you sure?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
+          <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
   <!-- 
     Note: portaling out the mobile view of comment threads because of
@@ -393,7 +448,7 @@ import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 // TODO: The template is a WET mess, need to refactor it
 
 export default {
@@ -529,10 +584,12 @@ export default {
   },
   setup() {
     const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
+    const { commentSlideShow } = useEmbedViewerQuery()
     return {
       streamId,
       resourceId,
-      isEmbed
+      isEmbed,
+      commentSlideShow
     }
   },
   data() {
@@ -695,13 +752,17 @@ export default {
         }
       })
     },
-    copyCommentLinkToClip() {
+    getCommentLink() {
       const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
       const first = res.shift()
       let route = `${window.origin}/streams/${this.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
+      return route
+    },
+    copyCommentLinkToClip() {
+      const route = this.getCommentLink()
       navigator.clipboard.writeText(route)
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'share' })
       this.$eventHub.$emit('notification', {

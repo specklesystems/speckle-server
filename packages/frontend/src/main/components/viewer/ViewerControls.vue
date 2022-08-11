@@ -16,9 +16,22 @@
         <v-icon small class="mr-2">mdi-eye</v-icon>
         Reset Filters
       </v-btn>
+      <v-btn
+        v-tooltip="'Viewer Help'"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="helpDialog = true"
+      >
+        <v-icon small>mdi-help</v-icon>
+      </v-btn>
+      <v-dialog v-model="helpDialog" max-width="600">
+        <viewer-help @close="helpDialog = false" />
+      </v-dialog>
       <!-- disabling ortho mode because comment intersection are f*ed. -->
       <!-- <v-btn
-        v-tooltip="`Toggle between perspective or ortho camera.`"
+        v-tooltip=" between perspective or ortho camera.`"
         :small="small"
         rounded
         icon
@@ -60,12 +73,13 @@
 <script>
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import { useQuery } from '@vue/apollo-composable'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import gql from 'graphql-tag'
 import { resetFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
-    CanonicalViews: () => import('@/main/components/viewer/CanonicalViews')
+    CanonicalViews: () => import('@/main/components/viewer/CanonicalViews'),
+    ViewerHelp: () => import('@/main/components/viewer/dialogs/ViewerHelp.vue')
   },
   props: {
     small: { type: Boolean, default: false }
@@ -83,7 +97,8 @@ export default {
       () => viewerStateResult.value?.commitObjectViewerState || {}
     )
 
-    return { viewer, viewerState }
+    const helpDialog = ref(false)
+    return { viewer, viewerState, helpDialog }
   },
   data() {
     return {
