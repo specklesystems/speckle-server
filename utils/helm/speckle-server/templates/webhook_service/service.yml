@@ -4,8 +4,6 @@ metadata:
   name: speckle-webhook-service-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-webhook-service
-    project: speckle-server
 {{ include "webhook_service.labels" . | indent 4 }}
 spec:
   selector:

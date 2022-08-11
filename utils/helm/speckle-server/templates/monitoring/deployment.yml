@@ -4,8 +4,6 @@ metadata:
   name: speckle-monitoring
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-monitoring
-    project: speckle-server
 {{ include "monitoring.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.monitoring.replicas }}
@@ -16,8 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        app: speckle-monitoring
-        project: speckle-server
 {{ include "monitoring.labels" . | indent 8 }}
     spec:
       containers:

@@ -1,3 +1,4 @@
+# default pre-commit file, checks node.js code and basic file formatting
 repos:
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: 'v8.19.0' # Use the sha / tag you want to point at
