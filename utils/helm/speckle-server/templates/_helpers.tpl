@@ -137,6 +137,9 @@ Creates a network policy egress definition for connecting to Postgres
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.s3.networkPolicy.inCluster.podSelector "namespaceSelector" .Values.s3.networkPolicy.inCluster.namespaceSelector "port" $port) }}
 {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
   {{- $host := (urlParse .Values.s3.endpoint).host -}}
+  {{- if (contains ":" $host) -}}
+    {{- $host = first (mustRegexSplit ":" $host) -}}
+  {{- end -}}
   {{- $ip := "" -}}
   {{- if eq (include "speckle.isIPv4" $host) "true" -}}
     {{- $ip = $host -}}
@@ -217,8 +220,6 @@ Usage:
 
 Params:
   - ip - String - Required - The string which we will try to determine is a valid IP address
-{{- if regexMatch "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$" . -}}
-  "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
 */}}
 {{- define "speckle.isIPv4" -}}
 {{- if regexMatch "^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" . -}}
