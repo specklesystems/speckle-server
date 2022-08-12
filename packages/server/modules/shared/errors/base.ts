@@ -17,7 +17,7 @@ export class BaseError extends VError {
    */
   static defaultMessage = 'Unexpected error occurred!'
 
-  constructor(message: string | null, options: Options | Error | null = null) {
+  constructor(message: string | null | undefined, options: Options | Error | undefined = undefined) {
     // Resolve options correctly
     if (options) {
       const cause = options instanceof Error ? options : options.cause
