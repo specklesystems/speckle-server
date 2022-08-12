@@ -53,7 +53,12 @@ export interface IViewer {
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
 
-  applyFilter(filter: unknown): Promise<unknown>
+  // Legacy
+  applyFilter(any): any
+
+  // TODO
+  getViews(): any[]
+
   // getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void

@@ -136,6 +136,9 @@ export class FilteringManager {
     return returnFilter
   }
 
+  /**
+   * Resets all current filters (visibility, isolation, colors and selection)
+   */
   public reset() {
     this.renderer.clearFilter()
     this.hiddenObjectsState.reset()
@@ -578,6 +581,15 @@ export class FilteringManager {
     })
     this.lookupCache[objectId] = Object.keys(rootNode.model.raw.__closure)
     return this.lookupCache[objectId]
+  }
+
+  /**
+   * Tries to handle a legacy filter
+   * @param filter legacy filter to handle
+   */
+  public handleLegacyFilter(filter) {
+    // TODO
+    console.warn('Not yet implemented.')
   }
 
   public getAllPropertyFilters(): PropertyInfo[] {

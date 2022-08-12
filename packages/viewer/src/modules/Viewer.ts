@@ -1,6 +1,4 @@
 import * as THREE from 'three'
-// import flat from 'flat'
-import flatten from '../helpers/flatten'
 import Stats from 'three/examples/jsm/libs/stats.module'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
@@ -34,7 +32,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public static Assets: Assets
 
-  public FilterManager: any
+  public FilterManager: FilteringManager
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -220,7 +218,7 @@ export class Viewer extends EventEmitter implements IViewer {
       for (const key of Object.keys(this.loaders)) {
         delete this.loaders[key]
       }
-      await this.applyFilter(null)
+      this.FilterManager.reset()
       WorldTree.getInstance().root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
         WorldTree.getRenderTree().purge()
@@ -235,15 +233,29 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public async applyFilter(filter: unknown) {
-    filter
-    // try {
-    //   if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
-    //   this.interactions.deselectObjects()
-    //   return await this.sceneManager.sceneObjects.applyFilter(filter)
-    // } finally {
-    //   if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-    // }
+  /**
+   * TODO: Gets all the "named views" currently present in the scene.
+   * @returns an array of any views found in the current model.
+   */
+  public getViews() {
+    const views = []
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      const raw = node.model.raw.parameters
+      if (!raw) return true
+      if (
+        raw.speckle_type === 'Objects.BuiltElements.View:Objects.BuiltElements.View3D'
+      )
+        views.push(views)
+    })
+    return views
+  }
+
+  /**
+   * LEGACY: Handles (or tries to handle) old viewer filtering.
+   * @param args legacy filter object
+   */
+  public applyFilter(filter: any) {
+    return this.FilterManager.handleLegacyFilter(filter)
   }
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {

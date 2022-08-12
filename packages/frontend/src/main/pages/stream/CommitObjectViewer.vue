@@ -714,7 +714,7 @@ export default defineComponent({
     },
     setViews() {
       this.views.splice(0, this.views.length)
-      this.views.push(...this.viewer.sceneManager.views)
+      this.views.push(...this.viewer.getViews())
     },
     async setFilters() {
       try {

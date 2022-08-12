@@ -32,7 +32,7 @@ export default class Input extends EventEmitter {
       const delta = new Date().getTime() - mdTime
 
       if (delta > 250) return
-      // TODO: ask Alex if this is ok
+
       const loc = this._getNormalisedClickPosition(e) as any
       if (e.shiftKey) loc.multiSelect = true
       if (e.ctrlKey) this.emit('object-clicked-debug', loc)
