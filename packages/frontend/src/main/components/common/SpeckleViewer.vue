@@ -96,7 +96,8 @@ export default {
         'load-progress',
         throttle((args) => this.$emit('load-progress', args), 250)
       )
-      this.viewer.on('select', (objects) => this.$emit('selection', objects))
+
+      this.viewer.on('object-clicked', (objects) => this.$emit('selection', objects))
     }
   }
 }

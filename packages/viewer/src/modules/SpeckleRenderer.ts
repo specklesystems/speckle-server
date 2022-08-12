@@ -138,7 +138,12 @@ export default class SpeckleRenderer {
   }
 
   public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(subtreeId, GeometryType.MESH, SpeckleType.Mesh, SpeckleType.Brep)
+    this.batcher.makeBatches(
+      subtreeId,
+      GeometryType.MESH,
+      SpeckleType.Mesh,
+      SpeckleType.Brep
+    )
     this.batcher.makeBatches(
       subtreeId,
       GeometryType.LINE,
@@ -150,7 +155,12 @@ export default class SpeckleRenderer {
       SpeckleType.Circle,
       SpeckleType.Ellipse
     )
-    this.batcher.makeBatches(subtreeId, GeometryType.POINT, SpeckleType.Point, SpeckleType.Pointcloud)
+    this.batcher.makeBatches(
+      subtreeId,
+      GeometryType.POINT,
+      SpeckleType.Point,
+      SpeckleType.Pointcloud
+    )
 
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -185,7 +195,9 @@ export default class SpeckleRenderer {
   }
 
   public applyFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
-    this.filterBatchRecording.push(...this.batcher.setObjectsFilterMaterial(ids, filterMaterial))
+    this.filterBatchRecording.push(
+      ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
+    )
   }
 
   public beginFilter() {
@@ -290,18 +302,36 @@ export default class SpeckleRenderer {
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
       // ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
-      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(this.sceneBox)
+      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+        this.sceneBox
+      )
     }
   }
 
+  // NOTE: Alex, sorry for the stateful BS
+  private selectionRawData = []
+
   private onObjectClick(e) {
-    const result: Intersection = this.intersections.intersect(this.scene, this.viewer.cameraHandler.activeCam.camera, e)
+    const result: Intersection = this.intersections.intersect(
+      this.scene,
+      this.viewer.cameraHandler.activeCam.camera,
+      e
+    )
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
+      this.viewer.FilterManager.resetSelection()
+      this.selectionRawData = []
+      this.viewer.emit('object-clicked', {
+        userData: [],
+        location: null,
+        selectionCenter: null
+      })
       return
     }
 
-    // console.warn(result)
+    let multiSelect = false
+    if (e.multiSelect) multiSelect = true
+
     const rv = this.batcher.getRenderView(
       result.object.uuid,
       result.faceIndex !== undefined ? result.faceIndex : result.index
@@ -311,26 +341,29 @@ export default class SpeckleRenderer {
     const hitNode = WorldTree.getInstance().findId(hitId)
 
     let parentNode = hitNode
-
     while (!parentNode.model.atomic) {
       parentNode = parentNode.parent
     }
 
-    console.log(parentNode.model.raw.id, parentNode.model.raw)
+    if (multiSelect && !this.selectionRawData.includes(parentNode.model.raw))
+      this.selectionRawData.push(parentNode.model.raw)
+    else this.selectionRawData = [parentNode.model.raw]
 
-    this.batcher.resetBatchesDrawRanges()
-
-    this.batcher.isolateRenderView(hitId)
-    /** In case the above call has breaking bugs, just use this instead */
-    // this.batcher.autoFillDrawRanges(
-    //   this.batcher.setObjectsFilterMaterial([hitNode.model.id], {
-    //     filterType: FilterMaterialType.SELECT
-    //   })
-    // )
+    const selectionInfo = {
+      userData: this.selectionRawData,
+      location: result.point,
+      selectionCenter: result.point
+    }
+    this.viewer.FilterManager.selectRv(rv, multiSelect)
+    this.viewer.emit('object-clicked', selectionInfo)
   }
 
   private onObjectDoubleClick(e) {
-    const result: Intersection = this.intersections.intersect(this.scene, this.viewer.cameraHandler.activeCam.camera, e)
+    const result: Intersection = this.intersections.intersect(
+      this.scene,
+      this.viewer.cameraHandler.activeCam.camera,
+      e
+    )
     let rv = null
     if (!result) {
       if (this.viewer.sectionBox.display.visible) {
@@ -349,7 +382,11 @@ export default class SpeckleRenderer {
     }
 
     this.viewer.needsRender = true
-    this.viewer.emit('object-doubleclicked', result ? rv.renderData.id : null, result ? result.point : null)
+    this.viewer.emit(
+      'object-doubleclicked',
+      result ? rv.renderData.id : null,
+      result ? result.point : null
+    )
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
@@ -382,8 +419,12 @@ export default class SpeckleRenderer {
     target.radius = target.radius * fitOffset
 
     const maxSize = Math.max(size.x, size.y, size.z)
-    const camFov = this.viewer.cameraHandler.camera.fov ? this.viewer.cameraHandler.camera.fov : 55
-    const camAspect = this.viewer.cameraHandler.camera.aspect ? this.viewer.cameraHandler.camera.aspect : 1.2
+    const camFov = this.viewer.cameraHandler.camera.fov
+      ? this.viewer.cameraHandler.camera.fov
+      : 55
+    const camAspect = this.viewer.cameraHandler.camera.aspect
+      ? this.viewer.cameraHandler.camera.aspect
+      : 1.2
     const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camFov) / 360))
     const fitWidthDistance = fitHeightDistance / camAspect
     const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance)
@@ -406,14 +447,22 @@ export default class SpeckleRenderer {
       let dist = target.distanceToPoint(camPos)
       if (dist < 0) {
         dist *= -1
-        this.viewer.cameraHandler.controls.setPosition(camPos.x + dist, camPos.y + dist, camPos.z + dist)
+        this.viewer.cameraHandler.controls.setPosition(
+          camPos.x + dist,
+          camPos.y + dist,
+          camPos.z + dist
+        )
       }
     }
   }
 
   /** DEBUG */
   public onObjectClickDebug(e) {
-    const result: Intersection = this.intersections.intersect(this.scene, this.viewer.cameraHandler.activeCam.camera, e)
+    const result: Intersection = this.intersections.intersect(
+      this.scene,
+      this.viewer.cameraHandler.activeCam.camera,
+      e
+    )
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
       return
@@ -440,7 +489,9 @@ export default class SpeckleRenderer {
       this.batcher.batches[k].setDrawRanges({
         offset: 0,
         count: Infinity,
-        material: this.batcher.materials.getDebugBatchMaterial(this.batcher.batches[k].getRenderView(0))
+        material: this.batcher.materials.getDebugBatchMaterial(
+          this.batcher.batches[k].getRenderView(0)
+        )
       })
     }
   }

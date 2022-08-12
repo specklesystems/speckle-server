@@ -145,7 +145,7 @@ export class Viewer extends EventEmitter implements IViewer {
     const delta = this.clock.getDelta()
     this.needsRender = this.cameraHandler.controls.update(delta)
     this.speckleRenderer.update(delta)
-    this.stats.update()
+    this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))
   }
 

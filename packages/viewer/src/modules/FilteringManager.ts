@@ -3,6 +3,7 @@ import { Color, Texture, MathUtils } from 'three'
 import flatten from '../helpers/flatten'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import { Assets } from './Assets'
+import { NodeRenderView } from './tree/NodeRenderView'
 
 export enum FilterMaterialType {
   SELECT,
@@ -55,6 +56,13 @@ export class FilteringManager {
     this.renderer = viewer.speckleRenderer
   }
 
+  /**
+   * Applies all current filter states in the expected order. Namely:
+   * - first pass: colours objects if a property color filter is set
+   * - second pass: normal visibility/isolation
+   * - third pass: hides non matching elements if a property color filter is set
+   * - fourth pass: selection highlights
+   */
   private setFilters() {
     this.renderer.clearFilter()
     this.renderer.beginFilter()
@@ -117,6 +125,13 @@ export class FilteringManager {
       })
     }
 
+    // Lastly, highlight any selected objects
+    if (this.selectionObjectsState.rvs.length !== 0) {
+      this.renderer.applyFilter(this.selectionObjectsState.rvs, {
+        filterType: FilterMaterialType.SELECT
+      })
+    }
+
     this.renderer.endFilter()
     return returnFilter
   }
@@ -126,6 +141,28 @@ export class FilteringManager {
     this.hiddenObjectsState.reset()
     this.isolateObjectsState.reset()
     this.colorFilterState.reset()
+    this.selectionObjectsState.reset()
+
+    return this.setFilters()
+  }
+
+  private selectionObjectsState = {
+    rvs: [],
+    reset() {
+      this.rvs = []
+    }
+  }
+
+  public selectRv(rv: NodeRenderView, append = true) {
+    if (append) this.selectionObjectsState.rvs.push(rv)
+    else this.selectionObjectsState.rvs = [rv]
+    console.log(this.selectionObjectsState)
+    return this.setFilters()
+  }
+
+  public resetSelection() {
+    this.selectionObjectsState.reset()
+    return this.setFilters()
   }
 
   private hiddenObjectsState = {
