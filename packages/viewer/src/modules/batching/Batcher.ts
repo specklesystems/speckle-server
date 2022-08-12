@@ -196,7 +196,7 @@ export default class Batcher {
           count: Infinity,
           material: this.materials.getFilterMaterial(
             this.batches[k].renderViews[0],
-            FilterMaterialType.HIDDEN
+            FilterMaterialType.GHOST
           )
         })
         this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
@@ -210,6 +210,15 @@ export default class Batcher {
               material: this.materials.getFilterMaterial(
                 this.batches[k].renderViews[i],
                 FilterMaterialType.GHOST
+              )
+            })
+          } else {
+            drawRanges.push({
+              offset: this.batches[k].renderViews[i].batchStart,
+              count: this.batches[k].renderViews[i].batchCount,
+              material: this.materials.getFilterMaterial(
+                this.batches[k].renderViews[i],
+                FilterMaterialType.SELECT
               )
             })
           }
