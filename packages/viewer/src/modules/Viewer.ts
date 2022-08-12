@@ -102,9 +102,6 @@ export class Viewer extends EventEmitter implements IViewer {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoomExtents()
-      const views = this.__getViews()
-      console.warn(`Found ${views.length} VIEWS:`)
-      console.warn(views)
       console.warn('Built stuff')
     })
   }
@@ -173,9 +170,45 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.toggleCameras()
   }
 
-  public __getViews() {
-    return WorldTree.getInstance().findAll((node: TreeNode) => {
-      return node.model.renderView?.speckleType === SpeckleType.View3D
+  public getViews() {
+    return WorldTree.getInstance()
+      .findAll((node: TreeNode) => {
+        return node.model.renderView?.speckleType === SpeckleType.View3D
+      })
+      .map((v) => {
+        return {
+          name: v.model.raw.applicationId,
+          id: v.model.id,
+          view: v.model.raw
+        }
+      })
+  }
+
+  public setView(id: string, transition: boolean): void {
+    const view3DNode = WorldTree.getInstance().findId(id)
+    this.speckleRenderer.setView(
+      view3DNode.model.raw.origin,
+      view3DNode.model.raw.target,
+      transition
+    )
+  }
+
+  public rotateTo(side: string, transition = true) {
+    this.speckleRenderer.rotateTo(side)
+    transition
+  }
+
+  public screenshot(): Promise<string> {
+    return new Promise((resolve) => {
+      const sectionBoxVisible = this.sectionBox.display.visible
+      if (sectionBoxVisible) {
+        this.sectionBox.displayOff()
+      }
+      const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
+      if (sectionBoxVisible) {
+        this.sectionBox.displayOn()
+      }
+      resolve(screenshot)
     })
   }
 
@@ -210,6 +243,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit('busy', false)
         console.warn(`Removed subtree ${url}`)
+        ;(this as EventEmitter).emit('unload-complete', url)
       }
     }
   }
@@ -231,6 +265,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit('busy', false)
         console.warn(`Removed all subtrees`)
+        ;(this as EventEmitter).emit('unload-all-complete')
       }
     }
   }

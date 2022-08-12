@@ -403,7 +403,7 @@ export default class SpeckleRenderer {
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
-  zoomToBox(box, fit = 1.2, transition = true) {
+  public zoomToBox(box, fit = 1.2, transition = true) {
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
@@ -448,6 +448,91 @@ export default class SpeckleRenderer {
           camPos.y + dist,
           camPos.z + dist
         )
+      }
+    }
+  }
+
+  public setView(origin: Vector3, target: Vector3, transition = true) {
+    this.viewer.cameraHandler.activeCam.controls.setLookAt(
+      origin.x,
+      origin.y,
+      origin.z,
+      target.x,
+      target.y,
+      target.z,
+      transition
+    )
+  }
+
+  /**
+   * Rotates camera to some canonical views
+   * @param  {string}  side       Can be any of front, back, up (top), down (bottom), right, left.
+   * @param  {Number}  fit        [description]
+   * @param  {Boolean} transition [description]
+   * @return {[type]}             [description]
+   */
+  public rotateTo(side: string, transition = true) {
+    const DEG90 = Math.PI * 0.5
+    const DEG180 = Math.PI
+
+    switch (side) {
+      case 'front':
+        this.viewer.cameraHandler.controls.rotateTo(0, DEG90, transition)
+        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
+          this.viewer.cameraHandler.disableRotations()
+        break
+
+      case 'back':
+        this.viewer.cameraHandler.controls.rotateTo(DEG180, DEG90, transition)
+        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
+          this.viewer.cameraHandler.disableRotations()
+        break
+
+      case 'up':
+      case 'top':
+        this.viewer.cameraHandler.controls.rotateTo(0, 0, transition)
+        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
+          this.viewer.cameraHandler.disableRotations()
+        break
+
+      case 'down':
+      case 'bottom':
+        this.viewer.cameraHandler.controls.rotateTo(0, DEG180, transition)
+        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
+          this.viewer.cameraHandler.disableRotations()
+        break
+
+      case 'right':
+        this.viewer.cameraHandler.controls.rotateTo(DEG90, DEG90, transition)
+        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
+          this.viewer.cameraHandler.disableRotations()
+        break
+
+      case 'left':
+        this.viewer.cameraHandler.controls.rotateTo(-DEG90, DEG90, transition)
+        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
+          this.viewer.cameraHandler.disableRotations()
+        break
+
+      case '3d':
+      case '3D':
+      default: {
+        let box
+        if (this.allObjects.children.length === 0)
+          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+        else box = new Box3().setFromObject(this.allObjects)
+        if (box.max.x === Infinity || box.max.x === -Infinity) {
+          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+        }
+        this.viewer.cameraHandler.controls.setPosition(
+          box.max.x,
+          box.max.y,
+          box.max.z,
+          transition
+        )
+        this.zoomExtents()
+        this.viewer.cameraHandler.enableRotations()
+        break
       }
     }
   }

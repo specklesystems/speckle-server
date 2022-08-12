@@ -47,11 +47,17 @@ export interface IViewer {
   sectionBoxOn(): void
   zoomExtents(fit?: number, transition?: boolean): void
   toggleCameraProjection(): void
+  getViews()
+  setView(id: string, transition: boolean)
+  // This shouldn't be part of the API, it should be handled through `setView`
+  rotateTo(side: string, transition: boolean)
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
+
+  screenshot(): Promise<string>
 
   applyFilter(filter: unknown): Promise<unknown>
   getObjectsProperties(includeAll?: boolean): unknown
