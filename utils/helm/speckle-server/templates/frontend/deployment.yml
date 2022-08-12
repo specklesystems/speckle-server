@@ -70,6 +70,8 @@ spec:
             name: nginx-tmp
           - mountPath: /etc/nginx/conf.d
             name: nginx-confd
+          - mountPath: /usr/local/openresty/nginx/logs
+            name: openresty-logs
           - mountPath: /var/run/openresty
             name: openresty-tmp
 
@@ -90,6 +92,8 @@ spec:
         - name: nginx-confd
           emptyDir: {}
         - name: nginx-tmp
+          emptyDir: {}
+        - name: openresty-logs
           emptyDir: {}
         - name: openresty-tmp
           emptyDir: {}
