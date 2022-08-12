@@ -72,6 +72,10 @@ export class NodeRenderView {
     return this._renderData.geometry && this._renderData.geometry.attributes
   }
 
+  public get speckleType() {
+    return this._renderData.speckleType
+  }
+
   public get geometryType() {
     return this._geometryType
   }

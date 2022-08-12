@@ -16,6 +16,7 @@ import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilterMaterialType } from './FilteringManager'
+import { SpeckleType } from './converter/GeometryConverter'
 
 export class Viewer extends EventEmitter implements IViewer {
   public speckleRenderer: SpeckleRenderer
@@ -101,7 +102,9 @@ export class Viewer extends EventEmitter implements IViewer {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoomExtents()
-
+      const views = this.__getViews()
+      console.warn(`Found ${views.length} VIEWS:`)
+      console.warn(views)
       console.warn('Built stuff')
     })
   }
@@ -168,6 +171,12 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
+  }
+
+  public __getViews() {
+    return WorldTree.getInstance().findAll((node: TreeNode) => {
+      return node.model.renderView?.speckleType === SpeckleType.View3D
+    })
   }
 
   public async loadObject(url: string, token?: string, enableCaching = true) {
