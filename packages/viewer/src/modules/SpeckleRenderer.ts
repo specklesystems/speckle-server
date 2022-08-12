@@ -210,10 +210,16 @@ export default class SpeckleRenderer {
 
   public updateClippingPlanes(planes: Plane[]) {
     if (!this.allObjects) return
+    /** This will be done via the batches in the near future */
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
-      if (material) {
+      if (!material) return
+      if (!Array.isArray(material)) {
         material.clippingPlanes = planes
+      } else {
+        for (let k = 0; k < material.length; k++) {
+          material[k].clippingPlanes = planes
+        }
       }
     })
   }
