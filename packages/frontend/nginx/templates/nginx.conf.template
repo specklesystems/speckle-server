@@ -56,9 +56,6 @@ set_real_ip_from 2a06:98c0::/29;
 real_ip_header CF-Connecting-IP;
 #real_ip_header X-Forwarded-For;
 
-error_log  /tmp/nginx/error.log warn;
-pid        /tmp/nginx/nginx.pid;
-
 server {
   listen 80;
   client_max_body_size 100m;

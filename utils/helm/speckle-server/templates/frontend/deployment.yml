@@ -64,12 +64,14 @@ spec:
             value: {{ .Values.file_size_limit_mb | quote }}
 
         volumeMounts:
-          - mountPath: /var/run/openresty
-            name: openresty-tmp
           - mountPath: /var/cache/nginx
             name: nginx-cache
           - mountPath: /tmp/nginx
             name: nginx-tmp
+          - mountPath: /etc/nginx/conf.d
+            name: nginx-confd
+          - mountPath: /var/run/openresty
+            name: openresty-tmp
 
       priorityClassName: high-priority
 
@@ -83,9 +85,11 @@ spec:
           type: RuntimeDefault
 
       volumes:
-        - name: openresty-tmp
-          emptyDir: {}
         - name: nginx-cache
           emptyDir: {}
+        - name: nginx-confd
+          emptyDir: {}
         - name: nginx-tmp
+          emptyDir: {}
+        - name: openresty-tmp
           emptyDir: {}
