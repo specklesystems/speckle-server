@@ -3,13 +3,17 @@ import {
   Box3,
   Box3Helper,
   Camera,
+  CameraHelper,
   Color,
   DirectionalLight,
+  DirectionalLightHelper,
   Group,
   Intersection,
+  Matrix4,
   Mesh,
   Object3D,
   Plane,
+  RGBADepthPacking,
   Scene,
   Sphere,
   Spherical,
@@ -21,10 +25,12 @@ import {
 } from 'three'
 import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
+import { Geometry } from './converter/Geometry'
 import { SpeckleType } from './converter/GeometryConverter'
 import { FilterMaterial } from './FilteringManager'
 import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
+import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
@@ -95,7 +101,7 @@ export default class SpeckleRenderer {
     this._renderer.toneMappingExposure = 0.5
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = VSMShadowMap
-    this.renderer.shadowMap.autoUpdate = false
+    this.renderer.shadowMap.autoUpdate = true
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
 
@@ -117,18 +123,51 @@ export default class SpeckleRenderer {
       sceneBoxHelper.name = 'SceneBoxHelper'
       helpers.add(sceneBoxHelper)
 
-      // const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
-      // dirLightHelper.name = 'DirLightHelper'
-      // helpers.add(dirLightHelper)
+      const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
+      dirLightHelper.name = 'DirLightHelper'
+      helpers.add(dirLightHelper)
 
-      // const camHelper = new CameraHelper(this.sun.shadow.camera)
-      // camHelper.name = 'CamHelper'
-      // helpers.add(camHelper)
+      const camHelper = new CameraHelper(this.sun.shadow.camera)
+      camHelper.name = 'CamHelper'
+      helpers.add(camHelper)
     }
   }
 
   public update(deltaTime: number) {
     this.batcher.update(deltaTime)
+    const viewer = new Vector3()
+    const viewerLow = new Vector3()
+    const viewerHigh = new Vector3()
+
+    viewer.set(
+      this.sun.shadow.camera.matrixWorld.elements[12],
+      this.sun.shadow.camera.matrixWorld.elements[13],
+      this.sun.shadow.camera.matrixWorld.elements[14]
+    )
+    Geometry.DoubleToHighLowVector(viewer, viewerLow, viewerHigh)
+
+    const rteView = new Matrix4()
+    rteView.copy(this.sun.shadow.camera.matrixWorldInverse)
+    rteView.elements[12] = 0
+    rteView.elements[13] = 0
+    rteView.elements[14] = 0
+
+    const meshBatches = this.batcher.getBatches()
+    for (let k = 0; k < meshBatches.length; k++) {
+      const meshBatch: Mesh = meshBatches[k].renderObject as Mesh
+      if (meshBatch.isMesh) {
+        const rteModelView = new Matrix4()
+        rteModelView.copy(rteView)
+        rteModelView.multiply(meshBatch.matrixWorld)
+        const depthMaterial: SpeckleDepthMaterial =
+          meshBatch.customDepthMaterial as SpeckleDepthMaterial
+
+        depthMaterial.userData.uViewer_low.value.copy(viewerLow)
+        depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
+        depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
+        depthMaterial.needsUpdate = true
+      }
+    }
   }
 
   public render(camera: Camera) {
@@ -174,6 +213,12 @@ export default class SpeckleRenderer {
         const material = mesh.material as SpeckleStandardMaterial
         batchRenderable.castShadow = !material.transparent
         batchRenderable.receiveShadow = !material.transparent
+        batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
+          {
+            depthPacking: RGBADepthPacking
+          },
+          ['USE_RTE']
+        )
       }
     })
 
@@ -301,7 +346,7 @@ export default class SpeckleRenderer {
 
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
-      // ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
       ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
         this.sceneBox
       )
