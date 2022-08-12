@@ -45,13 +45,19 @@ spec:
             memory: {{ .Values.fileimport_service.limits.memory }}
 
         securityContext:
-          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
           capabilities:
             drop:
               - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
 
-        {{- if .Values.db.useCertificate }}
         volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
@@ -92,15 +98,17 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 3000
+        runAsUser: 20000
+        runAsGroup: 30000
         seccompProfile:
           type: RuntimeDefault
 
       priorityClassName: low-priority
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
