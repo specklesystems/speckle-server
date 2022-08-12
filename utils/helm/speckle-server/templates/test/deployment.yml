@@ -25,4 +25,5 @@ spec:
           cpu: {{ .Values.test.limits.cpu }}
           memory: {{ .Values.test.limits.memory }}
   restartPolicy: Never
+  serviceAccountName: {{ include "test.name" $ }}
 {{- end }}

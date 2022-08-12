@@ -55,6 +55,8 @@ server:
   limits:
     cpu: 1000m
     memory: 3Gi
+  serviceAccount:
+    create: true
 
   monitoring:
     apollo:
@@ -75,6 +77,8 @@ frontend:
   limits:
     cpu: 1000m
     memory: 512Mi
+  serviceAccount:
+    create: true
 
 preview_service:
   replicas: 1
@@ -84,6 +88,8 @@ preview_service:
   limits:
     cpu: 1000m
     memory: 4Gi
+  serviceAccount:
+    create: true
 
 webhook_service:
   replicas: 1
@@ -93,6 +99,8 @@ webhook_service:
   limits:
     cpu: 200m
     memory: 512Mi
+  serviceAccount:
+    create: true
 
 fileimport_service:
   replicas: 1
@@ -102,6 +110,8 @@ fileimport_service:
   limits:
     cpu: 1000m
     memory: 2Gi
+  serviceAccount:
+    create: true
   time_limit_min: 10
 
 monitoring:
@@ -112,6 +122,8 @@ monitoring:
   limits:
     cpu: 200m
     memory: 512Mi
+  serviceAccount:
+    create: true
 
 test:
   requests:
@@ -120,6 +132,8 @@ test:
   limits:
     cpu: 200m
     memory: 512Mi
+  serviceAccount:
+    create: true
 
 secretName: server-vars
 

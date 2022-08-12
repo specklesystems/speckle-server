@@ -85,14 +85,13 @@ spec:
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
 
       priorityClassName: low-priority
-
+      serviceAccountName: {{ include "fileimport_service.name" $ }}
+      # Should be > File import timeout to allow finishing up imports
+      terminationGracePeriodSeconds: 610
       {{- if .Values.db.useCertificate }}
       volumes:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
       {{- end }}
-
-      # Should be > File import timeout to allow finishing up imports
-      terminationGracePeriodSeconds: 610
 {{- end }}

@@ -54,12 +54,11 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
-
+      serviceAccountName: {{ include "monitoring.name" $ }}
+      terminationGracePeriodSeconds: 10
       {{- if .Values.db.useCertificate }}
       volumes:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
       {{- end }}
-
-      terminationGracePeriodSeconds: 10

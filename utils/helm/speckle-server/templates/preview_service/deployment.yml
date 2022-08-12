@@ -65,6 +65,7 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
+      serviceAccountName: {{ include "preview_service.name" $ }}
 
       # Should be > preview generation time ( 1 hour for good measure )
       terminationGracePeriodSeconds: 3600

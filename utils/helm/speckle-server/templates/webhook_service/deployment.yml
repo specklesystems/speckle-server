@@ -65,6 +65,7 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
+      serviceAccountName: {{ include "webhook_service.name" $ }}
 
       # Should be > webhook max call time ( ~= 10 seconds )
       terminationGracePeriodSeconds: 30
