@@ -1,3 +1,4 @@
+import Express from 'express'
 import {
   Scopes,
   Roles,
@@ -9,10 +10,10 @@ import { getStream } from '@/modules/core/services/streams'
 
 import {
   BaseError,
-  ForbiddenError as FE,
-  UnauthorizedError as UE,
-  ContextError as CE,
-  BadRequestError as BRE
+  ForbiddenError,
+  UnauthorizedError,
+  ContextError,
+  BadRequestError
 } from '@/modules/shared/errors'
 // import { getbAllRoles } from '../core/services/generic'
 
@@ -32,12 +33,13 @@ interface Stream {
   allowPublicComments: boolean
 }
 
-interface AuthContext {
+export interface AuthContext {
   auth: boolean
-  role?: ServerRoles
-  stream?: Stream
   userId?: string
+  role?: ServerRoles
+  token?: string
   scopes?: string[]
+  stream?: Stream
 }
 
 interface AuthParams {
@@ -112,20 +114,31 @@ export function validateRole<T extends AvailableRoles>({
     // role validation has nothing to do with auth...
     //this check doesn't belong here, move it out to the auth pipeline
     if (!context.auth)
-      return authFailed(context, new UE('Cannot validate role without auth'))
+      return authFailed(
+        context,
+        new UnauthorizedError('Cannot validate role without auth')
+      )
 
     const contextRole = roleGetter(context)
     if (!contextRole)
-      return authFailed(context, new FE('You do not have the required role'))
+      return authFailed(
+        context,
+        new ForbiddenError('You do not have the required role')
+      )
 
     const role = roles.find((r) => r.name === requiredRole)
     const myRole = roles.find((r) => r.name === contextRole)
 
-    if (!role) return authFailed(context, new FE('Invalid role requirement specified'))
-    if (!myRole) return authFailed(context, new FE('Your role is not valid'))
+    if (!role)
+      return authFailed(
+        context,
+        new ForbiddenError('Invalid role requirement specified')
+      )
+    if (!myRole)
+      return authFailed(context, new ForbiddenError('Your role is not valid'))
     if (myRole.name === iddqd || myRole.weight >= role.weight)
       return authSuccess(context)
-    return authFailed(context, new FE('You do not have the required role'))
+    return authFailed(context, new ForbiddenError('You do not have the required role'))
   }
 }
 
@@ -151,22 +164,22 @@ export const validateScope =
     // having the required role doesn't rescue from authResult failure
     if (authHasFailed(authResult)) return { context, authResult }
     if (!context.scopes)
-      return authFailed(context, new FE('You do not have the required privileges.'))
+      return authFailed(
+        context,
+        new ForbiddenError('You do not have the required privileges.')
+      )
     if (
       context.scopes.indexOf(requiredScope) === -1 &&
       context.scopes.indexOf('*') === -1
     )
-      return authFailed(context, new FE('You do not have the required privileges.'))
+      return authFailed(
+        context,
+        new ForbiddenError('You do not have the required privileges.')
+      )
     return authSuccess(context)
   }
 
-type StreamGetter = ({
-  streamId,
-  userId
-}: {
-  streamId: string
-  userId?: string
-}) => Promise<Stream>
+type StreamGetter = (params: { streamId: string; userId?: string }) => Promise<Stream>
 
 // this doesn't do any checks  on the scopes, its sole responsibility is to add the
 // stream object to the pipeline context
@@ -176,10 +189,14 @@ export const contextRequiresStream =
   // IoC baby...
   async ({ context, authResult, params }) => {
     if (!params?.streamId)
-      return authFailed(context, new CE("The context doesn't have a streamId"))
+      return authFailed(
+        context,
+        new ContextError("The context doesn't have a streamId")
+      )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
-    if (!context) return authFailed(context, new CE('The context is not defined'))
+    if (!context)
+      return authFailed(context, new ContextError('The context is not defined'))
 
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
@@ -189,13 +206,17 @@ export const contextRequiresStream =
         userId: context?.userId
       })
       if (!stream)
-        return authFailed(context, new BRE('Stream inputs are malformed'), true)
+        return authFailed(
+          context,
+          new BadRequestError('Stream inputs are malformed'),
+          true
+        )
       context.stream = stream
       return { context, authResult }
     } catch (err) {
       // this prob needs some more detailing to not leak internal errors
       const error = err as Error
-      return authFailed(context, new CE(error.message))
+      return authFailed(context, new ContextError(error.message))
     }
   }
 
@@ -236,8 +257,6 @@ export const authPipelineCreator = (
   return pipeline
 }
 
-import Express from 'express'
-
 interface RequestWithContext extends Express.Request {
   context: AuthContext
 }
@@ -262,8 +281,8 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
       let status = 500
       if (authHasFailed(authResult)) {
         message = authResult.error?.message || message
-        if (authResult.error instanceof UE) status = 401
-        if (authResult.error instanceof FE) status = 403
+        if (authResult.error instanceof UnauthorizedError) status = 401
+        if (authResult.error instanceof ForbiddenError) status = 403
       }
 
       return res.status(status).json({ error: message })
