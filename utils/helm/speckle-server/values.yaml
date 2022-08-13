@@ -17,6 +17,7 @@ s3:
   bucket: ''
   access_key: ''
   create_bucket: 'false'
+  region: '' # optional, defaults to 'us-east-1'
   # secret_key: secret -> s3_secret_key
 
 #redis:

@@ -248,6 +248,7 @@ jobs:
       S3_SECRET_KEY: 'minioadmin'
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
     steps:
       - checkout
       - restore_cache:
