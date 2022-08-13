@@ -54,7 +54,9 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
+      {{- if .Values.monitoring.serviceAccount.create }}
       serviceAccountName: {{ include "monitoring.name" $ }}
+      {{- end }}
       terminationGracePeriodSeconds: 10
       {{- if .Values.db.useCertificate }}
       volumes:

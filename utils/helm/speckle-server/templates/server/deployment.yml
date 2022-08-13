@@ -242,7 +242,9 @@ spec:
                 key: apollo_key
           {{- end }}
       priorityClassName: high-priority
+      {{- if .Values.server.serviceAccount.create }}
       serviceAccountName: {{ include "server.name" $ }}
+      {{- end }}
       terminationGracePeriodSeconds: 310
       {{- if .Values.db.useCertificate }}
       volumes:

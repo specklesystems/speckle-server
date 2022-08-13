@@ -65,7 +65,9 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
+      {{- if .Values.preview_service.serviceAccount.create }}
       serviceAccountName: {{ include "preview_service.name" $ }}
+      {{- end }}
 
       # Should be > preview generation time ( 1 hour for good measure )
       terminationGracePeriodSeconds: 3600

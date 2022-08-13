@@ -46,10 +46,12 @@ spec:
             port: www
           initialDelaySeconds: 5
           periodSeconds: 5
-        
+
         env: 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
       priorityClassName: high-priority
+      {{- if .Values.frontend.serviceAccount.create }}
       serviceAccountName: {{ include "frontend.name" $ }}
+      {{- end }}

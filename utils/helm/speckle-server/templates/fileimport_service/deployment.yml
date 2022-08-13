@@ -85,7 +85,9 @@ spec:
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
 
       priorityClassName: low-priority
+      {{- if .Values.fileimport_service.serviceAccount.create }}
       serviceAccountName: {{ include "fileimport_service.name" $ }}
+      {{- end }}
       # Should be > File import timeout to allow finishing up imports
       terminationGracePeriodSeconds: 610
       {{- if .Values.db.useCertificate }}
