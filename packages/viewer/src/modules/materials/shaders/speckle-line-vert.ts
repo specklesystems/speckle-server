@@ -219,10 +219,14 @@ export const speckleLineVert = /* glsl */ `
 				/*
 				Not great, not terrible
 				*/
-				float d;
-				float offsetStep = linewidth;
-				vec3 move = offset;
 				float pixelSize = length(vec2(pixelThreshold/resolution.x + pixelThreshold/resolution.y));
+				float offsetStep = linewidth;
+				float d = screenSpaceDistance(worldPos, worldPos + vec4(cOffset * offsetStep, 0.));
+				/* We're trying to start off with a step closer to the initial difference between SS distance and the pixel size we want
+				*/
+				offsetStep += pixelSize - d;
+				vec3 move = offset;
+				
 				for(int i = 0; i < SEARCH_STEPS; i++){
 					move = cOffset * offsetStep;
 					d = screenSpaceDistance(worldPos, worldPos + vec4(move, 0.));

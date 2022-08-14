@@ -60,7 +60,9 @@ export default class LineBatch implements Batch {
     }
     for (let i = 0; i < ranges.length; i++) {
       const start = ranges[i].offset * this.colorBuffer.stride
-      const len = ranges[i].offset * this.colorBuffer.stride + ranges[i].count * this.colorBuffer.stride
+      const len =
+        ranges[i].offset * this.colorBuffer.stride +
+        ranges[i].count * this.colorBuffer.stride
       for (let k = start; k < len; k += 4) {
         data[k + 3] = 1
       }
@@ -79,10 +81,14 @@ export default class LineBatch implements Batch {
       const material = ranges[i].material as SpeckleLineMaterial
       const materialOptions = ranges[i].materialOptions
       const color: Color =
-        materialOptions && materialOptions.rampIndexColor ? materialOptions.rampIndexColor : material.color
+        materialOptions && materialOptions.rampIndexColor
+          ? materialOptions.rampIndexColor
+          : material.color
       const alpha: number = material.visible ? 1 : 0
       const start = ranges[i].offset * this.colorBuffer.stride
-      const len = ranges[i].offset * this.colorBuffer.stride + ranges[i].count * this.colorBuffer.stride
+      const len =
+        ranges[i].offset * this.colorBuffer.stride +
+        ranges[i].count * this.colorBuffer.stride
 
       LineBatch.vector4Buffer.set(color.r, color.g, color.b, alpha)
       this.updateColorBuffer(
@@ -150,7 +156,10 @@ export default class LineBatch implements Batch {
       offset += points.length
     }
     this.makeLineGeometry(position)
-    this.mesh = new LineSegments2(this.geometry as LineSegmentsGeometry, this.batchMaterial as SpeckleLineMaterial)
+    this.mesh = new LineSegments2(
+      this.geometry as LineSegmentsGeometry,
+      this.batchMaterial as SpeckleLineMaterial
+    )
     ;(this.mesh as LineSegments2).computeLineDistances()
     this.mesh.scale.set(1, 1, 1)
 
@@ -159,7 +168,12 @@ export default class LineBatch implements Batch {
 
   public getRenderView(index: number): NodeRenderView {
     for (let k = 0; k < this.renderViews.length; k++) {
-      if (index >= this.renderViews[k].batchStart && index < this.renderViews[k].batchEnd) {
+      if (
+        index >= this.renderViews[k].batchStart &&
+        index < this.renderViews[k].batchEnd &&
+        /** A bit cheaty, but ok for now */
+        this.colorBuffer.array[index * this.colorBuffer.stride + 3] !== 0
+      ) {
         return this.renderViews[k]
       }
     }
@@ -182,10 +196,21 @@ export default class LineBatch implements Batch {
     this.updateColorBuffer(
       0,
       buffer.length,
-      new Vector4(this.batchMaterial.color.r, this.batchMaterial.color.g, this.batchMaterial.color.b, 1)
+      new Vector4(
+        this.batchMaterial.color.r,
+        this.batchMaterial.color.g,
+        this.batchMaterial.color.b,
+        1
+      )
     )
-    geometry.setAttribute('instanceColorStart', new InterleavedBufferAttribute(this.colorBuffer, 4, 0)) // rgb
-    geometry.setAttribute('instanceColorEnd', new InterleavedBufferAttribute(this.colorBuffer, 4, 4)) // rgb
+    geometry.setAttribute(
+      'instanceColorStart',
+      new InterleavedBufferAttribute(this.colorBuffer, 4, 0)
+    ) // rgb
+    geometry.setAttribute(
+      'instanceColorEnd',
+      new InterleavedBufferAttribute(this.colorBuffer, 4, 4)
+    ) // rgb
     geometry.computeBoundingBox()
     return geometry
   }

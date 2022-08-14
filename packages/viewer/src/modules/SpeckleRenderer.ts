@@ -206,6 +206,7 @@ export default class SpeckleRenderer {
 
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
+    this.renderer.shadowMap.needsUpdate = true
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -319,6 +320,7 @@ export default class SpeckleRenderer {
     )
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
+      this.renderer.shadowMap.needsUpdate = true
       this.viewer.FilterManager.resetSelection()
       this.selectionRawData = []
       this.viewer.emit('object-clicked', {
@@ -336,6 +338,13 @@ export default class SpeckleRenderer {
       result.object.uuid,
       result.faceIndex !== undefined ? result.faceIndex : result.index
     )
+    /** Batch rejected picking. This only happens with hidden lines */
+    if (!rv) {
+      this.batcher.resetBatchesDrawRanges()
+      this.renderer.shadowMap.needsUpdate = true
+      return
+    }
+
     const hitId = rv.renderData.id
 
     const hitNode = WorldTree.getInstance().findId(hitId)
@@ -344,6 +353,9 @@ export default class SpeckleRenderer {
     while (!parentNode.model.atomic) {
       parentNode = parentNode.parent
     }
+
+    this.batcher.resetBatchesDrawRanges()
+    this.renderer.shadowMap.needsUpdate = true
 
     if (multiSelect && !this.selectionRawData.includes(parentNode.model.raw))
       this.selectionRawData.push(parentNode.model.raw)
@@ -376,17 +388,24 @@ export default class SpeckleRenderer {
         result.object.uuid,
         result.faceIndex !== undefined ? result.faceIndex : result.index
       )
-      const transformedBox = new Box3().copy(rv.aabb)
-      transformedBox.applyMatrix4(result.object.matrixWorld)
-      this.zoomToBox(transformedBox, 1.2, true)
+      if (rv) {
+        const transformedBox = new Box3().copy(rv.aabb)
+        transformedBox.applyMatrix4(result.object.matrixWorld)
+        this.zoomToBox(transformedBox, 1.2, true)
+        this.viewer.needsRender = true
+        this.viewer.emit(
+          'object-doubleclicked',
+          result ? rv.renderData.id : null,
+          result ? result.point : null
+        )
+      } else {
+        if (this.viewer.sectionBox.display.visible) {
+          this.zoomToBox(this.viewer.sectionBox.cube, 1.2, true)
+        } else {
+          this.zoomExtents()
+        }
+      }
     }
-
-    this.viewer.needsRender = true
-    this.viewer.emit(
-      'object-doubleclicked',
-      result ? rv.renderData.id : null,
-      result ? result.point : null
-    )
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
@@ -476,7 +495,7 @@ export default class SpeckleRenderer {
     const hitId = rv.renderData.id
 
     const hitNode = WorldTree.getInstance().findId(hitId)
-    console.log(hitNode)
+    // console.log(hitNode)
 
     this.batcher.resetBatchesDrawRanges()
 

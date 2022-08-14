@@ -20,6 +20,7 @@ export interface NodeData {
 export class WorldTree {
   private static instance: WorldTree
   private static renderTreeInstances: { [id: string]: RenderTree } = {}
+  private readonly supressWarnings = true
 
   private constructor() {
     this.tree = new TreeModel()
@@ -44,9 +45,6 @@ export class WorldTree {
     if (!WorldTree.getInstance()._root) {
       console.error(`WorldTree not initialised`)
       return null
-    }
-    if (!subtreeId) {
-      console.warn(`No subtree provided, using Root`)
     }
 
     const id = subtreeId ? subtreeId : WorldTree.getInstance().root.model.id
@@ -88,14 +86,14 @@ export class WorldTree {
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
-    if (!node) {
+    if (!node && !this.supressWarnings) {
       console.warn(`Root will be used for searching. You might not want that`)
     }
     return (node ? node : this.root).all(predicate)
   }
 
   public findId(id: string, node?: TreeNode) {
-    if (!node) {
+    if (!node && !this.supressWarnings) {
       console.warn(`Root will be used for searching. You might not want that`)
     }
     return (node ? node : this.root).first((_node: TreeNode) => {
@@ -108,7 +106,7 @@ export class WorldTree {
   }
 
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
-    if (!node) {
+    if (!node && !this.supressWarnings) {
       console.warn(`Root will be used for searching. You might not want that`)
     }
     this._root.walk(predicate)

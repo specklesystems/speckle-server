@@ -5,7 +5,7 @@ import { WorldTree } from '../tree/WorldTree'
 import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Batch, BatchUpdateRange, GeometryType } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 import PointBatch from './PointBatch'
 import { FilterMaterialType } from '../FilteringManager'
 import { WebGLRenderer } from 'three'
@@ -36,7 +36,7 @@ export default class Batcher {
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
 
-    // console.warn(materialHashes)
+    console.warn(materialHashes)
     // console.warn(rendeViews)
 
     for (let i = 0; i < materialHashes.length; i++) {
@@ -80,7 +80,7 @@ export default class Batcher {
 
       this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch()
-      // console.warn(batch)
+      console.warn(batch)
     }
   }
 
@@ -127,7 +127,8 @@ export default class Batcher {
 
   public setObjectsFilterMaterial(
     rvs: NodeRenderView[],
-    filterMaterial: FilterMaterial
+    filterMaterial: FilterMaterial,
+    uniqueRvsOnly = true
   ): string[] {
     // const rvs = []
     // ids.forEach((val: string) => {
@@ -143,13 +144,15 @@ export default class Batcher {
     // })
     // console.log(ids)
     // console.log(rvs)
-    const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
+    let renderViews = rvs
+    if (uniqueRvsOnly) renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
+    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
     for (let i = 0; i < batchIds.length; i++) {
       if (!batchIds[i]) {
         continue
       }
       const batch = this.batches[batchIds[i]]
-      const views = rvs
+      const views = renderViews
         .filter((value) => value.batchId === batchIds[i])
         .map((rv: NodeRenderView) => {
           return {
@@ -196,6 +199,7 @@ export default class Batcher {
             FilterMaterialType.HIDDEN
           )
         })
+        this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
       } else {
         const drawRanges = []
         for (let i = 0; i < this.batches[k].renderViews.length; i++) {
@@ -205,7 +209,7 @@ export default class Batcher {
               count: this.batches[k].renderViews[i].batchCount,
               material: this.materials.getFilterMaterial(
                 this.batches[k].renderViews[i],
-                FilterMaterialType.HIDDEN
+                FilterMaterialType.GHOST
               )
             })
           }

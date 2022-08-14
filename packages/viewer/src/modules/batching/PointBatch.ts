@@ -6,6 +6,7 @@ import {
   Points,
   WebGLRenderer
 } from 'three'
+import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
 import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
@@ -190,7 +191,7 @@ export default class PointBatch implements Batch {
     const attributeCount = this.renderViews.flatMap(
       (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
     ).length
-    const position = new Float32Array(attributeCount)
+    const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
@@ -221,11 +222,8 @@ export default class PointBatch implements Batch {
     }
   }
 
-  /**
-   * DUPLICATE from Geometry. Will unify in the future
-   */
   private makePointGeometry(
-    position: Float32Array,
+    position: Float64Array,
     color: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -238,6 +236,7 @@ export default class PointBatch implements Batch {
     this.geometry.computeBoundingBox()
 
     World.expandWorld(this.geometry.boundingBox)
+    Geometry.updateRTEGeometry(this.geometry, position)
 
     return this.geometry
   }

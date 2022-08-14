@@ -41,7 +41,9 @@ export default class Materials {
       renderMaterial = {
         id: node.model.raw.renderMaterial.id,
         color: node.model.raw.renderMaterial.diffuse,
-        opacity: node.model.raw.renderMaterial.opacity ? node.model.raw.renderMaterial.opacity : 1,
+        opacity: node.model.raw.renderMaterial.opacity
+          ? node.model.raw.renderMaterial.opacity
+          : 1,
         vertexColors: node.model.raw.colors && node.model.raw.colors.length > 0
       }
     }
@@ -132,30 +134,39 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineColoredMaterial).resolution = new Vector2()
 
-    this.pointCloudHighlightMaterial = new SpecklePointMaterial({
-      color: 0xff0000,
-      vertexColors: true,
-      size: 2,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.pointCloudHighlightMaterial = new SpecklePointMaterial(
+      {
+        color: 0xff0000,
+        vertexColors: true,
+        size: 2,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
 
-    this.pointHighlightMaterial = new SpecklePointMaterial({
-      color: 0xff0000,
-      vertexColors: false,
-      size: 2,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.pointHighlightMaterial = new SpecklePointMaterial(
+      {
+        color: 0xff0000,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
 
-    this.pointGhostMaterial = new SpecklePointMaterial({
-      color: 0xffffff,
-      vertexColors: false,
-      size: 2,
-      opacity: 0.01,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.pointGhostMaterial = new SpecklePointMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        opacity: 0.01,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
 
     this.meshGhostMaterial = new SpeckleStandardMaterial(
       {
@@ -220,29 +231,31 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).resolution = new Vector2()
     this.lineHiddenMaterial.visible = false
 
-    this.materialMap[NodeRenderView.NullRenderMaterialHash] = new SpeckleStandardMaterial(
-      {
-        color: 0x7f7f7f,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide // TBD,
-        // clippingPlanes: this.viewer.sectionBox.planes
-      },
-      ['USE_RTE']
-    )
-    this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] = new SpeckleStandardMaterial(
-      {
-        color: 0x7f7f7f,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide, // TBD
-        vertexColors: true
-        // clippingPlanes: this.viewer.sectionBox.planes
-      },
-      ['USE_RTE']
-    )
+    this.materialMap[NodeRenderView.NullRenderMaterialHash] =
+      new SpeckleStandardMaterial(
+        {
+          color: 0x7f7f7f,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide // TBD,
+          // clippingPlanes: this.viewer.sectionBox.planes
+        },
+        ['USE_RTE']
+      )
+    this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] =
+      new SpeckleStandardMaterial(
+        {
+          color: 0x7f7f7f,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide, // TBD
+          vertexColors: true
+          // clippingPlanes: this.viewer.sectionBox.planes
+        },
+        ['USE_RTE']
+      )
 
     const hash = NodeRenderView.NullDisplayStyleHash // So prettier doesn't fuck up everything
     this.materialMap[hash] = new SpeckleLineMaterial({
@@ -261,27 +274,38 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2()
 
-    this.materialMap[NodeRenderView.NullPointMaterialHash] = new SpecklePointMaterial({
-      color: 0x7f7f7f,
-      vertexColors: false,
-      size: 2,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
-    this.materialMap[NodeRenderView.NullPointCloudVertexColorsMaterialHash] = new SpecklePointMaterial({
-      color: 0xffffff,
-      vertexColors: true,
-      size: 2,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
-    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] = new SpecklePointMaterial({
-      color: 0xffffff,
-      vertexColors: false,
-      size: 2,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.materialMap[NodeRenderView.NullPointMaterialHash] = new SpecklePointMaterial(
+      {
+        color: 0x7f7f7f,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
+    this.materialMap[NodeRenderView.NullPointCloudVertexColorsMaterialHash] =
+      new SpecklePointMaterial(
+        {
+          color: 0xffffff,
+          vertexColors: true,
+          size: 2,
+          sizeAttenuation: false
+          // clippingPlanes: this.viewer.sectionBox.planes
+        },
+        ['USE_RTE']
+      )
+    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] =
+      new SpecklePointMaterial(
+        {
+          color: 0xffffff,
+          vertexColors: false,
+          size: 2,
+          sizeAttenuation: false
+          // clippingPlanes: this.viewer.sectionBox.planes
+        },
+        ['USE_RTE']
+      )
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
@@ -324,21 +348,40 @@ export default class Materials {
   }
 
   private makePointMaterial(materialData: RenderMaterial): Material {
-    const mat = new SpecklePointMaterial({
-      color: materialData.color,
-      opacity: materialData.opacity,
-      vertexColors: false,
-      size: 2,
-      sizeAttenuation: false
-      // clippingPlanes: this.viewer.sectionBox.planes
-    })
+    /** There's an issue with how the data is being sent. Some point clouds
+     *  have render materials with 0x000000 as the base color + vertex colors
+     *  By default three.js modulates the base color with the vertex colors
+     *  But since the base color is black, the result is also black. We'll have
+     *  to avoid this
+     */
+    const isBaseColorBlack = materialData.color === -16777216 // 0xff000000 (black)
+    const safeColor = materialData.vertexColors
+      ? isBaseColorBlack
+        ? 0xffffff
+        : materialData.color
+      : materialData.color
+    const mat = new SpecklePointMaterial(
+      {
+        color: safeColor,
+        opacity: materialData.opacity,
+        vertexColors: materialData.vertexColors,
+        size: 2,
+        sizeAttenuation: false
+        // clippingPlanes: this.viewer.sectionBox.planes
+      },
+      ['USE_RTE']
+    )
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
     mat.color.convertSRGBToLinear()
     return mat
   }
 
-  public updateMaterialMap(hash: number, material: RenderMaterial | DisplayStyle, type: GeometryType): Material {
+  public updateMaterialMap(
+    hash: number,
+    material: RenderMaterial | DisplayStyle,
+    type: GeometryType
+  ): Material {
     // console.log(this.materialMap)
     if (this.materialMap[hash]) {
       // console.warn(`Duplicate material hash found: ${hash}`)
@@ -462,23 +505,32 @@ export default class Materials {
         return mat
       }
       case GeometryType.POINT:
-        return new SpecklePointMaterial({
-          color,
-          vertexColors: false,
-          size: 2,
-          sizeAttenuation: false
-        })
+        return new SpecklePointMaterial(
+          {
+            color,
+            vertexColors: false,
+            size: 2,
+            sizeAttenuation: false
+          },
+          ['USE_RTE']
+        )
       case GeometryType.POINT_CLOUD:
-        return new SpecklePointMaterial({
-          color,
-          vertexColors: true,
-          size: 2,
-          sizeAttenuation: false
-        })
+        return new SpecklePointMaterial(
+          {
+            color,
+            vertexColors: true,
+            size: 2,
+            sizeAttenuation: false
+          },
+          ['USE_RTE']
+        )
     }
   }
 
-  public getFilterMaterial(renderView: NodeRenderView, filterMaterial: FilterMaterialType) {
+  public getFilterMaterial(
+    renderView: NodeRenderView,
+    filterMaterial: FilterMaterialType
+  ) {
     switch (filterMaterial) {
       case FilterMaterialType.SELECT:
         return this.getHighlightMaterial(renderView)
@@ -495,7 +547,8 @@ export default class Materials {
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
     return {
-      rampIndex: filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
+      rampIndex:
+        filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
       rampIndexColor: filterMaterial.rampIndexColor,
       rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
     }
