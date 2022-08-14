@@ -73,10 +73,24 @@ export class GeometryConverter {
         return GeometryConverter.ArcToGeometryData(node)
       case SpeckleType.Ellipse:
         return GeometryConverter.EllipseToGeometryData(node)
+      case SpeckleType.View3D:
+        return GeometryConverter.View3DToGeometryData(node)
       default:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }
+  }
+  static View3DToGeometryData(node: NodeData): GeometryData {
+    const vOrigin = GeometryConverter.PointToVector3(node.raw.origin)
+    const vTarget = GeometryConverter.PointToVector3(node.raw.target)
+    node.raw.origin = vOrigin
+    node.raw.target = vTarget
+
+    return {
+      attributes: null,
+      bakeTransform: null,
+      transform: null
+    } as GeometryData
   }
 
   /** BLOCK INSTANCE */

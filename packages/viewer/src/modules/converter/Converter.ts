@@ -298,7 +298,8 @@ export default class Coverter {
     NODES
    */
   private async View3DToNode(obj, node) {
-    node.model.raw = obj
+    obj.origin.units = obj.units
+    obj.target.units = obj.units
   }
 
   private async BlockInstanceToNode(obj, node) {

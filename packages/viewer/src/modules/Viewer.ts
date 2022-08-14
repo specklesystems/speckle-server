@@ -14,7 +14,8 @@ import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilteringManager, FilterMaterialType } from './FilteringManager'
+import { FilterMaterialType } from './FilteringManager'
+import { SpeckleType } from './converter/GeometryConverter'
 
 export class Viewer extends EventEmitter implements IViewer {
   public speckleRenderer: SpeckleRenderer
@@ -102,7 +103,6 @@ export class Viewer extends EventEmitter implements IViewer {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoomExtents()
-
       console.warn('Built stuff')
     })
 
@@ -177,6 +177,48 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.toggleCameras()
   }
 
+  public getViews() {
+    return WorldTree.getInstance()
+      .findAll((node: TreeNode) => {
+        return node.model.renderView?.speckleType === SpeckleType.View3D
+      })
+      .map((v) => {
+        return {
+          name: v.model.raw.applicationId,
+          id: v.model.id,
+          view: v.model.raw
+        }
+      })
+  }
+
+  public setView(id: string, transition: boolean): void {
+    const view3DNode = WorldTree.getInstance().findId(id)
+    this.speckleRenderer.setView(
+      view3DNode.model.raw.origin,
+      view3DNode.model.raw.target,
+      transition
+    )
+  }
+
+  public rotateTo(side: string, transition = true) {
+    this.speckleRenderer.rotateTo(side)
+    transition
+  }
+
+  public screenshot(): Promise<string> {
+    return new Promise((resolve) => {
+      const sectionBoxVisible = this.sectionBox.display.visible
+      if (sectionBoxVisible) {
+        this.sectionBox.displayOff()
+      }
+      const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
+      if (sectionBoxVisible) {
+        this.sectionBox.displayOn()
+      }
+      resolve(screenshot)
+    })
+  }
+
   public async loadObject(url: string, token?: string, enableCaching = true) {
     try {
       if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
@@ -208,6 +250,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit('busy', false)
         console.warn(`Removed subtree ${url}`)
+        ;(this as EventEmitter).emit('unload-complete', url)
       }
     }
   }
@@ -229,6 +272,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit('busy', false)
         console.warn(`Removed all subtrees`)
+        ;(this as EventEmitter).emit('unload-all-complete')
       }
     }
   }

@@ -10,6 +10,7 @@ export enum FilterMaterialType {
   GHOST,
   GRADIENT,
   COLORED,
+  OVERLAY,
   HIDDEN
 }
 
