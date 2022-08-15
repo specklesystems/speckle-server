@@ -39,6 +39,7 @@ services:
       S3_SECRET_KEY: 'minioadmin'
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
       FILE_SIZE_LIMIT_MB: 100
 
   preview-service:
