@@ -141,6 +141,8 @@ spec:
                 key: s3_secret_key
           - name: S3_CREATE_BUCKET
             value: "{{ .Values.s3.create_bucket }}"
+          - name: S3_REGION
+            value: "{{ .Values.s3.region }}"
 
           {{- end }}
 
