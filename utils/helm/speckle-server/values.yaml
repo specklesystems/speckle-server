@@ -96,9 +96,24 @@ server:
   sentry_dns: ''
   disable_tracking: false
   disable_tracing: false
-
   networkPolicy:
     enabled: false
+  ## @param server.affinity Affinity for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.topologySpreadConstraints Spread Constraints for Speckle server pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ##
+  topologySpreadConstraints: []
 
 frontend:
   replicas: 1
@@ -110,6 +125,22 @@ frontend:
     memory: 512Mi
   networkPolicy:
     enabled: false
+  ## @param server.affinity Affinity for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.topologySpreadConstraints Spread Constraints for Speckle server pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ##
+  topologySpreadConstraints: []
   serviceAccount:
     create: true
 
@@ -123,6 +154,22 @@ preview_service:
     memory: 4Gi
   networkPolicy:
     enabled: false
+  ## @param server.affinity Affinity for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.topologySpreadConstraints Spread Constraints for Speckle server pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ##
+  topologySpreadConstraints: []
   serviceAccount:
     create: true
 
@@ -136,6 +183,22 @@ webhook_service:
     memory: 512Mi
   networkPolicy:
     enabled: false
+  ## @param server.affinity Affinity for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.topologySpreadConstraints Spread Constraints for Speckle server pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ##
+  topologySpreadConstraints: []
   serviceAccount:
     create: true
 
@@ -152,6 +215,22 @@ fileimport_service:
   time_limit_min: 10
   networkPolicy:
     enabled: false
+  ## @param server.affinity Affinity for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.topologySpreadConstraints Spread Constraints for Speckle server pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ##
+  topologySpreadConstraints: []
 
 monitoring:
   replicas: 1
@@ -163,6 +242,22 @@ monitoring:
     memory: 512Mi
   networkPolicy:
     enabled: false
+  ## @param server.affinity Affinity for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ##
+  affinity: {}
+  ## @param server.nodeSelector Node labels for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param server.tolerations Tolerations for Speckle server pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param server.topologySpreadConstraints Spread Constraints for Speckle server pod assignment
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
+  ##
+  topologySpreadConstraints: []
   serviceAccount:
     create: true
 
