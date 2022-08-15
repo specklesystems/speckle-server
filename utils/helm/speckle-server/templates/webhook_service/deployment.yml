@@ -90,6 +90,9 @@ spec:
       {{- end }}
 
       priorityClassName: low-priority
+      {{- if .Values.webhook_service.serviceAccount.create }}
+      serviceAccountName: {{ include "webhook_service.name" $ }}
+      {{- end }}
 
       securityContext:
         runAsNonRoot: true

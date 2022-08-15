@@ -83,6 +83,8 @@ server:
   limits:
     cpu: 1000m
     memory: 3Gi
+  serviceAccount:
+    create: true
 
   monitoring:
     apollo:
@@ -139,6 +141,8 @@ frontend:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  serviceAccount:
+    create: true
 
 preview_service:
   replicas: 1
@@ -166,6 +170,8 @@ preview_service:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  serviceAccount:
+    create: true
 
 webhook_service:
   replicas: 1
@@ -193,6 +199,8 @@ webhook_service:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  serviceAccount:
+    create: true
 
 fileimport_service:
   replicas: 1
@@ -202,6 +210,8 @@ fileimport_service:
   limits:
     cpu: 1000m
     memory: 2Gi
+  serviceAccount:
+    create: true
   time_limit_min: 10
   networkPolicy:
     enabled: false
@@ -248,6 +258,8 @@ monitoring:
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  serviceAccount:
+    create: true
 
 test:
   requests:
@@ -258,6 +270,8 @@ test:
     memory: 512Mi
   networkPolicy:
     enabled: false
+  serviceAccount:
+    create: true
 
 secretName: server-vars
 

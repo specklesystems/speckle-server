@@ -105,7 +105,11 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       priorityClassName: low-priority
-
+      {{- if .Values.fileimport_service.serviceAccount.create }}
+      serviceAccountName: {{ include "fileimport_service.name" $ }}
+      {{- end }}
+      # Should be > File import timeout to allow finishing up imports
+      terminationGracePeriodSeconds: 610
       volumes:
         - name: tmp
           emptyDir: {}
@@ -114,7 +118,4 @@ spec:
           configMap:
             name: postgres-certificate
       {{- end }}
-
-      # Should be > File import timeout to allow finishing up imports
-      terminationGracePeriodSeconds: 610
 {{- end }}

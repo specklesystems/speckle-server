@@ -89,6 +89,9 @@ spec:
       topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end }}
       priorityClassName: low-priority
+      {{- if .Values.preview_service.serviceAccount.create }}
+      serviceAccountName: {{ include "preview_service.name" $ }}
+      {{- end }}
 
       securityContext:
         runAsNonRoot: true

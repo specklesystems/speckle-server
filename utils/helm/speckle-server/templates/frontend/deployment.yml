@@ -64,3 +64,6 @@ spec:
       {{- if .Values.frontend.topologySpreadConstraints }}
       topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end }}
+      {{- if .Values.frontend.serviceAccount.create }}
+      serviceAccountName: {{ include "frontend.name" $ }}
+      {{- end }}

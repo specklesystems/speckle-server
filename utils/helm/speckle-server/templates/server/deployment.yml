@@ -278,6 +278,9 @@ spec:
         seccompProfile:
           type: RuntimeDefault
 
+      {{- if .Values.server.serviceAccount.create }}
+      serviceAccountName: {{ include "server.name" $ }}
+      {{- end }}
       terminationGracePeriodSeconds: 310
       volumes:
         - name: tmp

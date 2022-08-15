@@ -63,7 +63,10 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
-
+      {{- if .Values.monitoring.serviceAccount.create }}
+      serviceAccountName: {{ include "monitoring.name" $ }}
+      {{- end }}
+      terminationGracePeriodSeconds: 10
       securityContext:
         runAsNonRoot: true
         runAsUser: 20000
@@ -80,7 +83,6 @@ spec:
             name: postgres-certificate
       {{- end }}
 
-      terminationGracePeriodSeconds: 10
       {{- if .Values.monitoring.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.affinity "context" $) | nindent 8 }}
       {{- end }}
