@@ -193,14 +193,10 @@ export default class SpeckleRenderer {
         shadowMatrix.multiply(meshBatch.matrixWorld)
         const material: SpeckleStandardMaterial =
           meshBatch.material as SpeckleStandardMaterial
-        try {
-          material.userData.rteShadowMatrix.value.copy(shadowMatrix)
-          material.userData.uShadowViewer_low.value.copy(viewerLow)
-          material.userData.uShadowViewer_high.value.copy(viewerHigh)
-          material.needsUpdate = true
-        } catch (e) {
-          console.warn('fsd')
-        }
+        material.userData.rteShadowMatrix.value.copy(shadowMatrix)
+        material.userData.uShadowViewer_low.value.copy(viewerLow)
+        material.userData.uShadowViewer_high.value.copy(viewerHigh)
+        material.needsUpdate = true
       }
     }
   }
