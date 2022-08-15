@@ -34,17 +34,6 @@ spec:
             cpu: {{ .Values.frontend.limits.cpu }}
             memory: {{ .Values.frontend.limits.memory }}
 
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-            add:
-              - NET_BIND_SERVICE
-          privileged: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: false
-
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
           preStop:
@@ -62,33 +51,4 @@ spec:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
-        volumeMounts:
-          - mountPath: /var/cache/nginx
-            name: nginx-cache
-          - mountPath: /tmp/nginx
-            name: nginx-tmp
-          - mountPath: /etc/nginx/conf.d
-            name: nginx-confd
-          - mountPath: /usr/local/openresty/nginx/logs
-            name: openresty-logs
-          - mountPath: /var/run/openresty
-            name: openresty-tmp
-
       priorityClassName: high-priority
-
-      securityContext:
-        runAsNonRoot: false
-        seccompProfile:
-          type: RuntimeDefault
-
-      volumes:
-        - name: nginx-cache
-          emptyDir: {}
-        - name: nginx-confd
-          emptyDir: {}
-        - name: nginx-tmp
-          emptyDir: {}
-        - name: openresty-logs
-          emptyDir: {}
-        - name: openresty-tmp
-          emptyDir: {}
