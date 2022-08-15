@@ -10,6 +10,8 @@ export default class Sandbox {
   private tabs
   private filterControls
   private steamsFolder
+  private viewsControls = []
+  private viewsFolder
   private streams: { [url: string]: Array<unknown> } = {}
 
   public static urlParams = {
@@ -47,6 +49,17 @@ export default class Sandbox {
 
     viewer.on('load-complete', (url: string) => {
       this.addStreamControls(url)
+      this.addViewControls()
+    })
+    viewer.on('unload-complete', (url: string) => {
+      this.removeViewControls()
+      this.addViewControls()
+      url
+    })
+    viewer.on('unload-all-complete', (url: string) => {
+      this.removeViewControls()
+      this.addViewControls()
+      url
     })
   }
 
@@ -87,6 +100,27 @@ export default class Sandbox {
     ;(this.streams[url][1] as { dispose: () => void }).dispose()
     ;(this.streams[url][2] as { dispose: () => void }).dispose()
     delete this.streams[url]
+  }
+
+  private addViewControls() {
+    const views = this.viewer.getViews()
+    this.viewsFolder = this.tabs.pages[0].addFolder({
+      title: 'Views',
+      expanded: true
+    })
+    for (let k = 0; k < views.length; k++) {
+      this.viewsFolder
+        .addButton({
+          title: views[k].name
+        })
+        .on('click', () => {
+          this.viewer.setView(views[k].id)
+        })
+    }
+  }
+
+  private removeViewControls() {
+    this.viewsFolder.dispose()
   }
 
   public makeGenericUI() {
@@ -148,6 +182,28 @@ export default class Sandbox {
     showBatches.on('click', () => {
       this.viewer.speckleRenderer.debugShowBatches()
     })
+
+    const screenshot = this.tabs.pages[0].addButton({
+      title: 'Screenshot'
+    })
+    screenshot.on('click', async () => {
+      console.warn(await this.viewer.screenshot())
+    })
+
+    const canonicalViewsFolder = this.tabs.pages[0].addFolder({
+      title: 'Canonical Views',
+      expanded: true
+    })
+    const sides = ['front', 'back', 'top', 'bottom', 'right', 'left', '3d']
+    for (let k = 0; k < sides.length; k++) {
+      canonicalViewsFolder
+        .addButton({
+          title: sides[k]
+        })
+        .on('click', () => {
+          this.viewer.rotateTo(sides[k])
+        })
+    }
   }
 
   makeSceneUI() {
