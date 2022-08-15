@@ -43,8 +43,20 @@ spec:
             cpu: {{ .Values.fileimport_service.limits.cpu }}
             memory: {{ .Values.fileimport_service.limits.memory }}
 
-        {{- if .Values.db.useCertificate }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
         volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
@@ -67,26 +79,24 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-
-          - name: S3_ENDPOINT
-            value: {{ .Values.s3.endpoint }}
-          - name: S3_ACCESS_KEY
-            value: {{ .Values.s3.access_key }}
-          - name: S3_BUCKET
-            value: {{ .Values.s3.bucket }}
-          - name: S3_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: s3_secret_key
-
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
 
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
+
       priorityClassName: low-priority
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate

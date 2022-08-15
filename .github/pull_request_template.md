@@ -34,7 +34,7 @@ Connects #123
 
 -->
 
-## To-do before merge
+## To-do before merge:
 
 <!---
 
@@ -72,9 +72,9 @@ This checklist is mostly useful as a reminder of small things that can easily be
 
 forgotten – it is meant as a helpful tool rather than hoops to jump through.
 
-Put an `x` in all the items that apply, make notes next to any that haven't been
+Put an `x` between the square brackets, e.g. [x], for all the items that apply,
 
-addressed, and remove any items that are not relevant to this PR.
+make notes next to any that haven't been addressed, and remove any items that are not relevant to this PR.
 
 -->
 
@@ -84,3 +84,19 @@ addressed, and remove any items that are not relevant to this PR.
 - [ ] My code follows a similar style to existing code.
 - [ ] I have added appropriate tests.
 - [ ] I have updated or added relevant documentation.
+
+## References
+
+<!---
+
+(Optional -- remove this section if not needed )
+
+Include **important** links regarding the implementation of this PR.
+
+This usually includes a RFC or an aggregation of issues and/or individual conversations
+
+that helped put this solution together. This helps ensure we retain and share knowledge
+
+regarding the implementation, and may help others understand motivation and design decisions etc..
+
+-->

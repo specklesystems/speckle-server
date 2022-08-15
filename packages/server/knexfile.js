@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 'use strict'
 
-const { repoRoot } = require('./bootstrap')
+const { packageRoot } = require('./bootstrap')
 const fs = require('fs')
 const path = require('path')
 const { isTestEnv } = require('@/modules/shared/helpers/envHelper')
@@ -26,7 +26,7 @@ function walk(dir) {
 // The only exception is when running tests in the test DB, cause the stakes are way lower there and we always
 // run them through ts-node anyway, so it doesn't make sense forcing the app to be built
 const migrationModulesDir = path.resolve(
-  repoRoot,
+  packageRoot,
   isTestEnv() ? './modules' : './dist/modules'
 )
 if (!fs.existsSync(migrationModulesDir)) {

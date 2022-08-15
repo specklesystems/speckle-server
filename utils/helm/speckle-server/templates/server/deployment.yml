@@ -33,10 +33,22 @@ spec:
             cpu: {{ .Values.server.limits.cpu }}
             memory: {{ .Values.server.limits.memory }}
 
-        {{- if .Values.db.useCertificate }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
         volumeMounts:
-        - name: postgres-certificate
-          mountPath: /postgres-certificate
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
         {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
@@ -128,6 +140,8 @@ spec:
                 key: s3_secret_key
           - name: S3_CREATE_BUCKET
             value: "{{ .Values.s3.create_bucket }}"
+          - name: S3_REGION
+            value: "{{ .Values.s3.region }}"
 
           {{- end }}
 
@@ -241,9 +255,21 @@ spec:
                 key: apollo_key
           {{- end }}
       priorityClassName: high-priority
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
+
       terminationGracePeriodSeconds: 310
-      {{- if .Values.db.useCertificate }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
