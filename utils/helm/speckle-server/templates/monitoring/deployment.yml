@@ -81,3 +81,15 @@ spec:
       {{- end }}
 
       terminationGracePeriodSeconds: 10
+      {{- if .Values.monitoring.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}

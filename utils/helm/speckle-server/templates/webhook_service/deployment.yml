@@ -76,6 +76,19 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+      {{- if .Values.webhook_service.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.webhook_service.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webhook_service.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.webhook_service.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webhook_service.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.webhook_service.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webhook_service.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.webhook_service.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
+
       priorityClassName: low-priority
 
       securityContext:
