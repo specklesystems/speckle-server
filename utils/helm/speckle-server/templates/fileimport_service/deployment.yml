@@ -64,7 +64,7 @@ spec:
         env:
           - name: SPECKLE_SERVER_URL
             value: "http://speckle-server:3000"
-            
+
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -82,6 +82,19 @@ spec:
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
 
+      {{- if .Values.fileimport_service.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fileimport_service.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fileimport_service.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fileimport_service.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
+
       securityContext:
         runAsNonRoot: true
         runAsUser: 20000
@@ -90,9 +103,12 @@ spec:
         runAsGroup: 30000
         seccompProfile:
           type: RuntimeDefault
-
       priorityClassName: low-priority
-
+      {{- if .Values.fileimport_service.serviceAccount.create }}
+      serviceAccountName: {{ include "fileimport_service.name" $ }}
+      {{- end }}
+      # Should be > File import timeout to allow finishing up imports
+      terminationGracePeriodSeconds: 610
       volumes:
         - name: tmp
           emptyDir: {}
@@ -101,7 +117,4 @@ spec:
           configMap:
             name: postgres-certificate
       {{- end }}
-
-      # Should be > File import timeout to allow finishing up imports
-      terminationGracePeriodSeconds: 610
 {{- end }}

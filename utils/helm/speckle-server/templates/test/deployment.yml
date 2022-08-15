@@ -43,4 +43,7 @@ spec:
     seccompProfile:
       type: RuntimeDefault
 
+  {{- if .Values.test.serviceAccount.create }}
+  serviceAccountName: {{ include "test.name" $ }}
+  {{- end }}
 {{- end }}

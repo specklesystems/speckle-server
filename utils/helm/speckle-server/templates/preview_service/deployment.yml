@@ -75,7 +75,22 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+      {{- if .Values.preview_service.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.preview_service.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.preview_service.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.preview_service.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
       priorityClassName: low-priority
+      {{- if .Values.preview_service.serviceAccount.create }}
+      serviceAccountName: {{ include "preview_service.name" $ }}
+      {{- end }}
 
       securityContext:
         runAsNonRoot: true
