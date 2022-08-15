@@ -189,6 +189,7 @@ export default class SpeckleRenderer {
 
         shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
         shadowMatrix.multiply(rteView)
+        shadowMatrix.multiply(meshBatch.matrixWorld)
         const material: SpeckleStandardMaterial =
           meshBatch.material as SpeckleStandardMaterial
         try {
@@ -375,6 +376,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
+    this.updateHelpers()
   }
 
   public updateHelpers() {
