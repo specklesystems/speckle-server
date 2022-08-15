@@ -241,6 +241,18 @@ spec:
                 name: {{ .Values.secretName }}
                 key: apollo_key
           {{- end }}
+      {{- if .Values.server.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.server.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.server.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.server.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.server.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.server.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.server.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.server.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
       priorityClassName: high-priority
       terminationGracePeriodSeconds: 310
       {{- if .Values.db.useCertificate }}

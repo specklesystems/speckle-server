@@ -93,3 +93,16 @@ Part-of label
 {{- define "speckle.labels.part-of" -}}
 app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
+
+{{/*
+Renders a value that contains template.
+Usage:
+{{ include "speckle.renderTpl" ( dict "value" .Values.path.to.value "context" $) }}
+*/}}
+{{- define "speckle.renderTpl" -}}
+    {{- if typeIs "string" .value }}
+        {{- tpl .value .context }}
+    {{- else }}
+        {{- tpl (.value | toYaml) .context }}
+    {{- end }}
+{{- end -}}
