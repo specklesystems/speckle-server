@@ -15,7 +15,7 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
-import { Batch, BatchUpdateRange } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 
 export default class LineBatch implements Batch {
   public id: string
@@ -35,6 +35,10 @@ export default class LineBatch implements Batch {
 
   public get renderObject(): Object3D {
     return this.mesh
+  }
+
+  public get geometryType(): GeometryType {
+    return this.renderViews[0].geometryType
   }
 
   public getCount(): number {

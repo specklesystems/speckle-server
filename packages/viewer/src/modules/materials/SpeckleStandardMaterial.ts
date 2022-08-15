@@ -25,6 +25,12 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.rteShadowMatrix = {
       value: new Matrix4()
     }
+    this.userData.uShadowViewer_high = {
+      value: new Vector3()
+    }
+    this.userData.uShadowViewer_low = {
+      value: new Vector3()
+    }
     ;(this as any).vertProgram = speckleStandardVert
     ;(this as any).fragProgram = speckleStandardFrag
     ;(this as any).uniforms = UniformsUtils.merge([
@@ -38,6 +44,12 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
         },
         rteShadowMatrix: {
           value: this.userData.rteShadowMatrix.value
+        },
+        uShdowViewer_high: {
+          value: this.userData.uShadowViewer_high.value
+        },
+        uShadowViewer_low: {
+          value: this.userData.uShadowViewer_low.value
         }
       }
     ])
@@ -46,6 +58,8 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
       shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
+      shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
+      shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }

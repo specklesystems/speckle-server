@@ -105,13 +105,12 @@ export default class Batcher {
     }
   }
 
-  public getBatches(subtreeId?: string) {
-    if (!subtreeId) {
-      return Object.values(this.batches)
-    }
-
+  public getBatches(subtreeId?: string, geometryType?: GeometryType) {
     return Object.values(this.batches).filter((value: Batch) => {
-      return value.subtreeId === subtreeId
+      const subtree = subtreeId !== undefined ? value.subtreeId === subtreeId : true
+      const type =
+        geometryType !== undefined ? value.geometryType === geometryType : true
+      return subtree && type
     })
   }
 

@@ -6,6 +6,8 @@ export const speckleStandardVert = /* glsl */ `
     uniform vec3 uViewer_high;
     uniform vec3 uViewer_low;
     uniform mat4 rteShadowMatrix;
+    uniform vec3 uShadowViewer_high;
+    uniform vec3 uShadowViewer_low;
 #endif
 
 varying vec3 vViewPosition;
@@ -29,7 +31,19 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
-
+vec4 computeRelativePosition(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
+    /* 
+    Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
+    Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
+    */
+    vec3 t1 = position_low.xyz - relativeTo_low;
+    vec3 e = t1 - position_low.xyz;
+    vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + position_high.xyz - relativeTo_high;
+    vec3 highDifference = t1 + t2;
+    vec3 lowDifference = t2 - (highDifference - t1);
+    vec3 position = highDifference.xyz + lowDifference.xyz;
+    return vec4(position, 1.);
+}
 
 void main() {
 
@@ -50,17 +64,7 @@ void main() {
     #include <displacementmap_vertex>
     //#include <project_vertex> // EDITED CHUNK
     #ifdef USE_RTE
-        /* 
-        Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
-        Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
-        */
-        vec3 t1 = position_low.xyz - uViewer_low;
-        vec3 e = t1 - position_low.xyz;
-        vec3 t2 = ((-uViewer_low - e) + (position_low.xyz - (t1 - e))) + position.xyz - uViewer_high;
-        vec3 highDifference = t1 + t2;
-        vec3 lowDifference = t2 - (highDifference - t1);
-        vec3 localPosition = highDifference.xyz + lowDifference.xyz;
-        vec4 mvPosition = vec4(localPosition, 1.);
+        vec4 mvPosition = computeRelativePosition(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
     #else
         vec4 mvPosition = vec4( transformed, 1.0 );
     #endif
@@ -92,7 +96,8 @@ void main() {
 	#pragma unroll_loop_start
 	for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {
         #ifdef USE_RTE
-            shadowWorldPosition = vec4(localPosition, 1.) + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
+            vec4 shadowPosition = computeRelativePosition(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
+            shadowWorldPosition = shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
             vDirectionalShadowCoord[ i ] = rteShadowMatrix * shadowWorldPosition;
         #else
             shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );

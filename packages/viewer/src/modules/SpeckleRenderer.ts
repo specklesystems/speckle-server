@@ -152,7 +152,7 @@ export default class SpeckleRenderer {
     rteView.elements[13] = 0
     rteView.elements[14] = 0
 
-    const meshBatches = this.batcher.getBatches()
+    const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
     for (let k = 0; k < meshBatches.length; k++) {
       const meshBatch: Mesh = meshBatches[k].renderObject as Mesh
       if (meshBatch.isMesh) {
@@ -166,6 +166,39 @@ export default class SpeckleRenderer {
         depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
         depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
         depthMaterial.needsUpdate = true
+
+        const shadowMatrix = new Matrix4()
+        shadowMatrix.set(
+          0.5,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.5,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        )
+
+        shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
+        shadowMatrix.multiply(rteView)
+        const material: SpeckleStandardMaterial =
+          meshBatch.material as SpeckleStandardMaterial
+        try {
+          material.userData.rteShadowMatrix.value.copy(shadowMatrix)
+          material.userData.uShadowViewer_low.value.copy(viewerLow)
+          material.userData.uShadowViewer_high.value.copy(viewerHigh)
+          material.needsUpdate = true
+        } catch (e) {
+          console.warn('fsd')
+        }
       }
     }
   }
@@ -208,7 +241,7 @@ export default class SpeckleRenderer {
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
       subtreeGroup.add(batch.renderObject)
-      if ((batchRenderable as Mesh).isMesh) {
+      if (batch.geometryType === GeometryType.MESH) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
         batchRenderable.castShadow = !material.transparent
@@ -350,6 +383,7 @@ export default class SpeckleRenderer {
       ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
         this.sceneBox
       )
+      ;(this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
     }
   }
 

@@ -14,7 +14,7 @@ import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredM
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
-import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -32,6 +32,10 @@ export default class MeshBatch implements Batch {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+  }
+
+  public get geometryType(): GeometryType {
+    return this.renderViews[0].geometryType
   }
 
   public get renderObject(): Object3D {
