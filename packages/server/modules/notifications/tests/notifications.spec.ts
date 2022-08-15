@@ -19,10 +19,6 @@ const testHandlerMock = mockRequireModule([
 ])
 
 describe('Notifications', () => {
-  before(async () => {
-    await purgeNotifications()
-  })
-
   beforeEach(async () => {
     await purgeNotifications()
   })

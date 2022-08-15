@@ -33,7 +33,7 @@ type AcknowledgementResult = {
  */
 export async function waitForAcknowledged(
   predicate?: (res: AcknowledgementResult) => boolean,
-  timeout = 2000
+  timeout = 3000
 ) {
   let timeoutRef: NodeJS.Timer
   let stopListening: () => void

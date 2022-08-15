@@ -16,6 +16,8 @@ import { shutdownConsumer } from '@/modules/shared/helpers/redisSmqHelper'
 let consumer: Optional<Consumer>
 
 export async function initializeConsumption(typeWhitelist?: NotificationType[]) {
+  modulesDebug('📞 Initializing notification queue consumption...')
+
   const allHandlers: Partial<NotificationTypeHandlers> = {
     [NotificationType.MentionedInComment]: (
       await import('@/modules/notifications/services/handlers/mentionedInComment')
