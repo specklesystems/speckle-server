@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-
 import Stats from 'three/examples/jsm/libs/stats.module'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
@@ -15,7 +14,7 @@ import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilterMaterialType } from './FilteringManager'
+import { FilteringManager, FilterMaterialType } from './FilteringManager'
 import { SpeckleType } from './converter/GeometryConverter'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -33,6 +32,8 @@ export class Viewer extends EventEmitter implements IViewer {
   private startupParams: ViewerParams
 
   public static Assets: Assets
+
+  public FilterManager: FilteringManager
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -104,6 +105,12 @@ export class Viewer extends EventEmitter implements IViewer {
       this.zoomExtents()
       console.warn('Built stuff')
     })
+
+    this.FilterManager = new FilteringManager(this)
+    ;(window as any).WT = WorldTree
+    ;(window as any).FilterManager = this.FilterManager
+    ;(window as any).FM = this.FilterManager
+    ;(window as any).R = this
   }
 
   public async init(): Promise<void> {
@@ -136,7 +143,7 @@ export class Viewer extends EventEmitter implements IViewer {
     const delta = this.clock.getDelta()
     this.needsRender = this.cameraHandler.controls.update(delta)
     this.speckleRenderer.update(delta)
-    this.stats.update()
+    this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))
   }
 
@@ -254,7 +261,7 @@ export class Viewer extends EventEmitter implements IViewer {
       for (const key of Object.keys(this.loaders)) {
         delete this.loaders[key]
       }
-      await this.applyFilter(null)
+      this.FilterManager.reset()
       WorldTree.getInstance().root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
         WorldTree.getRenderTree().purge()
@@ -270,72 +277,15 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public async applyFilter(filter: unknown) {
-    filter
-    // try {
-    //   if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
-    //   this.interactions.deselectObjects()
-    //   return await this.sceneManager.sceneObjects.applyFilter(filter)
-    // } finally {
-    //   if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-    // }
-  }
-
-  public getObjectsProperties() {
-    // return this.spceneManager.sceneObjects.getObjectsProperties(includeAll)
-    // const props = []
-    const flattenObject = function (obj) {
-      const flatten = {}
-      for (const k in obj) {
-        if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k))
-          continue
-        const v = obj[k]
-        if (v === null || v === undefined || Array.isArray(v)) continue
-        if (v.constructor === Object) {
-          const flattenProp = flattenObject(v)
-          for (const pk in flattenProp) {
-            flatten[`${k}.${pk}`] = flattenProp[pk]
-          }
-          continue
-        }
-        if (['string', 'number', 'boolean'].includes(typeof v)) flatten[k] = v
-      }
-      return flatten
-    }
-    const propValues = {}
-
-    WorldTree.getInstance().walk((node: TreeNode) => {
-      const obj = flattenObject(node.model.raw)
-      for (const prop of Object.keys(obj)) {
-        if (!(prop in propValues)) {
-          propValues[prop] = []
-        }
-        propValues[prop].push(obj[prop])
-      }
-      return true
+  /**
+   * LEGACY: Handles (or tries to handle) old viewer filtering.
+   * @param args legacy filter object
+   */
+  public applyFilter(filter: unknown): Promise<void> {
+    return new Promise((resolve) => {
+      this.FilterManager.handleLegacyFilter(filter)
+      resolve()
     })
-
-    const propInfo = {}
-    for (const prop in propValues) {
-      const pinfo = {
-        type: typeof propValues[prop][0],
-        objectCount: propValues[prop].length,
-        allValues: propValues[prop],
-        uniqueValues: {},
-        minValue: propValues[prop][0],
-        maxValue: propValues[prop][0]
-      }
-      for (const v of propValues[prop]) {
-        if (v < pinfo.minValue) pinfo.minValue = v
-        if (v > pinfo.maxValue) pinfo.maxValue = v
-        if (!(v in pinfo.uniqueValues)) {
-          pinfo.uniqueValues[v] = 0
-        }
-        pinfo.uniqueValues[v] += 1
-      }
-
-      propInfo[prop] = pinfo
-    }
   }
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {
@@ -451,14 +401,18 @@ export class Viewer extends EventEmitter implements IViewer {
       const rgb = new Color(`hsl(${colorHue}, 50%, 30%)`)
       return rgb.getHex()
     }
+
     const data: {
       color?: { name: string; color: string; colorIndex: number; nodes: [] }
     } = {}
+
     let colorCount = 0
+
     /** This is the lazy approach */
     WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model.atomic) return true
       const propertyValue = node.model.raw[propertyName]
-      if (propertyValue !== undefined) {
+      if (propertyValue !== null && propertyValue !== undefined) {
         const color = getColorHash(propertyValue.split('.').reverse()[0])
         if (data[color] === undefined) {
           data[color] = {
@@ -477,6 +431,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     return data
   }
+
   public debugApplyByNonNumericPropetyFilter(data: {
     color?: { name: string; color: string; colorIndex: number; nodes: [] }
   }) {
@@ -498,6 +453,9 @@ export class Viewer extends EventEmitter implements IViewer {
           WorldTree.getRenderTree().getRenderViewsForNode(nodes[i], nodes[i])
         )
       }
+      // console.log(colors[k].colorIndex / colors.length)
+      // console.log(rvs.length, colors[k].name)
+      console.log(colors[k])
       this.speckleRenderer.applyFilter(rvs, {
         filterType: FilterMaterialType.COLORED,
         rampIndex: colors[k].colorIndex / colors.length,
@@ -508,34 +466,6 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.endFilter()
     console.warn(`Filter time: ${performance.now() - start}`)
   }
-
-  // private isObject(value) {
-  //   return !!(value && typeof value === 'object' && !Array.isArray(value))
-  // }
-
-  // private findObjectProperty(object = {}, keyToMatch = '') {
-  //   if (this.isObject(object)) {
-  //     const entries = Object.entries(object)
-
-  //     for (let i = 0; i < entries.length; i += 1) {
-  //       const [objectKey, objectValue] = entries[i]
-
-  //       if (objectKey === keyToMatch) {
-  //         return object[objectKey]
-  //       }
-
-  //       if (this.isObject(objectValue)) {
-  //         const child = this.findObjectProperty(objectValue, keyToMatch)
-
-  //         if (child !== null) {
-  //           return child
-  //         }
-  //       }
-  //     }
-  //   }
-
-  //   return null
-  // }
 
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)

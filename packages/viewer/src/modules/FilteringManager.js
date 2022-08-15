@@ -3,6 +3,9 @@ import Rainbow from 'rainbowvis.js'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { Geometry } from './converter/Geometry'
 
+/**
+ * LEGACY
+ */
 export default class FilteringManager {
   constructor(viewer) {
     this.viewer = viewer

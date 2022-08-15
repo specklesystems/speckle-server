@@ -14,6 +14,8 @@
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
+    "pre-commit": "pre-commit run --all-files --config .pre-commit-config.yaml && pre-commit run --all-files --config .pre-commit-config.deployment.yaml",
+    "circleci:check": "circleci config validate ./.circleci/config.yml",
     "dev:docker:up": "docker-compose -f ./docker-compose-deps.yml -f ./docker-compose-dev.yml up -d",
     "dev:docker:down": "docker-compose -f ./docker-compose-deps.yml -f ./docker-compose-dev.yml down",
     "dev": "yarn workspaces foreach -piv -j unlimited run dev",

@@ -85,36 +85,39 @@ export default class InteractionHandler {
   }
 
   // used to display objects selected by other users
+  // eslint-disable-next-line no-unused-vars
   overlayObjects(ids = []) {
-    this.overlaidObjects.clear()
+    // TODO: backwards compatibility
+    return
+    // this.overlaidObjects.clear()
 
-    const all = this.viewer.sceneManager.allObjects
-    const subsetToAdd = all.filter((obj) => ids.indexOf(obj.uuid) !== -1)
+    // const all = this.viewer.sceneManager.allObjects
+    // const subsetToAdd = all.filter((obj) => ids.indexOf(obj.uuid) !== -1)
 
-    for (const obj of subsetToAdd) {
-      const selType = obj.type
-      switch (selType) {
-        case 'Group': {
-          const blockObjs = this.getBlockObjectsCloned(obj)
-          for (const child of blockObjs) {
-            child.material = this.overlayMeshMaterial
-            this.overlaidObjects.add(child)
-          }
-          break
-        }
-        case 'Mesh':
-          this.overlaidObjects.add(
-            new THREE.Mesh(obj.geometry, this.overlayMeshMaterial)
-          )
-          break
-        case 'Line':
-          this.overlaidObjects.add(
-            new THREE.Line(obj.geometry, this.overlayMeshMaterial)
-          )
-          break
-      }
-    }
-    this.viewer.needsRender = true
+    // for (const obj of subsetToAdd) {
+    //   const selType = obj.type
+    //   switch (selType) {
+    //     case 'Group': {
+    //       const blockObjs = this.getBlockObjectsCloned(obj)
+    //       for (const child of blockObjs) {
+    //         child.material = this.overlayMeshMaterial
+    //         this.overlaidObjects.add(child)
+    //       }
+    //       break
+    //     }
+    //     case 'Mesh':
+    //       this.overlaidObjects.add(
+    //         new THREE.Mesh(obj.geometry, this.overlayMeshMaterial)
+    //       )
+    //       break
+    //     case 'Line':
+    //       this.overlaidObjects.add(
+    //         new THREE.Line(obj.geometry, this.overlayMeshMaterial)
+    //       )
+    //       break
+    //   }
+    // }
+    // this.viewer.needsRender = true
   }
 
   _handleDoubleClick(objs) {

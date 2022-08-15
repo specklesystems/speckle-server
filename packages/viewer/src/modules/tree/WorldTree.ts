@@ -9,6 +9,11 @@ export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
   atomic: boolean
+  /**
+   * Keeps track wether this the root commit object or not.
+   * TODO: Ask Alex wether this is somehow avoidable.
+   */
+  root: boolean
   renderView?: NodeRenderView
 }
 

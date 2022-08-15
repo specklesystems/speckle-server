@@ -34,6 +34,7 @@ import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
+import { WorldTree } from './tree/WorldTree'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = true
@@ -395,6 +396,9 @@ export default class SpeckleRenderer {
     }
   }
 
+  // NOTE: Alex, sorry for the stateful BS
+  private selectionRawData = []
+
   private onObjectClick(e) {
     const result: Intersection = this.intersections.intersect(
       this.scene,
@@ -404,10 +408,19 @@ export default class SpeckleRenderer {
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
       this.renderer.shadowMap.needsUpdate = true
+      this.viewer.FilterManager.resetSelection()
+      this.selectionRawData = []
+      this.viewer.emit('object-clicked', {
+        userData: [],
+        location: null,
+        selectionCenter: null
+      })
       return
     }
 
-    // console.warn(result)
+    let multiSelect = false
+    if (e.multiSelect) multiSelect = true
+
     const rv = this.batcher.getRenderView(
       result.object.uuid,
       result.faceIndex !== undefined ? result.faceIndex : result.index
@@ -420,18 +433,28 @@ export default class SpeckleRenderer {
     }
 
     const hitId = rv.renderData.id
-    // const hitNode = WorldTree.getInstance().findId(hitId)
+
+    const hitNode = WorldTree.getInstance().findId(hitId)
+
+    let parentNode = hitNode
+    while (!parentNode.model.atomic) {
+      parentNode = parentNode.parent
+    }
 
     this.batcher.resetBatchesDrawRanges()
-
-    this.batcher.isolateRenderView(hitId)
     this.renderer.shadowMap.needsUpdate = true
-    /** In case the above call has breaking bugs, just use this instead */
-    // this.batcher.autoFillDrawRanges(
-    //   this.batcher.setObjectsFilterMaterial([hitNode.model.id], {
-    //     filterType: FilterMaterialType.SELECT
-    //   })
-    // )
+
+    if (multiSelect && !this.selectionRawData.includes(parentNode.model.raw))
+      this.selectionRawData.push(parentNode.model.raw)
+    else this.selectionRawData = [parentNode.model.raw]
+
+    const selectionInfo = {
+      userData: this.selectionRawData,
+      location: result.point,
+      selectionCenter: result.point
+    }
+    this.viewer.FilterManager.selectRv(rv, multiSelect)
+    this.viewer.emit('object-clicked', selectionInfo)
   }
 
   private onObjectDoubleClick(e) {
@@ -643,7 +666,8 @@ export default class SpeckleRenderer {
     )
     const hitId = rv.renderData.id
 
-    // const hitNode = WorldTree.getInstance().findId(hitId)
+    const hitNode = WorldTree.getInstance().findId(hitId)
+    // console.log(hitNode)
 
     this.batcher.resetBatchesDrawRanges()
 

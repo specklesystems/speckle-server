@@ -1,3 +1,6 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+// NOTE: any disabling temporary, most of the filtering stuff will go away
+
 import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
 import { makeVar, TypePolicies } from '@apollo/client/cache'
@@ -375,7 +378,7 @@ export async function isolateCategoryToggle(params: {
     state.appliedFilter = newAppliedFilter
   }
 
-  const res = await viewer.applyFilter(state.appliedFilter)
+  const res = (await viewer.applyFilter(state.appliedFilter)) as any
   state.colorLegend = res.colorLegend
   updateState(state)
 }
@@ -425,7 +428,7 @@ export async function hideCategoryToggle(params: {
       colorBy: colorBy ? { type: 'category', property: filterKey } : null
     }
   }
-  const res = await viewer.applyFilter(state.appliedFilter)
+  const res = (await viewer.applyFilter(state.appliedFilter)) as any
   state.colorLegend = res.colorLegend
   updateState(state)
 }
@@ -446,7 +449,7 @@ export async function toggleColorByCategory(params: { filterKey: string }) {
       colorBy: { type: 'category', property: filterKey }
     }
   }
-  const res = await viewer.applyFilter(state.appliedFilter)
+  const res = (await viewer.applyFilter(state.appliedFilter)) as any
   state.colorLegend = res.colorLegend
   updateState(state)
 }

@@ -1,6 +1,16 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -eo pipefail
 [ -n "$CI" ] && exit 0
 
+#shellcheck source=/dev/null
 . "$(dirname "$0")/_/husky.sh"
 
 yarn lint-staged
+
+if ! command -v pre-commit &> /dev/null; then exit 0; fi
+echo "🔍 Detected pre-commit on this system.  Running pre-commit checks..."
+pre-commit run --all-files --config .pre-commit-config.yaml
+
+if ! command -v hadolint &> /dev/null || ! command -v helm &> /dev/null || ! command -v shellcheck &> /dev/null; then exit 0; fi
+echo "🔍 Detected additional dependencies (hadolint, helm, and shellcheck) on this system.  Running additional pre-commit checks..."
+pre-commit run --all-files --config .pre-commit-config.deployment.yaml

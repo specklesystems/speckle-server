@@ -59,8 +59,8 @@ export interface IViewer {
 
   screenshot(): Promise<string>
 
-  applyFilter(filter: unknown): Promise<unknown>
-  getObjectsProperties(includeAll?: boolean): unknown
+  applyFilter(filter: unknown): Promise<void>
+  // getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void
 }

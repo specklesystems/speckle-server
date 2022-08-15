@@ -80,8 +80,18 @@ export class Assets {
     } else {
       srcUrl = asset as string
     }
+
     if (this._cache[srcUrl]) {
       return Promise.resolve(this._cache[srcUrl])
+    }
+
+    // Hack to load 'data:image's - for some reason, the frontend receives the default
+    // gradient map as a data image url, rather than a file (?).
+    if (srcUrl.includes('data:image')) {
+      const texture = new Texture(srcUrl as unknown as HTMLImageElement)
+      texture.needsUpdate = true
+      this._cache[srcUrl] = texture
+      return Promise.resolve(texture)
     }
 
     return new Promise<Texture>((resolve, reject) => {

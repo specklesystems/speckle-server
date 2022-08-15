@@ -39,10 +39,10 @@ export default class Sandbox {
 
   public constructor(viewer: Viewer) {
     this.viewer = viewer
-    this.pane = new Pane({ title: 'Sandbox', expanded: true })
-    this.pane['containerElem_'].style.width = '300px'
-    const t = `matrix(1.2, 0, 0, 1.2, -25, 16)`
-    this.pane['containerElem_'].style.transform = t
+    this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
+    this.pane['containerElem_'].style =
+      'position:fixed; top: 5px; right: 5px; width: 300px;'
+
     this.tabs = this.pane.addTab({
       pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
@@ -68,12 +68,16 @@ export default class Sandbox {
   }
 
   private addStreamControls(url: string) {
-    const label = this.steamsFolder.addInput({ url }, 'url', {
+    const folder = this.pane.addFolder({
+      title: `Object: ${url.split('/').reverse()[0]}`
+    })
+
+    const label = folder.addInput({ url }, 'url', {
       title: 'URL',
       disabled: true
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
-    const positionInput = this.steamsFolder
+    const positionInput = folder
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
         this.viewer.speckleRenderer
@@ -83,7 +87,7 @@ export default class Sandbox {
         this.viewer.speckleRenderer.updateHelpers()
       })
 
-    const button = this.steamsFolder
+    const button = folder
       .addButton({
         title: 'Unload'
       })
@@ -91,7 +95,7 @@ export default class Sandbox {
         this.removeStreamControls(url)
       })
     this.streams[url] = []
-    this.streams[url].push(label, positionInput, button)
+    this.streams[url].push(folder)
   }
 
   private removeStreamControls(url: string) {
@@ -144,11 +148,6 @@ export default class Sandbox {
       this.viewer.unloadAll()
     })
 
-    this.steamsFolder = this.tabs.pages[0].addFolder({
-      title: 'Active Streams',
-      expanded: true
-    })
-
     this.tabs.pages[0].addSeparator()
     this.tabs.pages[0].addSeparator()
 
@@ -181,6 +180,24 @@ export default class Sandbox {
     })
     showBatches.on('click', () => {
       this.viewer.speckleRenderer.debugShowBatches()
+    })
+
+    const darkModeToggle = this.tabs.pages[0].addButton({
+      title: '🌞 / 🌛'
+    })
+    const dark = localStorage.getItem('dark') === 'dark'
+    if (dark) {
+      const dark = document
+        .getElementById('renderer')
+        ?.classList.toggle('background-dark')
+    }
+
+    darkModeToggle.on('click', () => {
+      const dark = document
+        .getElementById('renderer')
+        ?.classList.toggle('background-dark')
+
+      localStorage.setItem('dark', dark ? `dark` : `light`)
     })
 
     const screenshot = this.tabs.pages[0].addButton({
