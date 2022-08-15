@@ -11,6 +11,16 @@ db:
   maxConnectionsServer: 4
   certificate: '' # Multi-line string with the contents of `ca-certificate.crt`
   PGSSLMODE: require
+  networkPolicy: # if network policy is enabled for any service, this provides the networkPolicy with the necessary details to allow egress connections to the database
+    port: '' # the port to connect to, if known (default: "5432")
+    externalToCluster: # use if the database is external to the kubernetes cluster
+      enabled: true # only one of externalToCluster or inCluster should be enabled, if both are enabled only inCluster is deployed
+      host: '' # Domain name, or provide IP address.  If both are provided IP address takes precedence
+      ipv4: '' # IP address of the externally hosted Database.  If not known, provide the host instead.  If both are provided the IP address takes precedence.
+    inCluster: # use if the database is deployed within the same kubernetes cluster as Speckle
+      enabled: false # only one of externalToCluster or inCluster should be enabled, if both are enabled only inCluster is deployed
+      podSelector: {} # the selector to match with pod of the deployed database instance
+      namespaceSelector: {} # the selector to match the namespace in which the database pod is deployed
 
 s3:
   endpoint: ''
@@ -18,9 +28,26 @@ s3:
   access_key: ''
   create_bucket: 'false'
   # secret_key: secret -> s3_secret_key
+  networkPolicy: # if network policy is enabled for any service, this provides the networkPolicy with the necessary details to allow egress connections to the s3 compatible storage
+    externalToCluster: # use if the s3 compatible storage is external to the kubernetes cluster
+      enabled: true # only one of externalToCluster or inCluster should be enabled, if both are enabled only inCluster is deployed
+    inCluster: # use if the s3 compatible storage is deployed within the same kubernetes cluster as Speckle
+      enabled: false # only one of externalToCluster or inCluster should be enabled, if both are enabled only inCluster is deployed
+      podSelector: {} # the selector to match with pod of the deployed s3 compatible storage instance
+      namespaceSelector: {} # the selector to match the namespace in which the s3 compatible storage pod is deployed
 
-#redis:
-# redis_url: secret -> redis_url
+redis:
+  # redis_url: secret -> redis_url
+  networkPolicy: # if network policy is enabled for any service, this provides the networkPolicy with the necessary details to allow egress connections to redis
+    port: '' # the port to connect to, if known (default: "6379")
+    externalToCluster: # use if redis is external to the kubernetes cluster
+      enabled: true # only one of externalToCluster or inCluster should be enabled, if both are enabled only inCluster is deployed
+      host: '' # Domain name of the externally hosted Redis. It is preferable to provide the IP address.  If both are provided IP address takes precedence
+      ipv4: '' # IP address of the externally hosted Redis.  If not known, provide the host instead.  If both are provided the IP address takes precedence.
+    inCluster: # use if redis is deployed within the same kubernetes cluster as Speckle
+      enabled: false # only one of externalToCluster or inCluster should be enabled, if both are enabled only inCluster is deployed
+      podSelector: {} # the selector to match with pod of the deployed Redis instance
+      namespaceSelector: {} # the selector to match the namespace in which the Redis pod is deployed
 
 server:
   replicas: 1
@@ -67,6 +94,9 @@ server:
   disable_tracking: false
   disable_tracing: false
 
+  networkPolicy:
+    enabled: false
+
 frontend:
   replicas: 1
   requests:
@@ -75,6 +105,8 @@ frontend:
   limits:
     cpu: 1000m
     memory: 512Mi
+  networkPolicy:
+    enabled: false
 
 preview_service:
   replicas: 1
@@ -84,6 +116,8 @@ preview_service:
   limits:
     cpu: 1000m
     memory: 4Gi
+  networkPolicy:
+    enabled: false
 
 webhook_service:
   replicas: 1
@@ -93,6 +127,8 @@ webhook_service:
   limits:
     cpu: 200m
     memory: 512Mi
+  networkPolicy:
+    enabled: false
 
 fileimport_service:
   replicas: 1
@@ -103,6 +139,8 @@ fileimport_service:
     cpu: 1000m
     memory: 2Gi
   time_limit_min: 10
+  networkPolicy:
+    enabled: false
 
 monitoring:
   replicas: 1
@@ -112,6 +150,8 @@ monitoring:
   limits:
     cpu: 200m
     memory: 512Mi
+  networkPolicy:
+    enabled: false
 
 test:
   requests:
@@ -120,6 +160,8 @@ test:
   limits:
     cpu: 200m
     memory: 512Mi
+  networkPolicy:
+    enabled: false
 
 secretName: server-vars
 
@@ -134,3 +176,7 @@ helm_test_enabled: true
 create_namespace: false
 file_size_limit_mb: 100
 imagePullPolicy: IfNotPresent
+
+ingress:
+  namespace: ingress-nginx
+  controllerName: ingress-nginx
