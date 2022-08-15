@@ -43,8 +43,7 @@ spec:
               - NET_BIND_SERVICE
           privileged: false
           readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 20000
+          runAsNonRoot: false
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
@@ -58,7 +57,7 @@ spec:
             port: www
           initialDelaySeconds: 5
           periodSeconds: 5
-        
+
         env: 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
@@ -78,11 +77,7 @@ spec:
       priorityClassName: high-priority
 
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 20000
-        fsGroup: 25000
-        fsGroupChangePolicy: OnRootMismatch
-        runAsGroup: 30000
+        runAsNonRoot: false
         seccompProfile:
           type: RuntimeDefault
 
