@@ -24,7 +24,25 @@ spec:
         limits:
           cpu: {{ .Values.test.limits.cpu }}
           memory: {{ .Values.test.limits.memory }}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 20000
+
   restartPolicy: Never
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 20000
+    runAsGroup: 30000
+    seccompProfile:
+      type: RuntimeDefault
+
   {{- if .Values.test.serviceAccount.create }}
   serviceAccountName: {{ include "test.name" $ }}
   {{- end }}

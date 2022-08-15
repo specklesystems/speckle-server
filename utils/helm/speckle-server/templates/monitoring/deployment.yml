@@ -34,6 +34,15 @@ spec:
             cpu: {{ .Values.monitoring.limits.cpu }}
             memory: {{ .Values.monitoring.limits.memory }}
 
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
 
         {{- if .Values.db.useCertificate }}
         volumeMounts:
@@ -58,6 +67,15 @@ spec:
       serviceAccountName: {{ include "monitoring.name" $ }}
       {{- end }}
       terminationGracePeriodSeconds: 10
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
+
       {{- if .Values.db.useCertificate }}
       volumes:
         - name: postgres-certificate

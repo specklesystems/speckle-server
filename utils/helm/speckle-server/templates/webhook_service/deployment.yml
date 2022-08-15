@@ -43,8 +43,20 @@ spec:
             cpu: {{ .Values.webhook_service.limits.cpu }}
             memory: {{ .Values.webhook_service.limits.memory }}
 
-        {{- if .Values.db.useCertificate }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
         volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
@@ -69,11 +81,22 @@ spec:
       serviceAccountName: {{ include "webhook_service.name" $ }}
       {{- end }}
 
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
+
       # Should be > webhook max call time ( ~= 10 seconds )
       terminationGracePeriodSeconds: 30
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
