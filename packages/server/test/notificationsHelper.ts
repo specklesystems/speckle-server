@@ -21,26 +21,28 @@ export async function purgeNotifications() {
   await purge(NOTIFICATIONS_QUEUE)
 }
 
+type AcknowledgementResult = {
+  notification?: NotificationMessage
+  err?: Error
+  ack: boolean
+}
+
 /**
  * Wait for an acknowledged notification. Use optional predicate to filter
  * which notification you're looking for.
  */
 export async function waitForAcknowledged(
-  predicate?: (msg: NotificationMessage) => boolean,
+  predicate?: (res: AcknowledgementResult) => boolean,
   timeout = 2000
 ) {
   let timeoutRef: NodeJS.Timer
   let stopListening: () => void
 
-  return new Promise((resolve, reject) => {
-    stopListening = onNotificationsEvent(
-      NotificationsEvents.Acknowledged,
-      ({ notification }) => {
-        if (!notification) return
-        if (!predicate) return resolve(notification)
-        if (predicate && predicate(notification)) return resolve(notification)
-      }
-    )
+  return new Promise<AcknowledgementResult>((resolve, reject) => {
+    stopListening = onNotificationsEvent(NotificationsEvents.Acknowledged, (event) => {
+      if (!predicate) return resolve(event)
+      if (predicate && predicate(event)) return resolve(event)
+    })
 
     timeoutRef = setTimeout(() => {
       reject(new Error('Waiting for acknowledged notifications timed out'))

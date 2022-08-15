@@ -5486,6 +5486,7 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
     "@types/compression": ^1.7.2
     "@types/debug": ^4.1.7
+    "@types/deep-equal-in-any-order": ^1.0.1
     "@types/ejs": ^3.1.1
     "@types/express": ^4.17.13
     "@types/lodash": ^4.14.180
@@ -6209,6 +6210,13 @@ __metadata:
   dependencies:
     "@types/ms": "*"
   checksum: 0a7b89d8ed72526858f0b61c6fd81f477853e8c4415bb97f48b1b5545248d2ae389931680b94b393b993a7cfe893537a200647d93defe6d87159b96812305adc
+  languageName: node
+  linkType: hard
+
+"@types/deep-equal-in-any-order@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "@types/deep-equal-in-any-order@npm:1.0.1"
+  checksum: 09a76203438bc2ed9e3ac3f22b6fd43f3561ac4ae5403cf62b4e69359f3016680fbd6ce31f80704e310c3616f4d134e3252ba70e963fc4ca4dd261719c6eb4fd
   languageName: node
   linkType: hard
 

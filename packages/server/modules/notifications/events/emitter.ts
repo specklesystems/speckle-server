@@ -26,6 +26,7 @@ type NotificationsEventPayloadMap = {
   [NotificationsEvents.Acknowledged]: {
     notification?: NotificationMessage
     err?: Error
+    ack: boolean
   }
 } & { [k in NotificationsEvents]: unknown }
 

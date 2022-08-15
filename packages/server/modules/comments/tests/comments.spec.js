@@ -1393,7 +1393,8 @@ describe('Comments @comments', () => {
             })
 
             const waitForAck = waitForAcknowledged(
-              (msg) => msg.type === NotificationType.MentionedInComment
+              ({ notification }) =>
+                notification?.type === NotificationType.MentionedInComment
             )
 
             const { data, errors } = await createOrReplyCommentWithMention(otherUser.id)

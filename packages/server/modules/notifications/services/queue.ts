@@ -149,7 +149,8 @@ export async function consumeIncomingNotifications() {
 
       ack()
       emitNotificationsEvent(NotificationsEvents.Acknowledged, {
-        notification: typedPayload
+        notification: typedPayload,
+        ack: true
       })
       notificationDebug('...successfully processed notification')
     } catch (e: unknown) {
@@ -157,13 +158,17 @@ export async function consumeIncomingNotifications() {
       const err =
         e instanceof Error ? e : new Error('Unexpected notification consumption error')
 
+      let isAcked = false
       if (err instanceof NotificationValidationError) {
         ack()
+        isAcked = true
       } else {
         ack(err)
       }
+
       emitNotificationsEvent(NotificationsEvents.Acknowledged, {
-        err
+        err,
+        ack: isAcked
       })
     }
   })
