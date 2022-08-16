@@ -5,7 +5,6 @@ const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
-const { purgeNotifications } = require('@/test/notificationsHelper')
 
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
@@ -67,7 +66,6 @@ exports.mochaHooks = {
     await unlock()
     await knex.migrate.rollback()
     await knex.migrate.latest()
-    await purgeNotifications()
     await init()
   },
   afterAll: async () => {
