@@ -1,4 +1,4 @@
-const VError = require('verror')
+import { VError, Options } from 'verror'
 
 /**
  * Base application error (don't use directly, treat it as abstract). Built on top of `verror` so that you can
@@ -6,7 +6,7 @@ const VError = require('verror')
  *
  * This allows for much nicer error handling & monitoring
  */
-class BaseError extends VError {
+export class BaseError extends VError {
   /**
    * Error code (override in child class)
    */
@@ -17,11 +17,10 @@ class BaseError extends VError {
    */
   static defaultMessage = 'Unexpected error occurred!'
 
-  /**
-   * @param {string | null} message
-   * @param {import('verror').Options | Error} options
-   */
-  constructor(message, options) {
+  constructor(
+    message: string | null | undefined,
+    options: Options | Error | undefined = undefined
+  ) {
     // Resolve options correctly
     if (options) {
       const cause = options instanceof Error ? options : options.cause
@@ -53,8 +52,6 @@ class BaseError extends VError {
    * Get collected info of this object and previous errors
    */
   info() {
-    return BaseError.info(this)
+    return BaseError.info(this as unknown as Error)
   }
 }
-
-module.exports = { BaseError }
