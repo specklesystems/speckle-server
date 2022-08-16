@@ -1,9 +1,10 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-ARG SPECKLE_SERVER_VERSION=custom
 
 # build stage
 FROM node:16.15-bullseye-slim as build-stage
+ARG SPECKLE_SERVER_VERSION=custom
  
+
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
