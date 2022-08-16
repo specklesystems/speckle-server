@@ -55,7 +55,7 @@ export async function publishNotification<T extends NotificationType>(
   } as NotificationTypeMessageMap[T]
 
   const msgId = await sendNotification(msg)
-  emitNotificationsEvent(NotificationsEvents.Published, { notification: msg })
+  emitNotificationsEvent(NotificationsEvents.Published, { notification: msg, msgId })
 
   return msgId
 }

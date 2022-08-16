@@ -74,10 +74,13 @@ describe('Notifications', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
+    console.log('CURSTATE')
+    await listPendingNotifications()
+
     const { err, ack } = await notificationsState
       .waitForMsgAck(msgId)
       .catch(async (e) => {
-        console.log('ERR unexpected struct!', msgId)
+        console.log('ERR unexpected struct!', msgId, new Date().toISOString())
         await listPendingNotifications()
         throw e
       })
@@ -123,10 +126,13 @@ describe('Notifications', () => {
         data: { a: 1, display, error }
       })
 
+      console.log('CURSTATE')
+      await listPendingNotifications()
+
       const { err, ack } = await notificationsState
         .waitForMsgAck(msgId)
         .catch(async (e) => {
-          console.log('ERR handler throw!', msgId)
+          console.log('ERR handler throw!', msgId, new Date().toISOString())
           await listPendingNotifications()
           throw e
         })
