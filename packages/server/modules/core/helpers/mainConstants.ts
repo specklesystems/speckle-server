@@ -1,11 +1,11 @@
-const _ = require('lodash')
+import _ from 'lodash'
 
 /**
  * Speckle role constants
  * - Stream - user roles in the context of a specific stream
  * - Server - user roles in the context of the entire server
  */
-const Roles = Object.freeze({
+export const Roles = Object.freeze(<const>{
   Stream: {
     Owner: 'stream:owner',
     Contributor: 'stream:contributor',
@@ -18,11 +18,14 @@ const Roles = Object.freeze({
   }
 })
 
+export type ServerRoles = typeof Roles['Server'][keyof typeof Roles['Server']]
+export type StreamRoles = typeof Roles['Stream'][keyof typeof Roles['Stream']]
+
 /**
  * Speckle scope constants
  * - Scopes define what kind of access has a user approved for a specific access token
  */
-const Scopes = Object.freeze({
+export const Scopes = Object.freeze(<const>{
   Streams: {
     Read: 'streams:read',
     Write: 'streams:write'
@@ -51,10 +54,4 @@ const Scopes = Object.freeze({
  * All scopes
  * @type {string[]}
  */
-const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
-
-module.exports = {
-  Roles,
-  Scopes,
-  AllScopes
-}
+export const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
