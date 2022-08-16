@@ -14,7 +14,7 @@ import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilterMaterialType } from './FilteringManager'
+import { FilterMaterialType, FilteringManager } from './FilteringManager'
 import { SpeckleType } from './converter/GeometryConverter'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -33,7 +33,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public static Assets: Assets
 
-  public FilterManager: FilteringManager
+  public FilteringManager: FilteringManager
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -106,11 +106,10 @@ export class Viewer extends EventEmitter implements IViewer {
       console.warn('Built stuff')
     })
 
-    this.FilterManager = new FilteringManager(this)
+    this.FilteringManager = new FilteringManager(this)
     ;(window as any).WT = WorldTree
-    ;(window as any).FilterManager = this.FilterManager
-    ;(window as any).FM = this.FilterManager
-    ;(window as any).R = this
+    ;(window as any).FM = this.FilteringManager
+    ;(window as any).V = this
   }
 
   public async init(): Promise<void> {
@@ -201,8 +200,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public rotateTo(side: string, transition = true) {
-    this.speckleRenderer.rotateTo(side)
-    transition
+    this.speckleRenderer.rotateTo(side, transition)
   }
 
   public screenshot(): Promise<string> {
@@ -261,7 +259,7 @@ export class Viewer extends EventEmitter implements IViewer {
       for (const key of Object.keys(this.loaders)) {
         delete this.loaders[key]
       }
-      this.FilterManager.reset()
+      this.FilteringManager.reset()
       WorldTree.getInstance().root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
         WorldTree.getRenderTree().purge()
@@ -278,29 +276,18 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   /**
-   * TODO: Gets all the "named views" currently present in the scene.
-   * @returns an array of any views found in the current model.
-   */
-  public getViews() {
-    const views = []
-    WorldTree.getInstance().walk((node: TreeNode) => {
-      const raw = node.model.raw.parameters
-      if (!raw) return true
-      if (
-        raw.speckle_type === 'Objects.BuiltElements.View:Objects.BuiltElements.View3D'
-      )
-        views.push(views)
-    })
-    return views
-  }
-
-  /**
    * LEGACY: Handles (or tries to handle) old viewer filtering.
    * @param args legacy filter object
    */
-  public applyFilter(filter: any) {
-    return this.FilterManager.handleLegacyFilter(filter)
+  public async applyFilter(filter: any) {
+    return this.FilteringManager.handleLegacyFilter(filter)
   }
+
+  /**
+   * Legacy: use FilteringManager.getAllPropertyFilters()
+   * @returns
+   */
+  public getObjectsProperties = () => this.FilteringManager.getAllPropertyFilters()
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {
     min: number
@@ -467,9 +454,6 @@ export class Viewer extends EventEmitter implements IViewer {
           WorldTree.getRenderTree().getRenderViewsForNode(nodes[i], nodes[i])
         )
       }
-      // console.log(colors[k].colorIndex / colors.length)
-      // console.log(rvs.length, colors[k].name)
-      console.log(colors[k])
       this.speckleRenderer.applyFilter(rvs, {
         filterType: FilterMaterialType.COLORED,
         rampIndex: colors[k].colorIndex / colors.length,

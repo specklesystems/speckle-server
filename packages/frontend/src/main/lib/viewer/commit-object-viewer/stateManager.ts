@@ -6,7 +6,7 @@ import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/view
 import { makeVar, TypePolicies } from '@apollo/client/cache'
 import { DefaultViewerParams, Viewer } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray } from 'lodash'
+import { cloneDeep, filter, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -60,7 +60,9 @@ const commitObjectViewerState = makeVar({
   addingComment: false,
   preventCommentCollapse: false,
   commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
-  emojis
+  emojis,
+  // TODO: new filtering shit
+  currentFilterState: null as Nullable<UnknownObject>
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
@@ -104,7 +106,7 @@ function getOrInitViewerData(): GlobalViewerData {
   return globalViewerData
 }
 
-function getInitializedViewer(): Viewer {
+export function getInitializedViewer(): Viewer {
   if (!globalViewerData?.viewer) {
     throw new Error('Attempting to access viewer before it has been initialized')
   }
@@ -204,6 +206,23 @@ export function setSelectedCommentMetaData(
   })
 }
 
+export function isolateObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.isolateObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  const state = { ...commitObjectViewerState() }
+  state.currentFilterState = result
+  updateState(state)
+}
+
 export function isolateObjects(params: FilterKeyAndValues) {
   const { filterKey, filterValues } = params
 
@@ -227,6 +246,21 @@ export function isolateObjects(params: FilterKeyAndValues) {
 
   updateState(state)
   getInitializedViewer().applyFilter(state.appliedFilter)
+}
+
+export function unIsolateObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.unIsolateObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
 }
 
 export function unisolateObjects(params: FilterKeyAndValues) {
@@ -256,6 +290,45 @@ export function unisolateObjects(params: FilterKeyAndValues) {
   getInitializedViewer().applyFilter(state.appliedFilter)
 }
 
+export function hideObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.hideObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function hideTree(
+  objectId: string,
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.hideTree(
+    objectId,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function showTree(objectId: string, filterKey: string, resourceUrl: string) {
+  const result = getInitializedViewer().FilteringManager.showTree(
+    objectId,
+    filterKey,
+    resourceUrl
+  )
+  updateState({ currentFilterState: result })
+}
+
 export function hideObjects(params: FilterKeyAndValues) {
   const { filterKey, filterValues } = params
   const state = { ...commitObjectViewerState() }
@@ -279,6 +352,21 @@ export function hideObjects(params: FilterKeyAndValues) {
 
   updateState(state)
   getInitializedViewer().applyFilter(state.appliedFilter)
+}
+
+export function showObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string
+) {
+  const result = getInitializedViewer().FilteringManager.showObjects(
+    objectIds,
+    filterKey,
+    resourceUrl
+  )
+  const state = { ...commitObjectViewerState() }
+  state.currentFilterState = result
+  updateState(state)
 }
 
 export function showObjects(params: FilterKeyAndValues) {

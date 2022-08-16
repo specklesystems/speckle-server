@@ -129,9 +129,16 @@ import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
   hideObjects,
-  isolateObjects,
+  hideObjects2,
+  hideTree,
+  showTree,
   showObjects,
-  unisolateObjects
+  showObjects2,
+  isolateObjects,
+  isolateObjects2,
+  unisolateObjects,
+  unIsolateObjects2,
+  getInitializedViewer
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
@@ -162,6 +169,7 @@ export default {
         commitObjectViewerState @client {
           isolateValues
           hideValues
+          currentFilterState
         }
       }
     `)
@@ -169,7 +177,9 @@ export default {
       () => viewerStateResult.value?.commitObjectViewerState || {}
     )
 
-    return { viewerState }
+    const viewer = getInitializedViewer()
+
+    return { viewerState, viewer }
   },
   data() {
     return {
@@ -192,15 +202,30 @@ export default {
     },
     visible() {
       if (this.prop.type === 'object') {
-        return this.viewerState.hideValues.indexOf(this.prop.value.referencedId) === -1
+        if (!this.viewerState.currentFilterState) return true
+        if (!this.viewerState.currentFilterState.visibilityState) return true
+        const stateName = this.viewerState.currentFilterState.visibilityState.name
+        if (stateName !== 'hiddenObjectState') return true
+
+        return this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+          this.prop.value.referencedId
+        ) && stateName === 'hiddenObjectState'
+          ? false
+          : true
       }
       if (this.prop.type === 'array') {
+        if (!this.viewerState.currentFilterState) return true
+        if (!this.viewerState.currentFilterState.visibilityState) return true
+        const stateName = this.viewerState.currentFilterState.visibilityState.name
+        if (stateName !== 'hiddenObjectState') return true
+
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds = this.viewerState.hideValues.filter(
-          (val) => ids.indexOf(val) !== -1
-        )
-        if (targetIds.length === 0) return true
-        else return false // return "partial" or "full", depending on state
+        const targetIds =
+          this.viewerState.currentFilterState?.visibilityState?.ids.filter(
+            (val) => ids.indexOf(val) !== -1
+          )
+        if (targetIds.length === 0 && stateName === 'hiddenObjectState') return true
+        else return false // TODO: return "partial" or "full", depending on state
       }
       return true
     },
@@ -211,10 +236,16 @@ export default {
         )
       }
       if (this.prop.type === 'array') {
+        if (!this.viewerState.currentFilterState) return false
+        if (!this.viewerState.currentFilterState.visibilityState) return false
+        const stateName = this.viewerState.currentFilterState.visibilityState.name
+        if (stateName !== 'isolateObjectsState') return false
+
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds = this.viewerState.isolateValues.filter(
-          (val) => ids.indexOf(val) !== -1
-        )
+        const targetIds =
+          this.viewerState.currentFilterState?.visibilityState?.ids.filter(
+            (val) => ids.indexOf(val) !== -1
+          )
         if (targetIds.length === 0) return false
         else return true // return "partial" or "full", depending on state
       }
@@ -224,40 +255,42 @@ export default {
   mounted() {},
   methods: {
     toggleVisibility() {
-      let targetIds
-      if (this.prop.type === 'object') targetIds = [this.prop.value.referencedId]
-      if (this.prop.type === 'array') {
-        targetIds = this.prop.value.map((o) => o.referencedId)
+      if (this.prop.type === 'object') {
+        if (this.visible) {
+          hideTree(this.prop.value.referencedId, 'ui-vis')
+        } else {
+          showTree(this.prop.value.referencedId, 'ui-vis')
+        }
       }
-
-      if (this.visible)
-        hideObjects({
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
-      else
-        showObjects({
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
+      if (this.prop.type === 'array') {
+        const targetIds = this.prop.value.map((o) => o.referencedId)
+        if (this.visible) {
+          hideObjects2(targetIds, 'ui-vis')
+        } else {
+          showObjects2(targetIds, 'ui-vis')
+        }
+      }
     },
     toggleFilter() {
-      let targetIds
-      if (this.prop.type === 'object') targetIds = [this.prop.value.referencedId]
-      if (this.prop.type === 'array') {
-        targetIds = this.prop.value.map((o) => o.referencedId)
+      if (this.prop.type === 'object') {
+        // TODO: isolateTree?
+        if (this.isolated) {
+          // TODO
+        } else {
+          // TODO
+        }
       }
-
-      if (this.isolated)
-        unisolateObjects({
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
-      else
-        isolateObjects({
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
+      if (this.prop.type === 'array') {
+        const targetIds = this.prop.value.map((o) => o.referencedId)
+        // TODO: isolateObjects?
+        if (this.isolated) {
+          // TODO
+          unIsolateObjects2(targetIds, 'ui-iso')
+        } else {
+          // TODO
+          isolateObjects2(targetIds, 'ui-iso')
+        }
+      }
     }
   }
 }

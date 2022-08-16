@@ -327,7 +327,7 @@ export default class SpeckleRenderer {
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
       this.renderer.shadowMap.needsUpdate = true
-      this.viewer.FilterManager.resetSelection()
+      this.viewer.FilteringManager.resetSelection()
       this.selectionRawData = []
       this.viewer.emit('object-clicked', {
         userData: [],
@@ -360,8 +360,8 @@ export default class SpeckleRenderer {
       parentNode = parentNode.parent
     }
 
-    this.batcher.resetBatchesDrawRanges()
-    this.renderer.shadowMap.needsUpdate = true
+    // this.batcher.resetBatchesDrawRanges()
+    // this.renderer.shadowMap.needsUpdate = true
 
     if (multiSelect && !this.selectionRawData.includes(parentNode.model.raw))
       this.selectionRawData.push(parentNode.model.raw)
@@ -372,7 +372,7 @@ export default class SpeckleRenderer {
       location: result.point,
       selectionCenter: result.point
     }
-    this.viewer.FilterManager.selectRv(rv, multiSelect)
+    this.viewer.FilteringManager.selectRv(rv, multiSelect)
     this.viewer.emit('object-clicked', selectionInfo)
   }
 

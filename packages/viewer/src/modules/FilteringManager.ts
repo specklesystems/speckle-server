@@ -67,10 +67,7 @@ export class FilteringManager {
   private setFilters() {
     this.renderer.clearFilter()
     this.renderer.beginFilter()
-    const returnFilter = {
-      coloringState: null,
-      visibilityState: null
-    }
+    const returnFilter = {} as any
 
     if (this.colorFilterState.enabled) {
       if (this.colorFilterState.type === 'string') {
@@ -85,9 +82,8 @@ export class FilteringManager {
           })
         }
       }
-      //todo
+
       if (this.colorFilterState.type === 'number') {
-        // TODO
         for (const group of this.colorFilterState.colors) {
           this.renderer.applyFilter(group.rvs, {
             filterType: FilterMaterialType.GRADIENT,
@@ -95,7 +91,7 @@ export class FilteringManager {
           })
         }
       }
-      returnFilter.coloringState = this.colorFilterState
+      returnFilter.coloringState = this.colorFilterState.getState()
     }
 
     if (this.hiddenObjectsState.enabled) {
@@ -104,7 +100,7 @@ export class FilteringManager {
           ? FilterMaterialType.GHOST
           : FilterMaterialType.HIDDEN
       })
-      returnFilter.visibilityState = this.hiddenObjectsState
+      returnFilter.visibilityState = this.hiddenObjectsState.getState()
     } else if (this.isolateObjectsState.enabled) {
       this.renderer.applyFilter(this.isolateObjectsState.ghostedRvs, {
         filterType: this.isolateObjectsState.ghost
@@ -112,7 +108,7 @@ export class FilteringManager {
           : FilterMaterialType.HIDDEN
       })
 
-      returnFilter.visibilityState = this.isolateObjectsState
+      returnFilter.visibilityState = this.isolateObjectsState.getState()
     }
 
     // The color filter state gets a last pass as we always want to hide/ghost
@@ -160,7 +156,6 @@ export class FilteringManager {
   public selectRv(rv: NodeRenderView, append = true) {
     if (append) this.selectionObjectsState.rvs.push(rv)
     else this.selectionObjectsState.rvs = [rv]
-    console.log(this.selectionObjectsState)
     return this.setFilters()
   }
 
@@ -190,6 +185,14 @@ export class FilteringManager {
      */
     purgeRenderViews() {
       this.hiddenRvs = []
+    },
+    getState() {
+      return {
+        name: 'hiddenObjectState',
+        enabled: this.enabled,
+        filterKey: this.filterKey,
+        ids: this.ids
+      }
     }
   }
 
@@ -208,7 +211,7 @@ export class FilteringManager {
     ghost = false
   ) {
     return this.toggleObjectsVisibility(
-      objectIds,
+      this.getAllDescendantIds(objectIds),
       VisibilityCommand.HIDE,
       filterKey,
       resourceUrl,
@@ -229,7 +232,7 @@ export class FilteringManager {
     resourceUrl: string = null
   ) {
     return this.toggleObjectsVisibility(
-      objectIds,
+      this.getAllDescendantIds(objectIds),
       VisibilityCommand.SHOW,
       filterKey,
       resourceUrl
@@ -239,13 +242,19 @@ export class FilteringManager {
   /**
    * Hides all the descendants of the provided object's id. The opposite of `showTree`.
    * @param objectId the root object id.
+   * @param filterKey the "ui scope" this command is coming from.
    * @param resourceUrl the resource url to limit searching to.
    * @param ghost whether to ghost instead of completely hide the objects.
    * @returns the current applied filter state.
    */
-  public hideTree(objectId: string, resourceUrl: string = null, ghost = false) {
+  public hideTree(
+    objectId: string,
+    filterKey: string = null,
+    resourceUrl: string = null,
+    ghost = false
+  ) {
     const ids = this.getDescendantIds(objectId)
-    return this.hideObjects(ids, null, resourceUrl, ghost)
+    return this.hideObjects(ids, filterKey, resourceUrl, ghost)
   }
 
   /**
@@ -254,9 +263,13 @@ export class FilteringManager {
    * @param resourceUrl the resource url to limit searching to.
    * @returns the current applied filter state.
    */
-  public showTree(objectId: string, resourceUrl: string = null) {
+  public showTree(
+    objectId: string,
+    filterKey: string = null,
+    resourceUrl: string = null
+  ) {
     const ids = this.getDescendantIds(objectId)
-    return this.showObjects(ids, null, resourceUrl)
+    return this.showObjects(ids, filterKey, resourceUrl)
   }
 
   private toggleObjectsVisibility(
@@ -328,6 +341,14 @@ export class FilteringManager {
     purgeRenderViews() {
       this.ghostedRvs = []
       this.visibleRvs = []
+    },
+    getState() {
+      return {
+        name: 'isolateObjectsState',
+        enabled: this.enabled,
+        filterKey: this.filterKey,
+        ids: this.ids
+      }
     }
   }
 
@@ -346,7 +367,7 @@ export class FilteringManager {
     ghost = true
   ) {
     return this.toggleObjectsIsolation(
-      objectIds,
+      this.getAllDescendantIds(objectIds),
       IsolateCommand.ISOLATE,
       filterKey,
       resourceUrl,
@@ -365,13 +386,15 @@ export class FilteringManager {
   public unIsolateObjects(
     objectIds: string[],
     filterKey: string = null,
-    resourceUrl: string = null
+    resourceUrl: string = null,
+    ghost = true
   ) {
     return this.toggleObjectsIsolation(
-      objectIds,
+      this.getAllDescendantIds(objectIds),
       IsolateCommand.UNISOLATE,
       filterKey,
-      resourceUrl
+      resourceUrl,
+      ghost
     )
   }
 
@@ -428,6 +451,7 @@ export class FilteringManager {
 
     this.isolateObjectsState.enabled = this.isolateObjectsState.ids.length !== 0
     this.isolateObjectsState.ghost = ghost
+    this.isolateObjectsState.filterKey = filterKey
 
     // Thinking: ghosted rvs = everyhting
     // subtract out of ghosted rvs the rvs coming from elements i do not want to hide
@@ -470,6 +494,15 @@ export class FilteringManager {
       this.rampTexture = null
       this.ghostNonMatchingObjects = true
       console.log('Color filter state was reset')
+    },
+    getState() {
+      return {
+        name: 'colorFilterState',
+        enabled: this.enabled,
+        type: this.type,
+        key: this.key,
+        colors: this.colors
+      }
     }
   }
 
@@ -568,20 +601,43 @@ export class FilteringManager {
     this.colorFilterState.enabled = false
   }
 
-  private lookupCache = {}
+  private singleIdDesclookupCache = {}
   private getDescendantIds(objectId: string) {
-    if (this.lookupCache[objectId]) return this.lookupCache[objectId]
+    if (this.singleIdDesclookupCache[objectId])
+      return this.singleIdDesclookupCache[objectId]
     let rootNode = null
     WorldTree.getInstance().walk((node: TreeNode) => {
-      if (!node.model.atomic) return true
       if (node.model.raw.id === objectId) {
         rootNode = node
         return false
       }
       return true
     })
-    this.lookupCache[objectId] = Object.keys(rootNode.model.raw.__closure)
-    return this.lookupCache[objectId]
+
+    if (rootNode.model.raw.__closure) {
+      this.singleIdDesclookupCache[objectId] = [
+        ...Object.keys(rootNode.model.raw.__closure),
+        objectId
+      ]
+    } else {
+      this.singleIdDesclookupCache[objectId] = [objectId]
+    }
+    return this.singleIdDesclookupCache[objectId]
+  }
+
+  private multIdDesclookupCache = {}
+  private getAllDescendantIds(objectIds: string[]) {
+    const allIds = []
+    const key = objectIds.join(',')
+    if (this.multIdDesclookupCache[key]) return this.multIdDesclookupCache[key]
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {
+        allIds.push(...Object.keys(node.model.raw.__closure))
+      }
+      return true
+    })
+    this.multIdDesclookupCache[key] = [...allIds, ...objectIds]
+    return this.multIdDesclookupCache[key]
   }
 
   /**

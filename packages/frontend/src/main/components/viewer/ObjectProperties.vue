@@ -53,7 +53,7 @@ export default {
       currItems: 20,
       loading: false,
       ignoredProps: [
-        '__closure',
+        // '__closure',
         // 'displayMesh',
         // 'displayValue',
         '__importedUrl',
@@ -116,9 +116,13 @@ export default {
           type === 'array' &&
           value &&
           value[0]?.referencedId &&
+          // TODO: why was this here? A: because we don't want visibility toggles on non-atomic objects
           !this.realObject.speckle_type?.includes('Objects')
         )
           extras.push('visibility')
+
+        // hack
+        if (type === 'array') extras.push('visibility')
 
         // handle undefined as well as null 'values'
         // eslint-disable-next-line eqeqeq
