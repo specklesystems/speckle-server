@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euox pipefail
+set -euo pipefail
 if ! command -v node &> /dev/null
 then
     echo "🛑 node could not be found. Please install node (and ensure it is in your PATH) before trying again."
