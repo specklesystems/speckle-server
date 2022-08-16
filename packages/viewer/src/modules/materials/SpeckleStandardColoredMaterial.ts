@@ -32,6 +32,15 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
     this.userData.gradientRamp = {
       value: null
     }
+    this.userData.rteShadowMatrix = {
+      value: new Matrix4()
+    }
+    this.userData.uShadowViewer_high = {
+      value: new Vector3()
+    }
+    this.userData.uShadowViewer_low = {
+      value: new Vector3()
+    }
     ;(this as any).vertProgram = speckleStandardColoredVert
     ;(this as any).fragProgram = speckleStandardColoredFrag
     ;(this as any).uniforms = UniformsUtils.merge([
@@ -45,6 +54,15 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
         },
         gradientRamp: {
           value: this.userData.gradientRamp
+        },
+        rteShadowMatrix: {
+          value: this.userData.rteShadowMatrix.value
+        },
+        uShdowViewer_high: {
+          value: this.userData.uShadowViewer_high.value
+        },
+        uShadowViewer_low: {
+          value: this.userData.uShadowViewer_low.value
         }
       }
     ])
@@ -53,6 +71,9 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
       shader.uniforms.gradientRamp = this.userData.gradientRamp
+      shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
+      shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
+      shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -72,6 +93,18 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
       value: new Vector3()
     }
     this.userData.uViewer_low = {
+      value: new Vector3()
+    }
+    this.userData.gradientRamp = {
+      value: null
+    }
+    this.userData.rteShadowMatrix = {
+      value: new Matrix4()
+    }
+    this.userData.uShadowViewer_high = {
+      value: new Vector3()
+    }
+    this.userData.uShadowViewer_low = {
       value: new Vector3()
     }
 

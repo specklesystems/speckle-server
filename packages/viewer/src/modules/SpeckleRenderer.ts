@@ -194,16 +194,12 @@ export default class SpeckleRenderer {
         shadowMatrix.multiply(meshBatch.matrixWorld)
         let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] =
           meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
-        try {
-          material = Array.isArray(material) ? material : [material]
-          for (let k = 0; k < material.length; k++) {
-            material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
-            material[k].userData.uShadowViewer_low.value.copy(viewerLow)
-            material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
-            material[k].needsUpdate = true
-          }
-        } catch (e) {
-          console.log('plm')
+        material = Array.isArray(material) ? material : [material]
+        for (let k = 0; k < material.length; k++) {
+          material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
+          material[k].userData.uShadowViewer_low.value.copy(viewerLow)
+          material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
+          material[k].needsUpdate = true
         }
       }
     }

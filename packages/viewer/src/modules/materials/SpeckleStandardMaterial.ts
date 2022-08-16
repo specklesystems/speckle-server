@@ -84,6 +84,12 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.rteShadowMatrix = {
       value: new Matrix4()
     }
+    this.userData.uShadowViewer_high = {
+      value: new Vector3()
+    }
+    this.userData.uShadowViewer_low = {
+      value: new Vector3()
+    }
 
     this.defines['USE_RTE'] = ' '
 
