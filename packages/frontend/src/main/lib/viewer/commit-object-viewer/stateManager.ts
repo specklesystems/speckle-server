@@ -4,7 +4,7 @@
 import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
 import { makeVar, TypePolicies } from '@apollo/client/cache'
-import { DefaultViewerParams, Viewer } from '@speckle/viewer'
+import { DefaultViewerParams, Viewer, SelectionEvent } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
 import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
@@ -62,7 +62,8 @@ const commitObjectViewerState = makeVar({
   commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
   emojis,
   // TODO: new filtering shit
-  currentFilterState: null as Nullable<UnknownObject>
+  currentFilterState: null as Nullable<UnknownObject>,
+  selectedObjects: [] as UnknownObject[]
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
@@ -206,6 +207,34 @@ export function setSelectedCommentMetaData(
   })
 }
 
+export function setPreventCommentCollapse(shouldPrevent: boolean) {
+  updateState({
+    preventCommentCollapse: shouldPrevent
+  })
+}
+
+// VIEWER
+
+export function handleViewerSelection(selectionInfo: SelectionEvent) {
+  if (!selectionInfo) {
+    updateState({ selectedObjects: [] })
+    // TODO: FM.clearSelection()
+    return
+  }
+
+  const state = { ...commitObjectViewerState() }
+  if (selectionInfo.multiple) {
+    // for (const obj of selectionInfo.userData) {
+    //   if (!state.selectedObjects.includes(obj)) state.selectedObjects.push(obj)
+    // }
+  } else {
+    state.selectedObjects = [selectionInfo.userData]
+  }
+  // TODO: FM.setSelection()
+}
+
+// FILTERING NEW
+
 export function isolateObjects2(
   objectIds: string[],
   filterKey: string,
@@ -223,31 +252,6 @@ export function isolateObjects2(
   updateState(state)
 }
 
-export function isolateObjects(params: FilterKeyAndValues) {
-  const { filterKey, filterValues } = params
-
-  const state = { ...commitObjectViewerState() }
-  state.hideKey = null
-  state.hideValues = []
-  if (state.isolateKey !== filterKey) {
-    state.isolateValues = []
-  }
-
-  state.isolateKey = filterKey
-  state.isolateValues = [...new Set([...state.isolateValues, ...filterValues])]
-  if (state.isolateValues.length === 0) {
-    state.appliedFilter = null
-  } else {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { includes: state.isolateValues } },
-      ghostOthers: true
-    }
-  }
-
-  updateState(state)
-  getInitializedViewer().applyFilter(state.appliedFilter)
-}
-
 export function unIsolateObjects2(
   objectIds: string[],
   filterKey: string,
@@ -255,48 +259,6 @@ export function unIsolateObjects2(
   ghost = false
 ) {
   const result = getInitializedViewer().FilteringManager.unIsolateObjects(
-    objectIds,
-    filterKey,
-    resourceUrl,
-    ghost
-  )
-  updateState({ currentFilterState: result })
-}
-
-export function unisolateObjects(params: FilterKeyAndValues) {
-  const { filterKey, filterValues } = params
-
-  const state = { ...commitObjectViewerState() }
-  state.hideKey = null
-  state.hideValues = []
-  if (state.isolateKey !== filterKey) {
-    state.isolateValues = []
-  }
-
-  state.isolateKey = filterKey
-  state.isolateValues = state.isolateValues.filter(
-    (val) => filterValues.indexOf(val) === -1
-  )
-  if (state.isolateValues.length === 0) {
-    state.appliedFilter = null
-  } else {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { includes: state.isolateValues } },
-      ghostOthers: true
-    }
-  }
-
-  updateState(state)
-  getInitializedViewer().applyFilter(state.appliedFilter)
-}
-
-export function hideObjects2(
-  objectIds: string[],
-  filterKey: string,
-  resourceUrl: string,
-  ghost = false
-) {
-  const result = getInitializedViewer().FilteringManager.hideObjects(
     objectIds,
     filterKey,
     resourceUrl,
@@ -329,6 +291,90 @@ export function showTree(objectId: string, filterKey: string, resourceUrl: strin
   updateState({ currentFilterState: result })
 }
 
+export function hideObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.hideObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function showObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string
+) {
+  const result = getInitializedViewer().FilteringManager.showObjects(
+    objectIds,
+    filterKey,
+    resourceUrl
+  )
+  const state = { ...commitObjectViewerState() }
+  state.currentFilterState = result
+  updateState(state)
+}
+
+// FILTERING OLD
+
+export function isolateObjects(params: FilterKeyAndValues) {
+  const { filterKey, filterValues } = params
+
+  const state = { ...commitObjectViewerState() }
+  state.hideKey = null
+  state.hideValues = []
+  if (state.isolateKey !== filterKey) {
+    state.isolateValues = []
+  }
+
+  state.isolateKey = filterKey
+  state.isolateValues = [...new Set([...state.isolateValues, ...filterValues])]
+  if (state.isolateValues.length === 0) {
+    state.appliedFilter = null
+  } else {
+    state.appliedFilter = {
+      filterBy: { [filterKey]: { includes: state.isolateValues } },
+      ghostOthers: true
+    }
+  }
+
+  updateState(state)
+  getInitializedViewer().applyFilter(state.appliedFilter)
+}
+
+export function unisolateObjects(params: FilterKeyAndValues) {
+  const { filterKey, filterValues } = params
+
+  const state = { ...commitObjectViewerState() }
+  state.hideKey = null
+  state.hideValues = []
+  if (state.isolateKey !== filterKey) {
+    state.isolateValues = []
+  }
+
+  state.isolateKey = filterKey
+  state.isolateValues = state.isolateValues.filter(
+    (val) => filterValues.indexOf(val) === -1
+  )
+  if (state.isolateValues.length === 0) {
+    state.appliedFilter = null
+  } else {
+    state.appliedFilter = {
+      filterBy: { [filterKey]: { includes: state.isolateValues } },
+      ghostOthers: true
+    }
+  }
+
+  updateState(state)
+  getInitializedViewer().applyFilter(state.appliedFilter)
+}
+
 export function hideObjects(params: FilterKeyAndValues) {
   const { filterKey, filterValues } = params
   const state = { ...commitObjectViewerState() }
@@ -352,21 +398,6 @@ export function hideObjects(params: FilterKeyAndValues) {
 
   updateState(state)
   getInitializedViewer().applyFilter(state.appliedFilter)
-}
-
-export function showObjects2(
-  objectIds: string[],
-  filterKey: string,
-  resourceUrl: string
-) {
-  const result = getInitializedViewer().FilteringManager.showObjects(
-    objectIds,
-    filterKey,
-    resourceUrl
-  )
-  const state = { ...commitObjectViewerState() }
-  state.currentFilterState = result
-  updateState(state)
 }
 
 export function showObjects(params: FilterKeyAndValues) {
@@ -585,8 +616,6 @@ export function setNumericFilter(params: {
   viewer.applyFilter(state.appliedFilter)
 }
 
-// not sure if these filter types are 100% correct, I reverse engineered them
-// from the code
 type FilterByValue =
   | {
       gte: number
@@ -694,10 +723,4 @@ export function resetFilter() {
 
   viewer.FilteringManager.reset()
   viewer.applyFilter(null)
-}
-
-export function setPreventCommentCollapse(shouldPrevent: boolean) {
-  updateState({
-    preventCommentCollapse: shouldPrevent
-  })
 }

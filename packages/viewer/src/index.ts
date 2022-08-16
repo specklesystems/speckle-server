@@ -1,6 +1,6 @@
 import { Viewer } from './modules/Viewer'
 import Converter from './modules/converter/Converter'
-import { DefaultViewerParams, IViewer } from './IViewer'
+import { DefaultViewerParams, IViewer, SelectionEvent } from './IViewer'
 import SpeckleLineMaterial from './modules/materials/SpeckleLineMaterial'
 import { FilterMaterialType } from './modules/FilteringManager'
 import { WorldTree } from './modules/tree/WorldTree'
@@ -17,4 +17,5 @@ export {
   SpeckleType,
   GeometryConverter
 }
-export type { IViewer }
+
+export type { IViewer, SelectionEvent }
