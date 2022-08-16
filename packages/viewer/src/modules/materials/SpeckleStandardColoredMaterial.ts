@@ -19,7 +19,7 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
   private static readonly vecBuff0: Vector3 = new Vector3()
   private static readonly vecBuff1: Vector3 = new Vector3()
   private static readonly vecBuff2: Vector3 = new Vector3()
-  //test
+
   constructor(parameters, defines = []) {
     super(parameters)
 
