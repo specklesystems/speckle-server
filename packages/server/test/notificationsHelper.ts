@@ -3,7 +3,14 @@ import {
   NotificationsEvents,
   onNotificationsEvent
 } from '@/modules/notifications/events/emitter'
+import { NOTIFICATIONS_QUEUE } from '@/modules/notifications/services/queue'
+import {
+  baseConfig,
+  createMessageManagerAsync
+} from '@/modules/shared/helpers/redisSmqHelper'
 import { EventEmitter } from 'events'
+import util from 'util'
+import { TGetMessagesReply } from 'redis-smq/dist/types'
 
 type AckEvent = NotificationsEventPayloadMap[NotificationsEvents.Acknowledged]
 
@@ -28,7 +35,7 @@ export async function buildNotificationsStateTracker() {
     /**
      * Quit listening for notification acknowledgements
      */
-    quit: () => {
+    destroy: () => {
       stopListening()
       localEvents.removeAllListeners()
     },
@@ -104,3 +111,23 @@ export async function buildNotificationsStateTracker() {
 export type NotificationsStateManager = Awaited<
   ReturnType<typeof buildNotificationsStateTracker>
 >
+
+/**
+ * Purge pre-queued notifications
+ */
+export async function purgeNotifications() {
+  const manager = await createMessageManagerAsync(baseConfig())
+
+  const list = await new Promise<TGetMessagesReply | undefined>((resolve, reject) => {
+    manager.pendingMessages.list(NOTIFICATIONS_QUEUE, 0, 100, (err, reply) => {
+      if (err) return reject(err)
+      resolve(reply)
+    })
+  })
+  console.log(list)
+
+  const purge = util
+    .promisify(manager.pendingMessages.purge)
+    .bind(manager.pendingMessages)
+  await purge(NOTIFICATIONS_QUEUE)
+}

@@ -46,7 +46,10 @@ const { createAuthTokenForUser } = require('@/test/authHelper')
 const { uploadBlob } = require('@/test/blobHelper')
 const { Comments } = require('@/modules/core/dbSchema')
 const CommentsGraphQLClient = require('@/test/graphql/comments')
-const { buildNotificationsStateTracker } = require('@/test/notificationsHelper')
+const {
+  buildNotificationsStateTracker,
+  purgeNotifications
+} = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
 
 function buildCommentInputFromString(textString) {
@@ -93,6 +96,7 @@ describe('Comments @comments', () => {
   let commitId1, commitId2
 
   before(async () => {
+    await purgeNotifications()
     notificationsState = await buildNotificationsStateTracker()
 
     const { app: express } = await beforeEachContext()
@@ -125,7 +129,7 @@ describe('Comments @comments', () => {
   })
 
   after(() => {
-    notificationsState.quit()
+    notificationsState.destroy()
     commentsServiceMock.destroy()
     mailerMock.destroy()
   })

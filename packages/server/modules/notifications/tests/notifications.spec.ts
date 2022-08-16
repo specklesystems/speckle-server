@@ -7,7 +7,8 @@ import {
 import { publishNotification } from '@/modules/notifications/services/publication'
 import {
   buildNotificationsStateTracker,
-  NotificationsStateManager
+  NotificationsStateManager,
+  purgeNotifications
 } from '@/test/notificationsHelper'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { expect } from 'chai'
@@ -25,11 +26,12 @@ describe('Notifications', () => {
   let notificationsState: NotificationsStateManager
 
   before(async () => {
+    await purgeNotifications()
     notificationsState = await buildNotificationsStateTracker()
   })
 
   after(async () => {
-    notificationsState.quit()
+    notificationsState.destroy()
   })
 
   afterEach(() => {

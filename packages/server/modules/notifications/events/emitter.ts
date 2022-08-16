@@ -42,6 +42,7 @@ export function emitNotificationsEvent<T extends NotificationsEvents>(
   eventName: T,
   payload: NotificationsEventPayloadMap[T]
 ) {
+  console.log(eventName, payload, new Date().toISOString())
   eventEmitter.emit(eventName, payload)
 }
 
