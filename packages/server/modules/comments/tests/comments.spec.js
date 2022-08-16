@@ -46,10 +46,7 @@ const { createAuthTokenForUser } = require('@/test/authHelper')
 const { uploadBlob } = require('@/test/blobHelper')
 const { Comments } = require('@/modules/core/dbSchema')
 const CommentsGraphQLClient = require('@/test/graphql/comments')
-const {
-  waitForAcknowledged,
-  purgeNotifications
-} = require('@/test/notificationsHelper')
+const { buildNotificationsStateTracker } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
 
 function buildCommentInputFromString(textString) {
@@ -63,6 +60,9 @@ function generateRandomCommentText() {
 describe('Comments @comments', () => {
   /** @type {import('express').Express} */
   let app
+
+  /** @type {import('@/test/notificationsHelper').NotificationsStateManager} */
+  let notificationsState
 
   const user = {
     name: 'The comment wizard',
@@ -93,6 +93,8 @@ describe('Comments @comments', () => {
   let commitId1, commitId2
 
   before(async () => {
+    notificationsState = await buildNotificationsStateTracker()
+
     const { app: express } = await beforeEachContext()
     app = express
 
@@ -123,6 +125,7 @@ describe('Comments @comments', () => {
   })
 
   after(() => {
+    notificationsState.quit()
     commentsServiceMock.destroy()
     mailerMock.destroy()
   })
@@ -1380,10 +1383,6 @@ describe('Comments @comments', () => {
               ...input
             })
 
-          before(async () => {
-            await purgeNotifications()
-          })
-
           it('a valid mention triggers a notification', async () => {
             /** @type {import('@/modules/emails/services/sending').SendEmailParams | undefined} */
             let emailParams
@@ -1392,7 +1391,7 @@ describe('Comments @comments', () => {
               emailParams = params
             })
 
-            const waitForAck = waitForAcknowledged(
+            const waitForAck = notificationsState.waitForAck(
               ({ notification }) =>
                 notification?.type === NotificationType.MentionedInComment
             )

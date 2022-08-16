@@ -20,13 +20,14 @@ export enum NotificationsEvents {
 }
 
 // Add mappings between event types and expected payloads here
-type NotificationsEventPayloadMap = {
+export type NotificationsEventPayloadMap = {
   [NotificationsEvents.Published]: { notification: NotificationMessage }
-  [NotificationsEvents.Consumed]: { notification: NotificationMessage }
+  [NotificationsEvents.Consumed]: { notification: NotificationMessage; msgId: string }
   [NotificationsEvents.Acknowledged]: {
     notification?: NotificationMessage
-    err?: Error
     ack: boolean
+    msgId: string
+    err?: Error
   }
 } & { [k in NotificationsEvents]: unknown }
 

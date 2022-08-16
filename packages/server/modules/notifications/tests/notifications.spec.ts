@@ -5,7 +5,10 @@ import {
   TestMessage
 } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { purgeNotifications, waitForAcknowledged } from '@/test/notificationsHelper'
+import {
+  buildNotificationsStateTracker,
+  NotificationsStateManager
+} from '@/test/notificationsHelper'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { expect } from 'chai'
 import {
@@ -19,8 +22,14 @@ const testHandlerMock = mockRequireModule([
 ])
 
 describe('Notifications', () => {
-  beforeEach(async () => {
-    await purgeNotifications()
+  let notificationsState: NotificationsStateManager
+
+  before(async () => {
+    notificationsState = await buildNotificationsStateTracker()
+  })
+
+  after(async () => {
+    notificationsState.quit()
   })
 
   afterEach(() => {
@@ -39,17 +48,14 @@ describe('Notifications', () => {
       enqueuedMessage = msg
     }) as NotificationHandler<TestMessage>)
 
-    const waitForAck = waitForAcknowledged(
-      ({ notification }) => notification?.type === NotificationType.Test
-    )
-
     // Enqueue notification
-    await publishNotification(NotificationType.Test, {
+    const msgId = await publishNotification(NotificationType.Test, {
       targetUserId,
       data
     })
 
-    await waitForAck
+    // Wait for ack
+    await notificationsState.waitForMsgAck(msgId)
 
     expect(enqueuedMessage).to.be.ok
     expect(enqueuedMessage?.targetUserId).to.eq(targetUserId)
@@ -58,16 +64,15 @@ describe('Notifications', () => {
   })
 
   it('fail safely when emitted with an unexpected structure', async () => {
-    const waitForAck = waitForAcknowledged(({ err }) => !!err)
-
     // Enqueue notification with invalid structure
-    await publishNotification(NotificationType.Test, {
+    const msgId = await publishNotification(NotificationType.Test, {
       a: 1,
       b: 2
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
-    const { err, ack } = await waitForAck
+    const { err, ack } = await notificationsState.waitForMsgAck(msgId)
+
     expect(ack).to.be.false
     expect(err).to.be.ok
     expect(err instanceof InvalidNotificationError).to.be.true
@@ -75,17 +80,15 @@ describe('Notifications', () => {
   })
 
   it('fail safely when emitted with an unexpected type', async () => {
-    const waitForAck = waitForAcknowledged(({ err }) => !!err)
-
     // Enqueue notification with invalid structure
-    await publishNotification('booooooooo' as NotificationType, {
+    const msgId = await publishNotification('booooooooo' as NotificationType, {
       targetUserId: '123',
       data: {
         a: 123
       }
     })
 
-    const { err, ack } = await waitForAck
+    const { err, ack } = await notificationsState.waitForMsgAck(msgId)
     expect(ack).to.be.false
     expect(err).to.be.ok
     expect(err instanceof UnhandledNotificationError).to.be.true
@@ -106,14 +109,13 @@ describe('Notifications', () => {
         throw error
       }) as NotificationHandler<TestMessage>)
 
-      const waitForAck = waitForAcknowledged(({ err }) => !!err)
-
-      await publishNotification(NotificationType.Test, {
+      const msgId = await publishNotification(NotificationType.Test, {
         targetUserId: '123',
         data: { a: 1, display, error }
       })
 
-      const { err, ack } = await waitForAck
+      const { err, ack } = await notificationsState.waitForMsgAck(msgId)
+
       expect(ack).to.be.eq(error instanceof NotificationValidationError)
       expect(err?.name).to.eq(error.name)
     })

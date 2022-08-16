@@ -116,6 +116,8 @@ export function registerNotificationHandlers(
  */
 export async function consumeIncomingNotifications() {
   return await startConsumption(NOTIFICATIONS_QUEUE, async (msg, ack) => {
+    const msgId = msg.getId() || ''
+
     try {
       notificationsDebug('New notification received...')
 
@@ -131,7 +133,8 @@ export async function consumeIncomingNotifications() {
         })
       }
       emitNotificationsEvent(NotificationsEvents.Consumed, {
-        notification: typedPayload
+        notification: typedPayload,
+        msgId
       })
 
       // Invoke correct handler
@@ -150,7 +153,8 @@ export async function consumeIncomingNotifications() {
       ack()
       emitNotificationsEvent(NotificationsEvents.Acknowledged, {
         notification: typedPayload,
-        ack: true
+        ack: true,
+        msgId
       })
       notificationDebug('...successfully processed notification')
     } catch (e: unknown) {
@@ -168,7 +172,8 @@ export async function consumeIncomingNotifications() {
 
       emitNotificationsEvent(NotificationsEvents.Acknowledged, {
         err,
-        ack: isAcked
+        ack: isAcked,
+        msgId
       })
     }
   })
