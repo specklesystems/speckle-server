@@ -134,3 +134,15 @@ export async function purgeNotifications() {
     .bind(manager.pendingMessages)
   await purge(NOTIFICATIONS_QUEUE)
 }
+
+export async function listPendingNotifications() {
+  const manager = await createMessageManagerAsync(baseConfig())
+
+  const list = await new Promise<TGetMessagesReply | undefined>((resolve, reject) => {
+    manager.pendingMessages.list(NOTIFICATIONS_QUEUE, 0, 100, (err, reply) => {
+      if (err) return reject(err)
+      resolve(reply)
+    })
+  })
+  console.log(list)
+}

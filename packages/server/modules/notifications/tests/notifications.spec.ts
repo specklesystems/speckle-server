@@ -7,6 +7,7 @@ import {
 import { publishNotification } from '@/modules/notifications/services/publication'
 import {
   buildNotificationsStateTracker,
+  listPendingNotifications,
   NotificationsStateManager,
   purgeNotifications
 } from '@/test/notificationsHelper'
@@ -73,7 +74,13 @@ describe('Notifications', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
 
-    const { err, ack } = await notificationsState.waitForMsgAck(msgId)
+    const { err, ack } = await notificationsState
+      .waitForMsgAck(msgId)
+      .catch(async (e) => {
+        console.log('ERR!', msgId)
+        await listPendingNotifications()
+        throw e
+      })
 
     expect(ack).to.be.false
     expect(err).to.be.ok
