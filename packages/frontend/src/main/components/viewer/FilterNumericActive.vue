@@ -15,6 +15,9 @@
       </v-list-item-action>
     </portal>
     <v-row no-gutters class="my-1 property-row rounded-lg">
+      <v-col cols="12">
+        {{ filter }}
+      </v-col>
       <v-col
         cols="1"
         :class="`text-center text-truncate px-1 ${

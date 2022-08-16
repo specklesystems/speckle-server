@@ -16,7 +16,10 @@
 <script>
 import throttle from 'lodash/throttle'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
-import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import {
+  useCommitObjectViewerParams,
+  handleViewerSelection
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   name: 'SpeckleViewer',
@@ -97,7 +100,11 @@ export default {
         throttle((args) => this.$emit('load-progress', args), 250)
       )
 
-      this.viewer.on('object-clicked', (objects) => this.$emit('selection', objects))
+      this.viewer.on('object-clicked', (selectionInfo) => {
+        console.log('Viewer Event')
+        console.log(selectionInfo)
+        handleViewerSelection(selectionInfo)
+      })
     }
   }
 }

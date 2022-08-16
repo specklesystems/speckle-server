@@ -79,7 +79,7 @@
           <!-- Filters display -->
           <viewer-filters
             class="mt-4"
-            :props="objectProperties"
+            :property-filters="objectProperties"
             :source-application="
               resources
                 .filter((r) => r.type === 'commit')
@@ -87,6 +87,16 @@
                 .join(',')
             "
           />
+          <!-- <viewer-filters-legacy
+            class="mt-4"
+            :props="objectProperties"
+            :source-application="
+              resources
+                .filter((r) => r.type === 'commit')
+                .map((r) => r.data.commit.sourceApplication)
+                .join(',')
+            "
+          /> -->
         </commit-object-viewer-scope>
       </prioritized-portal>
 
@@ -320,6 +330,8 @@ export default defineComponent({
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup.vue'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay.vue'),
     ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue'),
+    // ViewerFiltersLegacy: () =>
+    //   import('@/main/components/viewer/ViewerFilters-Legacy.vue'),
     ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay.vue'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay.vue')
@@ -715,6 +727,7 @@ export default defineComponent({
     setViews() {
       this.views.splice(0, this.views.length)
       this.views.push(...this.viewer.getViews())
+      console.log(this.views)
     },
     async setFilters() {
       try {

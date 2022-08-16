@@ -90,6 +90,7 @@ export default {
       query {
         commitObjectViewerState @client {
           appliedFilter
+          currentFilterState
         }
       }
     `)
@@ -107,7 +108,7 @@ export default {
   },
   computed: {
     showVisReset() {
-      return !!this.viewerState.appliedFilter
+      return !!this.viewerState.appliedFilter || !!this.viewerState.currentFilterState
     }
   },
   mounted() {

@@ -11,7 +11,7 @@
       <v-list-item-content>
         <v-list-item-title>
           <span v-if="activeFilter === null">
-            Filters
+            Filters (OLD)
             <span class="caption grey--text">({{ allFilters.length }})</span>
           </span>
           <span v-else>{{ activeFilter.name }}</span>
@@ -97,9 +97,9 @@ export default {
     FilterNumericActive: () => import('@/main/components/viewer/FilterNumericActive')
   },
   props: {
-    propertyFilters: {
-      type: Array,
-      default: () => []
+    props: {
+      type: Object,
+      default: () => {}
     },
     sourceApplication: {
       type: String,
@@ -139,13 +139,13 @@ export default {
     topFilters() {
       if (this.allFilters.length === 0) return []
       const arr = []
-      arr.push(this.allFilters.find((f) => f.key === 'Object Type'))
+      arr.push(this.allFilters.find((f) => f.name === 'Object Type'))
       if (this.sourceApplication.toLowerCase().includes('revit')) {
-        arr.push(this.allFilters.find((f) => f.key === 'Level'))
-        arr.push(this.allFilters.find((f) => f.key === 'family'))
-        arr.push(this.allFilters.find((f) => f.key === 'type'))
-        arr.push(this.allFilters.find((f) => f.key === 'Area'))
-        arr.push(this.allFilters.find((f) => f.key === 'Volume'))
+        arr.push(this.allFilters.find((f) => f.name === 'Level'))
+        arr.push(this.allFilters.find((f) => f.name === 'family'))
+        arr.push(this.allFilters.find((f) => f.name === 'type'))
+        arr.push(this.allFilters.find((f) => f.name === 'Area'))
+        arr.push(this.allFilters.find((f) => f.name === 'Volume'))
       }
       return arr.filter((el) => !!el)
     },
@@ -161,7 +161,7 @@ export default {
     }
   },
   watch: {
-    propertyFilters(newVal) {
+    props(newVal) {
       if (newVal) {
         this.parseAndSetFilters()
       }
@@ -178,6 +178,9 @@ export default {
     }
   },
   mounted() {
+    if (this.props) {
+      this.parseAndSetFilters()
+    }
     if (this.$eventHub) {
       this.$eventHub.$on('structure-filters', () => {
         this.activeFilter = null
@@ -189,21 +192,16 @@ export default {
   },
   methods: {
     parseAndSetFilters() {
-      // const keys = Object.keys(this.props)
+      const keys = Object.keys(this.props)
       const filters = []
-      for (const rawFilter of this.propertyFilters) {
+      for (const key of keys) {
         const filter = {}
-        const key = rawFilter.key
-        // Handle revit params (a wee bit of FML moment)
+        // Handle revit params
         if (key.startsWith('parameters.')) {
           if (key.endsWith('.value')) {
-            // filter.name = this.props[key.replace('.value', '.name')].allValues[0]
-            const nameProp = this.propertyFilters.find(
-              (f) => f.key === key.replace('.value', '.name')
-            )
-            filter.name = nameProp?.valueGroups[0].value
+            filter.name = this.props[key.replace('.value', '.name')].allValues[0]
             filter.targetKey = key
-            filter.data = rawFilter
+            filter.data = this.props[key]
             filters.push(filter)
             continue
           } else {
@@ -214,7 +212,7 @@ export default {
         if (key === 'level.name') {
           filter.name = 'Level'
           filter.targetKey = key
-          filter.data = rawFilter
+          filter.data = this.props[key]
           filters.push(filter)
           continue
         }
@@ -222,7 +220,7 @@ export default {
         if (key === 'speckle_type') {
           filter.name = 'Object Type'
           filter.targetKey = key
-          filter.data = rawFilter
+          filter.data = this.props[key]
           filters.push(filter)
           continue
         }
@@ -252,7 +250,7 @@ export default {
 
         filter.name = key
         filter.targetKey = key
-        filter.data = rawFilter
+        filter.data = this.props[key]
         filters.push(filter)
       }
       this.allFilters = filters

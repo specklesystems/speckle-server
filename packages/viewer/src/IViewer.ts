@@ -1,3 +1,4 @@
+import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 
 export interface ViewerParams {
@@ -37,6 +38,14 @@ export const DefaultViewerParams: ViewerParams = {
     type: AssetType.TEXTURE_EXR
   }
 }
+
+export type SelectionEvent = {
+  userData: Record<string, unknown>
+  location: Vector3
+  selectionCenter: Vector3
+  multiple: boolean
+}
+
 /**
  * Carried over from the old Viewer. To be extended/changed
  */
@@ -60,7 +69,7 @@ export interface IViewer {
   screenshot(): Promise<string>
 
   applyFilter(filter: unknown): Promise<void>
-  // getObjectsProperties(includeAll?: boolean): unknown
+  getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void
 }

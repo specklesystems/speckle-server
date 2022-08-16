@@ -35,6 +35,7 @@ import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { WorldTree } from './tree/WorldTree'
+import { SelectionEvent } from '../IViewer'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = true
@@ -191,12 +192,19 @@ export default class SpeckleRenderer {
         shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
         shadowMatrix.multiply(rteView)
         shadowMatrix.multiply(meshBatch.matrixWorld)
-        const material: SpeckleStandardMaterial =
-          meshBatch.material as SpeckleStandardMaterial
-        material.userData.rteShadowMatrix.value.copy(shadowMatrix)
-        material.userData.uShadowViewer_low.value.copy(viewerLow)
-        material.userData.uShadowViewer_high.value.copy(viewerHigh)
-        material.needsUpdate = true
+        let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] =
+          meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
+        try {
+          material = Array.isArray(material) ? material : [material]
+          for (let k = 0; k < material.length; k++) {
+            material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
+            material[k].userData.uShadowViewer_low.value.copy(viewerLow)
+            material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
+            material[k].needsUpdate = true
+          }
+        } catch (e) {
+          console.log('plm')
+        }
       }
     }
   }
@@ -393,7 +401,7 @@ export default class SpeckleRenderer {
   }
 
   // NOTE: Alex, sorry for the stateful BS
-  private selectionRawData = []
+  private selectionRawData: Record<string, unknown>[] = []
 
   private onObjectClick(e) {
     const result: Intersection = this.intersections.intersect(
@@ -401,16 +409,10 @@ export default class SpeckleRenderer {
       this.viewer.cameraHandler.activeCam.camera,
       e
     )
+
     if (!result) {
-      this.batcher.resetBatchesDrawRanges()
-      this.renderer.shadowMap.needsUpdate = true
-      this.viewer.FilterManager.resetSelection()
       this.selectionRawData = []
-      this.viewer.emit('object-clicked', {
-        userData: [],
-        location: null,
-        selectionCenter: null
-      })
+      this.viewer.emit('object-clicked', null)
       return
     }
 
@@ -421,15 +423,14 @@ export default class SpeckleRenderer {
       result.object.uuid,
       result.faceIndex !== undefined ? result.faceIndex : result.index
     )
+
     /** Batch rejected picking. This only happens with hidden lines */
     if (!rv) {
-      this.batcher.resetBatchesDrawRanges()
-      this.renderer.shadowMap.needsUpdate = true
+      this.viewer.emit('object-clicked', !multiSelect ? null : { multiple: true })
       return
     }
 
     const hitId = rv.renderData.id
-
     const hitNode = WorldTree.getInstance().findId(hitId)
 
     let parentNode = hitNode
@@ -437,19 +438,17 @@ export default class SpeckleRenderer {
       parentNode = parentNode.parent
     }
 
-    this.batcher.resetBatchesDrawRanges()
-    this.renderer.shadowMap.needsUpdate = true
-
     if (multiSelect && !this.selectionRawData.includes(parentNode.model.raw))
       this.selectionRawData.push(parentNode.model.raw)
     else this.selectionRawData = [parentNode.model.raw]
 
     const selectionInfo = {
-      userData: this.selectionRawData,
+      userData: parentNode.model.raw,
       location: result.point,
-      selectionCenter: result.point
-    }
-    this.viewer.FilterManager.selectRv(rv, multiSelect)
+      selectionCenter: result.point, // Ideally we'd get the selection center here
+      multiple: multiSelect
+    } as SelectionEvent
+
     this.viewer.emit('object-clicked', selectionInfo)
   }
 

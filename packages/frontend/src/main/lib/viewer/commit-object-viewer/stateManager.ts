@@ -4,9 +4,9 @@
 import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
 import { makeVar, TypePolicies } from '@apollo/client/cache'
-import { DefaultViewerParams, Viewer } from '@speckle/viewer'
+import { DefaultViewerParams, Viewer, SelectionEvent } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray } from 'lodash'
+import { cloneDeep, has, isArray, update } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -60,7 +60,10 @@ const commitObjectViewerState = makeVar({
   addingComment: false,
   preventCommentCollapse: false,
   commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
-  emojis
+  emojis,
+  // TODO: new filtering shit
+  currentFilterState: null as Nullable<UnknownObject>,
+  selectedObjects: [] as UnknownObject[]
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
@@ -104,7 +107,7 @@ function getOrInitViewerData(): GlobalViewerData {
   return globalViewerData
 }
 
-function getInitializedViewer(): Viewer {
+export function getInitializedViewer(): Viewer {
   if (!globalViewerData?.viewer) {
     throw new Error('Attempting to access viewer before it has been initialized')
   }
@@ -203,6 +206,124 @@ export function setSelectedCommentMetaData(
       : null
   })
 }
+
+export function setPreventCommentCollapse(shouldPrevent: boolean) {
+  updateState({
+    preventCommentCollapse: shouldPrevent
+  })
+}
+
+// VIEWER
+
+export function handleViewerSelection(selectionInfo: SelectionEvent) {
+  if (!selectionInfo) {
+    updateState({ selectedObjects: [] })
+    // TODO: FM.clearSelection()
+    return
+  }
+
+  const state = { ...commitObjectViewerState() }
+
+  if (selectionInfo.multiple) {
+    if (!state.selectedObjects.includes(selectionInfo.userData))
+      state.selectedObjects.push(selectionInfo.userData)
+  } else {
+    state.selectedObjects = [selectionInfo.userData]
+  }
+  // TODO: FM.setSelection()
+  console.log(state.selectedObjects)
+  updateState({ selectedObjects: state.selectedObjects })
+}
+
+// FILTERING NEW
+
+export function isolateObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.isolateObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  const state = { ...commitObjectViewerState() }
+  state.currentFilterState = result
+  updateState(state)
+}
+
+export function unIsolateObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.unIsolateObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function hideTree(
+  objectId: string,
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.hideTree(
+    objectId,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function showTree(objectId: string, filterKey: string, resourceUrl: string) {
+  const result = getInitializedViewer().FilteringManager.showTree(
+    objectId,
+    filterKey,
+    resourceUrl
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function hideObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string,
+  ghost = false
+) {
+  const result = getInitializedViewer().FilteringManager.hideObjects(
+    objectIds,
+    filterKey,
+    resourceUrl,
+    ghost
+  )
+  updateState({ currentFilterState: result })
+}
+
+export function showObjects2(
+  objectIds: string[],
+  filterKey: string,
+  resourceUrl: string
+) {
+  const result = getInitializedViewer().FilteringManager.showObjects(
+    objectIds,
+    filterKey,
+    resourceUrl
+  )
+  const state = { ...commitObjectViewerState() }
+  state.currentFilterState = result
+  updateState(state)
+}
+
+// FILTERING OLD
 
 export function isolateObjects(params: FilterKeyAndValues) {
   const { filterKey, filterValues } = params
@@ -497,8 +618,6 @@ export function setNumericFilter(params: {
   viewer.applyFilter(state.appliedFilter)
 }
 
-// not sure if these filter types are 100% correct, I reverse engineered them
-// from the code
 type FilterByValue =
   | {
       gte: number
@@ -600,14 +719,10 @@ export function resetFilter() {
   resetInternalCategoryObjectState()
   updateState({
     appliedFilter: null,
-    preventCommentCollapse: true
+    preventCommentCollapse: true,
+    currentFilterState: null
   })
 
+  viewer.FilteringManager.reset()
   viewer.applyFilter(null)
-}
-
-export function setPreventCommentCollapse(shouldPrevent: boolean) {
-  updateState({
-    preventCommentCollapse: shouldPrevent
-  })
 }
