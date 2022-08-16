@@ -1,16 +1,16 @@
-ARG NODE_ENV=production
-
 FROM node:16.15-bullseye-slim as build-stage
 
 WORKDIR /speckle-server
 
-# add wait
-ENV WAIT_VERSION 2.8.0
+# install wait
+ARG WAIT_VERSION=2.8.0
+ENV WAIT_VERSION=${WAIT_VERSION}
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
 RUN chmod +x ./wait
 
-# Add tini
-ENV TINI_VERSION v0.19.0
+# install tini
+ARG TINI_VERSION=v0.19.0
+ENV TINI_VERSION=${TINI_VERSION}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
 RUN chmod +x ./tini
 
@@ -28,6 +28,7 @@ RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirement
 
 # yarn install
 WORKDIR /speckle-server
+ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
@@ -49,7 +50,7 @@ COPY --from=build-stage /speckle-server/node_modules/ ./node_modules/
 # Prefixing PATH with our virtual environment should seek required binaries
 # from virtual environment first.
 # Unsetting python home
-ENV PATH=/venv/bin:${PATH}, \
+ENV PATH=/venv/bin:${PATH} \
     PYTHONHOME=
 
 ENTRYPOINT ["/tini", "--", "/nodejs/bin/node", "src/daemon.js"]

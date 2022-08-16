@@ -1,11 +1,10 @@
-ARG PG_CONNECTION_STRING
-ARG NODE_EXTRA_CA_CERTS
-
 FROM debian:11-slim AS build-stage
 
 WORKDIR /build
-# Add Tini
-ENV TINI_VERSION v0.19.0
+
+# install tini
+ARG TINI_VERSION=v0.19.0
+ENV TINI_VERSION=${TINI_VERSION}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
 RUN chmod +x ./tini
 
@@ -21,8 +20,9 @@ COPY utils/monitor-deployment/requirements.txt /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirements.txt
 
 FROM gcr.io/distroless/python3-debian11:nonroot as production-stage
-
-ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING}, \
+ARG PG_CONNECTION_STRING
+ARG NODE_EXTRA_CA_CERTS
+ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING} \
     NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS}
 
 COPY --from=build-stage /venv /venv

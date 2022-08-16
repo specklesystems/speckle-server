@@ -1,6 +1,3 @@
-ARG SPECKLE_SERVER
-ARG SPECKLE_VERSION
-
 FROM debian:11-slim AS build-stage
 WORKDIR /venv
 RUN apt-get update && \
@@ -13,8 +10,9 @@ COPY utils/test-deployment/requirements.txt /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirements.txt
 
 FROM gcr.io/distroless/python3-debian11:nonroot as production-stage
-
-ENV SPECKLE_SERVER=${SPECKLE_SERVER}, \
+ARG SPECKLE_SERVER
+ARG SPECKLE_VERSION
+ENV SPECKLE_SERVER=${SPECKLE_SERVER} \
     SPECKLE_SERVER=${SPECKLE_VERSION}
 COPY --from=build-stage /venv /venv
 COPY utils/test-deployment /app

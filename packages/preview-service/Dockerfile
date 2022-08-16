@@ -1,15 +1,15 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-ARG NODE_ENV=production
-
 # build stage
 FROM node:16.15-buster-slim as build-stage
 
+ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
 
 # install wait
-ENV WAIT_VERSION 2.8.0
+ARG WAIT_VERSION=2.8.0
+ENV WAIT_VERSION=${WAIT_VERSION}
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
 RUN chmod +x ./wait
 
@@ -70,6 +70,7 @@ RUN apt-get update && \
 
 COPY --from=build-stage /speckle-server/wait /wait
 
+ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
