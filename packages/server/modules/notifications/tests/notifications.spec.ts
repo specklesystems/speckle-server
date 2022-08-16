@@ -77,7 +77,7 @@ describe('Notifications', () => {
     const { err, ack } = await notificationsState
       .waitForMsgAck(msgId)
       .catch(async (e) => {
-        console.log('ERR!', msgId)
+        console.log('ERR unexpected struct!', msgId)
         await listPendingNotifications()
         throw e
       })
@@ -123,7 +123,13 @@ describe('Notifications', () => {
         data: { a: 1, display, error }
       })
 
-      const { err, ack } = await notificationsState.waitForMsgAck(msgId)
+      const { err, ack } = await notificationsState
+        .waitForMsgAck(msgId)
+        .catch(async (e) => {
+          console.log('ERR handler throw!', msgId)
+          await listPendingNotifications()
+          throw e
+        })
 
       expect(ack).to.be.eq(error instanceof NotificationValidationError)
       expect(err?.name).to.eq(error.name)
