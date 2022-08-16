@@ -224,6 +224,7 @@ export function handleViewerSelection(selectionInfo: SelectionEvent) {
 
   const state = { ...commitObjectViewerState() }
   if (selectionInfo.multiple) {
+    // YOLO
     // for (const obj of selectionInfo.userData) {
     //   if (!state.selectedObjects.includes(obj)) state.selectedObjects.push(obj)
     // }
