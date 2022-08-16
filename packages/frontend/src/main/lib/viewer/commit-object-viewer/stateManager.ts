@@ -6,7 +6,7 @@ import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/view
 import { makeVar, TypePolicies } from '@apollo/client/cache'
 import { DefaultViewerParams, Viewer } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, filter, has, isArray } from 'lodash'
+import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -688,9 +688,11 @@ export function resetFilter() {
   resetInternalCategoryObjectState()
   updateState({
     appliedFilter: null,
-    preventCommentCollapse: true
+    preventCommentCollapse: true,
+    currentFilterState: null
   })
 
+  viewer.FilteringManager.reset()
   viewer.applyFilter(null)
 }
 

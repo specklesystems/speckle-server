@@ -1,4 +1,3 @@
-import { get } from 'lodash'
 import { Color, Texture, MathUtils } from 'three'
 import flatten from '../helpers/flatten'
 import { TreeNode, WorldTree } from './tree/WorldTree'
@@ -49,11 +48,9 @@ export interface StringPropertyInfo extends PropertyInfo {
 }
 
 export class FilteringManager {
-  private viewer: any
   private renderer: any
 
   constructor(viewer: any) {
-    this.viewer = viewer
     this.renderer = viewer.speckleRenderer
   }
 
@@ -69,6 +66,7 @@ export class FilteringManager {
     this.renderer.beginFilter()
     const returnFilter = {} as any
 
+    // First: colour things!
     if (this.colorFilterState.enabled) {
       if (this.colorFilterState.type === 'string') {
         let k = -1
@@ -94,6 +92,7 @@ export class FilteringManager {
       returnFilter.coloringState = this.colorFilterState.getState()
     }
 
+    // Second: hide objects/isolate objects.
     if (this.hiddenObjectsState.enabled) {
       this.renderer.applyFilter(this.hiddenObjectsState.hiddenRvs, {
         filterType: this.hiddenObjectsState.ghost
@@ -111,7 +110,7 @@ export class FilteringManager {
       returnFilter.visibilityState = this.isolateObjectsState.getState()
     }
 
-    // The color filter state gets a last pass as we always want to hide/ghost
+    // Third: The color filter state gets a last pass as we always want to hide/ghost
     // elements that do not match.
     if (
       this.colorFilterState.enabled &&
@@ -128,6 +127,8 @@ export class FilteringManager {
         filterType: FilterMaterialType.SELECT
       })
     }
+
+    // TODO: overlay pass.
 
     this.renderer.endFilter()
     return returnFilter
@@ -601,6 +602,7 @@ export class FilteringManager {
     this.colorFilterState.enabled = false
   }
 
+  // TODO: merge/reuse the two functions below.
   private singleIdDesclookupCache = {}
   private getDescendantIds(objectId: string) {
     if (this.singleIdDesclookupCache[objectId])
@@ -649,6 +651,11 @@ export class FilteringManager {
     console.warn('Not yet implemented.')
   }
 
+  /**
+   * Trawls the scene for all atomic objects's properties and groups them
+   * by property & value.
+   * @returns a list of unique property info objects.
+   */
   public getAllPropertyFilters(): PropertyInfo[] {
     const propValues = {}
 
