@@ -28,6 +28,7 @@ export async function buildNotificationsStateTracker() {
 
       // Emit event to waitForAck promise handlers
       localEvents.emit(newAckEvent, event)
+      console.log(newAckEvent, event)
     }
   )
 
@@ -50,7 +51,7 @@ export async function buildNotificationsStateTracker() {
     /**
      * Wait for an acknowledgement of a specific msg
      */
-    waitForMsgAck: async (msgId: string, timeout = 2000) => {
+    waitForMsgAck: async (msgId: string, timeout = 10000) => {
       // Create promise for waiting for ack. Creating it first, so that we don't run into
       // a situation where an ack occurred between the "Do we have it already?" check
       // and the promise actually being initialized
@@ -59,6 +60,7 @@ export async function buildNotificationsStateTracker() {
       const waitPromise = new Promise<AckEvent>((resolve, reject) => {
         // Set ack cb for notifications event handler
         eventEmitterHandler = (e) => {
+          console.log('test: ', msgId, e)
           if (e.msgId === msgId) return resolve(e)
         }
         localEvents.on(newAckEvent, eventEmitterHandler)
@@ -84,12 +86,13 @@ export async function buildNotificationsStateTracker() {
     /**
      * Wait for an acknowledgement without knowing the msg id
      */
-    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 2000) => {
+    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 10000) => {
       let timeoutRef: NodeJS.Timer
       let eventEmitterHandler: (e: AckEvent) => void
       return new Promise<AckEvent>((resolve, reject) => {
         // Set ack cb for notifications event handler
         eventEmitterHandler = (e) => {
+          console.log('testX: ', e)
           if (!predicate) return resolve(e)
           if (predicate && predicate(e)) return resolve(e)
         }
