@@ -301,56 +301,126 @@ redis:
 ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
 ## @descriptionEnd
 server:
-  ## @param server.replicas The number of replicas of the Server pod to be deployed
+  ## @param server.replicas The number of instances of the Server pod to be deployed within the cluster.
   replicas: 1
   ## @section Authentication configuration
   ## @descriptionStart
   ## Speckle provides a number of different mechanisms for authenticating users.  Each available option must be configured here.
   ## @descriptionEnd
+  ##
   auth:
     local:
+      ## @param server.auth.local.enabled If enabled, users can register and authenticate with an email address and password.
+      ## The login details are stored in the Postgres database connected to Speckle and are encrypted.
+      ##
       enabled: true
     google:
+      ## @param server.auth.google.enabled If enabled, users can authenticate via Google with their Google account credentials.
+      ## If enabling Google, the `server.auth.google.client_id` parameter is required.
+      ## A secret containing the client secret must stored within the Kubernetes cluster as an opaque Kubernetes Secret.
+      ## The name of the Kubernetes Secret resource must match the `secretName` parameter, and the key within this Kubernetes Secret must be `google_client_secret`.
+      ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+      ##
       enabled: false
+      ## @param server.auth.google.client_id This is the ID for Speckle that you have registered with Google
       client_id: ''
-      # client_secret: secret -> `google_client_secret`
     github:
+      ## @param server.auth.github.enabled If enabled, users can authenticate via Github with their Github account credentials.
+      ## If enabling Github authentication, the `server.auth.github.client_id` parameter is required.
+      ## A secret containing the client secret must stored within the Kubernetes cluster as an opaque Kubernetes Secret.
+      ## The name of the Kubernetes Secret resource must match the `secretName` parameter, and the key within this Kubernetes Secret must be `github_client_secret`.
+      ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+      ##
       enabled: false
+      ## @param server.auth.github.client_id This is the ID for Speckle that you have registered with Github
       client_id: ''
-      # client_secret: secret -> `github_client_secret`
     azure_ad:
+      ## @param server.auth.azure_ad.enabled If enabled, users can authenticate via Azure Active Directory.
+      ## If enabling Azure Active Directory authentication, a secret containing the client secret must stored within the Kubernetes cluster as an opaque Kubernetes Secret.
+      ## The name of the Kubernetes Secret resource must match the `secretName` parameter, and the key within this Kubernetes Secret must be `azure_ad_client_secret`.
+      ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+      ##
       enabled: false
+      ## @param server.auth.azure_ad.org_name This is the Organisation Name that you have registered with Azure
       org_name: ''
+      ## @param server.auth.azure_ad.identity_metadata This is the identity metadata for Speckle that you have registered with Azure
       identity_metadata: ''
+      ## @param server.auth.azure_ad.issuer This is the issuer name for Speckle that you have registered with Azure
       issuer: ''
+      ## @param server.auth.azure_ad.client_id This is the ID for Speckle that you have registered with Azure
       client_id: ''
-      # client_secret: secret -> `azure_ad_client_secret`
   email:
+    ## @param server.email.enabled If enabled, Speckle can send email to users - for example, email verification for account registration.
+    ## If enabling Email, a secret containing the password to the email server must stored within the Kubernetes cluster as an opaque Kubernetes Secret.
+    ## The name of the Kubernetes Secret resource must match the `secretName` parameter, and the key within this Kubernetes Secret must be `email_password`.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+    ##
     enabled: false
+    ## @param server.email.host The domain name or IP address of the server hosting the email service.
+    ##
     host: ''
+    ## @param server.email.port The port on the server for the email service.
+    ##
     port: ''
+    ## @param server.email.username The username with which Speckle will authenticate with the email service.
+    ## Note that the `email_password` is expected to be provided in the Kubernetes Secret with the name provided in the `secretName` parameter.
+    ##
     username: ''
-    # password: secret -> `email_password`
   requests:
+    ## @param server.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 500m
+    ## @param server.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 1Gi
   limits:
+    ## @param server.limits.cpu The maximum CPU that will be made available to the server Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 1000m
+    ## @param server.limits.memory The maximum Memory that will be made available to the server Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 3Gi
   serviceAccount:
+    ## @param server.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
     create: true
 
   monitoring:
     apollo:
+      ## @param server.monitoring.apollo.enabled (Optional) If enabled, exports metrics from the GraphQL API to Apollo Graphql Studio.
+      ## If enabling Apollo, a secret containing the key to the Apollo Graphql Studio API must stored within the Kubernetes cluster as an opaque Kubernetes Secret.
+      ## The name of the Kubernetes Secret resource must match the `secretName` parameter, and the key within this Kubernetes Secret must be `apollo_key`.
+      ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+      ##
       enabled: false
+      ## @param server.monitoring.apollo.graph_id The ID for Speckle that you registered in Apollo Graphql Studio.
       graph_id: ''
-      # key: secret -> `apollo_key`
 
-  # Sentry specific:
+  ## @Section Sentry
+  ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
+  ## Sentry.io allows events within Speckle to be monitored
+  ##
   sentry_dns: ''
+  ## @param server.disable_tracking If set to true, will prevent tracking metrics from being collected
+  ## Setting this value to false requires `sentry_dns` to be set
   disable_tracking: false
+  ## @param server.disable_tracing If set to true, will prevent tracing metrics from being collected
+  ## Setting this value to false requires `sentry_dns` to be set
   disable_tracing: false
   networkPolicy:
+    ## @param server.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## If enabled, the `ingress`, `postgres.networkPolicy`, `redis.networkPolicy`, and `s3.networkPolicy` parameters need be configured.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
   ## @param server.affinity Affinity for Speckle server pods scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -370,14 +440,34 @@ server:
   topologySpreadConstraints: []
 
 frontend:
+  ## @param frontend.replicas The number of instances of the Frontend pod to be deployed within the cluster.
   replicas: 1
   requests:
+    ## @param frontend.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 250m
+    ## @param frontend.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 256Mi
   limits:
+    ## @param frontend.limits.cpu The maximum CPU that will be made available to the frontend Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 1000m
+    ## @param frontend.limits.memory The maximum Memory that will be made available to the frontend Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 512Mi
   networkPolicy:
+    ## @param frontend.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## If enabled, the `ingress` parameters need be configured.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
   ## @param frontend.affinity Affinity for Speckle frontend pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
@@ -396,123 +486,232 @@ frontend:
   ##
   topologySpreadConstraints: []
   serviceAccount:
+    ## @param frontend.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
     create: true
 
 preview_service:
+  ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   replicas: 1
   requests:
+    ## @param preview_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 500m
+    ## @param preview_service.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 2Gi
   limits:
+    ## @param preview_service.limits.cpu The maximum CPU that will be made available to the Preview Service Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 1000m
+    ## @param preview_service.limits.memory The maximum Memory that will be made available to the Preview Service Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 4Gi
   networkPolicy:
+    ## @param preview_service.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## If enabled, the `db.networkPolicy` parameters need be configured.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
-  ## @param preview_service.affinity Affinity for Speckle preview_service pods scheduling
+  ## @param preview_service.affinity Affinity for Speckle Preview Service pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-  ## @param preview_service.nodeSelector Node labels for Speckle preview_service pods scheduling
+  ## @param preview_service.nodeSelector Node labels for Speckle Preview Service pods scheduling
   ## ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
-  ## @param preview_service.tolerations Tolerations for Speckle preview_service pods scheduling
+  ## @param preview_service.tolerations Tolerations for Speckle Preview Service pods scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: []
-  ## @param preview_service.topologySpreadConstraints Spread Constraints for Speckle preview_service pod scheduling
+  ## @param preview_service.topologySpreadConstraints Spread Constraints for Speckle Preview Service pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
   serviceAccount:
+    ## @param preview_service.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
     create: true
 
 webhook_service:
+  ## @param webhook_service.replicas The number of instances of the Webhook Service pod to be deployed within the cluster.
   replicas: 1
   requests:
-    cpu: 100m
-    memory: 256Mi
+    ## @param webhook_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
+    cpu: 500m
+    ## @param webhook_service.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
+    memory: 2Gi
   limits:
-    cpu: 200m
-    memory: 512Mi
+    ## @param webhook_service.limits.cpu The maximum CPU that will be made available to the Webhook Service Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
+    cpu: 1000m
+    ## @param webhook_service.limits.memory The maximum Memory that will be made available to the Webhook Service Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
+    memory: 4Gi
   networkPolicy:
+    ## @param webhook_service.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## If enabled, the `db.networkPolicy` parameters need be configured.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
-  ## @param webhook_service.affinity Affinity for Speckle webhook_service pods scheduling
+  ## @param webhook_service.affinity Affinity for Speckle Webhook Service pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-  ## @param webhook_service.nodeSelector Node labels for Speckle webhook_service pods scheduling
+  ## @param webhook_service.nodeSelector Node labels for Speckle Webhook Service pods scheduling
   ## ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
-  ## @param webhook_service.tolerations Tolerations for Speckle webhook_service pods scheduling
+  ## @param webhook_service.tolerations Tolerations for Speckle Webhook Service pods scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: []
-  ## @param webhook_service.topologySpreadConstraints Spread Constraints for Speckle webhook_service pod scheduling
+  ## @param webhook_service.topologySpreadConstraints Spread Constraints for Speckle Webhook Service pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
   serviceAccount:
+    ## @param webhook_service.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
     create: true
 
 fileimport_service:
+  ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   replicas: 1
   requests:
+    ## @param fileimport_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 100m
+    ## @param fileimport_service.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 512Mi
   limits:
+    ## @param fileimport_service.limits.cpu The maximum CPU that will be made available to the FileImport Service Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 1000m
+    ## @param fileimport_service.limits.memory The maximum Memory that will be made available to the FileImport Service Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 2Gi
-  serviceAccount:
-    create: true
-  time_limit_min: 10
   networkPolicy:
+    ## @param fileimport_service.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## If enabled, the `db.networkPolicy` parameters need be configured.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
-  ## @param fileimport_service.affinity Affinity for Speckle fileimport_service pods scheduling
+  ## @param fileimport_service.affinity Affinity for Speckle FileImport Service pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-  ## @param fileimport_service.nodeSelector Node labels for Speckle fileimport_service pods scheduling
+  ## @param fileimport_service.nodeSelector Node labels for Speckle FileImport Service pods scheduling
   ## ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
-  ## @param fileimport_service.tolerations Tolerations for Speckle fileimport_service pods scheduling
+  ## @param fileimport_service.tolerations Tolerations for Speckle FileImport Service pods scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: []
-  ## @param fileimport_service.topologySpreadConstraints Spread Constraints for Speckle fileimport_service pod scheduling
+  ## @param fileimport_service.topologySpreadConstraints Spread Constraints for Speckle FileImport Service pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
+  serviceAccount:
+    ## @param fileimport_service.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
+    create: true
+  ## param fileimport_service.time_limit_min The maximum time that a file can take to be processed by the FileImport Service.
+  ## Files which take longer than this value to process will be cancelled.
+  ## If you experience repeated issues with small files taking a long time, and increasing CPU and/or memory requests & limits does not help,
+  ##  please reach out to Speckle at https://speckle.community/
+  time_limit_min: 10
 
+## @section Monitoring
+## @descriptionStart
+## Provides Speckle with metrics related to the Postgres database
+## @descriptionEnd
+##
 monitoring:
+  ## @param monitoring.replicas The number of instances of the Monitoring pod to be deployed within the cluster.
   replicas: 1
   requests:
+    ## @param monitoring.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 100m
+    ## @param monitoring.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 64Mi
   limits:
+    ## @param monitoring.limits.cpu The maximum CPU that will be made available to the Monitoring Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 200m
+    ## @param monitoring.limits.memory The maximum Memory that will be made available to the Monitoring Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 512Mi
   networkPolicy:
+    ## @param monitoring.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## If enabled, the `db.networkPolicy` parameters need be configured.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
-  ## @param monitoring.affinity Affinity for Speckle monitoring pods scheduling
+  ## @param monitoring.affinity Affinity for Speckle Monitoring pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-  ## @param monitoring.nodeSelector Node labels for Speckle monitoring pods scheduling
+  ## @param monitoring.nodeSelector Node labels for Speckle Monitoring pods scheduling
   ## ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
-  ## @param monitoring.tolerations Tolerations for Speckle monitoring pods scheduling
+  ## @param monitoring.tolerations Tolerations for Speckle Monitoring pods scheduling
   ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: []
-  ## @param monitoring.topologySpreadConstraints Spread Constraints for Speckle monitoring pod scheduling
+  ## @param monitoring.topologySpreadConstraints Spread Constraints for Speckle Monitoring pod scheduling
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
   ##
   topologySpreadConstraints: []
   serviceAccount:
+    ## @param monitoring.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
     create: true
 
 ## @section Testing
@@ -523,12 +722,34 @@ helm_test_enabled: true
 
 test:
   requests:
+    ## @param test.requests.cpu The CPU that should be available on a node when scheduling this pod.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 100m
+    ## @param test.requests.memory The Memory that should be available on a node when scheduling this pod.
+    ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 64Mi
   limits:
+    ## @param test.limits.cpu The maximum CPU that will be made available to the Test Pod in a given period.
+    ## If this limit is exceeded, execution of the Pod will be paused until the next period.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     cpu: 200m
+    ## @param test.limits.memory The maximum Memory that will be made available to the Test Pod.
+    ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
+    ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    ##
     memory: 512Mi
   networkPolicy:
+    ## @param test.networkPolicy.enabled If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    ##
     enabled: false
   serviceAccount:
+    ## @param test.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
+    ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
+    ## If disabled, the default Service Account will be used which in most Kubernetes configurations will grant this pod
+    ## access to most secrets on the cluster and access to the Kubernetes API.
     create: true
