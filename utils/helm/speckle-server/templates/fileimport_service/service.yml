@@ -5,8 +5,6 @@ metadata:
   name: speckle-fileimport-service-metrics
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-fileimport-service-metrics
-    project: speckle-server
 {{ include "fileimport_service.labels" . | indent 4 }}
 spec:
   selector:

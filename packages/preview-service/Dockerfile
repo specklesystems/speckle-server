@@ -24,8 +24,7 @@ COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
 
-RUN yarn workspaces focus -A
-RUN yarn 
+RUN yarn workspaces focus -A && yarn
 
 # Onyl copy in the relevant source files for the dependencies
 COPY packages/objectloader ./packages/objectloader/
@@ -44,15 +43,39 @@ FROM node:16.15-bullseye-slim as node
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-RUN apt-get update && apt-get install -y \
-  tini \
-  && rm -rf /var/lib/apt/lists/*
-
-# chromium dependencies
-RUN apt-get update && apt-get install -y \
-  # ca-certificates fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libnss3 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 lsb-release wget xdg-utils \
-  ca-certificates fonts-liberation libasound2 libatk-bridge2.0-0 libatk1.0-0 libatspi2.0-0 libcairo2 libcups2 libdbus-1-3 libdrm2 libexpat1 libgbm1 libglib2.0-0 libnspr4 libnss3 libpango-1.0-0 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxkbcommon0 libxrandr2 wget xdg-utils \
-  chromium \
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  --no-install-recommends \
+  tini=0.19.0-1 \
+  # chromium dependencies \
+  ca-certificates=20210119 \
+  fonts-liberation=1:1.07.4-11 \
+  libasound2=1.2.4-1.1 \
+  libatk-bridge2.0-0=2.38.0-1 \
+  libatk1.0-0=2.36.0-2 \
+  libatspi2.0-0=2.38.0-4 \
+  libcairo2=1.16.0-5 \
+  libcups2=2.3.3op2-3+deb11u2 \
+  libdbus-1-3=1.12.20-2 \
+  libdrm2=2.4.104-1 \
+  libexpat1=2.2.10-2+deb11u3 \
+  libgbm1=20.3.5-1 \
+  libglib2.0-0=2.66.8-1 \
+  libnspr4=2:4.29-1 \
+  libnss3=2:3.61-1+deb11u2 \
+  libpango-1.0-0=1.46.2-3 \
+  libx11-6=2:1.7.2-1 \
+  libxcb1=1.14-3 \
+  libxcomposite1=1:0.4.5-1 \
+  libxdamage1=1:1.1.5-2 \
+  libxext6=2:1.3.3-1.1 \
+  libxfixes3=1:5.0.3-2 \
+  libxkbcommon0=1.0.3-2 \
+  libxrandr2=2:1.5.1-1 \
+  wget=1.21-1+deb11u1 \
+  xdg-utils=1.1.3-4.1 \
+  chromium=103.0.5060.53-1~deb11u1 \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait

@@ -27,22 +27,18 @@ If release name contains chart name it will be used as a full name.
 Common labels
 */}}
 {{- define "webhook_service.labels" -}}
-helm.sh/chart: {{ include "speckle.chart" . }}
-{{ include "webhook_service.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{ include "speckle.commonLabels" . }}
 app.kubernetes.io/component: {{ include "webhook_service.name" . }}
-app.kubernetes.io/part-of: {{ include "speckle.name" . }}
+{{ include "webhook_service.selectorLabels" . }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
 {{- define "webhook_service.selectorLabels" -}}
+app: {{ include "webhook_service.name" . }}
 app.kubernetes.io/name: {{ include "webhook_service.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "speckle.commonSelectorLabels" . }}
 {{- end }}
 
 {{/*

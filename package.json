@@ -15,6 +15,7 @@
     "dev:kind:skaffold": "skaffold run",
     "dev:kind:down": "kind delete cluster --name=speckle",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+    "helm:readme:generate": "./utils/helm/update-documentation.sh",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "circleci:check": "circleci config validate ./.circleci/config.yml",
