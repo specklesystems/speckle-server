@@ -6,7 +6,7 @@ import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/view
 import { makeVar, TypePolicies } from '@apollo/client/cache'
 import { DefaultViewerParams, Viewer, SelectionEvent } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray } from 'lodash'
+import { cloneDeep, has, isArray, update } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -223,15 +223,16 @@ export function handleViewerSelection(selectionInfo: SelectionEvent) {
   }
 
   const state = { ...commitObjectViewerState() }
+
   if (selectionInfo.multiple) {
-    // YOLO
-    // for (const obj of selectionInfo.userData) {
-    //   if (!state.selectedObjects.includes(obj)) state.selectedObjects.push(obj)
-    // }
+    if (!state.selectedObjects.includes(selectionInfo.userData))
+      state.selectedObjects.push(selectionInfo.userData)
   } else {
     state.selectedObjects = [selectionInfo.userData]
   }
   // TODO: FM.setSelection()
+  console.log(state.selectedObjects)
+  updateState({ selectedObjects: state.selectedObjects })
 }
 
 // FILTERING NEW

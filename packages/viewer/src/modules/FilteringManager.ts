@@ -494,7 +494,7 @@ export class FilteringManager {
       this.nonMatchingRvs = []
       this.rampTexture = null
       this.ghostNonMatchingObjects = true
-      console.log('Color filter state was reset')
+      console.log('Color filter state was reset, yo!')
     },
     getState() {
       return {

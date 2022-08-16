@@ -5,6 +5,10 @@
       $vuetify.breakpoint.xs ? '90%' : '300px'
     }; height: 100vh; position: absolute; padding-top: 72px`"
   >
+    <pre>
+    {{ viewerState.selectedObjects }}
+  </pre
+    >
     <!-- <v-card class="px-2"> -->
     <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
@@ -41,7 +45,11 @@
           <v-icon x-small>mdi-close</v-icon>
         </v-btn>
       </div>
-      <div v-for="prop in props" :key="prop.value.id" style="width: 99%">
+      <div
+        v-for="prop in viewerState.selectedObjects"
+        :key="prop.value.id"
+        style="width: 99%"
+      >
         <v-card
           class="transparent elevation-3 rounded-lg mb-3"
           style="pointer-events: auto"
@@ -90,6 +98,7 @@ export default {
       query {
         commitObjectViewerState @client {
           isolateValues
+          selectedObjects
         }
       }
     `)
@@ -120,26 +129,28 @@ export default {
       })
     },
     isolated() {
-      const ids = this.objects.map((o) => o.id)
-      ids.forEach((val) => {
-        if (this.viewerState.isolateValues.indexOf(val) === -1) return false
-      })
-      return true
+      // TODO
+      return false
+      // const ids = this.objects.map((o) => o.id)
+      // ids.forEach((val) => {
+      //   if (this.viewerState.isolateValues.indexOf(val) === -1) return false
+      // })
+      // return true
     }
   },
   methods: {
     isolateSelection() {
-      const ids = this.objects.map((o) => o.id)
-      if (!this.isolated)
-        unisolateObjects({
-          filterKey: '__parents',
-          filterValues: ids
-        })
-      else
-        isolateObjects({
-          filterKey: '__parents',
-          filterValues: ids
-        })
+      // const ids = this.objects.map((o) => o.id)
+      // if (!this.isolated)
+      //   unisolateObjects({
+      //     filterKey: '__parents',
+      //     filterValues: ids
+      //   })
+      // else
+      //   isolateObjects({
+      //     filterKey: '__parents',
+      //     filterValues: ids
+      //   })
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''
