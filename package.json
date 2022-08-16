@@ -12,6 +12,7 @@
     "build": "yarn workspaces foreach -ptv run build",
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+    "helm:readme:generate": "./utils/helm/update-documentation.sh",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "circleci:check": "circleci config validate ./.circleci/config.yml",

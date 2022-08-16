@@ -95,14 +95,6 @@ app.kubernetes.io/part-of: {{ include "speckle.name" . }}
 {{- end }}
 
 {{/*
-Connects to kube api-server to determine if Cilium CRD are present.
-If they are we assume that Cilium is installed.
-*/}}
-{{- define "speckle.networkpolicy.ciliumIsPresent" -}}
-
-{{- end }}
-
-{{/*
 Creates a network policy egress definition for connecting to Redis
 
 Expects the global context "$" to be passed as the parameter
