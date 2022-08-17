@@ -400,7 +400,9 @@ export default class SpeckleRenderer {
     const result: Intersection = this.intersections.intersect(
       this.scene,
       this.viewer.cameraHandler.activeCam.camera,
-      e
+      e,
+      true,
+      this.viewer.sectionBox.getCurrentBox()
     )
 
     if (!result) {
@@ -444,12 +446,14 @@ export default class SpeckleRenderer {
     const result: Intersection = this.intersections.intersect(
       this.scene,
       this.viewer.cameraHandler.activeCam.camera,
-      e
+      e,
+      true,
+      this.viewer.sectionBox.getCurrentBox()
     )
     let rv = null
     if (!result) {
       if (this.viewer.sectionBox.display.visible) {
-        this.zoomToBox(this.viewer.sectionBox.cube, 1.2, true)
+        this.zoomToBox(this.viewer.sectionBox.getCurrentBox(), 1.2, true)
       } else {
         this.zoomExtents()
       }
@@ -635,7 +639,9 @@ export default class SpeckleRenderer {
     const result: Intersection = this.intersections.intersect(
       this.scene,
       this.viewer.cameraHandler.activeCam.camera,
-      e
+      e,
+      true,
+      this.viewer.sectionBox.getCurrentBox()
     )
     if (!result) {
       this.batcher.resetBatchesDrawRanges()
