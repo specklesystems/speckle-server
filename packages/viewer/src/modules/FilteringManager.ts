@@ -2,7 +2,9 @@ import { Color, Texture, MathUtils } from 'three'
 import flatten from '../helpers/flatten'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import { Assets } from './Assets'
-import { NodeRenderView } from './tree/NodeRenderView'
+// import { NodeRenderView } from './tree/NodeRenderView'
+import { Viewer } from './Viewer'
+import SpeckleRenderer from './SpeckleRenderer'
 
 export enum FilterMaterialType {
   SELECT,
@@ -38,19 +40,28 @@ export interface PropertyInfo {
 }
 
 export interface NumericPropertyInfo extends PropertyInfo {
+  type: 'number'
   min: number
   max: number
   valueGroups: [{ value: number; id: string }]
+  passMin: number | null
+  passMax: number | null
 }
 
 export interface StringPropertyInfo extends PropertyInfo {
+  type: 'number'
   valueGroups: [{ value: string; ids: string[] }]
 }
 
-export class FilteringManager {
-  private renderer: any
+export type Test = {
+  colouringState: null | Record<string, unknown>
+  visibilityState: null | Record<string, unknown>
+}
 
-  constructor(viewer: any) {
+export class FilteringManager {
+  private renderer: SpeckleRenderer
+
+  constructor(viewer: Viewer) {
     this.renderer = viewer.speckleRenderer
   }
 
@@ -64,7 +75,7 @@ export class FilteringManager {
   private setFilters() {
     this.renderer.clearFilter()
     this.renderer.beginFilter()
-    const returnFilter = {} as any
+    const returnFilter = {} as Record<string, unknown>
 
     // First: colour things!
     if (this.colorFilterState.enabled) {
@@ -519,7 +530,7 @@ export class FilteringManager {
   }
 
   public setColorFilter(
-    property: any,
+    property: PropertyInfo,
     resourceUrl: string = null,
     ghostNonMatchingObjects = true
   ) {
@@ -529,12 +540,13 @@ export class FilteringManager {
     this.colorFilterState.enabled = true
 
     if (property.type === 'number') {
-      const passMin = property.passMin || property.min
-      const passMax = property.passMax || property.max
-      const matchingIds = property.valueGroups
+      const numProp = property as NumericPropertyInfo
+      const passMin = numProp.passMin || numProp.min
+      const passMax = numProp.passMax || numProp.max
+      const matchingIds = numProp.valueGroups
         .filter((p) => p.value >= passMin && p.value <= passMax)
         .map((v) => v.id)
-      const matchingValues = property.valueGroups
+      const matchingValues = numProp.valueGroups
         .filter((p) => p.value >= passMin && p.value <= passMax)
         .map((v) => v.value)
 
@@ -566,9 +578,10 @@ export class FilteringManager {
     }
     if (property.type === 'string') {
       const valueGroupColors = []
-      for (const valueGroup of property.valueGroups) {
+      const stringProp = property as StringPropertyInfo
+      for (const valueGroup of stringProp.valueGroups) {
         valueGroupColors.push({
-          ...valueGroup, // [value, ids[] ]
+          ...valueGroup,
           color: new Color(MathUtils.randInt(0, 0xffffff)).getHex(),
           rvs: []
         })
@@ -599,7 +612,6 @@ export class FilteringManager {
       this.colorFilterState.colors = valueGroupColors
       this.colorFilterState.rampTexture = rampTexture
       this.colorFilterState.nonMatchingRvs = nonMatchingRvs
-      // return valueGroupColors
     }
     this.colorFilterState.key = property.key
     this.colorFilterState.type = property.type
