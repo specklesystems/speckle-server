@@ -33,8 +33,9 @@ export default class Input extends EventEmitter {
 
       if (delta > 250) return
 
-      const loc = this._getNormalisedClickPosition(e) as any
-      if (e.shiftKey) loc.multiSelect = true
+      const loc = this._getNormalisedClickPosition(e)
+
+      if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
       if (e.ctrlKey) this.emit('object-clicked-debug', loc)
       else this.emit('object-clicked', loc)
     })

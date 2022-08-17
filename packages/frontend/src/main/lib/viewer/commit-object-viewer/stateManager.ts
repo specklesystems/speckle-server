@@ -6,7 +6,7 @@ import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/view
 import { makeVar, TypePolicies } from '@apollo/client/cache'
 import { DefaultViewerParams, Viewer, SelectionEvent } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray, update } from 'lodash'
+import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -218,7 +218,7 @@ export function setPreventCommentCollapse(shouldPrevent: boolean) {
 export function handleViewerSelection(selectionInfo: SelectionEvent) {
   if (!selectionInfo) {
     updateState({ selectedObjects: [] })
-    // TODO: FM.clearSelection()
+    getInitializedViewer().FilteringManager.resetSelection()
     return
   }
 
@@ -226,13 +226,24 @@ export function handleViewerSelection(selectionInfo: SelectionEvent) {
 
   if (selectionInfo.multiple) {
     if (!state.selectedObjects.includes(selectionInfo.userData))
-      state.selectedObjects.push(selectionInfo.userData)
+      state.selectedObjects = [...state.selectedObjects, selectionInfo.userData]
   } else {
     state.selectedObjects = [selectionInfo.userData]
   }
-  // TODO: FM.setSelection()
-  console.log(state.selectedObjects)
-  updateState({ selectedObjects: state.selectedObjects })
+
+  getInitializedViewer().FilteringManager.selectObjects(
+    state.selectedObjects.map((o) => o.id) as string[]
+  )
+  updateState(state)
+}
+
+export function clearSelectionDisplay() {
+  getInitializedViewer().FilteringManager.resetSelection()
+}
+
+export function resetSelection() {
+  updateState({ selectedObjects: [] })
+  getInitializedViewer().FilteringManager.resetSelection()
 }
 
 // FILTERING NEW
@@ -251,6 +262,7 @@ export function isolateObjects2(
   )
   const state = { ...commitObjectViewerState() }
   state.currentFilterState = result
+  console.log(result)
   updateState(state)
 }
 

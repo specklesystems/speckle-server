@@ -5,11 +5,6 @@
       $vuetify.breakpoint.xs ? '90%' : '300px'
     }; height: 100vh; position: absolute; padding-top: 72px`"
   >
-    <pre>
-    {{ viewerState.selectedObjects }}
-  </pre
-    >
-    <!-- <v-card class="px-2"> -->
     <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
         <span class="caption">Selection Info</span>
@@ -45,11 +40,7 @@
           <v-icon x-small>mdi-close</v-icon>
         </v-btn>
       </div>
-      <div
-        v-for="prop in viewerState.selectedObjects"
-        :key="prop.value.id"
-        style="width: 99%"
-      >
+      <div v-for="prop in props" :key="prop.value.id" style="width: 99%">
         <v-card
           class="transparent elevation-3 rounded-lg mb-3"
           style="pointer-events: auto"
@@ -68,7 +59,6 @@
         Hint: hold shift to select multiple objects.
       </div>
     </perfect-scrollbar>
-    <!-- </v-card> -->
   </div>
 </template>
 <script>
@@ -76,18 +66,15 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
-  isolateObjects,
-  unisolateObjects
+  clearSelectionDisplay,
+  isolateObjects2,
+  unIsolateObjects2
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
   },
   props: {
-    objects: {
-      type: Array,
-      default: () => []
-    },
     streamId: {
       type: String,
       default: null
@@ -99,6 +86,7 @@ export default {
         commitObjectViewerState @client {
           isolateValues
           selectedObjects
+          currentFilterState
         }
       }
     `)
@@ -114,6 +102,9 @@ export default {
     }
   },
   computed: {
+    objects() {
+      return this.viewerState.selectedObjects
+    },
     props() {
       return this.objects.map((obj) => {
         let key = obj?.id
@@ -130,27 +121,29 @@ export default {
     },
     isolated() {
       // TODO
-      return false
-      // const ids = this.objects.map((o) => o.id)
-      // ids.forEach((val) => {
-      //   if (this.viewerState.isolateValues.indexOf(val) === -1) return false
-      // })
-      // return true
+      // return false
+      const ids = this.objects.map((o) => o.id)
+      if (!this.viewerState.currentFilterState) return false
+      if (!this.viewerState.currentFilterState.visibilityState) return false
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'isolateObjectsState') return false
+
+      ids.forEach((val) => {
+        if (this.viewerState.currentFilterState.visibilityState.ids.indexOf(val) === -1)
+          return false
+      })
+      return true
     }
   },
   methods: {
     isolateSelection() {
-      // const ids = this.objects.map((o) => o.id)
-      // if (!this.isolated)
-      //   unisolateObjects({
-      //     filterKey: '__parents',
-      //     filterValues: ids
-      //   })
-      // else
-      //   isolateObjects({
-      //     filterKey: '__parents',
-      //     filterValues: ids
-      //   })
+      const ids = this.objects.map((o) => o.id)
+      if (!this.isolated) {
+        clearSelectionDisplay()
+        isolateObjects2(ids, 'ui-sel')
+      } else {
+        unIsolateObjects2(ids, 'ui-sel')
+      }
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''

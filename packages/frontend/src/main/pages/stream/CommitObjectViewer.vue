@@ -127,11 +127,7 @@
         ref="renderParent"
         :style="`height: 100vh; width: 100%; ${topOffsetStyle} left: 0px; position: absolute`"
       >
-        <speckle-viewer
-          :no-scroll="noScroll"
-          @load-progress="captureProgress"
-          @selection="captureSelect"
-        />
+        <speckle-viewer :no-scroll="noScroll" @load-progress="captureProgress" />
       </div>
 
       <div
@@ -145,11 +141,9 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="selectionData.length !== 0 && !hideSelectionInfo"
+          v-show="viewerState.selectedObjects.length !== 0 && !hideSelectionInfo"
           :key="'one'"
-          :objects="selectionData"
           :stream-id="streamId"
-          @clear-selection="selectionData = []"
         />
       </div>
 
@@ -371,6 +365,7 @@ export default defineComponent({
       query {
         commitObjectViewerState @client {
           appliedFilter
+          selectedObjects
         }
       }
     `)
@@ -390,7 +385,6 @@ export default defineComponent({
     loadedModel: false,
     loadProgress: 0,
     showCommitEditDialog: false,
-    selectionData: [] as Record<string, unknown>[],
     views: [] as Record<string, unknown>[],
     objectProperties: null as Nullable<Record<string, unknown>>,
     resources: [] as ResourceObjectType<AllSupportedDataTypes>[],
@@ -741,10 +735,6 @@ export default defineComponent({
     },
     captureProgress(args: { progress: number }) {
       this.loadProgress = args.progress * 100
-    },
-    captureSelect(selectionData: { userData: Record<string, unknown>[] }) {
-      this.selectionData.splice(0, this.selectionData.length)
-      this.selectionData.push(...selectionData.userData)
     }
   }
 })

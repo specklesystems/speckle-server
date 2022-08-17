@@ -18,7 +18,8 @@ import throttle from 'lodash/throttle'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import {
   useCommitObjectViewerParams,
-  handleViewerSelection
+  handleViewerSelection,
+  resetSelection
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
@@ -101,9 +102,13 @@ export default {
       )
 
       this.viewer.on('object-clicked', (selectionInfo) => {
-        console.log('Viewer Event')
-        console.log(selectionInfo)
         handleViewerSelection(selectionInfo)
+      })
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          resetSelection()
+        }
       })
     }
   }

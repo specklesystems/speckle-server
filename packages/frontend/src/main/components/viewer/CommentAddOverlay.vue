@@ -333,7 +333,7 @@ export default {
   },
   mounted() {
     this.viewerSelectHandler = debounce(this.handleSelect, 10)
-    this.viewer.on('select', this.viewerSelectHandler)
+    this.viewer.on('object-clicked', this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
@@ -351,7 +351,7 @@ export default {
     document.addEventListener('keyup', this.docKeyUpHandler)
   },
   beforeDestroy() {
-    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.removeListener('object-clicked', this.viewerSelectHandler)
     this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
@@ -465,7 +465,7 @@ export default {
     },
     handleSelect(info) {
       this.expand = false
-      if (!info.location) {
+      if (!info || !info.location) {
         // TODO: deselect event
         this.visible = false
         this.location = null
