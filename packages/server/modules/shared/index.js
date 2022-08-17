@@ -63,19 +63,15 @@ async function contextApiTokenHelper({ req, connection }) {
     token = token.split(' ')[1]
   }
 
-  if (token === null) return { auth: false }
+  if (!token) return { auth: false }
 
   try {
     const { valid, scopes, userId, role } = await validateToken(token)
-
-    if (!valid) {
-      return { auth: false }
-    }
+    if (!valid) throw new Error('Invalid token')
 
     return { auth: true, userId, role, token, scopes }
   } catch (e) {
-    // TODO: Think whether perhaps it's better to throw the error
-    return { auth: false, err: e }
+    throw new ForbiddenError('Invalid or expired access token')
   }
 }
 
