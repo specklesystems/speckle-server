@@ -45,9 +45,12 @@ export default class Materials {
       renderMaterial = {
         id: node.model.raw.renderMaterial.id,
         color: node.model.raw.renderMaterial.diffuse,
-        opacity: node.model.raw.renderMaterial.opacity
-          ? node.model.raw.renderMaterial.opacity
-          : 1,
+        opacity:
+          node.model.raw.renderMaterial.opacity !== undefined
+            ? node.model.raw.renderMaterial.opacity
+            : 1,
+        roughness: node.model.raw.renderMaterial.roughness,
+        metalness: node.model.raw.renderMaterial.metalness,
         vertexColors: node.model.raw.colors && node.model.raw.colors.length > 0
       }
     }
@@ -381,8 +384,8 @@ export default class Materials {
       {
         color: materialData.color,
         emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
+        roughness: materialData.roughness,
+        metalness: materialData.metalness,
         opacity: materialData.opacity,
         side: DoubleSide // TBD
         // clippingPlanes: this.viewer.sectionBox.planes

@@ -7,6 +7,8 @@ export interface RenderMaterial {
   id: string
   color: number
   opacity: number
+  roughness: number
+  metalness: number
   vertexColors: boolean
 }
 
@@ -151,7 +153,11 @@ export class NodeRenderView {
     return (
       this.renderData.renderMaterial.color.toString() +
       '/' +
-      this.renderData.renderMaterial.opacity.toString()
+      this.renderData.renderMaterial.opacity.toString() +
+      '/' +
+      this.renderData.renderMaterial.roughness.toString() +
+      '/' +
+      this.renderData.renderMaterial.metalness.toString()
     )
   }
 
