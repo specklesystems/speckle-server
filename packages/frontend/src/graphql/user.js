@@ -154,3 +154,15 @@ export const userTimelineQuery = gql`
 
   ${activityMainFieldsFragment}
 `
+
+export const validatePasswordStrengthQuery = gql`
+  query ValidatePasswordStrength($pwd: String!) {
+    userPwdStrength(pwd: $pwd) {
+      score
+      feedback {
+        warning
+        suggestions
+      }
+    }
+  }
+`

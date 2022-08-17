@@ -1,8 +1,9 @@
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import ejs from 'ejs'
-import { ServerInfo } from '@/modules/core/helpers/types'
 import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { ServerInfo } from '@/modules/core/helpers/types'
 
 type MultiTypeEmailBody = {
   text: string
@@ -24,7 +25,10 @@ export type BasicEmailTemplateParams = {
     title: string
     altTitle?: string
   }
-  server: EmailTemplateServerInfo
+  /**
+   * If not set, this data will be automatically resolved from serverInfo
+   */
+  server?: EmailTemplateServerInfo
 }
 
 function getPathToTemplatesDir(): string {
@@ -55,6 +59,11 @@ export function buildBasicTemplateServerInfo(
 export async function buildBasicTemplateEmail(
   params: BasicEmailTemplateParams
 ): Promise<MultiTypeEmailBody> {
+  if (!params.server) {
+    const serverInfo = await getServerInfo()
+    params.server = buildBasicTemplateServerInfo(serverInfo)
+  }
+
   const textPath = buildTemplatePath('basic', 'txt')
   const htmlPath = buildTemplatePath('basic', 'html')
 

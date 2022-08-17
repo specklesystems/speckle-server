@@ -63,6 +63,7 @@
                 v-model="form.email"
                 label="your email"
                 :rules="validation.emailRules"
+                :readonly="loading"
                 filled
                 single-line
                 prepend-icon="mdi-email"
@@ -76,6 +77,7 @@
                 v-model="form.firstName"
                 label="name"
                 :rules="validation.nameRules"
+                :readonly="loading"
                 filled
                 single-line
                 style="margin-top: -12px"
@@ -87,6 +89,7 @@
                 v-model="form.company"
                 label="company/team"
                 :rules="validation.companyRules"
+                :readonly="loading"
                 filled
                 single-line
                 style="margin-top: -12px"
@@ -96,11 +99,12 @@
             <v-col cols="12" sm="6">
               <v-text-field
                 id="new-password"
-                v-model="form.password"
+                v-model="password"
                 label="password"
                 type="password"
                 autocomplete="new-password"
                 :rules="validation.passwordRules"
+                :readonly="loading"
                 filled
                 single-line
                 style="margin-top: -12px"
@@ -110,11 +114,12 @@
             <v-col cols="12" sm="6">
               <v-text-field
                 id="confirm-password"
-                v-model="form.passwordConf"
+                v-model="passwordConfirmation"
                 label="confirm password"
                 type="password"
                 autocomplete="new-password"
                 :rules="validation.passwordRules"
+                :readonly="loading"
                 filled
                 single-line
                 style="margin-top: -12px"
@@ -122,7 +127,7 @@
             </v-col>
             <v-col cols="12" class="py-2 pl-9" style="margin-top: -18px">
               <v-row
-                v-show="passwordStrength !== 1 && form.password"
+                v-show="passwordStrength !== 1 && password"
                 no-gutters
                 align="center"
               >
@@ -136,9 +141,9 @@
                     height="5"
                     class="mt-1 mb-0"
                     :color="`${
-                      passwordStrength >= 75 && form.password === form.passwordConf
+                      passwordStrength >= 75 && password === passwordConfirmation
                         ? 'green'
-                        : passwordStrength >= 50 && form.password === form.passwordConf
+                        : passwordStrength >= 50 && password === passwordConfirmation
                         ? 'orange'
                         : 'red'
                     }`"
@@ -146,15 +151,15 @@
                 </v-col>
                 <v-col cols="12" class="caption text-center mt-3">
                   {{
-                    pwdSuggestions
-                      ? pwdSuggestions
-                      : form.password && form.password === form.passwordConf
+                    passwordSuggestion
+                      ? passwordSuggestion
+                      : password && password === passwordConfirmation
                       ? 'Looks good.'
                       : null
                   }}
-                  <span v-if="form.password !== form.passwordConf">
+                  <div v-if="password !== passwordConfirmation">
                     <b>Passwords do not match.</b>
-                  </span>
+                  </div>
                 </v-col>
               </v-row>
             </v-col>
@@ -195,6 +200,7 @@ import {
   processSuccessfulAuth
 } from '@/main/lib/auth/services/authService'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { useValidatablePasswordEntry } from '@/main/lib/auth/composables/useValidatablePasswordEntry'
 
 export default {
   name: 'TheRegistration',
@@ -225,6 +231,12 @@ export default {
       `
     }
   },
+  setup() {
+    const validatablePasswordEntry = useValidatablePasswordEntry()
+    return {
+      ...validatablePasswordEntry
+    }
+  },
   data() {
     return {
       serverInfo: { authStrategies: [] },
@@ -232,9 +244,7 @@ export default {
         email: null,
         firstName: null,
         lastName: null,
-        company: null,
-        password: null,
-        passwordConf: null
+        company: null
       },
       registrationError: false,
       errorMessage: '',
@@ -250,8 +260,6 @@ export default {
           (v) => isEmailValid(v) || 'E-mail must be valid'
         ]
       },
-      passwordStrength: 1,
-      pwdSuggestions: null,
       appId: null,
       challenge: null,
       loading: false
@@ -296,37 +304,22 @@ export default {
     }
   },
   methods: {
-    async validatePasswordStrength() {
-      const result = await this.$apollo.query({
-        query: gql`
-          query ($pwd: String!) {
-            userPwdStrength(pwd: $pwd)
-          }
-        `,
-        variables: { pwd: this.form.password }
-      })
-      this.passwordStrength = result.data.userPwdStrength.score * 25
-      this.pwdSuggestions = result.data.userPwdStrength.feedback.suggestions[0]
-    },
     async registerUser() {
       if (this.loading) return
 
       try {
         const valid = this.$refs.form.validate()
         if (!valid) return
-        if (this.form.password !== this.form.passwordConf)
-          throw new Error('Passwords do not match')
+        this.validatePassword()
 
         this.loading = true
 
-        // Validate password strength
         await this.validatePasswordStrength()
-        if (this.passwordStrength < 3) throw new Error('Password too weak')
 
         const user = {
           email: this.form.email,
           company: this.form.company,
-          password: this.form.password,
+          password: this.password,
           name: `${this.form.firstName}`
         }
 
