@@ -7,7 +7,7 @@
   >
     <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
-        <span class="caption">Selection Info {{ isolated }}</span>
+        <span class="caption">Selection Info</span>
         <v-spacer />
         <v-btn
           v-show="objects.length > 1"
