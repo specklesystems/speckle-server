@@ -672,6 +672,7 @@ export class FilteringManager {
   public handleLegacyFilter(filter) {
     // TODO
     console.warn('Not yet implemented.')
+    console.log(filter)
   }
 
   /**

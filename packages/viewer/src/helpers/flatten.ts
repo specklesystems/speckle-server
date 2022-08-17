@@ -5,7 +5,7 @@
  * @returns an object with all its props flattened into `prop.subprop.subsubprop`.
  */
 const flattenObject = function (obj) {
-  const flatten = {} as any
+  const flatten = {} as Record<string, unknown>
   for (const k in obj) {
     if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k))
       continue

@@ -128,15 +128,11 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
-  hideObjects,
   hideObjects2,
   hideTree,
   showTree,
-  showObjects,
   showObjects2,
-  isolateObjects,
   isolateObjects2,
-  unisolateObjects,
   unIsolateObjects2,
   getInitializedViewer
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
@@ -265,23 +261,17 @@ export default {
     },
     toggleFilter() {
       if (this.prop.type === 'object') {
-        // TODO: isolateTree?
         if (this.isolated) {
-          // TODO
           unIsolateObjects2([this.prop.value.referencedId], 'ui-iso')
         } else {
-          // TODO
           isolateObjects2([this.prop.value.referencedId], 'ui-iso')
         }
       }
       if (this.prop.type === 'array') {
         const targetIds = this.prop.value.map((o) => o.referencedId)
-        // TODO: isolateObjects?
         if (this.isolated) {
-          // TODO
           unIsolateObjects2(targetIds, 'ui-iso')
         } else {
-          // TODO
           isolateObjects2(targetIds, 'ui-iso')
         }
       }
