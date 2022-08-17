@@ -29,6 +29,7 @@ workflows:
           filters: &filters-build
             tags:
               only: /.*/
+              ignore: /pull\/[0-9]+/
           requires:
             - test-server
             - get-version
