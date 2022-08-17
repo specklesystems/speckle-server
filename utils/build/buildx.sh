@@ -16,6 +16,10 @@ set -eo pipefail
 if [ -z "${1}" ]; then echo "The Dockerfile must be supplied"; exit 1; fi
 DOCKERFILE="${1}"
 
+if [ -z "${IMAGE}" ]; then echo "The image (IMAGE) with value in format name:tag must be supplied"; exit 1; fi
+if [ -z "${BUILD_CONTEXT}" ]; then echo "The path to the build context (BUILD_CONTEXT) must be supplied"; exit 1; fi
+PLATFORMS="${PLATFORMS:-linux/amd64}"
+
 # `buildx` uses named _builder_ instances configured for specific platforms.
 # This script creates a `skaffold-builder` as required.
 if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
@@ -30,20 +34,21 @@ else
   args="--load"
 fi
 
-echo "IMAGE: ${IMAGE}"
-echo "DOCKERFILE: ${DOCKERFILE}"
-echo "BUILD_CONTEXT: ${BUILD_CONTEXT}"
+echo "🧱 Building image with the following details:"
+echo "      IMAGE:         ${IMAGE}"
+echo "      DOCKERFILE:    ${DOCKERFILE}"
+echo "      BUILD_CONTEXT: ${BUILD_CONTEXT}"
 
-CACHE_DIR="/tmp/speckle_skaffold_buildx_cache"
+CACHE_DIR="/tmp/speckle_buildx_cache"
 mkdir -p "${CACHE_DIR}"
 
 # shellcheck disable=SC2086
 docker buildx build \
     --builder    skaffold-builder \
-    --cache-from type=local,src=${CACHE_DIR} \
-    --cache-to   type=local,dest=${CACHE_DIR},mode=max \
+    --cache-from "type=local,src=${CACHE_DIR}" \
+    --cache-to   "type=local,dest=${CACHE_DIR},mode=max" \
     --platform   "${PLATFORMS}" \
     --file       "${DOCKERFILE}" \
     --tag        "${IMAGE}" \
-    $args \
+    ${args} \
     ${BUILD_CONTEXT}

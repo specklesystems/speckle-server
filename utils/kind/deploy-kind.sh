@@ -4,14 +4,16 @@ set -eox pipefail
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 CLUSTER_NAME="speckle"
 CLUSTER_CONTEXT="kind-${CLUSTER_NAME}"
-SPECKLE_NAMESPACE="speckle"
+SPECKLE_NAMESPACE="${SPECKLE_NAMESPACE:-speckle}"
 
-if kind get clusters | grep -q speckle; then
+if kind get clusters | grep -q "${CLUSTER_NAME}"; then
     kubectl config set-context "${CLUSTER_CONTEXT}"
 else
     echo "Deploying kind ✨"
     kind create cluster --name="${CLUSTER_NAME}" --config="${SCRIPT_DIR}/kind-config.yml"
 fi
+
+(kubectl config current-context | grep -q ${CLUSTER_CONTEXT}) || (echo "ERROR: Kind is not the current kubectl context. Temporarily modify the makefile if you really want to use the current configured kubectl context" && exit 1)
 
 echo "Adding helm repos ☸️"
 helm repo add cilium https://helm.cilium.io/
@@ -99,7 +101,7 @@ helm upgrade pgadmin runix/pgadmin4 \
     --create-namespace \
     --install
 
-cat <<'EOF' | kubectl create --namespace ${SPECKLE_NAMESPACE} --filename -
+cat <<'EOF' | kubectl create --namespace "${SPECKLE_NAMESPACE}" --filename -
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
@@ -124,3 +126,5 @@ value: -100
 globalDefault: false
 description: "Low priority (-100) - Non-critical microservices"
 EOF
+
+echo "✅ kind for speckle has deployed successfully 🎉"
