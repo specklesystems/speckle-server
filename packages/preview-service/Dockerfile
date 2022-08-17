@@ -1,6 +1,6 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 # build stage
-FROM node:16.15-buster-slim as build-stage
+FROM node:16.15-bullseye-slim as build-stage
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -34,6 +34,11 @@ RUN yarn workspaces foreach -pt run build
 
 FROM node:16.15-bullseye-slim as node
 
+# required for ensuring cross-compatibility
+# https://github.com/puppeteer/puppeteer/issues/7740
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
@@ -65,6 +70,8 @@ RUN apt-get update && \
   libxrandr2=2:1.5.1-1 \
   wget=1.21-1+deb11u1 \
   xdg-utils=1.1.3-4.1 \
+  chromium-common=103.0.5060.53-1~deb11u1 \
+  chromium=103.0.5060.53-1~deb11u1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
