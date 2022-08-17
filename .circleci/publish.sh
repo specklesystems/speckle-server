@@ -9,6 +9,7 @@ if [[ "${SHOULD_PUBLISH}" != "true" ]]; then
 fi
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# shellcheck disable=SC1091
 source "${SCRIPT_DIR}/common.sh"
 
 echo "Publishing: ${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}"
