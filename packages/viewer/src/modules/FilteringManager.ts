@@ -167,6 +167,7 @@ export class FilteringManager {
       }
       return true
     })
+
     return this.setFilters()
   }
 

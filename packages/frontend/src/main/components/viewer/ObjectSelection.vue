@@ -7,7 +7,7 @@
   >
     <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
-        <span class="caption">Selection Info</span>
+        <span class="caption">Selection Info {{ isolated }}</span>
         <v-spacer />
         <v-btn
           v-show="objects.length > 1"
@@ -66,18 +66,15 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
-  isolateObjects,
-  unisolateObjects
+  clearSelectionDisplay,
+  isolateObjects2,
+  unIsolateObjects2
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
   },
   props: {
-    // objects: {
-    //   type: Array,
-    //   default: () => []
-    // },
     streamId: {
       type: String,
       default: null
@@ -89,6 +86,7 @@ export default {
         commitObjectViewerState @client {
           isolateValues
           selectedObjects
+          currentFilterState
         }
       }
     `)
@@ -123,27 +121,29 @@ export default {
     },
     isolated() {
       // TODO
-      return false
-      // const ids = this.objects.map((o) => o.id)
-      // ids.forEach((val) => {
-      //   if (this.viewerState.isolateValues.indexOf(val) === -1) return false
-      // })
-      // return true
+      // return false
+      const ids = this.objects.map((o) => o.id)
+      if (!this.viewerState.currentFilterState) return false
+      if (!this.viewerState.currentFilterState.visibilityState) return false
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'isolateObjectsState') return false
+
+      ids.forEach((val) => {
+        if (this.viewerState.currentFilterState.visibilityState.ids.indexOf(val) === -1)
+          return false
+      })
+      return true
     }
   },
   methods: {
     isolateSelection() {
-      // const ids = this.objects.map((o) => o.id)
-      // if (!this.isolated)
-      //   unisolateObjects({
-      //     filterKey: '__parents',
-      //     filterValues: ids
-      //   })
-      // else
-      //   isolateObjects({
-      //     filterKey: '__parents',
-      //     filterValues: ids
-      //   })
+      const ids = this.objects.map((o) => o.id)
+      if (!this.isolated) {
+        clearSelectionDisplay()
+        isolateObjects2(ids, 'ui-sel')
+      } else {
+        unIsolateObjects2(ids, 'ui-sel')
+      }
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''

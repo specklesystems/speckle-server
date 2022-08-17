@@ -141,11 +141,9 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="!hideSelectionInfo"
+          v-show="viewerState.selectedObjects.length !== 0 && !hideSelectionInfo"
           :key="'one'"
-          :objects="selectionData"
           :stream-id="streamId"
-          @clear-selection="selectionData = []"
         />
       </div>
 
@@ -367,6 +365,7 @@ export default defineComponent({
       query {
         commitObjectViewerState @client {
           appliedFilter
+          selectedObjects
         }
       }
     `)
@@ -386,7 +385,6 @@ export default defineComponent({
     loadedModel: false,
     loadProgress: 0,
     showCommitEditDialog: false,
-    selectionData: [] as Record<string, unknown>[],
     views: [] as Record<string, unknown>[],
     objectProperties: null as Nullable<Record<string, unknown>>,
     resources: [] as ResourceObjectType<AllSupportedDataTypes>[],

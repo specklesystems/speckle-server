@@ -222,8 +222,6 @@ export function handleViewerSelection(selectionInfo: SelectionEvent) {
     return
   }
 
-  console.log(selectionInfo.multiple)
-
   const state = { ...commitObjectViewerState() }
 
   if (selectionInfo.multiple) {
@@ -232,13 +230,15 @@ export function handleViewerSelection(selectionInfo: SelectionEvent) {
   } else {
     state.selectedObjects = [selectionInfo.userData]
   }
-  // TODO: FM.setSelection()
+
   getInitializedViewer().FilteringManager.selectObjects(
     state.selectedObjects.map((o) => o.id) as string[]
   )
-  console.log('state', state.selectedObjects)
   updateState(state)
-  // updateState({ selectedObjects: state.selectedObjects })
+}
+
+export function clearSelectionDisplay() {
+  getInitializedViewer().FilteringManager.resetSelection()
 }
 
 // FILTERING NEW
@@ -257,6 +257,7 @@ export function isolateObjects2(
   )
   const state = { ...commitObjectViewerState() }
   state.currentFilterState = result
+  console.log(result)
   updateState(state)
 }
 
