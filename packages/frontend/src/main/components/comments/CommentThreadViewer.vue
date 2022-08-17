@@ -694,6 +694,13 @@ export default {
     window.addEventListener('beforeunload', async () => {
       await this.sendTypingUpdate(false)
     })
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.$emit('close', this.comment)
+      }
+    })
+
     setInterval(() => {
       const now = Date.now()
       for (let i = this.whoIsTyping.length - 1; i >= 0; i--) {

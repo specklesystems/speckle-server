@@ -241,6 +241,11 @@ export function clearSelectionDisplay() {
   getInitializedViewer().FilteringManager.resetSelection()
 }
 
+export function resetSelection() {
+  updateState({ selectedObjects: [] })
+  getInitializedViewer().FilteringManager.resetSelection()
+}
+
 // FILTERING NEW
 
 export function isolateObjects2(
