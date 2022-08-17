@@ -201,46 +201,38 @@ export default {
       }
     },
     visible() {
+      if (!this.viewerState.currentFilterState) return true
+      if (!this.viewerState.currentFilterState.visibilityState) return true
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'hiddenObjectState') return true
       if (this.prop.type === 'object') {
-        if (!this.viewerState.currentFilterState) return true
-        if (!this.viewerState.currentFilterState.visibilityState) return true
-        const stateName = this.viewerState.currentFilterState.visibilityState.name
-        if (stateName !== 'hiddenObjectState') return true
-
-        return this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+        return !this.viewerState.currentFilterState?.visibilityState?.ids.includes(
           this.prop.value.referencedId
-        ) && stateName === 'hiddenObjectState'
-          ? false
-          : true
+        )
       }
       if (this.prop.type === 'array') {
-        if (!this.viewerState.currentFilterState) return true
-        if (!this.viewerState.currentFilterState.visibilityState) return true
-        const stateName = this.viewerState.currentFilterState.visibilityState.name
-        if (stateName !== 'hiddenObjectState') return true
-
         const ids = this.prop.value.map((o) => o.referencedId)
         const targetIds =
           this.viewerState.currentFilterState?.visibilityState?.ids.filter(
             (val) => ids.indexOf(val) !== -1
           )
-        if (targetIds.length === 0 && stateName === 'hiddenObjectState') return true
+        if (targetIds.length === 0) return true
         else return false // TODO: return "partial" or "full", depending on state
       }
       return true
     },
     isolated() {
+      if (!this.viewerState.currentFilterState) return false
+      if (!this.viewerState.currentFilterState.visibilityState) return false
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'isolateObjectsState') return false
+
       if (this.prop.type === 'object') {
-        return (
-          this.viewerState.isolateValues.indexOf(this.prop.value.referencedId) !== -1
+        return this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+          this.prop.value.referencedId
         )
       }
       if (this.prop.type === 'array') {
-        if (!this.viewerState.currentFilterState) return false
-        if (!this.viewerState.currentFilterState.visibilityState) return false
-        const stateName = this.viewerState.currentFilterState.visibilityState.name
-        if (stateName !== 'isolateObjectsState') return false
-
         const ids = this.prop.value.map((o) => o.referencedId)
         const targetIds =
           this.viewerState.currentFilterState?.visibilityState?.ids.filter(
@@ -276,8 +268,10 @@ export default {
         // TODO: isolateTree?
         if (this.isolated) {
           // TODO
+          unIsolateObjects2([this.prop.value.referencedId], 'ui-iso')
         } else {
           // TODO
+          isolateObjects2([this.prop.value.referencedId], 'ui-iso')
         }
       }
       if (this.prop.type === 'array') {
