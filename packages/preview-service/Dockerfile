@@ -1,6 +1,4 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-
-
 # build stage
 FROM node:16.15-buster-slim as build-stage
 
@@ -8,11 +6,18 @@ ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
+
+# install wait
+ARG WAIT_VERSION=2.8.0
+ENV WAIT_VERSION=${WAIT_VERSION}
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
+RUN chmod +x ./wait
+
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-# Onyl copy in the relevant package.json files for the dependencies
+# Only copy in the relevant package.json files for the dependencies
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
@@ -69,8 +74,7 @@ RUN apt-get update && \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
+COPY --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -92,5 +96,4 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 WORKDIR /speckle-server/packages/preview-service
 RUN yarn workspaces focus --production
 
-ENTRYPOINT [ "tini", "--" ]
-CMD ["yarn", "node", "bin/www"]
+ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
