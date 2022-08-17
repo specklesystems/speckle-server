@@ -163,6 +163,7 @@ export default class MeshBatch implements Batch {
   }
 
   public autoFillDrawRanges() {
+    // this.autoFillDrawRangesBasic()
     this.autoFillDrawRangesShuffleIBO()
   }
 
@@ -194,17 +195,27 @@ export default class MeshBatch implements Batch {
         b.materialIndex
       ]
       const visibleOrder = +materialB.visible - +materialA.visible
-      const transparentOrder = +materialA.transparent - +materialB.transparent
+      const transparentOrder = +materialB.transparent - +materialA.transparent
       if (visibleOrder !== 0) return visibleOrder
       return transparentOrder
     })
+    const materialOrder = []
+    groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
 
-    const grouped = Object.values(
-      groups.reduce((acc, item) => {
-        acc[item.materialIndex] = [...(acc[item.materialIndex] || []), item]
-        return acc
-      }, {})
-    )
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
+      )
+    }
+
     const sourceIBO: BufferAttribute = this.getCurrentIndexBuffer()
     const targetIBO: BufferAttribute = this.getNextIndexBuffer()
     const newGroups = []
@@ -332,7 +343,6 @@ export default class MeshBatch implements Batch {
     }
   }
   */
-
   private createRenderViewMapping(): { [index: number]: NodeRenderView } {
     const mapping: { [index: number]: NodeRenderView } = {}
     for (let k = 0; k < this.renderViews.length; k++) {
