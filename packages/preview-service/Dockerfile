@@ -7,13 +7,6 @@ FROM node:16.15-buster-slim as build-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-# required for building on Mac with Apple Silicon (M1, M2 etc..)
-# https://github.com/puppeteer/puppeteer/issues/7740
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-RUN apt-get update && apt-get install -y \
-  chromium && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
@@ -33,8 +26,6 @@ COPY packages/preview-service ./packages/preview-service/
 
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach -pt run build
-
-
 
 FROM node:16.15-bullseye-slim as node
 

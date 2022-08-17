@@ -57,6 +57,7 @@ helm upgrade postgres bitnami/postgresql \
     --install
 
 # postgres-postgresql.speckle.svc.cluster.local
+# shellcheck disable=SC2034
 POSTGRES_PASSWORD=$(kubectl get secret --namespace speckle postgres-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
 
 echo "Deploying Cache (Redis) 💾"
@@ -66,12 +67,13 @@ helm upgrade redis bitnami/redis \
     --install
 
 # redis-redis-master.speckle.svc.cluster.local # read and write
+# shellcheck disable=SC2034
 REDIS_PASSWORD=$(kubectl get secret --namespace speckle redis -o jsonpath="{.data.redis-password}" | base64 -d)
 
 echo "Deploying Blob Storage (minio) 🧱"
 
 set +e
-MINIO_ROOT_PASSWORD="$(kubectl get secret --namespace speckle minio -o jsonpath='{.data.root-password}' | base64 -d)"
+MINIO_ROOT_PASSWORD="$(kubectl get secret --namespace minio minio -o jsonpath='{.data.root-password}' | base64 -d)"
 set -e
 if [[ -z "${MINIO_ROOT_PASSWORD}" ]]; then
     helm upgrade minio bitnami/minio \
@@ -87,8 +89,9 @@ else
 fi
 
 # minio.speckle.svc.cluster.local
-MINIO_ROOT_USER=$(kubectl get secret --namespace speckle minio -o jsonpath="{.data.root-user}" | base64 -d)
-MINIO_ROOT_PASSWORD=$(kubectl get secret --namespace speckle minio -o jsonpath="{.data.root-password}" | base64 -d)
+# shellcheck disable=SC2034
+MINIO_ROOT_USER=$(kubectl get secret --namespace minio minio -o jsonpath="{.data.root-user}" | base64 -d)
+MINIO_ROOT_PASSWORD=$(kubectl get secret --namespace minio minio -o jsonpath="{.data.root-password}" | base64 -d)
 
 echo "Deploying PGAdmin4 🔬"
 helm upgrade pgadmin runix/pgadmin4 \

@@ -14,23 +14,23 @@
 
 1. To deploy a kind cluster and all dependencies, from the repository root directory run:
    ```shell
-   yarn kind
+   yarn dev:kind:up
    ```
 1. To deploy Speckle server, run:
    ```shell
-   yarn kind:skaffold
+   yarn dev:kind:skaffold
    ```
 
 ### Delete the cluster
 
 1. From the root directory run:
    ```shell
-   yarn kind:delete
+   yarn dev:kind:down
    ```
 
 ## Description
 
-This utility creates a kubernetes cluster locally with 3 nodes and deploys Cilium CNI. This is intended to replicate DigitalOcean kubernetes setup as closely as possible.
+This utility creates a kubernetes cluster locally with 4 nodes and deploys Cilium CNI. This is intended to replicate DigitalOcean kubernetes setup as closely as possible.
 
 ## Viewing network activity
 

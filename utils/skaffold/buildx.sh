@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -eo pipefail
 
 # Source: https://github.com/GoogleContainerTools/skaffold/blob/main/examples/custom-buildx/buildx.sh
@@ -19,7 +19,7 @@ DOCKERFILE="${1}"
 # `buildx` uses named _builder_ instances configured for specific platforms.
 # This script creates a `skaffold-builder` as required.
 if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
-  docker buildx create --name skaffold-builder --platform ${PLATFORMS}
+  docker buildx create --name skaffold-builder --platform "${PLATFORMS}"
 fi
 
 # Building for multiple platforms requires pushing to a registry
@@ -37,11 +37,12 @@ echo "BUILD_CONTEXT: ${BUILD_CONTEXT}"
 CACHE_DIR="/tmp/speckle_skaffold_buildx_cache"
 mkdir -p "${CACHE_DIR}"
 
+# shellcheck disable=SC2086
 docker buildx build \
     --builder    skaffold-builder \
     --cache-from type=local,src=${CACHE_DIR} \
     --cache-to   type=local,dest=${CACHE_DIR},mode=max \
-    --platform   ${PLATFORMS} \
+    --platform   "${PLATFORMS}" \
     --file       "${DOCKERFILE}" \
     --tag        "${IMAGE}" \
     $args \
