@@ -154,9 +154,19 @@ export class FilteringManager {
     }
   }
 
-  public selectRv(rv: NodeRenderView, append = true) {
-    if (append) this.selectionObjectsState.rvs.push(rv)
-    else this.selectionObjectsState.rvs = [rv]
+  public selectObjects(objectIds: string[], resourceUrl: string = null) {
+    const ids = this.getAllDescendantIds(objectIds)
+    this.selectionObjectsState.rvs = []
+
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model.atomic) return true
+      if (ids.indexOf(node.model.raw.id) !== -1) {
+        this.selectionObjectsState.rvs.push(
+          ...WorldTree.getRenderTree(resourceUrl).getRenderViewsForNode(node, node)
+        )
+      }
+      return true
+    })
     return this.setFilters()
   }
 

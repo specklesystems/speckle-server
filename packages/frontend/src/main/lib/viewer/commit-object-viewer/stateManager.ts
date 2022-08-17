@@ -218,21 +218,27 @@ export function setPreventCommentCollapse(shouldPrevent: boolean) {
 export function handleViewerSelection(selectionInfo: SelectionEvent) {
   if (!selectionInfo) {
     updateState({ selectedObjects: [] })
-    // TODO: FM.clearSelection()
+    getInitializedViewer().FilteringManager.resetSelection()
     return
   }
+
+  console.log(selectionInfo.multiple)
 
   const state = { ...commitObjectViewerState() }
 
   if (selectionInfo.multiple) {
     if (!state.selectedObjects.includes(selectionInfo.userData))
-      state.selectedObjects.push(selectionInfo.userData)
+      state.selectedObjects = [...state.selectedObjects, selectionInfo.userData]
   } else {
     state.selectedObjects = [selectionInfo.userData]
   }
   // TODO: FM.setSelection()
-  console.log(state.selectedObjects)
-  updateState({ selectedObjects: state.selectedObjects })
+  getInitializedViewer().FilteringManager.selectObjects(
+    state.selectedObjects.map((o) => o.id) as string[]
+  )
+  console.log('state', state.selectedObjects)
+  updateState(state)
+  // updateState({ selectedObjects: state.selectedObjects })
 }
 
 // FILTERING NEW

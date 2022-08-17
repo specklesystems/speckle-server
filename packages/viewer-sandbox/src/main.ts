@@ -36,6 +36,10 @@ viewer.on('load-complete', () => {
   sandbox.refresh()
 })
 
+viewer.on('object-click', (selectionInfo) => {
+  // TODO
+})
+
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 sandbox.makeFilteringUI()

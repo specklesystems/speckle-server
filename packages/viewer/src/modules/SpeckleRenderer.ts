@@ -316,9 +316,6 @@ export default class SpeckleRenderer {
     }
   }
 
-  // NOTE: Alex, sorry for the stateful BS
-  private selectionRawData: Record<string, unknown>[] = []
-
   private onObjectClick(e) {
     const result: Intersection = this.intersections.intersect(
       this.scene,
@@ -327,7 +324,6 @@ export default class SpeckleRenderer {
     )
 
     if (!result) {
-      this.selectionRawData = []
       this.viewer.emit('object-clicked', null)
       return
     }
@@ -350,13 +346,9 @@ export default class SpeckleRenderer {
     const hitNode = WorldTree.getInstance().findId(hitId)
 
     let parentNode = hitNode
-    while (!parentNode.model.atomic) {
+    while (!parentNode.model.atomic && parentNode.parent) {
       parentNode = parentNode.parent
     }
-
-    if (multiSelect && !this.selectionRawData.includes(parentNode.model.raw))
-      this.selectionRawData.push(parentNode.model.raw)
-    else this.selectionRawData = [parentNode.model.raw]
 
     const selectionInfo = {
       userData: parentNode.model.raw,

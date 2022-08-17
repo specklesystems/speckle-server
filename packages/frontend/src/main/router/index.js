@@ -338,8 +338,9 @@ function shouldForceToLogin(isLoggedIn, to) {
 
   const allowedForUnauthedNames = [
     'stream',
-    'commit',
     'branch',
+    'commit',
+    'objects',
     'Embedded Viewer',
     'Login',
     'Register',

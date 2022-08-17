@@ -5,11 +5,6 @@
       $vuetify.breakpoint.xs ? '90%' : '300px'
     }; height: 100vh; position: absolute; padding-top: 72px`"
   >
-    <pre>
-    {{ viewerState.selectedObjects }}
-  </pre
-    >
-    <!-- <v-card class="px-2"> -->
     <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
         <span class="caption">Selection Info</span>
@@ -45,11 +40,7 @@
           <v-icon x-small>mdi-close</v-icon>
         </v-btn>
       </div>
-      <div
-        v-for="prop in viewerState.selectedObjects"
-        :key="prop.value.id"
-        style="width: 99%"
-      >
+      <div v-for="prop in props" :key="prop.value.id" style="width: 99%">
         <v-card
           class="transparent elevation-3 rounded-lg mb-3"
           style="pointer-events: auto"
@@ -68,7 +59,6 @@
         Hint: hold shift to select multiple objects.
       </div>
     </perfect-scrollbar>
-    <!-- </v-card> -->
   </div>
 </template>
 <script>
@@ -84,10 +74,10 @@ export default {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
   },
   props: {
-    objects: {
-      type: Array,
-      default: () => []
-    },
+    // objects: {
+    //   type: Array,
+    //   default: () => []
+    // },
     streamId: {
       type: String,
       default: null
@@ -114,6 +104,9 @@ export default {
     }
   },
   computed: {
+    objects() {
+      return this.viewerState.selectedObjects
+    },
     props() {
       return this.objects.map((obj) => {
         let key = obj?.id

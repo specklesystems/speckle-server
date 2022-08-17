@@ -101,8 +101,6 @@ export default {
       )
 
       this.viewer.on('object-clicked', (selectionInfo) => {
-        console.log('Viewer Event')
-        console.log(selectionInfo)
         handleViewerSelection(selectionInfo)
       })
     }

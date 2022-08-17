@@ -127,11 +127,7 @@
         ref="renderParent"
         :style="`height: 100vh; width: 100%; ${topOffsetStyle} left: 0px; position: absolute`"
       >
-        <speckle-viewer
-          :no-scroll="noScroll"
-          @load-progress="captureProgress"
-          @selection="captureSelect"
-        />
+        <speckle-viewer :no-scroll="noScroll" @load-progress="captureProgress" />
       </div>
 
       <div
@@ -145,7 +141,7 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="selectionData.length !== 0 && !hideSelectionInfo"
+          v-show="!hideSelectionInfo"
           :key="'one'"
           :objects="selectionData"
           :stream-id="streamId"
@@ -741,10 +737,6 @@ export default defineComponent({
     },
     captureProgress(args: { progress: number }) {
       this.loadProgress = args.progress * 100
-    },
-    captureSelect(selectionData: { userData: Record<string, unknown>[] }) {
-      this.selectionData.splice(0, this.selectionData.length)
-      this.selectionData.push(...selectionData.userData)
     }
   }
 })
