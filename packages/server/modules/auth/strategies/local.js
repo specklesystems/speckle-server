@@ -2,7 +2,6 @@
 const debug = require('debug')
 const {
   createUser,
-  updateUser,
   validatePasssword,
   getUserByEmail
 } = require('@/modules/core/services/users')
@@ -38,11 +37,6 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         const user = await getUserByEmail({ email: req.body.email })
         if (!user) throw new Error('Invalid credentials')
-
-        if (req.body.suuid && user.suuid !== req.body.suuid) {
-          await updateUser(user.id, { suuid: req.body.suuid })
-        }
-
         req.user = { id: user.id }
 
         next()

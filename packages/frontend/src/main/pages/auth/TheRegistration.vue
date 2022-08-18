@@ -28,7 +28,6 @@
         :strategies="strategies"
         :app-id="appId"
         :challenge="challenge"
-        :suuid="suuid"
       />
       <v-card-title class="justify-center pb-5 pt-0 body-1 text--secondary">
         <v-divider class="mx-4"></v-divider>
@@ -255,7 +254,6 @@ export default {
       pwdSuggestions: null,
       appId: null,
       challenge: null,
-      suuid: null,
       loading: false
     }
   },
@@ -269,7 +267,6 @@ export default {
         query: {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
-          suuid: this.$route.query.suuid,
           token: this.token
         }
       }
@@ -285,8 +282,6 @@ export default {
     const urlParams = new URLSearchParams(window.location.search)
     const appId = urlParams.get('appId')
     const challenge = urlParams.get('challenge')
-    const suuid = urlParams.get('suuid')
-    this.suuid = suuid
 
     this.$mixpanel.track('Visit Sign Up')
 
@@ -334,8 +329,6 @@ export default {
           password: this.form.password,
           name: `${this.form.firstName}`
         }
-
-        if (this.suuid) user.suuid = this.suuid
 
         const res = await fetch(
           `/auth/local/register?challenge=${this.challenge}${

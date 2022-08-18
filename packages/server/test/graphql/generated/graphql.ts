@@ -1071,7 +1071,6 @@ export type User = {
   role?: Maybe<Scalars['String']>;
   /** All the streams that a user has access to. */
   streams?: Maybe<StreamCollection>;
-  suuid?: Maybe<Scalars['String']>;
   timeline?: Maybe<ActivityCollection>;
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int'];
