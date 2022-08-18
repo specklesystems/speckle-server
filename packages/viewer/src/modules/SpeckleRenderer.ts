@@ -42,7 +42,7 @@ import {
 } from '../IViewer'
 
 export default class SpeckleRenderer {
-  private readonly SHOW_HELPERS = false
+  private readonly SHOW_HELPERS = true
   private _renderer: WebGLRenderer
   public scene: Scene
   private rootGroup: Group
@@ -181,11 +181,12 @@ export default class SpeckleRenderer {
         rteModelView.multiply(meshBatch.matrixWorld)
         const depthMaterial: SpeckleDepthMaterial =
           meshBatch.customDepthMaterial as SpeckleDepthMaterial
-
-        depthMaterial.userData.uViewer_low.value.copy(viewerLow)
-        depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
-        depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
-        depthMaterial.needsUpdate = true
+        if (depthMaterial) {
+          depthMaterial.userData.uViewer_low.value.copy(viewerLow)
+          depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
+          depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
+          depthMaterial.needsUpdate = true
+        }
 
         const shadowMatrix = new Matrix4()
         shadowMatrix.set(
@@ -209,7 +210,6 @@ export default class SpeckleRenderer {
 
         shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
         shadowMatrix.multiply(rteView)
-        shadowMatrix.multiply(meshBatch.matrixWorld)
         let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] =
           meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
         material = Array.isArray(material) ? material : [material]
@@ -420,6 +420,7 @@ export default class SpeckleRenderer {
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
       ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      // Thank you prettier, this looks so much better
       ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
         this.sceneBox
       )

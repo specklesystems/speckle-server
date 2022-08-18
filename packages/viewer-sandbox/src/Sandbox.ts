@@ -9,8 +9,6 @@ export default class Sandbox {
   private pane: Pane
   private tabs
   private filterControls
-  private steamsFolder
-  private viewsControls = []
   private viewsFolder
   private streams: { [url: string]: Array<unknown> } = {}
 
@@ -110,8 +108,6 @@ export default class Sandbox {
   private removeStreamControls(url: string) {
     this.viewer.unloadObject(url)
     ;(this.streams[url][0] as { dispose: () => void }).dispose()
-    ;(this.streams[url][1] as { dispose: () => void }).dispose()
-    ;(this.streams[url][2] as { dispose: () => void }).dispose()
     delete this.streams[url]
   }
 

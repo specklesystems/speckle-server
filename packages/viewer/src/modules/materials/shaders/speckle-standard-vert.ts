@@ -97,7 +97,7 @@ void main() {
 	for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {
         #ifdef USE_RTE
             vec4 shadowPosition = computeRelativePosition(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
-            shadowWorldPosition = shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
+            shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
             vDirectionalShadowCoord[ i ] = rteShadowMatrix * shadowWorldPosition;
         #else
             shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
