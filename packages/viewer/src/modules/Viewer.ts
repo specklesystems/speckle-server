@@ -109,7 +109,6 @@ export class Viewer extends EventEmitter implements IViewer {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoomExtents()
-      console.warn('Built stuff')
     })
 
     this.FilteringManager = new FilteringManager(this)
