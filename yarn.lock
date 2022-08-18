@@ -5472,6 +5472,7 @@ __metadata:
     "@types/lodash": ^4.14.180
     "@types/mocha": ^7.0.2
     "@types/module-alias": ^2.0.1
+    "@types/nodemailer": ^6.4.5
     "@types/verror": ^1.10.6
     "@types/yargs": ^17.0.10
     "@typescript-eslint/eslint-plugin": ^5.32.0
@@ -6491,6 +6492,15 @@ __metadata:
   version: 17.0.43
   resolution: "@types/node@npm:17.0.43"
   checksum: 7fd84b1e37dc406c1c73a1461ccd6a1a38a5a335563788dd25e0aa75476d6948f815d0e9e4c2201f785a36a72269e6aaf0d851ca75c1e44b92e3a9d504e04a1e
+  languageName: node
+  linkType: hard
+
+"@types/nodemailer@npm:^6.4.5":
+  version: 6.4.5
+  resolution: "@types/nodemailer@npm:6.4.5"
+  dependencies:
+    "@types/node": "*"
+  checksum: ecbe34a6eb5559bdca58115b5c03ff048896e14dc7ea6426b3fdfc03484764eb9e4100fcff37b96d012543ca47238c973d0f5bbfb1ab5a2d1f1f25d494714c59
   languageName: node
   linkType: hard
 
