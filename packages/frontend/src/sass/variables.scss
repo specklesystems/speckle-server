@@ -267,3 +267,10 @@ html {
   opacity: 0.5;
   width: 0px;
 }
+
+.no-mouse {
+  pointer-events: none;
+}
+.mouse {
+  pointer-events: auto;
+}
