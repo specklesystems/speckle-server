@@ -148,10 +148,11 @@
         :style="`width: 100%; bottom: 12px; left: 0px; position: ${
           $isMobile() ? 'fixed' : 'absolute'
         }; z-index: 20`"
-        :class="`d-flex justify-center`"
+        :class="`d-flex justify-center no-mouse`"
       >
         <viewer-controls
           v-show="!hideControls"
+          class="mouse"
           @show-add-overlay="showAddOverlay = true"
         />
       </div>
