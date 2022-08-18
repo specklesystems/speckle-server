@@ -35,10 +35,14 @@ import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { WorldTree } from './tree/WorldTree'
-import { SelectionEvent } from '../IViewer'
+import {
+  DefaultLightConfiguration,
+  SelectionEvent,
+  SunLightConfiguration
+} from '../IViewer'
 
 export default class SpeckleRenderer {
-  private readonly SHOW_HELPERS = true
+  private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
   public scene: Scene
   private rootGroup: Group
@@ -47,6 +51,7 @@ export default class SpeckleRenderer {
   private input: Input
   private sun: DirectionalLight
   private sunTarget: Object3D
+  private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
 
@@ -56,6 +61,19 @@ export default class SpeckleRenderer {
 
   public set indirectIBL(texture: Texture) {
     this.scene.environment = texture
+  }
+
+  public set indirectIBLIntensity(value: number) {
+    const batches = this.batcher.getBatches(undefined, GeometryType.MESH)
+    for (let k = 0; k < batches.length; k++) {
+      let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] = (
+        batches[k].renderObject as Mesh
+      ).material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
+      material = Array.isArray(material) ? material : [material]
+      for (let k = 0; k < material.length; k++) {
+        material[k].envMapIntensity = value
+      }
+    }
   }
 
   /** TEMPORARY for backwards compatibility */
@@ -257,14 +275,14 @@ export default class SpeckleRenderer {
       }
     })
 
-    this.updateDirectLights(0.47, 0)
+    this.updateDirectLights()
     this.updateHelpers()
   }
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
     this.batcher.purgeBatches(subtreeId)
-    this.updateDirectLights(0.47, 0)
+    this.updateDirectLights()
     this.updateHelpers()
   }
 
@@ -331,7 +349,15 @@ export default class SpeckleRenderer {
     this.sun.target = this.sunTarget
   }
 
-  public updateDirectLights(phi: number, theta: number, radiusOffset = 0) {
+  public updateDirectLights() {
+    const phi = this.sunConfiguration.elevation
+    const theta = this.sunConfiguration.azimuth
+    const radiusOffset = this.sunConfiguration.radius
+    this.sun.castShadow = this.sunConfiguration.castShadow
+    this.sun.intensity = this.sunConfiguration.intensity
+    this.sun.color = new Color(this.sunConfiguration.color)
+    this.sun.visible = this.sunConfiguration.enabled
+
     this.sunTarget.position.copy(this.sceneCenter)
     const spherical = new Spherical(this.sceneSphere.radius + radiusOffset, phi, theta)
     this.sun.position.setFromSpherical(spherical)
@@ -384,6 +410,11 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
     this.updateHelpers()
+  }
+
+  public setSunLightConfiguration(config: SunLightConfiguration) {
+    Object.assign(this.sunConfiguration, config)
+    this.updateDirectLights()
   }
 
   public updateHelpers() {

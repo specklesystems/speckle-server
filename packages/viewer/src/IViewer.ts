@@ -46,6 +46,29 @@ export type SelectionEvent = {
   multiple: boolean
 }
 
+export interface LightConfiguration {
+  enabled?: boolean
+  castShadow?: boolean
+  intensity?: number
+  color?: number
+}
+
+export interface SunLightConfiguration extends LightConfiguration {
+  elevation?: number
+  azimuth?: number
+  radius?: number
+}
+
+export const DefaultLightConfiguration: SunLightConfiguration = {
+  enabled: true,
+  castShadow: true,
+  intensity: 5,
+  color: 0xffffff,
+  elevation: 0.47,
+  azimuth: 0,
+  radius: 0
+}
+
 /**
  * Carried over from the old Viewer. To be extended/changed
  */
@@ -56,6 +79,8 @@ export interface IViewer {
   sectionBoxOn(): void
   zoomExtents(fit?: number, transition?: boolean): void
   toggleCameraProjection(): void
+  setLightConfiguration(config: LightConfiguration): void
+
   getViews()
   setView(id: string, transition: boolean)
   // This shouldn't be part of the API, it should be handled through `setView`

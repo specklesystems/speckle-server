@@ -36,7 +36,7 @@ export default class Batcher {
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
 
-    console.warn(materialHashes)
+    // console.warn(materialHashes)
     // console.warn(rendeViews)
 
     for (let i = 0; i < materialHashes.length; i++) {
@@ -80,7 +80,7 @@ export default class Batcher {
 
       this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch()
-      console.warn(batch)
+      // console.warn(batch)
     }
   }
 

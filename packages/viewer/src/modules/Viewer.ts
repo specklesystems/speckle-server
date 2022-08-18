@@ -10,7 +10,13 @@ import SectionBox from './SectionBox'
 import { Clock, Color, MathUtils, Texture, Vector3 } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
-import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
+import {
+  DefaultViewerParams,
+  IViewer,
+  LightConfiguration,
+  SunLightConfiguration,
+  ViewerParams
+} from '../IViewer'
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
@@ -107,8 +113,11 @@ export class Viewer extends EventEmitter implements IViewer {
     })
 
     this.FilteringManager = new FilteringManager(this)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).WT = WorldTree
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).FM = this.FilteringManager
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).V = this
   }
 
@@ -125,7 +134,7 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  onWindowResize() {
+  private onWindowResize() {
     this.speckleRenderer.renderer.setSize(
       this.container.offsetWidth,
       this.container.offsetHeight
@@ -174,6 +183,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
+  }
+
+  public setLightConfiguration(config: LightConfiguration): void {
+    this.speckleRenderer.setSunLightConfiguration(config as SunLightConfiguration)
   }
 
   public getViews() {
