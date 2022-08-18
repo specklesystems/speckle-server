@@ -163,7 +163,6 @@ describe('Actors & Tokens @user-services', () => {
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
-      newUser.suuid = 'really it does not matter'
 
       const { id } = await findOrCreateUser({ user: newUser })
       expect(id).to.equal(ballmerUserId)

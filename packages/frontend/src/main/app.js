@@ -10,7 +10,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import { createProvider, installVueApollo } from '@/config/apolloConfig'
 import {
   checkAccessCodeAndGetTokens,
-  prefetchUserAndSetSuuid
+  prefetchUserAndSetID
 } from '@/plugins/authHelpers'
 
 import router from '@/main/router/index'
@@ -58,7 +58,7 @@ installVueApollo(apolloProvider)
 
 // TODO: Sort out error handling here, if something goes wrong it just goes into an infinite loop
 if (AuthToken) {
-  prefetchUserAndSetSuuid(apolloProvider.defaultClient)
+  prefetchUserAndSetID(apolloProvider.defaultClient)
     .then(() => {
       postAuthInit()
     })
@@ -72,7 +72,7 @@ if (AuthToken) {
 } else {
   checkAccessCodeAndGetTokens()
     .then(() => {
-      return prefetchUserAndSetSuuid(apolloProvider.defaultClient)
+      return prefetchUserAndSetID(apolloProvider.defaultClient)
     })
     .then(() => {
       postAuthInit()

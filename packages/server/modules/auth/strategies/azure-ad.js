@@ -58,8 +58,6 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           name: req.user._json.name || req.user.displayName
         }
 
-        if (req.session.suuid) user.suuid = req.session.suuid
-
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
