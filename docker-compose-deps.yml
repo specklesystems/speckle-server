@@ -33,6 +33,12 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9001:9001'
 
+  maildev:
+    image: maildev/maildev
+    ports:
+      - 1080:1080
+      - 1025:1025
+
   # Useful for debugging / exploring local databases
 
   pgadmin:
