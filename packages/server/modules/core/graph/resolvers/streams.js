@@ -30,6 +30,7 @@ const {
   StreamPubsubEvents
 } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
+const { ActionTypes } = require('@/modules/activitystream/services/types')
 const { respectsLimits } = require('@/modules/core/services/ratelimits')
 const {
   getPendingStreamCollaborators
@@ -60,7 +61,7 @@ const _deleteStream = async (parent, args, context) => {
     streamId: args.id,
     resourceType: 'stream',
     resourceId: args.id,
-    actionType: 'stream_delete',
+    actionType: ActionTypes.Stream.Delete,
     userId: context.userId,
     info: {},
     message: 'Stream deleted'
@@ -216,7 +217,7 @@ module.exports = {
         streamId: id,
         resourceType: 'stream',
         resourceId: id,
-        actionType: 'stream_create',
+        actionType: ActionTypes.Stream.Create,
         userId: context.userId,
         info: { stream: args.stream },
         message: `Stream '${args.stream.name}' created`
@@ -246,7 +247,7 @@ module.exports = {
         streamId: args.stream.id,
         resourceType: 'stream',
         resourceId: args.stream.id,
-        actionType: 'stream_update',
+        actionType: ActionTypes.Stream.Update,
         userId: context.userId,
         info: { old: oldValue, new: args.stream },
         message: 'Stream metadata changed'

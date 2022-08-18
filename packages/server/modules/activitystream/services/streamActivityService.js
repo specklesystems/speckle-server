@@ -1,9 +1,9 @@
+const { saveActivity } = require('@/modules/activitystream/services')
+const { pubsub, StreamPubsubEvents } = require('@/modules/shared')
 const {
-  saveActivity,
   ResourceTypes,
   ActionTypes
-} = require('@/modules/activitystream/services')
-const { pubsub, StreamPubsubEvents } = require('@/modules/shared')
+} = require('@/modules/activitystream/services/types')
 
 /**
  * Save "stream permissions granted to user" activity item

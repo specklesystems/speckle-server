@@ -8,6 +8,7 @@ const {
 } = require('@/modules/core/dbSchema')
 
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/services/types')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
@@ -81,7 +82,7 @@ module.exports = {
       streamId: null,
       resourceType: 'user',
       resourceId: user.id,
-      actionType: 'user_create',
+      actionType: ActionTypes.User.Create,
       userId: user.id,
       info: { user: loggedUser },
       message: 'User created'
