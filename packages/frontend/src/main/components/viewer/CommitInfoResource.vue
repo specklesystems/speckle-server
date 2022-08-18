@@ -81,10 +81,10 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
-  hideObjects,
-  isolateObjects,
-  showObjects,
-  unisolateObjects,
+  hideTree,
+  isolateObjects2,
+  showTree,
+  unIsolateObjects2,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
@@ -106,6 +106,7 @@ export default {
         commitObjectViewerState @client {
           isolateValues
           hideValues
+          currentFilterState
         }
       }
     `)
@@ -126,46 +127,42 @@ export default {
       return this.resource.data.commit
     },
     isolated() {
-      return (
-        this.viewerState.isolateValues.indexOf(
-          this.resource.data.commit.referencedObject
-        ) !== -1
+      if (!this.viewerState.currentFilterState) return false
+      if (!this.viewerState.currentFilterState.visibilityState) return false
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'isolateObjectsState') return false
+
+      return this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+        this.resource.data.commit.referencedObject
       )
     },
     visible() {
-      return (
-        this.viewerState.hideValues.indexOf(
-          this.resource.data.commit.referencedObject
-        ) === -1
+      if (!this.viewerState.currentFilterState) return true
+      if (!this.viewerState.currentFilterState.visibilityState) return true
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'hiddenObjectState') return true
+
+      return !this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+        this.resource.data.commit.referencedObject
       )
     }
   },
   methods: {
     isolate() {
       const id = this.resource.data.commit.referencedObject
-      if (this.isolated)
-        unisolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        isolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.isolated) {
+        unIsolateObjects2([id], 'ui-iso')
+      } else {
+        isolateObjects2([id], 'ui-iso')
+      }
     },
     toggleVisibility() {
       const id = this.resource.data.commit.referencedObject
-      if (this.visible)
-        hideObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        showObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.visible) {
+        hideTree(id, 'ui-vis')
+      } else {
+        showTree(id, 'ui-vis')
+      }
     }
   }
 }
