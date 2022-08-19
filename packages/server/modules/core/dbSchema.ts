@@ -32,6 +32,11 @@ type InnerSchemaConfig<T extends string, C extends string> = {
   col: {
     [colName in C]: string
   }
+
+  /**
+   * All of the column names in an array
+   */
+  cols: string[]
 }
 
 type SchemaConfigParams = {
@@ -51,17 +56,21 @@ function buildTableHelper<T extends string, C extends string>(
   function buildInnerSchemaConfig(
     params: SchemaConfigParams = {}
   ): InnerSchemaConfig<T, C> {
+    const colName = (col: string) =>
+      params.withoutTablePrefix ? col : `${tableName}.${col}`
+
     return {
       name: tableName,
       knex: () => knex(tableName),
       col: reduce(
         columns,
         (prev, curr) => {
-          prev[curr] = params.withoutTablePrefix ? curr : `${tableName}.${curr}`
+          prev[curr] = colName(curr)
           return prev
         },
         {} as Record<C, string>
-      )
+      ),
+      cols: columns.map(colName)
     }
   }
 
@@ -69,23 +78,6 @@ function buildTableHelper<T extends string, C extends string>(
     ...buildInnerSchemaConfig(),
     with: buildInnerSchemaConfig
   }
-}
-
-/*
- * TABLE RECORD TYPES
- */
-
-export type ServerInviteRecord = {
-  id: string
-  target: string
-  inviterId: string
-  createdAt?: Date
-  used?: boolean
-  message?: string
-  resourceTarget?: string
-  resourceId?: string
-  role?: string
-  token: string
 }
 
 /*
@@ -108,7 +100,8 @@ export const Streams = buildTableHelper('streams', [
   'clonedFrom',
   'createdAt',
   'updatedAt',
-  'allowPublicComments'
+  'allowPublicComments',
+  'isDiscoverable'
 ])
 
 export const StreamAcl = buildTableHelper('stream_acl', [

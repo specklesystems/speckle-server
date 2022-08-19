@@ -40,6 +40,7 @@ export type StreamRecord = {
   createdAt: Date
   updatedAt: Date
   allowPublicComments: boolean
+  isDiscoverable: boolean
 }
 
 export type StreamAclRecord = {

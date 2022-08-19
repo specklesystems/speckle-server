@@ -55,6 +55,10 @@ module.exports = {
 
   */
 
+  /**
+   * @param {{}} user
+   * @returns {Promise<string>}
+   */
   async createUser(user) {
     user.id = crs({ length: 10 })
     user.email = user.email.toLowerCase()

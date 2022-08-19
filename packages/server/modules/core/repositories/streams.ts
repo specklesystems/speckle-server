@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import _, { isNaN, toNumber } from 'lodash'
 import {
   Streams,
   StreamAcl,
@@ -14,10 +14,25 @@ import {
   StreamFavoriteRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
+import {
+  DiscoverableStreamsSortingInput,
+  DiscoverableStreamsSortType,
+  QueryDiscoverableStreamsArgs,
+  SortDirection
+} from '@/modules/core/graph/generated/graphql'
+import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import dayjs from 'dayjs'
 
 export type BasicStream = Pick<
   StreamRecord,
-  'id' | 'name' | 'description' | 'isPublic' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'name'
+  | 'description'
+  | 'isPublic'
+  | 'isDiscoverable'
+  | 'createdAt'
+  | 'updatedAt'
 > &
   Pick<StreamAclRecord, 'role'>
 
@@ -37,6 +52,7 @@ export const BASE_STREAM_COLUMNS = [
   Streams.col.name,
   Streams.col.description,
   Streams.col.isPublic,
+  Streams.col.isDiscoverable,
   Streams.col.createdAt,
   Streams.col.updatedAt,
   StreamAcl.col.role
@@ -323,4 +339,149 @@ export async function getStreamCollaborator(streamId: string, userId: string) {
 
   const res = await query
   return res
+}
+
+/**
+ * Get user's role in all of the specified streams
+ */
+export async function getStreamRoles(userId: string, streamIds: string[]) {
+  const q = Streams.knex()
+    .select<{ id: string; role: Nullable<string> }[]>([
+      Streams.col.id,
+      StreamAcl.col.role
+    ])
+    .leftJoin(StreamAcl.name, (q) =>
+      q
+        .on(StreamAcl.col.resourceId, '=', Streams.col.id)
+        .andOnVal(StreamAcl.col.userId, userId)
+    )
+    .whereIn(Streams.col.id, streamIds)
+
+  const results = await q
+  return _.mapValues(
+    _.keyBy(results, (r) => r.id),
+    (v) => v.role
+  )
+}
+
+export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
+  sort: DiscoverableStreamsSortingInput
+}
+
+function buildDiscoverableStreamsBaseQuery<Result = Array<StreamRecord>>() {
+  const q = Streams.knex()
+    .select<Result>(Streams.cols)
+    .where(Streams.col.isDiscoverable, true)
+    .andWhere(Streams.col.isPublic, true)
+
+  return q
+}
+
+const decodeDiscoverableStreamsCursor = (
+  sortType: DiscoverableStreamsSortType,
+  cursor: string
+): Nullable<string | number> => {
+  const decodedCursor = cursor ? decodeCursor(cursor) : null
+
+  switch (sortType) {
+    case DiscoverableStreamsSortType.CreatedDate: {
+      let dateCursor: Nullable<string> = null
+      try {
+        dateCursor = dayjs(decodedCursor).toISOString()
+      } catch (e: unknown) {
+        if (!(e instanceof RangeError)) {
+          throw e
+        }
+      }
+
+      return dateCursor
+    }
+    case DiscoverableStreamsSortType.FavoritesCount: {
+      const numericCursor = toNumber(decodedCursor)
+      return isNaN(numericCursor) ? null : numericCursor
+    }
+  }
+}
+
+export const encodeDiscoverableStreamsCursor = (
+  sortType: DiscoverableStreamsSortType,
+  retrievedStreams: StreamRecord[],
+  previousCursor: Nullable<string>
+): Nullable<string> => {
+  const decodedPreviousCursor = previousCursor
+    ? decodeDiscoverableStreamsCursor(sortType, previousCursor)
+    : null
+
+  let value: Nullable<string>
+  switch (sortType) {
+    case DiscoverableStreamsSortType.CreatedDate: {
+      // Using timestamps for filtering w/ a WHERE clause,
+      // cause there will never be duplicates
+      const lastItem = retrievedStreams.length
+        ? retrievedStreams[retrievedStreams.length - 1]
+        : null
+      value = lastItem?.createdAt.toISOString() || null
+      break
+    }
+    case DiscoverableStreamsSortType.FavoritesCount: {
+      // Using offset based pagination here, cause there will be many rows with
+      // the same favorite count
+      const previousOffset: number = (decodedPreviousCursor as number) || 0
+      value = `${previousOffset + retrievedStreams.length}`
+      break
+    }
+  }
+
+  return value ? encodeCursor(value) : null
+}
+
+/**
+ * Counts all discoverable streams
+ */
+export async function countDiscoverableStreams() {
+  const q = buildDiscoverableStreamsBaseQuery<{ count: string }[]>()
+  q.clearSelect()
+  q.count()
+
+  const [res] = await q
+  return parseInt(res.count)
+}
+
+/**
+ * Paginated discoverable stream retrieval with support for multiple sorting approaches
+ */
+export async function getDiscoverableStreams(params: GetDiscoverableStreamsParams) {
+  const { cursor, sort, limit } = params
+  const q = buildDiscoverableStreamsBaseQuery().limit(limit)
+
+  const decodedCursor = cursor
+    ? decodeDiscoverableStreamsCursor(sort.type, cursor)
+    : null
+  const sortOperator = sort.direction === SortDirection.Asc ? '>' : '<'
+
+  switch (sort.type) {
+    case DiscoverableStreamsSortType.CreatedDate: {
+      q.orderBy([
+        { column: Streams.col.createdAt, order: sort.direction },
+        { column: Streams.col.name }
+      ])
+
+      if (decodedCursor) {
+        q.andWhere(Streams.col.createdAt, sortOperator, decodedCursor)
+      }
+
+      break
+    }
+    case DiscoverableStreamsSortType.FavoritesCount: {
+      q.leftJoin(StreamFavorites.name, StreamFavorites.col.streamId, Streams.col.id)
+        .groupBy(Streams.col.id)
+        .orderByRaw(`COUNT("stream_favorites"."streamId") ${sort.direction}`)
+        .orderBy([{ column: Streams.col.name }])
+
+      if (decodedCursor) q.offset(decodedCursor as number)
+      break
+    }
+  }
+
+  return await q
 }

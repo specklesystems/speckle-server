@@ -22,7 +22,7 @@ const pubsub = new RedisPubSub({
 })
 
 /**
- * @typedef {import('@/modules/shared/authz').AuthContext & {loaders: import('@/modules/core/loaders').RequestDataLoaders}} GraphQLContext
+ * @typedef {import('@/modules/shared/helpers/typeHelper').GraphQLContext} GraphQLContext
  */
 
 /**

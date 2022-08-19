@@ -84,7 +84,7 @@ describe('Streams @core-streams', () => {
 
     it('Should update a stream', async () => {
       await updateStream({
-        streamId: testStream.id,
+        id: testStream.id,
         name: 'Modified Name',
         description: 'Wooot'
       })
@@ -213,7 +213,7 @@ describe('Streams @core-streams', () => {
 
       await sleep(100)
 
-      await updateStream({ streamId: s.id, name: 'TU1' })
+      await updateStream({ id: s.id, name: 'TU1' })
       const su = await getStream({ streamId: s.id })
 
       expect(su.updatedAt).to.not.equal(s.updatedAt)

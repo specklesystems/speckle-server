@@ -11,9 +11,9 @@ export type Scalars = {
   Int: number;
   Float: number;
   BigInt: any;
-  DateTime: any;
+  DateTime: string;
   EmailAddress: any;
-  JSONObject: any;
+  JSONObject: Record<string, unknown>;
 };
 
 export type Activity = {
@@ -359,6 +359,16 @@ export type CommitUpdateInput = {
   /** To move the commit to a different branch, please the name of the branch. */
   newBranchName?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+};
+
+export enum DiscoverableStreamsSortType {
+  CreatedDate = 'CREATED_DATE',
+  FavoritesCount = 'FAVORITES_COUNT'
+}
+
+export type DiscoverableStreamsSortingInput = {
+  direction: SortDirection;
+  type: DiscoverableStreamsSortType;
 };
 
 export type FileUpload = {
@@ -784,6 +794,7 @@ export type Query = {
   __typename?: 'Query';
   /** Stare into the void. */
   _?: Maybe<Scalars['String']>;
+  /** All the streams of the server. Available to admins only. */
   adminStreams?: Maybe<StreamCollection>;
   /**
    * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
@@ -801,6 +812,8 @@ export type Query = {
    * - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
    */
   comments?: Maybe<CommentCollection>;
+  /** All of the discoverable streams of the server */
+  discoverableStreams?: Maybe<StreamCollection>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -864,6 +877,13 @@ export type QueryCommentsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
   resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
   streamId: Scalars['String'];
+};
+
+
+export type QueryDiscoverableStreamsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  sort?: InputMaybe<DiscoverableStreamsSortingInput>;
 };
 
 
@@ -1043,6 +1063,11 @@ export type SmartTextEditorValue = {
   version: Scalars['String'];
 };
 
+export enum SortDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
 export type Stream = {
   __typename?: 'Stream';
   /** All the recent activity on this stream in chronological order */
@@ -1077,6 +1102,12 @@ export type Stream = {
   /** Returns a list of all the file uploads for this stream. */
   fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
   id: Scalars['String'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable: Scalars['Boolean'];
+  /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean'];
   name: Scalars['String'];
   object?: Maybe<Object>;
@@ -1165,6 +1196,12 @@ export type StreamCollection = {
 
 export type StreamCreateInput = {
   description?: InputMaybe<Scalars['String']>;
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
   /** Optionally specify user IDs of users that you want to invite to be contributors to this stream */
@@ -1195,6 +1232,12 @@ export type StreamUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
 };
@@ -1488,7 +1531,7 @@ export type WebhookUpdateInput = {
   url?: InputMaybe<Scalars['String']>;
 };
 
-export type CommentWithRepliesFragment = { __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null };
+export type CommentWithRepliesFragment = { __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null };
 
 export type CreateCommentMutationVariables = Exact<{
   input: CommentCreateInput;
@@ -1510,7 +1553,7 @@ export type GetCommentQueryVariables = Exact<{
 }>;
 
 
-export type GetCommentQuery = { __typename?: 'Query', comment?: { __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null } | null };
+export type GetCommentQuery = { __typename?: 'Query', comment?: { __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null } | null };
 
 export type GetCommentsQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -1518,7 +1561,7 @@ export type GetCommentsQueryVariables = Exact<{
 }>;
 
 
-export type GetCommentsQuery = { __typename?: 'Query', comments?: { __typename?: 'CommentCollection', totalCount: number, cursor?: any | null, items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: any | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null }> } | null };
+export type GetCommentsQuery = { __typename?: 'Query', comments?: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null }> } | null };
 
 export type CreateServerInviteMutationVariables = Exact<{
   input: ServerInviteCreateInput;
@@ -1601,12 +1644,44 @@ export type GetStreamPendingCollaboratorsQueryVariables = Exact<{
 
 export type GetStreamPendingCollaboratorsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, pendingCollaborators?: Array<{ __typename?: 'PendingStreamCollaborator', inviteId: string, title: string, token?: string | null, user?: { __typename?: 'LimitedUser', id: string, name?: string | null } | null }> | null } | null };
 
+export type BasicStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string };
+
 export type LeaveStreamMutationVariables = Exact<{
   streamId: Scalars['String'];
 }>;
 
 
 export type LeaveStreamMutation = { __typename?: 'Mutation', streamLeave: boolean };
+
+export type CreateStreamMutationVariables = Exact<{
+  stream: StreamCreateInput;
+}>;
+
+
+export type CreateStreamMutation = { __typename?: 'Mutation', streamCreate?: string | null };
+
+export type UpdateStreamMutationVariables = Exact<{
+  stream: StreamUpdateInput;
+}>;
+
+
+export type UpdateStreamMutation = { __typename?: 'Mutation', streamUpdate: boolean };
+
+export type ReadStreamQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type ReadStreamQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string } | null };
+
+export type ReadDiscoverableStreamsQueryVariables = Exact<{
+  limit?: Scalars['Int'];
+  cursor?: InputMaybe<Scalars['String']>;
+  sort?: InputMaybe<DiscoverableStreamsSortingInput>;
+}>;
+
+
+export type ReadDiscoverableStreamsQuery = { __typename?: 'Query', discoverableStreams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', favoritesCount: number, id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> | null } | null };
 
 export type GetAdminUsersQueryVariables = Exact<{
   limit?: Scalars['Int'];
