@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import knex from '@/db/knex'
 import { Knex } from 'knex'
 import { reduce } from 'lodash'
@@ -21,9 +22,9 @@ type InnerSchemaConfig<T extends string, C extends string> = {
    */
   name: T
   /**
-   * Get `knex(tableName)` QueryBuilder instance
+   * Get `knex(tableName)` QueryBuilder instance. Use the generic argument to type the results of the query.
    */
-  knex: () => Knex.QueryBuilder
+  knex: <TResult = any>() => Knex.QueryBuilder<any, TResult>
   /**
    * Get names of table columns. The names can be prefixed with the table name or not, depending
    * on whether `withoutTablePrefix` was set when accessing the helper.
@@ -106,7 +107,8 @@ export const Streams = buildTableHelper('streams', [
   'isPublic',
   'clonedFrom',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  'allowPublicComments'
 ])
 
 export const StreamAcl = buildTableHelper('stream_acl', [
@@ -150,6 +152,12 @@ export const Comments = buildTableHelper('comments', [
   'data',
   'archived',
   'parentComment'
+])
+
+export const CommentLinks = buildTableHelper('comment_links', [
+  'commentId',
+  'resourceId',
+  'resourceType'
 ])
 
 export const ServerInvites = buildTableHelper('server_invites', [

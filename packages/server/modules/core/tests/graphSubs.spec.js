@@ -135,7 +135,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
   })
 
   after(async () => {
-    serverProcess.kill()
+    serverProcess.kill(9) // force killing with SIGKILL
   })
 
   describe('Streams', () => {
