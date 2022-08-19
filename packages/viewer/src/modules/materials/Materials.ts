@@ -1,4 +1,12 @@
-import { Color, DoubleSide, Material, MathUtils, Texture, Vector2 } from 'three'
+import {
+  Color,
+  DoubleSide,
+  FrontSide,
+  Material,
+  MathUtils,
+  Texture,
+  Vector2
+} from 'three'
 import { GeometryType } from '../batching/Batch'
 // import { getConversionFactor } from '../converter/Units'
 import { TreeNode } from '../tree/WorldTree'
@@ -12,6 +20,7 @@ import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { FilterMaterial } from '../FilteringManager'
 import { getConversionFactor } from '../converter/Units'
+import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -175,13 +184,12 @@ export default class Materials {
       ['USE_RTE']
     )
 
-    this.meshGhostMaterial = new SpeckleStandardMaterial(
+    this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
         color: 0xffffff,
-        // side: DoubleSide,
+        side: FrontSide,
         transparent: true,
-        opacity: 0.2,
-        wireframe: false
+        opacity: 0.1
       },
       ['USE_RTE']
     )

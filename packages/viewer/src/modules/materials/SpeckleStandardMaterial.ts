@@ -8,10 +8,10 @@ import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
 class SpeckleStandardMaterial extends MeshStandardMaterial {
-  private static readonly matBuff: Matrix4 = new Matrix4()
-  private static readonly vecBuff0: Vector3 = new Vector3()
-  private static readonly vecBuff1: Vector3 = new Vector3()
-  private static readonly vecBuff2: Vector3 = new Vector3()
+  protected static readonly matBuff: Matrix4 = new Matrix4()
+  protected static readonly vecBuff0: Vector3 = new Vector3()
+  protected static readonly vecBuff1: Vector3 = new Vector3()
+  protected static readonly vecBuff2: Vector3 = new Vector3()
 
   constructor(parameters, defines = []) {
     super(parameters)
