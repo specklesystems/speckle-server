@@ -102,6 +102,12 @@ export class NodeRenderView {
     return this._aabb
   }
 
+  public get transparent() {
+    return (
+      this._renderData.renderMaterial && this._renderData.renderMaterial.opacity < 1
+    )
+  }
+
   public get needsSegmentConversion() {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||
