@@ -36,7 +36,6 @@ when a user is reading/writing info about himself
 """
 type User {
   id: String!
-  suuid: String
   """
   E-mail can be null, if it's requested for a user other than the authenticated one
   and the user isn't an admin

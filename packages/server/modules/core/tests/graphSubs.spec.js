@@ -13,7 +13,7 @@ const { createPersonalAccessToken } = require('../services/tokens')
 const { beforeEachContext } = require(`@/test/hooks`)
 
 const { sleep, noErrors } = require('@/test/helpers')
-const { repoRoot } = require('@/bootstrap')
+const { packageRoot } = require('@/bootstrap')
 const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
@@ -70,7 +70,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',
       ['run', 'dev:server:test'],
-      { cwd: repoRoot.path }
+      { cwd: packageRoot }
     )
 
     const reg = /running at 0.0.0.0:([0-9]*)/
@@ -135,7 +135,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
   })
 
   after(async () => {
-    serverProcess.kill()
+    serverProcess.kill(9) // force killing with SIGKILL
   })
 
   describe('Streams', () => {

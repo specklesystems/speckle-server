@@ -6,7 +6,6 @@ import { gql } from '@apollo/client/core'
 export const commonUserFieldsFragment = gql`
   fragment CommonUserFields on User {
     id
-    suuid
     email
     name
     bio
@@ -15,7 +14,6 @@ export const commonUserFieldsFragment = gql`
     verified
     profiles
     role
-    suuid
     streams {
       totalCount
     }
@@ -115,7 +113,6 @@ export const adminUsersListQuery = gql`
         id
         registeredUser {
           id
-          suuid
           email
           name
           bio

@@ -4,8 +4,6 @@ metadata:
   name: speckle-preview-service
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-preview-service
-    project: speckle-server
 {{ include "preview_service.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.preview_service.replicas }}
@@ -16,8 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        app: speckle-preview-service
-        project: speckle-server
 {{ include "preview_service.labels" . | indent 8 }}
     spec:
       containers:
@@ -47,8 +43,20 @@ spec:
             cpu: {{ .Values.preview_service.limits.cpu }}
             memory: {{ .Values.preview_service.limits.memory }}
 
-        {{- if .Values.db.useCertificate }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
         volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
@@ -68,13 +76,39 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+      {{- if .Values.preview_service.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.preview_service.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.preview_service.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.preview_service.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
       priorityClassName: low-priority
+      {{- if .Values.preview_service.serviceAccount.create }}
+      serviceAccountName: {{ include "preview_service.name" $ }}
+      {{- end }}
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
 
       # Should be > preview generation time ( 1 hour for good measure )
       terminationGracePeriodSeconds: 3600
 
-      {{- if .Values.db.useCertificate }}
       volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate

@@ -159,6 +159,10 @@ export async function init() {
   return { app, graphqlServer }
 }
 
+export async function shutdown(): Promise<void> {
+  await ModulesSetup.shutdown()
+}
+
 /**
  * Starts a http server, hoisting the express app to it.
  */
@@ -211,7 +215,7 @@ export async function startHttp(app: Express, customPortOverride?: number) {
       debug('speckle:shutdown')('Shutting down (signal received)...')
     },
     onSignal: async () => {
-      // Other custom cleanup after connections are finished
+      await shutdown()
     },
     onShutdown: () => {
       debug('speckle:shutdown')('Shutdown completed')

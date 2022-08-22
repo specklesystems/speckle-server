@@ -27,7 +27,7 @@ const getS3Config = () => {
       forcePathStyle: true,
       // s3ForcePathStyle: true,
       // signatureVersion: 'v4',
-      region: 'us-east-1'
+      region: process.env.S3_REGION || 'us-east-1'
     }
   }
   return s3Config

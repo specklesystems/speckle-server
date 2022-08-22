@@ -9,6 +9,5 @@ query User($id: String!) {
     verified
     profiles
     role
-    suuid
   }
 }

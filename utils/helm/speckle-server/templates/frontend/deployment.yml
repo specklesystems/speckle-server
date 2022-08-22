@@ -4,8 +4,6 @@ metadata:
   name: speckle-frontend
   namespace: {{ .Values.namespace }}
   labels:
-    app: speckle-frontend
-    project: speckle-server
 {{ include "frontend.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicas }}
@@ -16,8 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        app: speckle-frontend
-        project: speckle-server
 {{ include "frontend.labels" . | indent 8 }}
     spec:
       containers:
@@ -47,12 +43,27 @@ spec:
         readinessProbe:
           httpGet:
             path: /
-            port: 80
+            port: www
           initialDelaySeconds: 5
           periodSeconds: 5
-        
+
         env: 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
       priorityClassName: high-priority
+      {{- if .Values.frontend.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend.serviceAccount.create }}
+      serviceAccountName: {{ include "frontend.name" $ }}
+      {{- end }}
