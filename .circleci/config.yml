@@ -218,25 +218,19 @@ jobs:
       - image: cimg/base:2022.08
     working_directory: *work-dir
     steps:
-      - when:
-          condition:
-            or:
-              - equal: [main, << pipeline.git.branch >>]
-              - equal: [true, '${CIRCLE_PULL_REQUEST}']
-          steps:
-            - checkout
-            - run: pwd
-            - run: mkdir -p workspace
-            - run:
-                name: determine whether to build
-                command: |
-                  echo "export SHOULD_BUILD=$(.circleci/should_build.sh)" >> workspace/should-build
-            - run: cat workspace/should-build >> $BASH_ENV
-            - run: echo "SHOULD_BUILD=${SHOULD_BUILD}"
-            - persist_to_workspace:
-                root: workspace
-                paths:
-                  - should-build
+      - checkout
+      - run: pwd
+      - run: mkdir -p workspace
+      - run:
+          name: determine whether to build
+          command: |
+            echo "export SHOULD_BUILD=$(.circleci/should_build.sh)" >> workspace/should-build
+      - run: cat workspace/should-build >> $BASH_ENV
+      - run: echo "SHOULD_BUILD=${SHOULD_BUILD}"
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - should-build
 
   pre-commit:
     parameters:
@@ -379,13 +373,17 @@ jobs:
           # this fixes it
           version: 20.10.12
           docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: ./.circleci/build.sh
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - speckle*
+      - when:
+          condition:
+            equal: [true, '${SHOULD_BUILD}']
+          steps:
+            - run:
+                name: Build and Publish
+                command: ./.circleci/build.sh
+            - persist_to_workspace:
+                root: workspace
+                paths:
+                  - speckle*
 
   docker-build-server:
     <<: *build-job
