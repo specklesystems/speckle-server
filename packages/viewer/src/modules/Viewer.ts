@@ -21,6 +21,7 @@ import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilterMaterialType, FilteringManager } from './filtering/FilteringManager'
+import { FilteringManager as FMO } from './FilteringManager'
 import { PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 
@@ -41,6 +42,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public static Assets: Assets
 
   public FilteringManager: FilteringManager
+  public FMO: FMO
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -113,9 +115,13 @@ export class Viewer extends EventEmitter implements IViewer {
     })
 
     this.FilteringManager = new FilteringManager(this.speckleRenderer)
+    this.FMO = new FMO(this)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).WT = WorldTree
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).FM = this.FilteringManager
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).FMO = this.FMO
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).V = this
   }
@@ -446,7 +452,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public debugApplyByNonNumericPropetyFilter(data: {
-    color?: { name: string; color: string; colorIndex: number; nodes: [] }
+    color?: { name: string; color: number; colorIndex: number; nodes: [] }
   }) {
     const start = performance.now()
     const colors = Object.values(data)

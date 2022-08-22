@@ -1,4 +1,7 @@
+import { Color, Texture, MathUtils } from 'three'
+import { Assets } from '../Assets'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   PropertyInfo,
   StringPropertyInfo,
@@ -6,12 +9,34 @@ import {
 } from './PropertyManager'
 import SpeckleRenderer from '../SpeckleRenderer'
 
+export type FilteringState = {
+  test?: Record<string, unknown>
+  selectedObjects?: string[]
+  hiddenObjects?: string[]
+  isolatedObjects?: string[]
+  colorGroups?: Record<string, string>[]
+  activePropFilter?: PropertyInfo
+}
+
+export enum FilterMaterialType {
+  SELECT,
+  GHOST,
+  GRADIENT,
+  COLORED,
+  OVERLAY,
+  HIDDEN
+}
+
 export class FilteringManager {
   public WTI: WorldTree
   private Renderer: SpeckleRenderer
   private StateKey: string = null
 
   private VisibilityState = new VisibilityState()
+  private ColorStringFilterState = new ColorStringFilterState()
+  private ColorNumericFilterState = new ColorNumericFilterState()
+  private SelectionState = new GenericRvState()
+  private OverlayState = new GenericRvState()
 
   public constructor(renderer: SpeckleRenderer) {
     this.WTI = WorldTree.getInstance()
@@ -47,7 +72,7 @@ export class FilteringManager {
   public isolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = false
+    includeDescendants = true
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
@@ -60,7 +85,7 @@ export class FilteringManager {
   public unIsolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = false
+    includeDescendants = true
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
@@ -136,7 +161,7 @@ export class FilteringManager {
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) === -1) {
       this.VisibilityState.rvs.push(...rvs)
     } else {
-      // take out rvs
+      // take out rvs that do not match our ids
       this.VisibilityState.rvs = this.VisibilityState.rvs.filter(
         (rv) => !rvs.includes(rv)
       )
@@ -145,26 +170,183 @@ export class FilteringManager {
   }
 
   public setColorFilter(prop: PropertyInfo) {
-    // TODO
+    if (prop.type === 'number') {
+      return this.setNumericColorFilter(prop as NumericPropertyInfo)
+    }
+    if (prop.type === 'string') {
+      return this.setStringColorFilter(prop as StringPropertyInfo)
+    }
   }
 
-  public removeColorFilter() {
-    // TODO
+  private setNumericColorFilter(numProp: NumericPropertyInfo) {
+    this.ColorStringFilterState = null
+    // if (
+    //   this.ColorNumericFilterState?.currentProp?.key === numProp.key &&
+    //   this.ColorNumericFilterState?.currentProp?.passMin === numProp.passMin &&
+    //   this.ColorNumericFilterState?.currentProp?.passMax === numProp.passMax
+    // ) {
+    //   return this.setFilters()
+    // }
+    this.ColorNumericFilterState.currentProp = numProp
+
+    const passMin = numProp.passMin || numProp.min
+    const passMax = numProp.passMax || numProp.max
+
+    const matchingIds = numProp.valueGroups
+      .filter((p) => p.value >= passMin && p.value <= passMax)
+      .map((v) => v.id)
+    const matchingValues = numProp.valueGroups
+      .filter((p) => p.value >= passMin && p.value <= passMax)
+      .map((v) => v.value)
+
+    const nonMatchingRvs: NodeRenderView[] = []
+    const colorGroups: ValueGroupColorItemNumericProps[] = []
+
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
+        return true
+      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+      const idx = matchingIds.indexOf(node.model.raw.id)
+      if (idx === -1) {
+        nonMatchingRvs.push(...rvs)
+      } else {
+        colorGroups.push({
+          rvs,
+          value: (matchingValues[idx] - passMin) / (passMax - passMin)
+        })
+      }
+    })
+    this.ColorNumericFilterState.colorGroups = colorGroups
+    this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
+    return this.setFilters()
+  }
+
+  private setStringColorFilter(stringProp: StringPropertyInfo) {
+    this.ColorNumericFilterState = null
+    if (this.ColorStringFilterState?.currentProp?.key === stringProp.key) {
+      return this.setFilters()
+    }
+
+    this.ColorStringFilterState.currentProp = stringProp
+
+    const valueGroupColors: ValueGroupColorItemStringProps[] = []
+    for (const vg of stringProp.valueGroups) {
+      valueGroupColors.push({
+        ...vg,
+        color: new Color(MathUtils.randInt(0, 0xffffff)),
+        rvs: []
+      })
+    }
+    const rampTexture = Assets.generateDiscreetRampTexture(
+      valueGroupColors.map((v) => v.color.getHex())
+    )
+    const nonMatchingRvs: NodeRenderView[] = []
+    this.WTI.walk((node: TreeNode) => {
+      if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root) {
+        return true
+      }
+      const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
+      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+      if (!vg) {
+        nonMatchingRvs.push(...rvs)
+        return true
+      }
+      vg.rvs.push(...rvs)
+      return true
+    })
+
+    this.ColorStringFilterState.colorGroups = valueGroupColors
+    this.ColorStringFilterState.rampTexture = rampTexture
+    this.ColorStringFilterState.nonMatchingRvs = nonMatchingRvs
+
+    return this.setFilters()
+  }
+
+  public removeColorFilter(): FilteringState {
+    this.ColorStringFilterState = new ColorStringFilterState()
+    this.ColorNumericFilterState = new ColorNumericFilterState()
+    return this.setFilters()
+  }
+
+  public selectObjects(objectIds: string[]) {
+    return this.populateGenericState(objectIds, this.SelectionState)
+  }
+  public overlayObjects(objectIds: string[]) {
+    return this.populateGenericState(objectIds, this.OverlayState)
+  }
+
+  private populateGenericState(objectIds, state) {
+    const ids = [...objectIds, ...this.getDescendantIds(objectIds)]
+    state.rvs = []
+
+    if (ids.length !== 0) {
+      WorldTree.getInstance().walk((node: TreeNode) => {
+        if (!node.model.atomic) return true
+        if (ids.indexOf(node.model.raw.id) !== -1) {
+          state.rvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(node, node))
+        }
+        return true
+      })
+    }
+    return this.setFilters()
+  }
+
+  public resetSelection() {
+    this.SelectionState = new GenericRvState()
+    return this.setFilters()
+  }
+
+  public resetOverlay() {
+    this.OverlayState = new GenericRvState()
+    return this.setFilters()
   }
 
   public reset(): FilteringState {
-    // TODO
     this.Renderer.clearFilter()
+    this.VisibilityState = new VisibilityState()
+    this.ColorStringFilterState = new ColorStringFilterState()
+    this.ColorNumericFilterState = new ColorNumericFilterState()
+    this.SelectionState = new GenericRvState()
+    this.OverlayState = new GenericRvState()
+    this.StateKey = null
     return null
   }
 
   private setFilters(): FilteringState {
-    console.log(this.VisibilityState)
-
     const returnState: FilteringState = {}
 
     this.Renderer.clearFilter()
     this.Renderer.beginFilter()
+
+    // String based colors
+    if (this.ColorStringFilterState) {
+      returnState.colorGroups = []
+      let k = -1
+      for (const group of this.ColorStringFilterState.colorGroups) {
+        k++
+        this.Renderer.applyFilter(group.rvs, {
+          filterType: FilterMaterialType.COLORED,
+          rampIndex: k / this.ColorStringFilterState.colorGroups.length,
+          rampIndexColor: group.color,
+          rampTexture: this.ColorStringFilterState.rampTexture
+        })
+        returnState.colorGroups.push({
+          value: group.value,
+          color: group.color.getHexString()
+        })
+        returnState.activePropFilter = this.ColorStringFilterState.currentProp
+      }
+    }
+    // Number based colors
+    if (this.ColorNumericFilterState) {
+      for (const group of this.ColorNumericFilterState.colorGroups) {
+        this.Renderer.applyFilter(group.rvs, {
+          filterType: FilterMaterialType.GRADIENT,
+          rampIndex: group.value
+        })
+      }
+      returnState.activePropFilter = this.ColorNumericFilterState.currentProp
+    }
 
     const isShowHide =
       this.VisibilityState.command === Command.HIDE ||
@@ -182,11 +364,33 @@ export class FilteringManager {
       if (isIsolate) returnState.isolatedObjects = this.VisibilityState.ids
     }
 
+    // TODO: colors non matching ghost
+    const nonMatchingRvs =
+      this.ColorStringFilterState?.nonMatchingRvs ||
+      this.ColorNumericFilterState?.nonMatchingRvs
+    if (nonMatchingRvs) {
+      this.Renderer.applyFilter(nonMatchingRvs, {
+        filterType: FilterMaterialType.HIDDEN // TODO: ghost
+      })
+    }
+
+    if (this.SelectionState.rvs.length !== 0) {
+      this.Renderer.applyFilter(this.SelectionState.rvs, {
+        filterType: FilterMaterialType.SELECT
+      })
+    }
+
+    if (this.OverlayState.rvs.length !== 0) {
+      this.Renderer.applyFilter(this.SelectionState.rvs, {
+        filterType: FilterMaterialType.OVERLAY
+      })
+    }
+
+    this.Renderer.endFilter()
     return returnState
   }
 
   private idCache = {} as Record<string, string[]>
-
   private getDescendantIds(objectIds: string[]): string[] {
     const allIds: string[] = []
     const key = objectIds.join(',')
@@ -207,23 +411,6 @@ export class FilteringManager {
   }
 }
 
-export enum FilterMaterialType {
-  SELECT,
-  GHOST,
-  GRADIENT,
-  COLORED,
-  OVERLAY,
-  HIDDEN
-}
-
-export type FilteringState = {
-  test?: Record<string, unknown>
-  selectedObjects?: string[]
-  hiddenObjects?: string[]
-  isolatedObjects?: string[]
-  colorGroups?: Record<string, string>[]
-}
-
 enum Command {
   HIDE,
   SHOW,
@@ -232,20 +419,56 @@ enum Command {
   NONE
 }
 
-interface IInternalState {
-  ids: string[]
-  reset: () => void
-}
-
-class VisibilityState implements IInternalState {
+class VisibilityState {
   public command = Command.NONE
   public ghost = false
   public ids: string[] = []
-  public rvs = []
+  public rvs: NodeRenderView[] = []
 
   public reset() {
     this.ghost = false
     this.ids = []
     this.rvs = []
+  }
+}
+
+class ColorStringFilterState {
+  public currentProp: StringPropertyInfo
+  public colorGroups: ValueGroupColorItemStringProps[]
+  public nonMatchingRvs: NodeRenderView[]
+  public rampTexture: Texture
+  public reset() {
+    this.currentProp = null
+    this.colorGroups = []
+    this.nonMatchingRvs = []
+    this.rampTexture = null
+  }
+}
+
+type ValueGroupColorItemStringProps = {
+  value: string
+  ids: string[]
+  color: Color
+  rvs: NodeRenderView[]
+}
+
+class ColorNumericFilterState {
+  public currentProp: NumericPropertyInfo
+  public nonMatchingRvs: NodeRenderView[]
+  public colorGroups: ValueGroupColorItemNumericProps[]
+}
+
+type ValueGroupColorItemNumericProps = {
+  rvs: NodeRenderView[]
+  value: number
+}
+
+class GenericRvState {
+  public ids: string[] = []
+  public rvs: NodeRenderView[] = []
+
+  public reset() {
+    this.rvs = []
+    this.ids = []
   }
 }

@@ -104,6 +104,7 @@ export class FilteringManager {
     }
 
     // Second: hide objects/isolate objects.
+    console.log(this.hiddenObjectsState)
     if (this.hiddenObjectsState.enabled) {
       this.renderer.applyFilter(this.hiddenObjectsState.hiddenRvs, {
         filterType: this.hiddenObjectsState.ghost

@@ -125,7 +125,7 @@ export class Assets {
     // NOT NECESSARY AT THE MOMENT. USING STATIC GRADIENT RAMP
   }
 
-  public static generateDiscreetRampTexture(hexColors: string[]): Texture {
+  public static generateDiscreetRampTexture(hexColors: number[]): Texture {
     const width = hexColors.length
     const height = 1
 
@@ -146,14 +146,14 @@ export class Assets {
     texture.needsUpdate = true
 
     /** In case we want to see what gets generated */
-    // const canvas = document.createElement('canvas')
-    // canvas.width = width
-    // canvas.height = height
-    // const context = canvas.getContext('2d')
-    // const imageData = new ImageData(width, height)
-    // imageData.data.set(data)
-    // context.putImageData(imageData, 0, 0)
-    // console.log('SRC:', canvas.toDataURL())
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    const imageData = new ImageData(width, height)
+    imageData.data.set(data)
+    context.putImageData(imageData, 0, 0)
+    console.log('SRC:', canvas.toDataURL())
 
     return texture
   }
