@@ -367,23 +367,21 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-build >> $BASH_ENV
-      - when:
-          condition:
-            equal: [true, '${SHOULD_BUILD}']
-          steps:
-            - checkout
-            - setup_remote_docker:
-                # a weird issue with yarn installing packages throwing EPERM errors
-                # this fixes it
-                version: 20.10.12
-                docker_layer_caching: true
-            - run:
-                name: Build and Publish
-                command: ./.circleci/build.sh
-            - persist_to_workspace:
-                root: workspace
-                paths:
-                  - speckle*
+      - run: |
+          [[ "${SHOULD_BUILD}" != true ]] && echo "Should not build, stopping" && circleci-agent step halt
+      - checkout
+      - setup_remote_docker:
+          # a weird issue with yarn installing packages throwing EPERM errors
+          # this fixes it
+          version: 20.10.12
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish
+          command: ./.circleci/build.sh
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - speckle*
 
   docker-build-server:
     <<: *build-job
@@ -432,19 +430,17 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-publish >> $BASH_ENV
-      - when:
-          condition:
-            equal: [true, '${SHOULD_PUBLISH}']
-          steps:
-            - checkout
-            - setup_remote_docker:
-                # a weird issue with yarn installing packages throwing EPERM errors
-                # this fixes it
-                version: 20.10.12
-                docker_layer_caching: true
-            - run:
-                name: Publish
-                command: ./.circleci/publish.sh
+      - run: |
+          [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
+      - checkout
+      - setup_remote_docker:
+          # a weird issue with yarn installing packages throwing EPERM errors
+          # this fixes it
+          version: 20.10.12
+          docker_layer_caching: true
+      - run:
+          name: Publish
+          command: ./.circleci/publish.sh
 
   docker-publish-server:
     <<: *publish-job
