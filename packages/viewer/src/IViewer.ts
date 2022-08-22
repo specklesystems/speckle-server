@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { DataTree } from './modules/tree/DataTree'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -95,6 +96,8 @@ export interface IViewer {
 
   applyFilter(filter: unknown): Promise<void>
   getObjectsProperties(includeAll?: boolean): unknown
+
+  getDataTree(): DataTree
 
   dispose(): void
 }

@@ -22,6 +22,7 @@ import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilteringManager, FilterMaterialType } from './FilteringManager'
 import { SpeckleType } from './converter/GeometryConverter'
+import { DataTree } from './tree/DataTree'
 
 export class Viewer extends EventEmitter implements IViewer {
   public speckleRenderer: SpeckleRenderer
@@ -118,6 +119,10 @@ export class Viewer extends EventEmitter implements IViewer {
     ;(window as any).FM = this.FilteringManager
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).V = this
+  }
+
+  getDataTree(): DataTree {
+    return WorldTree.getDataTree()
   }
 
   public async init(): Promise<void> {
