@@ -177,7 +177,6 @@ jobs:
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: set version
@@ -200,7 +199,6 @@ jobs:
       PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: determine whether to publish
@@ -219,7 +217,6 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: determine whether to build
@@ -363,6 +360,7 @@ jobs:
     resource_class: medium
     working_directory: *work-dir
     steps:
+      - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
@@ -428,6 +426,7 @@ jobs:
     resource_class: medium
     working_directory: *work-dir
     steps:
+      - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
