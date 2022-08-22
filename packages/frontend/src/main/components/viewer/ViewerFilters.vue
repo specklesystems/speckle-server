@@ -11,7 +11,7 @@
       <v-list-item-content>
         <v-list-item-title>
           <span v-if="activeFilter === null">
-            Filters
+            Filters Groups
             <span class="caption grey--text">({{ allFilters.length }})</span>
           </span>
           <span v-else>{{ activeFilter.name }}</span>
@@ -115,6 +115,7 @@ export default {
       query {
         commitObjectViewerState @client {
           appliedFilter
+          currentFilterState
         }
       }
     `)
@@ -166,6 +167,11 @@ export default {
         this.parseAndSetFilters()
       }
     },
+    'viewerState.currentFilterState'() {
+      if (!this.viewerState.currentFilterState?.coloringState) {
+        this.activeFilter = null
+      }
+    },
     'viewerState.appliedFilter'() {
       if (this.trySetPresetFilter) return
       if (this.viewerState.appliedFilter?.filterBy) {
@@ -193,6 +199,7 @@ export default {
       const filters = []
       for (const rawFilter of this.propertyFilters) {
         const filter = {}
+        filter.propInfo = rawFilter
         const key = rawFilter.key
         // Handle revit params (a wee bit of FML moment)
         if (key.startsWith('parameters.')) {

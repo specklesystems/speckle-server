@@ -8,6 +8,7 @@ export type SearchPredicate = (node: TreeNode) => boolean
 export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
+  children: Node[]
   atomic: boolean
   /**
    * Keeps track wether this the root commit object or not.
@@ -58,7 +59,7 @@ export class WorldTree {
   }
 
   private tree: TreeModel
-  private _root: TreeNode
+  public _root: TreeNode
 
   public get root(): TreeNode {
     return this._root
@@ -108,8 +109,9 @@ export class WorldTree {
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
     if (!node && !this.supressWarnings) {
       console.warn(`Root will be used for searching. You might not want that`)
+      this._root.walk(predicate)
     }
-    this._root.walk(predicate)
+    this._root.walk(predicate, node)
   }
 
   public purge(subtreeId?: string) {

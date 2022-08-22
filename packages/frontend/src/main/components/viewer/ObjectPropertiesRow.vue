@@ -253,9 +253,9 @@ export default {
       if (this.prop.type === 'array') {
         const targetIds = this.prop.value.map((o) => o.referencedId)
         if (this.visible) {
-          hideObjects2(targetIds, 'ui-vis')
+          hideObjects2(targetIds, 'ui-vis', undefined, undefined, undefined, true)
         } else {
-          showObjects2(targetIds, 'ui-vis')
+          showObjects2(targetIds, 'ui-vis', undefined, undefined, undefined, true)
         }
       }
     },

@@ -14,7 +14,8 @@ import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilterMaterialType, FilteringManager } from './FilteringManager'
+import { FilterMaterialType, FilteringManager } from './filtering/FilteringManager'
+import { PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -106,7 +107,7 @@ export class Viewer extends EventEmitter implements IViewer {
       console.warn('Built stuff')
     })
 
-    this.FilteringManager = new FilteringManager(this)
+    this.FilteringManager = new FilteringManager(this.speckleRenderer)
     ;(window as any).WT = WorldTree
     ;(window as any).FM = this.FilteringManager
     ;(window as any).V = this
@@ -280,14 +281,14 @@ export class Viewer extends EventEmitter implements IViewer {
    * @param args legacy filter object
    */
   public async applyFilter(filter: any) {
-    return this.FilteringManager.handleLegacyFilter(filter)
+    // return this.FilteringManager.handleLegacyFilter(filter)
   }
 
   /**
    * Legacy: use FilteringManager.getAllPropertyFilters()
    * @returns
    */
-  public getObjectsProperties = () => this.FilteringManager.getAllPropertyFilters()
+  public getObjectsProperties = () => PropertyManager.getProperties()
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {
     min: number

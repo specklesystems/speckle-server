@@ -4,7 +4,12 @@
 import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
 import { makeVar, TypePolicies } from '@apollo/client/cache'
-import { DefaultViewerParams, Viewer, SelectionEvent } from '@speckle/viewer'
+import {
+  DefaultViewerParams,
+  Viewer,
+  SelectionEvent,
+  PropertyInfo
+} from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
 import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
@@ -309,13 +314,15 @@ export function hideObjects2(
   objectIds: string[],
   filterKey: string,
   resourceUrl: string,
-  ghost = false
+  ghost = false,
+  includeDescendants = false
 ) {
   const result = getInitializedViewer().FilteringManager.hideObjects(
     objectIds,
     filterKey,
     resourceUrl,
-    ghost
+    ghost,
+    includeDescendants
   )
   updateState({ currentFilterState: result })
 }
@@ -323,16 +330,33 @@ export function hideObjects2(
 export function showObjects2(
   objectIds: string[],
   filterKey: string,
-  resourceUrl: string
+  resourceUrl: string,
+  includeDescendants = false
 ) {
   const result = getInitializedViewer().FilteringManager.showObjects(
     objectIds,
     filterKey,
-    resourceUrl
+    resourceUrl,
+    includeDescendants
   )
   const state = { ...commitObjectViewerState() }
   state.currentFilterState = result
   updateState(state)
+}
+
+export function setColorFilter(
+  property: PropertyInfo,
+  resourceUrl: string,
+  ghostNonMatchingObjects = true
+) {
+  const result = getInitializedViewer().FilteringManager.setColorFilter(
+    JSON.parse(JSON.stringify(property)), // TODO: HACK, is the filtering manager mutating the prop? BAD
+    resourceUrl,
+    ghostNonMatchingObjects
+  )
+  // "#" + value.toString(16)
+  console.log(result)
+  updateState({ currentFilterState: result })
 }
 
 // FILTERING OLD

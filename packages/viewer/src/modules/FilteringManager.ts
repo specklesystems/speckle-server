@@ -231,10 +231,11 @@ export class FilteringManager {
     objectIds: string[],
     filterKey: string = null,
     resourceUrl: string = null,
-    ghost = false
+    ghost = false,
+    includeDescendants = false
   ) {
     return this.toggleObjectsVisibility(
-      this.getAllDescendantIds(objectIds),
+      includeDescendants ? this.getAllDescendantIds(objectIds) : objectIds,
       VisibilityCommand.HIDE,
       filterKey,
       resourceUrl,
@@ -252,10 +253,11 @@ export class FilteringManager {
   public showObjects(
     objectIds: string[],
     filterKey: string = null,
-    resourceUrl: string = null
+    resourceUrl: string = null,
+    includeDescendants = false
   ) {
     return this.toggleObjectsVisibility(
-      this.getAllDescendantIds(objectIds),
+      includeDescendants ? this.getAllDescendantIds(objectIds) : objectIds,
       VisibilityCommand.SHOW,
       filterKey,
       resourceUrl
@@ -524,7 +526,13 @@ export class FilteringManager {
         enabled: this.enabled,
         type: this.type,
         key: this.key,
-        colors: this.colors
+        colors: this.colors.map((c) => {
+          return {
+            value: c.value,
+            ids: c.ids,
+            color: c.color
+          }
+        })
       }
     }
   }
@@ -608,7 +616,7 @@ export class FilteringManager {
         vg.rvs.push(...rvs)
         return true
       })
-
+      console.log(valueGroupColors)
       this.colorFilterState.colors = valueGroupColors
       this.colorFilterState.rampTexture = rampTexture
       this.colorFilterState.nonMatchingRvs = nonMatchingRvs
