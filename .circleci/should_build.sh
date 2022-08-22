@@ -8,5 +8,4 @@ set -eo pipefail
 [[ -n "${CIRCLE_PULL_REQUEST}" ]] && echo "true" && exit 0
 
 echo "false"
-circleci-agent step halt
 exit 0
