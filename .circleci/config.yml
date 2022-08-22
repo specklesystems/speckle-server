@@ -367,8 +367,10 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-build >> $BASH_ENV
-      - run: |
-          [[ "${SHOULD_BUILD}" != true ]] && echo "Should not build, stopping" && circleci-agent step halt
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${SHOULD_BUILD}" != true ]] && echo "Should not build, stopping" && circleci-agent step halt
       - checkout
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
@@ -430,8 +432,10 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-publish >> $BASH_ENV
-      - run: |
-          [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
       - checkout
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
