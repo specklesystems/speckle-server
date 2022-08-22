@@ -1,4 +1,4 @@
-import { Camera, Intersection, Raycaster, Scene, Vector2 } from 'three'
+import { Box3, Camera, Intersection, Raycaster, Scene, Vector2 } from 'three'
 
 export class Intersections {
   private raycaster: Raycaster
@@ -17,7 +17,8 @@ export class Intersections {
     scene: Scene,
     camera: Camera,
     point: Vector2,
-    nearest = true
+    nearest = true,
+    bounds: Box3 = null
   ): Intersection {
     this.raycaster.setFromCamera(point, camera)
     const target = scene.getObjectByName('ContentGroup')
@@ -28,6 +29,13 @@ export class Intersections {
 
     if (results.length === 0) return null
     if (nearest) results.sort((value) => value.distance)
+    if (bounds) {
+      if (!bounds.containsPoint(results[0].point)) {
+        console.warn('Object clipped. Rejecting!')
+        return null
+      }
+    }
+
     return results[0]
   }
 }

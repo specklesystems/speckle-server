@@ -9,7 +9,7 @@ import {
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
-import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -27,6 +27,10 @@ export default class PointBatch implements Batch {
 
   public get renderObject(): Object3D {
     return this.mesh
+  }
+
+  public get geometryType(): GeometryType {
+    return this.renderViews[0].geometryType
   }
 
   public getCount() {

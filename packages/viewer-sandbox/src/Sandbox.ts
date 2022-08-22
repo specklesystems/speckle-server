@@ -1,4 +1,4 @@
-import { SpeckleType } from '@speckle/viewer'
+import { SpeckleType, SunLightConfiguration } from '@speckle/viewer'
 import { GeometryConverter } from '@speckle/viewer'
 import { Viewer, WorldTree } from '@speckle/viewer'
 import { Pane } from 'tweakpane'
@@ -9,8 +9,6 @@ export default class Sandbox {
   private pane: Pane
   private tabs
   private filterControls
-  private steamsFolder
-  private viewsControls = []
   private viewsFolder
   private streams: { [url: string]: Array<unknown> } = {}
 
@@ -23,10 +21,21 @@ export default class Sandbox {
     worldOrigin: { x: 0, y: 0, z: 0 },
     pixelThreshold: 0.5,
     exposure: 0.5,
-    tonemapping: 'ACESFilmicToneMapping',
-    sunPhi: 0.5,
-    sunTheta: 0.5,
-    sunRadiusOffset: 0
+    tonemapping: 'ACESFilmicToneMapping'
+  }
+
+  public static lightParams: SunLightConfiguration = {
+    enabled: true,
+    castShadow: true,
+    intensity: 5,
+    color: 0xffffff,
+    elevation: 0.47,
+    azimuth: 0,
+    radius: 0
+  }
+
+  public static indirectLightParams = {
+    intensity: 1
   }
 
   public static filterParams = {
@@ -72,22 +81,20 @@ export default class Sandbox {
       title: `Object: ${url.split('/').reverse()[0]}`
     })
 
-    const label = folder.addInput({ url }, 'url', {
+    folder.addInput({ url }, 'url', {
       title: 'URL',
       disabled: true
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
-    const positionInput = folder
-      .addInput(position, 'value', { label: 'Position' })
-      .on('change', () => {
-        this.viewer.speckleRenderer
-          .subtree(url)
-          .position.set(position.value.x, position.value.y, position.value.z)
-        this.viewer.speckleRenderer.updateDirectLights(0.47, 0)
-        this.viewer.speckleRenderer.updateHelpers()
-      })
+    folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
+      this.viewer.speckleRenderer
+        .subtree(url)
+        .position.set(position.value.x, position.value.y, position.value.z)
+      this.viewer.speckleRenderer.updateDirectLights()
+      this.viewer.speckleRenderer.updateHelpers()
+    })
 
-    const button = folder
+    folder
       .addButton({
         title: 'Unload'
       })
@@ -101,8 +108,6 @@ export default class Sandbox {
   private removeStreamControls(url: string) {
     this.viewer.unloadObject(url)
     ;(this.streams[url][0] as { dispose: () => void }).dispose()
-    ;(this.streams[url][1] as { dispose: () => void }).dispose()
-    ;(this.streams[url][2] as { dispose: () => void }).dispose()
     delete this.streams[url]
   }
 
@@ -118,7 +123,7 @@ export default class Sandbox {
           title: views[k].name
         })
         .on('click', () => {
-          this.viewer.setView(views[k].id)
+          this.viewer.setView(views[k].id, true)
         })
     }
   }
@@ -187,9 +192,7 @@ export default class Sandbox {
     })
     const dark = localStorage.getItem('dark') === 'dark'
     if (dark) {
-      const dark = document
-        .getElementById('renderer')
-        ?.classList.toggle('background-dark')
+      document.getElementById('renderer')?.classList.toggle('background-dark')
     }
 
     darkModeToggle.on('click', () => {
@@ -303,29 +306,84 @@ export default class Sandbox {
       title: 'Lights',
       expanded: true
     })
-    lightsFolder
-      .addInput(Sandbox.sceneParams, 'sunPhi', {
+    const directLightFolder = lightsFolder.addFolder({
+      title: 'Direct',
+      expanded: true
+    })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'enabled', {
+        label: 'Sun Enabled'
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'castShadow', {
+        label: 'Sun Shadows'
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'intensity', {
+        label: 'Sun Intensity',
+        min: 0,
+        max: 10
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'color', {
+        view: 'color',
+        label: 'Sun Color'
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'elevation', {
+        label: 'Sun Elevation',
         min: 0,
         max: Math.PI
       })
       .on('change', () => {
-        this.viewer.speckleRenderer.updateDirectLights(
-          Sandbox.sceneParams.sunPhi,
-          Sandbox.sceneParams.sunTheta,
-          Sandbox.sceneParams.sunRadiusOffset
-        )
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
       })
-    lightsFolder
-      .addInput(Sandbox.sceneParams, 'sunTheta', {
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'azimuth', {
+        label: 'Sun Azimuth',
         min: -Math.PI * 0.5,
         max: Math.PI * 0.5
       })
       .on('change', () => {
-        this.viewer.speckleRenderer.updateDirectLights(
-          Sandbox.sceneParams.sunPhi,
-          Sandbox.sceneParams.sunTheta,
-          Sandbox.sceneParams.sunRadiusOffset
-        )
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'radius', {
+        label: 'Sun Radius',
+        min: 0,
+        max: 1000
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+
+    const indirectLightsFolder = lightsFolder.addFolder({
+      title: 'Indirect',
+      expanded: true
+    })
+
+    indirectLightsFolder
+      .addInput(Sandbox.indirectLightParams, 'intensity', {
+        label: 'Probe Intensity',
+        min: 0,
+        max: 10
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.speckleRenderer.indirectIBLIntensity =
+          Sandbox.indirectLightParams.intensity
       })
   }
 

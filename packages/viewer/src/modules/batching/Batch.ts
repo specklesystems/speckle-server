@@ -15,6 +15,7 @@ export interface Batch {
   renderViews: NodeRenderView[]
   batchMaterial: Material
   renderObject: Object3D
+  geometryType: GeometryType
 
   getCount(): number
   setBatchMaterial(material: Material): void

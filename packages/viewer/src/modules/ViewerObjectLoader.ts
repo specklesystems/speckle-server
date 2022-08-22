@@ -66,6 +66,7 @@ export default class ViewerObjectLoader {
   }
 
   public async load() {
+    const start = performance.now()
     let first = true
     let current = 0
     let total = 0
@@ -104,6 +105,9 @@ export default class ViewerObjectLoader {
     }
 
     // await this.viewer.sceneManager.postLoadFunction()
+    console.warn(
+      `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
+    )
     this.emiter.emit('load-complete', this.objectUrl)
 
     if (viewerLoads === 0) {

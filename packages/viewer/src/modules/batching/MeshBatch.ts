@@ -14,7 +14,7 @@ import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredM
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { World } from '../World'
-import { Batch, BatchUpdateRange, HideAllBatchUpdateRange } from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -32,6 +32,10 @@ export default class MeshBatch implements Batch {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+  }
+
+  public get geometryType(): GeometryType {
+    return this.renderViews[0].geometryType
   }
 
   public get renderObject(): Object3D {
@@ -72,11 +76,7 @@ export default class MeshBatch implements Batch {
       maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
     )
   }
-  /**
-   * This is the first version for multi draw ranges with automatic fill support
-   * In the near future, we'll re-sort the index buffer so we minimize draw calls to
-   * a minimmum. For now it's ok
-   */
+
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => val.material)
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]

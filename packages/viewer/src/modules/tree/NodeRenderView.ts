@@ -7,6 +7,8 @@ export interface RenderMaterial {
   id: string
   color: number
   opacity: number
+  roughness: number
+  metalness: number
   vertexColors: boolean
 }
 
@@ -100,6 +102,12 @@ export class NodeRenderView {
     return this._aabb
   }
 
+  public get transparent() {
+    return (
+      this._renderData.renderMaterial && this._renderData.renderMaterial.opacity < 1
+    )
+  }
+
   public get needsSegmentConversion() {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||
@@ -151,7 +159,11 @@ export class NodeRenderView {
     return (
       this.renderData.renderMaterial.color.toString() +
       '/' +
-      this.renderData.renderMaterial.opacity.toString()
+      this.renderData.renderMaterial.opacity.toString() +
+      '/' +
+      this.renderData.renderMaterial.roughness.toString() +
+      '/' +
+      this.renderData.renderMaterial.metalness.toString()
     )
   }
 

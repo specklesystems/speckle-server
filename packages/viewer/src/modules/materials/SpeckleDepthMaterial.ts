@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleBasicVert } from './shaders/speckle-basic-vert'
-import { speckleBasicFrag } from './shaders/speckle-basic-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshBasicMaterial } from 'three'
+import { speckleDepthVert } from './shaders/speckle-depth-vert'
+import { speckleDepthFrag } from './shaders/speckle-depth-frag'
+import { UniformsUtils, ShaderLib, Vector3, MeshDepthMaterial } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
-class SpeckleBasicMaterial extends MeshBasicMaterial {
-  protected static readonly matBuff: Matrix4 = new Matrix4()
-  protected static readonly vecBuff0: Vector3 = new Vector3()
-  protected static readonly vecBuff1: Vector3 = new Vector3()
-  protected static readonly vecBuff2: Vector3 = new Vector3()
+class SpeckleDepthMaterial extends MeshDepthMaterial {
+  private static readonly matBuff: Matrix4 = new Matrix4()
+  private static readonly vecBuff0: Vector3 = new Vector3()
+  private static readonly vecBuff1: Vector3 = new Vector3()
+  private static readonly vecBuff2: Vector3 = new Vector3()
 
   constructor(parameters, defines = []) {
     super(parameters)
@@ -22,8 +22,11 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
-    ;(this as any).vertProgram = speckleBasicVert
-    ;(this as any).fragProgram = speckleBasicFrag
+    this.userData.rteModelViewMatrix = {
+      value: new Matrix4()
+    }
+    ;(this as any).vertProgram = speckleDepthVert
+    ;(this as any).fragProgram = speckleDepthFrag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {
@@ -32,6 +35,9 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
         },
         uViewer_low: {
           value: this.userData.uViewer_low.value
+        },
+        rteModelViewMatrix: {
+          value: this.userData.rteModelViewMatrix.value
         }
       }
     ])
@@ -39,6 +45,7 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this.onBeforeCompile = function (shader) {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
+      shader.uniforms.rteModelViewMatrix = this.userData.rteModelViewMatrix
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -60,37 +67,39 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
-
+    this.userData.rteModelViewMatrix = {
+      value: new Matrix4()
+    }
     this.defines['USE_RTE'] = ' '
 
     return this
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleBasicMaterial.matBuff.elements[12] = 0
-    SpeckleBasicMaterial.matBuff.elements[13] = 0
-    SpeckleBasicMaterial.matBuff.elements[14] = 0
-    SpeckleBasicMaterial.matBuff.multiply(object.matrixWorld)
-    object.modelViewMatrix.copy(SpeckleBasicMaterial.matBuff)
+    SpeckleDepthMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleDepthMaterial.matBuff.elements[12] = 0
+    SpeckleDepthMaterial.matBuff.elements[13] = 0
+    SpeckleDepthMaterial.matBuff.elements[14] = 0
+    SpeckleDepthMaterial.matBuff.multiply(object.matrixWorld)
+    object.modelViewMatrix.copy(SpeckleDepthMaterial.matBuff)
 
-    SpeckleBasicMaterial.vecBuff0.set(
+    SpeckleDepthMaterial.vecBuff0.set(
       camera.matrixWorld.elements[12],
       camera.matrixWorld.elements[13],
       camera.matrixWorld.elements[14]
     )
 
     Geometry.DoubleToHighLowVector(
-      SpeckleBasicMaterial.vecBuff0,
-      SpeckleBasicMaterial.vecBuff1,
-      SpeckleBasicMaterial.vecBuff2
+      SpeckleDepthMaterial.vecBuff0,
+      SpeckleDepthMaterial.vecBuff1,
+      SpeckleDepthMaterial.vecBuff2
     )
 
-    this.userData.uViewer_low.value.copy(SpeckleBasicMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleBasicMaterial.vecBuff2)
+    this.userData.uViewer_low.value.copy(SpeckleDepthMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleDepthMaterial.vecBuff2)
 
     this.needsUpdate = true
   }
 }
 
-export default SpeckleBasicMaterial
+export default SpeckleDepthMaterial

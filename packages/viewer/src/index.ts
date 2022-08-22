@@ -11,6 +11,7 @@ import {
 import { WorldTree } from './modules/tree/WorldTree'
 import { SpeckleType } from './modules/converter/GeometryConverter'
 import { GeometryConverter } from './modules/converter/GeometryConverter'
+import { SunLightConfiguration } from './IViewer'
 
 export {
   Viewer,
@@ -28,5 +29,6 @@ export type {
   SelectionEvent,
   PropertyInfo,
   StringPropertyInfo,
-  NumericPropertyInfo
+  NumericPropertyInfo,
+  SunLightConfiguration
 }

@@ -36,7 +36,7 @@ export default class Batcher {
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
 
-    console.warn(materialHashes)
+    // console.warn(materialHashes)
     // console.warn(rendeViews)
 
     for (let i = 0; i < materialHashes.length; i++) {
@@ -80,7 +80,7 @@ export default class Batcher {
 
       this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch()
-      console.warn(batch)
+      // console.warn(batch)
     }
   }
 
@@ -105,13 +105,12 @@ export default class Batcher {
     }
   }
 
-  public getBatches(subtreeId?: string) {
-    if (!subtreeId) {
-      return Object.values(this.batches)
-    }
-
+  public getBatches(subtreeId?: string, geometryType?: GeometryType) {
     return Object.values(this.batches).filter((value: Batch) => {
-      return value.subtreeId === subtreeId
+      const subtree = subtreeId !== undefined ? value.subtreeId === subtreeId : true
+      const type =
+        geometryType !== undefined ? value.geometryType === geometryType : true
+      return subtree && type
     })
   }
 
