@@ -249,7 +249,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: large
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -360,26 +360,30 @@ jobs:
   docker-build: &build-job
     docker: &docker-image
       - image: cimg/node:16.15
-    resource_class: xlarge
+    resource_class: medium
     working_directory: *work-dir
     steps:
-      - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-build >> $BASH_ENV
-      - setup_remote_docker:
-          # a weird issue with yarn installing packages throwing EPERM errors
-          # this fixes it
-          version: 20.10.12
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: ./.circleci/build.sh
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - speckle*
+      - when:
+          condition:
+            equal: [true, '${SHOULD_BUILD}']
+          steps:
+            - checkout
+            - setup_remote_docker:
+                # a weird issue with yarn installing packages throwing EPERM errors
+                # this fixes it
+                version: 20.10.12
+                docker_layer_caching: true
+            - run:
+                name: Build and Publish
+                command: ./.circleci/build.sh
+            - persist_to_workspace:
+                root: workspace
+                paths:
+                  - speckle*
 
   docker-build-server:
     <<: *build-job
@@ -424,19 +428,23 @@ jobs:
     resource_class: medium
     working_directory: *work-dir
     steps:
-      - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-publish >> $BASH_ENV
-      - setup_remote_docker:
-          # a weird issue with yarn installing packages throwing EPERM errors
-          # this fixes it
-          version: 20.10.12
-          docker_layer_caching: true
-      - run:
-          name: Publish
-          command: ./.circleci/publish.sh
+      - when:
+          condition:
+            equal: [true, '${SHOULD_PUBLISH}']
+          steps:
+            - checkout
+            - setup_remote_docker:
+                # a weird issue with yarn installing packages throwing EPERM errors
+                # this fixes it
+                version: 20.10.12
+                docker_layer_caching: true
+            - run:
+                name: Publish
+                command: ./.circleci/publish.sh
 
   docker-publish-server:
     <<: *publish-job
@@ -502,7 +510,7 @@ jobs:
       - run:
           name: auth to npm as Speckle
           command: |
-            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml 
+            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml
             echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
       - run:
           name: try login to npm
