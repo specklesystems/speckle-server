@@ -249,7 +249,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: large
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -360,7 +360,7 @@ jobs:
   docker-build: &build-job
     docker: &docker-image
       - image: cimg/node:16.15
-    resource_class: xlarge
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
