@@ -363,7 +363,6 @@ jobs:
     resource_class: medium
     working_directory: *work-dir
     steps:
-      - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
@@ -429,7 +428,6 @@ jobs:
     resource_class: medium
     working_directory: *work-dir
     steps:
-      - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
