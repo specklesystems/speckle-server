@@ -1,0 +1,44 @@
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "fileimport_service.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "fileimport_service.labels" . | indent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+{{ include "fileimport_service.selectorLabels" . | indent 6 }}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
+            io.kubernetes.pod.namespace: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+      toPorts:
+        - ports:
+            - port: "metrics"
+              protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*" # TODO
+    # allow egress to speckle-server
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ printf "%s" .Values.namespace }}
+{{ include "server.selectorLabels" $ | indent 12 }}
+      toPorts:
+        - ports:
+          - port: http # TODO use named port
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
+{{- end }}

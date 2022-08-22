@@ -160,15 +160,18 @@ db:
       ##
       enabled: false
       ## @param db.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the Postgres database pods within the cluster and given namespace
-      ## This is a Kubernetes podSelector object
+      ## For Kubernetes Network Policies this is a podSelector object.
+      ## For Cilium Network Policies this is a toEndpoints object, containing matchLabels or matchExpressions.
       ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
       ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
       ##
       podSelector: {}
       ## @param db.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the Postgres database pods are deployed
-      ## This is a Kubernetes namespaceSelector object
+      ## For Kubernetes Network Policies this is a Kubernetes namespaceSelector object.
+      ## For Cilium Network Policies, this is ignored
       ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
       ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ## ref (cilium): https://docs.cilium.io/en/v1.9/policy/language/#egress
       ##
       namespaceSelector: {}
 
@@ -232,13 +235,16 @@ s3:
       ##
       enabled: false
       ## @param s3.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the s3 compatible storage pods within the cluster and given namespace
-      ## This is a Kubernetes podSelector object
+      ## For Kubernetes Network Policies this is a podSelector object.
+      ## For Cilium Network Policies this is a toEndpoints object, containing matchLabels or matchExpressions.
       ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
       ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ## ref (cilium): https://docs.cilium.io/en/v1.9/policy/language/#egress
       ##
       podSelector: {}
       ## @param s3.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the s3 compatible storage pods are deployed
-      ## This is a Kubernetes namespaceSelector object
+      ## For Kubernetes Network Policies this is a Kubernetes namespaceSelector object.
+      ## For Cilium Network Policies, this is ignored
       ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
       ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
       ##
@@ -283,14 +289,17 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
-      ## @param redis.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the Redis store pods within the cluster and given namespace
-      ## This is a Kubernetes podSelector object
+      ## @param redis.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the Redis pods within the cluster and given namespace
+      ## For Kubernetes Network Policies this is a podSelector object.
+      ## For Cilium Network Policies this is a toEndpoints object, containing matchLabels or matchExpressions.
       ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
       ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ## ref (cilium): https://docs.cilium.io/en/v1.9/policy/language/#egress
       ##
       podSelector: {}
-      ## @param redis.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the Redis store pods are deployed
-      ## This is a Kubernetes namespaceSelector object
+      ## @param redis.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the Redis pods are deployed
+      ## For Kubernetes Network Policies this is a Kubernetes namespaceSelector object.
+      ## For Cilium Network Policies, this is ignored
       ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
       ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
       ##

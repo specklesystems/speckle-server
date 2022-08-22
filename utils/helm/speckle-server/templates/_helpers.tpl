@@ -109,7 +109,21 @@ Expects the global context "$" to be passed as the parameter
 {{- end }}
 
 {{/*
-Creates a network policy egress definition for connecting to Postgres
+Creates a Cilium Network Policy egress definition for connecting to Redis
+
+Expects the global context "$" to be passed as the parameter
+*/}}
+{{- define "speckle.networkpolicy.egress.redis.cilium" -}}
+{{- $port := (default "6379" .Values.redis.networkPolicy.port ) -}}
+{{- if .Values.redis.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.redis.networkPolicy.inCluster.podSelector "port" $port) }}
+{{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" .Values.redis.networkPolicy.externalToCluster.ipv4 "fqdn" .Values.redis.networkPolicy.externalToCluster.host "port" $port) }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Creates a Kubernetes Network Policy egress definition for connecting to Postgres
 */}}
 {{- define "speckle.networkpolicy.egress.postgres" -}}
 {{- $port := (default "5432" .Values.db.networkPolicy.port ) -}}
@@ -121,7 +135,19 @@ Creates a network policy egress definition for connecting to Postgres
 {{- end }}
 
 {{/*
-Creates a network policy egress definition for connecting to Postgres
+Creates a Cilium network policy egress definition for connecting to Postgres
+*/}}
+{{- define "speckle.networkpolicy.egress.postgres.cilium" -}}
+{{- $port := (default "5432" .Values.db.networkPolicy.port ) -}}
+{{- if .Values.db.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.db.networkPolicy.inCluster.podSelector "port" $port) }}
+{{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" .Values.db.networkPolicy.externalToCluster.ipv4 "fqdn" .Values.db.networkPolicy.externalToCluster.host "port" $port) }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Creates a Kubernetes network policy egress definition for connecting to S3 compatible storage
 */}}
 {{- define "speckle.networkpolicy.egress.blob_storage" -}}
 {{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
@@ -137,6 +163,29 @@ Creates a network policy egress definition for connecting to Postgres
     {{- $ip = $host -}}
   {{- end -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $ip "port" $port) }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Creates a Cilium Network Policy egress definition for connecting to S3 compatible storage
+*/}}
+{{- define "speckle.networkpolicy.egress.blob_storage.cilium" -}}
+{{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
+{{- if .Values.s3.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.s3.networkPolicy.inCluster.podSelector "port" $port) }}
+{{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
+  {{- $host := (urlParse .Values.s3.endpoint).host -}}
+  {{- if (contains ":" $host) -}}
+    {{- $host = first (mustRegexSplit ":" $host) -}}
+  {{- end -}}
+  {{- $ip := "" -}}
+  {{- $fqdn := "" -}}
+  {{- if eq (include "speckle.isIPv4" $host) "true" -}}
+    {{- $ip = $host -}}
+  {{- else -}}
+    {{- $fqdn = $host -}}
+  {{- end -}}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $ip "fqdn" $fqdn "port" $port) }}
 {{- end -}}
 {{- end }}
 
@@ -175,10 +224,57 @@ Limitations:
 {{- end }}
 
 {{/*
+Creates a Cilium network policy egress definition for connecting to an external Layer 3/Layer 4 endpoint i.e. ip:port
+
+Usage:
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" "" "fqdn" "myredis.example.org" "port" "6379") }}
+
+Params:
+  - ip - String - Optional - IP of the endpoint to allow egress to. Can provide either ip, fqdn or neither. If both IP or FQDN are provided, IP takes precedence. If neither fqdn or ip is provided then egress is allowed to 0.0.0.0/0 (i.e. everywhere!)
+  - fpdn - String - Optional - Domain name of the endpoint to allow egress to.  Can include a pattern matching glob '*'.  Can provide either ip, fqdn, or neither. If both IP or FQDN are provided, IP takes precedence. If neigher, then egress is allowed to 0.0.0.0/0 (i.e. everywhere!)
+  - port - String - Required
+
+Limitations:
+    - IP is limited to IPv4 due to Kubernetes use of IPv4 CIDR
+    - toFQDNs:
+        - matchName: digitalocean.io
+      toPorts:
+        - ports:
+            - port: "443"
+
+*/}}
+{{- define "speckle.networkpolicy.egress.external.cilium" -}}
+{{- if not .port -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The port was not provided \"%s\"\n" .port | fail -}}
+{{- end -}}
+{{- if .ip }}
+- toCIDR:
+    - {{ printf "%s/32" .ip }}
+{{- else if .fqdn }}
+- toFQDNs:
+  {{- if ( contains "*" .fqdn ) }}
+    - matchPattern: {{ printf "%s" .fqdn }}
+  {{- else }}
+    - matchName: {{ printf "%s" .fqdn }}
+  {{- end }}
+{{- else }}
+- toCIDRSet:
+      # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
+    - cidr: 0.0.0.0/0
+      # except to kubernetes pods or services
+      except:
+        - 10.0.0.0/8
+{{- end }}
+  toPorts:
+    - ports:
+      - port: {{ printf "%s" .port | quote }}
+{{- end }}
+
+{{/*
 Creates a network policy egress definition for connecting to a pod within the cluster
 
 Usage:
-{{ include "speckle.networkpolicy.egress.internal" (dict "podSelectorLabels" {matchLabels.name=redis} "namespaceSelector" {matchLabels.name=redis} "port" "6379") }}
+{{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" {matchLabels.name=redis} "namespaceSelector" {matchLabels.name=redis} "port" "6379") }}
 
 Params:
   - podSelector - Object - Required
@@ -203,6 +299,31 @@ Params:
 {{ .podSelector | toYaml | indent 8 }}
   ports:
     - port: {{ printf "%s" .port }}
+{{- end }}
+
+{{/*
+Creates a cilium network policy egress definition for connecting to a pod within the cluster
+
+Usage:
+{{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" {matchLabels.name=redis matchLabels."io.kubernetes.pod.namespace.labels.name"=speckle} "port" "6379") }}
+
+Params:
+  - endpointSelector - Object - Required
+  - port - String - Required
+
+*/}}
+{{- define "speckle.networkpolicy.egress.internal.cilium" -}}
+{{- if not .endpointSelector -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The Endpoint selector was not provided\n" | fail -}}
+{{- end -}}
+{{- if not .port -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The port was not provided \"%s\"\n" .port | fail -}}
+{{- end -}}
+- toEndpoints:
+{{ .endpointSelector | toYaml | indent 4 }}
+  toPorts:
+    - ports:
+      - port: {{ printf "%s" .port | quote }}
 {{- end }}
 
 {{/*
