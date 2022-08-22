@@ -214,7 +214,7 @@ export default class SpeckleRenderer {
           meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
         material = Array.isArray(material) ? material : [material]
         for (let k = 0; k < material.length; k++) {
-          if (material instanceof SpeckleStandardMaterial) {
+          if (material[k] instanceof SpeckleStandardMaterial) {
             material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
             material[k].userData.uShadowViewer_low.value.copy(viewerLow)
             material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
