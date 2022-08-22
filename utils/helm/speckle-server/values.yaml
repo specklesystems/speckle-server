@@ -26,6 +26,16 @@ ssl_canonical_url: true
 ##
 cert_manager_issuer: letsencrypt-staging
 
+## @section Network Plugin configuration
+## @descriptionStart
+## This is used to define the type of network policy that is deployed.
+## Different Kubernetes Network Plugins or Container Network Interfaces (CNIs) can make use of different types of
+## Network Policy.  Some of these provide more features than the standard Kubernetes Network Policy.
+## @descriptionEnd
+networkPlugin:
+  ## @param networkPlugin.type (Optional) Used to configure which type of NetworkPolicy is deployed. Options are 'kubernetes' or 'cilium'.
+  type: 'kubernetes'
+
 ## @section Ingress metadata for NetworkPolicy
 ## @descriptionStart
 ## This section is ignored unless networkPolicy is enabled for frontend or server.

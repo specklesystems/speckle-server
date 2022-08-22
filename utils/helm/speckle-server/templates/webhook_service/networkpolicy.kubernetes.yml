@@ -1,15 +1,15 @@
-{{- if .Values.monitoring.networkPolicy.enabled -}}
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "monitoring.name" $ }}
+  name: {{ include "webhook_service.name" $ }}
   namespace: {{ .Values.namespace }}
   labels:
-{{ include "monitoring.labels" . | indent 4 }}
+{{ include "webhook_service.labels" . | indent 4 }}
 spec:
   podSelector:
     matchLabels:
-{{ include "monitoring.selectorLabels" . | indent 6 }}
+{{ include "webhook_service.selectorLabels" . | indent 6 }}
   policyTypes:
     - Egress
     - Ingress
@@ -24,6 +24,12 @@ spec:
       ports:
         - port: metrics
   egress:
+    # webhook can call anything external, but is blocked from egress elsewhere within the cluster
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
     # allow access to DNS
     - to:
         - namespaceSelector: {}
@@ -33,6 +39,4 @@ spec:
       ports:
         - port: 53
           protocol: UDP
-    # postgres
-{{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
 {{- end -}}
