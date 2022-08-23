@@ -11,10 +11,12 @@ import {
   StringPropertyInfo,
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
+
 import { WorldTree } from './modules/tree/WorldTree'
 import { SpeckleType } from './modules/converter/GeometryConverter'
 import { GeometryConverter } from './modules/converter/GeometryConverter'
 import { SunLightConfiguration } from './IViewer'
+import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 
 export {
   Viewer,
@@ -34,5 +36,8 @@ export type {
   StringPropertyInfo,
   NumericPropertyInfo,
   FilteringState,
-  SunLightConfiguration
+  SunLightConfiguration,
+  DataTree,
+  ObjectPredicate,
+  SpeckleObject
 }

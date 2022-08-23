@@ -1,5 +1,8 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { FilteringState } from './modules/filtering/FilteringManager'
+import { PropertyInfo } from './modules/filtering/PropertyManager'
+import { DataTree } from './modules/tree/DataTree'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -74,6 +77,7 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
  */
 export interface IViewer {
   init(): Promise<void>
+  onWindowResize(): void
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
@@ -93,8 +97,43 @@ export interface IViewer {
 
   screenshot(): Promise<string>
 
+  /** Old Filtering members. Deprecated */
   applyFilter(filter: unknown): Promise<void>
-  getObjectsProperties(includeAll?: boolean): unknown
+
+  /** New Filtering members */
+  getObjectProperties(resourceURL?: string): PropertyInfo[]
+  showObjects(
+    objectIds: string[],
+    stateKey?: string,
+    includeDescendants?
+  ): Promise<void>
+  hideObjects(
+    objectIds: string[],
+    stateKey?: string,
+    includeDescendants?
+  ): Promise<void>
+  isolateObjects(
+    objectIds: string[],
+    stateKey?: string,
+    includeDescendants?
+  ): Promise<void>
+  unIsolateObjects(
+    objectIds: string[],
+    stateKey?: string,
+    includeDescendants?
+  ): Promise<void>
+
+  selectObjects(objectIds: string[]): Promise<void>
+  resetSelection(): Promise<void>
+  highlightObjects(objectIds: string[]): Promise<void>
+  resetHighlight(): Promise<void>
+
+  setColorFilter(prop: PropertyInfo): Promise<FilteringState>
+  removeColorFilter(): Promise<FilteringState>
+  reset(): Promise<FilteringState>
+
+  /** Data ops */
+  getDataTree(): DataTree
 
   dispose(): void
 }
