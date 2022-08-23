@@ -190,13 +190,14 @@ export default {
         type: 'action'
       })
 
-      const url = `https://releases.speckle.dev/manager/SpeckleManager Setup.exe`
+      const url = `https://releases.speckle.systems/`
 
       const a = document.createElement('a')
-      document.body.appendChild(a)
       a.style = 'display: none'
       a.href = url
-      a.download = 'SpeckleManager Setup.exe'
+      a.target = '_blank'
+
+      document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
     }
