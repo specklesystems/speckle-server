@@ -106,22 +106,22 @@ export interface IViewer {
     objectIds: string[],
     stateKey?: string,
     includeDescendants?
-  ): Promise<void>
+  ): Promise<FilteringState>
   hideObjects(
     objectIds: string[],
     stateKey?: string,
     includeDescendants?
-  ): Promise<void>
+  ): Promise<FilteringState>
   isolateObjects(
     objectIds: string[],
     stateKey?: string,
     includeDescendants?
-  ): Promise<void>
+  ): Promise<FilteringState>
   unIsolateObjects(
     objectIds: string[],
     stateKey?: string,
     includeDescendants?
-  ): Promise<void>
+  ): Promise<FilteringState>
 
   selectObjects(objectIds: string[]): Promise<void>
   resetSelection(): Promise<void>

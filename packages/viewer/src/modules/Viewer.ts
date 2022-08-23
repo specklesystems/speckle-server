@@ -119,11 +119,11 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.filteringManager = new FilteringManager(this.speckleRenderer)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).WT = WorldTree
+    // ;(window as any).WT = WorldTree
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).FM = this.filteringManager
+    // ;(window as any).FM = this.filteringManager
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).V = this
+    // ;(window as any).V = this
   }
 
   public getObjectProperties(resourceURL: string = null): PropertyInfo[] {
@@ -148,10 +148,11 @@ export class Viewer extends EventEmitter implements IViewer {
     objectIds: string[],
     stateKey: string = null,
     includeDescendants = false
-  ): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.hideObjects(objectIds, stateKey, includeDescendants)
-      resolve()
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.hideObjects(objectIds, stateKey, includeDescendants)
+      )
     })
   }
 
@@ -159,10 +160,11 @@ export class Viewer extends EventEmitter implements IViewer {
     objectIds: string[],
     stateKey: string = null,
     includeDescendants = false
-  ): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.showObjects(objectIds, stateKey, includeDescendants)
-      resolve()
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.showObjects(objectIds, stateKey, includeDescendants)
+      )
     })
   }
 
@@ -170,10 +172,11 @@ export class Viewer extends EventEmitter implements IViewer {
     objectIds: string[],
     stateKey: string = null,
     includeDescendants = false
-  ): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.isolateObjects(objectIds, stateKey, includeDescendants)
-      resolve()
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.isolateObjects(objectIds, stateKey, includeDescendants)
+      )
     })
   }
 
@@ -181,10 +184,11 @@ export class Viewer extends EventEmitter implements IViewer {
     objectIds: string[],
     stateKey: string = null,
     includeDescendants = false
-  ): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.unIsolateObjects(objectIds, stateKey, includeDescendants)
-      resolve()
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.unIsolateObjects(objectIds, stateKey, includeDescendants)
+      )
     })
   }
 
@@ -395,7 +399,7 @@ export class Viewer extends EventEmitter implements IViewer {
    * LEGACY: Handles (or tries to handle) old viewer filtering.
    * @param args legacy filter object
    */
-  public async applyFilter(filter: Record<string, unknown>) {
+  public async applyFilter(filter: unknown) {
     filter
     // return this.FilteringManager.handleLegacyFilter(filter)
   }

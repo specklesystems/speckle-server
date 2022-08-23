@@ -9,8 +9,6 @@ import {
   Viewer,
   SelectionEvent,
   PropertyInfo,
-  NumericPropertyInfo,
-  StringPropertyInfo,
   FilteringState
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
@@ -223,10 +221,10 @@ export function setPreventCommentCollapse(shouldPrevent: boolean) {
 
 // VIEWER
 
-export function handleViewerSelection(selectionInfo: SelectionEvent) {
+export async function handleViewerSelection(selectionInfo: SelectionEvent) {
   if (!selectionInfo) {
     updateState({ selectedObjects: [] })
-    getInitializedViewer().FilteringManager.resetSelection()
+    await getInitializedViewer().resetSelection()
     return
   }
 
@@ -239,38 +237,38 @@ export function handleViewerSelection(selectionInfo: SelectionEvent) {
     state.selectedObjects = [selectionInfo.userData]
   }
 
-  getInitializedViewer().FilteringManager.selectObjects(
+  getInitializedViewer().selectObjects(
     state.selectedObjects.map((o) => o.id) as string[]
   )
   updateState(state)
 }
 
-export function clearSelectionDisplay() {
-  getInitializedViewer().FilteringManager.resetSelection()
+export async function clearSelectionDisplay() {
+  await getInitializedViewer().resetSelection()
 }
 
-export function resetSelection() {
+export async function resetSelection() {
   updateState({ selectedObjects: [] })
-  getInitializedViewer().FilteringManager.resetSelection()
+  await getInitializedViewer().resetSelection()
 }
 
-export function highlightObjects(objectIds: string[]) {
-  getInitializedViewer().FilteringManager.highlightObjects(objectIds)
+export async function highlightObjects(objectIds: string[]) {
+  await getInitializedViewer().highlightObjects(objectIds)
 }
 
-export function removeHighlights() {
+export async function removeHighlights() {
   // TODO
-  getInitializedViewer().FilteringManager.resetHighlight()
+  await getInitializedViewer().resetHighlight()
 }
 
 // FILTERING NEW
 
-export function isolateObjects2(
+export async function isolateObjects2(
   objectIds: string[],
   stateKey: string,
   includeDescendants = false
 ) {
-  const result = getInitializedViewer().FilteringManager.isolateObjects(
+  const result = await getInitializedViewer().isolateObjects(
     objectIds,
     stateKey,
     includeDescendants
@@ -279,12 +277,12 @@ export function isolateObjects2(
   updateState({ currentFilterState: result })
 }
 
-export function unIsolateObjects2(
+export async function unIsolateObjects2(
   objectIds: string[],
   stateKey: string,
   includeDescendants = false
 ) {
-  const result = getInitializedViewer().FilteringManager.unIsolateObjects(
+  const result = await getInitializedViewer().unIsolateObjects(
     objectIds,
     stateKey,
     includeDescendants
@@ -293,12 +291,12 @@ export function unIsolateObjects2(
   console.log(result)
 }
 
-export function hideObjects2(
+export async function hideObjects2(
   objectIds: string[],
   stateKey: string,
   includeDescendants = false
 ) {
-  const result = getInitializedViewer().FilteringManager.hideObjects(
+  const result = await getInitializedViewer().hideObjects(
     objectIds,
     stateKey,
     includeDescendants
@@ -307,12 +305,12 @@ export function hideObjects2(
   console.log(result)
 }
 
-export function showObjects2(
+export async function showObjects2(
   objectIds: string[],
   stateKey: string,
   includeDescendants = false
 ) {
-  const result = getInitializedViewer().FilteringManager.showObjects(
+  const result = await getInitializedViewer().showObjects(
     objectIds,
     stateKey,
     includeDescendants
@@ -323,8 +321,8 @@ export function showObjects2(
   console.log(result)
 }
 
-export function setColorFilter(property: PropertyInfo) {
-  const result = getInitializedViewer().FilteringManager.setColorFilter(property)
+export async function setColorFilter(property: PropertyInfo) {
+  const result = await getInitializedViewer().setColorFilter(property)
   updateState({ currentFilterState: result })
   console.log(result)
 }
@@ -718,7 +716,7 @@ export async function setFilterDirectly(params: { filter: Filter }) {
   }
 }
 
-export function resetFilter() {
+export async function resetFilter() {
   const viewer = getInitializedViewer()
 
   resetInternalHideIsolateObjectState()
@@ -729,6 +727,6 @@ export function resetFilter() {
     currentFilterState: null
   })
 
-  viewer.FilteringManager.reset()
+  await viewer.reset()
   viewer.applyFilter(null)
 }
