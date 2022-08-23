@@ -174,10 +174,7 @@ Creates a Cilium Network Policy egress definition for connecting to S3 compatibl
 {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.s3.networkPolicy.inCluster.podSelector "port" $port) }}
 {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-  {{- $host := (urlParse .Values.s3.endpoint).host -}}
-  {{- if (contains ":" $host) -}}
-    {{- $host = first (mustRegexSplit ":" $host) -}}
-  {{- end -}}
+  {{- $host := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
   {{- $ip := "" -}}
   {{- $fqdn := "" -}}
   {{- if eq (include "speckle.isIPv4" $host) "true" -}}
@@ -187,6 +184,17 @@ Creates a Cilium Network Policy egress definition for connecting to S3 compatibl
   {{- end -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $ip "fqdn" $fqdn "port" $port) }}
 {{- end -}}
+{{- end }}
+
+{{/*
+Extracts the domain name from a url
+*/}}
+{{- define "speckle.networkPolicy.domainFromUrl" -}}
+{{- $host := ( urlParse . ).host -}}
+{{- if (contains ":" $host) -}}
+  {{- $host = first (mustRegexSplit ":" $host) -}}
+{{- end -}}
+{{ printf "%s" $host }}
 {{- end }}
 
 {{/*
@@ -213,6 +221,16 @@ Params:
     {{- end }}
   {{- end }}
 {{- end }}
+{{- end }}
+
+{{/*
+Creates a DNS match pattern for discovering blob storage IP
+*/}}
+{{- define "speckle.networkpolicy.dns.blob_storage.cilium" -}}
+{{- $domain := ( include  "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+  {{- if ne (include "speckle.isIPv4" $domain ) "true" -}}
+{{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
+  {{- end }}
 {{- end }}
 
 {{/*
@@ -392,4 +410,11 @@ Selector labels for Prometheus release
 */}}
 {{- define "speckle.prometheus.selectorLabels.release" -}}
 prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
+{{- end }}
+
+{{/*
+Ingress pod selector
+*/}}
+{{- define "speckle.ingress.selector.pod" -}}
+app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
 {{- end }}

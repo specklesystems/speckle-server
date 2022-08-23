@@ -51,10 +51,3 @@ Create the name of the service account to use
 {{- default "default" .Values.frontend.serviceAccount.name }}
 {{- end }}
 {{- end }}
-
-{{/*
-Ingress pod selector
-*/}}
-{{- define "frontend.ingress.selector.pod" -}}
-app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
-{{- end }}
