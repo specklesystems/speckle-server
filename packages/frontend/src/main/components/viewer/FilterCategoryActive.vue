@@ -176,7 +176,8 @@ export default {
       }
     },
     async toggleVisibility(prop) {
-      console.log(this.isolatedLegend[prop.value])
+      console.log(prop)
+      console.log(this.visibleLegend[prop.value])
       if (this.visibleLegend[prop.value]) {
         hideObjects2(prop.ids, 'ui-filters')
       } else {

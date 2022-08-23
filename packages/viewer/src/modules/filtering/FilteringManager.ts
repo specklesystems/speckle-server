@@ -244,6 +244,9 @@ export class FilteringManager {
       valueGroupColors.map((v) => v.color.getHex())
     )
     const nonMatchingRvs: NodeRenderView[] = []
+    // TODO: note that this does not handle well nested element categories. For example,
+    // windows (family instances) inside walls get the same color as the walls, even though
+    // they are identified as a different category.
     this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root) {
         return true
@@ -336,7 +339,8 @@ export class FilteringManager {
         })
         returnState.colorGroups.push({
           value: group.value,
-          color: group.color.getHexString()
+          color: group.color.getHexString(),
+          ids: group.ids
         })
         returnState.activePropFilterKey = this.ColorStringFilterState.currentProp.key
       }
