@@ -80,6 +80,8 @@ export default class Materials {
       let lineWeight = node.model.raw.displayStyle.lineweight || 0
       const units = node.model.raw.displayStyle.units
       lineWeight = units ? lineWeight * getConversionFactor(units) : 0
+      /** If the line width is smalle than 1mm, we'll just render it in screen space */
+      lineWeight = lineWeight < 0.001 ? 0 : lineWeight
       displayStyle = {
         id: node.model.raw.displayStyle.id,
         color: node.model.raw.displayStyle.diffuse || node.model.raw.displayStyle.color,
