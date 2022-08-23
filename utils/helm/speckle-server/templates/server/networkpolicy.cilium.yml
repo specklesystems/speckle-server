@@ -26,16 +26,6 @@ spec:
         - ports:
             - port: http
               protocol: TCP
-{{- if .Values.helm_test_enabled }}
-    # ingress from test
-    - fromEndpoints:
-        - matchLabels:
-{{ include "test.selectorLabels" $ | indent 12 }}
-      toPorts:
-        - ports:
-          - port: http
-            protocol: TCP
-{{- end }}
     # ingress from file import service
     - fromEndpoints:
         - matchLabels:
@@ -55,6 +45,7 @@ spec:
               protocol: UDP
           rules:
             dns:
+              - matchPattern: {{ .Values.domain }}
 {{- if .Values.server.sentry_dns }}
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
@@ -75,4 +66,11 @@ spec:
 {{ include "speckle.networkpolicy.egress.redis.cilium" $ | indent 4 }}
     # s3
 {{ include "speckle.networkpolicy.egress.blob_storage.cilium" $ | indent 4 }}
+    # allow egress to the ingress for speckle-server, so it can call itself
+    - toFQDNs:
+        - matchPattern: {{ .Values.domain }}
+      toPorts:
+        - ports:
+          - port: "443"
+            protocol: TCP
 {{- end }}

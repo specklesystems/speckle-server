@@ -19,5 +19,7 @@ spec:
         - ports:
             - port: "www"
               protocol: TCP
-  egress: []
+  egressDeny:
+    - toEntities:
+        - "all"
 {{- end }}
