@@ -43,7 +43,7 @@ export class FilteringManager {
   private ColorStringFilterState = null
   private ColorNumericFilterState = null
   private SelectionState = new GenericRvState()
-  private OverlayState = new GenericRvState()
+  private HighlightState = new GenericRvState()
 
   public constructor(renderer: SpeckleRenderer) {
     this.WTI = WorldTree.getInstance()
@@ -274,17 +274,18 @@ export class FilteringManager {
   public selectObjects(objectIds: string[]) {
     return this.populateGenericState(objectIds, this.SelectionState)
   }
-  public overlayObjects(objectIds: string[]) {
-    return this.populateGenericState(objectIds, this.OverlayState)
+  public highlightObjects(objectIds: string[]) {
+    return this.populateGenericState(objectIds, this.HighlightState)
   }
 
   private populateGenericState(objectIds, state) {
     const ids = [...objectIds, ...this.getDescendantIds(objectIds)]
     state.rvs = []
-
+    state.ids = ids
     if (ids.length !== 0) {
       WorldTree.getInstance().walk((node: TreeNode) => {
         if (!node.model.atomic) return true
+        if (!node.model.raw) return true
         if (ids.indexOf(node.model.raw.id) !== -1) {
           state.rvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(node, node))
         }
@@ -299,8 +300,8 @@ export class FilteringManager {
     return this.setFilters()
   }
 
-  public resetOverlay() {
-    this.OverlayState = new GenericRvState()
+  public resetHighlight() {
+    this.HighlightState = new GenericRvState()
     return this.setFilters()
   }
 
@@ -310,7 +311,7 @@ export class FilteringManager {
     this.ColorStringFilterState = null
     this.ColorNumericFilterState = null
     this.SelectionState = new GenericRvState()
-    this.OverlayState = new GenericRvState()
+    this.HighlightState = new GenericRvState()
     this.StateKey = null
     return null
   }
@@ -383,8 +384,8 @@ export class FilteringManager {
       })
     }
 
-    if (this.OverlayState.rvs.length !== 0) {
-      this.Renderer.applyFilter(this.SelectionState.rvs, {
+    if (this.HighlightState.rvs.length !== 0) {
+      this.Renderer.applyFilter(this.HighlightState.rvs, {
         filterType: FilterMaterialType.OVERLAY
       })
     }

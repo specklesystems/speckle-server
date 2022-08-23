@@ -17,6 +17,8 @@
     @click.stop="
       prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null
     "
+    @mouseenter="toggleHighlight(true)"
+    @mouseleave="toggleHighlight(false)"
   >
     <v-col cols="1" class="text-center">
       <v-icon
@@ -132,6 +134,8 @@ import {
   showObjects2,
   isolateObjects2,
   unIsolateObjects2,
+  highlightObjects,
+  removeHighlights,
   getInitializedViewer
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
@@ -232,6 +236,25 @@ export default {
   },
   mounted() {},
   methods: {
+    toggleHighlight(hovered) {
+      if (this.prop.type === 'array') {
+        const targetIds = this.prop.value.map((o) => o.referencedId)
+        if (hovered) {
+          highlightObjects(targetIds)
+        } else {
+          removeHighlights()
+        }
+        return
+      }
+
+      if (!this.prop.value.referencedId) return
+
+      if (hovered) {
+        highlightObjects([this.prop.value.referencedId])
+      } else {
+        removeHighlights()
+      }
+    },
     toggleVisibility() {
       if (this.prop.type === 'object') {
         if (this.visible) {

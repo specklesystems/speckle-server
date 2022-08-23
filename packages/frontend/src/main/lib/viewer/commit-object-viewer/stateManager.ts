@@ -254,6 +254,15 @@ export function resetSelection() {
   getInitializedViewer().FilteringManager.resetSelection()
 }
 
+export function highlightObjects(objectIds: string[]) {
+  getInitializedViewer().FilteringManager.highlightObjects(objectIds)
+}
+
+export function removeHighlights() {
+  // TODO
+  getInitializedViewer().FilteringManager.resetHighlight()
+}
+
 // FILTERING NEW
 
 export function isolateObjects2(
@@ -281,6 +290,7 @@ export function unIsolateObjects2(
     includeDescendants
   )
   updateState({ currentFilterState: result })
+  console.log(result)
 }
 
 export function hideObjects2(
@@ -307,16 +317,16 @@ export function showObjects2(
     stateKey,
     includeDescendants
   )
-  console.log(result)
   const state = { ...commitObjectViewerState() }
   state.currentFilterState = result
   updateState(state)
+  console.log(result)
 }
 
 export function setColorFilter(property: PropertyInfo) {
   const result = getInitializedViewer().FilteringManager.setColorFilter(property)
-  console.log(result)
   updateState({ currentFilterState: result })
+  console.log(result)
 }
 
 // FILTERING OLD
