@@ -15,7 +15,7 @@ export type FilteringState = {
   hiddenObjects?: string[]
   isolatedObjects?: string[]
   colorGroups?: Record<string, string>[]
-  activePropFilter?: PropertyInfo
+  activePropFilterKey?: string
 }
 
 export enum FilterMaterialType {
@@ -338,7 +338,7 @@ export class FilteringManager {
           value: group.value,
           color: group.color.getHexString()
         })
-        returnState.activePropFilter = this.ColorStringFilterState.currentProp
+        returnState.activePropFilterKey = this.ColorStringFilterState.currentProp.key
       }
     }
     // Number based colors
@@ -349,7 +349,7 @@ export class FilteringManager {
           rampIndex: group.value
         })
       }
-      returnState.activePropFilter = this.ColorNumericFilterState.currentProp
+      returnState.activePropFilterKey = this.ColorNumericFilterState.currentProp.key
     }
 
     const isShowHide =

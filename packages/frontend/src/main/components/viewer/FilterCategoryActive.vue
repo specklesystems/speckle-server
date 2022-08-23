@@ -133,16 +133,21 @@ export default {
       isolatedLegend: {}
     }
   },
-  computed: {},
+  computed: {
+    colors() {
+      if (!this.viewerState.currentFilterState?.colorGroups) return []
+      return this.viewerState.currentFilterState?.colorGroups
+    }
+  },
   watch: {
     viewerState() {
-      if (!this.viewerState.currentFilterState?.coloringState) {
+      if (!this.viewerState.currentFilterState?.colorGroups) {
         return
       }
       const colorLegend = {}
       const visibleLegend = {}
       const isolatedLegend = {}
-      for (const vgc of this.viewerState.currentFilterState.coloringState.colors) {
+      for (const vgc of this.viewerState.currentFilterState.colorGroups) {
         colorLegend[vgc.value] = '#' + vgc.color.toString(16)
 
         visibleLegend[vgc.value] = this.isVisible(vgc.ids)
@@ -180,26 +185,21 @@ export default {
     },
     isVisible(ids) {
       if (!this.viewerState.currentFilterState) return true
-      if (!this.viewerState.currentFilterState.visibilityState) return true
-      const stateName = this.viewerState.currentFilterState.visibilityState.name
-      if (stateName !== 'hiddenObjectState') return true
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
 
-      const targetIds =
-        this.viewerState.currentFilterState?.visibilityState?.ids.filter(
-          (val) => ids.indexOf(val) !== -1
-        )
+      const targetIds = this.viewerState.currentFilterState?.hiddenObjects?.filter(
+        (val) => ids.indexOf(val) !== -1
+      )
       if (targetIds.length === 0) return true
       else return false
     },
     isIsolated(ids) {
       if (!this.viewerState.currentFilterState) return false
-      if (!this.viewerState.currentFilterState.visibilityState) return false
-      const stateName = this.viewerState.currentFilterState.visibilityState.name
-      if (stateName !== 'isolateObjectsState') return false
-      const targetIds =
-        this.viewerState.currentFilterState?.visibilityState?.ids.filter(
-          (val) => ids.indexOf(val) !== -1
-        )
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
+      const targetIds = this.viewerState.currentFilterState?.isolatedObjects?.filter(
+        (val) => ids.indexOf(val) !== -1
+      )
       if (targetIds.length === 0) return false
       else return true
     }

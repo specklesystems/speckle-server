@@ -9,12 +9,10 @@ import {
   Viewer,
   SelectionEvent,
   PropertyInfo,
-  NumericPropertyInfo,
-  StringPropertyInfo,
   FilteringState
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray } from 'lodash'
+import { cloneDeep, has, isArray, update } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -69,9 +67,10 @@ const commitObjectViewerState = makeVar({
   preventCommentCollapse: false,
   commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
   emojis,
-  // TODO: new filtering shit
+  // New filtering vars
   currentFilterState: null as Nullable<FilteringState>,
-  selectedObjects: [] as UnknownObject[]
+  selectedObjects: [] as UnknownObject[],
+  objectProperties: [] as PropertyInfo[]
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
@@ -223,6 +222,13 @@ export function setPreventCommentCollapse(shouldPrevent: boolean) {
 
 // VIEWER
 
+export function getObjectProperties() {
+  setIsViewerBusy(true)
+  const props = getInitializedViewer().getObjectsProperties()
+  setIsViewerBusy(false)
+  updateState({ objectProperties: props })
+}
+
 export function handleViewerSelection(selectionInfo: SelectionEvent) {
   if (!selectionInfo) {
     updateState({ selectedObjects: [] })
@@ -270,6 +276,7 @@ export function isolateObjects2(
   stateKey: string,
   includeDescendants = false
 ) {
+  setIsViewerBusy(true)
   const result = getInitializedViewer().FilteringManager.isolateObjects(
     objectIds,
     stateKey,
@@ -277,6 +284,7 @@ export function isolateObjects2(
   )
   console.log(result)
   updateState({ currentFilterState: result })
+  setIsViewerBusy(false)
 }
 
 export function unIsolateObjects2(
@@ -284,6 +292,7 @@ export function unIsolateObjects2(
   stateKey: string,
   includeDescendants = false
 ) {
+  setIsViewerBusy(true)
   const result = getInitializedViewer().FilteringManager.unIsolateObjects(
     objectIds,
     stateKey,
@@ -291,6 +300,7 @@ export function unIsolateObjects2(
   )
   updateState({ currentFilterState: result })
   console.log(result)
+  setIsViewerBusy(false)
 }
 
 export function hideObjects2(
@@ -298,6 +308,7 @@ export function hideObjects2(
   stateKey: string,
   includeDescendants = false
 ) {
+  setIsViewerBusy(true)
   const result = getInitializedViewer().FilteringManager.hideObjects(
     objectIds,
     stateKey,
@@ -305,6 +316,7 @@ export function hideObjects2(
   )
   updateState({ currentFilterState: result })
   console.log(result)
+  setIsViewerBusy(false)
 }
 
 export function showObjects2(
@@ -312,21 +324,23 @@ export function showObjects2(
   stateKey: string,
   includeDescendants = false
 ) {
+  setIsViewerBusy(true)
   const result = getInitializedViewer().FilteringManager.showObjects(
     objectIds,
     stateKey,
     includeDescendants
   )
-  const state = { ...commitObjectViewerState() }
-  state.currentFilterState = result
-  updateState(state)
+  updateState({ currentFilterState: result })
   console.log(result)
+  setIsViewerBusy(false)
 }
 
 export function setColorFilter(property: PropertyInfo) {
+  setIsViewerBusy(true)
   const result = getInitializedViewer().FilteringManager.setColorFilter(property)
   updateState({ currentFilterState: result })
   console.log(result)
+  setIsViewerBusy(false)
 }
 
 // FILTERING OLD

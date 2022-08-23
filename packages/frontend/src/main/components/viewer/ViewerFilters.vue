@@ -97,10 +97,6 @@ export default {
     FilterNumericActive: () => import('@/main/components/viewer/FilterNumericActive')
   },
   props: {
-    propertyFilters: {
-      type: Array,
-      default: () => []
-    },
     sourceApplication: {
       type: String,
       default: ''
@@ -116,6 +112,7 @@ export default {
         commitObjectViewerState @client {
           appliedFilter
           currentFilterState
+          objectProperties
         }
       }
     `)
@@ -137,16 +134,20 @@ export default {
     }
   },
   computed: {
+    propertyFilters() {
+      if (!this.viewerState.objectProperties) return []
+      return this.viewerState.objectProperties
+    },
     topFilters() {
       if (this.allFilters.length === 0) return []
       const arr = []
-      arr.push(this.allFilters.find((f) => f.key === 'Object Type'))
+      arr.push(this.allFilters.find((f) => f.name === 'Object Type'))
       if (this.sourceApplication.toLowerCase().includes('revit')) {
-        arr.push(this.allFilters.find((f) => f.key === 'Level'))
-        arr.push(this.allFilters.find((f) => f.key === 'family'))
-        arr.push(this.allFilters.find((f) => f.key === 'type'))
-        arr.push(this.allFilters.find((f) => f.key === 'Area'))
-        arr.push(this.allFilters.find((f) => f.key === 'Volume'))
+        arr.push(this.allFilters.find((f) => f.name === 'Level'))
+        arr.push(this.allFilters.find((f) => f.name === 'family'))
+        arr.push(this.allFilters.find((f) => f.name === 'type'))
+        arr.push(this.allFilters.find((f) => f.name === 'Area'))
+        arr.push(this.allFilters.find((f) => f.name === 'Volume'))
       }
       return arr.filter((el) => !!el)
     },
@@ -168,20 +169,20 @@ export default {
       }
     },
     'viewerState.currentFilterState'() {
-      if (!this.viewerState.currentFilterState?.coloringState) {
+      if (!this.viewerState.currentFilterState?.activePropFilterKey) {
         this.activeFilter = null
       }
-    },
-    'viewerState.appliedFilter'() {
-      if (this.trySetPresetFilter) return
-      if (this.viewerState.appliedFilter?.filterBy) {
-        const key = Object.keys(this.viewerState.appliedFilter.filterBy)[0]
-        const presetFilter = this.allFilters.find((f) => f.targetKey === key)
-        if (presetFilter) this.activeFilter = presetFilter
-        this.trySetPresetFilter = true
-        this.preventFirstSet = true
-      }
     }
+    // 'viewerState.appliedFilter'() {
+    //   if (this.trySetPresetFilter) return
+    //   if (this.viewerState.appliedFilter?.filterBy) {
+    //     const key = Object.keys(this.viewerState.appliedFilter.filterBy)[0]
+    //     const presetFilter = this.allFilters.find((f) => f.targetKey === key)
+    //     if (presetFilter) this.activeFilter = presetFilter
+    //     this.trySetPresetFilter = true
+    //     this.preventFirstSet = true
+    //   }
+    // }
   },
   mounted() {
     if (this.$eventHub) {

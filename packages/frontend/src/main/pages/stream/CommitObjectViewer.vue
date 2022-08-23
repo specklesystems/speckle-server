@@ -79,7 +79,6 @@
           <!-- Filters display -->
           <viewer-filters
             class="mt-4"
-            :property-filters="objectProperties"
             :source-application="
               resources
                 .filter((r) => r.type === 'commit')
@@ -255,8 +254,10 @@ import {
   Filter,
   setFilterDirectly,
   setIsViewerBusy,
-  setupCommitObjectViewer
+  setupCommitObjectViewer,
+  getObjectProperties
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { PropertyInfo } from '@speckle/viewer'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import {
@@ -386,7 +387,7 @@ export default defineComponent({
     loadProgress: 0,
     showCommitEditDialog: false,
     views: [] as Record<string, unknown>[],
-    objectProperties: null as Nullable<Record<string, unknown>>,
+    objectProperties: null as Nullable<PropertyInfo[]>,
     resources: [] as ResourceObjectType<AllSupportedDataTypes>[],
     showAddOverlay: false,
     viewerBusy: false
@@ -726,7 +727,8 @@ export default defineComponent({
     async setFilters() {
       try {
         // repopulate object props
-        this.objectProperties = await this.viewer.getObjectsProperties()
+        // this.objectProperties = await this.viewer.getObjectsProperties()
+        getObjectProperties()
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: 'Failed to get object properties from viewer.'
