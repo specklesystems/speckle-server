@@ -1,4 +1,5 @@
 import TreeModel from 'tree-model'
+import { DataTree, DataTreeBuilder } from './DataTree'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
 
@@ -56,6 +57,10 @@ export class WorldTree {
     }
 
     return WorldTree.renderTreeInstances[id]
+  }
+
+  public static getDataTree(): DataTree {
+    return DataTreeBuilder.build(WorldTree.instance._root)
   }
 
   private tree: TreeModel

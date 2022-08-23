@@ -1,6 +1,5 @@
-import { SpeckleType, SunLightConfiguration } from '@speckle/viewer'
-import { GeometryConverter } from '@speckle/viewer'
-import { Viewer, WorldTree } from '@speckle/viewer'
+import { SunLightConfiguration } from '@speckle/viewer'
+import { Viewer } from '@speckle/viewer'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 
@@ -21,7 +20,7 @@ export default class Sandbox {
     worldOrigin: { x: 0, y: 0, z: 0 },
     pixelThreshold: 0.5,
     exposure: 0.5,
-    tonemapping: 'ACESFilmicToneMapping'
+    tonemapping: 4 //'ACESFilmicToneMapping'
   }
 
   public static lightParams: SunLightConfiguration = {
@@ -500,34 +499,5 @@ export default class Sandbox {
       await this.viewer.loadObject(url, authToken)
     }
     localStorage.setItem('last-load-url', url)
-  }
-
-  private getRandomNodeIds(chance: number): string[] {
-    const res: string[] = []
-    WorldTree.getInstance().walk(
-      (node: {
-        [x: string]: unknown
-        model: {
-          renderView: { hasGeometry: unknown }
-          atomic: unknown
-          children: string | unknown[]
-          id: string
-        }
-      }) => {
-        if (
-          node.model.renderView !== null &&
-          GeometryConverter.getSpeckleType(node.model) in SpeckleType &&
-          (node.model.atomic ||
-            (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
-        ) {
-          const _try = Math.random()
-          if (_try < chance) {
-            res.push(node.model.id)
-          }
-        }
-        return true
-      }
-    )
-    return res
   }
 }
