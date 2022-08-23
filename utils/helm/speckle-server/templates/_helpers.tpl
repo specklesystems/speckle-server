@@ -378,3 +378,18 @@ Usage:
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
+
+{{/*
+Selector labels for Prometheus
+*/}}
+{{- define "speckle.prometheus.selectorLabels" -}}
+{{ include "speckle.prometheus.selectorLabels.release" . }}
+io.kubernetes.pod.namespace: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+{{- end }}
+
+{{/*
+Selector labels for Prometheus release
+*/}}
+{{- define "speckle.prometheus.selectorLabels.release" -}}
+prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
+{{- end }}

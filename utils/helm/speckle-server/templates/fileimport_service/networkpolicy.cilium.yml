@@ -13,8 +13,7 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
-            io.kubernetes.pod.namespace: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+{{ include "speckle.prometheus.selectorLabels" $ | indent 12 }}
       toPorts:
         - ports:
             - port: "metrics"

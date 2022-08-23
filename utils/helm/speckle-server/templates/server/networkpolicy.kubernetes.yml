@@ -55,7 +55,7 @@ spec:
               kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
           podSelector:
             matchLabels:
-              prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
+              {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
       ports:
         - port: http
     # allow ingress from the fileimport service
