@@ -81,9 +81,9 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
-  hideTree,
+  hideObjects2,
+  showObjects2,
   isolateObjects2,
-  showTree,
   unIsolateObjects2,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
@@ -127,22 +127,16 @@ export default {
       return this.resource.data.commit
     },
     isolated() {
-      if (!this.viewerState.currentFilterState) return false
-      if (!this.viewerState.currentFilterState.visibilityState) return false
-      const stateName = this.viewerState.currentFilterState.visibilityState.name
-      if (stateName !== 'isolateObjectsState') return false
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
 
-      return this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+      return this.viewerState.currentFilterState?.isolatedObjects?.includes(
         this.resource.data.commit.referencedObject
       )
     },
     visible() {
-      if (!this.viewerState.currentFilterState) return true
-      if (!this.viewerState.currentFilterState.visibilityState) return true
-      const stateName = this.viewerState.currentFilterState.visibilityState.name
-      if (stateName !== 'hiddenObjectState') return true
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
 
-      return !this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+      return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
         this.resource.data.commit.referencedObject
       )
     }
@@ -151,17 +145,17 @@ export default {
     isolate() {
       const id = this.resource.data.commit.referencedObject
       if (this.isolated) {
-        unIsolateObjects2([id], 'ui-iso')
+        unIsolateObjects2([id], 'ui-iso', true)
       } else {
-        isolateObjects2([id], 'ui-iso')
+        isolateObjects2([id], 'ui-iso', true)
       }
     },
     toggleVisibility() {
       const id = this.resource.data.commit.referencedObject
       if (this.visible) {
-        hideTree(id, 'ui-vis')
+        hideObjects2([id], 'ui-vis', true)
       } else {
-        showTree(id, 'ui-vis')
+        showObjects2([id], 'ui-vis', true)
       }
     }
   }

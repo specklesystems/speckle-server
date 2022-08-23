@@ -98,10 +98,18 @@ export default {
   },
   computed: {
     isolated() {
-      return this.viewerState.isolateValues.indexOf(this.resource.data.object.id) !== -1
+      return (
+        this.viewerState?.currentFilterState?.isolatedObjects?.indexOf(
+          this.resource.data.object.id
+        ) !== -1
+      )
     },
     visible() {
-      return this.viewerState.hideValues.indexOf(this.resource.data.object.id) === -1
+      return (
+        this.viewerState?.currentFilterState?.hiddenObjects?.indexOf(
+          this.resource.data.object.id
+        ) === -1
+      )
     }
   },
   methods: {

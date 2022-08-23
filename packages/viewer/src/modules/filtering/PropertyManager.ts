@@ -14,7 +14,10 @@ export class PropertyManager {
   public static getProperties(resourceUrl: string = null): PropertyInfo[] {
     let rootNode: TreeNode = PropertyManager.WT.root
 
-    if (this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
+    let bypassCache = false
+    if (!resourceUrl) bypassCache = true
+
+    if (!bypassCache && this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
       return this.propCache[resourceUrl ? resourceUrl : rootNode.model.id]
 
     if (resourceUrl) {
