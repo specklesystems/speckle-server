@@ -2,7 +2,10 @@ import { Viewer } from './modules/Viewer'
 import Converter from './modules/converter/Converter'
 import { DefaultViewerParams, IViewer, SelectionEvent } from './IViewer'
 import SpeckleLineMaterial from './modules/materials/SpeckleLineMaterial'
-import { FilterMaterialType } from './modules/filtering/FilteringManager'
+import {
+  FilterMaterialType,
+  FilteringState
+} from './modules/filtering/FilteringManager'
 import {
   PropertyInfo,
   StringPropertyInfo,
@@ -30,5 +33,6 @@ export type {
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo,
+  FilteringState,
   SunLightConfiguration
 }

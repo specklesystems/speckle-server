@@ -21,7 +21,7 @@ import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilterMaterialType, FilteringManager } from './filtering/FilteringManager'
-import { FilteringManager as FMO } from './FilteringManager'
+import { FilteringManager as FMO } from './legacy/FilteringManager'
 import { PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 

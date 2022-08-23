@@ -8,7 +8,10 @@ import {
   DefaultViewerParams,
   Viewer,
   SelectionEvent,
-  PropertyInfo
+  PropertyInfo,
+  NumericPropertyInfo,
+  StringPropertyInfo,
+  FilteringState
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
 import { cloneDeep, has, isArray } from 'lodash'
@@ -67,7 +70,7 @@ const commitObjectViewerState = makeVar({
   commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
   emojis,
   // TODO: new filtering shit
-  currentFilterState: null as Nullable<UnknownObject>,
+  currentFilterState: null as Nullable<FilteringState>,
   selectedObjects: [] as UnknownObject[]
 })
 
@@ -255,106 +258,63 @@ export function resetSelection() {
 
 export function isolateObjects2(
   objectIds: string[],
-  filterKey: string,
-  resourceUrl: string,
-  ghost = false
+  stateKey: string,
+  includeDescendants = false
 ) {
   const result = getInitializedViewer().FilteringManager.isolateObjects(
     objectIds,
-    filterKey,
-    resourceUrl,
-    ghost
+    stateKey,
+    includeDescendants
   )
-  const state = { ...commitObjectViewerState() }
-  state.currentFilterState = result
   console.log(result)
-  updateState(state)
+  updateState({ currentFilterState: result })
 }
 
 export function unIsolateObjects2(
   objectIds: string[],
-  filterKey: string,
-  resourceUrl: string,
-  ghost = false
+  stateKey: string,
+  includeDescendants = false
 ) {
   const result = getInitializedViewer().FilteringManager.unIsolateObjects(
     objectIds,
-    filterKey,
-    resourceUrl,
-    ghost
-  )
-  updateState({ currentFilterState: result })
-}
-
-export function hideTree(
-  objectId: string,
-  filterKey: string,
-  resourceUrl: string,
-  ghost = false
-) {
-  const result = getInitializedViewer().FilteringManager.hideTree(
-    objectId,
-    filterKey,
-    resourceUrl,
-    ghost
-  )
-  updateState({ currentFilterState: result })
-}
-
-export function showTree(objectId: string, filterKey: string, resourceUrl: string) {
-  const result = getInitializedViewer().FilteringManager.showTree(
-    objectId,
-    filterKey,
-    resourceUrl
+    stateKey,
+    includeDescendants
   )
   updateState({ currentFilterState: result })
 }
 
 export function hideObjects2(
   objectIds: string[],
-  filterKey: string,
-  resourceUrl: string,
-  ghost = false,
+  stateKey: string,
   includeDescendants = false
 ) {
   const result = getInitializedViewer().FilteringManager.hideObjects(
     objectIds,
-    filterKey,
-    resourceUrl,
-    ghost,
+    stateKey,
     includeDescendants
   )
   updateState({ currentFilterState: result })
+  console.log(result)
 }
 
 export function showObjects2(
   objectIds: string[],
-  filterKey: string,
-  resourceUrl: string,
+  stateKey: string,
   includeDescendants = false
 ) {
   const result = getInitializedViewer().FilteringManager.showObjects(
     objectIds,
-    filterKey,
-    resourceUrl,
+    stateKey,
     includeDescendants
   )
+  console.log(result)
   const state = { ...commitObjectViewerState() }
   state.currentFilterState = result
   updateState(state)
 }
 
-export function setColorFilter(
-  property: PropertyInfo,
-  resourceUrl: string,
-  ghostNonMatchingObjects = true
-) {
-  const result = getInitializedViewer().FilteringManager.setColorFilter(
-    JSON.parse(JSON.stringify(property)), // TODO: HACK, is the filtering manager mutating the prop? BAD
-    resourceUrl,
-    ghostNonMatchingObjects
-  )
-  // "#" + value.toString(16)
+export function setColorFilter(property: PropertyInfo) {
+  const result = getInitializedViewer().FilteringManager.setColorFilter(property)
   console.log(result)
   updateState({ currentFilterState: result })
 }

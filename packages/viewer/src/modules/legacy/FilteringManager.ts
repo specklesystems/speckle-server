@@ -1,10 +1,10 @@
 import { Color, Texture, MathUtils } from 'three'
-import flatten from '../helpers/flatten'
-import { TreeNode, WorldTree } from './tree/WorldTree'
-import { Assets } from './Assets'
+import flatten from '../../helpers/flatten'
+import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { Assets } from '../Assets'
 // import { NodeRenderView } from './tree/NodeRenderView'
-import { Viewer } from './Viewer'
-import SpeckleRenderer from './SpeckleRenderer'
+import { Viewer } from '../Viewer'
+import SpeckleRenderer from '../SpeckleRenderer'
 
 export enum FilterMaterialType {
   SELECT,

@@ -129,8 +129,6 @@ import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
   hideObjects2,
-  hideTree,
-  showTree,
   showObjects2,
   isolateObjects2,
   unIsolateObjects2,
@@ -197,43 +195,35 @@ export default {
       }
     },
     visible() {
-      if (!this.viewerState.currentFilterState) return true
-      if (!this.viewerState.currentFilterState.visibilityState) return true
-      const stateName = this.viewerState.currentFilterState.visibilityState.name
-      if (stateName !== 'hiddenObjectState') return true
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
       if (this.prop.type === 'object') {
-        return !this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+        return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
           this.prop.value.referencedId
         )
       }
       if (this.prop.type === 'array') {
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds =
-          this.viewerState.currentFilterState?.visibilityState?.ids.filter(
-            (val) => ids.indexOf(val) !== -1
-          )
+        const targetIds = this.viewerState.currentFilterState?.hiddenObjects?.filter(
+          (val) => ids.indexOf(val) !== -1
+        )
         if (targetIds.length === 0) return true
         else return false // TODO: return "partial" or "full", depending on state
       }
       return true
     },
     isolated() {
-      if (!this.viewerState.currentFilterState) return false
-      if (!this.viewerState.currentFilterState.visibilityState) return false
-      const stateName = this.viewerState.currentFilterState.visibilityState.name
-      if (stateName !== 'isolateObjectsState') return false
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
 
       if (this.prop.type === 'object') {
-        return this.viewerState.currentFilterState?.visibilityState?.ids.includes(
+        return this.viewerState.currentFilterState?.isolatedObjects?.includes(
           this.prop.value.referencedId
         )
       }
       if (this.prop.type === 'array') {
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds =
-          this.viewerState.currentFilterState?.visibilityState?.ids.filter(
-            (val) => ids.indexOf(val) !== -1
-          )
+        const targetIds = this.viewerState.currentFilterState?.isolatedObjects?.filter(
+          (val) => ids.indexOf(val) !== -1
+        )
         if (targetIds.length === 0) return false
         else return true // return "partial" or "full", depending on state
       }
@@ -245,34 +235,34 @@ export default {
     toggleVisibility() {
       if (this.prop.type === 'object') {
         if (this.visible) {
-          hideTree(this.prop.value.referencedId, 'ui-vis')
+          hideObjects2([this.prop.value.referencedId], 'ui-vis', true)
         } else {
-          showTree(this.prop.value.referencedId, 'ui-vis')
+          showObjects2([this.prop.value.referencedId], 'ui-vis', true)
         }
       }
       if (this.prop.type === 'array') {
         const targetIds = this.prop.value.map((o) => o.referencedId)
         if (this.visible) {
-          hideObjects2(targetIds, 'ui-vis', undefined, undefined, undefined, true)
+          hideObjects2(targetIds, 'ui-vis', true)
         } else {
-          showObjects2(targetIds, 'ui-vis', undefined, undefined, undefined, true)
+          showObjects2(targetIds, 'ui-vis', true)
         }
       }
     },
     toggleFilter() {
       if (this.prop.type === 'object') {
         if (this.isolated) {
-          unIsolateObjects2([this.prop.value.referencedId], 'ui-iso')
+          unIsolateObjects2([this.prop.value.referencedId], 'ui-iso', true)
         } else {
-          isolateObjects2([this.prop.value.referencedId], 'ui-iso')
+          isolateObjects2([this.prop.value.referencedId], 'ui-iso', true)
         }
       }
       if (this.prop.type === 'array') {
         const targetIds = this.prop.value.map((o) => o.referencedId)
         if (this.isolated) {
-          unIsolateObjects2(targetIds, 'ui-iso')
+          unIsolateObjects2(targetIds, 'ui-iso', true)
         } else {
-          isolateObjects2(targetIds, 'ui-iso')
+          isolateObjects2(targetIds, 'ui-iso', true)
         }
       }
     }

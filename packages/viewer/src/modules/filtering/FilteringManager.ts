@@ -27,14 +27,21 @@ export enum FilterMaterialType {
   HIDDEN
 }
 
+export interface FilterMaterial {
+  filterType: FilterMaterialType
+  rampIndex?: number
+  rampIndexColor?: Color
+  rampTexture?: Texture
+}
+
 export class FilteringManager {
   public WTI: WorldTree
   private Renderer: SpeckleRenderer
   private StateKey: string = null
 
   private VisibilityState = new VisibilityState()
-  private ColorStringFilterState = new ColorStringFilterState()
-  private ColorNumericFilterState = new ColorNumericFilterState()
+  private ColorStringFilterState = null
+  private ColorNumericFilterState = null
   private SelectionState = new GenericRvState()
   private OverlayState = new GenericRvState()
 
@@ -101,7 +108,10 @@ export class FilteringManager {
     command: Command,
     includeDescendants = false
   ): FilteringState {
-    if (stateKey !== this.StateKey || command !== this.VisibilityState.command) {
+    if (
+      stateKey !== this.StateKey ||
+      Math.abs(command - this.VisibilityState.command) > 1
+    ) {
       this.VisibilityState.reset()
     }
 
@@ -124,6 +134,10 @@ export class FilteringManager {
         ...new Set([...objectIds, ...this.VisibilityState.ids])
       ]
     }
+
+    this.VisibilityState.ids = this.VisibilityState.ids.filter(
+      (id) => id !== undefined && id !== null
+    )
 
     const enabled = this.VisibilityState.ids.length !== 0
     if (!enabled) {
@@ -254,8 +268,8 @@ export class FilteringManager {
   }
 
   public removeColorFilter(): FilteringState {
-    this.ColorStringFilterState = new ColorStringFilterState()
-    this.ColorNumericFilterState = new ColorNumericFilterState()
+    this.ColorStringFilterState = null
+    this.ColorNumericFilterState = null
     return this.setFilters()
   }
 
@@ -295,8 +309,8 @@ export class FilteringManager {
   public reset(): FilteringState {
     this.Renderer.clearFilter()
     this.VisibilityState = new VisibilityState()
-    this.ColorStringFilterState = new ColorStringFilterState()
-    this.ColorNumericFilterState = new ColorNumericFilterState()
+    this.ColorStringFilterState = null
+    this.ColorNumericFilterState = null
     this.SelectionState = new GenericRvState()
     this.OverlayState = new GenericRvState()
     this.StateKey = null
@@ -403,11 +417,11 @@ export class FilteringManager {
 }
 
 enum Command {
-  HIDE,
-  SHOW,
-  ISOLATE,
-  UNISOLATE,
-  NONE
+  HIDE = 10,
+  SHOW = 11,
+  ISOLATE = 20,
+  UNISOLATE = 21,
+  NONE = 30
 }
 
 class VisibilityState {

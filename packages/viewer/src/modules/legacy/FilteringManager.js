@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import Rainbow from 'rainbowvis.js'
-import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { Geometry } from './converter/Geometry'
+import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
+import { Geometry } from '../converter/Geometry'
 
 /**
  * LEGACY

@@ -7,9 +7,9 @@ import Materials from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 import PointBatch from './PointBatch'
-import { FilterMaterialType } from '../FilteringManager'
+// import { FilterMaterialType } from '../FilteringManager'
 import { WebGLRenderer } from 'three'
-import { FilterMaterial } from '../FilteringManager'
+import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 
 export default class Batcher {
   public materials: Materials

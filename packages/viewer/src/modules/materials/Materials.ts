@@ -8,17 +8,15 @@ import {
   Vector2
 } from 'three'
 import { GeometryType } from '../batching/Batch'
-// import { getConversionFactor } from '../converter/Units'
 import { TreeNode } from '../tree/WorldTree'
 import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
-import { FilterMaterialType } from '../FilteringManager'
+import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
 import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
-import { FilterMaterial } from '../FilteringManager'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 
