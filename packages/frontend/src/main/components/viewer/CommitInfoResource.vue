@@ -104,8 +104,6 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          isolateValues
-          hideValues
           currentFilterState
         }
       }

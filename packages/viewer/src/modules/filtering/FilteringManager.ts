@@ -154,7 +154,6 @@ export class FilteringManager {
       walkFunc = this.isolationWalk
 
     this.WTI.walk(walkFunc.bind(this))
-
     return this.setFilters()
   }
 
@@ -169,8 +168,7 @@ export class FilteringManager {
   }
 
   private isolationWalk(node: TreeNode): boolean {
-    if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
-      return true
+    if (!node.model.atomic || node.model.id === 'MOTHERSHIP') return true
     const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) === -1) {
       this.VisibilityState.rvs.push(...rvs)

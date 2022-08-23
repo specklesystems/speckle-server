@@ -59,10 +59,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
-  hideObjects,
-  isolateObjects,
-  showObjects,
-  unisolateObjects,
+  isolateObjects2,
+  unIsolateObjects2,
+  hideObjects2,
+  showObjects2,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
@@ -80,8 +80,7 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          isolateValues
-          hideValues
+          currentFilterState
         }
       }
     `)
@@ -98,46 +97,30 @@ export default {
   },
   computed: {
     isolated() {
-      return (
-        this.viewerState?.currentFilterState?.isolatedObjects?.indexOf(
-          this.resource.data.object.id
-        ) !== -1
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
+      return this.viewerState.currentFilterState?.isolatedObjects?.includes(
+        this.resource.data.object.id
       )
     },
     visible() {
-      return (
-        this.viewerState?.currentFilterState?.hiddenObjects?.indexOf(
-          this.resource.data.object.id
-        ) === -1
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
+
+      return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
+        this.resource.data.object.id
       )
     }
   },
   methods: {
     isolate() {
       const id = this.resource.data.object.id
-      if (this.isolated)
-        unisolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        isolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.isolated) unIsolateObjects2([id], 'ui-res', true)
+      else isolateObjects2([id], 'ui-res', true)
     },
     toggleVisibility() {
       const id = this.resource.data.object.id
-      if (this.visible)
-        hideObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        showObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.visible) hideObjects2([id], 'ui-res', true)
+      else showObjects2([id], 'ui-res', true)
     }
   }
 }
