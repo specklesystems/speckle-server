@@ -20,7 +20,7 @@ import {
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilteringManager, FilterMaterialType } from './FilteringManager'
+import { FilteringManager, FilterMaterialType, PropertyInfo } from './FilteringManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
 
@@ -40,7 +40,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public static Assets: Assets
 
-  public FilteringManager: FilteringManager
+  private filteringManager: FilteringManager
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -112,16 +112,151 @@ export class Viewer extends EventEmitter implements IViewer {
       this.zoomExtents()
     })
 
-    this.FilteringManager = new FilteringManager(this)
+    this.filteringManager = new FilteringManager(this)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).WT = WorldTree
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).FM = this.FilteringManager
+    ;(window as any).FM = this.filteringManager
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).V = this
   }
 
-  getDataTree(): DataTree {
+  public getAllPropertyFilters(): PropertyInfo[] {
+    return this.filteringManager.getAllPropertyFilters()
+  }
+
+  public selectObjects(objectIds: string[], resourceUrl: string = null): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.selectObjects(objectIds, resourceUrl)
+      resolve()
+    })
+  }
+
+  public resetSelection(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.resetSelection()
+      resolve()
+    })
+  }
+
+  public hideObjects(
+    objectIds: string[],
+    filterKey: string = null,
+    resourceUrl: string = null,
+    ghost = false
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.hideObjects(objectIds, filterKey, resourceUrl, ghost)
+      resolve()
+    })
+  }
+
+  public showObjects(
+    objectIds: string[],
+    filterKey: string = null,
+    resourceUrl: string = null
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.showObjects(objectIds, filterKey, resourceUrl)
+      resolve()
+    })
+  }
+
+  public hideTree(
+    objectId: string,
+    filterKey: string = null,
+    resourceUrl: string = null,
+    ghost = false
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.hideTree(objectId, filterKey, resourceUrl, ghost)
+      resolve()
+    })
+  }
+
+  public showTree(
+    objectId: string,
+    filterKey: string = null,
+    resourceUrl: string = null
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.showTree(objectId, filterKey, resourceUrl)
+      resolve()
+    })
+  }
+
+  public isolateObjects(
+    objectIds: string[],
+    filterKey: string = null,
+    resourceUrl: string = null,
+    ghost = false
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.isolateObjects(objectIds, filterKey, resourceUrl, ghost)
+      resolve()
+    })
+  }
+
+  public unIsolateObjects(
+    objectIds: string[],
+    filterKey: string = null,
+    resourceUrl: string = null,
+    ghost = false
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.unIsolateObjects(objectIds, filterKey, resourceUrl, ghost)
+      resolve()
+    })
+  }
+
+  public isolateTree(
+    objectId: string,
+    resourceUrl: string = null,
+    ghost = false
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.isolateTree(objectId, resourceUrl, ghost)
+      resolve()
+    })
+  }
+
+  public unIsolateTree(objectId: string, resourceUrl: string = null): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.unIsolateTree(objectId, resourceUrl)
+      resolve()
+    })
+  }
+
+  public setColorFilter(
+    property: PropertyInfo,
+    resourceUrl: string = null,
+    ghostNonMatchingObjects = false
+  ): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.setColorFilter(
+        property,
+        resourceUrl,
+        ghostNonMatchingObjects
+      )
+      resolve()
+    })
+  }
+
+  public removeColorFilter(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.removeColorFilter()
+      resolve()
+    })
+  }
+
+  public reset(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.filteringManager.reset()
+      resolve()
+    })
+  }
+
+  public getDataTree(): DataTree {
     return WorldTree.getDataTree()
   }
 
@@ -138,7 +273,7 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  private onWindowResize() {
+  public onWindowResize() {
     this.speckleRenderer.renderer.setSize(
       this.container.offsetWidth,
       this.container.offsetHeight
@@ -276,7 +411,7 @@ export class Viewer extends EventEmitter implements IViewer {
       for (const key of Object.keys(this.loaders)) {
         delete this.loaders[key]
       }
-      this.FilteringManager.reset()
+      this.filteringManager.reset()
       WorldTree.getInstance().root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
         WorldTree.getRenderTree().purge()
@@ -298,7 +433,7 @@ export class Viewer extends EventEmitter implements IViewer {
    */
   public applyFilter(filter: unknown): Promise<void> {
     return new Promise((resolve) => {
-      this.FilteringManager.handleLegacyFilter(filter)
+      this.filteringManager.handleLegacyFilter(filter)
       resolve()
     })
   }
@@ -307,7 +442,7 @@ export class Viewer extends EventEmitter implements IViewer {
    * Legacy: use FilteringManager.getAllPropertyFilters()
    * @returns
    */
-  public getObjectsProperties = () => this.FilteringManager.getAllPropertyFilters()
+  public getObjectsProperties = () => this.filteringManager.getAllPropertyFilters()
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {
     min: number

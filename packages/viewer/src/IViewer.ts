@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { PropertyInfo } from './modules/FilteringManager'
 import { DataTree } from './modules/tree/DataTree'
 
 export interface ViewerParams {
@@ -75,6 +76,7 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
  */
 export interface IViewer {
   init(): Promise<void>
+  onWindowResize(): void
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
@@ -94,9 +96,55 @@ export interface IViewer {
 
   screenshot(): Promise<string>
 
+  /** Old Filtering members. Deprecated */
   applyFilter(filter: unknown): Promise<void>
   getObjectsProperties(includeAll?: boolean): unknown
 
+  /** New Filtering members */
+  getAllPropertyFilters(): PropertyInfo[]
+  selectObjects(objectIds: string[], resourceUrl?: string): Promise<void>
+  resetSelection(): Promise<void>
+  hideObjects(
+    objectIds: string[],
+    filterKey?: string,
+    resourceUrl?: string,
+    ghost?: boolean
+  ): Promise<void>
+  showObjects(
+    objectIds: string[],
+    filterKey?: string,
+    resourceUrl?: string
+  ): Promise<void>
+  hideTree(
+    objectId: string,
+    filterKey?: string,
+    resourceUrl?: string,
+    ghost?: boolean
+  ): Promise<void>
+  showTree(objectId: string, filterKey?: string, resourceUrl?: string): Promise<void>
+  isolateObjects(
+    objectIds: string[],
+    filterKey?: string,
+    resourceUrl?: string,
+    ghost?: boolean
+  ): Promise<void>
+  unIsolateObjects(
+    objectIds: string[],
+    filterKey?: string,
+    resourceUrl?: string,
+    ghost?: boolean
+  ): Promise<void>
+  isolateTree(objectId: string, resourceUrl?: string, ghost?: boolean): Promise<void>
+  unIsolateTree(objectId: string, resourceUrl?: string): Promise<void>
+  setColorFilter(
+    property: PropertyInfo,
+    resourceUrl?: string,
+    ghostNonMatchingObjects?: boolean
+  ): Promise<void>
+  removeColorFilter(): Promise<void>
+  reset(): void
+
+  /** Data ops */
   getDataTree(): DataTree
 
   dispose(): void

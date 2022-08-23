@@ -1,4 +1,10 @@
-import { Viewer, DefaultViewerParams, DataTree, SpeckleObject } from '@speckle/viewer'
+import {
+  Viewer,
+  DefaultViewerParams,
+  DataTree,
+  SpeckleObject,
+  SelectionEvent
+} from '@speckle/viewer'
 
 import './style.css'
 import Sandbox from './Sandbox'
@@ -36,9 +42,12 @@ viewer.on('load-complete', () => {
   sandbox.refresh()
 })
 
-viewer.on('object-click', (selectionInfo) => {
-  selectionInfo
-  // TODO
+viewer.on('object-clicked', async (selectionInfo: SelectionEvent) => {
+  if (!selectionInfo) {
+    await viewer.resetSelection()
+    return
+  }
+  await viewer.selectObjects([selectionInfo.userData.id as string])
 })
 
 sandbox.makeGenericUI()
