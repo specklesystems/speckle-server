@@ -190,6 +190,32 @@ Creates a Cilium Network Policy egress definition for connecting to S3 compatibl
 {{- end }}
 
 {{/*
+Creates a DNS match pattern for Cilium Network Policies.
+
+Usage:
+{{ include "speckle.networkpolicy.dns.cilium" (list .Values.db.networkPolicy.externalToCluster .Values.redis.networkPolicy.externalToCluster) }}
+
+Params:
+  - domain names - List of dictionaries containing `ipv4` and `host` string values - Required - If IP exists, domain is not added.  Otherwise host is used to match domain excactly or match a pattern (domain with a glob).
+*/}}
+{{- define "speckle.networkpolicy.dns.cilium" -}}
+{{- $catchAll := false -}}
+{{- range . -}}
+  {{- if ( and .enabled ( not .ipv4 ) ) }}
+    {{- if .host -}}
+{{ include "speckle.networkpolicy.matchNameOrPattern" .host }}
+    {{- else }}
+      # only add catch all match pattern if there is no ipv4 or host, and only add it one time.
+      {{- if not $catchAll }}
+- matchPattern: "*"
+        {{- $catchAll = true }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
 Creates a network policy egress definition for connecting to an external url:port or ip:port
 
 Usage:
@@ -236,12 +262,6 @@ Params:
 
 Limitations:
     - IP is limited to IPv4 due to Kubernetes use of IPv4 CIDR
-    - toFQDNs:
-        - matchName: digitalocean.io
-      toPorts:
-        - ports:
-            - port: "443"
-
 */}}
 {{- define "speckle.networkpolicy.egress.external.cilium" -}}
 {{- if not .port -}}
@@ -252,11 +272,7 @@ Limitations:
     - {{ printf "%s/32" .ip }}
 {{- else if .fqdn }}
 - toFQDNs:
-  {{- if ( contains "*" .fqdn ) }}
-    - matchPattern: {{ printf "%s" .fqdn }}
-  {{- else }}
-    - matchName: {{ printf "%s" .fqdn }}
-  {{- end }}
+{{ include "speckle.networkpolicy.matchNameOrPattern" .fqdn | indent 4 }}
 {{- else }}
 - toCIDRSet:
       # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
@@ -268,6 +284,14 @@ Limitations:
   toPorts:
     - ports:
       - port: {{ printf "%s" .port | quote }}
+{{- end }}
+
+{{- define "speckle.networkpolicy.matchNameOrPattern" -}}
+  {{- if ( contains "*" . ) }}
+- matchPattern: {{ printf "%s" . }}
+  {{- else }}
+- matchName: {{ printf "%s" . }}
+  {{- end }}
 {{- end }}
 
 {{/*

@@ -30,15 +30,18 @@ spec:
               protocol: UDP
           rules:
             dns:
-              - matchPattern: "*" # TODO
+              - matchName: {{ include "server.service.fqdn" $ }}
+{{ include "speckle.networkpolicy.dns.cilium" (list .Values.db.networkPolicy.externalToCluster) | indent 14 }}
     # allow egress to speckle-server
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: {{ printf "%s" .Values.namespace }}
-{{ include "server.selectorLabels" $ | indent 12 }}
+    - toServices:
+        - k8sServiceSelector:
+            namespace: {{ printf "%s" .Values.namespace }}
+            selector:
+              matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
       toPorts:
         - ports:
-          - port: http # TODO use named port
+          - port: {{ printf "%s" ( include "server.port" $ | quote ) }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
 {{- end }}
