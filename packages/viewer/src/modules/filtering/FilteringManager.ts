@@ -171,22 +171,18 @@ export class FilteringManager {
 
   public setColorFilter(prop: PropertyInfo) {
     if (prop.type === 'number') {
+      this.ColorStringFilterState = null
+      this.ColorNumericFilterState = new ColorNumericFilterState()
       return this.setNumericColorFilter(prop as NumericPropertyInfo)
     }
     if (prop.type === 'string') {
+      this.ColorNumericFilterState = null
+      this.ColorStringFilterState = new ColorStringFilterState()
       return this.setStringColorFilter(prop as StringPropertyInfo)
     }
   }
 
   private setNumericColorFilter(numProp: NumericPropertyInfo) {
-    this.ColorStringFilterState = null
-    // if (
-    //   this.ColorNumericFilterState?.currentProp?.key === numProp.key &&
-    //   this.ColorNumericFilterState?.currentProp?.passMin === numProp.passMin &&
-    //   this.ColorNumericFilterState?.currentProp?.passMax === numProp.passMax
-    // ) {
-    //   return this.setFilters()
-    // }
     this.ColorNumericFilterState.currentProp = numProp
 
     const passMin = numProp.passMin || numProp.min
@@ -222,11 +218,6 @@ export class FilteringManager {
   }
 
   private setStringColorFilter(stringProp: StringPropertyInfo) {
-    this.ColorNumericFilterState = null
-    if (this.ColorStringFilterState?.currentProp?.key === stringProp.key) {
-      return this.setFilters()
-    }
-
     this.ColorStringFilterState.currentProp = stringProp
 
     const valueGroupColors: ValueGroupColorItemStringProps[] = []
