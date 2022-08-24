@@ -84,7 +84,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           throw new Error('This server is invite only. Please provide an invite id.')
 
         // 2. if you have an invite it must be valid, both for invite only and public servers
-        /** @type {import('@/modules/serverinvites/repositories').ServerInviteRecord} */
+        /** @type {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} */
         let invite
         if (req.session.token) {
           invite = await validateServerInvite(user.email, req.session.token)

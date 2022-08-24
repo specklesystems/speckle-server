@@ -21,6 +21,7 @@
     "dev": "yarn workspaces foreach -piv -j unlimited run dev",
     "dev:no-server": "yarn workspaces foreach --exclude @speckle/server -piv -j unlimited run dev",
     "dev:minimal": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run dev",
+    "gqlgen": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run gqlgen",
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend": "yarn workspace @speckle/frontend dev",
     "prepare": "husky install",

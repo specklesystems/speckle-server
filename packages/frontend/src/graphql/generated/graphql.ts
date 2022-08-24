@@ -393,6 +393,16 @@ export type CommitUpdateInput = {
   streamId: Scalars['String'];
 };
 
+export enum DiscoverableStreamsSortType {
+  CreatedDate = 'CREATED_DATE',
+  FavoritesCount = 'FAVORITES_COUNT'
+}
+
+export type DiscoverableStreamsSortingInput = {
+  direction: SortDirection;
+  type: DiscoverableStreamsSortType;
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
   branchName?: Maybe<Scalars['String']>;
@@ -838,6 +848,7 @@ export type Query = {
   __typename?: 'Query';
   /** Stare into the void. */
   _?: Maybe<Scalars['String']>;
+  /** All the streams of the server. Available to admins only. */
   adminStreams?: Maybe<StreamCollection>;
   /**
    * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
@@ -857,6 +868,8 @@ export type Query = {
   comments?: Maybe<CommentCollection>;
   /** Commit/Object viewer state (local-only) */
   commitObjectViewerState: CommitObjectViewerState;
+  /** All of the discoverable streams of the server */
+  discoverableStreams?: Maybe<StreamCollection>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -921,6 +934,13 @@ export type QueryCommentsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
   resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
   streamId: Scalars['String'];
+};
+
+
+export type QueryDiscoverableStreamsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  sort?: InputMaybe<DiscoverableStreamsSortingInput>;
 };
 
 
@@ -1106,6 +1126,11 @@ export type SmartTextEditorValue = {
   version: Scalars['String'];
 };
 
+export enum SortDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
 export type Stream = {
   __typename?: 'Stream';
   /** All the recent activity on this stream in chronological order */
@@ -1141,6 +1166,12 @@ export type Stream = {
   /** Returns a list of all the file uploads for this stream. */
   fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
   id: Scalars['String'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable: Scalars['Boolean'];
+  /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean'];
   name: Scalars['String'];
   object?: Maybe<Object>;
@@ -1229,6 +1260,12 @@ export type StreamCollection = {
 
 export type StreamCreateInput = {
   description?: InputMaybe<Scalars['String']>;
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
   /** Optionally specify user IDs of users that you want to invite to be contributors to this stream */
@@ -1259,6 +1296,12 @@ export type StreamUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
 };

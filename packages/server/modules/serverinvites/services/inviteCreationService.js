@@ -42,7 +42,7 @@ const {
  */
 
 /**
- * @typedef {CreateInviteParams|import('@/modules/serverinvites/repositories').ServerInviteRecord} InviteOrInputParams
+ * @typedef {CreateInviteParams|import('@/modules/serverinvites/helpers/types').ServerInviteRecord} InviteOrInputParams
  */
 
 /**
@@ -174,7 +174,7 @@ function sanitizeMessage(message, stripAll = false) {
 
 /**
  * Build the email subject line
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {string | null} resourceName
  * @returns {string}
@@ -195,7 +195,7 @@ function buildEmailSubject(invite, inviter, resourceName) {
 
 /**
  * Build invite link URL
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @returns {string}
  */
 function buildInviteLink(invite) {
@@ -260,7 +260,7 @@ ${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : '
 }
 
 /**
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {import('@/modules/core/helpers/types').ServerInfo} serverInfo
  * @param {string} resourceName
@@ -286,7 +286,7 @@ function buildEmailTemplateParams(
 
 /**
  * Build invite email contents
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser
  * @param {Object | null} resource
@@ -384,7 +384,7 @@ async function createAndSendInvite(params) {
 
 /**
  * Re-send existing invite email
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  */
 async function resendInviteEmail(invite) {
   const { inviterId, target } = invite

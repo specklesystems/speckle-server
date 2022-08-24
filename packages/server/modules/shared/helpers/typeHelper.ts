@@ -1,3 +1,5 @@
+import { RequestDataLoaders } from '@/modules/core/loaders'
+import { AuthContext } from '@/modules/shared/authz'
 import { Express } from 'express'
 
 export type Nullable<T> = T | null
@@ -27,4 +29,12 @@ export type SpeckleModule = {
    * Cleanup resources before the server shuts down
    */
   shutdown?: () => MaybeAsync<void>
+}
+
+export type GraphQLContext = AuthContext & {
+  /**
+   * Request-scoped GraphQL dataloaders
+   * @see https://github.com/graphql/dataloader
+   */
+  loaders: RequestDataLoaders
 }

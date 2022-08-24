@@ -30,7 +30,7 @@ const {
  * Resolve the relative auth redirect path, after registering with an invite
  * Note: Important auth query string params like the access_code are added separately
  * in auth middlewares
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord | undefined} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord | undefined} invite
  * @returns {string}
  */
 function resolveAuthRedirectPath(invite) {
@@ -50,7 +50,7 @@ function resolveAuthRedirectPath(invite) {
  * Validate that the new user has a valid invite for registering to the server
  * @param {Object} email User's email address
  * @param {string} token Invite token
- * @returns {import('@/modules/serverinvites/repositories').ServerInviteRecord}
+ * @returns {import('@/modules/serverinvites/helpers/types').ServerInviteRecord}
  */
 async function validateServerInvite(email, token) {
   const invite = await getServerInvite(email, token)

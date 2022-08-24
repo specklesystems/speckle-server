@@ -9,12 +9,21 @@ generates:
     plugins:
       - 'typescript'
       - 'typescript-resolvers'
+    config:
+      contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
+      scalars:
+        JSONObject: Record<string, unknown>
+        DateTime: string
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'
       - 'typescript-operations'
     documents:
       - 'test/graphql/*.{js,ts}'
+    config:
+      scalars:
+        JSONObject: Record<string, unknown>
+        DateTime: string
 require:
   - ts-node/register
   - tsconfig-paths/register

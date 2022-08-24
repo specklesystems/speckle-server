@@ -1,9 +1,4 @@
-import {
-  ServerInviteRecord,
-  ServerInvites,
-  Streams,
-  Users
-} from '@/modules/core/dbSchema'
+import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
 import { createStream } from '@/modules/core/services/streams'
@@ -15,6 +10,8 @@ import { addLoadersToCtx } from '@/modules/shared'
 import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import { ApolloServer } from 'apollo-server-express'
+import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { Optional } from '@/modules/shared/helpers/typeHelper'
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
@@ -44,7 +41,7 @@ describe('[Admin users list]', () => {
     name: 'Mr Server Admin Dude',
     email: 'adminuserguy@gmail.com',
     password: 'sn3aky-1337-b1m',
-    id: undefined
+    id: undefined as Optional<string>
   }
 
   const USER_COUNT = 15
@@ -241,8 +238,8 @@ describe('[Admin users list]', () => {
         expect(userItem.registeredUser?.id).to.eq(expectedUserId)
 
         if (userItem.registeredUser?.id !== me.id) {
-          expect(userItem.registeredUser.name).to.contain('User #')
-          expect(userItem.registeredUser.email).to.contain('speckleuser')
+          expect(userItem.registeredUser?.name).to.contain('User #')
+          expect(userItem.registeredUser?.email).to.contain('speckleuser')
         }
       }
 
