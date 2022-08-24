@@ -45,6 +45,7 @@ spec:
               protocol: UDP
           rules:
             dns:
+              # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
               - matchPattern: {{ .Values.domain }}
 {{- if .Values.server.sentry_dns }}
               # DNS lookup for sentry
@@ -67,6 +68,7 @@ spec:
     # s3
 {{ include "speckle.networkpolicy.egress.blob_storage.cilium" $ | indent 4 }}
     # allow egress to the ingress for speckle-server, so it can call itself
+    # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
     - toFQDNs:
         - matchPattern: {{ .Values.domain }}
       toPorts:
