@@ -132,9 +132,6 @@ db:
   ## @extra db.networkPolicy If networkPolicy is enabled for any service, this provides the NetworkPolicy with the necessary details to allow egress connections to the Postgres database
   ##
   networkPolicy:
-    ## @param db.networkPolicy.port the port on the server providing the Postgres database (default: "5432")
-    ##
-    port: ''
     ## @extra db.networkPolicy.externalToCluster Only required if the Postgres database is not hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     externalToCluster:
@@ -149,6 +146,9 @@ db:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
+      ## @param db.networkPolicy.inCluster.port the port on the server providing the Postgres database (default: "5432")
+      ##
+      port: ''
       kubernetes:
         ## @param db.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the postgres compatible database pods within the cluster and given namespace
         ## For Kubernetes Network Policies this is a podSelector object.
@@ -264,9 +264,6 @@ redis:
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
   networkPolicy:
-    ## @param redis.networkPolicy.port the port on the server providing the Redis store (default: "6379")
-    ##
-    port: ''
     ## @extra redis.networkPolicy.externalToCluster Only required if the Redis store is not hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     externalToCluster:
@@ -281,6 +278,9 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
+      ## @param redis.networkPolicy.inCluster.port the port on the server providing the Redis store (default: "6379")
+      ##
+      port: ''
       kubernetes:
         ## @param redis.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the redis store pods within the cluster and given namespace
         ## For Kubernetes Network Policies this is a podSelector object.

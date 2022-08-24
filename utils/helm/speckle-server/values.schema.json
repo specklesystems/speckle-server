@@ -118,11 +118,6 @@
         "networkPolicy": {
           "type": "object",
           "properties": {
-            "port": {
-              "type": "string",
-              "description": "the port on the server providing the Postgres database (default: \"5432\")",
-              "default": ""
-            },
             "externalToCluster": {
               "type": "object",
               "properties": {
@@ -140,6 +135,11 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the Postgres database is hosted withing the same Kubernetes cluster in which Speckle will be deployed",
                   "default": false
+                },
+                "port": {
+                  "type": "string",
+                  "description": "the port on the server providing the Postgres database (default: \"5432\")",
+                  "default": ""
                 },
                 "kubernetes": {
                   "type": "object",
@@ -273,11 +273,6 @@
         "networkPolicy": {
           "type": "object",
           "properties": {
-            "port": {
-              "type": "string",
-              "description": "the port on the server providing the Redis store (default: \"6379\")",
-              "default": ""
-            },
             "externalToCluster": {
               "type": "object",
               "properties": {
@@ -295,6 +290,11 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the Redis store is hosted withing the same Kubernetes cluster in which Speckle will be deployed",
                   "default": false
+                },
+                "port": {
+                  "type": "string",
+                  "description": "the port on the server providing the Redis store (default: \"6379\")",
+                  "default": ""
                 },
                 "kubernetes": {
                   "type": "object",

@@ -100,12 +100,13 @@ Creates a network policy egress definition for connecting to Redis
 Expects the global context "$" to be passed as the parameter
 */}}
 {{- define "speckle.networkpolicy.egress.redis" -}}
-{{- $port := (default "6379" .Values.redis.networkPolicy.port ) -}}
 {{- if .Values.redis.networkPolicy.inCluster.enabled -}}
+  {{- $port := (default "6379" .Values.redis.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.redis.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.redis.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
   {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+  {{- $port := ( default "6379" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
@@ -116,12 +117,13 @@ Creates a Cilium Network Policy egress definition for connecting to Redis
 Expects the global context "$" to be passed as the parameter
 */}}
 {{- define "speckle.networkpolicy.egress.redis.cilium" -}}
-{{- $port := (default "6379" .Values.redis.networkPolicy.port ) -}}
 {{- if .Values.redis.networkPolicy.inCluster.enabled -}}
+  {{- $port := (default "6379" .Values.redis.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.redis.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.redis.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
   {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+  {{- $port := ( default "6379" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
@@ -130,12 +132,13 @@ Expects the global context "$" to be passed as the parameter
 Creates a Kubernetes Network Policy egress definition for connecting to Postgres
 */}}
 {{- define "speckle.networkpolicy.egress.postgres" -}}
-{{- $port := (default "5432" .Values.db.networkPolicy.port ) -}}
 {{- if .Values.db.networkPolicy.inCluster.enabled -}}
+  {{- $port := (default "5432" .Values.db.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.db.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.db.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
   {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+  {{- $port := ( default "5432" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
@@ -144,12 +147,13 @@ Creates a Kubernetes Network Policy egress definition for connecting to Postgres
 Creates a Cilium network policy egress definition for connecting to Postgres
 */}}
 {{- define "speckle.networkpolicy.egress.postgres.cilium" -}}
-{{- $port := (default "5432" .Values.db.networkPolicy.port ) -}}
 {{- if .Values.db.networkPolicy.inCluster.enabled -}}
+  {{- $port := (default "5432" .Values.db.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.db.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.db.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
   {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+  {{- $port := ( default "5432" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
@@ -158,26 +162,26 @@ Creates a Cilium network policy egress definition for connecting to Postgres
 Creates a Kubernetes network policy egress definition for connecting to S3 compatible storage
 */}}
 {{- define "speckle.networkpolicy.egress.blob_storage" -}}
-{{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
-{{- if .Values.s3.networkPolicy.inCluster.enabled -}}
+  {{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
+  {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.s3.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.s3.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
-{{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-  {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+  {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
+    {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $ip "port" $port) }}
-{{- end -}}
+  {{- end -}}
 {{- end }}
 
 {{/*
 Creates a Cilium Network Policy egress definition for connecting to S3 compatible storage
 */}}
 {{- define "speckle.networkpolicy.egress.blob_storage.cilium" -}}
-{{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
-{{- if .Values.s3.networkPolicy.inCluster.enabled -}}
+  {{- $port := (default "443" .Values.s3.networkPolicy.port ) -}}
+  {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.s3.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.s3.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
-{{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-  {{- $host := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+  {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
+    {{- $host := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $host "port" $port) }}
-{{- end -}}
+  {{- end -}}
 {{- end }}
 
 {{/*
@@ -404,6 +408,18 @@ Extracts the domain name from a url
 {{ printf "%s" $host }}
 {{- end }}
 
+{{/*
+Extracts the port from a url
+*/}}
+{{- define "speckle.networkPolicy.portFromUrl" -}}
+  {{- if not . -}}
+      {{- printf "\nERROR: The url was not provided as the context \"%s\"\n" . | fail -}}
+  {{- end -}}
+  {{- $host := ( urlParse . ).host -}}
+  {{- if (contains ":" $host) -}}
+{{ printf "%s" ( index (mustRegexSplit ":" $host -1) 1 ) }}
+  {{- end -}}
+{{- end }}
 {{/*
 Renders a value that contains template.
 Usage:
