@@ -18,6 +18,7 @@ const { StreamAccessUpdateError } = require('@/modules/core/errors/stream')
 const {
   inviteUsersToStream
 } = require('@/modules/serverinvites/services/inviteCreationService')
+const { omitBy, isNull, isUndefined, has } = require('lodash')
 
 /**
  * Get base query for finding or counting user streams
@@ -45,21 +46,26 @@ function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
 
 module.exports = {
   /**
-   * @param {{
-   *  name?: string,
-   *  description?: string,
-   *  isPublic?: boolean,
-   *  ownerId: string,
-   *  withContributors?: string[]
-   * }} param0
+   * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
    * @returns
    */
-  async createStream({ name, description, isPublic, ownerId, withContributors }) {
+  async createStream({
+    name,
+    description,
+    isPublic,
+    ownerId,
+    withContributors,
+    isDiscoverable
+  }) {
+    const shouldBePublic = isPublic !== false
+    const shouldBeDiscoverable = isDiscoverable !== false && shouldBePublic
+
     const stream = {
       id: crs({ length: 10 }),
       name: name || generateStreamName(),
       description: description || '',
-      isPublic: isPublic !== false,
+      isPublic: shouldBePublic,
+      isDiscoverable: shouldBeDiscoverable,
       updatedAt: knex.fn.now()
     }
 
@@ -89,15 +95,24 @@ module.exports = {
 
   getStream,
 
-  async updateStream({ streamId, name, description, isPublic, allowPublicComments }) {
+  /**
+   * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
+   */
+  async updateStream(update) {
+    const { id: streamId } = update
+    const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
+
+    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+      validUpdate.isDiscoverable = false
+    }
+
+    if (!Object.keys(validUpdate).length) return null
+
     const [{ id }] = await Streams.knex()
       .returning('id')
       .where({ id: streamId })
       .update({
-        name,
-        description,
-        isPublic,
-        allowPublicComments,
+        ...validUpdate,
         updatedAt: knex.fn.now()
       })
     return id

@@ -70,7 +70,6 @@ export default {
             verified
             profiles
             role
-            suuid
             totalOwnedStreamsFavorites
             streams {
               totalCount

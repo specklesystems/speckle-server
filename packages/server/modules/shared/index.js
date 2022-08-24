@@ -13,13 +13,16 @@ const StreamPubsubEvents = Object.freeze({
   StreamDeleted: 'STREAM_DELETED'
 })
 
+/**
+ * GraphQL Subscription PubSub instance
+ */
 const pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
 })
 
 /**
- * @typedef {import('@/modules/shared/authz').AuthContext & {loaders: import('@/modules/core/loaders').RequestDataLoaders}} GraphQLContext
+ * @typedef {import('@/modules/shared/helpers/typeHelper').GraphQLContext} GraphQLContext
  */
 
 /**

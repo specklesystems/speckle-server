@@ -10,7 +10,8 @@ const ResourceTypes = Object.freeze({
   User: 'user',
   Stream: 'stream',
   Commit: 'commit',
-  Branch: 'branch'
+  Branch: 'branch',
+  Comment: 'comment'
 })
 
 const ActionTypes = Object.freeze({
@@ -23,12 +24,19 @@ const ActionTypes = Object.freeze({
     Create: 'stream_create',
     InviteSent: 'stream_invite_sent',
     InviteDeclined: 'stream_invite_declined'
+  },
+  Comment: {
+    Mention: 'comment_mention'
   }
 })
 
 module.exports = {
   ActionTypes,
   ResourceTypes,
+
+  /**
+   * @param {Omit<import('@/modules/activitystream/helpers/types').StreamActivityRecord, "time">} param0
+   */
   async saveActivity({
     streamId,
     resourceType,

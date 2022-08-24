@@ -1,19 +1,21 @@
-const {
+import {
   saveActivity,
   ResourceTypes,
   ActionTypes
-} = require('@/modules/activitystream/services')
-const { pubsub, StreamPubsubEvents } = require('@/modules/shared')
+} from '@/modules/activitystream/services'
+import { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { pubsub, StreamPubsubEvents } from '@/modules/shared'
 
 /**
  * Save "stream permissions granted to user" activity item
  */
-async function addStreamPermissionsAddedActivity({
-  streamId,
-  activityUserId,
-  targetUserId,
-  role
+export async function addStreamPermissionsAddedActivity(params: {
+  streamId: string
+  activityUserId: string
+  targetUserId: string
+  role: StreamRoles
 }) {
+  const { streamId, activityUserId, targetUserId, role } = params
   await Promise.all([
     saveActivity({
       streamId,
@@ -37,12 +39,13 @@ async function addStreamPermissionsAddedActivity({
 /**
  * Save "user accepted stream invite" activity item
  */
-async function addStreamInviteAcceptedActivity({
-  streamId,
-  inviteTargetId,
-  inviterId,
-  role
+export async function addStreamInviteAcceptedActivity(params: {
+  streamId: string
+  inviteTargetId: string
+  inviterId: string
+  role: StreamRoles
 }) {
+  const { streamId, inviteTargetId, inviterId, role } = params
   await Promise.all([
     saveActivity({
       streamId,
@@ -66,11 +69,12 @@ async function addStreamInviteAcceptedActivity({
 /**
  * Save "stream permissions revoked for user" activity item
  */
-async function addStreamPermissionsRevokedActivity({
-  streamId,
-  activityUserId,
-  removedUserId
+export async function addStreamPermissionsRevokedActivity(params: {
+  streamId: string
+  activityUserId: string
+  removedUserId: string
 }) {
+  const { streamId, activityUserId, removedUserId } = params
   const isVoluntaryLeave = activityUserId === removedUserId
 
   await Promise.all([
@@ -99,12 +103,13 @@ async function addStreamPermissionsRevokedActivity({
 /**
  * Save "user invited another user to stream" activity item
  */
-async function addStreamInviteSentOutActivity({
-  streamId,
-  inviteTargetId,
-  inviterId,
-  inviteTargetEmail
+export async function addStreamInviteSentOutActivity(params: {
+  streamId: string
+  inviteTargetId: string
+  inviterId: string
+  inviteTargetEmail: string
 }) {
+  const { streamId, inviteTargetId, inviterId, inviteTargetEmail } = params
   const targetDisplay = inviteTargetId || inviteTargetEmail
 
   await saveActivity({
@@ -121,11 +126,12 @@ async function addStreamInviteSentOutActivity({
 /**
  * Save "user declined an invite" activity item
  */
-async function addStreamInviteDeclinedActivity({
-  streamId,
-  inviteTargetId,
-  inviterId
+export async function addStreamInviteDeclinedActivity(params: {
+  streamId: string
+  inviteTargetId: string
+  inviterId: string
 }) {
+  const { streamId, inviteTargetId, inviterId } = params
   await saveActivity({
     streamId,
     resourceType: ResourceTypes.Stream,
@@ -137,10 +143,29 @@ async function addStreamInviteDeclinedActivity({
   })
 }
 
-module.exports = {
-  addStreamPermissionsAddedActivity,
-  addStreamPermissionsRevokedActivity,
-  addStreamInviteAcceptedActivity,
-  addStreamInviteSentOutActivity,
-  addStreamInviteDeclinedActivity
+/**
+ * Save "user mentioned in stream comment" activity item
+ */
+export async function addStreamCommentMentionActivity(params: {
+  streamId: string
+  mentionAuthorId: string
+  mentionTargetId: string
+  commentId: string
+  threadId: string
+}) {
+  const { streamId, mentionAuthorId, mentionTargetId, commentId, threadId } = params
+  await saveActivity({
+    streamId,
+    resourceType: ResourceTypes.Comment,
+    resourceId: commentId,
+    actionType: ActionTypes.Comment.Mention,
+    userId: mentionAuthorId,
+    message: `User ${mentionAuthorId} mentioned user ${mentionTargetId} in comment ${commentId}`,
+    info: {
+      mentionAuthorId,
+      mentionTargetId,
+      commentId,
+      threadId
+    }
+  })
 }

@@ -1603,7 +1603,15 @@ describe('GraphQL API Core @core-api', () => {
 
   describe('Generic / Server Info', () => {
     it('Should eval string for password strength', async () => {
-      const query = 'query { userPwdStrength( pwd: "garbage" ) } '
+      const query = `query {
+                      userPwdStrength(pwd: "garbage") {
+                        score
+                        feedback {
+                          warning
+                          suggestions
+                        }
+                      }
+                    } `
       const res = await sendRequest(null, { query })
       expect(res).to.be.json
       expect(res.body.errors).to.not.exist

@@ -36,10 +36,6 @@ module.exports = async (app) => {
 
     req.session.challenge = req.query.challenge
 
-    if (req.query.suuid) {
-      req.session.suuid = req.query.suuid
-    }
-
     const token = req.query.token || req.query.inviteId
     if (token) {
       req.session.token = token

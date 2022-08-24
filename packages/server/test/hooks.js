@@ -4,7 +4,7 @@ const chai = require('chai')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
-const { init, startHttp } = require(`@/app`)
+const { init, startHttp, shutdown } = require(`@/app`)
 
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
@@ -71,6 +71,7 @@ exports.mochaHooks = {
   afterAll: async () => {
     console.log('running after all')
     await unlock()
+    await shutdown()
   }
 }
 

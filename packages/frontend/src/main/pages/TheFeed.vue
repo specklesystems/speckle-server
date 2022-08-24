@@ -4,11 +4,11 @@
       <div class="font-weight-bold">Feed</div>
     </portal>
     <v-row>
-      <v-col cols="12" lg="12">
-        <feed-timeline />
+      <v-col cols="12" class="d-flex">
+        <feed-timeline class="flex-grow-1" />
+        <latest-blogposts class="d-none d-lg-block ml-6" />
       </v-col>
     </v-row>
-    <latest-blogposts />
   </div>
 </template>
 <script>

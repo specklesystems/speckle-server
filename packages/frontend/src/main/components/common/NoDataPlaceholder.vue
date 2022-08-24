@@ -26,7 +26,8 @@
                   link
                   class="primary mb-4"
                   dark
-                  @click="downloadManager"
+                  href="https://releases.speckle.systems/"
+                  target="_blank"
                 >
                   <v-list-item-icon>
                     <v-icon class="pt-4">mdi-download</v-icon>
@@ -183,23 +184,6 @@ export default {
   },
   beforeDestroy() {
     clearInterval(this.checkAccountTimer)
-  },
-  methods: {
-    async downloadManager() {
-      this.$mixpanel.track('Manager Download', {
-        type: 'action'
-      })
-
-      const url = `https://releases.speckle.dev/manager/SpeckleManager Setup.exe`
-
-      const a = document.createElement('a')
-      document.body.appendChild(a)
-      a.style = 'display: none'
-      a.href = url
-      a.download = 'SpeckleManager Setup.exe'
-      a.click()
-      document.body.removeChild(a)
-    }
   }
 }
 </script>
