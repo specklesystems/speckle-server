@@ -34,6 +34,15 @@ spec:
             cpu: {{ .Values.monitoring.limits.cpu }}
             memory: {{ .Values.monitoring.limits.memory }}
 
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
 
         {{- if .Values.db.useCertificate }}
         volumeMounts:
@@ -54,6 +63,18 @@ spec:
           {{- end }}
 
       priorityClassName: low-priority
+      {{- if .Values.monitoring.serviceAccount.create }}
+      serviceAccountName: {{ include "monitoring.name" $ }}
+      {{- end }}
+      terminationGracePeriodSeconds: 10
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
 
       {{- if .Values.db.useCertificate }}
       volumes:
@@ -62,4 +83,15 @@ spec:
             name: postgres-certificate
       {{- end }}
 
-      terminationGracePeriodSeconds: 10
+      {{- if .Values.monitoring.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.monitoring.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}

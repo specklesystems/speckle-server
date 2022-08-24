@@ -56,10 +56,18 @@ set_real_ip_from 2a06:98c0::/29;
 real_ip_header CF-Connecting-IP;
 #real_ip_header X-Forwarded-For;
 
-
 server {
   listen 80;
   client_max_body_size 100m;
+
+  # move default write paths to a custom directory
+  # kubernetes can mount this directory and prevent writes to the root directory
+  # https://github.com/openresty/docker-openresty/issues/119
+  client_body_temp_path /var/run/openresty/nginx-client-body;
+  proxy_temp_path /var/run/openresty/nginx-proxy;
+  fastcgi_temp_path /var/run/openresty/nginx-fastcgi;
+  uwsgi_temp_path /var/run/openresty/nginx-uwsgi;
+  scgi_temp_path /var/run/openresty/nginx-scgi;
 
   location / {
     root   /usr/share/nginx/html;

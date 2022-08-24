@@ -55,6 +55,10 @@ module.exports = {
 
   */
 
+  /**
+   * @param {{}} user
+   * @returns {Promise<string>}
+   */
   async createUser(user) {
     user.id = crs({ length: 10 })
     user.email = user.email.toLowerCase()
@@ -92,15 +96,7 @@ module.exports = {
 
   async findOrCreateUser({ user }) {
     const existingUser = await userByEmailQuery(user.email).select('id').first()
-
-    if (existingUser) {
-      if (user.suuid) {
-        await module.exports.updateUser(existingUser.id, { suuid: user.suuid })
-      }
-
-      existingUser.suuid = user.suuid
-      return existingUser
-    }
+    if (existingUser) return existingUser
 
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?

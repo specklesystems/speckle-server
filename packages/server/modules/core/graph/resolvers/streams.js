@@ -42,6 +42,10 @@ const {
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const {
+  getDiscoverableStreams
+} = require('@/modules/core/services/streams/discoverableStreams')
+const { has } = require('lodash')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -90,6 +94,9 @@ const _deleteStream = async (parent, args, context) => {
   return true
 }
 
+/**
+ * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
+ */
 module.exports = {
   Query: {
     async stream(parent, args, context) {
@@ -128,6 +135,10 @@ module.exports = {
       return { totalCount, cursor, items: streams }
     },
 
+    async discoverableStreams(parent, args) {
+      return await getDiscoverableStreams(args)
+    },
+
     async adminStreams(parent, args) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
@@ -164,6 +175,21 @@ module.exports = {
       const { id: streamId } = parent
 
       return await getStreamFavoritesCount({ ctx, streamId })
+    },
+
+    async isDiscoverable(parent) {
+      const { isPublic, isDiscoverable } = parent
+
+      if (!isPublic) return false
+      return isDiscoverable
+    },
+
+    async role(parent, _args, ctx) {
+      // If role already resolved, return that
+      if (has(parent, 'role')) return parent.role
+
+      // Otherwise resolve it now through a dataloader
+      return await ctx.loaders.streams.getRole.load(parent.id)
     }
   },
   User: {
@@ -232,15 +258,9 @@ module.exports = {
       await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
 
       const oldValue = await getStream({ streamId: args.stream.id })
-      const update = {
-        streamId: args.stream.id,
-        name: args.stream.name,
-        description: args.stream.description,
-        isPublic: args.stream.isPublic,
-        allowPublicComments: args.stream.allowPublicComments
-      }
 
-      await updateStream(update)
+      const { stream } = args
+      await updateStream(stream)
 
       await saveActivity({
         streamId: args.stream.id,
@@ -394,8 +414,6 @@ module.exports = {
   PendingStreamCollaborator: {
     /**
      * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     * @param {Object} _args
-     * @param {import('@/modules/shared/index').GraphQLContext} ctx
      */
     async invitedBy(parent, _args, ctx) {
       const { invitedById } = parent
@@ -406,8 +424,6 @@ module.exports = {
     },
     /**
      * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     * @param {Object} _args
-     * @param {import('@/modules/shared/index').GraphQLContext} ctx
      */
     async streamName(parent, _args, ctx) {
       const { streamId } = parent
@@ -416,8 +432,6 @@ module.exports = {
     },
     /**
      * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     * @param {Object} _args
-     * @param {import('@/modules/shared/index').GraphQLContext} ctx
      */
     async token(parent, _args, ctx) {
       const authedUserId = ctx.userId

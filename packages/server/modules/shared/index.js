@@ -13,27 +13,21 @@ const StreamPubsubEvents = Object.freeze({
   StreamDeleted: 'STREAM_DELETED'
 })
 
+/**
+ * GraphQL Subscription PubSub instance
+ */
 const pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
 })
 
 /**
- * @typedef {Object} AuthContextPart
- * @property {boolean} auth Whether or not user is logged in
- * @property {string | undefined} userId User ID, if user is logged in
- * @property {string | undefined} role User role, if logged in
- * @property {string | undefined} token User token, if logged in
- * @property {string[] | undefined} scopes Token scopes, if logged in
- */
-
-/**
- * @typedef {AuthContextPart & {loaders: import('@/modules/core/loaders').RequestDataLoaders}} GraphQLContext
+ * @typedef {import('@/modules/shared/helpers/typeHelper').GraphQLContext} GraphQLContext
  */
 
 /**
  * Add data loaders to auth ctx
- * @param {AuthContextPart} ctx
+ * @param {import('@/modules/shared/authz').AuthContext} ctx
  * @returns {GraphQLContext}
  */
 async function addLoadersToCtx(ctx) {
@@ -56,7 +50,7 @@ async function buildContext({ req, connection }) {
 
 /**
  * Not just Graphql server context helper: sets req.context to have an auth prop (true/false), userId and server role.
- * @returns {AuthContextPart}
+ * @returns {import('@/modules/shared/authz').AuthContext}
  */
 async function contextApiTokenHelper({ req, connection }) {
   let token = null
