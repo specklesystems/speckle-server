@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 const request = require('supertest')
 
 const knex = require('@/db/knex')

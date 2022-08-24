@@ -66,4 +66,9 @@ export class UninitializedResourceAccessError extends BaseError {
   static defaultMessage = 'Attempted to use uninitialized resources'
 }
 
+export class UnexpectedErrorStructureError extends BaseError {
+  static code = 'UNEXPECTED_ERROR_STRUCTURE_ERROR'
+  static defaultMessage = 'An unexpected error type was thrown'
+}
+
 export { BaseError }
