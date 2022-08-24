@@ -13,6 +13,7 @@ spec:
   policyTypes:
     - Egress
     - Ingress
+{{- if .Values.enable_prometheus_monitoring }}
   ingress:
     - from:
         - namespaceSelector:
@@ -23,6 +24,10 @@ spec:
               {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
       ports:
         - port: metrics
+{{- else }}
+  # deny all ingress
+  ingress: []
+{{- end }}
   egress:
     # webhook can call anything external, but is blocked from egress elsewhere within the cluster
     - to:

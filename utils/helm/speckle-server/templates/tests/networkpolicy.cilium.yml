@@ -11,8 +11,8 @@ spec:
     matchLabels:
 {{ include "test.selectorLabels" . | indent 6 }}
   ingressDeny:
-  - fromEntities:
-    - "all"
+    - fromEntities:
+      - "all"
   egress:
     - toEndpoints:
         - matchLabels:

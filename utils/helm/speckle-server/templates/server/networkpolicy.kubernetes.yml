@@ -48,6 +48,7 @@ spec:
               app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
       ports:
         - port: http
+{{- if .Values.enable_prometheus_monitoring }}
     # allow ingress from servicemonitor/prometheus
     - from:
         - namespaceSelector:
@@ -58,6 +59,7 @@ spec:
               {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
       ports:
         - port: http
+{{- end }}
     # allow ingress from the fileimport service
     - from:
         - podSelector:

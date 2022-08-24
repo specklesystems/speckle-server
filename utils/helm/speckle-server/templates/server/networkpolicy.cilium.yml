@@ -19,6 +19,7 @@ spec:
         - ports:
             - port: http
               protocol: TCP
+{{- if .Values.enable_prometheus_monitoring }}
     - fromEndpoints:
         - matchLabels:
 {{ include "speckle.prometheus.selectorLabels" $ | indent 12 }}
@@ -26,6 +27,7 @@ spec:
         - ports:
             - port: http
               protocol: TCP
+{{- end }}
     # ingress from file import service
     - fromEndpoints:
         - matchLabels:
