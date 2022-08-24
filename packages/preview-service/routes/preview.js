@@ -46,7 +46,7 @@ async function pageFunction(objectUrl) {
   let dirArray = [ 'top', 'bottom', 'front', 'back', 'left', 'right' ]
   for ( let i in dirArray ) {
     let d = dirArray[i]
-    v.interactions.rotateTo( d )
+    v.interactionsro.setView( d )
     await waitForAnimation()
     ret.scr[d] = v.interactions.screenshot()
   }

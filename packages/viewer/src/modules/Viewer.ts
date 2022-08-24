@@ -10,9 +10,12 @@ import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
+  CanonicalView,
   DefaultViewerParams,
+  InlineView,
   IViewer,
   LightConfiguration,
+  SpeckleView,
   SunLightConfiguration,
   ViewerEvent,
   ViewerParams
@@ -287,7 +290,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.setSunLightConfiguration(config as SunLightConfiguration)
   }
 
-  public getViews() {
+  public getViews(): SpeckleView[] {
     return WorldTree.getInstance()
       .findAll((node: TreeNode) => {
         return node.model.renderView?.speckleType === SpeckleType.View3D
@@ -297,21 +300,15 @@ export class Viewer extends EventEmitter implements IViewer {
           name: v.model.raw.applicationId,
           id: v.model.id,
           view: v.model.raw
-        }
+        } as SpeckleView
       })
   }
 
-  public setView(id: string, transition: boolean): void {
-    const view3DNode = WorldTree.getInstance().findId(id)
-    this.speckleRenderer.setView(
-      view3DNode.model.raw.origin,
-      view3DNode.model.raw.target,
-      transition
-    )
-  }
-
-  public rotateTo(side: string, transition = true) {
-    this.speckleRenderer.rotateTo(side, transition)
+  public setView(
+    view: CanonicalView | SpeckleView | InlineView,
+    transition = true
+  ): void {
+    this.speckleRenderer.setView(view, transition)
   }
 
   public screenshot(): Promise<string> {

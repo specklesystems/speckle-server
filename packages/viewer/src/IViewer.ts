@@ -83,6 +83,30 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   radius: 0
 }
 
+export type CanonicalView =
+  | 'front'
+  | 'back'
+  | 'up'
+  | 'top'
+  | 'down'
+  | 'bottom'
+  | 'right'
+  | 'left'
+  | '3d'
+  | '3D'
+
+export type SpeckleView = {
+  name: string
+  id: string
+  view: Record<string, unknown>
+}
+
+export type InlineView = {
+  position: Vector3
+  target: Vector3
+  zoom: number
+}
+
 /**
  * Carried over from the old Viewer. To be extended/changed
  */
@@ -96,10 +120,8 @@ export interface IViewer {
   toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
 
-  getViews()
-  setView(id: string, transition: boolean)
-  // This shouldn't be part of the API, it should be handled through `setView`
-  rotateTo(side: string, transition: boolean)
+  getViews(): SpeckleView[]
+  setView(view: CanonicalView | SpeckleView | InlineView, transition?: boolean)
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>

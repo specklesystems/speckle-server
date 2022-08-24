@@ -1,4 +1,9 @@
-import { PropertyInfo, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
+import {
+  CanonicalView,
+  PropertyInfo,
+  SunLightConfiguration,
+  ViewerEvent
+} from '@speckle/viewer'
 import { Viewer } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -122,7 +127,7 @@ export default class Sandbox {
           title: views[k].name
         })
         .on('click', () => {
-          this.viewer.setView(views[k].id, true)
+          this.viewer.setView(views[k], true)
         })
     }
   }
@@ -179,12 +184,12 @@ export default class Sandbox {
     this.tabs.pages[0].addSeparator()
     this.tabs.pages[0].addSeparator()
 
-    const showBatches = this.tabs.pages[0].addButton({
-      title: 'ShowBatches'
-    })
-    showBatches.on('click', () => {
-      this.viewer.speckleRenderer.debugShowBatches()
-    })
+    // const showBatches = this.tabs.pages[0].addButton({
+    //   title: 'ShowBatches'
+    // })
+    // showBatches.on('click', () => {
+    //   this.viewer.speckleRenderer.debugShowBatches()
+    // })
 
     const darkModeToggle = this.tabs.pages[0].addButton({
       title: '🌞 / 🌛'
@@ -220,7 +225,7 @@ export default class Sandbox {
           title: sides[k]
         })
         .on('click', () => {
-          this.viewer.rotateTo(sides[k])
+          this.viewer.setView(sides[k] as CanonicalView)
         })
     }
   }

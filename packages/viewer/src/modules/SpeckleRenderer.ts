@@ -36,8 +36,11 @@ import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { WorldTree } from './tree/WorldTree'
 import {
+  CanonicalView,
   DefaultLightConfiguration,
+  InlineView,
   SelectionEvent,
+  SpeckleView,
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
@@ -587,14 +590,50 @@ export default class SpeckleRenderer {
     }
   }
 
-  public setView(origin: Vector3, target: Vector3, transition = true) {
+  private isSpeckleView(
+    view: CanonicalView | SpeckleView | InlineView
+  ): view is SpeckleView {
+    return (view as SpeckleView).name !== undefined
+  }
+
+  private isCanonicalView(
+    view: CanonicalView | SpeckleView | InlineView
+  ): view is CanonicalView {
+    return typeof (view as CanonicalView) === 'string'
+  }
+
+  private isInlineView(
+    view: CanonicalView | SpeckleView | InlineView
+  ): view is InlineView {
+    return (
+      (view as InlineView).position !== undefined &&
+      (view as InlineView).target !== undefined
+    )
+  }
+
+  public setView(
+    view: CanonicalView | SpeckleView | InlineView,
+    transition = true
+  ): void {
+    if (this.isSpeckleView(view)) {
+      this.setViewSpeckle(view, transition)
+    }
+    if (this.isCanonicalView(view)) {
+      this.setViewCanonical(view, transition)
+    }
+    if (this.isInlineView(view)) {
+      this.setViewInline(view, transition)
+    }
+  }
+
+  private setViewSpeckle(view: SpeckleView, transition = true) {
     this.viewer.cameraHandler.activeCam.controls.setLookAt(
-      origin.x,
-      origin.y,
-      origin.z,
-      target.x,
-      target.y,
-      target.z,
+      view.view.origin['x'],
+      view.view.origin['y'],
+      view.view.origin['z'],
+      view.view.target['x'],
+      view.view.target['y'],
+      view.view.target['z'],
       transition
     )
   }
@@ -606,7 +645,7 @@ export default class SpeckleRenderer {
    * @param  {Boolean} transition [description]
    * @return {[type]}             [description]
    */
-  public rotateTo(side: string, transition = true) {
+  private setViewCanonical(side: string, transition = true) {
     const DEG90 = Math.PI * 0.5
     const DEG180 = Math.PI
 
@@ -670,6 +709,18 @@ export default class SpeckleRenderer {
         break
       }
     }
+  }
+
+  private setViewInline(view: InlineView, transition = true) {
+    this.viewer.cameraHandler.activeCam.controls.setLookAt(
+      view.position.x,
+      view.position.y,
+      view.position.z,
+      view.target.x,
+      view.target.y,
+      view.target.z,
+      transition
+    )
   }
 
   /** DEBUG */

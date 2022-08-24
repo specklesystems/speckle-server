@@ -1,9 +1,12 @@
 import { Viewer } from './modules/Viewer'
 import {
+  CanonicalView,
   DefaultLightConfiguration,
   DefaultViewerParams,
+  InlineView,
   IViewer,
   SelectionEvent,
+  SpeckleView,
   ViewerEvent
 } from './IViewer'
 import { FilteringState } from './modules/filtering/FilteringManager'
@@ -29,5 +32,8 @@ export type {
   SunLightConfiguration,
   DataTree,
   ObjectPredicate,
-  SpeckleObject
+  SpeckleObject,
+  SpeckleView,
+  CanonicalView,
+  InlineView
 }

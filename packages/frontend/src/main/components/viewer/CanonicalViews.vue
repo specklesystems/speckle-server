@@ -53,7 +53,7 @@ export default defineComponent({
   },
   methods: {
     setView(view: string) {
-      this.viewer.rotateTo(view.toLowerCase())
+      this.viewer.setView(view.toLowerCase())
     }
   }
 })
