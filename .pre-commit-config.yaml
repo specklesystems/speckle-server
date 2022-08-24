@@ -21,9 +21,5 @@ repos:
     hooks:
       - id: circleci-config-validate
 
-  - repo: https://github.com/specklesystems/speckle-server
-    hooks:
-      - id: ggshield-not-ci
-
 ci:
   autoupdate_schedule: quarterly
