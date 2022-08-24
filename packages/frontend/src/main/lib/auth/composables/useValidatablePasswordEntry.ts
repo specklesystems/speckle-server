@@ -1,7 +1,7 @@
 import { ValidatePasswordStrengthDocument } from '@/graphql/generated/graphql'
 import { Nullable } from '@/helpers/typeHelpers'
 import { useApolloClient } from '@vue/apollo-composable'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 export function useValidatablePasswordEntry() {
   const password = ref<Nullable<string>>(null)
@@ -52,10 +52,16 @@ export function useValidatablePasswordEntry() {
    */
   const validatePasswordStrength = async () => {
     await updatePasswordStrength()
-    if ((passwordStrength.value || 0) < 75) {
+    if ((passwordStrength.value || 0) < 50) {
       throw new Error('Password too weak')
     }
   }
+
+  // Wipe old suggestion, if password is changed
+  watch(password, () => {
+    passwordStrength.value = 0
+    passwordSuggestion.value = null
+  })
 
   return {
     password,
