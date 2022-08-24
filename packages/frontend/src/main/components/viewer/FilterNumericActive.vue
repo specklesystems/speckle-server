@@ -78,6 +78,27 @@
           @finish="setFilterHistogram"
         />
       </v-col>
+      <!-- TODO -->
+      <!-- <v-col class="d-flex px-2 mt-2">
+        <v-text-field
+          v-model="userMin"
+          :min="filter.data.min"
+          :max="filter.data.max"
+          type="number"
+          class="px-1"
+          label="min"
+          @input="setMin"
+        />
+        <v-text-field
+          v-model="userMax"
+          :min="filter.data.min"
+          :max="filter.data.max"
+          type="number"
+          class="px-1"
+          label="max"
+          @input="setMax"
+        />
+      </v-col> -->
     </v-row>
   </div>
 </template>
@@ -113,7 +134,11 @@ export default {
       range: [0, 1],
       colorBy: true,
       width: 300,
-      preventFirstSetInternal: this.preventFirstSet
+      preventFirstSetInternal: this.preventFirstSet,
+      userMin: 0,
+      userMax: 1,
+      error: false,
+      errorMessages: []
     }
   },
   watch: {
@@ -127,7 +152,9 @@ export default {
   },
   mounted() {
     this.$set(this.range, 0, this.filter.data.min)
+    this.userMin = this.filter.data.min
     this.$set(this.range, 1, this.filter.data.max)
+    this.userMax = this.filter.data.max
     this.setFilter()
     this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
@@ -138,6 +165,14 @@ export default {
     resetFilter()
   },
   methods: {
+    // setMin() {
+    //   console.log('setmin')
+    //   console.log(this.userMin)
+    // },
+    // setMax() {
+    //   console.log('setmax')
+    //   console.log(this.userMax)
+    // },
     async setFilterHistogram(e) {
       if (this.preventFirstSetInternal) {
         this.preventFirstSetInternal = false
@@ -147,34 +182,15 @@ export default {
       const propInfo = { ...this.filter.data }
       propInfo.passMin = e.from
       propInfo.passMax = e.to
-      setColorFilter(JSON.parse(JSON.stringify(propInfo)))
-      console.log(propInfo)
-
-      // setNumericFilter({
-      //   filterKey: this.filter.targetKey,
-      //   min: e.from,
-      //   max: e.to
-      // })
+      setColorFilter(propInfo)
     },
     async setFilter() {
       if (this.preventFirstSetInternal) {
         this.preventFirstSetInternal = false
         return
       }
-
       const propInfo = { ...this.filter.data }
-      // propInfo.passMin = this.range[0]
-      // propInfo.passMax = this.range[1]
-      setColorFilter(JSON.parse(JSON.stringify(propInfo)))
-      console.log(propInfo)
-
-      // setColorFilter() // TODO
-
-      // setNumericFilter({
-      //   filterKey: this.filter.targetKey,
-      //   min: this.range[0],
-      //   max: this.range[1]
-      // })
+      setColorFilter(propInfo)
     },
     prettify(num) {
       return this.$options.filters.prettynum(num)

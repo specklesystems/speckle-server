@@ -226,8 +226,6 @@ export class FilteringManager {
     })
     this.ColorNumericFilterState.colorGroups = colorGroups
     this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
-    console.log(numProp)
-    console.log(this.ColorNumericFilterState)
     return this.setFilters()
   }
 
