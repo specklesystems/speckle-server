@@ -40,7 +40,7 @@
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn> -->
-      <v-btn
+      <!-- <v-btn
         v-tooltip="'Sun & Shadow Settings'"
         :small="small"
         rounded
@@ -52,7 +52,34 @@
       </v-btn>
       <v-dialog v-model="lightsDialog" hide-overlay max-width="400">
         <lights-dialog @close="lightsDialog = false" />
-      </v-dialog>
+      </v-dialog> -->
+      <v-menu
+        :close-on-content-click="false"
+        origin="center"
+        rounded="lg"
+        open-on-hover
+        top
+        offset-y
+        close-delay="400"
+        nudge-top="10"
+        nudge-left="100"
+        nudge-width="200"
+      >
+        <template #activator="{ on, attrs }">
+          <v-btn
+            v-tooltip="'Sun & Shadow Settings'"
+            :small="small"
+            rounded
+            icon
+            class="mr-2"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon small>mdi-white-balance-sunny</v-icon>
+          </v-btn>
+        </template>
+        <lights-menu />
+      </v-menu>
       <canonical-views :small="small" />
       <v-btn
         v-tooltip="'Zoom extents'"
@@ -93,7 +120,7 @@ export default {
   components: {
     CanonicalViews: () => import('@/main/components/viewer/CanonicalViews'),
     ViewerHelp: () => import('@/main/components/viewer/dialogs/ViewerHelp.vue'),
-    LightsDialog: () => import('@/main/components/viewer/dialogs/LightsDialog.vue')
+    LightsMenu: () => import('@/main/components/viewer/LightsMenu.vue')
   },
   props: {
     small: { type: Boolean, default: false }

@@ -54,6 +54,7 @@ export interface LightConfiguration {
   castShadow?: boolean
   intensity?: number
   color?: number
+  indirectLightIntensity?: number
 }
 
 export interface SunLightConfiguration extends LightConfiguration {
@@ -67,9 +68,10 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   castShadow: true,
   intensity: 5,
   color: 0xffffff,
-  elevation: 0.47,
-  azimuth: 0,
-  radius: 0
+  elevation: 1.33,
+  azimuth: 0.75,
+  radius: 0,
+  indirectLightIntensity: 1.85
 }
 
 /**

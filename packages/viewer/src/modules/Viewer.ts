@@ -292,8 +292,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.toggleCameras()
   }
 
-  public setLightConfiguration(config: LightConfiguration): void {
-    this.speckleRenderer.setSunLightConfiguration(config as SunLightConfiguration)
+  public setLightConfiguration(config: SunLightConfiguration): void {
+    this.speckleRenderer.setSunLightConfiguration(config)
   }
 
   public getViews() {

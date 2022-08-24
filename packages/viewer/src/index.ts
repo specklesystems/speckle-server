@@ -15,7 +15,7 @@ import {
 import { WorldTree } from './modules/tree/WorldTree'
 import { SpeckleType } from './modules/converter/GeometryConverter'
 import { GeometryConverter } from './modules/converter/GeometryConverter'
-import { SunLightConfiguration } from './IViewer'
+import { SunLightConfiguration, DefaultLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 
 export {
@@ -26,7 +26,8 @@ export {
   FilterMaterialType as FilterMaterial,
   WorldTree,
   SpeckleType,
-  GeometryConverter
+  GeometryConverter,
+  DefaultLightConfiguration
 }
 
 export type {
