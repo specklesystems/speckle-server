@@ -1,0 +1,35 @@
+{{- if (and (.Values.test.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "test.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "test.labels" . | indent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+{{ include "test.selectorLabels" . | indent 6 }}
+  ingressDeny:
+  - fromEntities:
+    - "all"
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchName: {{ .Values.domain }}
+    # allow egress to domain hosting speckle-server
+    - toFQDNs:
+        - matchPattern: {{ .Values.domain }}
+      toPorts:
+        - ports:
+          - port: "443"
+            protocol: TCP
+{{- end }}

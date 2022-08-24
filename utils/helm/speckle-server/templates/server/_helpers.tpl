@@ -42,6 +42,20 @@ app.kubernetes.io/name: {{ include "server.name" . }}
 {{- end }}
 
 {{/*
+Service FQDN
+*/}}
+{{- define "server.service.fqdn" -}}
+{{ printf "%s.%s.svc.cluster.local." (include "server.name" $) .Values.namespace }}
+{{- end }}
+
+{{/*
+Server Port
+*/}}
+{{- define "server.port" -}}
+{{ printf "%d" 3000 }}
+{{- end }}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "server.serviceAccountName" -}}
