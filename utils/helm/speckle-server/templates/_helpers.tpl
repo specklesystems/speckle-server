@@ -104,7 +104,9 @@ Expects the global context "$" to be passed as the parameter
 {{- if .Values.redis.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.redis.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.redis.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
-{{ include "speckle.networkpolicy.egress.external" (dict "ip" .Values.redis.networkPolicy.externalToCluster.ipv4 "port" $port) }}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
+  {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
 
@@ -118,7 +120,9 @@ Expects the global context "$" to be passed as the parameter
 {{- if .Values.redis.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.redis.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.redis.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
-{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" .Values.redis.networkPolicy.externalToCluster.ipv4 "fqdn" .Values.redis.networkPolicy.externalToCluster.host "port" $port) }}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
+  {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
 
@@ -130,7 +134,9 @@ Creates a Kubernetes Network Policy egress definition for connecting to Postgres
 {{- if .Values.db.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.db.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.db.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
-{{ include "speckle.networkpolicy.egress.external" (dict "ip" .Values.db.networkPolicy.externalToCluster.ipv4 "port" $port) }}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
+  {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
 
@@ -142,7 +148,9 @@ Creates a Cilium network policy egress definition for connecting to Postgres
 {{- if .Values.db.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.db.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.db.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
-{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" .Values.db.networkPolicy.externalToCluster.ipv4 "fqdn" .Values.db.networkPolicy.externalToCluster.host "port" $port) }}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
+  {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $domain "port" $port) }}
 {{- end -}}
 {{- end }}
 
@@ -154,11 +162,7 @@ Creates a Kubernetes network policy egress definition for connecting to S3 compa
 {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.s3.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.s3.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-  {{- $host := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
-  {{- $ip := "" -}}
-  {{- if eq (include "speckle.isIPv4" $host) "true" -}}
-    {{- $ip = $host -}}
-  {{- end -}}
+  {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $ip "port" $port) }}
 {{- end -}}
 {{- end }}
@@ -172,52 +176,42 @@ Creates a Cilium Network Policy egress definition for connecting to S3 compatibl
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.s3.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.s3.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
   {{- $host := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
-  {{- $ip := "" -}}
-  {{- $fqdn := "" -}}
-  {{- if eq (include "speckle.isIPv4" $host) "true" -}}
-    {{- $ip = $host -}}
-  {{- else -}}
-    {{- $fqdn = $host -}}
-  {{- end -}}
-{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $ip "fqdn" $fqdn "port" $port) }}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $host "port" $port) }}
 {{- end -}}
 {{- end }}
 
 {{/*
-Extracts the domain name from a url
-*/}}
-{{- define "speckle.networkPolicy.domainFromUrl" -}}
-{{- $host := ( urlParse . ).host -}}
-{{- if (contains ":" $host) -}}
-  {{- $host = first (mustRegexSplit ":" $host) -}}
-{{- end -}}
-{{ printf "%s" $host }}
-{{- end }}
-
-{{/*
-Creates a DNS match pattern for Cilium Network Policies.
+Creates a DNS match pattern for discovering the postgres IP
 
 Usage:
-{{ include "speckle.networkpolicy.dns.cilium" (list .Values.db.networkPolicy.externalToCluster .Values.redis.networkPolicy.externalToCluster) }}
+{{ include "speckle.networkpolicy.dns.postgres.cilium" $ }}
 
 Params:
-  - domain names - List of dictionaries containing `ipv4` and `host` string values - Required - If IP exists, domain is not added.  Otherwise host is used to match domain excactly or match a pattern (domain with a glob).
+  - context - Required, global context should be provided.
 */}}
-{{- define "speckle.networkpolicy.dns.cilium" -}}
-{{- $catchAll := false -}}
-{{- range . -}}
-  {{- if ( and .enabled ( not .ipv4 ) ) }}
-    {{- if .host -}}
-{{ include "speckle.networkpolicy.matchNameOrPattern" .host }}
-    {{- else }}
-      # only add catch all match pattern if there is no ipv4 or host, and only add it one time.
-      {{- if not $catchAll }}
-- matchPattern: "*"
-        {{- $catchAll = true }}
-      {{- end }}
-    {{- end }}
+{{- define "speckle.networkpolicy.dns.postgres.cilium" -}}
+{{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
+{{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+  {{- if (and .Values.db.networkPolicy.externalToCluster.enabled ( ne ( include "speckle.isIPv4" $domain ) "true" ) ) -}}
+{{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
   {{- end }}
 {{- end }}
+
+{{/*
+Creates a DNS match pattern for discovering redis store IP
+
+Usage:
+{{ include "speckle.networkpolicy.dns.redis.cilium" $ }}
+
+Params:
+  - context - Required, global context should be provided.
+*/}}
+{{- define "speckle.networkpolicy.dns.redis.cilium" -}}
+{{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
+{{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
+  {{- if (and .Values.redis.networkPolicy.externalToCluster.enabled ( ne ( include "speckle.isIPv4" $domain ) "true" ) ) -}}
+{{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
+  {{- end }}
 {{- end }}
 
 {{/*
@@ -237,7 +231,7 @@ Usage:
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" "" "port" "6379") }}
 
 Params:
-  - ip - String - Optional - If the IP is not known, then egress is allowed to 0.0.0.0/0.
+  - ip - String - Optional - IP or Domain of the endpoint to allow egress to. Can provide either ip, fqdn or neither. If neither fqdn or ip is provided then egress is allowed to 0.0.0.0/0 (i.e. everywhere!)
   - port - String - Required
 
 Limitations:
@@ -251,7 +245,7 @@ Limitations:
 {{- end -}}
 - to:
     - ipBlock:
-    {{- if .ip }}
+    {{- if ( eq ( include "speckle.isIPv4" .ip ) "true" ) }}
         cidr: {{ printf "%s/32" .ip }}
     {{- else }}
         # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
@@ -268,11 +262,10 @@ Limitations:
 Creates a Cilium network policy egress definition for connecting to an external Layer 3/Layer 4 endpoint i.e. ip:port
 
 Usage:
-{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" "" "fqdn" "myredis.example.org" "port" "6379") }}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" "" "port" "6379") }}
 
 Params:
-  - ip - String - Optional - IP of the endpoint to allow egress to. Can provide either ip, fqdn or neither. If both IP or FQDN are provided, IP takes precedence. If neither fqdn or ip is provided then egress is allowed to 0.0.0.0/0 (i.e. everywhere!)
-  - fpdn - String - Optional - Domain name of the endpoint to allow egress to.  Can include a pattern matching glob '*'.  Can provide either ip, fqdn, or neither. If both IP or FQDN are provided, IP takes precedence. If neigher, then egress is allowed to 0.0.0.0/0 (i.e. everywhere!)
+  - ip - String - Optional - IP or Domain of the endpoint to allow egress to. Can provide either ip, fqdn or neither. If neither fqdn or ip is provided then egress is allowed to 0.0.0.0/0 (i.e. everywhere!)
   - port - String - Required
 
 Limitations:
@@ -282,12 +275,12 @@ Limitations:
 {{- if not .port -}}
     {{- printf "\nNETWORKPOLICY ERROR: The port was not provided \"%s\"\n" .port | fail -}}
 {{- end -}}
-{{- if .ip }}
+{{- if ( eq ( include "speckle.isIPv4" .ip ) "true" ) }}
 - toCIDR:
     - {{ printf "%s/32" .ip }}
-{{- else if .fqdn }}
+{{- else if .ip }}
 - toFQDNs:
-{{ include "speckle.networkpolicy.matchNameOrPattern" .fqdn | indent 4 }}
+{{ include "speckle.networkpolicy.matchNameOrPattern" .ip | indent 4 }}
 {{- else }}
 - toCIDRSet:
       # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
@@ -299,10 +292,13 @@ Limitations:
   toPorts:
     - ports:
       - port: {{ printf "%s" .port | quote }}
-        protcol: TCP
+        protocol: TCP
 {{- end }}
 
 {{- define "speckle.networkpolicy.matchNameOrPattern" -}}
+{{- if not . -}}
+    {{- printf "\nNETWORKPOLICY ERROR: The name or glob pattern was not provided \"%s\"\n" . | fail -}}
+{{- end -}}
   {{- if ( contains "*" . ) }}
 - matchPattern: {{ printf "%s" . }}
   {{- else }}
@@ -374,7 +370,7 @@ Params:
   toPorts:
     - ports:
       - port: {{ printf "%s" .port | quote }}
-        protcol: TCP
+        protocol: TCP
 {{- end }}
 {{- end }}
 
@@ -393,6 +389,20 @@ Params:
 {{- printf "false" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Extracts the domain name from a url
+*/}}
+{{- define "speckle.networkPolicy.domainFromUrl" -}}
+  {{- if not . -}}
+      {{- printf "\nERROR: The url was not provided as the context \"%s\"\n" . | fail -}}
+  {{- end -}}
+  {{- $host := ( urlParse . ).host -}}
+  {{- if (contains ":" $host) -}}
+    {{- $host = first (mustRegexSplit ":" $host -1) -}}
+  {{- end -}}
+{{ printf "%s" $host }}
+{{- end }}
 
 {{/*
 Renders a value that contains template.
@@ -427,4 +437,21 @@ Ingress pod selector
 */}}
 {{- define "speckle.ingress.selector.pod" -}}
 app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
+{{- end }}
+
+{{/*
+Retrieves an existing secret
+
+Usage:
+{{ include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" $ )}}
+
+Params:
+  - secret_key - Required, the key within the secret.
+  - context - Required, must be global context.  Values of global context must include 'namespace' and 'secretName' keys.
+*/}}
+{{- define "speckle.getSecret" -}}
+{{- $secretResource := (lookup "v1" "Secret" .context.Values.namespace .context.Values.secretName ) -}}
+{{- $secret := ( index $secretResource.data .secret_key ) -}}
+{{- $secretDecoded := (b64dec $secret) -}}
+{{- printf "%s" $secretDecoded }}
 {{- end }}

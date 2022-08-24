@@ -130,16 +130,6 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the Postgres database is hosted externally to the Kubernetes cluster",
                   "default": true
-                },
-                "host": {
-                  "type": "string",
-                  "description": "The domain name at which the Postgres database is hosted.",
-                  "default": ""
-                },
-                "ipv4": {
-                  "type": "string",
-                  "description": "The IP address at which the Postgres database is hosted",
-                  "default": ""
                 }
               }
             },
@@ -295,16 +285,6 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the Redis store is hosted externally to the Kubernetes cluster",
                   "default": true
-                },
-                "host": {
-                  "type": "string",
-                  "description": "The domain name at which the Redis store is hosted.",
-                  "default": ""
-                },
-                "ipv4": {
-                  "type": "string",
-                  "description": "The IP address at which the Redis store is hosted",
-                  "default": ""
                 }
               }
             },

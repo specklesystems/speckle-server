@@ -142,16 +142,6 @@ db:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param db.networkPolicy.externalToCluster.host The domain name at which the Postgres database is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param db.networkPolicy.externalToCluster.ipv4 The IP address at which the Postgres database is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra db.networkPolicy.inCluster Only required if the Postgres database is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -284,16 +274,6 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param redis.networkPolicy.externalToCluster.host The domain name at which the Redis store is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param redis.networkPolicy.externalToCluster.ipv4 The IP address at which the Redis store is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra redis.networkPolicy.inCluster is only required if the Redis store is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
