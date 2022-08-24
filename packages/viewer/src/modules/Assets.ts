@@ -89,7 +89,9 @@ export class Assets {
     // gradient map as a data image url, rather than a file (?).
     if (srcUrl.includes('data:image')) {
       console.log(srcUrl)
-      const texture = new Texture(srcUrl as unknown as HTMLImageElement)
+      const image = new Image()
+      image.src = srcUrl
+      const texture = new Texture(image)
       texture.needsUpdate = true
       this._cache[srcUrl] = texture
       console.log(texture)

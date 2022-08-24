@@ -224,7 +224,7 @@ export function setPreventCommentCollapse(shouldPrevent: boolean) {
 
 export function getObjectProperties() {
   setIsViewerBusy(true)
-  const props = getInitializedViewer().getObjectsProperties()
+  const props = getInitializedViewer().getObjectProperties()
   setIsViewerBusy(false)
   updateState({ objectProperties: props })
 }
