@@ -27,6 +27,16 @@
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
       "default": "letsencrypt-staging"
     },
+    "networkPlugin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "(Optional) Used to configure which type of NetworkPolicy is deployed. Options are 'kubernetes' or 'cilium'.",
+          "default": "kubernetes"
+        }
+      }
+    },
     "ingress": {
       "type": "object",
       "properties": {
@@ -278,12 +288,12 @@
                 },
                 "podSelector": {
                   "type": "object",
-                  "description": "The pod Selector yaml object used to uniquely select the Redis store pods within the cluster and given namespace",
+                  "description": "The pod Selector yaml object used to uniquely select the Redis pods within the cluster and given namespace",
                   "default": {}
                 },
                 "namespaceSelector": {
                   "type": "object",
-                  "description": "The namespace selector yaml object used to uniquely select the namespace in which the Redis store pods are deployed",
+                  "description": "The namespace selector yaml object used to uniquely select the namespace in which the Redis pods are deployed",
                   "default": {}
                 }
               }
