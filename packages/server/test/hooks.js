@@ -5,9 +5,11 @@ const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
+const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
+chai.use(graphqlChaiPlugin)
 
 const unlock = async () => {
   const exists = await knex.schema.hasTable('knex_migrations_lock')
@@ -75,10 +77,14 @@ exports.mochaHooks = {
   }
 }
 
-exports.beforeEachContext = async () => {
-  await exports.truncateTables()
+exports.buildApp = async () => {
   const { app, graphqlServer } = await init()
   return { app, graphqlServer }
+}
+
+exports.beforeEachContext = async () => {
+  await exports.truncateTables()
+  return await exports.buildApp()
 }
 
 exports.initializeTestServer = initializeTestServer

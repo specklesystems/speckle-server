@@ -6,10 +6,7 @@ const {
   buildCommentTextFromInput,
   validateInputAttachments
 } = require('@/modules/comments/services/commentTextService')
-const {
-  emitCommentEvent,
-  CommentsEvents
-} = require('@/modules/comments/events/emitter')
+const { CommentsEmitter, CommentsEvents } = require('@/modules/comments/events/emitter')
 const { getComment } = require('@/modules/comments/repositories/comments')
 
 const Comments = () => knex('comments')
@@ -118,7 +115,9 @@ module.exports = {
     // Get new comment from DB, that way we don't have to mock/fill in the missing
     // values
     const newComment = await module.exports.getComment({ id: comment.id, userId })
-    emitCommentEvent(CommentsEvents.Created, { comment: newComment })
+    await CommentsEmitter.emit(CommentsEvents.Created, {
+      comment: newComment
+    })
 
     return newComment
   },
@@ -161,7 +160,9 @@ module.exports = {
       id: comment.id,
       userId: authorId
     })
-    emitCommentEvent(CommentsEvents.Created, { comment: newComment })
+    await CommentsEmitter.emit(CommentsEvents.Created, {
+      comment: newComment
+    })
 
     return newComment
   },
@@ -183,7 +184,7 @@ module.exports = {
     // Get new comment from DB, that way we don't have to mock/fill in the missing
     // values
     const updatedComment = await module.exports.getComment({ id: input.id, userId })
-    emitCommentEvent(CommentsEvents.Updated, {
+    await CommentsEmitter.emit(CommentsEvents.Updated, {
       previousComment: editedComment,
       newComment: updatedComment
     })

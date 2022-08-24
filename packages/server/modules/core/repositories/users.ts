@@ -64,3 +64,17 @@ export async function getUserByEmail(email: string) {
   const user = await q.first()
   return user ? sanitizeUserRecord(user) : null
 }
+
+/**
+ * Mark a user as verified by e-mail address, and return true on success
+ */
+export async function markUserAsVerified(email: string) {
+  const UserCols = Users.with({ withoutTablePrefix: true }).col
+  const q = Users.knex()
+    .whereRaw('lower(email) = lower(?)', [email])
+    .update({
+      [UserCols.verified]: true
+    })
+
+  return !!(await q)
+}

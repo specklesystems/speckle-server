@@ -202,4 +202,11 @@ export const ApiTokens = buildTableHelper('api_tokens', [
   'lastUsed'
 ])
 
+export const EmailVerifications = buildTableHelper('email_verifications', [
+  'id',
+  'email',
+  'createdAt',
+  'used'
+])
+
 export { knex }

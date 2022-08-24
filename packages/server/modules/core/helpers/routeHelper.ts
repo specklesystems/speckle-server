@@ -30,3 +30,11 @@ export function getCommentRoute(
   const objectOrCommitPart = commitId ? `commits/${commitId}` : `objects/${objectId}`
   return `/streams/${streamId}/${objectOrCommitPart}?cId=${commentId}`
 }
+
+export function getPasswordResetFinalizationRoute(tokenId: string): string {
+  return `/authn/resetpassword/finalize?t=${tokenId}`
+}
+
+export function getEmailVerificationFinalizationRoute(tokenId: string): string {
+  return `/auth/verifyemail?t=${tokenId}`
+}

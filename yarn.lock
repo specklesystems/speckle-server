@@ -5557,6 +5557,7 @@ __metadata:
     "@types/module-alias": ^2.0.1
     "@types/nodemailer": ^6.4.5
     "@types/sanitize-html": ^2.6.2
+    "@types/supertest": ^2.0.12
     "@types/verror": ^1.10.6
     "@types/yargs": ^17.0.10
     "@types/zxcvbn": ^4.4.1
@@ -5589,6 +5590,7 @@ __metadata:
     ejs: ^3.1.8
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
+    eventemitter2: ^6.4.7
     express: ^4.17.3
     express-async-errors: ^3.1.1
     express-session: ^1.17.1
@@ -6814,6 +6816,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/superagent@npm:*":
+  version: 4.1.15
+  resolution: "@types/superagent@npm:4.1.15"
+  dependencies:
+    "@types/cookiejar": "*"
+    "@types/node": "*"
+  checksum: 347cd74ef0a29e6b9c6d32253c3fb0dd39a31618b50752f84d36b6a9246237bb6b68c9b436c1f94adabc2df89d9f1939e4782f4c850f98b9c2fe431ad4e565a4
+  languageName: node
+  linkType: hard
+
 "@types/superagent@npm:^3.8.3":
   version: 3.8.7
   resolution: "@types/superagent@npm:3.8.7"
@@ -6821,6 +6833,15 @@ __metadata:
     "@types/cookiejar": "*"
     "@types/node": "*"
   checksum: 87ca335703f203c5f558977f4a7cd29fef792698007952631575518085f1604791b7a85ceb4f03b395a20ce82f4e8c87d78b1a142b3721f5043195329a4bfc00
+  languageName: node
+  linkType: hard
+
+"@types/supertest@npm:^2.0.12":
+  version: 2.0.12
+  resolution: "@types/supertest@npm:2.0.12"
+  dependencies:
+    "@types/superagent": "*"
+  checksum: f0e2b44f86bec2f708d6a3d0cb209055b487922040773049b0f8c6b557af52d4b5fa904e17dfaa4ce6e610172206bbec7b62420d158fa57b6ffc2de37b1730d3
   languageName: node
   linkType: hard
 
@@ -14334,6 +14355,13 @@ __metadata:
   version: 5.0.1
   resolution: "event-target-shim@npm:5.0.1"
   checksum: 1ffe3bb22a6d51bdeb6bf6f7cf97d2ff4a74b017ad12284cc9e6a279e727dc30a5de6bb613e5596ff4dc3e517841339ad09a7eec44266eccb1aa201a30448166
+  languageName: node
+  linkType: hard
+
+"eventemitter2@npm:^6.4.7":
+  version: 6.4.7
+  resolution: "eventemitter2@npm:6.4.7"
+  checksum: 1b36a77e139d6965ebf3a36c01fa00c089ae6b80faa1911e52888f40b3a7057b36a2cc45dcd1ad87cda3798fe7b97a0aabcbb8175a8b96092a23bb7d0f039e66
   languageName: node
   linkType: hard
 

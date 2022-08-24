@@ -448,6 +448,8 @@ export type Mutation = {
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
   objectCreate: Array<Maybe<Scalars['String']>>;
+  /** (Re-)send the account verification e-mail */
+  requestVerification: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
@@ -777,6 +779,27 @@ export type ObjectCreateInput = {
   streamId: Scalars['String'];
 };
 
+export type PasswordStrengthCheckFeedback = {
+  __typename?: 'PasswordStrengthCheckFeedback';
+  suggestions: Array<Scalars['String']>;
+  warning?: Maybe<Scalars['String']>;
+};
+
+export type PasswordStrengthCheckResults = {
+  __typename?: 'PasswordStrengthCheckResults';
+  /** Verbal feedback to help choose better passwords. set when score <= 2. */
+  feedback: PasswordStrengthCheckFeedback;
+  /**
+   * Integer from 0-4 (useful for implementing a strength bar):
+   * 0 too guessable: risky password. (guesses < 10^3)
+   * 1 very guessable: protection from throttled online attacks. (guesses < 10^6)
+   * 2 somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
+   * 3 safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
+   * 4 very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
+   */
+  score: Scalars['Int'];
+};
+
 export type PendingStreamCollaborator = {
   __typename?: 'PendingStreamCollaborator';
   id: Scalars['String'];
@@ -833,12 +856,10 @@ export type Query = {
   streamInvites: Array<PendingStreamCollaborator>;
   /** All the streams of the current user, pass in the `query` parameter to search by name, description or ID. */
   streams?: Maybe<StreamCollection>;
-  /**
-   * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
-   * If ID is provided, admin access is required
-   */
+  /** Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header). */
   user?: Maybe<User>;
-  userPwdStrength?: Maybe<Scalars['JSONObject']>;
+  /** Validate password strength */
+  userPwdStrength: PasswordStrengthCheckResults;
   /**
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
@@ -1382,6 +1403,8 @@ export type User = {
   email?: Maybe<Scalars['String']>;
   /** All the streams that a user has favorited */
   favoriteStreams?: Maybe<StreamCollection>;
+  /** Whether the user has a pending/active email verification token */
+  hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['String'];
   name?: Maybe<Scalars['String']>;
   profiles?: Maybe<Scalars['JSONObject']>;
@@ -1649,6 +1672,8 @@ export type ResolversTypes = {
   Object: ResolverTypeWrapper<Object>;
   ObjectCollection: ResolverTypeWrapper<ObjectCollection>;
   ObjectCreateInput: ObjectCreateInput;
+  PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
+  PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaborator>;
   Query: ResolverTypeWrapper<{}>;
   ReplyCreateInput: ReplyCreateInput;
@@ -1738,6 +1763,8 @@ export type ResolversParentTypes = {
   Object: Object;
   ObjectCollection: ObjectCollection;
   ObjectCreateInput: ObjectCreateInput;
+  PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
+  PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaborator;
   Query: {};
   ReplyCreateInput: ReplyCreateInput;
@@ -1800,6 +1827,10 @@ export type HasStreamRoleDirectiveArgs = {
 };
 
 export type HasStreamRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasStreamRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type IsOwnerDirectiveArgs = { };
+
+export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type ActivityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Activity'] = ResolversParentTypes['Activity']> = {
   actionType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2050,6 +2081,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
+  requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;
@@ -2094,6 +2126,18 @@ export type ObjectCollectionResolvers<ContextType = GraphQLContext, ParentType e
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type PasswordStrengthCheckFeedbackResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PasswordStrengthCheckFeedback'] = ResolversParentTypes['PasswordStrengthCheckFeedback']> = {
+  suggestions?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  warning?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PasswordStrengthCheckResultsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PasswordStrengthCheckResults'] = ResolversParentTypes['PasswordStrengthCheckResults']> = {
+  feedback?: Resolver<ResolversTypes['PasswordStrengthCheckFeedback'], ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PendingStreamCollaborator'] = ResolversParentTypes['PendingStreamCollaborator']> = {
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2123,7 +2167,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
-  userPwdStrength?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
+  userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<Maybe<ResolversTypes['UserSearchResultCollection']>, ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'limit' | 'query'>>;
 };
 
@@ -2291,6 +2335,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   createdApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerApp']>>>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
+  hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
@@ -2371,6 +2416,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
+  PasswordStrengthCheckFeedback?: PasswordStrengthCheckFeedbackResolvers<ContextType>;
+  PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ResourceIdentifier?: ResourceIdentifierResolvers<ContextType>;
@@ -2399,4 +2446,5 @@ export type DirectiveResolvers<ContextType = GraphQLContext> = {
   hasScope?: HasScopeDirectiveResolver<any, any, ContextType>;
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasStreamRole?: HasStreamRoleDirectiveResolver<any, any, ContextType>;
+  isOwner?: IsOwnerDirectiveResolver<any, any, ContextType>;
 };
