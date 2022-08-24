@@ -40,6 +40,19 @@
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn> -->
+      <v-btn
+        v-tooltip="'Sun & Shadow Settings'"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="lightsDialog = true"
+      >
+        <v-icon small>mdi-white-balance-sunny</v-icon>
+      </v-btn>
+      <v-dialog v-model="lightsDialog" hide-overlay max-width="400">
+        <lights-dialog @close="lightsDialog = false" />
+      </v-dialog>
       <canonical-views :small="small" />
       <v-btn
         v-tooltip="'Zoom extents'"
@@ -79,7 +92,8 @@ import { resetFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager
 export default {
   components: {
     CanonicalViews: () => import('@/main/components/viewer/CanonicalViews'),
-    ViewerHelp: () => import('@/main/components/viewer/dialogs/ViewerHelp.vue')
+    ViewerHelp: () => import('@/main/components/viewer/dialogs/ViewerHelp.vue'),
+    LightsDialog: () => import('@/main/components/viewer/dialogs/LightsDialog.vue')
   },
   props: {
     small: { type: Boolean, default: false }
@@ -99,7 +113,8 @@ export default {
     )
 
     const helpDialog = ref(false)
-    return { viewer, viewerState, helpDialog }
+    const lightsDialog = ref(false)
+    return { viewer, viewerState, helpDialog, lightsDialog }
   },
   data() {
     return {
