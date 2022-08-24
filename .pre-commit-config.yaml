@@ -21,12 +21,9 @@ repos:
     hooks:
       - id: circleci-config-validate
 
-  - repo: https://github.com/gitguardian/ggshield
-    rev: 'v1.13.0'
+  - repo: https://github.com/specklesystems/speckle-server
     hooks:
-      - id: ggshield
-        language_version: python3
-        stages: [commit]
+      - id: ggshield-not-ci
 
 ci:
   autoupdate_schedule: quarterly
