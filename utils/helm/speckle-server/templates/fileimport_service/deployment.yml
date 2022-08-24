@@ -12,6 +12,8 @@ spec:
     matchLabels:
       app: speckle-fileimport-service
       project: speckle-server
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
