@@ -26,7 +26,7 @@ check_dependencies_available() {
   done
 }
 
-check_dependencies_available pre-commit hadolint helm shellcheck 
+check_dependencies_available pre-commit hadolint helm shellcheck circleci ggshield
 
 echo "All systems functional, running additional pre-commit checks..."
 pre-commit run --all-files
