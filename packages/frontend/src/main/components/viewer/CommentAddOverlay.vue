@@ -252,7 +252,7 @@ import {
   setIsAddingComment,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { ViewerEvent } from '@speckle/viewer'
 /**
  * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
  */
@@ -333,7 +333,7 @@ export default {
   },
   mounted() {
     this.viewerSelectHandler = debounce(this.handleSelect, 10)
-    this.viewer.on('object-clicked', this.viewerSelectHandler)
+    this.viewer.on(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
@@ -351,7 +351,7 @@ export default {
     document.addEventListener('keyup', this.docKeyUpHandler)
   },
   beforeDestroy() {
-    this.viewer.removeListener('object-clicked', this.viewerSelectHandler)
+    this.viewer.removeListener(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
     this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler

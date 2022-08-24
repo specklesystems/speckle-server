@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import SelectionHelper from './legacy/SelectionHelper'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { Box3 } from 'three'
+import { ViewerEvent } from '../IViewer'
 
 export default class SectionBox {
   constructor(viewer) {
@@ -86,7 +87,7 @@ export default class SectionBox {
       hover: false,
       checkForSectionBoxInclusion: false
     })
-    this.selectionHelper.on('object-clicked', this._clickHandler.bind(this))
+    this.selectionHelper.on(ViewerEvent.ObjectClicked, this._clickHandler.bind(this))
     this.selectionHelper.on('hovered', () => {
       // TODO: cannot get this to work reliably
       // if( !this.attachedToBox ) return

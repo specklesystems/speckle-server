@@ -38,7 +38,8 @@ import { WorldTree } from './tree/WorldTree'
 import {
   DefaultLightConfiguration,
   SelectionEvent,
-  SunLightConfiguration
+  SunLightConfiguration,
+  ViewerEvent
 } from '../IViewer'
 
 export default class SpeckleRenderer {
@@ -129,9 +130,9 @@ export default class SpeckleRenderer {
     container.appendChild(this._renderer.domElement)
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
-    this.input.on('object-clicked', this.onObjectClick.bind(this))
+    this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
     this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
-    this.input.on('object-doubleclicked', this.onObjectDoubleClick.bind(this))
+    this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
     if (this.SHOW_HELPERS) {
@@ -440,7 +441,7 @@ export default class SpeckleRenderer {
     )
 
     if (!result) {
-      this.viewer.emit('object-clicked', null)
+      this.viewer.emit(ViewerEvent.ObjectClicked, null)
       return
     }
 
@@ -454,7 +455,10 @@ export default class SpeckleRenderer {
 
     /** Batch rejected picking. This only happens with hidden lines */
     if (!rv) {
-      this.viewer.emit('object-clicked', !multiSelect ? null : { multiple: true })
+      this.viewer.emit(
+        ViewerEvent.ObjectClicked,
+        !multiSelect ? null : { multiple: true }
+      )
       return
     }
 
@@ -473,7 +477,7 @@ export default class SpeckleRenderer {
       multiple: multiSelect
     } as SelectionEvent
 
-    this.viewer.emit('object-clicked', selectionInfo)
+    this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 
   private onObjectDoubleClick(e) {
@@ -502,7 +506,7 @@ export default class SpeckleRenderer {
         this.zoomToBox(transformedBox, 1.2, true)
         this.viewer.needsRender = true
         this.viewer.emit(
-          'object-doubleclicked',
+          ViewerEvent.ObjectDoubleClicked,
           result ? rv.renderData.id : null,
           result ? result.point : null
         )

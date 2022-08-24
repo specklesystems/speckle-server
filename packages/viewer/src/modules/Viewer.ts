@@ -15,6 +15,7 @@ import {
   IViewer,
   LightConfiguration,
   SunLightConfiguration,
+  ViewerEvent,
   ViewerParams
 } from '../IViewer'
 import { World } from './World'
@@ -111,7 +112,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.inProgressOperations = 0
 
-    this.on('load-complete', (url) => {
+    this.on(ViewerEvent.LoadComplete, (url) => {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoomExtents()
@@ -218,7 +219,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public reset(): Promise<FilteringState> {
+  public resetFilters(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(this.filteringManager.reset())
     })
@@ -239,6 +240,10 @@ export class Viewer extends EventEmitter implements IViewer {
           console.warn('Fallback to null environment!')
         })
     }
+  }
+
+  public on(eventType: ViewerEvent, listener: (arg) => void): void {
+    super.on(eventType, listener)
   }
 
   public onWindowResize() {
@@ -337,7 +342,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public async loadObject(url: string, token?: string, enableCaching = true) {
+  public async loadObject(url: string, token: string = null, enableCaching = true) {
     try {
       if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
 
@@ -368,7 +373,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit('busy', false)
         console.warn(`Removed subtree ${url}`)
-        ;(this as EventEmitter).emit('unload-complete', url)
+        ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, url)
       }
     }
   }
@@ -390,7 +395,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit('busy', false)
         console.warn(`Removed all subtrees`)
-        ;(this as EventEmitter).emit('unload-all-complete')
+        ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }
   }
@@ -403,12 +408,6 @@ export class Viewer extends EventEmitter implements IViewer {
     filter
     // return this.FilteringManager.handleLegacyFilter(filter)
   }
-
-  /**
-   * Legacy: use FilteringManager.getAllPropertyFilters()
-   * @returns
-   */
-  public getObjectsProperties = () => PropertyManager.getProperties()
 
   public debugGetFilterByNumericPropetyData(propertyName: string): {
     min: number

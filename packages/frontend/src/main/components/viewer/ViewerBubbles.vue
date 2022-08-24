@@ -99,6 +99,7 @@ import {
   setFilterDirectly,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'ViewerBubbles',
@@ -241,7 +242,7 @@ export default {
         this.sendUpdateAndPrune()
       }, 50)
     )
-    this.viewer.on('object-doubleclicked', () => {})
+    this.viewer.on(ViewerEvent.ObjectDoubleClicked, () => {})
   },
   async beforeDestroy() {
     await this.sendDisconnect()

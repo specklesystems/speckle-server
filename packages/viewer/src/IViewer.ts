@@ -42,6 +42,15 @@ export const DefaultViewerParams: ViewerParams = {
   }
 }
 
+export enum ViewerEvent {
+  ObjectClicked = 'object-clicked',
+  ObjectDoubleClicked = 'object-doubleclicked',
+  LoadComplete = 'load-complete',
+  LoadProgress = 'load-progress',
+  UnloadComplete = 'unload-complete',
+  UnloadAllComplete = 'unload-all-complete'
+}
+
 export type SelectionEvent = {
   userData: Record<string, unknown>
   location: Vector3
@@ -78,6 +87,7 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
 export interface IViewer {
   init(): Promise<void>
   onWindowResize(): void
+  on(eventType: ViewerEvent, handler: (arg) => void)
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
@@ -130,7 +140,7 @@ export interface IViewer {
 
   setColorFilter(prop: PropertyInfo): Promise<FilteringState>
   removeColorFilter(): Promise<FilteringState>
-  reset(): Promise<FilteringState>
+  resetFilters(): Promise<FilteringState>
 
   /** Data ops */
   getDataTree(): DataTree

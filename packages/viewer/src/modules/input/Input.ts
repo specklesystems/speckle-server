@@ -1,4 +1,5 @@
 import { Vector2 } from 'three'
+import { ViewerEvent } from '../../IViewer'
 import EventEmitter from '../EventEmitter'
 
 export interface InputOptions {
@@ -37,7 +38,7 @@ export default class Input extends EventEmitter {
 
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
       if (e.ctrlKey) this.emit('object-clicked-debug', loc)
-      else this.emit('object-clicked', loc)
+      else this.emit(ViewerEvent.ObjectClicked, loc)
     })
 
     // Doubleclicks on touch devices
@@ -55,7 +56,7 @@ export default class Input extends EventEmitter {
       clearTimeout(this.tapTimeout)
       if (tapLength < 500 && tapLength > 0) {
         this.emit(
-          'object-doubleclicked',
+          ViewerEvent.ObjectDoubleClicked,
           this._getNormalisedClickPosition(this.touchLocation)
         )
       } else {
@@ -67,7 +68,7 @@ export default class Input extends EventEmitter {
     })
 
     this.container.addEventListener('dblclick', (e) => {
-      this.emit('object-doubleclicked', this._getNormalisedClickPosition(e))
+      this.emit(ViewerEvent.ObjectDoubleClicked, this._getNormalisedClickPosition(e))
     })
 
     // Handle multiple object selection

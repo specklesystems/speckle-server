@@ -1,15 +1,15 @@
-import { SunLightConfiguration } from '@speckle/viewer'
+import { PropertyInfo, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
 import { Viewer } from '@speckle/viewer'
-import { Pane } from 'tweakpane'
+import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 
 export default class Sandbox {
   private viewer: Viewer
   private pane: Pane
   private tabs
-  private filterControls
-  private viewsFolder
+  private viewsFolder!: FolderApi
   private streams: { [url: string]: Array<unknown> } = {}
+  private properties: PropertyInfo[]
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -38,11 +38,7 @@ export default class Sandbox {
   }
 
   public static filterParams = {
-    filterBy: 'Volume',
-    numericProperty: true,
-    data: {},
-    minValue: 0,
-    maxValue: 10000
+    filterBy: 'Volume'
   }
 
   public constructor(viewer: Viewer) {
@@ -54,19 +50,23 @@ export default class Sandbox {
     this.tabs = this.pane.addTab({
       pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
+    this.properties = []
 
-    viewer.on('load-complete', (url: string) => {
+    viewer.on(ViewerEvent.LoadComplete, (url: string) => {
       this.addStreamControls(url)
       this.addViewControls()
+      this.properties = this.viewer.getObjectProperties()
     })
-    viewer.on('unload-complete', (url: string) => {
+    viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
+      this.properties = this.viewer.getObjectProperties()
       url
     })
-    viewer.on('unload-all-complete', (url: string) => {
+    viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
+      this.properties = this.viewer.getObjectProperties()
       url
     })
   }
@@ -259,20 +259,6 @@ export default class Sandbox {
       label: 'Origin-z'
     })
 
-    // worldFolder
-    //   .addInput(Sandbox.sceneParams, 'pixelThreshold', {
-    //     min: 0,
-    //     max: 5
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.scene.traverse((object: Object3D) => {
-    //       if (object.type === 'Line2') {
-    //         ;(object.material as SpeckleLineMaterial).pixelThreshold =
-    //           Sandbox.sceneParams.pixelThreshold
-    //       }
-    //     })
-    //   })
-
     this.tabs.pages[1].addSeparator()
     const postFolder = this.tabs.pages[1].addFolder({
       title: 'Post',
@@ -392,100 +378,32 @@ export default class Sandbox {
       expanded: true
     })
 
-    filteringFolder
-      .addInput(Sandbox.filterParams, 'filterBy', {
-        options: {
-          Volume: 'Volume',
-          Area: 'Area',
-          SpeckleType: 'speckle_type'
-        }
-      })
-      .on('change', () => {
-        switch (Sandbox.filterParams.filterBy) {
-          case 'Volume':
-          case 'Area':
-            Sandbox.filterParams.numericProperty = true
-            break
-
-          case 'speckle_type':
-            Sandbox.filterParams.numericProperty = false
-        }
-      })
+    filteringFolder.addInput(Sandbox.filterParams, 'filterBy', {
+      options: {
+        Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
+        Area: 'parameters.HOST_AREA_COMPUTED.value',
+        SpeckleType: 'speckle_type'
+      }
+    })
 
     filteringFolder
       .addButton({
         title: 'Apply Filter'
       })
       .on('click', () => {
-        if (Sandbox.filterParams.numericProperty) {
-          Sandbox.filterParams.data = this.viewer.debugGetFilterByNumericPropetyData(
-            Sandbox.filterParams.filterBy
-          )
-          Sandbox.filterParams.minValue = Sandbox.filterParams.data.min
-          Sandbox.filterParams.maxValue = Sandbox.filterParams.data.max
-          this.viewer.debugApplyByNumericPropetyFilter(
-            Sandbox.filterParams.data,
-            Sandbox.filterParams.filterBy
-          )
-
-          if (this.filterControls) this.filterControls.dispose()
-          this.filterControls = this.tabs.pages[2].addFolder({
-            title: 'Filter Options',
-            expanded: true
-          })
-
-          this.filterControls
-            .addInput(Sandbox.filterParams, 'minValue', {
-              min: Sandbox.filterParams.minValue,
-              max: Sandbox.filterParams.maxValue
-            })
-            .on('change', () => {
-              this.viewer.debugApplyByNumericPropetyFilter(
-                Sandbox.filterParams.data,
-                Sandbox.filterParams.filterBy,
-                Sandbox.filterParams.minValue,
-                Sandbox.filterParams.maxValue
-              )
-            })
-          this.filterControls
-            .addInput(Sandbox.filterParams, 'maxValue', {
-              min: Sandbox.filterParams.minValue,
-              max: Sandbox.filterParams.maxValue
-            })
-            .on('change', () => {
-              this.viewer.debugApplyByNumericPropetyFilter(
-                Sandbox.filterParams.data,
-                Sandbox.filterParams.filterBy,
-                Sandbox.filterParams.minValue,
-                Sandbox.filterParams.maxValue
-              )
-            })
-        } else {
-          Sandbox.filterParams.data = this.viewer.debugGetFilterByNonNumericPropetyData(
-            Sandbox.filterParams.filterBy
-          )
-          this.viewer.debugApplyByNonNumericPropetyFilter(Sandbox.filterParams.data)
-          if (this.filterControls) this.filterControls.dispose()
-          this.filterControls = this.tabs.pages[2].addFolder({
-            title: 'Filter Options',
-            expanded: true
-          })
-          const categories = Object.values(Sandbox.filterParams.data)
-          categories.forEach((category) => {
-            this.filterControls
-              .addInput(category, 'color', {
-                view: 'color',
-                label: category.name
-              })
-              .on('change', () => {
-                this.viewer.debugApplyByNonNumericPropetyFilter(
-                  Sandbox.filterParams.data
-                )
-              })
-          })
-        }
-
+        const data = this.properties.find((value) => {
+          return value.key === Sandbox.filterParams.filterBy
+        }) as PropertyInfo
+        this.viewer.setColorFilter(data)
         this.pane.refresh()
+      })
+
+    filteringFolder
+      .addButton({
+        title: 'Clear Filters'
+      })
+      .on('click', () => {
+        this.viewer.resetFilters()
       })
   }
 
@@ -495,7 +413,7 @@ export default class Sandbox {
       console.log(`Loading ${url}`)
       const authToken = localStorage.getItem(
         url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
-      )
+      ) as string
       await this.viewer.loadObject(url, authToken)
     }
     localStorage.setItem('last-load-url', url)
