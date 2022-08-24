@@ -228,16 +228,6 @@ s3:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param s3.networkPolicy.externalToCluster.host The domain name at which the s3 compatible storage is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param s3.networkPolicy.externalToCluster.ipv4 The IP address at which the s3 compatible storage is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra s3.networkPolicy.inCluster Only required if the s3 compatible storage is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:

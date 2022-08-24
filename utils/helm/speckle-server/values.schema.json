@@ -230,16 +230,6 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the s3 compatible storage is hosted externally to the Kubernetes cluster",
                   "default": true
-                },
-                "host": {
-                  "type": "string",
-                  "description": "The domain name at which the s3 compatible storage is hosted.",
-                  "default": ""
-                },
-                "ipv4": {
-                  "type": "string",
-                  "description": "The IP address at which the s3 compatible storage is hosted",
-                  "default": ""
                 }
               }
             },
