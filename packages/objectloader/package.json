@@ -11,7 +11,7 @@
     "directory": "packages/objectloader"
   },
   "engines": {
-    "node": "^16.0.0"
+    "node": ">=14.0.0"
   },
   "scripts": {
     "lint": "eslint . --ext .js,.ts",

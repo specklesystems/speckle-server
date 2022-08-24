@@ -173,4 +173,40 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'token'
 ])
 
+export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [
+  'id',
+  'email',
+  'createdAt'
+])
+
+export const RefreshTokens = buildTableHelper('refresh_tokens', [
+  'id',
+  'tokenDigest',
+  'appId',
+  'userId',
+  'createdAt',
+  'lifespan'
+])
+
+export const AuthorizationCodes = buildTableHelper('authorization_codes', [
+  'id',
+  'appId',
+  'userId',
+  'challenge',
+  'createdAt',
+  'lifespan'
+])
+
+export const ApiTokens = buildTableHelper('api_tokens', [
+  'id',
+  'tokenDigest',
+  'owner',
+  'name',
+  'lastChars',
+  'revoked',
+  'lifespan',
+  'createdAt',
+  'lastUsed'
+])
+
 export { knex }
