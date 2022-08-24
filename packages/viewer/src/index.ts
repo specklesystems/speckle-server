@@ -15,8 +15,9 @@ import {
 
 import { SunLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
+import { World } from './modules/World'
 
-export { Viewer, DefaultViewerParams, ViewerEvent, DefaultLightConfiguration }
+export { Viewer, DefaultViewerParams, ViewerEvent, DefaultLightConfiguration, World }
 
 export type {
   IViewer,

@@ -52,7 +52,8 @@ v.on('section-box', (status) => {
 })
 
 window.viewerScreenshot = function () {
-  let data = v.interactions.screenshot() // transparent png.
+  //@Dim: Changed this to use the API
+  let data = v.screenshot() // transparent png.
 
   let pop = window.open()
   pop.document.title = 'super screenshot'
@@ -64,5 +65,6 @@ window.viewerScreenshot = function () {
 }
 
 window.zoomFast = function () {
-  v.interactions.zoomExtents(0.95, false)
+  //@Dim: This needs to use the API
+  // v.interactions.zoomExtents(0.95, false)
 }

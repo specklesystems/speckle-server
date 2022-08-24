@@ -405,7 +405,8 @@ export default {
           sectionBox: this.viewer.sectionBox.getCurrentBox(),
           selection: null // TODO for later, lazy now
         },
-        screenshot: this.viewer.interactions.screenshot()
+        //@Dim: Changed this to use the API
+        screenshot: this.viewer.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
@@ -445,7 +446,8 @@ export default {
       this.visible = false
       this.commentValue = { doc: null, attachments: [] }
       setIsAddingComment(false)
-      this.viewer.interactions.deselectObjects()
+      //@Dim: Changed this to use the API
+      this.viewer.resetSelection()
     },
     sendStatusUpdate() {
       // TODO: typing or not

@@ -727,6 +727,6 @@ export async function resetFilter() {
     currentFilterState: null
   })
 
-  await viewer.reset()
+  await viewer.resetFilters()
   viewer.applyFilter(null)
 }

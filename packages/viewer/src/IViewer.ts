@@ -3,6 +3,7 @@ import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { DataTree } from './modules/tree/DataTree'
+import { World } from './modules/World'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -48,7 +49,8 @@ export enum ViewerEvent {
   LoadComplete = 'load-complete',
   LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
-  UnloadAllComplete = 'unload-all-complete'
+  UnloadAllComplete = 'unload-all-complete',
+  Busy = 'busy'
 }
 
 export type SelectionEvent = {
@@ -86,7 +88,6 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
  */
 export interface IViewer {
   init(): Promise<void>
-  onWindowResize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
   toggleSectionBox(): void
   sectionBoxOff(): void
@@ -144,6 +145,7 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  get World(): World
 
   dispose(): void
 }

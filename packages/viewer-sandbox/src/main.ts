@@ -7,6 +7,7 @@ import {
 
 import './style.css'
 import Sandbox from './Sandbox'
+import { IViewer } from '@speckle/viewer'
 
 const container = document.querySelector<HTMLElement>('#renderer')
 if (!container) {
@@ -20,7 +21,7 @@ params.showStats = true
 // 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
 // 'http://localhost:3033/sample-hdri.exr'
 
-const viewer = new Viewer(container, params)
+const viewer: IViewer = new Viewer(container, params)
 await viewer.init()
 
 const sandbox = new Sandbox(viewer)
@@ -39,8 +40,8 @@ viewer.on(
 )
 
 viewer.on(ViewerEvent.LoadComplete, () => {
-  Object.assign(Sandbox.sceneParams.worldSize, viewer.worldSize)
-  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.worldOrigin)
+  Object.assign(Sandbox.sceneParams.worldSize, viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
   sandbox.refresh()
 })
 
@@ -75,11 +76,3 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/e22f696b08'
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
 )
-
-// const dataTree: DataTree = viewer.getDataTree()
-// console.log(`Built data tree `, dataTree)
-// console.log(
-//   dataTree.findAll((obj: SpeckleObject) => {
-//     return obj.speckle_type === 'Objects.Geometry.Mesh'
-//   })
-// )
