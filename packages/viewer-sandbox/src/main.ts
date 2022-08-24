@@ -62,6 +62,7 @@ await sandbox.loadUrl(
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // Same sample revit house, local to dim's computer
+  'http://localhost:3000/streams/6960695d7b/commits/da0a2343fa'
   // 'http://100.66.180.109:3000/streams/6960695d7b/commits/417526751d'
   // IFC building (good for a tree based structure)
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
@@ -71,7 +72,7 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
   // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/e22f696b08'
-  'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
 )
 
 const dataTree: DataTree = viewer.getDataTree()

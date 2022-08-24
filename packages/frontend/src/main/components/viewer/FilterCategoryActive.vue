@@ -166,7 +166,7 @@ export default {
   },
   methods: {
     async toggleColors() {
-      setColorFilter(this.filter.propInfo)
+      setColorFilter(this.filter.data)
     },
     async toggleFilter(prop) {
       if (this.isolatedLegend[prop.value]) {

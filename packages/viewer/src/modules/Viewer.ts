@@ -121,9 +121,9 @@ export class Viewer extends EventEmitter implements IViewer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(window as any).WT = WorldTree
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // ;(window as any).FM = this.filteringManager
+    ;(window as any).FM = this.filteringManager
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // ;(window as any).V = this
+    ;(window as any).V = this
   }
 
   public getObjectProperties(resourceURL: string = null): PropertyInfo[] {

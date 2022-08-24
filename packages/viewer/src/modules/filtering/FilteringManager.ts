@@ -226,6 +226,8 @@ export class FilteringManager {
     })
     this.ColorNumericFilterState.colorGroups = colorGroups
     this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
+    console.log(numProp)
+    console.log(this.ColorNumericFilterState)
     return this.setFilters()
   }
 
@@ -248,7 +250,7 @@ export class FilteringManager {
     // windows (family instances) inside walls get the same color as the walls, even though
     // they are identified as a different category.
     this.WTI.walk((node: TreeNode) => {
-      if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root) {
+      if (!node.model.atomic || node.model.id === 'MOTHERSHIP') {
         return true
       }
       const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)

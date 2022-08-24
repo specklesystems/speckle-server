@@ -35,6 +35,9 @@
         <v-btn small icon @click.stop="expand = !expand">
           <v-icon>{{ expand ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
         </v-btn>
+        <!-- <v-btn v-if="expand" small icon @click.stop="refresh()">
+          <v-icon small>mdi-refresh</v-icon>
+        </v-btn> -->
       </v-list-item-action>
     </v-list-item>
     <v-scroll-y-transition>
@@ -89,6 +92,7 @@
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
+import { getObjectProperties } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   name: 'ViewerFilters',
   components: {
@@ -172,6 +176,9 @@ export default {
       if (!this.viewerState.currentFilterState?.activePropFilterKey) {
         this.activeFilter = null
       }
+    },
+    objectProperties() {
+      this.parseAndSetFilters()
     }
     // 'viewerState.appliedFilter'() {
     //   if (this.trySetPresetFilter) return
@@ -195,12 +202,15 @@ export default {
     }
   },
   methods: {
+    refresh() {
+      getObjectProperties()
+    },
     parseAndSetFilters() {
       // const keys = Object.keys(this.props)
       const filters = []
       for (const rawFilter of this.propertyFilters) {
         const filter = {}
-        filter.propInfo = rawFilter
+        filter.data = rawFilter
         const key = rawFilter.key
         // Handle revit params (a wee bit of FML moment)
         if (key.startsWith('parameters.')) {
@@ -211,7 +221,6 @@ export default {
             )
             filter.name = nameProp?.valueGroups[0].value
             filter.targetKey = key
-            filter.data = rawFilter
             filters.push(filter)
             continue
           } else {
@@ -222,7 +231,6 @@ export default {
         if (key === 'level.name') {
           filter.name = 'Level'
           filter.targetKey = key
-          filter.data = rawFilter
           filters.push(filter)
           continue
         }
@@ -230,7 +238,6 @@ export default {
         if (key === 'speckle_type') {
           filter.name = 'Object Type'
           filter.targetKey = key
-          filter.data = rawFilter
           filters.push(filter)
           continue
         }
@@ -260,7 +267,6 @@ export default {
 
         filter.name = key
         filter.targetKey = key
-        filter.data = rawFilter
         filters.push(filter)
       }
       this.allFilters = filters

@@ -16,7 +16,7 @@
     </portal>
     <v-row no-gutters class="my-1 property-row rounded-lg">
       <v-col cols="12">
-        {{ filter }}
+        <!-- {{ filter }} -->
       </v-col>
       <v-col
         cols="1"
@@ -41,11 +41,11 @@
         style="line-height: 24px"
       >
         {{ filter.data.objectCount }} elements; min:
-        {{ Math.round(filter.data.minValue, 2) | prettynum }}; max:
-        {{ Math.round(filter.data.maxValue, 2) | prettynum }}
+        {{ Math.round(filter.data.min, 2) | prettynum }}; max:
+        {{ Math.round(filter.data.max, 2) | prettynum }}
       </v-col>
       <v-col
-        v-if="filter.data.maxValue === filter.data.minValue"
+        v-if="filter.data.max === filter.data.min"
         cols="12"
         :class="`caption text-truncatexxx px-1 ${
           $vuetify.theme.dark ? 'grey--text' : ''
@@ -59,13 +59,13 @@
           :key="width"
           :width="width"
           :bar-height="100"
-          :data="filter.data.allValues"
+          :data="filter.data.valueGroups.map((vg) => vg.value)"
           :bar-width="4"
           :bar-gap="6"
           :handle-size="18"
-          :max="filter.data.maxValue"
-          :min="filter.data.minValue"
-          :step="filter.data.minValue / 10"
+          :max="filter.data.max"
+          :min="filter.data.min"
+          :step="filter.data.min / 10"
           force-edges
           :keyboard="false"
           :bar-radius="2"
@@ -84,7 +84,8 @@
 <script>
 import {
   resetFilter,
-  setNumericFilter
+  // setNumericFilter,
+  setColorFilter
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
@@ -117,16 +118,16 @@ export default {
   },
   watch: {
     filter(newVal) {
-      this.$set(this.range, 0, newVal.data.minValue)
-      this.$set(this.range, 1, newVal.data.maxValue)
+      this.$set(this.range, 0, newVal.data.min)
+      this.$set(this.range, 1, newVal.data.max)
     },
     colorBy() {
       this.setFilter()
     }
   },
   mounted() {
-    this.$set(this.range, 0, this.filter.data.minValue)
-    this.$set(this.range, 1, this.filter.data.maxValue)
+    this.$set(this.range, 0, this.filter.data.min)
+    this.$set(this.range, 1, this.filter.data.max)
     this.setFilter()
     this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
@@ -143,11 +144,17 @@ export default {
         return
       }
 
-      setNumericFilter({
-        filterKey: this.filter.targetKey,
-        minValue: e.from,
-        maxValue: e.to
-      })
+      const propInfo = { ...this.filter.data }
+      propInfo.passMin = e.from
+      propInfo.passMax = e.to
+      setColorFilter(JSON.parse(JSON.stringify(propInfo)))
+      console.log(propInfo)
+
+      // setNumericFilter({
+      //   filterKey: this.filter.targetKey,
+      //   min: e.from,
+      //   max: e.to
+      // })
     },
     async setFilter() {
       if (this.preventFirstSetInternal) {
@@ -155,11 +162,19 @@ export default {
         return
       }
 
-      setNumericFilter({
-        filterKey: this.filter.targetKey,
-        minValue: this.range[0],
-        maxValue: this.range[1]
-      })
+      const propInfo = { ...this.filter.data }
+      // propInfo.passMin = this.range[0]
+      // propInfo.passMax = this.range[1]
+      setColorFilter(JSON.parse(JSON.stringify(propInfo)))
+      console.log(propInfo)
+
+      // setColorFilter() // TODO
+
+      // setNumericFilter({
+      //   filterKey: this.filter.targetKey,
+      //   min: this.range[0],
+      //   max: this.range[1]
+      // })
     },
     prettify(num) {
       return this.$options.filters.prettynum(num)

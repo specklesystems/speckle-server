@@ -88,9 +88,11 @@ export class Assets {
     // Hack to load 'data:image's - for some reason, the frontend receives the default
     // gradient map as a data image url, rather than a file (?).
     if (srcUrl.includes('data:image')) {
+      console.log(srcUrl)
       const texture = new Texture(srcUrl as unknown as HTMLImageElement)
       texture.needsUpdate = true
       this._cache[srcUrl] = texture
+      console.log(texture)
       return Promise.resolve(texture)
     }
 
@@ -146,14 +148,14 @@ export class Assets {
     texture.needsUpdate = true
 
     /** In case we want to see what gets generated */
-    const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
-    const context = canvas.getContext('2d')
-    const imageData = new ImageData(width, height)
-    imageData.data.set(data)
-    context.putImageData(imageData, 0, 0)
-    console.log('SRC:', canvas.toDataURL())
+    // const canvas = document.createElement('canvas')
+    // canvas.width = width
+    // canvas.height = height
+    // const context = canvas.getContext('2d')
+    // const imageData = new ImageData(width, height)
+    // imageData.data.set(data)
+    // context.putImageData(imageData, 0, 0)
+    // console.log('SRC:', canvas.toDataURL())
 
     return texture
   }
