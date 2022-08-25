@@ -245,6 +245,7 @@
   </div>
 </template>
 <script lang="ts">
+import * as THREE from 'three'
 import { computed, defineComponent, toRefs } from 'vue'
 import debounce from 'lodash/debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
@@ -527,15 +528,23 @@ export default defineComponent({
             if (this.camToSet[6] === 1) {
               this.viewer.toggleCameraProjection()
             }
-            //@Dim: This needs to be replaced with a call from the API.
-            // this.viewer.interactions.setLookAt(
-            //   { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
-            //   { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
-            // )
-            if (this.camToSet[6] === 1) {
-              //@Dim: This needs to be replaced with a call from the API.
-              // this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
-            }
+            this.viewer.setView({
+              position: new THREE.Vector3(
+                this.camToSet[0],
+                this.camToSet[1],
+                this.camToSet[2]
+              ),
+              target: new THREE.Vector3(
+                this.camToSet[3],
+                this.camToSet[4],
+                this.camToSet[5]
+              )
+            })
+
+            // NOTE: disabled because ortho camera is not working with comment bubbles intersections properly
+            // if (this.camToSet[6] === 1) {
+            // this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+            // }
             this.camToSet = null
           }, 200)
         }

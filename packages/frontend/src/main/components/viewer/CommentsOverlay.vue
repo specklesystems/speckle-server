@@ -521,7 +521,7 @@ export default {
         position: new THREE.Vector3(camToSet[0], camToSet[1], camToSet[2]),
         target: new THREE.Vector3(camToSet[3], camToSet[4], camToSet[5])
       })
-      // TODO: If it's an isometric cam.
+      // TODO: If it's an (ortho) isometric cam.
       // NOTE: currently not supported as parallel cam is disabled due to
       // comment bubbles projection complications.
       // if (camToSet[6] === 1) {

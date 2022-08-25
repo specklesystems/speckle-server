@@ -350,13 +350,18 @@ export default class SectionBox {
     this.controls.showZ = true
   }
 
+  // setBoxFromObjects(objectIds: string[], offset = 0.05) {
+  // WorldTree.getInstance().walk() => Solved
+  // this.setBox(...)
+  // }
+
   setBox(targetBox, offset = 0.05) {
     let box
 
-    if (targetBox) box = targetBox
+    if (targetBox) box = targetBox // targetbox = { min: {x, y, z}, max: {x, y, z} }
     else {
-      // @Alex: part of the old behaviour: if a selected object is present, we zoom to it
-      // if no selection is present, we zoom to visible scene. TBD re API, etc.
+      // @Alex: part of the old behaviour: if a selected object is present, we set the box to it
+      // if no selection is present, we set the box to whole scene. TBD re API, etc.
       /* //@Dim: Not sure what this needs to do in the new viewer
       if (this.viewer.interactions.selectedObjects.children.length !== 0) {
         box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)

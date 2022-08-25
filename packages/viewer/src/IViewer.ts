@@ -116,9 +116,16 @@ export interface IViewer {
   init(): Promise<void>
   on(eventType: ViewerEvent, handler: (arg) => void)
   toggleSectionBox(): void
+
   sectionBoxOff(): void
   sectionBoxOn(): void
+
   zoomExtents(fit?: number, transition?: boolean): void
+  // zoom(objectIds: string[] = null) {
+  // if(!objectIds)  -> zoom extents
+  // else -> calc box for objects, and zoom to box
+  // }
+
   toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
 
