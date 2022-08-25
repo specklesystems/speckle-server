@@ -1,4 +1,4 @@
-{{- if .Values.frontend.networkPolicy.enabled -}}
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -21,7 +21,7 @@ spec:
               kubernetes.io/metadata.name: {{ .Values.ingress.namespace }}
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
+{{ include  "frontend.ingress.selector.pod" $ | indent 14 }}
       ports:
         - port: www
   egress: [] # block all egress

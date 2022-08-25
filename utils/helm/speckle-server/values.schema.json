@@ -27,6 +27,16 @@
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
       "default": "letsencrypt-staging"
     },
+    "networkPlugin": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "(Optional) Used to configure which type of NetworkPolicy is deployed. Options are 'kubernetes' or 'cilium'.",
+          "default": "kubernetes"
+        }
+      }
+    },
     "ingress": {
       "type": "object",
       "properties": {
@@ -108,11 +118,6 @@
         "networkPolicy": {
           "type": "object",
           "properties": {
-            "port": {
-              "type": "string",
-              "description": "the port on the server providing the Postgres database (default: \"5432\")",
-              "default": ""
-            },
             "externalToCluster": {
               "type": "object",
               "properties": {
@@ -120,16 +125,6 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the Postgres database is hosted externally to the Kubernetes cluster",
                   "default": true
-                },
-                "host": {
-                  "type": "string",
-                  "description": "The domain name at which the Postgres database is hosted.",
-                  "default": ""
-                },
-                "ipv4": {
-                  "type": "string",
-                  "description": "The IP address at which the Postgres database is hosted",
-                  "default": ""
                 }
               }
             },
@@ -141,15 +136,40 @@
                   "description": "If enabled, indicates that the Postgres database is hosted withing the same Kubernetes cluster in which Speckle will be deployed",
                   "default": false
                 },
-                "podSelector": {
-                  "type": "object",
-                  "description": "The pod Selector yaml object used to uniquely select the Postgres database pods within the cluster and given namespace",
-                  "default": {}
+                "port": {
+                  "type": "string",
+                  "description": "the port on the server providing the Postgres database (default: \"5432\")",
+                  "default": ""
                 },
-                "namespaceSelector": {
+                "kubernetes": {
                   "type": "object",
-                  "description": "The namespace selector yaml object used to uniquely select the namespace in which the Postgres database pods are deployed",
-                  "default": {}
+                  "properties": {
+                    "podSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the postgres compatible database pods within the cluster and given namespace",
+                      "default": {}
+                    },
+                    "namespaceSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the postgres compatible database pods are deployed",
+                      "default": {}
+                    }
+                  }
+                },
+                "cilium": {
+                  "type": "object",
+                  "properties": {
+                    "endpointSelector": {
+                      "type": "object",
+                      "description": "(Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the postgres compatible database pods are deployed",
+                      "default": {}
+                    },
+                    "serviceSelector": {
+                      "type": "object",
+                      "description": "(Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the postgres compatible database service",
+                      "default": {}
+                    }
+                  }
                 }
               }
             }
@@ -200,16 +220,6 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the s3 compatible storage is hosted externally to the Kubernetes cluster",
                   "default": true
-                },
-                "host": {
-                  "type": "string",
-                  "description": "The domain name at which the s3 compatible storage is hosted.",
-                  "default": ""
-                },
-                "ipv4": {
-                  "type": "string",
-                  "description": "The IP address at which the s3 compatible storage is hosted",
-                  "default": ""
                 }
               }
             },
@@ -221,15 +231,35 @@
                   "description": "If enabled, indicates that the s3 compatible storage is hosted withing the same Kubernetes cluster in which Speckle will be deployed",
                   "default": false
                 },
-                "podSelector": {
+                "kubernetes": {
                   "type": "object",
-                  "description": "The pod Selector yaml object used to uniquely select the s3 compatible storage pods within the cluster and given namespace",
-                  "default": {}
+                  "properties": {
+                    "podSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the s3 compatible storage pods within the cluster and given namespace",
+                      "default": {}
+                    },
+                    "namespaceSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the s3 compatible storage pods are deployed",
+                      "default": {}
+                    }
+                  }
                 },
-                "namespaceSelector": {
+                "cilium": {
                   "type": "object",
-                  "description": "The namespace selector yaml object used to uniquely select the namespace in which the s3 compatible storage pods are deployed",
-                  "default": {}
+                  "properties": {
+                    "endpointSelector": {
+                      "type": "object",
+                      "description": "(Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the s3 compatible storage pods are deployed",
+                      "default": {}
+                    },
+                    "serviceSelector": {
+                      "type": "object",
+                      "description": "(Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the s3 compatible storage service",
+                      "default": {}
+                    }
+                  }
                 }
               }
             }
@@ -243,11 +273,6 @@
         "networkPolicy": {
           "type": "object",
           "properties": {
-            "port": {
-              "type": "string",
-              "description": "the port on the server providing the Redis store (default: \"6379\")",
-              "default": ""
-            },
             "externalToCluster": {
               "type": "object",
               "properties": {
@@ -255,16 +280,6 @@
                   "type": "boolean",
                   "description": "If enabled, indicates that the Redis store is hosted externally to the Kubernetes cluster",
                   "default": true
-                },
-                "host": {
-                  "type": "string",
-                  "description": "The domain name at which the Redis store is hosted.",
-                  "default": ""
-                },
-                "ipv4": {
-                  "type": "string",
-                  "description": "The IP address at which the Redis store is hosted",
-                  "default": ""
                 }
               }
             },
@@ -276,15 +291,40 @@
                   "description": "If enabled, indicates that the Redis store is hosted withing the same Kubernetes cluster in which Speckle will be deployed",
                   "default": false
                 },
-                "podSelector": {
-                  "type": "object",
-                  "description": "The pod Selector yaml object used to uniquely select the Redis store pods within the cluster and given namespace",
-                  "default": {}
+                "port": {
+                  "type": "string",
+                  "description": "the port on the server providing the Redis store (default: \"6379\")",
+                  "default": ""
                 },
-                "namespaceSelector": {
+                "kubernetes": {
                   "type": "object",
-                  "description": "The namespace selector yaml object used to uniquely select the namespace in which the Redis store pods are deployed",
-                  "default": {}
+                  "properties": {
+                    "podSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the redis store pods within the cluster and given namespace",
+                      "default": {}
+                    },
+                    "namespaceSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the redis store pods are deployed",
+                      "default": {}
+                    }
+                  }
+                },
+                "cilium": {
+                  "type": "object",
+                  "properties": {
+                    "endpointSelector": {
+                      "type": "object",
+                      "description": "(Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the redis pods are deployed",
+                      "default": {}
+                    },
+                    "serviceSelector": {
+                      "type": "object",
+                      "description": "(Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the redis store service",
+                      "default": {}
+                    }
+                  }
                 }
               }
             }
@@ -397,6 +437,61 @@
               "type": "string",
               "description": "The username with which Speckle will authenticate with the email service.",
               "default": ""
+            },
+            "networkPolicy": {
+              "type": "object",
+              "properties": {
+                "externalToCluster": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "If enabled, indicates that the email server is hosted externally to the Kubernetes cluster",
+                      "default": true
+                    }
+                  }
+                },
+                "inCluster": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "If enabled, indicates that the email server is hosted withing the same Kubernetes cluster in which Speckle will be deployed",
+                      "default": false
+                    },
+                    "kubernetes": {
+                      "type": "object",
+                      "properties": {
+                        "podSelector": {
+                          "type": "object",
+                          "description": "(Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the email server pods within the cluster and given namespace",
+                          "default": {}
+                        },
+                        "namespaceSelector": {
+                          "type": "object",
+                          "description": "(Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the email server pods are deployed",
+                          "default": {}
+                        }
+                      }
+                    },
+                    "cilium": {
+                      "type": "object",
+                      "properties": {
+                        "endpointSelector": {
+                          "type": "object",
+                          "description": "(Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the email server pods are deployed",
+                          "default": {}
+                        },
+                        "serviceSelector": {
+                          "type": "object",
+                          "description": "(Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the email server",
+                          "default": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         },

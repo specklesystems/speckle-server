@@ -1,4 +1,4 @@
-{{- if .Values.server.networkPolicy.enabled -}}
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -23,6 +23,16 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+{{- if .Values.server.monitoring.apollo.enabled }}
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          # except to kubernetes pods or services
+          except:
+            - 10.0.0.0/8
+      ports:
+        - port: 443
+{{- end }}
 {{- if .Values.server.sentry_dns }}
     # sentry.io https://docs.sentry.io/product/security/ip-ranges/#event-ingestion
     - to:
@@ -30,6 +40,10 @@ spec:
           cidr: 34.120.195.249/32
       ports:
         - port: 443
+{{- end }}
+{{- if .Values.server.email.enabled }}
+    # email server
+{{ include "speckle.networkpolicy.egress.email" $ | indent 4 }}
 {{- end }}
     # redis
 {{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
@@ -48,6 +62,7 @@ spec:
               app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
       ports:
         - port: http
+{{- if .Values.enable_prometheus_monitoring }}
     # allow ingress from servicemonitor/prometheus
     - from:
         - namespaceSelector:
@@ -55,9 +70,10 @@ spec:
               kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
           podSelector:
             matchLabels:
-              prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
+              {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
       ports:
         - port: http
+{{- end }}
     # allow ingress from the fileimport service
     - from:
         - podSelector:

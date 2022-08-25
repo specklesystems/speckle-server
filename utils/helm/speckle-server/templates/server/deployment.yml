@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: speckle-server
+  name: {{ include "server.name" $ }}
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "server.labels" . | indent 4 }}
@@ -11,6 +11,8 @@ spec:
     matchLabels:
       app: speckle-server
       project: speckle-server
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -23,7 +25,7 @@ spec:
 
         ports:
           - name: http
-            containerPort: 3000
+            containerPort: {{ include "server.port" $ }}
             protocol: TCP
 
         resources:
@@ -89,7 +91,7 @@ spec:
             {{- end }}
 
           - name: PORT
-            value: "3000"
+            value: {{ include "server.port" $ | quote }}
           - name: DEBUG
             value: "speckle:*"
 

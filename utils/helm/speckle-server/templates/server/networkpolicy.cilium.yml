@@ -1,0 +1,101 @@
+{{- if (and (.Values.server.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "server.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "server.labels" . | indent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+{{ include "server.selectorLabels" . | indent 6 }}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ .Values.ingress.namespace }}
+{{ include  "speckle.ingress.selector.pod" $ | indent 12 }}
+      toPorts:
+        - ports:
+            - port: http
+              protocol: TCP
+{{- if .Values.enable_prometheus_monitoring }}
+    - fromEndpoints:
+        - matchLabels:
+{{ include "speckle.prometheus.selectorLabels" $ | indent 12 }}
+      toPorts:
+        - ports:
+            - port: http
+              protocol: TCP
+{{- end }}
+    # ingress from file import service
+    - fromEndpoints:
+        - matchLabels:
+{{ include "fileimport_service.selectorLabels" $ | indent 12 }}
+      toPorts:
+        - ports:
+          - port: http
+            protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
+              - matchName: {{ .Values.domain }}
+{{- if .Values.server.monitoring.apollo.enabled }}
+              - matchPattern: "*.api.apollographql.com"
+{{- end }}
+{{- if .Values.server.sentry_dns }}
+              # DNS lookup for sentry
+              - matchPattern: "*.ingest.sentry.io"
+{{- end }}
+{{- if .Values.server.email.enabled }}
+              # email server
+{{ include "speckle.networkpolicy.dns.email.cilium" $ | indent 14 }}
+{{- end }}
+{{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
+{{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
+{{ include  "speckle.networkpolicy.dns.blob_storage.cilium" $ | indent 14 }}
+{{- if .Values.server.monitoring.apollo.enabled }}
+    - toFQDNs:
+        - matchPattern: "*.api.apollographql.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+{{- end }}
+{{- if .Values.server.sentry_dns }}
+    # egress to sentry
+    - toCIDRSet:
+        - cidr: 34.120.195.249/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+{{- end }}
+{{- if .Values.server.email.enabled }}
+    # email server
+{{ include "speckle.networkpolicy.egress.email.cilium" $ | indent 4 }}
+{{- end }}
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
+    # redis
+{{ include "speckle.networkpolicy.egress.redis.cilium" $ | indent 4 }}
+    # s3
+{{ include "speckle.networkpolicy.egress.blob_storage.cilium" $ | indent 4 }}
+    # allow egress to the ingress for speckle-server, so it can call itself
+    # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
+    - toFQDNs:
+        - matchName: {{ .Values.domain }}
+      toPorts:
+        - ports:
+          - port: "443"
+            protocol: TCP
+{{- end }}
