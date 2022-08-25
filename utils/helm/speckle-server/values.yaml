@@ -132,9 +132,6 @@ db:
   ## @extra db.networkPolicy If networkPolicy is enabled for any service, this provides the NetworkPolicy with the necessary details to allow egress connections to the Postgres database
   ##
   networkPolicy:
-    ## @param db.networkPolicy.port the port on the server providing the Postgres database (default: "5432")
-    ##
-    port: ''
     ## @extra db.networkPolicy.externalToCluster Only required if the Postgres database is not hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     externalToCluster:
@@ -142,16 +139,6 @@ db:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param db.networkPolicy.externalToCluster.host The domain name at which the Postgres database is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param db.networkPolicy.externalToCluster.ipv4 The IP address at which the Postgres database is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra db.networkPolicy.inCluster Only required if the Postgres database is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -159,6 +146,9 @@ db:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
+      ## @param db.networkPolicy.inCluster.port the port on the server providing the Postgres database (default: "5432")
+      ##
+      port: ''
       kubernetes:
         ## @param db.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the postgres compatible database pods within the cluster and given namespace
         ## For Kubernetes Network Policies this is a podSelector object.
@@ -228,16 +218,6 @@ s3:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param s3.networkPolicy.externalToCluster.host The domain name at which the s3 compatible storage is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param s3.networkPolicy.externalToCluster.ipv4 The IP address at which the s3 compatible storage is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra s3.networkPolicy.inCluster Only required if the s3 compatible storage is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -284,9 +264,6 @@ redis:
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
   networkPolicy:
-    ## @param redis.networkPolicy.port the port on the server providing the Redis store (default: "6379")
-    ##
-    port: ''
     ## @extra redis.networkPolicy.externalToCluster Only required if the Redis store is not hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     externalToCluster:
@@ -294,16 +271,6 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param redis.networkPolicy.externalToCluster.host The domain name at which the Redis store is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param redis.networkPolicy.externalToCluster.ipv4 The IP address at which the Redis store is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra redis.networkPolicy.inCluster is only required if the Redis store is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -311,6 +278,9 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
+      ## @param redis.networkPolicy.inCluster.port the port on the server providing the Redis store (default: "6379")
+      ##
+      port: ''
       kubernetes:
         ## @param redis.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the redis store pods within the cluster and given namespace
         ## For Kubernetes Network Policies this is a podSelector object.

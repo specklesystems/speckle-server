@@ -19,6 +19,7 @@ spec:
         - ports:
             - port: http
               protocol: TCP
+{{- if .Values.enable_prometheus_monitoring }}
     - fromEndpoints:
         - matchLabels:
 {{ include "speckle.prometheus.selectorLabels" $ | indent 12 }}
@@ -26,6 +27,7 @@ spec:
         - ports:
             - port: http
               protocol: TCP
+{{- end }}
     # ingress from file import service
     - fromEndpoints:
         - matchLabels:
@@ -46,12 +48,13 @@ spec:
           rules:
             dns:
               # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
-              - matchPattern: {{ .Values.domain }}
+              - matchName: {{ .Values.domain }}
 {{- if .Values.server.sentry_dns }}
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
-{{ include "speckle.networkpolicy.dns.cilium" (list .Values.db.networkPolicy.externalToCluster .Values.redis.networkPolicy.externalToCluster ) | indent 14 }}
+{{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
+{{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
 {{ include  "speckle.networkpolicy.dns.blob_storage.cilium" $ | indent 14 }}
 {{- if .Values.server.sentry_dns }}
     # egress to sentry

@@ -10,6 +10,7 @@ spec:
   endpointSelector:
     matchLabels:
 {{ include "preview_service.selectorLabels" . | indent 6 }}
+{{- if .Values.enable_prometheus_monitoring }}
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -18,6 +19,11 @@ spec:
         - ports:
             - port: "metrics"
               protocol: TCP
+{{- else }}
+  ingressDeny:
+    - fromEntities:
+      - "all"
+{{- end }}
   egress:
     - toEndpoints:
         - matchLabels:
@@ -29,7 +35,7 @@ spec:
               protocol: UDP
           rules:
             dns:
-{{ include "speckle.networkpolicy.dns.cilium" (list .Values.db.networkPolicy.externalToCluster) | indent 14 }}
+{{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
 {{- end }}
