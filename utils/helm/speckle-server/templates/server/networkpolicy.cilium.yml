@@ -49,6 +49,9 @@ spec:
             dns:
               # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
               - matchName: {{ .Values.domain }}
+{{- if .Values.server.monitoring.apollo.enabled }}
+              - matchPattern: "*.api.apollographql.com"
+{{- end }}
 {{- if .Values.server.sentry_dns }}
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
@@ -56,6 +59,14 @@ spec:
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
 {{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
 {{ include  "speckle.networkpolicy.dns.blob_storage.cilium" $ | indent 14 }}
+{{- if .Values.server.monitoring.apollo.enabled }}
+    - toFQDNs:
+        - matchPattern: "*.api.apollographql.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+{{- end }}
 {{- if .Values.server.sentry_dns }}
     # egress to sentry
     - toCIDRSet:
@@ -63,6 +74,7 @@ spec:
       toPorts:
         - ports:
             - port: "443"
+              protocol: TCP
 {{- end }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
@@ -73,7 +85,7 @@ spec:
     # allow egress to the ingress for speckle-server, so it can call itself
     # TODO: remove egress to domain once https://github.com/specklesystems/speckle-server/issues/959 is fixed
     - toFQDNs:
-        - matchPattern: {{ .Values.domain }}
+        - matchName: {{ .Values.domain }}
       toPorts:
         - ports:
           - port: "443"
