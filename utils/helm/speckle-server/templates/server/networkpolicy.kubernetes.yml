@@ -41,6 +41,10 @@ spec:
       ports:
         - port: 443
 {{- end }}
+{{- if .Values.server.email.enabled }}
+    # email server
+{{ include "speckle.networkpolicy.egress.email" $ | indent 4 }}
+{{- end }}
     # redis
 {{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
     # postgres

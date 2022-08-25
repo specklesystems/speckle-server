@@ -56,6 +56,10 @@ spec:
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
+{{- if .Values.server.email.enabled }}
+              # email server
+{{ include "speckle.networkpolicy.dns.email.cilium" $ | indent 14 }}
+{{- end }}
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
 {{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
 {{ include  "speckle.networkpolicy.dns.blob_storage.cilium" $ | indent 14 }}
@@ -75,6 +79,10 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+{{- end }}
+{{- if .Values.server.email.enabled }}
+    # email server
+{{ include "speckle.networkpolicy.egress.email.cilium" $ | indent 4 }}
 {{- end }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}

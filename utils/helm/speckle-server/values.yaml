@@ -388,6 +388,49 @@ server:
     ## Note that the `email_password` is expected to be provided in the Kubernetes Secret with the name provided in the `secretName` parameter.
     ##
     username: ''
+    ## @extra server.email.networkPolicy If networkPolicy is enabled for Speckle server, this provides the Network Policy with the necessary details to allow egress connections to the email server
+    ##
+    networkPolicy:
+      ## @extra server.email.networkPolicy.externalToCluster Only required if the Redis store is not hosted within the Kubernetes cluster in which Speckle will be deployed.
+      ##
+      externalToCluster:
+        ## @param server.email.networkPolicy.externalToCluster.enabled If enabled, indicates that the email server is hosted externally to the Kubernetes cluster
+        ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
+        ##
+        enabled: true
+      ## @extra server.email.networkPolicy.inCluster is only required if the email server is hosted within the Kubernetes cluster in which Speckle will be deployed.
+      ##
+      inCluster:
+        ## @param server.email.networkPolicy.inCluster.enabled If enabled, indicates that the email server is hosted withing the same Kubernetes cluster in which Speckle will be deployed
+        ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
+        ##
+        enabled: false
+        kubernetes:
+          ## @param server.email.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the email server pods within the cluster and given namespace
+          ## For Kubernetes Network Policies this is a podSelector object.
+          ## For Cilium Network Policies this is ignored.
+          ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+          ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          ##
+          podSelector: {}
+          ## @param server.email.networkPolicy.inCluster.kubernetes.namespaceSelector  (Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the email server pods are deployed
+          ## This is a Kubernetes namespaceSelector object.
+          ## For Cilium Network Policies, this is ignored
+          ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+          ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          ##
+          namespaceSelector: {}
+        cilium:
+          ## @param server.email.networkPolicy.inCluster.cilium.endpointSelector (Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the email server pods are deployed
+          ## For Kubernetes Network Policies, this is ignored.
+          ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+          ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/selector.go
+          endpointSelector: {}
+          ## @param server.email.networkPolicy.inCluster.cilium.serviceSelector (Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the email server
+          ## For Kubernetes Network Policies this is ignored.
+          ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+          ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/service.go
+          serviceSelector: {}
   requests:
     ## @param server.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
