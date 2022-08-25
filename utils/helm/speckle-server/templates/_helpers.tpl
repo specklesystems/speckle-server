@@ -185,6 +185,35 @@ Creates a Cilium Network Policy egress definition for connecting to S3 compatibl
 {{- end }}
 
 {{/*
+Creates a Kubernetes Network Policy egress definition for connecting to the email server
+
+Params:
+  - context - Required, global context should be provided
+*/}}
+{{- define "speckle.networkpolicy.egress.email" -}}
+  {{- $port := (default "443" .Values.server.email.port ) -}}
+  {{- if .Values.server.email.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.server.email.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.server.email.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
+  {{- else if .Values.server.email.networkPolicy.externalToCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.external" (dict "ip" .Values.server.email.host "port" $port) }}
+  {{- end -}}
+{{- end }}
+
+{{/*
+Creates a Cilium Network Policy egress definition for connecting to an email server
+
+Expects the global context "$" to be passed as the parameter
+*/}}
+{{- define "speckle.networkpolicy.egress.email.cilium" -}}
+  {{- $port := (default "443" .Values.server.email.port ) -}}
+  {{- if .Values.server.email.networkPolicy.inCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.server.email.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.server.email.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
+  {{- else if .Values.server.email.networkPolicy.externalToCluster.enabled -}}
+{{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" .Values.server.email.host "port" $port) }}
+  {{- end -}}
+{{- end }}
+
+{{/*
 Creates a DNS match pattern for discovering the postgres IP
 
 Usage:
@@ -224,6 +253,22 @@ Creates a DNS match pattern for discovering blob storage IP
 {{- define "speckle.networkpolicy.dns.blob_storage.cilium" -}}
 {{- $domain := ( include  "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
   {{- if ne (include "speckle.isIPv4" $domain ) "true" -}}
+{{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
+  {{- end }}
+{{- end }}
+
+{{/*
+Creates a DNS match pattern for discovering email server IP
+
+Usage:
+{{ include "speckle.networkpolicy.dns.email.cilium" $ }}
+
+Params:
+  - context - Required, global context should be provided.
+*/}}
+{{- define "speckle.networkpolicy.dns.email.cilium" -}}
+{{- $domain := .Values.server.email.host -}}
+  {{- if (and .Values.server.email.networkPolicy.externalToCluster.enabled ( ne ( include "speckle.isIPv4" $domain ) "true" ) ) -}}
 {{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
   {{- end }}
 {{- end }}
