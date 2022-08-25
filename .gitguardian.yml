@@ -1,3 +1,5 @@
-matches-ignore:
-  - name: MIXPANEL_TOKEN
-    match: acd87c5a50b56df91a795e999812a3a4
+secret:
+  ignored-matches:
+    - match: acd87c5a50b56df91a795e999812a3a4
+      name: MIXPANEL_TOKEN
+version: 2
