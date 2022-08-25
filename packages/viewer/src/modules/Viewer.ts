@@ -108,7 +108,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.on(ViewerEvent.LoadComplete, (url) => {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
-      this.zoomExtents()
+      this.zoom()
     })
   }
 
@@ -280,8 +280,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.sectionBox.on()
   }
 
-  public zoomExtents(fit?: number, transition?: boolean) {
-    this.speckleRenderer.zoomExtents(fit, transition)
+  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
+    this.speckleRenderer.zoom(objectIds, fit, transition)
   }
 
   public setProjectionMode(mode: typeof CameraHandler.prototype.activeCam) {

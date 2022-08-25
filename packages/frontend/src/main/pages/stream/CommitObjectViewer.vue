@@ -621,7 +621,7 @@ export default defineComponent({
       await this.viewer.loadObject(
         `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       )
-      this.viewer.zoomExtents(undefined, true)
+      this.viewer.zoom(undefined, undefined, true)
 
       this.loadedModel = true
       this.setFilters()
@@ -706,7 +706,7 @@ export default defineComponent({
         })
 
         await this.viewer.unloadObject(url)
-        this.viewer.zoomExtents(undefined, true)
+        this.viewer.zoom(undefined, undefined, true)
       }
       this.resources.splice(index, 1)
       this.setFilters()

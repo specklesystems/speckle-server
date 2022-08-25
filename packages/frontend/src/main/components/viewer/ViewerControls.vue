@@ -151,7 +151,7 @@ export default {
       resetFilter()
     },
     zoomEx() {
-      this.viewer.zoomExtents()
+      this.viewer.zoom()
     },
     sectionToggle() {
       this.viewer.toggleSectionBox()

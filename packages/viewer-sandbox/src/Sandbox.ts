@@ -2,6 +2,7 @@ import {
   CanonicalView,
   DebugViewer,
   PropertyInfo,
+  SelectionEvent,
   SunLightConfiguration,
   ViewerEvent
 } from '@speckle/viewer'
@@ -15,6 +16,7 @@ export default class Sandbox {
   private viewsFolder!: FolderApi
   private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
+  private selectionList: SelectionEvent[] = null
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -43,8 +45,9 @@ export default class Sandbox {
     filterBy: 'Volume'
   }
 
-  public constructor(viewer: DebugViewer) {
+  public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
     this.viewer = viewer
+    this.selectionList = selectionList
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     this.pane['containerElem_'].style =
       'position:fixed; top: 5px; right: 5px; width: 300px;'
@@ -177,7 +180,11 @@ export default class Sandbox {
       title: 'Zoom Extents'
     })
     zoomExtents.on('click', () => {
-      this.viewer.zoomExtents(undefined, true)
+      this.viewer.zoom(
+        this.selectionList.map((val) => val.guid) as string[],
+        undefined,
+        true
+      )
     })
 
     this.tabs.pages[0].addSeparator()

@@ -479,6 +479,7 @@ export default class SpeckleRenderer {
     }
 
     const selectionInfo = {
+      guid: parentNode.model.id,
       userData: parentNode.model.raw,
       location: result.point,
       selectionCenter: result.point, // Ideally we'd get the selection center here
@@ -501,7 +502,7 @@ export default class SpeckleRenderer {
       if (this.viewer.sectionBox.display.visible) {
         this.zoomToBox(this.viewer.sectionBox.getCurrentBox(), 1.2, true)
       } else {
-        this.zoomExtents()
+        this.zoom()
       }
     } else {
       rv = this.batcher.getRenderView(
@@ -522,14 +523,36 @@ export default class SpeckleRenderer {
         if (this.viewer.sectionBox.display.visible) {
           this.zoomToBox(this.viewer.sectionBox.cube, 1.2, true)
         } else {
-          this.zoomExtents()
+          this.zoom()
         }
       }
     }
   }
 
+  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
+    if (!objectIds) {
+      this.zoomExtents(fit, transition)
+      return
+    }
+    const box = new Box3()
+    objectIds.forEach((value: string) => {
+      const rvs: NodeRenderView[] =
+        WorldTree.getRenderTree().getRenderViewsForNodeId(value)
+      for (let k = 0; k < rvs.length; k++) {
+        let rvBox = null
+        if ((rvBox = rvs[k].aabb) !== null) {
+          box.union(rvBox)
+        }
+      }
+    })
+    if (box.getSize(new Vector3()).length() === 0) {
+      console.error(`'zoom' to object ids resulted in empty box`)
+    }
+    this.zoomToBox(box, fit, transition)
+  }
+
   /** Taken from InteractionsHandler. Will revisit in the future */
-  public zoomExtents(fit = 1.2, transition = true) {
+  private zoomExtents(fit = 1.2, transition = true) {
     if (this.viewer.sectionBox.display.visible) {
       this.zoomToBox(this.viewer.sectionBox.cube.geometry.boundingBox, 1.2, true)
       return

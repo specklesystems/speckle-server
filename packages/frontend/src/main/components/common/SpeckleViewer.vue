@@ -71,12 +71,12 @@ export default {
       // this.viewer.cameraHandler.controls.mouseButtons.wheel = 8
     }
 
-    this.viewer.onWindowResize()
+    this.viewer.resize()
     this.viewer.cameraHandler.onWindowResize()
     this.setupEvents()
     this.$emit('viewer-init')
     this.$eventHub.$on('resize-viewer', () => {
-      this.viewer.onWindowResize()
+      this.viewer.resize()
       this.viewer.cameraHandler.onWindowResize()
     })
   },

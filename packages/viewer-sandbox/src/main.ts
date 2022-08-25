@@ -17,14 +17,12 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
-// params.environmentSrc =
-// 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
-// 'http://localhost:3033/sample-hdri.exr'
 
+const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)
 await viewer.init()
 
-const sandbox = new Sandbox(viewer)
+const sandbox = new Sandbox(viewer as DebugViewer, multiSelectList)
 
 window.addEventListener('load', () => {
   viewer.resize()
@@ -47,10 +45,24 @@ viewer.on(ViewerEvent.LoadComplete, () => {
 
 viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   if (!selectionInfo) {
+    multiSelectList.length = 0
     await viewer.resetSelection()
     return
   }
-  await viewer.selectObjects([selectionInfo.userData.id as string])
+  if (!selectionInfo.multiple) multiSelectList.length = 0
+
+  let guids = multiSelectList.map((val) => val.guid)
+  if (
+    (selectionInfo.multiple && !guids.includes(selectionInfo.guid)) ||
+    multiSelectList.length === 0
+  ) {
+    multiSelectList.push(selectionInfo)
+  }
+
+  guids = multiSelectList.map((val) => val.guid)
+  const ids = multiSelectList.map((val) => val.userData.id)
+
+  await viewer.selectObjects(ids as string[])
 })
 
 sandbox.makeGenericUI()
@@ -61,7 +73,7 @@ sandbox.makeFilteringUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // Same sample revit house, local to dim's computer
@@ -76,4 +88,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
   // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/e22f696b08'
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
+  'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
 )

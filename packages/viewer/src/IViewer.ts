@@ -53,6 +53,7 @@ export enum ViewerEvent {
 }
 
 export type SelectionEvent = {
+  guid?: string
   userData: Record<string, unknown>
   location: Vector3
   selectionCenter: Vector3
@@ -126,11 +127,7 @@ export interface IViewer {
   sectionBoxOff(): void
   sectionBoxOn(): void
 
-  zoomExtents(fit?: number, transition?: boolean): void
-  // zoom(objectIds: string[] = null) {
-  // if(!objectIds)  -> zoom extents
-  // else -> calc box for objects, and zoom to box
-  // }
+  zoom(objectIds?: string[], fit?: number, transition?: boolean): void
 
   toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
