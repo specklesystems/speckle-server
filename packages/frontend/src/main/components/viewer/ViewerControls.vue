@@ -40,19 +40,6 @@
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn> -->
-      <!-- <v-btn
-        v-tooltip="'Sun & Shadow Settings'"
-        :small="small"
-        rounded
-        icon
-        class="mr-2"
-        @click="lightsDialog = true"
-      >
-        <v-icon small>mdi-white-balance-sunny</v-icon>
-      </v-btn>
-      <v-dialog v-model="lightsDialog" hide-overlay max-width="400">
-        <lights-dialog @close="lightsDialog = false" />
-      </v-dialog> -->
       <v-menu
         :close-on-content-click="false"
         origin="center"
