@@ -13,7 +13,7 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { World } from '../World'
+import { Viewer } from '../Viewer'
 import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 
 export default class MeshBatch implements Batch {
@@ -447,7 +447,7 @@ export default class MeshBatch implements Batch {
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
 
-    World.expandWorld(this.geometry.boundingBox)
+    Viewer.World.expandWorld(this.geometry.boundingBox)
 
     Geometry.updateRTEGeometry(this.geometry, position)
 

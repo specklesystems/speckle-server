@@ -1,15 +1,15 @@
 import {
   CanonicalView,
+  DebugViewer,
   PropertyInfo,
   SunLightConfiguration,
   ViewerEvent
 } from '@speckle/viewer'
-import { Viewer } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 
 export default class Sandbox {
-  private viewer: Viewer
+  private viewer: DebugViewer
   private pane: Pane
   private tabs
   private viewsFolder!: FolderApi
@@ -33,20 +33,17 @@ export default class Sandbox {
     castShadow: true,
     intensity: 5,
     color: 0xffffff,
-    elevation: 0.47,
-    azimuth: 0,
-    radius: 0
-  }
-
-  public static indirectLightParams = {
-    intensity: 1
+    elevation: 1.33,
+    azimuth: 0.75,
+    radius: 0,
+    indirectLightIntensity: 1.85
   }
 
   public static filterParams = {
     filterBy: 'Volume'
   }
 
-  public constructor(viewer: Viewer) {
+  public constructor(viewer: DebugViewer) {
     this.viewer = viewer
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     this.pane['containerElem_'].style =
@@ -91,11 +88,13 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      this.viewer.speckleRenderer
+      this.viewer
+        .getRenderer()
         .subtree(url)
         .position.set(position.value.x, position.value.y, position.value.z)
-      this.viewer.speckleRenderer.updateDirectLights()
-      this.viewer.speckleRenderer.updateHelpers()
+      this.viewer.getRenderer().updateDirectLights()
+      this.viewer.getRenderer().updateHelpers()
+      this.viewer.requestRender()
     })
 
     folder
@@ -184,12 +183,13 @@ export default class Sandbox {
     this.tabs.pages[0].addSeparator()
     this.tabs.pages[0].addSeparator()
 
-    // const showBatches = this.tabs.pages[0].addButton({
-    //   title: 'ShowBatches'
-    // })
-    // showBatches.on('click', () => {
-    //   this.viewer.speckleRenderer.debugShowBatches()
-    // })
+    const showBatches = this.tabs.pages[0].addButton({
+      title: 'ShowBatches'
+    })
+    showBatches.on('click', () => {
+      this.viewer.getRenderer().debugShowBatches()
+      this.viewer.requestRender()
+    })
 
     const darkModeToggle = this.tabs.pages[0].addButton({
       title: '🌞 / 🌛'
@@ -276,8 +276,9 @@ export default class Sandbox {
         max: 1
       })
       .on('change', () => {
-        this.viewer.speckleRenderer.renderer.toneMappingExposure =
+        this.viewer.getRenderer().renderer.toneMappingExposure =
           Sandbox.sceneParams.exposure
+        this.viewer.requestRender()
       })
 
     postFolder
@@ -288,8 +289,8 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.speckleRenderer.renderer.toneMapping =
-          Sandbox.sceneParams.tonemapping
+        this.viewer.getRenderer().renderer.toneMapping = Sandbox.sceneParams.tonemapping
+        this.viewer.requestRender()
       })
 
     const lightsFolder = this.tabs.pages[1].addFolder({
@@ -365,15 +366,14 @@ export default class Sandbox {
     })
 
     indirectLightsFolder
-      .addInput(Sandbox.indirectLightParams, 'intensity', {
+      .addInput(Sandbox.lightParams, 'indirectLightIntensity', {
         label: 'Probe Intensity',
         min: 0,
         max: 10
       })
       .on('change', (value) => {
         value
-        this.viewer.speckleRenderer.indirectIBLIntensity =
-          Sandbox.indirectLightParams.intensity
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
       })
   }
 

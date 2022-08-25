@@ -14,7 +14,6 @@ import {
   DefaultViewerParams,
   InlineView,
   IViewer,
-  LightConfiguration,
   SpeckleView,
   SunLightConfiguration,
   ViewerEvent,
@@ -37,8 +36,9 @@ export class Viewer extends EventEmitter implements IViewer {
   private startupParams: ViewerParams
 
   /** Viewer components */
+  private static world: World = new World()
   public static Assets: Assets
-  private speckleRenderer: SpeckleRenderer
+  protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
@@ -60,9 +60,9 @@ export class Viewer extends EventEmitter implements IViewer {
     this._needsRender = value || this._needsRender
   }
 
-  /** Gets the World object. Currently it's used for statistics mostly */
-  public get World(): World {
-    return World
+  /** Gets the World object. Currently it's used for info mostly */
+  public static get World(): World {
+    return this.world
   }
 
   public constructor(
@@ -83,7 +83,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.speckleRenderer = new SpeckleRenderer(this)
     this.speckleRenderer.create(this.container)
-    window.addEventListener('resize', this.onWindowResize.bind(this), false)
+    window.addEventListener('resize', this.resize.bind(this), false)
 
     new Assets(this.speckleRenderer.renderer)
     this.filteringManager = new FilteringManager(this.speckleRenderer)
@@ -101,7 +101,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
 
     this.frame()
-    this.onWindowResize()
+    this.resize()
     this.needsRender = true
 
     this.on(ViewerEvent.LoadComplete, (url) => {
@@ -111,7 +111,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  private onWindowResize() {
+  public resize() {
     this.speckleRenderer.renderer.setSize(
       this.container.offsetWidth,
       this.container.offsetHeight

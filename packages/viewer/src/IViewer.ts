@@ -3,7 +3,6 @@ import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { DataTree } from './modules/tree/DataTree'
-import { World } from './modules/World'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -114,6 +113,7 @@ export type InlineView = {
  */
 export interface IViewer {
   init(): Promise<void>
+  resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
   toggleSectionBox(): void
 
@@ -176,7 +176,6 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
-  get World(): World
 
   dispose(): void
 }

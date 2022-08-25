@@ -1,13 +1,13 @@
 import {
-  Viewer,
   DefaultViewerParams,
   SelectionEvent,
-  ViewerEvent
+  ViewerEvent,
+  DebugViewer,
+  Viewer
 } from '@speckle/viewer'
 
 import './style.css'
 import Sandbox from './Sandbox'
-import { IViewer } from '@speckle/viewer'
 
 const container = document.querySelector<HTMLElement>('#renderer')
 if (!container) {
@@ -21,27 +21,27 @@ params.showStats = true
 // 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
 // 'http://localhost:3033/sample-hdri.exr'
 
-const viewer: IViewer = new Viewer(container, params)
+const viewer: Viewer = new DebugViewer(container, params)
 await viewer.init()
 
 const sandbox = new Sandbox(viewer)
 
 window.addEventListener('load', () => {
-  viewer.onWindowResize()
+  viewer.resize()
 })
 
 viewer.on(
   ViewerEvent.LoadProgress,
   (a: { progress: number; id: string; url: string }) => {
     if (a.progress >= 1) {
-      viewer.onWindowResize()
+      viewer.resize()
     }
   }
 )
 
 viewer.on(ViewerEvent.LoadComplete, () => {
-  Object.assign(Sandbox.sceneParams.worldSize, viewer.World.worldSize)
-  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
+  Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
   sandbox.refresh()
 })
 

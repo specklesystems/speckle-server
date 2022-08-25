@@ -8,7 +8,7 @@ import {
 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { World } from '../World'
+import { Viewer } from '../Viewer'
 import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 
 export default class PointBatch implements Batch {
@@ -239,7 +239,7 @@ export default class PointBatch implements Batch {
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
 
-    World.expandWorld(this.geometry.boundingBox)
+    Viewer.World.expandWorld(this.geometry.boundingBox)
     Geometry.updateRTEGeometry(this.geometry, position)
 
     return this.geometry

@@ -14,7 +14,7 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { World } from '../World'
+import { Viewer } from '../Viewer'
 import { Batch, BatchUpdateRange, GeometryType } from './Batch'
 
 export default class LineBatch implements Batch {
@@ -186,7 +186,7 @@ export default class LineBatch implements Batch {
   private makeLineGeometry(position: Float64Array) {
     this.geometry = this.makeLineGeometryTriangle(new Float32Array(position))
     Geometry.updateRTEGeometry(this.geometry, position)
-    World.expandWorld(this.geometry.boundingBox)
+    Viewer.World.expandWorld(this.geometry.boundingBox)
   }
 
   private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {
