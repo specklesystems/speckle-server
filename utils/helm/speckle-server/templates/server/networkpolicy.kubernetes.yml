@@ -23,6 +23,16 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+{{- if .Values.server.monitoring.apollo.enabled }}
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          # except to kubernetes pods or services
+          except:
+            - 10.0.0.0/8
+      ports:
+        - port: 443
+{{- end }}
 {{- if .Values.server.sentry_dns }}
     # sentry.io https://docs.sentry.io/product/security/ip-ranges/#event-ingestion
     - to:

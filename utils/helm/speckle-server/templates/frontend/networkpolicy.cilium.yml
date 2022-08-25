@@ -14,7 +14,7 @@ spec:
     - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: {{ .Values.ingress.namespace }}
-{{ include  "speckle.ingress.selector.pod" $ | indent 12 }}
+{{ include "speckle.ingress.selector.pod" $ | indent 12 }}
       toPorts:
         - ports:
             - port: "www"
