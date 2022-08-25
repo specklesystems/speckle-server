@@ -1,0 +1,19 @@
+<mj-section padding-top="0" border-bottom="1px solid #e0e0e0">
+  <mj-column>
+    <mj-text font-size="12px" line-height="18px" align="center" color="#999">
+      Sent from <%- params.serverInfo.name -%> at
+      <a href="#"><%- params.serverInfo.canonicalUrl -%></a>
+      , deployed and managed by <%- params.serverInfo.company -%>. Your admin contact is
+      <%- params.serverInfo.adminContact -%>.
+    </mj-text>
+  </mj-column>
+</mj-section>
+<mj-section padding-top="20px">
+  <mj-column>
+    <mj-text font-size="12px" line-height="18px" align="center" color="#e0e0e0">
+      Brought to you by
+      <a href="https://speckle.systems" target="_blank">Speckle</a>
+      , the Open Source Data Platform for 3D Data
+    </mj-text>
+  </mj-column>
+</mj-section>
