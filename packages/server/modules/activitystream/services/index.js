@@ -7,6 +7,9 @@ const StreamActivity = () => knex('stream_activity')
 const StreamAcl = () => knex('stream_acl')
 
 module.exports = {
+  /**
+   * @param {Omit<import('@/modules/activitystream/helpers/types').StreamActivityRecord, "time">} param0
+   */
   async saveActivity({
     streamId,
     resourceType,

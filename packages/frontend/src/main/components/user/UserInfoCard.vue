@@ -64,8 +64,6 @@
             <span v-if="isSelf" class="caption">
               id:
               <code>{{ user.id }}</code>
-              , suuid:
-              <code>{{ user.suuid }}</code>
             </span>
             <br />
           </v-col>

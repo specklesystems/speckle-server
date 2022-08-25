@@ -20,23 +20,24 @@
           <v-col cols="12">
             <v-text-field
               id="new-password"
-              v-model="form.password"
+              v-model="password"
               label="new password"
               type="password"
               autocomplete="new-password"
               :rules="validation.passwordRules"
+              :readonly="loading"
               filled
               single-line
               style="margin-top: -12px"
-              @keydown="debouncedPwdTest"
             />
           </v-col>
           <v-col cols="12">
             <v-text-field
-              v-model="form.passwordConf"
+              v-model="passwordConfirmation"
               label="confirm new password"
               type="password"
               :rules="validation.passwordRules"
+              :readonly="loading"
               filled
               single-line
               style="margin-top: -12px"
@@ -44,7 +45,7 @@
           </v-col>
           <v-col cols="12" class="py-2" style="margin-top: -18px">
             <v-row
-              v-show="passwordStrength !== 1 && form.password"
+              v-show="passwordStrength !== 1 && password"
               no-gutters
               align="center"
             >
@@ -68,16 +69,27 @@
               </v-col>
               <v-col cols="12" class="caption text-center mt-3">
                 {{
-                  pwdSuggestions ? pwdSuggestions : form.password ? 'Looks good.' : null
+                  passwordSuggestion
+                    ? passwordSuggestion
+                    : password && password === passwordConfirmation
+                    ? 'Looks good.'
+                    : null
                 }}
-                <span v-if="form.password !== form.passwordConf">
+                <div v-if="password !== passwordConfirmation">
                   <b>Passwords do not match.</b>
-                </span>
+                </div>
               </v-col>
             </v-row>
           </v-col>
           <v-col cols="12">
-            <v-btn type="submit" block large color="primary" @click="resetPassword()">
+            <v-btn
+              type="submit"
+              block
+              large
+              color="primary"
+              :disabled="loading"
+              @click="resetPassword()"
+            >
               Save new password
             </v-btn>
           </v-col>
@@ -88,7 +100,7 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import debounce from 'lodash/debounce'
+import { useValidatablePasswordEntry } from '@/main/lib/auth/composables/useValidatablePasswordEntry'
 
 export default {
   name: 'ResetPasswordRequest',
@@ -117,22 +129,22 @@ export default {
       `
     }
   },
+  setup() {
+    const validatablePasswordEntry = useValidatablePasswordEntry()
+    return {
+      ...validatablePasswordEntry
+    }
+  },
   data() {
     return {
-      passwordStrength: 1,
-      pwdSuggestions: null,
-      form: {
-        password: null,
-        passwordConf: null
-      },
-
       validation: {
         passwordRules: [(v) => !!v || 'Required']
       },
       tokenId: null,
       errors: false,
       errorMessage: null,
-      success: false
+      success: false,
+      loading: false
     }
   },
   computed: {
@@ -147,28 +159,24 @@ export default {
     this.tokenId = this.$route.query.t
   },
   methods: {
-    debouncedPwdTest: debounce(async function () {
-      const result = await this.$apollo.query({
-        query: gql` query{ userPwdStrength(pwd:"${this.form.password}")}`
-      })
-      this.passwordStrength = result.data.userPwdStrength.score * 25
-      this.pwdSuggestions = result.data.userPwdStrength.feedback.suggestions[0]
-    }, 1000),
     async resetPassword() {
+      if (this.loading) return
+
       try {
         this.success = false
         this.errors = false
         this.errorMessage = null
         const valid = this.$refs.form.validate()
         if (!valid) return
-        if (this.form.password !== this.form.passwordConf)
-          throw new Error('Passwords do not match')
-        if (this.passwordStrength < 3) throw new Error('Password too weak.')
+        this.validatePassword()
+
+        this.loading = true
+        await this.validatePasswordStrength()
 
         const res = await fetch(`/auth/pwdreset/finalize`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tokenId: this.tokenId, password: this.form.password })
+          body: JSON.stringify({ tokenId: this.tokenId, password: this.password })
         })
 
         if (res.status !== 200) {
@@ -181,6 +189,8 @@ export default {
       } catch (err) {
         this.errorMessage = err.message
         this.errors = true
+      } finally {
+        this.loading = false
       }
     }
   }

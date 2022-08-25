@@ -42,8 +42,6 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         const user = { email, name, bio }
 
-        if (req.session.suuid) user.suuid = req.session.suuid
-
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {

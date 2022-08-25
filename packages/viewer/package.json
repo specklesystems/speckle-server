@@ -21,7 +21,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^16.0.0"
+    "node": ">=14.0.0"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",

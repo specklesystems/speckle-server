@@ -19,12 +19,7 @@
       <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
       Interoperability in seconds
     </v-card-title>
-    <auth-strategies
-      :strategies="strategies"
-      :app-id="appId"
-      :challenge="challenge"
-      :suuid="suuid"
-    />
+    <auth-strategies :strategies="strategies" :app-id="appId" :challenge="challenge" />
     <div v-if="hasLocalStrategy">
       <v-card-title class="justify-center pb-5 pt-0 body-1 text--secondary">
         <v-divider class="mx-4"></v-divider>
@@ -155,7 +150,6 @@ export default {
     errorMessage: '',
     serverApp: null,
     appId: null,
-    suuid: null,
     challenge: null
   }),
   computed: {
@@ -174,7 +168,6 @@ export default {
         query: {
           appId: this.$route.query.appId,
           challenge: this.$route.query.challenge,
-          suuid: this.$route.query.suuid,
           token: this.token
         }
       }
@@ -184,8 +177,6 @@ export default {
     const urlParams = new URLSearchParams(window.location.search)
     const appId = urlParams.get('appId')
     const challenge = urlParams.get('challenge')
-    const suuid = urlParams.get('suuid')
-    this.suuid = suuid
 
     this.$mixpanel.track('Visit Log In')
 
@@ -209,8 +200,6 @@ export default {
           email: this.form.email,
           password: this.form.password
         }
-
-        if (this.suuid) user.suuid = this.suuid
 
         const res = await fetch(`/auth/local/login?challenge=${this.challenge}`, {
           method: 'POST',

@@ -23,7 +23,8 @@ export const ActionTypes = Object.freeze(<const>{
   Comment: {
     Create: 'comment_created',
     Archive: 'comment_archived',
-    Reply: 'comment_replied'
+    Reply: 'comment_replied',
+    Mention: 'comment_mention'
   },
   Branch: {
     Create: 'branch_create',

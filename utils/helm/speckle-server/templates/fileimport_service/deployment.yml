@@ -12,6 +12,8 @@ spec:
     matchLabels:
       app: speckle-fileimport-service
       project: speckle-server
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -64,7 +66,7 @@ spec:
 
         env:
           - name: SPECKLE_SERVER_URL
-            value: "http://speckle-server:3000"
+            value: {{ printf "http://%s:%s" ( include "server.service.fqdn" $ ) ( include "server.port" $ ) }}
 
           - name: PG_CONNECTION_STRING
             valueFrom:

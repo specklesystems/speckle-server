@@ -26,6 +26,16 @@ ssl_canonical_url: true
 ##
 cert_manager_issuer: letsencrypt-staging
 
+## @section Network Plugin configuration
+## @descriptionStart
+## This is used to define the type of network policy that is deployed.
+## Different Kubernetes Network Plugins or Container Network Interfaces (CNIs) can make use of different types of
+## Network Policy.  Some of these provide more features than the standard Kubernetes Network Policy.
+## @descriptionEnd
+networkPlugin:
+  ## @param networkPlugin.type (Optional) Used to configure which type of NetworkPolicy is deployed. Options are 'kubernetes' or 'cilium'.
+  type: 'kubernetes'
+
 ## @section Ingress metadata for NetworkPolicy
 ## @descriptionStart
 ## This section is ignored unless networkPolicy is enabled for frontend or server.
@@ -122,9 +132,6 @@ db:
   ## @extra db.networkPolicy If networkPolicy is enabled for any service, this provides the NetworkPolicy with the necessary details to allow egress connections to the Postgres database
   ##
   networkPolicy:
-    ## @param db.networkPolicy.port the port on the server providing the Postgres database (default: "5432")
-    ##
-    port: ''
     ## @extra db.networkPolicy.externalToCluster Only required if the Postgres database is not hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     externalToCluster:
@@ -132,16 +139,6 @@ db:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param db.networkPolicy.externalToCluster.host The domain name at which the Postgres database is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param db.networkPolicy.externalToCluster.ipv4 The IP address at which the Postgres database is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra db.networkPolicy.inCluster Only required if the Postgres database is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -149,18 +146,35 @@ db:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
-      ## @param db.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the Postgres database pods within the cluster and given namespace
-      ## This is a Kubernetes podSelector object
-      ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
-      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ## @param db.networkPolicy.inCluster.port the port on the server providing the Postgres database (default: "5432")
       ##
-      podSelector: {}
-      ## @param db.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the Postgres database pods are deployed
-      ## This is a Kubernetes namespaceSelector object
-      ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
-      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-      ##
-      namespaceSelector: {}
+      port: ''
+      kubernetes:
+        ## @param db.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the postgres compatible database pods within the cluster and given namespace
+        ## For Kubernetes Network Policies this is a podSelector object.
+        ## For Cilium Network Policies this is ignored.
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        podSelector: {}
+        ## @param db.networkPolicy.inCluster.kubernetes.namespaceSelector  (Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the postgres compatible database pods are deployed
+        ## This is a Kubernetes namespaceSelector object.
+        ## For Cilium Network Policies this is ignored
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        namespaceSelector: {}
+      cilium:
+        ## @param db.networkPolicy.inCluster.cilium.endpointSelector (Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the postgres compatible database pods are deployed
+        ## For Kubernetes Network Policies this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/selector.go
+        endpointSelector: {}
+        ## @param db.networkPolicy.inCluster.cilium.serviceSelector (Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the postgres compatible database service
+        ## For Kubernetes Network Policies this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/service.go
+        serviceSelector: {}
 
 ## @section S3 Compatible Storage
 ## @descriptionStart
@@ -204,16 +218,6 @@ s3:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param s3.networkPolicy.externalToCluster.host The domain name at which the s3 compatible storage is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param s3.networkPolicy.externalToCluster.ipv4 The IP address at which the s3 compatible storage is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra s3.networkPolicy.inCluster Only required if the s3 compatible storage is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -221,18 +225,32 @@ s3:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
-      ## @param s3.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the s3 compatible storage pods within the cluster and given namespace
-      ## This is a Kubernetes podSelector object
-      ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
-      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-      ##
-      podSelector: {}
-      ## @param s3.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the s3 compatible storage pods are deployed
-      ## This is a Kubernetes namespaceSelector object
-      ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
-      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-      ##
-      namespaceSelector: {}
+      kubernetes:
+        ## @param s3.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the s3 compatible storage pods within the cluster and given namespace
+        ## For Kubernetes Network Policies this is a podSelector object.
+        ## For Cilium Network Policies this is ignored.
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        podSelector: {}
+        ## @param s3.networkPolicy.inCluster.kubernetes.namespaceSelector  (Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the s3 compatible storage pods are deployed
+        ## This is a Kubernetes namespaceSelector object.
+        ## For Cilium Network Policies, this is ignored
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        namespaceSelector: {}
+      cilium:
+        ## @param s3.networkPolicy.inCluster.cilium.endpointSelector (Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the s3 compatible storage pods are deployed
+        ## For Kubernetes Network Policies, this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/selector.go
+        endpointSelector: {}
+        ## @param s3.networkPolicy.inCluster.cilium.serviceSelector (Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the s3 compatible storage service
+        ## For Kubernetes Network Policies this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/service.go
+        serviceSelector: {}
 
 ## @section Redis Store
 ## @descriptionStart
@@ -246,9 +264,6 @@ redis:
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
   networkPolicy:
-    ## @param redis.networkPolicy.port the port on the server providing the Redis store (default: "6379")
-    ##
-    port: ''
     ## @extra redis.networkPolicy.externalToCluster Only required if the Redis store is not hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     externalToCluster:
@@ -256,16 +271,6 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only one deployed
       ##
       enabled: true
-      ## @param redis.networkPolicy.externalToCluster.host The domain name at which the Redis store is hosted.
-      ## This should match the value provided within the connection string.
-      ## Provide the IP address if available (use the `ipv4` parameter), as the IP address takes precedence.
-      ##
-      host: ''
-      ## @param redis.networkPolicy.externalToCluster.ipv4 The IP address at which the Redis store is hosted
-      ## This should be an IP address not within the Kubernetes Cluster Pod or Service IP ranges.
-      ## If both host and ipv4 parameters are provided, ipv4 takes precedence and host is ignored.
-      ##
-      ipv4: ''
     ## @extra redis.networkPolicy.inCluster is only required if the Redis store is hosted within the Kubernetes cluster in which Speckle will be deployed.
     ##
     inCluster:
@@ -273,18 +278,35 @@ redis:
       ## Only one of externalToCluster or inCluster should be enabled. If both are enabled then inCluster takes precedence and is the only set of egress network policy rules deployed.
       ##
       enabled: false
-      ## @param redis.networkPolicy.inCluster.podSelector The pod Selector yaml object used to uniquely select the Redis store pods within the cluster and given namespace
-      ## This is a Kubernetes podSelector object
-      ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
-      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+      ## @param redis.networkPolicy.inCluster.port the port on the server providing the Redis store (default: "6379")
       ##
-      podSelector: {}
-      ## @param redis.networkPolicy.inCluster.namespaceSelector The namespace selector yaml object used to uniquely select the namespace in which the Redis store pods are deployed
-      ## This is a Kubernetes namespaceSelector object
-      ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
-      ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
-      ##
-      namespaceSelector: {}
+      port: ''
+      kubernetes:
+        ## @param redis.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the redis store pods within the cluster and given namespace
+        ## For Kubernetes Network Policies this is a podSelector object.
+        ## For Cilium Network Policies this is ignored.
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        podSelector: {}
+        ## @param redis.networkPolicy.inCluster.kubernetes.namespaceSelector  (Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the redis store pods are deployed
+        ## This is a Kubernetes namespaceSelector object.
+        ## For Cilium Network Policies, this is ignored
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        namespaceSelector: {}
+      cilium:
+        ## @param redis.networkPolicy.inCluster.cilium.endpointSelector (Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the redis pods are deployed
+        ## For Kubernetes Network Policies, this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/selector.go
+        endpointSelector: {}
+        ## @param redis.networkPolicy.inCluster.cilium.serviceSelector (Cilium Network Policy only) The service selector yaml object used to uniquely select the in-cluster service providing the redis store service
+        ## For Kubernetes Network Policies this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#egress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/service.go
+        serviceSelector: {}
 
 ## @section Server
 ## @descriptionStart

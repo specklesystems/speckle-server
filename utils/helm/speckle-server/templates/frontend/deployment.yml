@@ -11,6 +11,8 @@ spec:
     matchLabels:
       app: speckle-frontend
       project: speckle-server
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:

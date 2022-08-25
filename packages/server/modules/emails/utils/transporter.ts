@@ -25,8 +25,8 @@ const initSmtpTransporter = async () => {
     })
     await smtpTransporter.verify()
     return smtpTransporter
-  } catch {
-    errorDebug('📧 Email provider is misconfigured, check config variables.')
+  } catch (e) {
+    errorDebug('📧 Email provider is misconfigured, check config variables.', e)
   }
 }
 
