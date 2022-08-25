@@ -1,4 +1,5 @@
 import ObjectLoader from '@speckle/objectloader'
+import { ViewerEvent } from '../IViewer'
 import Converter from './converter/Converter'
 import EventEmitter from './EventEmitter'
 /**
@@ -74,7 +75,7 @@ export default class ViewerObjectLoader {
     let firstObjectPromise = null
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
-        this.emiter.emit('load-progress', {
+        this.emiter.emit(ViewerEvent.LoadProgress, {
           progress: 1,
           id: this.objectId,
           url: this.objectUrl
@@ -94,7 +95,7 @@ export default class ViewerObjectLoader {
         total = obj.totalChildrenCount
       }
       current++
-      this.emiter.emit('load-progress', {
+      this.emiter.emit(ViewerEvent.LoadProgress, {
         progress: current / (total + 1),
         id: this.objectId
       })
@@ -108,7 +109,7 @@ export default class ViewerObjectLoader {
     console.warn(
       `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
     )
-    this.emiter.emit('load-complete', this.objectUrl)
+    this.emiter.emit(ViewerEvent.LoadComplete, this.objectUrl)
 
     if (viewerLoads === 0) {
       console.warn(`Viewer: no 3d objects found in object ${this.objectId}`)

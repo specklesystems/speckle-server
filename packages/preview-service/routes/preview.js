@@ -26,15 +26,17 @@ async function pageFunction(objectUrl) {
     // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
     await waitForAnimation(1000)
   }
-
-  v.interactions.zoomExtents(0.95, false)
+  //@Dim: This needs to use the API
+  // v.interactions.zoomExtents(0.95, false)
   await waitForAnimation(100)
 
   // full 360
   for (let i = 0; i < 24; i++) {
-    v.interactions.rotateCamera(undefined, undefined, false)
+    //@Dim: This needs to use the API
+    // v.interactions.rotateCamera(undefined, undefined, false)
     await waitForAnimation()
-    ret.scr[i + ''] = v.interactions.screenshot()
+    //@Dim: Changed this to use the API
+    ret.scr[i + ''] = v.screenshot()
   }
 
   /*
@@ -44,7 +46,7 @@ async function pageFunction(objectUrl) {
   let dirArray = [ 'top', 'bottom', 'front', 'back', 'left', 'right' ]
   for ( let i in dirArray ) {
     let d = dirArray[i]
-    v.interactions.rotateTo( d )
+    v.interactionsro.setView( d )
     await waitForAnimation()
     ret.scr[d] = v.interactions.screenshot()
   }

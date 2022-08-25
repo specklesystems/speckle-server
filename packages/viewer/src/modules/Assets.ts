@@ -84,34 +84,38 @@ export class Assets {
     if (this._cache[srcUrl]) {
       return Promise.resolve(this._cache[srcUrl])
     }
-
-    // Hack to load 'data:image's - for some reason, the frontend receives the default
-    // gradient map as a data image url, rather than a file (?).
-    if (srcUrl.includes('data:image')) {
-      const image = new Image()
-      image.src = srcUrl
-      const texture = new Texture(image)
-      texture.needsUpdate = true
-      this._cache[srcUrl] = texture
-      return Promise.resolve(texture)
-    }
-
     return new Promise<Texture>((resolve, reject) => {
-      const loader = Assets.getLoader(srcUrl, assetType)
-      if (loader) {
-        loader.load(
-          srcUrl,
-          (texture) => {
-            this._cache[srcUrl] = texture
-            resolve(this._cache[srcUrl])
-          },
-          undefined,
-          (error: ErrorEvent) => {
-            reject(`Loading asset ${srcUrl} failed ${error.message}`)
-          }
-        )
+      // Hack to load 'data:image's - for some reason, the frontend receives the default
+      // gradient map as a data image url, rather than a file (?).
+      if (srcUrl.includes('data:image')) {
+        const image = new Image()
+        image.src = srcUrl
+        image.onload = () => {
+          const texture = new Texture(image)
+          texture.needsUpdate = true
+          this._cache[srcUrl] = texture
+          resolve(texture)
+        }
+        image.onerror = (ev) => {
+          reject(`Loading asset ${srcUrl} failed with ${ev.toString()}`)
+        }
       } else {
-        reject(`Loading asset ${srcUrl} failed`)
+        const loader = Assets.getLoader(srcUrl, assetType)
+        if (loader) {
+          loader.load(
+            srcUrl,
+            (texture) => {
+              this._cache[srcUrl] = texture
+              resolve(this._cache[srcUrl])
+            },
+            undefined,
+            (error: ErrorEvent) => {
+              reject(`Loading asset ${srcUrl} failed ${error.message}`)
+            }
+          )
+        } else {
+          reject(`Loading asset ${srcUrl} failed`)
+        }
       }
     })
   }

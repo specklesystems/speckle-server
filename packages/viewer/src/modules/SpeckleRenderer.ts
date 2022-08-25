@@ -36,9 +36,13 @@ import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { WorldTree } from './tree/WorldTree'
 import {
+  CanonicalView,
   DefaultLightConfiguration,
+  InlineView,
   SelectionEvent,
-  SunLightConfiguration
+  SpeckleView,
+  SunLightConfiguration,
+  ViewerEvent
 } from '../IViewer'
 
 export default class SpeckleRenderer {
@@ -129,9 +133,9 @@ export default class SpeckleRenderer {
     container.appendChild(this._renderer.domElement)
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
-    this.input.on('object-clicked', this.onObjectClick.bind(this))
+    this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
     this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
-    this.input.on('object-doubleclicked', this.onObjectDoubleClick.bind(this))
+    this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
     if (this.SHOW_HELPERS) {
@@ -411,6 +415,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
+    this.viewer.needsRender = true
     this.updateHelpers()
   }
 
@@ -443,7 +448,7 @@ export default class SpeckleRenderer {
     )
 
     if (!result) {
-      this.viewer.emit('object-clicked', null)
+      this.viewer.emit(ViewerEvent.ObjectClicked, null)
       return
     }
 
@@ -457,7 +462,10 @@ export default class SpeckleRenderer {
 
     /** Batch rejected picking. This only happens with hidden lines */
     if (!rv) {
-      this.viewer.emit('object-clicked', !multiSelect ? null : { multiple: true })
+      this.viewer.emit(
+        ViewerEvent.ObjectClicked,
+        !multiSelect ? null : { multiple: true }
+      )
       return
     }
 
@@ -476,7 +484,7 @@ export default class SpeckleRenderer {
       multiple: multiSelect
     } as SelectionEvent
 
-    this.viewer.emit('object-clicked', selectionInfo)
+    this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 
   private onObjectDoubleClick(e) {
@@ -505,7 +513,7 @@ export default class SpeckleRenderer {
         this.zoomToBox(transformedBox, 1.2, true)
         this.viewer.needsRender = true
         this.viewer.emit(
-          'object-doubleclicked',
+          ViewerEvent.ObjectDoubleClicked,
           result ? rv.renderData.id : null,
           result ? result.point : null
         )
@@ -586,14 +594,50 @@ export default class SpeckleRenderer {
     }
   }
 
-  public setView(origin: Vector3, target: Vector3, transition = true) {
+  private isSpeckleView(
+    view: CanonicalView | SpeckleView | InlineView
+  ): view is SpeckleView {
+    return (view as SpeckleView).name !== undefined
+  }
+
+  private isCanonicalView(
+    view: CanonicalView | SpeckleView | InlineView
+  ): view is CanonicalView {
+    return typeof (view as CanonicalView) === 'string'
+  }
+
+  private isInlineView(
+    view: CanonicalView | SpeckleView | InlineView
+  ): view is InlineView {
+    return (
+      (view as InlineView).position !== undefined &&
+      (view as InlineView).target !== undefined
+    )
+  }
+
+  public setView(
+    view: CanonicalView | SpeckleView | InlineView,
+    transition = true
+  ): void {
+    if (this.isSpeckleView(view)) {
+      this.setViewSpeckle(view, transition)
+    }
+    if (this.isCanonicalView(view)) {
+      this.setViewCanonical(view, transition)
+    }
+    if (this.isInlineView(view)) {
+      this.setViewInline(view, transition)
+    }
+  }
+
+  private setViewSpeckle(view: SpeckleView, transition = true) {
     this.viewer.cameraHandler.activeCam.controls.setLookAt(
-      origin.x,
-      origin.y,
-      origin.z,
-      target.x,
-      target.y,
-      target.z,
+      view.view.origin['x'],
+      view.view.origin['y'],
+      view.view.origin['z'],
+      view.view.target['x'],
+      view.view.target['y'],
+      view.view.target['z'],
       transition
     )
   }
@@ -605,7 +649,7 @@ export default class SpeckleRenderer {
    * @param  {Boolean} transition [description]
    * @return {[type]}             [description]
    */
-  public rotateTo(side: string, transition = true) {
+  private setViewCanonical(side: string, transition = true) {
     const DEG90 = Math.PI * 0.5
     const DEG180 = Math.PI
 
@@ -669,6 +713,18 @@ export default class SpeckleRenderer {
         break
       }
     }
+  }
+
+  private setViewInline(view: InlineView, transition = true) {
+    this.viewer.cameraHandler.activeCam.controls.setLookAt(
+      view.position.x,
+      view.position.y,
+      view.position.z,
+      view.target.x,
+      view.target.y,
+      view.target.z,
+      transition
+    )
   }
 
   /** DEBUG */

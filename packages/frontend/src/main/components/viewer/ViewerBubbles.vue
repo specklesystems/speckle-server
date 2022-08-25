@@ -99,6 +99,7 @@ import {
   setFilterDirectly,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'ViewerBubbles',
@@ -241,7 +242,7 @@ export default {
         this.sendUpdateAndPrune()
       }, 50)
     )
-    this.viewer.on('object-doubleclicked', () => {})
+    this.viewer.on(ViewerEvent.ObjectDoubleClicked, () => {})
   },
   async beforeDestroy() {
     await this.sendDisconnect()
@@ -253,10 +254,11 @@ export default {
       if (camToSet[6] === 1) {
         this.viewer.toggleCameraProjection()
       }
-      this.viewer.interactions.setLookAt(
-        { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
-        { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
-      )
+      //@Dim: This needs to use the API
+      // this.viewer.interactions.setLookAt(
+      //   { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
+      //   { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
+      // )
       if (camToSet[6] === 1) {
         this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       }
@@ -465,8 +467,8 @@ export default {
         uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
-
-      this.viewer.interactions.overlayObjects(selectedObjects)
+      //@Dim: This shouldn't be needed anymore, right?
+      // this.viewer.interactions.overlayObjects(selectedObjects)
     }
   }
 }

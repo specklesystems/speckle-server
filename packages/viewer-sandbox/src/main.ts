@@ -1,13 +1,13 @@
 import {
   Viewer,
   DefaultViewerParams,
-  DataTree,
-  SpeckleObject,
-  SelectionEvent
+  SelectionEvent,
+  ViewerEvent
 } from '@speckle/viewer'
 
 import './style.css'
 import Sandbox from './Sandbox'
+import { IViewer } from '@speckle/viewer'
 
 const container = document.querySelector<HTMLElement>('#renderer')
 if (!container) {
@@ -21,7 +21,7 @@ params.showStats = true
 // 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
 // 'http://localhost:3033/sample-hdri.exr'
 
-const viewer = new Viewer(container, params)
+const viewer: IViewer = new Viewer(container, params)
 await viewer.init()
 
 const sandbox = new Sandbox(viewer)
@@ -30,19 +30,22 @@ window.addEventListener('load', () => {
   viewer.onWindowResize()
 })
 
-viewer.on('load-progress', (a: { progress: number; id: string; url: string }) => {
-  if (a.progress >= 1) {
-    viewer.onWindowResize()
+viewer.on(
+  ViewerEvent.LoadProgress,
+  (a: { progress: number; id: string; url: string }) => {
+    if (a.progress >= 1) {
+      viewer.onWindowResize()
+    }
   }
-})
+)
 
-viewer.on('load-complete', () => {
-  Object.assign(Sandbox.sceneParams.worldSize, viewer.worldSize)
-  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.worldOrigin)
+viewer.on(ViewerEvent.LoadComplete, () => {
+  Object.assign(Sandbox.sceneParams.worldSize, viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
   sandbox.refresh()
 })
 
-viewer.on('object-clicked', async (selectionInfo: SelectionEvent) => {
+viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   if (!selectionInfo) {
     await viewer.resetSelection()
     return
@@ -73,12 +76,4 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
   // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/e22f696b08'
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
-)
-
-const dataTree: DataTree = viewer.getDataTree()
-console.log(`Built data tree `, dataTree)
-console.log(
-  dataTree.findAll((obj: SpeckleObject) => {
-    return obj.speckle_type === 'Objects.Geometry.Mesh'
-  })
 )

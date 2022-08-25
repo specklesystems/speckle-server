@@ -21,6 +21,7 @@ import {
   handleViewerSelection,
   resetSelection
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'SpeckleViewer',
@@ -97,11 +98,11 @@ export default {
       })
 
       this.viewer.on(
-        'load-progress',
-        throttle((args) => this.$emit('load-progress', args), 250)
+        ViewerEvent.LoadProgress,
+        throttle((args) => this.$emit(ViewerEvent.LoadProgress, args), 250)
       )
 
-      this.viewer.on('object-clicked', (selectionInfo) => {
+      this.viewer.on(ViewerEvent.ObjectClicked, (selectionInfo) => {
         handleViewerSelection(selectionInfo)
       })
 

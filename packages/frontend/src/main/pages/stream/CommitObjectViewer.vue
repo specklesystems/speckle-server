@@ -270,6 +270,7 @@ import { Nullable } from '@/helpers/typeHelpers'
 import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'
 import CommitObjectViewerScope from '@/main/components/viewer/CommitObjectViewerScope.vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
+import { ViewerEvent } from '@speckle/viewer'
 
 type ErroredResourceData = {
   error: boolean
@@ -516,7 +517,7 @@ export default defineComponent({
         }
       }
 
-      this.viewer.on('busy', (val: boolean) => {
+      this.viewer.on(ViewerEvent.Busy, (val: boolean) => {
         setIsViewerBusy(!!val)
         this.viewerBusy = val
         if (!val && this.camToSet) {
@@ -526,12 +527,14 @@ export default defineComponent({
             if (this.camToSet[6] === 1) {
               this.viewer.toggleCameraProjection()
             }
-            this.viewer.interactions.setLookAt(
-              { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
-              { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
-            )
+            //@Dim: This needs to be replaced with a call from the API.
+            // this.viewer.interactions.setLookAt(
+            //   { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
+            //   { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
+            // )
             if (this.camToSet[6] === 1) {
-              this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+              //@Dim: This needs to be replaced with a call from the API.
+              // this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
             }
             this.camToSet = null
           }, 200)

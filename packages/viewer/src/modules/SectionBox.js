@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import SelectionHelper from './legacy/SelectionHelper'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { Box3 } from 'three'
+import { ViewerEvent } from '../IViewer'
 
 export default class SectionBox {
   constructor(viewer) {
@@ -86,7 +87,7 @@ export default class SectionBox {
       hover: false,
       checkForSectionBoxInclusion: false
     })
-    this.selectionHelper.on('object-clicked', this._clickHandler.bind(this))
+    this.selectionHelper.on(ViewerEvent.ObjectClicked, this._clickHandler.bind(this))
     this.selectionHelper.on('hovered', () => {
       // TODO: cannot get this to work reliably
       // if( !this.attachedToBox ) return
@@ -132,12 +133,14 @@ export default class SectionBox {
       const val = !!event.value
       if (val) {
         this.dragging = val
-        this.viewer.interactions.preventSelection = val
+        //@Dim: Not sure what this needs to do in the new viewer
+        // this.viewer.interactions.preventSelection = val
         this.viewer.cameraHandler.enabled = !val
       } else {
         setTimeout(() => {
           this.dragging = val
-          this.viewer.interactions.preventSelection = val
+          //@Dim: Not sure what this needs to do in the new viewer
+          // this.viewer.interactions.preventSelection = val
           this.viewer.cameraHandler.enabled = !val
         }, 100)
       }
@@ -350,9 +353,10 @@ export default class SectionBox {
 
     if (targetBox) box = targetBox
     else {
+      /* //@Dim: Not sure what this needs to do in the new viewer
       if (this.viewer.interactions.selectedObjects.children.length !== 0) {
         box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
-      } else if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
+      } else*/ if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
         box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
       } else {
         box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))

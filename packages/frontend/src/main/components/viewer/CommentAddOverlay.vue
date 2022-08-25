@@ -252,7 +252,7 @@ import {
   setIsAddingComment,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { ViewerEvent } from '@speckle/viewer'
 /**
  * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
  */
@@ -333,7 +333,7 @@ export default {
   },
   mounted() {
     this.viewerSelectHandler = debounce(this.handleSelect, 10)
-    this.viewer.on('object-clicked', this.viewerSelectHandler)
+    this.viewer.on(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
@@ -351,7 +351,7 @@ export default {
     document.addEventListener('keyup', this.docKeyUpHandler)
   },
   beforeDestroy() {
-    this.viewer.removeListener('object-clicked', this.viewerSelectHandler)
+    this.viewer.removeListener(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
     this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
@@ -405,7 +405,8 @@ export default {
           sectionBox: this.viewer.sectionBox.getCurrentBox(),
           selection: null // TODO for later, lazy now
         },
-        screenshot: this.viewer.interactions.screenshot()
+        //@Dim: Changed this to use the API
+        screenshot: this.viewer.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
@@ -445,7 +446,8 @@ export default {
       this.visible = false
       this.commentValue = { doc: null, attachments: [] }
       setIsAddingComment(false)
-      this.viewer.interactions.deselectObjects()
+      //@Dim: Changed this to use the API
+      this.viewer.resetSelection()
     },
     sendStatusUpdate() {
       // TODO: typing or not

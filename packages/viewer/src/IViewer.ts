@@ -3,6 +3,7 @@ import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { DataTree } from './modules/tree/DataTree'
+import { World } from './modules/World'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -42,6 +43,16 @@ export const DefaultViewerParams: ViewerParams = {
   }
 }
 
+export enum ViewerEvent {
+  ObjectClicked = 'object-clicked',
+  ObjectDoubleClicked = 'object-doubleclicked',
+  LoadComplete = 'load-complete',
+  LoadProgress = 'load-progress',
+  UnloadComplete = 'unload-complete',
+  UnloadAllComplete = 'unload-all-complete',
+  Busy = 'busy'
+}
+
 export type SelectionEvent = {
   userData: Record<string, unknown>
   location: Vector3
@@ -74,12 +85,36 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   indirectLightIntensity: 1.85
 }
 
+export type CanonicalView =
+  | 'front'
+  | 'back'
+  | 'up'
+  | 'top'
+  | 'down'
+  | 'bottom'
+  | 'right'
+  | 'left'
+  | '3d'
+  | '3D'
+
+export type SpeckleView = {
+  name: string
+  id: string
+  view: Record<string, unknown>
+}
+
+export type InlineView = {
+  position: Vector3
+  target: Vector3
+  zoom: number
+}
+
 /**
  * Carried over from the old Viewer. To be extended/changed
  */
 export interface IViewer {
   init(): Promise<void>
-  onWindowResize(): void
+  on(eventType: ViewerEvent, handler: (arg) => void)
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
@@ -87,10 +122,8 @@ export interface IViewer {
   toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
 
-  getViews()
-  setView(id: string, transition: boolean)
-  // This shouldn't be part of the API, it should be handled through `setView`
-  rotateTo(side: string, transition: boolean)
+  getViews(): SpeckleView[]
+  setView(view: CanonicalView | SpeckleView | InlineView, transition?: boolean)
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
@@ -132,10 +165,11 @@ export interface IViewer {
 
   setColorFilter(prop: PropertyInfo): Promise<FilteringState>
   removeColorFilter(): Promise<FilteringState>
-  reset(): Promise<FilteringState>
+  resetFilters(): Promise<FilteringState>
 
   /** Data ops */
   getDataTree(): DataTree
+  get World(): World
 
   dispose(): void
 }
