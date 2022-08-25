@@ -1,6 +1,0 @@
-- id: ggshield-not-ci
-  name: GitGuardian Shield (pre-commit)
-  entry: bash -c 'if [[ ! -z ${CI}} ]]; then ggshield secret scan pre-commit; fi'
-  description: Runs ggshield in non-CI environments to detect hardcoded secrets, security vulnerabilities and policy breaks.
-  stages: [commit]
-  language: system
