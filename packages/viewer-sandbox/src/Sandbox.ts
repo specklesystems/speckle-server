@@ -214,6 +214,20 @@ export default class Sandbox {
       console.warn(await this.viewer.screenshot())
     })
 
+    const rotate = this.tabs.pages[0].addButton({
+      title: '360'
+    })
+    rotate.on('click', async () => {
+      const waitForAnimation = async (ms = 70) =>
+        await new Promise((resolve) => {
+          setTimeout(resolve, ms)
+        })
+      for (let i = 0; i < 24; i++) {
+        this.viewer.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
+        await waitForAnimation(1000)
+      }
+    })
+
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
       expanded: true

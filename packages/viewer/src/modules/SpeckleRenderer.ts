@@ -39,6 +39,7 @@ import {
   CanonicalView,
   DefaultLightConfiguration,
   InlineView,
+  PolarView,
   SelectionEvent,
   SpeckleView,
   SunLightConfiguration,
@@ -595,19 +596,19 @@ export default class SpeckleRenderer {
   }
 
   private isSpeckleView(
-    view: CanonicalView | SpeckleView | InlineView
+    view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is SpeckleView {
     return (view as SpeckleView).name !== undefined
   }
 
   private isCanonicalView(
-    view: CanonicalView | SpeckleView | InlineView
+    view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is CanonicalView {
     return typeof (view as CanonicalView) === 'string'
   }
 
   private isInlineView(
-    view: CanonicalView | SpeckleView | InlineView
+    view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is InlineView {
     return (
       (view as InlineView).position !== undefined &&
@@ -615,8 +616,17 @@ export default class SpeckleRenderer {
     )
   }
 
+  private isPolarView(
+    view: CanonicalView | SpeckleView | InlineView | PolarView
+  ): view is PolarView {
+    return (
+      (view as PolarView).azimuth !== undefined &&
+      (view as PolarView).polar !== undefined
+    )
+  }
+
   public setView(
-    view: CanonicalView | SpeckleView | InlineView,
+    view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition = true
   ): void {
     if (this.isSpeckleView(view)) {
@@ -627,6 +637,9 @@ export default class SpeckleRenderer {
     }
     if (this.isInlineView(view)) {
       this.setViewInline(view, transition)
+    }
+    if (this.isPolarView(view)) {
+      this.setViewPolar(view, transition)
     }
   }
 
@@ -725,6 +738,10 @@ export default class SpeckleRenderer {
       view.target.z,
       transition
     )
+  }
+
+  private setViewPolar(view: PolarView, transition = true) {
+    this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
   }
 
   /** DEBUG */

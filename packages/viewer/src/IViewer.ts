@@ -105,7 +105,13 @@ export type SpeckleView = {
 export type InlineView = {
   position: Vector3
   target: Vector3
-  zoom: number
+}
+
+export type PolarView = {
+  azimuth: number
+  polar: number
+  radius?: number
+  origin?: Vector3
 }
 
 /**
@@ -130,7 +136,10 @@ export interface IViewer {
   setLightConfiguration(config: LightConfiguration): void
 
   getViews(): SpeckleView[]
-  setView(view: CanonicalView | SpeckleView | InlineView, transition?: boolean)
+  setView(
+    view: CanonicalView | SpeckleView | InlineView | PolarView,
+    transition?: boolean
+  )
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>

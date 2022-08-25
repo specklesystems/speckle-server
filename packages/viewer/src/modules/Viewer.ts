@@ -14,6 +14,7 @@ import {
   DefaultViewerParams,
   InlineView,
   IViewer,
+  PolarView,
   SpeckleView,
   SunLightConfiguration,
   ViewerEvent,
@@ -310,10 +311,11 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public setView(
-    view: CanonicalView | SpeckleView | InlineView,
+    view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition = true
   ): void {
     this.speckleRenderer.setView(view, transition)
+    this.needsRender = true
   }
 
   public screenshot(): Promise<string> {
