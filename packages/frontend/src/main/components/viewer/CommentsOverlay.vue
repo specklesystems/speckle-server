@@ -516,14 +516,17 @@ export default {
       if (camToSet[6] === 1) {
         this.viewer.toggleCameraProjection()
       }
-      //@Dim: This needs to use the API.
-      // this.viewer.interactions.setLookAt(
-      //   { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
-      //   { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
-      // )
-      if (camToSet[6] === 1) {
-        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
-      }
+
+      this.viewer.setView({
+        position: new THREE.Vector3(camToSet[0], camToSet[1], camToSet[2]),
+        target: new THREE.Vector3(camToSet[3], camToSet[4], camToSet[5])
+      })
+      // TODO: If it's an isometric cam.
+      // NOTE: currently not supported as parallel cam is disabled due to
+      // comment bubbles projection complications.
+      // if (camToSet[6] === 1) {
+      //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+      // }
       if (comment.data.filters) {
         setFilterDirectly({
           filter: comment.data.filters

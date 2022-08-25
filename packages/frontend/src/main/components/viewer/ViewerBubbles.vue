@@ -254,14 +254,15 @@ export default {
       if (camToSet[6] === 1) {
         this.viewer.toggleCameraProjection()
       }
-      //@Dim: This needs to use the API
-      // this.viewer.interactions.setLookAt(
-      //   { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
-      //   { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
-      // )
-      if (camToSet[6] === 1) {
-        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
-      }
+
+      this.viewer.setView({
+        position: new THREE.Vector3(camToSet[0], camToSet[1], camToSet[2]),
+        target: new THREE.Vector3(camToSet[3], camToSet[4], camToSet[5])
+      })
+      // NOTE: disabled as parallel projection cam is not enabled anymore, see other comments
+      // if (camToSet[6] === 1) {
+      //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+      // }
 
       if (user.filter) setFilterDirectly({ filter: user.filter })
       else resetFilter()
@@ -468,6 +469,7 @@ export default {
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
       //@Dim: This shouldn't be needed anymore, right?
+      // TODO: user filtering manager to overlay objects
       // this.viewer.interactions.overlayObjects(selectedObjects)
     }
   }

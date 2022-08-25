@@ -405,7 +405,6 @@ export default {
           sectionBox: this.viewer.sectionBox.getCurrentBox(),
           selection: null // TODO for later, lazy now
         },
-        //@Dim: Changed this to use the API
         screenshot: this.viewer.screenshot()
       }
       if (this.$route.query.overlay) {
@@ -446,7 +445,6 @@ export default {
       this.visible = false
       this.commentValue = { doc: null, attachments: [] }
       setIsAddingComment(false)
-      //@Dim: Changed this to use the API
       this.viewer.resetSelection()
     },
     sendStatusUpdate() {

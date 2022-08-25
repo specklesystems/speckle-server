@@ -395,6 +395,7 @@ export class FilteringManager {
     }
 
     this.Renderer.endFilter()
+    this.Renderer.viewer.needsRender = true
     return returnState
   }
 

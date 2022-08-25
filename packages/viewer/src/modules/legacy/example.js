@@ -52,6 +52,7 @@ v.on('section-box', (status) => {
 })
 
 window.viewerScreenshot = function () {
+  //@Alex: we can get rid of the whole example.js/html stuff (sandbox is the replacement)
   //@Dim: Changed this to use the API
   let data = v.screenshot() // transparent png.
 

@@ -134,12 +134,14 @@ export default class SectionBox {
       if (val) {
         this.dragging = val
         //@Dim: Not sure what this needs to do in the new viewer
+        //@Alex: this prevents(?) involuntary selection happening on mobile
         // this.viewer.interactions.preventSelection = val
         this.viewer.cameraHandler.enabled = !val
       } else {
         setTimeout(() => {
           this.dragging = val
           //@Dim: Not sure what this needs to do in the new viewer
+          //@Alex: this prevents(?) involuntary selection happening on mobile
           // this.viewer.interactions.preventSelection = val
           this.viewer.cameraHandler.enabled = !val
         }, 100)
@@ -353,6 +355,8 @@ export default class SectionBox {
 
     if (targetBox) box = targetBox
     else {
+      // @Alex: part of the old behaviour: if a selected object is present, we zoom to it
+      // if no selection is present, we zoom to visible scene. TBD re API, etc.
       /* //@Dim: Not sure what this needs to do in the new viewer
       if (this.viewer.interactions.selectedObjects.children.length !== 0) {
         box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)

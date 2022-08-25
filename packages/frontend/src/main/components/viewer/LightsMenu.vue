@@ -1,10 +1,5 @@
 <template>
   <v-card>
-    <!-- <v-toolbar dark flat>
-      <v-toolbar-title>Lighting Settings</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-btn icon @click="$emit('close')"><v-icon>mdi-close</v-icon></v-btn>
-    </v-toolbar> -->
     <v-card-text>
       <div class="d-flex align-center">
         <span class="mr-5">Sun shadows</span>

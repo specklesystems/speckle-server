@@ -26,13 +26,14 @@ async function pageFunction(objectUrl) {
     // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
     await waitForAnimation(1000)
   }
-  //@Dim: This needs to use the API
-  // v.interactions.zoomExtents(0.95, false)
+  v.zoomExtents(0.95, false)
   await waitForAnimation(100)
 
   // full 360
   for (let i = 0; i < 24; i++) {
     //@Dim: This needs to use the API
+    //@Alex: we really need the old behaviour here - it rotates the camera around the scene in increments of
+    //an angle and we stich those screenshots for the 3d previews...
     // v.interactions.rotateCamera(undefined, undefined, false)
     await waitForAnimation()
     //@Dim: Changed this to use the API

@@ -17,8 +17,8 @@
     @click.stop="
       prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null
     "
-    @mouseenter="toggleHighlight(true)"
-    @mouseleave="toggleHighlight(false)"
+    @mouseenter.stop="toggleHighlight(true)"
+    @mouseleave.stop="toggleHighlight(false)"
   >
     <v-col cols="1" class="text-center">
       <v-icon
