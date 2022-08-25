@@ -22,7 +22,7 @@ repos:
       - id: circleci-config-validate
 
   - repo: https://github.com/specklesystems/pre-commit
-    rev: '0.1.0'
+    rev: '0.2.0'
     hooks:
       - id: ggshield-not-ci
 
