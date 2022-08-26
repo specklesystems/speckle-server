@@ -121,7 +121,7 @@ export interface IViewer {
   on(eventType: ViewerEvent, handler: (arg) => void)
 
   setSectionBox(
-    box: {
+    box?: {
       min: { x: number; y: number; z: number }
       max: { x: number; y: number; z: number }
     },
