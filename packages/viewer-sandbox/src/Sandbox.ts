@@ -181,7 +181,7 @@ export default class Sandbox {
     })
     zoomExtents.on('click', () => {
       this.viewer.zoom(
-        this.selectionList.map((val) => val.guid) as string[],
+        this.selectionList.map((val) => val.userData.id) as string[],
         undefined,
         true
       )

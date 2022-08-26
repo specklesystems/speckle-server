@@ -51,7 +51,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
   if (!selectionInfo.multiple) multiSelectList.length = 0
 
-  let guids = multiSelectList.map((val) => val.guid)
+  const guids = multiSelectList.map((val) => val.guid)
   if (
     (selectionInfo.multiple && !guids.includes(selectionInfo.guid)) ||
     multiSelectList.length === 0
@@ -59,7 +59,6 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
     multiSelectList.push(selectionInfo)
   }
 
-  guids = multiSelectList.map((val) => val.guid)
   const ids = multiSelectList.map((val) => val.userData.id)
 
   await viewer.selectObjects(ids as string[])

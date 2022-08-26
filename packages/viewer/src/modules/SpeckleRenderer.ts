@@ -34,7 +34,7 @@ import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
-import { WorldTree } from './tree/WorldTree'
+import { TreeNode, WorldTree } from './tree/WorldTree'
 import {
   CanonicalView,
   DefaultLightConfiguration,
@@ -535,16 +535,24 @@ export default class SpeckleRenderer {
       return
     }
     const box = new Box3()
-    objectIds.forEach((value: string) => {
-      const rvs: NodeRenderView[] =
-        WorldTree.getRenderTree().getRenderViewsForNodeId(value)
-      for (let k = 0; k < rvs.length; k++) {
-        let rvBox = null
-        if ((rvBox = rvs[k].aabb) !== null) {
-          box.union(rvBox)
+    const rvs: NodeRenderView[] = []
+    if (objectIds.length > 0) {
+      WorldTree.getInstance().walk((node: TreeNode) => {
+        if (!node.model.atomic) return true
+        if (!node.model.raw) return true
+        if (objectIds.indexOf(node.model.raw.id) !== -1) {
+          rvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(node, node))
         }
+        return true
+      })
+    }
+
+    for (let k = 0; k < rvs.length; k++) {
+      let rvBox = null
+      if ((rvBox = rvs[k].aabb) !== null) {
+        box.union(rvBox)
       }
-    })
+    }
     if (box.getSize(new Vector3()).length() === 0) {
       console.error(`'zoom' to object ids resulted in empty box`)
     }
