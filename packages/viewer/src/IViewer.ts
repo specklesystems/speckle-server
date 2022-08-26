@@ -115,9 +115,6 @@ export type PolarView = {
   origin?: Vector3
 }
 
-/**
- * Carried over from the old Viewer. To be extended/changed
- */
 export interface IViewer {
   init(): Promise<void>
   resize(): void

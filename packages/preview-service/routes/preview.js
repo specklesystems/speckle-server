@@ -33,7 +33,7 @@ async function pageFunction(objectUrl) {
   for (let i = 0; i < 24; i++) {
     v.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
     await waitForAnimation()
-    ret.scr[i + ''] = v.screenshot()
+    ret.scr[i + ''] = await v.screenshot()
   }
 
   /*
