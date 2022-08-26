@@ -138,16 +138,17 @@ export default class _SelectionHelper extends EventEmitter {
     // const targetObjects = this.subset
     //   ? this.subset
     //   : this.viewer.sceneManager.filteredObjects
-    // let intersectedObjects = this.raycaster.intersectObjects(targetObjects)
+    let intersectedObjects = [] // = this.raycaster.intersectObjects(targetObjects)
     // // filters objects in section box mode
-    // if (this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion) {
-    //   const box = new THREE.Box3().setFromObject(this.viewer.sectionBox.cube)
-    //   intersectedObjects = intersectedObjects.filter((obj) => {
-    //     return box.containsPoint(obj.point)
-    //   })
-    // }
-    // return intersectedObjects
-    return []
+    if (this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion) {
+      // const box = new THREE.Box3().setFromObject(this.viewer.sectionBox.cube)
+      intersectedObjects = this.raycaster.intersectObject(this.viewer.sectionBox.cube)
+      // console.log(ret)
+      // intersectedObjects = intersectedObjects.filter((obj) => {
+      //   return box.containsPoint(obj.point)
+      // })
+    }
+    return intersectedObjects
   }
 
   _getNormalisedClickPosition(e) {

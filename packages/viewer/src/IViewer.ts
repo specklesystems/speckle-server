@@ -122,8 +122,16 @@ export interface IViewer {
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
-  toggleSectionBox(): void
 
+  setSectionBox(
+    box: {
+      min: { x: number; y: number; z: number }
+      max: { x: number; y: number; z: number }
+    },
+    offset?: number
+  )
+  setSectionBoxFromObjects(objectIds: string[], offset?: number)
+  toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
 

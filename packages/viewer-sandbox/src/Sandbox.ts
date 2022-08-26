@@ -166,6 +166,9 @@ export default class Sandbox {
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
+      this.viewer.setSectionBoxFromObjects(
+        this.selectionList.map((val) => val.userData.id) as string[]
+      )
       this.viewer.toggleSectionBox()
     })
 

@@ -47,7 +47,7 @@ import {
 } from '../IViewer'
 
 export default class SpeckleRenderer {
-  private readonly SHOW_HELPERS = true
+  private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
   public scene: Scene
   private rootGroup: Group
@@ -529,12 +529,8 @@ export default class SpeckleRenderer {
     }
   }
 
-  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
-    if (!objectIds) {
-      this.zoomExtents(fit, transition)
-      return
-    }
-    const box = new Box3()
+  public boxFromObjects(objectIds: string[]) {
+    let box = new Box3()
     const rvs: NodeRenderView[] = []
     if (objectIds.length > 0) {
       WorldTree.getInstance().walk((node: TreeNode) => {
@@ -545,8 +541,7 @@ export default class SpeckleRenderer {
         }
         return true
       })
-    }
-
+    } else box = this.sceneBox
     for (let k = 0; k < rvs.length; k++) {
       let rvBox = null
       if ((rvBox = rvs[k].aabb) !== null) {
@@ -554,9 +549,16 @@ export default class SpeckleRenderer {
       }
     }
     if (box.getSize(new Vector3()).length() === 0) {
-      console.error(`'zoom' to object ids resulted in empty box`)
+      console.error(`object selection resulted in empty box`)
     }
-    this.zoomToBox(box, fit, transition)
+    return box
+  }
+  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
+    if (!objectIds) {
+      this.zoomExtents(fit, transition)
+      return
+    }
+    this.zoomToBox(this.boxFromObjects(objectIds), fit, transition)
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */

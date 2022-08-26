@@ -111,6 +111,25 @@ export class Viewer extends EventEmitter implements IViewer {
       this.zoom()
     })
   }
+  public setSectionBox(
+    box: {
+      min: {
+        x: number
+        y: number
+        z: number
+      }
+      max: { x: number; y: number; z: number }
+    },
+    offset?: number
+  ) {
+    if (!box) {
+      box = this.speckleRenderer.sceneBox
+    }
+    this.sectionBox.setBox(box, offset)
+  }
+  public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
+    this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
+  }
 
   public resize() {
     this.speckleRenderer.renderer.setSize(

@@ -360,16 +360,15 @@ export default class SectionBox {
 
     if (targetBox) box = targetBox // targetbox = { min: {x, y, z}, max: {x, y, z} }
     else {
-      // @Alex: part of the old behaviour: if a selected object is present, we set the box to it
-      // if no selection is present, we set the box to whole scene. TBD re API, etc.
-      /* //@Dim: Not sure what this needs to do in the new viewer
-      if (this.viewer.interactions.selectedObjects.children.length !== 0) {
-        box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
-      } else*/ if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
-        box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
-      } else {
-        box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
-      }
+      // // @Alex: part of the old behaviour: if a selected object is present, we set the box to it
+      // // if no selection is present, we set the box to whole scene. TBD re API, etc.
+      // /* //@Dim: Not sure what this needs to do in the new viewer
+      // if (this.viewer.interactions.selectedObjects.children.length !== 0) {
+      //   box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
+      // } else*/ if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
+      //   box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
+      // } else {
+      box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
     }
 
     if (box.min.x === Infinity) {
@@ -426,7 +425,8 @@ export default class SectionBox {
   }
 
   toggle() {
-    this.setBox()
+    // This will not get set internally anymore
+    // this.setBox()
     this.display.visible = !this.display.visible
     this.viewer.speckleRenderer.renderer.localClippingEnabled = this.display.visible
     this.viewer.needsRender = true
