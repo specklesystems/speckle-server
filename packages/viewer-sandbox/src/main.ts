@@ -47,6 +47,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   if (!selectionInfo) {
     multiSelectList.length = 0
     await viewer.resetSelection()
+    viewer.setSectionBox(null)
     return
   }
   if (!selectionInfo.multiple) multiSelectList.length = 0
