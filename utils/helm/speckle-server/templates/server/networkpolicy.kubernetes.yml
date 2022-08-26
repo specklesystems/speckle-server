@@ -26,10 +26,7 @@ spec:
 {{- if .Values.server.monitoring.apollo.enabled }}
     - to:
       - ipBlock:
-          cidr: 0.0.0.0/0
-          # except to kubernetes pods or services
-          except:
-            - 10.0.0.0/8
+          cidr:  34.120.83.176/32
       ports:
         - port: 443
 {{- end }}
