@@ -51,7 +51,7 @@
                 :disabled="stream.role !== 'stream:owner'"
               />
               <h2>Privacy</h2>
-              <StreamVisibilityToggle
+              <stream-visibility-toggle
                 :disabled="isEditDisabled"
                 :is-public.sync="isPublic"
                 :is-discoverable.sync="isDiscoverable"

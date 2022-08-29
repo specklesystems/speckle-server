@@ -1,3 +1,4 @@
+import { fullStreamAccessRequestFieldsFragment } from '@/graphql/fragments/accessRequests'
 import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import {
   limitedUserFieldsFragment,
@@ -70,10 +71,14 @@ export const streamWithCollaboratorsQuery = gql`
           ...LimitedUserFields
         }
       }
+      pendingAccessRequests {
+        ...FullStreamAccessRequestFields
+      }
     }
   }
   ${limitedUserFieldsFragment}
   ${streamCollaboratorFieldsFragment}
+  ${fullStreamAccessRequestFieldsFragment}
 `
 
 export const streamWithActivityQuery = gql`

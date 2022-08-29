@@ -6,7 +6,7 @@ import { iterateContentNodes } from '@/modules/core/services/richTextEditorServi
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { difference, flatten } from 'lodash'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivityService'
+import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivity'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()

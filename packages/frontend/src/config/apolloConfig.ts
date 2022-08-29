@@ -110,6 +110,9 @@ function createCache(): InMemoryCache {
             },
             pendingCollaborators: {
               merge: incomingOverwritesExistingMergeFunction
+            },
+            pendingAccessRequests: {
+              merge: incomingOverwritesExistingMergeFunction
             }
           }
         },

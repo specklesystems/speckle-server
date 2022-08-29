@@ -451,6 +451,10 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean'];
+  /** Request access to a specific stream */
+  streamAccessRequestCreate: StreamAccessRequest;
+  /** Accept or decline a stream access request. Must be a stream owner to invoke this. */
+  streamAccessRequestUse: Scalars['Boolean'];
   /** Creates a new stream. */
   streamCreate?: Maybe<Scalars['String']>;
   /** Deletes an existing stream. */
@@ -615,6 +619,18 @@ export type MutationServerInviteBatchCreateArgs = {
 
 export type MutationServerInviteCreateArgs = {
   input: ServerInviteCreateInput;
+};
+
+
+export type MutationStreamAccessRequestCreateArgs = {
+  streamId: Scalars['String'];
+};
+
+
+export type MutationStreamAccessRequestUseArgs = {
+  accept: Scalars['Boolean'];
+  requestId: Scalars['String'];
+  role?: StreamRole;
 };
 
 
@@ -844,6 +860,8 @@ export type Query = {
    * to see it.
    */
   stream?: Maybe<Stream>;
+  /** Get authed user's stream access request */
+  streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
    * Look for an invitation to a stream, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -910,6 +928,11 @@ export type QueryDiscoverableStreamsArgs = {
 
 export type QueryStreamArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryStreamAccessRequestArgs = {
+  streamId: Scalars['String'];
 };
 
 
@@ -1132,6 +1155,8 @@ export type Stream = {
   isPublic: Scalars['Boolean'];
   name: Scalars['String'];
   object?: Maybe<Object>;
+  /** Pending stream access requests */
+  pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
   pendingCollaborators?: Maybe<Array<PendingStreamCollaborator>>;
   /** Your role for this stream. `null` if request is not authenticated, or the stream is not explicitly shared with you. */
@@ -1197,6 +1222,18 @@ export type StreamObjectArgs = {
 
 export type StreamWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
+};
+
+/** Created when a user requests to become a contributor on a stream */
+export type StreamAccessRequest = {
+  __typename?: 'StreamAccessRequest';
+  createdAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  requester: LimitedUser;
+  requesterId: Scalars['String'];
+  /** Can only be selected if authed user has proper access */
+  stream: Stream;
+  streamId: Scalars['String'];
 };
 
 export type StreamCollaborator = {
@@ -1553,6 +1590,38 @@ export type WebhookUpdateInput = {
   triggers?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
   url?: InputMaybe<Scalars['String']>;
 };
+
+export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } };
+
+export type CreateStreamAccessRequestMutationVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type CreateStreamAccessRequestMutation = { __typename?: 'Mutation', streamAccessRequestCreate: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } };
+
+export type GetStreamAccessRequestQueryVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type GetStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null };
+
+export type GetPendingStreamAccessRequestsQueryVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type GetPendingStreamAccessRequestsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, pendingAccessRequests?: Array<{ __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, stream: { __typename?: 'Stream', id: string, name: string }, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } }> | null } | null };
+
+export type UseStreamAccessRequestMutationVariables = Exact<{
+  requestId: Scalars['String'];
+  accept: Scalars['Boolean'];
+  role?: StreamRole;
+}>;
+
+
+export type UseStreamAccessRequestMutation = { __typename?: 'Mutation', streamAccessRequestUse: boolean };
 
 export type CommentWithRepliesFragment = { __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null };
 
