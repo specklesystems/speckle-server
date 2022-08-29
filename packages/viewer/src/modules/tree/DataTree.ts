@@ -16,7 +16,7 @@ class DataTreeInternal implements DataTree {
 
   public constructor() {
     this.tree = new TreeModel()
-    this.root = this.tree.parse({ id: 'MOTHERSHIP' })
+    this.root = this.tree.parse({ guid: 'MOTHERSHIP' })
   }
   public findAll(predicate: ObjectPredicate): SpeckleObject[] {
     return this.root
@@ -53,7 +53,7 @@ export class DataTreeBuilder {
       }
 
       parent = dataTree.root.first((localNode) => {
-        return localNode.model.id === node.parent.model.id
+        return localNode.model.guid === node.parent.model.id
       })
 
       const _node: TreeNode = WorldTree.getInstance().parse({

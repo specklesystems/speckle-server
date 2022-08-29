@@ -180,17 +180,15 @@ export class Viewer extends EventEmitter implements IViewer {
     return PropertyManager.getProperties(resourceURL)
   }
 
-  public selectObjects(objectIds: string[]): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.selectObjects(objectIds)
-      resolve()
+  public selectObjects(objectIds: string[]): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.selectObjects(objectIds))
     })
   }
 
-  public resetSelection(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.resetSelection()
-      resolve()
+  public resetSelection(): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.resetSelection())
     })
   }
 
@@ -242,17 +240,15 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public highlightObjects(objectIds: string[]): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.highlightObjects(objectIds)
-      resolve()
+  public highlightObjects(objectIds: string[]): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.highlightObjects(objectIds))
     })
   }
 
-  public resetHighlight(): Promise<void> {
-    return new Promise<void>((resolve) => {
-      this.filteringManager.resetHighlight()
-      resolve()
+  public resetHighlight(): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.resetHighlight())
     })
   }
 

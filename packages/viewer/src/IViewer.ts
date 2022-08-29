@@ -5,8 +5,6 @@ import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { DataTree } from './modules/tree/DataTree'
 
 export interface ViewerParams {
-  postprocessing: boolean
-  reflections: boolean
   showStats: boolean
   environmentSrc: Asset | string
 }
@@ -33,8 +31,6 @@ export interface Asset {
  * a .png will work just fine.
  */
 export const DefaultViewerParams: ViewerParams = {
-  postprocessing: false,
-  reflections: true,
   showStats: false,
   environmentSrc: {
     src: sampleHdri,
@@ -176,10 +172,10 @@ export interface IViewer {
     includeDescendants?
   ): Promise<FilteringState>
 
-  selectObjects(objectIds: string[]): Promise<void>
-  resetSelection(): Promise<void>
-  highlightObjects(objectIds: string[]): Promise<void>
-  resetHighlight(): Promise<void>
+  selectObjects(objectIds: string[]): Promise<FilteringState>
+  resetSelection(): Promise<FilteringState>
+  highlightObjects(objectIds: string[]): Promise<FilteringState>
+  resetHighlight(): Promise<FilteringState>
 
   setColorFilter(prop: PropertyInfo): Promise<FilteringState>
   removeColorFilter(): Promise<FilteringState>

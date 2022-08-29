@@ -61,6 +61,11 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
+      // const dataTree = this.viewer.getDataTree()
+      // const objects = dataTree.findAll((guid, obj) => {
+      //   return obj.speckle_type === 'Objects.Geometry.Mesh'
+      // })
+      // console.log(objects)
     })
     viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
       this.removeViewControls()
