@@ -205,7 +205,7 @@ const digestMostActiveStream: TopicDigesterFunction = (activitySummary, serverIn
   const receives = mostActive.activity.filter(
     (a) => a.actionType === ActionTypes.Commit.Receive
   )
-  const numReceiveUsers = new Set(receives.map((a) => a.userId)).values.length
+  const numReceiveUsers = new Set(receives.map((a) => a.userId)).size
 
   const heading = `Your most active stream was ${mostActive.stream.name}!`
 
@@ -283,8 +283,8 @@ const digestActiveStreams: TopicDigesterFunction = (activitySummary, serverInfo)
       text += ` had ${commitCount} new commits`
     }
     if (receiveCount) {
-      html += `which were received ${receiveCount} times.`
-      text += `which were received ${receiveCount} times.`
+      html += ` which were received ${receiveCount} times`
+      text += ` which were received ${receiveCount} times`
     }
     if (commentCount) {
       html += `.<br/>It also got ${commentCount} <a href="${streamUrl}/comments">comments</a>`
@@ -300,21 +300,47 @@ const digestActiveStreams: TopicDigesterFunction = (activitySummary, serverInfo)
   }
 }
 
-const commitReceiveOverview: TopicDigesterFunction = (activitySummary) => {
-  if (activitySummary.streamActivities.length < 2) return null
-  const streamCount = activitySummary.streamActivities.length
-  const receiveActions = flattenActivities(activitySummary.streamActivities).filter(
+const closingOverview: TopicDigesterFunction = (activitySummary) => {
+  const activities = flattenActivities(activitySummary.streamActivities)
+  const commitCount = activities.filter(
+    (a) => a.actionType === ActionTypes.Commit.Create
+  ).length
+  const commentCount = activities.filter(
+    (a) => a.actionType in [ActionTypes.Comment.Create, ActionTypes.Comment.Reply]
+  ).length
+  const receiveCount = activities.filter(
     (a) => a.actionType === ActionTypes.Commit.Receive
-  )
-  if (receiveActions.length < 2) return null
+  ).length
+
+  const factCount = [commitCount, commentCount, receiveCount].filter((f) => f > 0)
+  if (factCount.length < 2) return null
+
+  const fact = 'Before you leave, a quick overview:'
+
+  let text = `${fact}\n\n`
+  let html = `<p>${fact}<ul>`
+
+  if (commitCount) {
+    const factText = `Your streams received a total of ${commitCount} new commits.`
+    text += `- ${factText}\n`
+    html += `<li>${factText}</li>`
+  }
+
+  if (commentCount) {
+    const factText = `${commentCount} comments were created.`
+    text += `- ${factText}\n`
+    html += `<li>${factText}</li>`
+  }
+
+  if (receiveCount) {
+    const factText = `Commits were received ${receiveCount} times.`
+    text += `- ${factText}\n`
+    html += `<li>${factText}</li>`
+  }
   return {
-    // TODO: the accurate stream count would be determined by
-    // counting the distinct streamId-s of receive actions.
-    text: `Your commits across ${streamCount} steams have 
-    been received ${receiveActions.length} times.`,
-    html: `Your commits across ${streamCount} steams have 
-    been received ${receiveActions.length} times.`,
-    sources: receiveActions
+    text,
+    html,
+    sources: []
   }
 }
 
@@ -342,10 +368,6 @@ const mostActiveComment: TopicDigesterFunction = (activitySummary, serverInfo) =
   // the stream was deleted since
   if (!streamActivity || !streamActivity.stream) return null
 
-  // const mentionActions = activities.filter(
-  //   (a) => a.actionType === ActionTypes.Comment.Archive
-  // )
-
   const heading = 'Most active comment'
 
   const fact = `The most active comment was on ${streamActivity.stream.name} stream. 
@@ -368,6 +390,30 @@ const mostActiveComment: TopicDigesterFunction = (activitySummary, serverInfo) =
   }
 }
 
+const commentMentionSummary: TopicDigesterFunction = (activitySummary) => {
+  const activities = flattenActivities(activitySummary.streamActivities)
+  const mentionActions = activities.filter(
+    (a) => a.actionType === ActionTypes.Comment.Mention
+  )
+  const mentionFact = mentionActions.length
+    ? `You have been mentioned in ${mentionActions.length} comments. Make sure to follow up on them.`
+    : null
+  if (!mentionFact) return null
+  return {
+    text: mentionFact,
+    html: `<p>${mentionFact}</p>`,
+    sources: mentionActions
+  }
+}
+
+const farewell = () => {
+  return {
+    text: "That's it for this week, see you next time.\nWarm regards from the Speckle team.",
+    html: "<p>That's it for this week, see you next time.<br/>Warm regards from the Speckle team.</p>",
+    sources: []
+  }
+}
+
 // TODO send them to tutorials digest, or a feedback form
 
 //TODO scope inactive user email ping
@@ -384,13 +430,16 @@ const digestSummaryData = (
     digestMostActiveStream,
     digestActiveStreams,
     mostActiveComment,
-    commitReceiveOverview
+    commentMentionSummary,
+    closingOverview
   ]
 
   const maybeTopics = topicDigesters.map((dig) => dig(activitySummary, serverInfo))
   const topics = maybeTopics.filter((topic): topic is DigestTopic => topic !== null)
   // if there are no topics, do not return a digest
-  return topics.length ? { user: activitySummary.user, topics } : null
+  if (!topics.length) return null
+  topics.push(farewell())
+  return { user: activitySummary.user, topics }
 }
 
 type ServerInfo = {
@@ -419,7 +468,8 @@ const renderEmailBody = async (
 ): Promise<EmailBody> => {
   let text = `
 Hello ${digest.user.name}!\n
-Here's a summary of what happened on the Speckle ${serverInfo.name}\n\n
+Here's a summary of what happened in the past week
+ on the Speckle server: ${serverInfo.name}\n\n
 `
   // digest.topics.map((t) => (bodyStart += `${t.html}<br />`))
   digest.topics.map((t) => (text += `${t.text} \n\n`))
@@ -427,7 +477,8 @@ Here's a summary of what happened on the Speckle ${serverInfo.name}\n\n
   let mjml = `
 <mj-text>
 <h3>Hello ${digest.user.name}!</h3>
-<p>Here's a summary of what happened on the Speckle ${serverInfo.name} ✨ </p>
+<p>Here's a summary of what happened in the past week
+ on the Speckle server: ${serverInfo.name} ✨ </p>
 </mj-text>
 `
   const topicPath = path.resolve(packageRoot, 'assets/activitystream/topic.ejs')
@@ -457,7 +508,7 @@ const renderEmailShell = async (
     'assets/activitystream/digestEmail.mjml.ejs'
   )
   const cta = {
-    title: 'Check activities.',
+    title: 'Check activities',
     url: serverInfo.canonicalUrl
   }
   const params = {
