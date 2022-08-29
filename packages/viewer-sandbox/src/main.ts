@@ -47,7 +47,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   if (!selectionInfo) {
     multiSelectList.length = 0
     await viewer.resetSelection()
-    viewer.setSectionBox(null)
+    viewer.setSectionBox()
     return
   }
   if (!selectionInfo.multiple) multiSelectList.length = 0
@@ -63,6 +63,15 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   const ids = multiSelectList.map((val) => val.userData.id)
 
   await viewer.selectObjects(ids as string[])
+})
+
+viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent) => {
+  if (!selectionInfo) {
+    viewer.zoom()
+    return
+  }
+
+  viewer.zoom([selectionInfo.userData.id as string])
 })
 
 sandbox.makeGenericUI()

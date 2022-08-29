@@ -112,7 +112,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
   public setSectionBox(
-    box: {
+    box?: {
       min: {
         x: number
         y: number

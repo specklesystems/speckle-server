@@ -12,7 +12,7 @@ import {
   FilteringState
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray, update } from 'lodash'
+import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -249,6 +249,16 @@ export async function handleViewerSelection(selectionInfo: SelectionEvent) {
     state.selectedObjects.map((o) => o.id) as string[]
   )
   updateState(state)
+}
+
+export async function handleViewerDoubleClick(selectionInfo: SelectionEvent) {
+  // @Dim: This is the simplest implementation I could come up with. Feel free to change it
+  if (!selectionInfo) {
+    await getInitializedViewer().zoom()
+    return
+  }
+
+  await getInitializedViewer().zoom([selectionInfo.userData.id as string])
 }
 
 export async function clearSelectionDisplay() {

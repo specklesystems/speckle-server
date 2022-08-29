@@ -499,33 +499,37 @@ export default class SpeckleRenderer {
     )
     let rv = null
     if (!result) {
-      if (this.viewer.sectionBox.display.visible) {
-        this.zoomToBox(this.viewer.sectionBox.getCurrentBox(), 1.2, true)
-      } else {
-        this.zoom()
+      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
+      return
+    }
+    let multiSelect = false
+    if (e.multiSelect) multiSelect = true
+
+    rv = this.batcher.getRenderView(
+      result.object.uuid,
+      result.faceIndex !== undefined ? result.faceIndex : result.index
+    )
+    if (rv) {
+      const hitId = rv.renderData.id
+      const hitNode = WorldTree.getInstance().findId(hitId)
+
+      let parentNode = hitNode
+      while (!parentNode.model.atomic && parentNode.parent) {
+        parentNode = parentNode.parent
       }
+
+      const selectionInfo = {
+        guid: parentNode.model.id,
+        userData: parentNode.model.raw,
+        location: result.point,
+        selectionCenter: result.point, // Ideally we'd get the selection center here
+        multiple: multiSelect
+      } as SelectionEvent
+
+      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)
     } else {
-      rv = this.batcher.getRenderView(
-        result.object.uuid,
-        result.faceIndex !== undefined ? result.faceIndex : result.index
-      )
-      if (rv) {
-        const transformedBox = new Box3().copy(rv.aabb)
-        transformedBox.applyMatrix4(result.object.matrixWorld)
-        this.zoomToBox(transformedBox, 1.2, true)
-        this.viewer.needsRender = true
-        this.viewer.emit(
-          ViewerEvent.ObjectDoubleClicked,
-          result ? rv.renderData.id : null,
-          result ? result.point : null
-        )
-      } else {
-        if (this.viewer.sectionBox.display.visible) {
-          this.zoomToBox(this.viewer.sectionBox.cube, 1.2, true)
-        } else {
-          this.zoom()
-        }
-      }
+      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
+      return
     }
   }
 

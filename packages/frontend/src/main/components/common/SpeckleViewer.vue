@@ -19,7 +19,8 @@ import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import {
   useCommitObjectViewerParams,
   handleViewerSelection,
-  resetSelection
+  resetSelection,
+  handleViewerDoubleClick
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { ViewerEvent } from '@speckle/viewer'
 
@@ -104,6 +105,10 @@ export default {
 
       this.viewer.on(ViewerEvent.ObjectClicked, (selectionInfo) => {
         handleViewerSelection(selectionInfo)
+      })
+
+      this.viewer.on(ViewerEvent.ObjectDoubleClicked, (selectionInfo) => {
+        handleViewerDoubleClick(selectionInfo)
       })
 
       window.addEventListener('keydown', (e) => {
