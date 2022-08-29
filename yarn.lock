@@ -11724,6 +11724,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"convict@npm:^6.2.3":
+  version: 6.2.3
+  resolution: "convict@npm:6.2.3"
+  dependencies:
+    lodash.clonedeep: ^4.5.0
+    yargs-parser: ^20.2.7
+  checksum: 69e44ac26405bf4abcc452a95cf5b9f0ef55786cdf19526a83165e2746a93d86187e3705ebf7e7efc8f06e904143acb228ba21604202ec5a937aed0958d49ac7
+  languageName: node
+  linkType: hard
+
 "cookie-parser@npm:~1.4.4":
   version: 1.4.6
   resolution: "cookie-parser@npm:1.4.6"
@@ -24677,6 +24687,7 @@ __metadata:
   dependencies:
     "@types/eslint": ^8.4.1
     commitizen: ^4.2.4
+    convict: ^6.2.3
     cz-conventional-changelog: ^3.3.0
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
@@ -29458,7 +29469,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs-parser@npm:^20.2.2":
+"yargs-parser@npm:^20.2.2, yargs-parser@npm:^20.2.7":
   version: 20.2.9
   resolution: "yargs-parser@npm:20.2.9"
   checksum: 8bb69015f2b0ff9e17b2c8e6bfe224ab463dd00ca211eece72a4cd8a906224d2703fb8a326d36fdd0e68701e201b2a60ed7cf81ce0fd9b3799f9fe7745977ae3

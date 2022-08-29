@@ -24,10 +24,7 @@ const {
   getApolloServerVersion,
   getServerVersion
 } = require('./modules/shared/helpers/envHelper')
-
-if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
-  process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
-}
+const convict = require('convict')
 
 // If running in test env, load .env.test first
 // (appRoot necessary, cause env files aren't loaded through require() calls)
@@ -44,7 +41,14 @@ if (isTestEnv()) {
 
 dotenv.config({ path: `${packageRoot}/.env` })
 
+const config = convict('./config.schema.json')
+
+if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
+  process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
+}
+
 module.exports = {
+  config,
   appRoot,
   packageRoot
 }
