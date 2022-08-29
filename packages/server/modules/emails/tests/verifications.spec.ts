@@ -221,7 +221,7 @@ describe('Email verifications @emails', () => {
             dayjs().subtract(8, 'day').toISOString()
           )
 
-        const url = getEmailVerificationFinalizationRoute('aaabbbccdd')
+        const url = getEmailVerificationFinalizationRoute(requestToken)
 
         const result = await request(app).get(url)
 
