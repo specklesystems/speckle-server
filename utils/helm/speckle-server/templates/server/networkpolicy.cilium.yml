@@ -72,19 +72,20 @@ spec:
 {{- end }}
 {{- if .Values.server.auth.azure_ad.enabled }}
               # azure ad auth
-              - matchName: '*.login.microsoftonline.com'
-              - matchName: '*.aadcdn.msftauth.net'
-              - matchName: '*.logincdn.msftauth.net'
-              - matchName: '*.login.live.com'
-              - matchName: '*.msauth.net'
-              - matchName: '*.aadcdn.microsoftonline-p.com'
-              - matchName: '*.microsoftonline-p.com'
-              - matchName: '*.account.microsoft.com'
-              - matchName: '*.bmx.azure.com'
-              - matchName: '*.subscriptionrp.trafficmanager.net'
-              - matchName: '*.signup.azure.com'
+              - matchPattern: '*.login.microsoftonline.com'
+              - matchPattern: '*.aadcdn.msftauth.net'
+              - matchPattern: '*.logincdn.msftauth.net'
+              - matchPattern: '*.login.live.com'
+              - matchPattern: '*.msauth.net'
+              - matchPattern: '*.aadcdn.microsoftonline-p.com'
+              - matchPattern: '*.microsoftonline-p.com'
+              - matchPattern: '*.account.microsoft.com'
+              - matchPattern: '*.bmx.azure.com'
+              - matchPattern: '*.subscriptionrp.trafficmanager.net'
+              - matchPattern: '*.signup.azure.com'
               - matchName: 'login.microsoftonline.com'
               - matchName: 'login.windows.net'
+{{ include "speckle.renderTpl" (dict "value" .Values.server.auth.azure_ad.networkPolicy.domains "context" $ ) | indent 14 }}
 {{- end }}
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
 {{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
@@ -133,22 +134,22 @@ spec:
 {{- if .Values.server.auth.azure_ad.enabled }}
     # azure ad auth
     - toFQDNs:
-        - matchName: '*.login.microsoftonline.com'
-        - matchName: '*.aadcdn.msftauth.net'
-        - matchName: '*.logincdn.msftauth.net'
-        - matchName: '*.login.live.com'
-        - matchName: '*.msauth.net'
-        - matchName: '*.aadcdn.microsoftonline-p.com'
-        - matchName: '*.microsoftonline-p.com'
-        - matchName: '*.account.microsoft.com'
-        - matchName: '*.bmx.azure.com'
-        - matchName: '*.subscriptionrp.trafficmanager.net'
-        - matchName: '*.signup.azure.com'
+        - matchPattern: '*.login.microsoftonline.com'
+        - matchPattern: '*.aadcdn.msftauth.net'
+        - matchPattern: '*.logincdn.msftauth.net'
+        - matchPattern: '*.login.live.com'
+        - matchPattern: '*.msauth.net'
+        - matchPattern: '*.aadcdn.microsoftonline-p.com'
+        - matchPattern: '*.microsoftonline-p.com'
+        - matchPattern: '*.account.microsoft.com'
+        - matchPattern: '*.bmx.azure.com'
+        - matchPattern: '*.subscriptionrp.trafficmanager.net'
+        - matchPattern: '*.signup.azure.com'
         - matchName: 'login.microsoftonline.com'
         - matchName: 'login.windows.net'
+{{ include "speckle.renderTpl" (dict "value" .Values.server.auth.azure_ad.additional_domains "context" $ ) | indent 8 }}
       toPorts:
-        - ports:
-            - port: '443'
+            - port: {{ default 443 .Values.server.auth.azure_ad.port | quote }}
               protocol: TCP
 {{- end }}
     # postgres
