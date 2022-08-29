@@ -18,6 +18,7 @@ const zxcvbn = require('zxcvbn')
 const {
   getAdminUsersListCollection
 } = require('@/modules/core/services/users/adminUsersListService')
+const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 
 module.exports = {
   Query: {
@@ -86,7 +87,9 @@ module.exports = {
       }
 
       try {
-        await validateScopes(context.scopes, 'users:email')
+        // you should only have access to other users email if you have elevated privileges
+        await validateServerRole(context, Roles.Server.Admin)
+        await validateScopes(context.scopes, Scopes.Users.Email)
         return parent.email
       } catch (err) {
         return null
