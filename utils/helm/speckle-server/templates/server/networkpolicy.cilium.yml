@@ -72,6 +72,17 @@ spec:
 {{- end }}
 {{- if .Values.server.auth.azure_ad.enabled }}
               # azure ad auth
+              - matchName: '*.login.microsoftonline.com'
+              - matchName: '*.aadcdn.msftauth.net'
+              - matchName: '*.logincdn.msftauth.net'
+              - matchName: '*.login.live.com'
+              - matchName: '*.msauth.net'
+              - matchName: '*.aadcdn.microsoftonline-p.com'
+              - matchName: '*.microsoftonline-p.com'
+              - matchName: '*.account.microsoft.com'
+              - matchName: '*.bmx.azure.com'
+              - matchName: '*.subscriptionrp.trafficmanager.net'
+              - matchName: '*.signup.azure.com'
               - matchName: 'login.microsoftonline.com'
               - matchName: 'login.windows.net'
 {{- end }}
@@ -122,6 +133,17 @@ spec:
 {{- if .Values.server.auth.azure_ad.enabled }}
     # azure ad auth
     - toFQDNs:
+        - matchName: '*.login.microsoftonline.com'
+        - matchName: '*.aadcdn.msftauth.net'
+        - matchName: '*.logincdn.msftauth.net'
+        - matchName: '*.login.live.com'
+        - matchName: '*.msauth.net'
+        - matchName: '*.aadcdn.microsoftonline-p.com'
+        - matchName: '*.microsoftonline-p.com'
+        - matchName: '*.account.microsoft.com'
+        - matchName: '*.bmx.azure.com'
+        - matchName: '*.subscriptionrp.trafficmanager.net'
+        - matchName: '*.signup.azure.com'
         - matchName: 'login.microsoftonline.com'
         - matchName: 'login.windows.net'
       toPorts:
