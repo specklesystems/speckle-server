@@ -1,6 +1,6 @@
 import Redis from 'ioredis'
 import Bull from 'bull'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl } from '@/modules/shared/helpers/secretsHelper'
 
 export function buildBaseQueueOptions(): Bull.QueueOptions {
   return {
