@@ -369,6 +369,12 @@ server:
       ## @param server.auth.azure_ad.client_id This is the ID for Speckle that you have registered with Azure
       ##
       client_id: ''
+      ## @param server.auth.azure_ad.additional_domains List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy. https://docs.microsoft.com/en-us/azure/azure-portal/azure-portal-safelist-urls?tabs=public-cloud are enabled by default.
+      ##
+      additional_domains: []
+      ## @param server.auth.azure_ad.port Port on server to connect to. Used to allow egress in Network Policy. Defaults to 443
+      ##
+      port: 443
   ## @extra server.email Speckle can communicate with users via email, providing account verification and notification.
   ##
   email:
