@@ -13,6 +13,7 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
+const { getAzureADClientSecret } = require('@/modules/shared/helpers/secretsHelper')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = new OIDCStrategy(
@@ -27,7 +28,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         process.env.CANONICAL_URL
       ).toString(),
       allowHttpForRedirectUrl: true,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
+      clientSecret: getAzureADClientSecret(),
       scope: ['profile', 'email', 'openid'],
       loggingLevel: process.env.NODE_ENV === 'development' ? 'info' : 'error',
       passReqToCallback: true

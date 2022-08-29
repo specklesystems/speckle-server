@@ -5,6 +5,7 @@ const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { buildRequestLoaders } = require('@/modules/core/loaders')
 const { validateToken } = require(`@/modules/core/services/tokens`)
+const { getRedisUrl } = require('@/modules/shared/helpers/secretsHelper')
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -17,8 +18,8 @@ const StreamPubsubEvents = Object.freeze({
  * GraphQL Subscription PubSub instance
  */
 const pubsub = new RedisPubSub({
-  publisher: new Redis(process.env.REDIS_URL),
-  subscriber: new Redis(process.env.REDIS_URL)
+  publisher: new Redis(getRedisUrl()),
+  subscriber: new Redis(getRedisUrl())
 })
 
 /**

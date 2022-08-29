@@ -53,6 +53,9 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+          - name: secrets
+            mountPath: "/etc/secrets/"
+            readOnly: true
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
@@ -95,28 +98,16 @@ spec:
           - name: DEBUG
             value: "speckle:*"
 
-          - name: SESSION_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: "{{ .Values.secretName }}"
-                key: session_secret
+          # SESSION_SECRET mounted as file
 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
           # *** Redis ***
-          - name: REDIS_URL
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: redis_url
+          # REDIS_URL mounted as file
 
           # *** PostgreSQL Database ***
-          - name: POSTGRES_URL
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: postgres_url
+          # POSTGRES_URL mounted as file
           - name: POSTGRES_MAX_CONNECTIONS_SERVER
             value: {{ .Values.db.maxConnectionsServer | quote }}
 
@@ -136,11 +127,7 @@ spec:
             value: {{ .Values.s3.access_key }}
           - name: S3_BUCKET
             value: {{ .Values.s3.bucket }}
-          - name: S3_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: s3_secret_key
+          # S3_SECRET_KEY mounted as file
           - name: S3_CREATE_BUCKET
             value: "{{ .Values.s3.create_bucket }}"
           - name: S3_REGION
@@ -165,11 +152,7 @@ spec:
             value: "true"
           - name: GOOGLE_CLIENT_ID
             value: {{ .Values.server.auth.google.client_id }}
-          - name: GOOGLE_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: google_client_secret
+          # GOOGLE_CLIENT_SECRET mounted as file
           {{- end }}
 
           # Github Auth
@@ -178,11 +161,7 @@ spec:
             value: "true"
           - name: GITHUB_CLIENT_ID
             value: {{ .Values.server.auth.github.client_id }}
-          - name: GITHUB_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: github_client_secret
+          # GITHUB_CLIENT_SECRET mounted as file
           {{- end }}
 
           # AzureAD Auth
@@ -197,11 +176,7 @@ spec:
             value: {{ .Values.server.auth.azure_ad.issuer }}
           - name: AZURE_AD_CLIENT_ID
             value: {{ .Values.server.auth.azure_ad.client_id }}
-          - name: AZURE_AD_CLIENT_SECRET
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: azure_ad_client_secret
+          # AZURE_AD_CLIENT_SECRET mounted as file
           {{- end }}
 
 
@@ -216,11 +191,7 @@ spec:
             value: "{{ .Values.server.email.port }}"
           - name: EMAIL_USERNAME
             value: "{{ .Values.server.email.username }}"
-          - name: EMAIL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: email_password
+          # EMAIL_PASSWORD mounted as file
           {{- end }}
 
           # *** Tracking / Tracing ***
@@ -285,6 +256,10 @@ spec:
       {{- end }}
       terminationGracePeriodSeconds: 310
       volumes:
+        - name: secrets
+          secret:
+            secretName: "{{ .Values.secretName }}"
+            defaultMode: 0400
         - name: tmp
           emptyDir: {}
       {{- if .Values.db.useCertificate }}

@@ -1,5 +1,6 @@
 const debug = require('debug')('speckle')
 
+const { getEmailPassword } = require('@/modules/shared/helpers/secretsHelper')
 const nodemailer = require('nodemailer')
 const modulesDebug = debug.extend('modules')
 const errorDebug = debug.extend('errors')
@@ -20,7 +21,7 @@ const initSmtpTransporter = async () => {
       secure: process.env.EMAIL_SECURE === 'true',
       auth: {
         user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD
+        pass: getEmailPassword()
       }
     })
     await smtpTransporter.verify()

@@ -1,6 +1,7 @@
 'use strict'
 
 const redis = require('redis')
+const { getRedisUrl, getSessionSecret } = require('../shared/helpers/secretsHelper')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
@@ -20,8 +21,8 @@ module.exports = async (app) => {
   app.use(passport.initialize())
 
   const session = ExpressSession({
-    store: new RedisStore({ client: redis.createClient(process.env.REDIS_URL) }),
-    secret: process.env.SESSION_SECRET,
+    store: new RedisStore({ client: redis.createClient(getRedisUrl()) }),
+    secret: getSessionSecret(),
     saveUninitialized: false,
     resave: false,
     cookie: { maxAge: 1000 * 60 * 3 } // 3 minutes
