@@ -104,6 +104,7 @@
     "@types/express": "^4.17.13",
     "@types/lodash": "^4.14.180",
     "@types/mocha": "^7.0.2",
+    "@types/mock-require": "^2.0.1",
     "@types/module-alias": "^2.0.1",
     "@types/nodemailer": "^6.4.5",
     "@types/sanitize-html": "^2.6.2",

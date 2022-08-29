@@ -5,11 +5,6 @@ const commentsServiceMock = mockRequireModule(
   ['@/modules/comments/graph/resolvers/comments']
 )
 
-const mailerMock = mockRequireModule(
-  ['@/modules/emails/services/sending'],
-  ['@/modules/notifications/index']
-)
-
 const path = require('path')
 const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
@@ -51,6 +46,7 @@ const {
   purgeNotifications
 } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
+const { EmailSendingServiceMock } = require('@/test/mocks/global')
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -59,6 +55,8 @@ function buildCommentInputFromString(textString) {
 function generateRandomCommentText() {
   return buildCommentInputFromString(crs({ length: 10 }))
 }
+
+const mailerMock = EmailSendingServiceMock
 
 describe('Comments @comments', () => {
   /** @type {import('express').Express} */
@@ -131,15 +129,11 @@ describe('Comments @comments', () => {
   after(() => {
     notificationsState.destroy()
     commentsServiceMock.destroy()
-    mailerMock.destroy()
   })
 
   afterEach(() => {
     commentsServiceMock.disable()
     commentsServiceMock.resetMockedFunctions()
-
-    mailerMock.disable()
-    mailerMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -1389,8 +1383,7 @@ describe('Comments @comments', () => {
           it('a valid mention triggers a notification', async () => {
             /** @type {import('@/modules/emails/services/sending').SendEmailParams | undefined} */
             let emailParams
-            mailerMock.enable()
-            mailerMock.mockFunction('sendEmail', (params) => {
+            mailerMock.hijackFunction('sendEmail', (params) => {
               emailParams = params
             })
 

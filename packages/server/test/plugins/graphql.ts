@@ -19,7 +19,6 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
     Assertion.prototype,
     'haveGraphQLErrors',
     function (this: ChaiPluginThis<GraphQLResponse>, matchMessage?: string) {
-      console.log(this)
       const { negate, object } = this.__flags
       const { errors } = object
 

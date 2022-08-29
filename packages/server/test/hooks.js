@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 require('../bootstrap')
 const chai = require('chai')
 const chaiHttp = require('chai-http')
@@ -7,9 +6,13 @@ const knex = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
 const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 
+// Register chai plugins
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
+
+// Register global mocks
+require('@/test/mocks/global')
 
 const unlock = async () => {
   const exists = await knex.schema.hasTable('knex_migrations_lock')

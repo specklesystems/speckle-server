@@ -8,7 +8,6 @@ import {
 import { ApolloServer } from 'apollo-server-express'
 import request from 'supertest'
 import { expect } from 'chai'
-import { mockRequireModule } from '@/test/mockHelper'
 import { SendEmailParams } from '@/modules/emails/services/sending'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
@@ -21,15 +20,10 @@ import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/ro
 import { Express } from 'express'
 import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
+import { EmailSendingServiceMock } from '@/test/mocks/global'
 
-const mailerMock = mockRequireModule(
-  ['@/modules/emails/services/sending'],
-  [
-    '@/modules/emails/services/verification/request',
-    '@/modules/emails/index',
-    '@/modules/emails/graph/resolvers/index'
-  ]
-)
+const mailerMock = EmailSendingServiceMock
+
 const cleanup = async () => {
   await truncateTables([Users.name, EmailVerifications.name])
 }
@@ -53,17 +47,13 @@ describe('Email verifications @emails', () => {
 
   after(async () => {
     await cleanup()
-    mailerMock.destroy()
-  })
-
-  afterEach(() => {
-    mailerMock.resetMockedFunctions()
   })
 
   it('sends out verification email immediatelly after new account creation', async () => {
     let emailParams: Optional<SendEmailParams> = undefined
-    mailerMock.mockFunction('sendEmail', (params: SendEmailParams) => {
+    mailerMock.hijackFunction('sendEmail', async (params: SendEmailParams) => {
       emailParams = params
+      return false
     })
 
     const newGuy: BasicTestUser = {
@@ -122,8 +112,9 @@ describe('Email verifications @emails', () => {
         await deleteVerifications(userA.email)
 
         let emailParams: Optional<SendEmailParams> = undefined
-        mailerMock.mockFunction('sendEmail', (params: SendEmailParams) => {
+        mailerMock.hijackFunction('sendEmail', async (params: SendEmailParams) => {
           emailParams = params
+          return false
         })
 
         const result = await invokeRequestVerification(userA)
@@ -205,8 +196,6 @@ describe('Email verifications @emails', () => {
 
       it('it fails without a token', async () => {
         const result = await request(app).get('/auth/verifyemail')
-
-        console.log(result.headers)
         expect(result.statusCode).to.eq(302)
 
         const location = decodeURIComponent(result.headers['location'] || '')
@@ -225,14 +214,12 @@ describe('Email verifications @emails', () => {
       })
 
       it('it fails with an expired token', async () => {
-        const EmailVerificationsCols = EmailVerifications.with({
-          withoutTablePrefix: true
-        }).col
         await EmailVerifications.knex()
-          .where(EmailVerificationsCols.id, requestToken)
-          .update({
-            [EmailVerificationsCols.createdAt]: dayjs().subtract(8, 'day').toISOString()
-          })
+          .where(EmailVerifications.withoutTablePrefix.col.id, requestToken)
+          .update(
+            EmailVerifications.withoutTablePrefix.col.createdAt,
+            dayjs().subtract(8, 'day').toISOString()
+          )
 
         const url = getEmailVerificationFinalizationRoute('aaabbbccdd')
 
