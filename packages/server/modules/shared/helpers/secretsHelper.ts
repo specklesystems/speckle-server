@@ -66,7 +66,7 @@ function getSecret(secretName: string): string {
   }
 
   if (process.env[secretName.toUpperCase()]) {
-    return process.env[secretName.toUpperCase()] || ''
+    return process.env[secretName.toUpperCase()] ?? ''
   }
 
   throw new MisconfiguredSecretError(
