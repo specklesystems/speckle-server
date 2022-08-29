@@ -148,10 +148,10 @@ describe('[Stream & Server Invites]', () => {
         const messagePart2 = 'yepppppp'
         const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
 
-        let emailParams
-        mailerMock.hijackFunction('sendEmail', (params) => {
-          emailParams = params
-        })
+        const sendEmailInvocations = mailerMock.hijackFunction(
+          'sendEmail',
+          async () => true
+        )
 
         const result = await createInvite({
           email: targetEmail,
@@ -163,6 +163,7 @@ describe('[Stream & Server Invites]', () => {
         expect(result.errors).to.be.not.ok
 
         // Check that email was sent out
+        const emailParams = sendEmailInvocations.args[0][0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(targetEmail)
         expect(emailParams.subject).to.be.ok
@@ -294,10 +295,10 @@ describe('[Stream & Server Invites]', () => {
           const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
           const targetEmail = email || user.email
 
-          let emailParams
-          mailerMock.hijackFunction('sendEmail', (params) => {
-            emailParams = params
-          })
+          const sendEmailInvocations = mailerMock.hijackFunction(
+            'sendEmail',
+            async () => true
+          )
 
           const result = await createInvite({
             email,
@@ -312,6 +313,7 @@ describe('[Stream & Server Invites]', () => {
           expect(result.errors).to.be.not.ok
 
           // Check that email was sent out
+          const emailParams = sendEmailInvocations.args[0][0]
           expect(emailParams).to.be.ok
           expect(emailParams.to).to.eq(targetEmail)
           expect(emailParams.subject).to.be.ok
@@ -415,12 +417,9 @@ describe('[Stream & Server Invites]', () => {
       })
 
       it('they can resend pre-existing invites irregardless of type', async () => {
-        const emailParamsArr = []
-        mailerMock.hijackFunction(
+        const sendEmailInvocations = mailerMock.hijackFunction(
           'sendEmail',
-          (params) => {
-            emailParamsArr.push(params)
-          },
+          async () => true,
           { times: invites.length }
         )
 
@@ -435,7 +434,7 @@ describe('[Stream & Server Invites]', () => {
           expect(result.errors).to.not.be.ok
         }
 
-        expect(emailParamsArr).to.have.length(inviteIds.length)
+        expect(sendEmailInvocations.length()).to.eq(inviteIds.length)
       })
 
       it('they can delete pre-existing invites irregardless of type', async () => {
@@ -482,12 +481,9 @@ describe('[Stream & Server Invites]', () => {
         const emails = ['abababa1@mail.com', 'abababa2@mail.com', 'abababa3@mail.com']
         const message = 'ayyoyoyoyoy'
 
-        const emailParamsArr = []
-        mailerMock.hijackFunction(
+        const sendEmailInvocations = mailerMock.hijackFunction(
           'sendEmail',
-          (params) => {
-            emailParamsArr.push(params)
-          },
+          async () => true,
           { times: emails.length }
         )
 
@@ -499,9 +495,9 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.serverInviteBatchCreate).to.be.ok
         expect(result.errors).to.not.be.ok
 
-        expect(emailParamsArr).to.have.length(emails.length)
+        expect(sendEmailInvocations.length()).to.eq(emails.length)
         for (const email of emails) {
-          const emailParams = emailParamsArr.find((p) => p.to === email)
+          const emailParams = sendEmailInvocations.args.find(([p]) => p.to === email)[0]
 
           expect(emailParams).to.be.ok
           expect(emailParams.html).to.contain(message)
@@ -536,12 +532,9 @@ describe('[Stream & Server Invites]', () => {
           }
         ]
 
-        const emailParamsArr = []
-        mailerMock.hijackFunction(
+        const sendEmailInvocations = mailerMock.hijackFunction(
           'sendEmail',
-          (params) => {
-            emailParamsArr.push(params)
-          },
+          async () => false,
           { times: inputs.length }
         )
 
@@ -550,11 +543,11 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.streamInviteBatchCreate).to.be.ok
         expect(result.errors).to.not.be.ok
 
-        expect(emailParamsArr).to.have.length(inputs.length)
+        expect(sendEmailInvocations.length()).to.eq(inputs.length)
         for (const inputData of inputs) {
-          const emailParams = emailParamsArr.find((p) =>
+          const emailParams = sendEmailInvocations.args.find(([p]) =>
             inputData.email ? p.to === inputData.email : p.to === otherGuy.email
-          )
+          )[0]
           expect(emailParams).to.be.ok
           expect(emailParams.html).to.contain(inputData.message)
           expect(emailParams.text).to.contain(inputData.message)

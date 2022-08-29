@@ -8,8 +8,6 @@ import {
 import { ApolloServer } from 'apollo-server-express'
 import request from 'supertest'
 import { expect } from 'chai'
-import { SendEmailParams } from '@/modules/emails/services/sending'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
 import {
   getPendingEmailVerificationStatus,
@@ -50,11 +48,10 @@ describe('Email verifications @emails', () => {
   })
 
   it('sends out verification email immediatelly after new account creation', async () => {
-    let emailParams: Optional<SendEmailParams> = undefined
-    mailerMock.hijackFunction('sendEmail', async (params: SendEmailParams) => {
-      emailParams = params
-      return false
-    })
+    const sendEmailInvocations = mailerMock.hijackFunction(
+      'sendEmail',
+      async () => true
+    )
 
     const newGuy: BasicTestUser = {
       name: 'happy to be here',
@@ -65,6 +62,7 @@ describe('Email verifications @emails', () => {
 
     await createTestUser(newGuy)
 
+    const emailParams = sendEmailInvocations.args[0][0]
     expect(emailParams).to.be.ok
     expect(emailParams!.subject).to.contain('Speckle Account E-mail Verification')
 
@@ -111,16 +109,16 @@ describe('Email verifications @emails', () => {
         // delete previous requests for userA, if any
         await deleteVerifications(userA.email)
 
-        let emailParams: Optional<SendEmailParams> = undefined
-        mailerMock.hijackFunction('sendEmail', async (params: SendEmailParams) => {
-          emailParams = params
-          return false
-        })
+        const sendEmailInvocations = mailerMock.hijackFunction(
+          'sendEmail',
+          async () => false
+        )
 
         const result = await invokeRequestVerification(userA)
         expect(result).to.not.haveGraphQLErrors()
         expect(result.data?.requestVerification).to.be.true
 
+        const emailParams = sendEmailInvocations.args[0][0]
         expect(emailParams).to.be.ok
         expect(emailParams!.subject).to.contain('Speckle Account E-mail Verification')
         expect(emailParams!.html).to.be.ok

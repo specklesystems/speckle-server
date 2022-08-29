@@ -1381,11 +1381,10 @@ describe('Comments @comments', () => {
             })
 
           it('a valid mention triggers a notification', async () => {
-            /** @type {import('@/modules/emails/services/sending').SendEmailParams | undefined} */
-            let emailParams
-            mailerMock.hijackFunction('sendEmail', (params) => {
-              emailParams = params
-            })
+            const sendEmailInvocations = mailerMock.hijackFunction(
+              'sendEmail',
+              async () => false
+            )
 
             const waitForAck = notificationsState.waitForAck(
               (e) => e.result?.type === NotificationType.MentionedInComment
@@ -1400,6 +1399,7 @@ describe('Comments @comments', () => {
             // Wait for
             await waitForAck
 
+            const emailParams = sendEmailInvocations.args[0][0]
             expect(emailParams).to.be.ok
             expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
             expect(emailParams.to).to.eq(otherUser.email)
