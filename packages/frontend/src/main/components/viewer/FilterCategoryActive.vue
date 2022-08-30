@@ -1,17 +1,7 @@
 <template>
   <div class="mt-3">
-    <!-- <portal to="filter-actions">
-      <v-list-item-action class="pa-0 ma-0">
-        <v-btn
-          v-tooltip="'Set colors automatically based on each property'"
-          small
-          icon
-          @click.stop="toggleColors()"
-        ></v-btn>
-      </v-list-item-action>
-    </portal> -->
     <v-row
-      v-for="valueGroup in filter.data.valueGroups"
+      v-for="valueGroup in filter.valueGroups"
       :key="valueGroup.value"
       no-gutters
       class="my-1 property-row rounded-lg"
@@ -140,34 +130,45 @@ export default {
     }
   },
   watch: {
-    viewerState() {
-      if (!this.viewerState.currentFilterState?.colorGroups) {
-        return
-      }
-      const colorLegend = {}
-      const visibleLegend = {}
-      const isolatedLegend = {}
-      for (const vgc of this.viewerState.currentFilterState.colorGroups) {
-        colorLegend[vgc.value] = '#' + vgc.color.toString(16)
+    viewerState: {
+      deep: true,
+      handler() {
+        if (!this.viewerState.currentFilterState?.colorGroups) {
+          return
+        }
+        const colorLegend = {}
+        const visibleLegend = {}
+        const isolatedLegend = {}
+        for (const vgc of this.viewerState.currentFilterState.colorGroups) {
+          colorLegend[vgc.value] = '#' + vgc.color.toString(16)
 
-        visibleLegend[vgc.value] = this.isVisible(vgc.ids)
-        isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
+          visibleLegend[vgc.value] = this.isVisible(vgc.ids)
+          isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
+        }
+        this.colorLegend = colorLegend
+        this.visibleLegend = visibleLegend
+        this.isolatedLegend = isolatedLegend
       }
-      this.colorLegend = colorLegend
-      this.visibleLegend = visibleLegend
-      this.isolatedLegend = isolatedLegend
     }
   },
   mounted() {
-    this.toggleColors()
-  },
-  beforeDestroy() {
-    resetFilter()
+    if (!this.viewerState.currentFilterState?.colorGroups) {
+      return
+    }
+    const colorLegend = {}
+    const visibleLegend = {}
+    const isolatedLegend = {}
+    for (const vgc of this.viewerState.currentFilterState.colorGroups) {
+      colorLegend[vgc.value] = '#' + vgc.color.toString(16)
+
+      visibleLegend[vgc.value] = this.isVisible(vgc.ids)
+      isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
+    }
+    this.colorLegend = colorLegend
+    this.visibleLegend = visibleLegend
+    this.isolatedLegend = isolatedLegend
   },
   methods: {
-    async toggleColors() {
-      setColorFilter(this.filter.data)
-    },
     async toggleFilter(prop) {
       if (this.isolatedLegend[prop.value]) {
         unIsolateObjects2(prop.ids, 'ui-filters')
@@ -176,8 +177,6 @@ export default {
       }
     },
     async toggleVisibility(prop) {
-      console.log(prop)
-      console.log(this.visibleLegend[prop.value])
       if (this.visibleLegend[prop.value]) {
         hideObjects2(prop.ids, 'ui-filters')
       } else {

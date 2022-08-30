@@ -489,11 +489,11 @@ export default {
         }
       }
     },
-    collapseComment(comment) {
+    async collapseComment(comment) {
       for (const c of this.localComments) {
         if (c.id === comment.id && c.expanded) {
           c.expanded = false
-          if (c.data.filters) resetFilter()
+          if (c.data.filters) await resetFilter()
           if (c.data.sectionBox) this.viewer.sectionBox.off()
 
           setSelectedCommentMetaData(null)
@@ -511,7 +511,7 @@ export default {
       this.collapseComment(comment)
       this.expandComment(this.activeComments[index])
     },
-    setCommentPow(comment) {
+    async setCommentPow(comment) {
       const camToSet = comment.data.camPos
       if (camToSet[6] === 1) {
         this.viewer.toggleCameraProjection()
@@ -527,12 +527,14 @@ export default {
       // if (camToSet[6] === 1) {
       //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       // }
+
       if (comment.data.filters) {
-        setFilterDirectly({
+        // await resetFilter()
+        await setFilterDirectly({
           filter: comment.data.filters
         })
       } else {
-        resetFilter()
+        await resetFilter()
       }
 
       if (comment.data.sectionBox) {

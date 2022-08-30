@@ -16,6 +16,8 @@ export type FilteringState = {
   isolatedObjects?: string[]
   colorGroups?: Record<string, string>[]
   activePropFilterKey?: string
+  passMin?: number | null
+  passMax?: number | null
 }
 
 export enum FilterMaterialType {
@@ -354,6 +356,12 @@ export class FilteringManager {
         })
       }
       returnState.activePropFilterKey = this.ColorNumericFilterState.currentProp.key
+      returnState.passMin =
+        this.ColorNumericFilterState.currentProp.passMin ||
+        this.ColorNumericFilterState.currentProp.min
+      returnState.passMax =
+        this.ColorNumericFilterState.currentProp.passMax ||
+        this.ColorNumericFilterState.currentProp.max
     }
 
     const isShowHide =

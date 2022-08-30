@@ -250,7 +250,8 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import {
   setIsAddingComment,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { ViewerEvent } from '@speckle/viewer'
 /**
@@ -300,6 +301,7 @@ export default {
           selectedCommentMetaData
           commentReactions
           appliedFilter
+          currentFilterState
         }
       }
     `)
@@ -401,11 +403,11 @@ export default {
             ? this.location
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
           camPos: getCamArray(this.viewer),
-          filters: this.viewerState.appliedFilter,
-          sectionBox: this.viewer.sectionBox.getCurrentBox(),
+          filters: getLocalFilterState(),
+          sectionBox: this.viewer.sectionBox.getCurrentBox(), // @Alex/Dim: TODO
           selection: null // TODO for later, lazy now
         },
-        screenshot: this.viewer.screenshot()
+        screenshot: await this.viewer.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
