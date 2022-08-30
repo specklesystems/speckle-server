@@ -39,6 +39,8 @@ if (config.isApolloMonitoringEnabled() && !config.apolloServerVersion()) {
   config.copy('speckle_server_version', 'apollo.server_user_version')
 }
 
+// config.validate()
+
 module.exports = {
   config,
   appRoot,

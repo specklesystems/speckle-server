@@ -5548,6 +5548,8 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
     "@types/bull": ^3.15.9
     "@types/compression": ^1.7.2
+    "@types/convict": ^6.1.1
+    "@types/convict-format-with-validator": ^6.0.2
     "@types/debug": ^4.1.7
     "@types/deep-equal-in-any-order": ^1.0.1
     "@types/ejs": ^3.1.1
@@ -6243,6 +6245,24 @@ __metadata:
   version: 0.5.4
   resolution: "@types/content-disposition@npm:0.5.4"
   checksum: eee083f930fedb125acf0d658653b7d349cdfe93ef78d5613450c4817e4882eb0c0e59b4ab2bc57997bb59f87db9f734dc234644509bb3df51f8388635daf1e1
+  languageName: node
+  linkType: hard
+
+"@types/convict-format-with-validator@npm:^6.0.2":
+  version: 6.0.2
+  resolution: "@types/convict-format-with-validator@npm:6.0.2"
+  dependencies:
+    "@types/convict": "*"
+  checksum: 2014f7a20b32a4cee8685d6df6c51b51f22668b5780ca542f243a0ee3e98000cb266f3d7bbb1235ecd427c7a1874d5c2add018e0950e2d303292926757376df4
+  languageName: node
+  linkType: hard
+
+"@types/convict@npm:*, @types/convict@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@types/convict@npm:6.1.1"
+  dependencies:
+    "@types/node": "*"
+  checksum: 0150048098eec1ff0df5d04e77fd44ff0fa8e732cc5d5e43a2fe603b2d3f05c9f1e369977a109844b8b449b096818c017737b166ccb52b569161642d884e17d2
   languageName: node
   linkType: hard
 

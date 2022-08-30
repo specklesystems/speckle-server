@@ -35,6 +35,8 @@
     "@godaddy/terminus": "^4.9.0",
     "@sentry/node": "^6.17.9",
     "@sentry/tracing": "^6.17.9",
+    "@types/convict": "^6.1.1",
+    "@types/convict-format-with-validator": "^6.0.2",
     "apollo-server-express": "^2.19.0",
     "apollo-server-testing": "^2.19.0",
     "bcrypt": "^5.0.0",
