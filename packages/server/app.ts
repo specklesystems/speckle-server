@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import './bootstrap'
+import { config } from './bootstrap'
 import http from 'http'
 import express, { Express } from 'express'
 
@@ -31,7 +31,7 @@ import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import apolloPlugin from '@/logging/apolloPlugin'
 
-import { get, has, isString, toNumber } from 'lodash'
+import { get, has, isString } from 'lodash'
 
 let graphqlServer: ApolloServer
 
@@ -122,11 +122,11 @@ export async function init() {
   // Should perhaps be done manually?
   await knex.migrate.latest()
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (!config.isTestEnv()) {
     app.use(logger('speckle', 'dev', {}))
   }
 
-  if (process.env.COMPRESSION) {
+  if (config.get('compression')) {
     app.use(compression())
   }
 
@@ -167,15 +167,15 @@ export async function shutdown(): Promise<void> {
  * Starts a http server, hoisting the express app to it.
  */
 export async function startHttp(app: Express, customPortOverride?: number) {
-  let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
-  let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
+  const bindAddress = config.getBindAddress()
+  let port = config.get('port')
 
-  const frontendHost = process.env.FRONTEND_HOST || 'localhost'
-  const frontendPort = process.env.FRONTEND_PORT || 8080
+  const frontendHost = config.get('frontend.host')
+  const frontendPort = config.get('frontend.port')
 
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
-  if (process.env.NODE_ENV === 'development') {
+  if (config.isDevelopmentEnv()) {
     const { createProxyMiddleware } = await import('http-proxy-middleware')
 
     const frontendProxy = createProxyMiddleware({
@@ -188,11 +188,6 @@ export async function startHttp(app: Express, customPortOverride?: number) {
 
     debug('speckle:startup')('✨ Proxying frontend (dev mode):')
     debug('speckle:startup')(`👉 main application: http://localhost:${port}/`)
-  }
-
-  // Production mode
-  else {
-    bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'
   }
 
   const server = http.createServer(app)

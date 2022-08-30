@@ -42,6 +42,8 @@
     "busboy": "^1.4.0",
     "compression": "^1.7.4",
     "connect-redis": "^6.1.1",
+    "convict": "^6.2.3",
+    "convict-format-with-validator": "^6.2.0",
     "cors": "^2.8.5",
     "crypto-random-string": "^3.2.0",
     "dataloader": "^2.0.0",

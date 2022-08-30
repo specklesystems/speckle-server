@@ -4,5 +4,55 @@
     "format": ["production", "development", "test"],
     "default": "development",
     "env": "NODE_ENV"
+  },
+  "speckle_server_version": {
+    "doc": "The version of the Speckle server.",
+    "format": "*",
+    "default": "dev",
+    "env": "SPECKLE_SERVER_VERSION"
+  },
+  "compression": {
+    "doc": "Enables compression in GraphQL middleware.",
+    "format": "Boolean",
+    "default": false,
+    "env": "COMPRESSION"
+  },
+  "bind_address": {
+    "doc": "The IP address the server should bind to (listen on).",
+    "format": "ipaddress",
+    "env": "BIND_ADDRESS"
+  },
+  "port": {
+    "doc": "The port the server should serve on.",
+    "format": "port",
+    "default": 3000,
+    "env": "PORT"
+  },
+  "frontend": {
+    "host": {
+      "doc": "The IP address or domain the frontend should be hosted on.",
+      "format": "ipaddress",
+      "default": "localhost",
+      "env": "FRONTEND_ADDRESS"
+    },
+    "port": {
+      "doc": "The port the frontend is served on.",
+      "format": "port",
+      "default": "8080",
+      "env": "FRONTEND_PORT"
+    }
+  },
+  "apollo": {
+    "schema_reporting": {
+      "doc": "Enables the GraphQL server to report its schema to Apollo",
+      "format": "Boolean",
+      "default": false,
+      "env": "APOLLO_SCHEMA_REPORTING"
+    },
+    "server_user_version": {
+      "doc": "An identifier for the current running version of your server, such as the SHA of its associated Git commit. Apollo display this value in Apollo Studio to help segment metrics.",
+      "format": "*",
+      "env": "APOLLO_SERVER_USER_VERSION"
+    }
   }
 }

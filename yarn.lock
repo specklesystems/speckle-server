@@ -5578,6 +5578,8 @@ __metadata:
     compression: ^1.7.4
     concurrently: ^7.0.0
     connect-redis: ^6.1.1
+    convict: ^6.2.3
+    convict-format-with-validator: ^6.2.0
     cors: ^2.8.5
     cross-env: ^7.0.3
     crypto-random-string: ^3.2.0
@@ -11721,6 +11723,15 @@ __metadata:
   dependencies:
     safe-buffer: ~5.1.1
   checksum: 985d974a2d33e1a2543ada51c93e1ba2f73eaed608dc39f229afc78f71dcc4c8b7d7c684aa647e3c6a3a204027444d69e53e169ce94e8d1fa8d7dee80c9c8fed
+  languageName: node
+  linkType: hard
+
+"convict-format-with-validator@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "convict-format-with-validator@npm:6.2.0"
+  dependencies:
+    validator: ^13.6.0
+  checksum: c4f6ec7b0413a807ce83e7a4b6ce8381aba013da9be6791e43e05c61c5faec6a7bb61962bcdd1429350a0108bec340f4eed96c70193fe0c5f6a8dd623bfb7661
   languageName: node
   linkType: hard
 
@@ -24687,7 +24698,6 @@ __metadata:
   dependencies:
     "@types/eslint": ^8.4.1
     commitizen: ^4.2.4
-    convict: ^6.2.3
     cz-conventional-changelog: ^3.3.0
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
@@ -28086,6 +28096,13 @@ __metadata:
   dependencies:
     builtins: ^1.0.3
   checksum: ce4c68207abfb22c05eedb09ff97adbcedc80304a235a0844f5344f1fd5086aa80e4dbec5684d6094e26e35065277b765c1caef68bcea66b9056761eddb22967
+  languageName: node
+  linkType: hard
+
+"validator@npm:^13.6.0":
+  version: 13.7.0
+  resolution: "validator@npm:13.7.0"
+  checksum: 2b83283de1222ca549a7ef57f46e8d49c6669213348db78b7045bce36a3b5843ff1e9f709ebf74574e06223461ee1f264f8cc9a26a0060a79a27de079d8286ef
   languageName: node
   linkType: hard
 

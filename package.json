@@ -49,8 +49,5 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
-  },
-  "dependencies": {
-    "convict": "^6.2.3"
   }
 }
