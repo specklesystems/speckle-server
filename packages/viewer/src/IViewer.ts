@@ -150,7 +150,7 @@ export interface IViewer {
   applyFilter(filter: unknown): Promise<void>
 
   /** New Filtering members */
-  getObjectProperties(resourceURL?: string): PropertyInfo[]
+  getObjectProperties(resourceURL?: string, bypassCache?: boolean): PropertyInfo[]
   showObjects(
     objectIds: string[],
     stateKey?: string,

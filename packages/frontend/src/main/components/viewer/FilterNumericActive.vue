@@ -1,19 +1,5 @@
 <template>
   <div class="mt-3">
-    <portal to="filter-actions">
-      <v-list-item-action class="pa-0 ma-0">
-        <v-btn
-          v-tooltip="'Set colors automatically based on each property'"
-          small
-          icon
-          @click.stop="colorBy = !colorBy"
-        >
-          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">
-            mdi-palette
-          </v-icon>
-        </v-btn>
-      </v-list-item-action>
-    </portal>
     <v-row no-gutters class="my-1 property-row rounded-lg">
       <v-col cols="12">
         <!-- {{ filter }} -->
@@ -40,12 +26,12 @@
         }`"
         style="line-height: 24px"
       >
-        {{ filter.data.objectCount }} elements; min:
-        {{ Math.round(filter.data.min, 2) | prettynum }}; max:
-        {{ Math.round(filter.data.max, 2) | prettynum }}
+        {{ filter.objectCount }} elements; min:
+        {{ Math.round(filter.min, 2) | prettynum }}; max:
+        {{ Math.round(filter.max, 2) | prettynum }}
       </v-col>
       <v-col
-        v-if="filter.data.max === filter.data.min"
+        v-if="filter.max === filter.min"
         cols="12"
         :class="`caption text-truncatexxx px-1 ${
           $vuetify.theme.dark ? 'grey--text' : ''
@@ -56,16 +42,17 @@
       </v-col>
       <v-col v-else ref="parent" cols="12" class="px-3 py-3">
         <HistogramSlider
+          ref="histogramSlider"
           :key="width"
           :width="width"
           :bar-height="100"
-          :data="filter.data.valueGroups.map((vg) => vg.value)"
+          :data="filter.valueGroups.map((vg) => vg.value)"
           :bar-width="4"
           :bar-gap="6"
           :handle-size="18"
-          :max="filter.data.max"
-          :min="filter.data.min"
-          :step="filter.data.min / 10"
+          :max="filter.max"
+          :min="filter.min"
+          :step="filter.min / 10"
           force-edges
           :keyboard="false"
           :bar-radius="2"
@@ -103,12 +90,11 @@
   </div>
 </template>
 <script>
-import {
-  resetFilter,
-  // setNumericFilter,
-  setColorFilter
-} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
 
+import { setColorFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     HistogramSlider: async () => {
@@ -129,6 +115,23 @@ export default {
     active: { type: Boolean, default: false },
     preventFirstSet: { type: Boolean, default: false }
   },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          appliedFilter
+          currentFilterState
+          objectProperties
+          localFilterPropKey
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState }
+  },
   data() {
     return {
       range: [0, 1],
@@ -143,53 +146,35 @@ export default {
   },
   watch: {
     filter(newVal) {
-      this.$set(this.range, 0, newVal.data.min)
-      this.$set(this.range, 1, newVal.data.max)
-    },
-    colorBy() {
-      this.setFilter()
+      this.$set(this.range, 0, newVal.min)
+      this.$set(this.range, 1, newVal.max)
     }
   },
   mounted() {
-    this.$set(this.range, 0, this.filter.data.min)
-    this.userMin = this.filter.data.min
-    this.$set(this.range, 1, this.filter.data.max)
-    this.userMax = this.filter.data.max
-    this.setFilter()
+    this.$set(this.range, 0, this.filter.min)
+    this.$set(this.range, 1, this.filter.max)
+
+    setTimeout(() => {
+      this.userMin = this.viewerState?.currentFilterState?.passMin || this.filter.min
+      this.userMax = this.viewerState?.currentFilterState?.passMax || this.filter.max
+      this.$refs.histogramSlider.update({ from: this.userMin, to: this.userMax })
+    }, 500)
+
     this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
       this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     })
   },
-  beforeDestroy() {
-    resetFilter()
-  },
   methods: {
-    // setMin() {
-    //   console.log('setmin')
-    //   console.log(this.userMin)
-    // },
-    // setMax() {
-    //   console.log('setmax')
-    //   console.log(this.userMax)
-    // },
     async setFilterHistogram(e) {
       if (this.preventFirstSetInternal) {
         this.preventFirstSetInternal = false
         return
       }
 
-      const propInfo = { ...this.filter.data }
+      const propInfo = { ...this.filter }
       propInfo.passMin = e.from
       propInfo.passMax = e.to
-      setColorFilter(propInfo)
-    },
-    async setFilter() {
-      if (this.preventFirstSetInternal) {
-        this.preventFirstSetInternal = false
-        return
-      }
-      const propInfo = { ...this.filter.data }
       setColorFilter(propInfo)
     },
     prettify(num) {

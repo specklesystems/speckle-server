@@ -9,13 +9,14 @@ export class PropertyManager {
   /**
    *
    * @param resourceUrl The target resource's url. This must be an **object url** or null. If null, it will return the props for the whole scene.
+   * @param bypassCache Forces a full rescan if set to true.
    * @returns a list of property infos containing basic information for filtering purposes.
    */
-  public static getProperties(resourceUrl: string = null): PropertyInfo[] {
+  public static getProperties(
+    resourceUrl: string = null,
+    bypassCache = false
+  ): PropertyInfo[] {
     let rootNode: TreeNode = PropertyManager.WT.root
-
-    let bypassCache = false
-    if (!resourceUrl) bypassCache = true
 
     if (!bypassCache && this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
       return this.propCache[resourceUrl ? resourceUrl : rootNode.model.id]

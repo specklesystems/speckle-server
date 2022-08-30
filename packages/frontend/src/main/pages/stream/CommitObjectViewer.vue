@@ -256,7 +256,8 @@ import {
   setFilterDirectly,
   setIsViewerBusy,
   setupCommitObjectViewer,
-  getObjectProperties
+  getObjectProperties,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { PropertyInfo } from '@speckle/viewer'
 import { useQuery } from '@vue/apollo-composable'
@@ -369,6 +370,7 @@ export default defineComponent({
         commitObjectViewerState @client {
           appliedFilter
           selectedObjects
+          currentFilterState
         }
       }
     `)
@@ -427,7 +429,7 @@ export default defineComponent({
     }
   },
   watch: {
-    'viewerState.appliedFilter'(val) {
+    'viewerState.currentFilterState'(val) {
       if (this.isEmbed) return
       if (!val) {
         const fullQuery = { ...this.$route.query }
@@ -443,7 +445,7 @@ export default defineComponent({
       this.$router
         .replace({
           path: this.$route.path,
-          query: { ...fullQuery, filter: JSON.stringify(val) }
+          query: { ...fullQuery, filter: JSON.stringify(getLocalFilterState()) }
         })
         .catch(() => {})
     }

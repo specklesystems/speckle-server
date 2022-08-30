@@ -10,24 +10,17 @@
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
-          <span v-if="activeFilter === null">
+          <span v-if="!activeFilter">
             Filters Groups
             <span class="caption grey--text">({{ allFilters.length }})</span>
           </span>
-          <span v-else>{{ activeFilter.name }}</span>
+          <span v-else>{{ getFilterNameFromKey(activeFilter.key) }}</span>
+          <!-- <span v-else>{{ activeFilter.key.split('.').reverse()[0] }}</span> -->
         </v-list-item-title>
       </v-list-item-content>
       <portal-target name="filter-actions"></portal-target>
       <v-list-item-action v-if="activeFilter" class="pa-0 ma-0">
-        <v-btn
-          v-tooltip="'Remove filter'"
-          small
-          icon
-          @click.stop="
-            activeFilter = null
-            filterSearch = null
-          "
-        >
+        <v-btn v-tooltip="'Remove filter'" small icon @click.stop="removeFilter()">
           <v-icon small>mdi-close</v-icon>
         </v-btn>
       </v-list-item-action>
@@ -35,23 +28,20 @@
         <v-btn small icon @click.stop="expand = !expand">
           <v-icon>{{ expand ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
         </v-btn>
-        <!-- <v-btn v-if="expand" small icon @click.stop="refresh()">
-          <v-icon small>mdi-refresh</v-icon>
-        </v-btn> -->
       </v-list-item-action>
     </v-list-item>
     <v-scroll-y-transition>
       <div v-show="expand">
-        <div v-if="activeFilter && activeFilter.data.type === 'string'">
+        <div v-if="activeFilter && activeFilter.type === 'string'">
           <filter-category-active :filter="activeFilter" />
         </div>
-        <div v-if="activeFilter && activeFilter.data.type === 'number'">
+        <div v-if="activeFilter && activeFilter.type === 'number'">
           <filter-numeric-active
             :filter="activeFilter"
             :prevent-first-set="preventFirstSet"
           />
         </div>
-        <div v-show="activeFilter === null">
+        <div v-show="!activeFilter">
           <div class="">
             <v-text-field
               v-model="filterSearch"
@@ -69,7 +59,7 @@
                 <filter-row-select
                   v-if="filter"
                   :filter="filter"
-                  @active-toggle="(e) => (activeFilter = e)"
+                  @active-toggle="setActiveFilter"
                 />
               </div>
             </div>
@@ -77,10 +67,7 @@
               {{ filterSearch ? 'Matching' : 'Other' }} filters:
             </v-subheader>
             <div v-for="filter in matchingFilters" :key="filter.targetKey">
-              <filter-row-select
-                :filter="filter"
-                @active-toggle="(e) => (activeFilter = e)"
-              />
+              <filter-row-select :filter="filter" @active-toggle="setActiveFilter" />
             </div>
           </div>
         </div>
@@ -92,7 +79,11 @@
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
-import { getObjectProperties } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import {
+  getObjectProperties,
+  resetFilter,
+  setColorFilter
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   name: 'ViewerFilters',
   components: {
@@ -117,6 +108,7 @@ export default {
           appliedFilter
           currentFilterState
           objectProperties
+          localFilterPropKey
         }
       }
     `)
@@ -131,13 +123,17 @@ export default {
       expand: false,
       revitFilters: ['type', 'family', 'level'],
       allFilters: [],
-      activeFilter: null,
       filterSearch: null,
       trySetPresetFilter: false,
       preventFirstSet: false
     }
   },
   computed: {
+    activeFilter() {
+      return this.viewerState.objectProperties.find(
+        (prop) => prop.key === this.viewerState.localFilterPropKey
+      )
+    },
     propertyFilters() {
       if (!this.viewerState.objectProperties) return []
       return this.viewerState.objectProperties
@@ -172,38 +168,42 @@ export default {
         this.parseAndSetFilters()
       }
     },
-    'viewerState.currentFilterState'() {
-      if (!this.viewerState.currentFilterState?.activePropFilterKey) {
-        this.activeFilter = null
-      }
-    },
     objectProperties() {
       this.parseAndSetFilters()
+    },
+    viewerState: {
+      deep: true,
+      handler() {
+        if (this.viewerState.localFilterPropKey && !this.expand) this.expand = true
+      }
     }
-    // 'viewerState.appliedFilter'() {
-    //   if (this.trySetPresetFilter) return
-    //   if (this.viewerState.appliedFilter?.filterBy) {
-    //     const key = Object.keys(this.viewerState.appliedFilter.filterBy)[0]
-    //     const presetFilter = this.allFilters.find((f) => f.targetKey === key)
-    //     if (presetFilter) this.activeFilter = presetFilter
-    //     this.trySetPresetFilter = true
-    //     this.preventFirstSet = true
-    //   }
-    // }
   },
   mounted() {
-    if (this.$eventHub) {
-      this.$eventHub.$on('structure-filters', () => {
-        this.activeFilter = null
-      })
-      this.$eventHub.$on('selection-filters', () => {
-        this.activeFilter = null
-      })
-    }
+    // setTimeout(() => {
+    //   console.log(JSON.stringify(this.viewerState))
+    //   console.log(this.expand)
+    //   if (this.viewerState.localFilterPropKey) this.expand = true
+    //   console.log(this.expand)
+    // }, 2000)
   },
   methods: {
+    async setActiveFilter(e) {
+      const prop = this.viewerState.objectProperties?.find((p) => p.key === e.targetKey)
+      setColorFilter(prop)
+    },
     refresh() {
       getObjectProperties()
+    },
+    removeFilter() {
+      this.filterSearch = null
+      resetFilter()
+    },
+    getFilterNameFromKey(key) {
+      // if (key.startsWith('parameters.') && key.endsWith('.value')) {
+
+      // }
+      const filter = this.allFilters.find((f) => f.targetKey === key)
+      return filter.name
     },
     parseAndSetFilters() {
       // const keys = Object.keys(this.props)

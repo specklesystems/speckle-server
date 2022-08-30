@@ -9,7 +9,8 @@ import {
   Viewer,
   SelectionEvent,
   PropertyInfo,
-  FilteringState
+  FilteringState,
+  NumericPropertyInfo
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
 import { cloneDeep, has, isArray } from 'lodash'
@@ -67,13 +68,22 @@ const commitObjectViewerState = makeVar({
   preventCommentCollapse: false,
   commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
   emojis,
-  // New filtering vars
+  // New viewer & filter vars
   currentFilterState: null as Nullable<FilteringState>,
   selectedObjects: [] as UnknownObject[],
-  objectProperties: [] as PropertyInfo[]
+  objectProperties: [] as PropertyInfo[],
+  localFilterPropKey: null as Nullable<string>
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
+
+export type LocalFilterState = {
+  hiddenIds?: string[]
+  isolatedIds?: string[]
+  propertyInfoKey?: string
+  passMin?: number | null
+  passMax?: number | null
+}
 
 /**
  * Merge (through _.merge) these with the rest of your Apollo Client `typePolicies` to set up
@@ -222,10 +232,28 @@ export function setPreventCommentCollapse(shouldPrevent: boolean) {
 
 // VIEWER
 
+/**
+ *
+ * @returns A bare minimum filtering state object for storing with comments or plopping in the url.
+ */
+export function getLocalFilterState(): LocalFilterState {
+  const state = { ...commitObjectViewerState() }
+  const fs = {} as LocalFilterState
+  fs.hiddenIds = state.currentFilterState?.hiddenObjects
+  fs.isolatedIds = state.currentFilterState?.isolatedObjects
+  fs.propertyInfoKey = state.currentFilterState?.activePropFilterKey
+  fs.passMax = state.currentFilterState?.passMax
+  fs.passMin = state.currentFilterState?.passMin
+
+  return fs
+}
+
 export function getObjectProperties() {
+  console.log('getting obj props')
   setIsViewerBusy(true)
-  const props = getInitializedViewer().getObjectProperties()
+  const props = getInitializedViewer().getObjectProperties(undefined, true)
   setIsViewerBusy(false)
+  console.log(props)
   updateState({ objectProperties: props })
 }
 
@@ -275,7 +303,6 @@ export async function highlightObjects(objectIds: string[]) {
 }
 
 export async function removeHighlights() {
-  // TODO
   await getInitializedViewer().resetHighlight()
 }
 
@@ -348,7 +375,7 @@ export async function showObjects2(
 export async function setColorFilter(property: PropertyInfo) {
   setIsViewerBusy(true)
   const result = await getInitializedViewer().setColorFilter(property)
-  updateState({ currentFilterState: result })
+  updateState({ currentFilterState: result, localFilterPropKey: property.key })
   console.log(result)
   setIsViewerBusy(false)
 }
@@ -671,8 +698,52 @@ export type Filter = {
   }
   ghostOthers?: boolean
 }
+function isLegacyFilter(obj: UnknownObject) {
+  const keys = Object.keys(obj)
+  return (
+    keys.includes('filterBy') ||
+    keys.includes('colorBy') ||
+    keys.includes('ghostOhters')
+  )
+}
 
-export async function setFilterDirectly(params: { filter: Filter }) {
+export async function setFilterDirectly(params: { filter: Filter | LocalFilterState }) {
+  if (isLegacyFilter(params.filter)) {
+    // TODO: Legacy filter setting
+    console.log('legacy filter type detected, TODO')
+    console.log(params.filter)
+    return
+  }
+
+  const lfs = params.filter as LocalFilterState
+  console.log('new filter type detected')
+  await resetFilter()
+
+  if (lfs.hiddenIds) {
+    hideObjects2(lfs.hiddenIds, 'setfilter-direct', false)
+  }
+  if (lfs.isolatedIds) {
+    isolateObjects2(lfs.isolatedIds, 'setfilter-direct', false)
+  }
+  if (lfs.propertyInfoKey) {
+    const { objectProperties } = { ...commitObjectViewerState() }
+    const prop = { ...objectProperties.find((p) => p.key === lfs.propertyInfoKey) }
+
+    if (lfs.passMax) {
+      ;(prop as NumericPropertyInfo).passMax = lfs.passMax
+    }
+    if (lfs.passMin) {
+      ;(prop as NumericPropertyInfo).passMin = lfs.passMin
+    }
+
+    if (prop) {
+      setColorFilter(prop as NumericPropertyInfo)
+      // TODO: set active filter key or something
+    } else console.warn(`${lfs.propertyInfoKey} property not found.`)
+  }
+}
+
+export async function setFilterDirectlyLegacy(params: { filter: Filter }) {
   const { filter } = params
 
   const isNotFilter = (filterByVal: FilterByValue): filterByVal is { not: string[] } =>
@@ -750,7 +821,8 @@ export async function resetFilter() {
   updateState({
     appliedFilter: null,
     preventCommentCollapse: true,
-    currentFilterState: null
+    currentFilterState: null,
+    localFilterPropKey: null
   })
 
   await viewer.resetFilters()
