@@ -20,6 +20,7 @@
   "bind_address": {
     "doc": "The IP address the server should bind to (listen on).",
     "format": "ipaddress",
+    "default": "",
     "env": "BIND_ADDRESS"
   },
   "port": {
@@ -52,7 +53,38 @@
     "server_user_version": {
       "doc": "An identifier for the current running version of your server, such as the SHA of its associated Git commit. Apollo display this value in Apollo Studio to help segment metrics.",
       "format": "*",
+      "default": "",
       "env": "APOLLO_SERVER_USER_VERSION"
+    }
+  },
+  "db": {
+    "user": {
+      "doc": "The username to access the postgres database. Not required if 'db.url' is a full connection string.",
+      "default": "",
+      "env": "POSTGRES_USER"
+    },
+    "password": {
+      "doc": "The password for the user in the postgres database. Not required if 'db.url' is a full connection string.",
+      "sensitive": true,
+      "default": "",
+      "env": "POSTGRES_PASSWORD"
+    },
+    "database": {
+      "doc": "The database to connect to in the server. Not required if 'db.url' is a full connection string.",
+      "default": "",
+      "env": "POSTGRES_DB"
+    },
+    "url": {
+      "doc": "The full connection string to the postgres database. May contain username & password, so should be treated as a secret.",
+      "sensitive": true,
+      "default": "localhost:8080",
+      "env": "POSTGRES_URL"
+    },
+    "max_connections": {
+      "doc": "The maximum number of TCP connections the server can create to connect to the database.",
+      "format": "nat",
+      "default": 4,
+      "env": "POSTGRES_MAX_CONNECTIONS_SERVER"
     }
   }
 }
