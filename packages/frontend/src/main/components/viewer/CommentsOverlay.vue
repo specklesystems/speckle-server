@@ -528,14 +528,17 @@ export default {
       //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       // }
 
-      if (comment.data.filters) {
-        // await resetFilter()
-        await setFilterDirectly({
-          filter: comment.data.filters
-        })
-      } else {
-        await resetFilter()
-      }
+      // NOTE: this is a "hack" to prevent jank - let the camera animation end
+      // before applying some heavy filters
+      setTimeout(async () => {
+        if (comment.data.filters) {
+          await setFilterDirectly({
+            filter: comment.data.filters
+          })
+        } else {
+          await resetFilter()
+        }
+      }, 1000)
 
       if (comment.data.sectionBox) {
         this.viewer.sectionBox.setBox(comment.data.sectionBox, 0)
@@ -551,7 +554,6 @@ export default {
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
-      // console.log('updateCommentBubbles', new Date().toISOString())
       if (!this.comments) return
       const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()

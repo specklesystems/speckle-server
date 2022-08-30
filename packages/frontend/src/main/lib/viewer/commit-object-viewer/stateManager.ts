@@ -249,9 +249,11 @@ export function getLocalFilterState(): LocalFilterState {
 }
 
 export function getObjectProperties() {
+  console.log('getting obj props')
   setIsViewerBusy(true)
-  const props = getInitializedViewer().getObjectProperties()
+  const props = getInitializedViewer().getObjectProperties(undefined, true)
   setIsViewerBusy(false)
+  console.log(props)
   updateState({ objectProperties: props })
 }
 

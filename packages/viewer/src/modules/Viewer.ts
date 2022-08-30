@@ -156,8 +156,11 @@ export class Viewer extends EventEmitter implements IViewer {
     super.on(eventType, listener)
   }
 
-  public getObjectProperties(resourceURL: string = null): PropertyInfo[] {
-    return PropertyManager.getProperties(resourceURL)
+  public getObjectProperties(
+    resourceURL: string = null,
+    bypassCache = true
+  ): PropertyInfo[] {
+    return PropertyManager.getProperties(resourceURL, bypassCache)
   }
 
   public selectObjects(objectIds: string[]): Promise<void> {

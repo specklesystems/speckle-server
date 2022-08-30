@@ -42,6 +42,7 @@
       </v-col>
       <v-col v-else ref="parent" cols="12" class="px-3 py-3">
         <HistogramSlider
+          ref="histogramSlider"
           :key="width"
           :width="width"
           :bar-height="100"
@@ -148,33 +149,23 @@ export default {
       this.$set(this.range, 0, newVal.min)
       this.$set(this.range, 1, newVal.max)
     }
-    // colorBy() {
-    //   this.setFilter()
-    // }
   },
   mounted() {
     this.$set(this.range, 0, this.filter.min)
-    this.userMin = this.viewerState?.currentFilterState?.passMin || this.filter.min
     this.$set(this.range, 1, this.filter.max)
-    this.userMax = this.viewerState?.currentFilterState?.passMax || this.filter.max
-    // this.setFilter()
+
+    setTimeout(() => {
+      this.userMin = this.viewerState?.currentFilterState?.passMin || this.filter.min
+      this.userMax = this.viewerState?.currentFilterState?.passMax || this.filter.max
+      this.$refs.histogramSlider.update({ from: this.userMin, to: this.userMax })
+    }, 500)
+
     this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
       this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     })
   },
-  beforeDestroy() {
-    // resetFilter()
-  },
   methods: {
-    // setMin() {
-    //   console.log('setmin')
-    //   console.log(this.userMin)
-    // },
-    // setMax() {
-    //   console.log('setmax')
-    //   console.log(this.userMax)
-    // },
     async setFilterHistogram(e) {
       if (this.preventFirstSetInternal) {
         this.preventFirstSetInternal = false
@@ -185,14 +176,6 @@ export default {
       propInfo.passMin = e.from
       propInfo.passMax = e.to
       setColorFilter(propInfo)
-    },
-    async setFilter() {
-      // if (this.preventFirstSetInternal) {
-      //   this.preventFirstSetInternal = false
-      //   return
-      // }
-      // const propInfo = { ...this.filter.data }
-      // setColorFilter(propInfo)
     },
     prettify(num) {
       return this.$options.filters.prettynum(num)
