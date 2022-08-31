@@ -45,7 +45,8 @@ export enum ViewerEvent {
   LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
   UnloadAllComplete = 'unload-all-complete',
-  Busy = 'busy'
+  Busy = 'busy',
+  SectionBoxChanged = 'section-box-changed'
 }
 
 export type SelectionEvent = {

@@ -371,6 +371,7 @@ export default defineComponent({
           appliedFilter
           selectedObjects
           currentFilterState
+          sectionBox
         }
       }
     `)
@@ -429,25 +430,8 @@ export default defineComponent({
     }
   },
   watch: {
-    'viewerState.currentFilterState'(val) {
-      if (this.isEmbed) return
-      if (!val) {
-        const fullQuery = { ...this.$route.query }
-        delete fullQuery.filter
-        this.$router.replace({
-          path: this.$route.path,
-          query: { ...fullQuery }
-        })
-        return
-      }
-      const fullQuery = { ...this.$route.query }
-      delete fullQuery.filter
-      this.$router
-        .replace({
-          path: this.$route.path,
-          query: { ...fullQuery, filter: JSON.stringify(getLocalFilterState()) }
-        })
-        .catch(() => {})
+    'viewerState.currentFilterState'() {
+      this.updateUrl()
     }
   },
   async mounted() {
@@ -520,6 +504,13 @@ export default defineComponent({
         }
       }
 
+      this.viewer.on(
+        ViewerEvent.SectionBoxChanged,
+        debounce(() => {
+          this.updateUrl()
+        }, 1000)
+      )
+
       this.viewer.on(ViewerEvent.Busy, (val: boolean) => {
         setIsViewerBusy(!!val)
         this.viewerBusy = val
@@ -527,9 +518,6 @@ export default defineComponent({
           setTimeout(() => {
             if (!this.camToSet) return
 
-            if (this.camToSet[6] === 1) {
-              this.viewer.toggleCameraProjection()
-            }
             this.viewer.setView({
               position: new THREE.Vector3(
                 this.camToSet[0],
@@ -590,6 +578,30 @@ export default defineComponent({
     }, 300)
   },
   methods: {
+    updateUrl() {
+      if (this.isEmbed) return
+
+      const hasSectionBox = this.viewerState.sectionBox !== null
+      const hasFilters = this.viewerState.currentFilterState !== null
+
+      if (!hasSectionBox && !hasFilters) {
+        const fullQuery = { ...this.$route.query }
+        delete fullQuery.filter
+        this.$router.replace({
+          path: this.$route.path,
+          query: { ...fullQuery }
+        })
+        return
+      }
+      const fullQuery = { ...this.$route.query }
+      delete fullQuery.filter
+      this.$router
+        .replace({
+          path: this.$route.path,
+          query: { ...fullQuery, filter: JSON.stringify(getLocalFilterState()) }
+        })
+        .catch(() => {})
+    },
     resolveResourceType(resourceId: string): ResourceTypeValue {
       return resourceId.length === 10 ? 'commit' : 'object'
     },

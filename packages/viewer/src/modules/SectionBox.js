@@ -195,6 +195,7 @@ export default class SectionBox {
       this.prevPosition = this.sphere.position.clone()
     }
     this.viewer.needsRender = true
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
   }
 
   _clickHandler(args) {
@@ -422,26 +423,28 @@ export default class SectionBox {
     this._generateOrUpdatePlanes()
     this._attachControlsToBox()
     this.boxHelper.update()
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
   toggle() {
-    // This will not get set internally anymore
-    // this.setBox()
     this.display.visible = !this.display.visible
     this.viewer.speckleRenderer.renderer.localClippingEnabled = this.display.visible
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
   off() {
     this.display.visible = false
     this.viewer.speckleRenderer.renderer.localClippingEnabled = false
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
   on() {
     this.display.visible = true
     this.viewer.speckleRenderer.renderer.localClippingEnabled = true
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
