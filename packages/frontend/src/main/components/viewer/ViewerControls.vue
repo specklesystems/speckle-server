@@ -83,10 +83,10 @@
         :small="small"
         rounded
         icon
-        :class="`mr-2 ${sectionBoxIsOn ? 'primary' : ''}`"
+        :class="`mr-2 ${viewerState.sectionBox ? 'primary elevation-2' : ''}`"
         @click="sectionToggle()"
       >
-        <v-icon small :class="`${sectionBoxIsOn ? 'white--text' : ''}`">
+        <v-icon small :class="`${viewerState.sectionBox ? 'white--text' : ''}`">
           mdi-scissors-cutting
         </v-icon>
       </v-btn>
@@ -104,7 +104,14 @@ import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import { useQuery } from '@vue/apollo-composable'
 import { computed, ref } from 'vue'
 import gql from 'graphql-tag'
-import { resetFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import {
+  resetFilter,
+  sectionBoxOff,
+  sectionBoxOn,
+  toggleSectionBox,
+  setSectionBox,
+  setSectionBoxFromObjects
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     CanonicalViews: () => import('@/main/components/viewer/CanonicalViews'),
@@ -122,6 +129,7 @@ export default {
           appliedFilter
           currentFilterState
           selectedObjects
+          sectionBox
         }
       }
     `)
@@ -135,8 +143,7 @@ export default {
   },
   data() {
     return {
-      fullScreen: false,
-      sectionBoxIsOn: false
+      fullScreen: false
     }
   },
   computed: {
@@ -160,14 +167,12 @@ export default {
     },
     sectionToggle() {
       if (this.viewerState.selectedObjects.length !== 0) {
-        this.viewer.setSectionBoxFromObjects(
-          this.viewerState.selectedObjects.map((o) => o.id)
-        )
+        setSectionBoxFromObjects(this.viewerState.selectedObjects.map((o) => o.id))
       } else {
-        this.viewer.setSectionBox()
+        setSectionBox()
       }
-      this.viewer.toggleSectionBox()
-      this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
+
+      toggleSectionBox()
     }
   }
 }

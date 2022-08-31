@@ -98,7 +98,10 @@ import {
   resetFilter,
   setFilterDirectly,
   useCommitObjectViewerParams,
-  getLocalFilterState
+  getLocalFilterState,
+  setSectionBox,
+  sectionBoxOn,
+  sectionBoxOff
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { ViewerEvent } from '@speckle/viewer'
 
@@ -270,10 +273,10 @@ export default {
       else resetFilter()
 
       if (user.sectionBox) {
-        this.viewer.setSectionBox(user.sectionBox, 0)
-        this.viewer.sectionBoxOn()
+        setSectionBox(user.sectionBox, 0)
+        sectionBoxOn()
       } else {
-        this.viewer.sectionBoxOff()
+        sectionBoxOff()
       }
       this.$mixpanel.track('Bubbles Action', { type: 'action', name: 'avatar-click' })
     },

@@ -404,7 +404,7 @@ export default {
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
           camPos: getCamArray(this.viewer),
           filters: getLocalFilterState(),
-          sectionBox: this.viewer.sectionBox.getCurrentBox(), // @Alex/Dim: TODO
+          sectionBox: this.viewer.getCurrentSectionBox(),
           selection: null // TODO for later, lazy now
         },
         screenshot: await this.viewer.screenshot()

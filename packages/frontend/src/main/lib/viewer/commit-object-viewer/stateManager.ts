@@ -15,6 +15,7 @@ import {
 import emojis from '@/main/store/emojis'
 import { cloneDeep, has, isArray } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
+import { off } from 'process'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_STREAMID'
@@ -72,7 +73,8 @@ const commitObjectViewerState = makeVar({
   currentFilterState: null as Nullable<FilteringState>,
   selectedObjects: [] as UnknownObject[],
   objectProperties: [] as PropertyInfo[],
-  localFilterPropKey: null as Nullable<string>
+  localFilterPropKey: null as Nullable<string>,
+  sectionBox: false
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
@@ -83,6 +85,7 @@ export type LocalFilterState = {
   propertyInfoKey?: string
   passMin?: number | null
   passMax?: number | null
+  sectionBox?: number[]
 }
 
 /**
@@ -244,8 +247,40 @@ export function getLocalFilterState(): LocalFilterState {
   fs.propertyInfoKey = state.currentFilterState?.activePropFilterKey
   fs.passMax = state.currentFilterState?.passMax
   fs.passMin = state.currentFilterState?.passMin
-
+  const box = getInitializedViewer().getCurrentSectionBox()
+  if (box) {
+    fs.sectionBox = [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z]
+  }
   return fs
+}
+
+export function setSectionBox(
+  box?: {
+    min: { x: number; y: number; z: number }
+    max: { x: number; y: number; z: number }
+  },
+  offset?: number
+) {
+  getInitializedViewer().setSectionBox(box, offset)
+}
+
+export function setSectionBoxFromObjects(objectIds: string[], offset?: number) {
+  getInitializedViewer().setSectionBoxFromObjects(objectIds, offset)
+}
+
+export function toggleSectionBox() {
+  getInitializedViewer().toggleSectionBox()
+  updateState({ sectionBox: getInitializedViewer().getCurrentSectionBox() !== null })
+}
+
+export function sectionBoxOff() {
+  getInitializedViewer().sectionBoxOff()
+  updateState({ sectionBox: false })
+}
+
+export function sectionBoxOn() {
+  getInitializedViewer().sectionBoxOn()
+  updateState({ sectionBox: true })
 }
 
 export function getObjectProperties() {
@@ -732,6 +767,14 @@ export async function setFilterDirectly(params: { filter: Filter | LocalFilterSt
       setColorFilter(prop as NumericPropertyInfo)
       // TODO: set active filter key or something
     } else console.warn(`${lfs.propertyInfoKey} property not found.`)
+  }
+  if (lfs.sectionBox) {
+    const box = {
+      min: { x: lfs.sectionBox[0], y: lfs.sectionBox[1], z: lfs.sectionBox[2] },
+      max: { x: lfs.sectionBox[3], y: lfs.sectionBox[4], z: lfs.sectionBox[5] }
+    }
+    setSectionBox(box)
+    sectionBoxOn()
   }
 }
 

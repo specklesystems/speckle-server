@@ -193,7 +193,10 @@ import {
   setFilterDirectly,
   setPreventCommentCollapse,
   setSelectedCommentMetaData,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  sectionBoxOff,
+  sectionBoxOn,
+  setSectionBox
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 export default {
@@ -494,7 +497,7 @@ export default {
         if (c.id === comment.id && c.expanded) {
           c.expanded = false
           if (c.data.filters) await resetFilter()
-          if (c.data.sectionBox) this.viewer.sectionBox.off()
+          if (c.data.sectionBox) sectionBoxOff()
 
           setSelectedCommentMetaData(null)
         }
@@ -541,10 +544,10 @@ export default {
       }, 1000)
 
       if (comment.data.sectionBox) {
-        this.viewer.sectionBox.setBox(comment.data.sectionBox, 0)
-        this.viewer.sectionBox.on()
+        setSectionBox(comment.data.sectionBox, 0)
+        sectionBoxOn()
       } else {
-        this.viewer.sectionBox.off()
+        sectionBoxOff()
       }
     },
     async handleDeletion(comment) {
