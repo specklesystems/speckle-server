@@ -15,12 +15,6 @@ const config = {
   ignorePatterns: ['node_modules', 'dist', 'generated/**/*'],
   overrides: [
     {
-      files: '*.spec.{js,ts}',
-      env: {
-        mocha: true
-      }
-    },
-    {
       files: '*.ts',
       plugins: ['@typescript-eslint'],
       parserOptions: {
@@ -32,6 +26,15 @@ const config = {
         'prettier'
       ],
       parser: '@typescript-eslint/parser'
+    },
+    {
+      files: '*.spec.{js,ts}',
+      env: {
+        mocha: true
+      },
+      rules: {
+        '@typescript-eslint/no-non-null-assertion': 'off'
+      }
     }
   ]
 }
