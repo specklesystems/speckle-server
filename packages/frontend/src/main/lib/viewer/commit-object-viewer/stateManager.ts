@@ -249,11 +249,9 @@ export function getLocalFilterState(): LocalFilterState {
 }
 
 export function getObjectProperties() {
-  console.log('getting obj props')
   setIsViewerBusy(true)
   const props = getInitializedViewer().getObjectProperties(undefined, true)
   setIsViewerBusy(false)
-  console.log(props)
   updateState({ objectProperties: props })
 }
 
@@ -319,7 +317,6 @@ export async function isolateObjects2(
     stateKey,
     includeDescendants
   )
-  console.log(result)
   updateState({ currentFilterState: result })
   setIsViewerBusy(false)
 }
@@ -336,7 +333,6 @@ export async function unIsolateObjects2(
     includeDescendants
   )
   updateState({ currentFilterState: result })
-  console.log(result)
   setIsViewerBusy(false)
 }
 
@@ -352,7 +348,6 @@ export async function hideObjects2(
     includeDescendants
   )
   updateState({ currentFilterState: result })
-  console.log(result)
   setIsViewerBusy(false)
 }
 
@@ -368,7 +363,6 @@ export async function showObjects2(
     includeDescendants
   )
   updateState({ currentFilterState: result })
-  console.log(result)
   setIsViewerBusy(false)
 }
 
@@ -376,7 +370,6 @@ export async function setColorFilter(property: PropertyInfo) {
   setIsViewerBusy(true)
   const result = await getInitializedViewer().setColorFilter(property)
   updateState({ currentFilterState: result, localFilterPropKey: property.key })
-  console.log(result)
   setIsViewerBusy(false)
 }
 
@@ -716,7 +709,6 @@ export async function setFilterDirectly(params: { filter: Filter | LocalFilterSt
   }
 
   const lfs = params.filter as LocalFilterState
-  console.log('new filter type detected')
   await resetFilter()
 
   if (lfs.hiddenIds) {

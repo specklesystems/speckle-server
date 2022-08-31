@@ -78,7 +78,7 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   elevation: 1.33,
   azimuth: 0.75,
   radius: 0,
-  indirectLightIntensity: 1.85
+  indirectLightIntensity: 1.2
 }
 
 export type CanonicalView =

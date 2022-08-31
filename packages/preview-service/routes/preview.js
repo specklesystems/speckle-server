@@ -21,33 +21,20 @@ async function pageFunction(objectUrl) {
   await window.v.init()
 
   try {
-    await v.loadObject(objectUrl, '')
+    await window.v.loadObject(objectUrl, '')
   } catch (error) {
     // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
     await waitForAnimation(1000)
   }
-  v.zoom(undefined, 0.95, false)
+  window.v.zoom(undefined, 0.95, false)
   await waitForAnimation(100)
 
   // full 360
   for (let i = 0; i < 24; i++) {
-    v.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
+    window.v.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
     await waitForAnimation()
-    ret.scr[i + ''] = await v.screenshot()
+    ret.scr[i + ''] = await window.v.screenshot()
   }
-
-  /*
-  v.interactions.rotateCamera( 2 * stepAngle, transition=false )
-  await waitForAnimation( 500 )
-
-  let dirArray = [ 'top', 'bottom', 'front', 'back', 'left', 'right' ]
-  for ( let i in dirArray ) {
-    let d = dirArray[i]
-    v.interactionsro.setView( d )
-    await waitForAnimation()
-    ret.scr[d] = v.interactions.screenshot()
-  }
-  */
 
   ret.duration = (Date.now() - t0) / 1000
   ret.mem = {
