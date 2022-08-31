@@ -7,13 +7,13 @@
     >
       <v-btn
         v-show="showVisReset"
-        v-tooltip="`Resets all applied filters`"
-        small
+        v-tooltip="`Resets all applied color and visibility filters`"
+        x-small
         rounded
-        class="mr-2"
+        class="mr-2 primary"
         @click="resetVisibility()"
       >
-        <v-icon small class="mr-2">mdi-eye</v-icon>
+        <v-icon small class="mr-2">mdi-eye-off</v-icon>
         Reset Filters
       </v-btn>
       <v-btn
@@ -156,7 +156,6 @@ export default {
     },
     sectionToggle() {
       if (this.viewerState.selectedObjects.length !== 0) {
-        console.log('TODO: set box from objects', this.viewerState.selectedObjects)
         this.viewer.setSectionBoxFromObjects(
           this.viewerState.selectedObjects.map((o) => o.id)
         )

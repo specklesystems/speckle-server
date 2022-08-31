@@ -229,6 +229,7 @@ export default {
       this.updateBubbles(false)
     )
 
+    // TODO: this needs to be more intelligent...
     this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
     window.addEventListener('beforeunload', async () => {
       await this.sendDisconnect()
