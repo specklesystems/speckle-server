@@ -45,6 +45,7 @@ WORKDIR /speckle-server/packages/server
 COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
+COPY --from=build-stage /speckle-server/packages/server/config.schema.json ./config.schema.json
 
 ENV FILE_SIZE_LIMIT_MB=100
 ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}

@@ -21,6 +21,8 @@ build:
 
 
 install:
+	@(kubectl config current-context | grep -q minikube) || (echo "ERROR: Minikube is not the current kubectl context. Temporarily modify the makefile if you really want to use the current configured kubectl context" && exit 1)
+
 	helm uninstall speckle-test 2>/dev/null || true
 	helm install -f test-values.yml speckle-test ./speckle-server
 
