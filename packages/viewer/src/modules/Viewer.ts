@@ -129,6 +129,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
   }
 
+  public getCurrentSectionBox() {
+    return this.sectionBox.getCurrentBox()
+  }
+
   public resize() {
     this.speckleRenderer.renderer.setSize(
       this.container.offsetWidth,

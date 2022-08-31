@@ -83,10 +83,12 @@
         :small="small"
         rounded
         icon
-        class="mr-2"
+        :class="`mr-2 ${sectionBoxIsOn ? 'primary' : ''}`"
         @click="sectionToggle()"
       >
-        <v-icon small>mdi-scissors-cutting</v-icon>
+        <v-icon small :class="`${sectionBoxIsOn ? 'white--text' : ''}`">
+          mdi-scissors-cutting
+        </v-icon>
       </v-btn>
       <!-- Other components teleport extra controls in here -->
       <portal-target
@@ -133,7 +135,8 @@ export default {
   },
   data() {
     return {
-      fullScreen: false
+      fullScreen: false,
+      sectionBoxIsOn: false
     }
   },
   computed: {
@@ -143,6 +146,7 @@ export default {
   },
   mounted() {
     this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
+    this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
   },
   methods: {
     toggleCamera() {
@@ -163,6 +167,7 @@ export default {
         this.viewer.setSectionBox()
       }
       this.viewer.toggleSectionBox()
+      this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
     }
   }
 }

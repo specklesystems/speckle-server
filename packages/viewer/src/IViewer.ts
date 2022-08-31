@@ -124,6 +124,10 @@ export interface IViewer {
     offset?: number
   )
   setSectionBoxFromObjects(objectIds: string[], offset?: number)
+  getCurrentSectionBox(): {
+    min: { x: number; y: number; z: number }
+    max: { x: number; y: number; z: number }
+  } | null
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void

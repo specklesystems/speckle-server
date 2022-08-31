@@ -97,7 +97,8 @@ import { computed } from 'vue'
 import {
   resetFilter,
   setFilterDirectly,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { ViewerEvent } from '@speckle/viewer'
 
@@ -269,8 +270,10 @@ export default {
       else resetFilter()
 
       if (user.sectionBox) {
-        this.viewer.sectionBox.on()
-        this.viewer.sectionBox.setBox(user.sectionBox, 0)
+        this.viewer.setSectionBox(user.sectionBox, 0)
+        this.viewer.sectionBoxOn()
+      } else {
+        this.viewer.sectionBoxOff()
       }
       this.$mixpanel.track('Bubbles Action', { type: 'action', name: 'avatar-click' })
     },
@@ -311,10 +314,10 @@ export default {
       }
 
       const data = {
-        filter: this.viewerState.appliedFilter,
+        filter: getLocalFilterState(),
         selection: this.selectedIds,
         selectionLocation,
-        sectionBox: this.viewer.sectionBox.getCurrentBox(),
+        sectionBox: this.viewer.getCurrentSectionBox(),
         selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
