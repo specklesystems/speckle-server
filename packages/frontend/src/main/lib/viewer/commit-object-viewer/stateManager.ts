@@ -775,7 +775,7 @@ export async function setFilterDirectly(params: { filter: Filter | LocalFilterSt
       // TODO: set active filter key or something
     } else console.warn(`${lfs.propertyInfoKey} property not found.`)
   }
-  console.log(lfs.sectionBox)
+
   if (lfs.sectionBox) {
     const box = {
       min: { x: lfs.sectionBox[0], y: lfs.sectionBox[1], z: lfs.sectionBox[2] },

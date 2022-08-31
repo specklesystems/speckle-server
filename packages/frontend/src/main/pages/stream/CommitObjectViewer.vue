@@ -368,6 +368,7 @@ export default defineComponent({
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
+          selectedCommentMetaData
           appliedFilter
           selectedObjects
           currentFilterState
@@ -561,10 +562,14 @@ export default defineComponent({
             return
           }
           if (this.camToSet) return
+          if (this.viewerState.selectedCommentMetaData) {
+            return
+          }
 
           const c = getCamArray(this.viewer)
           const fullQuery = { ...this.$route.query }
           delete fullQuery.c
+          delete fullQuery.cId
           this.$router
             .replace({
               path: this.$route.path,
@@ -581,12 +586,26 @@ export default defineComponent({
     updateUrl() {
       if (this.isEmbed) return
 
+      if (this.viewerState.selectedCommentMetaData) {
+        this.$router
+          .replace({
+            path: this.$route.path,
+            query: { cId: this.viewerState.selectedCommentMetaData.id }
+          })
+          .catch(() => {})
+        return
+      }
+
+      // TODO: remove comment if there's no selected comment
+
       const hasSectionBox = this.viewerState.sectionBox !== null
       const hasFilters = this.viewerState.currentFilterState !== null
+      const hasComment = this.viewerState.selectedCommentMetaData !== null
 
       if (!hasSectionBox && !hasFilters) {
         const fullQuery = { ...this.$route.query }
         delete fullQuery.filter
+        if (!hasComment) delete fullQuery.cId
         this.$router.replace({
           path: this.$route.path,
           query: { ...fullQuery }
@@ -595,6 +614,7 @@ export default defineComponent({
       }
       const fullQuery = { ...this.$route.query }
       delete fullQuery.filter
+      if (!hasComment) delete fullQuery.cId
       this.$router
         .replace({
           path: this.$route.path,
