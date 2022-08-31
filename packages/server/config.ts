@@ -1,7 +1,5 @@
 import convict from 'convict'
 import convictFormatValidations from 'convict-format-with-validator'
-convict.addFormat(convictFormatValidations.ipaddress)
-convict.addFormat(convictFormatValidations.url)
 
 type ExportedConfig<T> = convict.Config<T> & {
   isTestEnv(): boolean
@@ -14,6 +12,8 @@ type ExportedConfig<T> = convict.Config<T> & {
 }
 
 module.exports = function (path: string) {
+  convict.addFormat(convictFormatValidations.ipaddress)
+  convict.addFormat(convictFormatValidations.url)
   const config = convict(path) as unknown as ExportedConfig<string>
   config.isTestEnv = function () {
     return this.get('env' as convict.Path<string>) === 'test'
