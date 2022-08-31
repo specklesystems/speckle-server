@@ -119,6 +119,7 @@ export default {
         commitObjectViewerState @client {
           appliedFilter
           currentFilterState
+          selectedObjects
         }
       }
     `)
@@ -154,6 +155,14 @@ export default {
       this.viewer.zoom()
     },
     sectionToggle() {
+      if (this.viewerState.selectedObjects.length !== 0) {
+        console.log('TODO: set box from objects', this.viewerState.selectedObjects)
+        this.viewer.setSectionBoxFromObjects(
+          this.viewerState.selectedObjects.map((o) => o.id)
+        )
+      } else {
+        this.viewer.setSectionBox()
+      }
       this.viewer.toggleSectionBox()
     }
   }

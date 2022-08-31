@@ -90,9 +90,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).FM = this.filteringManager
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).V = this
+    ;(window as any)._V = this // For debugging!
 
     this.cameraHandler = new CameraHandler(this)
     this.sectionBox = new SectionBox(this)

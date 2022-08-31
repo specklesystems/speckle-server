@@ -368,6 +368,7 @@ export default class SectionBox {
       // } else*/ if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
       //   box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
       // } else {
+      // box = this.viewer.world.worldBox.clone()
       box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
     }
 
