@@ -49,9 +49,7 @@ const getUsersBaseQuery = (searchQuery = null) => {
 
 module.exports = {
   /*
-
-        Users
-
+    Users
   */
 
   /**
@@ -73,8 +71,7 @@ module.exports = {
     const usr = await userByEmailQuery(user.email).select('id').first()
     if (usr) throw new Error('Email taken. Try logging in?')
 
-    await Users().insert(user)
-    const newUser = await module.exports.getUserById({ userId: newId })
+    const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
 
     const userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
