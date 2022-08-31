@@ -249,7 +249,14 @@ export function getLocalFilterState(): LocalFilterState {
   fs.passMin = state.currentFilterState?.passMin
   const box = getInitializedViewer().getCurrentSectionBox()
   if (box) {
-    fs.sectionBox = [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z]
+    fs.sectionBox = [
+      +box.min.x.toFixed(2),
+      +box.min.y.toFixed(2),
+      +box.min.z.toFixed(2),
+      +box.max.x.toFixed(2),
+      +box.max.y.toFixed(2),
+      +box.max.z.toFixed(2)
+    ]
   }
   return fs
 }
