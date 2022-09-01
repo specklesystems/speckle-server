@@ -13,7 +13,7 @@ import {
   NumericPropertyInfo
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray } from 'lodash'
+import { cloneDeep } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -32,11 +32,6 @@ type GlobalViewerData = {
   viewer: Viewer
   container: HTMLElement
   initialized: Promise<void>
-}
-
-type FilterKeyAndValues = {
-  filterKey: string
-  filterValues: string[]
 }
 
 /**
@@ -492,76 +487,76 @@ export async function setFilterDirectly(params: { filter: Filter | LocalFilterSt
   }
 }
 
-// NOTE: keeping legacy function around for now as it will help implement a legacy filter fallback.
-export async function setFilterDirectlyLegacy(params: { filter: Filter }) {
-  const { filter } = params
+// NOTE: keeping legacy function around for now as it will help implement a legacy filter fallback later on.
+// export async function setFilterDirectlyLegacy(params: { filter: Filter }) {
+//   const { filter } = params
 
-  const isNotFilter = (filterByVal: FilterByValue): filterByVal is { not: string[] } =>
-    has(filterByVal, 'not')
+//   const isNotFilter = (filterByVal: FilterByValue): filterByVal is { not: string[] } =>
+//     has(filterByVal, 'not')
 
-  const filterBy = filter.filterBy
-  if (filterBy && filterBy.__parents) {
-    if (filterBy.__parents.includes) {
-      // isolateObjects({
-      //   filterKey: '__parents',
-      //   filterValues: filterBy.__parents.includes
-      // })
-      return
-    }
-    if (filterBy.__parents.excludes) {
-      // hideObjects({
-      //   filterKey: '__parents',
-      //   filterValues: filterBy.__parents.excludes
-      // })
-      return
-    }
-  } else if (filter.ghostOthers && filterBy) {
-    // means it's isolate by category or numeric filter
-    const filterByKey = Object.keys(filterBy || {})[0]
-    const filterVal = filterBy[filterByKey]
+//   const filterBy = filter.filterBy
+//   if (filterBy && filterBy.__parents) {
+//     if (filterBy.__parents.includes) {
+//       // isolateObjects({
+//       //   filterKey: '__parents',
+//       //   filterValues: filterBy.__parents.includes
+//       // })
+//       return
+//     }
+//     if (filterBy.__parents.excludes) {
+//       // hideObjects({
+//       //   filterKey: '__parents',
+//       //   filterValues: filterBy.__parents.excludes
+//       // })
+//       return
+//     }
+//   } else if (filter.ghostOthers && filterBy) {
+//     // means it's isolate by category or numeric filter
+//     const filterByKey = Object.keys(filterBy || {})[0]
+//     const filterVal = filterBy[filterByKey]
 
-    if (
-      filter.colorBy &&
-      filter.colorBy.type === 'gradient' &&
-      !isArray(filterVal) &&
-      !isNotFilter(filterVal)
-    ) {
-      // setNumericFilter({
-      //   filterKey: filterByKey,
-      //   minValue: filterVal.gte,
-      //   maxValue: filterVal.lte
-      // })
-    } else if (isArray(filterVal)) {
-      for (const val of filterVal) {
-        const f = {
-          filterKey: filterByKey,
-          filterValue: val,
-          allValues: [],
-          colorBy: filter.colorBy
-        }
-        // isolateCategoryToggle(f)
-      }
-    }
-  } else if (filterBy) {
-    const filterByKey = Object.keys(filterBy || {})[0]
-    const filterVal = filterBy[filterByKey]
+//     if (
+//       filter.colorBy &&
+//       filter.colorBy.type === 'gradient' &&
+//       !isArray(filterVal) &&
+//       !isNotFilter(filterVal)
+//     ) {
+//       // setNumericFilter({
+//       //   filterKey: filterByKey,
+//       //   minValue: filterVal.gte,
+//       //   maxValue: filterVal.lte
+//       // })
+//     } else if (isArray(filterVal)) {
+//       for (const val of filterVal) {
+//         const f = {
+//           filterKey: filterByKey,
+//           filterValue: val,
+//           allValues: [],
+//           colorBy: filter.colorBy
+//         }
+//         // isolateCategoryToggle(f)
+//       }
+//     }
+//   } else if (filterBy) {
+//     const filterByKey = Object.keys(filterBy || {})[0]
+//     const filterVal = filterBy[filterByKey]
 
-    if (isNotFilter(filterVal)) {
-      const values = filterVal.not
-      for (const val of values) {
-        const f = {
-          filterKey: filterByKey,
-          filterValue: val,
-          allValues: [],
-          colorBy: filter.colorBy
-        }
-        // hideCategoryToggle(f)
-      }
-    }
-  } else if (filter.colorBy) {
-    // toggleColorByCategory({ filterKey: filter.colorBy.property })
-  }
-}
+//     if (isNotFilter(filterVal)) {
+//       const values = filterVal.not
+//       for (const val of values) {
+//         const f = {
+//           filterKey: filterByKey,
+//           filterValue: val,
+//           allValues: [],
+//           colorBy: filter.colorBy
+//         }
+//         // hideCategoryToggle(f)
+//       }
+//     }
+//   } else if (filter.colorBy) {
+//     // toggleColorByCategory({ filterKey: filter.colorBy.property })
+//   }
+// }
 
 export async function resetFilter() {
   const viewer = getInitializedViewer()
