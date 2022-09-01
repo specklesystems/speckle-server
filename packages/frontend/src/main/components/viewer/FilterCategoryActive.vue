@@ -79,9 +79,7 @@ import {
   hideObjects2,
   showObjects2,
   isolateObjects2,
-  unIsolateObjects2,
-  resetFilter,
-  setColorFilter
+  unIsolateObjects2
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {},

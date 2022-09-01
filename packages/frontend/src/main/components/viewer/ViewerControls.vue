@@ -106,8 +106,6 @@ import { computed, ref } from 'vue'
 import gql from 'graphql-tag'
 import {
   resetFilter,
-  sectionBoxOff,
-  sectionBoxOn,
   toggleSectionBox,
   setSectionBox,
   setSectionBoxFromObjects
