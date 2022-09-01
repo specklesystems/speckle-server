@@ -130,10 +130,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
-  hideObjects2,
-  showObjects2,
-  isolateObjects2,
-  unIsolateObjects2,
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects,
   highlightObjects,
   removeHighlights,
   getInitializedViewer
@@ -258,34 +258,34 @@ export default {
     toggleVisibility() {
       if (this.prop.type === 'object') {
         if (this.visible) {
-          hideObjects2([this.prop.value.referencedId], 'ui-vis', true)
+          hideObjects([this.prop.value.referencedId], 'ui-vis', true)
         } else {
-          showObjects2([this.prop.value.referencedId], 'ui-vis', true)
+          showObjects([this.prop.value.referencedId], 'ui-vis', true)
         }
       }
       if (this.prop.type === 'array') {
         const targetIds = this.prop.value.map((o) => o.referencedId)
         if (this.visible) {
-          hideObjects2(targetIds, 'ui-vis', true)
+          hideObjects(targetIds, 'ui-vis', true)
         } else {
-          showObjects2(targetIds, 'ui-vis', true)
+          showObjects(targetIds, 'ui-vis', true)
         }
       }
     },
     toggleFilter() {
       if (this.prop.type === 'object') {
         if (this.isolated) {
-          unIsolateObjects2([this.prop.value.referencedId], 'ui-iso', true)
+          unIsolateObjects([this.prop.value.referencedId], 'ui-iso', true)
         } else {
-          isolateObjects2([this.prop.value.referencedId], 'ui-iso', true)
+          isolateObjects([this.prop.value.referencedId], 'ui-iso', true)
         }
       }
       if (this.prop.type === 'array') {
         const targetIds = this.prop.value.map((o) => o.referencedId)
         if (this.isolated) {
-          unIsolateObjects2(targetIds, 'ui-iso', true)
+          unIsolateObjects(targetIds, 'ui-iso', true)
         } else {
-          isolateObjects2(targetIds, 'ui-iso', true)
+          isolateObjects(targetIds, 'ui-iso', true)
         }
       }
     }

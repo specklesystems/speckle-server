@@ -67,8 +67,8 @@ import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
   clearSelectionDisplay,
-  isolateObjects2,
-  unIsolateObjects2
+  isolateObjects,
+  unIsolateObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
@@ -140,9 +140,9 @@ export default {
       const ids = this.objects.map((o) => o.id)
       if (!this.isolated) {
         clearSelectionDisplay()
-        isolateObjects2(ids, 'ui-sel')
+        isolateObjects(ids, 'ui-sel')
       } else {
-        unIsolateObjects2(ids, 'ui-sel')
+        unIsolateObjects(ids, 'ui-sel')
       }
     },
     getSelectionUrl() {

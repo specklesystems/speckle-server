@@ -76,10 +76,10 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
-  hideObjects2,
-  showObjects2,
-  isolateObjects2,
-  unIsolateObjects2
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {},
@@ -169,16 +169,16 @@ export default {
   methods: {
     async toggleFilter(prop) {
       if (this.isolatedLegend[prop.value]) {
-        unIsolateObjects2(prop.ids, 'ui-filters')
+        unIsolateObjects(prop.ids, 'ui-filters')
       } else {
-        isolateObjects2(prop.ids, 'ui-filters')
+        isolateObjects(prop.ids, 'ui-filters')
       }
     },
     async toggleVisibility(prop) {
       if (this.visibleLegend[prop.value]) {
-        hideObjects2(prop.ids, 'ui-filters')
+        hideObjects(prop.ids, 'ui-filters')
       } else {
-        showObjects2(prop.ids, 'ui-filters')
+        showObjects(prop.ids, 'ui-filters')
       }
     },
     isVisible(ids) {

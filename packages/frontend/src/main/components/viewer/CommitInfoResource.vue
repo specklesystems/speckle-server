@@ -81,10 +81,10 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
-  hideObjects2,
-  showObjects2,
-  isolateObjects2,
-  unIsolateObjects2,
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
@@ -143,17 +143,17 @@ export default {
     isolate() {
       const id = this.resource.data.commit.referencedObject
       if (this.isolated) {
-        unIsolateObjects2([id], 'ui-iso', true)
+        unIsolateObjects([id], 'ui-iso', true)
       } else {
-        isolateObjects2([id], 'ui-iso', true)
+        isolateObjects([id], 'ui-iso', true)
       }
     },
     toggleVisibility() {
       const id = this.resource.data.commit.referencedObject
       if (this.visible) {
-        hideObjects2([id], 'ui-vis', true)
+        hideObjects([id], 'ui-vis', true)
       } else {
-        showObjects2([id], 'ui-vis', true)
+        showObjects([id], 'ui-vis', true)
       }
     }
   }
