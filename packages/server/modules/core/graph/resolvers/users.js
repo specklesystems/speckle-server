@@ -27,7 +27,7 @@ module.exports = {
 
     async user(parent, args, context) {
       // User wants info about himself and he's not authenticated - just return null
-      // if (!context.auth && !args.id) return null
+      if (!context.auth && !args.id) return null
 
       await validateServerRole(context, 'server:user')
 
