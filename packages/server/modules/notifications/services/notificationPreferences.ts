@@ -1,4 +1,7 @@
-import { getUserNotificationPreferences, saveUserNotificationPreferences } from '@/modules/notifications/repositories'
+import {
+  getUserNotificationPreferences,
+  saveUserNotificationPreferences
+} from '@/modules/notifications/repositories'
 import {
   NotificationChannel,
   NotificationType,

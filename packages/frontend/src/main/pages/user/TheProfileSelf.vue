@@ -8,9 +8,7 @@
       <v-col cols="12" lg="8">
         <section-card v-if="user && user.notificationPreferences" expandable>
           <template #header><b>Notification preferences</b></template>
-          <user-notification-preferences
-            :notification-preferences="user.notificationPreferences"
-          />
+          <user-notification-preferences :user="user" />
         </section-card>
         <section-card expandable class="my-10">
           <template #header><b>Authorized Apps</b></template>
