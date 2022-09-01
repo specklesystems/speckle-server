@@ -1,4 +1,5 @@
-import { Color, Texture, MathUtils } from 'three'
+import { Color, Texture } from 'three'
+import stc from 'string-to-color'
 import { Assets } from '../Assets'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -231,14 +232,18 @@ export class FilteringManager {
     return this.setFilters()
   }
 
+  // private hashCode = (str): number =>
+  //   str.split('').reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
+
   private setStringColorFilter(stringProp: StringPropertyInfo) {
     this.ColorStringFilterState.currentProp = stringProp
 
     const valueGroupColors: ValueGroupColorItemStringProps[] = []
     for (const vg of stringProp.valueGroups) {
+      const col = stc(vg.value) // TODO: smarter way needed.
       valueGroupColors.push({
         ...vg,
-        color: new Color(MathUtils.randInt(0, 0xffffff)),
+        color: new Color(col),
         rvs: []
       })
     }
