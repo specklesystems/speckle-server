@@ -45,7 +45,7 @@ export class PropertyManager {
 
     for (const propKey in propValues) {
       const propValuesArr = propValues[propKey]
-      const propInfo = {} as any
+      const propInfo = {} as Record<string, unknown>
       propInfo.key = propKey
       propInfo.type = typeof propValuesArr[0].value
       propInfo.objectCount = propValuesArr.length
