@@ -59,6 +59,8 @@ import { groupBy } from 'lodash'
 import path from 'path'
 import * as ejs from 'ejs'
 import mjml2html from 'mjml'
+import { getUserNotificationPreferences } from '@/modules/notifications/repositories'
+import { NotificationPreferences } from '@/modules/notifications/helpers/types'
 
 type UserStreams = {
   userId: string
@@ -545,11 +547,21 @@ const prepareSummaryEmail = async (
 export const sendSummaryEmails = async (
   start: Date,
   end: Date,
-  emailSender: (params: EmailInput) => Promise<boolean>
+  emailSender: (params: EmailInput) => Promise<boolean>,
+  notificationPreferenceGetter: (
+    userId: string
+  ) => Promise<NotificationPreferences> = getUserNotificationPreferences
 ): Promise<boolean> => {
   const activityData = await createSummaryDataForEveryone(start, end)
   const serverInfo = (await getServerInfo()) as ServerInfo
+  const wantsDigests = await Promise.all(
+    activityData.map(
+      async (a) =>
+        (await notificationPreferenceGetter(a.user.id)).activityDigest?.email !== false
+    )
+  )
   const digestData = activityData
+    .filter((_value, index) => wantsDigests[index])
     .map((activity) => digestSummaryData(activity, serverInfo))
     .filter((dig): dig is Digest => dig !== null)
   const sendResults = await Promise.all(

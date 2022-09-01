@@ -1,0 +1,1 @@
+// describe('Activity summary @activity', () => {})

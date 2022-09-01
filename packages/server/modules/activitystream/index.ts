@@ -22,10 +22,10 @@ const activityModule: SpeckleModule = {
       const end = new Date()
       const start = new Date(end.getTime())
       start.setDate(start.getDate() - numberOfDays)
-      const sendResult = await sendSummaryEmails(start, end, SendingService.sendEmail)
-      sendResult
-        ? activitiesDebug('Successfully sent all summaries')
-        : activitiesDebug('Sending some email summaries failed')
+      // const sendResult = await sendSummaryEmails(start, end, SendingService.sendEmail)
+      // sendResult
+      //   ? activitiesDebug('Successfully sent all summaries')
+      //   : activitiesDebug('Sending some email summaries failed')
     })
   }
 }

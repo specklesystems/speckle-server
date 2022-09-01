@@ -5,8 +5,18 @@ import debug from 'debug'
 import { isObject, has } from 'lodash'
 
 export enum NotificationType {
-  MentionedInComment = 'mentioned-in-comment'
+  ActivityDigest = 'activityDigest',
+  MentionedInComment = 'mentionedInComment'
 }
+
+export enum NotificationChannel {
+  Email = 'email',
+  Web = 'web'
+}
+
+export type NotificationPreferences = Partial<
+  Record<NotificationType, Partial<Record<NotificationChannel, boolean>>>
+>
 
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
@@ -22,7 +32,9 @@ export type NotificationMessage<
   data: P
 }
 
-export type NotificationHandler<M extends NotificationMessage = NotificationMessage> = (
+export type NotificationHandler<
+  M extends NotificationMessage | unknown = NotificationMessage
+> = (
   msg: M,
   extra: {
     job: Job

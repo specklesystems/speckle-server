@@ -479,6 +479,7 @@ export type Mutation = {
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
   userDelete: Scalars['Boolean'];
+  userNotificationPreferencesUpdate?: Maybe<Scalars['Boolean']>;
   userRoleChange: Scalars['Boolean'];
   /** Edits a user's profile. */
   userUpdate: Scalars['Boolean'];
@@ -694,6 +695,11 @@ export type MutationUserCommentThreadActivityBroadcastArgs = {
 
 export type MutationUserDeleteArgs = {
   userConfirmation: UserDeleteInput;
+};
+
+
+export type MutationUserNotificationPreferencesUpdateArgs = {
+  preferences: Scalars['JSONObject'];
 };
 
 
@@ -1407,6 +1413,7 @@ export type User = {
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['String'];
   name?: Maybe<Scalars['String']>;
+  notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
   /** All the streams that a user has access to. */
@@ -2099,6 +2106,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   streamsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<MutationStreamsDeleteArgs>>;
   userCommentThreadActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserCommentThreadActivityBroadcastArgs, 'commentId' | 'streamId'>>;
   userDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserDeleteArgs, 'userConfirmation'>>;
+  userNotificationPreferencesUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationUserNotificationPreferencesUpdateArgs, 'preferences'>>;
   userRoleChange?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserRoleChangeArgs, 'userRoleInput'>>;
   userUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserUpdateArgs, 'user'>>;
   userViewerActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserViewerActivityBroadcastArgs, 'resourceId' | 'streamId'>>;
@@ -2338,6 +2346,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<UserStreamsArgs, 'limit'>>;
