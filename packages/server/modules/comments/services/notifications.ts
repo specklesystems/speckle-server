@@ -1,5 +1,5 @@
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentsEvents, onCommentEvent } from '@/modules/comments/events/emitter'
+import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
@@ -85,12 +85,15 @@ async function processCommentMentions(
  */
 export async function notifyUsersOnCommentEvents() {
   const exitCbs = [
-    onCommentEvent(CommentsEvents.Created, async ({ comment }) => {
+    CommentsEmitter.listen(CommentsEvents.Created, async ({ comment }) => {
       await processCommentMentions(comment)
     }),
-    onCommentEvent(CommentsEvents.Updated, async ({ newComment, previousComment }) => {
-      await processCommentMentions(newComment, previousComment)
-    })
+    CommentsEmitter.listen(
+      CommentsEvents.Updated,
+      async ({ newComment, previousComment }) => {
+        await processCommentMentions(newComment, previousComment)
+      }
+    )
   ]
 
   return () => exitCbs.forEach((cb) => cb())

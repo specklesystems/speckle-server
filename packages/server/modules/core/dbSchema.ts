@@ -14,6 +14,11 @@ type SchemaConfig<T extends string, C extends string> = InnerSchemaConfig<T, C> 
    * Return schema helper with custom configuration options
    */
   with: (params?: SchemaConfigParams) => InnerSchemaConfig<T, C>
+
+  /**
+   * Helper with withoutTablePrefix set to true
+   */
+  withoutTablePrefix: InnerSchemaConfig<T, C>
 }
 
 type InnerSchemaConfig<T extends string, C extends string> = {
@@ -76,7 +81,8 @@ function buildTableHelper<T extends string, C extends string>(
 
   return {
     ...buildInnerSchemaConfig(),
-    with: buildInnerSchemaConfig
+    with: buildInnerSchemaConfig,
+    withoutTablePrefix: buildInnerSchemaConfig({ withoutTablePrefix: true })
   }
 }
 
@@ -200,6 +206,13 @@ export const ApiTokens = buildTableHelper('api_tokens', [
   'lifespan',
   'createdAt',
   'lastUsed'
+])
+
+export const EmailVerifications = buildTableHelper('email_verifications', [
+  'id',
+  'email',
+  'createdAt',
+  'used'
 ])
 
 export { knex }

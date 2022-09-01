@@ -23,6 +23,23 @@ spec:
       ports:
         - port: 53
           protocol: UDP
+{{- if .Values.server.monitoring.apollo.enabled }}
+    - to:
+      - ipBlock:
+          cidr:  34.120.83.176/32
+      ports:
+        - port: 443
+{{- end }}
+{{- if ( or .Values.server.auth.google.enabled .Values.server.auth.github.enabled .Values.server.auth.azure_ad.enabled ) }}
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          # except to kubernetes pods or services
+          except:
+            - 10.0.0.0/8
+      ports:
+        - port: 443
+{{- end }}
 {{- if .Values.server.sentry_dns }}
     # sentry.io https://docs.sentry.io/product/security/ip-ranges/#event-ingestion
     - to:
@@ -30,6 +47,10 @@ spec:
           cidr: 34.120.195.249/32
       ports:
         - port: 443
+{{- end }}
+{{- if .Values.server.email.enabled }}
+    # email server
+{{ include "speckle.networkpolicy.egress.email" $ | indent 4 }}
 {{- end }}
     # redis
 {{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}

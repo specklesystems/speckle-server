@@ -1,7 +1,6 @@
 extend type Query {
   """
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
-  If ID is provided, admin access is required
   """
   user(id: String): User
 

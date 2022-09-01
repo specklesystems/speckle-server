@@ -1,5 +1,5 @@
 <template>
-  <transition name="component-fade" mode="out-in">
+  <transition v-if="shouldShowBanner" name="component-fade" mode="out-in">
     <v-alert
       v-if="!success & !errors"
       type="warning"
@@ -10,10 +10,10 @@
       dense
     >
       <v-row align="center">
-        <v-col class="grow">Your email {{ user.email }} is not verified.</v-col>
+        <v-col class="grow">{{ verifyBannerText }}</v-col>
         <v-col class="shrink">
           <v-btn plain small :loading="loading" @click="requestVerification">
-            Send verification
+            {{ verifyBannerCtaText }}
           </v-btn>
         </v-col>
       </v-row>
@@ -28,7 +28,7 @@
       height="44"
       dense
     >
-      Verification email sent, please check you inbox.
+      Verification e-mail sent, please check you inbox.
     </v-alert>
     <v-alert
       v-if="errors"
@@ -39,18 +39,49 @@
       elevation="8"
       dense
     >
-      Email verification failed.{{ errorMessage ? ` Reason: ${errorMessage}` : '' }}
+      E-mail verification failed.{{ errorMessage ? ` Reason: ${errorMessage}` : '' }}
     </v-alert>
   </transition>
 </template>
-<script>
-import { AppLocalStorage } from '@/utils/localStorage'
+<script lang="ts">
+import {
+  EmailVerificationBannerStateDocument,
+  RequestVerificationDocument
+} from '@/graphql/generated/graphql'
+import { Nullable } from '@/helpers/typeHelpers'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { useQuery } from '@vue/apollo-composable'
+import { computed, defineComponent } from 'vue'
 
-export default {
-  props: {
-    user: {
-      type: Object,
-      default: () => null
+export default defineComponent({
+  setup() {
+    const { result } = useQuery(EmailVerificationBannerStateDocument)
+
+    const user = computed(() => result.value?.user || null)
+    const shouldShowBanner = computed(() => {
+      if (!user.value) return false
+      if (user.value.verified) return false
+
+      return true
+    })
+    const hasPendingVerification = computed(() => !!user.value?.hasPendingVerification)
+
+    const verifyBannerText = computed(() =>
+      hasPendingVerification.value
+        ? `Please check your inbox (${user.value?.email}) for the verification e-mail`
+        : `Please verify your e-mail address (${user.value?.email})`
+    )
+
+    const verifyBannerCtaText = computed(() =>
+      hasPendingVerification.value ? `Re-send verification` : `Send verification`
+    )
+
+    return {
+      user,
+      shouldShowBanner,
+      hasPendingVerification,
+      verifyBannerText,
+      verifyBannerCtaText
     }
   },
   data() {
@@ -58,30 +89,44 @@ export default {
       errors: false,
       success: false,
       loading: false,
-      errorMessage: null
+      errorMessage: null as Nullable<string>
     }
   },
   methods: {
     async requestVerification() {
-      this.loading = true
-      const res = await fetch(`/auth/emailverification/request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: AppLocalStorage.get('AuthToken')
-        },
-        body: JSON.stringify({ email: this.user.email })
-      })
-      if (res.status !== 200) {
-        this.errors = true
-        this.errorMessage = await res.text()
-        this.loading = false
-        return
-      }
+      const user = this.user
+      if (!user) return
 
-      this.success = true
-      this.loading = false
+      this.loading = true
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: RequestVerificationDocument,
+          update: (cache, { data }) => {
+            const isSuccess = !!data?.requestVerification
+            if (!isSuccess) return
+
+            // Switch hasPendingVerification to true
+            cache.modify({
+              id: cache.identify(user),
+              fields: {
+                hasPendingVerification: () => true
+              }
+            })
+          }
+        })
+        .catch(convertThrowIntoFetchResult)
+        .finally(() => (this.loading = false))
+
+      if (errors?.length || !data?.requestVerification) {
+        const errMsg = errors?.[0].message || 'An unexpected issue occurred!'
+
+        this.errors = true
+        this.errorMessage = errMsg
+        this.loading = false
+      } else {
+        this.success = true
+      }
     }
   }
-}
+})
 </script>

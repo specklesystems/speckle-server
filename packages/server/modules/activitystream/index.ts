@@ -1,16 +1,18 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import debug from 'debug'
 import cron from 'node-cron'
-import { noop } from 'lodash'
 import { sendSummaryEmails } from '@/modules/activitystream/services/summary'
 import * as SendingService from '@/modules/emails/services/sending'
+import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
+import { modulesDebug } from '@/modules/shared/utils/logger'
 
-const modulesDebug = debug('speckle').extend('modules')
 const activitiesDebug = modulesDebug.extend('activities')
 
 const activityModule: SpeckleModule = {
-  init: async () => {
+  init: async (_, isInitial) => {
     modulesDebug('🤺 Init activity module')
+    if (isInitial) {
+      initializeEventListener()
+    }
 
     const cronExpression = '*/1000 * * * * *'
     cron.validate(cronExpression)
@@ -25,8 +27,7 @@ const activityModule: SpeckleModule = {
         ? activitiesDebug('Successfully sent all summaries')
         : activitiesDebug('Sending some email summaries failed')
     })
-  },
-  finalize: noop
+  }
 }
 
 export = {
