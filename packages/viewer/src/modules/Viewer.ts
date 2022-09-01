@@ -200,11 +200,17 @@ export class Viewer extends EventEmitter implements IViewer {
   public hideObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = false
+    includeDescendants = false,
+    ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(
-        this.filteringManager.hideObjects(objectIds, stateKey, includeDescendants)
+        this.filteringManager.hideObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
       )
     })
   }
@@ -224,11 +230,17 @@ export class Viewer extends EventEmitter implements IViewer {
   public isolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = false
+    includeDescendants = false,
+    ghost = true
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(
-        this.filteringManager.isolateObjects(objectIds, stateKey, includeDescendants)
+        this.filteringManager.isolateObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
       )
     })
   }
@@ -257,9 +269,9 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public setColorFilter(property: PropertyInfo): Promise<FilteringState> {
+  public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.setColorFilter(property))
+      resolve(this.filteringManager.setColorFilter(property, ghost))
     })
   }
 

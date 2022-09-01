@@ -56,13 +56,15 @@ export class FilteringManager {
   public hideObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = false
+    includeDescendants = false,
+    ghost = false
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
       stateKey,
       Command.HIDE,
-      includeDescendants
+      includeDescendants,
+      ghost
     )
   }
 
@@ -82,13 +84,15 @@ export class FilteringManager {
   public isolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = true
+    includeDescendants = true,
+    ghost = true
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
       stateKey,
       Command.ISOLATE,
-      includeDescendants
+      includeDescendants,
+      ghost
     )
   }
 
@@ -109,7 +113,8 @@ export class FilteringManager {
     objectIds: string[],
     stateKey: string = null,
     command: Command,
-    includeDescendants = false
+    includeDescendants = false,
+    ghost = false
   ): FilteringState {
     if (
       stateKey !== this.StateKey ||
@@ -121,6 +126,7 @@ export class FilteringManager {
     this.StateKey = stateKey
 
     this.VisibilityState.rvs = []
+    this.VisibilityState.ghost = ghost
 
     if (includeDescendants) {
       objectIds = [...objectIds, ...this.getDescendantIds(objectIds)]
@@ -184,20 +190,20 @@ export class FilteringManager {
     return true
   }
 
-  public setColorFilter(prop: PropertyInfo) {
+  public setColorFilter(prop: PropertyInfo, ghost = true) {
     if (prop.type === 'number') {
       this.ColorStringFilterState = null
       this.ColorNumericFilterState = new ColorNumericFilterState()
-      return this.setNumericColorFilter(prop as NumericPropertyInfo)
+      return this.setNumericColorFilter(prop as NumericPropertyInfo, ghost)
     }
     if (prop.type === 'string') {
       this.ColorNumericFilterState = null
       this.ColorStringFilterState = new ColorStringFilterState()
-      return this.setStringColorFilter(prop as StringPropertyInfo)
+      return this.setStringColorFilter(prop as StringPropertyInfo, ghost)
     }
   }
 
-  private setNumericColorFilter(numProp: NumericPropertyInfo) {
+  private setNumericColorFilter(numProp: NumericPropertyInfo, ghost) {
     this.ColorNumericFilterState.currentProp = numProp
 
     const passMin = numProp.passMin || numProp.min
@@ -229,13 +235,14 @@ export class FilteringManager {
     })
     this.ColorNumericFilterState.colorGroups = colorGroups
     this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
+    this.ColorNumericFilterState.ghost = ghost
     return this.setFilters()
   }
 
   // private hashCode = (str): number =>
   //   str.split('').reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
 
-  private setStringColorFilter(stringProp: StringPropertyInfo) {
+  private setStringColorFilter(stringProp: StringPropertyInfo, ghost) {
     this.ColorStringFilterState.currentProp = stringProp
 
     const valueGroupColors: ValueGroupColorItemStringProps[] = []
@@ -271,7 +278,7 @@ export class FilteringManager {
     this.ColorStringFilterState.colorGroups = valueGroupColors
     this.ColorStringFilterState.rampTexture = rampTexture
     this.ColorStringFilterState.nonMatchingRvs = nonMatchingRvs
-
+    this.ColorStringFilterState.ghost = ghost
     return this.setFilters()
   }
 
@@ -378,20 +385,30 @@ export class FilteringManager {
 
     if (isShowHide || isIsolate) {
       this.Renderer.applyFilter(this.VisibilityState.rvs, {
-        filterType: FilterMaterialType.HIDDEN // TODO or ghost if ghosting
+        filterType: this.VisibilityState.ghost
+          ? FilterMaterialType.GHOST
+          : FilterMaterialType.HIDDEN
       })
 
       if (isShowHide) returnState.hiddenObjects = this.VisibilityState.ids
       if (isIsolate) returnState.isolatedObjects = this.VisibilityState.ids
     }
 
-    // TODO: colors non matching ghost
     const nonMatchingRvs =
       this.ColorStringFilterState?.nonMatchingRvs ||
       this.ColorNumericFilterState?.nonMatchingRvs
+
+    let ghostNonMatching = false
+    if (this.ColorStringFilterState)
+      ghostNonMatching = this.ColorStringFilterState.ghost
+    if (this.ColorNumericFilterState)
+      ghostNonMatching = this.ColorNumericFilterState.ghost
+
     if (nonMatchingRvs) {
       this.Renderer.applyFilter(nonMatchingRvs, {
-        filterType: FilterMaterialType.HIDDEN // TODO: ghost
+        filterType: ghostNonMatching
+          ? FilterMaterialType.GHOST
+          : FilterMaterialType.HIDDEN // TODO: ghost
       })
     }
 
@@ -443,12 +460,12 @@ enum Command {
 
 class VisibilityState {
   public command = Command.NONE
-  public ghost = false
+  public ghost = true
   public ids: string[] = []
   public rvs: NodeRenderView[] = []
 
   public reset() {
-    this.ghost = false
+    this.ghost = true
     this.ids = []
     this.rvs = []
   }
@@ -459,6 +476,7 @@ class ColorStringFilterState {
   public colorGroups: ValueGroupColorItemStringProps[]
   public nonMatchingRvs: NodeRenderView[]
   public rampTexture: Texture
+  public ghost = true
   public reset() {
     this.currentProp = null
     this.colorGroups = []
@@ -478,6 +496,7 @@ class ColorNumericFilterState {
   public currentProp: NumericPropertyInfo
   public nonMatchingRvs: NodeRenderView[]
   public colorGroups: ValueGroupColorItemNumericProps[]
+  public ghost = true
 }
 
 type ValueGroupColorItemNumericProps = {

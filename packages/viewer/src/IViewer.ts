@@ -164,12 +164,14 @@ export interface IViewer {
   hideObjects(
     objectIds: string[],
     stateKey?: string,
-    includeDescendants?
+    includeDescendants?,
+    ghost?: boolean
   ): Promise<FilteringState>
   isolateObjects(
     objectIds: string[],
     stateKey?: string,
-    includeDescendants?
+    includeDescendants?,
+    ghost?: boolean
   ): Promise<FilteringState>
   unIsolateObjects(
     objectIds: string[],
@@ -182,7 +184,7 @@ export interface IViewer {
   highlightObjects(objectIds: string[]): Promise<FilteringState>
   resetHighlight(): Promise<FilteringState>
 
-  setColorFilter(prop: PropertyInfo): Promise<FilteringState>
+  setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
   removeColorFilter(): Promise<FilteringState>
   resetFilters(): Promise<FilteringState>
 
