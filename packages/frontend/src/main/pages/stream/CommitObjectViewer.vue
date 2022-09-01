@@ -369,7 +369,6 @@ export default defineComponent({
       query {
         commitObjectViewerState @client {
           selectedCommentMetaData
-          appliedFilter
           selectedObjects
           currentFilterState
           sectionBox
@@ -768,7 +767,6 @@ export default defineComponent({
     setViews() {
       this.views.splice(0, this.views.length)
       this.views.push(...this.viewer.getViews())
-      console.log(this.views)
     },
     async setFilters() {
       try {

@@ -45,38 +45,42 @@ export class PropertyManager {
 
     for (const propKey in propValues) {
       const propValuesArr = propValues[propKey]
-      const propInfo = {} as Record<string, unknown>
+      const propInfo = {} as PropertyInfo
       propInfo.key = propKey
-      propInfo.type = typeof propValuesArr[0].value
+      propInfo.type = typeof propValuesArr[0].value === 'string' ? 'string' : 'number'
       propInfo.objectCount = propValuesArr.length
 
       // For string based props, keep track of which ids belong to which group
       if (propInfo.type === 'string') {
+        const stringPropInfo = propInfo as StringPropertyInfo
         const valueGroups = {}
         for (const { value, id } of propValuesArr) {
           if (!valueGroups[value]) valueGroups[value] = []
           valueGroups[value].push(id)
         }
-        const valueMaps = []
+        stringPropInfo.valueGroups = []
         for (const key in valueGroups)
-          valueMaps.push({ value: key, ids: valueGroups[key] })
+          stringPropInfo.valueGroups.push({ value: key, ids: valueGroups[key] })
 
-        propInfo.valueGroups = valueMaps.sort((a, b) => a.value.localeCompare(b.value))
+        stringPropInfo.valueGroups = stringPropInfo.valueGroups.sort((a, b) =>
+          a.value.localeCompare(b.value)
+        )
       }
       // For numeric props, we keep track of min and max and all the {id, val}s
       if (propInfo.type === 'number') {
-        propInfo.min = Number.MAX_VALUE
-        propInfo.max = Number.MIN_VALUE
+        const numProp = propInfo as NumericPropertyInfo
+        numProp.min = Number.MAX_VALUE
+        numProp.max = Number.MIN_VALUE
         for (const { value } of propValuesArr) {
-          if (value < propInfo.min) propInfo.min = value
-          if (value > propInfo.max) propInfo.max = value
+          if (value < numProp.min) numProp.min = value
+          if (value > numProp.max) numProp.max = value
         }
-        propInfo.valueGroups = propValuesArr.sort((a, b) => a.value - b.value)
+        numProp.valueGroups = propValuesArr.sort((a, b) => a.value - b.value)
         // const sorted = propValuesArr.sort((a, b) => a.value - b.value)
         // propInfo.sortedValues = sorted.map(s => s.value)
         // propInfo.sortedIds = sorted.map(s => s.value) // tl;dr: not worth it
       }
-      allPropInfos.push(propInfo)
+      allPropInfos.push(propInfo as PropertyInfo)
     }
 
     this.propCache[rootNode.model.id] = allPropInfos
@@ -96,12 +100,12 @@ export interface NumericPropertyInfo extends PropertyInfo {
   type: 'number'
   min: number
   max: number
-  valueGroups: [{ value: number; id: string }]
+  valueGroups: { value: number; id: string }[]
   passMin: number | null
   passMax: number | null
 }
 
 export interface StringPropertyInfo extends PropertyInfo {
   type: 'number'
-  valueGroups: [{ value: string; ids: string[] }]
+  valueGroups: { value: string; ids: string[] }[]
 }

@@ -124,7 +124,7 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          appliedFilter
+          # appliedFilter
           currentFilterState
           selectedObjects
           sectionBox
@@ -146,7 +146,7 @@ export default {
   },
   computed: {
     showVisReset() {
-      return !!this.viewerState.appliedFilter || !!this.viewerState.currentFilterState
+      return !!this.viewerState.currentFilterState
     }
   },
   mounted() {

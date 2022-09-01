@@ -198,7 +198,7 @@ export default {
         commitObjectViewerState @client {
           selectedCommentMetaData
           addingComment
-          appliedFilter
+          # appliedFilter
         }
       }
     `)

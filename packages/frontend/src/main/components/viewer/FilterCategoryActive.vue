@@ -93,10 +93,6 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          colorLegend
-          hideCategoryValues
-          isolateCategoryValues
-          appliedFilter
           currentFilterState
         }
       }
@@ -114,7 +110,6 @@ export default {
       hidden: [],
       filtered: [],
       typeMap: [],
-      appliedFilter: {},
       legend: {},
       colorLegend: {},
       visibleLegend: {},

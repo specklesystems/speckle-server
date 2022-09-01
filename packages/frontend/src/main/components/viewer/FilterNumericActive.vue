@@ -119,7 +119,6 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          appliedFilter
           currentFilterState
           objectProperties
           localFilterPropKey

@@ -300,7 +300,7 @@ export default {
         commitObjectViewerState @client {
           selectedCommentMetaData
           commentReactions
-          appliedFilter
+          # appliedFilter
           currentFilterState
         }
       }

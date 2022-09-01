@@ -361,10 +361,10 @@ export type CommitDeleteInput = {
 export type CommitObjectViewerState = {
   __typename?: 'CommitObjectViewerState';
   addingComment: Scalars['Boolean'];
-  appliedFilter?: Maybe<Scalars['JSONObject']>;
   colorLegend: Scalars['JSONObject'];
   commentReactions: Array<Scalars['String']>;
   emojis: Array<Scalars['String']>;
+  appliedFilter?: Maybe<Scalars['JSONObject']>;
   hideCategoryKey?: Maybe<Scalars['String']>;
   hideCategoryValues: Array<Scalars['String']>;
   hideKey?: Maybe<Scalars['String']>;
