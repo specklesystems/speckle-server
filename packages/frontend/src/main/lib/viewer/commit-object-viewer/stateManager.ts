@@ -331,8 +331,8 @@ export async function resetSelection() {
   await getInitializedViewer().resetSelection()
 }
 
-export async function highlightObjects(objectIds: string[]) {
-  await getInitializedViewer().highlightObjects(objectIds)
+export async function highlightObjects(objectIds: string[], ghost = false) {
+  await getInitializedViewer().highlightObjects(objectIds, ghost)
 }
 
 export async function removeHighlights() {

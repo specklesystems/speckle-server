@@ -257,9 +257,9 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public highlightObjects(objectIds: string[]): Promise<FilteringState> {
+  public highlightObjects(objectIds: string[], ghost = false): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.highlightObjects(objectIds))
+      resolve(this.filteringManager.highlightObjects(objectIds, ghost))
     })
   }
 

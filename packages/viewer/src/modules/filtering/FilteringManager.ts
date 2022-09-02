@@ -291,7 +291,8 @@ export class FilteringManager {
   public selectObjects(objectIds: string[]) {
     return this.populateGenericState(objectIds, this.SelectionState)
   }
-  public highlightObjects(objectIds: string[]) {
+  public highlightObjects(objectIds: string[], ghost = false) {
+    this.HighlightState.ghost = ghost
     return this.populateGenericState(objectIds, this.HighlightState)
   }
 
@@ -420,7 +421,9 @@ export class FilteringManager {
 
     if (this.HighlightState.rvs.length !== 0) {
       this.Renderer.applyFilter(this.HighlightState.rvs, {
-        filterType: FilterMaterialType.OVERLAY
+        filterType: this.HighlightState.ghost
+          ? FilterMaterialType.GHOST
+          : FilterMaterialType.OVERLAY
       })
     }
 
@@ -507,7 +510,7 @@ type ValueGroupColorItemNumericProps = {
 class GenericRvState {
   public ids: string[] = []
   public rvs: NodeRenderView[] = []
-
+  public ghost = false
   public reset() {
     this.rvs = []
     this.ids = []
