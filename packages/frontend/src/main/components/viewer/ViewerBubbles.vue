@@ -246,22 +246,31 @@ export default {
     window.addEventListener('beforeunload', async () => {
       await this.sendDisconnect()
     })
+
     this.viewer.on(
-      'select',
+      ViewerEvent.ObjectDoubleClicked,
       debounce((selectionInfo) => {
-        this.selectedIds = selectionInfo.userData.map((o) => o.id)
-        this.selectionLocation = selectionInfo.location
-        this.selectionCenter = selectionInfo.selectionCenter
-        this.sendUpdateAndPrune()
+        this.sendSelectionUpdate(selectionInfo)
       }, 50)
     )
-    this.viewer.on(ViewerEvent.ObjectDoubleClicked, () => {})
+    this.viewer.on(
+      ViewerEvent.ObjectClicked,
+      debounce((selectionInfo) => {
+        this.sendSelectionUpdate(selectionInfo)
+      }, 50)
+    )
   },
   async beforeDestroy() {
     await this.sendDisconnect()
     window.clearInterval(this.updateInterval)
   },
   methods: {
+    sendSelectionUpdate(selectionInfo) {
+      this.selectedIds = selectionInfo.userData.id
+      this.selectionLocation = selectionInfo.location
+      this.selectionCenter = selectionInfo.selectionCenter
+      this.sendUpdateAndPrune()
+    },
     setUserPow(user) {
       const camToSet = user.camera
       if (camToSet[6] === 1) {
