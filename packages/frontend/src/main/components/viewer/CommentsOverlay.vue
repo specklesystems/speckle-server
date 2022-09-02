@@ -14,7 +14,7 @@
     class="d-flex align-center justify-center no-mouse"
   >
     <div
-      v-show="showComments && !viewerState.addingComment"
+      v-show="showComments && !viewerState.addingComment && modelLoaded"
       style="
         width: 100%;
         height: 100vh;
@@ -319,6 +319,9 @@ export default {
         }
       }
     }
+  },
+  props: {
+    modelLoaded: { type: Boolean, default: false }
   },
   setup() {
     const { streamId, resourceId } = useCommitObjectViewerParams()

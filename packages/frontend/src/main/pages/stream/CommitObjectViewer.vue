@@ -172,7 +172,11 @@
         class=""
       >
         <viewer-bubbles v-if="!isEmbed" key="a" />
-        <comments-overlay key="c" @add-resources="addResources" />
+        <comments-overlay
+          key="c"
+          :model-loaded="loadedModel"
+          @add-resources="addResources"
+        />
         <comment-add-overlay v-if="!isEmbed" key="b" />
       </div>
 
