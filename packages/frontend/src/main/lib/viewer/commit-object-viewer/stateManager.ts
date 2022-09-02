@@ -45,16 +45,6 @@ let globalViewerData: Nullable<GlobalViewerData> = null
  */
 const commitObjectViewerState = makeVar({
   viewerBusy: false,
-  // appliedFilter: null as Nullable<UnknownObject>,
-  // isolateKey: null as Nullable<string>,
-  // isolateValues: [] as string[],
-  // hideKey: null as Nullable<string>,
-  // hideValues: [] as string[],
-  // colorLegend: {} as UnknownObject,
-  // isolateCategoryKey: null as Nullable<string>,
-  // isolateCategoryValues: [] as string[],
-  // hideCategoryKey: null as Nullable<string>,
-  // hideCategoryValues: [] as string[],
   selectedCommentMetaData: null as Nullable<{
     id: number
     selectionLocation: Record<string, unknown>

@@ -92,6 +92,7 @@ import { gql } from '@apollo/client/core'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash/debounce'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import {
@@ -101,7 +102,8 @@ import {
   getLocalFilterState,
   setSectionBox,
   sectionBoxOn,
-  sectionBoxOff
+  sectionBoxOff,
+  highlightObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { ViewerEvent } from '@speckle/viewer'
 
@@ -122,7 +124,7 @@ export default {
         }
       `,
       skip() {
-        return !this.$loggedIn()
+        return !this.isLoggedIn
       }
     },
     $subscribe: {
@@ -139,7 +141,7 @@ export default {
           }
         },
         skip() {
-          return !this.resourceId || !this.$loggedIn()
+          return !this.resourceId || !this.isLoggedIn
         },
         result(res) {
           const data = res.data
@@ -193,12 +195,13 @@ export default {
   setup() {
     const { streamId, resourceId } = useCommitObjectViewerParams()
     const { viewer } = useInjectedViewer()
+    const { isLoggedIn } = useIsLoggedIn()
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
           selectedCommentMetaData
           addingComment
-          # appliedFilter
+          selectedObjects
         }
       }
     `)
@@ -206,7 +209,7 @@ export default {
       () => viewerStateResult.value?.commitObjectViewerState || {}
     )
 
-    return { viewer, viewerState, streamId, resourceId }
+    return { viewer, viewerState, streamId, resourceId, isLoggedIn }
   },
   data() {
     return {
@@ -216,6 +219,11 @@ export default {
       selectionCenter: null,
       users: [],
       showBubbles: true
+    }
+  },
+  watch: {
+    showBubbles(newVal) {
+      if (!newVal) highlightObjects([])
     }
   },
   mounted() {
@@ -295,7 +303,7 @@ export default {
       }
       this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
 
-      if (!this.$loggedIn()) return
+      if (!this.isLoggedIn) return
 
       const controls = this.viewer.cameraHandler.activeCam.controls
       const pos = controls.getPosition()
@@ -318,7 +326,7 @@ export default {
 
       const data = {
         filter: getLocalFilterState(),
-        selection: this.selectedIds,
+        selection: this.viewerState.selectedObjects.map((o) => o.id),
         selectionLocation,
         sectionBox: this.viewer.getCurrentSectionBox(),
         selectionCenter: this.selectionCenter,
@@ -352,7 +360,7 @@ export default {
       })
     },
     async sendDisconnect() {
-      if (!this.$loggedIn()) return
+      if (!this.isLoggedIn) return
       if (!this.streamId) return
 
       await this.$apollo.mutate({
@@ -475,9 +483,7 @@ export default {
         uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
-      //@Dim: This shouldn't be needed anymore, right?
-      // TODO: user filtering manager to overlay objects
-      // this.viewer.interactions.overlayObjects(selectedObjects)
+      if (this.showBubbles) highlightObjects(selectedObjects)
     }
   }
 }
