@@ -86,16 +86,6 @@
                 .join(',')
             "
           />
-          <!-- <viewer-filters-legacy
-            class="mt-4"
-            :props="objectProperties"
-            :source-application="
-              resources
-                .filter((r) => r.type === 'commit')
-                .map((r) => r.data.commit.sourceApplication)
-                .join(',')
-            "
-          /> -->
         </commit-object-viewer-scope>
       </prioritized-portal>
 
@@ -260,7 +250,7 @@ import {
   setFilterDirectly,
   setIsViewerBusy,
   setupCommitObjectViewer,
-  getObjectProperties,
+  loadObjectProperties,
   getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { PropertyInfo } from '@speckle/viewer'
@@ -775,8 +765,7 @@ export default defineComponent({
     async setFilters() {
       try {
         // repopulate object props
-        // this.objectProperties = await this.viewer.getObjectsProperties()
-        getObjectProperties()
+        loadObjectProperties()
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: 'Failed to get object properties from viewer.'

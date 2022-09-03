@@ -45,12 +45,14 @@
 </template>
 <script>
 import { DefaultLightConfiguration } from '@speckle/viewer'
-import { getInitializedViewer } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import { reactive } from 'vue'
 export default {
   setup() {
     const config = reactive({ ...DefaultLightConfiguration })
+    const { viewer } = useInjectedViewer()
     return {
+      viewer,
       config
     }
   },
@@ -58,7 +60,7 @@ export default {
     config: {
       deep: true,
       handler(newVal) {
-        getInitializedViewer().setLightConfiguration(newVal)
+        this.viewer.setLightConfiguration(newVal)
       }
     }
   }

@@ -135,10 +135,9 @@ import {
   isolateObjects,
   unIsolateObjects,
   highlightObjects,
-  removeHighlights,
-  getInitializedViewer
+  removeHighlights
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 export default {
   components: {
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
@@ -173,7 +172,7 @@ export default {
       () => viewerStateResult.value?.commitObjectViewerState || {}
     )
 
-    const viewer = getInitializedViewer()
+    const { viewer } = useInjectedViewer()
 
     return { viewerState, viewer }
   },

@@ -111,7 +111,7 @@ function getOrInitViewerData(): GlobalViewerData {
   return globalViewerData
 }
 
-export function getInitializedViewer(): Viewer {
+function getInitializedViewer(): Viewer {
   if (!globalViewerData?.viewer) {
     throw new Error('Attempting to access viewer before it has been initialized')
   }
@@ -274,7 +274,7 @@ export function sectionBoxOn() {
   updateState({ sectionBox: true })
 }
 
-export function getObjectProperties() {
+export function loadObjectProperties() {
   setIsViewerBusy(true)
   const props = getInitializedViewer().getObjectProperties(undefined, true)
   setIsViewerBusy(false)

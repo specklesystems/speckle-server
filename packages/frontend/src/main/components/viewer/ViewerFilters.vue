@@ -80,7 +80,7 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
-  getObjectProperties,
+  loadObjectProperties,
   resetFilter,
   setColorFilter
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
@@ -191,7 +191,7 @@ export default {
       setColorFilter(prop)
     },
     refresh() {
-      getObjectProperties()
+      loadObjectProperties()
     },
     removeFilter() {
       this.filterSearch = null
