@@ -441,6 +441,8 @@
 <script>
 import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
+import { onKeyStroke } from '@vueuse/core'
+
 import CommentThreadReply from '@/main/components/comments/CommentThreadReply.vue'
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import { isDocEmpty } from '@/main/lib/common/text-editor/documentHelper'
@@ -695,10 +697,8 @@ export default {
       await this.sendTypingUpdate(false)
     })
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.$emit('close', this.comment)
-      }
+    onKeyStroke('Escape', () => {
+      this.$emit('close', this.comment)
     })
 
     setInterval(() => {

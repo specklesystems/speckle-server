@@ -15,6 +15,7 @@
 </template>
 <script>
 import throttle from 'lodash/throttle'
+import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import {
   useCommitObjectViewerParams,
@@ -111,10 +112,8 @@ export default {
         handleViewerDoubleClick(selectionInfo)
       })
 
-      window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          resetSelection()
-        }
+      onKeyStroke('Escape', () => {
+        resetSelection()
       })
     }
   }

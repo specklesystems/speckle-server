@@ -1,7 +1,7 @@
 <template>
   <div class="mt-3">
     <v-row no-gutters class="my-1 property-row rounded-lg">
-      <v-col cols="12">
+      <v-col>
         <!-- {{ filter }} -->
       </v-col>
       <v-col
@@ -65,7 +65,7 @@
           @finish="setFilterHistogram"
         />
       </v-col>
-      <!-- TODO -->
+      <!-- TODO: -->
       <!-- <v-col class="d-flex px-2 mt-2">
         <v-text-field
           v-model="userMin"
