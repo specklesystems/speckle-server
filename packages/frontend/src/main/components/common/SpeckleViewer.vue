@@ -43,7 +43,6 @@ export default {
       isEmbed
     }
   },
-  // TODO: pause rendering on destroy, reinit on mounted.
   async mounted() {
     // NOTE: we're doing some globals and dom shennanigans in here for the purpose
     // of having a unique global renderer and it's container dom element. The principles

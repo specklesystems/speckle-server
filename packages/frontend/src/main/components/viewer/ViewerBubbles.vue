@@ -439,7 +439,6 @@ export default {
           .multiplyScalar(70)
         const newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
 
-        // TODO: clamp sides
         const paddingX = 42
         const paddingYTop = 86
         const paddingYBottom = 68

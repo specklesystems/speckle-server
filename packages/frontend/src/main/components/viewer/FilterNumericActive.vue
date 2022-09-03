@@ -65,7 +65,7 @@
           @finish="setFilterHistogram"
         />
       </v-col>
-      <!-- TODO: -->
+      <!-- TODO: set up manual entry for ranges -->
       <!-- <v-col class="d-flex px-2 mt-2">
         <v-text-field
           v-model="userMin"

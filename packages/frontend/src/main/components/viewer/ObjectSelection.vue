@@ -84,7 +84,6 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          # isolateValues
           selectedObjects
           currentFilterState
           objectProperties
@@ -121,8 +120,6 @@ export default {
       })
     },
     isolated() {
-      // TODO
-      // return false
       const ids = this.objects.map((o) => o.id)
       if (!this.viewerState.currentFilterState) return false
       if (!this.viewerState.currentFilterState.visibilityState) return false

@@ -116,7 +116,6 @@ export default {
           type === 'array' &&
           value &&
           value[0]?.referencedId &&
-          // TODO: why was this here? A: because we don't want visibility toggles on non-atomic objects
           !this.realObject.speckle_type?.includes('Objects')
         )
           extras.push('visibility')

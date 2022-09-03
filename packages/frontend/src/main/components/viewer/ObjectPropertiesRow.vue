@@ -208,7 +208,7 @@ export default {
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return true
-        else return false // TODO: return "partial" or "full", depending on state
+        else return false // Note: could return "partial" or "full", depending on state
       }
       return true
     },

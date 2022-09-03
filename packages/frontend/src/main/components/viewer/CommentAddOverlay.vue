@@ -405,7 +405,7 @@ export default {
           camPos: getCamArray(this.viewer),
           filters: getLocalFilterState(),
           sectionBox: this.viewer.getCurrentSectionBox(),
-          selection: null // TODO for later, lazy now
+          selection: null // Note: comments could keep track of selected objects, but for now we're too lazy to do so.
         },
         screenshot: await this.viewer.screenshot()
       }
@@ -468,7 +468,6 @@ export default {
     handleSelect(info) {
       this.expand = false
       if (!info || !info.location) {
-        // TODO: deselect event
         this.visible = false
         this.location = null
         setIsAddingComment(false)
@@ -507,7 +506,6 @@ export default {
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
     },
     updateCommentBubble() {
-      // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
       const cam = this.viewer.cameraHandler.camera
