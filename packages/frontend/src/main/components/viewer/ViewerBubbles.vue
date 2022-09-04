@@ -266,9 +266,9 @@ export default {
   },
   methods: {
     sendSelectionUpdate(selectionInfo) {
-      this.selectedIds = selectionInfo.userData.id
-      this.selectionLocation = selectionInfo.location
-      this.selectionCenter = selectionInfo.selectionCenter
+      this.selectedIds = selectionInfo?.userData.id
+      this.selectionLocation = selectionInfo?.location
+      this.selectionCenter = selectionInfo?.selectionCenter
       this.sendUpdateAndPrune()
     },
     setUserPow(user) {

@@ -90,22 +90,18 @@
   </div>
 </template>
 <script>
+import 'vue-histogram-slider/dist/histogram-slider.css'
+import HistogramSlider from 'vue-histogram-slider'
+
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 
 import { setColorFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+
 export default {
   components: {
-    HistogramSlider: async () => {
-      await import(
-        /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider/dist/histogram-slider.css'
-      )
-      const component = await import(
-        /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider'
-      )
-      return component
-    }
+    HistogramSlider
   },
   props: {
     filter: {
@@ -133,8 +129,6 @@ export default {
   },
   data() {
     return {
-      range: [0, 1],
-      colorBy: true,
       width: 300,
       preventFirstSetInternal: this.preventFirstSet,
       userMin: 0,
@@ -143,21 +137,12 @@ export default {
       errorMessages: []
     }
   },
-  watch: {
-    filter(newVal) {
-      this.$set(this.range, 0, newVal.min)
-      this.$set(this.range, 1, newVal.max)
-    }
-  },
   mounted() {
-    this.$set(this.range, 0, this.filter.min)
-    this.$set(this.range, 1, this.filter.max)
-
-    setTimeout(() => {
+    this.$nextTick(() => {
       this.userMin = this.viewerState?.currentFilterState?.passMin || this.filter.min
       this.userMax = this.viewerState?.currentFilterState?.passMax || this.filter.max
       this.$refs.histogramSlider.update({ from: this.userMin, to: this.userMax })
-    }, 500)
+    })
 
     this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
