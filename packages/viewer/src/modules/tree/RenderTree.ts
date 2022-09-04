@@ -15,6 +15,13 @@ export class RenderTree {
   public buildRenderTree() {
     this.root.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
+      // if (
+      //   node.model.raw.id === 'bd0aaa52a09a4dc289bea94def2861f3' ||
+      //   node.model.raw.id === '22adc0ae60d1d1a83037d1214e7ebd8a' ||
+      //   node.model.raw.id === 'c2adfe331843d77c969f09701385c28f'
+      // ) {
+      //   rendeNode = null
+      // }
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       if (node.model.renderView && node.model.renderView.hasGeometry) {
         const transform = this.computeTransform(node)

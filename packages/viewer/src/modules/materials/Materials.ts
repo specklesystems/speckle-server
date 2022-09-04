@@ -377,7 +377,7 @@ export default class Materials {
           emissive: 0x0,
           roughness: 1,
           metalness: 0,
-          side: DoubleSide
+          side: FrontSide
         },
         ['USE_RTE']
       )
@@ -470,7 +470,7 @@ export default class Materials {
         roughness: materialData.roughness,
         metalness: materialData.metalness,
         opacity: materialData.opacity,
-        side: DoubleSide
+        side: FrontSide
       },
       ['USE_RTE']
     )

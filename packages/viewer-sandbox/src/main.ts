@@ -82,7 +82,7 @@ sandbox.makeFilteringUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // Same sample revit house, local to dim's computer
@@ -99,4 +99,11 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
   // AutoCAD
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
+  // 'https://latest.speckle.dev/streams/c43ac05d04/commits/91f2463004?c=%5B3.7881,2.40014,0.38887,0,0,0,0,1%5D'
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+  // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/661cc84b56' // Working poche
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/41fd990394'
+  'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec' // Blizzard world
+  // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116' // beams
 )

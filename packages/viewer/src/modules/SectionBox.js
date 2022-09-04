@@ -30,7 +30,7 @@ export default class SectionBox {
 
     this.boxHelper = new THREE.BoxHelper(this.cube, 0x0a66ff)
     this.boxHelper.material.opacity = 0.4
-    this.display.add(this.boxHelper)
+    // this.display.add(this.boxHelper)
 
     // we're attaching the gizmo mover to this sphere in the box centre
     const sphere = new THREE.SphereGeometry(0.01, 10, 10)

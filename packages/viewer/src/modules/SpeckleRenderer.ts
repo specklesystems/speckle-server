@@ -45,6 +45,7 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
+import { PocheSectionsPass } from './passes/PocheSectionsPass'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
@@ -59,6 +60,7 @@ export default class SpeckleRenderer {
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
+  private pochePass: PocheSectionsPass
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -111,13 +113,15 @@ export default class SpeckleRenderer {
     this.batcher = new Batcher()
     this.intersections = new Intersections()
     this.viewer = viewer
+    this.pochePass = new PocheSectionsPass(null)
   }
 
   public create(container: HTMLElement) {
     this._renderer = new WebGLRenderer({
       antialias: true,
       alpha: true,
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: true,
+      stencil: true
     })
     this._renderer.setClearColor(0xcccccc, 0)
     this._renderer.setPixelRatio(window.devicePixelRatio)
@@ -129,6 +133,7 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
+    this.renderer.localClippingEnabled = true
 
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
@@ -159,6 +164,7 @@ export default class SpeckleRenderer {
   }
 
   public update(deltaTime: number) {
+    this.pochePass.update(this.viewer.sectionBox)
     this.batcher.update(deltaTime)
     const viewer = new Vector3()
     const viewerLow = new Vector3()
@@ -235,7 +241,7 @@ export default class SpeckleRenderer {
     this.renderer.render(this.scene, camera)
   }
 
-  public addRenderTree(subtreeId: string) {
+  public async addRenderTree(subtreeId: string) {
     this.batcher.makeBatches(
       subtreeId,
       GeometryType.MESH,
@@ -267,12 +273,14 @@ export default class SpeckleRenderer {
     const batches = this.batcher.getBatches(subtreeId)
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
+      batchRenderable.renderOrder = 3
       subtreeGroup.add(batch.renderObject)
       if (batch.geometryType === GeometryType.MESH) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
         batchRenderable.castShadow = !material.transparent
         batchRenderable.receiveShadow = !material.transparent
+        // material.colorWrite = false
         batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
           {
             depthPacking: RGBADepthPacking
@@ -284,6 +292,30 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
+    // const geometry = new TorusKnotGeometry(0.4, 0.15, 220, 60)
+    // const material = new MeshStandardMaterial({
+    //   color: 0xffc107,
+    //   metalness: 0.1,
+    //   roughness: 0.75,
+    //   clipShadows: true,
+    //   shadowSide: DoubleSide
+    // })
+
+    // // add the color
+    // const clippedColorFront = new Mesh(geometry, material)
+    // clippedColorFront.castShadow = true
+    // clippedColorFront.renderOrder = 6
+    // clippedColorFront.scale.set(10, 10, 10)
+    // this.rootGroup.add(clippedColorFront)
+
+    const stencilGroup = this.pochePass.buildStencilGoup(
+      this.batcher
+        .getBatches(undefined, GeometryType.MESH)
+        .map((val) => val.renderObject as Mesh)
+    )
+    const plane = this.pochePass.buildPlaneStencil()
+    this.scene.add(stencilGroup)
+    this.scene.add(await plane)
   }
 
   public removeRenderTree(subtreeId: string) {

@@ -153,7 +153,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private render() {
     if (this.needsRender) {
       this.speckleRenderer.render(this.cameraHandler.activeCam.camera)
-      this._needsRender = false
+      // this._needsRender = false
     }
   }
 

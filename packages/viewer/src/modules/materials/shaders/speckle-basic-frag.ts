@@ -43,7 +43,16 @@ void main() {
 	reflectedLight.indirectDiffuse *= diffuseColor.rgb;
 	vec3 outgoingLight = reflectedLight.indirectDiffuse;
 	#include <envmap_fragment>
-	#include <output_fragment>
+	// #include <output_fragment>
+	#ifdef OPAQUE
+	diffuseColor.a = 1.0;
+	#endif
+	// https://github.com/mrdoob/three.js/pull/22425
+	#ifdef USE_TRANSMISSION
+	diffuseColor.a *= material.transmissionAlpha + 0.1;
+	#endif
+	vec3 valOut = gl_FrontFacing ? vec3(0., 1.,0.) : vec3(1., 0., 0.);
+	gl_FragColor = vec4( valOut, diffuseColor.a );
 	#include <tonemapping_fragment>
 	#include <encodings_fragment>
 	#include <fog_fragment>
