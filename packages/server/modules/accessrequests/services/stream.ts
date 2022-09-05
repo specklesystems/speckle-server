@@ -24,9 +24,6 @@ import {
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 
-// TODO: Emails
-// TODO: Tests
-
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
 ): StreamAccessRequestGraphQLReturn {

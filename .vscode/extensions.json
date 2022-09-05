@@ -6,11 +6,10 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "Vue.volar",
-    "vue.vscode-typescript-vue-plugin",
+    "octref.vetur",
     "hbenl.vscode-mocha-test-adapter",
     "ryanluker.vscode-coverage-gutters"
   ],
   // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-  "unwantedRecommendations": ["octref.vetur"]
+  "unwantedRecommendations": []
 }
