@@ -59,8 +59,8 @@ import { groupBy } from 'lodash'
 import path from 'path'
 import * as ejs from 'ejs'
 import mjml2html from 'mjml'
-import { getUserNotificationPreferences } from '@/modules/notifications/repositories'
 import { NotificationPreferences } from '@/modules/notifications/helpers/types'
+import { userNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
 
 type UserStreams = {
   userId: string
@@ -483,7 +483,10 @@ Here's a summary of what happened in the past week
  on the Speckle server: ${serverInfo.name} ✨ </p>
 </mj-text>
 `
-  const topicPath = path.resolve(packageRoot, 'assets/activitystream/topic.ejs')
+  const topicPath = path.resolve(
+    packageRoot,
+    'assets/emails/templates/components/digestTopic.ejs'
+  )
   const mjmlTopics = await Promise.all(
     digest.topics.map(
       async (params) =>
@@ -504,10 +507,10 @@ const renderEmailShell = async (
   serverInfo: ServerInfo,
   user: UserRecord
 ): Promise<EmailInput> => {
-  const start = performance.now()
+  const start = Date.now()
   const mjmlPath = path.resolve(
     packageRoot,
-    'assets/activitystream/digestEmail.mjml.ejs'
+    'assets/emails/templates/speckleEmailTemplate.mjml.ejs'
   )
   const cta = {
     title: 'Check activities',
@@ -527,7 +530,7 @@ const renderEmailShell = async (
   const fullHtml = mjml2html(fullMjml, { filePath: mjmlPath })
   const renderedHtml = ejs.render(fullHtml.html, { params })
 
-  console.log(`RENDERED IN ${performance.now() - start}`)
+  console.log(`RENDERED IN ${Date.now() - start}`)
   return {
     to: user.email,
     subject: 'Speckle weekly digest',
@@ -550,7 +553,7 @@ export const sendSummaryEmails = async (
   emailSender: (params: EmailInput) => Promise<boolean>,
   notificationPreferenceGetter: (
     userId: string
-  ) => Promise<NotificationPreferences> = getUserNotificationPreferences
+  ) => Promise<NotificationPreferences> = userNotificationPreferences
 ): Promise<boolean> => {
   const activityData = await createSummaryDataForEveryone(start, end)
   const serverInfo = (await getServerInfo()) as ServerInfo

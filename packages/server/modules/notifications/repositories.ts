@@ -6,8 +6,8 @@ const TABLE_NAME = 'user_notification_preferences'
 export async function getUserNotificationPreferences(
   userId: string
 ): Promise<NotificationPreferences> {
-  const { preferences } = await knex(TABLE_NAME).where({ userId }).first('*')
-  return preferences ?? {}
+  const userPreferences = await knex(TABLE_NAME).where({ userId }).first('*')
+  return userPreferences?.preferences ?? {}
 }
 
 export async function saveUserNotificationPreferences(

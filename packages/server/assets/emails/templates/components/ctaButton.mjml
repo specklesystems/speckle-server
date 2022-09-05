@@ -5,7 +5,7 @@
       border-radius="8px"
       color="white"
       href="<%- params.cta.url -%>"
-      title="<%- params.cta.title -%>"
+      title="<%- params.cta.altTitle || params.cta.title -%>"
       rel="notrack"
       inner-padding="25px 55px"
       text-transform="uppercase"
