@@ -109,3 +109,8 @@ export interface UserActivity extends Activity {
   resourceType: 'user'
   actionType: UserActivityType
 }
+
+export type UserStreams = {
+  userId: string
+  streamIds: string[]
+}

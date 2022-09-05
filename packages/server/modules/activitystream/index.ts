@@ -1,7 +1,6 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import cron from 'node-cron'
-import { sendSummaryEmails } from '@/modules/activitystream/services/summary'
-import * as SendingService from '@/modules/emails/services/sending'
+import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
 import { modulesDebug } from '@/modules/shared/utils/logger'
 
@@ -25,14 +24,11 @@ const activityModule: SpeckleModule = {
     const numberOfDays = 7
     cron.validate(cronExpression)
     cron.schedule(cronExpression, async () => {
-      activitiesDebug('Sending weekly email digests.')
+      activitiesDebug('Sending weekly activity digests notifications.')
       const end = new Date()
       const start = new Date(end.getTime())
       start.setDate(start.getDate() - numberOfDays)
-      const sendResult = await sendSummaryEmails(start, end, SendingService.sendEmail)
-      sendResult
-        ? activitiesDebug('Successfully sent all summaries')
-        : activitiesDebug('Sending some email summaries failed')
+      await sendActivityNotifications(start, end)
     })
   }
 }

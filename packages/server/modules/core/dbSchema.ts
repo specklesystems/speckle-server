@@ -54,7 +54,7 @@ type SchemaConfigParams = {
   withoutTablePrefix?: boolean
 }
 
-function buildTableHelper<T extends string, C extends string>(
+export function buildTableHelper<T extends string, C extends string>(
   tableName: T,
   columns: C[]
 ): SchemaConfig<T, C> {

@@ -1,15 +1,14 @@
 import '../bootstrap'
-import { sendSummaryEmails } from '@/modules/activitystream/services/summary'
-import { initializeTransporter } from '@/modules/emails/utils/transporter'
-import * as SendingService from '@/modules/emails/services/sending'
+import { initializeQueue } from '@/modules/notifications/services/queue'
+import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 
 const main = async () => {
-  await initializeTransporter()
-  const numberOfDays = 365
+  initializeQueue()
+  const numberOfDays = 17
   const end = new Date()
   const start = new Date(end.getTime())
   start.setDate(start.getDate() - numberOfDays)
-  const sendResult = await sendSummaryEmails(start, end, SendingService.sendEmail)
+  const sendResult = await sendActivityNotifications(start, end)
 
   console.log(sendResult)
 }

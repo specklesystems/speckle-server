@@ -10,8 +10,7 @@ export enum NotificationType {
 }
 
 export enum NotificationChannel {
-  Email = 'email',
-  Web = 'web'
+  Email = 'email'
 }
 
 export type NotificationPreferences = Partial<
@@ -21,6 +20,7 @@ export type NotificationPreferences = Partial<
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage
+  [NotificationType.ActivityDigest]: ActivityDigestMessage
 } & { [k in NotificationType]: unknown }
 
 export type NotificationMessage<
@@ -32,9 +32,7 @@ export type NotificationMessage<
   data: P
 }
 
-export type NotificationHandler<
-  M extends NotificationMessage | unknown = NotificationMessage
-> = (
+export type NotificationHandler<M extends NotificationMessage = NotificationMessage> = (
   msg: M,
   extra: {
     job: Job
@@ -60,4 +58,15 @@ export type MentionedInCommentData = {
 export type MentionedInCommentMessage = NotificationMessage<
   NotificationType.MentionedInComment,
   MentionedInCommentData
+>
+
+export type ActivityDigestData = {
+  streamIds: string[]
+  start: Date
+  end: Date
+}
+
+export type ActivityDigestMessage = NotificationMessage<
+  NotificationType.ActivityDigest,
+  ActivityDigestData
 >
