@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-0 mt-3 mb-5 transparent">
-    <v-card-text class="">Manage notification preferences</v-card-text>
+    <v-card-text>Manage notification preferences</v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
     <v-simple-table v-if="localPreferences">
       <template #default>
@@ -76,10 +76,7 @@ export default defineComponent({
     this.$watch(
       'localPreferences',
       async (newValue, oldValue) => {
-        console.log('old value', oldValue)
-        console.log('new value', newValue)
         const check = !oldValue
-        console.log(check)
         if (check) return
 
         const client = this.$apollo.getClient()

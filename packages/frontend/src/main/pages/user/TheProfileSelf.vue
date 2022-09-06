@@ -49,6 +49,7 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import UserNotificationPreferences from '@/main/components/user/UserNotificationPreferences'
 
 export default {
   name: 'TheProfileSelf',
@@ -59,8 +60,7 @@ export default {
     UserApps: () => import('@/main/components/user/UserApps'),
     UserAuthorisedApps: () => import('@/main/components/user/UserAuthorisedApps'),
     UserDeleteCard: () => import('@/main/components/user/UserDeleteCard'),
-    UserNotificationPreferences: () =>
-      import('@/main/components/user/UserNotificationPreferences')
+    UserNotificationPreferences
   },
   mixins: [
     buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'user-profile-self', 1)

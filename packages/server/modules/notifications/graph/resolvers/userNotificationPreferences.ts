@@ -4,7 +4,7 @@ import {
   getUserNotificationPreferences
 } from '@/modules/notifications/services/notificationPreferences'
 
-exports = {
+module.exports = {
   User: {
     async notificationPreferences(parent: User) {
       // does this need any access control?
