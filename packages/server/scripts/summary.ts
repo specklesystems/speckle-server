@@ -1,6 +1,7 @@
 import '../bootstrap'
 import { initializeQueue } from '@/modules/notifications/services/queue'
 import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
+import { publishNotification } from '@/modules/notifications/services/publication'
 
 const main = async () => {
   initializeQueue()
@@ -8,7 +9,7 @@ const main = async () => {
   const end = new Date()
   const start = new Date(end.getTime())
   start.setDate(start.getDate() - numberOfDays)
-  const sendResult = await sendActivityNotifications(start, end)
+  const sendResult = await sendActivityNotifications(start, end, publishNotification)
 
   console.log(sendResult)
 }

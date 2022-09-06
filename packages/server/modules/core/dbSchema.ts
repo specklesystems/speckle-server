@@ -54,7 +54,7 @@ type SchemaConfigParams = {
   withoutTablePrefix?: boolean
 }
 
-export function buildTableHelper<T extends string, C extends string>(
+function buildTableHelper<T extends string, C extends string>(
   tableName: T,
   columns: C[]
 ): SchemaConfig<T, C> {
@@ -214,5 +214,21 @@ export const EmailVerifications = buildTableHelper('email_verifications', [
   'createdAt',
   'used'
 ])
+
+export const Activities = buildTableHelper('stream_activity', [
+  'streamId',
+  'time',
+  'resourceType',
+  'resourceId',
+  'actionType',
+  'userId',
+  'info',
+  'message'
+])
+
+export const UserNotificationPreferences = buildTableHelper(
+  'user_notification_preferences',
+  ['userId', 'preferences']
+)
 
 export { knex }

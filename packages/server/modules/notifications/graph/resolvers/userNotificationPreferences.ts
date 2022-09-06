@@ -1,15 +1,14 @@
-import { User } from '@/modules/core/graph/generated/graphql'
+import { Resolvers, User } from '@/modules/core/graph/generated/graphql'
 import {
-  userNotificationPreferences,
-  updateNotificationPreferences
+  updateNotificationPreferences,
+  getUserNotificationPreferences
 } from '@/modules/notifications/services/notificationPreferences'
-// import { Resolvers } from '@/modules/notifications/graph/generated/graphql'
 
-module.exports = {
+exports = {
   User: {
     async notificationPreferences(parent: User) {
       // does this need any access control?
-      const preferences = await userNotificationPreferences(parent.id)
+      const preferences = await getUserNotificationPreferences(parent.id)
       return preferences
     }
   },
@@ -23,4 +22,4 @@ module.exports = {
       return true
     }
   }
-}
+} as Resolvers

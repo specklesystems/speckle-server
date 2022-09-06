@@ -2,9 +2,14 @@ import {
   getActivity,
   getActiveUserStreams
 } from '@/modules/activitystream/repositories'
-import { StreamScopeActivity } from '@/modules/activitystream/services/types'
-import { NotificationType } from '@/modules/notifications/helpers/types'
-import { publishNotification } from '@/modules/notifications/services/publication'
+import {
+  StreamScopeActivity,
+  UserStreams
+} from '@/modules/activitystream/services/types'
+import {
+  NotificationPublisher,
+  NotificationType
+} from '@/modules/notifications/helpers/types'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { getUser } from '@/modules/core/repositories/users'
 import { getStream } from '@/modules/core/services/streams'
@@ -45,12 +50,17 @@ export const createActivitySummary = async (
 
 export const sendActivityNotifications = async (
   start: Date,
-  end: Date
+  end: Date,
+  notificationPublisher: NotificationPublisher,
+  userActiveStreamsLookup: (
+    start: Date,
+    end: Date
+  ) => Promise<UserStreams[]> = getActiveUserStreams
 ): Promise<void> => {
-  const activeUserStreams = await getActiveUserStreams(start, end)
+  const activeUserStreams = await userActiveStreamsLookup(start, end)
   await Promise.all(
     activeUserStreams.map((userStreams) =>
-      publishNotification(NotificationType.ActivityDigest, {
+      notificationPublisher(NotificationType.ActivityDigest, {
         targetUserId: userStreams.userId,
         data: {
           streamIds: userStreams.streamIds,

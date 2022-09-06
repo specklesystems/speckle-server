@@ -1,7 +1,4 @@
-import {
-  getUserNotificationPreferences,
-  saveUserNotificationPreferences
-} from '@/modules/notifications/repositories'
+import * as repo from '@/modules/notifications/repositories'
 import {
   NotificationChannel,
   NotificationType,
@@ -9,10 +6,10 @@ import {
 } from '@/modules/notifications/helpers/types'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 
-export async function userNotificationPreferences(
+export async function getUserNotificationPreferences(
   userId: string
 ): Promise<NotificationPreferences> {
-  const savedPreferences = await getUserNotificationPreferences(userId)
+  const savedPreferences = await repo.getUserNotificationPreferences(userId)
   return addDefaultPreferenceValues(savedPreferences)
 }
 
@@ -54,10 +51,13 @@ export async function updateNotificationPreferences(
         )
       const nc = ncKey as NotificationChannel
       const preferenceValue = notificationTypeSettings[nc]
-      if (typeof preferenceValue === 'boolean')
-        notificationTypePreferences[nc] = preferenceValue
+      if (typeof preferenceValue !== 'boolean')
+        throw new InvalidArgumentError(
+          `Notification preferences input contains and invalid value: ${preferenceValue}`
+        )
+      notificationTypePreferences[nc] = preferenceValue
     }
     parsedPreferences[nt] = notificationTypePreferences
   }
-  return await saveUserNotificationPreferences(userId, parsedPreferences)
+  return await repo.saveUserNotificationPreferences(userId, parsedPreferences)
 }

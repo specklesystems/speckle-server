@@ -48,6 +48,11 @@ export type NotificationTypeHandlers = {
 export const isNotificationMessage = (msg: unknown): msg is NotificationMessage =>
   isObject(msg) && has(msg, 'targetUserId') && has(msg, 'type') && has(msg, 'data')
 
+export type NotificationPublisher = <T extends NotificationType>(
+  type: T,
+  params: Omit<NotificationTypeMessageMap[T], 'type'>
+) => Promise<string | number>
+
 export type MentionedInCommentData = {
   threadId: string
   commentId: string

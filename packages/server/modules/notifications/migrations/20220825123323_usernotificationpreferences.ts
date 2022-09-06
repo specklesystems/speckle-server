@@ -4,8 +4,13 @@ const TABLE_NAME = 'user_notification_preferences'
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(TABLE_NAME, (table) => {
-    table.string('userId', 10).primary()
-    table.jsonb('preferences')
+    table
+      .string('userId', 10)
+      .primary()
+      .references('id')
+      .inTable('users')
+      .onDelete('cascade')
+    table.jsonb('preferences').notNullable()
   })
 }
 

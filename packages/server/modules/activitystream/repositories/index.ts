@@ -3,19 +3,8 @@ import {
   StreamScopeActivity,
   UserStreams
 } from '@/modules/activitystream/services/types'
-import { buildTableHelper } from '@/modules/core/dbSchema'
+import { Activities } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-
-export const Activities = buildTableHelper('stream_activity', [
-  'streamId',
-  'time',
-  'resourceType',
-  'resourceId',
-  'actionType',
-  'userId',
-  'info',
-  'message'
-])
 
 export const getActivity = async (
   streamId: string,

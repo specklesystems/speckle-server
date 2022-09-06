@@ -47,7 +47,7 @@ function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
 module.exports = {
   /**
    * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
-   * @returns
+   * @returns {Promise<string>}
    */
   async createStream({
     name,

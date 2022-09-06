@@ -11,7 +11,7 @@ import {
 } from '@/modules/activitystream/services/types'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { userNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
+import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
@@ -42,7 +42,8 @@ const digestNotificationEmailHandler = async (
   emailSender: (params: SendEmailParams) => Promise<boolean>
 ): Promise<boolean | null> => {
   const wantDigests =
-    (await (await userNotificationPreferences(userId)).activityDigest?.email) !== false
+    (await (await getUserNotificationPreferences(userId)).activityDigest?.email) !==
+    false
   const activitySummary = await createActivitySummary(userId, streamIds, start, end)
   // if there are no activities stop early
   if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)

@@ -1,9 +1,3 @@
-// const { saveActivity } = require('@/modules/activitystream/services')
-// const { pubsub, StreamPubsubEvents } = require('@/modules/shared')
-// const {
-//   ResourceTypes,
-//   ActionTypes
-// } = require('@/modules/activitystream/services/types')
 import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/services/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
