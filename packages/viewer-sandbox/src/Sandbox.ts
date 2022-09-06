@@ -1,43 +1,146 @@
-import { Viewer, SpeckleLineMaterial } from '@speckle/viewer'
-import { Object3D, LinearToneMapping } from 'three'
-import { Line2 } from 'three/examples/jsm/lines/Line2'
-import { Pane } from 'tweakpane'
+import {
+  CanonicalView,
+  DebugViewer,
+  PropertyInfo,
+  SelectionEvent,
+  SunLightConfiguration,
+  ViewerEvent
+} from '@speckle/viewer'
+import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 
 export default class Sandbox {
-  private viewer: Viewer
+  private viewer: DebugViewer
   private pane: Pane
   private tabs
+  private viewsFolder!: FolderApi
+  private streams: { [url: string]: Array<unknown> } = {}
+  private properties: PropertyInfo[]
+  private selectionList: SelectionEvent[] = null
 
   public static urlParams = {
-    url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
+    url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
   }
 
   public static sceneParams = {
     worldSize: { x: 0, y: 0, z: 0 },
     worldOrigin: { x: 0, y: 0, z: 0 },
-    useRTE: false,
-    thickLines: true,
     pixelThreshold: 0.5,
-    exposure: 0.4,
-    tonemapping: LinearToneMapping
+    exposure: 0.5,
+    tonemapping: 4 //'ACESFilmicToneMapping'
   }
 
-  public constructor(viewer: Viewer) {
+  public static lightParams: SunLightConfiguration = {
+    enabled: true,
+    castShadow: true,
+    intensity: 5,
+    color: 0xffffff,
+    elevation: 1.33,
+    azimuth: 0.75,
+    radius: 0,
+    indirectLightIntensity: 1.85
+  }
+
+  public static filterParams = {
+    filterBy: 'Volume'
+  }
+
+  public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
     this.viewer = viewer
-    this.pane = new Pane({ title: 'Sandbox', expanded: true })
-    this.pane['containerElem_'].style.width = '300px'
-    const t = `matrix(1.2, 0, 0, 1.2, -25, 16)`
-    this.pane['containerElem_'].style.transform = t
+    this.selectionList = selectionList
+    this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
+    this.pane['containerElem_'].style =
+      'position:fixed; top: 5px; right: 5px; width: 300px;'
+
     this.tabs = this.pane.addTab({
-      pages: [{ title: 'General' }, { title: 'Scene' }]
+      pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
     })
-    Sandbox.sceneParams.useRTE = viewer.RTE
-    Sandbox.sceneParams.thickLines = viewer.thickLines
+    this.properties = []
+
+    viewer.on(ViewerEvent.LoadComplete, (url: string) => {
+      this.addStreamControls(url)
+      this.addViewControls()
+      this.properties = this.viewer.getObjectProperties()
+      // const dataTree = this.viewer.getDataTree()
+      // const objects = dataTree.findAll((guid, obj) => {
+      //   return obj.speckle_type === 'Objects.Geometry.Mesh'
+      // })
+      // console.log(objects)
+    })
+    viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
+      this.removeViewControls()
+      this.addViewControls()
+      this.properties = this.viewer.getObjectProperties()
+      url
+    })
+    viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
+      this.removeViewControls()
+      this.addViewControls()
+      this.properties = this.viewer.getObjectProperties()
+      url
+    })
   }
 
   public refresh() {
     this.pane.refresh()
+  }
+
+  private addStreamControls(url: string) {
+    const folder = this.pane.addFolder({
+      title: `Object: ${url.split('/').reverse()[0]}`
+    })
+
+    folder.addInput({ url }, 'url', {
+      title: 'URL',
+      disabled: true
+    })
+    const position = { value: { x: 0, y: 0, z: 0 } }
+    folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
+      this.viewer
+        .getRenderer()
+        .subtree(url)
+        .position.set(position.value.x, position.value.y, position.value.z)
+      this.viewer.getRenderer().updateDirectLights()
+      this.viewer.getRenderer().updateHelpers()
+      this.viewer.requestRender()
+    })
+
+    folder
+      .addButton({
+        title: 'Unload'
+      })
+      .on('click', () => {
+        this.removeStreamControls(url)
+      })
+    this.streams[url] = []
+    this.streams[url].push(folder)
+  }
+
+  private removeStreamControls(url: string) {
+    this.viewer.unloadObject(url)
+    ;(this.streams[url][0] as { dispose: () => void }).dispose()
+    delete this.streams[url]
+  }
+
+  private addViewControls() {
+    const views = this.viewer.getViews()
+    this.viewsFolder = this.tabs.pages[0].addFolder({
+      title: 'Views',
+      expanded: true
+    })
+    for (let k = 0; k < views.length; k++) {
+      this.viewsFolder
+        .addButton({
+          title: views[k].name
+        })
+        .on('click', () => {
+          this.viewer.setView(views[k], true)
+        })
+    }
+  }
+
+  private removeViewControls() {
+    this.viewsFolder.dispose()
   }
 
   public makeGenericUI() {
@@ -62,11 +165,15 @@ export default class Sandbox {
     })
 
     this.tabs.pages[0].addSeparator()
+    this.tabs.pages[0].addSeparator()
 
     const toggleSectionBox = this.tabs.pages[0].addButton({
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
+      this.viewer.setSectionBoxFromObjects(
+        this.selectionList.map((val) => val.userData.id) as string[]
+      )
       this.viewer.toggleSectionBox()
     })
 
@@ -81,8 +188,75 @@ export default class Sandbox {
       title: 'Zoom Extents'
     })
     zoomExtents.on('click', () => {
-      this.viewer.zoomExtents(undefined, true)
+      this.viewer.zoom(
+        this.selectionList.map((val) => val.userData.id) as string[],
+        undefined,
+        true
+      )
     })
+
+    this.tabs.pages[0].addSeparator()
+    this.tabs.pages[0].addSeparator()
+
+    const showBatches = this.tabs.pages[0].addButton({
+      title: 'ShowBatches'
+    })
+    showBatches.on('click', () => {
+      this.viewer.getRenderer().debugShowBatches()
+      this.viewer.requestRender()
+    })
+
+    const darkModeToggle = this.tabs.pages[0].addButton({
+      title: '🌞 / 🌛'
+    })
+    const dark = localStorage.getItem('dark') === 'dark'
+    if (dark) {
+      document.getElementById('renderer')?.classList.toggle('background-dark')
+    }
+
+    darkModeToggle.on('click', () => {
+      const dark = document
+        .getElementById('renderer')
+        ?.classList.toggle('background-dark')
+
+      localStorage.setItem('dark', dark ? `dark` : `light`)
+    })
+
+    const screenshot = this.tabs.pages[0].addButton({
+      title: 'Screenshot'
+    })
+    screenshot.on('click', async () => {
+      console.warn(await this.viewer.screenshot())
+    })
+
+    const rotate = this.tabs.pages[0].addButton({
+      title: '360'
+    })
+    rotate.on('click', async () => {
+      const waitForAnimation = async (ms = 70) =>
+        await new Promise((resolve) => {
+          setTimeout(resolve, ms)
+        })
+      for (let i = 0; i < 24; i++) {
+        this.viewer.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
+        await waitForAnimation(1000)
+      }
+    })
+
+    const canonicalViewsFolder = this.tabs.pages[0].addFolder({
+      title: 'Canonical Views',
+      expanded: true
+    })
+    const sides = ['front', 'back', 'top', 'bottom', 'right', 'left', '3d']
+    for (let k = 0; k < sides.length; k++) {
+      canonicalViewsFolder
+        .addButton({
+          title: sides[k]
+        })
+        .on('click', () => {
+          this.viewer.setView(sides[k] as CanonicalView)
+        })
+    }
   }
 
   makeSceneUI() {
@@ -119,36 +293,6 @@ export default class Sandbox {
       label: 'Origin-z'
     })
 
-    worldFolder
-      .addInput(Sandbox.sceneParams, 'useRTE', {
-        label: 'RTE'
-      })
-      .on('change', () => {
-        this.viewer.RTE = Sandbox.sceneParams.useRTE
-      })
-
-    worldFolder
-      .addInput(Sandbox.sceneParams, 'thickLines', {
-        label: 'Thick Lines'
-      })
-      .on('change', () => {
-        this.viewer.thickLines = Sandbox.sceneParams.thickLines
-      })
-
-    worldFolder
-      .addInput(Sandbox.sceneParams, 'pixelThreshold', {
-        min: 0,
-        max: 5
-      })
-      .on('change', () => {
-        this.viewer.scene.traverse((object: Object3D) => {
-          if (object.type === 'Line2') {
-            ;((object as Line2).material as SpeckleLineMaterial).pixelThreshold =
-              Sandbox.sceneParams.pixelThreshold
-          }
-        })
-      })
-
     this.tabs.pages[1].addSeparator()
     const postFolder = this.tabs.pages[1].addFolder({
       title: 'Post',
@@ -161,7 +305,9 @@ export default class Sandbox {
         max: 1
       })
       .on('change', () => {
-        this.viewer.renderer.toneMappingExposure = Sandbox.sceneParams.exposure
+        this.viewer.getRenderer().renderer.toneMappingExposure =
+          Sandbox.sceneParams.exposure
+        this.viewer.requestRender()
       })
 
     postFolder
@@ -172,7 +318,126 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.renderer.toneMapping = Sandbox.sceneParams.tonemapping
+        this.viewer.getRenderer().renderer.toneMapping = Sandbox.sceneParams.tonemapping
+        this.viewer.requestRender()
+      })
+
+    const lightsFolder = this.tabs.pages[1].addFolder({
+      title: 'Lights',
+      expanded: true
+    })
+    const directLightFolder = lightsFolder.addFolder({
+      title: 'Direct',
+      expanded: true
+    })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'enabled', {
+        label: 'Sun Enabled'
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'castShadow', {
+        label: 'Sun Shadows'
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'intensity', {
+        label: 'Sun Intensity',
+        min: 0,
+        max: 10
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'color', {
+        view: 'color',
+        label: 'Sun Color'
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'elevation', {
+        label: 'Sun Elevation',
+        min: 0,
+        max: Math.PI
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'azimuth', {
+        label: 'Sun Azimuth',
+        min: -Math.PI * 0.5,
+        max: Math.PI * 0.5
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+    directLightFolder
+      .addInput(Sandbox.lightParams, 'radius', {
+        label: 'Sun Radius',
+        min: 0,
+        max: 1000
+      })
+      .on('change', () => {
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+
+    const indirectLightsFolder = lightsFolder.addFolder({
+      title: 'Indirect',
+      expanded: true
+    })
+
+    indirectLightsFolder
+      .addInput(Sandbox.lightParams, 'indirectLightIntensity', {
+        label: 'Probe Intensity',
+        min: 0,
+        max: 10
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+  }
+
+  makeFilteringUI() {
+    const filteringFolder = this.tabs.pages[2].addFolder({
+      title: 'Filtering',
+      expanded: true
+    })
+
+    filteringFolder.addInput(Sandbox.filterParams, 'filterBy', {
+      options: {
+        Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
+        Area: 'parameters.HOST_AREA_COMPUTED.value',
+        SpeckleType: 'speckle_type'
+      }
+    })
+
+    filteringFolder
+      .addButton({
+        title: 'Apply Filter'
+      })
+      .on('click', () => {
+        const data = this.properties.find((value) => {
+          return value.key === Sandbox.filterParams.filterBy
+        }) as PropertyInfo
+        this.viewer.setColorFilter(data)
+        this.pane.refresh()
+      })
+
+    filteringFolder
+      .addButton({
+        title: 'Clear Filters'
+      })
+      .on('click', () => {
+        this.viewer.resetFilters()
       })
   }
 
@@ -180,7 +445,10 @@ export default class Sandbox {
     const objUrls = await UrlHelper.getResourceUrls(url)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      await this.viewer.loadObject(url, undefined)
+      const authToken = localStorage.getItem(
+        url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+      ) as string
+      await this.viewer.loadObject(url, authToken)
     }
     localStorage.setItem('last-load-url', url)
   }

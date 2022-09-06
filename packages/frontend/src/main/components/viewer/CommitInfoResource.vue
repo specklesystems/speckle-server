@@ -82,9 +82,9 @@ import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
   hideObjects,
-  isolateObjects,
   showObjects,
-  unisolateObjects,
+  isolateObjects,
+  unIsolateObjects,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
@@ -104,8 +104,7 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          isolateValues
-          hideValues
+          currentFilterState
         }
       }
     `)
@@ -126,46 +125,36 @@ export default {
       return this.resource.data.commit
     },
     isolated() {
-      return (
-        this.viewerState.isolateValues.indexOf(
-          this.resource.data.commit.referencedObject
-        ) !== -1
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
+      return this.viewerState.currentFilterState?.isolatedObjects?.includes(
+        this.resource.data.commit.referencedObject
       )
     },
     visible() {
-      return (
-        this.viewerState.hideValues.indexOf(
-          this.resource.data.commit.referencedObject
-        ) === -1
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
+
+      return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
+        this.resource.data.commit.referencedObject
       )
     }
   },
   methods: {
     isolate() {
       const id = this.resource.data.commit.referencedObject
-      if (this.isolated)
-        unisolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        isolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.isolated) {
+        unIsolateObjects([id], 'ui-iso', true)
+      } else {
+        isolateObjects([id], 'ui-iso', true)
+      }
     },
     toggleVisibility() {
       const id = this.resource.data.commit.referencedObject
-      if (this.visible)
-        hideObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        showObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.visible) {
+        hideObjects([id], 'ui-vis', true)
+      } else {
+        showObjects([id], 'ui-vis', true)
+      }
     }
   }
 }

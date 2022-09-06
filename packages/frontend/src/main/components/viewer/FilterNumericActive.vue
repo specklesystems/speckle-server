@@ -1,19 +1,5 @@
 <template>
   <div class="mt-3">
-    <portal to="filter-actions">
-      <v-list-item-action class="pa-0 ma-0">
-        <v-btn
-          v-tooltip="'Set colors automatically based on each property'"
-          small
-          icon
-          @click.stop="colorBy = !colorBy"
-        >
-          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">
-            mdi-palette
-          </v-icon>
-        </v-btn>
-      </v-list-item-action>
-    </portal>
     <v-row no-gutters class="my-1 property-row rounded-lg">
       <v-col
         cols="1"
@@ -37,12 +23,12 @@
         }`"
         style="line-height: 24px"
       >
-        {{ filter.data.objectCount }} elements; min:
-        {{ Math.round(filter.data.minValue, 2) | prettynum }}; max:
-        {{ Math.round(filter.data.maxValue, 2) | prettynum }}
+        {{ filter.objectCount }} elements; min:
+        {{ Math.round(filter.min, 2) | prettynum }}; max:
+        {{ Math.round(filter.max, 2) | prettynum }}
       </v-col>
       <v-col
-        v-if="filter.data.maxValue === filter.data.minValue"
+        v-if="filter.max === filter.min"
         cols="12"
         :class="`caption text-truncatexxx px-1 ${
           $vuetify.theme.dark ? 'grey--text' : ''
@@ -52,17 +38,18 @@
         Invalid values (min value equals to max value).
       </v-col>
       <v-col v-else ref="parent" cols="12" class="px-3 py-3">
-        <histogram-slider
+        <HistogramSlider
+          ref="histogramSlider"
           :key="width"
           :width="width"
           :bar-height="100"
-          :data="filter.data.allValues"
+          :data="filter.valueGroups.map((vg) => vg.value)"
           :bar-width="4"
           :bar-gap="6"
           :handle-size="18"
-          :max="filter.data.maxValue"
-          :min="filter.data.minValue"
-          :step="filter.data.minValue / 10"
+          :max="filter.max"
+          :min="filter.min"
+          :step="filter.min / 10"
           force-edges
           :keyboard="false"
           :bar-radius="2"
@@ -75,26 +62,43 @@
           @finish="setFilterHistogram"
         />
       </v-col>
+      <!-- TODO: set up manual entry for ranges -->
+      <!-- <v-col class="d-flex px-2 mt-2">
+        <v-text-field
+          v-model="userMin"
+          :min="filter.data.min"
+          :max="filter.data.max"
+          type="number"
+          class="px-1"
+          label="min"
+          @input="setMin"
+        />
+        <v-text-field
+          v-model="userMax"
+          :min="filter.data.min"
+          :max="filter.data.max"
+          type="number"
+          class="px-1"
+          label="max"
+          @input="setMax"
+        />
+      </v-col> -->
     </v-row>
   </div>
 </template>
 <script>
-import {
-  resetFilter,
-  setNumericFilter
-} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import 'vue-histogram-slider/dist/histogram-slider.css'
+import HistogramSlider from 'vue-histogram-slider'
+
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
+
+import { setColorFilter } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 
 export default {
   components: {
-    HistogramSlider: async () => {
-      await import(
-        /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider/dist/histogram-slider.css'
-      )
-      const component = await import(
-        /* webpackChunkName: "vue-histogram-slider" */ 'vue-histogram-slider'
-      )
-      return component
-    }
+    HistogramSlider
   },
   props: {
     filter: {
@@ -104,34 +108,43 @@ export default {
     active: { type: Boolean, default: false },
     preventFirstSet: { type: Boolean, default: false }
   },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          currentFilterState
+          objectProperties
+          localFilterPropKey
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState }
+  },
   data() {
     return {
-      range: [0, 1],
-      colorBy: true,
       width: 300,
-      preventFirstSetInternal: this.preventFirstSet
-    }
-  },
-  watch: {
-    filter(newVal) {
-      this.$set(this.range, 0, newVal.data.minValue)
-      this.$set(this.range, 1, newVal.data.maxValue)
-    },
-    colorBy() {
-      this.setFilter()
+      preventFirstSetInternal: this.preventFirstSet,
+      userMin: 0,
+      userMax: 1,
+      error: false,
+      errorMessages: []
     }
   },
   mounted() {
-    this.$set(this.range, 0, this.filter.data.minValue)
-    this.$set(this.range, 1, this.filter.data.maxValue)
-    this.setFilter()
+    this.$nextTick(() => {
+      this.userMin = this.viewerState?.currentFilterState?.passMin || this.filter.min
+      this.userMax = this.viewerState?.currentFilterState?.passMax || this.filter.max
+      this.$refs.histogramSlider.update({ from: this.userMin, to: this.userMax })
+    })
+
     this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     this.$eventHub.$on('resize-viewer', () => {
       this.width = this.$refs.parent ? this.$refs.parent.clientWidth - 24 : 300
     })
-  },
-  beforeDestroy() {
-    resetFilter()
   },
   methods: {
     async setFilterHistogram(e) {
@@ -140,23 +153,10 @@ export default {
         return
       }
 
-      setNumericFilter({
-        filterKey: this.filter.targetKey,
-        minValue: e.from,
-        maxValue: e.to
-      })
-    },
-    async setFilter() {
-      if (this.preventFirstSetInternal) {
-        this.preventFirstSetInternal = false
-        return
-      }
-
-      setNumericFilter({
-        filterKey: this.filter.targetKey,
-        minValue: this.range[0],
-        maxValue: this.range[1]
-      })
+      const propInfo = { ...this.filter }
+      propInfo.passMin = e.from
+      propInfo.passMax = e.to
+      setColorFilter(propInfo)
     },
     prettify(num) {
       return this.$options.filters.prettynum(num)

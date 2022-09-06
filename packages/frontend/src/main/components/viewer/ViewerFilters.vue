@@ -10,24 +10,17 @@
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
-          <span v-if="activeFilter === null">
-            Filters
+          <span v-if="!activeFilter">
+            Filters Groups
             <span class="caption grey--text">({{ allFilters.length }})</span>
           </span>
-          <span v-else>{{ activeFilter.name }}</span>
+          <span v-else>{{ getFilterNameFromKey(activeFilter.key) }}</span>
+          <!-- <span v-else>{{ activeFilter.key.split('.').reverse()[0] }}</span> -->
         </v-list-item-title>
       </v-list-item-content>
       <portal-target name="filter-actions"></portal-target>
       <v-list-item-action v-if="activeFilter" class="pa-0 ma-0">
-        <v-btn
-          v-tooltip="'Remove filter'"
-          small
-          icon
-          @click.stop="
-            activeFilter = null
-            filterSearch = null
-          "
-        >
+        <v-btn v-tooltip="'Remove filter'" small icon @click.stop="removeFilter()">
           <v-icon small>mdi-close</v-icon>
         </v-btn>
       </v-list-item-action>
@@ -39,16 +32,16 @@
     </v-list-item>
     <v-scroll-y-transition>
       <div v-show="expand">
-        <div v-if="activeFilter && activeFilter.data.type === 'string'">
+        <div v-if="activeFilter && activeFilter.type === 'string'">
           <filter-category-active :filter="activeFilter" />
         </div>
-        <div v-if="activeFilter && activeFilter.data.type === 'number'">
+        <div v-if="activeFilter && activeFilter.type === 'number'">
           <filter-numeric-active
             :filter="activeFilter"
             :prevent-first-set="preventFirstSet"
           />
         </div>
-        <div v-show="activeFilter === null">
+        <div v-show="!activeFilter">
           <div class="">
             <v-text-field
               v-model="filterSearch"
@@ -66,7 +59,7 @@
                 <filter-row-select
                   v-if="filter"
                   :filter="filter"
-                  @active-toggle="(e) => (activeFilter = e)"
+                  @active-toggle="setActiveFilter"
                 />
               </div>
             </div>
@@ -74,10 +67,7 @@
               {{ filterSearch ? 'Matching' : 'Other' }} filters:
             </v-subheader>
             <div v-for="filter in matchingFilters" :key="filter.targetKey">
-              <filter-row-select
-                :filter="filter"
-                @active-toggle="(e) => (activeFilter = e)"
-              />
+              <filter-row-select :filter="filter" @active-toggle="setActiveFilter" />
             </div>
           </div>
         </div>
@@ -89,6 +79,11 @@
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
+import {
+  loadObjectProperties,
+  resetFilter,
+  setColorFilter
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   name: 'ViewerFilters',
   components: {
@@ -97,10 +92,6 @@ export default {
     FilterNumericActive: () => import('@/main/components/viewer/FilterNumericActive')
   },
   props: {
-    props: {
-      type: Object,
-      default: () => {}
-    },
     sourceApplication: {
       type: String,
       default: ''
@@ -114,7 +105,9 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          appliedFilter
+          currentFilterState
+          objectProperties
+          localFilterPropKey
         }
       }
     `)
@@ -129,13 +122,20 @@ export default {
       expand: false,
       revitFilters: ['type', 'family', 'level'],
       allFilters: [],
-      activeFilter: null,
       filterSearch: null,
       trySetPresetFilter: false,
       preventFirstSet: false
     }
   },
   computed: {
+    activeFilter() {
+      return this.viewerState.objectProperties.find(
+        (prop) => prop.key === this.viewerState.localFilterPropKey
+      )
+    },
+    propertyFilters() {
+      return this.viewerState.objectProperties || []
+    },
     topFilters() {
       if (this.allFilters.length === 0) return []
       const arr = []
@@ -161,47 +161,54 @@ export default {
     }
   },
   watch: {
-    props(newVal) {
+    propertyFilters(newVal) {
       if (newVal) {
         this.parseAndSetFilters()
       }
     },
-    'viewerState.appliedFilter'() {
-      if (this.trySetPresetFilter) return
-      if (this.viewerState.appliedFilter?.filterBy) {
-        const key = Object.keys(this.viewerState.appliedFilter.filterBy)[0]
-        const presetFilter = this.allFilters.find((f) => f.targetKey === key)
-        if (presetFilter) this.activeFilter = presetFilter
-        this.trySetPresetFilter = true
-        this.preventFirstSet = true
+    objectProperties() {
+      this.parseAndSetFilters()
+    },
+    viewerState: {
+      deep: true,
+      handler() {
+        if (this.viewerState.localFilterPropKey && !this.expand) this.expand = true
       }
     }
   },
-  mounted() {
-    if (this.props) {
-      this.parseAndSetFilters()
-    }
-    if (this.$eventHub) {
-      this.$eventHub.$on('structure-filters', () => {
-        this.activeFilter = null
-      })
-      this.$eventHub.$on('selection-filters', () => {
-        this.activeFilter = null
-      })
-    }
-  },
+  mounted() {},
   methods: {
+    async setActiveFilter(e) {
+      const prop = this.viewerState.objectProperties?.find((p) => p.key === e.targetKey)
+      setColorFilter(prop)
+    },
+    refresh() {
+      loadObjectProperties()
+    },
+    removeFilter() {
+      this.filterSearch = null
+      resetFilter()
+    },
+    getFilterNameFromKey(key) {
+      const filter = this.allFilters.find((f) => f.targetKey === key)
+      return filter.name
+    },
     parseAndSetFilters() {
-      const keys = Object.keys(this.props)
+      // const keys = Object.keys(this.props)
       const filters = []
-      for (const key of keys) {
+      for (const rawFilter of this.propertyFilters) {
         const filter = {}
-        // Handle revit params
+        filter.data = rawFilter
+        const key = rawFilter.key
+        // Handle revit params (a wee bit of FML moment)
         if (key.startsWith('parameters.')) {
           if (key.endsWith('.value')) {
-            filter.name = this.props[key.replace('.value', '.name')].allValues[0]
+            // filter.name = this.props[key.replace('.value', '.name')].allValues[0]
+            const nameProp = this.propertyFilters.find(
+              (f) => f.key === key.replace('.value', '.name')
+            )
+            filter.name = nameProp?.valueGroups[0].value
             filter.targetKey = key
-            filter.data = this.props[key]
             filters.push(filter)
             continue
           } else {
@@ -212,7 +219,6 @@ export default {
         if (key === 'level.name') {
           filter.name = 'Level'
           filter.targetKey = key
-          filter.data = this.props[key]
           filters.push(filter)
           continue
         }
@@ -220,7 +226,6 @@ export default {
         if (key === 'speckle_type') {
           filter.name = 'Object Type'
           filter.targetKey = key
-          filter.data = this.props[key]
           filters.push(filter)
           continue
         }
@@ -250,7 +255,6 @@ export default {
 
         filter.name = key
         filter.targetKey = key
-        filter.data = this.props[key]
         filters.push(filter)
       }
       this.allFilters = filters

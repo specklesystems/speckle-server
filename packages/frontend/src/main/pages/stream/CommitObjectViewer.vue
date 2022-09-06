@@ -86,7 +86,6 @@
           <!-- Filters display -->
           <viewer-filters
             class="mt-4"
-            :props="objectProperties"
             :source-application="
               resources
                 .filter(isCommitResource)
@@ -127,11 +126,7 @@
         ref="renderParent"
         :style="`height: 100vh; width: 100%; ${topOffsetStyle} left: 0px; position: absolute`"
       >
-        <speckle-viewer
-          :no-scroll="noScroll"
-          @load-progress="captureProgress"
-          @selection="captureSelect"
-        />
+        <speckle-viewer :no-scroll="noScroll" @load-progress="captureProgress" />
       </div>
 
       <div
@@ -145,11 +140,9 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="selectionData.length !== 0 && !hideSelectionInfo"
+          v-show="viewerState.selectedObjects.length !== 0 && !hideSelectionInfo"
           :key="'one'"
-          :objects="selectionData"
           :stream-id="streamId"
-          @clear-selection="selectionData = []"
         />
       </div>
 
@@ -180,7 +173,11 @@
         class=""
       >
         <viewer-bubbles v-if="!isEmbed" key="a" />
-        <comments-overlay key="c" @add-resources="addResources" />
+        <comments-overlay
+          key="c"
+          :model-loaded="loadedModel"
+          @add-resources="addResources"
+        />
         <comment-add-overlay v-if="!isEmbed" key="b" />
       </div>
 
@@ -253,6 +250,7 @@
   </div>
 </template>
 <script lang="ts">
+import * as THREE from 'three'
 import { computed, defineComponent, toRefs } from 'vue'
 import debounce from 'lodash/debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
@@ -262,8 +260,11 @@ import {
   Filter,
   setFilterDirectly,
   setIsViewerBusy,
-  setupCommitObjectViewer
+  setupCommitObjectViewer,
+  loadObjectProperties,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { PropertyInfo } from '@speckle/viewer'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import {
@@ -276,6 +277,7 @@ import { Nullable } from '@/helpers/typeHelpers'
 import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'
 import CommitObjectViewerScope from '@/main/components/viewer/CommitObjectViewerScope.vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
+import { ViewerEvent } from '@speckle/viewer'
 
 type ErroredResourceData = {
   error: boolean
@@ -334,6 +336,8 @@ export default defineComponent({
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup.vue'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay.vue'),
     ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue'),
+    // ViewerFiltersLegacy: () =>
+    //   import('@/main/components/viewer/ViewerFilters-Legacy.vue'),
     ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay.vue'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay.vue')
@@ -372,7 +376,10 @@ export default defineComponent({
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          appliedFilter
+          selectedCommentMetaData
+          selectedObjects
+          currentFilterState
+          sectionBox
         }
       }
     `)
@@ -396,9 +403,8 @@ export default defineComponent({
     loadedModel: false,
     loadProgress: 0,
     showCommitEditDialog: false,
-    selectionData: [] as Record<string, unknown>[],
     views: [] as Record<string, unknown>[],
-    objectProperties: null as Nullable<Record<string, unknown>>,
+    objectProperties: null as Nullable<PropertyInfo[]>,
     resources: [] as ResourceObjectType<AllSupportedDataTypes>[],
     showAddOverlay: false,
     viewerBusy: false
@@ -435,25 +441,8 @@ export default defineComponent({
     }
   },
   watch: {
-    'viewerState.appliedFilter'(val) {
-      if (this.isEmbed) return
-      if (!val) {
-        const fullQuery = { ...this.$route.query }
-        delete fullQuery.filter
-        this.$router.replace({
-          path: this.$route.path,
-          query: { ...fullQuery }
-        })
-        return
-      }
-      const fullQuery = { ...this.$route.query }
-      delete fullQuery.filter
-      this.$router
-        .replace({
-          path: this.$route.path,
-          query: { ...fullQuery, filter: JSON.stringify(val) }
-        })
-        .catch(() => {})
+    'viewerState.currentFilterState'() {
+      this.updateUrl()
     }
   },
   async mounted() {
@@ -526,23 +515,37 @@ export default defineComponent({
         }
       }
 
-      this.viewer.on('busy', (val: boolean) => {
+      this.viewer.on(
+        ViewerEvent.SectionBoxChanged,
+        debounce(() => {
+          this.updateUrl()
+        }, 1000)
+      )
+
+      this.viewer.on(ViewerEvent.Busy, (val: boolean) => {
         setIsViewerBusy(!!val)
         this.viewerBusy = val
         if (!val && this.camToSet) {
           setTimeout(() => {
             if (!this.camToSet) return
 
-            if (this.camToSet[6] === 1) {
-              this.viewer.toggleCameraProjection()
-            }
-            this.viewer.interactions.setLookAt(
-              { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
-              { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
-            )
-            if (this.camToSet[6] === 1) {
-              this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
-            }
+            this.viewer.setView({
+              position: new THREE.Vector3(
+                this.camToSet[0],
+                this.camToSet[1],
+                this.camToSet[2]
+              ),
+              target: new THREE.Vector3(
+                this.camToSet[3],
+                this.camToSet[4],
+                this.camToSet[5]
+              )
+            })
+
+            // NOTE: disabled because ortho camera is not working with comment bubbles intersections properly
+            // if (this.camToSet[6] === 1) {
+            // this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+            // }
             this.camToSet = null
           }, 200)
         }
@@ -569,10 +572,14 @@ export default defineComponent({
             return
           }
           if (this.camToSet) return
+          if (this.viewerState.selectedCommentMetaData) {
+            return
+          }
 
           const c = getCamArray(this.viewer)
           const fullQuery = { ...this.$route.query }
           delete fullQuery.c
+          delete fullQuery.cId
           this.$router
             .replace({
               path: this.$route.path,
@@ -586,6 +593,45 @@ export default defineComponent({
     }, 300)
   },
   methods: {
+    updateUrl() {
+      if (this.isEmbed) return
+
+      if (this.viewerState.selectedCommentMetaData) {
+        this.$router
+          .replace({
+            path: this.$route.path,
+            query: { cId: this.viewerState.selectedCommentMetaData.id }
+          })
+          .catch(() => {})
+        return
+      }
+
+      // TODO: remove comment if there's no selected comment
+
+      const hasSectionBox = this.viewerState.sectionBox !== null
+      const hasFilters = this.viewerState.currentFilterState !== null
+      const hasComment = this.viewerState.selectedCommentMetaData !== null
+
+      if (!hasSectionBox && !hasFilters) {
+        const fullQuery = { ...this.$route.query }
+        delete fullQuery.filter
+        if (!hasComment) delete fullQuery.cId
+        this.$router.replace({
+          path: this.$route.path,
+          query: { ...fullQuery }
+        })
+        return
+      }
+      const fullQuery = { ...this.$route.query }
+      delete fullQuery.filter
+      if (!hasComment) delete fullQuery.cId
+      this.$router
+        .replace({
+          path: this.$route.path,
+          query: { ...fullQuery, filter: JSON.stringify(getLocalFilterState()) }
+        })
+        .catch(() => {})
+    },
     resolveResourceType(resourceId: string): ResourceTypeValue {
       return resourceId.length === 10 ? 'commit' : 'object'
     },
@@ -619,7 +665,7 @@ export default defineComponent({
       await this.viewer.loadObject(
         `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       )
-      this.viewer.zoomExtents(undefined, true)
+      this.viewer.zoom(undefined, undefined, true)
 
       this.loadedModel = true
       this.setFilters()
@@ -704,7 +750,7 @@ export default defineComponent({
         })
 
         await this.viewer.unloadObject(url)
-        this.viewer.zoomExtents(undefined, true)
+        this.viewer.zoom(undefined, undefined, true)
       }
       this.resources.splice(index, 1)
       this.setFilters()
@@ -731,12 +777,12 @@ export default defineComponent({
     },
     setViews() {
       this.views.splice(0, this.views.length)
-      this.views.push(...this.viewer.sceneManager.views)
+      this.views.push(...this.viewer.getViews())
     },
     async setFilters() {
       try {
         // repopulate object props
-        this.objectProperties = await this.viewer.getObjectsProperties()
+        loadObjectProperties()
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: 'Failed to get object properties from viewer.'
@@ -745,10 +791,6 @@ export default defineComponent({
     },
     captureProgress(args: { progress: number }) {
       this.loadProgress = args.progress * 100
-    },
-    captureSelect(selectionData: { userData: Record<string, unknown>[] }) {
-      this.selectionData.splice(0, this.selectionData.length)
-      this.selectionData.push(...selectionData.userData)
     }
   }
 })

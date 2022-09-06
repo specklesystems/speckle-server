@@ -53,7 +53,7 @@ export default {
       currItems: 20,
       loading: false,
       ignoredProps: [
-        '__closure',
+        // '__closure',
         // 'displayMesh',
         // 'displayValue',
         '__importedUrl',
@@ -119,6 +119,9 @@ export default {
           !this.realObject.speckle_type?.includes('Objects')
         )
           extras.push('visibility')
+
+        // hack
+        if (type === 'array') extras.push('visibility')
 
         // handle undefined as well as null 'values'
         // eslint-disable-next-line eqeqeq

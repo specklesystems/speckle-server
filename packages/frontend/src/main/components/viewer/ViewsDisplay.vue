@@ -56,7 +56,7 @@ export default {
   },
   methods: {
     setView(view) {
-      this.viewer.interactions.setView(view.id)
+      this.viewer.setView(view.id)
     }
   }
 }

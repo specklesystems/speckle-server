@@ -30,7 +30,10 @@ export default class CameraHandler {
     this.orthoCamera.updateProjectionMatrix()
 
     CameraControls.install({ THREE })
-    this.controls = new CameraControls(this.camera, this.viewer.renderer.domElement)
+    this.controls = new CameraControls(
+      this.camera,
+      this.viewer.speckleRenderer.renderer.domElement
+    )
     this.controls.maxPolarAngle = Math.PI / 2
     this.setupWASDControls()
 
@@ -145,9 +148,7 @@ export default class CameraHandler {
     // fit the camera inside, so we don't have clipping plane issues.
     // WIP implementation
     const camPos = this.orthoCamera.position
-    const box = new THREE.Box3().setFromObject(
-      this.viewer.sceneManager.sceneObjects.allObjects
-    )
+    const box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
     const sphere = new THREE.Sphere()
     box.getBoundingSphere(sphere)
 
