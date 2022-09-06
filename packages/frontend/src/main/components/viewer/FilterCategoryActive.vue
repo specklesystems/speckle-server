@@ -116,52 +116,35 @@ export default {
       isolatedLegend: {}
     }
   },
-  computed: {
-    colors() {
-      if (!this.viewerState.currentFilterState?.colorGroups) return []
-      return this.viewerState.currentFilterState?.colorGroups
-    }
-  },
   watch: {
     viewerState: {
       deep: true,
       handler() {
-        if (!this.viewerState.currentFilterState?.colorGroups) {
-          return
-        }
-        const colorLegend = {}
-        const visibleLegend = {}
-        const isolatedLegend = {}
-        for (const vgc of this.viewerState.currentFilterState.colorGroups) {
-          colorLegend[vgc.value] = '#' + vgc.color.toString(16)
-
-          visibleLegend[vgc.value] = this.isVisible(vgc.ids)
-          isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
-        }
-        this.colorLegend = colorLegend
-        this.visibleLegend = visibleLegend
-        this.isolatedLegend = isolatedLegend
+        this.updateLegend()
       }
     }
   },
   mounted() {
-    if (!this.viewerState.currentFilterState?.colorGroups) {
-      return
-    }
-    const colorLegend = {}
-    const visibleLegend = {}
-    const isolatedLegend = {}
-    for (const vgc of this.viewerState.currentFilterState.colorGroups) {
-      colorLegend[vgc.value] = '#' + vgc.color.toString(16)
-
-      visibleLegend[vgc.value] = this.isVisible(vgc.ids)
-      isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
-    }
-    this.colorLegend = colorLegend
-    this.visibleLegend = visibleLegend
-    this.isolatedLegend = isolatedLegend
+    this.updateLegend()
   },
   methods: {
+    updateLegend() {
+      if (!this.viewerState.currentFilterState?.colorGroups) {
+        return
+      }
+      const colorLegend = {}
+      const visibleLegend = {}
+      const isolatedLegend = {}
+      for (const vgc of this.viewerState.currentFilterState.colorGroups) {
+        colorLegend[vgc.value] = '#' + vgc.color.toString(16)
+
+        visibleLegend[vgc.value] = this.isVisible(vgc.ids)
+        isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
+      }
+      this.colorLegend = colorLegend
+      this.visibleLegend = visibleLegend
+      this.isolatedLegend = isolatedLegend
+    },
     async toggleFilter(prop) {
       if (this.isolatedLegend[prop.value]) {
         unIsolateObjects(prop.ids, 'ui-filters')

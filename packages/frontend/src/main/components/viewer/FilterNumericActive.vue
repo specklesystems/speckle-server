@@ -1,9 +1,6 @@
 <template>
   <div class="mt-3">
     <v-row no-gutters class="my-1 property-row rounded-lg">
-      <v-col>
-        <!-- {{ filter }} -->
-      </v-col>
       <v-col
         cols="1"
         :class="`text-center text-truncate px-1 ${

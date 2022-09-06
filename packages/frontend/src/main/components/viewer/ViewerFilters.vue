@@ -134,8 +134,7 @@ export default {
       )
     },
     propertyFilters() {
-      if (!this.viewerState.objectProperties) return []
-      return this.viewerState.objectProperties
+      return this.viewerState.objectProperties || []
     },
     topFilters() {
       if (this.allFilters.length === 0) return []
@@ -177,14 +176,7 @@ export default {
       }
     }
   },
-  mounted() {
-    // setTimeout(() => {
-    //   console.log(JSON.stringify(this.viewerState))
-    //   console.log(this.expand)
-    //   if (this.viewerState.localFilterPropKey) this.expand = true
-    //   console.log(this.expand)
-    // }, 2000)
-  },
+  mounted() {},
   methods: {
     async setActiveFilter(e) {
       const prop = this.viewerState.objectProperties?.find((p) => p.key === e.targetKey)
@@ -198,9 +190,6 @@ export default {
       resetFilter()
     },
     getFilterNameFromKey(key) {
-      // if (key.startsWith('parameters.') && key.endsWith('.value')) {
-
-      // }
       const filter = this.allFilters.find((f) => f.targetKey === key)
       return filter.name
     },
