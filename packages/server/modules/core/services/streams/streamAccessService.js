@@ -12,7 +12,7 @@ const {
   addStreamPermissionsAddedActivity,
   addStreamPermissionsRevokedActivity,
   addStreamInviteAcceptedActivity
-} = require('@/modules/activitystream/services/streamActivityService')
+} = require('@/modules/activitystream/services/streamActivity')
 
 /**
  * Validate that the user has the required permission level (or one above it) for the specified stream

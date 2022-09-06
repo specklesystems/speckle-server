@@ -7,7 +7,7 @@ import {
   Users
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { Roles } from '@/modules/core/helpers/mainConstants'
+import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
   LimitedUserRecord,
   StreamAclRecord,
@@ -23,6 +23,7 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 
 export type BasicStream = Pick<
   StreamRecord,
@@ -481,6 +482,22 @@ export async function getDiscoverableStreams(params: GetDiscoverableStreamsParam
       if (decodedCursor) q.offset(decodedCursor as number)
       break
     }
+  }
+
+  return await q
+}
+
+/**
+ * Get all stream collaborators. Optionally filter only specific roles.
+ */
+export async function getStreamCollaborators(streamId: string, type?: StreamRoles) {
+  const q = StreamAcl.knex()
+    .select<UserWithOptionalRole[]>([...Users.cols, StreamAcl.col.role])
+    .where(StreamAcl.col.resourceId, streamId)
+    .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
+
+  if (type) {
+    q.andWhere(StreamAcl.col.role, type)
   }
 
   return await q

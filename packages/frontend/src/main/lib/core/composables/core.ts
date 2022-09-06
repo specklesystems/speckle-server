@@ -32,3 +32,13 @@ export function useIsLoggedIn() {
   const isLoggedIn = computed(() => !!result.value?.user?.id)
   return { isLoggedIn }
 }
+
+/**
+ * Get Vuetify
+ */
+export function useVuetify() {
+  const vm = getCurrentInstance()
+  if (!vm) throw new ComposableInvokedOutOfScopeError()
+
+  return vm.proxy.$vuetify
+}

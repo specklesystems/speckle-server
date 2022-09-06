@@ -23,7 +23,9 @@ const ActionTypes = Object.freeze({
     Delete: 'stream_delete',
     Create: 'stream_create',
     InviteSent: 'stream_invite_sent',
-    InviteDeclined: 'stream_invite_declined'
+    InviteDeclined: 'stream_invite_declined',
+    AccessRequestSent: 'stream_access_request_sent',
+    AccessRequestDeclined: 'stream_access_request_declined'
   },
   Comment: {
     Mention: 'comment_mention'

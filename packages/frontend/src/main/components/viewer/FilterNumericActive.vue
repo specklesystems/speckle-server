@@ -52,7 +52,7 @@
         Invalid values (min value equals to max value).
       </v-col>
       <v-col v-else ref="parent" cols="12" class="px-3 py-3">
-        <HistogramSlider
+        <histogram-slider
           :key="width"
           :width="width"
           :bar-height="100"

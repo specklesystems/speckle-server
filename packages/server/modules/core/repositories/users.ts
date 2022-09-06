@@ -6,6 +6,7 @@ import { isArray } from 'lodash'
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
    * Available, if query joined this data from server_acl
+   * (this can be the server role or stream role depending on how and where this was retrieved)
    */
   role?: string
 }

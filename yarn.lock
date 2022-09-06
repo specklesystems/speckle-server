@@ -1733,6 +1733,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/helper-validator-identifier@npm:^7.18.6":
+  version: 7.18.6
+  resolution: "@babel/helper-validator-identifier@npm:7.18.6"
+  checksum: e295254d616bbe26e48c196a198476ab4d42a73b90478c9842536cf910ead887f5af6b5c4df544d3052a25ccb3614866fa808dc1e3a5a4291acd444e243c0648
+  languageName: node
+  linkType: hard
+
 "@babel/helper-validator-option@npm:^7.16.7":
   version: 7.16.7
   resolution: "@babel/helper-validator-option@npm:7.16.7"
@@ -1775,13 +1782,13 @@ __metadata:
   linkType: hard
 
 "@babel/highlight@npm:^7.10.4":
-  version: 7.17.12
-  resolution: "@babel/highlight@npm:7.17.12"
+  version: 7.18.6
+  resolution: "@babel/highlight@npm:7.18.6"
   dependencies:
-    "@babel/helper-validator-identifier": ^7.16.7
+    "@babel/helper-validator-identifier": ^7.18.6
     chalk: ^2.0.0
     js-tokens: ^4.0.0
-  checksum: 841a11aa353113bcce662b47085085a379251bf8b09054e37e1e082da1bf0d59355a556192a6b5e9ee98e8ee6f1f2831ac42510633c5e7043e3744dda2d6b9d6
+  checksum: 92d8ee61549de5ff5120e945e774728e5ccd57fd3b2ed6eace020ec744823d4a98e242be1453d21764a30a14769ecd62170fba28539b211799bbaf232bbb2789
   languageName: node
   linkType: hard
 
@@ -11500,7 +11507,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^8.2.0, commander@npm:^8.3.0":
+"commander@npm:^8.3.0":
   version: 8.3.0
   resolution: "commander@npm:8.3.0"
   checksum: 0f82321821fc27b83bd409510bb9deeebcfa799ff0bf5d102128b500b7af22872c0c92cb6a0ebc5a4cf19c6b550fba9cedfa7329d18c6442a625f851377bacf0
@@ -16415,23 +16422,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:14 - 16":
-  version: 16.5.0
-  resolution: "graphql@npm:16.5.0"
-  checksum: a82a926d085818934d04fdf303a269af170e79de943678bd2726370a96194f9454ade9d6d76c2de69afbd7b9f0b4f8061619baecbbddbe82125860e675ac219e
-  languageName: node
-  linkType: hard
-
-"graphql@npm:^14.6.0":
-  version: 14.7.0
-  resolution: "graphql@npm:14.7.0"
-  dependencies:
-    iterall: ^1.2.2
-  checksum: e5f4e60799421a573904f390e1ec0aa76360f751688dbbe62e9c35baa0d3727c8d59a659bfc524f126dffe3518da87fd8ecaa78c94fd5c0fe4e035c670745242
-  languageName: node
-  linkType: hard
-
-"graphql@npm:^15, graphql@npm:^15.0.0":
+"graphql@npm:^15":
   version: 15.8.0
   resolution: "graphql@npm:15.8.0"
   checksum: 423325271db8858428641b9aca01699283d1fe5b40ef6d4ac622569ecca927019fce8196208b91dd1d8eb8114f00263fe661d241d0eb40c10e5bfd650f86ec5e
@@ -18477,7 +18468,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"iterall@npm:^1.1.1, iterall@npm:^1.1.3, iterall@npm:^1.2.1, iterall@npm:^1.2.2, iterall@npm:^1.3.0":
+"iterall@npm:^1.1.1, iterall@npm:^1.1.3, iterall@npm:^1.2.1, iterall@npm:^1.3.0":
   version: 1.3.0
   resolution: "iterall@npm:1.3.0"
   checksum: c78b99678f8c99be488cca7f33e4acca9b72c1326e050afbaf023f086e55619ee466af0464af94a0cb3f292e60cb5bac53a8fd86bd4249ecad26e09f17bb158b
@@ -23304,11 +23295,11 @@ __metadata:
   linkType: hard
 
 "prettier@npm:^2.4.1":
-  version: 2.7.0
-  resolution: "prettier@npm:2.7.0"
+  version: 2.7.1
+  resolution: "prettier@npm:2.7.1"
   bin:
     prettier: bin-prettier.js
-  checksum: 5b55bb1dced9d16635b83229df8e670d150890fdb343f19e8a66e610094a108e960c0f57352b3e5cdbc4eff4ef00a834406047ffcd9f20bd22a6497ba143c81f
+  checksum: 55a4409182260866ab31284d929b3cb961e5fdb91fe0d2e099dac92eaecec890f36e524b4c19e6ceae839c99c6d7195817579cdffc8e2c80da0cb794463a748b
   languageName: node
   linkType: hard
 
@@ -28196,9 +28187,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vls@npm:^0.7.6":
-  version: 0.7.6
-  resolution: "vls@npm:0.7.6"
+"vls@npm:^0.8.1":
+  version: 0.8.1
+  resolution: "vls@npm:0.8.1"
   dependencies:
     eslint: ^7.32.0
     eslint-plugin-vue: ^7.19.1
@@ -28208,7 +28199,7 @@ __metadata:
     typescript: ^4.4.4
   bin:
     vls: bin/vls
-  checksum: 69a209a45b3a25f71c3e4cf60719caaf16ae21fa550a7136c43690e1a373a88be3cd040df6624bfaa6993bb6139d5bb2be59d92015b7289167f19d05bfd687e6
+  checksum: 604751b2363be3616a1db3272dafac7a02572f5efa3339e48b1f89bc92254713cc44227999dedbf3c04d6d9f52a2268dd834fcb57b51dff1db215839efe404be
   languageName: node
   linkType: hard
 
@@ -28220,14 +28211,14 @@ __metadata:
   linkType: hard
 
 "vti@npm:^0.1.5":
-  version: 0.1.5
-  resolution: "vti@npm:0.1.5"
+  version: 0.1.7
+  resolution: "vti@npm:0.1.7"
   dependencies:
-    commander: ^8.2.0
-    vls: ^0.7.6
+    commander: ^8.3.0
+    vls: ^0.8.1
   bin:
     vti: bin/vti
-  checksum: c9fb2b52ba7b85ce57cb5375d5656ea5414a82e2305a621c7e54f6489f61bfb52877893e4ae3f2be6b61bf8cca5b84539c6db4f8306bfc79d416929c63a2e4e0
+  checksum: 9e7189bb89c75beff58aacaa03050bc2e6e38db657983a19b5b94fd9d4d372bdd57d98c0072df684accdaec7067316dc7b5ab138ea56f0945b56a3d77d6b2638
   languageName: node
   linkType: hard
 

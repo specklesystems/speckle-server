@@ -1,7 +1,7 @@
 <template>
   <transition v-if="shouldShowBanner" name="component-fade" mode="out-in">
     <v-alert
-      v-if="!success & !errors"
+      v-if="!success && !errors"
       type="warning"
       dismissible
       rounded="lg"
@@ -19,7 +19,7 @@
       </v-row>
     </v-alert>
     <v-alert
-      v-if="success & !errors"
+      v-if="success && !errors"
       type="success"
       color="primary"
       dismissible
