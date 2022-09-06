@@ -390,10 +390,11 @@ export default class Sandbox {
       })
 
     directLightFolder
-      .addInput({bias: -0.001}, 'bias', {
+      .addInput({ bias: -0.001 }, 'bias', {
         label: 'Shadow Bias',
         min: -0.001,
-        max: 0
+        max: 0,
+        step: 0.00001
       })
       .on('change', (value) => {
         this.viewer.getRenderer().sunLight.shadow.bias = value.value
@@ -402,10 +403,11 @@ export default class Sandbox {
       })
 
     directLightFolder
-      .addInput({radius: 2}, 'radius', {
+      .addInput({ radius: 2 }, 'radius', {
         label: 'Shadow Radius',
         min: 0,
-        max: 6
+        max: 6,
+        step: 1
       })
       .on('change', (value) => {
         this.viewer.getRenderer().sunLight.shadow.radius = value.value
