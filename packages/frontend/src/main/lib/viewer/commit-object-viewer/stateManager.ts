@@ -434,15 +434,50 @@ function isLegacyFilter(obj: UnknownObject) {
 }
 
 export async function setFilterDirectly(params: { filter: Filter | LocalFilterState }) {
+  await resetFilter()
+
+  // Minimal support for legacy filters (old viewer filtering api)
   if (isLegacyFilter(params.filter)) {
-    // TODO: Legacy filter setting
-    console.log('legacy filter type detected, TODO')
-    console.log(params.filter)
+    console.warn('Legacy filter type detected. Things might not appear as expected.')
+    const legacyFilter = params.filter as Filter
+    if (legacyFilter.colorBy) {
+      const { objectProperties } = { ...commitObjectViewerState() }
+      const prop = {
+        ...objectProperties.find((p) => p.key === legacyFilter.colorBy?.property)
+      } as PropertyInfo
+
+      if (!prop) return
+      if ((legacyFilter.colorBy as Record<string, unknown>).maxValue) {
+        ;(prop as NumericPropertyInfo).passMax = (
+          legacyFilter.colorBy as Record<string, unknown>
+        ).maxValue as number
+      }
+
+      if ((legacyFilter.colorBy as Record<string, unknown>).minValue) {
+        ;(prop as NumericPropertyInfo).passMin = (
+          legacyFilter.colorBy as Record<string, unknown>
+        ).minValue as number
+      }
+
+      if (prop) {
+        setColorFilter(prop)
+        return
+      }
+    }
+
+    if (legacyFilter.filterBy?.__parents?.includes) {
+      isolateObjects(legacyFilter.filterBy?.__parents?.includes, 'setfilter-direct')
+    }
+
+    if (legacyFilter.filterBy?.__parents?.excludes) {
+      hideObjects(legacyFilter.filterBy?.__parents?.excludes, 'setfilter-direct')
+    }
+
     return
   }
 
+  // Current filters
   const lfs = params.filter as LocalFilterState
-  await resetFilter()
 
   if (lfs.hiddenIds) {
     hideObjects(lfs.hiddenIds, 'setfilter-direct', false)
@@ -476,77 +511,6 @@ export async function setFilterDirectly(params: { filter: Filter | LocalFilterSt
     sectionBoxOn()
   }
 }
-
-// NOTE: keeping legacy function around for now as it will help implement a legacy filter fallback later on.
-// export async function setFilterDirectlyLegacy(params: { filter: Filter }) {
-//   const { filter } = params
-
-//   const isNotFilter = (filterByVal: FilterByValue): filterByVal is { not: string[] } =>
-//     has(filterByVal, 'not')
-
-//   const filterBy = filter.filterBy
-//   if (filterBy && filterBy.__parents) {
-//     if (filterBy.__parents.includes) {
-//       // isolateObjects({
-//       //   filterKey: '__parents',
-//       //   filterValues: filterBy.__parents.includes
-//       // })
-//       return
-//     }
-//     if (filterBy.__parents.excludes) {
-//       // hideObjects({
-//       //   filterKey: '__parents',
-//       //   filterValues: filterBy.__parents.excludes
-//       // })
-//       return
-//     }
-//   } else if (filter.ghostOthers && filterBy) {
-//     // means it's isolate by category or numeric filter
-//     const filterByKey = Object.keys(filterBy || {})[0]
-//     const filterVal = filterBy[filterByKey]
-
-//     if (
-//       filter.colorBy &&
-//       filter.colorBy.type === 'gradient' &&
-//       !isArray(filterVal) &&
-//       !isNotFilter(filterVal)
-//     ) {
-//       // setNumericFilter({
-//       //   filterKey: filterByKey,
-//       //   minValue: filterVal.gte,
-//       //   maxValue: filterVal.lte
-//       // })
-//     } else if (isArray(filterVal)) {
-//       for (const val of filterVal) {
-//         const f = {
-//           filterKey: filterByKey,
-//           filterValue: val,
-//           allValues: [],
-//           colorBy: filter.colorBy
-//         }
-//         // isolateCategoryToggle(f)
-//       }
-//     }
-//   } else if (filterBy) {
-//     const filterByKey = Object.keys(filterBy || {})[0]
-//     const filterVal = filterBy[filterByKey]
-
-//     if (isNotFilter(filterVal)) {
-//       const values = filterVal.not
-//       for (const val of values) {
-//         const f = {
-//           filterKey: filterByKey,
-//           filterValue: val,
-//           allValues: [],
-//           colorBy: filter.colorBy
-//         }
-//         // hideCategoryToggle(f)
-//       }
-//     }
-//   } else if (filter.colorBy) {
-//     // toggleColorByCategory({ filterKey: filter.colorBy.property })
-//   }
-// }
 
 export async function resetFilter() {
   const viewer = getInitializedViewer()
