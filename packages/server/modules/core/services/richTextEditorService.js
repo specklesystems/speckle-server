@@ -1,11 +1,12 @@
 const { trim, isString, isObjectLike } = require('lodash')
 
 /**
- * @typedef {SmartTextEditorValueSchema}
- * @property {string} version The version of the schema
- * @property {string} type The type of value (comment, issue, blog post etc.)
- * @property {import("@tiptap/core").JSONContent} [doc] The ProseMirror document representing the text, if any
- * @property {string[]} [blobIds] Attachment blob IDs, if any
+ * @typedef {{
+ *  version: string,
+ *  type: string,
+ *  doc?: import("@tiptap/core").JSONContent | undefined,
+ *  blobIds?: string[] | undefined
+ * }} SmartTextEditorValueSchema
  */
 
 /**
@@ -93,9 +94,32 @@ function convertBasicStringToDocument(text) {
   }
 }
 
+/**
+ * Generator for walking through content nodes
+ * @param {import("@tiptap/core").JSONContent} document
+ * @returns {Generator<import("@tiptap/core").JSONContent>}
+ */
+function* iterateContentNodes(document) {
+  if (!document) return
+
+  /**
+   * @param {import("@tiptap/core").JSONContent} doc
+   */
+  function* recursiveWalker(doc) {
+    yield doc
+
+    for (const contentDoc of doc.content || []) {
+      yield* recursiveWalker(contentDoc)
+    }
+  }
+
+  yield* recursiveWalker(document)
+}
+
 module.exports = {
   isTextEditorValueSchema,
   isTextEditorDoc,
   isSerializedTextEditorValueSchema,
-  convertBasicStringToDocument
+  convertBasicStringToDocument,
+  iterateContentNodes
 }

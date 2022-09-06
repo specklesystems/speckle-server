@@ -21,3 +21,15 @@ export function buildAuthenticatedApolloServer(
       })
   })
 }
+
+/**
+ * Build an unauthenticated ApolloServer instance
+ */
+export function buildUnauthenticatedApolloServer() {
+  return buildApolloServer({
+    context: () =>
+      addLoadersToCtx({
+        auth: false
+      })
+  })
+}

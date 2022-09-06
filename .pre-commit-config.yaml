@@ -16,5 +16,10 @@ repos:
     hooks:
       - id: helmlint
 
+  - repo: https://github.com/syntaqx/git-hooks
+    rev: 'v0.0.17'
+    hooks:
+      - id: circleci-config-validate
+
 ci:
   autoupdate_schedule: quarterly

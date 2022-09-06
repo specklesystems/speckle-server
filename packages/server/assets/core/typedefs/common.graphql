@@ -26,3 +26,8 @@ type SmartTextEditorValue {
   """
   attachments: [BlobMetadata!]
 }
+
+enum SortDirection {
+  ASC
+  DESC
+}

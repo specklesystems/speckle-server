@@ -1,0 +1,98 @@
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "server.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "server.labels" . | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+{{ include "server.selectorLabels" . | indent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    # allow access to DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+{{- if .Values.server.monitoring.apollo.enabled }}
+    - to:
+      - ipBlock:
+          cidr:  34.120.83.176/32
+      ports:
+        - port: 443
+{{- end }}
+{{- if ( or .Values.server.auth.google.enabled .Values.server.auth.github.enabled .Values.server.auth.azure_ad.enabled ) }}
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          # except to kubernetes pods or services
+          except:
+            - 10.0.0.0/8
+      ports:
+        - port: 443
+{{- end }}
+{{- if .Values.server.sentry_dns }}
+    # sentry.io https://docs.sentry.io/product/security/ip-ranges/#event-ingestion
+    - to:
+      - ipBlock:
+          cidr: 34.120.195.249/32
+      ports:
+        - port: 443
+{{- end }}
+{{- if .Values.server.email.enabled }}
+    # email server
+{{ include "speckle.networkpolicy.egress.email" $ | indent 4 }}
+{{- end }}
+    # redis
+{{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
+    # blob storage
+{{ include "speckle.networkpolicy.egress.blob_storage" $ | indent 4 }}
+  ingress:
+    # allow ingress from the loadbalancer
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.ingress.namespace }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
+      ports:
+        - port: http
+{{- if .Values.enable_prometheus_monitoring }}
+    # allow ingress from servicemonitor/prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+          podSelector:
+            matchLabels:
+              {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
+      ports:
+        - port: http
+{{- end }}
+    # allow ingress from the fileimport service
+    - from:
+        - podSelector:
+            matchLabels:
+{{ include "fileimport_service.selectorLabels" $ | indent 14}}
+      ports:
+        - port: http
+{{- if .Values.helm_test_enabled }}
+    # allow ingress from the test
+    - from:
+        - podSelector:
+            matchLabels:
+{{ include "test.selectorLabels" $ | indent 14}}
+{{- end }}
+{{- end -}}

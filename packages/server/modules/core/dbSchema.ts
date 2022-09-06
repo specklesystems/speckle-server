@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import knex from '@/db/knex'
 import { Knex } from 'knex'
 import { reduce } from 'lodash'
@@ -13,6 +14,11 @@ type SchemaConfig<T extends string, C extends string> = InnerSchemaConfig<T, C> 
    * Return schema helper with custom configuration options
    */
   with: (params?: SchemaConfigParams) => InnerSchemaConfig<T, C>
+
+  /**
+   * Helper with withoutTablePrefix set to true
+   */
+  withoutTablePrefix: InnerSchemaConfig<T, C>
 }
 
 type InnerSchemaConfig<T extends string, C extends string> = {
@@ -21,9 +27,9 @@ type InnerSchemaConfig<T extends string, C extends string> = {
    */
   name: T
   /**
-   * Get `knex(tableName)` QueryBuilder instance
+   * Get `knex(tableName)` QueryBuilder instance. Use the generic argument to type the results of the query.
    */
-  knex: () => Knex.QueryBuilder
+  knex: <TResult = any>() => Knex.QueryBuilder<any, TResult>
   /**
    * Get names of table columns. The names can be prefixed with the table name or not, depending
    * on whether `withoutTablePrefix` was set when accessing the helper.
@@ -31,6 +37,11 @@ type InnerSchemaConfig<T extends string, C extends string> = {
   col: {
     [colName in C]: string
   }
+
+  /**
+   * All of the column names in an array
+   */
+  cols: string[]
 }
 
 type SchemaConfigParams = {
@@ -50,41 +61,29 @@ function buildTableHelper<T extends string, C extends string>(
   function buildInnerSchemaConfig(
     params: SchemaConfigParams = {}
   ): InnerSchemaConfig<T, C> {
+    const colName = (col: string) =>
+      params.withoutTablePrefix ? col : `${tableName}.${col}`
+
     return {
       name: tableName,
       knex: () => knex(tableName),
       col: reduce(
         columns,
         (prev, curr) => {
-          prev[curr] = params.withoutTablePrefix ? curr : `${tableName}.${curr}`
+          prev[curr] = colName(curr)
           return prev
         },
         {} as Record<C, string>
-      )
+      ),
+      cols: columns.map(colName)
     }
   }
 
   return {
     ...buildInnerSchemaConfig(),
-    with: buildInnerSchemaConfig
+    with: buildInnerSchemaConfig,
+    withoutTablePrefix: buildInnerSchemaConfig({ withoutTablePrefix: true })
   }
-}
-
-/*
- * TABLE RECORD TYPES
- */
-
-export type ServerInviteRecord = {
-  id: string
-  target: string
-  inviterId: string
-  createdAt?: Date
-  used?: boolean
-  message?: string
-  resourceTarget?: string
-  resourceId?: string
-  role?: string
-  token: string
 }
 
 /*
@@ -106,7 +105,9 @@ export const Streams = buildTableHelper('streams', [
   'isPublic',
   'clonedFrom',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  'allowPublicComments',
+  'isDiscoverable'
 ])
 
 export const StreamAcl = buildTableHelper('stream_acl', [
@@ -152,6 +153,12 @@ export const Comments = buildTableHelper('comments', [
   'parentComment'
 ])
 
+export const CommentLinks = buildTableHelper('comment_links', [
+  'commentId',
+  'resourceId',
+  'resourceType'
+])
+
 export const ServerInvites = buildTableHelper('server_invites', [
   'id',
   'target',
@@ -163,6 +170,69 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'resourceId',
   'role',
   'token'
+])
+
+export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [
+  'id',
+  'email',
+  'createdAt'
+])
+
+export const RefreshTokens = buildTableHelper('refresh_tokens', [
+  'id',
+  'tokenDigest',
+  'appId',
+  'userId',
+  'createdAt',
+  'lifespan'
+])
+
+export const AuthorizationCodes = buildTableHelper('authorization_codes', [
+  'id',
+  'appId',
+  'userId',
+  'challenge',
+  'createdAt',
+  'lifespan'
+])
+
+export const ApiTokens = buildTableHelper('api_tokens', [
+  'id',
+  'tokenDigest',
+  'owner',
+  'name',
+  'lastChars',
+  'revoked',
+  'lifespan',
+  'createdAt',
+  'lastUsed'
+])
+
+export const EmailVerifications = buildTableHelper('email_verifications', [
+  'id',
+  'email',
+  'createdAt',
+  'used'
+])
+
+export const ServerAccessRequests = buildTableHelper('server_access_requests', [
+  'id',
+  'requesterId',
+  'resourceType',
+  'resourceId',
+  'createdAt',
+  'updatedAt'
+])
+
+export const StreamActivity = buildTableHelper('stream_activity', [
+  'streamId',
+  'time',
+  'resourceType',
+  'resourceId',
+  'actionType',
+  'userId',
+  'info',
+  'message'
 ])
 
 export { knex }

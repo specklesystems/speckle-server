@@ -11,6 +11,9 @@ extend type Query {
   streams(query: String, limit: Int = 25, cursor: String): StreamCollection
     @hasScope(scope: "streams:read")
 
+  """
+  All the streams of the server. Available to admins only.
+  """
   adminStreams(
     offset: Int = 0
     query: String
@@ -18,13 +21,33 @@ extend type Query {
     visibility: String
     limit: Int = 25
   ): StreamCollection @hasRole(role: "server:admin")
+
+  """
+  All of the discoverable streams of the server
+  """
+  discoverableStreams(
+    limit: Int! = 25
+    cursor: String
+    """
+    Defaults to sorting by creation date in a descending order
+    """
+    sort: DiscoverableStreamsSortingInput
+  ): StreamCollection
 }
 
 type Stream {
   id: String!
   name: String!
   description: String
+  """
+  Whether the stream can be viewed by non-contributors
+  """
   isPublic: Boolean!
+  """
+  Whether the stream (if public) can be found on public stream exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean!
   allowPublicComments: Boolean!
   """
   Your role for this stream. `null` if request is not authenticated, or the stream is not explicitly shared with you.
@@ -189,7 +212,15 @@ extend type Subscription {
 input StreamCreateInput {
   name: String
   description: String
+  """
+  Whether the stream can be viewed by non-contributors
+  """
   isPublic: Boolean
+  """
+  Whether the stream (if public) can be found on public stream exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean
   """
   Optionally specify user IDs of users that you want to invite to be contributors to this stream
   """
@@ -200,7 +231,15 @@ input StreamUpdateInput {
   id: String!
   name: String
   description: String
+  """
+  Whether the stream can be viewed by non-contributors
+  """
   isPublic: Boolean
+  """
+  Whether the stream (if public) can be found on public stream exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean
   allowPublicComments: Boolean
 }
 
@@ -213,4 +252,14 @@ input StreamUpdatePermissionInput {
 input StreamRevokePermissionInput {
   streamId: String!
   userId: String!
+}
+
+input DiscoverableStreamsSortingInput {
+  type: DiscoverableStreamsSortType!
+  direction: SortDirection!
+}
+
+enum DiscoverableStreamsSortType {
+  FAVORITES_COUNT
+  CREATED_DATE
 }

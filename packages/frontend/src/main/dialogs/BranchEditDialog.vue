@@ -11,7 +11,7 @@
     <v-alert v-show="error" dismissible type="error">
       {{ error }}
     </v-alert>
-    <v-form ref="form" v-model="valid" lazy-validation>
+    <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="updateBranch">
       <v-card-text>
         <v-text-field
           v-model="editableBranch.name"

@@ -33,7 +33,7 @@ const routes = [
         path: 'resetpassword',
         name: 'Reset Password',
         meta: {
-          title: 'Register | Speckle'
+          title: 'Reset Password | Speckle'
         },
         component: () => import('@/main/pages/auth/ResetPasswordRequest.vue')
       },
@@ -41,7 +41,7 @@ const routes = [
         path: 'resetpassword/finalize',
         name: 'Reset Password Finalization',
         meta: {
-          title: 'Register | Speckle'
+          title: 'Reset Password | Speckle'
         },
         component: () => import('@/main/pages/auth/ResetPasswordFinalization.vue')
       },

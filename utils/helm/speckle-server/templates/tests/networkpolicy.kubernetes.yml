@@ -1,0 +1,36 @@
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "test.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "test.labels" $ | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+{{ include "test.selectorLabels" $ | indent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  # all ingress is blocked
+  ingress: []
+
+  egress:
+    # allow egress to speckle-server
+    - to:
+        - podSelector:
+            matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
+      ports:
+        - port: http
+    # allow access to DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+{{- end -}}

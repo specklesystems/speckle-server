@@ -1,7 +1,11 @@
 import { ApolloServer, gql } from 'apollo-server-express'
 import {
   GetAdminUsersQuery,
-  GetAdminUsersQueryVariables
+  GetAdminUsersQueryVariables,
+  GetPendingEmailVerificationStatusQuery,
+  GetPendingEmailVerificationStatusQueryVariables,
+  RequestVerificationMutation,
+  RequestVerificationMutationVariables
 } from '@/test/graphql/generated/graphql'
 import { executeOperation } from '@/test/graphqlHelper'
 
@@ -29,9 +33,20 @@ const adminUsersQuery = gql`
   }
 `
 
-/**
- * adminUsers query
- */
+const getPendingEmailVerificationStatusQuery = gql`
+  query GetPendingEmailVerificationStatus($id: String) {
+    user(id: $id) {
+      hasPendingVerification
+    }
+  }
+`
+
+const requestVerificationMutation = gql`
+  mutation RequestVerification {
+    requestVerification
+  }
+`
+
 export async function getAdminUsersList(
   apollo: ApolloServer,
   variables: GetAdminUsersQueryVariables
@@ -42,3 +57,22 @@ export async function getAdminUsersList(
     variables
   )
 }
+
+export const getPendingEmailVerificationStatus = (
+  apollo: ApolloServer,
+  variables: GetPendingEmailVerificationStatusQueryVariables
+) =>
+  executeOperation<
+    GetPendingEmailVerificationStatusQuery,
+    GetPendingEmailVerificationStatusQueryVariables
+  >(apollo, getPendingEmailVerificationStatusQuery, variables)
+
+export const requestVerification = (
+  apollo: ApolloServer,
+  variables?: RequestVerificationMutationVariables
+) =>
+  executeOperation<RequestVerificationMutation, RequestVerificationMutationVariables>(
+    apollo,
+    requestVerificationMutation,
+    variables
+  )

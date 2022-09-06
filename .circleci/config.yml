@@ -23,9 +23,7 @@ workflows:
       - pre-commit:
           filters: *filters-everything
 
-      - docker-build-and-publish-server:
-          context: &docker-hub-context
-            - docker-hub
+      - docker-build-server:
           filters: &filters-build
             tags:
               only: /.*/
@@ -33,59 +31,114 @@ workflows:
             - test-server
             - get-version
             - should-build
-            - should-publish
 
-      - docker-build-and-publish-frontend:
-          context: *docker-hub-context
+      - docker-build-frontend:
           filters: *filters-build
           requires:
             - get-version
             - should-build
-            - should-publish
 
-      - docker-build-and-publish-webhooks:
-          context: *docker-hub-context
+      - docker-build-webhooks:
           filters: *filters-build
           requires:
             - get-version
             - test-server
             - should-build
-            - should-publish
 
-      - docker-build-and-publish-file-imports:
-          context: *docker-hub-context
+      - docker-build-file-imports:
           filters: *filters-build
           requires:
             - get-version
             - test-server
             - should-build
-            - should-publish
 
-      - docker-build-and-publish-previews:
-          context: *docker-hub-context
+      - docker-build-previews:
           filters: *filters-build
           requires:
             - get-version
             - test-server
             - should-build
-            - should-publish
 
-      - docker-build-and-publish-test-container:
-          context: *docker-hub-context
+      - docker-build-test-container:
           filters: *filters-build
           requires:
             - get-version
             - test-server
             - should-build
-            - should-publish
 
-      - docker-build-and-publish-monitor-container:
-          context: *docker-hub-context
+      - docker-build-monitor-container:
           filters: *filters-build
           requires:
             - get-version
             - should-build
+
+      - docker-publish-server:
+          context: &docker-hub-context
+            - docker-hub
+          filters: &filters-publish
+            branches:
+              ignore: /pull\/[0-9]+/
+            tags:
+              only: /.*/
+          requires:
+            - get-version
             - should-publish
+            - docker-build-server
+            - pre-commit
+
+      - docker-publish-frontend:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - should-publish
+            - docker-build-frontend
+            - pre-commit
+
+      - docker-publish-webhooks:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - should-publish
+            - docker-build-webhooks
+            - pre-commit
+
+      - docker-publish-file-imports:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - should-publish
+            - docker-build-file-imports
+            - pre-commit
+
+      - docker-publish-previews:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - should-publish
+            - docker-build-previews
+            - pre-commit
+
+      - docker-publish-test-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - should-publish
+            - docker-build-test-container
+            - pre-commit
+
+      - docker-publish-monitor-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - should-publish
+            - docker-build-monitor-container
+            - pre-commit
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -96,16 +149,15 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
-            - test-server
             - get-version
             - should-publish
-            - docker-build-and-publish-server
-            - docker-build-and-publish-frontend
-            - docker-build-and-publish-webhooks
-            - docker-build-and-publish-file-imports
-            - docker-build-and-publish-previews
-            - docker-build-and-publish-monitor-container
-            - docker-build-and-publish-test-container
+            - docker-publish-server
+            - docker-publish-frontend
+            - docker-publish-webhooks
+            - docker-publish-file-imports
+            - docker-publish-previews
+            - docker-publish-monitor-container
+            - docker-publish-test-container
 
       - publish-npm:
           filters:
@@ -125,7 +177,6 @@ jobs:
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: set version
@@ -142,13 +193,12 @@ jobs:
     docker:
       - image: cimg/base:2022.08
     working_directory: *work-dir
-    environment:
-      # £ delimited strings of regex for matches which should be published
+    environment: &publishable-tags-branches
       PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
+      # £ delimited strings of regex for matches which should be published
       PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: determine whether to publish
@@ -165,9 +215,9 @@ jobs:
     docker:
       - image: cimg/base:2022.08
     working_directory: *work-dir
+    environment: *publishable-tags-branches
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: determine whether to build
@@ -197,7 +247,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: large
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -259,6 +309,7 @@ jobs:
       S3_SECRET_KEY: 'minioadmin'
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://localhost:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
     steps:
       - checkout
@@ -304,10 +355,10 @@ jobs:
           path: packages/server/coverage/lcov-report
           destination: package/server/coverage
 
-  docker-build-and-publish: &docker-job
+  docker-build: &build-job
     docker: &docker-image
       - image: cimg/node:16.15
-    resource_class: xlarge
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -315,7 +366,11 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-build >> $BASH_ENV
-      - run: cat workspace/should-publish >> $BASH_ENV
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${SHOULD_BUILD}" != true ]] && echo "Should not build, stopping" && circleci-agent step halt
+            echo 'Proceeding with build'
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it
@@ -324,40 +379,106 @@ jobs:
       - run:
           name: Build and Publish
           command: ./.circleci/build.sh
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - speckle*
 
-  docker-build-and-publish-server:
-    <<: *docker-job
+  docker-build-server:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
 
-  docker-build-and-publish-frontend:
-    <<: *docker-job
+  docker-build-frontend:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
 
-  docker-build-and-publish-previews:
-    <<: *docker-job
+  docker-build-previews:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: preview-service
 
-  docker-build-and-publish-webhooks:
-    <<: *docker-job
+  docker-build-webhooks:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: webhook-service
 
-  docker-build-and-publish-file-imports:
-    <<: *docker-job
+  docker-build-file-imports:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: fileimport-service
 
-  docker-build-and-publish-test-container:
-    <<: *docker-job
+  docker-build-test-container:
+    <<: *build-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
 
-  docker-build-and-publish-monitor-container:
-    <<: *docker-job
+  docker-build-monitor-container:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: monitor-deployment
+
+  docker-publish: &publish-job
+    docker: &base-image
+      - image: cimg/base:2022.08
+    resource_class: medium
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: cat workspace/should-publish >> $BASH_ENV
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
+            echo 'Proceeding with publish'
+      - setup_remote_docker:
+          # a weird issue with yarn installing packages throwing EPERM errors
+          # this fixes it
+          version: 20.10.12
+          docker_layer_caching: true
+      - run:
+          name: Publish
+          command: ./.circleci/publish.sh
+
+  docker-publish-server:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: server
+
+  docker-publish-frontend:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend
+
+  docker-publish-previews:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: preview-service
+
+  docker-publish-webhooks:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: webhook-service
+
+  docker-publish-file-imports:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: fileimport-service
+
+  docker-publish-test-container:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: test-deployment
+
+  docker-publish-monitor-container:
+    <<: *publish-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
@@ -389,7 +510,7 @@ jobs:
       - run:
           name: auth to npm as Speckle
           command: |
-            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml 
+            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml
             echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
       - run:
           name: try login to npm
@@ -406,14 +527,6 @@ jobs:
       - run:
           name: publish to npm
           command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
-
-      # - run:
-      # name: commit changes
-      # command: |
-      # yarn prettier:fix
-      # git add .
-      # git commit -m '[ci skip] bump version to $IMAGE_VERSION_TAG'
-      # git push
 
   publish-helm-chart:
     docker: *docker-image

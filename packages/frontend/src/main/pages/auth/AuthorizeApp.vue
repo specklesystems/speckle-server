@@ -147,7 +147,7 @@ export default {
       window.location.replace(
         `${window.location.origin}/auth/accesscode?appId=${this.app.id}&challenge=${
           this.$route.params.challenge
-        }&token=${AppLocalStorage.get('AuthToken')}&suuid=${this.$route.query.suuid}`
+        }&token=${AppLocalStorage.get('AuthToken')}`
       )
     }
   }

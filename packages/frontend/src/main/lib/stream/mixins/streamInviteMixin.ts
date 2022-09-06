@@ -43,7 +43,7 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
     token(): Nullable<string> {
       return this.streamInvite.token || this.inviteToken || null
     },
-    streamInviter(): Nullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
+    streamInviter(): NonNullable<Get<StreamInviteQuery, 'streamInvite.invitedBy'>> {
       return this.streamInvite.invitedBy
     },
     hasInvite(): boolean {

@@ -1,15 +1,22 @@
 <template>
   <div class="commit-object-viewer">
-    <div v-if="(isMultiple || isCommit || isObject) && !singleResourceError">
+    <div
+      v-if="
+        firstResource && (isMultiple || isCommit || isObject) && !singleResourceError
+      "
+    >
       <commit-toolbar
-        v-if="isCommit"
-        :stream="resources[0].data"
+        v-if="isCommitResource(firstResource)"
+        :stream="firstResource.data"
         @edit-commit="showCommitEditDialog = true"
       />
-      <object-toolbar v-if="isObject" :stream="resources[0].data" />
+      <object-toolbar
+        v-if="isObjectResource(firstResource)"
+        :stream="firstResource.data"
+      />
       <multiple-resources-toolbar
-        v-if="isMultiple"
-        :stream="{ name: resources[0].data.name, id: streamId }"
+        v-if="isMultiple && isNotErrorResource(firstResource)"
+        :stream="{ name: firstResource.data.name, id: streamId }"
         :resources="resources"
       />
 
@@ -27,9 +34,9 @@
             </div>
             <v-list nav dense class="mt-0 pt-0">
               <v-list-item
-                v-if="isCommit"
+                v-if="isCommitResource(firstResource)"
                 link
-                :to="`/streams/${streamId}/branches/${resources[0].data.commit.branchName}`"
+                :to="`/streams/${streamId}/branches/${firstResource.data.commit?.branchName}`"
                 class=""
               >
                 <v-list-item-icon>
@@ -38,7 +45,7 @@
                 <v-list-item-content>
                   <v-list-item-title class="font-weight-bold">
                     <v-icon small class="mr-1 caption">mdi-source-branch</v-icon>
-                    {{ resources[0].data.commit.branchName }}
+                    {{ firstResource.data.commit?.branchName }}
                   </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
@@ -81,8 +88,8 @@
             class="mt-4"
             :source-application="
               resources
-                .filter((r) => r.type === 'commit')
-                .map((r) => r.data.commit.sourceApplication)
+                .filter(isCommitResource)
+                .map((r) => r.data.commit?.sourceApplication)
                 .join(',')
             "
           />
@@ -92,7 +99,10 @@
       <!-- Preview image -->
       <v-fade-transition>
         <preview-image
-          v-if="!loadedModel && (isCommit || isObject)"
+          v-if="
+            !loadedModel &&
+            (isCommitResource(firstResource) || isObjectResource(firstResource))
+          "
           :style="`
             height: 100vh;
             width: 100%;
@@ -104,9 +114,9 @@
           `"
           :height="420"
           :url="`/preview/${streamId}/objects/${
-            isCommit
-              ? resources[0].data.commit.referencedObject
-              : resources[0].data.object.id
+            isCommitResource(firstResource)
+              ? firstResource.data.commit?.referencedObject
+              : firstResource.data.object?.id
           }`"
         ></preview-image>
       </v-fade-transition>
@@ -141,10 +151,11 @@
         :style="`width: 100%; bottom: 12px; left: 0px; position: ${
           $isMobile() ? 'fixed' : 'absolute'
         }; z-index: 20`"
-        :class="`d-flex justify-center`"
+        :class="`d-flex justify-center no-mouse`"
       >
         <viewer-controls
           v-show="!hideControls"
+          class="mouse"
           @show-add-overlay="showAddOverlay = true"
         />
       </div>
@@ -229,12 +240,12 @@
       />
     </v-dialog>
     <v-dialog
-      v-if="isCommit"
+      v-if="firstResource && isCommitResource(firstResource)"
       v-model="showCommitEditDialog"
       width="500"
       :fullscreen="$vuetify.breakpoint.smAndDown"
     >
-      <commit-edit :stream="resources[0].data" @close="showCommitEditDialog = false" />
+      <commit-edit :stream="firstResource.data" @close="showCommitEditDialog = false" />
     </v-dialog>
   </div>
 </template>
@@ -277,10 +288,9 @@ type CommitResourceData = NonNullable<Get<StreamCommitQueryQuery, 'stream'>>
 
 type ObjectResourceData = NonNullable<Get<StreamObjectNoDataQuery, 'stream'>>
 
-type AllSupportedDataTypes =
-  | ErroredResourceData
-  | CommitResourceData
-  | ObjectResourceData
+type NonErrorDataTypes = CommitResourceData | ObjectResourceData
+
+type AllSupportedDataTypes = ErroredResourceData | NonErrorDataTypes
 
 type ResourceTypeValue = 'commit' | 'object'
 
@@ -293,6 +303,10 @@ type ResourceObjectType<T> = {
 const isErrorResource = (
   resource: ResourceObjectType<unknown>
 ): resource is ResourceObjectType<ErroredResourceData> => has(resource.data, 'error')
+
+const isNotErrorResource = (
+  resource: ResourceObjectType<unknown>
+): resource is ResourceObjectType<NonErrorDataTypes> => !isErrorResource(resource)
 
 const isCommitResource = (
   resource: ResourceObjectType<unknown>
@@ -375,7 +389,11 @@ export default defineComponent({
 
     return {
       viewer,
-      viewerState
+      viewerState,
+      isCommitResource,
+      isObjectResource,
+      isErrorResource,
+      isNotErrorResource
     }
   },
   data: () => ({
@@ -397,21 +415,20 @@ export default defineComponent({
       return !this.$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'
     },
     isCommit(): boolean {
-      if (this.resources.length === 0) return false
-      if (this.resources.length === 1 && this.resources[0].type === 'commit')
-        return true
-      return false
+      if (this.isMultiple) return false
+      return this.firstResource?.type === 'commit'
     },
     isObject(): boolean {
-      if (this.resources.length === 0) return false
-      if (this.resources.length === 1 && this.resources[0].type === 'object')
-        return true
-      return false
+      if (this.isMultiple) return false
+      return this.firstResource?.type === 'object'
     },
     isMultiple(): boolean {
       if (this.resources.length === 0) return false
       if (this.resources.length > 1) return true
       return false
+    },
+    firstResource(): Nullable<ResourceObjectType<AllSupportedDataTypes>> {
+      return this.resources[0] || null
     },
     singleResourceError(): boolean {
       if (this.resources.length !== 1) return false

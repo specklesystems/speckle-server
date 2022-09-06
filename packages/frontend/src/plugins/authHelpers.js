@@ -31,11 +31,11 @@ export async function checkAccessCodeAndGetTokens() {
 }
 
 /**
- * Gets the user id and suuid, sets them in local storage
+ * Gets the user id and sets it in localStorage
  * @param {import('@apollo/client/core').ApolloClient} apolloClient
  * @return {Object} The full graphql response.
  */
-export async function prefetchUserAndSetSuuid(apolloClient) {
+export async function prefetchUserAndSetID(apolloClient) {
   const token = AppLocalStorage.get(LocalStorageKeys.AuthToken)
   if (!token) return
 
@@ -45,11 +45,8 @@ export async function prefetchUserAndSetSuuid(apolloClient) {
   })
 
   if (data.user) {
-    // eslint-disable-next-line camelcase
-    const distinct_id = '@' + md5(data.user.email.toLowerCase()).toUpperCase()
-
-    AppLocalStorage.set('suuid', data.user.suuid)
-    AppLocalStorage.set('distinct_id', distinct_id)
+    const distinctId = '@' + md5(data.user.email.toLowerCase()).toUpperCase()
+    AppLocalStorage.set('distinct_id', distinctId)
     AppLocalStorage.set('uuid', data.user.id)
     AppLocalStorage.set('stcount', data.user.streams.totalCount)
     return data
@@ -95,7 +92,6 @@ export async function signOut(mixpanelInstance) {
 
   AppLocalStorage.remove(LocalStorageKeys.AuthToken)
   AppLocalStorage.remove(LocalStorageKeys.RefreshToken)
-  AppLocalStorage.remove('suuid')
   AppLocalStorage.remove('uuid')
   AppLocalStorage.remove('distinct_id')
   AppLocalStorage.remove('stcount')
@@ -131,7 +127,7 @@ export async function refreshToken() {
   if (data.hasOwnProperty('token')) {
     AppLocalStorage.set(LocalStorageKeys.AuthToken, data.token)
     AppLocalStorage.set(LocalStorageKeys.RefreshToken, data.refreshToken)
-    await prefetchUserAndSetSuuid()
+    await prefetchUserAndSetID()
     return true
   }
 }
