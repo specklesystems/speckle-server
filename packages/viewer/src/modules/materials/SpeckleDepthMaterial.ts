@@ -3,7 +3,7 @@
 /* eslint-disable camelcase */
 import { speckleDepthVert } from './shaders/speckle-depth-vert'
 import { speckleDepthFrag } from './shaders/speckle-depth-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshDepthMaterial } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, MeshDepthMaterial, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
@@ -56,6 +56,20 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ' '
     }
+  }
+
+  /** A note here:
+   *  We need to do this, becuse three creates clones behind the scenes when the depth material
+   *  has clipping planes enabled. Those clones do not have the user data bound anymore so we
+   *  end up not being able to update our custom uniforms, meaning nothing will work right
+   *  Dick move from three.js doing dirty stuff like this behind our back.
+   */
+  clone(): this {
+    const ret = super.clone()
+    ret.userData.uViewer_high = this.userData.uViewer_high
+    ret.userData.uViewer_low = this.userData.uViewer_low
+    ret.userData.rteModelViewMatrix = this.userData.rteModelViewMatrix
+    return ret
   }
 
   copy(source) {

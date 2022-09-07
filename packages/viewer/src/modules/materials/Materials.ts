@@ -106,6 +106,7 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshHighlightMaterial.clipShadows = true
 
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
@@ -119,6 +120,7 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshTransparentHighlightMaterial.clipShadows = true
 
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
@@ -142,6 +144,7 @@ export default class Materials {
     ;(this.meshGradientMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
       await Assets.getTexture(defaultGradient)
     )
+    this.meshGradientMaterial.clipShadows = true
 
     this.meshTransparentGradientMaterial = new SpeckleStandardColoredMaterial(
       {
@@ -154,6 +157,7 @@ export default class Materials {
     ;(
       this.meshTransparentGradientMaterial as SpeckleStandardColoredMaterial
     ).setGradientTexture(await Assets.getTexture(defaultGradient))
+    this.meshTransparentGradientMaterial.clipShadows = true
 
     this.meshColoredMaterial = new SpeckleStandardColoredMaterial(
       {
@@ -164,6 +168,8 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshColoredMaterial.clipShadows = true
+
     this.meshTransparentColoredMaterial = new SpeckleStandardColoredMaterial(
       {
         side: DoubleSide,
@@ -194,6 +200,8 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshOverlayMaterial.clipShadows = true
+
     this.meshTransparentOverlayMaterial = new SpeckleStandardMaterial(
       {
         color: 0x04cbfb,
@@ -477,6 +485,7 @@ export default class Materials {
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
+    mat.clipShadows = true
     mat.color.convertSRGBToLinear()
     return mat
   }

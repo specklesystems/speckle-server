@@ -126,7 +126,7 @@ export default class SpeckleRenderer {
     this._renderer.toneMappingExposure = 0.5
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = VSMShadowMap
-    this.renderer.shadowMap.autoUpdate = false
+    this.renderer.shadowMap.autoUpdate = true
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
 
