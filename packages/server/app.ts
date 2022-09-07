@@ -29,7 +29,6 @@ import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import apolloPlugin from '@/logging/apolloPlugin'
 
 import { get, has, isString, toNumber } from 'lodash'
 
@@ -100,7 +99,7 @@ export function buildApolloServer(
         metricConnectedClients.dec()
       }
     },
-    plugins: [apolloPlugin],
+    plugins: [require('@/logging/apolloPlugin')],
     tracing: debug,
     introspection: true,
     playground: true,

@@ -6,7 +6,7 @@
   >
     <!-- BG image -->
     <div
-      v-if="resourceMetadata && !isModelLoaded"
+      v-if="previewUrl && resourceMetadata && !isModelLoaded"
       style="position: fixed; top: 0; width: 100%; height: 100%; cursor: pointer"
       class="embed-bg"
       @click="load()"
@@ -34,7 +34,7 @@
 
     <!-- This should always be conditionally and asynchronously loaded so that heavy viewer deps are lazy loaded -->
     <embedded-commit-object-viewer
-      v-if="shouldLoadHeavyDeps"
+      v-if="resourceMetadata && shouldLoadHeavyDeps"
       :stream-id="streamId"
       :resource-id="resourceMetadata.resourceId"
       @models-loaded="onModelsLoaded"

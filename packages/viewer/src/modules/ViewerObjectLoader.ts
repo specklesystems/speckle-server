@@ -1,14 +1,29 @@
 import ObjectLoader from '@speckle/objectloader'
+import { ViewerEvent } from '../IViewer'
 import Converter from './converter/Converter'
-
+import EventEmitter from './EventEmitter'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */
 
 export default class ViewerObjectLoader {
-  constructor(parent, objectUrl, authToken, enableCaching) {
-    this.objectUrl = objectUrl
-    this.viewer = parent
+  private _objectUrl: string
+  private objectId: string
+  private token: string
+  private loader: ObjectLoader
+  private converter: Converter
+
+  private cancel = false
+
+  private emiter: EventEmitter
+
+  public get objectUrl(): string {
+    return this._objectUrl
+  }
+
+  constructor(parentEmitter: EventEmitter, objectUrl, authToken, enableCaching) {
+    this.emiter = parentEmitter
+    this._objectUrl = objectUrl
     this.token = null
     try {
       this.token = authToken || localStorage.getItem('AuthToken')
@@ -34,67 +49,53 @@ export default class ViewerObjectLoader {
       throw new Error('Unexpected object url format.')
     }
 
-    this.serverUrl = url.origin
-    this.streamId = segments[2]
+    const serverUrl = url.origin
+    const streamId = segments[2]
     this.objectId = segments[4]
 
     this.loader = new ObjectLoader({
-      serverUrl: this.serverUrl,
+      serverUrl,
       token: this.token,
-      streamId: this.streamId,
+      streamId,
       objectId: this.objectId,
       options: { enableCaching }
     })
 
     this.converter = new Converter(this.loader)
 
-    this.lastAsyncPause = Date.now()
-    this.existingAsyncPause = null
     this.cancel = false
   }
 
-  async asyncPause() {
-    // Don't freeze the UI
-    if (Date.now() - this.lastAsyncPause >= 100) {
-      this.lastAsyncPause = Date.now()
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    }
-  }
-
-  async load() {
+  public async load() {
+    const start = performance.now()
     let first = true
     let current = 0
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
-    const parsedObjects = [] // Temporary until refactor
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
-        this.viewer.emit('load-progress', {
+        this.emiter.emit(ViewerEvent.LoadProgress, {
           progress: 1,
           id: this.objectId,
           url: this.objectUrl
         }) // to hide progress bar, easier on the frontend
-        this.viewer.emit('load-cancelled', { id: this.objectId, url: this.objectUrl })
+        this.emiter.emit('load-cancelled', { id: this.objectId, url: this.objectUrl })
         return
       }
       await this.converter.asyncPause()
       if (first) {
         // console.log(obj)
-        firstObjectPromise = this.converter.traverseAndConvert(
-          obj,
-          async (objectWrapper) => {
-            await this.converter.asyncPause()
-            objectWrapper.meta.__importedUrl = this.objectUrl
-            parsedObjects.push(objectWrapper) // Temporary until refactor
-            viewerLoads++
-          }
-        )
+        firstObjectPromise = this.converter.traverse(this.objectUrl, obj, async () => {
+          await this.converter.asyncPause()
+          // objectWrapper.meta.__importedUrl = this.objectUrl
+          viewerLoads++
+        })
         first = false
         total = obj.totalChildrenCount
       }
       current++
-      this.viewer.emit('load-progress', {
+      this.emiter.emit(ViewerEvent.LoadProgress, {
         progress: current / (total + 1),
         id: this.objectId
       })
@@ -104,26 +105,18 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
-    // Geometry.applyWorldTransform(parsedObjects)
-    // Temporary until refactor
-    for (let k = 0; k < parsedObjects.length; k++) {
-      await this.converter.asyncPause()
-      this.viewer.sceneManager.addObject(parsedObjects[k])
-    }
-    await this.viewer.sceneManager.postLoadFunction()
-    this.viewer.emit('load-complete')
+    // await this.viewer.sceneManager.postLoadFunction()
+    console.warn(
+      `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
+    )
+    this.emiter.emit(ViewerEvent.LoadComplete, this.objectUrl)
 
     if (viewerLoads === 0) {
       console.warn(`Viewer: no 3d objects found in object ${this.objectId}`)
-      this.viewer.emit('load-warning', {
+      this.emiter.emit('load-warning', {
         message: `No displayable objects found in object ${this.objectId}.`
       })
     }
-  }
-
-  async unload() {
-    this.cancel = true
-    await this.viewer.sceneManager.removeImportedObject(this.objectUrl)
   }
 
   cancelLoad() {

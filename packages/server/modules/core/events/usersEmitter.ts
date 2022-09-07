@@ -5,9 +5,11 @@ export enum UsersEvents {
   Created = 'created'
 }
 
-const { emit, listen } = initializeModuleEventEmitter<{
+export type UsersEventsPayloads = {
   [UsersEvents.Created]: { user: UserRecord }
-}>({
+}
+
+const { emit, listen } = initializeModuleEventEmitter<UsersEventsPayloads>({
   moduleName: 'core',
   namespace: 'users'
 })

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
 import { MaybeAsync, Optional } from '@/modules/shared/helpers/typeHelper'
 import { Job } from 'bull'
 import debug from 'debug'
@@ -6,7 +7,9 @@ import { isObject, has } from 'lodash'
 
 export enum NotificationType {
   ActivityDigest = 'activityDigest',
-  MentionedInComment = 'mentionedInComment'
+  MentionedInComment = 'mentionedInComment',
+  NewStreamAccessRequest = 'newStreamAccessRequest',
+  StreamAccessRequestApproved = 'streamAccessRequestApproved'
 }
 
 export enum NotificationChannel {
@@ -20,6 +23,8 @@ export type NotificationPreferences = Partial<
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage
+  [NotificationType.NewStreamAccessRequest]: NewStreamAccessRequestMessage
+  [NotificationType.StreamAccessRequestApproved]: StreamAccessRequestApprovedMessage
   [NotificationType.ActivityDigest]: ActivityDigestMessage
 } & { [k in NotificationType]: unknown }
 
@@ -63,6 +68,29 @@ export type MentionedInCommentData = {
 export type MentionedInCommentMessage = NotificationMessage<
   NotificationType.MentionedInComment,
   MentionedInCommentData
+>
+
+export type NewStreamAccessRequestData = { requestId: string }
+
+export type NewStreamAccessRequestMessage = NotificationMessage<
+  NotificationType.NewStreamAccessRequest,
+  NewStreamAccessRequestData
+>
+
+export type StreamAccessRequestApprovedData = {
+  /**
+   * Approved (and since then deleted) request object
+   */
+  request: StreamAccessRequestRecord
+  /**
+   * ID of user who finalized the request
+   */
+  finalizedBy: string
+}
+
+export type StreamAccessRequestApprovedMessage = NotificationMessage<
+  NotificationType.StreamAccessRequestApproved,
+  StreamAccessRequestApprovedData
 >
 
 export type ActivityDigestData = {

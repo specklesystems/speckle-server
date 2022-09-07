@@ -215,7 +215,16 @@ export const EmailVerifications = buildTableHelper('email_verifications', [
   'used'
 ])
 
-export const Activities = buildTableHelper('stream_activity', [
+export const ServerAccessRequests = buildTableHelper('server_access_requests', [
+  'id',
+  'requesterId',
+  'resourceType',
+  'resourceId',
+  'createdAt',
+  'updatedAt'
+])
+
+export const StreamActivity = buildTableHelper('stream_activity', [
   'streamId',
   'time',
   'resourceType',

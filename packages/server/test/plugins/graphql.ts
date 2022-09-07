@@ -36,9 +36,9 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
             errorsArr.map((e) => e.message.toLowerCase()).join('\n')
           ).to.not.contain(matchMessage.toLowerCase())
         } else {
-          new Assertion(errorsArr.map((e) => e.message).join('\n')).to.contain(
-            matchMessage.toLowerCase()
-          )
+          new Assertion(
+            errorsArr.map((e) => e.message.toLowerCase()).join('\n')
+          ).to.contain(matchMessage.toLowerCase())
         }
       }
     }

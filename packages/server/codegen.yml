@@ -11,9 +11,9 @@ generates:
       - 'typescript-resolvers'
     config:
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
-      scalars:
-        JSONObject: Record<string, unknown>
-        DateTime: string
+      mappers:
+        Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
+        StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'
@@ -24,6 +24,10 @@ generates:
       scalars:
         JSONObject: Record<string, unknown>
         DateTime: string
+config:
+  scalars:
+    JSONObject: Record<string, unknown>
+    DateTime: Date
 require:
   - ts-node/register
   - tsconfig-paths/register

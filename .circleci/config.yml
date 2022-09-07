@@ -193,9 +193,9 @@ jobs:
     docker:
       - image: cimg/base:2022.08
     working_directory: *work-dir
-    environment:
-      # £ delimited strings of regex for matches which should be published
+    environment: &publishable-tags-branches
       PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
+      # £ delimited strings of regex for matches which should be published
       PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
     steps:
       - checkout
@@ -215,6 +215,7 @@ jobs:
     docker:
       - image: cimg/base:2022.08
     working_directory: *work-dir
+    environment: *publishable-tags-branches
     steps:
       - checkout
       - run: mkdir -p workspace

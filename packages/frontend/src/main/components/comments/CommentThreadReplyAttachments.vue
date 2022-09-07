@@ -3,7 +3,7 @@
     <div class="text-caption d-flex flex-column">
       <a
         v-for="attachment in attachments"
-        :key="attachment.url"
+        :key="attachment.id"
         v-tooltip="attachment.fileName"
         href="javascript:;"
         :class="`my-1 ${primary ? '' : 'blue--text'}`"
@@ -34,6 +34,7 @@
 import { BlobMetadata } from '@/graphql/generated/graphql'
 import Vue, { PropType } from 'vue'
 import CommentThreadAttachmentPreview from '@/main/components/comments/CommentThreadAttachmentPreview.vue'
+import { Nullable } from '@/helpers/typeHelpers'
 
 export default Vue.extend({
   name: 'CommentThreadReplyAttachments',
@@ -53,7 +54,7 @@ export default Vue.extend({
   data: () => {
     return {
       showAttachmentPreview: false,
-      selectedAttachment: null
+      selectedAttachment: null as Nullable<BlobMetadata>
     }
   },
   methods: {

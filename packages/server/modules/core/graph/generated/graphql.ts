@@ -1,10 +1,13 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
+import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -14,7 +17,7 @@ export type Scalars = {
   Int: number;
   Float: number;
   BigInt: any;
-  DateTime: string;
+  DateTime: Date;
   EmailAddress: any;
   JSONObject: Record<string, unknown>;
 };
@@ -454,6 +457,10 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean'];
+  /** Request access to a specific stream */
+  streamAccessRequestCreate: StreamAccessRequest;
+  /** Accept or decline a stream access request. Must be a stream owner to invoke this. */
+  streamAccessRequestUse: Scalars['Boolean'];
   /** Creates a new stream. */
   streamCreate?: Maybe<Scalars['String']>;
   /** Deletes an existing stream. */
@@ -619,6 +626,18 @@ export type MutationServerInviteBatchCreateArgs = {
 
 export type MutationServerInviteCreateArgs = {
   input: ServerInviteCreateInput;
+};
+
+
+export type MutationStreamAccessRequestCreateArgs = {
+  streamId: Scalars['String'];
+};
+
+
+export type MutationStreamAccessRequestUseArgs = {
+  accept: Scalars['Boolean'];
+  requestId: Scalars['String'];
+  role?: StreamRole;
 };
 
 
@@ -853,6 +872,8 @@ export type Query = {
    * to see it.
    */
   stream?: Maybe<Stream>;
+  /** Get authed user's stream access request */
+  streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
    * Look for an invitation to a stream, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -919,6 +940,11 @@ export type QueryDiscoverableStreamsArgs = {
 
 export type QueryStreamArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryStreamAccessRequestArgs = {
+  streamId: Scalars['String'];
 };
 
 
@@ -1141,6 +1167,8 @@ export type Stream = {
   isPublic: Scalars['Boolean'];
   name: Scalars['String'];
   object?: Maybe<Object>;
+  /** Pending stream access requests */
+  pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
   pendingCollaborators?: Maybe<Array<PendingStreamCollaborator>>;
   /** Your role for this stream. `null` if request is not authenticated, or the stream is not explicitly shared with you. */
@@ -1206,6 +1234,18 @@ export type StreamObjectArgs = {
 
 export type StreamWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
+};
+
+/** Created when a user requests to become a contributor on a stream */
+export type StreamAccessRequest = {
+  __typename?: 'StreamAccessRequest';
+  createdAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  requester: LimitedUser;
+  requesterId: Scalars['String'];
+  /** Can only be selected if authed user has proper access */
+  stream: Stream;
+  streamId: Scalars['String'];
 };
 
 export type StreamCollaborator = {
@@ -1635,8 +1675,8 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type ResolversTypes = {
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
-  AdminUsersListCollection: ResolverTypeWrapper<AdminUsersListCollection>;
-  AdminUsersListItem: ResolverTypeWrapper<AdminUsersListItem>;
+  AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
+  AdminUsersListItem: ResolverTypeWrapper<Omit<AdminUsersListItem, 'registeredUser'> & { registeredUser?: Maybe<ResolversTypes['User']> }>;
   ApiToken: ResolverTypeWrapper<ApiToken>;
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: ResolverTypeWrapper<AppAuthor>;
@@ -1647,8 +1687,8 @@ export type ResolversTypes = {
   BlobMetadata: ResolverTypeWrapper<BlobMetadata>;
   BlobMetadataCollection: ResolverTypeWrapper<BlobMetadataCollection>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
-  Branch: ResolverTypeWrapper<Branch>;
-  BranchCollection: ResolverTypeWrapper<BranchCollection>;
+  Branch: ResolverTypeWrapper<Omit<Branch, 'author'> & { author?: Maybe<ResolversTypes['User']> }>;
+  BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['Branch']>>> }>;
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
@@ -1698,9 +1738,10 @@ export type ResolversTypes = {
   ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   SortDirection: SortDirection;
-  Stream: ResolverTypeWrapper<Stream>;
+  Stream: ResolverTypeWrapper<StreamGraphQLReturn>;
+  StreamAccessRequest: ResolverTypeWrapper<StreamAccessRequestGraphQLReturn>;
   StreamCollaborator: ResolverTypeWrapper<StreamCollaborator>;
-  StreamCollection: ResolverTypeWrapper<StreamCollection>;
+  StreamCollection: ResolverTypeWrapper<Omit<StreamCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Stream']>> }>;
   StreamCreateInput: StreamCreateInput;
   StreamInviteCreateInput: StreamInviteCreateInput;
   StreamRevokePermissionInput: StreamRevokePermissionInput;
@@ -1709,7 +1750,7 @@ export type ResolversTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
-  User: ResolverTypeWrapper<User>;
+  User: ResolverTypeWrapper<Omit<User, 'favoriteStreams' | 'streams'> & { favoriteStreams?: Maybe<ResolversTypes['StreamCollection']>, streams?: Maybe<ResolversTypes['StreamCollection']> }>;
   UserDeleteInput: UserDeleteInput;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<UserSearchResultCollection>;
@@ -1727,8 +1768,8 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   Activity: Activity;
   ActivityCollection: ActivityCollection;
-  AdminUsersListCollection: AdminUsersListCollection;
-  AdminUsersListItem: AdminUsersListItem;
+  AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
+  AdminUsersListItem: Omit<AdminUsersListItem, 'registeredUser'> & { registeredUser?: Maybe<ResolversParentTypes['User']> };
   ApiToken: ApiToken;
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: AppAuthor;
@@ -1739,8 +1780,8 @@ export type ResolversParentTypes = {
   BlobMetadata: BlobMetadata;
   BlobMetadataCollection: BlobMetadataCollection;
   Boolean: Scalars['Boolean'];
-  Branch: Branch;
-  BranchCollection: BranchCollection;
+  Branch: Omit<Branch, 'author'> & { author?: Maybe<ResolversParentTypes['User']> };
+  BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['Branch']>>> };
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
@@ -1787,9 +1828,10 @@ export type ResolversParentTypes = {
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerStats: ServerStats;
   SmartTextEditorValue: SmartTextEditorValue;
-  Stream: Stream;
+  Stream: StreamGraphQLReturn;
+  StreamAccessRequest: StreamAccessRequestGraphQLReturn;
   StreamCollaborator: StreamCollaborator;
-  StreamCollection: StreamCollection;
+  StreamCollection: Omit<StreamCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Stream']>> };
   StreamCreateInput: StreamCreateInput;
   StreamInviteCreateInput: StreamInviteCreateInput;
   StreamRevokePermissionInput: StreamRevokePermissionInput;
@@ -1797,7 +1839,7 @@ export type ResolversParentTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
   Subscription: {};
-  User: User;
+  User: Omit<User, 'favoriteStreams' | 'streams'> & { favoriteStreams?: Maybe<ResolversParentTypes['StreamCollection']>, streams?: Maybe<ResolversParentTypes['StreamCollection']> };
   UserDeleteInput: UserDeleteInput;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: UserSearchResultCollection;
@@ -2092,6 +2134,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;
+  streamAccessRequestCreate?: Resolver<ResolversTypes['StreamAccessRequest'], ParentType, ContextType, RequireFields<MutationStreamAccessRequestCreateArgs, 'streamId'>>;
+  streamAccessRequestUse?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationStreamAccessRequestUseArgs, 'accept' | 'requestId' | 'role'>>;
   streamCreate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MutationStreamCreateArgs, 'stream'>>;
   streamDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationStreamDeleteArgs, 'id'>>;
   streamFavorite?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<MutationStreamFavoriteArgs, 'favorited' | 'streamId'>>;
@@ -2171,6 +2215,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
+  streamAccessRequest?: Resolver<Maybe<ResolversTypes['StreamAccessRequest']>, ParentType, ContextType, RequireFields<QueryStreamAccessRequestArgs, 'streamId'>>;
   streamInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryStreamInviteArgs, 'streamId'>>;
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
@@ -2291,11 +2336,22 @@ export type StreamResolvers<ContextType = GraphQLContext, ParentType extends Res
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   object?: Resolver<Maybe<ResolversTypes['Object']>, ParentType, ContextType, RequireFields<StreamObjectArgs, 'id'>>;
+  pendingAccessRequests?: Resolver<Maybe<Array<ResolversTypes['StreamAccessRequest']>>, ParentType, ContextType>;
   pendingCollaborators?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   size?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   webhooks?: Resolver<Maybe<ResolversTypes['WebhookCollection']>, ParentType, ContextType, Partial<StreamWebhooksArgs>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type StreamAccessRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StreamAccessRequest'] = ResolversParentTypes['StreamAccessRequest']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  requester?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  requesterId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  stream?: Resolver<ResolversTypes['Stream'], ParentType, ContextType>;
+  streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2439,6 +2495,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerStats?: ServerStatsResolvers<ContextType>;
   SmartTextEditorValue?: SmartTextEditorValueResolvers<ContextType>;
   Stream?: StreamResolvers<ContextType>;
+  StreamAccessRequest?: StreamAccessRequestResolvers<ContextType>;
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;

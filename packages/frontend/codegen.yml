@@ -15,3 +15,5 @@ generates:
     config:
       scalars:
         JSONObject: Record<string, unknown>
+        DateTime: string
+      dedupeFragments: true

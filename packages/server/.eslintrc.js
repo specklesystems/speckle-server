@@ -28,6 +28,12 @@ const config = {
       parser: '@typescript-eslint/parser'
     },
     {
+      files: '*.d.ts',
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off'
+      }
+    },
+    {
       files: '*.spec.{js,ts}',
       env: {
         mocha: true
