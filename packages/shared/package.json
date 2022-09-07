@@ -10,10 +10,6 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*"
-  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
@@ -22,7 +18,7 @@
     "lint": "yarn lint:eslint && yarn lint:tsc"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=14.0.0"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",

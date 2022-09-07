@@ -37,6 +37,7 @@
     "@graphql-tools/schema": "^9.0.4",
     "@sentry/node": "^6.17.9",
     "@sentry/tracing": "^6.17.9",
+    "@speckle/shared": "workspace:^",
     "apollo-server-express": "^3.10.2",
     "bcrypt": "^5.0.0",
     "bull": "^4.8.5",

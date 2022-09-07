@@ -1,23 +1,5 @@
+import { Roles, ServerRoles, StreamRoles } from '@speckle/shared'
 import { StreamRole } from '@/graphql/generated/graphql'
-
-/**
- * Speckle role constants
- */
-export const Roles = Object.freeze(<const>{
-  Stream: {
-    Owner: 'stream:owner',
-    Contributor: 'stream:contributor',
-    Reviewer: 'stream:reviewer'
-  },
-  Server: {
-    Admin: 'server:admin',
-    User: 'server:user',
-    ArchivedUser: 'server:archived-user'
-  }
-})
-
-export type ServerRoles = typeof Roles['Server'][keyof typeof Roles['Server']]
-export type StreamRoles = typeof Roles['Stream'][keyof typeof Roles['Stream']]
 
 /**
  * Keys for values stored in localStorage
@@ -44,3 +26,5 @@ export function streamRoleToGraphQLEnum(role: StreamRoles): StreamRole {
       return StreamRole.StreamContributor
   }
 }
+
+export { Roles, ServerRoles, StreamRoles }

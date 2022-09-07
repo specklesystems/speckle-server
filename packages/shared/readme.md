@@ -4,9 +4,15 @@ This package holds code that otherwise would be duplicated across @speckle packa
 
 ## Usage
 
+### Peer dependencies
+
+Some dependencies are marked as peer dependencies, to ensure that package consumers can manage their versions themselves. If you use any code from this package that relies on a specific peer dependency, make sure its installed.
+
+### How to use
+
 ```js
-import { Roles } from '@speckle/shared' // get important exports from main module entry point
-import { isDocEmpty } from '@speckle/shared/rich-text-editor/helpers' // get exports from sub-modules
+import { Roles } from '@speckle/shared' // get main exports (from 'core')
+import { isDocEmpty } from '@speckle/shared/dist/rich-text-editor' // get exports from sub-modules
 ```
 
 ## Development
