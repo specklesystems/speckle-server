@@ -389,6 +389,32 @@ export default class Sandbox {
         this.viewer.setLightConfiguration(Sandbox.lightParams)
       })
 
+    directLightFolder
+      .addInput({ bias: -0.001 }, 'bias', {
+        label: 'Shadow Bias',
+        min: -0.001,
+        max: 0,
+        step: 0.00001
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().sunLight.shadow.bias = value.value
+        this.viewer.requestRenderShadowmap()
+        this.viewer.requestRender()
+      })
+
+    directLightFolder
+      .addInput({ radius: 2 }, 'radius', {
+        label: 'Shadow Radius',
+        min: 0,
+        max: 6,
+        step: 1
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().sunLight.shadow.radius = value.value
+        this.viewer.requestRenderShadowmap()
+        this.viewer.requestRender()
+      })
+
     const indirectLightsFolder = lightsFolder.addFolder({
       title: 'Indirect',
       expanded: true

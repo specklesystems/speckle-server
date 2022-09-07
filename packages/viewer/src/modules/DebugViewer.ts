@@ -7,4 +7,7 @@ export class DebugViewer extends Viewer {
   requestRender() {
     this.needsRender = true
   }
+  requestRenderShadowmap() {
+    this.getRenderer().updateDirectLights()
+  }
 }
