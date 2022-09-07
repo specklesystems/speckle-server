@@ -5,6 +5,7 @@ packages/frontend/dist
 packages/frontend/profiler
 packages/viewer/dist
 packages/objectloader/dist
+packages/*/dist
 *.env
 *.env.test
 *.crt

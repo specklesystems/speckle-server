@@ -5086,6 +5086,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/shared@workspace:packages/shared":
+  version: 0.0.0-use.local
+  resolution: "@speckle/shared@workspace:packages/shared"
+  dependencies:
+    "@types/lodash": ^4.14.184
+    "@typescript-eslint/eslint-plugin": ^5.32.0
+    "@typescript-eslint/parser": ^5.32.0
+    eslint: ^8.11.0
+    eslint-config-prettier: ^8.5.0
+    lodash: ^4.17.0
+    typescript: ^4.5.4
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.176
+  languageName: unknown
+  linkType: soft
+
 "@speckle/viewer-sandbox@workspace:packages/viewer-sandbox":
   version: 0.0.0-use.local
   resolution: "@speckle/viewer-sandbox@workspace:packages/viewer-sandbox"
@@ -5884,6 +5900,13 @@ __metadata:
   version: 4.14.182
   resolution: "@types/lodash@npm:4.14.182"
   checksum: 7dd137aa9dbabd632408bd37009d984655164fa1ecc3f2b6eb94afe35bf0a5852cbab6183148d883e9c73a958b7fec9a9bcf7c8e45d41195add6a18c34958209
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.14.184":
+  version: 4.14.184
+  resolution: "@types/lodash@npm:4.14.184"
+  checksum: 6d9a4d67f7f9d0ec3fd21174f3dd3d00629dc1227eb469450eace53adbc1f7e2330699c28d0fe093e5f0fef0f0e763098be1f779268857213224af082b62be21
   languageName: node
   linkType: hard
 
@@ -15152,7 +15175,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:^4.11.2, lodash@npm:^4.17.10, lodash@npm:^4.17.11, lodash@npm:^4.17.12, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:~4.17.0":
+"lodash@npm:^4.11.2, lodash@npm:^4.17.0, lodash@npm:^4.17.10, lodash@npm:^4.17.11, lodash@npm:^4.17.12, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:~4.17.0":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7

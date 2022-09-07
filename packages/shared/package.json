@@ -1,0 +1,50 @@
+{
+  "name": "@speckle/shared",
+  "version": "0.1.0",
+  "description": "Shared code between various Speckle JS packages",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/shared"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "lint:eslint": "eslint . --ext .js,.ts",
+    "lint:tsc": "tsc --noEmit",
+    "lint": "yarn lint:eslint && yarn lint:tsc"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "author": "AEC Systems",
+  "license": "Apache-2.0",
+  "keywords": [
+    "speckle",
+    "aec",
+    "3d",
+    "3d viewer",
+    "threejs"
+  ],
+  "dependencies": {
+    "lodash": "^4.17.0"
+  },
+  "peerDependencies": {
+    "@tiptap/core": "^2.0.0-beta.176"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.184",
+    "@typescript-eslint/eslint-plugin": "^5.32.0",
+    "@typescript-eslint/parser": "^5.32.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "typescript": "^4.5.4"
+  }
+}
