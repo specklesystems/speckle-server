@@ -8,7 +8,7 @@ const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/services/types')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
   getComment,

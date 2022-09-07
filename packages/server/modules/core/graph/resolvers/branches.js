@@ -19,7 +19,7 @@ const {
 
 const { getUserById } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/services/types')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 // subscription events
 const BRANCH_CREATED = 'BRANCH_CREATED'

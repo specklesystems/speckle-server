@@ -30,7 +30,7 @@ const {
   StreamPubsubEvents
 } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
-const { ActionTypes } = require('@/modules/activitystream/services/types')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { respectsLimits } = require('@/modules/core/services/ratelimits')
 const {
   getPendingStreamCollaborators

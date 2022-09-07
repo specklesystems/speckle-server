@@ -8,7 +8,7 @@ const {
 } = require('apollo-server-express')
 const { authorizeResolver, pubsub } = require('@/modules/shared')
 const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/services/types')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
   createCommitByBranchName,

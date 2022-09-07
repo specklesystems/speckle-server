@@ -5,7 +5,7 @@ import {
 import {
   StreamScopeActivity,
   UserStreams
-} from '@/modules/activitystream/services/types'
+} from '@/modules/activitystream/helpers/types'
 import {
   NotificationPublisher,
   NotificationType

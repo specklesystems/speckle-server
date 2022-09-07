@@ -13,7 +13,7 @@ const {
   archiveUser
 } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/services/types')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 const {

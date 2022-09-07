@@ -8,7 +8,7 @@ import {
   Activity,
   AllActivityTypes,
   StreamScopeActivity
-} from '@/modules/activitystream/services/types'
+} from '@/modules/activitystream/helpers/types'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo } from '@/modules/core/helpers/types'
 import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
