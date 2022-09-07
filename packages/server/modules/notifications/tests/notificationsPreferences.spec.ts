@@ -39,46 +39,46 @@ describe('User notification preferences @notifications', () => {
         }
       }
     })
-  })
-  it('store notification settings', async () => {
-    await services.updateNotificationPreferences(userA.id, {
-      activityDigest: { email: false }
+    it('store notification settings', async () => {
+      await services.updateNotificationPreferences(userA.id, {
+        activityDigest: { email: false }
+      })
+      let preferences = await services.getUserNotificationPreferences(userA.id)
+      expect(preferences).to.not.be.empty
+      expect(preferences.activityDigest?.email).to.be.false
+      await services.updateNotificationPreferences(userA.id, {
+        activityDigest: { email: true }
+      })
+      preferences = await services.getUserNotificationPreferences(userA.id)
+      expect(preferences.activityDigest?.email).to.be.true
     })
-    let preferences = await services.getUserNotificationPreferences(userA.id)
-    expect(preferences).to.not.be.empty
-    expect(preferences.activityDigest?.email).to.be.false
-    await services.updateNotificationPreferences(userA.id, {
-      activityDigest: { email: true }
-    })
-    preferences = await services.getUserNotificationPreferences(userA.id)
-    expect(preferences.activityDigest?.email).to.be.true
-  })
-  it("doesn't store invalid preference keys", async () => {
-    const invalidKeys = [
-      [NotificationType.ActivityDigest, 'mailPigeon', true],
-      ['birthdayParty', NotificationChannel.Email, false],
-      [
-        NotificationType.MentionedInComment,
-        NotificationChannel.Email,
-        'PleaseDontSpamMe'
+    it("doesn't store invalid preference keys", async () => {
+      const invalidKeys = [
+        [NotificationType.ActivityDigest, 'mailPigeon', true],
+        ['birthdayParty', NotificationChannel.Email, false],
+        [
+          NotificationType.MentionedInComment,
+          NotificationChannel.Email,
+          'PleaseDontSpamMe'
+        ]
       ]
-    ]
-    for (const [nt, nc, value] of invalidKeys) {
-      try {
-        const preferences: Partial<Record<string, Partial<Record<string, boolean>>>> =
-          {}
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        preferences[nt] = {}
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        preferences[nt][nc] = value
-        await services.updateNotificationPreferences(userA.id, preferences)
-      } catch (err) {
-        expect(err instanceof BaseError)
-        const error = err as BaseError
-        expect(error.message).to.contain('Notification preferences input')
+      for (const [nt, nc, value] of invalidKeys) {
+        try {
+          const preferences: Partial<Record<string, Partial<Record<string, boolean>>>> =
+            {}
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
+          preferences[nt] = {}
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
+          preferences[nt][nc] = value
+          await services.updateNotificationPreferences(userA.id, preferences)
+        } catch (err) {
+          expect(err instanceof BaseError)
+          const error = err as BaseError
+          expect(error.message).to.contain('Notification preferences input')
+        }
       }
-    }
+    })
   })
 })
