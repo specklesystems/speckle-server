@@ -62,6 +62,10 @@ type Comment {
   archived: Boolean!
   screenshot: String
   text: SmartTextEditorValue!
+  """
+  Plain-text version of the comment text, ideal for previews
+  """
+  rawText: String!
   data: JSONObject
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.

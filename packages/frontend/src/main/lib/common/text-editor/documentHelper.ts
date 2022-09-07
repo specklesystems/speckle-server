@@ -38,9 +38,11 @@ export function isDocEmpty(doc: JSONContent | null | undefined): boolean {
 /**
  * Convert document to a basic string without all of the formatting, HTML tags, attributes etc.
  * Useful for previews or text analysis.
- * @param doc
  * @param stopAtLength If set, will stop further parsing when the resulting string length
  * reaches this length. Useful when you're only interested in the first few characters of the document.
+ *
+ * IMPORTANT NOTE!: A duplicate of this exists on the server side as well, so if you
+ * update this, make sure you update that one as well
  */
 export function documentToBasicString(
   doc: JSONContent | null | undefined,
@@ -58,7 +60,7 @@ export function documentToBasicString(
     }
 
     // if mention, add it as text as well
-    if (doc.type === 'mention' && doc.attrs?.label) {
+    if (doc.type === 'mention' && doc.attrs?.label && doc.attrs.id) {
       currentString += '@' + doc.attrs.label
     }
 

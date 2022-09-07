@@ -26,6 +26,9 @@ const {
 } = require('@/modules/comments/services/commentTextService')
 const { withFilter } = require('graphql-subscriptions')
 const { has } = require('lodash')
+const {
+  documentToBasicString
+} = require('@/modules/core/services/richTextEditorService')
 
 const authorizeStreamAccess = async ({
   streamId,
@@ -94,6 +97,11 @@ module.exports = {
     text(parent) {
       const commentText = parent?.text || ''
       return ensureCommentSchema(commentText)
+    },
+
+    rawText(parent) {
+      const { doc } = ensureCommentSchema(parent.text || '')
+      return documentToBasicString(doc)
     },
 
     /**

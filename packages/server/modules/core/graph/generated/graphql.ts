@@ -197,11 +197,13 @@ export type Comment = {
   createdAt?: Maybe<Scalars['DateTime']>;
   data?: Maybe<Scalars['JSONObject']>;
   id: Scalars['String'];
+  /** Plain-text version of the comment text, ideal for previews */
+  rawText: Scalars['String'];
   reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** Gets the replies to this comment. */
   replies?: Maybe<CommentCollection>;
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
-  resources: Array<Maybe<ResourceIdentifier>>;
+  resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']>;
   text: SmartTextEditorValue;
   /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
@@ -2079,9 +2081,10 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rawText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   reactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   replies?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
-  resources?: Resolver<Array<Maybe<ResolversTypes['ResourceIdentifier']>>, ParentType, ContextType>;
+  resources?: Resolver<Array<ResolversTypes['ResourceIdentifier']>, ParentType, ContextType>;
   screenshot?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<ResolversTypes['SmartTextEditorValue'], ParentType, ContextType>;
   updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
