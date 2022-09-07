@@ -89,7 +89,10 @@ export class Intersections {
     }
 
     if (results.length === 0) return null
-    if (nearest) results.sort((value) => value.distance)
+    if (nearest)
+      results.sort((a, b) => {
+        return a.distance - b.distance
+      })
     if (bounds) {
       if (!bounds.containsPoint(results[0].point)) {
         console.warn('Object clipped. Rejecting!')
