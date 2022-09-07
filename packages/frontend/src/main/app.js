@@ -35,9 +35,7 @@ Vue.use(PerfectScrollbar)
 
 // Async ApexChart load
 Vue.component('ApexChart', async () => {
-  const VueApexCharts = await import(
-    /* webpackChunkName: "vue-apexcharts" */ 'vue-apexcharts'
-  )
+  const VueApexCharts = await import('vue-apexcharts')
   Vue.use(VueApexCharts)
 
   return VueApexCharts

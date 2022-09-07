@@ -3,16 +3,13 @@
   "version": "2.5.4",
   "private": true,
   "scripts": {
-    "serve": "ws -p 8080 -d dist -r '/([a-zA-Z0-9-_/]*)(\\?.*)? -> /app.html' ",
-    "build": "vue-cli-service build --mode production --silent",
-    "lint": "eslint . --ext .js,.ts,.vue,.tsx,.jsx",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview --port 8080",
+    "profile": "vite-bundle-visualizer --output profiler/stats.html",
+    "lint:eslint": "eslint . --ext .js,.ts,.vue,.tsx,.jsx",
     "lint:ts": "vue-tsc --noEmit",
-    "build:dev": "vue-cli-service build --mode development --silent",
-    "build:dev:profile": "yarn build:dev -- --profile",
-    "build:profile": "yarn build -- --profile",
-    "dev": "vue-cli-service serve --mode development",
-    "inspect": "vue-cli-service inspect --mode production",
-    "inspect:dev": "vue-cli-service inspect --mode development",
+    "lint": "yarn lint:eslint && yarn lint:ts",
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
@@ -44,6 +41,7 @@
     "graphql": "^15.0.0",
     "graphql-tag": "^2.12.6",
     "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
     "regenerator-runtime": "^0.13.9",
@@ -79,41 +77,23 @@
     "@types/node": "^17.0.43",
     "@typescript-eslint/eslint-plugin": "^5.21.0",
     "@typescript-eslint/parser": "^5.21.0",
-    "@vue/cli": "^4.5.19",
-    "@vue/cli-plugin-babel": "~4.3.1",
-    "@vue/cli-plugin-router": "~4.3.1",
-    "@vue/cli-plugin-typescript": "~4.5.19",
-    "@vue/cli-service": "~4.3.1",
-    "@vue/eslint-config-typescript": "^11.0.0",
-    "babel-eslint": "^10.1.0",
+    "@vitejs/plugin-vue2": "^1.1.2",
+    "@vue/eslint-config-typescript": "^11.0.1",
     "babel-plugin-lodash": "^3.3.4",
-    "duplicate-dependencies-webpack-plugin": "^1.0.2",
-    "esbuild-loader": "^2.18.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-loader": "^4.0.2",
     "eslint-plugin-vue": "^9.2.0",
-    "local-web-server": "^5.2.0",
-    "lodash-webpack-plugin": "^0.11.6",
     "prettier": "^2.5.1",
     "sass": "~1.32.6",
-    "sass-loader": "^8.0.0",
-    "speed-measure-webpack-plugin": "^1.5.0",
     "type-fest": "^2.13.1",
-    "typescript": "~4.1.5",
-    "vue-cli-plugin-vuetify": "^2.5.1",
-    "vue-tsc": "^0.40.13",
-    "vuetify-loader": "^1.9.1",
-    "webpack": "^4.46.0",
-    "webpack-bundle-analyzer": "^4.5.0"
+    "typescript": "~4.5.5",
+    "unplugin-vue-components": "^0.22.4",
+    "vite": "^3.1.0",
+    "vite-bundle-visualizer": "^0.4.1",
+    "vite-plugin-simple-gql": "^0.5.0",
+    "vue-tsc": "^0.40.13"
   },
   "engines": {
     "node": "^16.0.0"
-  },
-  "vuePlugins": {
-    "service": [
-      "./build-config/esbuildPlugin.js",
-      "./build-config/gqlPlugin.js"
-    ]
   }
 }

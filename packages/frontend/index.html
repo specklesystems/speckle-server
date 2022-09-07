@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- <base href="/appname/"> -->
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta
@@ -10,11 +9,11 @@
     />
     <meta property="og:title" content="Speckle" />
     <meta property="og:description" content="" />
-    <meta property="og:image" content="https://speckle.xyz/og_image.png" />
-    <meta property="og:url" content="<%= BASE_URL %>" />
+    <meta property="og:image" content="/og_image.png" />
+    <meta property="og:url" content="/" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
-    <title><%= htmlWebpackPlugin.options.title %></title>
+    <link rel="icon" href="/favicon.ico" />
+    <title>Speckle</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -135,9 +134,9 @@
           font-size: 10px;
         "
       >
-        <img src="<%= BASE_URL %>logo.svg" style="max-width: 50px" class="tada" />
+        <img src="/logo.svg" style="max-width: 50px" class="tada" />
       </div>
     </div>
-    <!-- built files will be auto injected -->
+    <script type="module" src="./src/main/app.js"></script>
   </body>
 </html>

@@ -177,11 +177,16 @@ export async function startHttp(app: Express, customPortOverride?: number) {
   if (process.env.NODE_ENV === 'development') {
     const { createProxyMiddleware } = await import('http-proxy-middleware')
 
+    // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
+    // slowing everything down
+    const defaultAgent = new http.Agent()
+
     const frontendProxy = createProxyMiddleware({
       target: `http://${frontendHost}:${frontendPort}`,
       changeOrigin: true,
       ws: false,
-      logLevel: 'silent'
+      logLevel: 'silent',
+      agent: defaultAgent
     })
     app.use('/', frontendProxy)
 

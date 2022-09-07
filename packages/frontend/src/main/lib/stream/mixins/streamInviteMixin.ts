@@ -9,7 +9,7 @@ import { MaybeFalsy, Nullable, vueWithMixins } from '@/helpers/typeHelpers'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { PropType } from 'vue'
 
 export type StreamInviteType = NonNullable<Get<StreamInviteQuery, 'streamInvite'>>
