@@ -57,6 +57,11 @@ export function documentToBasicString(
       currentString += doc.text
     }
 
+    // if mention, add it as text as well
+    if (doc.type === 'mention' && doc.attrs?.label) {
+      currentString += '@' + doc.attrs.label
+    }
+
     for (const contentDoc of doc.content || []) {
       currentString = recursiveStringBuilder(contentDoc, currentString)
     }

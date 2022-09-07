@@ -66,7 +66,7 @@ type Comment {
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
-  resources: [ResourceIdentifier]!
+  resources: [ResourceIdentifier!]!
   createdAt: DateTime
   """
   The time this comment was last updated. Corresponds also to the latest reply to this comment, if any.
