@@ -132,6 +132,7 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshGhostMaterial.depthWrite = false
+    this.meshGhostMaterial.alphaTest = 1
 
     this.meshGradientMaterial = new SpeckleStandardColoredMaterial(
       {
@@ -196,7 +197,8 @@ export default class Materials {
         emissive: 0x0,
         roughness: 1,
         metalness: 0,
-        side: DoubleSide // TBD
+        side: DoubleSide // TBD,
+        // clippingPlanes: []
       },
       ['USE_RTE']
     )
@@ -563,6 +565,10 @@ export default class Materials {
           break
       }
     }
+    /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
+     *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array
+     */
+    this.materialMap[hash].clippingPlanes = []
     return this.materialMap[hash]
   }
 
@@ -712,21 +718,33 @@ export default class Materials {
   public getFilterMaterial(
     renderView: NodeRenderView,
     filterMaterial: FilterMaterialType
-  ) {
+  ): Material {
+    let retMaterial: Material
     switch (filterMaterial) {
       case FilterMaterialType.SELECT:
-        return this.getHighlightMaterial(renderView)
+        retMaterial = this.getHighlightMaterial(renderView)
+        break
       case FilterMaterialType.GHOST:
-        return this.getGhostMaterial(renderView)
+        retMaterial = this.getGhostMaterial(renderView)
+        break
       case FilterMaterialType.GRADIENT:
-        return this.getGradientMaterial(renderView)
+        retMaterial = this.getGradientMaterial(renderView)
+        break
       case FilterMaterialType.COLORED:
-        return this.getColoredMaterial(renderView)
+        retMaterial = this.getColoredMaterial(renderView)
+        break
       case FilterMaterialType.OVERLAY:
-        return this.getOverlayMaterial(renderView)
+        retMaterial = this.getOverlayMaterial(renderView)
+        break
       case FilterMaterialType.HIDDEN:
-        return this.getHiddenMaterial(renderView)
+        retMaterial = this.getHiddenMaterial(renderView)
+        break
     }
+    /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
+     *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array
+     */
+    retMaterial.clippingPlanes = []
+    return retMaterial
   }
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
