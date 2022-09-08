@@ -26,18 +26,6 @@ import dayjs from 'dayjs'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
 
-export type BasicStream = Pick<
-  StreamRecord,
-  | 'id'
-  | 'name'
-  | 'description'
-  | 'isPublic'
-  | 'isDiscoverable'
-  | 'createdAt'
-  | 'updatedAt'
-> &
-  Pick<StreamAclRecord, 'role'>
-
 export type StreamWithOptionalRole = StreamRecord & {
   /**
    * Available, if query joined this data StreamAcl
@@ -49,16 +37,7 @@ export type StreamWithOptionalRole = StreamRecord & {
  * List of base columns to select when querying for user streams
  * (expects join to StreamAcl)
  */
-export const BASE_STREAM_COLUMNS = [
-  Streams.col.id,
-  Streams.col.name,
-  Streams.col.description,
-  Streams.col.isPublic,
-  Streams.col.isDiscoverable,
-  Streams.col.createdAt,
-  Streams.col.updatedAt,
-  StreamAcl.col.role
-]
+export const STREAM_WITH_OPTIONAL_ROLE_COLUMNS = [...Streams.cols, StreamAcl.col.role]
 
 export const generateId = () => cryptoRandomString({ length: 10 })
 
@@ -145,12 +124,11 @@ export async function getFavoritedStreams(params: {
   const finalLimit = _.clamp(limit || 25, 1, 25)
   const query =
     getFavoritedStreamsQueryBase<
-      Array<BasicStream & { favoritedDate: Date; favCursor: string }>
+      Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
     >(userId)
   query
-    .select()
-    .columns([
-      ...BASE_STREAM_COLUMNS,
+    .select([
+      ...STREAM_WITH_OPTIONAL_ROLE_COLUMNS,
       { favoritedDate: StreamFavorites.col.createdAt },
       { favCursor: StreamFavorites.col.cursor }
     ])
@@ -539,7 +517,7 @@ export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
  * Get base query for finding or counting user streams
  */
 function getUserStreamsQueryBase<
-  S extends BasicStream = StreamRecord & StreamAclRecord
+  S extends StreamRecord = StreamRecord & StreamAclRecord
 >({ userId, searchQuery, forOtherUser }: BaseUserStreamsQueryParams) {
   const query = StreamAcl.knex<Array<S>>()
     .where(StreamAcl.col.userId, userId)
@@ -573,12 +551,12 @@ export async function getUserStreams({
 }: UserStreamsQueryParams) {
   const finalLimit = clamp(limit || 25, 1, 50)
 
-  const query = getUserStreamsQueryBase<BasicStream>({
+  const query = getUserStreamsQueryBase<StreamWithOptionalRole>({
     userId,
     forOtherUser,
     searchQuery
   })
-  query.select(BASE_STREAM_COLUMNS)
+  query.select(STREAM_WITH_OPTIONAL_ROLE_COLUMNS)
 
   if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
 

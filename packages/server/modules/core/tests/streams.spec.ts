@@ -16,7 +16,7 @@ import {
 import { createObject } from '../services/objects'
 import { createCommitByBranchName } from '../services/commits'
 
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
 import {
   addOrUpdateStreamCollaborator,
   validateStreamAccess
@@ -26,11 +26,21 @@ import {
   buildAuthenticatedApolloServer,
   buildUnauthenticatedApolloServer
 } from '@/test/serverHelper'
-import { leaveStream } from '@/test/graphql/streams'
+import { getUserStreams, leaveStream } from '@/test/graphql/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
+import {
+  BasicTestStream,
+  createTestStream,
+  createTestStreams
+} from '@/test/speckle-helpers/streamHelper'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import { times } from 'lodash'
+import { Streams } from '@/modules/core/dbSchema'
+import { ApolloServer } from 'apollo-server-express'
+import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { sleep } from '@/test/helpers'
+import dayjs, { Dayjs } from 'dayjs'
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -317,41 +327,189 @@ describe('Streams @core-streams', () => {
     })
   })
 
-  describe.skip('when reading streams', () => {
-    // TODO: WIP
+  describe('when reading streams', () => {
+    const PAGE_LIMIT = 5
+
+    // keep owned+shared below maximum limit (50)
+    const OWNED_STREAM_COUNT = 30
+    const SHARED_STREAM_COUNT = 6
+    const TOTAL_OWN_STREAM_COUNT = OWNED_STREAM_COUNT + SHARED_STREAM_COUNT
+
+    const PUBLIC_STREAM_COUNT = 15
+    const DISCOVERABLE_STREAM_COUNT = PUBLIC_STREAM_COUNT - 5
+
+    let userOneStreams: BasicTestStream[]
+    let userTwoStreams: BasicTestStream[]
+
+    before(async () => {
+      // truncating previous streams
+      await truncateTables([Streams.name])
+
+      async function setupStreams(user: BasicTestUser): Promise<BasicTestStream[]> {
+        let remainingPublicStreams = PUBLIC_STREAM_COUNT
+        let remainingDiscoverableStreams = DISCOVERABLE_STREAM_COUNT
+
+        // creating test streams
+        const streamDefinitions = times(
+          OWNED_STREAM_COUNT,
+          (i): BasicTestStream => ({
+            name: `${user.name} test stream #${i}`,
+            isPublic: remainingPublicStreams-- > 0,
+            isDiscoverable: remainingDiscoverableStreams-- > 0,
+            id: '',
+            ownerId: ''
+          })
+        )
+
+        // invoking promises sequentially to ensure timestamps differ
+        for (const streamDef of streamDefinitions) {
+          await createTestStream(streamDef, user)
+          await sleep(1)
+        }
+
+        return streamDefinitions
+      }
+
+      async function shareStreams(
+        streams: BasicTestStream[],
+        streamOwner: BasicTestUser,
+        targetUser: BasicTestUser
+      ) {
+        // invoking promises sequentially to ensure timestamps differ between items
+        for (let i = 0; i < SHARED_STREAM_COUNT; i++) {
+          await addOrUpdateStreamCollaborator(
+            streams[i].id,
+            targetUser.id,
+            Roles.Stream.Contributor,
+            streamOwner.id
+          )
+          await sleep(1)
+        }
+      }
+
+      // creating test streams
+      userOneStreams = await setupStreams(userOne)
+      userTwoStreams = await setupStreams(userTwo)
+
+      // share streams
+      await shareStreams(userOneStreams, userOne, userTwo)
+      await shareStreams(userTwoStreams, userTwo, userOne)
+    })
+
+    const paginationDataset = [
+      { display: 'with pagination', pagination: true },
+      { display: 'without pagination', pagination: false }
+    ]
+
+    /**
+     * Base test for testing paginated & unpaginated User.streams query in various circumstances
+     */
+    const testPaginatedUserStreams = async (
+      apollo: ApolloServer,
+      pagination: boolean,
+      userId: string,
+      isOtherUser: boolean
+    ) => {
+      const expectedTotalCount = isOtherUser
+        ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only shared streams + discoverable ones
+        : TOTAL_OWN_STREAM_COUNT // all owned & shared streams
+
+      const requestPage = async (cursor?: Nullable<string>) => {
+        const results = await getUserStreams(apollo, {
+          userId,
+          limit: pagination ? PAGE_LIMIT : 100,
+          cursor
+        })
+
+        expect(results).to.not.haveGraphQLErrors()
+        if (!results.data?.user?.streams) throw new Error('Unexpected issue')
+        expect(results.data.user.streams.totalCount).to.eq(expectedTotalCount)
+        return results.data.user.streams
+      }
+
+      let cursor: Nullable<string> = null
+      let failSafe = Math.ceil(TOTAL_OWN_STREAM_COUNT / PAGE_LIMIT)
+      let allItemsFound = false
+      let foundItemsCount = 0
+      let foundOwnedStreams = 0
+      let foundSharedStreams = 0
+
+      let previousUpdatedAt: Nullable<Dayjs> = null
+      do {
+        const pageStreams: Awaited<ReturnType<typeof requestPage>> = await requestPage(
+          cursor
+        )
+
+        cursor = pageStreams.cursor || null
+        foundItemsCount += pageStreams.items?.length || 0
+
+        if (!pageStreams.items?.length) {
+          allItemsFound = true
+          break
+        }
+
+        for (const item of pageStreams.items || []) {
+          expect(item.id).to.be.ok
+          expect(item.role).to.be.ok
+          expect(item.createdAt).to.be.ok
+          expect(item.updatedAt).to.be.ok
+
+          const newUpdatedAt = dayjs(item.updatedAt)
+          if (previousUpdatedAt) {
+            const isSortingCorrect = previousUpdatedAt.isAfter(newUpdatedAt)
+            expect(isSortingCorrect).to.be.true
+          }
+          previousUpdatedAt = newUpdatedAt
+
+          if (item.role === Roles.Stream.Owner) {
+            foundOwnedStreams++
+          } else {
+            foundSharedStreams++
+          }
+        }
+      } while (failSafe-- > 0)
+
+      expect(allItemsFound).to.be.true
+      expect(foundItemsCount).to.eq(expectedTotalCount)
+      expect(foundOwnedStreams).to.eq(
+        isOtherUser
+          ? DISCOVERABLE_STREAM_COUNT // only discoverable streams found, those user will be an owner in (see before())
+          : OWNED_STREAM_COUNT // all streams where user is a contributor
+      )
+      expect(foundSharedStreams).to.eq(SHARED_STREAM_COUNT)
+    }
 
     describe('and user is authenticated', () => {
-      /** @type {ApolloServer} */
-      let apollo
+      let apollo: ApolloServer
+      let activeUserId: string
 
       before(async () => {
-        apollo = buildAuthenticatedApolloServer(userOne.id)
+        activeUserId = userOne.id
+        apollo = buildAuthenticatedApolloServer(activeUserId)
       })
 
-      it(
-        'User.streams()/Query.streams() for active user returns all streams the user is a collaborator on, even other ppls'
-      )
+      paginationDataset.forEach(({ display, pagination }) => {
+        it(`User.streams() ${display} for active user returns all streams the user is a collaborator on`, async () => {
+          await testPaginatedUserStreams(apollo, pagination, activeUserId, false)
+        })
 
-      it('User.streams()/Query.streams() pagination and filtering works')
-
-      it(
-        'User.streams() for a different user only returns that users discoverable streams'
-      )
+        it(`User.streams() ${display} for a different user only returns that users discoverable streams`, async () => {
+          await testPaginatedUserStreams(apollo, pagination, userTwo.id, true)
+        })
+      })
     })
 
     describe('and user is not authenticated', () => {
-      /** @type {ApolloServer} */
-      let apollo
+      let apollo: ApolloServer
 
       before(async () => {
         apollo = buildUnauthenticatedApolloServer()
       })
 
-      it('Query.streams() is inaccessible')
-
-      it('User.streams() only returns a users discoverable streams')
-
-      it('User.streams()/Query.streams() pagination and filtering works')
+      it('User.streams is inaccessible', async () => {
+        const results = await getUserStreams(apollo, { userId: userOne.id })
+        expect(results).to.haveGraphQLErrors('you must provide an auth token')
+      })
     })
   })
 })
