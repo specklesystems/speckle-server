@@ -36,8 +36,8 @@ services:
   maildev:
     image: maildev/maildev
     ports:
-      - 1080:1080
-      - 1025:1025
+      - '127.0.0.1:1080:1080'
+      - '127.0.0.1:1025:1025'
 
   # Useful for debugging / exploring local databases
 
