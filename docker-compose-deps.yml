@@ -3,7 +3,7 @@ services:
   # Actual Speckle Server dependencies
 
   postgres:
-    image: 'postgres:13.1-alpine'
+    image: 'postgres:13-alpine'
     restart: always
     environment:
       POSTGRES_DB: speckle
@@ -16,7 +16,7 @@ services:
       - '127.0.0.1:5432:5432'
 
   redis:
-    image: 'redis:6.0-alpine'
+    image: 'redis:7-alpine'
     restart: always
     volumes:
       - redis-data:/data
