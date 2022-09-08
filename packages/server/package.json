@@ -27,6 +27,7 @@
     "lint:tsc": "tsc --noEmit",
     "cli": "cross-env NODE_ENV=development DEBUG='speckle:*' ts-node ./modules/cli/index.js",
     "migrate": "yarn cli db migrate",
+    "migrate:test": "cross-env NODE_ENV=test DEBUG='speckle:*' ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {

@@ -73,13 +73,8 @@ type Stream {
 
 extend type User {
   """
-  New:
   Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
   authenticated user, then this will only return discoverable streams.
-
-  Old:
-  Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
-  authenticated user, then this will only return public streams.
   """
   streams(limit: Int! = 25, cursor: String): StreamCollection
     @hasRole(role: "server:user")

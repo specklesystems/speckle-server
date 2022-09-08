@@ -876,7 +876,7 @@ export type Query = {
   /** Get all invitations to streams that the active user has */
   streamInvites: Array<PendingStreamCollaborator>;
   /**
-   * Returns all streams that the user is a collaborator on.
+   * Returns all streams that the active user is a collaborator on.
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
@@ -1460,13 +1460,8 @@ export type User = {
   profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
   /**
-   * New:
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
    * authenticated user, then this will only return discoverable streams.
-   *
-   * Old:
-   * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
-   * authenticated user, then this will only return public streams.
    */
   streams?: Maybe<StreamCollection>;
   timeline?: Maybe<ActivityCollection>;
