@@ -1,4 +1,3 @@
-/* istanbul ignore file */
 const expect = require('chai').expect
 
 const { createUser } = require('../services/users')
@@ -27,7 +26,10 @@ const {
   validateStreamAccess
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
+const {
+  buildAuthenticatedApolloServer,
+  buildUnauthenticatedApolloServer
+} = require('@/test/serverHelper')
 const { leaveStream } = require('@/test/graphql/streams')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 
@@ -271,6 +273,40 @@ describe('Streams @core-streams', () => {
 
       const su = await getStream({ streamId: s.id })
       expect(su.updatedAt).to.not.equal(s.updatedAt)
+    })
+  })
+
+  describe('when reading streams', () => {
+    // TODO: WIP
+
+    describe('and user is authenticated', () => {
+      /** @type {ApolloServer} */
+      let apollo
+
+      before(async () => {
+        apollo = buildAuthenticatedApolloServer(userOne.id)
+      })
+
+      it(
+        'User.streams()/Query.streams() for active user returns all streams the user is a collaborator on'
+      )
+
+      it(
+        'User.streams() for a different user only returns that users discoverable streams'
+      )
+    })
+
+    describe('and user is not authenticated', () => {
+      /** @type {ApolloServer} */
+      let apollo
+
+      before(async () => {
+        apollo = buildUnauthenticatedApolloServer()
+      })
+
+      it('Query.streams() is inaccessible')
+
+      it('User.streams() only returns a users discoverable streams')
     })
   })
 })

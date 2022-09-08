@@ -6,10 +6,11 @@ extend type Query {
   stream(id: String!): Stream
 
   """
-  Returns all streams that the user is a collaborator on.
+  Returns all streams that the active user is a collaborator on.
   Pass in the `query` parameter to search by name, description or ID.
   """
   streams(query: String, limit: Int = 25, cursor: String): StreamCollection
+    @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
@@ -72,6 +73,11 @@ type Stream {
 
 extend type User {
   """
+  New:
+  Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
+  authenticated user, then this will only return discoverable streams.
+
+  Old:
   Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
   authenticated user, then this will only return public streams.
   """
