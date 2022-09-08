@@ -24,6 +24,7 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import cryptoRandomString from 'crypto-random-string'
 
 export type BasicStream = Pick<
   StreamRecord,
@@ -58,6 +59,8 @@ export const BASE_STREAM_COLUMNS = [
   Streams.col.updatedAt,
   StreamAcl.col.role
 ]
+
+export const generateId = () => cryptoRandomString({ length: 10 })
 
 /**
  * Get multiple streams
