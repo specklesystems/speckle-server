@@ -59,18 +59,17 @@ const digestNotificationEmailHandler = async (
  * Organize the activity summary into topics.
  * The order of topics should be by relevance.
  */
-const digestSummaryData = (
+export const digestSummaryData = (
   activitySummary: ActivitySummary,
-  serverInfo: ServerInfo
-): Digest | null => {
-  const topicDigesters: TopicDigesterFunction[] = [
+  serverInfo: ServerInfo,
+  topicDigesters: TopicDigesterFunction[] = [
     digestMostActiveStream,
     digestActiveStreams,
     mostActiveComment,
     commentMentionSummary,
     closingOverview
   ]
-
+): Digest | null => {
   const maybeTopics = topicDigesters.map((dig) => dig(activitySummary, serverInfo))
   const topics = maybeTopics.filter((topic): topic is DigestTopic => topic !== null)
   // if there are no topics, do not return a digest
@@ -79,12 +78,12 @@ const digestSummaryData = (
   return { user: activitySummary.user, topics }
 }
 
-type Digest = {
+export type Digest = {
   user: UserRecord
   topics: DigestTopic[]
 }
 
-type DigestTopic = {
+export type DigestTopic = {
   text: string
   html: string
   cta?: {
@@ -100,7 +99,10 @@ type TopicDigesterFunction = (
   serverInfo: ServerInfo
 ) => DigestTopic | null
 
-const digestMostActiveStream: TopicDigesterFunction = (activitySummary, serverInfo) => {
+export const digestMostActiveStream: TopicDigesterFunction = (
+  activitySummary,
+  serverInfo
+) => {
   // if there are less than 2 streams with activity, there is not reason to highlight it
   const minStreamCount = 1
   if (activitySummary.streamActivities.length <= minStreamCount) return null
@@ -154,17 +156,19 @@ const digestMostActiveStream: TopicDigesterFunction = (activitySummary, serverIn
   const topic: DigestTopic = {
     text,
     html,
-    sources: mostActive.activity
-  }
-  if (mostActive.stream)
-    topic.cta = {
+    sources: mostActive.activity,
+    cta: {
       url: `${serverInfo.canonicalUrl}/streams/${mostActive.stream.id}`,
       title: 'Check it out here!'
     }
+  }
   return topic
 }
 
-const mostActiveComment: TopicDigesterFunction = (activitySummary, serverInfo) => {
+export const mostActiveComment: TopicDigesterFunction = (
+  activitySummary,
+  serverInfo
+) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const replyActions = activities.filter(
     (a) => a.actionType === ActionTypes.Comment.Reply
@@ -210,7 +214,7 @@ const mostActiveComment: TopicDigesterFunction = (activitySummary, serverInfo) =
   }
 }
 
-const commentMentionSummary: TopicDigesterFunction = (activitySummary) => {
+export const commentMentionSummary: TopicDigesterFunction = (activitySummary) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const mentionActions = activities.filter(
     (a) => a.actionType === ActionTypes.Comment.Mention
@@ -226,7 +230,7 @@ const commentMentionSummary: TopicDigesterFunction = (activitySummary) => {
   }
 }
 
-const farewell = () => {
+export const farewell = () => {
   return {
     text: "That's it for this week, see you next time.\nWarm regards from the Speckle team.",
     html: "<p>That's it for this week, see you next time.<br/>Warm regards from the Speckle team.</p>",
@@ -234,13 +238,16 @@ const farewell = () => {
   }
 }
 
-const digestActiveStreams: TopicDigesterFunction = (activitySummary, serverInfo) => {
+export const digestActiveStreams: TopicDigesterFunction = (
+  activitySummary,
+  serverInfo
+) => {
   const minStreamCount = 2
   if (activitySummary.streamActivities.length <= minStreamCount) return null
   const orderedActivities = sortedByActivityCount(activitySummary.streamActivities)
   // i know it sucks, but i have to drop the most active stream here, cause its been
   // part of digests elsewhere...
-  const activities = orderedActivities.slice(1, 3)
+  const activities = orderedActivities.slice(1, 4)
 
   const heading = 'Notable active streams'
   let html = `<h1>${heading}</h1>`
@@ -286,14 +293,18 @@ const digestActiveStreams: TopicDigesterFunction = (activitySummary, serverInfo)
   }
 }
 
-const closingOverview: TopicDigesterFunction = (activitySummary) => {
+export const closingOverview: TopicDigesterFunction = (activitySummary) => {
   const activities = flattenActivities(activitySummary.streamActivities)
   const commitCount = activities.filter(
     (a) => a.actionType === ActionTypes.Commit.Create
   ).length
-  const commentCount = activities.filter(
-    (a) => a.actionType in [ActionTypes.Comment.Create, ActionTypes.Comment.Reply]
-  ).length
+  const commentCount = activities.filter((a) => {
+    const actions: AllActivityTypes[] = [
+      ActionTypes.Comment.Create,
+      ActionTypes.Comment.Reply
+    ]
+    return actions.includes(a.actionType)
+  }).length
   const receiveCount = activities.filter(
     (a) => a.actionType === ActionTypes.Commit.Receive
   ).length
@@ -348,7 +359,7 @@ const flattenActivities = (
   return allActivity
 }
 
-const prepareSummaryEmail = async (
+export const prepareSummaryEmail = async (
   digest: Digest,
   serverInfo: ServerInfo
 ): Promise<EmailInput> => {
@@ -369,7 +380,7 @@ type EmailBody = {
   mjml: string
 }
 
-const renderEmailBody = async (
+export const renderEmailBody = async (
   digest: Digest,
   serverInfo: ServerInfo
 ): Promise<EmailBody> => {
