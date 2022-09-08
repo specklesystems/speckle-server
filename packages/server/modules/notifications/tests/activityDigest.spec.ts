@@ -417,7 +417,7 @@ describe('Activity digest notifications @notifications', () => {
           user,
           streamActivities: [
             createBasicActivity('activity', [
-              createActivity(ActionTypes.Commit.Delete),
+              createActivity(ActionTypes.Comment.Reply),
               createActivity(ActionTypes.Commit.Create)
             ])
           ]

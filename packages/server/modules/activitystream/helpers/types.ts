@@ -3,9 +3,9 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 export type StreamActivityRecord = {
   streamId: Nullable<string>
   time: Date
-  resourceType: Nullable<string>
+  resourceType: Nullable<typeof ResourceTypes[keyof typeof ResourceTypes]>
   resourceId: Nullable<string>
-  actionType: Nullable<string>
+  actionType: Nullable<AllActivityTypes>
   userId: Nullable<string>
   info: Nullable<Record<string, unknown>>
   message: Nullable<string>
@@ -81,18 +81,18 @@ export type AllActivityTypes =
   | CommitActivityType
   | UserActivityType
 
-export interface Activity {
-  streamId: string | null
-  time: Date
-  resourceType: typeof ResourceTypes[keyof typeof ResourceTypes]
-  resourceId: string
-  actionType: AllActivityTypes
-  userId: string
-  info: Record<string, unknown>
-  message: string
-}
+// export interface Activity {
+//   streamId: string | null
+//   time: Date
+//   resourceType: typeof ResourceTypes[keyof typeof ResourceTypes]
+//   resourceId: string
+//   actionType: AllActivityTypes
+//   userId: string
+//   info: Record<string, unknown>
+//   message: string
+// }
 
-export interface StreamScopeActivity extends Activity {
+export interface StreamScopeActivity extends StreamActivityRecord {
   streamId: string
 }
 
@@ -120,12 +120,7 @@ export interface CommitActivity extends StreamScopeActivity {
   actionType: CommitActivityType
 }
 
-export interface UserActivity extends Activity {
+export interface UserActivity extends StreamActivityRecord {
   resourceType: 'user'
   actionType: UserActivityType
-}
-
-export type UserStreams = {
-  userId: string
-  streamIds: string[]
 }

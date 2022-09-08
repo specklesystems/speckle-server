@@ -5,7 +5,7 @@ import {
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   ActionTypes,
-  Activity,
+  StreamActivityRecord,
   AllActivityTypes,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
@@ -91,7 +91,7 @@ export type DigestTopic = {
     title: string
     altTitle?: string
   }
-  sources: Activity[]
+  sources: StreamActivityRecord[]
 }
 
 type TopicDigesterFunction = (
@@ -303,7 +303,7 @@ export const closingOverview: TopicDigesterFunction = (activitySummary) => {
       ActionTypes.Comment.Create,
       ActionTypes.Comment.Reply
     ]
-    return actions.includes(a.actionType)
+    return a.actionType && actions.includes(a.actionType)
   }).length
   const receiveCount = activities.filter(
     (a) => a.actionType === ActionTypes.Commit.Receive
@@ -425,7 +425,7 @@ const renderEmailShell = async (
 ): Promise<EmailInput> => {
   const mjmlPath = path.resolve(
     packageRoot,
-    'assets/emails/templates/speckleEmailTemplate.mjml.ejs'
+    'assets/emails/templates/speckleBasicEmailTemplate.mjml.ejs'
   )
   const cta = {
     title: 'Check activities',

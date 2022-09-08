@@ -11,7 +11,9 @@
       </mj-column>
     </mj-section>
 
+    <% if (params.bodyEnd?.cta) { %>
     <mj-include path="./components/ctaButton.mjml" />
+    <% } %>
 
     <!-- Body - End -->
     <% if (params.bodyEnd?.mjml?.length) { %>

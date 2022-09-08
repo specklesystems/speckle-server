@@ -1,11 +1,9 @@
 import {
   getActivity,
-  getActiveUserStreams
-} from '@/modules/activitystream/repositories'
-import {
-  StreamScopeActivity,
+  getActiveUserStreams,
   UserStreams
-} from '@/modules/activitystream/helpers/types'
+} from '@/modules/activitystream/repositories'
+import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
 import {
   NotificationPublisher,
   NotificationType

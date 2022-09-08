@@ -1,8 +1,5 @@
 import knex from '@/db/knex'
-import {
-  StreamScopeActivity,
-  UserStreams
-} from '@/modules/activitystream/helpers/types'
+import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
 import { StreamActivity } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 
@@ -15,8 +12,7 @@ export const getActivity = async (
   let query = StreamActivity.knex()
     .where(StreamActivity.col.streamId, '=', streamId)
     .whereBetween(StreamActivity.col.time, [start, end])
-  if (filteredUser)
-    query = query.andWhereNot(StreamActivity.col.userId, '=', filteredUser)
+  if (filteredUser) query = query.andWhereNot(StreamActivity.col.userId, filteredUser)
   return await query
 }
 
@@ -43,4 +39,9 @@ export const getActiveUserStreams = async (
     .join('server_acl', 'server_acl.userId', '=', StreamActivity.col.userId)
     .whereNot('server_acl.role', '=', Roles.Server.ArchivedUser)
   return await query
+}
+
+export type UserStreams = {
+  userId: string
+  streamIds: string[]
 }
