@@ -6,6 +6,10 @@ extend type Stream {
 }
 
 extend type User {
+  """
+  Get commits authored by the user. If requested for another user, then only commits
+  from public streams will be returned.
+  """
   commits(limit: Int! = 25, cursor: String): CommitCollectionUser
 }
 

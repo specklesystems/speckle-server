@@ -1,12 +1,13 @@
 extend type Query {
   """
   Returns a specific stream. Will throw an authorization error if active user isn't authorized
-  to see it.
+  to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
   """
   stream(id: String!): Stream
 
   """
-  All the streams of the current user, pass in the `query` parameter to search by name, description or ID.
+  Returns all streams that the user is a collaborator on.
+  Pass in the `query` parameter to search by name, description or ID.
   """
   streams(query: String, limit: Int = 25, cursor: String): StreamCollection
     @hasScope(scope: "streams:read")
@@ -71,12 +72,16 @@ type Stream {
 
 extend type User {
   """
-  All the streams that a user has access to.
+  Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
+  authenticated user, then this will only return public streams.
   """
   streams(limit: Int! = 25, cursor: String): StreamCollection
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 
   """
-  All the streams that a user has favorited
+  All the streams that a active user has favorited.
+  Note: You can't use this to retrieve another user's favorite streams.
   """
   favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection
     @hasRole(role: "server:user")
