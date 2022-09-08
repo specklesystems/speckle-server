@@ -440,14 +440,20 @@ export default class SpeckleRenderer {
     }
   }
 
-  private queryHits(results: Array<Intersection>) {
+  private queryHits(
+    results: Array<Intersection>
+  ): Array<{ node: TreeNode; point: Vector3 }> {
     const rvs = []
+    const points = []
     for (let k = 0; k < results.length; k++) {
       const rv = this.batcher.getRenderView(
         results[k].object.uuid,
         results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
       )
-      if (rv) rvs.push(rv)
+      if (rv) {
+        rvs.push(rv)
+        points.push(results[k].point)
+      }
     }
 
     /** Batch rejected picking. This only happens with hidden lines */
@@ -455,7 +461,7 @@ export default class SpeckleRenderer {
       return null
     }
 
-    const hitNodes = []
+    const queryResult = []
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
       const hitNode = WorldTree.getInstance().findId(hitId)
@@ -463,10 +469,10 @@ export default class SpeckleRenderer {
       while (!parentNode.model.atomic && parentNode.parent) {
         parentNode = parentNode.parent
       }
-      hitNodes.push(parentNode)
+      queryResult.push({ node: parentNode, point: points[k] })
     }
 
-    return hitNodes
+    return queryResult
   }
 
   private onObjectClick(e) {
@@ -486,8 +492,8 @@ export default class SpeckleRenderer {
     let multiSelect = false
     if (e.multiSelect) multiSelect = true
 
-    const hitNodes = this.queryHits(results)
-    if (!hitNodes) {
+    const queryResults = this.queryHits(results)
+    if (!queryResults) {
       this.viewer.emit(
         ViewerEvent.ObjectClicked,
         !multiSelect ? null : { multiple: true }
@@ -496,13 +502,13 @@ export default class SpeckleRenderer {
     }
 
     const selectionInfo = {
-      guid: hitNodes[0].model.id,
-      userData: hitNodes[0].model.raw,
+      guid: queryResults[0].node.model.id,
+      userData: queryResults[0].node.model.raw,
       location: results[0].point,
       selectionCenter: results[0].point, // Ideally we'd get the selection center here
       multiple: multiSelect,
-      hitChain: hitNodes.map((value) => value.model.raw),
-      hitPoints: results.map((value) => value.point)
+      hitChain: queryResults.map((value) => value.node.model.raw),
+      hitPoints: queryResults.map((value) => value.point)
     } as SelectionEvent
 
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
@@ -524,20 +530,20 @@ export default class SpeckleRenderer {
     let multiSelect = false
     if (e.multiSelect) multiSelect = true
 
-    const hitNodes = this.queryHits(results)
-    if (!hitNodes) {
+    const queryResults = this.queryHits(results)
+    if (!queryResults) {
       this.viewer.emit(ViewerEvent.ObjectClicked, null)
       return
     }
 
     const selectionInfo = {
-      guid: hitNodes[0].model.id,
-      userData: hitNodes[0].model.raw,
+      guid: queryResults[0].node.model.id,
+      userData: queryResults[0].node.model.raw,
       location: results[0].point,
       selectionCenter: results[0].point, // Ideally we'd get the selection center here
       multiple: multiSelect,
-      hitChain: hitNodes.map((value) => value.model.raw),
-      hitPoints: results.map((value) => value.point)
+      hitChain: queryResults.map((value) => value.node.model.raw),
+      hitPoints: queryResults.map((value) => value.point)
     } as SelectionEvent
 
     this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)
