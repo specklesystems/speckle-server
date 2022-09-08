@@ -79,7 +79,7 @@ export class Intersections {
     point: Vector2,
     nearest = true,
     bounds: Box3 = null
-  ): Intersection {
+  ): Array<Intersection> {
     this.raycaster.setFromCamera(point, camera)
     const target = scene.getObjectByName('ContentGroup')
 
@@ -105,6 +105,6 @@ export class Intersections {
         return !(val.object instanceof Points)
       })
     }
-    return results[0]
+    return results
   }
 }
