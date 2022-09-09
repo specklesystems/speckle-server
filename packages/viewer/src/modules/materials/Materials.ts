@@ -106,6 +106,7 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshHighlightMaterial.clipShadows = true
 
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
@@ -119,6 +120,7 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshTransparentHighlightMaterial.clipShadows = true
 
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
@@ -130,6 +132,7 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshGhostMaterial.depthWrite = false
+    this.meshGhostMaterial.alphaTest = 1
 
     this.meshGradientMaterial = new SpeckleStandardColoredMaterial(
       {
@@ -142,6 +145,7 @@ export default class Materials {
     ;(this.meshGradientMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
       await Assets.getTexture(defaultGradient)
     )
+    this.meshGradientMaterial.clipShadows = true
 
     this.meshTransparentGradientMaterial = new SpeckleStandardColoredMaterial(
       {
@@ -154,6 +158,7 @@ export default class Materials {
     ;(
       this.meshTransparentGradientMaterial as SpeckleStandardColoredMaterial
     ).setGradientTexture(await Assets.getTexture(defaultGradient))
+    this.meshTransparentGradientMaterial.clipShadows = true
 
     this.meshColoredMaterial = new SpeckleStandardColoredMaterial(
       {
@@ -164,6 +169,8 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.meshColoredMaterial.clipShadows = true
+
     this.meshTransparentColoredMaterial = new SpeckleStandardColoredMaterial(
       {
         side: DoubleSide,
@@ -190,10 +197,13 @@ export default class Materials {
         emissive: 0x0,
         roughness: 1,
         metalness: 0,
-        side: DoubleSide // TBD
+        side: DoubleSide // TBD,
+        // clippingPlanes: []
       },
       ['USE_RTE']
     )
+    this.meshOverlayMaterial.clipShadows = true
+
     this.meshTransparentOverlayMaterial = new SpeckleStandardMaterial(
       {
         color: 0x04cbfb,
@@ -477,6 +487,7 @@ export default class Materials {
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
+    mat.clipShadows = true
     mat.color.convertSRGBToLinear()
     return mat
   }
@@ -554,6 +565,10 @@ export default class Materials {
           break
       }
     }
+    /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
+     *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array
+     */
+    this.materialMap[hash].clippingPlanes = []
     return this.materialMap[hash]
   }
 
@@ -703,21 +718,33 @@ export default class Materials {
   public getFilterMaterial(
     renderView: NodeRenderView,
     filterMaterial: FilterMaterialType
-  ) {
+  ): Material {
+    let retMaterial: Material
     switch (filterMaterial) {
       case FilterMaterialType.SELECT:
-        return this.getHighlightMaterial(renderView)
+        retMaterial = this.getHighlightMaterial(renderView)
+        break
       case FilterMaterialType.GHOST:
-        return this.getGhostMaterial(renderView)
+        retMaterial = this.getGhostMaterial(renderView)
+        break
       case FilterMaterialType.GRADIENT:
-        return this.getGradientMaterial(renderView)
+        retMaterial = this.getGradientMaterial(renderView)
+        break
       case FilterMaterialType.COLORED:
-        return this.getColoredMaterial(renderView)
+        retMaterial = this.getColoredMaterial(renderView)
+        break
       case FilterMaterialType.OVERLAY:
-        return this.getOverlayMaterial(renderView)
+        retMaterial = this.getOverlayMaterial(renderView)
+        break
       case FilterMaterialType.HIDDEN:
-        return this.getHiddenMaterial(renderView)
+        retMaterial = this.getHiddenMaterial(renderView)
+        break
     }
+    /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
+     *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array
+     */
+    retMaterial.clippingPlanes = []
+    return retMaterial
   }
 
   public getFilterMaterialOptions(filterMaterial: FilterMaterial) {

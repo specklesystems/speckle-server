@@ -281,7 +281,7 @@ export default class SpeckleRenderer {
           {
             depthPacking: RGBADepthPacking
           },
-          ['USE_RTE']
+          ['USE_RTE', 'ALPHATEST_REJECTION']
         )
       }
     })
@@ -331,6 +331,7 @@ export default class SpeckleRenderer {
         }
       }
     })
+    this.renderer.shadowMap.needsUpdate = true
   }
 
   private addDirectLights() {

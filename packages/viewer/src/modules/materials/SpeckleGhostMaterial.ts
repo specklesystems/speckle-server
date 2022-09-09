@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { Matrix4, ShaderLib, UniformsUtils, Vector3 } from 'three'
-import { speckleBasicVert } from './shaders/speckle-basic-vert'
-import { speckleBasicFrag } from './shaders/speckle-basic-frag'
+import { speckleGhostVert } from './shaders/speckle-ghost-vert'
+import { speckleGhostFrag } from './shaders/speckle-ghost-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 
 class SpeckleGhostMaterial extends SpeckleBasicMaterial {
@@ -15,8 +15,8 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
-    ;(this as any).vertProgram = speckleBasicVert
-    ;(this as any).fragProgram = speckleBasicFrag
+    ;(this as any).vertProgram = speckleGhostVert
+    ;(this as any).fragProgram = speckleGhostFrag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {
@@ -42,8 +42,6 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ' '
     }
-
-    this.defines['NO_SHADOWS'] = ''
   }
 }
 

@@ -8,7 +8,7 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
-import { WebGLRenderer } from 'three'
+import { Material, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 
 export default class Batcher {
@@ -157,7 +157,10 @@ export default class Batcher {
           return {
             offset: rv.batchStart,
             count: rv.batchCount,
-            material: this.materials.getFilterMaterial(rv, filterMaterial.filterType),
+            material: this.materials.getFilterMaterial(
+              rv,
+              filterMaterial.filterType
+            ) as Material,
             materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
           } as BatchUpdateRange
         })

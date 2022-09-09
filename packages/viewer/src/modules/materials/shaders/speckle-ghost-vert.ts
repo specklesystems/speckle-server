@@ -1,37 +1,38 @@
-export const speckleDepthVert = /* glsl */ `
+export const speckleGhostVert = /* glsl */ `
 #include <common>
 #ifdef USE_RTE
     // The high component is stored as the default 'position' attribute buffer
     attribute vec3 position_low;
     uniform vec3 uViewer_high;
     uniform vec3 uViewer_low;
-    uniform mat4 rteModelViewMatrix;
 #endif
 #include <uv_pars_vertex>
-#include <displacementmap_pars_vertex>
+#include <uv2_pars_vertex>
+#include <envmap_pars_vertex>
+#include <color_pars_vertex>
+#include <fog_pars_vertex>
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
-// This is used for computing an equivalent of gl_FragCoord.z that is as high precision as possible.
-// Some platforms compute gl_FragCoord at a lower precision which makes the manually computed value better for
-// depth-based postprocessing effects. Reproduced on iPad with A10 processor / iPadOS 13.3.1.
-varying vec2 vHighPrecisionZW;
 void main() {
 	#include <uv_vertex>
-	#include <skinbase_vertex>
-	#ifdef USE_DISPLACEMENTMAP
+	#include <uv2_vertex>
+	#include <color_vertex>
+	#include <morphcolor_vertex>
+	#if defined ( USE_ENVMAP ) || defined ( USE_SKINNING )
 		#include <beginnormal_vertex>
 		#include <morphnormal_vertex>
+		#include <skinbase_vertex>
 		#include <skinnormal_vertex>
+		#include <defaultnormal_vertex>
 	#endif
 	#include <begin_vertex>
 	#include <morphtarget_vertex>
 	#include <skinning_vertex>
-	#include <displacementmap_vertex>
-	//#include <project_vertex> // EDITED CHUNK
+	// #include <project_vertex> COMMENTED CHUNK
     #ifdef USE_RTE
-        /* 
+		/* 
         Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
         Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
         */
@@ -50,14 +51,13 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
 
     #endif
-    mvPosition = rteModelViewMatrix * mvPosition;
+    mvPosition = modelViewMatrix * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;
 	#include <logdepthbuf_vertex>
-	// #include <clipping_planes_vertex>
-    #if NUM_CLIPPING_PLANES > 0
-	    vClipPosition = - mvPosition.xyz;
-    #endif
-	vHighPrecisionZW = gl_Position.zw;
+	#include <clipping_planes_vertex>
+	#include <worldpos_vertex>
+	#include <envmap_vertex>
+	#include <fog_vertex>
 }
 `
