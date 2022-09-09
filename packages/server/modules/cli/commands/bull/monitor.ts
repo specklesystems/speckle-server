@@ -3,18 +3,35 @@ import express from 'express'
 import { ExpressAdapter } from '@bull-board/express'
 import { createBullBoard } from '@bull-board/api'
 import { BullAdapter } from '@bull-board/api/bullAdapter'
-import { buildAllPossibleQueues } from '@/modules/notifications/services/queue'
+import {
+  NOTIFICATIONS_QUEUE,
+  buildNotificationsQueue
+} from '@/modules/notifications/services/queue'
 import { cliDebug } from '@/modules/shared/utils/logger'
 import { noop } from 'lodash'
 
 const PORT = 3032
 
-const command: CommandModule = {
-  command: 'monitor',
+const command: CommandModule<unknown, { testQueueId: string }> = {
+  command: 'monitor [testQueueId]',
   describe: 'Run bull-board monitoring web UI',
-  handler: async () => {
+  builder: {
+    testQueueId: {
+      describe:
+        'Optionally specify the ID of a test queue (from a test run) to load it as well',
+      type: 'string'
+    }
+  },
+  handler: async (argv) => {
+    const testQueueId = argv.testQueueId
+
     cliDebug('Initializing bull queues...')
-    const queues = buildAllPossibleQueues()
+    const queues = [buildNotificationsQueue(NOTIFICATIONS_QUEUE)]
+
+    if (testQueueId) {
+      cliDebug('Also initializing queue ' + testQueueId + '...')
+      queues.push(buildNotificationsQueue(testQueueId))
+    }
 
     cliDebug('Initializing monitor...')
     const app = express()
