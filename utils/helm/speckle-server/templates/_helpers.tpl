@@ -104,7 +104,7 @@ Expects the global context "$" to be passed as the parameter
   {{- $port := (default "6379" .Values.redis.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.redis.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.redis.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
-  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.redis.connectionString.secretName) "secret_key" (default "redis_url" .Values.redis.connectionString.secretKey) "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- $port := ( default "6379" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $domain "port" $port) }}
@@ -121,7 +121,7 @@ Expects the global context "$" to be passed as the parameter
   {{- $port := (default "6379" .Values.redis.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.redis.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.redis.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.redis.networkPolicy.externalToCluster.enabled -}}
-  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.redis.connectionString.secretName) "secret_key" (default "redis_url" .Values.redis.connectionString.secretKey) "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- $port := ( default "6379" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $domain "port" $port) }}
@@ -136,7 +136,7 @@ Creates a Kubernetes Network Policy egress definition for connecting to Postgres
   {{- $port := (default "5432" .Values.db.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.db.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.db.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
 {{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
-  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.db.connectionString.secretName) "secret_key" (default "postgres_url" .Values.db.connectionString.secretKey) "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- $port := ( default "5432" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $domain "port" $port) }}
@@ -151,7 +151,7 @@ Creates a Cilium network policy egress definition for connecting to Postgres
   {{- $port := (default "5432" .Values.db.networkPolicy.inCluster.port ) -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.db.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.db.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
 {{- else if .Values.db.networkPolicy.externalToCluster.enabled -}}
-  {{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
+  {{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.db.connectionString.secretName) "secret_key" (default "postgres_url" .Values.db.connectionString.secretKey) "context" . ) ) -}}
   {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- $port := ( default "5432" ( include "speckle.networkPolicy.portFromUrl" $secret ) ) -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $domain "port" $port) }}
@@ -223,7 +223,7 @@ Params:
   - context - Required, global context should be provided.
 */}}
 {{- define "speckle.networkpolicy.dns.postgres.cilium" -}}
-{{- $secret := ( include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" . ) ) -}}
+{{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.db.connectionString.secretName) "secret_key" (default "postgres_url" .Values.db.connectionString.secretKey) "context" . ) ) -}}
 {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- if (and .Values.db.networkPolicy.externalToCluster.enabled ( ne ( include "speckle.isIPv4" $domain ) "true" ) ) -}}
 {{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
@@ -240,7 +240,7 @@ Params:
   - context - Required, global context should be provided.
 */}}
 {{- define "speckle.networkpolicy.dns.redis.cilium" -}}
-{{- $secret := ( include "speckle.getSecret" (dict "secret_key" "redis_url" "context" . ) ) -}}
+{{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.db.connectionString.secretName) "secret_key" (default "postgres_url" .Values.db.connectionString.secretKey) "context" . ) ) -}}
 {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- if (and .Values.redis.networkPolicy.externalToCluster.enabled ( ne ( include "speckle.isIPv4" $domain ) "true" ) ) -}}
 {{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
@@ -504,14 +504,14 @@ app.kubernetes.io/name: {{ .Values.ingress.controllerName }}
 Retrieves an existing secret
 
 Usage:
-{{ include "speckle.getSecret" (dict "secret_key" "postgres_url" "context" $ )}}
+{{ include "speckle.getSecret" (dict  "secret_name" "server-vars" "secret_key" "postgres_url" "context" $ )}}
 
 Params:
   - secret_key - Required, the key within the secret.
   - context - Required, must be global context.  Values of global context must include 'namespace' and 'secretName' keys.
 */}}
 {{- define "speckle.getSecret" -}}
-{{- $secretResource := (lookup "v1" "Secret" .context.Values.namespace .context.Values.secretName ) -}}
+{{- $secretResource := (lookup "v1" "Secret" .context.Values.namespace .secret_name ) -}}
 {{- $secret := ( index $secretResource.data .secret_key ) -}}
 {{- $secretDecoded := (b64dec $secret) -}}
 {{- printf "%s" $secretDecoded }}
