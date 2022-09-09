@@ -161,3 +161,29 @@ export const streamBranchFirstCommitQuery = gql`
     }
   }
 `
+
+export const streamSettingsQuery = gql`
+  query StreamSettings($id: String!) {
+    stream(id: $id) {
+      id
+      name
+      description
+      isPublic
+      isDiscoverable
+      allowPublicComments
+      role
+    }
+  }
+`
+
+export const updateStreamSettingsMutation = gql`
+  mutation UpdateStreamSettings($input: StreamUpdateInput!) {
+    streamUpdate(stream: $input)
+  }
+`
+
+export const deleteStreamMutation = gql`
+  mutation DeleteStream($id: String!) {
+    streamDelete(id: $id)
+  }
+`
