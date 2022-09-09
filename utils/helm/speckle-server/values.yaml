@@ -117,8 +117,7 @@ db:
   ## @param db.maxConnectionsServer The number of connections to the Postgres database to provide in the connection pool
   ##
   maxConnectionsServer: 4
-  ## @param db.certificate The x509 public certificate for SSL connections to the Postgres database
-  ## Use of this certificate requires db.useCertificate to be enabled and an appropriate value for db.PGSSLMODE provided.
+  ## @param db.certificate The x509 public certificate for SSL connections to the Postgres database. Use of this certificate requires db.useCertificate to be enabled and an appropriate value for db.PGSSLMODE provided.
   ## The value must be formatted as a multi-line string.  We recommend using the pipe-symbol and taking care to
   ##  indent all lines of the value correctly.
   ## ref: https://helm.sh/docs/chart_template_guide/yaml_techniques/#strings-in-yaml
