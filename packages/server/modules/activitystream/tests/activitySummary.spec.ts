@@ -14,6 +14,7 @@ import {
   NotificationType,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
+import { sleep } from '@/test/helpers'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])
@@ -72,6 +73,7 @@ describe('Activity summary @activity', () => {
         info: {},
         message: 'foo'
       })
+      await sleep(100)
       const summary = await createActivitySummary(
         userA.id,
         streamIds,
