@@ -8,6 +8,7 @@ const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
   getComment,
@@ -199,7 +200,7 @@ module.exports = {
         streamId: args.input.streamId,
         resourceType: 'comment',
         resourceId: comment.id,
-        actionType: 'comment_created',
+        actionType: ActionTypes.Comment.Create,
         userId: context.userId,
         info: { input: args.input },
         message: `Comment added: ${comment.id} (${args.input})`
@@ -269,7 +270,7 @@ module.exports = {
         streamId: args.streamId,
         resourceType: 'comment',
         resourceId: args.commentId,
-        actionType: 'comment_archived',
+        actionType: ActionTypes.Comment.Archive,
         userId: context.userId,
         info: { input: args },
         message: `Comment archived`
@@ -311,7 +312,7 @@ module.exports = {
         streamId: args.input.streamId,
         resourceType: 'comment',
         resourceId: args.input.parentComment,
-        actionType: 'comment_replied',
+        actionType: ActionTypes.Comment.Reply,
         userId: context.userId,
         info: { input: args.input },
         message: `Comment reply created.`

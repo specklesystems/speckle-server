@@ -30,7 +30,8 @@ export function useMixpanel(): OverridedMixpanel {
 export function useIsLoggedIn() {
   const { result } = useQuery(IsLoggedInDocument)
   const isLoggedIn = computed(() => !!result.value?.user?.id)
-  return { isLoggedIn }
+  const userId = computed(() => result.value?.user?.id)
+  return { isLoggedIn, userId }
 }
 
 /**

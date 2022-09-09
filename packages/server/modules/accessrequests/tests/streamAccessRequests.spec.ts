@@ -3,7 +3,7 @@ import {
   getPendingAccessRequest
 } from '@/modules/accessrequests/repositories'
 import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
-import { ActionTypes } from '@/modules/activitystream/services'
+import { ActionTypes } from '@/modules/activitystream/helpers/types'
 import { ServerAccessRequests, StreamActivity } from '@/modules/core/dbSchema'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'

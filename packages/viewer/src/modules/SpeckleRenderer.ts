@@ -102,6 +102,10 @@ export default class SpeckleRenderer {
     return this.sceneBox.getCenter(new Vector3())
   }
 
+  public get sunLight() {
+    return this.sun
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this.scene = new Scene()
     this.rootGroup = new Group()
@@ -346,10 +350,10 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.right = d
     this.sun.shadow.camera.top = d
     this.sun.shadow.camera.bottom = -d
-    this.sun.shadow.bias = 0.5
     this.sun.shadow.camera.near = 5
     this.sun.shadow.camera.far = 350
-    this.sun.shadow.bias = -0.0001
+    this.sun.shadow.bias = -0.001
+    this.sun.shadow.radius = 2
 
     this.sunTarget = new Object3D()
     this.scene.add(this.sunTarget)

@@ -480,6 +480,7 @@ export type Mutation = {
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
   userDelete: Scalars['Boolean'];
+  userNotificationPreferencesUpdate?: Maybe<Scalars['Boolean']>;
   userRoleChange: Scalars['Boolean'];
   /** Edits a user's profile. */
   userUpdate: Scalars['Boolean'];
@@ -707,6 +708,11 @@ export type MutationUserCommentThreadActivityBroadcastArgs = {
 
 export type MutationUserDeleteArgs = {
   userConfirmation: UserDeleteInput;
+};
+
+
+export type MutationUserNotificationPreferencesUpdateArgs = {
+  preferences: Scalars['JSONObject'];
 };
 
 
@@ -1441,6 +1447,7 @@ export type User = {
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['String'];
   name?: Maybe<Scalars['String']>;
+  notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
   /** All the streams that a user has access to. */

@@ -1,8 +1,6 @@
-import {
-  ActionTypes,
-  ResourceTypes,
-  saveActivity
-} from '@/modules/activitystream/services'
+import { saveActivity } from '@/modules/activitystream/services'
+
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 
 /**
  * Save a "stream access requested" activity

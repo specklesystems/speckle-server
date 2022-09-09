@@ -1,8 +1,5 @@
-import {
-  saveActivity,
-  ResourceTypes,
-  ActionTypes
-} from '@/modules/activitystream/services'
+import { saveActivity } from '@/modules/activitystream/services'
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { pubsub, StreamPubsubEvents } from '@/modules/shared'
 
