@@ -28,6 +28,9 @@ export async function initializeConsumption(
       await import(
         '@/modules/notifications/services/handlers/streamAccessRequestApproved'
       )
+    ).default,
+    [NotificationType.ActivityDigest]: (
+      await import('@/modules/notifications/services/handlers/activityDigest')
     ).default
   }
 

@@ -70,6 +70,7 @@ export const profileSelfQuery = gql`
     user {
       ...CommonUserFields
       totalOwnedStreamsFavorites
+      notificationPreferences
     }
   }
 
@@ -182,5 +183,11 @@ export const emailVerificationBannerStateQuery = gql`
 export const requestVerificationMutation = gql`
   mutation RequestVerification {
     requestVerification
+  }
+`
+
+export const updateUserNotificationPreferencesMutation = gql`
+  mutation UpdateUserNotificationPreferences($preferences: JSONObject!) {
+    userNotificationPreferencesUpdate(preferences: $preferences)
   }
 `

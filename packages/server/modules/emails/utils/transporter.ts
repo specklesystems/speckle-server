@@ -1,27 +1,27 @@
-const debug = require('debug')('speckle')
+import debug from 'debug'
 
-const nodemailer = require('nodemailer')
-const modulesDebug = debug.extend('modules')
-const errorDebug = debug.extend('errors')
+import { createTransport, Transporter } from 'nodemailer'
 
-/** @type {import('nodemailer').Transporter | undefined} */
-let transporter = undefined
+const modulesDebug = debug('speckle').extend('modules')
+const errorDebug = debug('speckle').extend('errors')
 
-const createJsonEchoTransporter = () =>
-  nodemailer.createTransport({
-    jsonTransport: true
-  })
+let transporter: Transporter | undefined = undefined
+
+const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 
 const initSmtpTransporter = async () => {
   try {
-    const smtpTransporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT || 587,
+    const smtpTransporter = createTransport({
+      host: process.env.EMAIL_HOST || 'localhost',
+      port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
       auth: {
         user: process.env.EMAIL_USERNAME,
         pass: process.env.EMAIL_PASSWORD
-      }
+      },
+      pool: true,
+      maxConnections: 20,
+      maxMessages: Infinity
     })
     await smtpTransporter.verify()
     return smtpTransporter
@@ -30,10 +30,7 @@ const initSmtpTransporter = async () => {
   }
 }
 
-/**
- * @returns {import('nodemailer').Transporter | undefined}
- */
-async function initializeTransporter() {
+export async function initializeTransporter(): Promise<Transporter | undefined> {
   let newTransporter = undefined
 
   if (process.env.NODE_ENV === 'test') newTransporter = createJsonEchoTransporter()
@@ -49,14 +46,6 @@ async function initializeTransporter() {
   return newTransporter
 }
 
-/**
- * @returns {import('nodemailer').Transporter | undefined}
- */
-function getTransporter() {
+export function getTransporter(): Transporter | undefined {
   return transporter
-}
-
-module.exports = {
-  initializeTransporter,
-  getTransporter
 }

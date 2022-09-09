@@ -12,6 +12,7 @@ module.exports = {
   async getServerInfo() {
     const serverInfo = await Info().select('*').first()
     serverInfo.version = process.env.SPECKLE_SERVER_VERSION || 'dev'
+    serverInfo.canonicalUrl = process.env.CANONICAL_URL || 'localhost'
     return serverInfo
   },
 

@@ -6,16 +6,26 @@ import debug from 'debug'
 import { isObject, has } from 'lodash'
 
 export enum NotificationType {
-  MentionedInComment = 'mentioned-in-comment',
-  NewStreamAccessRequest = 'new-stream-access-request',
-  StreamAccessRequestApproved = 'stream-access-request-approved'
+  ActivityDigest = 'activityDigest',
+  MentionedInComment = 'mentionedInComment',
+  NewStreamAccessRequest = 'newStreamAccessRequest',
+  StreamAccessRequestApproved = 'streamAccessRequestApproved'
 }
+
+export enum NotificationChannel {
+  Email = 'email'
+}
+
+export type NotificationPreferences = Partial<
+  Record<NotificationType, Partial<Record<NotificationChannel, boolean>>>
+>
 
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage
   [NotificationType.NewStreamAccessRequest]: NewStreamAccessRequestMessage
   [NotificationType.StreamAccessRequestApproved]: StreamAccessRequestApprovedMessage
+  [NotificationType.ActivityDigest]: ActivityDigestMessage
 } & { [k in NotificationType]: unknown }
 
 export type NotificationMessage<
@@ -42,6 +52,11 @@ export type NotificationTypeHandlers = {
 
 export const isNotificationMessage = (msg: unknown): msg is NotificationMessage =>
   isObject(msg) && has(msg, 'targetUserId') && has(msg, 'type') && has(msg, 'data')
+
+export type NotificationPublisher = <T extends NotificationType>(
+  type: T,
+  params: Omit<NotificationTypeMessageMap[T], 'type'>
+) => Promise<string | number>
 
 export type MentionedInCommentData = {
   threadId: string
@@ -76,4 +91,15 @@ export type StreamAccessRequestApprovedData = {
 export type StreamAccessRequestApprovedMessage = NotificationMessage<
   NotificationType.StreamAccessRequestApproved,
   StreamAccessRequestApprovedData
+>
+
+export type ActivityDigestData = {
+  streamIds: string[]
+  start: Date
+  end: Date
+}
+
+export type ActivityDigestMessage = NotificationMessage<
+  NotificationType.ActivityDigest,
+  ActivityDigestData
 >
