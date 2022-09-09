@@ -16,7 +16,7 @@ const scheduleWeeklyActivityNotifications = () => {
   // at 00 minutest, 10 (am) hours, every month, every year,
   // every 1st day of the week (monday)
   // cheat sheet https://crontab.guru
-  const cronExpression = '00 14 * * 5'
+  const cronExpression = '00 13 * * 5'
   // configure the number of days, the activities are scraped for
   const numberOfDays = 7
   cron.validate(cronExpression)
