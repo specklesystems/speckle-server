@@ -109,7 +109,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
-                key: {{ default "redis_url" .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
 
           # *** PostgreSQL Database ***
           - name: POSTGRES_URL
