@@ -240,7 +240,7 @@ Params:
   - context - Required, global context should be provided.
 */}}
 {{- define "speckle.networkpolicy.dns.redis.cilium" -}}
-{{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.db.connectionString.secretName) "secret_key" (default "postgres_url" .Values.db.connectionString.secretKey) "context" . ) ) -}}
+{{- $secret := ( include "speckle.getSecret" (dict "secret_name" (default .Values.secretName .Values.redis.connectionString.secretName) "secret_key" (default "redis_url" .Values.redis.connectionString.secretKey) "context" . ) ) -}}
 {{- $domain := ( include "speckle.networkPolicy.domainFromUrl" $secret ) -}}
   {{- if (and .Values.redis.networkPolicy.externalToCluster.enabled ( ne ( include "speckle.isIPv4" $domain ) "true" ) ) -}}
 {{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
