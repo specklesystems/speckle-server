@@ -127,10 +127,10 @@ db:
   connectionString:
     ## @param db.connectionString.secretName Required. A secret containing the full connection string to the Postgres database (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
-    secretName: server-vars
+    secretName: ''
     ## @param db.connectionString.secretKey Required. The key within the Kubernetes Secret holding the connection string.
     ##
-    secretKey: postgres_url
+    secretKey: ''
   ## @extra db.networkPolicy If networkPolicy is enabled for any service, this provides the NetworkPolicy with the necessary details to allow egress connections to the Postgres database
   ##
   networkPolicy:
@@ -199,10 +199,10 @@ s3:
   secret_key:
     ## @param s3.secret_key.secretName Required. A Kubernetes secret containing the s3 secret_key.  This is expected to be the name of an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
-    secretName: server-vars
+    secretName: ''
     ## @param s3.secret_key.secretKey Required. The key within the Kubernetes Secret, the value of which is the s3 secret.
     ##
-    secretKey: s3_secret_key
+    secretKey: ''
   ## @param s3.create_bucket If enabled, will create a bucket with the given bucket name at this endpoint
   ## If enabled, the access_key must be granted the appropriate bucket creation privileges
   ##
@@ -267,10 +267,10 @@ redis:
   connectionString:
     ## @param redis.connectionString.secretName Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
-    secretName: server-vars
+    secretName: ''
     ## @param redis.connectionString.secretKey Required. The key within the Kubernetes Secret holding the Redis connection string.
     ##
-    secretKey: redis_url
+    secretKey: ''
   ## @extra redis.networkPolicy If networkPolicy is enabled for Speckle server, this provides the NetworkPolicy with the necessary details to allow egress connections to the Redis store
   ##
   networkPolicy:
@@ -330,10 +330,10 @@ server:
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
-    secretName: server-vars
+    secretName: ''
     ## @param server.sessionSecret.secretKey The key within the Kubernetes Secret holding the Session secret as its value.
     ##
-    secretKey: session_secret
+    secretKey: ''
   ## @extra server.auth Speckle provides a number of different mechanisms for authenticating users.  Each available option must be configured here.
   ##
   auth:
@@ -352,10 +352,10 @@ server:
       clientSecret:
         ## @param server.auth.google.clientSecret.secretName The name of the Kubernetes Secret containing the Google client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
         ##
-        secretName: server-vars
+        secretName: ''
         ## @param server.auth.google.clientSecret.secretKey The key within the Kubernetes Secret holding the Google client secret as its value.
         ##
-        secretKey: google_client_secret
+        secretKey: ''
     github:
       ## @param server.auth.github.enabled If enabled, users can authenticate via Github with their Github account credentials. If enabling Github authentication, the `server.auth.github.client_id` parameter is required.
       ##
@@ -366,10 +366,10 @@ server:
       clientSecret:
         ## @param server.auth.github.clientSecret.secretName The name of the Kubernetes Secret containing the GitHub client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
         ##
-        secretName: server-vars
+        secretName: ''
         ## @param server.auth.github.clientSecret.secretKey The key within the Kubernetes Secret holding the GitHub client secret as its value.
         ##
-        secretKey: github_client_secret
+        secretKey: ''
     azure_ad:
       ## @param server.auth.azure_ad.enabled If enabled, users can authenticate via Azure Active Directory.
       ##
@@ -389,10 +389,10 @@ server:
       clientSecret:
         ## @param server.auth.azure_ad.clientSecret.secretName The name of the Kubernetes Secret containing the Azure AD client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
         ##
-        secretName: server-vars
+        secretName: ''
         ## @param server.auth.azure_ad.clientSecret.secretKey The key within the Kubernetes Secret holding the Azure AD client secret as its value.
         ##
-        secretKey: azure_ad_client_secret
+        secretKey: ''
       ## @param server.auth.azure_ad.additional_domains List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy. https://docs.microsoft.com/en-us/azure/azure-portal/azure-portal-safelist-urls?tabs=public-cloud are enabled by default.
       ##
       additional_domains: []
@@ -403,9 +403,6 @@ server:
   ##
   email:
     ## @param server.email.enabled If enabled, Speckle can send email to users - for example, email verification for account registration.
-    ## If enabling Email, a secret containing the password to the email server must stored within the Kubernetes cluster as an opaque Kubernetes Secret.
-    ## The name of the Kubernetes Secret resource must match the `secretName` parameter, and the key within this Kubernetes Secret must be `email_password`.
-    ## ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
     enabled: false
     ## @param server.email.host The domain name or IP address of the server hosting the email service.
@@ -421,10 +418,10 @@ server:
     password:
       ## @param server.email.password.secretName The name of the Kubernetes Secret containing the email password. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
       ##
-      secretName: server-vars
+      secretName: ''
       ## @param server.email.password.secretKey The key within the Kubernetes Secret holding the email password as its value.
       ##
-      secretKey: email_password
+      secretKey: ''
     ## @extra server.email.networkPolicy If networkPolicy is enabled for Speckle server, this provides the Network Policy with the necessary details to allow egress connections to the email server
     ##
     networkPolicy:
@@ -511,10 +508,10 @@ server:
       key:
         ## @param server.monitoring.apollo.key.secretName The name of the Kubernetes Secret containing the Apollo monitoring key. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
         ##
-        secretName: server-vars
+        secretName: ''
         ## @param server.monitoring.apollo.key.secretKey The key within the Kubernetes Secret holding the Apollo monitoring key as its value.
         ##
-        secretKey: apollo_key
+        secretKey: ''
 
   ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
   ## Sentry.io allows events within Speckle to be monitored
