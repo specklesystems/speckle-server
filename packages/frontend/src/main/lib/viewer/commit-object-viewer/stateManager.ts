@@ -6,6 +6,7 @@ import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/view
 import { makeVar, TypePolicies } from '@apollo/client/cache'
 import {
   DefaultViewerParams,
+  ViewerParams,
   Viewer,
   SelectionEvent,
   PropertyInfo,
@@ -104,7 +105,7 @@ export const statePolicies: TypePolicies = {
 /**
  * Get current global Commit Object Viewer instance or create one
  */
-function getOrInitViewerData(): GlobalViewerData {
+function getOrInitViewerData(params: Partial<ViewerParams> = {}): GlobalViewerData {
   if (globalViewerData) return globalViewerData
 
   const container = document.createElement('div')
@@ -112,7 +113,10 @@ function getOrInitViewerData(): GlobalViewerData {
   container.className = 'viewer-container'
   container.style.display = 'inline-block'
 
-  const viewer = new Viewer(container, DefaultViewerParams)
+  const viewer = new Viewer(container, {
+    ...DefaultViewerParams,
+    ...params
+  })
   const initPromise = viewer.init()
 
   globalViewerData = {
@@ -144,7 +148,9 @@ export function setupCommitObjectViewer(reactiveMainProps: {
   const { streamId, resourceId, isEmbed, isShooter } = reactiveMainProps
 
   // Set up and inject viewer
-  const viewerData = getOrInitViewerData()
+  const viewerData = getOrInitViewerData({
+    doomMode: isShooter.value ? true : false
+  })
   const { viewer, container, isInitialized, isInitializedPromise } =
     setupNewViewerInjection({
       viewer: viewerData.viewer,

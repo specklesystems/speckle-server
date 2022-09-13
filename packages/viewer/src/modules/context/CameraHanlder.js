@@ -1,9 +1,12 @@
+/* eslint-disable no-console */
 import * as THREE from 'three'
 import CameraControls from 'camera-controls'
 import { KeyboardKeyHold } from 'hold-event'
+import { mapValues } from 'lodash-es'
 
 export default class CameraHandler {
   constructor(viewer) {
+    /** @type {import('../Viewer').Viewer} */
     this.viewer = viewer
 
     this.camera = new THREE.PerspectiveCamera(
@@ -30,12 +33,18 @@ export default class CameraHandler {
     this.orthoCamera.updateProjectionMatrix()
 
     CameraControls.install({ THREE })
+
+    /** @type {CameraControls} */
     this.controls = new CameraControls(
       this.camera,
       this.viewer.speckleRenderer.renderer.domElement
     )
     this.controls.maxPolarAngle = Math.PI / 2
     this.setupWASDControls()
+
+    if (this.viewer.startupParams.doomMode) {
+      this.setupDoomMode()
+    }
 
     this.cameras = [
       {
@@ -88,6 +97,14 @@ export default class CameraHandler {
 
   set enabled(val) {
     this.controls.enabled = val
+  }
+
+  setupDoomMode() {
+    // eslint-disable-next-line no-console
+    console.log('Welcome to your Doom! Mwahahaha!')
+
+    // Set up arrow key controls
+    this.setupArrowKeyControls()
   }
 
   setPerspectiveCameraOn() {
@@ -220,6 +237,49 @@ export default class CameraHandler {
         return
       }.bind(this)
     )
+  }
+
+  /**
+   * Looking around with arrow keys
+   */
+  setupArrowKeyControls() {
+    const keyCodes = { Up: 38, Left: 37, Down: 40, Right: 39 }
+    const holdIntervalDelay = 10
+    const keys = mapValues(
+      keyCodes,
+      (code) => new KeyboardKeyHold(code, holdIntervalDelay)
+    )
+
+    // todo: clean up events
+    Object.entries(keys).forEach(([keyCode, key]) => {
+      key.addEventListener('holding', (event) => {
+        const currTarget = new THREE.Vector3()
+        this.controls.getTarget(currTarget)
+
+        // look around
+        console.log('holding ' + keyCode)
+        console.log('curr target ' + currTarget.toArray())
+
+        if (['Up', 'Down'].includes(keyCode)) {
+          const increment = (keyCode === 'Up' ? 1 : -1) * 0.01 * event.deltaTime
+
+          this.controls.setTarget(
+            currTarget.x,
+            currTarget.y,
+            currTarget.z + increment,
+            true
+          )
+        } else if (['Left', 'Right'].includes(keyCode)) {
+          const increment = (keyCode === 'Left' ? 1 : -1) * 0.01 * event.deltaTime
+          this.controls.setTarget(
+            currTarget.x,
+            currTarget.y + increment,
+            currTarget.z,
+            true
+          )
+        }
+      })
+    })
   }
 
   onWindowResize() {

@@ -3,6 +3,7 @@ import {
   CanonicalView,
   DefaultLightConfiguration,
   DefaultViewerParams,
+  ViewerParams,
   InlineView,
   IViewer,
   SelectionEvent,
@@ -20,6 +21,8 @@ import { SunLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 import { World } from './modules/World'
 import { DebugViewer } from './modules/DebugViewer'
+
+export type { ViewerParams }
 
 export {
   Viewer,
