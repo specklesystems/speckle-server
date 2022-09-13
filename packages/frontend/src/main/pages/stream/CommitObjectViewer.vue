@@ -25,6 +25,7 @@
           :stream-id="streamId"
           :resource-id="resourceId"
           :is-embed="isEmbed"
+          :is-shooter="isShooter"
         >
           <template v-if="!isEmbed">
             <div v-if="!$loggedIn()" class="px-4 my-2">
@@ -154,10 +155,11 @@
         :class="`d-flex justify-center no-mouse`"
       >
         <viewer-controls
-          v-show="!hideControls"
+          v-show="!hideControls && !isShooter"
           class="mouse"
           @show-add-overlay="showAddOverlay = true"
         />
+        <shooter-hud v-if="isShooter" class="mouse" />
       </div>
       <div
         :style="`
@@ -340,7 +342,8 @@ export default defineComponent({
     //   import('@/main/components/viewer/ViewerFilters-Legacy.vue'),
     ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay.vue'),
-    CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay.vue')
+    CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay.vue'),
+    ShooterHud: () => import('@/main/components/viewer/ShooterHud.vue')
   },
   props: {
     streamId: {
@@ -367,6 +370,10 @@ export default defineComponent({
       default: false
     },
     noScroll: {
+      type: Boolean,
+      default: false
+    },
+    isShooter: {
       type: Boolean,
       default: false
     }

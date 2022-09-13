@@ -18,6 +18,7 @@ export function useEmbedViewerQuery() {
   const hideSelectionInfo = computed(() => route.query.hideselectioninfo === 'true')
   const hideLogo = computed(() => route.query.ilovespeckleanyway === 'true')
   const commentSlideShow = computed(() => route.query.commentslideshow === 'true')
+  const isShooter = computed(() => route.query.doom === 'true')
 
   return {
     streamId,
@@ -31,6 +32,7 @@ export function useEmbedViewerQuery() {
     hideSidebar,
     hideSelectionInfo,
     hideLogo,
-    commentSlideShow
+    commentSlideShow,
+    isShooter
   }
 }

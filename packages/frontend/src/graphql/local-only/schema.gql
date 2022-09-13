@@ -17,9 +17,14 @@ type CommitObjectViewerState {
   objectProperties: [JSONObject]
   localFilterPropKey: String
   sectionBox: Boolean
+  shooter: ViewerShooterState!
 }
 
 type SelectedCommentMetaData {
   id: String!
   selectionLocation: JSONObject!
+}
+
+type ViewerShooterState {
+  health: Int!
 }

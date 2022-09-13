@@ -26,6 +26,10 @@ export default defineComponent({
     isEmbed: {
       type: Boolean,
       required: true
+    },
+    isShooter: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props) {

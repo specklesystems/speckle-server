@@ -13,7 +13,7 @@ import {
   NumericPropertyInfo
 } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
-import { cloneDeep } from 'lodash'
+import { clamp, cloneDeep } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
@@ -23,6 +23,10 @@ const ViewerResourceIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_RESOURCEID'
 )
 const ViewerIsEmbedKey: InjectionKey<Ref<boolean>> = Symbol(
+  'COMMIT_OBJECT_VIEWER_IS_EMBED'
+)
+
+const ViewerIsShooterKey: InjectionKey<Ref<boolean>> = Symbol(
   'COMMIT_OBJECT_VIEWER_IS_EMBED'
 )
 
@@ -58,7 +62,9 @@ const commitObjectViewerState = makeVar({
   selectedObjects: [] as UnknownObject[],
   objectProperties: [] as PropertyInfo[],
   localFilterPropKey: null as Nullable<string>,
-  sectionBox: false
+  sectionBox: false,
+  // Shooter state
+  shooter: { health: 100 } as ShooterState
 })
 
 export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
@@ -70,6 +76,13 @@ export type LocalFilterState = {
   passMin?: number | null
   passMax?: number | null
   sectionBox?: number[]
+}
+
+export type ShooterState = {
+  /**
+   * 0-100
+   */
+  health: number
 }
 
 /**
@@ -126,8 +139,9 @@ export function setupCommitObjectViewer(reactiveMainProps: {
   streamId: Ref<string>
   resourceId: Ref<string>
   isEmbed: Ref<boolean>
+  isShooter: Ref<boolean>
 }) {
-  const { streamId, resourceId, isEmbed } = reactiveMainProps
+  const { streamId, resourceId, isEmbed, isShooter } = reactiveMainProps
 
   // Set up and inject viewer
   const viewerData = getOrInitViewerData()
@@ -142,6 +156,7 @@ export function setupCommitObjectViewer(reactiveMainProps: {
   provide(ViewerStreamIdKey, streamId)
   provide(ViewerResourceIdKey, resourceId)
   provide(ViewerIsEmbedKey, isEmbed)
+  provide(ViewerIsShooterKey, isShooter)
 
   return { viewer, container, isInitialized, isInitializedPromise }
 }
@@ -153,6 +168,7 @@ export function useCommitObjectViewerParams() {
   const injectedStreamId = inject(ViewerStreamIdKey)
   const injectedResourceId = inject(ViewerResourceIdKey)
   const injectedIsEmbed = inject(ViewerIsEmbedKey)
+  const injectedIsShooter = inject(ViewerIsShooterKey)
 
   const buildSafeRef = <T>(ref: Ref<T> | undefined): ComputedRef<T> =>
     computed(() => {
@@ -168,8 +184,9 @@ export function useCommitObjectViewerParams() {
   const streamId = buildSafeRef(injectedStreamId)
   const resourceId = buildSafeRef(injectedResourceId)
   const isEmbed = buildSafeRef(injectedIsEmbed)
+  const isShooter = buildSafeRef(injectedIsShooter)
 
-  return { streamId, resourceId, isEmbed }
+  return { streamId, resourceId, isEmbed, isShooter }
 }
 
 /*
@@ -523,4 +540,36 @@ export async function resetFilter() {
 
   await viewer.resetFilters()
   viewer.applyFilter(null)
+}
+
+/**
+ * Shooter state
+ */
+
+function updateShooterState(newValues: Partial<ShooterState>) {
+  const currentState = commitObjectViewerState()
+  const currentShooterState = currentState.shooter
+
+  commitObjectViewerState({
+    ...currentState,
+    shooter: {
+      ...currentShooterState,
+      ...newValues
+    }
+  })
+}
+
+export function resetShooterState() {
+  updateState({
+    shooter: {
+      health: 100
+    }
+  })
+}
+
+export function updateShooterHealth(health: number) {
+  const newHealth = clamp(health, 0, 100)
+  updateShooterState({
+    health: newHealth
+  })
 }

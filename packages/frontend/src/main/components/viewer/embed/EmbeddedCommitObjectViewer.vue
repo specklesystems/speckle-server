@@ -59,6 +59,7 @@
         :hide-controls="hideControls"
         :hide-selection-info="hideSelectionInfo"
         :no-scroll="noScroll"
+        :is-shooter="isShooter"
         @models-loaded="onModelsLoaded"
       />
     </div>
@@ -118,7 +119,8 @@ export default defineComponent({
       hideSidebar,
       hideSelectionInfo,
       hideLogo,
-      noScroll
+      noScroll,
+      isShooter
     } = useEmbedViewerQuery()
 
     const goToServerUrl = computed(() => {
@@ -143,6 +145,7 @@ export default defineComponent({
       hideSelectionInfo,
       noScroll,
       hideLogo,
+      isShooter,
       onModelsLoaded: () => {
         loadedModel.value = true
         emit('models-loaded')

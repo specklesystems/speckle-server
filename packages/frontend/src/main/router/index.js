@@ -151,7 +151,8 @@ const routes = [
             component: () => import('@/main/pages/stream/CommitObjectViewer.vue'),
             props: (route) => ({
               streamId: route.params.streamId,
-              resourceId: route.params.resourceId
+              resourceId: route.params.resourceId,
+              isShooter: route.query.doom === 'true'
             })
           },
           {
@@ -165,7 +166,8 @@ const routes = [
             component: () => import('@/main/pages/stream/CommitObjectViewer.vue'),
             props: (route) => ({
               streamId: route.params.streamId,
-              resourceId: route.params.resourceId
+              resourceId: route.params.resourceId,
+              isShooter: route.query.doom === 'true'
             })
           },
           {
