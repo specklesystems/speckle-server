@@ -43,7 +43,7 @@ export default defineComponent({
 </script>
 <style scoped lang="scss">
 .hud {
-  background-color: rgb(27, 29, 32);
+  background-color: rgba(27, 29, 32, 0.5);
   width: 100%;
   position: relative;
   bottom: -12px;
