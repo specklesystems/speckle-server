@@ -12,8 +12,10 @@
       <v-btn color="primary" class="mb-1" @click="onRestart">Restart</v-btn>
       <v-btn color="red" to="/">Quit</v-btn>
     </div>
-    <div class="d-none">
+    <div :style="playerWrapperStyle">
+      <!-- <iframe :src="MusicURL" allow="autoplay" style="display: none"></iframe> -->
       <audio :src="MusicURL" controls autoplay loop />
+      <v-btn @click="hidePlayer">Hide</v-btn>
     </div>
   </div>
 </template>
@@ -38,9 +40,24 @@ export default defineComponent({
 
     return { shooterState, MusicURL }
   },
+  data() {
+    return {
+      hide: false
+    }
+  },
+  computed: {
+    playerWrapperStyle() {
+      return {
+        display: this.hide ? 'none' : 'block'
+      }
+    }
+  },
   methods: {
     onRestart() {
       resetShooterState()
+    },
+    hidePlayer() {
+      this.hide = true
     }
   }
 })
