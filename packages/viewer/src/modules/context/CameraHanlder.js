@@ -204,12 +204,20 @@ export default class CameraHandler {
   }
 
   setupWASDControls() {
-    const KEYCODE = { W: 87, A: 65, S: 83, D: 68 }
+    const KEYCODE = { W: 87, A: 65, S: 83, D: 68}
 
     const wKey = new KeyboardKeyHold(KEYCODE.W, 16.666)
     const aKey = new KeyboardKeyHold(KEYCODE.A, 16.666)
     const sKey = new KeyboardKeyHold(KEYCODE.S, 16.666)
     const dKey = new KeyboardKeyHold(KEYCODE.D, 16.666)
+    document.body.onkeyup = function(e) {
+  if (e.key == " " ||
+      e.code == "Space" ||      
+      e.keyCode == 32      
+  ) {
+    World.applyCameraMovement(new Vec3(0, 0, 100))
+  }
+}
     aKey.addEventListener(
       'holding',
       function (event) {

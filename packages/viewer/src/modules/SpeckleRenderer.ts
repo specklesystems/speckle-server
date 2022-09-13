@@ -1,5 +1,6 @@
 import {
   ACESFilmicToneMapping,
+  AnimationMixer,
   Box3,
   Box3Helper,
   Camera,
@@ -25,7 +26,7 @@ import {
 } from 'three'
 import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
-import { Geometry } from './converter/Geometry'
+import { Geometry, GeometryAttributes } from './converter/Geometry'
 import { SpeckleType } from './converter/GeometryConverter'
 import { FilterMaterial } from './filtering/FilteringManager'
 import Input, { InputOptionsDefault } from './input/Input'
@@ -45,6 +46,8 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
@@ -59,6 +62,7 @@ export default class SpeckleRenderer {
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
+  private mixers = []
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -130,7 +134,7 @@ export default class SpeckleRenderer {
     this._renderer.toneMappingExposure = 0.5
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = VSMShadowMap
-    this.renderer.shadowMap.autoUpdate = false
+    this.renderer.shadowMap.autoUpdate = true
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
 
@@ -232,6 +236,10 @@ export default class SpeckleRenderer {
         }
       }
     }
+
+    for(let k = 0 ; k < this.mixers.length; k++) {
+      this.mixers[k].update(deltaTime)
+    }
   }
 
   public render(camera: Camera) {
@@ -257,12 +265,12 @@ export default class SpeckleRenderer {
     //   SpeckleType.Circle,
     //   SpeckleType.Ellipse
     // )
-    // this.batcher.makeBatches(
-    //   subtreeId,
-    //   GeometryType.POINT,
-    //   SpeckleType.Point,
-    //   SpeckleType.Pointcloud
-    // )
+    this.batcher.makeBatches(
+      subtreeId,
+      GeometryType.POINT,
+      SpeckleType.Point,
+      SpeckleType.Pointcloud
+    )
 
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -288,6 +296,57 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
+    const points = this.batcher.getBatches(subtreeId, GeometryType.POINT)
+    const models = [
+      "Dying.fbx",
+      "Salsa Dancing.fbx",
+      "Punching.fbx",
+      "Standing 2H Magic Attack 01.fbx"
+
+    ]
+    for( let k = 0 ;k < points[0].renderViews.length; k++) {
+      const pos = points[0].renderViews[k].renderData.geometry.attributes[GeometryAttributes.POSITION]
+      const loader = new FBXLoader();
+        loader.load( models[Math.floor(Math.random() * 3) + 1], ( object ) => {
+        const mixer = new AnimationMixer( object )
+        this.mixers.push(mixer);
+
+        const action = mixer.clipAction( object.animations[ 0 ] );
+        action.play();
+
+        object.traverse( function ( child ) {
+
+          if ( (child as any).isMesh ) {
+
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        } );
+        object.position.set(pos[0], pos[1], pos[2])
+        object.rotateX(Math.PI*0.5)
+        object.rotateY(Math.PI)
+        object.scale.set(0.1, 0.1, 0.1)
+        this.scene.add( object );
+
+      } ); 
+    }
+    new EXRLoader()
+					.load( 'moonless_golf_1k.exr', ( texture, textureData ) => {
+
+						// memorial.exr is NPOT
+
+						//console.log( textureData );
+						//console.log( texture );
+
+						// EXRLoader sets these default settings
+						//texture.generateMipmaps = false;
+						//texture.minFilter = LinearFilter;
+						//texture.magFilter = LinearFilter;
+
+						this.scene.background = texture
+
+					} );
+    
   }
 
   public getDoomScene(): Scene {
@@ -352,8 +411,8 @@ export default class SpeckleRenderer {
 
     this.sun.castShadow = true
 
-    this.sun.shadow.mapSize.width = 2048
-    this.sun.shadow.mapSize.height = 2048
+    this.sun.shadow.mapSize.width = 4096
+    this.sun.shadow.mapSize.height = 4096
 
     const d = 50
 
