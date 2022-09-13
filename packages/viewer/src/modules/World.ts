@@ -10,8 +10,10 @@ export class World {
   private static cannonWorld = new CANNON.World()
   private static cannonBodyMapping: Record<number, CANNON.Body> = {}
   static cameraBody: Body
+  private lastTime: number
 
   private _worldOrigin: Vector3 = new Vector3()
+  static lastTime: number
   public get worldSize() {
     this.worldBox.getCenter(this._worldOrigin)
     const size = new Vector3().subVectors(this.worldBox.max, this.worldBox.min)
@@ -64,7 +66,7 @@ export class World {
     // use this to test non-split solver
     // world.solver = solver
 
-    this.cannonWorld.gravity.set(0, 0, -10)
+    this.cannonWorld.gravity.set(0, 0, -20)
   }
 
   public static getCannonWorld() {
@@ -138,7 +140,13 @@ export class World {
   }
 
   public static updateCannonWorld(deltaTime: number, scene: Scene) {
+    const now = performance.now() / 1000
+    const delta = now - this.lastTime
+    
     this.cannonWorld.fixedStep()
+
+    this.lastTime = now
+
     for (const k in World.cannonBodyMapping) {
       const model = scene.getObjectById(Number.parseInt(k))
       const body = World.cannonBodyMapping[k]

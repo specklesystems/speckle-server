@@ -215,14 +215,14 @@ export default class CameraHandler {
       e.code == "Space" ||      
       e.keyCode == 32      
   ) {
-    World.applyCameraMovement(new Vec3(0, 0, 100))
+    World.applyCameraMovement(new Vec3(0, 0, 1000))
   }
 }
     aKey.addEventListener(
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        const v = new Vector3(-10, 0, 0)
+        const v = new Vector3(-100, 0, 0)
         v.applyQuaternion(this.activeCam.camera.quaternion)
         // v.multiplyScalar(event.deltaTime)
         World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
@@ -234,7 +234,7 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        const v = new Vector3(10, 0, 0)
+        const v = new Vector3(100, 0, 0)
         v.applyQuaternion(this.activeCam.camera.quaternion)
         // v.multiplyScalar(event.deltaTime)
         World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
@@ -246,7 +246,7 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        const v = new Vector3(0, 0, -10)
+        const v = new Vector3(0, 0, -100)
         v.applyQuaternion(this.activeCam.camera.quaternion)
         World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
         // this.controls.forward(0.01 * event.deltaTime, false)
@@ -257,7 +257,7 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        const v = new Vector3(0, 0, 10)
+        const v = new Vector3(0, 0, 100)
         v.applyQuaternion(this.activeCam.camera.quaternion)
         World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
         // this.controls.forward(-0.01 * event.deltaTime, false)

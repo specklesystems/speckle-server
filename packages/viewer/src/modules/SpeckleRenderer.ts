@@ -337,7 +337,7 @@ export default class SpeckleRenderer {
         //console.log( textureData );
         //console.log( texture );
 
-        this.renderer.shadowMap.autoUpdate = true
+        // this.renderer.shadowMap.autoUpdate = true
         // EXRLoader sets these default settings
         //texture.generateMipmaps = false;
         //texture.minFilter = LinearFilter;
