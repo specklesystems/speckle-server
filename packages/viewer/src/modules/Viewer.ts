@@ -136,6 +136,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
   }
 
+  public doomCall(){
+    World.cameraBody.position.set(0, 0, 5)
+  }
+  
   public getCurrentSectionBox() {
     return this.sectionBox.getCurrentBox()
   }

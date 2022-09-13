@@ -102,5 +102,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/da4d853547?c=%5B54.04268,9.99853,15.54459,12.24363,5.36739,3.78698,0,1%5D'
   // 'https://latest.speckle.dev/streams/50a8ffffee/commits/f3cb22d5c1'
   // 'https://latest.speckle.dev/streams/50a8ffffee/commits/80578c1a79'
-  "https://latest.speckle.dev/streams/50a8ffffee/commits/8180a5e490"
+  "https://latest.speckle.dev/streams/50a8ffffee/commits/c1e86bf4af"
 )

@@ -13,6 +13,7 @@ import {
   Matrix4,
   Mesh,
   Object3D,
+  PCFSoftShadowMap,
   Plane,
   RGBADepthPacking,
   Scene,
@@ -133,7 +134,7 @@ export default class SpeckleRenderer {
     this._renderer.toneMapping = ACESFilmicToneMapping
     this._renderer.toneMappingExposure = 0.5
     this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = VSMShadowMap
+    this.renderer.shadowMap.type = PCFSoftShadowMap
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
