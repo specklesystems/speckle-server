@@ -196,6 +196,15 @@ const routes = [
             component: () => import('@/main/pages/stream/TheWebhooks.vue')
           },
           {
+            path: 'functions/',
+            name: 'functions',
+            meta: {
+              title: 'Functions | Speckle'
+            },
+            props: true,
+            component: () => import('@/main/pages/stream/TheFunctions.vue')
+          },
+          {
             path: 'uploads/',
             name: 'uploads',
             meta: {

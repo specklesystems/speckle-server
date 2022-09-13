@@ -67,6 +67,8 @@ type Stream {
   favoritedDate: DateTime
   # How many times this stream has been favorited
   favoritesCount: Int!
+
+  functions: [String!]!
 }
 
 extend type User {
@@ -165,6 +167,8 @@ extend type Mutation {
   Remove yourself from stream collaborators (not possible for the owner)
   """
   streamLeave(streamId: String!): Boolean! @hasRole(role: "server:user")
+
+  addFunction(streamId: String!, url: String!): Boolean!
 }
 
 extend type Subscription {

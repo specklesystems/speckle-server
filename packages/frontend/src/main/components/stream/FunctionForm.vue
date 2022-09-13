@@ -2,56 +2,10 @@
   <v-container>
     <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="sendInvite">
       <v-text-field
-        v-if="webhookType == 'URL'"
-        v-model="url"
-        :rules="validation.urlRules"
-        label="URL"
-        hint="A POST request will be sent to this URL when this webhook is triggered"
-      />
-      <v-autocomplete
-        v-else
-        v-model="selectedFunction"
-        :items="functions"
-        label="Function"
-        hint="This function will be executed when this webhook is triggered"
-      />
-      <v-autocomplete
-        v-model="webhookType"
-        :items="webhookTypes"
-        :rules="validation.triggersRules"
-        label="Choose what events will trigger this webhook"
-      />
-      <v-text-field
-        v-model="description"
+        v-model="functionName"
         :rules="validation.descriptionRules"
-        label="Description"
-        hint="An optional description to help you identify this webhook."
-      />
-      <v-text-field
-        v-model="secret"
-        :rules="validation.secretRules"
-        label="Secret"
-        :hint="
-          webhook == null
-            ? `An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it.`
-            : `Change your secret. Note that anything using your old secret will need to be updated.`
-        "
-      />
-      <v-autocomplete
-        v-model="triggers"
-        :items="allTriggers"
-        :rules="validation.triggersRules"
-        label="Choose what events will trigger this webhook"
-        multiple
-        small-chips
-        deletable-chips
-      />
-      <v-switch
-        v-if="webhook != null"
-        v-model="enabled"
-        :label="enabled ? 'Enabled' : 'Disabled'"
-        hint="Get notified when this webhook is triggered"
-        persistent-hint
+        label="Function Name"
+        hint="A POST request will be sent to this URL when this webhook is triggered"
       />
     </v-form>
 
@@ -79,8 +33,10 @@
     </v-card-actions>
     <v-card-actions v-else>
       <v-spacer></v-spacer>
-      <v-btn color="primary" type="submit" :disabled="!valid" @click="addWebhook">
-        Add Webhook
+      <input ref="file" type="file" style="display: none" />
+      <v-btn color="link" type="submit" @click="addFunction">Or Upload Files</v-btn>
+      <v-btn color="primary" type="submit" :disabled="!valid" @click="addFunction">
+        Add Function
       </v-btn>
     </v-card-actions>
   </v-container>
@@ -89,10 +45,9 @@
 <script>
 import { gql } from '@apollo/client/core'
 import webhookQuery from '@/graphql/webhook.gql'
-import { functionsQuery } from '@/graphql/functions'
 
 export default {
-  name: 'WebhookForm',
+  name: 'FunctionForm',
   props: {
     webhookId: {
       type: String,
@@ -104,17 +59,6 @@ export default {
     }
   },
   apollo: {
-    functions: {
-      query: functionsQuery,
-      variables() {
-        return {
-          streamId: this.streamId
-        }
-      },
-      update(data) {
-        return data.stream?.functions || []
-      }
-    },
     webhook: {
       query: webhookQuery,
       variables() {
@@ -142,13 +86,12 @@ export default {
     }
   },
   data: () => ({
+    functionName: '',
+    functions: [],
     showDelete: false,
     valid: false,
     url: null,
     description: null,
-    webhookType: 'URL',
-    webhookTypes: ['URL', 'Function'],
-    selectedFunction: '',
     triggers: [],
     secret: null,
     enabled: true,
@@ -193,64 +136,55 @@ export default {
       ]
     }
   }),
-  // computed: {
-  //   functions() {
-  //     console.log(this.stream)
-  //     return this.stream?.functions || []
-  //   }
-  // },
   methods: {
-    async saveChanges() {
-      this.$emit('update:loading', true)
-      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update' })
+    // async saveChanges() {
+    //   this.$emit('update:loading', true)
+    //   this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update' })
 
-      const params = {
-        id: this.webhook.id,
-        streamId: this.streamId,
-        url: this.url,
-        description: this.description,
-        triggers: this.triggers,
-        enabled: this.enabled
-      }
-      if (this.secret) params.secret = this.secret
+    //   const params = {
+    //     id: this.webhook.id,
+    //     streamId: this.streamId,
+    //     url: this.url,
+    //     description: this.description,
+    //     triggers: this.triggers,
+    //     enabled: this.enabled
+    //   }
+    //   if (this.secret) params.secret = this.secret
+
+    //   await this.$apollo.mutate({
+    //     mutation: gql`
+    //       mutation webhookUpdate($params: WebhookUpdateInput!) {
+    //         addFunction(webhook: $params)
+    //       }
+    //     `,
+    //     variables: {
+    //       params
+    //     }
+    //   })
+    //   this.$emit('refetch-webhooks')
+    //   this.$emit('update:loading', false)
+    //   this.$emit('close')
+    // },
+    async addFunction() {
+      this.$emit('update:loading', true)
+
+      console.log(this.functions)
+
+      this.url = 'gateway.openfaas.svc.cluster.local/function/' + this.functionName
 
       await this.$apollo.mutate({
         mutation: gql`
-          mutation webhookUpdate($params: WebhookUpdateInput!) {
-            webhookUpdate(webhook: $params)
+          mutation functionCreate($streamId: String!, $url: String!) {
+            addFunction(streamId: $streamId, url: $url)
           }
         `,
         variables: {
-          params
-        }
-      })
-      this.$emit('refetch-webhooks')
-      this.$emit('update:loading', false)
-      this.$emit('close')
-    },
-    async addWebhook() {
-      this.$emit('update:loading', true)
-      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create' })
-
-      await this.$apollo.mutate({
-        mutation: gql`
-          mutation webhookCreate($params: WebhookCreateInput!) {
-            webhookCreate(webhook: $params)
-          }
-        `,
-        variables: {
-          params: {
-            streamId: this.streamId,
-            url: this.url,
-            description: this.description,
-            triggers: this.triggers,
-            enabled: this.enabled,
-            secret: this.secret
-          }
+          streamId: this.streamId,
+          url: this.url
         }
       })
 
-      this.$emit('refetch-webhooks')
+      // this.$emit('refetch-webhooks')
       this.$emit('update:loading', false)
       this.$emit('close')
     },

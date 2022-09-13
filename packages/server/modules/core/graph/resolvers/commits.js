@@ -33,6 +33,8 @@ const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
+const FUNCTION_RETURNED = "FUNCTION_RETURNED"
+
 module.exports = {
   Query: {},
   Stream: {

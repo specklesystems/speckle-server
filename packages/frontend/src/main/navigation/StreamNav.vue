@@ -190,6 +190,15 @@
         </v-list-item-content>
       </v-list-item>
 
+      <v-list-item link :to="`/streams/${stream.id}/functions`">
+        <v-list-item-icon>
+          <v-icon small>mdi-function</v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title>Functions</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+
       <v-list-item link :to="`/streams/${stream.id}/collaborators`">
         <v-list-item-icon>
           <v-icon small>mdi-account-group</v-icon>

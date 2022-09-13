@@ -1188,6 +1188,7 @@ export type Stream = {
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
   fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  functions: Array<Scalars['String']>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages

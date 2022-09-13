@@ -47,6 +47,7 @@ const {
   getDiscoverableStreams
 } = require('@/modules/core/services/streams/discoverableStreams')
 const { has } = require('lodash')
+const { addFunction, getFunctions } = require('@/modules/core/services/functions')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -191,6 +192,10 @@ module.exports = {
 
       // Otherwise resolve it now through a dataloader
       return await ctx.loaders.streams.getRole.load(parent.id)
+    },
+
+    async functions(parent) {
+      return await getFunctions({ streamId: parent.id })
     }
   },
   User: {
@@ -230,6 +235,11 @@ module.exports = {
   },
 
   Mutation: {
+    async addFunction(parent, { streamId, url }) {
+      await addFunction({ streamId, url })
+      return true
+    },
+
     async streamCreate(parent, args, context) {
       if (
         !(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))

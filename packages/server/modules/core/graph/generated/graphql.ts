@@ -1157,6 +1157,7 @@ export type Stream = {
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
   fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  functions: Array<Scalars['String']>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -2331,6 +2332,7 @@ export type StreamResolvers<ContextType = GraphQLContext, ParentType extends Res
   favoritesCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileUpload?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<StreamFileUploadArgs, 'id'>>;
   fileUploads?: Resolver<Maybe<Array<Maybe<ResolversTypes['FileUpload']>>>, ParentType, ContextType>;
+  functions?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isDiscoverable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;

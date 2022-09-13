@@ -3,6 +3,7 @@ query webhooks($streamId: String!) {
     id
     name
     role
+    functions
     webhooks {
       items {
         id
