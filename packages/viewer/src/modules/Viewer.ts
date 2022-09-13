@@ -107,11 +107,11 @@ export class Viewer extends EventEmitter implements IViewer {
     this.needsRender = true
 
     this.on(ViewerEvent.LoadComplete, (url) => {
-      this.doom = new Doom(this.speckleRenderer)
+      this.doom = new Doom(this.speckleRenderer, this.cameraHandler.activeCam.camera)
       this.doom.init()
-      // WorldTree.getRenderTree(url).buildRenderTree()
-      // this.speckleRenderer.addRenderTree(url)
-      // this.zoom()
+      WorldTree.getRenderTree(url).buildRenderTree()
+      this.speckleRenderer.addRenderTree(url)
+      this.zoom()
     })
   }
   public setSectionBox(
@@ -154,7 +154,9 @@ export class Viewer extends EventEmitter implements IViewer {
   private update() {
     const delta = this.clock.getDelta()
     World.updateCannonWorld(delta, this.speckleRenderer.scene)
+
     this.needsRender = this.cameraHandler.controls.update(delta)
+    if (this.doom) this.doom.update()
     this.speckleRenderer.update(delta)
     this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))

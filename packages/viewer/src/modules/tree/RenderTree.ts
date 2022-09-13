@@ -24,7 +24,7 @@ export class RenderTree {
         }
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
-        // World.addBoxCannonPrimitiveBatched(node.model.renderView.aabb)
+        World.addBoxCannonPrimitiveBatched(node.model.renderView.aabb)
       }
 
       return true

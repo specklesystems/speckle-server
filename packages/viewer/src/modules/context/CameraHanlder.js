@@ -3,6 +3,9 @@ import * as THREE from 'three'
 import CameraControls from 'camera-controls'
 import { KeyboardKeyHold } from 'hold-event'
 import { mapValues } from 'lodash-es'
+import { World } from '../World'
+import { Vec3 } from 'cannon-es'
+import { Vector3 } from 'three'
 
 export default class CameraHandler {
   constructor(viewer) {
@@ -15,6 +18,8 @@ export default class CameraHandler {
     )
     this.camera.up.set(0, 0, 1)
     this.camera.position.set(1, 1, 1)
+    this.camera.near = 0.01
+    this.camera.far = 1000
     this.camera.updateProjectionMatrix()
 
     const aspect =
@@ -209,7 +214,11 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        this.controls.truck(-0.01 * event.deltaTime, 0, false)
+        const v = new Vector3(-10, 0, 0)
+        v.applyQuaternion(this.activeCam.camera.quaternion)
+        // v.multiplyScalar(event.deltaTime)
+        World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
+        // this.controls.truck(-0.01 * event.deltaTime, 0, false)
         return
       }.bind(this)
     )
@@ -217,7 +226,11 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        this.controls.truck(0.01 * event.deltaTime, 0, false)
+        const v = new Vector3(10, 0, 0)
+        v.applyQuaternion(this.activeCam.camera.quaternion)
+        // v.multiplyScalar(event.deltaTime)
+        World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
+        // this.controls.truck(0.01 * event.deltaTime, 0, false)
         return
       }.bind(this)
     )
@@ -225,7 +238,10 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        this.controls.forward(0.01 * event.deltaTime, false)
+        const v = new Vector3(0, 0, -10)
+        v.applyQuaternion(this.activeCam.camera.quaternion)
+        World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
+        // this.controls.forward(0.01 * event.deltaTime, false)
         return
       }.bind(this)
     )
@@ -233,7 +249,10 @@ export default class CameraHandler {
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
-        this.controls.forward(-0.01 * event.deltaTime, false)
+        const v = new Vector3(0, 0, 10)
+        v.applyQuaternion(this.activeCam.camera.quaternion)
+        World.applyCameraMovement(new Vec3(v.x, v.y, v.z))
+        // this.controls.forward(-0.01 * event.deltaTime, false)
         return
       }.bind(this)
     )
@@ -242,7 +261,7 @@ export default class CameraHandler {
   /**
    * Looking around with arrow keys
    */
-  setupArrowKeyControls() {
+  dsetupArrowKeyControls() {
     const keyCodes = { Up: 38, Left: 37, Down: 40, Right: 39 }
     const holdIntervalDelay = 10
     const keys = mapValues(

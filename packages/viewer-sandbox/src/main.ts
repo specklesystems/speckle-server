@@ -99,5 +99,7 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/af6098915b?c=%5B0.02144,-0.0377,0.05554,0.00566,0.00236,0,0,1%5D'
   // AutoCAD
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
-  'https://latest.speckle.dev/streams/0c6ad366c4/commits/da4d853547?c=%5B54.04268,9.99853,15.54459,12.24363,5.36739,3.78698,0,1%5D'
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/da4d853547?c=%5B54.04268,9.99853,15.54459,12.24363,5.36739,3.78698,0,1%5D'
+  'https://latest.speckle.dev/streams/50a8ffffee/commits/f3cb22d5c1'
+  // 'https://latest.speckle.dev/streams/50a8ffffee/commits/80578c1a79'
 )
