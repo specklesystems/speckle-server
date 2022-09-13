@@ -305,6 +305,8 @@ export function loadObjectProperties() {
 }
 
 export async function handleViewerSelection(selectionInfo: SelectionEvent) {
+  return
+
   if (!selectionInfo) {
     updateState({ selectedObjects: [] })
     await getInitializedViewer().resetSelection()
