@@ -237,7 +237,7 @@ export default class SpeckleRenderer {
       }
     }
 
-    for(let k = 0 ; k < this.mixers.length; k++) {
+    for (let k = 0; k < this.mixers.length; k++) {
       this.mixers[k].update(deltaTime)
     }
   }
@@ -298,66 +298,63 @@ export default class SpeckleRenderer {
     this.updateHelpers()
     const points = this.batcher.getBatches(subtreeId, GeometryType.POINT)
     const models = [
-      "Dying.fbx",
-      "Salsa Dancing.fbx",
-      "Punching.fbx",
-      "Standing 2H Magic Attack 01.fbx"
-
+      'http://localhost:3033/Dying.fbx',
+      'http://localhost:3033/Salsa%20Dancing.fbx',
+      'http://localhost:3033/Punching.fbx',
+      'http://localhost:3033/Standing 2H Magic Attack 01.fbx'
     ]
-    for( let k = 0 ;k < points[0].renderViews.length; k++) {
-      const pos = points[0].renderViews[k].renderData.geometry.attributes[GeometryAttributes.POSITION]
-      const loader = new FBXLoader();
-        loader.load( models[Math.floor(Math.random() * 3) + 1], ( object ) => {
-        const mixer = new AnimationMixer( object )
-        this.mixers.push(mixer);
+    for (let k = 0; k < points[0].renderViews.length; k++) {
+      const pos =
+        points[0].renderViews[k].renderData.geometry.attributes[
+          GeometryAttributes.POSITION
+        ]
+      const loader = new FBXLoader()
+      loader.load(models[Math.floor(Math.random() * 3) + 1], (object) => {
+        const mixer = new AnimationMixer(object)
+        this.mixers.push(mixer)
 
-        const action = mixer.clipAction( object.animations[ 0 ] );
-        action.play();
+        const action = mixer.clipAction(object.animations[0])
+        action.play()
 
-        object.traverse( function ( child ) {
-
-          if ( (child as any).isMesh ) {
-
-            child.castShadow = true;
-            child.receiveShadow = true;
+        object.traverse(function (child) {
+          if ((child as any).isMesh) {
+            child.castShadow = true
+            child.receiveShadow = true
           }
-        } );
+        })
         object.position.set(pos[0], pos[1], pos[2])
-        object.rotateX(Math.PI*0.5)
+        object.rotateX(Math.PI * 0.5)
         object.rotateY(Math.PI)
         object.scale.set(0.1, 0.1, 0.1)
-        this.scene.add( object );
-
-      } ); 
+        this.scene.add(object)
+      })
     }
-    new EXRLoader()
-					.load( 'moonless_golf_1k.exr', ( texture, textureData ) => {
+    new EXRLoader().load(
+      'http://localhost:3033/moonless_golf_1k.exr',
+      (texture, textureData) => {
+        // memorial.exr is NPOT
 
-						// memorial.exr is NPOT
+        //console.log( textureData );
+        //console.log( texture );
 
-						//console.log( textureData );
-						//console.log( texture );
+        // EXRLoader sets these default settings
+        //texture.generateMipmaps = false;
+        //texture.minFilter = LinearFilter;
+        //texture.magFilter = LinearFilter;
 
-						// EXRLoader sets these default settings
-						//texture.generateMipmaps = false;
-						//texture.minFilter = LinearFilter;
-						//texture.magFilter = LinearFilter;
-
-						this.scene.background = texture
-
-					} );
-    
+        this.scene.background = texture
+      }
+    )
   }
 
   public getDoomScene(): Scene {
-    let doomSceneRoot: Scene = this.scene.getObjectByName("DoomScene") as Scene
-    if(!doomSceneRoot) {
+    let doomSceneRoot: Scene = this.scene.getObjectByName('DoomScene') as Scene
+    if (!doomSceneRoot) {
       doomSceneRoot = new Scene()
-      doomSceneRoot.name = "DoomScene"
+      doomSceneRoot.name = 'DoomScene'
       this.scene.add(doomSceneRoot)
     }
-    return doomSceneRoot;
-
+    return doomSceneRoot
   }
 
   public removeRenderTree(subtreeId: string) {
