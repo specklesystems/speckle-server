@@ -12,6 +12,9 @@
       <v-btn color="primary" class="mb-1" @click="onRestart">Restart</v-btn>
       <v-btn color="red" to="/">Quit</v-btn>
     </div>
+    <div class="d-none">
+      <audio :src="MusicURL" controls autoplay loop />
+    </div>
   </div>
 </template>
 <script lang="ts">
@@ -20,6 +23,7 @@ import { resetShooterState } from '@/main/lib/viewer/commit-object-viewer/stateM
 import { useQuery } from '@vue/apollo-composable'
 import { computed, defineComponent } from 'vue'
 import ShooterHudFace from '@/main/components/viewer/shooter/ShooterHudFace.vue'
+import MusicURL from '@/assets/viewer/shooter/music.mp3'
 
 export default defineComponent({
   name: 'ShooterHud',
@@ -32,7 +36,7 @@ export default defineComponent({
       () => viewerStateResult.value?.commitObjectViewerState.shooter
     )
 
-    return { shooterState }
+    return { shooterState, MusicURL }
   },
   methods: {
     onRestart() {
@@ -61,7 +65,7 @@ export default defineComponent({
   &__middle {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     flex-grow: 1;
   }
 
