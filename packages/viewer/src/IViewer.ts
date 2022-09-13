@@ -7,6 +7,7 @@ import { DataTree } from './modules/tree/DataTree'
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
+  doomMode?: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
