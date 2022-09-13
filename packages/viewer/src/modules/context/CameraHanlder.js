@@ -269,7 +269,7 @@ export default class CameraHandler {
   /**
    * Looking around with arrow keys
    */
-  dsetupArrowKeyControls() {
+  setupArrowKeyControls() {
     const keyCodes = { Up: 38, Left: 37, Down: 40, Right: 39 }
     const holdIntervalDelay = 10
     const keys = mapValues(

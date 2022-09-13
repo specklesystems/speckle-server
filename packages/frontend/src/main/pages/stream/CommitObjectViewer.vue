@@ -159,7 +159,10 @@
           class="mouse"
           @show-add-overlay="showAddOverlay = true"
         />
-        <shooter-hud v-if="isShooter" class="mouse" />
+        <template v-if="isShooter">
+          <shooter-hud-gun />
+          <shooter-hud class="mouse" />
+        </template>
       </div>
       <div
         :style="`
@@ -343,7 +346,8 @@ export default defineComponent({
     ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay.vue'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay.vue'),
-    ShooterHud: () => import('@/main/components/viewer/ShooterHud.vue')
+    ShooterHud: () => import('@/main/components/viewer/ShooterHud.vue'),
+    ShooterHudGun: () => import('@/main/components/viewer/shooter/ShooterHudGun.vue')
   },
   props: {
     streamId: {
