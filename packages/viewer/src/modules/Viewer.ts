@@ -27,6 +27,7 @@ import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
+import { Doom } from './Doom'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -52,6 +53,8 @@ export class Viewer extends EventEmitter implements IViewer {
   private inProgressOperations: number
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
+
+  private doom: Doom
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -104,9 +107,11 @@ export class Viewer extends EventEmitter implements IViewer {
     this.needsRender = true
 
     this.on(ViewerEvent.LoadComplete, (url) => {
-      WorldTree.getRenderTree(url).buildRenderTree()
-      this.speckleRenderer.addRenderTree(url)
-      this.zoom()
+      this.doom = new Doom(this.speckleRenderer)
+      this.doom.init()
+      // WorldTree.getRenderTree(url).buildRenderTree()
+      // this.speckleRenderer.addRenderTree(url)
+      // this.zoom()
     })
   }
   public setSectionBox(
@@ -148,6 +153,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   private update() {
     const delta = this.clock.getDelta()
+    World.updateCannonWorld(delta, this.speckleRenderer.scene)
     this.needsRender = this.cameraHandler.controls.update(delta)
     this.speckleRenderer.update(delta)
     this.stats?.update()
@@ -157,7 +163,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private render() {
     if (this.needsRender) {
       this.speckleRenderer.render(this.cameraHandler.activeCam.camera)
-      this._needsRender = false
+      // this._needsRender = false
     }
   }
 

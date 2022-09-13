@@ -5694,6 +5694,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.21.0
     "@typescript-eslint/parser": ^5.21.0
     camera-controls: ^1.33.1
+    cannon-es: ^0.20.0
     core-js: ^3.21.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
@@ -10797,6 +10798,13 @@ __metadata:
   version: 1.0.30001336
   resolution: "caniuse-lite@npm:1.0.30001336"
   checksum: 05577b295f2c3780f4a2c814c4255b8b73353ff5a7238f5f97fe3b2bb61b78d77be7df52e9646b829bbde8f0efbfbad971324001086f9069ec144e4fc88ed5b8
+  languageName: node
+  linkType: hard
+
+"cannon-es@npm:^0.20.0":
+  version: 0.20.0
+  resolution: "cannon-es@npm:0.20.0"
+  checksum: a11c2a51d8f4bf314fdbe671dd03e025513e3ab98621d3260c06f2c2a11922c67bc670f98e866a21919d966ba9b19aade5b7c3f9cf507a2ed7499c85eb8934bb
   languageName: node
   linkType: hard
 

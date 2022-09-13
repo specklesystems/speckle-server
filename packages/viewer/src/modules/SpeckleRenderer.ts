@@ -246,23 +246,23 @@ export default class SpeckleRenderer {
       SpeckleType.Mesh,
       SpeckleType.Brep
     )
-    this.batcher.makeBatches(
-      subtreeId,
-      GeometryType.LINE,
-      SpeckleType.Line,
-      SpeckleType.Curve,
-      SpeckleType.Polycurve,
-      SpeckleType.Polyline,
-      SpeckleType.Arc,
-      SpeckleType.Circle,
-      SpeckleType.Ellipse
-    )
-    this.batcher.makeBatches(
-      subtreeId,
-      GeometryType.POINT,
-      SpeckleType.Point,
-      SpeckleType.Pointcloud
-    )
+    // this.batcher.makeBatches(
+    //   subtreeId,
+    //   GeometryType.LINE,
+    //   SpeckleType.Line,
+    //   SpeckleType.Curve,
+    //   SpeckleType.Polycurve,
+    //   SpeckleType.Polyline,
+    //   SpeckleType.Arc,
+    //   SpeckleType.Circle,
+    //   SpeckleType.Ellipse
+    // )
+    // this.batcher.makeBatches(
+    //   subtreeId,
+    //   GeometryType.POINT,
+    //   SpeckleType.Point,
+    //   SpeckleType.Pointcloud
+    // )
 
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -288,6 +288,17 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
+  }
+
+  public getDoomScene(): Scene {
+    let doomSceneRoot: Scene = this.scene.getObjectByName("DoomScene") as Scene
+    if(!doomSceneRoot) {
+      doomSceneRoot = new Scene()
+      doomSceneRoot.name = "DoomScene"
+      this.scene.add(doomSceneRoot)
+    }
+    return doomSceneRoot;
+
   }
 
   public removeRenderTree(subtreeId: string) {

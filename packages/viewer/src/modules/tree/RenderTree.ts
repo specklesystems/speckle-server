@@ -4,6 +4,7 @@ import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 import { Geometry } from '../converter/Geometry'
+import { World } from '../World'
 
 export class RenderTree {
   private root: TreeNode
@@ -23,6 +24,7 @@ export class RenderTree {
         }
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
+        // World.addBoxCannonPrimitiveBatched(node.model.renderView.aabb)
       }
 
       return true

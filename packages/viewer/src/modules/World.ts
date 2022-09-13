@@ -1,8 +1,13 @@
-import { Box3, Vector3 } from 'three'
+import { Box3, Mesh, Object3D, Quaternion, Scene, Vector3 } from 'three'
+import * as CANNON from 'cannon-es'
+import { generateUUID } from 'three/src/math/MathUtils'
+import { Vec3 } from 'cannon-es'
 
 export class World {
   private readonly boxes: Array<Box3> = new Array<Box3>()
   public readonly worldBox: Box3 = new Box3()
+  private static cannonWorld = new CANNON.World()
+  private static cannonBodyMapping : Record<number, CANNON.Body> = {}
 
   private _worldOrigin: Vector3 = new Vector3()
   public get worldSize() {
@@ -39,5 +44,81 @@ export class World {
   public resetWorld() {
     this.worldBox.makeEmpty()
     this.boxes.length = 0
+  }
+
+  public static createCannonWorld() {
+    this.cannonWorld = new CANNON.World()
+    // Tweak contact properties.
+    // Contact stiffness - use to make softer/harder contacts
+    // this.cannonWorld.defaultContactMaterial.contactEquationStiffness = 1e9
+
+    // // Stabilization time in number of timesteps
+    // this.cannonWorld.defaultContactMaterial.contactEquationRelaxation = 4
+
+    // const solver = new CANNON.GSSolver()
+    // solver.iterations = 7
+    // solver.tolerance = 0.1
+    // this.cannonWorld.solver = new CANNON.SplitSolver(solver)
+    // use this to test non-split solver
+    // world.solver = solver
+
+    this.cannonWorld.gravity.set(0, -9.7, 0)
+  }
+
+  public static getCannonWorld() {
+    return this.cannonWorld
+  }
+
+  public static addPlaneCannonPrimitive(fromMesh: Mesh) {
+    const uid = fromMesh.id
+    const planeShape = new CANNON.Plane()
+    const planeBody = new CANNON.Body({ type: CANNON.Body.STATIC, shape: planeShape })
+    planeBody.addShape(planeShape)
+    World.cannonBodyMapping[uid] = planeBody
+    this.cannonWorld.addBody(planeBody)
+    World.updateCannonBody(fromMesh)
+  }
+
+  public static addBoxCannonPrimitive(fromMesh: Mesh) {
+    const uid = fromMesh.id
+    fromMesh.geometry.computeBoundingBox()
+    const size = fromMesh.geometry.boundingBox.getSize(new Vector3()).multiplyScalar(0.5)
+    const cubeShape = new CANNON.Box(new Vec3(size.x, size.y, size.z))
+    const cubeBody = new CANNON.Body({ mass: 1})
+    cubeBody.addShape(cubeShape)
+    World.cannonBodyMapping[uid] = cubeBody
+    this.cannonWorld.addBody(cubeBody)
+    World.updateCannonBody(fromMesh)
+    cubeBody.applyForce(new Vec3(0, 0, 0))
+  }
+
+  public static addBoxCannonPrimitiveBatched(aabb: Box3) {
+    const size = aabb.getSize(new Vector3()).multiplyScalar(0.5)
+    const center = aabb.getCenter(new Vector3())
+    const shapeSize = new Vec3(size.x, size.y, size.z)
+    const cubeShape = new CANNON.Box(shapeSize)
+    const cubeBody = new CANNON.Body({ type: CANNON.Body.STATIC, mass: 0 })
+    cubeBody.position.x = center.x
+    cubeBody.position.y = center.y
+    cubeBody.position.z = center.z 
+    cubeBody.addShape(cubeShape)
+    this.cannonWorld.addBody(cubeBody)
+  }
+
+  public static updateCannonBody(fromMesh: Object3D) {
+    const body = World.cannonBodyMapping[fromMesh.id]
+    body.quaternion.set(fromMesh.quaternion.x, fromMesh.quaternion.y, fromMesh.quaternion.z, fromMesh.quaternion.w)
+    body.position.set(fromMesh.position.x, fromMesh.position.y, fromMesh.position.z)
+  }
+
+  public static updateCannonWorld(deltaTime: number, scene: Scene) {
+    this.cannonWorld.fixedStep()
+    for(let k in World.cannonBodyMapping) {
+      const model = scene.getObjectById(Number.parseInt(k))
+      const body = World.cannonBodyMapping[k]
+      model.position.copy(body.position as unknown as Vector3)
+      model.quaternion.copy(body.quaternion as unknown as Quaternion)
+      // console.log(body.position)
+    }
   }
 }
