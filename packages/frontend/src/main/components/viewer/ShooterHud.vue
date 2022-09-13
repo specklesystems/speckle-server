@@ -26,6 +26,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed, defineComponent } from 'vue'
 import ShooterHudFace from '@/main/components/viewer/shooter/ShooterHudFace.vue'
 import MusicURL from '@/assets/viewer/shooter/music.mp3'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 
 export default defineComponent({
   name: 'ShooterHud',
@@ -38,7 +39,9 @@ export default defineComponent({
       () => viewerStateResult.value?.commitObjectViewerState.shooter
     )
 
-    return { shooterState, MusicURL }
+    const { viewer } = useInjectedViewer()
+
+    return { shooterState, MusicURL, viewer }
   },
   data() {
     return {
@@ -55,6 +58,7 @@ export default defineComponent({
   methods: {
     onRestart() {
       resetShooterState()
+      this.viewer.doomCall()
     },
     hidePlayer() {
       this.hide = true

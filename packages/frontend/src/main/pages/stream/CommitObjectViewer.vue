@@ -677,7 +677,7 @@ export default defineComponent({
       let url = `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       if (this.isShooter) {
         url =
-          'https://latest.speckle.dev/streams/50a8ffffee/objects/1de23654a251ddff4dda29274e37f301'
+          'https://latest.speckle.dev/streams/50a8ffffee/objects/dbc06025f6c5b0b7c39f60ec84f4c3ee'
       }
 
       await this.viewer.loadObject(url)
