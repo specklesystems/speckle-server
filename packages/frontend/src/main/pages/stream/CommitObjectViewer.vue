@@ -673,9 +673,13 @@ export default defineComponent({
       }
     },
     async loadModel(objectId: string) {
-      await this.viewer.loadObject(
-        `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
-      )
+      let url = `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
+      if (this.isShooter) {
+        url =
+          'https://latest.speckle.dev/streams/50a8ffffee/objects/1de23654a251ddff4dda29274e37f301'
+      }
+
+      await this.viewer.loadObject(url)
       this.viewer.zoom(undefined, undefined, true)
 
       this.loadedModel = true
