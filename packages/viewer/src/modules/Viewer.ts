@@ -28,6 +28,7 @@ import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
 import { Doom } from './Doom'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -55,6 +56,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private loaders: { [id: string]: ViewerObjectLoader } = {}
 
   private doom: Doom
+  private mixer;
 
   public get needsRender(): boolean {
     return this._needsRender
@@ -154,7 +156,8 @@ export class Viewer extends EventEmitter implements IViewer {
   private update() {
     const delta = this.clock.getDelta()
     World.updateCannonWorld(delta, this.speckleRenderer.scene)
-
+    if(this.mixer)
+    this.mixer.update(delta)
     this.needsRender = this.cameraHandler.controls.update(delta)
     if (this.doom) this.doom.update()
     this.speckleRenderer.update(delta)
@@ -171,9 +174,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      Assets.getEnvironment(this.startupParams.environmentSrc)
+      Assets.getEnvironment("moonless_golf_1k.exr")
         .then((value: Texture) => {
           this.speckleRenderer.indirectIBL = value
+          this.speckleRenderer.scene.environment = value
         })
         .catch((reason) => {
           console.warn(reason)

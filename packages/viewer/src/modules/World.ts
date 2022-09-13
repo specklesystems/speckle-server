@@ -2,6 +2,7 @@ import { Box3, Mesh, Object3D, Quaternion, Scene, Vector3 } from 'three'
 import * as CANNON from 'cannon-es'
 import { generateUUID } from 'three/src/math/MathUtils'
 import { Body, Vec3 } from 'cannon-es'
+import { Geometry, GeometryAttributes, GeometryData } from './converter/Geometry'
 
 export class World {
   private readonly boxes: Array<Box3> = new Array<Box3>()
@@ -63,7 +64,7 @@ export class World {
     // use this to test non-split solver
     // world.solver = solver
 
-    this.cannonWorld.gravity.set(0, 0, -100)
+    this.cannonWorld.gravity.set(0, 0, -10)
   }
 
   public static getCannonWorld() {
@@ -108,6 +109,15 @@ export class World {
     this.cannonWorld.addBody(cubeBody)
   }
 
+  public static addMeshCannon(geometry: GeometryData) {
+    if(!geometry.attributes[GeometryAttributes.POSITION] || !geometry.attributes[GeometryAttributes.INDEX])
+    return
+    const trimeshShape = new CANNON.Trimesh(geometry.attributes[GeometryAttributes.POSITION], geometry.attributes[GeometryAttributes.INDEX])
+    const cubeBody = new CANNON.Body({ type: CANNON.Body.STATIC, mass: 0 })
+    cubeBody.addShape(trimeshShape)
+    this.cannonWorld.addBody(cubeBody)
+  }
+
   public static addCameraSphere() {
     const sphereShape = new CANNON.Sphere(0.1)
     this.cameraBody = new CANNON.Body({ mass: 1 })
@@ -143,7 +153,7 @@ export class World {
     return new Vector3(
       this.cameraBody.position.x,
       this.cameraBody.position.y,
-      this.cameraBody.position.z + 0.5
+      this.cameraBody.position.z + 2.5
     )
   }
 

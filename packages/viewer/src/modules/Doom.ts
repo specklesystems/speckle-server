@@ -40,5 +40,6 @@ export class Doom {
   public update() {
     this.camera.position.copy(World.getCameraPosition())
     ;(this.camera as PerspectiveCamera).near = 0.001
+    ;(this.camera as PerspectiveCamera).updateProjectionMatrix()
   }
 }
