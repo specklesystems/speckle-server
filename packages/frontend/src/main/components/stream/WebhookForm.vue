@@ -232,6 +232,10 @@ export default {
       this.$emit('update:loading', true)
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create' })
 
+      if (this.url === '' || this.url === null) {
+        this.url = this.selectedFunction
+      }
+
       await this.$apollo.mutate({
         mutation: gql`
           mutation webhookCreate($params: WebhookCreateInput!) {

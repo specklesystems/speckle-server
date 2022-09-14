@@ -170,7 +170,8 @@ export default {
 
       console.log(this.functions)
 
-      this.url = 'gateway.openfaas.svc.cluster.local/function/' + this.functionName
+      this.url =
+        'https://gateway.speckle-functions.speckle.dev/function/' + this.functionName
 
       await this.$apollo.mutate({
         mutation: gql`
