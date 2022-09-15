@@ -1,4 +1,4 @@
-FROM node:16.15-bullseye-slim as build-stage
+FROM node:lts-bullseye-slim as build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
@@ -25,7 +25,7 @@ COPY packages/server .
 
 RUN yarn build && yarn workspaces focus --production
 
-FROM node:16.15-bullseye-slim as production-stage
+FROM node:lts-bullseye-slim as production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
