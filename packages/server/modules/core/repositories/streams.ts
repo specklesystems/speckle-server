@@ -20,7 +20,7 @@ import {
   QueryDiscoverableStreamsArgs,
   SortDirection
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
@@ -42,25 +42,16 @@ export const STREAM_WITH_OPTIONAL_ROLE_COLUMNS = [...Streams.cols, StreamAcl.col
 export const generateId = () => cryptoRandomString({ length: 10 })
 
 /**
- * Get multiple streams
- * @param {string[]} streamIds
+ * Get multiple streams. If userId is specified, the role will be resolved as well.
  */
-export async function getStreams(streamIds: string[]) {
-  if (!streamIds?.length) throw new InvalidArgumentError('Invalid stream IDs')
-  const q = Streams.knex<StreamRecord[]>().whereIn(Streams.col.id, streamIds)
-  return await q
-}
+export async function getStreams(
+  streamIds: string[],
+  options: Partial<{ userId: string }> = {}
+) {
+  const { userId } = options
+  if (!streamIds?.length) throw new InvalidArgumentError('Empty stream IDs')
 
-/**
- * Get a single stream. If userId is specified, the role will be resolved as well.
- */
-export async function getStream(params: { streamId: string; userId?: string }) {
-  const { streamId, userId } = params
-  if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
-
-  const q = Streams.knex<StreamWithOptionalRole[]>().where({
-    [Streams.col.id]: streamId
-  })
+  const q = Streams.knex<StreamWithOptionalRole[]>().whereIn(Streams.col.id, streamIds)
 
   if (userId) {
     q.select([
@@ -74,11 +65,21 @@ export async function getStream(params: { streamId: string; userId?: string }) {
         userId
       )
     })
-    q.groupBy(Streams.col.id) //
+    q.groupBy(Streams.col.id)
   }
 
-  const res = await q.first()
-  return res
+  return await q
+}
+
+/**
+ * Get a single stream. If userId is specified, the role will be resolved as well.
+ */
+export async function getStream(params: { streamId: string; userId?: string }) {
+  const { streamId, userId } = params
+  if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
+
+  const streams = await getStreams([streamId], { userId })
+  return <Optional<StreamWithOptionalRole>>streams[0]
 }
 
 /**
