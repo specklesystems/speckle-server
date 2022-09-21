@@ -28,6 +28,8 @@
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["ts-node", "${file}"],
       "console": "integratedTerminal"
     },
     {

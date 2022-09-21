@@ -235,4 +235,9 @@ export const StreamActivity = buildTableHelper('stream_activity', [
   'message'
 ])
 
+export const UserNotificationPreferences = buildTableHelper(
+  'user_notification_preferences',
+  ['userId', 'preferences']
+)
+
 export { knex }

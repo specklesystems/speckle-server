@@ -1,0 +1,13 @@
+<mj-head>
+  <mj-font
+    name="Space Grotesk"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk"
+  />
+  <mj-attributes>
+    <mj-all font-family="Space Grotesk, Helvetica" font-size="16px" />
+  </mj-attributes>
+  <mj-style inline="inline">
+    h1 { font-size: 2em } h2 { font-size: 1.5em } h3 { font-size: 1.17em } h4 {
+    font-size: 1em }
+  </mj-style>
+</mj-head>

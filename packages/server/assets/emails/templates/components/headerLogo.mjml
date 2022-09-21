@@ -1,0 +1,18 @@
+<mj-section>
+  <mj-column>
+    <mj-spacer height="10px" />
+  </mj-column>
+</mj-section>
+<mj-section
+  border-radius="8px"
+  background-color="linear-gradient(90deg, rgba(0,143,233,1) 0%, rgba(0,76,235,1) 100%)"
+  padding="10px 0 15px 0"
+>
+  <mj-column>
+    <mj-image
+      width="100px"
+      src="<%- params.serverInfo.canonicalUrl -%>/static/logo-slab-white.png"
+      alt="Speckle"
+    />
+  </mj-column>
+</mj-section>

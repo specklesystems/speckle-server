@@ -13,6 +13,7 @@ const {
   archiveUser
 } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 const {
@@ -113,7 +114,7 @@ module.exports = {
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,
-        actionType: 'user_update',
+        actionType: ActionTypes.User.Update,
         userId: context.userId,
         info: { old: oldValue, new: args.user },
         message: 'User updated'
@@ -159,7 +160,7 @@ module.exports = {
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,
-        actionType: 'user_delete',
+        actionType: ActionTypes.User.Delete,
         userId: context.userId,
         info: {},
         message: 'User deleted'

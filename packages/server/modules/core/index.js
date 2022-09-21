@@ -4,6 +4,8 @@ const { registerOrUpdateScope, registerOrUpdateRole } = require('@/modules/share
 
 exports.init = async (app) => {
   debug('speckle:modules')('💥 Init core module')
+  // Initialize the static route
+  require('./rest/static')(app)
 
   // Initialises the two main bulk upload/download endpoints
   require('./rest/upload')(app)
