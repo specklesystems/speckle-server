@@ -502,13 +502,14 @@ export default class SpeckleRenderer {
     }
 
     const selectionInfo = {
-      guid: queryResults[0].node.model.id,
-      userData: queryResults[0].node.model.raw,
-      location: results[0].point,
-      selectionCenter: results[0].point, // Ideally we'd get the selection center here
       multiple: multiSelect,
-      hitChain: queryResults.map((value) => value.node.model.raw),
-      hitPoints: queryResults.map((value) => value.point)
+      hits: queryResults.map((value) => {
+        return {
+          guid: value.node.model.id,
+          object: value.node.model.raw,
+          point: value.point
+        }
+      })
     } as SelectionEvent
 
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
@@ -537,13 +538,14 @@ export default class SpeckleRenderer {
     }
 
     const selectionInfo = {
-      guid: queryResults[0].node.model.id,
-      userData: queryResults[0].node.model.raw,
-      location: results[0].point,
-      selectionCenter: results[0].point, // Ideally we'd get the selection center here
       multiple: multiSelect,
-      hitChain: queryResults.map((value) => value.node.model.raw),
-      hitPoints: queryResults.map((value) => value.point)
+      hits: queryResults.map((value) => {
+        return {
+          guid: value.node.model.id,
+          object: value.node.model.raw,
+          point: value.point
+        }
+      })
     } as SelectionEvent
 
     this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)

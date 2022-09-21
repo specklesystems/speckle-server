@@ -50,13 +50,12 @@ export enum ViewerEvent {
 }
 
 export type SelectionEvent = {
-  guid?: string
-  userData: Record<string, unknown>
-  location: Vector3
-  selectionCenter: Vector3
   multiple: boolean
-  hitChain?: Array<Record<string, unknown>>
-  hitPoints?: Array<Vector3>
+  hits: Array<{
+    guid?: string
+    object: Record<string, unknown>
+    point: Vector3
+  }>
 }
 
 export interface LightConfiguration {
