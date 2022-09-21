@@ -45,6 +45,7 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
+import { Pipeline, PipelineOptions } from './Pipeline'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
@@ -59,6 +60,7 @@ export default class SpeckleRenderer {
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
+  private pipeline: Pipeline
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -106,6 +108,10 @@ export default class SpeckleRenderer {
     return this.sun
   }
 
+  public set pipelineOptions(value: PipelineOptions) {
+    this.pipeline.pipelineOptions = value
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this.scene = new Scene()
     this.rootGroup = new Group()
@@ -136,6 +142,9 @@ export default class SpeckleRenderer {
 
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
+
+    this.pipeline = new Pipeline(this._renderer)
+    this.pipeline.configure(this.scene, this.viewer.cameraHandler.activeCam.camera)
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -232,11 +241,37 @@ export default class SpeckleRenderer {
         }
       }
     }
+
+    const v = new Vector3()
+    const box = this.sceneBox
+    const camPos = new Vector3().copy(
+      this.viewer.cameraHandler.activeCam.camera.position
+    )
+    let d = 0
+    v.set(box.min.x, box.min.y, box.min.z) // 000
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.min.y, box.max.z) // 001
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.max.y, box.min.z) // 010
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.max.y, box.max.z) // 011
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.min.y, box.min.z) // 100
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.min.y, box.max.z) // 101
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.max.y, box.min.z) // 110
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.max.y, box.max.z) // 111
+    d = Math.max(camPos.distanceTo(v), d)
+    this.viewer.cameraHandler.activeCam.camera.far = d
+    this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
+    this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
   }
 
   public render(camera: Camera) {
     this.batcher.render(this.renderer)
-    this.renderer.render(this.scene, camera)
+    this.pipeline.render(this.scene, camera)
   }
 
   public addRenderTree(subtreeId: string) {
@@ -490,7 +525,6 @@ export default class SpeckleRenderer {
       selectionCenter: result.point, // Ideally we'd get the selection center here
       multiple: multiSelect
     } as SelectionEvent
-
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 

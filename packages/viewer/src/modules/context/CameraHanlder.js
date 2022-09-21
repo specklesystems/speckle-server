@@ -30,10 +30,7 @@ export default class CameraHandler {
     this.orthoCamera.updateProjectionMatrix()
 
     CameraControls.install({ THREE })
-    this.controls = new CameraControls(
-      this.camera,
-      this.viewer.speckleRenderer.renderer.domElement
-    )
+    this.controls = new CameraControls(this.camera, this.viewer.container)
     this.controls.maxPolarAngle = Math.PI / 2
     this.setupWASDControls()
 

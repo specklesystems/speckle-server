@@ -82,6 +82,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.clock = new THREE.Clock()
     this.inProgressOperations = 0
 
+    this.cameraHandler = new CameraHandler(this)
+
     this.speckleRenderer = new SpeckleRenderer(this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
@@ -92,7 +94,6 @@ export class Viewer extends EventEmitter implements IViewer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging!
 
-    this.cameraHandler = new CameraHandler(this)
     this.sectionBox = new SectionBox(this)
     this.sectionBox.off()
     this.sectionBox.controls.addEventListener('change', () => {
