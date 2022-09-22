@@ -68,7 +68,7 @@ exports.init = (app) => {
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      debug('speckle:errors')(
+      debug('speckle:error')(
         `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
       )
       return {
@@ -79,7 +79,7 @@ exports.init = (app) => {
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      debug('speckle:errors')(`Error: Preview image not found: ${previewImgId}`)
+      debug('speckle:error')(`Error: Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
         file: previewErrorImage
