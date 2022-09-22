@@ -572,14 +572,6 @@ describe('GraphQL API Core @core-api', () => {
         expect(res.body.data.streamDelete).to.equal(true)
       })
 
-      it('Should query streams', async () => {
-        const streamResults = await sendRequest(userA.token, {
-          query: '{ streams(limit: 200) { totalCount items { id name } } }'
-        })
-        expect(streamResults.body.errors).to.exist
-        expect(streamResults.body.errors[0].extensions.code).to.equal('BAD_USER_INPUT')
-      })
-
       it('Should be forbidden to query admin streams if not admin', async () => {
         const res = await sendRequest(userC.token, {
           query: '{ adminStreams { totalCount items { id name } } }'

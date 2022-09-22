@@ -12,8 +12,6 @@ const {
   getStreams,
   updateStream,
   deleteStream,
-  getUserStreams,
-  getUserStreamsCount,
   getStreamUsers,
   favoriteStream,
   getFavoriteStreamsCollection,
@@ -47,6 +45,10 @@ const {
   getDiscoverableStreams
 } = require('@/modules/core/services/streams/discoverableStreams')
 const { has } = require('lodash')
+const {
+  getUserStreamsCount,
+  getUserStreams
+} = require('@/modules/core/repositories/streams')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -117,12 +119,8 @@ module.exports = {
     },
 
     async streams(parent, args, context) {
-      if (args.limit && args.limit > 50)
-        throw new UserInputError('Cannot return more than 50 items at a time.')
-
       const totalCount = await getUserStreamsCount({
         userId: context.userId,
-        publicOnly: false,
         searchQuery: args.query
       })
 
@@ -130,7 +128,6 @@ module.exports = {
         userId: context.userId,
         limit: args.limit,
         cursor: args.cursor,
-        publicOnly: false,
         searchQuery: args.query
       })
       return { totalCount, cursor, items: streams }
@@ -195,17 +192,15 @@ module.exports = {
   },
   User: {
     async streams(parent, args, context) {
-      if (args.limit && args.limit > 50)
-        throw new UserInputError('Cannot return more than 50 items.')
       // Return only the user's public streams if parent.id !== context.userId
-      const publicOnly = parent.id !== context.userId
-      const totalCount = await getUserStreamsCount({ userId: parent.id, publicOnly })
+      const forOtherUser = parent.id !== context.userId
+      const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
 
       const { cursor, streams } = await getUserStreams({
         userId: parent.id,
         limit: args.limit,
         cursor: args.cursor,
-        publicOnly
+        forOtherUser
       })
 
       return { totalCount, cursor, items: streams }

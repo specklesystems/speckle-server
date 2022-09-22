@@ -1,4 +1,4 @@
-import _, { isNaN, toNumber } from 'lodash'
+import _, { clamp, isNaN, toNumber } from 'lodash'
 import {
   Streams,
   StreamAcl,
@@ -24,18 +24,7 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-
-export type BasicStream = Pick<
-  StreamRecord,
-  | 'id'
-  | 'name'
-  | 'description'
-  | 'isPublic'
-  | 'isDiscoverable'
-  | 'createdAt'
-  | 'updatedAt'
-> &
-  Pick<StreamAclRecord, 'role'>
+import cryptoRandomString from 'crypto-random-string'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -48,16 +37,9 @@ export type StreamWithOptionalRole = StreamRecord & {
  * List of base columns to select when querying for user streams
  * (expects join to StreamAcl)
  */
-export const BASE_STREAM_COLUMNS = [
-  Streams.col.id,
-  Streams.col.name,
-  Streams.col.description,
-  Streams.col.isPublic,
-  Streams.col.isDiscoverable,
-  Streams.col.createdAt,
-  Streams.col.updatedAt,
-  StreamAcl.col.role
-]
+export const STREAM_WITH_OPTIONAL_ROLE_COLUMNS = [...Streams.cols, StreamAcl.col.role]
+
+export const generateId = () => cryptoRandomString({ length: 10 })
 
 /**
  * Get multiple streams
@@ -142,12 +124,11 @@ export async function getFavoritedStreams(params: {
   const finalLimit = _.clamp(limit || 25, 1, 25)
   const query =
     getFavoritedStreamsQueryBase<
-      Array<BasicStream & { favoritedDate: Date; favCursor: string }>
+      Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
     >(userId)
   query
-    .select()
-    .columns([
-      ...BASE_STREAM_COLUMNS,
+    .select([
+      ...STREAM_WITH_OPTIONAL_ROLE_COLUMNS,
       { favoritedDate: StreamFavorites.col.createdAt },
       { favCursor: StreamFavorites.col.cursor }
     ])
@@ -501,4 +482,108 @@ export async function getStreamCollaborators(streamId: string, type?: StreamRole
   }
 
   return await q
+}
+
+type BaseUserStreamsQueryParams = {
+  /**
+   * User whose streams we wish to find
+   */
+  userId: string
+  /**
+   * Filter streams by name/description/id
+   */
+  searchQuery?: string
+  /**
+   * Whether this data is retrieved for another user, and thus the data set
+   * should be limited to only show publicly accessible (discoverable) streams
+   */
+  forOtherUser?: boolean
+}
+
+export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
+  /**
+   * Max amount of streams per page. Defaults to 25, max is 50.
+   */
+  limit?: number
+  /**
+   * Pagination cursor
+   */
+  cursor?: string
+}
+
+export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
+
+/**
+ * Get base query for finding or counting user streams
+ */
+function getUserStreamsQueryBase<
+  S extends StreamRecord = StreamRecord & StreamAclRecord
+>({ userId, searchQuery, forOtherUser }: BaseUserStreamsQueryParams) {
+  const query = StreamAcl.knex<Array<S>>()
+    .where(StreamAcl.col.userId, userId)
+    .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+
+  if (forOtherUser) {
+    query
+      .andWhere(Streams.col.isDiscoverable, true)
+      .andWhere(Streams.col.isPublic, true)
+  }
+
+  if (searchQuery)
+    query.andWhere(function () {
+      this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
+        .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
+        .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
+    })
+
+  return query
+}
+
+/**
+ * Get streams the user is a collaborator on
+ */
+export async function getUserStreams({
+  userId,
+  limit,
+  cursor,
+  forOtherUser,
+  searchQuery
+}: UserStreamsQueryParams) {
+  const finalLimit = clamp(limit || 25, 1, 50)
+
+  const query = getUserStreamsQueryBase<StreamWithOptionalRole>({
+    userId,
+    forOtherUser,
+    searchQuery
+  })
+  query.select(STREAM_WITH_OPTIONAL_ROLE_COLUMNS)
+
+  if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
+
+  query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
+
+  const rows = await query
+  return {
+    streams: rows,
+    cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+  }
+}
+
+/**
+ * Get the total amount of streams the user is a collaborator on
+ */
+export async function getUserStreamsCount({
+  userId,
+  forOtherUser,
+  searchQuery
+}: UserStreamsQueryCountParams) {
+  const query = getUserStreamsQueryBase({
+    userId,
+    forOtherUser,
+    searchQuery
+  })
+  const countQuery = query.count<{ count: string }[]>()
+
+  const [res] = await countQuery
+  return parseInt(res.count)
 }
