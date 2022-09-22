@@ -33,15 +33,15 @@ export default class Sandbox {
   public static postParams = {
     saoEnabled: true,
     saoParams: {
-      saoBias: 0,
+      saoBias: 0.15,
       saoIntensity: 1.5,
       saoScale: 434,
-      saoKernelRadius: 6.52,
+      saoKernelRadius: 20,
       saoMinResolution: 0,
       saoBlur: true,
-      saoBlurRadius: 2,
+      saoBlurRadius: 4,
       saoBlurStdDev: 4,
-      saoBlurDepthCutoff: 0.00007
+      saoBlurDepthCutoff: 0.0007
     }
   }
 
@@ -53,7 +53,7 @@ export default class Sandbox {
     elevation: 1.33,
     azimuth: 0.75,
     radius: 0,
-    indirectLightIntensity: 1.85
+    indirectLightIntensity: 1.2
   }
 
   public static filterParams = {
@@ -337,6 +337,12 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
     postFolder
+      .addInput(Sandbox.postParams, 'saoEnabled', { label: 'SAO-ENABLED' })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+    postFolder
       .addInput(Sandbox.postParams.saoParams, 'saoBias', {
         min: -1,
         max: 1
@@ -358,7 +364,7 @@ export default class Sandbox {
     postFolder
       .addInput(Sandbox.postParams.saoParams, 'saoScale', {
         min: 0,
-        max: 2000
+        max: 100
       })
       .on('change', () => {
         this.viewer.getRenderer().pipelineOptions = Sandbox.postParams

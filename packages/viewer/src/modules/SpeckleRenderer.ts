@@ -45,7 +45,7 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
-import { Pipeline, PipelineOptions } from './Pipeline'
+import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
@@ -145,6 +145,7 @@ export default class SpeckleRenderer {
 
     this.pipeline = new Pipeline(this._renderer)
     this.pipeline.configure(this.scene, this.viewer.cameraHandler.activeCam.camera)
+    this.pipeline.pipelineOptions = DefaultPipelineOptions
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -267,6 +268,7 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
+    // console.log(d)
   }
 
   public render(camera: Camera) {

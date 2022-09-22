@@ -91,7 +91,7 @@ await sandbox.loadUrl(
   // IFC building (good for a tree based structure)
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
   // IFC story, a subtree of the above
-  // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
+  'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
   // Small scale lines
   // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
@@ -100,5 +100,7 @@ await sandbox.loadUrl(
   // AutoCAD
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
   //Blizzard world
-  'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+  //Car
+  // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
 )
