@@ -299,7 +299,7 @@ describe('Streams @core-streams', () => {
         streamId: updatableStream.id,
         name: 'dim/lol'
       })
-      await deleteBranchById({ id: b.id, streamId: updatableStream.id })
+      await deleteBranchById({ id: b!.id, streamId: updatableStream.id })
 
       const su2 = await getStream({ streamId: updatableStream.id })
       expect(su2?.updatedAt).to.be.ok
