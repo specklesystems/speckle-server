@@ -21,6 +21,7 @@ const {
   getCommitsTotalCountByUserId
 } = require('../services/commits')
 const { times } = require('lodash')
+const { sleep } = require('@/test/helpers')
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -259,19 +260,18 @@ describe('Commits @core-commits', () => {
         times(mainCommitCount, () => generateObject(otherStream.id))
       )
 
-      // create commits
-      await Promise.all(
-        objectIds.map((oid) =>
-          createCommitByBranchName({
-            streamId: otherStream.id,
-            branchName: 'main',
-            message: 'first commit',
-            sourceApplication: 'tests',
-            objectId: oid,
-            authorId: otherUser.id
-          })
-        )
-      )
+      // create commits (sequentially to avoid duplicate cursors)
+      for (const oid of objectIds) {
+        await createCommitByBranchName({
+          streamId: otherStream.id,
+          branchName: 'main',
+          message: 'first commit',
+          sourceApplication: 'tests',
+          objectId: oid,
+          authorId: otherUser.id
+        })
+        await sleep(1)
+      }
     })
 
     it('Should get the commits of a user', async () => {
