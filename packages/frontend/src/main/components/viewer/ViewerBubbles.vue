@@ -266,9 +266,15 @@ export default {
   },
   methods: {
     sendSelectionUpdate(selectionInfo) {
-      this.selectedIds = selectionInfo?.userData.id
-      this.selectionLocation = selectionInfo?.location
-      this.selectionCenter = selectionInfo?.selectionCenter
+      if (!selectionInfo) {
+        this.sendUpdateAndPrune()
+        return
+      }
+
+      const firstHit = selectionInfo?.hits[0]
+      this.selectedIds = firstHit.object.id
+      this.selectionLocation = firstHit.point
+      this.selectionCenter = firstHit.point
       this.sendUpdateAndPrune()
     },
     setUserPow(user) {

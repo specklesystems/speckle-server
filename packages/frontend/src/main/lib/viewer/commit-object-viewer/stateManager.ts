@@ -282,19 +282,22 @@ export function loadObjectProperties() {
 }
 
 export async function handleViewerSelection(selectionInfo: SelectionEvent) {
-  if (!selectionInfo) {
+  const state = { ...commitObjectViewerState() }
+  const firstVisibleHit = selectionInfo
+    ? getFirstVisibleSelectionHit(selectionInfo)
+    : null
+
+  if (!selectionInfo || !firstVisibleHit) {
     updateState({ selectedObjects: [] })
     await getInitializedViewer().resetSelection()
     return
   }
 
-  const state = { ...commitObjectViewerState() }
-
   if (selectionInfo.multiple) {
-    if (!state.selectedObjects.includes(selectionInfo.userData))
-      state.selectedObjects = [...state.selectedObjects, selectionInfo.userData]
+    if (!state.selectedObjects.includes(firstVisibleHit.object))
+      state.selectedObjects = [...state.selectedObjects, firstVisibleHit.object]
   } else {
-    state.selectedObjects = [selectionInfo.userData]
+    state.selectedObjects = [firstVisibleHit.object]
   }
 
   getInitializedViewer().selectObjects(
@@ -309,7 +312,34 @@ export async function handleViewerDoubleClick(selectionInfo: SelectionEvent) {
     return
   }
 
-  await getInitializedViewer().zoom([selectionInfo.userData.id as string])
+  const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
+  if (!firstVisibleHit) return
+
+  await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
+}
+
+function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {
+  const { currentFilterState } = { ...commitObjectViewerState() }
+  const hasHiddenObjects =
+    !!currentFilterState?.hiddenObjects &&
+    currentFilterState?.hiddenObjects.length !== 0
+  const hasIsolatedObjects =
+    !!currentFilterState?.isolatedObjects &&
+    currentFilterState?.isolatedObjects.length !== 0
+
+  for (const hit of hits) {
+    if (hasHiddenObjects) {
+      if (!currentFilterState?.hiddenObjects?.includes(hit.object.id as string)) {
+        return hit
+      }
+    } else if (hasIsolatedObjects) {
+      if (currentFilterState.isolatedObjects?.includes(hit.object.id as string))
+        return hit
+    } else {
+      return hit
+    }
+  }
+  return null
 }
 
 export async function clearSelectionDisplay() {
