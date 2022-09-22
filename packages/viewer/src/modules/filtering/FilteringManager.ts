@@ -416,17 +416,17 @@ export class FilteringManager {
       })
     }
 
-    if (this.SelectionState.rvs.length !== 0) {
-      this.Renderer.applyFilter(this.SelectionState.rvs, {
-        filterType: FilterMaterialType.SELECT
-      })
-    }
-
     if (this.HighlightState.rvs.length !== 0) {
       this.Renderer.applyFilter(this.HighlightState.rvs, {
         filterType: this.HighlightState.ghost
           ? FilterMaterialType.GHOST
           : FilterMaterialType.OVERLAY
+      })
+    }
+
+    if (this.SelectionState.rvs.length !== 0) {
+      this.Renderer.applyFilter(this.SelectionState.rvs, {
+        filterType: FilterMaterialType.SELECT
       })
     }
 
