@@ -444,8 +444,43 @@ export default class SpeckleRenderer {
     }
   }
 
+  private queryHits(
+    results: Array<Intersection>
+  ): Array<{ node: TreeNode; point: Vector3 }> {
+    const rvs = []
+    const points = []
+    for (let k = 0; k < results.length; k++) {
+      const rv = this.batcher.getRenderView(
+        results[k].object.uuid,
+        results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+      )
+      if (rv) {
+        rvs.push(rv)
+        points.push(results[k].point)
+      }
+    }
+
+    /** Batch rejected picking. This only happens with hidden lines */
+    if (rvs.length === 0) {
+      return null
+    }
+
+    const queryResult = []
+    for (let k = 0; k < rvs.length; k++) {
+      const hitId = rvs[k].renderData.id
+      const hitNode = WorldTree.getInstance().findId(hitId)
+      let parentNode = hitNode
+      while (!parentNode.model.atomic && parentNode.parent) {
+        parentNode = parentNode.parent
+      }
+      queryResult.push({ node: parentNode, point: points[k] })
+    }
+
+    return queryResult
+  }
+
   private onObjectClick(e) {
-    const result: Intersection = this.intersections.intersect(
+    const results: Array<Intersection> = this.intersections.intersect(
       this.scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
@@ -453,7 +488,7 @@ export default class SpeckleRenderer {
       this.viewer.sectionBox.getCurrentBox()
     )
 
-    if (!result) {
+    if (!results) {
       this.viewer.emit(ViewerEvent.ObjectClicked, null)
       return
     }
@@ -461,13 +496,8 @@ export default class SpeckleRenderer {
     let multiSelect = false
     if (e.multiSelect) multiSelect = true
 
-    const rv = this.batcher.getRenderView(
-      result.object.uuid,
-      result.faceIndex !== undefined ? result.faceIndex : result.index
-    )
-
-    /** Batch rejected picking. This only happens with hidden lines */
-    if (!rv) {
+    const queryResults = this.queryHits(results)
+    if (!queryResults) {
       this.viewer.emit(
         ViewerEvent.ObjectClicked,
         !multiSelect ? null : { multiple: true }
@@ -475,67 +505,54 @@ export default class SpeckleRenderer {
       return
     }
 
-    const hitId = rv.renderData.id
-    const hitNode = WorldTree.getInstance().findId(hitId)
-
-    let parentNode = hitNode
-    while (!parentNode.model.atomic && parentNode.parent) {
-      parentNode = parentNode.parent
-    }
-
     const selectionInfo = {
-      guid: parentNode.model.id,
-      userData: parentNode.model.raw,
-      location: result.point,
-      selectionCenter: result.point, // Ideally we'd get the selection center here
-      multiple: multiSelect
+      multiple: multiSelect,
+      hits: queryResults.map((value) => {
+        return {
+          guid: value.node.model.id,
+          object: value.node.model.raw,
+          point: value.point
+        }
+      })
     } as SelectionEvent
 
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 
   private onObjectDoubleClick(e) {
-    const result: Intersection = this.intersections.intersect(
+    const results: Array<Intersection> = this.intersections.intersect(
       this.scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
       this.viewer.sectionBox.getCurrentBox()
     )
-    let rv = null
-    if (!result) {
+    if (!results) {
       this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
       return
     }
+
     let multiSelect = false
     if (e.multiSelect) multiSelect = true
 
-    rv = this.batcher.getRenderView(
-      result.object.uuid,
-      result.faceIndex !== undefined ? result.faceIndex : result.index
-    )
-    if (rv) {
-      const hitId = rv.renderData.id
-      const hitNode = WorldTree.getInstance().findId(hitId)
-
-      let parentNode = hitNode
-      while (!parentNode.model.atomic && parentNode.parent) {
-        parentNode = parentNode.parent
-      }
-
-      const selectionInfo = {
-        guid: parentNode.model.id,
-        userData: parentNode.model.raw,
-        location: result.point,
-        selectionCenter: result.point, // Ideally we'd get the selection center here
-        multiple: multiSelect
-      } as SelectionEvent
-
-      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)
-    } else {
-      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
+    const queryResults = this.queryHits(results)
+    if (!queryResults) {
+      this.viewer.emit(ViewerEvent.ObjectClicked, null)
       return
     }
+
+    const selectionInfo = {
+      multiple: multiSelect,
+      hits: queryResults.map((value) => {
+        return {
+          guid: value.node.model.id,
+          object: value.node.model.raw,
+          point: value.point
+        }
+      })
+    } as SelectionEvent
+
+    this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)
   }
 
   public boxFromObjects(objectIds: string[]) {
@@ -788,18 +805,18 @@ export default class SpeckleRenderer {
 
   /** DEBUG */
   public onObjectClickDebug(e) {
-    const result: Intersection = this.intersections.intersect(
+    const results: Array<Intersection> = this.intersections.intersect(
       this.scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
       this.viewer.sectionBox.getCurrentBox()
     )
-    if (!result) {
+    if (!results) {
       this.batcher.resetBatchesDrawRanges()
       return
     }
-
+    const result = results[0]
     // console.warn(result)
     const rv = this.batcher.getRenderView(
       result.object.uuid,

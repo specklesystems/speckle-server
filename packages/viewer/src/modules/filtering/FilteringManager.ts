@@ -236,6 +236,7 @@ export class FilteringManager {
     this.ColorNumericFilterState.colorGroups = colorGroups
     this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
     this.ColorNumericFilterState.ghost = ghost
+    this.ColorNumericFilterState.matchingIds = matchingIds
     return this.setFilters()
   }
 
@@ -375,6 +376,8 @@ export class FilteringManager {
       returnState.passMax =
         this.ColorNumericFilterState.currentProp.passMax ||
         this.ColorNumericFilterState.currentProp.max
+
+      returnState.isolatedObjects = this.ColorNumericFilterState.matchingIds
     }
 
     const isShowHide =
@@ -500,6 +503,7 @@ class ColorNumericFilterState {
   public nonMatchingRvs: NodeRenderView[]
   public colorGroups: ValueGroupColorItemNumericProps[]
   public ghost = true
+  public matchingIds: string[]
 }
 
 type ValueGroupColorItemNumericProps = {
