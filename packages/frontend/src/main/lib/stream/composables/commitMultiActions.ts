@@ -1,4 +1,3 @@
-import { reduce } from 'lodash'
 import { ref, computed } from 'vue'
 
 export enum BatchActionType {
@@ -11,19 +10,14 @@ export enum BatchActionType {
  */
 export function useCommitMultiActions() {
   const selectedCommitsState = ref({} as Record<string, boolean>)
-  const selectedCommitIds = computed(() =>
-    reduce(
-      selectedCommitsState.value,
-      (res, val, key) => {
-        if (val) {
-          res.push(key)
-        }
+  const selectedCommitIds = computed(() => {
+    const results: string[] = []
+    for (const [key, val] of Object.entries(selectedCommitsState.value)) {
+      if (val) results.push(key)
+    }
 
-        return res
-      },
-      [] as string[]
-    )
-  )
+    return results
+  })
 
   const clearSelectedCommits = () => {
     selectedCommitsState.value = {}
