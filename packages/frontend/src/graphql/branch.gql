@@ -2,6 +2,7 @@ query StreamWithBranch($streamId: String!, $branchName: String!, $cursor: String
   stream(id: $streamId) {
     id
     name
+    role
     branch(name: $branchName) {
       id
       name

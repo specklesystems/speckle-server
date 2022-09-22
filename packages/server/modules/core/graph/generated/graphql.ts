@@ -165,7 +165,7 @@ export type BranchCommitsArgs = {
 export type BranchCollection = {
   __typename?: 'BranchCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<Branch>>>;
+  items?: Maybe<Array<Branch>>;
   totalCount: Scalars['Int'];
 };
 
@@ -340,7 +340,10 @@ export type CommitCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   objectId: Scalars['String'];
   parents?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
-  /** **DEPRECATED** Use the `parents` field. */
+  /**
+   * **DEPRECATED** Use the `parents` field.
+   * @deprecated Field no longer supported
+   */
   previousCommitIds?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
   sourceApplication?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
@@ -365,6 +368,15 @@ export type CommitUpdateInput = {
   /** To move the commit to a different branch, please the name of the branch. */
   newBranchName?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+};
+
+export type CommitsDeleteInput = {
+  commitIds: Array<Scalars['String']>;
+};
+
+export type CommitsMoveInput = {
+  commitIds: Array<Scalars['String']>;
+  targetBranch: Scalars['String'];
 };
 
 export enum DiscoverableStreamsSortType {
@@ -446,6 +458,10 @@ export type Mutation = {
   commitDelete: Scalars['Boolean'];
   commitReceive: Scalars['Boolean'];
   commitUpdate: Scalars['Boolean'];
+  /** Delete a batch of commits */
+  commitsDelete: Scalars['Boolean'];
+  /** Move a batch of commits to a new branch */
+  commitsMove: Scalars['Boolean'];
   /** Delete a pending invite */
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
@@ -596,6 +612,16 @@ export type MutationCommitReceiveArgs = {
 
 export type MutationCommitUpdateArgs = {
   commit: CommitUpdateInput;
+};
+
+
+export type MutationCommitsDeleteArgs = {
+  input: CommitsDeleteInput;
+};
+
+
+export type MutationCommitsMoveArgs = {
+  input: CommitsMoveInput;
 };
 
 
@@ -1701,7 +1727,7 @@ export type ResolversTypes = {
   BlobMetadataCollection: ResolverTypeWrapper<BlobMetadataCollection>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Branch: ResolverTypeWrapper<Omit<Branch, 'author'> & { author?: Maybe<ResolversTypes['User']> }>;
-  BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['Branch']>>> }>;
+  BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Branch']>> }>;
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
@@ -1719,6 +1745,8 @@ export type ResolversTypes = {
   CommitDeleteInput: CommitDeleteInput;
   CommitReceivedInput: CommitReceivedInput;
   CommitUpdateInput: CommitUpdateInput;
+  CommitsDeleteInput: CommitsDeleteInput;
+  CommitsMoveInput: CommitsMoveInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
@@ -1794,7 +1822,7 @@ export type ResolversParentTypes = {
   BlobMetadataCollection: BlobMetadataCollection;
   Boolean: Scalars['Boolean'];
   Branch: Omit<Branch, 'author'> & { author?: Maybe<ResolversParentTypes['User']> };
-  BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['Branch']>>> };
+  BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Branch']>> };
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
@@ -1812,6 +1840,8 @@ export type ResolversParentTypes = {
   CommitDeleteInput: CommitDeleteInput;
   CommitReceivedInput: CommitReceivedInput;
   CommitUpdateInput: CommitUpdateInput;
+  CommitsDeleteInput: CommitsDeleteInput;
+  CommitsMoveInput: CommitsMoveInput;
   DateTime: Scalars['DateTime'];
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EmailAddress: Scalars['EmailAddress'];
@@ -1993,7 +2023,7 @@ export type BranchResolvers<ContextType = GraphQLContext, ParentType extends Res
 
 export type BranchCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BranchCollection'] = ResolversParentTypes['BranchCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Maybe<Array<Maybe<ResolversTypes['Branch']>>>, ParentType, ContextType>;
+  items?: Resolver<Maybe<Array<ResolversTypes['Branch']>>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2140,6 +2170,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitDeleteArgs, 'commit'>>;
   commitReceive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitReceiveArgs, 'input'>>;
   commitUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitUpdateArgs, 'commit'>>;
+  commitsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsDeleteArgs, 'input'>>;
+  commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;

@@ -3,9 +3,7 @@
     <v-card
       :class="`rounded-lg overflow-hidden`"
       :elevation="hover ? 10 : 1"
-      :style="`transition: all 0.2s ease-in-out; ${
-        highlight ? 'outline: 0.2rem solid #047EFB;' : ''
-      }`"
+      :style="`${highlighted ? 'outline: 0.2rem solid #047EFB;' : ''}`"
     >
       <router-link :to="`/streams/${streamId}/commits/${commit.id}`">
         <preview-image
@@ -15,14 +13,22 @@
         ></preview-image>
       </router-link>
       <v-toolbar class="transparent elevation-0" dense>
-        <v-toolbar-title>
-          <router-link
-            class="text-decoration-none"
-            :to="`/streams/${streamId}/commits/${commit.id}`"
-          >
-            <v-icon small>mdi-source-commit</v-icon>
-            {{ commit.message }}
-          </router-link>
+        <v-toolbar-title class="d-flex" style="overflow: visible; width: 100%">
+          <v-checkbox
+            v-if="allowSelect"
+            v-model="selectedState"
+            dense
+            @change="onSelect"
+          />
+          <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+            <router-link
+              class="text-decoration-none"
+              :to="`/streams/${streamId}/commits/${commit.id}`"
+            >
+              <v-icon v-if="!allowSelect" small>mdi-source-commit</v-icon>
+              {{ commit.message }}
+            </router-link>
+          </div>
         </v-toolbar-title>
       </v-toolbar>
       <div class="mx-1 mb-2">
@@ -90,13 +96,37 @@ export default {
     commit: { type: Object, default: () => null },
     previewHeight: { type: Number, default: () => 180 },
     showStreamAndBranch: { type: Boolean, default: true },
-    highlight: { type: Boolean, default: false }
+    highlight: { type: Boolean, default: false },
+    allowSelect: {
+      type: Boolean,
+      default: false
+    },
+    selected: {
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
+    highlighted() {
+      return this.highlight || this.selected
+    },
     streamId() {
       return (
         this.commit.streamId ?? this.$route.params.streamId ?? this.$route.query.stream
       )
+    },
+    selectedState: {
+      get() {
+        return this.selected
+      },
+      set(val) {
+        this.$emit('update:selected', !!val)
+      }
+    }
+  },
+  methods: {
+    onSelect() {
+      this.$emit('select', { value: this.selected })
     }
   }
 }

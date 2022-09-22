@@ -20,6 +20,7 @@ const {
   getCommitsByUserId,
   getCommitsTotalCountByUserId
 } = require('../services/commits')
+const { times } = require('lodash')
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -48,54 +49,92 @@ describe('Commits @core-commits', () => {
     baz: 'qux5'
   }
 
+  const generateObject = async (streamId = stream.id, object = testObject) =>
+    await createObject(streamId, object)
+  const generateStream = async (streamBase = stream, ownerId = user.id) =>
+    await createStream({ ...streamBase, ownerId })
+
+  let commitId1, commitId2, commitId3
+
   before(async () => {
     await beforeEachContext()
 
     user.id = await createUser(user)
     stream.id = await createStream({ ...stream, ownerId: user.id })
 
-    testObject.id = await createObject(stream.id, testObject)
-    testObject2.id = await createObject(stream.id, testObject2)
-    testObject3.id = await createObject(stream.id, testObject3)
-  })
+    const testObjectId = await createObject(stream.id, testObject)
+    const testObject2Id = await createObject(stream.id, testObject2)
+    const testObject3Id = await createObject(stream.id, testObject3)
 
-  let commitId1, commitId2, commitId3
-
-  it('Should create a commit by branch name', async () => {
     commitId1 = await createCommitByBranchName({
       streamId: stream.id,
       branchName: 'main',
       message: 'first commit',
       sourceApplication: 'tests',
-      objectId: testObject.id,
+      objectId: testObjectId,
       authorId: user.id
     })
-    expect(commitId1).to.be.a.string
-  })
 
-  it('Should create a commit with a previous commit id', async () => {
     commitId2 = await createCommitByBranchName({
       streamId: stream.id,
       branchName: 'main',
       message: 'second commit',
       sourceApplication: 'tests',
-      objectId: testObject2.id,
+      objectId: testObject2Id,
       authorId: user.id,
       parents: [commitId1]
     })
-    expect(commitId2).to.be.a.string
 
     commitId3 = await createCommitByBranchName({
       streamId: stream.id,
       branchName: 'main',
       message: 'third commit',
       sourceApplication: 'tests',
-      objectId: testObject3.id,
+      objectId: testObject3Id,
+      authorId: user.id,
+      parents: [commitId1, commitId2]
+    })
+  })
+
+  it('Should create a commit by branch name', async () => {
+    const objectId = await generateObject()
+    const id = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: 'main',
+      message: 'first commit',
+      sourceApplication: 'tests',
+      objectId,
+      authorId: user.id
+    })
+    expect(id).to.be.a.string
+  })
+
+  it('Should create a commit with a previous commit id', async () => {
+    const objectId = await generateObject()
+    const objectId2 = await generateObject()
+
+    const id = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: 'main',
+      message: 'second commit',
+      sourceApplication: 'tests',
+      objectId,
+      authorId: user.id,
+      parents: [commitId1]
+    })
+    expect(id).to.be.a.string
+
+    const id2 = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: 'main',
+      message: 'third commit',
+      sourceApplication: 'tests',
+      objectId: objectId2,
       authorId: user.id,
       parents: [commitId1, commitId2]
     })
 
-    expect(commitId3).to.be.a.string
+    expect(id2).to.be.a.string
   })
 
   it('Should update a commit', async () => {
@@ -104,12 +143,13 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should delete a commit', async () => {
+    const objectId = await generateObject()
     const tempCommit = await createCommitByBranchName({
       streamId: stream.id,
       branchName: 'main',
       message: 'temp commit',
       sourceApplication: 'tests',
-      objectId: testObject.id,
+      objectId,
       authorId: user.id
     })
 
@@ -123,12 +163,14 @@ describe('Commits @core-commits', () => {
     expect(cm.authorId).to.equal(user.id)
   })
 
-  it('Should get the commits from a branch', async () => {
+  it('Should get the commits and their total count from a branch', async () => {
+    const streamId = await generateStream()
+
     for (let i = 0; i < 10; i++) {
       const t = { qux: i }
-      t.id = await createObject(stream.id, t)
+      t.id = await createObject(streamId, t)
       await createCommitByBranchName({
-        streamId: stream.id,
+        streamId,
         branchName: 'main',
         message: `commit # ${i + 3}`,
         sourceApplication: 'tests',
@@ -138,7 +180,7 @@ describe('Commits @core-commits', () => {
     }
 
     const { commits, cursor } = await getCommitsByBranchName({
-      streamId: stream.id,
+      streamId,
       branchName: 'main',
       limit: 2
     })
@@ -146,30 +188,29 @@ describe('Commits @core-commits', () => {
     expect(commits.length).to.equal(2)
 
     const { commits: commits2 } = await getCommitsByBranchName({
-      streamId: stream.id,
+      streamId,
       branchName: 'main',
       limit: 5,
       cursor
     })
     expect(commits2.length).to.equal(5)
-  })
 
-  it('Should get the commit count from a branch', async () => {
     const c = await getCommitsTotalCountByBranchName({
-      streamId: stream.id,
+      streamId,
       branchName: 'main'
     })
-    expect(c).to.equal(13)
+    expect(c).to.equal(10)
   })
 
-  it('Should get the commits from a stream', async () => {
-    await createBranch({ name: 'dim/dev', streamId: stream.id, authorId: user.id })
+  it('Should get the commits and their total count from a stream', async () => {
+    const streamId = await generateStream()
+    await createBranch({ name: 'dim/dev', streamId, authorId: user.id })
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 15; i++) {
       const t = { thud: i }
-      t.id = await createObject(stream.id, t)
+      t.id = await createObject(streamId, t)
       await createCommitByBranchName({
-        streamId: stream.id,
+        streamId,
         branchName: 'dim/dev',
         message: `pushed something # ${i + 3}`,
         sourceApplication: 'tests',
@@ -179,60 +220,106 @@ describe('Commits @core-commits', () => {
     }
 
     const { commits, cursor } = await getCommitsByStreamId({
-      streamId: stream.id,
+      streamId,
       limit: 10
     })
     const { commits: commits2 } = await getCommitsByStreamId({
-      streamId: stream.id,
+      streamId,
       limit: 20,
       cursor
     })
 
     expect(commits.length).to.equal(10)
-    expect(commits2.length).to.equal(13)
+    expect(commits2.length).to.equal(5)
+
+    const c = await getCommitsTotalCountByStreamId({ streamId })
+    expect(c).to.equal(15)
   })
 
-  it('Should get the commit count of a stream', async () => {
-    const c = await getCommitsTotalCountByStreamId({ streamId: stream.id })
-    expect(c).to.equal(23)
-  })
+  describe('when reading user commits', async () => {
+    const otherUser = {
+      name: 'Dimitrie Other',
+      email: 'otthhherrdidimitrie4342@gmail.com',
+      password: 'sn3aky-1337-b1m'
+    }
 
-  it('Should get the commits of a user', async () => {
-    const { commits, cursor } = await getCommitsByUserId({ userId: user.id, limit: 3 })
+    const otherStream = {
+      name: 'Other Test Stream References',
+      description: 'Whatever goes in here usually...'
+    }
 
-    const { commits: commits2 } = await getCommitsByUserId({
-      userId: user.id,
-      limit: 100,
-      cursor
+    const mainCommitCount = 16
+
+    before(async () => {
+      otherUser.id = await createUser(otherUser)
+      otherStream.id = await generateStream(otherStream, otherUser.id)
+
+      // create objects
+      const objectIds = await Promise.all(
+        times(mainCommitCount, () => generateObject(otherStream.id))
+      )
+
+      // create commits
+      await Promise.all(
+        objectIds.map((oid) =>
+          createCommitByBranchName({
+            streamId: otherStream.id,
+            branchName: 'main',
+            message: 'first commit',
+            sourceApplication: 'tests',
+            objectId: oid,
+            authorId: otherUser.id
+          })
+        )
+      )
     })
 
-    expect(commits.length).to.equal(3)
-    expect(commits2.length).to.equal(20)
-  })
+    it('Should get the commits of a user', async () => {
+      const { commits, cursor } = await getCommitsByUserId({
+        userId: otherUser.id,
+        limit: 3
+      })
 
-  it('Should get the public commits of an user only', async () => {
-    const privateStreamId = await createStream({
-      name: 'private',
-      isPublic: false,
-      ownerId: user.id
-    })
-    const objectId = await createObject(privateStreamId, testObject)
-    await createCommitByBranchName({
-      streamId: privateStreamId,
-      branchName: 'main',
-      message: 'first commit',
-      sourceApplication: 'tests',
-      objectId,
-      authorId: user.id
+      const { commits: commits2 } = await getCommitsByUserId({
+        userId: otherUser.id,
+        limit: 100,
+        cursor
+      })
+
+      expect(commits.length).to.equal(3)
+      expect(commits2.length).to.equal(mainCommitCount - 3)
     })
 
-    const { commits } = await getCommitsByUserId({ userId: user.id, limit: 1000 })
-    expect(commits.length).to.equal(23)
-  })
+    it('Should get the public commits of an user only', async () => {
+      const privateStreamId = await createStream({
+        name: 'private',
+        isPublic: false,
+        ownerId: otherUser.id
+      })
+      const objectId = await createObject(privateStreamId, testObject)
+      const commitId = await createCommitByBranchName({
+        streamId: privateStreamId,
+        branchName: 'main',
+        message: 'first commit',
+        sourceApplication: 'tests',
+        objectId,
+        authorId: otherUser.id
+      })
 
-  it('Should get the commit count of an user', async () => {
-    const c = await getCommitsTotalCountByUserId({ userId: user.id })
-    expect(c).to.equal(24)
+      const { commits } = await getCommitsByUserId({
+        userId: otherUser.id,
+        limit: 1000
+      })
+      expect(commits.length).to.equal(mainCommitCount)
+
+      // clean up
+      await deleteCommit({ id: commitId })
+    })
+
+    it('Should get the commit count of an user', async () => {
+      const c = await getCommitsTotalCountByUserId({ userId: otherUser.id })
+      expect(c).to.equal(mainCommitCount)
+    })
   })
 
   it('Commits should have source, total count, branch name and parents fields', async () => {

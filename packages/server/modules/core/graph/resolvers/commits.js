@@ -27,12 +27,17 @@ const { getStream } = require('../../services/streams')
 const { getUser } = require('../../services/users')
 
 const { respectsLimits } = require('../../services/ratelimits')
+const {
+  batchMoveCommits,
+  batchDeleteCommits
+} = require('@/modules/core/services/commit/batchCommitActions')
 
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
   Stream: {
@@ -245,6 +250,16 @@ module.exports = {
       }
 
       return deleted
+    },
+
+    async commitsMove(_, args, ctx) {
+      await batchMoveCommits(args.input, ctx.userId)
+      return true
+    },
+
+    async commitsDelete(_, args, ctx) {
+      await batchDeleteCommits(args.input, ctx.userId)
+      return true
     }
   },
   Subscription: {

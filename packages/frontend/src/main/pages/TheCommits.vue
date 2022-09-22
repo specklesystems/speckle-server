@@ -1,15 +1,16 @@
 <template>
   <div>
-    <portal v-if="canRenderToolbarPortal" to="toolbar">
+    <!-- Toolbar -->
+    <prioritized-portal to="toolbar" identity="commits" :priority="0">
       <div class="font-weight-bold">
         Your Latest Commits
         <span v-if="user" class="caption">({{ user.commits.totalCount }})</span>
       </div>
-    </portal>
+    </prioritized-portal>
 
     <v-row v-if="user && user.commits.totalCount !== 0">
       <v-col
-        v-for="commit in user.commits.items.filter((c) => c.branchName !== 'globals')"
+        v-for="commit in commitItems"
         :key="commit.id"
         cols="12"
         sm="6"
@@ -61,21 +62,18 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
 import { useQuery } from '@vue/apollo-composable'
-import { computed } from 'vue'
+import { computed, defineComponent } from 'vue'
+import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 
-export default {
+export default defineComponent({
   name: 'TheCommits',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
-    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
+    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
+    PrioritizedPortal
   },
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'commits', 0)],
   setup() {
     const { result, fetchMore: userFetchMore } = useQuery(gql`
       query ($cursor: String) {
@@ -101,9 +99,13 @@ export default {
       }
     `)
     const user = computed(() => result.value?.user)
+    const commitItems = computed(() =>
+      (user.value?.commits.items || []).filter((c) => c.branchName !== 'globals')
+    )
 
     return {
       user,
+      commitItems,
       userFetchMore
     }
   },
@@ -123,5 +125,5 @@ export default {
       }
     }
   }
-}
+})
 </script>
