@@ -59,6 +59,8 @@ spec:
         volumeMounts:
           - mountPath: /tmp
             name: tmp
+          - mountPath: /.local/share/Speckle
+            name: local-share-speckle
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
@@ -114,6 +116,8 @@ spec:
       terminationGracePeriodSeconds: 610
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: local-share-speckle
           emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
