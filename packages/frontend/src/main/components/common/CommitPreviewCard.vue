@@ -18,6 +18,7 @@
             v-if="allowSelect"
             v-model="selectedState"
             dense
+            hide-details
             @change="onSelect"
           />
           <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
@@ -85,6 +86,8 @@
   </v-hover>
 </template>
 <script>
+import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
+
 export default {
   components: {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
@@ -106,27 +109,16 @@ export default {
       default: false
     }
   },
+  setup(props, ctx) {
+    const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+
+    return { highlighted, selectedState, onSelect }
+  },
   computed: {
-    highlighted() {
-      return this.highlight || this.selected
-    },
     streamId() {
       return (
         this.commit.streamId ?? this.$route.params.streamId ?? this.$route.query.stream
       )
-    },
-    selectedState: {
-      get() {
-        return this.selected
-      },
-      set(val) {
-        this.$emit('update:selected', !!val)
-      }
-    }
-  },
-  methods: {
-    onSelect() {
-      this.$emit('select', { value: this.selected })
     }
   }
 }

@@ -1,6 +1,7 @@
 import { ReactiveVar } from '@apollo/client/core'
 import { isUndefined } from 'lodash'
 import Vue, { VueConstructor } from 'vue'
+import { LooseRequired } from 'vue/types/common'
 
 export type Nullable<T> = T | null
 
@@ -24,6 +25,8 @@ export type GetReactiveVarType<V extends ReactiveVar<any>> = V extends ReactiveV
 >
   ? T
   : unknown
+
+export type SetupProps<P = unknown> = Readonly<LooseRequired<P>>
 
 // Copied from Vue typings & improved ergonomics
 export type CombinedVueInstance<

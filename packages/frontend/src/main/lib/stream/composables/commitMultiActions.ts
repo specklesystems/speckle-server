@@ -1,4 +1,5 @@
-import { ref, computed } from 'vue'
+import { SetupProps } from '@/helpers/typeHelpers'
+import { ref, computed, SetupContext } from 'vue'
 
 export enum BatchActionType {
   Move = 'move',
@@ -42,5 +43,26 @@ export function useCommitMultiActions() {
      * Clear selected commits
      */
     clearSelectedCommits
+  }
+}
+
+/**
+ * Use inside a component that represents a commit that can be selected (e.g. for batch actions)
+ */
+export function useSelectableCommit(
+  props: SetupProps<{ allowSelect: boolean; selected: boolean; highlight: boolean }>,
+  ctx: SetupContext
+) {
+  const highlighted = computed(() => props.highlight || props.selected)
+  const selectedState = computed({
+    get: () => props.selected,
+    set: (newVal) => ctx.emit('update:selected', !!newVal)
+  })
+  const onSelect = () => ctx.emit('select', { value: props.selected })
+
+  return {
+    highlighted,
+    onSelect,
+    selectedState
   }
 }
