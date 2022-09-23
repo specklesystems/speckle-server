@@ -226,6 +226,7 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 
 export default {
   components: {
@@ -301,7 +302,7 @@ export default {
   },
   mounted() {
     this.branchMenuOpen = this.$route.name.toLowerCase().includes('branch')
-    this.$eventHub.$on('branch-refresh', async () => {
+    this.$eventHub.$on(StreamEvents.RefetchBranches, async () => {
       await this.refetchBranches()
     })
     this.$eventHub.$on('show-new-branch-dialog', () => {

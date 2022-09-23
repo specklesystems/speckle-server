@@ -16,6 +16,7 @@
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "circleci:check": "circleci config validate ./.circleci/config.yml",
+    "dev:docker": "docker-compose -f ./docker-compose-deps.yml",
     "dev:docker:up": "docker-compose -f ./docker-compose-deps.yml up -d",
     "dev:docker:down": "docker-compose -f ./docker-compose-deps.yml down",
     "dev": "yarn workspaces foreach -piv -j unlimited run dev",
