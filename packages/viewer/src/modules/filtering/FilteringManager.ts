@@ -99,13 +99,15 @@ export class FilteringManager {
   public unIsolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = true
+    includeDescendants = true,
+    ghost = true
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
       stateKey,
       Command.UNISOLATE,
-      includeDescendants
+      includeDescendants,
+      ghost
     )
   }
 
