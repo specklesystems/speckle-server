@@ -1,6 +1,11 @@
 <template>
   <div>
-    <!-- Toolbar -->
+    <commit-multi-select-toolbar
+      v-if="hasSelectedCommits"
+      :selected-commit-ids="selectedCommitIds"
+      @clear="clearSelectedCommits"
+      @finish="onBatchCommitActionFinish"
+    />
     <prioritized-portal to="toolbar" identity="commits" :priority="0">
       <div class="font-weight-bold">
         Your Latest Commits
@@ -18,7 +23,12 @@
         lg="4"
         xl="3"
       >
-        <commit-preview-card :commit="commit" :preview-height="180" />
+        <commit-preview-card
+          :commit="commit"
+          :preview-height="180"
+          :allow-select="isCommitOrStreamOwner(commit)"
+          :selected.sync="selectedCommitsState[commit.id]"
+        />
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading spinner="waveDots" @infinite="infiniteHandler">
@@ -65,6 +75,9 @@ import { gql } from '@apollo/client/core'
 import { useQuery } from '@vue/apollo-composable'
 import { computed, defineComponent } from 'vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
+import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
+import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
+import { Roles } from '@/helpers/mainConstants'
 
 export default defineComponent({
   name: 'TheCommits',
@@ -72,10 +85,15 @@ export default defineComponent({
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
-    PrioritizedPortal
+    PrioritizedPortal,
+    CommitMultiSelectToolbar
   },
   setup() {
-    const { result, fetchMore: userFetchMore } = useQuery(gql`
+    const {
+      result,
+      fetchMore: userFetchMore,
+      refetch: userRefetch
+    } = useQuery(gql`
       query ($cursor: String) {
         user {
           id
@@ -87,12 +105,16 @@ export default defineComponent({
               id
               referencedObject
               message
-              streamName
-              streamId
+              authorId
               createdAt
               sourceApplication
               branchName
               commentCount
+              stream {
+                id
+                role
+                name
+              }
             }
           }
         }
@@ -103,10 +125,32 @@ export default defineComponent({
       (user.value?.commits.items || []).filter((c) => c.branchName !== 'globals')
     )
 
+    const isCommitOrStreamOwner = (commit) => {
+      const userId = user.value.id
+      return commit.stream.role === Roles.Stream.Owner || commit.authorId === userId
+    }
+
+    const {
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState
+    } = useCommitMultiActions()
+
+    const onBatchCommitActionFinish = () => {
+      userRefetch()
+    }
+
     return {
       user,
       commitItems,
-      userFetchMore
+      userFetchMore,
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState,
+      onBatchCommitActionFinish,
+      isCommitOrStreamOwner
     }
   },
   methods: {

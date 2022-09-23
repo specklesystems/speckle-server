@@ -45,13 +45,13 @@
       </div>
       <v-divider v-if="showStreamAndBranch" />
       <div v-if="showStreamAndBranch" class="d-flex align-center caption px-5 py-2">
-        <div v-show="commit.streamName" class="text-truncate mr-2">
+        <div v-show="streamName" class="text-truncate mr-2">
           <router-link
             class="text-decoration-none d-inline-flex align-center"
             :to="`/streams/${streamId}`"
           >
             <v-icon x-small class="primary--text mr-2">mdi-folder-outline</v-icon>
-            {{ commit.streamName }}
+            {{ streamName }}
           </router-link>
         </div>
         <div class="text-right flex-grow-1 text-truncate">
@@ -117,8 +117,14 @@ export default {
   computed: {
     streamId() {
       return (
-        this.commit.streamId ?? this.$route.params.streamId ?? this.$route.query.stream
+        this.commit.streamId ||
+        this.commit.stream?.id ||
+        this.$route.params.streamId ||
+        this.$route.query.stream
       )
+    },
+    streamName() {
+      return this.commit.streamName || this.commit.stream?.name
     }
   }
 }

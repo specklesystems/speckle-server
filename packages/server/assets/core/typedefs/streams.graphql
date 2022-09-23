@@ -4,6 +4,8 @@ extend type Query {
   to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
   """
   stream(id: String!): Stream
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 
   """
   Returns all streams that the active user is a collaborator on.

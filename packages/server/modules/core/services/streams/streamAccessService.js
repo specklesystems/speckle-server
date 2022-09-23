@@ -16,16 +16,20 @@ const {
 
 /**
  * Validate that the user has the required permission level (or one above it) for the specified stream
- * @param {string} userId
+ * @param {string} [userId] If falsy, will throw for non-public streams
  * @param {string} streamId
- * @param {string} expectedRole
+ * @param {string} [expectedRole] Defaults to reviewer
  * @returns {Promise<boolean>}
  */
 async function validateStreamAccess(userId, streamId, expectedRole) {
+  expectedRole = expectedRole || Roles.Stream.Reviewer
+
   const streamRoles = Object.values(Roles.Stream)
   if (!streamRoles.includes(expectedRole)) {
     throw new LogicError('Unexpected stream role')
   }
+
+  userId = userId || null
 
   try {
     await authorizeResolver(userId, streamId, expectedRole)

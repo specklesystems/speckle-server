@@ -31,6 +31,10 @@ const {
   batchMoveCommits,
   batchDeleteCommits
 } = require('@/modules/core/services/commit/batchCommitActions')
+const {
+  validateStreamAccess
+} = require('@/modules/core/services/streams/streamAccessService')
+const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
@@ -40,6 +44,29 @@ const COMMIT_DELETED = 'COMMIT_DELETED'
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
+  Commit: {
+    async stream(parent, _args, ctx) {
+      const { id: commitId } = parent
+
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      if (!stream) {
+        throw new StreamInvalidAccessError('Commit stream not found')
+      }
+
+      await validateStreamAccess(ctx.userId, stream.id)
+      return stream
+    },
+    async streamId(parent, _args, ctx) {
+      const { id: commitId } = parent
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      return stream?.id || null
+    },
+    async streamName(parent, _args, ctx) {
+      const { id: commitId } = parent
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      return stream?.name || null
+    }
+  },
   Stream: {
     async commits(parent, args) {
       if (args.limit && args.limit > 100)

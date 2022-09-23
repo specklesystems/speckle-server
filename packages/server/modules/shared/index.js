@@ -142,6 +142,8 @@ async function validateScopes(scopes, scope) {
  * @param  {string} requiredRole
  */
 async function authorizeResolver(userId, resourceId, requiredRole) {
+  userId = userId || null
+
   if (!roles) roles = await knex('user_roles').select('*')
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.

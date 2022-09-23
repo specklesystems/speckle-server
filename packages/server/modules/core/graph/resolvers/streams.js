@@ -20,13 +20,7 @@ const {
   getOwnedFavoritesCount
 } = require('@/modules/core/services/streams')
 
-const {
-  authorizeResolver,
-  validateScopes,
-  validateServerRole,
-  pubsub,
-  StreamPubsubEvents
-} = require(`@/modules/shared`)
+const { authorizeResolver, pubsub, StreamPubsubEvents } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { respectsLimits } = require('@/modules/core/services/ratelimits')
@@ -106,14 +100,7 @@ module.exports = {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) throw new ApolloError('Stream not found')
 
-      if (!stream.isPublic && context.auth === false)
-        throw new ForbiddenError('You are not authorized.')
-
-      if (!stream.isPublic) {
-        await validateServerRole(context, 'server:user')
-        await validateScopes(context.scopes, 'streams:read')
-        await authorizeResolver(context.userId, args.id, 'stream:reviewer')
-      }
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       return stream
     },

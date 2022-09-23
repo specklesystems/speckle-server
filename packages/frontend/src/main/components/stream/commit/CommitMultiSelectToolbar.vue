@@ -7,7 +7,9 @@
     <prioritized-portal to="actions" identity="commits-multi-select" :priority="2">
       <div class="d-flex align-center">
         <v-btn small @click="clear">Clear selection</v-btn>
-        <v-btn small class="ml-2" color="primary" @click="initMove">Move To</v-btn>
+        <v-btn v-if="streamId" small class="ml-2" color="primary" @click="initMove">
+          Move To
+        </v-btn>
         <v-btn small class="mx-2" color="red" @click="initDelete">Delete</v-btn>
       </div>
     </prioritized-portal>
@@ -23,6 +25,7 @@
   </div>
 </template>
 <script lang="ts">
+import { Optional } from '@/helpers/typeHelpers'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 import CommitsBatchActionsDialog from '@/main/dialogs/commit/CommitsBatchActionsDialog.vue'
 import { BatchActionType } from '@/main/lib/stream/composables/commitMultiActions'
@@ -36,26 +39,28 @@ export default defineComponent({
   },
   props: {
     streamId: {
-      type: String,
-      required: true
+      type: String as PropType<Optional<string>>,
+      default: undefined
     },
     selectedCommitIds: {
       type: Array as PropType<string[]>,
       required: true
     },
     branchName: {
-      type: String,
-      required: true
+      type: String as PropType<Optional<string>>,
+      default: undefined
     }
   },
   setup(props, { emit }) {
     const showDialog = ref(false)
-    const dialogType = ref(BatchActionType.Move)
+    const dialogType = ref(BatchActionType.Delete)
 
     const count = computed(() => props.selectedCommitIds?.length || 0)
 
     const clear = () => emit('clear')
     const initMove = () => {
+      if (!props.streamId) return
+
       showDialog.value = true
       dialogType.value = BatchActionType.Move
     }
