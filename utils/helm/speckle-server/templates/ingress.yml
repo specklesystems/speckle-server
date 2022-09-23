@@ -32,6 +32,7 @@ spec:
             port:
               number: 80
       - pathType: Exact
+        # path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*))"
         path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
         backend:
           service:
