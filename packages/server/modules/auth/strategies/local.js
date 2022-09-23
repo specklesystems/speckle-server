@@ -106,7 +106,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         return next()
       } catch (err) {
-        debug('speckle:errors')(err)
+        debug('speckle:error')(err)
         return res.status(400).send({ err: err.message })
       }
     },
