@@ -23,7 +23,6 @@ const {
   getCommitsTotalCountByBranchId
 } = require('../../services/commits')
 
-const { getStream } = require('../../services/streams')
 const { getUser } = require('../../services/users')
 
 const { respectsLimits } = require('../../services/ratelimits')
@@ -216,12 +215,7 @@ module.exports = {
     },
 
     async commitReceive(parent, args, context) {
-      // if stream is private, check if the user has access to it
-      const stream = await getStream({ streamId: args.input.streamId })
-
-      if (!stream.public) {
-        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
-      }
+      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
       await getCommitById({
         streamId: args.input.streamId,
