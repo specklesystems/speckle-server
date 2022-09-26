@@ -37,6 +37,8 @@ export default {
       if (appname.includes('python')) return 'yellow darken-1'
       if (appname.includes('.net')) return 'purple darken-2'
       if (appname.includes('ifc')) return 'red darken-4'
+      if (appname.includes('qgis')) return 'light-green accent-4'
+      if (appname.includes('arcgis')) return 'blue accent-4'
       return 'grey'
     },
     shortName() {
@@ -57,6 +59,8 @@ export default {
       if (appname.includes('python')) return 'PY'
       if (appname.includes('.net')) return '.NET'
       if (appname.includes('ifc')) return 'IFC'
+      if (appname.includes('qgis')) return 'QGIS'
+      if (appname.includes('arcgis')) return 'AGIS'
       return appname
     }
   }
