@@ -108,14 +108,6 @@ module.exports = {
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
-  CommitCollectionUserNode: {
-    // urgh, i think we tripped our gql schemas in there a bit
-    async commentCount(parent, args, context) {
-      if (context.role === Roles.Server.ArchivedUser)
-        throw new ApolloForbiddenError('You are not authorized.')
-      return await getResourceCommentCount({ resourceId: parent.id })
-    }
-  },
   Object: {
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)

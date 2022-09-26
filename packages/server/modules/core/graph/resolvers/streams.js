@@ -22,10 +22,10 @@ const {
 
 const {
   authorizeResolver,
-  validateScopes,
-  validateServerRole,
   pubsub,
-  StreamPubsubEvents
+  StreamPubsubEvents,
+  validateScopes,
+  validateServerRole
 } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
@@ -102,7 +102,7 @@ const _deleteStream = async (parent, args, context) => {
  */
 module.exports = {
   Query: {
-    async stream(parent, args, context) {
+    async stream(_, args, context) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) throw new ApolloError('Stream not found')
 

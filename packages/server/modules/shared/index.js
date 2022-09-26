@@ -142,6 +142,8 @@ async function validateScopes(scopes, scope) {
  * @param  {string} requiredRole
  */
 async function authorizeResolver(userId, resourceId, requiredRole) {
+  userId = userId || null
+
   if (!roles) roles = await knex('user_roles').select('*')
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
@@ -155,7 +157,7 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
       .select('isPublic')
       .where({ id: resourceId })
       .first()
-    if (isPublic && roles[requiredRole] < 200) return true
+    if (isPublic && role.weight < 200) return true
   } catch (e) {
     throw new ApolloError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
