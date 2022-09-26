@@ -9,11 +9,11 @@
     <prioritized-portal to="toolbar" identity="commits" :priority="0">
       <div class="font-weight-bold">
         Your Latest Commits
-        <span v-if="user" class="caption">({{ user.commits.totalCount }})</span>
+        <span v-if="user" class="caption">({{ totalCommitCount }})</span>
       </div>
     </prioritized-portal>
 
-    <v-row v-if="user && user.commits.totalCount !== 0">
+    <v-row v-if="commitItems.length">
       <v-col
         v-for="commit in commitItems"
         :key="commit.id"
@@ -72,12 +72,17 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import { useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { computed, defineComponent } from 'vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
-import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
+import {
+  BatchActionType,
+  useCommitMultiActions
+} from '@/main/lib/stream/composables/commitMultiActions'
 import { Roles } from '@/helpers/mainConstants'
+import { getCacheId } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { deleteCommitsFromCachedCommitsQuery } from '@/main/lib/stream/services/commitMultiActions'
 
 export default defineComponent({
   name: 'TheCommits',
@@ -89,13 +94,9 @@ export default defineComponent({
     CommitMultiSelectToolbar
   },
   setup() {
-    const {
-      result,
-      fetchMore: userFetchMore,
-      refetch: userRefetch
-    } = useQuery(gql`
-      query ($cursor: String) {
-        user {
+    const { result, fetchMore: userFetchMore } = useQuery(gql`
+      query PaginatedUserCommits($cursor: String) {
+        activeUser {
           id
           name
           commits(limit: 10, cursor: $cursor) {
@@ -120,10 +121,18 @@ export default defineComponent({
         }
       }
     `)
-    const user = computed(() => result.value?.user)
+    const user = computed(() => result.value?.activeUser)
+
     const commitItems = computed(() =>
       (user.value?.commits.items || []).filter((c) => c.branchName !== 'globals')
     )
+    const totalCommitCount = computed(() => {
+      const realTotalCount = user.value?.commits.totalCount || 0
+      const globalCommitCount = (user.value?.commits.items || []).filter(
+        (c) => c.branchName === 'globals'
+      ).length
+      return realTotalCount - globalCommitCount
+    })
 
     const isCommitOrStreamOwner = (commit) => {
       const userId = user.value.id
@@ -137,13 +146,25 @@ export default defineComponent({
       selectedCommitsState
     } = useCommitMultiActions()
 
-    const onBatchCommitActionFinish = () => {
-      userRefetch()
+    const apolloCache = useApolloClient().client.cache
+    const onBatchCommitActionFinish = ({ type, variables }) => {
+      const commitIds = variables.input?.commitIds || []
+      if (!commitIds.length) return
+
+      // Update cache
+      if (type === BatchActionType.Delete) {
+        deleteCommitsFromCachedCommitsQuery(
+          apolloCache,
+          getCacheId('User', user.value.id),
+          commitIds
+        )
+      }
     }
 
     return {
       user,
       commitItems,
+      totalCommitCount,
       userFetchMore,
       selectedCommitIds,
       hasSelectedCommits,
@@ -161,7 +182,7 @@ export default defineComponent({
         }
       })
 
-      const newItems = result.data?.user?.commits?.items || []
+      const newItems = result.data?.activeUser?.commits?.items || []
       if (!newItems.length) {
         $state.complete()
       } else {

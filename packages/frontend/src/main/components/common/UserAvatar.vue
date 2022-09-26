@@ -118,7 +118,7 @@ export default defineComponent({
       () => ({ id: props.id }),
       () => ({ enabled: isLoggedIn.value })
     )
-    const userById = computed(() => userByIdResult.value?.user)
+    const userById = computed(() => userByIdResult.value?.otherUser)
 
     return { isLoggedIn, userById }
   },

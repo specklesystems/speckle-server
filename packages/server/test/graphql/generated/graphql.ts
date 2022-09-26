@@ -390,12 +390,68 @@ export type FileUpload = {
  */
 export type LimitedUser = {
   __typename?: 'LimitedUser';
+  /** All the recent activity from this user in chronological order */
+  activity?: Maybe<ActivityCollection>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
+  /** Get public stream commits authored by the user */
+  commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   name?: Maybe<Scalars['String']>;
+  role?: Maybe<Scalars['String']>;
+  /** Returns all discoverable streams that the user is a collaborator on */
+  streams: StreamCollection;
+  /** The user's timeline in chronological order */
+  timeline?: Maybe<ActivityCollection>;
+  /** Total amount of favorites attached to streams owned by the user */
+  totalOwnedStreamsFavorites: Scalars['Int'];
   verified?: Maybe<Scalars['Boolean']>;
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserActivityArgs = {
+  actionType?: InputMaybe<Scalars['String']>;
+  after?: InputMaybe<Scalars['DateTime']>;
+  before?: InputMaybe<Scalars['DateTime']>;
+  cursor?: InputMaybe<Scalars['DateTime']>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserCommitsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserStreamsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Limited user type, for showing public info about a user
+ * to another user
+ */
+export type LimitedUserTimelineArgs = {
+  after?: InputMaybe<Scalars['DateTime']>;
+  before?: InputMaybe<Scalars['DateTime']>;
+  cursor?: InputMaybe<Scalars['DateTime']>;
+  limit?: Scalars['Int'];
 };
 
 export type Mutation = {
@@ -845,6 +901,8 @@ export type Query = {
   __typename?: 'Query';
   /** Stare into the void. */
   _?: Maybe<Scalars['String']>;
+  /** Gets the profile of the authenticated user or null if not authenticated */
+  activeUser?: Maybe<User>;
   /** All the streams of the server. Available to admins only. */
   adminStreams?: Maybe<StreamCollection>;
   /**
@@ -865,6 +923,8 @@ export type Query = {
   comments?: Maybe<CommentCollection>;
   /** All of the discoverable streams of the server */
   discoverableStreams?: Maybe<StreamCollection>;
+  /** Get the (limited) profile information of another server user */
+  otherUser?: Maybe<LimitedUser>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -886,7 +946,10 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
-  /** Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header). */
+  /**
+   * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
+   * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
+   */
   user?: Maybe<User>;
   /** Validate password strength */
   userPwdStrength: PasswordStrengthCheckResults;
@@ -938,6 +1001,11 @@ export type QueryDiscoverableStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
   sort?: InputMaybe<DiscoverableStreamsSortingInput>;
+};
+
+
+export type QueryOtherUserArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1458,7 +1526,7 @@ export type User = {
    * All the streams that a active user has favorited.
    * Note: You can't use this to retrieve another user's favorite streams.
    */
-  favoriteStreams?: Maybe<StreamCollection>;
+  favoriteStreams: StreamCollection;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['String'];
@@ -1470,7 +1538,8 @@ export type User = {
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
    * authenticated user, then this will only return discoverable streams.
    */
-  streams?: Maybe<StreamCollection>;
+  streams: StreamCollection;
+  /** The user's timeline in chronological order */
   timeline?: Maybe<ActivityCollection>;
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int'];
@@ -1633,6 +1702,13 @@ export type GetStreamAccessRequestQueryVariables = Exact<{
 
 export type GetStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null };
 
+export type GetFullStreamAccessRequestQueryVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type GetFullStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, stream: { __typename?: 'Stream', id: string, name: string }, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null };
+
 export type GetPendingStreamAccessRequestsQueryVariables = Exact<{
   streamId: Scalars['String'];
 }>;
@@ -1681,6 +1757,25 @@ export type GetCommentsQueryVariables = Exact<{
 
 export type GetCommentsQuery = { __typename?: 'Query', comments?: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null }> } | null };
 
+export type BaseCommitFieldsFragment = { __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, streamId?: string | null, streamName?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number };
+
+export type ReadOwnCommitsQueryVariables = Exact<{
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+}>;
+
+
+export type ReadOwnCommitsQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, streamId?: string | null, streamName?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number }> | null } | null } | null };
+
+export type ReadOtherUsersCommitsQueryVariables = Exact<{
+  userId: Scalars['String'];
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+}>;
+
+
+export type ReadOtherUsersCommitsQuery = { __typename?: 'Query', otherUser?: { __typename?: 'LimitedUser', commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, streamId?: string | null, streamName?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number, stream: { __typename?: 'Stream', id: string, name: string, isPublic: boolean } }> | null } | null } | null };
+
 export type ReadStreamBranchCommitsQueryVariables = Exact<{
   streamId: Scalars['String'];
   branchName: Scalars['String'];
@@ -1689,7 +1784,7 @@ export type ReadStreamBranchCommitsQueryVariables = Exact<{
 }>;
 
 
-export type ReadStreamBranchCommitsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, branch?: { __typename?: 'Branch', id: string, name: string, description?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number }> | null } | null } | null } | null };
+export type ReadStreamBranchCommitsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, branch?: { __typename?: 'Branch', id: string, name: string, description?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, streamId?: string | null, streamName?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number }> | null } | null } | null } | null };
 
 export type MoveCommitsMutationVariables = Exact<{
   input: CommitsMoveInput;
@@ -1832,7 +1927,32 @@ export type GetUserStreamsQueryVariables = Exact<{
 }>;
 
 
-export type GetUserStreamsQuery = { __typename?: 'Query', user?: { __typename?: 'User', streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> | null } | null } | null };
+export type GetUserStreamsQuery = { __typename?: 'Query', user?: { __typename?: 'User', streams: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> | null } } | null };
+
+export type GetLimitedUserStreamsQueryVariables = Exact<{
+  userId: Scalars['String'];
+  limit?: Scalars['Int'];
+  cursor?: InputMaybe<Scalars['String']>;
+}>;
+
+
+export type GetLimitedUserStreamsQuery = { __typename?: 'Query', otherUser?: { __typename?: 'LimitedUser', streams: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> | null } } | null };
+
+export type BaseUserFieldsFragment = { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null };
+
+export type BaseLimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null };
+
+export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetActiveUserQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null } | null };
+
+export type GetOtherUserQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type GetOtherUserQuery = { __typename?: 'Query', otherUser?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
 
 export type GetAdminUsersQueryVariables = Exact<{
   limit?: Scalars['Int'];

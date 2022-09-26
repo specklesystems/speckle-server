@@ -152,7 +152,7 @@ export default defineComponent({
 
         // finished
         close()
-        emit('finish')
+        emit('finish', { type: props.type, variables })
       } else {
         const msg = getFirstErrorMessage(errors)
         triggerNotification({

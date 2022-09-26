@@ -14,7 +14,7 @@ export const suggestion = {
       return undefined
     }
 
-    // Execute users() query
+    // Execute users search query
     const client = apolloProvider.defaultClient
     const { data } = await client.query({
       query: userSearchQuery,

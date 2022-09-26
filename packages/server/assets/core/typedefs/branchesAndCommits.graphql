@@ -13,6 +13,13 @@ extend type User {
   commits(limit: Int! = 25, cursor: String): CommitCollection
 }
 
+extend type LimitedUser {
+  """
+  Get public stream commits authored by the user
+  """
+  commits(limit: Int! = 25, cursor: String): CommitCollection
+}
+
 type Branch {
   id: String!
   name: String!

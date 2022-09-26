@@ -394,7 +394,8 @@ export default {
               data: {
                 ...cachedStream,
                 isPublic: isSuccessFul ? newIsPublic : !newIsPublic
-              }
+              },
+              overwrite: true
             })
           }
         })

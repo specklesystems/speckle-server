@@ -36,6 +36,28 @@ const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
+/**
+ * @param {boolean} publicOnly
+ * @param {string} userId
+ * @param {{limit: number, cursor: string}} args
+ * @returns
+ */
+const getUserCommits = async (publicOnly, userId, args) => {
+  const totalCount = await getCommitsTotalCountByUserId({ userId, publicOnly })
+  if (args.limit && args.limit > 100)
+    throw new UserInputError(
+      'Cannot return more than 100 items, please use pagination.'
+    )
+  const { commits: items, cursor } = await getCommitsByUserId({
+    userId,
+    limit: args.limit,
+    cursor: args.cursor,
+    publicOnly
+  })
+
+  return { items, cursor, totalCount }
+}
+
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
@@ -97,22 +119,14 @@ module.exports = {
       return c
     }
   },
+  LimitedUser: {
+    async commits(parent, args) {
+      return await getUserCommits(true, parent.id, args)
+    }
+  },
   User: {
     async commits(parent, args, context) {
-      const publicOnly = context.userId !== parent.id
-      const totalCount = await getCommitsTotalCountByUserId({ userId: parent.id })
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { commits: items, cursor } = await getCommitsByUserId({
-        userId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor,
-        publicOnly
-      })
-
-      return { items, cursor, totalCount }
+      return await getUserCommits(context.userId !== parent.id, parent.id, args)
     }
   },
   Branch: {

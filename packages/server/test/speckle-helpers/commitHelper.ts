@@ -59,3 +59,7 @@ export async function createTestCommits(commits: BasicTestCommit[]) {
     )
   )
 }
+
+export async function createTestCommit(commit: BasicTestCommit) {
+  await createTestCommits([commit])
+}

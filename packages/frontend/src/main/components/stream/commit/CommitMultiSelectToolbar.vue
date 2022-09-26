@@ -68,9 +68,9 @@ export default defineComponent({
       showDialog.value = true
       dialogType.value = BatchActionType.Delete
     }
-    const onFinish = () => {
+    const onFinish = (payload: unknown) => {
       clear()
-      emit('finish')
+      emit('finish', payload)
     }
 
     return { clear, count, showDialog, initMove, initDelete, onFinish, dialogType }

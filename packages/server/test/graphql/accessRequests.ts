@@ -1,6 +1,8 @@
 import {
   CreateStreamAccessRequestMutation,
   CreateStreamAccessRequestMutationVariables,
+  GetFullStreamAccessRequestQuery,
+  GetFullStreamAccessRequestQueryVariables,
   GetPendingStreamAccessRequestsQuery,
   GetPendingStreamAccessRequestsQueryVariables,
   GetStreamAccessRequestQuery,
@@ -38,6 +40,20 @@ const getStreamAccessRequestQuery = gql`
   query GetStreamAccessRequest($streamId: String!) {
     streamAccessRequest(streamId: $streamId) {
       ...BasicStreamAccessRequestFields
+    }
+  }
+
+  ${basicStreamAccessRequestFragment}
+`
+
+const getFullStreamAccessRequestQuery = gql`
+  query GetFullStreamAccessRequest($streamId: String!) {
+    streamAccessRequest(streamId: $streamId) {
+      ...BasicStreamAccessRequestFields
+      stream {
+        id
+        name
+      }
     }
   }
 
@@ -90,6 +106,15 @@ export const getStreamAccessRequest = (
     getStreamAccessRequestQuery,
     variables
   )
+
+export const getFullStreamAccessRequest = (
+  apollo: ApolloServer,
+  variables: GetFullStreamAccessRequestQueryVariables
+) =>
+  executeOperation<
+    GetFullStreamAccessRequestQuery,
+    GetFullStreamAccessRequestQueryVariables
+  >(apollo, getFullStreamAccessRequestQuery, variables)
 
 export const getPendingStreamAccessRequests = (
   apollo: ApolloServer,

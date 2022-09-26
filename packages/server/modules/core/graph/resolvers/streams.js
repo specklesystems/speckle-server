@@ -92,6 +92,19 @@ const _deleteStream = async (parent, args, context) => {
   return true
 }
 
+const getUserStreamsCore = async (forOtherUser, parent, args) => {
+  const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
+
+  const { cursor, streams } = await getUserStreams({
+    userId: parent.id,
+    limit: args.limit,
+    cursor: args.cursor,
+    forOtherUser
+  })
+
+  return { totalCount, cursor, items: streams }
+}
+
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
  */
@@ -187,16 +200,7 @@ module.exports = {
     async streams(parent, args, context) {
       // Return only the user's public streams if parent.id !== context.userId
       const forOtherUser = parent.id !== context.userId
-      const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
-
-      const { cursor, streams } = await getUserStreams({
-        userId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor,
-        forOtherUser
-      })
-
-      return { totalCount, cursor, items: streams }
+      return await getUserStreamsCore(forOtherUser, parent, args)
     },
 
     async favoriteStreams(parent, args, context) {
@@ -212,11 +216,18 @@ module.exports = {
 
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
-
       return await getOwnedFavoritesCount({ ctx, userId })
     }
   },
-
+  LimitedUser: {
+    async streams(parent, args) {
+      return await getUserStreamsCore(true, parent, args)
+    },
+    async totalOwnedStreamsFavorites(parent, _args, ctx) {
+      const { id: userId } = parent
+      return await getOwnedFavoritesCount({ ctx, userId })
+    }
+  },
   Mutation: {
     async streamCreate(parent, args, context) {
       if (

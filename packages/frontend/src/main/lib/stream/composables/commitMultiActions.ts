@@ -1,10 +1,8 @@
 import { SetupProps } from '@/helpers/typeHelpers'
+import { BatchActionType } from '@/main/lib/stream/services/commitMultiActions'
 import { ref, computed, SetupContext } from 'vue'
 
-export enum BatchActionType {
-  Move = 'move',
-  Delete = 'delete'
-}
+export { BatchActionType }
 
 /**
  * Composable for setting up commit multi-select & actions like delete, move etc.
