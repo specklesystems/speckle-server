@@ -42,7 +42,8 @@ export default class Sandbox {
       saoBlurRadius: 4,
       saoBlurStdDev: 4,
       saoBlurDepthCutoff: 0.0007
-    }
+    },
+    saoScaleOffset: 0
   }
 
   public static lightParams: SunLightConfiguration = {
@@ -364,6 +365,15 @@ export default class Sandbox {
     postFolder
       .addInput(Sandbox.postParams.saoParams, 'saoScale', {
         min: 0,
+        max: 100
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+    postFolder
+      .addInput(Sandbox.postParams, 'saoScaleOffset', {
+        min: -100,
         max: 100
       })
       .on('change', () => {

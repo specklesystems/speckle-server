@@ -14,7 +14,13 @@ import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredM
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Viewer } from '../Viewer'
-import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
+import {
+  AllBatchUpdateRange,
+  Batch,
+  BatchUpdateRange,
+  GeometryType,
+  HideAllBatchUpdateRange
+} from './Batch'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -64,6 +70,16 @@ export default class MeshBatch implements Batch {
       this.mesh.visible = false
       return
     }
+    if (
+      ranges.length === 1 &&
+      ranges[0].offset === AllBatchUpdateRange.offset &&
+      ranges[0].count === AllBatchUpdateRange.count
+    ) {
+      this.geometry.setDrawRange(0, this.getCount())
+      this.mesh.visible = true
+      return
+    }
+
     let minOffset = Infinity
     let maxOffset = 0
     ranges.forEach((range) => {
@@ -75,6 +91,14 @@ export default class MeshBatch implements Batch {
       minOffset,
       maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
     )
+  }
+
+  public getVisibleRange(): BatchUpdateRange {
+    if (this.geometry.groups.length === 0) return AllBatchUpdateRange
+    return {
+      offset: this.geometry.drawRange.start,
+      count: this.geometry.drawRange.count
+    }
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {

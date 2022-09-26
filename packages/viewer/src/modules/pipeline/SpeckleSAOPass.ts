@@ -1,7 +1,9 @@
 import {
+  Camera,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
+  Scene,
   ShaderMaterial,
   UniformsUtils,
   Vector2
@@ -12,6 +14,7 @@ import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShad
 import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
 import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
+import Batcher from '../batching/Batcher'
 
 /**
  * SAO implementation inspired from bhouston previous SAO work
@@ -21,16 +24,19 @@ export class SpeckleSAOPass extends SAOPass {
   private _oldClearColor
   private prevStdDev
   private prevNumSamples
+  private batcher: Batcher = null
 
   constructor(
-    scene,
-    camera,
+    scene: Scene,
+    camera: Camera,
+    batcher: Batcher,
     useDepthTexture = false,
     useNormals = false,
     resolution = new Vector2(256, 256)
   ) {
     super(scene, camera, useDepthTexture, useNormals, resolution)
 
+    this.batcher = batcher
     this.saoMaterial = new ShaderMaterial({
       defines: {
         NUM_SAMPLES: 7,
@@ -146,7 +152,10 @@ export class SpeckleSAOPass extends SAOPass {
     // renderer.setRenderTarget(this.beautyRenderTarget)
     // renderer.clear()
     // renderer.render(this.scene, this.camera)
-
+    const restoreVisibility = this.batcher.saveVisiblity()
+    const opaque = this.batcher.getOpaque()
+    // const transparent = this.batcher.getTransparent()
+    this.batcher.applyVisibility(opaque)
     // Re-render scene if depth texture extension is not supported
     if (!this.supportsDepthTextureExtension) {
       // Clear rule : far clipping plane in both RGBA and Basic encoding
@@ -169,6 +178,7 @@ export class SpeckleSAOPass extends SAOPass {
         1.0
       )
     }
+    this.batcher.applyVisibility(restoreVisibility)
 
     // Rendering SAO texture
     this.renderPass(renderer, this.saoMaterial, this.saoRenderTarget, 0xffffff, 1.0)

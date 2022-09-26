@@ -9,7 +9,13 @@ import {
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Viewer } from '../Viewer'
-import { Batch, BatchUpdateRange, GeometryType, HideAllBatchUpdateRange } from './Batch'
+import {
+  AllBatchUpdateRange,
+  Batch,
+  BatchUpdateRange,
+  GeometryType,
+  HideAllBatchUpdateRange
+} from './Batch'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -67,6 +73,11 @@ export default class PointBatch implements Batch {
       maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
     )
   }
+
+  public getVisibleRange() {
+    return AllBatchUpdateRange
+  }
+
   /**
    * This is the first version for multi draw ranges with automatic fill support
    * In the near future, we'll re-sort the index buffer so we minimize draw calls to

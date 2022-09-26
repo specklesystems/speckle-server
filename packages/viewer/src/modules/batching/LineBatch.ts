@@ -15,7 +15,7 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Viewer } from '../Viewer'
-import { Batch, BatchUpdateRange, GeometryType } from './Batch'
+import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
 
 export default class LineBatch implements Batch {
   public id: string
@@ -76,6 +76,11 @@ export default class LineBatch implements Batch {
     this.colorBuffer.needsUpdate = true
     this.geometry.attributes['instanceColorStart'].needsUpdate = true
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
+  }
+
+  public getVisibleRange() {
+    return AllBatchUpdateRange
+    // TO DO if required
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {

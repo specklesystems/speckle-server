@@ -143,7 +143,7 @@ export default class SpeckleRenderer {
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
-    this.pipeline = new Pipeline(this._renderer)
+    this.pipeline = new Pipeline(this._renderer, this.batcher)
     this.pipeline.configure(this.scene, this.viewer.cameraHandler.activeCam.camera)
     this.pipeline.pipelineOptions = DefaultPipelineOptions
 
@@ -274,6 +274,7 @@ export default class SpeckleRenderer {
   public render(camera: Camera) {
     this.batcher.render(this.renderer)
     this.pipeline.render(this.scene, camera)
+    // this.renderer.render(this.scene, camera)
   }
 
   public addRenderTree(subtreeId: string) {
