@@ -19,7 +19,7 @@ import { createCommitByBranchName } from '../services/commits'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import {
   addOrUpdateStreamCollaborator,
-  validateStreamAccess
+  isStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
@@ -27,7 +27,6 @@ import {
   buildUnauthenticatedApolloServer
 } from '@/test/serverHelper'
 import { getUserStreams, leaveStream } from '@/test/graphql/streams'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   BasicTestStream,
@@ -153,14 +152,6 @@ describe('Streams @core-streams', () => {
       )
     })
 
-    // it('Stream should show up in the other users` list', async () => {
-    //   const { streams: userTwoStreams } = await getUserStreams({ userId: userTwo.id })
-
-    //   expect(userTwoStreams).to.have.lengthOf(1)
-    //   expect(userTwoStreams[0]).to.have.property('role')
-    //   expect(userTwoStreams[0].role).to.equal('stream:contributor')
-    // })
-
     it('Should get the users with access to a stream', async () => {
       const users = await getStreamUsers({ streamId: testStream.id })
       expect(users).to.have.lengthOf(2)
@@ -207,17 +198,8 @@ describe('Streams @core-streams', () => {
       expect(errors).to.be.not.ok
       expect(data?.streamLeave).to.be.ok
 
-      let accessNotFound = false
-      await validateStreamAccess(userTwo.id, streamId, Roles.Stream.Reviewer).catch(
-        (e) => {
-          if (e instanceof StreamInvalidAccessError) {
-            accessNotFound = true
-          } else {
-            throw e
-          }
-        }
-      )
-      expect(accessNotFound).to.be.ok
+      const userIsCollaborator = await isStreamCollaborator(userTwo.id, streamId)
+      expect(userIsCollaborator).to.not.be.ok
     })
   })
 
