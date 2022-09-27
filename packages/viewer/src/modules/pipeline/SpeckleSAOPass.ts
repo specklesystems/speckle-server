@@ -104,6 +104,11 @@ export class SpeckleSAOPass extends SAOPass {
     this.saoMaterial.uniforms['cameraFar'].value = (
       this.camera as PerspectiveCamera | OrthographicCamera
     ).far
+    this.saoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
+      this.camera.projectionMatrixInverse
+    )
+    this.saoMaterial.uniforms['cameraProjectionMatrix'].value =
+      this.camera.projectionMatrix
     // this.saoMaterial.uniforms['randomSeed'].value = Math.random();
 
     const depthCutoff =
