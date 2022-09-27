@@ -135,10 +135,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public resize() {
-    this.speckleRenderer.renderer.setSize(
-      this.container.offsetWidth,
-      this.container.offsetHeight
-    )
+    this.speckleRenderer.resize(this.container.offsetWidth, this.container.offsetHeight)
     this.needsRender = true
   }
 

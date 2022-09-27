@@ -277,6 +277,11 @@ export default class SpeckleRenderer {
     // this.renderer.render(this.scene, camera)
   }
 
+  public resize(width: number, height: number) {
+    this.renderer.setSize(width, height)
+    this.pipeline.resize(width, height)
+  }
+
   public addRenderTree(subtreeId: string) {
     this.batcher.makeBatches(
       subtreeId,

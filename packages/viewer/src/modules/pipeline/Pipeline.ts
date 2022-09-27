@@ -1,4 +1,4 @@
-import { Camera, Scene, WebGLRenderer } from 'three'
+import { Camera, Scene, Vector2, WebGLRenderer } from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { SAOPass, SAOPassParams } from 'three/examples/jsm/postprocessing/SAOPass.js'
@@ -36,6 +36,7 @@ export class Pipeline {
   private renderPass: RenderPass = null
   private saoPass: SAOPass = null
   private applySaoPass: ApplySAOPass = null
+  private drawingSize: Vector2 = new Vector2()
 
   public set pipelineOptions(options: PipelineOptions) {
     Object.assign(this._pipelineOptions, options)
@@ -66,10 +67,17 @@ export class Pipeline {
   }
 
   public render(scene: Scene, camera: Camera) {
+    this._renderer.getDrawingBufferSize(this.drawingSize)
+    if (this.drawingSize.length() === 0) return
+
     this.renderPass.scene = scene
     this.renderPass.camera = camera
     this.saoPass.scene = scene
     this.saoPass.camera = camera
     this.composer.render()
+  }
+
+  public resize(width: number, height: number) {
+    this.composer.setSize(width, height)
   }
 }
