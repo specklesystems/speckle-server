@@ -82,7 +82,7 @@ sandbox.makeFilteringUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // Same sample revit house, local to dim's computer
@@ -103,4 +103,6 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
   //Car
   // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
+  // Jonathon's
+  'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
 )

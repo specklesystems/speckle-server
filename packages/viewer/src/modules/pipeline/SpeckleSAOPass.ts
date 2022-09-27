@@ -3,6 +3,7 @@ import {
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
+  RGBADepthPacking,
   Scene,
   ShaderMaterial,
   UniformsUtils,
@@ -15,6 +16,8 @@ import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
 import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
 import Batcher from '../batching/Batcher'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
+import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
 
 /**
  * SAO implementation inspired from bhouston previous SAO work
@@ -37,6 +40,18 @@ export class SpeckleSAOPass extends SAOPass {
     super(scene, camera, useDepthTexture, useNormals, resolution)
 
     this.batcher = batcher
+
+    this.depthMaterial = new SpeckleDepthMaterial(
+      {
+        depthPacking: RGBADepthPacking
+      },
+      ['USE_RTE', 'ALPHATEST_REJECTION']
+    )
+    this.depthMaterial.blending = NoBlending
+
+    this.normalMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
+    this.normalMaterial.blending = NoBlending
+
     this.saoMaterial = new ShaderMaterial({
       defines: {
         NUM_SAMPLES: 7,
