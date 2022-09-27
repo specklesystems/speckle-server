@@ -106,7 +106,7 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) continue
+      // if (batch.geometryType !== GeometryType.MESH) continue
       visibilityRanges[k] = batch.getVisibleRange()
     }
     return visibilityRanges
@@ -115,7 +115,7 @@ export default class Batcher {
   public applyVisibility(ranges: Record<string, BatchUpdateRange>) {
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) continue
+      // if (batch.geometryType !== GeometryType.MESH) continue
       const range = ranges[k]
       if (!range) {
         batch.setVisibleRange(HideAllBatchUpdateRange)
@@ -129,7 +129,10 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) continue
+      if (batch.geometryType !== GeometryType.MESH) {
+        visibilityRanges[k] = HideAllBatchUpdateRange
+        continue
+      }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
         if ((batchMesh.material as Material).transparent === true)
@@ -159,7 +162,10 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) continue
+      if (batch.geometryType !== GeometryType.MESH) {
+        visibilityRanges[k] = HideAllBatchUpdateRange
+        continue
+      }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
         if ((batchMesh.material as Material).transparent === false)

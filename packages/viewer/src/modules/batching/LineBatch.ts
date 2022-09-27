@@ -15,7 +15,13 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Viewer } from '../Viewer'
-import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
+import {
+  AllBatchUpdateRange,
+  Batch,
+  BatchUpdateRange,
+  GeometryType,
+  HideAllBatchUpdateRange
+} from './Batch'
 
 export default class LineBatch implements Batch {
   public id: string
@@ -58,6 +64,24 @@ export default class LineBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
+    if (
+      ranges.length === 1 &&
+      ranges[0].offset === HideAllBatchUpdateRange.offset &&
+      ranges[0].count === HideAllBatchUpdateRange.count
+    ) {
+      this.mesh.visible = false
+      return
+    }
+
+    if (
+      ranges.length === 1 &&
+      ranges[0].offset === AllBatchUpdateRange.offset &&
+      ranges[0].count === AllBatchUpdateRange.count
+    ) {
+      this.mesh.visible = true
+      return
+    }
+    this.mesh.visible = true
     const data = this.colorBuffer.array as number[]
     for (let k = 0; k < data.length; k += 4) {
       data[k + 3] = 0
@@ -123,6 +147,7 @@ export default class LineBatch implements Batch {
       material: this.batchMaterial
     })
     this.mesh.material = this.batchMaterial
+    this.mesh.visible = true
   }
 
   public buildBatch() {

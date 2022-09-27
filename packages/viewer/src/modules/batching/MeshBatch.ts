@@ -219,7 +219,7 @@ export default class MeshBatch implements Batch {
         b.materialIndex
       ]
       const visibleOrder = +materialB.visible - +materialA.visible
-      const transparentOrder = +materialB.transparent - +materialA.transparent
+      const transparentOrder = +materialA.transparent - +materialB.transparent
       if (visibleOrder !== 0) return visibleOrder
       return transparentOrder
     })
@@ -230,6 +230,19 @@ export default class MeshBatch implements Batch {
       }
       return previousValue
     }, materialOrder)
+
+    // if (materialOrder.length > 1) {
+    //   for (let m = 0; m < materialOrder.length; m++) {
+    //     if (!this.mesh.material[materialOrder[m]].visible)
+    //       console.log(
+    //         `Batch ${this.id} material: Hidden -> ${!this.mesh.material[
+    //           materialOrder[m]
+    //         ].visible}, Transparent -> ${
+    //           this.mesh.material[materialOrder[m]].transparent
+    //         }`
+    //       )
+    //   }
+    // }
 
     const grouped = []
     for (let k = 0; k < materialOrder.length; k++) {
