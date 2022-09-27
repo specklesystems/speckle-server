@@ -8,7 +8,9 @@ import {
   ReadStreamQueryVariables,
   ReadStreamQuery,
   ReadDiscoverableStreamsQueryVariables,
-  ReadDiscoverableStreamsQuery
+  ReadDiscoverableStreamsQuery,
+  GetUserStreamsQueryVariables,
+  GetUserStreamsQuery
 } from '@/test/graphql/generated/graphql'
 import { executeOperation } from '@/test/graphqlHelper'
 import { ApolloServer, gql } from 'apollo-server-express'
@@ -74,6 +76,22 @@ const readDiscoverableStreamsQuery = gql`
   ${basicStreamFieldsFragment}
 `
 
+const getUserStreamsQuery = gql`
+  query GetUserStreams($userId: String, $limit: Int! = 25, $cursor: String) {
+    user(id: $userId) {
+      streams(limit: $limit, cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...BasicStreamFields
+        }
+      }
+    }
+  }
+
+  ${basicStreamFieldsFragment}
+`
+
 export const leaveStream = (
   apollo: ApolloServer,
   variables: LeaveStreamMutationVariables
@@ -118,5 +136,15 @@ export const readDiscoverableStreams = (
   executeOperation<ReadDiscoverableStreamsQuery, ReadDiscoverableStreamsQueryVariables>(
     apollo,
     readDiscoverableStreamsQuery,
+    variables
+  )
+
+export const getUserStreams = (
+  apollo: ApolloServer,
+  variables: GetUserStreamsQueryVariables
+) =>
+  executeOperation<GetUserStreamsQuery, GetUserStreamsQueryVariables>(
+    apollo,
+    getUserStreamsQuery,
     variables
   )

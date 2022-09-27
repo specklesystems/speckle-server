@@ -52,15 +52,15 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
   if (!selectionInfo.multiple) multiSelectList.length = 0
 
-  const guids = multiSelectList.map((val) => val.guid)
+  const guids = multiSelectList.map((val) => val.hits[0].guid)
   if (
-    (selectionInfo.multiple && !guids.includes(selectionInfo.guid)) ||
+    (selectionInfo.multiple && !guids.includes(selectionInfo.hits[0].guid)) ||
     multiSelectList.length === 0
   ) {
     multiSelectList.push(selectionInfo)
   }
 
-  const ids = multiSelectList.map((val) => val.userData.id)
+  const ids = multiSelectList.map((val) => val.hits[0].object.id)
 
   await viewer.selectObjects(ids as string[])
 })
@@ -71,7 +71,7 @@ viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent)
     return
   }
 
-  viewer.zoom([selectionInfo.userData.id as string])
+  viewer.zoom([selectionInfo.hits[0].object.id as string])
 })
 
 sandbox.makeGenericUI()

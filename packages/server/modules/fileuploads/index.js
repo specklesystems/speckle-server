@@ -43,6 +43,11 @@ exports.init = async (app) => {
         request(
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
+            if (err) {
+              debug('speckle:error')(err.message)
+              res.status(500).send(err.message)
+              return
+            }
             if (response.statusCode === 201) {
               const { uploadResults } = JSON.parse(body)
               await saveFileUploads({

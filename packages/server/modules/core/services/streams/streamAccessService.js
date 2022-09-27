@@ -13,19 +13,39 @@ const {
   addStreamPermissionsRevokedActivity,
   addStreamInviteAcceptedActivity
 } = require('@/modules/activitystream/services/streamActivity')
+const { getStream } = require('@/modules/core/repositories/streams')
 
 /**
- * Validate that the user has the required permission level (or one above it) for the specified stream
+ * Check if user is a stream collaborator
  * @param {string} userId
  * @param {string} streamId
- * @param {string} expectedRole
+ * @returns
+ */
+async function isStreamCollaborator(userId, streamId) {
+  const stream = await getStream({ streamId, userId })
+  return !!stream.role
+}
+
+/**
+ * Validate that the user has the required permission level (or one above it) for the specified stream.
+ *
+ * Note: The access check can sometimes succeed even if the user being tested is a guest, e.g.
+ * if the stream is public and we're only looking for stream:reviewer or up. If you want to check
+ * that the target user is an actual collaborator, use isStreamCollaborator instead.
+ * @param {string} [userId] If falsy, will throw for non-public streams
+ * @param {string} streamId
+ * @param {string} [expectedRole] Defaults to reviewer
  * @returns {Promise<boolean>}
  */
 async function validateStreamAccess(userId, streamId, expectedRole) {
+  expectedRole = expectedRole || Roles.Stream.Reviewer
+
   const streamRoles = Object.values(Roles.Stream)
   if (!streamRoles.includes(expectedRole)) {
     throw new LogicError('Unexpected stream role')
   }
+
+  userId = userId || null
 
   try {
     await authorizeResolver(userId, streamId, expectedRole)
@@ -62,7 +82,7 @@ async function removeStreamCollaborator(streamId, userId, removedById) {
     await validateStreamAccess(removedById, streamId, Roles.Stream.Owner)
   } else {
     // User must have any kind of role to remove himself
-    await validateStreamAccess(removedById, streamId, Roles.Stream.Reviewer)
+    await isStreamCollaborator(userId, streamId)
   }
 
   await revokePermissionsStream({ streamId, userId })
@@ -133,5 +153,6 @@ async function addOrUpdateStreamCollaborator(
 module.exports = {
   validateStreamAccess,
   removeStreamCollaborator,
-  addOrUpdateStreamCollaborator
+  addOrUpdateStreamCollaborator,
+  isStreamCollaborator
 }

@@ -467,7 +467,7 @@ export default {
     },
     handleSelect(info) {
       this.expand = false
-      if (!info || !info.location) {
+      if (!info || !info.hits.length === 0) {
         this.visible = false
         this.location = null
         setIsAddingComment(false)
@@ -478,14 +478,14 @@ export default {
       this.visible = true
 
       const projectedLocation = new THREE.Vector3(
-        info.location.x,
-        info.location.y,
-        info.location.z
+        info.hits[0].point.x,
+        info.hits[0].point.y,
+        info.hits[0].point.z
       )
       this.location = new THREE.Vector3(
-        info.location.x,
-        info.location.y,
-        info.location.z
+        info.hits[0].point.x,
+        info.hits[0].point.y,
+        info.hits[0].point.z
       )
 
       const cam = this.viewer.cameraHandler.camera

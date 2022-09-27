@@ -1,7 +1,15 @@
 <template>
   <div>
+    <commit-multi-select-toolbar
+      v-if="hasSelectedCommits"
+      :selected-commit-ids="selectedCommitIds"
+      :stream-id="streamId"
+      :branch-name="branchName"
+      @clear="clearSelectedCommits"
+      @finish="onBatchCommitActionFinish"
+    />
     <branch-toolbar
-      v-if="canRenderToolbarPortal && stream && stream.branch"
+      v-else-if="canRenderToolbarPortal && stream && stream.branch"
       :stream="stream"
       @edit-branch="branchEditDialog = true"
     />
@@ -25,7 +33,7 @@
         </v-row>
         <v-row v-if="!listMode">
           <v-col
-            v-for="(commit, index) in allCommits"
+            v-for="commit in allCommits"
             :key="commit.id + 'card'"
             cols="12"
             sm="6"
@@ -35,7 +43,8 @@
             <commit-preview-card
               :commit="commit"
               :show-stream-and-branch="false"
-              :highlight="index === 0"
+              :allow-select="isStreamOwner || isCommitOwner(commit)"
+              :selected.sync="selectedCommitsState[commit.id]"
             />
           </v-col>
         </v-row>
@@ -43,13 +52,14 @@
           <v-col v-if="stream && stream.branch && listMode" cols="12" class="px-4">
             <v-list v-if="stream.branch.commits.items.length > 0" class="transparent">
               <list-item-commit
-                v-for="(item, index) in allCommits"
+                v-for="item in allCommits"
                 :key="item.id + 'list'"
                 :commit="item"
                 :stream-id="streamId"
+                :allow-select="isStreamOwner || isCommitOwner(item)"
+                :selected.sync="selectedCommitsState[item.id]"
                 show-received-receipts
                 class="mb-1 rounded"
-                :highlight="index === 0"
               ></list-item-commit>
             </v-list>
           </v-col>
@@ -100,14 +110,16 @@
 <script>
 import { gql } from '@apollo/client/core'
 import branchQuery from '@/graphql/branch.gql'
-import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
+import { STANDARD_PORTAL_KEYS, usePortalState } from '@/main/utils/portalStateManager'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
+import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
+import { Roles } from '@/helpers/mainConstants'
+import { useEventHub, useIsLoggedIn } from '@/main/lib/core/composables/core'
+import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 
 export default {
   name: 'TheBranch',
@@ -118,11 +130,31 @@ export default {
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     BranchEditDialog: () => import('@/main/dialogs/BranchEditDialog'),
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
-    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
+    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
+    CommitMultiSelectToolbar
   },
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-branch', 1)],
   setup() {
+    const eventHub = useEventHub()
+
     const route = useRoute()
+    const streamId = computed(() => route.params.streamId)
+    const branchName = computed(() => (route.params.branchName || '').toLowerCase())
+
+    const { canRenderToolbarPortal } = usePortalState(
+      [STANDARD_PORTAL_KEYS.Toolbar],
+      'stream-branch',
+      1
+    )
+
+    const { userId } = useIsLoggedIn()
+
+    const {
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState
+    } = useCommitMultiActions()
+
     const {
       result,
       fetchMore: streamFetchMore,
@@ -131,19 +163,41 @@ export default {
     } = useQuery(
       branchQuery,
       () => ({
-        streamId: route.params.streamId,
-        branchName: (route.params.branchName || '').toLowerCase(),
+        streamId: streamId.value,
+        branchName: branchName.value,
         cursor: null
       }),
       { fetchPolicy: 'network-only' }
     )
     const stream = computed(() => result.value?.stream)
 
+    const isStreamOwner = computed(() => stream.value.role === Roles.Stream.Owner)
+    const isCommitOwner = (commit) => userId.value && commit.authorId === userId.value
+
+    const onBatchCommitActionFinish = () => {
+      // refetch the main branch query
+      streamRefetch()
+
+      // refetch stream & branches
+      eventHub.$emit(StreamEvents.Refetch)
+      eventHub.$emit(StreamEvents.RefetchBranches)
+    }
+
     return {
       stream,
       streamFetchMore,
       streamRefetch,
-      streamLoading
+      streamLoading,
+      streamId,
+      branchName,
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState,
+      canRenderToolbarPortal,
+      isStreamOwner,
+      isCommitOwner,
+      onBatchCommitActionFinish
     }
   },
   data() {
@@ -209,9 +263,6 @@ export default {
     },
     loggedInUserId() {
       return AppLocalStorage.get('uuid')
-    },
-    streamId() {
-      return this.$route.params.streamId
     },
     latestCommitObjectUrl() {
       if ((this.stream?.branch?.commits?.items || []).length > 0)

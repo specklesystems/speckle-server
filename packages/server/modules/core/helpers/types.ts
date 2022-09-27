@@ -74,3 +74,34 @@ export type ServerInfo = ServerConfigRecord & {
    */
   version: string
 }
+
+export type CommitRecord = {
+  id: string
+  referencedObject: string
+  author: string
+  message: string
+  createdAt: Date
+  sourceApplication: Nullable<string>
+  totalChildrenCount: Nullable<number>
+  parents: Nullable<string>
+}
+
+export type BranchCommitRecord = {
+  branchId: string
+  commitId: string
+}
+
+export type StreamCommitRecord = {
+  streamId: string
+  commitId: string
+}
+
+export type BranchRecord = {
+  id: string
+  streamId: string
+  authorId: string
+  name: string
+  description: Nullable<string>
+  createdAt: Date
+  updatedAt: Date
+}

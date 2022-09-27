@@ -218,7 +218,8 @@ export default {
       selectionLocation: null,
       selectionCenter: null,
       users: [],
-      showBubbles: true
+      showBubbles: true,
+      otherUsersSelectedObjects: []
     }
   },
   watch: {
@@ -266,9 +267,15 @@ export default {
   },
   methods: {
     sendSelectionUpdate(selectionInfo) {
-      this.selectedIds = selectionInfo?.userData.id
-      this.selectionLocation = selectionInfo?.location
-      this.selectionCenter = selectionInfo?.selectionCenter
+      if (!selectionInfo) {
+        this.sendUpdateAndPrune()
+        return
+      }
+
+      const firstHit = selectionInfo?.hits[0]
+      this.selectedIds = firstHit.object.id
+      this.selectionLocation = firstHit.point
+      this.selectionCenter = firstHit.point
       this.sendUpdateAndPrune()
     },
     setUserPow(user) {
@@ -491,7 +498,18 @@ export default {
         uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
-      if (this.showBubbles) highlightObjects(selectedObjects)
+
+      selectedObjects.sort((a, b) => a.localeCompare(b))
+
+      const isSame =
+        JSON.stringify(selectedObjects) ===
+        JSON.stringify([...this.otherUsersSelectedObjects])
+
+      if (this.showBubbles && !isSame) {
+        highlightObjects(selectedObjects)
+      }
+
+      this.otherUsersSelectedObjects = selectedObjects
     }
   }
 }

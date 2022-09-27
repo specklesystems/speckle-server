@@ -99,13 +99,15 @@ export class FilteringManager {
   public unIsolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = true
+    includeDescendants = true,
+    ghost = true
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
       stateKey,
       Command.UNISOLATE,
-      includeDescendants
+      includeDescendants,
+      ghost
     )
   }
 
@@ -236,6 +238,7 @@ export class FilteringManager {
     this.ColorNumericFilterState.colorGroups = colorGroups
     this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
     this.ColorNumericFilterState.ghost = ghost
+    this.ColorNumericFilterState.matchingIds = matchingIds
     return this.setFilters()
   }
 
@@ -375,6 +378,8 @@ export class FilteringManager {
       returnState.passMax =
         this.ColorNumericFilterState.currentProp.passMax ||
         this.ColorNumericFilterState.currentProp.max
+
+      returnState.isolatedObjects = this.ColorNumericFilterState.matchingIds
     }
 
     const isShowHide =
@@ -413,17 +418,17 @@ export class FilteringManager {
       })
     }
 
-    if (this.SelectionState.rvs.length !== 0) {
-      this.Renderer.applyFilter(this.SelectionState.rvs, {
-        filterType: FilterMaterialType.SELECT
-      })
-    }
-
     if (this.HighlightState.rvs.length !== 0) {
       this.Renderer.applyFilter(this.HighlightState.rvs, {
         filterType: this.HighlightState.ghost
           ? FilterMaterialType.GHOST
           : FilterMaterialType.OVERLAY
+      })
+    }
+
+    if (this.SelectionState.rvs.length !== 0) {
+      this.Renderer.applyFilter(this.SelectionState.rvs, {
+        filterType: FilterMaterialType.SELECT
       })
     }
 
@@ -500,6 +505,7 @@ class ColorNumericFilterState {
   public nonMatchingRvs: NodeRenderView[]
   public colorGroups: ValueGroupColorItemNumericProps[]
   public ghost = true
+  public matchingIds: string[]
 }
 
 type ValueGroupColorItemNumericProps = {

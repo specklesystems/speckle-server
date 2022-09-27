@@ -25,12 +25,12 @@ export function useMixpanel(): OverridedMixpanel {
 }
 
 /**
- * Composable that resolves whether the user is logged in through an Apollo query
+ * Composable that resolves user auth information through an Apollo query
  */
 export function useIsLoggedIn() {
   const { result } = useQuery(IsLoggedInDocument)
-  const isLoggedIn = computed(() => !!result.value?.user?.id)
   const userId = computed(() => result.value?.user?.id)
+  const isLoggedIn = computed(() => !!userId.value)
   return { isLoggedIn, userId }
 }
 

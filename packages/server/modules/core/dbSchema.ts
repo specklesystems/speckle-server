@@ -96,6 +96,8 @@ function buildTableHelper<T extends string, C extends string>(
  *
  * Streams.with({...}) - configure helper, e.g. disable table name being prefixed to col names:
  * Streams.with({withoutTablePrefix: true}).col.id
+ *
+ * Streams.withoutTablePrefix.col.id - Shorthand for accessing columns without the table prefix
  */
 
 export const Streams = buildTableHelper('streams', [
@@ -239,5 +241,36 @@ export const UserNotificationPreferences = buildTableHelper(
   'user_notification_preferences',
   ['userId', 'preferences']
 )
+
+export const Commits = buildTableHelper('commits', [
+  'id',
+  'referencedObject',
+  'author',
+  'message',
+  'createdAt',
+  'sourceApplication',
+  'totalChildrenCount',
+  'parents'
+])
+
+export const StreamCommits = buildTableHelper('stream_commits', [
+  'streamId',
+  'commitId'
+])
+
+export const BranchCommits = buildTableHelper('branch_commits', [
+  'branchId',
+  'commitId'
+])
+
+export const Branches = buildTableHelper('branches', [
+  'id',
+  'streamId',
+  'authorId',
+  'name',
+  'description',
+  'createdAt',
+  'updatedAt'
+])
 
 export { knex }

@@ -166,7 +166,7 @@ export type BranchCommitsArgs = {
 export type BranchCollection = {
   __typename?: 'BranchCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<Branch>>>;
+  items?: Maybe<Array<Branch>>;
   totalCount: Scalars['Int'];
 };
 
@@ -290,6 +290,15 @@ export type Commit = {
   parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  /**
+   * Will throw an authorization error if active user isn't authorized to see it, for example,
+   * if a stream isn't public and the user doesn't have the appropriate rights.
+   */
+  stream: Stream;
+  /** @deprecated Use the stream field instead */
+  streamId?: Maybe<Scalars['String']>;
+  /** @deprecated Use the stream field instead */
+  streamName?: Maybe<Scalars['String']>;
   totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
@@ -305,40 +314,8 @@ export type CommitActivityArgs = {
 export type CommitCollection = {
   __typename?: 'CommitCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<Commit>>>;
+  items?: Maybe<Array<Commit>>;
   totalCount: Scalars['Int'];
-};
-
-export type CommitCollectionUser = {
-  __typename?: 'CommitCollectionUser';
-  cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<CommitCollectionUserNode>>>;
-  totalCount: Scalars['Int'];
-};
-
-export type CommitCollectionUserNode = {
-  __typename?: 'CommitCollectionUserNode';
-  branchName?: Maybe<Scalars['String']>;
-  /**
-   * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
-   * E.g.,
-   * ```
-   * query{
-   *   comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
-   *     ...
-   *   }
-   * ```
-   */
-  commentCount: Scalars['Int'];
-  createdAt?: Maybe<Scalars['DateTime']>;
-  id: Scalars['String'];
-  message?: Maybe<Scalars['String']>;
-  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
-  referencedObject: Scalars['String'];
-  sourceApplication?: Maybe<Scalars['String']>;
-  streamId?: Maybe<Scalars['String']>;
-  streamName?: Maybe<Scalars['String']>;
-  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 export type CommitCreateInput = {
@@ -346,8 +323,6 @@ export type CommitCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   objectId: Scalars['String'];
   parents?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
-  /** **DEPRECATED** Use the `parents` field. */
-  previousCommitIds?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
   sourceApplication?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
   totalChildrenCount?: InputMaybe<Scalars['Int']>;
@@ -386,6 +361,15 @@ export type CommitUpdateInput = {
   /** To move the commit to a different branch, please the name of the branch. */
   newBranchName?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+};
+
+export type CommitsDeleteInput = {
+  commitIds: Array<Scalars['String']>;
+};
+
+export type CommitsMoveInput = {
+  commitIds: Array<Scalars['String']>;
+  targetBranch: Scalars['String'];
 };
 
 export enum DiscoverableStreamsSortType {
@@ -467,6 +451,10 @@ export type Mutation = {
   commitDelete: Scalars['Boolean'];
   commitReceive: Scalars['Boolean'];
   commitUpdate: Scalars['Boolean'];
+  /** Delete a batch of commits */
+  commitsDelete: Scalars['Boolean'];
+  /** Move a batch of commits to a new branch */
+  commitsMove: Scalars['Boolean'];
   /** Delete a pending invite */
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
@@ -618,6 +606,16 @@ export type MutationCommitReceiveArgs = {
 
 export type MutationCommitUpdateArgs = {
   commit: CommitUpdateInput;
+};
+
+
+export type MutationCommitsDeleteArgs = {
+  input: CommitsDeleteInput;
+};
+
+
+export type MutationCommitsMoveArgs = {
+  input: CommitsMoveInput;
 };
 
 
@@ -893,7 +891,7 @@ export type Query = {
   serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
-   * to see it.
+   * to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
    */
   stream?: Maybe<Stream>;
   /** Get authed user's stream access request */
@@ -905,7 +903,10 @@ export type Query = {
   streamInvite?: Maybe<PendingStreamCollaborator>;
   /** Get all invitations to streams that the active user has */
   streamInvites: Array<PendingStreamCollaborator>;
-  /** All the streams of the current user, pass in the `query` parameter to search by name, description or ID. */
+  /**
+   * Returns all streams that the active user is a collaborator on.
+   * Pass in the `query` parameter to search by name, description or ID.
+   */
   streams?: Maybe<StreamCollection>;
   /** Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header). */
   user?: Maybe<User>;
@@ -1469,7 +1470,11 @@ export type User = {
   authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
-  commits?: Maybe<CommitCollectionUser>;
+  /**
+   * Get commits authored by the user. If requested for another user, then only commits
+   * from public streams will be returned.
+   */
+  commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<Maybe<ServerApp>>>;
@@ -1478,7 +1483,10 @@ export type User = {
    * and the user isn't an admin
    */
   email?: Maybe<Scalars['String']>;
-  /** All the streams that a user has favorited */
+  /**
+   * All the streams that a active user has favorited.
+   * Note: You can't use this to retrieve another user's favorite streams.
+   */
   favoriteStreams?: Maybe<StreamCollection>;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
@@ -1487,7 +1495,10 @@ export type User = {
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
-  /** All the streams that a user has access to. */
+  /**
+   * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
+   * authenticated user, then this will only return discoverable streams.
+   */
   streams?: Maybe<StreamCollection>;
   timeline?: Maybe<ActivityCollection>;
   /** Total amount of favorites attached to streams owned by the user */
@@ -1665,7 +1676,7 @@ export type StreamWithBranchQueryVariables = Exact<{
 }>;
 
 
-export type StreamWithBranchQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, branch?: { __typename?: 'Branch', id: string, name: string, description?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number } | null> | null } | null } | null } | null };
+export type StreamWithBranchQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, branch?: { __typename?: 'Branch', id: string, name: string, description?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number }> | null } | null } | null } | null };
 
 export type BranchCreatedSubscriptionVariables = Exact<{
   streamId: Scalars['String'];
@@ -1683,6 +1694,27 @@ export type StreamCommitQueryQueryVariables = Exact<{
 
 
 export type StreamCommitQueryQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, role?: string | null, commit?: { __typename?: 'Commit', id: string, message?: string | null, referencedObject: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, createdAt?: string | null, branchName?: string | null, sourceApplication?: string | null } | null } | null };
+
+export type StreamBranchesSelectorQueryVariables = Exact<{
+  streamId: Scalars['String'];
+}>;
+
+
+export type StreamBranchesSelectorQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, branches?: { __typename?: 'BranchCollection', items?: Array<{ __typename?: 'Branch', name: string }> | null } | null } | null };
+
+export type MoveCommitsMutationVariables = Exact<{
+  input: CommitsMoveInput;
+}>;
+
+
+export type MoveCommitsMutation = { __typename?: 'Mutation', commitsMove: boolean };
+
+export type DeleteCommitsMutationVariables = Exact<{
+  input: CommitsDeleteInput;
+}>;
+
+
+export type DeleteCommitsMutation = { __typename?: 'Mutation', commitsDelete: boolean };
 
 export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, streamId: string, createdAt: string };
 
@@ -1802,14 +1834,14 @@ export type StreamCommitsQueryVariables = Exact<{
 }>;
 
 
-export type StreamCommitsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, role?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, authorId?: string | null, authorName?: string | null, authorAvatar?: string | null, createdAt?: string | null, message?: string | null, referencedObject: string, branchName?: string | null, sourceApplication?: string | null } | null> | null } | null } | null };
+export type StreamCommitsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, role?: string | null, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, authorId?: string | null, authorName?: string | null, authorAvatar?: string | null, createdAt?: string | null, message?: string | null, referencedObject: string, branchName?: string | null, sourceApplication?: string | null }> | null } | null } | null };
 
 export type StreamsQueryVariables = Exact<{
   cursor?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type StreamsQuery = { __typename?: 'Query', streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: string, updatedAt: string, commentCount: number, favoritedDate?: string | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: string | null, message?: string | null, authorId?: string | null, branchName?: string | null, authorName?: string | null, authorAvatar?: string | null, referencedObject: string } | null> | null } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null };
+export type StreamsQuery = { __typename?: 'Query', streams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: string, updatedAt: string, commentCount: number, favoritedDate?: string | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: string | null, message?: string | null, authorId?: string | null, branchName?: string | null, authorName?: string | null, authorAvatar?: string | null, referencedObject: string }> | null } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null };
 
 export type CommonStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: string, updatedAt: string, commentCount: number, favoritedDate?: string | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null };
 
@@ -1854,7 +1886,7 @@ export type StreamFirstCommitQueryVariables = Exact<{
 }>;
 
 
-export type StreamFirstCommitQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, referencedObject: string } | null> | null } | null } | null };
+export type StreamFirstCommitQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, referencedObject: string }> | null } | null } | null };
 
 export type StreamBranchFirstCommitQueryVariables = Exact<{
   id: Scalars['String'];
@@ -1862,26 +1894,47 @@ export type StreamBranchFirstCommitQueryVariables = Exact<{
 }>;
 
 
-export type StreamBranchFirstCommitQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, branch?: { __typename?: 'Branch', commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, referencedObject: string } | null> | null } | null } | null } | null };
+export type StreamBranchFirstCommitQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, branch?: { __typename?: 'Branch', commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, referencedObject: string }> | null } | null } | null } | null };
 
-export type CommonUserFieldsFragment = { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: string | null } | null> | null } | null };
+export type StreamSettingsQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type StreamSettingsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null } | null };
+
+export type UpdateStreamSettingsMutationVariables = Exact<{
+  input: StreamUpdateInput;
+}>;
+
+
+export type UpdateStreamSettingsMutation = { __typename?: 'Mutation', streamUpdate: boolean };
+
+export type DeleteStreamMutationVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type DeleteStreamMutation = { __typename?: 'Mutation', streamDelete: boolean };
+
+export type CommonUserFieldsFragment = { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: string | null }> | null } | null };
 
 export type UserFavoriteStreamsQueryVariables = Exact<{
   cursor?: InputMaybe<Scalars['String']>;
 }>;
 
 
-export type UserFavoriteStreamsQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, favoriteStreams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: string, updatedAt: string, commentCount: number, favoritedDate?: string | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: string | null } | null> | null } | null } | null };
+export type UserFavoriteStreamsQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, favoriteStreams?: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, role?: string | null, isPublic: boolean, createdAt: string, updatedAt: string, commentCount: number, favoritedDate?: string | null, favoritesCount: number, collaborators: Array<{ __typename?: 'StreamCollaborator', id: string, name: string, company?: string | null, avatar?: string | null, role: string }>, commits?: { __typename?: 'CommitCollection', totalCount: number } | null, branches?: { __typename?: 'BranchCollection', totalCount: number } | null }> | null } | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: string | null }> | null } | null } | null };
 
 export type MainUserDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MainUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: string | null } | null> | null } | null } | null };
+export type MainUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: string | null }> | null } | null } | null };
 
 export type ExtraUserDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ExtraUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', totalOwnedStreamsFavorites: number, notificationPreferences: Record<string, unknown>, id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollectionUser', totalCount: number, items?: Array<{ __typename?: 'CommitCollectionUserNode', id: string, createdAt?: string | null } | null> | null } | null } | null };
+export type ExtraUserDataQuery = { __typename?: 'Query', user?: { __typename?: 'User', totalOwnedStreamsFavorites: number, notificationPreferences: Record<string, unknown>, id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, hasPendingVerification?: boolean | null, profiles?: Record<string, unknown> | null, role?: string | null, streams?: { __typename?: 'StreamCollection', totalCount: number } | null, commits?: { __typename?: 'CommitCollection', totalCount: number, items?: Array<{ __typename?: 'Commit', id: string, createdAt?: string | null }> | null } | null } | null };
 
 export type UserSearchQueryVariables = Exact<{
   query: Scalars['String'];
@@ -2180,6 +2233,7 @@ export const StreamWithBranch = gql`
   stream(id: $streamId) {
     id
     name
+    role
     branch(name: $branchName) {
       id
       name
@@ -2226,6 +2280,28 @@ export const StreamCommitQuery = gql`
       sourceApplication
     }
   }
+}
+    `;
+export const StreamBranchesSelector = gql`
+    query StreamBranchesSelector($streamId: String!) {
+  stream(id: $streamId) {
+    id
+    branches(limit: 100) {
+      items {
+        name
+      }
+    }
+  }
+}
+    `;
+export const MoveCommits = gql`
+    mutation MoveCommits($input: CommitsMoveInput!) {
+  commitsMove(input: $input)
+}
+    `;
+export const DeleteCommits = gql`
+    mutation DeleteCommits($input: CommitsDeleteInput!) {
+  commitsDelete(input: $input)
 }
     `;
 export const StreamInvite = gql`
@@ -2488,6 +2564,29 @@ export const StreamBranchFirstCommit = gql`
   }
 }
     `;
+export const StreamSettings = gql`
+    query StreamSettings($id: String!) {
+  stream(id: $id) {
+    id
+    name
+    description
+    isPublic
+    isDiscoverable
+    allowPublicComments
+    role
+  }
+}
+    `;
+export const UpdateStreamSettings = gql`
+    mutation UpdateStreamSettings($input: StreamUpdateInput!) {
+  streamUpdate(stream: $input)
+}
+    `;
+export const DeleteStream = gql`
+    mutation DeleteStream($id: String!) {
+  streamDelete(id: $id)
+}
+    `;
 export const UserFavoriteStreams = gql`
     query UserFavoriteStreams($cursor: String) {
   user {
@@ -2708,9 +2807,12 @@ export const CommonUserFieldsFragmentDoc = {"kind":"Document","definitions":[{"k
 export const GetStreamAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStreamAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamAccessRequest"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"}}]}}]}},...BasicStreamAccessRequestFieldsFragmentDoc.definitions]} as unknown as DocumentNode<GetStreamAccessRequestQuery, GetStreamAccessRequestQueryVariables>;
 export const CreateStreamAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateStreamAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamAccessRequestCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"}}]}}]}},...BasicStreamAccessRequestFieldsFragmentDoc.definitions]} as unknown as DocumentNode<CreateStreamAccessRequestMutation, CreateStreamAccessRequestMutationVariables>;
 export const UseStreamAccessRequestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UseStreamAccessRequest"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"requestId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"accept"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"role"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"StreamRole"}},"defaultValue":{"kind":"EnumValue","value":"STREAM_CONTRIBUTOR"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamAccessRequestUse"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"requestId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"requestId"}}},{"kind":"Argument","name":{"kind":"Name","value":"accept"},"value":{"kind":"Variable","name":{"kind":"Name","value":"accept"}}},{"kind":"Argument","name":{"kind":"Name","value":"role"},"value":{"kind":"Variable","name":{"kind":"Name","value":"role"}}}]}]}}]} as unknown as DocumentNode<UseStreamAccessRequestMutation, UseStreamAccessRequestMutationVariables>;
-export const StreamWithBranchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamWithBranch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"branch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"4"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"commentCount"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamWithBranchQuery, StreamWithBranchQueryVariables>;
+export const StreamWithBranchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamWithBranch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"branch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"4"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"commentCount"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamWithBranchQuery, StreamWithBranchQueryVariables>;
 export const BranchCreatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"BranchCreated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"branchCreated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}]}]}}]} as unknown as DocumentNode<BranchCreatedSubscription, BranchCreatedSubscriptionVariables>;
 export const StreamCommitQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamCommitQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"commit"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"branchName"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}}]}}]}}]}}]} as unknown as DocumentNode<StreamCommitQueryQuery, StreamCommitQueryQueryVariables>;
+export const StreamBranchesSelectorDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamBranchesSelector"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"branches"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"100"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamBranchesSelectorQuery, StreamBranchesSelectorQueryVariables>;
+export const MoveCommitsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MoveCommits"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CommitsMoveInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commitsMove"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<MoveCommitsMutation, MoveCommitsMutationVariables>;
+export const DeleteCommitsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteCommits"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CommitsDeleteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commitsDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<DeleteCommitsMutation, DeleteCommitsMutationVariables>;
 export const StreamInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInvite"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"UsersOwnInviteFields"}}]}}]}},...UsersOwnInviteFieldsFragmentDoc.definitions,...LimitedUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<StreamInviteQuery, StreamInviteQueryVariables>;
 export const UserStreamInvitesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserStreamInvites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInvites"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"UsersOwnInviteFields"}}]}}]}},...UsersOwnInviteFieldsFragmentDoc.definitions,...LimitedUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<UserStreamInvitesQuery, UserStreamInvitesQueryVariables>;
 export const UseStreamInviteDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UseStreamInvite"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"accept"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Boolean"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamInviteUse"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"accept"},"value":{"kind":"Variable","name":{"kind":"Name","value":"accept"}}},{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}},{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}]}]}}]} as unknown as DocumentNode<UseStreamInviteMutation, UseStreamInviteMutationVariables>;
@@ -2733,6 +2835,9 @@ export const LeaveStreamDocument = {"kind":"Document","definitions":[{"kind":"Op
 export const UpdateStreamPermissionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateStreamPermission"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"params"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StreamUpdatePermissionInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamUpdatePermission"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"permissionParams"},"value":{"kind":"Variable","name":{"kind":"Name","value":"params"}}}]}]}}]} as unknown as DocumentNode<UpdateStreamPermissionMutation, UpdateStreamPermissionMutationVariables>;
 export const StreamFirstCommitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamFirstCommit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamFirstCommitQuery, StreamFirstCommitQueryVariables>;
 export const StreamBranchFirstCommitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamBranchFirstCommit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"branch"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"branch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"branch"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<StreamBranchFirstCommitQuery, StreamBranchFirstCommitQueryVariables>;
+export const StreamSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"StreamSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"isPublic"}},{"kind":"Field","name":{"kind":"Name","value":"isDiscoverable"}},{"kind":"Field","name":{"kind":"Name","value":"allowPublicComments"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}}]} as unknown as DocumentNode<StreamSettingsQuery, StreamSettingsQueryVariables>;
+export const UpdateStreamSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateStreamSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StreamUpdateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamUpdate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"stream"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<UpdateStreamSettingsMutation, UpdateStreamSettingsMutationVariables>;
+export const DeleteStreamDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteStream"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"streamDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteStreamMutation, DeleteStreamMutationVariables>;
 export const UserFavoriteStreamsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserFavoriteStreams"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonUserFields"}},{"kind":"Field","name":{"kind":"Name","value":"favoriteStreams"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonStreamFields"}}]}}]}}]}}]}},...CommonUserFieldsFragmentDoc.definitions,...CommonStreamFieldsFragmentDoc.definitions]} as unknown as DocumentNode<UserFavoriteStreamsQuery, UserFavoriteStreamsQueryVariables>;
 export const MainUserDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MainUserData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonUserFields"}}]}}]}},...CommonUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<MainUserDataQuery, MainUserDataQueryVariables>;
 export const ExtraUserDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ExtraUserData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommonUserFields"}},{"kind":"Field","name":{"kind":"Name","value":"totalOwnedStreamsFavorites"}},{"kind":"Field","name":{"kind":"Name","value":"notificationPreferences"}}]}}]}},...CommonUserFieldsFragmentDoc.definitions]} as unknown as DocumentNode<ExtraUserDataQuery, ExtraUserDataQueryVariables>;
