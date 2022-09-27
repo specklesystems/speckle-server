@@ -1,4 +1,4 @@
-import { Camera, Scene, Vector2, WebGLRenderer } from 'three'
+import { Camera, Plane, Scene, Vector2, WebGLRenderer } from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { SAOPass, SAOPassParams } from 'three/examples/jsm/postprocessing/SAOPass.js'
@@ -64,6 +64,11 @@ export class Pipeline {
     this.applySaoPass = new ApplySAOPass(this.saoPass.saoRenderTarget.texture)
     this.applySaoPass.renderToScreen = true
     this.composer.addPass(this.applySaoPass)
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    this.saoPass.depthMaterial.clippingPlanes = planes
+    this.saoPass.normalMaterial.clippingPlanes = planes
   }
 
   public render(scene: Scene, camera: Camera) {

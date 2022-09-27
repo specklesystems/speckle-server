@@ -374,6 +374,7 @@ export default class SpeckleRenderer {
         }
       }
     })
+    this.pipeline.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
   }
 
