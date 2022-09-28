@@ -31,7 +31,6 @@ import {
   getUserStreams,
   leaveStream
 } from '@/test/graphql/streams'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   BasicTestStream,
