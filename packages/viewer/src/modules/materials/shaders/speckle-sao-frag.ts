@@ -48,13 +48,75 @@ export const speckleSaoFrag = /* glsl */ `
 			clipPosition *= clipW; // unprojection.
 			return ( cameraInverseProjectionMatrix * clipPosition ).xyz;
 		}
+
+		//https://wickedengine.net/2019/09/22/improved-normal-reconstruction-from-depth/
+		vec3 depth_cross(in vec2 uv, in vec3 origin)
+		{	
+			highp vec2 dd = abs(vec2(1./size.x, 1./size.y));
+			highp vec2 ddx = vec2(dd.x, 0.);
+			highp vec2 ddy = vec2(0., dd.y);
+
+			float sampleDepth = getDepth( uv - ddy );
+			float sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 top = getViewPosition( uv - ddy, sampleDepth, sampleViewZ );
+
+			sampleDepth = getDepth( uv + ddy );
+			sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 bottom = getViewPosition( uv + ddy, sampleDepth, sampleViewZ );
+
+			highp vec3 center = origin;
+			
+			sampleDepth = getDepth( uv - ddx );
+			sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 left = getViewPosition( uv - ddx, sampleDepth, sampleViewZ );
+
+			sampleDepth = getDepth( uv + ddx );
+			sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 right = getViewPosition( uv + ddx, sampleDepth, sampleViewZ );
+
+			highp float dx0 = abs(right.z - center.z);
+			highp float dx1 = abs(left.z - center.z);
+			highp float dy0 = abs(bottom.z - center.z);
+			highp float dy1 = abs(top.z - center.z);
+			
+			int best_Z_horizontal = dx0 < dx1 ? 1 : 2;
+			int best_Z_vertical = dy0 < dy1 ? 3 : 4;
+
+			vec3 P1, P2;
+			if (best_Z_horizontal == 1 && best_Z_vertical == 4)
+			{
+				P1 = right;
+				P2 = top;
+			}
+			else if (best_Z_horizontal == 1 && best_Z_vertical == 3)
+			{
+				P1 = bottom;
+				P2 = right;
+			}
+			else if (best_Z_horizontal == 2 && best_Z_vertical == 4)
+			{
+				P1 = top;
+				P2 = left;
+			}
+			else if (best_Z_horizontal == 2 && best_Z_vertical == 3)
+			{
+				P1 = left;
+				P2 = bottom;
+			}
+
+			return normalize(cross(P2 - center, P1 - center));
+		}
+
 		vec3 getViewNormal( const in vec3 viewPosition, const in vec2 screenPosition ) {
 			#if NORMAL_TEXTURE == 1
-			return unpackRGBToNormal( texture2D( tNormal, screenPosition ).xyz );
+				return unpackRGBToNormal( texture2D( tNormal, screenPosition ).xyz );
+			#elif IMPROVED_NORMAL_RECONSTRUCTION == 1
+				return depth_cross(screenPosition, viewPosition);
 			#else
-			return normalize( cross( dFdx( viewPosition ), dFdy( viewPosition ) ) );
+				return normalize( cross( dFdx( viewPosition ), dFdy( viewPosition ) ) );
 			#endif
 		}
+
 		float scaleDividedByCameraFar;
 		float minResolutionMultipliedByCameraFar;
 		float getOcclusion( const in vec3 centerViewPosition, const in vec3 centerViewNormal, const in vec3 sampleViewPosition ) {
@@ -103,4 +165,5 @@ export const speckleSaoFrag = /* glsl */ `
 			float ambientOcclusion = getAmbientOcclusion( viewPosition );
 			gl_FragColor = getDefaultColor( vUv );
 			gl_FragColor.xyz *=  1.0 - ambientOcclusion;
+			// gl_FragColor.xyz = depth_cross(vUv, viewPosition) * 0.5 + 0.5;
 		}`
