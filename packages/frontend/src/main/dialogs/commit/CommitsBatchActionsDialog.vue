@@ -8,14 +8,18 @@
         Deleting commits is an irrevocable action! If you are sure about wanting to
         delete the selected commits, please click on the button below!
       </template>
-      <template v-else-if="type === BatchActionType.Move">
+      <template
+        v-else-if="
+          type === BatchActionType.Move && supportsBranchScopedActions && streamId
+        "
+      >
         <div class="mb-4">
           Please select the target branch to move all of the selected commits to:
         </div>
         <branch-select
           v-model="targetBranch"
           :stream-id="streamId"
-          :excluded-names="[branchName]"
+          :excluded-names="branchName ? [branchName] : []"
         />
       </template>
     </template>
@@ -27,7 +31,9 @@
           Delete
         </v-btn>
       </template>
-      <template v-else-if="type === BatchActionType.Move">
+      <template
+        v-else-if="type === BatchActionType.Move && supportsBranchScopedActions"
+      >
         <v-btn color="primary" :disabled="moveDisabled" @click="moveCommits">
           Move
         </v-btn>
@@ -49,7 +55,7 @@ import {
   DeleteCommitsMutation,
   DeleteCommitsMutationVariables
 } from '@/graphql/generated/graphql'
-import { Nullable } from '@/helpers/typeHelpers'
+import { Nullable, Optional } from '@/helpers/typeHelpers'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
@@ -65,12 +71,12 @@ export default defineComponent({
   },
   props: {
     streamId: {
-      type: String,
-      required: true
+      type: String as PropType<Optional<string>>,
+      default: undefined
     },
     branchName: {
-      type: String,
-      required: true
+      type: String as PropType<Optional<string>>,
+      default: undefined
     },
     selectedCommitIds: {
       type: Array as PropType<string[]>,
@@ -88,6 +94,10 @@ export default defineComponent({
   setup(props, { emit }) {
     const apollo = useApolloClient().client
     const { triggerNotification } = useGlobalToast()
+
+    const supportsBranchScopedActions = computed(
+      () => props.streamId && props.branchName
+    )
 
     const targetBranch = ref(null as Nullable<string>)
     const loading = ref(false)
@@ -156,7 +166,7 @@ export default defineComponent({
 
     const moveCommits = async () => {
       await invokeAction<MoveCommitsMutation, MoveCommitsMutationVariables>({
-        shouldQuit: () => moveDisabled.value,
+        shouldQuit: () => !supportsBranchScopedActions.value || moveDisabled.value,
         getResult: (data) => data?.commitsMove,
         document: MoveCommitsDocument,
         variables: {
@@ -193,7 +203,8 @@ export default defineComponent({
       deleteCommits,
       targetBranch,
       moveDisabled,
-      deleteDisabled
+      deleteDisabled,
+      supportsBranchScopedActions
     }
   }
 })

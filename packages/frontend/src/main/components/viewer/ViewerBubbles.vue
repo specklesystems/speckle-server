@@ -218,7 +218,8 @@ export default {
       selectionLocation: null,
       selectionCenter: null,
       users: [],
-      showBubbles: true
+      showBubbles: true,
+      otherUsersSelectedObjects: []
     }
   },
   watch: {
@@ -497,7 +498,18 @@ export default {
         uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
-      if (this.showBubbles) highlightObjects(selectedObjects)
+
+      selectedObjects.sort((a, b) => a.localeCompare(b))
+
+      const isSame =
+        JSON.stringify(selectedObjects) ===
+        JSON.stringify([...this.otherUsersSelectedObjects])
+
+      if (this.showBubbles && !isSame) {
+        highlightObjects(selectedObjects)
+      }
+
+      this.otherUsersSelectedObjects = selectedObjects
     }
   }
 }

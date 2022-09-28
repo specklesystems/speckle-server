@@ -23,7 +23,6 @@ const {
   getCommitsTotalCountByBranchId
 } = require('../../services/commits')
 
-const { getStream } = require('../../services/streams')
 const { getUser } = require('../../services/users')
 
 const { respectsLimits } = require('../../services/ratelimits')
@@ -31,6 +30,10 @@ const {
   batchMoveCommits,
   batchDeleteCommits
 } = require('@/modules/core/services/commit/batchCommitActions')
+const {
+  validateStreamAccess
+} = require('@/modules/core/services/streams/streamAccessService')
+const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
@@ -40,6 +43,29 @@ const COMMIT_DELETED = 'COMMIT_DELETED'
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
+  Commit: {
+    async stream(parent, _args, ctx) {
+      const { id: commitId } = parent
+
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      if (!stream) {
+        throw new StreamInvalidAccessError('Commit stream not found')
+      }
+
+      await validateStreamAccess(ctx.userId, stream.id)
+      return stream
+    },
+    async streamId(parent, _args, ctx) {
+      const { id: commitId } = parent
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      return stream?.id || null
+    },
+    async streamName(parent, _args, ctx) {
+      const { id: commitId } = parent
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      return stream?.name || null
+    }
+  },
   Stream: {
     async commits(parent, args) {
       if (args.limit && args.limit > 100)
@@ -189,12 +215,7 @@ module.exports = {
     },
 
     async commitReceive(parent, args, context) {
-      // if stream is private, check if the user has access to it
-      const stream = await getStream({ streamId: args.input.streamId })
-
-      if (!stream.public) {
-        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
-      }
+      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
       await getCommitById({
         streamId: args.input.streamId,

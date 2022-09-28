@@ -18,6 +18,7 @@
             v-if="allowSelect"
             v-model="selectedState"
             dense
+            hide-details
             @change="onSelect"
           />
           <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
@@ -44,13 +45,13 @@
       </div>
       <v-divider v-if="showStreamAndBranch" />
       <div v-if="showStreamAndBranch" class="d-flex align-center caption px-5 py-2">
-        <div v-show="commit.streamName" class="text-truncate mr-2">
+        <div v-show="streamName" class="text-truncate mr-2">
           <router-link
             class="text-decoration-none d-inline-flex align-center"
             :to="`/streams/${streamId}`"
           >
             <v-icon x-small class="primary--text mr-2">mdi-folder-outline</v-icon>
-            {{ commit.streamName }}
+            {{ streamName }}
           </router-link>
         </div>
         <div class="text-right flex-grow-1 text-truncate">
@@ -85,6 +86,8 @@
   </v-hover>
 </template>
 <script>
+import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
+
 export default {
   components: {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
@@ -106,27 +109,22 @@ export default {
       default: false
     }
   },
+  setup(props, ctx) {
+    const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+
+    return { highlighted, selectedState, onSelect }
+  },
   computed: {
-    highlighted() {
-      return this.highlight || this.selected
-    },
     streamId() {
       return (
-        this.commit.streamId ?? this.$route.params.streamId ?? this.$route.query.stream
+        this.commit.streamId ||
+        this.commit.stream?.id ||
+        this.$route.params.streamId ||
+        this.$route.query.stream
       )
     },
-    selectedState: {
-      get() {
-        return this.selected
-      },
-      set(val) {
-        this.$emit('update:selected', !!val)
-      }
-    }
-  },
-  methods: {
-    onSelect() {
-      this.$emit('select', { value: this.selected })
+    streamName() {
+      return this.commit.streamName || this.commit.stream?.name
     }
   }
 }

@@ -84,7 +84,7 @@ function createCache(): InMemoryCache {
             },
             commits: {
               keyArgs: false,
-              merge: buildAbstractCollectionMergeFunction('CommitCollectionUser', {
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
                 checkIdentity: true
               })
             },
