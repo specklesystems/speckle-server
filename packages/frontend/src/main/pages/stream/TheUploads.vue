@@ -219,7 +219,7 @@ export default {
       this.dragover = false
       this.dragError = null
       for (const file of files) {
-        const extension = file.name.split('.')[1]
+        const extension = file.name.split('.').at(-1)
         if (
           !extension ||
           !['ifc', 'stl', 'obj', 'mtl'].includes(extension.toLowerCase())
