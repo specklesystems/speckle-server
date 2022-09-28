@@ -1,5 +1,6 @@
 import {
   Camera,
+  DoubleSide,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
@@ -48,9 +49,11 @@ export class SpeckleSAOPass extends SAOPass {
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
     this.depthMaterial.blending = NoBlending
+    this.depthMaterial.side = DoubleSide
 
     this.normalMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
     this.normalMaterial.blending = NoBlending
+    this.normalMaterial.side = DoubleSide
 
     this.saoMaterial = new ShaderMaterial({
       defines: {
