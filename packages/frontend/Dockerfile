@@ -3,7 +3,7 @@
 # build stage
 FROM node:16.15-bullseye-slim as build-stage
 ARG SPECKLE_SERVER_VERSION=custom
- 
+
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
@@ -26,13 +26,17 @@ COPY packages/frontend ./packages/frontend/
 RUN yarn workspaces foreach -pt run build
 
 # production stage
-
-
 FROM openresty/openresty:1.21.4.1-bullseye as production-stage
+
 COPY --from=build-stage /speckle-server/packages/frontend/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 
 COPY packages/frontend/nginx/ /etc/nginx/
+
+RUN apt-get update && \
+    apt-get install -y dos2unix && \
+    apt-get clean && \
+    dos2unix /etc/nginx/docker-entrypoint.sh
 
 # prepare the environment
 ENTRYPOINT ["/etc/nginx/docker-entrypoint.sh"]

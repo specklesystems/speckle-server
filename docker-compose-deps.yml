@@ -63,6 +63,9 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  minio-data:
   pgadmin-data:
   redis_insight-data:
-  minio-data:
+
+# run with
+# docker compose -f docker-compose-deps.yml up -d

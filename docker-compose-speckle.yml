@@ -79,3 +79,6 @@ services:
       S3_BUCKET: 'speckle-server'
 
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'
+
+# run with
+# docker compose -f docker-compose-speckle.yml up -d
