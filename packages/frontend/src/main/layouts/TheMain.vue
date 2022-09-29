@@ -5,7 +5,9 @@
       v-model="drawer"
       app
       floating
-      :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
+      :class="`main-nav-drawer grey ${
+        $vuetify.theme.dark ? 'darken-4' : 'lighten-4'
+      } elevation-1`"
       :width="navWidth"
       style="z-index: 100"
     >
