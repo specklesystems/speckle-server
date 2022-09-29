@@ -4,6 +4,7 @@ import { sendActivityNotifications } from '@/modules/activitystream/services/sum
 import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
 import { modulesDebug } from '@/modules/shared/utils/logger'
 import { publishNotification } from '@/modules/notifications/services/publication'
+import { scheduleExecution } from '@/modules/core/services/taskScheduler'
 
 const activitiesDebug = modulesDebug.extend('activities')
 
@@ -19,14 +20,17 @@ const scheduleWeeklyActivityNotifications = () => {
   const cronExpression = '00 13 * * 5'
   // configure the number of days, the activities are scraped for
   const numberOfDays = 7
-  cron.validate(cronExpression)
-  return cron.schedule(cronExpression, async () => {
-    activitiesDebug('Sending weekly activity digests notifications.')
-    const end = new Date()
-    const start = new Date(end.getTime())
-    start.setDate(start.getDate() - numberOfDays)
-    await sendActivityNotifications(start, end, publishNotification)
-  })
+  return scheduleExecution(
+    cronExpression,
+    'weeklyActivityNotification',
+    async (now: Date) => {
+      activitiesDebug('Sending weekly activity digests notifications.')
+      const end = now
+      const start = new Date(end.getTime())
+      start.setDate(start.getDate() - numberOfDays)
+      await sendActivityNotifications(start, end, publishNotification)
+    }
+  )
 }
 
 const activityModule: SpeckleModule = {
