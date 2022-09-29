@@ -1,21 +1,22 @@
 import { Camera, Plane, Scene, Vector2, WebGLRenderer } from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { SAOPass, SAOPassParams } from 'three/examples/jsm/postprocessing/SAOPass.js'
+import { SAOPassParams } from 'three/examples/jsm/postprocessing/SAOPass.js'
 import Batcher from '../batching/Batcher'
 import { ApplySAOPass } from './ApplySAOPass'
-import { SpeckleSAOPass } from './SpeckleSAOPass'
+import { NormalsType, SpeckleSAOPass } from './SpeckleSAOPass'
 
 export interface PipelineOptions {
   saoEnabled?: boolean
   saoParams?: Partial<SAOPassParams>
   saoScaleOffset?: number
+  saoNormalsRendering?: NormalsType
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
   saoEnabled: true,
   saoParams: {
-    saoBias: 0,
+    saoBias: 0.15,
     saoIntensity: 1.25,
     saoScale: 434,
     saoKernelRadius: 10,
@@ -25,7 +26,8 @@ export const DefaultPipelineOptions: PipelineOptions = {
     saoBlurStdDev: 4,
     saoBlurDepthCutoff: 0.0007
   },
-  saoScaleOffset: 0
+  saoScaleOffset: 0,
+  saoNormalsRendering: NormalsType.IMPROVED
 }
 
 export class Pipeline {
@@ -34,7 +36,7 @@ export class Pipeline {
   private _pipelineOptions: PipelineOptions = {}
   private composer: EffectComposer = null
   private renderPass: RenderPass = null
-  private saoPass: SAOPass = null
+  private saoPass: SpeckleSAOPass = null
   private applySaoPass: ApplySAOPass = null
   private drawingSize: Vector2 = new Vector2()
 
@@ -44,6 +46,7 @@ export class Pipeline {
       this.applySaoPass.enabled = this._pipelineOptions.saoEnabled
       Object.assign(this.saoPass.params, this._pipelineOptions.saoParams)
       this.saoPass.params.saoScale += this._pipelineOptions.saoScaleOffset
+      this.saoPass.normalsRendering = this._pipelineOptions.saoNormalsRendering
     }
   }
 
@@ -56,7 +59,13 @@ export class Pipeline {
   }
 
   public configure(scene: Scene, camera: Camera) {
-    this.saoPass = new SpeckleSAOPass(scene, camera, this._batcher, false, true)
+    this.saoPass = new SpeckleSAOPass(
+      scene,
+      camera,
+      this._batcher,
+      false,
+      NormalsType.IMPROVED
+    )
     this.composer.addPass(this.saoPass)
     this.renderPass = new RenderPass(scene, camera)
     this.renderPass.renderToScreen = true

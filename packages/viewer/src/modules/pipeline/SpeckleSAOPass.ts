@@ -20,6 +20,11 @@ import Batcher from '../batching/Batcher'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
 
+export enum NormalsType {
+  DEFAULT = 0,
+  IMPROVED = 1
+}
+
 /**
  * SAO implementation inspired from bhouston previous SAO work
  */
@@ -29,16 +34,26 @@ export class SpeckleSAOPass extends SAOPass {
   private prevStdDev
   private prevNumSamples
   private batcher: Batcher = null
+  private normalsType: NormalsType = NormalsType.IMPROVED
+
+  public set normalsRendering(type: NormalsType) {
+    this.normalsType = type
+    this.saoMaterial.defines['NORMAL_TEXTURE'] =
+      this.normalsType === NormalsType.DEFAULT ? 1 : 0
+    this.saoMaterial.defines['IMPROVED_NORMAL_RECONSTRUCTION'] =
+      this.normalsType === NormalsType.IMPROVED ? 1 : 0
+    this.saoMaterial.needsUpdate = true
+  }
 
   constructor(
     scene: Scene,
     camera: Camera,
     batcher: Batcher,
     useDepthTexture = false,
-    useNormals = false,
+    normalsType: NormalsType,
     resolution = new Vector2(256, 256)
   ) {
-    super(scene, camera, useDepthTexture, useNormals, resolution)
+    super(scene, camera, useDepthTexture, true, resolution)
 
     this.batcher = batcher
 
@@ -68,11 +83,11 @@ export class SpeckleSAOPass extends SAOPass {
       vertexShader: speckleSaoVert,
       uniforms: UniformsUtils.clone(SAOShader.uniforms)
     })
+    this.normalsRendering = normalsType
     this.saoMaterial.extensions.derivatives = true
     this.saoMaterial.defines['DEPTH_PACKING'] = this.supportsDepthTextureExtension
       ? 0
       : 1
-    this.saoMaterial.defines['NORMAL_TEXTURE'] = this.supportsNormalTexture ? 1 : 0
     this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (this.camera as PerspectiveCamera)
       .isPerspectiveCamera
       ? 1
@@ -90,14 +105,7 @@ export class SpeckleSAOPass extends SAOPass {
     this.saoMaterial.blending = NoBlending
   }
 
-  render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {
-    // Rendering readBuffer first when rendering to screen
-    // if (this.renderToScreen) {
-    //   this.materialCopy.blending = NoBlending
-    //   this.materialCopy.uniforms['tDiffuse'].value = readBuffer.texture
-    //   this.materialCopy.needsUpdate = true
-    //   this.renderPass(renderer, this.materialCopy, null)
-    // }
+  public render(renderer, writeBuffer, readBuffer) {
     writeBuffer
     readBuffer
     if (this.params.output === 1) {
@@ -170,14 +178,8 @@ export class SpeckleSAOPass extends SAOPass {
       this.prevNumSamples = this.params.saoBlurRadius
     }
 
-    // Rendering scene to depth texture
-    // renderer.setClearColor(0x000000)
-    // renderer.setRenderTarget(this.beautyRenderTarget)
-    // renderer.clear()
-    // renderer.render(this.scene, this.camera)
     const restoreVisibility = this.batcher.saveVisiblity()
     const opaque = this.batcher.getOpaque()
-    // const transparent = this.batcher.getTransparent()
     this.batcher.applyVisibility(opaque)
     // Re-render scene if depth texture extension is not supported
     if (!this.supportsDepthTextureExtension) {
@@ -191,15 +193,17 @@ export class SpeckleSAOPass extends SAOPass {
       )
     }
 
-    if (this.supportsNormalTexture) {
-      // Clear rule : default normal is facing the camera
-      this.renderOverride(
-        renderer,
-        this.normalMaterial,
-        this.normalRenderTarget,
-        0x7777ff,
-        1.0
-      )
+    if (this.normalsType === NormalsType.DEFAULT) {
+      if (this.supportsNormalTexture) {
+        // Clear rule : default normal is facing the camera
+        this.renderOverride(
+          renderer,
+          this.normalMaterial,
+          this.normalRenderTarget,
+          0x7777ff,
+          1.0
+        )
+      }
     }
     this.batcher.applyVisibility(restoreVisibility)
 
@@ -217,42 +221,9 @@ export class SpeckleSAOPass extends SAOPass {
       )
       this.renderPass(renderer, this.hBlurMaterial, this.saoRenderTarget, 0xffffff, 1.0)
     }
-
-    // let outputMaterial = this.materialCopy
-    // // Setting up SAO rendering
-    // if (this.params.output === 3) {
-    //   if (this.supportsDepthTextureExtension) {
-    //     this.materialCopy.uniforms['tDiffuse'].value =
-    //       this.beautyRenderTarget.depthTexture
-    //     this.materialCopy.needsUpdate = true
-    //   } else {
-    //     this.depthCopy.uniforms['tDiffuse'].value = this.depthRenderTarget.texture
-    //     this.depthCopy.needsUpdate = true
-    //     outputMaterial = this.depthCopy
-    //   }
-    // } else if (this.params.output === 4) {
-    //   this.materialCopy.uniforms['tDiffuse'].value = this.normalRenderTarget.texture
-    //   this.materialCopy.needsUpdate = true
-    // } else {
-    //   this.materialCopy.uniforms['tDiffuse'].value = this.saoRenderTarget.texture
-    //   this.materialCopy.needsUpdate = true
-    // }
-
-    // // Blending depends on output, only want a CustomBlending when showing SAO
-    // if (this.params.output === 0) {
-    //   outputMaterial.blending = CustomBlending
-    // } else {
-    //   outputMaterial.blending = NoBlending
-    // }
-
-    // // Rendering SAOPass result on top of previous pass
-    // // this.renderPass(renderer, outputMaterial, this.renderToScreen ? null : readBuffer)
-
-    // renderer.setClearColor(this._oldClearColor, this.oldClearAlpha)
-    // renderer.autoClear = oldAutoClear
   }
 
-  renderPass(
+  public renderPass(
     renderer,
     passMaterial,
     renderTarget,
@@ -283,7 +254,13 @@ export class SpeckleSAOPass extends SAOPass {
     renderer.setClearAlpha(originalClearAlpha)
   }
 
-  renderOverride(renderer, overrideMaterial, renderTarget, clearColor, clearAlpha) {
+  public renderOverride(
+    renderer,
+    overrideMaterial,
+    renderTarget,
+    clearColor,
+    clearAlpha
+  ) {
     renderer.getClearColor(this.originalClearColor)
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
