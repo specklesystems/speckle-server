@@ -263,13 +263,17 @@ module.exports = {
         'commits.createdAt',
         { branchName: 'branches.name' },
         { streamId: 'stream_commits.streamId' },
-        { streamName: 'streams.name' }
+        { streamName: 'streams.name' },
+        { authorName: 'users.name' },
+        { authorId: 'users.id' },
+        { authorAvatar: 'users.avatar' }
       ])
       .select()
       .join('stream_commits', 'commits.id', 'stream_commits.commitId')
       .join('streams', 'stream_commits.streamId', 'streams.id')
       .join('branch_commits', 'commits.id', 'branch_commits.commitId')
       .join('branches', 'branches.id', 'branch_commits.branchId')
+      .leftJoin('users', 'commits.author', 'users.id')
       .where('author', userId)
 
     if (publicOnly) query.andWhere('streams.isPublic', true)

@@ -99,13 +99,15 @@ export class FilteringManager {
   public unIsolateObjects(
     objectIds: string[],
     stateKey: string = null,
-    includeDescendants = true
+    includeDescendants = true,
+    ghost = true
   ): FilteringState {
     return this.setVisibilityState(
       objectIds,
       stateKey,
       Command.UNISOLATE,
-      includeDescendants
+      includeDescendants,
+      ghost
     )
   }
 
@@ -416,17 +418,17 @@ export class FilteringManager {
       })
     }
 
-    if (this.SelectionState.rvs.length !== 0) {
-      this.Renderer.applyFilter(this.SelectionState.rvs, {
-        filterType: FilterMaterialType.SELECT
-      })
-    }
-
     if (this.HighlightState.rvs.length !== 0) {
       this.Renderer.applyFilter(this.HighlightState.rvs, {
         filterType: this.HighlightState.ghost
           ? FilterMaterialType.GHOST
           : FilterMaterialType.OVERLAY
+      })
+    }
+
+    if (this.SelectionState.rvs.length !== 0) {
+      this.Renderer.applyFilter(this.SelectionState.rvs, {
+        filterType: FilterMaterialType.SELECT
       })
     }
 

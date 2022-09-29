@@ -52,13 +52,14 @@
           <v-col v-if="stream && stream.branch && listMode" cols="12" class="px-4">
             <v-list v-if="stream.branch.commits.items.length > 0" class="transparent">
               <list-item-commit
-                v-for="(item, index) in allCommits"
+                v-for="item in allCommits"
                 :key="item.id + 'list'"
                 :commit="item"
                 :stream-id="streamId"
+                :allow-select="isStreamOwner || isCommitOwner(item)"
+                :selected.sync="selectedCommitsState[item.id]"
                 show-received-receipts
                 class="mb-1 rounded"
-                :highlight="index === 0"
               ></list-item-commit>
             </v-list>
           </v-col>
