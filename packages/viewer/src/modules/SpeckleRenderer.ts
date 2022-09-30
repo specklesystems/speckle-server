@@ -265,8 +265,10 @@ export default class SpeckleRenderer {
     d = Math.max(camPos.distanceTo(v), d)
     v.set(box.max.x, box.max.y, box.max.z) // 111
     d = Math.max(camPos.distanceTo(v), d)
+    this.viewer.cameraHandler.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
+    this.viewer.cameraHandler.camera.updateProjectionMatrix()
     this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
     // console.log(d)
   }
@@ -674,9 +676,9 @@ export default class SpeckleRenderer {
 
     this.viewer.cameraHandler.controls.minDistance = distance / 100
     this.viewer.cameraHandler.controls.maxDistance = distance * 100
-    this.viewer.cameraHandler.camera.near = distance / 100
-    this.viewer.cameraHandler.camera.far = distance * 100
-    this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    // this.viewer.cameraHandler.camera.near = distance / 100
+    // this.viewer.cameraHandler.camera.far = distance * 100
+    // this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     if (this.viewer.cameraHandler.activeCam.name === 'ortho') {
       this.viewer.cameraHandler.orthoCamera.far = distance * 100

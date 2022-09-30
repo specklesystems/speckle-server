@@ -50,7 +50,7 @@ export const speckleSaoFrag = /* glsl */ `
 		}
 
 		//https://wickedengine.net/2019/09/22/improved-normal-reconstruction-from-depth/
-		vec3 depth_cross(in vec2 uv, in vec3 origin)
+		vec3 viewNormalImproved(in vec2 uv, in vec3 origin)
 		{	
 			highp vec2 dd = abs(vec2(1./size.x, 1./size.y));
 			highp vec2 ddx = vec2(dd.x, 0.);
@@ -74,44 +74,91 @@ export const speckleSaoFrag = /* glsl */ `
 			sampleViewZ = getViewZ( sampleDepth );
 			highp vec3 right = getViewPosition( uv + ddx, sampleDepth, sampleViewZ );
 
-			highp float dx0 = abs(right.z - center.z);
-			highp float dx1 = abs(left.z - center.z);
-			highp float dy0 = abs(bottom.z - center.z);
-			highp float dy1 = abs(top.z - center.z);
-			
-			int best_Z_horizontal = dx0 < dx1 ? 1 : 2;
-			int best_Z_vertical = dy0 < dy1 ? 3 : 4;
+			 // get the difference between the current and each offset position
+			vec3 l = center - left;
+			vec3 r = right - center;
+			vec3 d = center - top;
+			vec3 u = bottom - center;
 
-			vec3 P1, P2;
-			if (best_Z_horizontal == 1 && best_Z_vertical == 4)
-			{
-				P1 = right;
-				P2 = top;
-			}
-			else if (best_Z_horizontal == 1 && best_Z_vertical == 3)
-			{
-				P1 = bottom;
-				P2 = right;
-			}
-			else if (best_Z_horizontal == 2 && best_Z_vertical == 4)
-			{
-				P1 = top;
-				P2 = left;
-			}
-			else if (best_Z_horizontal == 2 && best_Z_vertical == 3)
-			{
-				P1 = left;
-				P2 = bottom;
-			}
+			// pick horizontal and vertical diff with the smallest z difference
+			vec3 hDeriv = abs(l.z) < abs(r.z) ? l : r;
+			vec3 vDeriv = abs(d.z) < abs(u.z) ? d : u;
 
-			return normalize(cross(P2 - center, P1 - center));
+			// get view space normal from the cross product of the two smallest offsets
+			vec3 viewNormal = normalize(cross(hDeriv, vDeriv));
+
+			return viewNormal;
 		}
 
-		vec3 getViewNormal( const in vec3 viewPosition, const in vec2 screenPosition ) {
+		vec3 viewNormalAccurate(in vec2 uv, in vec3 origin, in float centerDepth) {
+			highp vec2 dd = abs(vec2(1./size.x, 1./size.y));
+			highp vec2 ddx = vec2(dd.x, 0.);
+			highp vec2 ddy = vec2(0., dd.y);
+
+			float sampleDepth = getDepth( uv - ddy );
+			float sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 top = getViewPosition( uv - ddy, sampleDepth, sampleViewZ );
+
+			sampleDepth = getDepth( uv + ddy );
+			sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 bottom = getViewPosition( uv + ddy, sampleDepth, sampleViewZ );
+
+			highp vec3 center = origin;
+			
+			sampleDepth = getDepth( uv - ddx );
+			sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 left = getViewPosition( uv - ddx, sampleDepth, sampleViewZ );
+
+			sampleDepth = getDepth( uv + ddx );
+			sampleViewZ = getViewZ( sampleDepth );
+			highp vec3 right = getViewPosition( uv + ddx, sampleDepth, sampleViewZ );
+
+			 // get the difference between the current and each offset position
+			vec3 l = center - left;
+			vec3 r = right - center;
+			vec3 d = center - top;
+			vec3 u = bottom - center;
+
+			// get depth values at 1 & 2 pixels offsets from current along the horizontal axis
+			vec4 H = vec4(
+				getDepth(uv - ddx),
+				getDepth(uv + ddx),
+				getDepth(uv - 2. * ddx),
+				getDepth(uv + 2. * ddx)
+			);
+
+			// get depth values at 1 & 2 pixels offsets from current along the vertical axis
+			vec4 V = vec4(
+				getDepth(uv - ddy),
+				getDepth(uv + ddy),
+				getDepth(uv - 2. * ddy),
+				getDepth(uv + 2. * ddy)
+			);
+
+			// current pixel's depth difference from slope of offset depth samples
+			// differs from original article because we're using non-linear depth values
+			// see article's comments
+			vec2 he = abs((2. * H.xy - H.zw) - centerDepth);
+			vec2 ve = abs((2. * V.xy - V.zw) - centerDepth);
+
+			// pick horizontal and vertical diff with the smallest depth difference from slopes
+			vec3 hDeriv = he.x < he.y ? l : r;
+			vec3 vDeriv = ve.x < ve.y ? d : u;
+
+			// get view space normal from the cross product of the best derivatives
+			vec3 viewNormal = normalize(cross(hDeriv, vDeriv));
+
+			return viewNormal;
+
+		}
+
+		vec3 getViewNormal( const in vec3 viewPosition, const in vec2 screenPosition, in float centerDepth ) {
 			#if NORMAL_TEXTURE == 1
 				return unpackRGBToNormal( texture2D( tNormal, screenPosition ).xyz );
 			#elif IMPROVED_NORMAL_RECONSTRUCTION == 1
-				return depth_cross(screenPosition, viewPosition);
+				return viewNormalImproved(screenPosition, viewPosition);
+			#elif ACCURATE_NORMAL_RECONSTRUCTION == 1
+				return viewNormalAccurate(screenPosition, viewPosition, centerDepth);
 			#else
 				return normalize( cross( dFdx( viewPosition ), dFdy( viewPosition ) ) );
 			#endif
@@ -128,11 +175,11 @@ export const speckleSaoFrag = /* glsl */ `
 		// moving costly divides into consts
 		const float ANGLE_STEP = PI2 * float( NUM_RINGS ) / float( NUM_SAMPLES );
 		const float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
-		float getAmbientOcclusion( const in vec3 centerViewPosition ) {
+		float getAmbientOcclusion( const in vec3 centerViewPosition, in float centerDepth ) {
 			// precompute some variables require in getOcclusion.
 			scaleDividedByCameraFar = scale / cameraFar;
 			minResolutionMultipliedByCameraFar = minResolution * cameraFar;
-			vec3 centerViewNormal = getViewNormal( centerViewPosition, vUv );
+			vec3 centerViewNormal = getViewNormal( centerViewPosition, vUv, centerDepth );
 			// jsfiddle that shows sample pattern: https://jsfiddle.net/a16ff1p7/
 			float angle = rand( vUv + randomSeed ) * PI2;
 			vec2 radius = vec2( kernelRadius * INV_NUM_SAMPLES ) / size;
@@ -162,7 +209,7 @@ export const speckleSaoFrag = /* glsl */ `
 			}
 			float centerViewZ = getViewZ( centerDepth );
 			vec3 viewPosition = getViewPosition( vUv, centerDepth, centerViewZ );
-			float ambientOcclusion = getAmbientOcclusion( viewPosition );
+			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
 			gl_FragColor.xyz *=  1.0 - ambientOcclusion;
 			// gl_FragColor.xyz = depth_cross(vUv, viewPosition) * 0.5 + 0.5;

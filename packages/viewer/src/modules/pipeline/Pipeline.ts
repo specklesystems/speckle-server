@@ -27,7 +27,7 @@ export const DefaultPipelineOptions: PipelineOptions = {
     saoBlurDepthCutoff: 0.0007
   },
   saoScaleOffset: 0,
-  saoNormalsRendering: NormalsType.IMPROVED
+  saoNormalsRendering: NormalsType.ACCURATE
 }
 
 export class Pipeline {

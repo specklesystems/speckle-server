@@ -22,7 +22,8 @@ import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
 
 export enum NormalsType {
   DEFAULT = 0,
-  IMPROVED = 1
+  IMPROVED = 1,
+  ACCURATE = 2
 }
 
 /**
@@ -42,6 +43,8 @@ export class SpeckleSAOPass extends SAOPass {
       this.normalsType === NormalsType.DEFAULT ? 1 : 0
     this.saoMaterial.defines['IMPROVED_NORMAL_RECONSTRUCTION'] =
       this.normalsType === NormalsType.IMPROVED ? 1 : 0
+    this.saoMaterial.defines['ACCURATE_NORMAL_RECONSTRUCTION'] =
+      this.normalsType === NormalsType.ACCURATE ? 1 : 0
     this.saoMaterial.needsUpdate = true
   }
 

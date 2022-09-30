@@ -44,7 +44,7 @@ export default class Sandbox {
       saoBlurDepthCutoff: 0.0007
     },
     saoScaleOffset: 0,
-    saoNormalsRendering: 1
+    saoNormalsRendering: 2
   }
 
   public static lightParams: SunLightConfiguration = {
@@ -386,7 +386,8 @@ export default class Sandbox {
       .addInput(Sandbox.postParams, 'saoNormalsRendering', {
         options: {
           DEFAULT: 0,
-          ADVANCED: 1
+          ADVANCED: 1,
+          ACCURATE: 2
         }
       })
       .on('change', () => {
