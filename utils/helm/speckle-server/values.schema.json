@@ -121,12 +121,12 @@
             "secretName": {
               "type": "string",
               "description": "Required. A secret containing the full connection string to the Postgres database (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": "server-vars"
+              "default": ""
             },
             "secretKey": {
               "type": "string",
               "description": "Required. The key within the Kubernetes Secret holding the connection string.",
-              "default": "postgres_url"
+              "default": ""
             }
           }
         },
@@ -195,19 +195,34 @@
     "s3": {
       "type": "object",
       "properties": {
+        "configMap": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, the s3.endpoint, s3.bucket, and s3.access_key values will be determined from a configMap and the values provided in this helm release ignored.",
+              "default": false
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the ConfigMap in which values for the keys (`endpoint`, `bucket`, and `access_key`) are provided. Expected to be in the namespace defined by the `namespace` parameter of this Helm Chart.",
+              "default": ""
+            }
+          }
+        },
         "endpoint": {
           "type": "string",
-          "description": "The URL at which the s3 compatible storage is hosted",
+          "description": "The URL at which the s3 compatible storage is hosted. If `s3.configMap.enabled` is true, this value is ignored.",
           "default": ""
         },
         "bucket": {
           "type": "string",
-          "description": "The s3 compatible bucket in which Speckle data will be stored",
+          "description": "The s3 compatible bucket in which Speckle data will be stored.  If `s3.configMap.enabled` is true, this value is ignored.",
           "default": ""
         },
         "access_key": {
           "type": "string",
-          "description": "The key of the access key used to authenticate with the s3 compatible storage",
+          "description": "The key of the access key used to authenticate with the s3 compatible storage.  If `s3.configMap.enabled` is true, this value is ignored.",
           "default": ""
         },
         "secret_key": {
@@ -216,12 +231,12 @@
             "secretName": {
               "type": "string",
               "description": "Required. A Kubernetes secret containing the s3 secret_key.  This is expected to be the name of an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": "server-vars"
+              "default": ""
             },
             "secretKey": {
               "type": "string",
               "description": "Required. The key within the Kubernetes Secret, the value of which is the s3 secret.",
-              "default": "s3_secret_key"
+              "default": ""
             }
           }
         },
@@ -306,12 +321,12 @@
             "secretName": {
               "type": "string",
               "description": "Required. A secret containing the full connection string to the Redis store (e.g. in format of `protocol://username:password@host:port/database`) stored within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": "server-vars"
+              "default": ""
             },
             "secretKey": {
               "type": "string",
               "description": "Required. The key within the Kubernetes Secret holding the Redis connection string.",
-              "default": "redis_url"
+              "default": ""
             }
           }
         },
@@ -391,12 +406,12 @@
             "secretName": {
               "type": "string",
               "description": "The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-              "default": "server-vars"
+              "default": ""
             },
             "secretKey": {
               "type": "string",
               "description": "The key within the Kubernetes Secret holding the Session secret as its value.",
-              "default": "session_secret"
+              "default": ""
             }
           }
         },
@@ -432,12 +447,12 @@
                     "secretName": {
                       "type": "string",
                       "description": "The name of the Kubernetes Secret containing the Google client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                      "default": "server-vars"
+                      "default": ""
                     },
                     "secretKey": {
                       "type": "string",
                       "description": "The key within the Kubernetes Secret holding the Google client secret as its value.",
-                      "default": "google_client_secret"
+                      "default": ""
                     }
                   }
                 }
@@ -462,12 +477,12 @@
                     "secretName": {
                       "type": "string",
                       "description": "The name of the Kubernetes Secret containing the GitHub client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                      "default": "server-vars"
+                      "default": ""
                     },
                     "secretKey": {
                       "type": "string",
                       "description": "The key within the Kubernetes Secret holding the GitHub client secret as its value.",
-                      "default": "github_client_secret"
+                      "default": ""
                     }
                   }
                 }
@@ -507,12 +522,12 @@
                     "secretName": {
                       "type": "string",
                       "description": "The name of the Kubernetes Secret containing the Azure AD client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                      "default": "server-vars"
+                      "default": ""
                     },
                     "secretKey": {
                       "type": "string",
                       "description": "The key within the Kubernetes Secret holding the Azure AD client secret as its value.",
-                      "default": "azure_ad_client_secret"
+                      "default": ""
                     }
                   }
                 },
@@ -562,12 +577,12 @@
                 "secretName": {
                   "type": "string",
                   "description": "The name of the Kubernetes Secret containing the email password. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                  "default": "server-vars"
+                  "default": ""
                 },
                 "secretKey": {
                   "type": "string",
                   "description": "The key within the Kubernetes Secret holding the email password as its value.",
-                  "default": "email_password"
+                  "default": ""
                 }
               }
             },
@@ -690,12 +705,12 @@
                     "secretName": {
                       "type": "string",
                       "description": "The name of the Kubernetes Secret containing the Apollo monitoring key. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
-                      "default": "server-vars"
+                      "default": ""
                     },
                     "secretKey": {
                       "type": "string",
                       "description": "The key within the Kubernetes Secret holding the Apollo monitoring key as its value.",
-                      "default": "apollo_key"
+                      "default": ""
                     }
                   }
                 }
