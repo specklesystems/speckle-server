@@ -473,7 +473,7 @@ export default class SpeckleRenderer {
 
   public setSunLightConfiguration(config: SunLightConfiguration) {
     Object.assign(this.sunConfiguration, config)
-    if (config.indirectLightIntensity) {
+    if (config.indirectLightIntensity !== undefined) {
       this.indirectIBLIntensity = config.indirectLightIntensity
     }
     this.updateDirectLights()
