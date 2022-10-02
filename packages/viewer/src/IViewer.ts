@@ -49,7 +49,7 @@ export enum ViewerEvent {
   SectionBoxChanged = 'section-box-changed'
 }
 
-export type SelectionEvent = {
+export interface SelectionEvent {
   multiple: boolean
   hits: Array<{
     guid?: string

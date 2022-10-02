@@ -16,7 +16,7 @@ export default class Sandbox {
   private viewsFolder!: FolderApi
   private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
-  private selectionList: SelectionEvent[] = null
+  private selectionList: SelectionEvent[] = []
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
