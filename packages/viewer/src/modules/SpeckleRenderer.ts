@@ -481,12 +481,12 @@ export default class SpeckleRenderer {
 
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
-      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
-      // Thank you prettier, this looks so much better
-      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
-        this.sceneBox
-      )
-      ;(this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
+      ; (this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+        // Thank you prettier, this looks so much better
+        ; (this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+          this.sceneBox
+        )
+        ; (this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
     }
   }
 
@@ -676,9 +676,9 @@ export default class SpeckleRenderer {
 
     this.viewer.cameraHandler.controls.minDistance = distance / 100
     this.viewer.cameraHandler.controls.maxDistance = distance * 100
-    // this.viewer.cameraHandler.camera.near = distance / 100
-    // this.viewer.cameraHandler.camera.far = distance * 100
-    // this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    this.viewer.cameraHandler.camera.near = Math.max(distance / 100, 0.1)
+    this.viewer.cameraHandler.camera.far = distance * 100
+    this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     if (this.viewer.cameraHandler.activeCam.name === 'ortho') {
       this.viewer.cameraHandler.orthoCamera.far = distance * 100

@@ -60,6 +60,15 @@ export class SpeckleSAOPass extends SAOPass {
 
     this.batcher = batcher
 
+    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
+     *  We're not really using a stencil buffer at all, we're just forcing
+     *  three.js to use a 24 bit depth render buffer
+     */
+    this.depthRenderTarget.depthBuffer = true
+    this.depthRenderTarget.stencilBuffer = true
+    this.normalRenderTarget.depthBuffer = true
+    this.normalRenderTarget.stencilBuffer = true
+
     this.depthMaterial = new SpeckleDepthMaterial(
       {
         depthPacking: RGBADepthPacking
@@ -248,8 +257,8 @@ export class SpeckleSAOPass extends SAOPass {
       renderer.clear()
     }
 
-    ;(this.fsQuad as FullScreenQuad).material = passMaterial
-    ;(this.fsQuad as FullScreenQuad).render(renderer)
+    ; (this.fsQuad as FullScreenQuad).material = passMaterial
+      ; (this.fsQuad as FullScreenQuad).render(renderer)
 
     // restore original state
     renderer.autoClear = originalAutoClear

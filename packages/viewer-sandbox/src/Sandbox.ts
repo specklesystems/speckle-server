@@ -135,7 +135,7 @@ export default class Sandbox {
 
   private removeStreamControls(url: string) {
     this.viewer.unloadObject(url)
-    ;(this.streams[url][0] as { dispose: () => void }).dispose()
+      ; (this.streams[url][0] as { dispose: () => void }).dispose()
     delete this.streams[url]
   }
 
@@ -228,7 +228,7 @@ export default class Sandbox {
     })
     const dark = localStorage.getItem('dark') === 'dark'
     if (dark) {
-      document.getElementById('renderer')?.classList.toggle('background-dark')
+      document.getElementById('renderer') ?.classList.toggle('background-dark')
     }
 
     darkModeToggle.on('click', () => {
