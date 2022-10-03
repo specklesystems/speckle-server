@@ -179,7 +179,8 @@ Creates a Cilium Network Policy egress definition for connecting to S3 compatibl
   {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal.cilium" (dict "endpointSelector" .Values.s3.networkPolicy.inCluster.cilium.endpointSelector "serviceSelector" .Values.s3.networkPolicy.inCluster.cilium.serviceSelector "port" $port) }}
   {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-    {{- $host := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+    {{- $s3Values := ( include "server.s3Values" . | fromJson ) -}}
+    {{- $host := ( include "speckle.networkPolicy.domainFromUrl" $s3Values.endpoint ) -}}
 {{ include "speckle.networkpolicy.egress.external.cilium" (dict "ip" $host "port" $port) }}
   {{- end -}}
 {{- end }}
@@ -251,7 +252,8 @@ Params:
 Creates a DNS match pattern for discovering blob storage IP
 */}}
 {{- define "speckle.networkpolicy.dns.blob_storage.cilium" -}}
-{{- $domain := ( include  "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+{{- $s3Values := ( include "server.s3Values" . | fromJson ) -}}
+{{- $domain := ( include  "speckle.networkPolicy.domainFromUrl" $s3Values.endpoint ) -}}
   {{- if ne (include "speckle.isIPv4" $domain ) "true" -}}
 {{ include "speckle.networkpolicy.matchNameOrPattern" $domain }}
   {{- end }}
@@ -515,4 +517,17 @@ Params:
 {{- $secret := ( index $secretResource.data .secret_key ) -}}
 {{- $secretDecoded := (b64dec $secret) -}}
 {{- printf "%s" $secretDecoded }}
+{{- end }}
+
+{{/*
+Retrieve the s3 parameters from ConfigMap if enabled, or default to retrieving them from the provided values
+*/}}
+{{- define "server.s3Values" -}}
+{{- if .Values.s3.configMap.enabled }}
+  {{- $configMap := (lookup "v1" "ConfigMap" .Values.namespace .Values.s3.configMap.name ) -}}
+  {{- printf "%s" ( $configMap.data | toJson ) }}
+{{- else }}
+  {{- $result := dict "endpoint" .Values.s3.endpoint "bucket" .Values.s3.bucket "access_key" .Values.s3.access_key }}
+  {{- $result | toJson  }}
+{{- end }}
 {{- end }}

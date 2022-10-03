@@ -5,21 +5,20 @@
         firstResource && (isMultiple || isCommit || isObject) && !singleResourceError
       "
     >
-      <commit-toolbar
-        v-if="isCommitResource(firstResource)"
-        :stream="firstResource.data"
-        @edit-commit="showCommitEditDialog = true"
-      />
-      <object-toolbar
-        v-if="isObjectResource(firstResource)"
-        :stream="firstResource.data"
-      />
       <multiple-resources-toolbar
         v-if="isMultiple && isNotErrorResource(firstResource)"
         :stream="{ name: firstResource.data.name, id: streamId }"
         :resources="resources"
       />
-
+      <commit-toolbar
+        v-else-if="isCommitResource(firstResource)"
+        :stream="firstResource.data"
+        @edit-commit="showCommitEditDialog = true"
+      />
+      <object-toolbar
+        v-else-if="isObjectResource(firstResource)"
+        :stream="firstResource.data"
+      />
       <prioritized-portal to="nav" identity="stream-commit-viewer" :priority="2">
         <commit-object-viewer-scope
           :stream-id="streamId"
@@ -34,7 +33,7 @@
             </div>
             <v-list nav dense class="mt-0 pt-0">
               <v-list-item
-                v-if="isCommitResource(firstResource)"
+                v-if="!isMultiple && isCommitResource(firstResource)"
                 link
                 :to="`/streams/${streamId}/branches/${firstResource.data.commit?.branchName}`"
                 class=""
@@ -101,6 +100,7 @@
         <preview-image
           v-if="
             !loadedModel &&
+            !isMultiple &&
             (isCommitResource(firstResource) || isObjectResource(firstResource))
           "
           :style="`
@@ -181,10 +181,10 @@
         <comment-add-overlay v-if="!isEmbed" key="b" />
       </div>
 
-      <!-- 
+      <!--
       Note: portaling out the mobile view of comment threads because of
       stacking chaos caused by transforms, etc. in positioning from the default
-      view. 
+      view.
       -->
       <portal-target name="mobile-comment-thread"></portal-target>
 
@@ -240,7 +240,7 @@
       />
     </v-dialog>
     <v-dialog
-      v-if="firstResource && isCommitResource(firstResource)"
+      v-if="!isMultiple && firstResource && isCommitResource(firstResource)"
       v-model="showCommitEditDialog"
       width="500"
       :fullscreen="$vuetify.breakpoint.smAndDown"
