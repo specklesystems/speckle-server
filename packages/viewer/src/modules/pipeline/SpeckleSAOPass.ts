@@ -257,8 +257,8 @@ export class SpeckleSAOPass extends SAOPass {
       renderer.clear()
     }
 
-    ; (this.fsQuad as FullScreenQuad).material = passMaterial
-      ; (this.fsQuad as FullScreenQuad).render(renderer)
+    ;(this.fsQuad as FullScreenQuad).material = passMaterial
+    ;(this.fsQuad as FullScreenQuad).render(renderer)
 
     // restore original state
     renderer.autoClear = originalAutoClear

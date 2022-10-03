@@ -481,12 +481,12 @@ export default class SpeckleRenderer {
 
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
-      ; (this.scene.getObjectByName('CamHelper') as CameraHelper).update()
-        // Thank you prettier, this looks so much better
-        ; (this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
-          this.sceneBox
-        )
-        ; (this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
+      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      // Thank you prettier, this looks so much better
+      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+        this.sceneBox
+      )
+      ;(this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
     }
   }
 
