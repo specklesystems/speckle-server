@@ -23,6 +23,8 @@ const scheduleWeeklyActivityNotifications = () => {
   return scheduleExecution(
     cronExpression,
     'weeklyActivityNotification',
+    //task should be locked for 10 minutes
+    10 * 60 * 1000,
     async (now: Date) => {
       activitiesDebug('Sending weekly activity digests notifications.')
       const end = now
