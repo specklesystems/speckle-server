@@ -89,6 +89,9 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     return this
   }
 
+  /** Another note here, this will NOT get called by three when rendering shadowmaps. We update the uniforms manually
+   * inside SpeckleRenderer for shadowmaps
+   */
   onBeforeRender(_this, scene, camera, geometry, object, group) {
     SpeckleDepthMaterial.matBuff.copy(camera.matrixWorldInverse)
     SpeckleDepthMaterial.matBuff.elements[12] = 0
@@ -111,6 +114,7 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
 
     this.userData.uViewer_low.value.copy(SpeckleDepthMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleDepthMaterial.vecBuff2)
+    this.userData.rteModelViewMatrix.value.copy(object.modelViewMatrix)
 
     this.needsUpdate = true
   }

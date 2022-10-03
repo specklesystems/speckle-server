@@ -16,7 +16,7 @@ export default class Sandbox {
   private viewsFolder!: FolderApi
   private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
-  private selectionList: SelectionEvent[] = null
+  private selectionList: SelectionEvent[]
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -30,6 +30,23 @@ export default class Sandbox {
     tonemapping: 4 //'ACESFilmicToneMapping'
   }
 
+  public static postParams = {
+    saoEnabled: true,
+    saoParams: {
+      saoBias: 0.15,
+      saoIntensity: 1.25,
+      saoScale: 434,
+      saoKernelRadius: 10,
+      saoMinResolution: 0,
+      saoBlur: true,
+      saoBlurRadius: 4,
+      saoBlurStdDev: 4,
+      saoBlurDepthCutoff: 0.0007
+    },
+    saoScaleOffset: 0,
+    saoNormalsRendering: 2
+  }
+
   public static lightParams: SunLightConfiguration = {
     enabled: true,
     castShadow: true,
@@ -38,7 +55,7 @@ export default class Sandbox {
     elevation: 1.33,
     azimuth: 0.75,
     radius: 0,
-    indirectLightIntensity: 1.85
+    indirectLightIntensity: 1.2
   }
 
   public static filterParams = {
@@ -172,7 +189,7 @@ export default class Sandbox {
     })
     toggleSectionBox.on('click', () => {
       this.viewer.setSectionBoxFromObjects(
-        this.selectionList.map((val) => val.userData.id) as string[]
+        this.selectionList.map((val) => val.hits[0].object.id) as string[]
       )
       this.viewer.toggleSectionBox()
     })
@@ -189,7 +206,7 @@ export default class Sandbox {
     })
     zoomExtents.on('click', () => {
       this.viewer.zoom(
-        this.selectionList.map((val) => val.userData.id) as string[],
+        this.selectionList.map((val) => val.hits[0].object.id) as string[],
         undefined,
         true
       )
@@ -321,6 +338,116 @@ export default class Sandbox {
         this.viewer.getRenderer().renderer.toneMapping = Sandbox.sceneParams.tonemapping
         this.viewer.requestRender()
       })
+    postFolder
+      .addInput(Sandbox.postParams, 'saoEnabled', { label: 'SAO-ENABLED' })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+    postFolder
+      .addInput(Sandbox.postParams.saoParams, 'saoBias', {
+        min: -1,
+        max: 1
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+    postFolder
+      .addInput(Sandbox.postParams.saoParams, 'saoIntensity', {
+        min: 0,
+        max: 5
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoScale', {
+    //     min: 0,
+    //     max: 100
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+    postFolder
+      .addInput(Sandbox.postParams, 'saoScaleOffset', {
+        min: -100,
+        max: 100
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    postFolder
+      .addInput(Sandbox.postParams, 'saoNormalsRendering', {
+        options: {
+          DEFAULT: 0,
+          ADVANCED: 1,
+          ACCURATE: 2
+        }
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    postFolder
+      .addInput(Sandbox.postParams.saoParams, 'saoKernelRadius', {
+        min: 0,
+        max: 100
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoMinResolution', {
+    //     min: 0,
+    //     max: 1
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+
+    postFolder
+      .addInput(Sandbox.postParams.saoParams, 'saoBlur', {})
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    postFolder
+      .addInput(Sandbox.postParams.saoParams, 'saoBlurRadius', { min: 0, max: 10 })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoBlurStdDev', {
+    //     min: 0,
+    //     max: 150
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoBlurDepthCutoff', {
+    //     min: 0,
+    //     max: 10
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
 
     const lightsFolder = this.tabs.pages[1].addFolder({
       title: 'Lights',
