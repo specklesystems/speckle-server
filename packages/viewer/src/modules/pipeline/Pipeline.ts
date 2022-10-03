@@ -4,7 +4,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import { SAOPassParams } from 'three/examples/jsm/postprocessing/SAOPass.js'
 import Batcher from '../batching/Batcher'
 import { ApplySAOPass } from './ApplySAOPass'
-import { NormalsType, SpeckleSAOPass } from './SpeckleSAOPass'
+import { NormalsType, SpeckleDynamicSAOPass } from './SpeckleDynamicSAOPass'
 
 export interface PipelineOptions {
   saoEnabled?: boolean
@@ -36,7 +36,7 @@ export class Pipeline {
   private _pipelineOptions: PipelineOptions = {}
   private composer: EffectComposer = null
   private renderPass: RenderPass = null
-  private saoPass: SpeckleSAOPass = null
+  private saoPass: SpeckleDynamicSAOPass = null
   private applySaoPass: ApplySAOPass = null
   private drawingSize: Vector2 = new Vector2()
 
@@ -59,7 +59,7 @@ export class Pipeline {
   }
 
   public configure(scene: Scene, camera: Camera) {
-    this.saoPass = new SpeckleSAOPass(
+    this.saoPass = new SpeckleDynamicSAOPass(
       scene,
       camera,
       this._batcher,
@@ -69,6 +69,7 @@ export class Pipeline {
     this.composer.addPass(this.saoPass)
     this.renderPass = new RenderPass(scene, camera)
     this.renderPass.renderToScreen = true
+    this.renderPass.enabled = false
     this.composer.addPass(this.renderPass)
     this.applySaoPass = new ApplySAOPass(this.saoPass.saoRenderTarget.texture)
     this.applySaoPass.renderToScreen = true
@@ -93,5 +94,13 @@ export class Pipeline {
 
   public resize(width: number, height: number) {
     this.composer.setSize(width, height)
+  }
+
+  public onStationaryBegin() {
+    this.saoPass.accumulate = true
+  }
+
+  public onStationaryEnd() {
+    this.saoPass.accumulate = false
   }
 }

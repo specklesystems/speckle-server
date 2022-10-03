@@ -30,12 +30,13 @@ export enum NormalsType {
  * SAO implementation inspired from bhouston previous SAO work
  */
 
-export class SpeckleSAOPass extends SAOPass {
+export class SpeckleDynamicSAOPass extends SAOPass {
   private _oldClearColor
   private prevStdDev
   private prevNumSamples
   private batcher: Batcher = null
   private normalsType: NormalsType = NormalsType.IMPROVED
+  public accumulate = false
 
   public set normalsRendering(type: NormalsType) {
     this.normalsType = type
@@ -138,7 +139,7 @@ export class SpeckleSAOPass extends SAOPass {
     )
     this.saoMaterial.uniforms['cameraProjectionMatrix'].value =
       this.camera.projectionMatrix
-    // this.saoMaterial.uniforms['randomSeed'].value = Math.random();
+    // this.saoMaterial.uniforms['randomSeed'].value = Math.random()
 
     const depthCutoff =
       this.params.saoBlurDepthCutoff *
@@ -242,12 +243,11 @@ export class SpeckleSAOPass extends SAOPass {
 
     // setup pass state
     renderer.autoClear = false
-    if (clearColor !== undefined && clearColor !== null) {
+    if (clearColor !== undefined && clearColor !== null && !this.accumulate) {
       renderer.setClearColor(clearColor)
       renderer.setClearAlpha(clearAlpha || 0.0)
       renderer.clear()
     }
-
     ;(this.fsQuad as FullScreenQuad).material = passMaterial
     ;(this.fsQuad as FullScreenQuad).render(renderer)
 

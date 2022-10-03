@@ -24,16 +24,16 @@ export class ApplySAOPass extends Pass {
       fragmentShader: CopyShader.fragmentShader,
       blending: NoBlending
     })
-    this.materialCopy.transparent = true
-    this.materialCopy.depthTest = false
-    this.materialCopy.depthWrite = false
-    this.materialCopy.blending = CustomBlending
-    this.materialCopy.blendSrc = DstColorFactor
-    this.materialCopy.blendDst = ZeroFactor
-    this.materialCopy.blendEquation = AddEquation
-    this.materialCopy.blendSrcAlpha = DstAlphaFactor
-    this.materialCopy.blendDstAlpha = ZeroFactor
-    this.materialCopy.blendEquationAlpha = AddEquation
+    // this.materialCopy.transparent = true
+    // this.materialCopy.depthTest = false
+    // this.materialCopy.depthWrite = false
+    // this.materialCopy.blending = CustomBlending
+    // this.materialCopy.blendSrc = DstColorFactor
+    // this.materialCopy.blendDst = ZeroFactor
+    // this.materialCopy.blendEquation = AddEquation
+    // this.materialCopy.blendSrcAlpha = DstAlphaFactor
+    // this.materialCopy.blendDstAlpha = ZeroFactor
+    // this.materialCopy.blendEquationAlpha = AddEquation
     this.materialCopy.uniforms['tDiffuse'].value = srcSao
     this.materialCopy.needsUpdate = true
     this.fsQuad = new FullScreenQuad(this.materialCopy)

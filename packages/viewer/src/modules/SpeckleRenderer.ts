@@ -62,6 +62,13 @@ export default class SpeckleRenderer {
   private filterBatchRecording: string[]
   private pipeline: Pipeline
 
+  private lastAzimuth: number
+  private lastPolar: number
+  private lastDistance: number
+  private lastTarget: Vector3 = new Vector3()
+  private lasMaxCameraMotion: number
+  private readonly CAMERA_MOTION_EPSILON: number = 0.0001
+
   public get renderer(): WebGLRenderer {
     return this._renderer
   }
@@ -170,10 +177,21 @@ export default class SpeckleRenderer {
       camHelper.name = 'CamHelper'
       helpers.add(camHelper)
     }
+    this.viewer.cameraHandler.controls.restThreshold = 0.001
+    this.viewer.cameraHandler.controls.addEventListener('sleep', (event) => {
+      this.pipeline.onStationaryBegin()
+    })
+    this.viewer.cameraHandler.controls.addEventListener('rest', (event) => {
+      this.pipeline.onStationaryBegin()
+    })
+    this.viewer.cameraHandler.controls.addEventListener('wake', (event) => {
+      this.pipeline.onStationaryEnd()
+    })
   }
 
   public update(deltaTime: number) {
     this.batcher.update(deltaTime)
+
     const viewer = new Vector3()
     const viewerLow = new Vector3()
     const viewerHigh = new Vector3()
@@ -270,7 +288,36 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
     this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
-    // console.log(d)
+
+    // const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
+    // const currentPolar = this.viewer.cameraHandler.controls.polarAngle
+    // const currentDistance = this.viewer.cameraHandler.controls.distance
+    // const currentTarget = this.viewer.cameraHandler.controls.getTarget(new Vector3())
+    // /** This looks so much better */
+    // const dAzimuth = Math.max(
+    //   0,
+    //   Math.abs(currentAzimuth - this.lastAzimuth) - this.CAMERA_MOTION_EPSILON
+    // )
+    // const dPolar = Math.max(
+    //   0,
+    //   Math.abs(currentPolar - this.lastPolar) - this.CAMERA_MOTION_EPSILON
+    // )
+    // const dDistance = Math.max(
+    //   0,
+    //   Math.abs(currentDistance - this.lastDistance) - this.CAMERA_MOTION_EPSILON
+    // )
+    // const dTarget = currentTarget.distanceTo(this.lastTarget)
+
+    // const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dDistance, dTarget))
+    // if (motionMaxDelta === 0 && this.lasMaxCameraMotion > 0) {
+    //   console.log('Stopped')
+    // }
+    // this.lasMaxCameraMotion = motionMaxDelta
+
+    // this.lastAzimuth = currentAzimuth
+    // this.lastPolar = currentPolar
+    // this.lastDistance = currentDistance
+    // this.lastTarget.copy(currentTarget)
   }
 
   public render(camera: Camera) {
