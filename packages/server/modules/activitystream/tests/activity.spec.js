@@ -17,6 +17,7 @@ let sendRequest
 
 describe('Activity @activity', () => {
   let server
+  let app
 
   const userIz = {
     name: 'Izzy Lyseggen',
@@ -74,8 +75,8 @@ describe('Activity @activity', () => {
   }
 
   before(async () => {
-    const { app } = await beforeEachContext()
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ server, app } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
 
     const normalScopesList = [
       'streams:read',

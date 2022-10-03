@@ -89,7 +89,7 @@ describe('Stream access requests', () => {
       [otherGuysPublicStream, otherGuy],
       [myPrivateStream, me]
     ])
-    apollo = buildAuthenticatedApolloServer(me.id)
+    apollo = await buildAuthenticatedApolloServer(me.id)
     notificationsStateManager = buildNotificationsStateTracker()
   })
 

@@ -192,7 +192,7 @@ describe('Streams @core-streams', () => {
         userOne.id
       )
 
-      const apollo = buildAuthenticatedApolloServer(userTwo.id)
+      const apollo = await buildAuthenticatedApolloServer(userTwo.id)
       const { data, errors } = await leaveStream(apollo, { streamId })
 
       expect(errors).to.be.not.ok
@@ -467,7 +467,7 @@ describe('Streams @core-streams', () => {
 
       before(async () => {
         activeUserId = userOne.id
-        apollo = buildAuthenticatedApolloServer(activeUserId)
+        apollo = await buildAuthenticatedApolloServer(activeUserId)
       })
 
       paginationDataset.forEach(({ display, pagination }) => {
@@ -485,7 +485,7 @@ describe('Streams @core-streams', () => {
       let apollo: ApolloServer
 
       before(async () => {
-        apollo = buildUnauthenticatedApolloServer()
+        apollo = await buildUnauthenticatedApolloServer()
       })
 
       it('User.streams is inaccessible', async () => {

@@ -1,10 +1,6 @@
 'use strict'
-const {
-  ApolloError,
-  ForbiddenError,
-  UserInputError,
-  withFilter
-} = require('apollo-server-express')
+const { ApolloError, ForbiddenError, UserInputError } = require('apollo-server-express')
+const { withFilter } = require('graphql-subscriptions')
 
 const {
   createStream,

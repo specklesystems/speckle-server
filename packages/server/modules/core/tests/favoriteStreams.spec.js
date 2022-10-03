@@ -132,7 +132,7 @@ describe('Favorite streams', () => {
       })
 
     before(async () => {
-      apollo = buildApolloServer({
+      apollo = await buildApolloServer({
         context: () =>
           addLoadersToCtx({
             auth: true,
@@ -300,7 +300,7 @@ describe('Favorite streams', () => {
 
     it('return total favorites count for user', async () => {
       // "Log in" with other user
-      const apollo = buildApolloServer({
+      const apollo = await buildApolloServer({
         context: () =>
           addLoadersToCtx({
             auth: true,
@@ -357,8 +357,8 @@ describe('Favorite streams', () => {
     /** @type {import('apollo-server-express').ApolloServer} */
     let apollo
 
-    before(() => {
-      apollo = buildApolloServer({
+    before(async () => {
+      apollo = await buildApolloServer({
         context: () => ({})
       })
     })

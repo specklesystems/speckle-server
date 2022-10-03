@@ -113,7 +113,7 @@ describe('[Stream & Server Invites]', () => {
     let apollo
 
     before(async () => {
-      apollo = buildApolloServer({
+      apollo = await buildApolloServer({
         context: () =>
           addLoadersToCtx({
             auth: true,
@@ -394,7 +394,7 @@ describe('[Stream & Server Invites]', () => {
       const invites = [serverInvite1, streamInvite1, streamInvite2]
 
       before(async () => {
-        apollo = buildApolloServer({
+        apollo = await buildApolloServer({
           context: () =>
             addLoadersToCtx({
               auth: true,
@@ -782,7 +782,7 @@ describe('[Stream & Server Invites]', () => {
         ])
 
         // Build authenticated apollo instance
-        apollo = buildAuthenticatedApolloServer(ownInvitesGuy.id)
+        apollo = await buildAuthenticatedApolloServer(ownInvitesGuy.id)
       })
 
       it('all invites can be retrieved successfully', async () => {

@@ -809,18 +809,9 @@ describe('Graphql @comments', () => {
       allowPublicComments: true
     })
   })
+
   testData.forEach((userContext) => {
     const user = userContext.user
-    const apollo = buildApolloServer({
-      context: () =>
-        addLoadersToCtx({
-          auth: true,
-          userId: user?.id,
-          role: user?.role,
-          token: 'asd',
-          scopes: AllScopes
-        })
-    })
 
     describe(`I, ${user?.name ?? 'Anonymous'} as a ${
       user?.role ?? 'shadow:lurker'
@@ -828,13 +819,27 @@ describe('Graphql @comments', () => {
       userContext.streamData.forEach((streamContext) => {
         const stream = streamContext.stream
         let resources
+        let apollo
+
         before(async () => {
-          if (user && stream.role)
+          apollo = await buildApolloServer({
+            context: () =>
+              addLoadersToCtx({
+                auth: true,
+                userId: user?.id,
+                role: user?.role,
+                token: 'asd',
+                scopes: AllScopes
+              })
+          })
+
+          if (user && stream.role) {
             await grantPermissionsStream({
               streamId: stream.id,
               userId: user.id,
               role: stream.role
             })
+          }
 
           const objectId = await createObject(stream.id, { test: 'object' })
 
@@ -856,6 +861,7 @@ describe('Graphql @comments', () => {
             testActorId: myTestActor.id
           }
         })
+
         describe(`testing ${streamContext.cases.length} cases of acting on ${
           stream.name
         } stream where I'm a ${

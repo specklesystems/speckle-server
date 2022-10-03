@@ -989,7 +989,7 @@ describe('Comments @comments', () => {
       const scopes = AllScopes
 
       // Init apollo instance w/ authenticated context
-      apollo = buildApolloServer({
+      apollo = await buildApolloServer({
         context: () =>
           addLoadersToCtx({
             auth: true,
