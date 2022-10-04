@@ -176,6 +176,20 @@ export const streamSettingsQuery = gql`
   }
 `
 
+export const searchStreamsQuery = gql`
+  query SearchStreams($query: String) {
+    streams(query: $query) {
+      totalCount
+      cursor
+      items {
+        id
+        name
+        updatedAt
+      }
+    }
+  }
+`
+
 export const updateStreamSettingsMutation = gql`
   mutation UpdateStreamSettings($input: StreamUpdateInput!) {
     streamUpdate(stream: $input)
