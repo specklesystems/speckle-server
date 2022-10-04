@@ -24,14 +24,14 @@ const scheduleWeeklyActivityNotifications = () => {
     cronExpression,
     'weeklyActivityNotification',
     //task should be locked for 10 minutes
-    10 * 60 * 1000,
     async (now: Date) => {
       activitiesDebug('Sending weekly activity digests notifications.')
       const end = now
       const start = new Date(end.getTime())
       start.setDate(start.getDate() - numberOfDays)
       await sendActivityNotifications(start, end, publishNotification)
-    }
+    },
+    10 * 60 * 1000
   )
 }
 
