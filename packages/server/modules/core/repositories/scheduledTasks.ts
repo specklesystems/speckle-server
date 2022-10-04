@@ -1,28 +1,15 @@
 import { ScheduledTasks } from '@/modules/core/dbSchema'
 import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
 
-export async function getLastScheduledTask(
-  taskName: string | null = null
-): Promise<ScheduledTaskRecord | null> {
-  let query = ScheduledTasks.knex<ScheduledTaskRecord>().orderBy(
-    ScheduledTasks.col.updatedAt,
-    'desc'
-  )
-  if (taskName) query = query.where({ taskName })
-  const task = await query.first()
-  return task ?? null
-}
-
-export async function saveScheduledTask(
+export async function acquireTaskLock(
   scheduledTask: ScheduledTaskRecord
-): Promise<ScheduledTaskRecord> {
-  const [record] = await ScheduledTasks.knex<ScheduledTaskRecord>()
+): Promise<ScheduledTaskRecord | null> {
+  const now = new Date()
+  const [lock] = await ScheduledTasks.knex<ScheduledTaskRecord>()
     .insert(scheduledTask)
-    .onConflict(['createdAt', 'taskName'])
-    // this puts the full table name + col name into string, which doesn't work here
-    // .onConflict([ScheduledTasks.col.createdAt, ScheduledTasks.col.taskName])
-    // .ignore()
+    .onConflict(ScheduledTasks.withoutTablePrefix.col.taskName)
     .merge()
+    .where(ScheduledTasks.col.lockExpiresAt, '<', now)
     .returning('*')
-  return record
+  return (lock as ScheduledTaskRecord) ?? null
 }
