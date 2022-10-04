@@ -17,7 +17,7 @@
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
-    "@apollo/client": "^3.6.9",
+    "@apollo/client": "^3.7.0",
     "@speckle/viewer": "workspace:^",
     "@tiptap/core": "^2.0.0-beta.176",
     "@tiptap/extension-bold": "^2.0.0-beta.26",

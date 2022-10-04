@@ -723,9 +723,9 @@ export default class SpeckleRenderer {
 
     this.viewer.cameraHandler.controls.minDistance = distance / 100
     this.viewer.cameraHandler.controls.maxDistance = distance * 100
-    // this.viewer.cameraHandler.camera.near = distance / 100
-    // this.viewer.cameraHandler.camera.far = distance * 100
-    // this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    this.viewer.cameraHandler.camera.near = Math.max(distance / 100, 0.1)
+    this.viewer.cameraHandler.camera.far = distance * 100
+    this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     if (this.viewer.cameraHandler.activeCam.name === 'ortho') {
       this.viewer.cameraHandler.orthoCamera.far = distance * 100
