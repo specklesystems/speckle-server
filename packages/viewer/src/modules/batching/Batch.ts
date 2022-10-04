@@ -20,6 +20,7 @@ export interface Batch {
   getCount(): number
   setBatchMaterial(material: Material): void
   setVisibleRange(...range: BatchUpdateRange[])
+  getVisibleRange(): BatchUpdateRange
   setDrawRanges(...ranges: BatchUpdateRange[])
   autoFillDrawRanges()
   resetDrawRanges()
@@ -40,4 +41,9 @@ export interface BatchUpdateRange {
 export const HideAllBatchUpdateRange = {
   offset: 0,
   count: 0
+} as BatchUpdateRange
+
+export const AllBatchUpdateRange = {
+  offset: 0,
+  count: Infinity
 } as BatchUpdateRange

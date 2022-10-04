@@ -45,6 +45,7 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
+import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
@@ -59,6 +60,7 @@ export default class SpeckleRenderer {
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
+  private pipeline: Pipeline
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -106,6 +108,10 @@ export default class SpeckleRenderer {
     return this.sun
   }
 
+  public set pipelineOptions(value: PipelineOptions) {
+    this.pipeline.pipelineOptions = value
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this.scene = new Scene()
     this.rootGroup = new Group()
@@ -136,6 +142,10 @@ export default class SpeckleRenderer {
 
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
+
+    this.pipeline = new Pipeline(this._renderer, this.batcher)
+    this.pipeline.configure(this.scene, this.viewer.cameraHandler.activeCam.camera)
+    this.pipeline.pipelineOptions = DefaultPipelineOptions
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -232,11 +242,46 @@ export default class SpeckleRenderer {
         }
       }
     }
+
+    const v = new Vector3()
+    const box = this.sceneBox
+    const camPos = new Vector3().copy(
+      this.viewer.cameraHandler.activeCam.camera.position
+    )
+    let d = 0
+    v.set(box.min.x, box.min.y, box.min.z) // 000
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.min.y, box.max.z) // 001
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.max.y, box.min.z) // 010
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.min.x, box.max.y, box.max.z) // 011
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.min.y, box.min.z) // 100
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.min.y, box.max.z) // 101
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.max.y, box.min.z) // 110
+    d = Math.max(camPos.distanceTo(v), d)
+    v.set(box.max.x, box.max.y, box.max.z) // 111
+    d = Math.max(camPos.distanceTo(v), d)
+    this.viewer.cameraHandler.camera.far = d
+    this.viewer.cameraHandler.activeCam.camera.far = d
+    this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
+    this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
+    // console.log(d)
   }
 
   public render(camera: Camera) {
     this.batcher.render(this.renderer)
-    this.renderer.render(this.scene, camera)
+    this.pipeline.render(this.scene, camera)
+    // this.renderer.render(this.scene, camera)
+  }
+
+  public resize(width: number, height: number) {
+    this.renderer.setSize(width, height)
+    this.pipeline.resize(width, height)
   }
 
   public addRenderTree(subtreeId: string) {
@@ -331,6 +376,7 @@ export default class SpeckleRenderer {
         }
       }
     })
+    this.pipeline.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
   }
 
@@ -427,7 +473,7 @@ export default class SpeckleRenderer {
 
   public setSunLightConfiguration(config: SunLightConfiguration) {
     Object.assign(this.sunConfiguration, config)
-    if (config.indirectLightIntensity) {
+    if (config.indirectLightIntensity !== undefined) {
       this.indirectIBLIntensity = config.indirectLightIntensity
     }
     this.updateDirectLights()
@@ -515,7 +561,6 @@ export default class SpeckleRenderer {
         }
       })
     } as SelectionEvent
-
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 
@@ -631,7 +676,7 @@ export default class SpeckleRenderer {
 
     this.viewer.cameraHandler.controls.minDistance = distance / 100
     this.viewer.cameraHandler.controls.maxDistance = distance * 100
-    this.viewer.cameraHandler.camera.near = distance / 100
+    this.viewer.cameraHandler.camera.near = Math.max(distance / 100, 0.1)
     this.viewer.cameraHandler.camera.far = distance * 100
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
