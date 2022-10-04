@@ -274,11 +274,8 @@ export const Branches = buildTableHelper('branches', [
 ])
 
 export const ScheduledTasks = buildTableHelper('scheduled_tasks', [
-  'createdAt',
   'taskName',
-  'status',
-  'updatedAt',
-  'lockTimeout'
+  'lockExpiresAt'
 ])
 
 export { knex }

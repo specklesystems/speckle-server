@@ -108,8 +108,5 @@ export type BranchRecord = {
 
 export type ScheduledTaskRecord = {
   taskName: string
-  createdAt: Date
-  status: number
-  updatedAt: Date
-  lockTimeout: number
+  lockExpiresAt: Date
 }
