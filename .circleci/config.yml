@@ -351,9 +351,9 @@ jobs:
       - store_test_results:
           path: packages/server/reports
 
-      - store_artifacts:
-          path: packages/server/coverage/lcov-report
-          destination: package/server/coverage
+      # - store_artifacts:
+      # path: packages/server/coverage/lcov-report
+      # destination: package/server/coverage
 
   docker-build: &build-job
     docker: &docker-image
