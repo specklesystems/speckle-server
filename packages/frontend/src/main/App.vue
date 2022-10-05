@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <router-view></router-view>
 </template>
 <script>

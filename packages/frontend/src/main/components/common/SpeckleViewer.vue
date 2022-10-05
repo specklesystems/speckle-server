@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <div style="height: 100vh; position: relative" class="speckle-viewer transparent">
     <div
       id="rendererparent"

@@ -1,20 +1,21 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 // NOTE: any disabling temporary, most of the filtering stuff will go away
 
-import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
+import { Nullable } from '@/helpers/typeHelpers'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
-import { makeVar, TypePolicies } from '@apollo/client/cache'
 import {
   DefaultViewerParams,
   Viewer,
   SelectionEvent,
   PropertyInfo,
-  FilteringState,
   NumericPropertyInfo
 } from '@speckle/viewer'
-import emojis from '@/main/store/emojis'
 import { cloneDeep } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
+import {
+  commitObjectViewerState,
+  StateType
+} from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_STREAMID'
@@ -40,29 +41,6 @@ type GlobalViewerData = {
  */
 let globalViewerData: Nullable<GlobalViewerData> = null
 
-/**
- * Queryable Apollo Client state
- */
-const commitObjectViewerState = makeVar({
-  viewerBusy: false,
-  selectedCommentMetaData: null as Nullable<{
-    id: number
-    selectionLocation: Record<string, unknown>
-  }>,
-  addingComment: false,
-  preventCommentCollapse: false,
-  commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
-  emojis,
-  // New viewer & filter vars
-  currentFilterState: null as Nullable<FilteringState>,
-  selectedObjects: [] as UnknownObject[],
-  objectProperties: [] as PropertyInfo[],
-  localFilterPropKey: null as Nullable<string>,
-  sectionBox: false
-})
-
-export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
-
 export type LocalFilterState = {
   hiddenIds?: string[]
   isolatedIds?: string[]
@@ -70,22 +48,6 @@ export type LocalFilterState = {
   passMin?: number | null
   passMax?: number | null
   sectionBox?: number[]
-}
-
-/**
- * Merge (through _.merge) these with the rest of your Apollo Client `typePolicies` to set up
- * commit object viewer state management
- */
-export const statePolicies: TypePolicies = {
-  Query: {
-    fields: {
-      commitObjectViewerState: {
-        read() {
-          return commitObjectViewerState()
-        }
-      }
-    }
-  }
 }
 
 /**

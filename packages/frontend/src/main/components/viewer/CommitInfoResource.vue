@@ -87,11 +87,16 @@ import {
   unIsolateObjects,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { Ripple } from 'vuetify/lib/directives'
+
 export default {
   components: {
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
+  },
+  directives: {
+    Ripple
   },
   props: {
     resource: {

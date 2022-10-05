@@ -12,9 +12,8 @@ import { formatNumber } from '@/plugins/formatNumber'
 // Accepts 'max' parameter to set it's formatting while being animated
 Vue.filter('prettynum', formatNumber)
 
-// process.env.NODE_ENV is injected by Webpack
-const enableDevMode =
-  !!process.env.FORCE_VUE_DEVTOOLS || process.env.NODE_ENV === 'development'
+// env vars injected by Vite
+const enableDevMode = !!import.meta.env.FORCE_VUE_DEVTOOLS || !!import.meta.env.DEV
 
 Vue.config.productionTip = enableDevMode
 Vue.config.devtools = enableDevMode

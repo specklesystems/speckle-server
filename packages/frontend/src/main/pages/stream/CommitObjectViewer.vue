@@ -271,7 +271,7 @@ import {
   StreamCommitQueryQuery,
   StreamObjectNoDataQuery
 } from '@/graphql/generated/graphql'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { has } from 'lodash'
 import { Nullable } from '@/helpers/typeHelpers'
 import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'

@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <v-container v-if="$apollo.loading" fluid>
     <v-skeleton-loader type="article"></v-skeleton-loader>
   </v-container>
