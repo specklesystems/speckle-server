@@ -2,8 +2,6 @@ secret:
   ignored-paths:
     - 'packages/server/modules/emails/tests'
   ignored-matches:
-    - match: a181060b766606db0652528b7065e2bbd5a639ccf44e1d5ca8fe01af709f9fb1
+    - match: acd87c5a50b56df91a795e999812a3a4
       name: '/Users/iainsproat/workspace/speckle-server/packages/frontend/src/bootstrapper.ts - token acd87c5a50b56df91a795e999812a3a4'
-    - match: 2faabe218ff70afafce63f14ce86080b535f5d52d26d3bab2305bf9f4e26e532
-      name: 'packages/server/modules/emails/tests/verifications.spec.ts'
 version: 2
