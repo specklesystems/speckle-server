@@ -232,8 +232,8 @@ export const commentMentionSummary: TopicDigesterFunction = (activitySummary) =>
 
 export const farewell = () => {
   return {
-    text: "That's it for this week, see you next time.\nWarm regards from the Speckle team.",
-    html: "<p>That's it for this week, see you next time.<br/>Warm regards from the Speckle team.</p>",
+    text: "That's it for this week, see you next time!",
+    html: "<p>That's it for this week, see you next time!</p>",
     sources: []
   }
 }
@@ -280,8 +280,8 @@ export const digestActiveStreams: TopicDigesterFunction = (
       text += ` which were received ${receiveCount} times`
     }
     if (commentCount) {
-      html += `.<br/>It also got ${commentCount} <a href="${streamUrl}/comments">comments</a>`
-      text += `.\nIt also got ${commentCount} comments. Check them at ${streamUrl}/comments`
+      html += `. It also got ${commentCount} <a href="${streamUrl}/comments">comments</a>`
+      text += `. It also got ${commentCount} comments. Check them at ${streamUrl}/comments`
     }
     html += `.<p/>`
     text += '.\n'
