@@ -1,4 +1,5 @@
 import {
+  AdditiveBlending,
   Camera,
   DoubleSide,
   NoBlending,
@@ -36,7 +37,6 @@ export class SpeckleDynamicSAOPass extends SAOPass {
   private prevNumSamples
   private batcher: Batcher = null
   private normalsType: NormalsType = NormalsType.IMPROVED
-  public accumulate = false
 
   public set normalsRendering(type: NormalsType) {
     this.normalsType = type
@@ -131,7 +131,7 @@ export class SpeckleDynamicSAOPass extends SAOPass {
 
     renderer.setRenderTarget(this.depthRenderTarget)
     renderer.clear()
-
+    this.saoMaterial.blending = AdditiveBlending
     this.saoMaterial.uniforms['bias'].value = this.params.saoBias
     this.saoMaterial.uniforms['intensity'].value = this.params.saoIntensity
     this.saoMaterial.uniforms['scale'].value = this.params.saoScale
@@ -221,7 +221,7 @@ export class SpeckleDynamicSAOPass extends SAOPass {
     this.batcher.applyVisibility(restoreVisibility)
 
     // Rendering SAO texture
-    this.renderPass(renderer, this.saoMaterial, this.saoRenderTarget, 0xffffff, 1.0)
+    this.renderPass(renderer, this.saoMaterial, this.saoRenderTarget, 0x000000, 1.0)
 
     // Blurring SAO texture
     if (this.params.saoBlur) {
@@ -252,7 +252,7 @@ export class SpeckleDynamicSAOPass extends SAOPass {
 
     // setup pass state
     renderer.autoClear = false
-    if (clearColor !== undefined && clearColor !== null && !this.accumulate) {
+    if (clearColor !== undefined && clearColor !== null) {
       renderer.setClearColor(clearColor)
       renderer.setClearAlpha(clearAlpha || 0.0)
       renderer.clear()

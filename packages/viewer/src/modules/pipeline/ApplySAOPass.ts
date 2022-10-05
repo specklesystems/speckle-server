@@ -14,7 +14,7 @@ import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 
 export class ApplySAOPass extends Pass {
   private fsQuad: FullScreenQuad
-  private materialCopy: ShaderMaterial
+  public materialCopy: ShaderMaterial
 
   constructor(srcSao: Texture) {
     super()
@@ -24,15 +24,22 @@ export class ApplySAOPass extends Pass {
       fragmentShader: CopyShader.fragmentShader,
       blending: NoBlending
     })
-    // this.materialCopy.transparent = true
-    // this.materialCopy.depthTest = false
-    // this.materialCopy.depthWrite = false
+    this.materialCopy.transparent = true
+    this.materialCopy.depthTest = false
+    this.materialCopy.depthWrite = false
+    this.materialCopy.blending = CustomBlending
+    this.materialCopy.blendSrc = DstColorFactor
+    this.materialCopy.blendDst = ZeroFactor
+    this.materialCopy.blendEquation = AddEquation
+    this.materialCopy.blendSrcAlpha = DstAlphaFactor
+    this.materialCopy.blendDstAlpha = ZeroFactor
+    this.materialCopy.blendEquationAlpha = AddEquation
     // this.materialCopy.blending = CustomBlending
-    // this.materialCopy.blendSrc = DstColorFactor
-    // this.materialCopy.blendDst = ZeroFactor
-    // this.materialCopy.blendEquation = AddEquation
-    // this.materialCopy.blendSrcAlpha = DstAlphaFactor
-    // this.materialCopy.blendDstAlpha = ZeroFactor
+    // this.materialCopy.blendSrc = OneFactor
+    // this.materialCopy.blendDst = OneFactor
+    // this.materialCopy.blendEquation = ReverseSubtractEquation
+    // this.materialCopy.blendSrcAlpha = OneFactor
+    // this.materialCopy.blendDstAlpha = OneFactor
     // this.materialCopy.blendEquationAlpha = AddEquation
     this.materialCopy.uniforms['tDiffuse'].value = srcSao
     this.materialCopy.needsUpdate = true

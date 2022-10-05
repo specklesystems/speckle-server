@@ -318,6 +318,7 @@ export default class SpeckleRenderer {
     // this.lastPolar = currentPolar
     // this.lastDistance = currentDistance
     // this.lastTarget.copy(currentTarget)
+    this.viewer.needsRender = this.pipeline.needsRender
   }
 
   public render(camera: Camera) {

@@ -39,6 +39,7 @@ export class Pipeline {
   private saoPass: SpeckleDynamicSAOPass = null
   private applySaoPass: ApplySAOPass = null
   private drawingSize: Vector2 = new Vector2()
+  public needsRender = true
 
   public set pipelineOptions(options: PipelineOptions) {
     Object.assign(this._pipelineOptions, options)
@@ -69,7 +70,6 @@ export class Pipeline {
     this.composer.addPass(this.saoPass)
     this.renderPass = new RenderPass(scene, camera)
     this.renderPass.renderToScreen = true
-    this.renderPass.enabled = false
     this.composer.addPass(this.renderPass)
     this.applySaoPass = new ApplySAOPass(this.saoPass.saoRenderTarget.texture)
     this.applySaoPass.renderToScreen = true
@@ -85,6 +85,7 @@ export class Pipeline {
     this._renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return
 
+    this._renderer.clear(true)
     this.renderPass.scene = scene
     this.renderPass.camera = camera
     this.saoPass.scene = scene
@@ -97,10 +98,10 @@ export class Pipeline {
   }
 
   public onStationaryBegin() {
-    this.saoPass.accumulate = true
+    this.needsRender = true
   }
 
   public onStationaryEnd() {
-    this.saoPass.accumulate = false
+    this.needsRender = true
   }
 }
