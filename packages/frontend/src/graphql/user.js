@@ -12,6 +12,7 @@ export const commonUserFieldsFragment = gql`
     company
     avatar
     verified
+    hasPendingVerification
     profiles
     role
     streams {
@@ -69,6 +70,7 @@ export const profileSelfQuery = gql`
     user {
       ...CommonUserFields
       totalOwnedStreamsFavorites
+      notificationPreferences
     }
   }
 
@@ -164,5 +166,28 @@ export const validatePasswordStrengthQuery = gql`
         suggestions
       }
     }
+  }
+`
+
+export const emailVerificationBannerStateQuery = gql`
+  query EmailVerificationBannerState {
+    user {
+      id
+      email
+      verified
+      hasPendingVerification
+    }
+  }
+`
+
+export const requestVerificationMutation = gql`
+  mutation RequestVerification {
+    requestVerification
+  }
+`
+
+export const updateUserNotificationPreferencesMutation = gql`
+  mutation UpdateUserNotificationPreferences($preferences: JSONObject!) {
+    userNotificationPreferencesUpdate(preferences: $preferences)
   }
 `

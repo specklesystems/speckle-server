@@ -16,6 +16,38 @@ export default {
       default: '?'
     }
   },
+  data: () => ({
+    apps: [
+      { name: 'dynamo', color: 'purple', short: 'DYN' },
+      { name: 'revit', color: 'blue darken-1', short: 'RVT' },
+      { name: 'autocad', color: 'red lighten-1', short: 'ACAD' },
+      { name: 'civil', color: 'cyan', short: 'C3D' },
+      { name: 'blender', color: 'orange  darken-1', short: 'BLEND' },
+      { name: 'rhino', color: 'black', short: 'RH' },
+      { name: 'grasshopper', color: 'green darken-2', short: 'GH' },
+      { name: 'excel', color: 'green lighten-1', short: 'XLSX' },
+      { name: 'unity', color: 'teal', short: 'UNITY' },
+      { name: 'unreal', color: 'brown', short: 'UE' },
+      { name: 'python', color: 'yellow darken-1', short: 'PY' },
+      { name: '.net', color: 'purple darken-2', short: '.NET' },
+      { name: 'ifc', color: 'red darken-4', short: 'IFC' },
+      { name: 'qgis', color: 'light-green accent-4', short: 'QGIS' },
+      { name: 'arcgis', color: 'blue accent-4', short: 'AGIS' },
+      { name: 'etabs', color: 'grey darken-2', short: 'ETABS' },
+      { name: 'powerbi', color: 'yellow accent-1', short: 'PBI' },
+      { name: 'sketchup', color: 'blue accent-1', short: 'SKP' },
+      { name: 'sap', color: 'grey darken-2', short: 'SAP' },
+      { name: 'csibridge', color: 'grey darken-2', short: 'CSIB' },
+      { name: 'safe', color: 'grey darken-2', short: 'SAFE' },
+      { name: 'archicad', color: 'blue darken-1', short: 'ARCHI' },
+      { name: 'teklastructures', color: 'blue accent-4', short: 'AGIS' },
+      { name: 'arcgis', color: 'red accent-4', short: 'TEKLAS' },
+      { name: 'openroads', color: 'brown accent-4', short: 'OROAD' },
+      { name: 'openrail', color: 'brown accent-4', short: 'ORAIL' },
+      { name: 'openbuildings', color: 'brown accent-4', short: 'OBUILD' },
+      { name: 'microstation', color: 'brown accent-4', short: 'MICRO' }
+    ]
+  }),
   computed: {
     // adding new colors?
     // this can help: https://codepen.io/teocomi/pen/vYxvREG?editors=1010
@@ -24,19 +56,9 @@ export default {
 
       const appname = this.applicationName.toLowerCase()
 
-      if (appname.includes('dynamo')) return 'purple'
-      if (appname.includes('revit')) return 'blue darken-3'
-      if (appname.includes('autocad')) return 'red lighten-1'
-      if (appname.includes('civil')) return 'blue lighten-1'
-      if (appname.includes('blender')) return 'orange darken-1'
-      if (appname.includes('rhino')) return 'black'
-      if (appname.includes('grasshopper')) return 'green darken-2'
-      if (appname.includes('excel')) return 'green lighten-1'
-      if (appname.includes('unity')) return 'teal'
-      if (appname.includes('unreal')) return 'brown'
-      if (appname.includes('python')) return 'yellow darken-1'
-      if (appname.includes('.net')) return 'purple darken-2'
-      if (appname.includes('ifc')) return 'red darken-4'
+      for (const app of this.apps) {
+        if (appname.includes(app.name)) return app.color
+      }
       return 'grey'
     },
     shortName() {
@@ -44,19 +66,9 @@ export default {
 
       const appname = this.applicationName.toLowerCase()
 
-      if (appname.includes('dynamo')) return 'DYN'
-      if (appname.includes('revit')) return 'RVT'
-      if (appname.includes('autocad')) return 'ACAD'
-      if (appname.includes('civil')) return 'C3D'
-      if (appname.includes('blender')) return 'BLNDR'
-      if (appname.includes('rhino')) return 'RH'
-      if (appname.includes('grasshopper')) return 'GH'
-      if (appname.includes('excel')) return 'XLSX'
-      if (appname.includes('unity')) return 'UNITY'
-      if (appname.includes('unreal')) return 'UE'
-      if (appname.includes('python')) return 'PY'
-      if (appname.includes('.net')) return '.NET'
-      if (appname.includes('ifc')) return 'IFC'
+      for (const app of this.apps) {
+        if (appname.includes(app.name)) return app.short
+      }
       return appname
     }
   }

@@ -11,7 +11,7 @@ const debug = require('debug')
 function passportAuthenticate(strategy, options = undefined) {
   return (req, res, next) =>
     passport.authenticate(strategy, options, (err, user, info) => {
-      if (err) debug('speckle:errors')(err)
+      if (err) debug('speckle:error')(err)
       if (!user) {
         const errMsg = info?.message || 'Failed to authenticate, contact server admins'
         return res.redirect(`/error?message=${errMsg}`)

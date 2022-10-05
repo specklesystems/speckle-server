@@ -21,8 +21,8 @@
     </portal>
     <v-row v-if="stream" justify="center">
       <v-col v-if="serverInfo && stream" cols="12">
-        <!-- Add contributors panel -->
         <v-row>
+          <!-- Add contributors panel -->
           <v-col v-if="isStreamOwner" cols="12">
             <section-card :elevation="4">
               <v-progress-linear v-show="loading" indeterminate></v-progress-linear>
@@ -97,6 +97,20 @@
             </v-alert>
           </v-col>
 
+          <!-- Stream access requests -->
+          <v-col
+            v-if="
+              isStreamOwner && pendingAccessRequests && pendingAccessRequests.length
+            "
+            cols="12"
+          >
+            <stream-access-request-banner
+              v-for="req in pendingAccessRequests"
+              :key="req.id"
+              :request="req"
+            />
+          </v-col>
+
           <!-- Current users/invites for each role - owner, contributor, reviewer  -->
           <v-col v-for="role in roles" :key="role.name" cols="12" md="4">
             <stream-role-collaborators
@@ -146,6 +160,7 @@ import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { vueWithMixins } from '@/helpers/typeHelpers'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { AppLocalStorage } from '@/utils/localStorage'
+import StreamAccessRequestBanner from '@/main/components/stream/StreamAccessRequestBanner.vue'
 
 export default vueWithMixins(IsLoggedInMixin).extend({
   // @vue/component
@@ -155,7 +170,8 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     InviteDialog,
     BasicUserInfoRow,
     StreamRoleCollaborators,
-    LeaveStreamPanel
+    LeaveStreamPanel,
+    StreamAccessRequestBanner
   },
   mixins: [
     buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-collaborators', 1)
@@ -254,6 +270,9 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     owners() {
       if (!this.stream) return []
       return this.stream.collaborators.filter((u) => u.role === 'stream:owner')
+    },
+    pendingAccessRequests() {
+      return this.stream?.pendingAccessRequests
     },
     filteredSearchResults() {
       if (!this.userSearch) return null

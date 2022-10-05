@@ -49,7 +49,7 @@ export default {
   props: {
     url: {
       type: String,
-      default: ''
+      default: () => ''
     },
     color: {
       type: Boolean,

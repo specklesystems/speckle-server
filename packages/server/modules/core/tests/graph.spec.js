@@ -423,17 +423,24 @@ describe('GraphQL API Core @core-api', () => {
         expect(resS1.body.data.streamUpdate).to.equal(true)
       })
 
-      it('Should not allow updating permissions if target user isnt added to stream yet', async () => {
-        const res = await sendRequest(userA.token, {
-          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
-        })
+      const publicPrivateDataset = [
+        { display: 'public', isPublic: true },
+        { display: 'private', isPublic: false }
+      ]
+      publicPrivateDataset.forEach(({ display, isPublic }) => {
+        it(`Should not allow updating permissions if target user isnt a collaborator on a ${display} stream`, async () => {
+          const streamId = isPublic ? ts2 : ts1
+          const res = await sendRequest(userA.token, {
+            query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}" role: "stream:owner"}) }`
+          })
 
-        expect(res).to.be.json
-        expect(res.body.errors).to.be.ok
-        expect(res.body.data.streamUpdatePermission).to.be.not.ok
-        expect(res.body.errors.map((e) => e.message).join('|')).to.contain(
-          "Cannot grant permissions to users who aren't collaborators already"
-        )
+          expect(res).to.be.json
+          expect(res.body.errors).to.be.ok
+          expect(res.body.data.streamUpdatePermission).to.be.not.ok
+          expect(res.body.errors.map((e) => e.message).join('|')).to.contain(
+            "Cannot grant permissions to users who aren't collaborators already"
+          )
+        })
       })
 
       it('Should be able to update some permissions', async () => {
@@ -570,14 +577,6 @@ describe('GraphQL API Core @core-api', () => {
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('streamDelete')
         expect(res.body.data.streamDelete).to.equal(true)
-      })
-
-      it('Should query streams', async () => {
-        const streamResults = await sendRequest(userA.token, {
-          query: '{ streams(limit: 200) { totalCount items { id name } } }'
-        })
-        expect(streamResults.body.errors).to.exist
-        expect(streamResults.body.errors[0].extensions.code).to.equal('BAD_USER_INPUT')
       })
 
       it('Should be forbidden to query admin streams if not admin', async () => {

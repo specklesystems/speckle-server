@@ -1,15 +1,16 @@
 /* istanbul ignore file */
 import * as SendingService from '@/modules/emails/services/sending'
+import { initializeVerificationOnRegistration } from '@/modules/emails/services/verification/request'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import dbg from 'debug'
-import { noop } from 'lodash'
 
 const debug = dbg('speckle')
 const modulesDebug = debug.extend('modules')
+let quitVerificationListeners: Optional<() => void> = undefined
 
 const emailsModule: SpeckleModule = {
-  init: async (app) => {
+  init: async (app, isInitial) => {
     modulesDebug('📧 Init emails module')
 
     // init transporter
@@ -17,9 +18,16 @@ const emailsModule: SpeckleModule = {
 
     // init rest api
     ;(await import('./rest')).default(app)
+
+    // init event listeners
+    if (isInitial) {
+      quitVerificationListeners = initializeVerificationOnRegistration()
+    }
   },
 
-  finalize: noop
+  shutdown() {
+    quitVerificationListeners?.()
+  }
 }
 
 async function sendEmail({

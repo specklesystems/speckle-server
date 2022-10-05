@@ -13,8 +13,8 @@ type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse & {
  * a properly typed response
  */
 export async function executeOperation<
-  R = Record<string, any>,
-  V = Record<string, unknown>
+  R extends Record<string, any> = Record<string, any>,
+  V extends Record<string, any> = Record<string, any>
 >(
   apollo: ApolloServer,
   query: DocumentNode,

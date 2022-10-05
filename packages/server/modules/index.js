@@ -52,7 +52,9 @@ async function getSpeckleModules() {
     './fileuploads',
     './comments',
     './blobstorage',
-    './notifications'
+    './notifications',
+    './activitystream',
+    './accessrequests'
   ]
 
   for (const dir of moduleDirs) {

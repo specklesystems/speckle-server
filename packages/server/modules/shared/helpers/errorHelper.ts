@@ -1,4 +1,5 @@
 import { BaseError, UnexpectedErrorStructureError } from '@/modules/shared/errors'
+import { VError } from 'verror'
 
 /**
  * In JS catch clauses can receive not only Errors, but pretty much any other kind of data type, so
@@ -14,4 +15,16 @@ export function ensureError(
       originalError: e
     }
   })
+}
+
+/**
+ * Resolve cause correctly depending on whether its a VError or basic Error
+ * object
+ */
+export function getCause(e: Error) {
+  if (e instanceof VError) {
+    return VError.cause(e)
+  } else {
+    return e.cause
+  }
 }

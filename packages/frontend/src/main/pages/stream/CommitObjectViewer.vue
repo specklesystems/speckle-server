@@ -1,18 +1,24 @@
 <template>
   <div class="commit-object-viewer">
-    <div v-if="(isMultiple || isCommit || isObject) && !singleResourceError">
-      <commit-toolbar
-        v-if="isCommit"
-        :stream="resources[0].data"
-        @edit-commit="showCommitEditDialog = true"
-      />
-      <object-toolbar v-if="isObject" :stream="resources[0].data" />
+    <div
+      v-if="
+        firstResource && (isMultiple || isCommit || isObject) && !singleResourceError
+      "
+    >
       <multiple-resources-toolbar
-        v-if="isMultiple"
-        :stream="{ name: resources[0].data.name, id: streamId }"
+        v-if="isMultiple && isNotErrorResource(firstResource)"
+        :stream="{ name: firstResource.data.name, id: streamId }"
         :resources="resources"
       />
-
+      <commit-toolbar
+        v-else-if="isCommitResource(firstResource)"
+        :stream="firstResource.data"
+        @edit-commit="showCommitEditDialog = true"
+      />
+      <object-toolbar
+        v-else-if="isObjectResource(firstResource)"
+        :stream="firstResource.data"
+      />
       <prioritized-portal to="nav" identity="stream-commit-viewer" :priority="2">
         <commit-object-viewer-scope
           :stream-id="streamId"
@@ -27,9 +33,9 @@
             </div>
             <v-list nav dense class="mt-0 pt-0">
               <v-list-item
-                v-if="isCommit"
+                v-if="!isMultiple && isCommitResource(firstResource)"
                 link
-                :to="`/streams/${streamId}/branches/${resources[0].data.commit.branchName}`"
+                :to="`/streams/${streamId}/branches/${firstResource.data.commit?.branchName}`"
                 class=""
               >
                 <v-list-item-icon>
@@ -38,7 +44,7 @@
                 <v-list-item-content>
                   <v-list-item-title class="font-weight-bold">
                     <v-icon small class="mr-1 caption">mdi-source-branch</v-icon>
-                    {{ resources[0].data.commit.branchName }}
+                    {{ firstResource.data.commit?.branchName }}
                   </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
@@ -79,11 +85,10 @@
           <!-- Filters display -->
           <viewer-filters
             class="mt-4"
-            :props="objectProperties"
             :source-application="
               resources
-                .filter((r) => r.type === 'commit')
-                .map((r) => r.data.commit.sourceApplication)
+                .filter(isCommitResource)
+                .map((r) => r.data.commit?.sourceApplication)
                 .join(',')
             "
           />
@@ -93,7 +98,11 @@
       <!-- Preview image -->
       <v-fade-transition>
         <preview-image
-          v-if="!loadedModel && (isCommit || isObject)"
+          v-if="
+            !loadedModel &&
+            !isMultiple &&
+            (isCommitResource(firstResource) || isObjectResource(firstResource))
+          "
           :style="`
             height: 100vh;
             width: 100%;
@@ -105,9 +114,9 @@
           `"
           :height="420"
           :url="`/preview/${streamId}/objects/${
-            isCommit
-              ? resources[0].data.commit.referencedObject
-              : resources[0].data.object.id
+            isCommitResource(firstResource)
+              ? firstResource.data.commit?.referencedObject
+              : firstResource.data.object?.id
           }`"
         ></preview-image>
       </v-fade-transition>
@@ -117,11 +126,7 @@
         ref="renderParent"
         :style="`height: 100vh; width: 100%; ${topOffsetStyle} left: 0px; position: absolute`"
       >
-        <speckle-viewer
-          :no-scroll="noScroll"
-          @load-progress="captureProgress"
-          @selection="captureSelect"
-        />
+        <speckle-viewer :no-scroll="noScroll" @load-progress="captureProgress" />
       </div>
 
       <div
@@ -135,11 +140,9 @@
           pointer-events: none;`"
       >
         <object-selection
-          v-show="selectionData.length !== 0 && !hideSelectionInfo"
+          v-show="viewerState.selectedObjects.length !== 0 && !hideSelectionInfo"
           :key="'one'"
-          :objects="selectionData"
           :stream-id="streamId"
-          @clear-selection="selectionData = []"
         />
       </div>
 
@@ -170,14 +173,18 @@
         class=""
       >
         <viewer-bubbles v-if="!isEmbed" key="a" />
-        <comments-overlay key="c" @add-resources="addResources" />
+        <comments-overlay
+          key="c"
+          :model-loaded="loadedModel"
+          @add-resources="addResources"
+        />
         <comment-add-overlay v-if="!isEmbed" key="b" />
       </div>
 
-      <!-- 
+      <!--
       Note: portaling out the mobile view of comment threads because of
       stacking chaos caused by transforms, etc. in positioning from the default
-      view. 
+      view.
       -->
       <portal-target name="mobile-comment-thread"></portal-target>
 
@@ -233,16 +240,17 @@
       />
     </v-dialog>
     <v-dialog
-      v-if="isCommit"
+      v-if="!isMultiple && firstResource && isCommitResource(firstResource)"
       v-model="showCommitEditDialog"
       width="500"
       :fullscreen="$vuetify.breakpoint.smAndDown"
     >
-      <commit-edit :stream="resources[0].data" @close="showCommitEditDialog = false" />
+      <commit-edit :stream="firstResource.data" @close="showCommitEditDialog = false" />
     </v-dialog>
   </div>
 </template>
 <script lang="ts">
+import * as THREE from 'three'
 import { computed, defineComponent, toRefs } from 'vue'
 import debounce from 'lodash/debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
@@ -252,20 +260,24 @@ import {
   Filter,
   setFilterDirectly,
   setIsViewerBusy,
-  setupCommitObjectViewer
+  setupCommitObjectViewer,
+  loadObjectProperties,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { PropertyInfo } from '@speckle/viewer'
 import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import {
   StreamCommitQueryQuery,
   StreamObjectNoDataQuery
 } from '@/graphql/generated/graphql'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { has } from 'lodash'
 import { Nullable } from '@/helpers/typeHelpers'
 import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'
 import CommitObjectViewerScope from '@/main/components/viewer/CommitObjectViewerScope.vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
+import { ViewerEvent } from '@speckle/viewer'
 
 type ErroredResourceData = {
   error: boolean
@@ -276,10 +288,9 @@ type CommitResourceData = NonNullable<Get<StreamCommitQueryQuery, 'stream'>>
 
 type ObjectResourceData = NonNullable<Get<StreamObjectNoDataQuery, 'stream'>>
 
-type AllSupportedDataTypes =
-  | ErroredResourceData
-  | CommitResourceData
-  | ObjectResourceData
+type NonErrorDataTypes = CommitResourceData | ObjectResourceData
+
+type AllSupportedDataTypes = ErroredResourceData | NonErrorDataTypes
 
 type ResourceTypeValue = 'commit' | 'object'
 
@@ -292,6 +303,10 @@ type ResourceObjectType<T> = {
 const isErrorResource = (
   resource: ResourceObjectType<unknown>
 ): resource is ResourceObjectType<ErroredResourceData> => has(resource.data, 'error')
+
+const isNotErrorResource = (
+  resource: ResourceObjectType<unknown>
+): resource is ResourceObjectType<NonErrorDataTypes> => !isErrorResource(resource)
 
 const isCommitResource = (
   resource: ResourceObjectType<unknown>
@@ -321,6 +336,8 @@ export default defineComponent({
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup.vue'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay.vue'),
     ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue'),
+    // ViewerFiltersLegacy: () =>
+    //   import('@/main/components/viewer/ViewerFilters-Legacy.vue'),
     ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay.vue'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay.vue')
@@ -359,7 +376,10 @@ export default defineComponent({
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          appliedFilter
+          selectedCommentMetaData
+          selectedObjects
+          currentFilterState
+          sectionBox
         }
       }
     `)
@@ -369,7 +389,11 @@ export default defineComponent({
 
     return {
       viewer,
-      viewerState
+      viewerState,
+      isCommitResource,
+      isObjectResource,
+      isErrorResource,
+      isNotErrorResource
     }
   },
   data: () => ({
@@ -379,9 +403,8 @@ export default defineComponent({
     loadedModel: false,
     loadProgress: 0,
     showCommitEditDialog: false,
-    selectionData: [] as Record<string, unknown>[],
     views: [] as Record<string, unknown>[],
-    objectProperties: null as Nullable<Record<string, unknown>>,
+    objectProperties: null as Nullable<PropertyInfo[]>,
     resources: [] as ResourceObjectType<AllSupportedDataTypes>[],
     showAddOverlay: false,
     viewerBusy: false
@@ -392,21 +415,20 @@ export default defineComponent({
       return !this.$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'
     },
     isCommit(): boolean {
-      if (this.resources.length === 0) return false
-      if (this.resources.length === 1 && this.resources[0].type === 'commit')
-        return true
-      return false
+      if (this.isMultiple) return false
+      return this.firstResource?.type === 'commit'
     },
     isObject(): boolean {
-      if (this.resources.length === 0) return false
-      if (this.resources.length === 1 && this.resources[0].type === 'object')
-        return true
-      return false
+      if (this.isMultiple) return false
+      return this.firstResource?.type === 'object'
     },
     isMultiple(): boolean {
       if (this.resources.length === 0) return false
       if (this.resources.length > 1) return true
       return false
+    },
+    firstResource(): Nullable<ResourceObjectType<AllSupportedDataTypes>> {
+      return this.resources[0] || null
     },
     singleResourceError(): boolean {
       if (this.resources.length !== 1) return false
@@ -419,25 +441,8 @@ export default defineComponent({
     }
   },
   watch: {
-    'viewerState.appliedFilter'(val) {
-      if (this.isEmbed) return
-      if (!val) {
-        const fullQuery = { ...this.$route.query }
-        delete fullQuery.filter
-        this.$router.replace({
-          path: this.$route.path,
-          query: { ...fullQuery }
-        })
-        return
-      }
-      const fullQuery = { ...this.$route.query }
-      delete fullQuery.filter
-      this.$router
-        .replace({
-          path: this.$route.path,
-          query: { ...fullQuery, filter: JSON.stringify(val) }
-        })
-        .catch(() => {})
+    'viewerState.currentFilterState'() {
+      this.updateUrl()
     }
   },
   async mounted() {
@@ -510,23 +515,37 @@ export default defineComponent({
         }
       }
 
-      this.viewer.on('busy', (val: boolean) => {
+      this.viewer.on(
+        ViewerEvent.SectionBoxChanged,
+        debounce(() => {
+          this.updateUrl()
+        }, 1000)
+      )
+
+      this.viewer.on(ViewerEvent.Busy, (val: boolean) => {
         setIsViewerBusy(!!val)
         this.viewerBusy = val
         if (!val && this.camToSet) {
           setTimeout(() => {
             if (!this.camToSet) return
 
-            if (this.camToSet[6] === 1) {
-              this.viewer.toggleCameraProjection()
-            }
-            this.viewer.interactions.setLookAt(
-              { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
-              { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
-            )
-            if (this.camToSet[6] === 1) {
-              this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
-            }
+            this.viewer.setView({
+              position: new THREE.Vector3(
+                this.camToSet[0],
+                this.camToSet[1],
+                this.camToSet[2]
+              ),
+              target: new THREE.Vector3(
+                this.camToSet[3],
+                this.camToSet[4],
+                this.camToSet[5]
+              )
+            })
+
+            // NOTE: disabled because ortho camera is not working with comment bubbles intersections properly
+            // if (this.camToSet[6] === 1) {
+            // this.viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+            // }
             this.camToSet = null
           }, 200)
         }
@@ -553,10 +572,14 @@ export default defineComponent({
             return
           }
           if (this.camToSet) return
+          if (this.viewerState.selectedCommentMetaData) {
+            return
+          }
 
           const c = getCamArray(this.viewer)
           const fullQuery = { ...this.$route.query }
           delete fullQuery.c
+          delete fullQuery.cId
           this.$router
             .replace({
               path: this.$route.path,
@@ -570,6 +593,45 @@ export default defineComponent({
     }, 300)
   },
   methods: {
+    updateUrl() {
+      if (this.isEmbed) return
+
+      if (this.viewerState.selectedCommentMetaData) {
+        this.$router
+          .replace({
+            path: this.$route.path,
+            query: { cId: this.viewerState.selectedCommentMetaData.id }
+          })
+          .catch(() => {})
+        return
+      }
+
+      // TODO: remove comment if there's no selected comment
+
+      const hasSectionBox = this.viewerState.sectionBox !== null
+      const hasFilters = this.viewerState.currentFilterState !== null
+      const hasComment = this.viewerState.selectedCommentMetaData !== null
+
+      if (!hasSectionBox && !hasFilters) {
+        const fullQuery = { ...this.$route.query }
+        delete fullQuery.filter
+        if (!hasComment) delete fullQuery.cId
+        this.$router.replace({
+          path: this.$route.path,
+          query: { ...fullQuery }
+        })
+        return
+      }
+      const fullQuery = { ...this.$route.query }
+      delete fullQuery.filter
+      if (!hasComment) delete fullQuery.cId
+      this.$router
+        .replace({
+          path: this.$route.path,
+          query: { ...fullQuery, filter: JSON.stringify(getLocalFilterState()) }
+        })
+        .catch(() => {})
+    },
     resolveResourceType(resourceId: string): ResourceTypeValue {
       return resourceId.length === 10 ? 'commit' : 'object'
     },
@@ -603,7 +665,7 @@ export default defineComponent({
       await this.viewer.loadObject(
         `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       )
-      this.viewer.zoomExtents(undefined, true)
+      this.viewer.zoom(undefined, undefined, true)
 
       this.loadedModel = true
       this.setFilters()
@@ -688,7 +750,7 @@ export default defineComponent({
         })
 
         await this.viewer.unloadObject(url)
-        this.viewer.zoomExtents(undefined, true)
+        this.viewer.zoom(undefined, undefined, true)
       }
       this.resources.splice(index, 1)
       this.setFilters()
@@ -715,12 +777,12 @@ export default defineComponent({
     },
     setViews() {
       this.views.splice(0, this.views.length)
-      this.views.push(...this.viewer.sceneManager.views)
+      this.views.push(...this.viewer.getViews())
     },
     async setFilters() {
       try {
         // repopulate object props
-        this.objectProperties = await this.viewer.getObjectsProperties()
+        loadObjectProperties()
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: 'Failed to get object properties from viewer.'
@@ -729,10 +791,6 @@ export default defineComponent({
     },
     captureProgress(args: { progress: number }) {
       this.loadProgress = args.progress * 100
-    },
-    captureSelect(selectionData: { userData: Record<string, unknown>[] }) {
-      this.selectionData.splice(0, this.selectionData.length)
-      this.selectionData.push(...selectionData.userData)
     }
   }
 })

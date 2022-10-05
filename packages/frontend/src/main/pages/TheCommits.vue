@@ -1,15 +1,21 @@
 <template>
   <div>
-    <portal v-if="canRenderToolbarPortal" to="toolbar">
+    <commit-multi-select-toolbar
+      v-if="hasSelectedCommits"
+      :selected-commit-ids="selectedCommitIds"
+      @clear="clearSelectedCommits"
+      @finish="onBatchCommitActionFinish"
+    />
+    <prioritized-portal to="toolbar" identity="commits" :priority="0">
       <div class="font-weight-bold">
         Your Latest Commits
         <span v-if="user" class="caption">({{ user.commits.totalCount }})</span>
       </div>
-    </portal>
+    </prioritized-portal>
 
     <v-row v-if="user && user.commits.totalCount !== 0">
       <v-col
-        v-for="commit in user.commits.items.filter((c) => c.branchName !== 'globals')"
+        v-for="commit in commitItems"
         :key="commit.id"
         cols="12"
         sm="6"
@@ -17,7 +23,12 @@
         lg="4"
         xl="3"
       >
-        <commit-preview-card :commit="commit" :preview-height="180" />
+        <commit-preview-card
+          :commit="commit"
+          :preview-height="180"
+          :allow-select="isCommitOrStreamOwner(commit)"
+          :selected.sync="selectedCommitsState[commit.id]"
+        />
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading spinner="waveDots" @infinite="infiniteHandler">
@@ -61,23 +72,28 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
 import { useQuery } from '@vue/apollo-composable'
-import { computed } from 'vue'
+import { computed, defineComponent } from 'vue'
+import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
+import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
+import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
+import { Roles } from '@/helpers/mainConstants'
 
-export default {
+export default defineComponent({
   name: 'TheCommits',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
-    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
+    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
+    PrioritizedPortal,
+    CommitMultiSelectToolbar
   },
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'commits', 0)],
   setup() {
-    const { result, fetchMore: userFetchMore } = useQuery(gql`
+    const {
+      result,
+      fetchMore: userFetchMore,
+      refetch: userRefetch
+    } = useQuery(gql`
       query ($cursor: String) {
         user {
           id
@@ -89,22 +105,52 @@ export default {
               id
               referencedObject
               message
-              streamName
-              streamId
+              authorId
               createdAt
               sourceApplication
               branchName
               commentCount
+              stream {
+                id
+                role
+                name
+              }
             }
           }
         }
       }
     `)
     const user = computed(() => result.value?.user)
+    const commitItems = computed(() =>
+      (user.value?.commits.items || []).filter((c) => c.branchName !== 'globals')
+    )
+
+    const isCommitOrStreamOwner = (commit) => {
+      const userId = user.value.id
+      return commit.stream.role === Roles.Stream.Owner || commit.authorId === userId
+    }
+
+    const {
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState
+    } = useCommitMultiActions()
+
+    const onBatchCommitActionFinish = () => {
+      userRefetch()
+    }
 
     return {
       user,
-      userFetchMore
+      commitItems,
+      userFetchMore,
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState,
+      onBatchCommitActionFinish,
+      isCommitOrStreamOwner
     }
   },
   methods: {
@@ -123,5 +169,5 @@ export default {
       }
     }
   }
-}
+})
 </script>

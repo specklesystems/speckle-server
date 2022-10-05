@@ -13,11 +13,13 @@ const {
   archiveUser
 } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 const {
   getAdminUsersListCollection
 } = require('@/modules/core/services/users/adminUsersListService')
+const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 
 module.exports = {
   Query: {
@@ -86,7 +88,9 @@ module.exports = {
       }
 
       try {
-        await validateScopes(context.scopes, 'users:email')
+        // you should only have access to other users email if you have elevated privileges
+        await validateServerRole(context, Roles.Server.Admin)
+        await validateScopes(context.scopes, Scopes.Users.Email)
         return parent.email
       } catch (err) {
         return null
@@ -110,7 +114,7 @@ module.exports = {
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,
-        actionType: 'user_update',
+        actionType: ActionTypes.User.Update,
         userId: context.userId,
         info: { old: oldValue, new: args.user },
         message: 'User updated'
@@ -156,7 +160,7 @@ module.exports = {
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,
-        actionType: 'user_delete',
+        actionType: ActionTypes.User.Delete,
         userId: context.userId,
         info: {},
         message: 'User deleted'

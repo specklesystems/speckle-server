@@ -1,10 +1,13 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
+import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -14,7 +17,7 @@ export type Scalars = {
   Int: number;
   Float: number;
   BigInt: any;
-  DateTime: string;
+  DateTime: Date;
   EmailAddress: any;
   JSONObject: Record<string, unknown>;
 };
@@ -162,7 +165,7 @@ export type BranchCommitsArgs = {
 export type BranchCollection = {
   __typename?: 'BranchCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<Branch>>>;
+  items?: Maybe<Array<Branch>>;
   totalCount: Scalars['Int'];
 };
 
@@ -281,6 +284,15 @@ export type Commit = {
   parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  /**
+   * Will throw an authorization error if active user isn't authorized to see it, for example,
+   * if a stream isn't public and the user doesn't have the appropriate rights.
+   */
+  stream: Stream;
+  /** @deprecated Use the stream field instead */
+  streamId?: Maybe<Scalars['String']>;
+  /** @deprecated Use the stream field instead */
+  streamName?: Maybe<Scalars['String']>;
   totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
@@ -296,40 +308,8 @@ export type CommitActivityArgs = {
 export type CommitCollection = {
   __typename?: 'CommitCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<Commit>>>;
+  items?: Maybe<Array<Commit>>;
   totalCount: Scalars['Int'];
-};
-
-export type CommitCollectionUser = {
-  __typename?: 'CommitCollectionUser';
-  cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<CommitCollectionUserNode>>>;
-  totalCount: Scalars['Int'];
-};
-
-export type CommitCollectionUserNode = {
-  __typename?: 'CommitCollectionUserNode';
-  branchName?: Maybe<Scalars['String']>;
-  /**
-   * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
-   * E.g.,
-   * ```
-   * query{
-   *   comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
-   *     ...
-   *   }
-   * ```
-   */
-  commentCount: Scalars['Int'];
-  createdAt?: Maybe<Scalars['DateTime']>;
-  id: Scalars['String'];
-  message?: Maybe<Scalars['String']>;
-  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
-  referencedObject: Scalars['String'];
-  sourceApplication?: Maybe<Scalars['String']>;
-  streamId?: Maybe<Scalars['String']>;
-  streamName?: Maybe<Scalars['String']>;
-  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 export type CommitCreateInput = {
@@ -337,7 +317,10 @@ export type CommitCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   objectId: Scalars['String'];
   parents?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
-  /** **DEPRECATED** Use the `parents` field. */
+  /**
+   * **DEPRECATED** Use the `parents` field.
+   * @deprecated Field no longer supported
+   */
   previousCommitIds?: InputMaybe<Array<InputMaybe<Scalars['String']>>>;
   sourceApplication?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
@@ -362,6 +345,15 @@ export type CommitUpdateInput = {
   /** To move the commit to a different branch, please the name of the branch. */
   newBranchName?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+};
+
+export type CommitsDeleteInput = {
+  commitIds: Array<Scalars['String']>;
+};
+
+export type CommitsMoveInput = {
+  commitIds: Array<Scalars['String']>;
+  targetBranch: Scalars['String'];
 };
 
 export enum DiscoverableStreamsSortType {
@@ -443,15 +435,25 @@ export type Mutation = {
   commitDelete: Scalars['Boolean'];
   commitReceive: Scalars['Boolean'];
   commitUpdate: Scalars['Boolean'];
+  /** Delete a batch of commits */
+  commitsDelete: Scalars['Boolean'];
+  /** Move a batch of commits to a new branch */
+  commitsMove: Scalars['Boolean'];
   /** Delete a pending invite */
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
   objectCreate: Array<Maybe<Scalars['String']>>;
+  /** (Re-)send the account verification e-mail */
+  requestVerification: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean'];
+  /** Request access to a specific stream */
+  streamAccessRequestCreate: StreamAccessRequest;
+  /** Accept or decline a stream access request. Must be a stream owner to invoke this. */
+  streamAccessRequestUse: Scalars['Boolean'];
   /** Creates a new stream. */
   streamCreate?: Maybe<Scalars['String']>;
   /** Deletes an existing stream. */
@@ -477,6 +479,7 @@ export type Mutation = {
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
   userDelete: Scalars['Boolean'];
+  userNotificationPreferencesUpdate?: Maybe<Scalars['Boolean']>;
   userRoleChange: Scalars['Boolean'];
   /** Edits a user's profile. */
   userUpdate: Scalars['Boolean'];
@@ -589,6 +592,16 @@ export type MutationCommitUpdateArgs = {
 };
 
 
+export type MutationCommitsDeleteArgs = {
+  input: CommitsDeleteInput;
+};
+
+
+export type MutationCommitsMoveArgs = {
+  input: CommitsMoveInput;
+};
+
+
 export type MutationInviteDeleteArgs = {
   inviteId: Scalars['String'];
 };
@@ -616,6 +629,18 @@ export type MutationServerInviteBatchCreateArgs = {
 
 export type MutationServerInviteCreateArgs = {
   input: ServerInviteCreateInput;
+};
+
+
+export type MutationStreamAccessRequestCreateArgs = {
+  streamId: Scalars['String'];
+};
+
+
+export type MutationStreamAccessRequestUseArgs = {
+  accept: Scalars['Boolean'];
+  requestId: Scalars['String'];
+  role?: StreamRole;
 };
 
 
@@ -692,6 +717,11 @@ export type MutationUserCommentThreadActivityBroadcastArgs = {
 
 export type MutationUserDeleteArgs = {
   userConfirmation: UserDeleteInput;
+};
+
+
+export type MutationUserNotificationPreferencesUpdateArgs = {
+  preferences: Scalars['JSONObject'];
 };
 
 
@@ -777,6 +807,27 @@ export type ObjectCreateInput = {
   streamId: Scalars['String'];
 };
 
+export type PasswordStrengthCheckFeedback = {
+  __typename?: 'PasswordStrengthCheckFeedback';
+  suggestions: Array<Scalars['String']>;
+  warning?: Maybe<Scalars['String']>;
+};
+
+export type PasswordStrengthCheckResults = {
+  __typename?: 'PasswordStrengthCheckResults';
+  /** Verbal feedback to help choose better passwords. set when score <= 2. */
+  feedback: PasswordStrengthCheckFeedback;
+  /**
+   * Integer from 0-4 (useful for implementing a strength bar):
+   * 0 too guessable: risky password. (guesses < 10^3)
+   * 1 very guessable: protection from throttled online attacks. (guesses < 10^6)
+   * 2 somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
+   * 3 safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
+   * 4 very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
+   */
+  score: Scalars['Int'];
+};
+
 export type PendingStreamCollaborator = {
   __typename?: 'PendingStreamCollaborator';
   id: Scalars['String'];
@@ -821,9 +872,11 @@ export type Query = {
   serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
-   * to see it.
+   * to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
    */
   stream?: Maybe<Stream>;
+  /** Get authed user's stream access request */
+  streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
    * Look for an invitation to a stream, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -831,14 +884,15 @@ export type Query = {
   streamInvite?: Maybe<PendingStreamCollaborator>;
   /** Get all invitations to streams that the active user has */
   streamInvites: Array<PendingStreamCollaborator>;
-  /** All the streams of the current user, pass in the `query` parameter to search by name, description or ID. */
-  streams?: Maybe<StreamCollection>;
   /**
-   * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
-   * If ID is provided, admin access is required
+   * Returns all streams that the active user is a collaborator on.
+   * Pass in the `query` parameter to search by name, description or ID.
    */
+  streams?: Maybe<StreamCollection>;
+  /** Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header). */
   user?: Maybe<User>;
-  userPwdStrength?: Maybe<Scalars['JSONObject']>;
+  /** Validate password strength */
+  userPwdStrength: PasswordStrengthCheckResults;
   /**
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
@@ -892,6 +946,11 @@ export type QueryDiscoverableStreamsArgs = {
 
 export type QueryStreamArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryStreamAccessRequestArgs = {
+  streamId: Scalars['String'];
 };
 
 
@@ -1114,6 +1173,8 @@ export type Stream = {
   isPublic: Scalars['Boolean'];
   name: Scalars['String'];
   object?: Maybe<Object>;
+  /** Pending stream access requests */
+  pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
   pendingCollaborators?: Maybe<Array<PendingStreamCollaborator>>;
   /** Your role for this stream. `null` if request is not authenticated, or the stream is not explicitly shared with you. */
@@ -1179,6 +1240,18 @@ export type StreamObjectArgs = {
 
 export type StreamWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
+};
+
+/** Created when a user requests to become a contributor on a stream */
+export type StreamAccessRequest = {
+  __typename?: 'StreamAccessRequest';
+  createdAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  requester: LimitedUser;
+  requesterId: Scalars['String'];
+  /** Can only be selected if authed user has proper access */
+  stream: Stream;
+  streamId: Scalars['String'];
 };
 
 export type StreamCollaborator = {
@@ -1371,7 +1444,11 @@ export type User = {
   authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
-  commits?: Maybe<CommitCollectionUser>;
+  /**
+   * Get commits authored by the user. If requested for another user, then only commits
+   * from public streams will be returned.
+   */
+  commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<Maybe<ServerApp>>>;
@@ -1380,13 +1457,22 @@ export type User = {
    * and the user isn't an admin
    */
   email?: Maybe<Scalars['String']>;
-  /** All the streams that a user has favorited */
+  /**
+   * All the streams that a active user has favorited.
+   * Note: You can't use this to retrieve another user's favorite streams.
+   */
   favoriteStreams?: Maybe<StreamCollection>;
+  /** Whether the user has a pending/active email verification token */
+  hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['String'];
   name?: Maybe<Scalars['String']>;
+  notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
-  /** All the streams that a user has access to. */
+  /**
+   * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
+   * authenticated user, then this will only return discoverable streams.
+   */
   streams?: Maybe<StreamCollection>;
   timeline?: Maybe<ActivityCollection>;
   /** Total amount of favorites attached to streams owned by the user */
@@ -1605,8 +1691,8 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 export type ResolversTypes = {
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
-  AdminUsersListCollection: ResolverTypeWrapper<AdminUsersListCollection>;
-  AdminUsersListItem: ResolverTypeWrapper<AdminUsersListItem>;
+  AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
+  AdminUsersListItem: ResolverTypeWrapper<Omit<AdminUsersListItem, 'registeredUser'> & { registeredUser?: Maybe<ResolversTypes['User']> }>;
   ApiToken: ResolverTypeWrapper<ApiToken>;
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: ResolverTypeWrapper<AppAuthor>;
@@ -1617,8 +1703,8 @@ export type ResolversTypes = {
   BlobMetadata: ResolverTypeWrapper<BlobMetadata>;
   BlobMetadataCollection: ResolverTypeWrapper<BlobMetadataCollection>;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
-  Branch: ResolverTypeWrapper<Branch>;
-  BranchCollection: ResolverTypeWrapper<BranchCollection>;
+  Branch: ResolverTypeWrapper<Omit<Branch, 'author' | 'commits'> & { author?: Maybe<ResolversTypes['User']>, commits?: Maybe<ResolversTypes['CommitCollection']> }>;
+  BranchCollection: ResolverTypeWrapper<Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Branch']>> }>;
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
@@ -1628,14 +1714,14 @@ export type ResolversTypes = {
   CommentCreateInput: CommentCreateInput;
   CommentEditInput: CommentEditInput;
   CommentThreadActivityMessage: ResolverTypeWrapper<CommentThreadActivityMessage>;
-  Commit: ResolverTypeWrapper<Commit>;
-  CommitCollection: ResolverTypeWrapper<CommitCollection>;
-  CommitCollectionUser: ResolverTypeWrapper<CommitCollectionUser>;
-  CommitCollectionUserNode: ResolverTypeWrapper<CommitCollectionUserNode>;
+  Commit: ResolverTypeWrapper<Omit<Commit, 'stream'> & { stream: ResolversTypes['Stream'] }>;
+  CommitCollection: ResolverTypeWrapper<Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Commit']>> }>;
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
   CommitReceivedInput: CommitReceivedInput;
   CommitUpdateInput: CommitUpdateInput;
+  CommitsDeleteInput: CommitsDeleteInput;
+  CommitsMoveInput: CommitsMoveInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
@@ -1649,6 +1735,8 @@ export type ResolversTypes = {
   Object: ResolverTypeWrapper<Object>;
   ObjectCollection: ResolverTypeWrapper<ObjectCollection>;
   ObjectCreateInput: ObjectCreateInput;
+  PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
+  PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaborator>;
   Query: ResolverTypeWrapper<{}>;
   ReplyCreateInput: ReplyCreateInput;
@@ -1666,9 +1754,10 @@ export type ResolversTypes = {
   ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   SortDirection: SortDirection;
-  Stream: ResolverTypeWrapper<Stream>;
+  Stream: ResolverTypeWrapper<StreamGraphQLReturn>;
+  StreamAccessRequest: ResolverTypeWrapper<StreamAccessRequestGraphQLReturn>;
   StreamCollaborator: ResolverTypeWrapper<StreamCollaborator>;
-  StreamCollection: ResolverTypeWrapper<StreamCollection>;
+  StreamCollection: ResolverTypeWrapper<Omit<StreamCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Stream']>> }>;
   StreamCreateInput: StreamCreateInput;
   StreamInviteCreateInput: StreamInviteCreateInput;
   StreamRevokePermissionInput: StreamRevokePermissionInput;
@@ -1677,7 +1766,7 @@ export type ResolversTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
-  User: ResolverTypeWrapper<User>;
+  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams?: Maybe<ResolversTypes['StreamCollection']>, streams?: Maybe<ResolversTypes['StreamCollection']> }>;
   UserDeleteInput: UserDeleteInput;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<UserSearchResultCollection>;
@@ -1695,8 +1784,8 @@ export type ResolversTypes = {
 export type ResolversParentTypes = {
   Activity: Activity;
   ActivityCollection: ActivityCollection;
-  AdminUsersListCollection: AdminUsersListCollection;
-  AdminUsersListItem: AdminUsersListItem;
+  AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
+  AdminUsersListItem: Omit<AdminUsersListItem, 'registeredUser'> & { registeredUser?: Maybe<ResolversParentTypes['User']> };
   ApiToken: ApiToken;
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: AppAuthor;
@@ -1707,8 +1796,8 @@ export type ResolversParentTypes = {
   BlobMetadata: BlobMetadata;
   BlobMetadataCollection: BlobMetadataCollection;
   Boolean: Scalars['Boolean'];
-  Branch: Branch;
-  BranchCollection: BranchCollection;
+  Branch: Omit<Branch, 'author' | 'commits'> & { author?: Maybe<ResolversParentTypes['User']>, commits?: Maybe<ResolversParentTypes['CommitCollection']> };
+  BranchCollection: Omit<BranchCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Branch']>> };
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
@@ -1718,14 +1807,14 @@ export type ResolversParentTypes = {
   CommentCreateInput: CommentCreateInput;
   CommentEditInput: CommentEditInput;
   CommentThreadActivityMessage: CommentThreadActivityMessage;
-  Commit: Commit;
-  CommitCollection: CommitCollection;
-  CommitCollectionUser: CommitCollectionUser;
-  CommitCollectionUserNode: CommitCollectionUserNode;
+  Commit: Omit<Commit, 'stream'> & { stream: ResolversParentTypes['Stream'] };
+  CommitCollection: Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Commit']>> };
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
   CommitReceivedInput: CommitReceivedInput;
   CommitUpdateInput: CommitUpdateInput;
+  CommitsDeleteInput: CommitsDeleteInput;
+  CommitsMoveInput: CommitsMoveInput;
   DateTime: Scalars['DateTime'];
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EmailAddress: Scalars['EmailAddress'];
@@ -1738,6 +1827,8 @@ export type ResolversParentTypes = {
   Object: Object;
   ObjectCollection: ObjectCollection;
   ObjectCreateInput: ObjectCreateInput;
+  PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
+  PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaborator;
   Query: {};
   ReplyCreateInput: ReplyCreateInput;
@@ -1753,9 +1844,10 @@ export type ResolversParentTypes = {
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerStats: ServerStats;
   SmartTextEditorValue: SmartTextEditorValue;
-  Stream: Stream;
+  Stream: StreamGraphQLReturn;
+  StreamAccessRequest: StreamAccessRequestGraphQLReturn;
   StreamCollaborator: StreamCollaborator;
-  StreamCollection: StreamCollection;
+  StreamCollection: Omit<StreamCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Stream']>> };
   StreamCreateInput: StreamCreateInput;
   StreamInviteCreateInput: StreamInviteCreateInput;
   StreamRevokePermissionInput: StreamRevokePermissionInput;
@@ -1763,7 +1855,7 @@ export type ResolversParentTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
   Subscription: {};
-  User: User;
+  User: Omit<User, 'commits' | 'favoriteStreams' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams?: Maybe<ResolversParentTypes['StreamCollection']>, streams?: Maybe<ResolversParentTypes['StreamCollection']> };
   UserDeleteInput: UserDeleteInput;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: UserSearchResultCollection;
@@ -1800,6 +1892,10 @@ export type HasStreamRoleDirectiveArgs = {
 };
 
 export type HasStreamRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasStreamRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type IsOwnerDirectiveArgs = { };
+
+export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type ActivityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Activity'] = ResolversParentTypes['Activity']> = {
   actionType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -1900,7 +1996,7 @@ export type BranchResolvers<ContextType = GraphQLContext, ParentType extends Res
 
 export type BranchCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BranchCollection'] = ResolversParentTypes['BranchCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Maybe<Array<Maybe<ResolversTypes['Branch']>>>, ParentType, ContextType>;
+  items?: Resolver<Maybe<Array<ResolversTypes['Branch']>>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -1954,36 +2050,17 @@ export type CommitResolvers<ContextType = GraphQLContext, ParentType extends Res
   parents?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sourceApplication?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  stream?: Resolver<ResolversTypes['Stream'], ParentType, ContextType>;
+  streamId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  streamName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   totalChildrenCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type CommitCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommitCollection'] = ResolversParentTypes['CommitCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Maybe<Array<Maybe<ResolversTypes['Commit']>>>, ParentType, ContextType>;
+  items?: Resolver<Maybe<Array<ResolversTypes['Commit']>>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type CommitCollectionUserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommitCollectionUser'] = ResolversParentTypes['CommitCollectionUser']> = {
-  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Maybe<Array<Maybe<ResolversTypes['CommitCollectionUserNode']>>>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type CommitCollectionUserNodeResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommitCollectionUserNode'] = ResolversParentTypes['CommitCollectionUserNode']> = {
-  branchName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  commentCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  parents?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sourceApplication?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  streamId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  streamName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  totalChildrenCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2047,12 +2124,17 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitDeleteArgs, 'commit'>>;
   commitReceive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitReceiveArgs, 'input'>>;
   commitUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitUpdateArgs, 'commit'>>;
+  commitsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsDeleteArgs, 'input'>>;
+  commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
+  requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;
+  streamAccessRequestCreate?: Resolver<ResolversTypes['StreamAccessRequest'], ParentType, ContextType, RequireFields<MutationStreamAccessRequestCreateArgs, 'streamId'>>;
+  streamAccessRequestUse?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationStreamAccessRequestUseArgs, 'accept' | 'requestId' | 'role'>>;
   streamCreate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MutationStreamCreateArgs, 'stream'>>;
   streamDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationStreamDeleteArgs, 'id'>>;
   streamFavorite?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<MutationStreamFavoriteArgs, 'favorited' | 'streamId'>>;
@@ -2067,6 +2149,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   streamsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<MutationStreamsDeleteArgs>>;
   userCommentThreadActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserCommentThreadActivityBroadcastArgs, 'commentId' | 'streamId'>>;
   userDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserDeleteArgs, 'userConfirmation'>>;
+  userNotificationPreferencesUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationUserNotificationPreferencesUpdateArgs, 'preferences'>>;
   userRoleChange?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserRoleChangeArgs, 'userRoleInput'>>;
   userUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserUpdateArgs, 'user'>>;
   userViewerActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserViewerActivityBroadcastArgs, 'resourceId' | 'streamId'>>;
@@ -2091,6 +2174,18 @@ export type ObjectCollectionResolvers<ContextType = GraphQLContext, ParentType e
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   objects?: Resolver<Array<Maybe<ResolversTypes['Object']>>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PasswordStrengthCheckFeedbackResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PasswordStrengthCheckFeedback'] = ResolversParentTypes['PasswordStrengthCheckFeedback']> = {
+  suggestions?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  warning?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type PasswordStrengthCheckResultsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['PasswordStrengthCheckResults'] = ResolversParentTypes['PasswordStrengthCheckResults']> = {
+  feedback?: Resolver<ResolversTypes['PasswordStrengthCheckFeedback'], ParentType, ContextType>;
+  score?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2119,11 +2214,12 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
+  streamAccessRequest?: Resolver<Maybe<ResolversTypes['StreamAccessRequest']>, ParentType, ContextType, RequireFields<QueryStreamAccessRequestArgs, 'streamId'>>;
   streamInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryStreamInviteArgs, 'streamId'>>;
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
-  userPwdStrength?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
+  userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<Maybe<ResolversTypes['UserSearchResultCollection']>, ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'limit' | 'query'>>;
 };
 
@@ -2239,11 +2335,22 @@ export type StreamResolvers<ContextType = GraphQLContext, ParentType extends Res
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   object?: Resolver<Maybe<ResolversTypes['Object']>, ParentType, ContextType, RequireFields<StreamObjectArgs, 'id'>>;
+  pendingAccessRequests?: Resolver<Maybe<Array<ResolversTypes['StreamAccessRequest']>>, ParentType, ContextType>;
   pendingCollaborators?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   size?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   webhooks?: Resolver<Maybe<ResolversTypes['WebhookCollection']>, ParentType, ContextType, Partial<StreamWebhooksArgs>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type StreamAccessRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StreamAccessRequest'] = ResolversParentTypes['StreamAccessRequest']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  requester?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  requesterId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  stream?: Resolver<ResolversTypes['Stream'], ParentType, ContextType>;
+  streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2286,13 +2393,15 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   authorizedApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
   avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  commits?: Resolver<Maybe<ResolversTypes['CommitCollectionUser']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
+  commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerApp']>>>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
+  hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<UserStreamsArgs, 'limit'>>;
@@ -2361,8 +2470,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   CommentThreadActivityMessage?: CommentThreadActivityMessageResolvers<ContextType>;
   Commit?: CommitResolvers<ContextType>;
   CommitCollection?: CommitCollectionResolvers<ContextType>;
-  CommitCollectionUser?: CommitCollectionUserResolvers<ContextType>;
-  CommitCollectionUserNode?: CommitCollectionUserNodeResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
   EmailAddress?: GraphQLScalarType;
   FileUpload?: FileUploadResolvers<ContextType>;
@@ -2371,6 +2478,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
+  PasswordStrengthCheckFeedback?: PasswordStrengthCheckFeedbackResolvers<ContextType>;
+  PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ResourceIdentifier?: ResourceIdentifierResolvers<ContextType>;
@@ -2383,6 +2492,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerStats?: ServerStatsResolvers<ContextType>;
   SmartTextEditorValue?: SmartTextEditorValueResolvers<ContextType>;
   Stream?: StreamResolvers<ContextType>;
+  StreamAccessRequest?: StreamAccessRequestResolvers<ContextType>;
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
@@ -2399,4 +2509,5 @@ export type DirectiveResolvers<ContextType = GraphQLContext> = {
   hasScope?: HasScopeDirectiveResolver<any, any, ContextType>;
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasStreamRole?: HasStreamRoleDirectiveResolver<any, any, ContextType>;
+  isOwner?: IsOwnerDirectiveResolver<any, any, ContextType>;
 };

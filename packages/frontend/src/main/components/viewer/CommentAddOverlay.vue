@@ -250,9 +250,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import {
   setIsAddingComment,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { ViewerEvent } from '@speckle/viewer'
 /**
  * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
  */
@@ -299,7 +300,8 @@ export default {
         commitObjectViewerState @client {
           selectedCommentMetaData
           commentReactions
-          appliedFilter
+          # appliedFilter
+          currentFilterState
         }
       }
     `)
@@ -333,7 +335,7 @@ export default {
   },
   mounted() {
     this.viewerSelectHandler = debounce(this.handleSelect, 10)
-    this.viewer.on('select', this.viewerSelectHandler)
+    this.viewer.on(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
@@ -351,7 +353,7 @@ export default {
     document.addEventListener('keyup', this.docKeyUpHandler)
   },
   beforeDestroy() {
-    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.removeListener(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
     this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
@@ -401,11 +403,11 @@ export default {
             ? this.location
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
           camPos: getCamArray(this.viewer),
-          filters: this.viewerState.appliedFilter,
-          sectionBox: this.viewer.sectionBox.getCurrentBox(),
-          selection: null // TODO for later, lazy now
+          filters: getLocalFilterState(),
+          sectionBox: this.viewer.getCurrentSectionBox(),
+          selection: null // Note: comments could keep track of selected objects, but for now we're too lazy to do so.
         },
-        screenshot: this.viewer.interactions.screenshot()
+        screenshot: await this.viewer.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
@@ -445,7 +447,7 @@ export default {
       this.visible = false
       this.commentValue = { doc: null, attachments: [] }
       setIsAddingComment(false)
-      this.viewer.interactions.deselectObjects()
+      this.viewer.resetSelection()
     },
     sendStatusUpdate() {
       // TODO: typing or not
@@ -465,8 +467,7 @@ export default {
     },
     handleSelect(info) {
       this.expand = false
-      if (!info.location) {
-        // TODO: deselect event
+      if (!info || !info.hits.length === 0) {
         this.visible = false
         this.location = null
         setIsAddingComment(false)
@@ -477,14 +478,14 @@ export default {
       this.visible = true
 
       const projectedLocation = new THREE.Vector3(
-        info.location.x,
-        info.location.y,
-        info.location.z
+        info.hits[0].point.x,
+        info.hits[0].point.y,
+        info.hits[0].point.z
       )
       this.location = new THREE.Vector3(
-        info.location.x,
-        info.location.y,
-        info.location.z
+        info.hits[0].point.x,
+        info.hits[0].point.y,
+        info.hits[0].point.z
       )
 
       const cam = this.viewer.cameraHandler.camera
@@ -505,7 +506,6 @@ export default {
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
     },
     updateCommentBubble() {
-      // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
       const cam = this.viewer.cameraHandler.camera

@@ -222,7 +222,7 @@ html {
 }
 
 // Simple scrollbar (OSX-like) to use instead of the ugly browser one
-.simple-scrollbar {
+@mixin simple-scrollbar {
   $sb-width: 6px;
   $sb-color: rgb(142, 142, 142);
 
@@ -249,6 +249,15 @@ html {
     scrollbar-width: $sb-width;
     scrollbar-color: $sb-color;
   }
+}
+
+.simple-scrollbar {
+  @include simple-scrollbar;
+}
+
+// Globally changing v-navigation-drawer scrollbar to the simple-scrollbar one
+.v-navigation-drawer__content {
+  @include simple-scrollbar;
 }
 
 // v-navigation-drawer resizer global restyle

@@ -8,6 +8,7 @@ const {
 } = require('apollo-server-express')
 const { authorizeResolver, pubsub } = require('@/modules/shared')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
   createCommitByBranchName,
@@ -22,18 +23,49 @@ const {
   getCommitsTotalCountByBranchId
 } = require('../../services/commits')
 
-const { getStream } = require('../../services/streams')
 const { getUser } = require('../../services/users')
 
 const { respectsLimits } = require('../../services/ratelimits')
+const {
+  batchMoveCommits,
+  batchDeleteCommits
+} = require('@/modules/core/services/commit/batchCommitActions')
+const {
+  validateStreamAccess
+} = require('@/modules/core/services/streams/streamAccessService')
+const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
+  Commit: {
+    async stream(parent, _args, ctx) {
+      const { id: commitId } = parent
+
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      if (!stream) {
+        throw new StreamInvalidAccessError('Commit stream not found')
+      }
+
+      await validateStreamAccess(ctx.userId, stream.id)
+      return stream
+    },
+    async streamId(parent, _args, ctx) {
+      const { id: commitId } = parent
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      return stream?.id || null
+    },
+    async streamName(parent, _args, ctx) {
+      const { id: commitId } = parent
+      const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
+      return stream?.name || null
+    }
+  },
   Stream: {
     async commits(parent, args) {
       if (args.limit && args.limit > 100)
@@ -126,7 +158,7 @@ module.exports = {
           streamId: args.commit.streamId,
           resourceType: 'commit',
           resourceId: id,
-          actionType: 'commit_create',
+          actionType: ActionTypes.Commit.Create,
           userId: context.userId,
           info: { id, commit: args.commit },
           message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
@@ -167,7 +199,7 @@ module.exports = {
           streamId: args.commit.streamId,
           resourceType: 'commit',
           resourceId: args.commit.id,
-          actionType: 'commit_update',
+          actionType: ActionTypes.Commit.Update,
           userId: context.userId,
           info: { old: commit, new: args.commit },
           message: `Commit message changed: ${args.commit.id} (${args.commit.message})`
@@ -183,12 +215,7 @@ module.exports = {
     },
 
     async commitReceive(parent, args, context) {
-      // if stream is private, check if the user has access to it
-      const stream = await getStream({ streamId: args.input.streamId })
-
-      if (!stream.public) {
-        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
-      }
+      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
       await getCommitById({
         streamId: args.input.streamId,
@@ -200,7 +227,7 @@ module.exports = {
         streamId: args.input.streamId,
         resourceType: 'commit',
         resourceId: args.input.commitId,
-        actionType: 'commit_receive',
+        actionType: ActionTypes.Commit.Receive,
         userId: context.userId,
         info: {
           sourceApplication: args.input.sourceApplication,
@@ -232,7 +259,7 @@ module.exports = {
           streamId: args.commit.streamId,
           resourceType: 'commit',
           resourceId: args.commit.id,
-          actionType: 'commit_delete',
+          actionType: ActionTypes.Commit.Delete,
           userId: context.userId,
           info: { commit },
           message: `Commit deleted: ${args.commit.id}`
@@ -244,6 +271,16 @@ module.exports = {
       }
 
       return deleted
+    },
+
+    async commitsMove(_, args, ctx) {
+      await batchMoveCommits(args.input, ctx.userId)
+      return true
+    },
+
+    async commitsDelete(_, args, ctx) {
+      await batchDeleteCommits(args.input, ctx.userId)
+      return true
     }
   },
   Subscription: {

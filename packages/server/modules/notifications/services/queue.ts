@@ -16,6 +16,7 @@ import { notificationsDebug } from '@/modules/shared/utils/logger'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
+import cryptoRandomString from 'crypto-random-string'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -29,15 +30,22 @@ export enum NotificationJobResultsStatus {
 
 const handlers = new Map<NotificationType, NotificationHandler>()
 
-export const NOTIFICATIONS_QUEUE_MAIN = `default:user-notifications`
-export const NOTIFICATIONS_QUEUE_TEST = `test:user-notifications`
+const NOTIFICATIONS_QUEUE_MAIN_BASE = `default:user-notifications`
+const NOTIFICATIONS_QUEUE_TEST_BASE = `test:user-notifications`
+const PROCESS_ID = cryptoRandomString({ length: 5 })
 
 export const NOTIFICATIONS_QUEUE = isTestEnv()
-  ? NOTIFICATIONS_QUEUE_TEST
-  : NOTIFICATIONS_QUEUE_MAIN
+  ? `${NOTIFICATIONS_QUEUE_TEST_BASE}:${PROCESS_ID}`
+  : NOTIFICATIONS_QUEUE_MAIN_BASE
+
+if (isTestEnv()) {
+  console.log('Notifications test queue ID: ' + NOTIFICATIONS_QUEUE)
+  console.log(`Monitor using: 'yarn cli bull monitor ${NOTIFICATIONS_QUEUE}'`)
+}
 
 let queue: Optional<Bull.Queue>
-const buildNotificationsQueue = (queueName: string) =>
+
+export const buildNotificationsQueue = (queueName: string) =>
   new Bull(queueName, {
     ...buildBaseQueueOptions(),
     ...(!isTestEnv()
@@ -55,16 +63,6 @@ const buildNotificationsQueue = (queueName: string) =>
       removeOnFail: isProdEnv()
     }
   })
-
-/**
- * Build all possible versions of the queue (default / test), for monitoring
- */
-export function buildAllPossibleQueues() {
-  return {
-    [NOTIFICATIONS_QUEUE_MAIN]: buildNotificationsQueue(NOTIFICATIONS_QUEUE_MAIN),
-    [NOTIFICATIONS_QUEUE_TEST]: buildNotificationsQueue(NOTIFICATIONS_QUEUE_TEST)
-  }
-}
 
 /**
  * Get queue, if it's been initialized

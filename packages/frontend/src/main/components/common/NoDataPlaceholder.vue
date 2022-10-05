@@ -26,7 +26,7 @@
                   link
                   class="primary mb-4"
                   dark
-                  href="https://releases.speckle.systems/"
+                  href="https://speckle.systems/download/"
                   target="_blank"
                 >
                   <v-list-item-icon>

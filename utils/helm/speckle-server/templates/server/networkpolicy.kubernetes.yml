@@ -26,6 +26,13 @@ spec:
 {{- if .Values.server.monitoring.apollo.enabled }}
     - to:
       - ipBlock:
+          cidr:  34.120.83.176/32
+      ports:
+        - port: 443
+{{- end }}
+{{- if ( or .Values.server.auth.google.enabled .Values.server.auth.github.enabled .Values.server.auth.azure_ad.enabled ) }}
+    - to:
+      - ipBlock:
           cidr: 0.0.0.0/0
           # except to kubernetes pods or services
           except:

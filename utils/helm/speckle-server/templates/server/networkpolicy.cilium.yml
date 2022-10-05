@@ -60,6 +60,33 @@ spec:
               # email server
 {{ include "speckle.networkpolicy.dns.email.cilium" $ | indent 14 }}
 {{- end }}
+{{- if .Values.server.auth.google.enabled }}
+              # google auth
+              - matchName: 'accounts.google.com'
+              - matchName: 'www.googleapis.com'
+{{- end }}
+{{- if .Values.server.auth.github.enabled }}
+              # github auth
+              - matchName: 'github.com'
+              - matchName: 'api.github.com'
+{{- end }}
+{{- if .Values.server.auth.azure_ad.enabled }}
+              # azure ad auth
+              - matchPattern: '*.login.microsoftonline.com'
+              - matchPattern: '*.aadcdn.msftauth.net'
+              - matchPattern: '*.logincdn.msftauth.net'
+              - matchPattern: '*.login.live.com'
+              - matchPattern: '*.msauth.net'
+              - matchPattern: '*.aadcdn.microsoftonline-p.com'
+              - matchPattern: '*.microsoftonline-p.com'
+              - matchPattern: '*.account.microsoft.com'
+              - matchPattern: '*.bmx.azure.com'
+              - matchPattern: '*.subscriptionrp.trafficmanager.net'
+              - matchPattern: '*.signup.azure.com'
+              - matchName: 'login.microsoftonline.com'
+              - matchName: 'login.windows.net'
+{{ include "speckle.renderTpl" (dict "value" .Values.server.auth.azure_ad.networkPolicy.domains "context" $ ) | indent 14 }}
+{{- end }}
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
 {{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
 {{ include  "speckle.networkpolicy.dns.blob_storage.cilium" $ | indent 14 }}
@@ -83,6 +110,47 @@ spec:
 {{- if .Values.server.email.enabled }}
     # email server
 {{ include "speckle.networkpolicy.egress.email.cilium" $ | indent 4 }}
+{{- end }}
+{{- if .Values.server.auth.google.enabled }}
+    # google auth
+    - toFQDNs:
+        - matchName: 'accounts.google.com'
+        - matchName: 'www.googleapis.com'
+      toPorts:
+        - ports:
+            - port: '443'
+              protocol: TCP
+{{- end }}
+{{- if .Values.server.auth.github.enabled }}
+    # github auth
+    - toFQDNs:
+        - matchName: 'github.com'
+        - matchName: 'api.github.com'
+      toPorts:
+        - ports:
+            - port: '443'
+              protocol: TCP
+{{- end }}
+{{- if .Values.server.auth.azure_ad.enabled }}
+    # azure ad auth
+    - toFQDNs:
+        - matchPattern: '*.login.microsoftonline.com'
+        - matchPattern: '*.aadcdn.msftauth.net'
+        - matchPattern: '*.logincdn.msftauth.net'
+        - matchPattern: '*.login.live.com'
+        - matchPattern: '*.msauth.net'
+        - matchPattern: '*.aadcdn.microsoftonline-p.com'
+        - matchPattern: '*.microsoftonline-p.com'
+        - matchPattern: '*.account.microsoft.com'
+        - matchPattern: '*.bmx.azure.com'
+        - matchPattern: '*.subscriptionrp.trafficmanager.net'
+        - matchPattern: '*.signup.azure.com'
+        - matchName: 'login.microsoftonline.com'
+        - matchName: 'login.windows.net'
+{{ include "speckle.renderTpl" (dict "value" .Values.server.auth.azure_ad.additional_domains "context" $ ) | indent 8 }}
+      toPorts:
+            - port: {{ default 443 .Values.server.auth.azure_ad.port | quote }}
+              protocol: TCP
 {{- end }}
     # postgres
 {{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}

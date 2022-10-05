@@ -11,7 +11,7 @@ type AckEvent = {
 
 const NEW_ACK_EVENT = 'new-ack'
 
-export async function buildNotificationsStateTracker() {
+export function buildNotificationsStateTracker() {
   const queue = getQueue()
   const localEvents = new EventEmitter()
 
@@ -108,8 +108,8 @@ export async function buildNotificationsStateTracker() {
   }
 }
 
-export type NotificationsStateManager = Awaited<
-  ReturnType<typeof buildNotificationsStateTracker>
+export type NotificationsStateManager = ReturnType<
+  typeof buildNotificationsStateTracker
 >
 
 /**

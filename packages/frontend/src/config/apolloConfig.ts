@@ -20,7 +20,7 @@ import {
   incomingOverwritesExistingMergeFunction
 } from '@/main/lib/core/helpers/apolloSetupHelper'
 import { merge } from 'lodash'
-import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -29,7 +29,7 @@ const httpEndpoint = `${window.location.origin}/graphql`
 // WS endpoint
 const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
 // app version
-const appVersion = process.env.SPECKLE_SERVER_VERSION || 'unknown'
+const appVersion = import.meta.env.SPECKLE_SERVER_VERSION || 'unknown'
 
 function hasAuthToken() {
   return !!AppLocalStorage.get(AUTH_TOKEN)
@@ -69,7 +69,7 @@ function createCache(): InMemoryCache {
               }
             },
             streams: {
-              keyArgs: false,
+              keyArgs: ['query'],
               merge: buildAbstractCollectionMergeFunction('StreamCollection', {
                 checkIdentity: true
               })
@@ -79,12 +79,12 @@ function createCache(): InMemoryCache {
         User: {
           fields: {
             timeline: {
-              keyArgs: false,
+              keyArgs: ['after', 'before'],
               merge: buildAbstractCollectionMergeFunction('ActivityCollection')
             },
             commits: {
               keyArgs: false,
-              merge: buildAbstractCollectionMergeFunction('CommitCollectionUser', {
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
                 checkIdentity: true
               })
             },
@@ -99,7 +99,7 @@ function createCache(): InMemoryCache {
         Stream: {
           fields: {
             activity: {
-              keyArgs: false,
+              keyArgs: ['after', 'before', 'actionType'],
               merge: buildAbstractCollectionMergeFunction('ActivityCollection')
             },
             commits: {
@@ -109,6 +109,9 @@ function createCache(): InMemoryCache {
               })
             },
             pendingCollaborators: {
+              merge: incomingOverwritesExistingMergeFunction
+            },
+            pendingAccessRequests: {
               merge: incomingOverwritesExistingMergeFunction
             }
           }
@@ -198,7 +201,7 @@ function createApolloClient() {
     link,
     cache,
     ssrForceFetchDelay: 100,
-    connectToDevTools: process.env.NODE_ENV !== 'production',
+    connectToDevTools: import.meta.env.DEV,
     name: 'web',
     version: appVersion
   })

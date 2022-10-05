@@ -6,34 +6,7 @@ const { dispatchStreamEvent } = require('../../webhooks/services/webhooks')
 const StreamActivity = () => knex('stream_activity')
 const StreamAcl = () => knex('stream_acl')
 
-const ResourceTypes = Object.freeze({
-  User: 'user',
-  Stream: 'stream',
-  Commit: 'commit',
-  Branch: 'branch',
-  Comment: 'comment'
-})
-
-const ActionTypes = Object.freeze({
-  Stream: {
-    Update: 'stream_update',
-    PermissionsRemove: 'stream_permissions_remove',
-    PermissionsAdd: 'stream_permissions_add',
-    InviteAccepted: 'stream_permissions_invite_accepted',
-    Delete: 'stream_delete',
-    Create: 'stream_create',
-    InviteSent: 'stream_invite_sent',
-    InviteDeclined: 'stream_invite_declined'
-  },
-  Comment: {
-    Mention: 'comment_mention'
-  }
-})
-
 module.exports = {
-  ActionTypes,
-  ResourceTypes,
-
   /**
    * @param {Omit<import('@/modules/activitystream/helpers/types').StreamActivityRecord, "time">} param0
    */

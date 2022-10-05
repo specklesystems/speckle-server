@@ -19,6 +19,7 @@ const {
 
 const { getUserById } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 // subscription events
 const BRANCH_CREATED = 'BRANCH_CREATED'
@@ -68,7 +69,7 @@ module.exports = {
           streamId: args.branch.streamId,
           resourceType: 'branch',
           resourceId: id,
-          actionType: 'branch_create',
+          actionType: ActionTypes.Branch.Create,
           userId: context.userId,
           info: { branch: { ...args.branch, id } },
           message: `Branch created: '${args.branch.name}' (${id})`
@@ -106,7 +107,7 @@ module.exports = {
           streamId: args.branch.streamId,
           resourceType: 'branch',
           resourceId: args.branch.id,
-          actionType: 'branch_update',
+          actionType: ActionTypes.Branch.Update,
           userId: context.userId,
           info: { old: oldValue, new: args.branch },
           message: `Branch metadata changed: '${args.branch.name}' (${args.branch.id})`
@@ -152,7 +153,7 @@ module.exports = {
           streamId: args.branch.streamId,
           resourceType: 'branch',
           resourceId: args.branch.id,
-          actionType: 'branch_delete',
+          actionType: ActionTypes.Branch.Delete,
           userId: context.userId,
           info: { branch: { ...args.branch, name: branch.name } },
           message: `Branch deleted: '${branch.name}' (${args.branch.id})`
