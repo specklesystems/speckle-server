@@ -82,7 +82,7 @@
       </v-card-text>
     </section-card>
     <user-edit-dialog ref="userDialog" :user="user"></user-edit-dialog>
-    <v-dialog v-model="avatarDialog" max-width="400">
+    <v-dialog v-model="avatarDialog" max-width="500">
       <v-card>
         <v-card-title>Choose a new profile picture</v-card-title>
         <v-card-text class="pl-10 pr-0 mt-5">
