@@ -192,9 +192,9 @@ export default {
   setup() {
     const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
     const blobSizeLimitBytes = computed(
-      () => result.value?.serverInfo.blobSizeLimitBytes
+      () => result.value?.serverInfo.blobSizeLimitBytes || 1
     )
-    const fileSizeLimit = computed(blobSizeLimitBytes.value / 1024 / 1024 || 100)
+    const fileSizeLimit = computed(() => blobSizeLimitBytes.value / 1024 / 1024)
     return { blobSizeLimitBytes, fileSizeLimit }
   },
   data() {
