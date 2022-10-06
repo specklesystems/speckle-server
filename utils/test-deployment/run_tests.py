@@ -32,13 +32,6 @@ frontend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, 'logo.svg'
 assert frontend_response.headers.get('Content-Type', '').startswith('image/'), 'Frontend logo Content-Type is not an image'
 print("Frontend accessible")
 
-# Test if backend is accessible
-graphql_accept_header = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
-backend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, 'graphql'), headers={'Accept': graphql_accept_header})
-assert backend_response.status_code == 200, "Backend request doesn't return status code 200"
-assert 'GraphQL Playground' in backend_response.text, "/graphql didn't respond with GraphQL Playground"
-print("Backend accessible")
-
 # Test basic unauthenticated operation using specklepy
 client = SpeckleClient(SPECKLE_SERVER, use_ssl=SPECKLE_SERVER.startswith('https://'))
 server_info = client.server.get()
