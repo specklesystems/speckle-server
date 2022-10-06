@@ -70,14 +70,12 @@ spec:
       ports:
         - port: http
 {{- if .Values.enable_prometheus_monitoring }}
-    # allow ingress from servicemonitor/prometheus
+    # allow ingress from pod prometheus
     - from:
         - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | indent 10 }}
           podSelector:
-            matchLabels:
-              {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | indent 10 }}
       ports:
         - port: http
 {{- end }}

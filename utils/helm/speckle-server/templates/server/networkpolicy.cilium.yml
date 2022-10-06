@@ -21,8 +21,7 @@ spec:
               protocol: TCP
 {{- if .Values.enable_prometheus_monitoring }}
     - fromEndpoints:
-        - matchLabels:
-{{ include "speckle.prometheus.selectorLabels" $ | indent 12 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.cilium.fromEndpoints | indent 10 }}
       toPorts:
         - ports:
             - port: http
