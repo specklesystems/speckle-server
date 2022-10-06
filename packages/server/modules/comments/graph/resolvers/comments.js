@@ -1,8 +1,7 @@
 const { pubsub } = require('@/modules/shared')
 const {
   ForbiddenError: ApolloForbiddenError,
-  ApolloError,
-  withFilter
+  ApolloError
 } = require('apollo-server-express')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
@@ -25,6 +24,7 @@ const {
 const {
   ensureCommentSchema
 } = require('@/modules/comments/services/commentTextService')
+const { withFilter } = require('graphql-subscriptions')
 
 const authorizeStreamAccess = async ({
   streamId,

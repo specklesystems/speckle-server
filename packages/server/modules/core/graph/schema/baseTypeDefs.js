@@ -6,11 +6,6 @@ const { scalarSchemas } = require('@/modules/core/graph/scalars')
 
 module.exports = `
   ${scalarSchemas}
-  directive @hasScope(scope: String!) on FIELD_DEFINITION
-  directive @hasScopes(scopes: [String]!) on FIELD_DEFINITION
-  directive @hasRole(role: String!) on FIELD_DEFINITION
-  directive @hasStreamRole(role: StreamRole!) on FIELD_DEFINITION
-  directive @isOwner on FIELD_DEFINITION
 
   type Query {
   """

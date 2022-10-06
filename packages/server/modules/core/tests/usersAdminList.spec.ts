@@ -172,7 +172,7 @@ describe('[Admin users list]', () => {
     orderedInviteIds = await getOrderedInviteIds()
     orderedUserIds = await getOrderedUserIds()
 
-    apollo = buildApolloServer({
+    apollo = await buildApolloServer({
       context: () =>
         addLoadersToCtx({
           auth: true,
