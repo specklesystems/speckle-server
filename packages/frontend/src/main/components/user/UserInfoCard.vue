@@ -160,7 +160,6 @@ export default {
 
       this.avatarDialog = false
     },
-    //using vue dialogs just like .net modals
     async editUser() {
       this.$refs.userDialog.open(this.user).then((dialog) => {
         if (!dialog.result) return

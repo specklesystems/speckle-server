@@ -33,7 +33,7 @@ export const commonUserFieldsFragment = gql`
  */
 export const userFavoriteStreamsQuery = gql`
   query UserFavoriteStreams($cursor: String) {
-    user {
+    activeUser {
       ...CommonUserFields
       favoriteStreams(cursor: $cursor, limit: 10) {
         totalCount
@@ -54,7 +54,7 @@ export const userFavoriteStreamsQuery = gql`
  */
 export const mainUserDataQuery = gql`
   query MainUserData {
-    user {
+    activeUser {
       ...CommonUserFields
     }
   }
@@ -66,8 +66,8 @@ export const mainUserDataQuery = gql`
  * Main metadata + extra info shown on profile page
  */
 export const profileSelfQuery = gql`
-  query ExtraUserData {
-    user {
+  query ProfileSelf {
+    activeUser {
       ...CommonUserFields
       totalOwnedStreamsFavorites
       notificationPreferences
@@ -98,7 +98,7 @@ export const userSearchQuery = gql`
  */
 export const isLoggedInQuery = gql`
   query IsLoggedIn {
-    user {
+    activeUser {
       id
     }
   }
@@ -142,7 +142,7 @@ export const adminUsersListQuery = gql`
 
 export const userTimelineQuery = gql`
   query UserTimeline($cursor: DateTime) {
-    user {
+    activeUser {
       id
       timeline(cursor: $cursor) {
         totalCount
@@ -171,7 +171,7 @@ export const validatePasswordStrengthQuery = gql`
 
 export const emailVerificationBannerStateQuery = gql`
   query EmailVerificationBannerState {
-    user {
+    activeUser {
       id
       email
       verified

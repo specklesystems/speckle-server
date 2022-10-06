@@ -111,15 +111,20 @@
 import { gql } from '@apollo/client/core'
 import branchQuery from '@/graphql/branch.gql'
 import { STANDARD_PORTAL_KEYS, usePortalState } from '@/main/utils/portalStateManager'
-import { useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
+import {
+  BatchActionType,
+  deleteCommitsFromCachedCommitsQuery
+} from '@/main/lib/stream/services/commitMultiActions'
 import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
 import { Roles } from '@/helpers/mainConstants'
 import { useEventHub, useIsLoggedIn } from '@/main/lib/core/composables/core'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
+import { getCacheId } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 export default {
   name: 'TheBranch',
@@ -170,13 +175,25 @@ export default {
       { fetchPolicy: 'network-only' }
     )
     const stream = computed(() => result.value?.stream)
+    const branch = computed(() => stream.value?.branch)
 
     const isStreamOwner = computed(() => stream.value.role === Roles.Stream.Owner)
     const isCommitOwner = (commit) => userId.value && commit.authorId === userId.value
 
-    const onBatchCommitActionFinish = () => {
-      // refetch the main branch query
-      streamRefetch()
+    const apolloCache = useApolloClient().client.cache
+    const onBatchCommitActionFinish = ({ type, variables }) => {
+      // update the paginated commits query
+      const commitIds = variables.input?.commitIds || []
+      if (!commitIds.length) return
+
+      // Update cache - remove from branch cache
+      if (type === BatchActionType.Delete || type === BatchActionType.Move) {
+        deleteCommitsFromCachedCommitsQuery(
+          apolloCache,
+          getCacheId('Branch', branch.value.id),
+          commitIds
+        )
+      }
 
       // refetch stream & branches
       eventHub.$emit(StreamEvents.Refetch)

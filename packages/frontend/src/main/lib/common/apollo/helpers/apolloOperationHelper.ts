@@ -74,10 +74,17 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
      * Default: true
      */
     ignoreCacheErrors: boolean
+
+    /**
+     * Whether to overwrite the old cache results, instead of triggering a merge function
+     * to merge the old and new results.
+     * Default: true
+     */
+    overwrite: boolean
   }> = {}
 ): boolean {
   const { fragment, query } = filter
-  const { ignoreCacheErrors = true } = options
+  const { ignoreCacheErrors = true, overwrite = true } = options
 
   if (!fragment && !query) {
     throw new Error(
@@ -97,10 +104,10 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 
   const writeData = (data: TData): boolean => {
     if (fragment) {
-      cache.writeFragment({ ...fragment, data })
+      cache.writeFragment({ ...fragment, data, overwrite })
       return true
     } else if (query) {
-      cache.writeQuery({ ...query, data })
+      cache.writeQuery({ ...query, data, overwrite })
       return true
     } else {
       return false

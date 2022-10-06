@@ -5,7 +5,7 @@ import {
   NotificationEventPayload,
   ToastNotificationType
 } from '@/main/lib/core/helpers/eventHubHelper'
-import Vue, { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import Vue, { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const globalToastState = Vue.observable({
   isInitialized: false,
@@ -44,11 +44,16 @@ export function setupGlobalToast() {
   })
 
   const handleEvent = (e: NotificationEventPayload) => {
-    snack.value = true
-    text.value = e.text
-    actionName.value = e.action ? e.action.name : null
-    to.value = e.action ? e.action.to : null
-    type.value = e.type || 'primary'
+    // first set snack.value to false so that the previous notification gets removed
+    // then wait for next tick so that we're sure vuetify has reset the timeout
+    snack.value = false
+    nextTick().then(() => {
+      snack.value = true
+      text.value = e.text
+      actionName.value = e.action ? e.action.name : null
+      to.value = e.action ? e.action.to : null
+      type.value = e.type || 'primary'
+    })
   }
 
   onMounted(() => {

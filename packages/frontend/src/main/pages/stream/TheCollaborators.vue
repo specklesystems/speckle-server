@@ -321,6 +321,7 @@ export default vueWithMixins(IsLoggedInMixin).extend({
               (c) => c.inviteId !== inviteId
             )
             const newData = {
+              ...cachedData,
               stream: {
                 ...cachedData.stream,
                 pendingCollaborators: newPendingCollaborators
@@ -330,7 +331,8 @@ export default vueWithMixins(IsLoggedInMixin).extend({
             store.writeQuery({
               query: StreamWithCollaboratorsDocument,
               variables: { id: streamId },
-              data: newData
+              data: newData,
+              overwrite: true
             })
           }
         })

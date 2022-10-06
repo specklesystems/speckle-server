@@ -6,6 +6,8 @@ import {
 } from '@/modules/accessrequests/services/stream'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { LogicError } from '@/modules/shared/errors'
 
 const resolvers: Resolvers = {
@@ -60,8 +62,13 @@ const resolvers: Resolvers = {
     async stream(parent, _args, ctx) {
       const { streamId } = parent
       const stream = await ctx.loaders.streams.getStream.load(streamId)
+
       if (!stream) {
         throw new LogicError('Unable to find request stream')
+      }
+
+      if (!stream.isPublic) {
+        await validateStreamAccess(ctx.userId, stream.id, Roles.Stream.Reviewer)
       }
 
       return stream

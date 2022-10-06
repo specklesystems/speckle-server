@@ -138,7 +138,7 @@ export default defineComponent({
   data() {
     return {
       error: null as Nullable<ApolloError>,
-      user: null as Nullable<Get<MainUserDataQuery, 'user'>>,
+      user: null as Nullable<Get<MainUserDataQuery, 'activeUser'>>,
       streamInvite: null as Nullable<StreamInviteType>,
       shareStream: false,
       branchMenuOpen: false,
@@ -207,7 +207,8 @@ export default defineComponent({
       }
     },
     user: {
-      query: MainUserDataDocument
+      query: MainUserDataDocument,
+      update: (data) => data.activeUser
     },
     $subscribe: {
       branchCreated: {
@@ -298,7 +299,8 @@ export default defineComponent({
             cache.writeQuery({
               query: GetStreamAccessRequestDocument,
               variables: { streamId: this.streamId },
-              data: { streamAccessRequest: { ...newReq } }
+              data: { streamAccessRequest: { ...newReq } },
+              overwrite: true
             })
           }
         })

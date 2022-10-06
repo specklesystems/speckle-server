@@ -12,6 +12,7 @@ generates:
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
+        LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

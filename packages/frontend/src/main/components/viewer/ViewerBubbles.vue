@@ -117,12 +117,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             name
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
         return !this.isLoggedIn
       }

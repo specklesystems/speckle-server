@@ -163,10 +163,9 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     )
   }
 
-  const userAclEntry = await knex(role.aclTableName)
-    .select('*')
-    .where({ resourceId, userId })
-    .first()
+  const userAclEntry = userId
+    ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
+    : null
 
   if (!userAclEntry)
     throw new ForbiddenError('You do not have access to this resource.')

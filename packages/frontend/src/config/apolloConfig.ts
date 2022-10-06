@@ -50,6 +50,15 @@ function createCache(): InMemoryCache {
       {
         Query: {
           fields: {
+            otherUser: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'LimitedUser', id: args.id })
+                }
+
+                return original
+              }
+            },
             user: {
               read(original, { args, toReference }) {
                 if (args?.id) {
@@ -71,6 +80,16 @@ function createCache(): InMemoryCache {
             streams: {
               keyArgs: ['query'],
               merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        LimitedUser: {
+          fields: {
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
                 checkIdentity: true
               })
             }
