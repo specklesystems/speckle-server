@@ -12,7 +12,7 @@ const config = {
   parserOptions: {
     ecmaVersion: 13
   },
-  ignorePatterns: ['node_modules', 'dist'],
+  ignorePatterns: ['node_modules', 'dist', 'dist-cjs', 'dist-esm'],
   overrides: [
     {
       files: '*.ts',

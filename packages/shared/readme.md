@@ -11,8 +11,7 @@ Some dependencies are marked as peer dependencies, to ensure that package consum
 ### How to use
 
 ```js
-import { Roles } from '@speckle/shared' // get main exports (from 'core')
-import { isDocEmpty } from '@speckle/shared/dist/rich-text-editor' // get exports from sub-modules
+import { Roles, RichTextEditor } from '@speckle/shared'
 ```
 
 ## Development
@@ -21,4 +20,4 @@ Do `yarn build` to build or `yarn dev` to build in watch mode
 
 ### Code organization
 
-The top-level index.ts should only export out important exports from other modules. Code should be organized according to areas of speckle, 'core' being the main one.
+Code should be organized according to areas of speckle, 'core' being the main one. Exports from areas other than "core" should be grouped under namespaces like "RichTextEditor".

@@ -1,10 +1,10 @@
-export {
+export { isUndefinedOrVoid } from '@speckle/shared'
+export type {
   Nullable,
   Optional,
   MaybeNullOrUndefined,
   MaybeAsync,
-  MaybeFalsy,
-  isUndefinedOrVoid
+  MaybeFalsy
 } from '@speckle/shared'
 import { ReactiveVar } from '@apollo/client/core'
 import Vue, { VueConstructor } from 'vue'

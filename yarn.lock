@@ -5098,6 +5098,9 @@ __metadata:
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
     lodash: ^4.17.0
+    rollup: ^2.79.1
+    rollup-plugin-delete: ^2.0.0
+    rollup-plugin-typescript2: ^0.34.1
     typescript: ^4.5.4
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
@@ -19267,6 +19270,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-typescript2@npm:^0.34.1":
+  version: 0.34.1
+  resolution: "rollup-plugin-typescript2@npm:0.34.1"
+  dependencies:
+    "@rollup/pluginutils": ^4.1.2
+    find-cache-dir: ^3.3.2
+    fs-extra: ^10.0.0
+    semver: ^7.3.7
+    tslib: ^2.4.0
+  peerDependencies:
+    rollup: ">=1.26.3"
+    typescript: ">=2.4.0"
+  checksum: 107e66b9ab1aaf4b237564e500ea9de9f2d3f0a81be5139dc753fc76bbf00a1a2230eb1ec59145d2dfc4c4da9be8211f1f3e1370007efe1e24ce45a00905e558
+  languageName: node
+  linkType: hard
+
 "rollup-plugin-visualizer@npm:^5.7.1":
   version: 5.8.1
   resolution: "rollup-plugin-visualizer@npm:5.8.1"
@@ -19297,6 +19316,20 @@ __metadata:
   bin:
     rollup: dist/bin/rollup
   checksum: d4c213d4250a0455e0ee40664db3339a9e3ca5affa09c348019b4895e7100cdbedeba881a239a7a80c407b4055dca4e97d10a740d99c09b17651efbfedd61a4b
+  languageName: node
+  linkType: hard
+
+"rollup@npm:^2.79.1":
+  version: 2.79.1
+  resolution: "rollup@npm:2.79.1"
+  dependencies:
+    fsevents: ~2.3.2
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    rollup: dist/bin/rollup
+  checksum: 6a2bf167b3587d4df709b37d149ad0300692cc5deb510f89ac7bdc77c8738c9546ae3de9322b0968e1ed2b0e984571f5f55aae28fa7de4cfcb1bc5402a4e2be6
   languageName: node
   linkType: hard
 

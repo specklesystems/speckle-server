@@ -1,8 +1,8 @@
+import { RichTextEditor } from '@speckle/shared'
 import { JSONContent } from '@tiptap/core'
-export {
-  isDocEmpty,
-  documentToBasicString
-} from '@speckle/shared/dist/rich-text-editor'
+
+const { isDocEmpty, documentToBasicString } = RichTextEditor
+export { isDocEmpty, documentToBasicString }
 
 export type SmartTextEditorSchemaOptions = {
   /**

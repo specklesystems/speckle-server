@@ -8,11 +8,14 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/shared"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist-cjs/index.js",
+  "types": "./dist-esm/index.d.ts",
+  "module": "./dist-esm/index.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w",
+    "build": "NODE_ENV=production rollup --config",
+    "build:dev": "rollup --config",
+    "dev": "rollup --config --watch",
+    "prepack": "yarn build",
     "lint:eslint": "eslint . --ext .js,.ts",
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc"
@@ -41,6 +44,9 @@
     "@typescript-eslint/parser": "^5.39.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-typescript2": "^0.34.1",
     "typescript": "^4.5.4"
   }
 }
