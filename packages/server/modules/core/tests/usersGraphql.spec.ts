@@ -35,7 +35,7 @@ describe('Users (GraphQL)', () => {
     let apollo: ApolloServer
 
     before(async () => {
-      apollo = buildUnauthenticatedApolloServer()
+      apollo = await buildUnauthenticatedApolloServer()
     })
 
     it('activeUser returns null', async () => {
@@ -57,7 +57,7 @@ describe('Users (GraphQL)', () => {
     let apollo: ApolloServer
 
     before(async () => {
-      apollo = buildAuthenticatedApolloServer(me.id)
+      apollo = await buildAuthenticatedApolloServer(me.id)
     })
 
     it('activeUser returns authenticated user info', async () => {

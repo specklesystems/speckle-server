@@ -97,7 +97,7 @@ describe('Commits (GraphQL)', () => {
     let apollo: ApolloServer
 
     before(async () => {
-      apollo = buildAuthenticatedApolloServer(me.id)
+      apollo = await buildAuthenticatedApolloServer(me.id)
     })
 
     describe('and reading user commits', async () => {
