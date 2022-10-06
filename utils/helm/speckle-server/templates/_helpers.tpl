@@ -494,12 +494,19 @@ Usage:
 {{ include "speckle.getSecret" (dict  "secret_name" "server-vars" "secret_key" "postgres_url" "context" $ )}}
 
 Params:
+  - secret_name - Required, the name of the secret.
   - secret_key - Required, the key within the secret.
   - context - Required, must be global context.  Values of global context must include 'namespace' and 'secretName' keys.
 */}}
 {{- define "speckle.getSecret" -}}
 {{- $secretResource := (lookup "v1" "Secret" .context.Values.namespace .secret_name ) -}}
+{{- if not $secretResource -}}
+    {{- printf "\nERROR: Could not discover a secret \"%s\" in namespace \"%s\".\n       Try `kubectl get secret --namespace %s` to view available secrets." .secret_name .context.Values.namespace .context.Values.namespace | fail -}}
+{{- end -}}
 {{- $secret := ( index $secretResource.data .secret_key ) -}}
+{{- if not $secret -}}
+    {{- printf "\nERROR: Could not find a secret key \"%s\" of secret \"%s\" in namespace \"%s\".\n       Try `kubectl describe secret --namespace %s %s` to view available keys in the secret." .secret_key .secret_name .context.Values.namespace .context.Values.namespace .secret_name | fail -}}
+{{- end -}}
 {{- $secretDecoded := (b64dec $secret) -}}
 {{- printf "%s" $secretDecoded }}
 {{- end }}

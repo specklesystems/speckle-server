@@ -13,7 +13,7 @@ spec:
 {{- if .Values.enable_prometheus_monitoring }}
   ingress:
     - fromEndpoints:
-{{ .Values.prometheusMonitoring.networkPolicy.inCluster.cilium.fromEndpoints | indent 10 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.cilium.fromEndpoints | toYaml | indent 10 }}
       toPorts:
         - ports:
             - port: "metrics"

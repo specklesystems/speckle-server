@@ -73,9 +73,9 @@ spec:
     # allow ingress from pod prometheus
     - from:
         - namespaceSelector:
-{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | indent 10 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | toYaml | indent 10 }}
           podSelector:
-{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | indent 10 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | toYaml | indent 10 }}
       ports:
         - port: http
 {{- end }}
