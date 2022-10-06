@@ -47,7 +47,7 @@ export const suggestion = {
       onStart: (props) => {
         // Render mention list with popper.js (which we have because of v-tooltip)
         component = new VueRenderer(SmartTextEditorMentionList, {
-          parent: this,
+          parent: undefined,
           propsData: props,
           vuetify
         })
