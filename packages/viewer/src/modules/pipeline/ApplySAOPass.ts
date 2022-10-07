@@ -1,14 +1,4 @@
-import {
-  AddEquation,
-  CustomBlending,
-  DstAlphaFactor,
-  DstColorFactor,
-  NoBlending,
-  ShaderMaterial,
-  Texture,
-  UniformsUtils,
-  ZeroFactor
-} from 'three'
+import { NoBlending, ShaderMaterial, Texture, UniformsUtils } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 
@@ -24,16 +14,17 @@ export class ApplySAOPass extends Pass {
       fragmentShader: CopyShader.fragmentShader,
       blending: NoBlending
     })
-    this.materialCopy.transparent = true
-    this.materialCopy.depthTest = false
-    this.materialCopy.depthWrite = false
-    this.materialCopy.blending = CustomBlending
-    this.materialCopy.blendSrc = DstColorFactor
-    this.materialCopy.blendDst = ZeroFactor
-    this.materialCopy.blendEquation = AddEquation
-    this.materialCopy.blendSrcAlpha = DstAlphaFactor
-    this.materialCopy.blendDstAlpha = ZeroFactor
-    this.materialCopy.blendEquationAlpha = AddEquation
+    // this.materialCopy.transparent = true
+    // this.materialCopy.depthTest = false
+    // this.materialCopy.depthWrite = false
+    // this.materialCopy.blending = CustomBlending
+    // this.materialCopy.blendSrc = DstColorFactor
+    // this.materialCopy.blendDst = ZeroFactor
+    // this.materialCopy.blendEquation = AddEquation
+    // this.materialCopy.blendSrcAlpha = DstAlphaFactor
+    // this.materialCopy.blendDstAlpha = ZeroFactor
+    // this.materialCopy.blendEquationAlpha = AddEquation
+
     // this.materialCopy.blending = CustomBlending
     // this.materialCopy.blendSrc = OneFactor
     // this.materialCopy.blendDst = OneFactor

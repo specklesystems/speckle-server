@@ -20,6 +20,12 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
         #define NUM_SAMPLES 16
         #define SPIRAL_TURNS 2
         #define NUM_FRAMES 16
+
+		#define NORMAL_TEXTURE 0
+		#define IMPROVED_NORMAL_RECONSTRUCTION 0
+		#define ACCURATE_NORMAL_RECONSTRUCTION 1
+
+		#define AO_ESTIMATOR 0
 		
 		// RGBA depth
 		#include <packing>
@@ -165,7 +171,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		float minResolutionMultipliedByCameraFar;
         // moving costly divides into consts
 		const float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
-        const float offset = PI2 / NUM_FRAMES
+        const float offset = PI2 / float(NUM_FRAMES);
 		
 		float getAmbientOcclusion( const in vec3 centerViewPosition, in float centerDepth ) {
             #if AO_ESTIMATOR == 0
@@ -177,9 +183,9 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
                 float occlusionSum = 0.0;
                 float weightSum = 0.0;
                 for( int i = 0; i < NUM_SAMPLES; i ++ ) {
-                    float alpha = ( i + 1. ) / NUM_SAMPLES;
-                    float angle = SPIRAL_TURNS  * alpha;
-                    vec2 radius = (kernelRadius / size)  * Math.pow( alpha, 1.1 );
+                    float alpha = ( float(i) + 1. ) / float(NUM_SAMPLES);
+                    float angle = float(SPIRAL_TURNS)  * alpha;
+                    vec2 radius = (kernelRadius / size) * pow( alpha, 1.1 );
                     vec2 sampleUv = vUv + vec2( cos( angle + frameIndex * offset ), sin( angle + frameIndex * offset ) ) * radius;
 
                     float sampleDepth = getDepth( sampleUv );
@@ -207,5 +213,6 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			vec3 viewPosition = getViewPosition( vUv, centerDepth, centerViewZ );
 			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
-			gl_FragColor.xyz *=  1. - ambientOcclusion;
+			gl_FragColor.xyz *=  ambientOcclusion;
+			// gl_FragColor.xyz = getViewNormal(viewPosition, vUv, centerDepth);
 		}`

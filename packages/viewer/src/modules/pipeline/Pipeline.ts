@@ -5,6 +5,7 @@ import { SAOPassParams } from 'three/examples/jsm/postprocessing/SAOPass.js'
 import Batcher from '../batching/Batcher'
 import { ApplySAOPass } from './ApplySAOPass'
 import { NormalsType, SpeckleDynamicSAOPass } from './SpeckleDynamicSAOPass'
+import { SpeckleStaticAOGeneratePass } from './SpeckleStaticAOGeneratePass'
 
 export interface PipelineOptions {
   saoEnabled?: boolean
@@ -38,6 +39,7 @@ export class Pipeline {
   private renderPass: RenderPass = null
   private saoPass: SpeckleDynamicSAOPass = null
   private applySaoPass: ApplySAOPass = null
+  private staticAOGenerationPass: SpeckleStaticAOGeneratePass = null
   private drawingSize: Vector2 = new Vector2()
   public needsRender = true
 
@@ -67,11 +69,17 @@ export class Pipeline {
       false,
       NormalsType.IMPROVED
     )
+    this.staticAOGenerationPass = new SpeckleStaticAOGeneratePass(this._batcher)
+    this.staticAOGenerationPass.depthTexture = this.saoPass.depthRenderTarget.texture
     this.composer.addPass(this.saoPass)
     this.renderPass = new RenderPass(scene, camera)
     this.renderPass.renderToScreen = true
+    this.renderPass.enabled = false
     this.composer.addPass(this.renderPass)
-    this.applySaoPass = new ApplySAOPass(this.saoPass.saoRenderTarget.texture)
+    this.composer.addPass(this.staticAOGenerationPass)
+    this.applySaoPass = new ApplySAOPass(
+      this.staticAOGenerationPass.outputTexture.texture
+    )
     this.applySaoPass.renderToScreen = true
     this.composer.addPass(this.applySaoPass)
   }
@@ -90,6 +98,7 @@ export class Pipeline {
     this.renderPass.camera = camera
     this.saoPass.scene = scene
     this.saoPass.camera = camera
+    this.staticAOGenerationPass.update(camera)
     this.composer.render()
   }
 
