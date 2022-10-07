@@ -303,8 +303,10 @@ Limitations:
         # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
         cidr: 0.0.0.0/0
         # except to kubernetes pods or services
-        except:
-          - 10.0.0.0/8
+        except: []
+          # unfortunately cannot limit to typical kubernetes pod CIDR,
+          # as some cloud vendor private IPs (e.g. for hosted databases) are also in this range
+          # - 10.0.0.0/8
     {{- end }}
   ports:
     - port: {{ printf "%s" .port }}
@@ -337,9 +339,10 @@ Limitations:
 - toCIDRSet:
       # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
     - cidr: 0.0.0.0/0
-      # except to kubernetes pods or services
-      except:
-        - 10.0.0.0/8
+      # ideally would like to prevent access to kubernetes pods or services
+      # but some cloud provider private IPs (e.g. for hosted services) are in this range
+      except: []
+        # - 10.0.0.0/8
 {{- end }}
   toPorts:
     - ports:

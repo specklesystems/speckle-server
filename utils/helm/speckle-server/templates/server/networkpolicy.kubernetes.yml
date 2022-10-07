@@ -34,9 +34,6 @@ spec:
     - to:
       - ipBlock:
           cidr: 0.0.0.0/0
-          # except to kubernetes pods or services
-          except:
-            - 10.0.0.0/8
       ports:
         - port: 443
 {{- end }}
