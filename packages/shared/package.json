@@ -28,9 +28,7 @@
   "keywords": [
     "speckle",
     "aec",
-    "3d",
-    "3d viewer",
-    "threejs"
+    "3d"
   ],
   "dependencies": {
     "lodash": "^4.17.0"
