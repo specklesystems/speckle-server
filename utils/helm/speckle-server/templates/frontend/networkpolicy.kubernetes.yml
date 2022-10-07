@@ -19,9 +19,9 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: {{ .Values.ingress.namespace }}
-        - podSelector:
+          podSelector:
             matchLabels:
-{{ include  "frontend.ingress.selector.pod" $ | indent 14 }}
+{{ include  "speckle.ingress.selector.pod" $ | indent 14 }}
       ports:
         - port: www
   egress: [] # block all egress

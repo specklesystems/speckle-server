@@ -82,13 +82,51 @@
       "properties": {
         "namespace": {
           "type": "string",
-          "description": "If provided, deploys Speckle's Prometheus resources in the given namespace",
+          "description": "If provided, deploys Speckle's Prometheus resources (e.g. ServiceMonitor) in the given namespace",
           "default": ""
         },
         "release": {
           "type": "string",
           "description": "If provided, adds the value to a `release` label on all the Prometheus resources deployed by Speckle",
           "default": ""
+        },
+        "networkPolicy": {
+          "type": "object",
+          "properties": {
+            "inCluster": {
+              "type": "object",
+              "properties": {
+                "kubernetes": {
+                  "type": "object",
+                  "properties": {
+                    "podSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the prometheus pods within the cluster and given namespace",
+                      "default": {}
+                    },
+                    "namespaceSelector": {
+                      "type": "object",
+                      "description": "(Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the prometheus pods are deployed",
+                      "default": {}
+                    }
+                  }
+                },
+                "cilium": {
+                  "type": "object",
+                  "properties": {
+                    "fromEndpoints": {
+                      "type": "array",
+                      "description": "(Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the prometheus pods are deployed",
+                      "default": [],
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

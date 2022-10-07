@@ -86,7 +86,7 @@ file_size_limit_mb: 100
 enable_prometheus_monitoring: false
 
 prometheusMonitoring:
-  ## @param prometheusMonitoring.namespace If provided, deploys Speckle's Prometheus resources in the given namespace
+  ## @param prometheusMonitoring.namespace If provided, deploys Speckle's Prometheus resources (e.g. ServiceMonitor) in the given namespace
   ## Prometheus prior to v0.19.0, or any version when deployed with default parameters, expects ServiceMonitors to be deployed within the same namespace.
   ## This parameter allows the Prometheus resources provided by Speckle to be deployed in another namespace.
   ## This allows Prometheus (< v0.19.0 or any version with default configuration) to be deployed in a separate namespace from Speckle.
@@ -100,6 +100,32 @@ prometheusMonitoring:
   ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/getting-started.md#related-resources
   ##
   release: ''
+  networkPolicy:
+    ## @extra prometheusMonitoring.networkPolicy.inCluster Parameters for allowing ingress from the Prometheus pod that will scrape this Speckle release. It is assumed that Prometheus is deployed within the Kubernetes cluster.
+    ##
+    inCluster:
+      kubernetes:
+        ## @param prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector (Kubernetes Network Policy only) The pod Selector yaml object used to uniquely select the prometheus pods within the cluster and given namespace
+        ## For Kubernetes Network Policies this is a podSelector object.
+        ## For Cilium Network Policies this is ignored.
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        podSelector: {}
+        ## @param prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector  (Kubernetes Network Policy only) The namespace selector yaml object used to uniquely select the namespace in which the prometheus pods are deployed
+        ## This is a Kubernetes namespaceSelector object.
+        ## For Cilium Network Policies this is ignored
+        ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors
+        ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+        ##
+        namespaceSelector: {}
+      cilium:
+        ## @param prometheusMonitoring.networkPolicy.inCluster.cilium.fromEndpoints (Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the prometheus pods are deployed
+        ## For Kubernetes Network Policies this is ignored.
+        ## ref: https://docs.cilium.io/en/v1.9/policy/language/#ingress
+        ## ref: https://github.com/cilium/cilium/blob/master/pkg/policy/api/selector.go
+        ##
+        fromEndpoints: []
 
 ## @section Postgres Database
 ## @descriptionStart
