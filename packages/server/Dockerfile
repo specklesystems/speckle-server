@@ -17,15 +17,15 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-COPY packages/server/package.json ./packages/server
-COPY packages/shared/package.json ./packages/shared
+COPY packages/server/package.json ./packages/server/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN yarn workspaces focus -A
 
-COPY packages/server ./packages/server
-COPY packages/shared ./packages/shared
+COPY packages/server ./packages/server/
+COPY packages/shared ./packages/shared/
 
-RUN yarn workspaces foreach -pt run build
+RUN yarn workspaces foreach run build
 
 WORKDIR /speckle-server/packages/server
 RUN yarn workspaces focus --production
@@ -44,6 +44,7 @@ COPY --from=build-stage /speckle-server/.yarnrc.yml .
 COPY --from=build-stage /speckle-server/.yarn ./.yarn
 COPY --from=build-stage /speckle-server/package.json /speckle-server/yarn.lock ./
 COPY --from=build-stage /speckle-server/node_modules ./node_modules
+COPY --from=build-stage /speckle-server/packages/shared /speckle-server/packages/shared
 
 WORKDIR /speckle-server/packages/server
 
