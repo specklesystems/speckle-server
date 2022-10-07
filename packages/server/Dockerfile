@@ -17,13 +17,18 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
+COPY packages/server/package.json ./packages/server
+COPY packages/shared/package.json ./packages/shared
+
+RUN yarn workspaces focus -A
+
+COPY packages/server ./packages/server
+COPY packages/shared ./packages/shared
+
+RUN yarn workspaces foreach -pt run build
+
 WORKDIR /speckle-server/packages/server
-COPY packages/server/package.json .
-RUN yarn workspaces focus
-
-COPY packages/server .
-
-RUN yarn build && yarn workspaces focus --production
+RUN yarn workspaces focus --production
 
 FROM node:16.15-bullseye-slim as production-stage
 ARG NODE_ENV=production
