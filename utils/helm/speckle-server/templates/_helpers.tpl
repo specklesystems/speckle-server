@@ -166,7 +166,8 @@ Creates a Kubernetes network policy egress definition for connecting to S3 compa
   {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.s3.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.s3.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
   {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-    {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+    {{- $s3Values := ( include "server.s3Values" . | fromJson ) -}}
+    {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" $s3Values.endpoint ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $ip "port" $port) }}
   {{- end -}}
 {{- end }}

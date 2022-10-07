@@ -17,9 +17,9 @@ spec:
   ingress:
     - from:
         - namespaceSelector:
-{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | toYaml | indent 10 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | toYaml | indent 12 }}
           podSelector:
-{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | toYaml | indent 10 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | toYaml | indent 12 }}
       ports:
         - port: metrics
 {{- else }}
