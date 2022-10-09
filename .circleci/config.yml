@@ -286,7 +286,7 @@ jobs:
   test-server:
     docker:
       - image: cimg/node:16.15
-      - image: cimg/redis:6.2.6
+      - image: cimg/redis:7.0.5
       - image: 'cimg/postgres:14.2'
         environment:
           POSTGRES_DB: speckle2_test
