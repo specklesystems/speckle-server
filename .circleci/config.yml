@@ -76,8 +76,8 @@ workflows:
           context: &docker-hub-context
             - docker-hub
           filters: &filters-publish
-            branches:
-              ignore: /pull\/[0-9]+/
+            # publish everything `SHOULD_PUBLISH` variable will determine if
+            # images are tagged as latest or a helm chart published
             tags:
               only: /.*/
           requires:
@@ -141,7 +141,7 @@ workflows:
             - pre-commit
 
       - publish-helm-chart:
-          filters: &filters-publish
+          filters: &filters-publish-chart
             branches:
               only:
                 - main
