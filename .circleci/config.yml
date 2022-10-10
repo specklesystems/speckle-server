@@ -432,11 +432,6 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: cat workspace/should-publish >> $BASH_ENV
-      - run:
-          name: 'Check if should proceed'
-          command: |
-            [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
-            echo 'Proceeding with publish'
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it
@@ -539,6 +534,11 @@ jobs:
       - add_ssh_keys:
           fingerprints:
             - '9a:57:23:d4:c9:5f:4d:83:d6:fa:b2:00:6b:8d:86:31'
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
+            echo 'Proceeding with publish'
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
