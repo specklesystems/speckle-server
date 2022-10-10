@@ -278,9 +278,10 @@ export default class ObjectLoader {
     const rootObj = JSON.parse(rootObjJson)
     if (!rootObj.__closure) return
 
-    let childrenIds = Object.keys(rootObj.__closure).sort(
-      (a, b) => rootObj.__closure[a] - rootObj.__closure[b]
-    )
+    let childrenIds = Object.keys(rootObj.__closure)
+      .filter((id) => !id.includes('blob'))
+      .sort((a, b) => rootObj.__closure[a] - rootObj.__closure[b])
+
     if (childrenIds.length === 0) return
 
     let splitHttpRequests = []
