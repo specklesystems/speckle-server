@@ -6,6 +6,8 @@ const {
   buildCommentTextFromInput,
   validateInputAttachments
 } = require('@/modules/comments/services/commentTextService')
+const { CommentsEmitter, CommentsEvents } = require('@/modules/comments/events/emitter')
+const { getComment } = require('@/modules/comments/repositories/comments')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -112,7 +114,12 @@ module.exports = {
 
     // Get new comment from DB, that way we don't have to mock/fill in the missing
     // values
-    return module.exports.getComment({ id: comment.id, userId })
+    const newComment = await module.exports.getComment({ id: comment.id, userId })
+    await CommentsEmitter.emit(CommentsEvents.Created, {
+      comment: newComment
+    })
+
+    return newComment
   },
 
   async createCommentReply({
@@ -149,12 +156,21 @@ module.exports = {
 
     // Get new comment from DB, that way we don't have to mock/fill in the missing
     // values
-    return module.exports.getComment({ id: comment.id, userId: authorId })
+    const newComment = await module.exports.getComment({
+      id: comment.id,
+      userId: authorId
+    })
+    await CommentsEmitter.emit(CommentsEvents.Created, {
+      comment: newComment
+    })
+
+    return newComment
   },
 
   async editComment({ userId, input, matchUser = false }) {
     const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error("The comment doesn't exist")
+
     if (matchUser && editedComment.authorId !== userId)
       throw new ForbiddenError("You cannot edit someone else's comments")
 
@@ -167,7 +183,13 @@ module.exports = {
 
     // Get new comment from DB, that way we don't have to mock/fill in the missing
     // values
-    return module.exports.getComment({ id: input.id, userId })
+    const updatedComment = await module.exports.getComment({ id: input.id, userId })
+    await CommentsEmitter.emit(CommentsEvents.Updated, {
+      previousComment: editedComment,
+      newComment: updatedComment
+    })
+
+    return updatedComment
   },
 
   async viewComment({ userId, commentId }) {
@@ -177,26 +199,7 @@ module.exports = {
       .merge()
     await query
   },
-
-  async getComment({ id, userId = null }) {
-    const query = Comments().select('*').joinRaw(`
-        join(
-          select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
-          from comment_links cl
-          join comments on comments.id = cl."commentId"
-          group by cl."commentId"
-        ) res using(id)`)
-    if (userId) {
-      query.leftOuterJoin('comment_views', (b) => {
-        b.on('comment_views.commentId', '=', 'comments.id')
-        b.andOn('comment_views.userId', '=', knex.raw('?', userId))
-      })
-    }
-    query.where({ id }).first()
-    const res = await query
-    return res
-  },
-
+  getComment,
   async archiveComment({ commentId, userId, streamId, archived = true }) {
     const comment = await Comments().where({ id: commentId }).first()
     if (!comment)

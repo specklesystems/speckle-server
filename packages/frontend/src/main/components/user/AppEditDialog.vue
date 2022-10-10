@@ -239,11 +239,8 @@ export default {
         })
 
         this.appUpdateResult = res.data.appUpdate
-        //this.name = null
-        //this.selectedScopes = []
         this.$emit('app-edited')
       } catch (e) {
-        // TODO: how do we catch and display errors?
         this.$eventHub.$emit('notification', {
           text: e.message
         })

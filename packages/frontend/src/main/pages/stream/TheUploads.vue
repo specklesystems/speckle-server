@@ -25,7 +25,8 @@
           <v-card-text>
             Speckle can now process files and store them as a commit (snapshot). You can
             then access it from the Speckle API, and receive it in other applications.
-            Current supported formats are: IFC, STL and OBJ. Thanks to the Open Source
+            Current supported formats are: IFC, STL, MTL and OBJ. Thanks to the Open
+            Source
             <a
               href="https://ifcjs.github.io/info/docs/Guide/web-ifc/Introduction"
               target="_blank"
@@ -97,7 +98,8 @@
               <span class="primary--text">Drag and drop your file here!</span>
               <br />
               <span class="caption">
-                Maximum 5 files at a time. Size is restricted to 50mb each.
+                Maximum 5 files at a time. Size is restricted to
+                {{ fileSizeLimit }} mb each.
               </span>
             </div>
             <v-alert
@@ -132,6 +134,10 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { ServerInfoBlobSizeLimitDocument } from '@/graphql/generated/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
 
 export default {
   name: 'TheUploads',
@@ -183,6 +189,14 @@ export default {
       }
     }
   },
+  setup() {
+    const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
+    const blobSizeLimitBytes = computed(
+      () => result.value?.serverInfo.blobSizeLimitBytes || 1
+    )
+    const fileSizeLimit = computed(() => blobSizeLimitBytes.value / 1024 / 1024)
+    return { blobSizeLimitBytes, fileSizeLimit }
+  },
   data() {
     return {
       dragover: false,
@@ -205,7 +219,7 @@ export default {
       this.dragover = false
       this.dragError = null
       for (const file of files) {
-        const extension = file.name.split('.')[1]
+        const extension = file.name.split('.').at(-1)
         if (
           !extension ||
           !['ifc', 'stl', 'obj', 'mtl'].includes(extension.toLowerCase())
@@ -214,9 +228,10 @@ export default {
           return
         }
 
-        if (file.size > 104857600) {
-          this.dragError =
-            'Your files are too powerful (for now). Maximum upload size is 100mb!'
+        if (file.size > this.blobSizeLimitBytes) {
+          this.dragError = `Your files are too powerful (for now). Maximum upload size is ${prettyFileSize(
+            this.blobSizeLimitBytes
+          )} mb!`
           return
         }
 

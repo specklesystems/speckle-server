@@ -7,18 +7,31 @@
     >
       <v-btn
         v-show="showVisReset"
-        v-tooltip="`Resets all applied filters`"
-        small
+        v-tooltip="`Resets all applied color and visibility filters`"
+        x-small
         rounded
-        class="mr-2"
+        class="mr-2 primary"
         @click="resetVisibility()"
       >
-        <v-icon small class="mr-2">mdi-eye</v-icon>
+        <v-icon small class="mr-2">mdi-eye-off</v-icon>
         Reset Filters
       </v-btn>
+      <v-btn
+        v-tooltip="'Viewer Help'"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="helpDialog = true"
+      >
+        <v-icon small>mdi-help</v-icon>
+      </v-btn>
+      <v-dialog v-model="helpDialog" max-width="600">
+        <viewer-help @close="helpDialog = false" />
+      </v-dialog>
       <!-- disabling ortho mode because comment intersection are f*ed. -->
       <!-- <v-btn
-        v-tooltip="`Toggle between perspective or ortho camera.`"
+        v-tooltip=" between perspective or ortho camera.`"
         :small="small"
         rounded
         icon
@@ -27,6 +40,33 @@
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn> -->
+      <v-menu
+        :close-on-content-click="false"
+        origin="center"
+        rounded="lg"
+        open-on-hover
+        top
+        offset-y
+        close-delay="400"
+        nudge-top="10"
+        nudge-left="100"
+        nudge-width="200"
+      >
+        <template #activator="{ on, attrs }">
+          <v-btn
+            v-tooltip="'Sun & Shadow Settings'"
+            :small="small"
+            rounded
+            icon
+            class="mr-2"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon small>mdi-white-balance-sunny</v-icon>
+          </v-btn>
+        </template>
+        <lights-menu />
+      </v-menu>
       <canonical-views :small="small" />
       <v-btn
         v-tooltip="'Zoom extents'"
@@ -43,10 +83,12 @@
         :small="small"
         rounded
         icon
-        class="mr-2"
+        :class="`mr-2 ${viewerState.sectionBox ? 'primary elevation-2' : ''}`"
         @click="sectionToggle()"
       >
-        <v-icon small>mdi-scissors-cutting</v-icon>
+        <v-icon small :class="`${viewerState.sectionBox ? 'white--text' : ''}`">
+          mdi-scissors-cutting
+        </v-icon>
       </v-btn>
       <!-- Other components teleport extra controls in here -->
       <portal-target
@@ -58,12 +100,44 @@
   </div>
 </template>
 <script>
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useQuery } from '@vue/apollo-composable'
+import { computed, ref } from 'vue'
+import gql from 'graphql-tag'
+import {
+  resetFilter,
+  toggleSectionBox,
+  setSectionBox,
+  setSectionBoxFromObjects
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
-    CanonicalViews: () => import('@/main/components/viewer/CanonicalViews')
+    CanonicalViews: () => import('@/main/components/viewer/CanonicalViews'),
+    ViewerHelp: () => import('@/main/components/viewer/dialogs/ViewerHelp.vue'),
+    LightsMenu: () => import('@/main/components/viewer/LightsMenu.vue')
   },
   props: {
     small: { type: Boolean, default: false }
+  },
+  setup() {
+    const { viewer } = useInjectedViewer()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          # appliedFilter
+          currentFilterState
+          selectedObjects
+          sectionBox
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    const helpDialog = ref(false)
+    const lightsDialog = ref(false)
+    return { viewer, viewerState, helpDialog, lightsDialog }
   },
   data() {
     return {
@@ -72,24 +146,31 @@ export default {
   },
   computed: {
     showVisReset() {
-      return !!this.$store.state.appliedFilter
+      return !!this.viewerState.currentFilterState
     }
   },
   mounted() {
     this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
+    this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
   },
   methods: {
     toggleCamera() {
-      window.__viewer.toggleCameraProjection()
+      this.viewer.toggleCameraProjection()
     },
     resetVisibility() {
-      this.$store.commit('resetFilter')
+      resetFilter()
     },
     zoomEx() {
-      window.__viewer.zoomExtents()
+      this.viewer.zoom()
     },
     sectionToggle() {
-      window.__viewer.toggleSectionBox()
+      if (this.viewerState.selectedObjects.length !== 0) {
+        setSectionBoxFromObjects(this.viewerState.selectedObjects.map((o) => o.id))
+      } else {
+        setSectionBox()
+      }
+
+      toggleSectionBox()
     }
   }
 }

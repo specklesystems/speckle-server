@@ -17,6 +17,8 @@
     @click.stop="
       prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null
     "
+    @mouseenter.stop="toggleHighlight(true)"
+    @mouseleave.stop="toggleHighlight(false)"
   >
     <v-col cols="1" class="text-center">
       <v-icon
@@ -124,7 +126,18 @@
 </template>
 <script>
 import { v4 as uuidv4 } from 'uuid'
-
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import gql from 'graphql-tag'
+import {
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects,
+  highlightObjects,
+  removeHighlights
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 export default {
   components: {
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
@@ -147,6 +160,22 @@ export default {
       default: () => null
     }
   },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          currentFilterState
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    const { viewer } = useInjectedViewer()
+
+    return { viewerState, viewer }
+  },
   data() {
     return {
       expanded: false,
@@ -167,28 +196,33 @@ export default {
       }
     },
     visible() {
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
       if (this.prop.type === 'object') {
-        return this.$store.state.hideValues.indexOf(this.prop.value.referencedId) === -1
+        return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
+          this.prop.value.referencedId
+        )
       }
       if (this.prop.type === 'array') {
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds = this.$store.state.hideValues.filter(
+        const targetIds = this.viewerState.currentFilterState?.hiddenObjects?.filter(
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return true
-        else return false // return "partial" or "full", depending on state
+        else return false // Note: could return "partial" or "full", depending on state
       }
       return true
     },
     isolated() {
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
       if (this.prop.type === 'object') {
-        return (
-          this.$store.state.isolateValues.indexOf(this.prop.value.referencedId) !== -1
+        return this.viewerState.currentFilterState?.isolatedObjects?.includes(
+          this.prop.value.referencedId
         )
       }
       if (this.prop.type === 'array') {
         const ids = this.prop.value.map((o) => o.referencedId)
-        const targetIds = this.$store.state.isolateValues.filter(
+        const targetIds = this.viewerState.currentFilterState?.isolatedObjects?.filter(
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return false
@@ -199,41 +233,58 @@ export default {
   },
   mounted() {},
   methods: {
-    toggleVisibility() {
-      let targetIds
-      if (this.prop.type === 'object') targetIds = [this.prop.value.referencedId]
+    toggleHighlight(hovered) {
       if (this.prop.type === 'array') {
-        targetIds = this.prop.value.map((o) => o.referencedId)
+        const targetIds = this.prop.value.map((o) => o.referencedId)
+        if (hovered) {
+          highlightObjects(targetIds)
+        } else {
+          removeHighlights()
+        }
+        return
       }
 
-      if (this.visible)
-        this.$store.commit('hideObjects', {
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
-      else
-        this.$store.commit('showObjects', {
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
+      if (!this.prop.value.referencedId) return
+
+      if (hovered) {
+        highlightObjects([this.prop.value.referencedId])
+      } else {
+        removeHighlights()
+      }
+    },
+    toggleVisibility() {
+      if (this.prop.type === 'object') {
+        if (this.visible) {
+          hideObjects([this.prop.value.referencedId], 'ui-vis', true)
+        } else {
+          showObjects([this.prop.value.referencedId], 'ui-vis', true)
+        }
+      }
+      if (this.prop.type === 'array') {
+        const targetIds = this.prop.value.map((o) => o.referencedId)
+        if (this.visible) {
+          hideObjects(targetIds, 'ui-vis', true)
+        } else {
+          showObjects(targetIds, 'ui-vis', true)
+        }
+      }
     },
     toggleFilter() {
-      let targetIds
-      if (this.prop.type === 'object') targetIds = [this.prop.value.referencedId]
-      if (this.prop.type === 'array') {
-        targetIds = this.prop.value.map((o) => o.referencedId)
+      if (this.prop.type === 'object') {
+        if (this.isolated) {
+          unIsolateObjects([this.prop.value.referencedId], 'ui-iso', true)
+        } else {
+          isolateObjects([this.prop.value.referencedId], 'ui-iso', true)
+        }
       }
-
-      if (this.isolated)
-        this.$store.commit('unisolateObjects', {
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
-      else
-        this.$store.commit('isolateObjects', {
-          filterKey: '__parents',
-          filterValues: targetIds
-        })
+      if (this.prop.type === 'array') {
+        const targetIds = this.prop.value.map((o) => o.referencedId)
+        if (this.isolated) {
+          unIsolateObjects(targetIds, 'ui-iso', true)
+        } else {
+          isolateObjects(targetIds, 'ui-iso', true)
+        }
+      }
     }
   }
 }

@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: speckle-server
   namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
   annotations:
     {{- if .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
@@ -30,7 +32,7 @@ spec:
             port:
               number: 80
       - pathType: Exact
-        path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
+        path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*))"
         backend:
           service:
             name: speckle-server

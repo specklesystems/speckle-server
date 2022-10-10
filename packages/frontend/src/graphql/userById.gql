@@ -1,14 +1,10 @@
-query User($id: String!) {
-  user(id: $id) {
+query UserById($id: String!) {
+  otherUser(id: $id) {
     id
-    email
     name
     bio
     company
     avatar
     verified
-    profiles
-    role
-    suuid
   }
 }

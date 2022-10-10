@@ -1,6 +1,6 @@
 <template>
   <div style="display: inline-block">
-    <v-menu v-if="$loggedIn()" offset-x open-on-hover :close-on-content-click="false">
+    <v-menu v-if="isLoggedIn" offset-x open-on-hover :close-on-content-click="false">
       <template #activator="{ on, attrs }">
         <div v-bind="attrs" v-on="on">
           <user-avatar-icon
@@ -69,15 +69,27 @@
     ></user-avatar-icon>
   </div>
 </template>
-<script>
-import userByIdQuery from '@/graphql/userById.gql'
-import UserAvatarIcon from '@/main/components/common/UserAvatarIcon'
+<script lang="ts">
+import UserAvatarIcon from '@/main/components/common/UserAvatarIcon.vue'
+import { AppLocalStorage } from '@/utils/localStorage'
+import { LocalStorageKeys } from '@/helpers/mainConstants'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
+import { computed, defineComponent, PropType } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import { UserByIdDocument } from '@/graphql/generated/graphql'
+import { MaybeNullOrUndefined } from '@/helpers/typeHelpers'
 
-export default {
+export default defineComponent({
   components: { UserAvatarIcon },
   props: {
-    avatar: { type: String, default: null },
-    name: { type: String, default: null },
+    avatar: {
+      type: String as PropType<MaybeNullOrUndefined<string>>,
+      default: null
+    },
+    name: {
+      type: String as PropType<MaybeNullOrUndefined<string>>,
+      default: null
+    },
     showHover: {
       type: Boolean,
       default: true
@@ -99,26 +111,21 @@ export default {
       default: null
     }
   },
-  computed: {
-    isSelf() {
-      return this.id === localStorage.getItem('uuid')
-    }
+  setup(props) {
+    const { isLoggedIn } = useIsLoggedIn()
+    const { result: userByIdResult } = useQuery(
+      UserByIdDocument,
+      () => ({ id: props.id }),
+      () => ({ enabled: isLoggedIn.value })
+    )
+    const userById = computed(() => userByIdResult.value?.otherUser)
+
+    return { isLoggedIn, userById }
   },
-  apollo: {
-    userById: {
-      query: userByIdQuery,
-      variables() {
-        return {
-          id: this.id
-        }
-      },
-      skip() {
-        return !this.$loggedIn
-      },
-      update: (data) => {
-        return data.user
-      }
+  computed: {
+    isSelf(): boolean {
+      return this.id === AppLocalStorage.get(LocalStorageKeys.Uuid)
     }
   }
-}
+})
 </script>

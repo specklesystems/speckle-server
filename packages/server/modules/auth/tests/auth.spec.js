@@ -35,8 +35,8 @@ describe('Auth @auth', () => {
     }
 
     before(async () => {
-      ;({ app } = await beforeEachContext())
-      ;({ server, sendRequest } = await initializeTestServer(app))
+      ;({ app, server } = await beforeEachContext())
+      ;({ sendRequest } = await initializeTestServer(server, app))
 
       // Register a user for testing login flows
       await createUser(me).then((id) => (me.id = id))
@@ -53,7 +53,7 @@ describe('Auth @auth', () => {
 
     it('Should register a new user (speckle frontend)', async () => {
       await request(app)
-        .post('/auth/local/register?challenge=test&suuid=test')
+        .post('/auth/local/register?challenge=test')
         .send({
           email: 'spam@speckle.systems',
           name: 'dimitrie stefanescu',
@@ -101,7 +101,7 @@ describe('Auth @auth', () => {
 
         // No invite
         await request(app)
-          .post('/auth/local/register?challenge=test&suuid=test')
+          .post('/auth/local/register?challenge=test')
           .send({
             email: 'spam@speckle.systems',
             name: 'dimitrie stefanescu',
@@ -112,7 +112,7 @@ describe('Auth @auth', () => {
 
         // Mismatched invite
         await request(app)
-          .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
+          .post('/auth/local/register?challenge=test&inviteId=' + inviteId)
           .send({
             email: 'spam-super@speckle.systems',
             name: 'dimitrie stefanescu',
@@ -123,7 +123,7 @@ describe('Auth @auth', () => {
 
         // Invalid inviteId
         await request(app)
-          .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + 'inviteId')
+          .post('/auth/local/register?challenge=test&inviteId=' + 'inviteId')
           .send({
             email: 'spam-super@speckle.systems',
             name: 'dimitrie stefanescu',
@@ -135,7 +135,7 @@ describe('Auth @auth', () => {
         // finally correct
         await request(app)
           .post(
-            '/auth/local/register?challenge=test&suuid=test&' +
+            '/auth/local/register?challenge=test&' +
               (withOldStyleParam ? 'inviteId=' : 'token=') +
               token
           )
@@ -444,7 +444,7 @@ describe('Auth @auth', () => {
     it('Should rate-limit user creation', async () => {
       const newUser = async (id, ip, expectCode) => {
         await request(app)
-          .post(`/auth/local/register?challenge=test&suuid=test`)
+          .post(`/auth/local/register?challenge=test`)
           .set('CF-Connecting-IP', ip)
           .send({
             email: `rltest_${id}@speckle.systems`,

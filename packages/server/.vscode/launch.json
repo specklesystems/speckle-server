@@ -28,6 +28,8 @@
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
       "type": "pwa-node",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["ts-node", "${file}"],
       "console": "integratedTerminal"
     },
     {
@@ -74,7 +76,7 @@
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/bin/www"
+      "program": "${workspaceFolder}/dist/bin/www"
     }
   ]
 }

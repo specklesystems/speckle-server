@@ -8,6 +8,8 @@ services:
     restart: always
     ports:
       - '0.0.0.0:80:80'
+    environment:
+      FILE_SIZE_LIMIT_MB: 100
 
   speckle-server:
     build:
@@ -37,6 +39,8 @@ services:
       S3_SECRET_KEY: 'minioadmin'
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
+      S3_REGION: '' # optional, defaults to 'us-east-1'
+      FILE_SIZE_LIMIT_MB: 100
 
   preview-service:
     build:
@@ -69,10 +73,4 @@ services:
     environment:
       DEBUG: 'fileimport-service:*'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
-
-      S3_ENDPOINT: 'http://minio:9000'
-      S3_ACCESS_KEY: 'minioadmin'
-      S3_SECRET_KEY: 'minioadmin'
-      S3_BUCKET: 'speckle-server'
-
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'

@@ -26,17 +26,11 @@ if not SPECKLE_SERVER.startswith('http://') and not SPECKLE_SERVER.startswith('h
 print(f"Using Speckle server '{SPECKLE_SERVER}'")
 
 # Test if frontend is accessible
-frontend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, 'img/logo.ddce2456.svg'))
-assert frontend_response.status_code == 200, "Frontend request doesn't return status code 200"
+frontend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, 'logo.svg'))
+# don't check for status code, the frontend app will server the 404 page with a status code 200
+# even if the rote doesn't exist
 assert frontend_response.headers.get('Content-Type', '').startswith('image/'), 'Frontend logo Content-Type is not an image'
 print("Frontend accessible")
-
-# Test if backend is accessible
-graphql_accept_header = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
-backend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, 'graphql'), headers={'Accept': graphql_accept_header})
-assert backend_response.status_code == 200, "Backend request doesn't return status code 200"
-assert 'GraphQL Playground' in backend_response.text, "/graphql didn't respond with GraphQL Playground"
-print("Backend accessible")
 
 # Test basic unauthenticated operation using specklepy
 client = SpeckleClient(SPECKLE_SERVER, use_ssl=SPECKLE_SERVER.startswith('https://'))
@@ -51,9 +45,12 @@ if len(sys.argv) > 2:
 if not SERVER_VERSION:
     SERVER_VERSION = os.getenv('SERVER_VERSION')
 if SERVER_VERSION:
-    assert server_info.version == SERVER_VERSION, f"The deployed version {server_info.version} doesn't match the expected {SERVER_VERSION}"
-    print(f"Server version {SERVER_VERSION} is deployed and available")
+    if not SERVER_VERSION == 'latest':
+      assert server_info.version == SERVER_VERSION, f"The deployed version {server_info.version} doesn't match the expected {SERVER_VERSION}"
+      print(f"Server version {SERVER_VERSION} is deployed and available")
+    else:
+      print("Not testing server version, as it was set to 'latest'")
 else:
-    print("Not testing server version, since it an expected value was not provided via env var or command-line argument")
+    print("Not testing server version, as an expected value was not provided via environment variables or command-line argument")
 
 print('Deployment tests PASS')

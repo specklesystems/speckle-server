@@ -21,7 +21,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^16.0.0"
+    "node": ">=14.0.0"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
@@ -41,11 +41,15 @@
   ],
   "dependencies": {
     "@speckle/objectloader": "workspace:^",
+    "@types/flat": "^5.0.2",
     "camera-controls": "^1.33.1",
+    "flat": "^5.0.2",
     "hold-event": "^0.1.0",
-    "lodash.debounce": "^4.0.8",
+    "lodash-es": "^4.17.21",
     "rainbowvis.js": "^1.0.1",
-    "three": "^0.140.0"
+    "string-to-color": "^2.2.2",
+    "three": "^0.140.0",
+    "tree-model": "1.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.18.2",

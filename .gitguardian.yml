@@ -1,0 +1,3 @@
+matches-ignore:
+  - name: MIXPANEL_TOKEN
+    match: acd87c5a50b56df91a795e999812a3a4

@@ -2,7 +2,6 @@ import '@/bootstrapper'
 import Vue from 'vue'
 
 import App from '@/main/App.vue'
-import store from '@/main/store'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import * as MixpanelManager from '@/mixpanelManager'
 
@@ -11,7 +10,7 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 import { createProvider, installVueApollo } from '@/config/apolloConfig'
 import {
   checkAccessCodeAndGetTokens,
-  prefetchUserAndSetSuuid
+  prefetchUserAndSetID
 } from '@/plugins/authHelpers'
 
 import router from '@/main/router/index'
@@ -28,16 +27,17 @@ Vue.use(VueFilterDateFormat)
 
 import PerfectScrollbar from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
+
 // adds various helper methods
 import '@/plugins/helpers'
+import { AppLocalStorage } from '@/utils/localStorage'
+import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 
 Vue.use(PerfectScrollbar)
 
 // Async ApexChart load
 Vue.component('ApexChart', async () => {
-  const VueApexCharts = await import(
-    /* webpackChunkName: "vue-apexcharts" */ 'vue-apexcharts'
-  )
+  const VueApexCharts = await import('vue-apexcharts')
   Vue.use(VueApexCharts)
 
   return VueApexCharts
@@ -50,37 +50,8 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
-const AuthToken = localStorage.getItem(LocalStorageKeys.AuthToken)
-const RefreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
-
 const apolloProvider = createProvider()
 installVueApollo(apolloProvider)
-
-// TODO: Sort out error handling here, if something goes wrong it just goes into an infinite loop
-if (AuthToken) {
-  prefetchUserAndSetSuuid(apolloProvider.defaultClient)
-    .then(() => {
-      postAuthInit()
-    })
-    .catch(() => {
-      if (RefreshToken) {
-        // TODO: try to rotate token & prefetch user, etc.
-      }
-
-      window.location = `${window.location.origin}/authn/login`
-    })
-} else {
-  checkAccessCodeAndGetTokens()
-    .then(() => {
-      return prefetchUserAndSetSuuid(apolloProvider.defaultClient)
-    })
-    .then(() => {
-      postAuthInit()
-    })
-    .catch(() => {
-      postAuthInit()
-    })
-}
 
 function postAuthInit() {
   // Init mixpanel
@@ -92,12 +63,38 @@ function postAuthInit() {
   new Vue({
     router,
     vuetify,
-    store,
     setup() {
       provide(DefaultApolloClient, apolloProvider.defaultClient)
     },
     render: (h) => h(App)
   }).$mount('#app')
 }
+
+async function init() {
+  const authToken = AppLocalStorage.get(LocalStorageKeys.AuthToken)
+
+  // no auth token - check if we can resolve it from access code
+  if (!authToken) {
+    await checkAccessCodeAndGetTokens()
+  }
+
+  // try to retrieve user info with auth token
+  try {
+    await prefetchUserAndSetID(apolloProvider.defaultClient)
+  } catch (e) {
+    if (e instanceof InvalidAuthTokenError) {
+      // data retrieval failed and user was logged out - go to login page
+      window.location = `${window.location.origin}/authn/login`
+      return
+    }
+
+    // Log and continue
+    console.error(e)
+  }
+
+  // Init app
+  postAuthInit()
+}
+init()
 
 export { apolloProvider }

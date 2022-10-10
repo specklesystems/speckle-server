@@ -5,7 +5,6 @@
       $vuetify.breakpoint.xs ? '90%' : '300px'
     }; height: 100vh; position: absolute; padding-top: 72px`"
   >
-    <!-- <v-card class="px-2"> -->
     <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
         <span class="caption">Selection Info</span>
@@ -60,23 +59,42 @@
         Hint: hold shift to select multiple objects.
       </div>
     </perfect-scrollbar>
-    <!-- </v-card> -->
   </div>
 </template>
 <script>
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import gql from 'graphql-tag'
+import {
+  clearSelectionDisplay,
+  isolateObjects,
+  unIsolateObjects
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
   },
   props: {
-    objects: {
-      type: Array,
-      default: () => []
-    },
     streamId: {
       type: String,
       default: null
     }
+  },
+  setup() {
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          selectedObjects
+          currentFilterState
+          objectProperties
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState }
   },
   data() {
     return {
@@ -84,6 +102,9 @@ export default {
     }
   },
   computed: {
+    objects() {
+      return this.viewerState.selectedObjects
+    },
     props() {
       return this.objects.map((obj) => {
         let key = obj?.id
@@ -100,8 +121,14 @@ export default {
     },
     isolated() {
       const ids = this.objects.map((o) => o.id)
+      if (!this.viewerState.currentFilterState) return false
+      if (!this.viewerState.currentFilterState.visibilityState) return false
+      const stateName = this.viewerState.currentFilterState.visibilityState.name
+      if (stateName !== 'isolateObjectsState') return false
+
       ids.forEach((val) => {
-        if (this.$store.state.isolateValues.indexOf(val) === -1) return false
+        if (this.viewerState.currentFilterState.visibilityState.ids.indexOf(val) === -1)
+          return false
       })
       return true
     }
@@ -109,16 +136,12 @@ export default {
   methods: {
     isolateSelection() {
       const ids = this.objects.map((o) => o.id)
-      if (!this.isolated)
-        this.$store.commit('unisolateObjects', {
-          filterKey: '__parents',
-          filterValues: ids
-        })
-      else
-        this.$store.commit('isolateObjects', {
-          filterKey: '__parents',
-          filterValues: ids
-        })
+      if (!this.isolated) {
+        clearSelectionDisplay()
+        isolateObjects(ids, 'ui-sel')
+      } else {
+        unIsolateObjects(ids, 'ui-sel')
+      }
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''

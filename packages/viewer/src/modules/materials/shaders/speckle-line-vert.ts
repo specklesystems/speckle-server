@@ -13,8 +13,8 @@ export const speckleLineVert = /* glsl */ `
 		attribute vec3 instanceStart;
 		attribute vec3 instanceEnd;
 
-		attribute vec3 instanceColorStart;
-		attribute vec3 instanceColorEnd;
+		attribute vec4 instanceColorStart;
+		attribute vec4 instanceColorEnd;
 		// varying vec3 debugColor;
 
 		#ifdef WORLD_UNITS
@@ -46,12 +46,8 @@ export const speckleLineVert = /* glsl */ `
 		#endif
 
         #ifdef USE_RTE
-            // attribute vec3 position_high;
-            // attribute vec3 position_low;
 			attribute vec3 instanceStartLow;
-            attribute vec3 instanceStartHigh;
 			attribute vec3 instanceEndLow;
-            attribute vec3 instanceEndHigh;
             uniform vec3 uViewer_high;
             uniform vec3 uViewer_low;
         #endif
@@ -80,10 +76,15 @@ export const speckleLineVert = /* glsl */ `
 		}
 
 		void main() {
+			if(instanceColorStart.w == 0.) {
+				gl_Position = vec4(0.);
+				return;
+			}
+			
             vec3 computedPosition = position;
 			#ifdef USE_COLOR
 
-				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
+				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart.xyz : instanceColorEnd.xyz;
 
 			#endif
 
@@ -98,12 +99,20 @@ export const speckleLineVert = /* glsl */ `
 
 			// camera space
             #ifdef USE_RTE
-                vec3 startHighDifference = vec3(instanceStartHigh.xyz - uViewer_high);
-                vec3 startLowDifference = vec3(instanceStartLow.xyz - uViewer_low);
-                vec3 endHighDifference = vec3(instanceEndHigh.xyz - uViewer_high);
-                vec3 endLowDifference = vec3(instanceEndLow.xyz - uViewer_low);
-                vec4 start = modelViewMatrix * vec4( startLowDifference + startHighDifference, 1.0 );
-                vec4 end = modelViewMatrix * vec4( endLowDifference + endHighDifference, 1.0 );
+			/** Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl */
+				vec3 t1 = instanceStartLow.xyz - uViewer_low;
+				vec3 e = t1 - instanceStartLow.xyz;
+				vec3 t2 = ((-uViewer_low - e) + (instanceStartLow.xyz - (t1 - e))) + instanceStart.xyz - uViewer_high;
+				vec3 highDifference = t1 + t2;
+				vec3 lowDifference = t2 - (highDifference - t1);
+				vec4 start = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
+
+				t1 = instanceEndLow.xyz - uViewer_low;
+				e = t1 - instanceEndLow.xyz;
+				t2 = ((-uViewer_low - e) + (instanceEndLow.xyz - (t1 - e))) + instanceEnd.xyz - uViewer_high;
+				highDifference = t1 + t2;
+				lowDifference = t2 - (highDifference - t1);
+				vec4 end = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
             #else
                 vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
                 vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
@@ -210,10 +219,14 @@ export const speckleLineVert = /* glsl */ `
 				/*
 				Not great, not terrible
 				*/
-				float d;
-				float offsetStep = linewidth;
-				vec3 move = offset;
 				float pixelSize = length(vec2(pixelThreshold/resolution.x + pixelThreshold/resolution.y));
+				float offsetStep = linewidth;
+				float d = screenSpaceDistance(worldPos, worldPos + vec4(cOffset * offsetStep, 0.));
+				/* We're trying to start off with a step closer to the initial difference between SS distance and the pixel size we want
+				*/
+				// offsetStep += pixelSize - d;
+				vec3 move = offset;
+				
 				for(int i = 0; i < SEARCH_STEPS; i++){
 					move = cOffset * offsetStep;
 					d = screenSpaceDistance(worldPos, worldPos + vec4(move, 0.));

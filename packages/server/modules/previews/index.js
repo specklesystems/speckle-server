@@ -25,10 +25,10 @@ const {
 const { makeOgImage } = require('./ogImage')
 
 const httpErrorImage = (httpErrorCode) =>
-  require.resolve(`@/modules/previews/assets/preview_${httpErrorCode}.png`)
+  require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
 
-const noPreviewImage = require.resolve('@/modules/previews/assets/no_preview.png')
-const previewErrorImage = require.resolve('@/modules/previews/assets/preview_error.png')
+const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
+const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 
 exports.init = (app) => {
   if (process.env.DISABLE_PREVIEWS) {
@@ -52,7 +52,7 @@ exports.init = (app) => {
     if (!dbObj) {
       return {
         type: 'file',
-        file: require.resolve('@/modules/previews/assets/preview_404.png')
+        file: require.resolve('#/assets/previews/images/preview_404.png')
       }
     }
 
@@ -68,7 +68,7 @@ exports.init = (app) => {
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      debug('speckle:errors')(
+      debug('speckle:error')(
         `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
       )
       return {
@@ -79,7 +79,7 @@ exports.init = (app) => {
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      debug('speckle:errors')(`Error: Preview image not found: ${previewImgId}`)
+      debug('speckle:error')(`Error: Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
         file: previewErrorImage

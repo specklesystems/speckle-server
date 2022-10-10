@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "server.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "server.labels" . | indent 4 }}
+spec:
+  selector:
+    app: speckle-server
+    project: speckle-server
+  ports:
+    - protocol: TCP
+      name: web
+      port: 3000
+      targetPort: http

@@ -3,7 +3,7 @@
     <file-upload-zone
       ref="uploadZone"
       v-slot="{ isFileDrag }"
-      :size-limit="fileSizeLimit"
+      :size-limit="blobSizeLimitBytes"
       :count-limit="countLimit"
       :accept="acceptValue"
       :disabled="disabled"
@@ -48,10 +48,11 @@ import {
 import FileUploadProgress from '@/main/components/common/file-upload/FileUploadProgress.vue'
 import { UploadFileItem } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { differenceBy } from 'lodash'
+import { useQuery } from '@vue/apollo-composable'
+import { ServerInfoBlobSizeLimitDocument } from '@/graphql/generated/graphql'
 import { deleteBlob, uploadFiles } from '@/main/lib/common/file-upload/blobStorageApi'
 import { JSONContent } from '@tiptap/core'
-
-// TODO: Styling for adding attachments & rendering them
+import { computed } from 'vue'
 
 type FileUploadZoneInstance = InstanceType<typeof FileUploadZone>
 
@@ -84,10 +85,17 @@ export default Vue.extend({
       default: true
     }
   },
+  setup() {
+    const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
+    const blobSizeLimitBytes = computed(
+      () => result.value?.serverInfo.blobSizeLimitBytes
+    )
+    return { blobSizeLimitBytes }
+  },
   data() {
     return {
       editorSchemaOptions: SMART_EDITOR_SCHEMA,
-      fileSizeLimit: 1024 * 1024 * 25, // 25MB
+      // fileSizeLimit: 1024 * 1024 * 25, // 25MB
       countLimit: 5, // if it's more than 5, just zip it up
       acceptValue: [
         UniqueFileTypeSpecifier.AnyImage,
@@ -156,9 +164,7 @@ export default Vue.extend({
       }
     },
     placeholder(): string {
-      return this.addingComment
-        ? 'Your comment... (press enter to send)'
-        : 'Reply... (press enter to send)'
+      return 'Press enter to send'
     },
     anyAttachmentsProcessing(): boolean {
       return this.currentFiles.some((a) => !isUploadProcessed(a))

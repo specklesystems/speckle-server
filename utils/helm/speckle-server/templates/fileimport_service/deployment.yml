@@ -1,0 +1,123 @@
+{{- if .Values.s3.endpoint }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-fileimport-service
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "fileimport_service.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.fileimport_service.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-fileimport-service
+      project: speckle-server
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+{{ include "fileimport_service.labels" . | indent 8 }}
+    spec:
+      containers:
+      - name: main
+        image: speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+
+        ports:
+          - name: metrics
+            containerPort: 9093
+            protocol: TCP
+
+        livenessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          exec:
+            command:
+              - node
+              - -e
+              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000)
+
+        resources:
+          requests:
+            cpu: {{ .Values.fileimport_service.requests.cpu }}
+            memory: {{ .Values.fileimport_service.requests.memory }}
+          limits:
+            cpu: {{ .Values.fileimport_service.limits.cpu }}
+            memory: {{ .Values.fileimport_service.limits.memory }}
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
+        volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: SPECKLE_SERVER_URL
+            value: {{ printf "http://%s:%s" ( include "server.service.fqdn" $ ) ( include "server.port" $ ) }}
+
+          - name: PG_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+
+          - name: DEBUG
+            value: "fileimport-service:*"
+
+          {{- if .Values.db.useCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+          - name: FILE_IMPORT_TIME_LIMIT_MIN
+            value: {{ .Values.fileimport_service.time_limit_min | quote }}
+
+      {{- if .Values.fileimport_service.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fileimport_service.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fileimport_service.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.fileimport_service.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 20000
+        fsGroup: 25000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
+      priorityClassName: low-priority
+      {{- if .Values.fileimport_service.serviceAccount.create }}
+      serviceAccountName: {{ include "fileimport_service.name" $ }}
+      {{- end }}
+      # Should be > File import timeout to allow finishing up imports
+      terminationGracePeriodSeconds: 610
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+{{- end }}

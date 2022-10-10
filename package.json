@@ -12,13 +12,17 @@
     "build": "yarn workspaces foreach -ptv run build",
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+    "helm:readme:generate": "./utils/helm/update-documentation.sh",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "dev:docker:up": "docker-compose -f ./docker-compose-deps.yml -f ./docker-compose-dev.yml up -d",
-    "dev:docker:down": "docker-compose -f ./docker-compose-deps.yml -f ./docker-compose-dev.yml down",
+    "circleci:check": "circleci config validate ./.circleci/config.yml",
+    "dev:docker": "docker-compose -f ./docker-compose-deps.yml",
+    "dev:docker:up": "docker-compose -f ./docker-compose-deps.yml up -d",
+    "dev:docker:down": "docker-compose -f ./docker-compose-deps.yml down",
     "dev": "yarn workspaces foreach -piv -j unlimited run dev",
     "dev:no-server": "yarn workspaces foreach --exclude @speckle/server -piv -j unlimited run dev",
     "dev:minimal": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run dev",
+    "gqlgen": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run gqlgen",
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend": "yarn workspace @speckle/frontend dev",
     "prepare": "husky install",
@@ -38,9 +42,8 @@
   "resolutions": {
     "tslib": "^2.3.1",
     "core-js": "3.22.4",
-    "vue-cli-plugin-apollo/graphql": "^15",
-    "typescript": "^4.5.4",
-    "vue-loader": "^15.10.0"
+    "graphql": "^15.3.0",
+    "typescript": "^4.5.4"
   },
   "config": {
     "commitizen": {

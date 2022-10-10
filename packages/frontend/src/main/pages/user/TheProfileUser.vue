@@ -1,8 +1,8 @@
 <template>
   <v-container fluid class="pa-0">
-    <portal v-if="canRenderToolbarPortal && user" to="toolbar">
+    <prioritized-portal v-if="user" to="toolbar" identity="user-profile" :priority="1">
       Profile Page of {{ user.name }}
-    </portal>
+    </prioritized-portal>
     <v-row v-if="$apollo.loading">
       <v-col cols="12">
         <v-skeleton-loader type="card, article"></v-skeleton-loader>
@@ -42,34 +42,28 @@
 <script>
 import ListItemStream from '@/main/components/user/ListItemStream'
 import { gql } from '@apollo/client/core'
-import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
+import { AppLocalStorage } from '@/utils/localStorage'
+import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 
 export default {
   name: 'TheProfileUser',
   components: {
     UserInfoCard: () => import('@/main/components/user/UserInfoCard'),
     SectionCard: () => import('@/main/components/common/SectionCard'),
-    ListItemStream
+    ListItemStream,
+    PrioritizedPortal
   },
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'user-profile', 1)],
   apollo: {
     user: {
       query: gql`
         query User($id: String!) {
-          user(id: $id) {
+          otherUser(id: $id) {
             id
-            email
             name
             bio
             company
             avatar
             verified
-            profiles
-            role
-            suuid
             totalOwnedStreamsFavorites
             streams {
               totalCount
@@ -86,6 +80,7 @@ export default {
           }
         }
       `,
+      update: (data) => data.otherUser,
       variables() {
         return {
           id: this.$route.params.userId
@@ -95,7 +90,7 @@ export default {
   },
   created() {
     // Move to self profile
-    if (this.$route.params.userId === localStorage.getItem('uuid')) {
+    if (this.$route.params.userId === AppLocalStorage.get('uuid')) {
       this.$router.replace({ path: '/profile' })
     }
   },

@@ -3,7 +3,8 @@ const testFileExtensions = ['ts', 'js']
 module.exports = {
   exclude: [
     `**/migrations/*.{${testFileExtensions}}`,
-    '**/*.spec.js',
+    `**/modules/cli/**/*.{${testFileExtensions}}`,
+    '**/*.spec.{js,ts}',
 
     // Default exclusions: https://github.com/istanbuljs/schema/blob/master/default-exclude.js
     'coverage/**',

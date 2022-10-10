@@ -305,24 +305,25 @@ export default {
     you: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             name
           }
         }
       `,
-      update: (data) => data.user
+      update: (data) => data.activeUser
     },
     user: {
       query: gql`
-        query ($id: String) {
-          user(id: $id) {
+        query ($id: String!) {
+          otherUser(id: $id) {
             name
             avatar
             id
           }
         }
       `,
+      update: (data) => data.otherUser,
       variables() {
         return {
           id: this.lastActivity.userId

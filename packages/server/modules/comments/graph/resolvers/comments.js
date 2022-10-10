@@ -1,13 +1,13 @@
 const { pubsub } = require('@/modules/shared')
 const {
   ForbiddenError: ApolloForbiddenError,
-  ApolloError,
-  withFilter
+  ApolloError
 } = require('apollo-server-express')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
   getComment,
@@ -24,6 +24,7 @@ const {
 const {
   ensureCommentSchema
 } = require('@/modules/comments/services/commentTextService')
+const { withFilter } = require('graphql-subscriptions')
 
 const authorizeStreamAccess = async ({
   streamId,
@@ -101,14 +102,6 @@ module.exports = {
     }
   },
   Commit: {
-    async commentCount(parent, args, context) {
-      if (context.role === Roles.Server.ArchivedUser)
-        throw new ApolloForbiddenError('You are not authorized.')
-      return await getResourceCommentCount({ resourceId: parent.id })
-    }
-  },
-  CommitCollectionUserNode: {
-    // urgh, i think we tripped our gql schemas in there a bit
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
@@ -199,7 +192,7 @@ module.exports = {
         streamId: args.input.streamId,
         resourceType: 'comment',
         resourceId: comment.id,
-        actionType: 'comment_created',
+        actionType: ActionTypes.Comment.Create,
         userId: context.userId,
         info: { input: args.input },
         message: `Comment added: ${comment.id} (${args.input})`
@@ -269,7 +262,7 @@ module.exports = {
         streamId: args.streamId,
         resourceType: 'comment',
         resourceId: args.commentId,
-        actionType: 'comment_archived',
+        actionType: ActionTypes.Comment.Archive,
         userId: context.userId,
         info: { input: args },
         message: `Comment archived`
@@ -311,7 +304,7 @@ module.exports = {
         streamId: args.input.streamId,
         resourceType: 'comment',
         resourceId: args.input.parentComment,
-        actionType: 'comment_replied',
+        actionType: ActionTypes.Comment.Reply,
         userId: context.userId,
         info: { input: args.input },
         message: `Comment reply created.`

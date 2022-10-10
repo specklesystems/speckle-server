@@ -14,7 +14,7 @@ export const suggestion = {
       return undefined
     }
 
-    // Execute users() query
+    // Execute users search query
     const client = apolloProvider.defaultClient
     const { data } = await client.query({
       query: userSearchQuery,
@@ -47,7 +47,7 @@ export const suggestion = {
       onStart: (props) => {
         // Render mention list with popper.js (which we have because of v-tooltip)
         component = new VueRenderer(SmartTextEditorMentionList, {
-          parent: this,
+          parent: undefined,
           propsData: props,
           vuetify
         })

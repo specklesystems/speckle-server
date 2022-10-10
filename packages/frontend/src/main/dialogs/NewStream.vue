@@ -18,6 +18,7 @@
       <v-card-text>
         <v-text-field
           v-model="name"
+          :disabled="isLoading"
           :rules="nameRules"
           validate-on-blur
           autofocus
@@ -25,27 +26,22 @@
         />
         <v-textarea
           v-model="description"
+          :disabled="isLoading"
           rows="1"
           row-height="15"
           label="Description (optional)"
         />
-        <v-switch
-          v-model="isPublic"
-          v-tooltip="
-            isPublic
-              ? `Anyone with the link can view this stream. It is also visible on your profile page. Only collaborators
-          can edit it.`
-              : `Only collaborators can access this stream.`
-          "
-          inset
-          :label="`${isPublic ? 'Link Sharing On' : 'Link Sharing Off'}`"
+        <stream-visibility-toggle
+          :disabled="isLoading"
+          :is-public.sync="isPublic"
+          :is-discoverable.sync="isDiscoverable"
         />
-
         <p class="mt-5">
           <b>Invite collaborators</b>
         </p>
         <v-text-field
           v-model="search"
+          :disabled="isLoading"
           label="Search users..."
           placeholder="Search by name or by email"
         />
@@ -100,7 +96,7 @@
           color="primary"
           block
           large
-          :disabled="!valid"
+          :disabled="!valid || isLoading"
           :loading="isLoading"
           elevation="0"
           type="submit"
@@ -114,10 +110,14 @@
 <script>
 import { gql } from '@apollo/client/core'
 import { userSearchQuery } from '@/graphql/user'
+import { AppLocalStorage } from '@/utils/localStorage'
+import StreamVisibilityToggle from '@/main/components/stream/editor/StreamVisibilityToggle.vue'
+import UserAvatar from '@/main/components/common/UserAvatar.vue'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar,
+    StreamVisibilityToggle
   },
   props: {
     open: {
@@ -155,6 +155,7 @@ export default {
       search: null,
       nameRules: [],
       isPublic: true,
+      isDiscoverable: false,
       collabs: [],
       isLoading: false,
       users: null
@@ -180,7 +181,7 @@ export default {
   },
   methods: {
     addCollab(user) {
-      if (user.id === localStorage.getItem('uuid')) return
+      if (user.id === AppLocalStorage.get('uuid')) return
       const indx = this.collabs.findIndex((u) => u.id === user.id)
       if (indx !== -1) return
 
@@ -209,6 +210,7 @@ export default {
             myStream: {
               name: this.name,
               isPublic: this.isPublic,
+              isDiscoverable: this.isDiscoverable,
               description: this.description,
               withContributors: collabIds
             }
@@ -222,8 +224,9 @@ export default {
         this.$eventHub.$emit('notification', {
           text: e.message
         })
+      } finally {
+        this.isLoading = false
       }
-      this.isLoading = false
     }
   }
 }

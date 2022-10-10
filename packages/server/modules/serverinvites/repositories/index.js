@@ -11,21 +11,7 @@ const { uniq, isArray } = require('lodash')
 const { getStream } = require('@/modules/core/repositories/streams')
 
 /**
- * @typedef {{
- *  id: string,
- *  target: string,
- *  inviterId: string,
- *  createdAt?: Date,
- *  used?: boolean,
- *  message?: string,
- *  resourceTarget?: string,
- *  resourceId?: string,
- *  role?: string,
- *  token: string
- * }} ServerInviteRecord
- */
-
-/**
+ *
  * Resolve resource from invite
  * @param {import('@/modules/serverinvites/helpers/inviteHelper').InviteResourceData} invite
  * @returns {Promise<Object>}
@@ -126,9 +112,10 @@ async function updateAllInviteTargets(oldTargets, newTarget) {
   if (!oldTargets.length) return
 
   // PostgreSQL doesn't support aliases in update calls for some reason...
+  const ServerInvitesCols = ServerInvites.with({ withoutTablePrefix: true }).col
   await ServerInvites.knex()
-    .whereIn(ServerInvites.col.target, oldTargets)
-    .update('target', newTarget.toLowerCase())
+    .whereIn(ServerInvitesCols.target, oldTargets)
+    .update(ServerInvitesCols.target, newTarget.toLowerCase())
 }
 
 /**

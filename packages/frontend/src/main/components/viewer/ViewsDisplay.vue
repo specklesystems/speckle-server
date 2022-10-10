@@ -33,6 +33,7 @@
   </v-list>
 </template>
 <script>
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 export default {
   props: {
     views: {
@@ -44,6 +45,10 @@ export default {
       default: true
     }
   },
+  setup() {
+    const { viewer } = useInjectedViewer()
+    return { viewer }
+  },
   data() {
     return {
       expand: false
@@ -51,7 +56,7 @@ export default {
   },
   methods: {
     setView(view) {
-      window.__viewer.interactions.setView(view.id)
+      this.viewer.setView(view.id)
     }
   }
 }

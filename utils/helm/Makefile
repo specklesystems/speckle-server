@@ -7,6 +7,7 @@ build:
 	cd ../.. && docker build -t speckle/speckle-webhook-service:local -f packages/webhook-service/Dockerfile .
 	cd ../.. && docker build -t speckle/speckle-fileimport-service:local -f packages/fileimport-service/Dockerfile .
 	cd ../.. && docker build -t speckle/speckle-monitor-deployment:local -f utils/monitor-deployment/Dockerfile .
+	cd ../.. && docker build -t speckle/speckle-test-deployment:local -f utils/test-deployment/Dockerfile .
 
 	echo "Making locally built images available inside minikube cluster. This takes a bit to copy, unfortunately..."
 
@@ -16,6 +17,7 @@ build:
 	minikube image load speckle/speckle-webhook-service:local
 	minikube image load speckle/speckle-fileimport-service:local
 	minikube image load speckle/speckle-monitor-deployment:local
+	minikube image load speckle/speckle-test-deployment:local
 
 
 install:

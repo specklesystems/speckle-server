@@ -18,8 +18,8 @@
             block
             :color="s.color"
             :href="`${s.url}?appId=${appId}&challenge=${challenge}${
-              suuid ? '&suuid=' + suuid : ''
-            }${token ? '&token=' + token : ''}`"
+              token ? '&token=' + token : ''
+            }`"
           >
             <v-icon small class="mr-5">{{ s.icon }}</v-icon>
             {{ s.name }}
@@ -43,10 +43,6 @@ export default {
       default: () => null
     },
     challenge: {
-      type: String,
-      default: () => null
-    },
-    suuid: {
       type: String,
       default: () => null
     }

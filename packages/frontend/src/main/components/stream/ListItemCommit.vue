@@ -2,10 +2,16 @@
   <div>
     <div
       :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`"
-      :style="`transition: all 0.2s ease-in-out; ${
-        highlight ? 'outline: 0.2rem solid #047EFB;' : ''
-      }`"
+      :style="`${highlighted ? 'outline: 0.2rem solid #047EFB;' : ''}`"
     >
+      <v-checkbox
+        v-if="allowSelect"
+        v-model="selectedState"
+        dense
+        hide-details
+        class="mt-0 ml-2 pa-0"
+        @change="onSelect"
+      />
       <div class="flex-shrink-0">
         <user-avatar :id="commit.authorId" :size="30" />
       </div>
@@ -57,6 +63,8 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
+import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
 
 export default {
   components: {
@@ -101,7 +109,20 @@ export default {
     highlight: {
       type: Boolean,
       default: false
+    },
+    allowSelect: {
+      type: Boolean,
+      default: false
+    },
+    selected: {
+      type: Boolean,
+      default: false
     }
+  },
+  setup(props, ctx) {
+    const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+
+    return { highlighted, selectedState, onSelect }
   },
   apollo: {
     activity: {
@@ -113,15 +134,14 @@ export default {
               id
               activity(actionType: "commit_receive", limit: 200) {
                 items {
-                  info
-                  time
-                  userId
-                  message
+                  ...LimitedCommitActivityFields
                 }
               }
             }
           }
         }
+
+        ${limitedCommitActivityFieldsFragment}
       `,
       update: (data) => data.stream.commit.activity,
       variables() {
@@ -169,15 +189,6 @@ export default {
       this.activity.items.forEach((item) => set.add(item.userId))
       return Array.from(set)
     }
-  },
-  watch: {
-    // activity(val) {
-    //   let set = new Set()
-    //   if (val && val.items && val.items.length > 0) {
-    //     val.items.forEach((item) => set.add(item.userId))
-    //     this.receivedUsersUnique = Array.from(set)
-    //   }
-    // }
   },
   methods: {
     goToBranch() {

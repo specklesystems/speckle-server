@@ -1,11 +1,13 @@
 <template>
   <v-app id="speckle">
     <v-navigation-drawer
-      ref="drawer"
+      ref="navDrawer"
       v-model="drawer"
       app
       floating
-      :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
+      :class="`main-nav-drawer grey ${
+        $vuetify.theme.dark ? 'darken-4' : 'lighten-4'
+      } elevation-1`"
       :width="navWidth"
       style="z-index: 100"
     >
@@ -46,8 +48,7 @@
     </v-app-bar>
     <v-main class="background">
       <email-verification-banner
-        v-if="!hideEmailBanner && user && !user.verified"
-        :user="user"
+        v-if="!hideEmailBanner"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
       <v-container fluid class="px-4">
@@ -62,8 +63,9 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import { mainUserDataQuery } from '@/graphql/user'
-import { setDarkTheme } from '@/main/utils/themeStateManager'
+import { useNavigationDrawerAutoResize } from '../lib/core/composables/dom'
+import { ref } from 'vue'
+import { useIsLoggedIn } from '../lib/core/composables/core'
 
 export default {
   name: 'TheMain',
@@ -77,12 +79,6 @@ export default {
       import('@/main/components/user/EmailVerificationBanner')
   },
   apollo: {
-    user: {
-      query: mainUserDataQuery,
-      skip() {
-        return !this.$loggedIn()
-      }
-    },
     $subscribe: {
       userStreamAdded: {
         query: gql`
@@ -102,117 +98,76 @@ export default {
           })
         },
         skip() {
-          return !this.user
+          return !this.isLoggedIn
         }
       }
+    }
+  },
+  setup() {
+    const navDrawer = ref(null)
+
+    const { navWidth } = useNavigationDrawerAutoResize({
+      drawerRef: navDrawer
+    })
+
+    const { isLoggedIn } = useIsLoggedIn()
+
+    // drawer ref must be returned, for it to be filled
+    return {
+      navDrawer,
+      navWidth,
+      isLoggedIn
     }
   },
   data() {
     return {
       newStreamDialog: 1,
       drawer: true,
-      navWidth: 300,
-      navRestWidth: 300,
-      borderSize: 3,
       hideEmailBanner: false
     }
   },
   watch: {
     $route: {
       handler(to) {
-        if (!to.meta.resizableNavbar) {
-          this.navWidth = this.navRestWidth
-        }
-        if (to.meta.resizableNavbar && window.__lastNavSize) {
-          this.navWidth = window.__lastNavSize
-        }
         this.hideEmailBanner = !!to.meta.hideEmailBanner
+      },
+      immediate: true
+    },
+    '$route.query.emailverifiedstatus': {
+      handler(emailVerifiedStatus, oldStatus) {
+        if (!oldStatus && emailVerifiedStatus === 'true') {
+          this.$triggerNotification({
+            text: '✉️ Email successfully verified!',
+            type: 'success'
+          })
+
+          this.cleanQuery()
+        }
+      },
+      immediate: true
+    },
+    '$route.query.emailverifiederror': {
+      handler(emailVerifiedError, oldError) {
+        if (!oldError && emailVerifiedError) {
+          this.$triggerNotification({
+            text: `✉️ ${emailVerifiedError}`,
+            type: 'error'
+          })
+
+          this.cleanQuery()
+        }
       },
       immediate: true
     }
   },
-  mounted() {
-    this.setNavResizeEvents()
-
-    if (this.$route.query.emailverfiedstatus) {
-      setTimeout(() => {
-        this.$eventHub.$emit('notification', {
-          text: '✉️ Email successfully verfied!'
-        })
-      }, 1000) // todo: ask fabian if there's a better way, feels icky
-    }
-  },
   methods: {
-    switchTheme() {
-      this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      setDarkTheme(this.$vuetify.theme.dark, true)
-
-      this.$mixpanel.people.set(
-        'Theme Web',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
-    },
-    setNavResizeEvents() {
-      const minSize = this.borderSize
-      const el = this.$refs.drawer.$el
-      const drawerBorder = el.querySelector('.nav-resizer')
-      drawerBorder.style.cursor = 'ew-resize'
-
-      function resize(e) {
-        e.preventDefault()
-        const maxWidth = document.body.offsetWidth / 2
-        const minWidth = 300
-        document.body.style.cursor = 'ew-resize'
-        if (!(e.clientX > maxWidth || e.clientX < minWidth)) {
-          el.style.width = e.clientX + 'px'
-          window.__lastNavSize = e.clientX
-        }
-      }
-
-      drawerBorder.addEventListener(
-        'mousedown',
-        (e) => {
-          e.preventDefault()
-          if (e.offsetX < minSize) {
-            el.style.transition = 'initial'
-            document.addEventListener('mousemove', resize, false)
-          }
-        },
-        false
-      )
-
-      document.addEventListener(
-        'mouseup',
-        (e) => {
-          e.preventDefault()
-          el.style.transition = ''
-          document.body.style.cursor = ''
-          this.navWidth = el.style.width
-          document.removeEventListener('mousemove', resize, false)
-          setTimeout(() => this.$eventHub.$emit('resize-viewer'), 300)
-        },
-        false
-      )
+    cleanQuery() {
+      this.$router.replace({ ...this.$router.currentRoute, query: '' })
     }
   }
 }
 </script>
 <style scoped>
-.nav-resizer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0px;
-  height: 100%;
-  z-index: 100000;
-  transition: all 0.6s ease;
-  opacity: 0.01;
-  border: 4px solid royalblue;
-}
-.nav-resizer:hover {
-  opacity: 0.5;
-  width: 0px;
-}
 .email-banner {
   z-index: 2;
 }

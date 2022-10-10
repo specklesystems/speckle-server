@@ -22,15 +22,43 @@
         </transition>
       </div>
       <div v-else style="width: 100%">
-        <error-placeholder v-if="!showInvitePlaceholder" :error-type="errorType">
-          <h2>{{ errorMsg }}</h2>
-        </error-placeholder>
         <stream-invite-placeholder
-          v-else
+          v-if="showInvitePlaceholder"
           :stream-invite="streamInvite"
           :invite-token="inviteToken"
           @invite-used="onInviteClosed"
         />
+        <error-placeholder v-else :error-type="errorType">
+          <template #default>
+            <h2>{{ errorMsg }}</h2>
+          </template>
+          <template v-if="allowRequestAccess" #actions>
+            <rounded-button-list>
+              <rounded-button-list-item
+                type="primary"
+                icon="mdi-lock-outline"
+                @click="onRequestAccess"
+              >
+                <span v-if="hasStreamAccessRequest">Access Request sent</span>
+                <span v-else>Request Access to Stream</span>
+
+                <template #subtitle>
+                  <span v-if="hasStreamAccessRequest">
+                    You will get a confirmation email once it's been approved
+                  </span>
+                  <span v-else>Request Access from the stream owners</span>
+                </template>
+              </rounded-button-list-item>
+              <rounded-button-list-item
+                type="secondary"
+                icon="mdi-home-outline"
+                @click="onBackToStreams"
+              >
+                Back to your Streams
+              </rounded-button-list-item>
+            </rounded-button-list>
+          </template>
+        </error-placeholder>
       </div>
     </v-col>
   </v-row>
@@ -40,7 +68,7 @@
 import { gql } from '@apollo/client/core'
 import StreamInviteBanner from '@/main/components/stream/StreamInviteBanner.vue'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
-import Vue from 'vue'
+import Vue, { defineComponent, computed } from 'vue'
 import { Nullable, MaybeFalsy } from '@/helpers/typeHelpers'
 import {
   StreamInviteDocument,
@@ -48,13 +76,24 @@ import {
   MainUserDataQuery,
   StreamQuery,
   StreamQueryVariables,
-  StreamDocument
+  StreamDocument,
+  CreateStreamAccessRequestDocument,
+  GetStreamAccessRequestDocument
 } from '@/graphql/generated/graphql'
 import type { ApolloQueryResult, ApolloError } from '@apollo/client/core'
 import type { Get } from 'type-fest'
 import StreamInvitePlaceholder from '@/main/components/stream/StreamInvitePlaceholder.vue'
 import { StreamInviteType } from '@/main/lib/stream/mixins/streamInviteMixin'
 import { getInviteTokenFromRoute } from '@/main/lib/auth/services/authService'
+import RoundedButtonList from '@/main/components/common/layout/RoundedButtonList.vue'
+import RoundedButtonListItem from '@/main/components/common/layout/rounded-button-list/RoundedButtonListItem.vue'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
+import { useQuery } from '@vue/apollo-composable'
+import { useRoute } from '@/main/lib/core/composables/router'
 
 // Cause of a limitation of Vue Apollo Options API TS types, this needs to be duplicated
 // (the better option is to just use the Composition API)
@@ -62,33 +101,54 @@ type VueThis = Vue & {
   streamId: string
   inviteToken: Nullable<string>
   error: Nullable<Error>
+  isLoggedIn: boolean
 }
 
-export default Vue.extend({
+export default defineComponent({
   name: 'TheStream',
   components: {
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder.vue'),
     StreamNav: () => import('@/main/navigation/StreamNav.vue'),
     StreamToolbar: () => import('@/main/toolbars/StreamToolbar.vue'),
     StreamInviteBanner,
-    StreamInvitePlaceholder
+    StreamInvitePlaceholder,
+    RoundedButtonList,
+    RoundedButtonListItem
+  },
+  setup() {
+    const route = useRoute()
+    const streamId = computed(() => route.params.streamId as string)
+
+    const { isLoggedIn } = useIsLoggedIn()
+
+    const { result: streamAccessRequestResult } = useQuery(
+      GetStreamAccessRequestDocument,
+      () => ({ streamId: streamId.value })
+    )
+    const hasStreamAccessRequest = computed(
+      () => !!streamAccessRequestResult.value?.streamAccessRequest?.id
+    )
+
+    return {
+      isLoggedIn,
+      streamId,
+      hasStreamAccessRequest
+    }
   },
   data() {
     return {
       error: null as Nullable<ApolloError>,
-      user: null as Nullable<Get<MainUserDataQuery, 'user'>>,
+      user: null as Nullable<Get<MainUserDataQuery, 'activeUser'>>,
       streamInvite: null as Nullable<StreamInviteType>,
       shareStream: false,
       branchMenuOpen: false,
-      inviteClosed: false
+      inviteClosed: false,
+      stream: null as Nullable<StreamQuery>
     }
   },
   computed: {
     inviteToken(): Nullable<string> {
       return getInviteTokenFromRoute(this.$route)
-    },
-    streamId(): string {
-      return this.$route.params.streamId
     },
     errorMsg(): MaybeFalsy<string> {
       return this.error?.message.replace('GraphQL error: ', '')
@@ -112,6 +172,9 @@ export default Vue.extend({
     },
     showInvitePlaceholder(): boolean {
       return !!(this.hasInvite && this.isAccessError)
+    },
+    allowRequestAccess(): boolean {
+      return !!(this.isAccessError && this.isLoggedIn)
     },
     hasInvite(): boolean {
       return !!(this.streamInvite && !this.inviteClosed)
@@ -144,7 +207,8 @@ export default Vue.extend({
       }
     },
     user: {
-      query: MainUserDataDocument
+      query: MainUserDataDocument,
+      update: (data) => data.activeUser
     },
     $subscribe: {
       branchCreated: {
@@ -172,7 +236,7 @@ export default Vue.extend({
           })
         },
         skip(this: VueThis): boolean {
-          return !this.$loggedIn()
+          return !this.isLoggedIn
         }
       },
       commitCreated: {
@@ -200,7 +264,7 @@ export default Vue.extend({
           })
         },
         skip(this: VueThis): boolean {
-          return !this.$loggedIn()
+          return !this.isLoggedIn
         }
       }
     }
@@ -214,6 +278,44 @@ export default Vue.extend({
     onInviteClosed() {
       this.inviteClosed = true
       this.error = null
+    },
+    onBackToStreams() {
+      this.$router.push('/streams')
+    },
+    async onRequestAccess() {
+      if (this.hasStreamAccessRequest) return
+
+      const { data, errors } = await this.$apollo
+        .mutate({
+          mutation: CreateStreamAccessRequestDocument,
+          variables: {
+            streamId: this.streamId
+          },
+          update: (cache, { data }) => {
+            if (!data?.streamAccessRequestCreate.id) return
+
+            // Update GetStreamAccessRequest query
+            const newReq = data.streamAccessRequestCreate
+            cache.writeQuery({
+              query: GetStreamAccessRequestDocument,
+              variables: { streamId: this.streamId },
+              data: { streamAccessRequest: { ...newReq } },
+              overwrite: true
+            })
+          }
+        })
+        .catch(convertThrowIntoFetchResult)
+
+      if (data?.streamAccessRequestCreate.id) {
+        this.$triggerNotification({
+          text: 'A stream access request has been submitted'
+        })
+      } else {
+        this.$triggerNotification({
+          text: getFirstErrorMessage(errors),
+          type: 'error'
+        })
+      }
     }
   }
 })

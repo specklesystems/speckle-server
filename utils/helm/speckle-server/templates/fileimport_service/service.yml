@@ -1,0 +1,18 @@
+{{- if .Values.s3.endpoint -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: speckle-fileimport-service-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "fileimport_service.labels" . | indent 4 }}
+spec:
+  selector:
+    app: speckle-fileimport-service
+    project: speckle-server
+  ports:
+    - protocol: TCP
+      name: web
+      port: 9093
+      targetPort: metrics
+{{- end -}}

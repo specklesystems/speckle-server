@@ -3,6 +3,7 @@ import { AppLocalStorage } from '@/utils/localStorage'
 import { GlobalEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import { getMixpanel } from '@/mixpanelManager'
 
 Vue.use(VueRouter)
 
@@ -33,7 +34,7 @@ const routes = [
         path: 'resetpassword',
         name: 'Reset Password',
         meta: {
-          title: 'Register | Speckle'
+          title: 'Reset Password | Speckle'
         },
         component: () => import('@/main/pages/auth/ResetPasswordRequest.vue')
       },
@@ -41,7 +42,7 @@ const routes = [
         path: 'resetpassword/finalize',
         name: 'Reset Password Finalization',
         meta: {
-          title: 'Register | Speckle'
+          title: 'Reset Password | Speckle'
         },
         component: () => import('@/main/pages/auth/ResetPasswordFinalization.vue')
       },
@@ -148,7 +149,11 @@ const routes = [
               resizableNavbar: true,
               hideEmailBanner: true
             },
-            component: () => import('@/main/pages/stream/CommitObjectViewer.vue')
+            component: () => import('@/main/pages/stream/CommitObjectViewer.vue'),
+            props: (route) => ({
+              streamId: route.params.streamId,
+              resourceId: route.params.resourceId
+            })
           },
           {
             path: 'objects/:resourceId*',
@@ -158,7 +163,11 @@ const routes = [
               resizableNavbar: true,
               hideEmailBanner: true
             },
-            component: () => import('@/main/pages/stream/CommitObjectViewer.vue')
+            component: () => import('@/main/pages/stream/CommitObjectViewer.vue'),
+            props: (route) => ({
+              streamId: route.params.streamId,
+              resourceId: route.params.resourceId
+            })
           },
           {
             path: 'collaborators/',
@@ -293,6 +302,23 @@ const routes = [
       title: 'Not Found | Speckle'
     },
     component: () => import('@/main/pages/common/NotFound.vue')
+  },
+  {
+    path: '/embed',
+    meta: {
+      title: 'Embed View | Speckle'
+    },
+    component: () => import('@/main/layouts/TheBasic.vue'),
+    children: [
+      {
+        path: '/',
+        name: 'viewer-embed',
+        meta: {
+          title: 'Embed View | Speckle'
+        },
+        component: () => import('@/main/pages/stream/TheEmbed.vue')
+      }
+    ]
   }
 ]
 
@@ -313,14 +339,16 @@ function shouldForceToLogin(isLoggedIn, to) {
 
   const allowedForUnauthedNames = [
     'stream',
-    'commit',
     'branch',
+    'commit',
+    'objects',
     'Embedded Viewer',
     'Login',
     'Register',
     'Error',
     'Reset Password',
-    'Reset Password Finalization'
+    'Reset Password Finalization',
+    'viewer-embed'
   ]
 
   // Check if any of the new routes (nested or not) is one of the routes that is allowed for unauthed users
@@ -370,6 +398,15 @@ router.afterEach((to) => {
 
   Vue.nextTick(() => {
     document.title = (to.meta && to.meta.title) || 'Speckle'
+  })
+
+  // Report route to mixpanel
+  const mp = getMixpanel()
+  const pathDefinition = to.matched[to.matched.length - 1].path
+  const path = to.path
+  mp.track('Route Visited', {
+    path,
+    pathDefinition
   })
 })
 

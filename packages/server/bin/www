@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-
 'use strict'
 
-let debug = require('debug')('speckle:www')
-let { init, startHttp } = require('../app')
+const debug = require('debug')('speckle:www')
+const { init, startHttp } = require('../dist/app')
 
 init()
-  .then(({ app }) => startHttp(app))
+  .then(({ app, server }) => startHttp(server, app))
   .catch((err) => debug(err))
 
 // 💥

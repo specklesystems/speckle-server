@@ -17,6 +17,9 @@ export default {
       required: true
     },
     avatar: {
+      /**
+       * @type {import('vue').PropType<string | null | undefined>}
+       */
       type: String,
       default: null
     }

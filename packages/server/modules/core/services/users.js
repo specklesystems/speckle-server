@@ -7,8 +7,6 @@ const {
   Users: UsersSchema
 } = require('@/modules/core/dbSchema')
 
-const { saveActivity } = require('@/modules/activitystream/services')
-
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
@@ -16,6 +14,7 @@ const debug = require('debug')
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
+const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -50,13 +49,16 @@ const getUsersBaseQuery = (searchQuery = null) => {
 
 module.exports = {
   /*
-
-        Users
-
+    Users
   */
 
+  /**
+   * @param {{}} user
+   * @returns {Promise<string>}
+   */
   async createUser(user) {
-    user.id = crs({ length: 10 })
+    const newId = crs({ length: 10 })
+    user.id = newId
     user.email = user.email.toLowerCase()
 
     if (user.password) {
@@ -69,38 +71,21 @@ module.exports = {
     const usr = await userByEmailQuery(user.email).select('id').first()
     if (usr) throw new Error('Email taken. Try logging in?')
 
-    const res = await Users().returning('id').insert(user)
+    const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
+    if (!newUser) throw new Error("Couldn't create user")
 
     const userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
 
-    await Acl().insert({ userId: res[0].id, role: userRole })
+    await Acl().insert({ userId: newId, role: userRole })
 
-    const loggedUser = { ...user }
-    delete loggedUser.passwordDigest
-    await saveActivity({
-      streamId: null,
-      resourceType: 'user',
-      resourceId: user.id,
-      actionType: 'user_create',
-      userId: user.id,
-      info: { user: loggedUser },
-      message: 'User created'
-    })
+    await UsersEmitter.emit(UsersEvents.Created, { user: newUser })
 
-    return res[0].id
+    return newUser.id
   },
 
   async findOrCreateUser({ user }) {
     const existingUser = await userByEmailQuery(user.email).select('id').first()
-
-    if (existingUser) {
-      if (user.suuid) {
-        await module.exports.updateUser(existingUser.id, { suuid: user.suuid })
-      }
-
-      existingUser.suuid = user.suuid
-      return existingUser
-    }
+    if (existingUser) return existingUser
 
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?

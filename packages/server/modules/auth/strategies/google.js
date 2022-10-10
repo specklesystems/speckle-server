@@ -39,8 +39,6 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         const user = { email, name, avatar: profile._json.picture }
 
-        if (req.session.suuid) user.suuid = req.session.suuid
-
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
@@ -90,7 +88,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return done(null, myUser)
       } catch (err) {
-        debug('speckle:errors')(err)
+        debug('speckle:error')(err)
         return done(null, false, { message: err.message })
       }
     }

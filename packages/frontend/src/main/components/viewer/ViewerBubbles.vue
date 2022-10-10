@@ -2,7 +2,7 @@
   <div
     ref="parent"
     :style="`width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden; opacity: ${
-      $store.state.selectedComment || $store.state.addingComment ? '0.2' : '1'
+      viewerState.selectedCommentMetaData || viewerState.addingComment ? '0.2' : '1'
     };`"
   >
     <div v-show="showBubbles">
@@ -91,6 +91,21 @@ import * as THREE from 'three'
 import { gql } from '@apollo/client/core'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash/debounce'
+import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
+import { useQuery } from '@vue/apollo-composable'
+import { computed } from 'vue'
+import {
+  resetFilter,
+  setFilterDirectly,
+  useCommitObjectViewerParams,
+  getLocalFilterState,
+  setSectionBox,
+  sectionBoxOn,
+  sectionBoxOff,
+  highlightObjects
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'ViewerBubbles',
@@ -102,14 +117,15 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             name
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
-        return !this.$loggedIn()
+        return !this.isLoggedIn
       }
     },
     $subscribe: {
@@ -121,12 +137,12 @@ export default {
         `,
         variables() {
           return {
-            streamId: this.$route.params.streamId,
-            resourceId: this.$route.params.resourceId
+            streamId: this.streamId,
+            resourceId: this.resourceId
           }
         },
         skip() {
-          return !this.$route.params.resourceId || !this.$loggedIn()
+          return !this.resourceId || !this.isLoggedIn
         },
         result(res) {
           const data = res.data
@@ -177,6 +193,25 @@ export default {
       }
     }
   },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { viewer } = useInjectedViewer()
+    const { isLoggedIn } = useIsLoggedIn()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          selectedCommentMetaData
+          addingComment
+          selectedObjects
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewer, viewerState, streamId, resourceId, isLoggedIn }
+  },
   data() {
     return {
       uuid: uuid(),
@@ -184,7 +219,13 @@ export default {
       selectionLocation: null,
       selectionCenter: null,
       users: [],
-      showBubbles: true
+      showBubbles: true,
+      otherUsersSelectedObjects: []
+    }
+  },
+  watch: {
+    showBubbles(newVal) {
+      if (!newVal) highlightObjects([])
     }
   },
   mounted() {
@@ -198,55 +239,74 @@ export default {
     this.uuid = window.__bubblesId
 
     this.raycaster = new THREE.Raycaster()
-    window.__viewer.cameraHandler.controls.addEventListener('update', () =>
+    this.viewer.cameraHandler.controls.addEventListener('update', () =>
       this.updateBubbles(false)
     )
 
+    // TODO: this needs to be more intelligent...
     this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
     window.addEventListener('beforeunload', async () => {
       await this.sendDisconnect()
     })
-    this.resourceId = this.$route.params.resourceId
-    window.__resourceId = this.$route.params.resourceId
-    window.__viewer.on(
-      'select',
+
+    this.viewer.on(
+      ViewerEvent.ObjectDoubleClicked,
       debounce((selectionInfo) => {
-        this.selectedIds = selectionInfo.userData.map((o) => o.id)
-        this.selectionLocation = selectionInfo.location
-        this.selectionCenter = selectionInfo.selectionCenter
-        this.sendUpdateAndPrune()
+        this.sendSelectionUpdate(selectionInfo)
       }, 50)
     )
-    window.__viewer.on('object-doubleclicked', () => {})
+    this.viewer.on(
+      ViewerEvent.ObjectClicked,
+      debounce((selectionInfo) => {
+        this.sendSelectionUpdate(selectionInfo)
+      }, 50)
+    )
   },
   async beforeDestroy() {
     await this.sendDisconnect()
     window.clearInterval(this.updateInterval)
   },
   methods: {
+    sendSelectionUpdate(selectionInfo) {
+      if (!selectionInfo) {
+        this.sendUpdateAndPrune()
+        return
+      }
+
+      const firstHit = selectionInfo?.hits[0]
+      this.selectedIds = firstHit.object.id
+      this.selectionLocation = firstHit.point
+      this.selectionCenter = firstHit.point
+      this.sendUpdateAndPrune()
+    },
     setUserPow(user) {
       const camToSet = user.camera
       if (camToSet[6] === 1) {
-        window.__viewer.toggleCameraProjection()
+        this.viewer.toggleCameraProjection()
       }
-      window.__viewer.interactions.setLookAt(
-        { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
-        { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
-      )
-      if (camToSet[6] === 1) {
-        window.__viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
-      }
-      if (user.filter) this.$store.commit('setFilterDirect', { filter: user.filter })
-      else this.$store.commit('resetFilter')
+
+      this.viewer.setView({
+        position: new THREE.Vector3(camToSet[0], camToSet[1], camToSet[2]),
+        target: new THREE.Vector3(camToSet[3], camToSet[4], camToSet[5])
+      })
+      // NOTE: disabled as parallel projection cam is not enabled anymore, see other comments
+      // if (camToSet[6] === 1) {
+      //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+      // }
+
+      if (user.filter) setFilterDirectly({ filter: user.filter })
+      else resetFilter()
 
       if (user.sectionBox) {
-        window.__viewer.sectionBox.on()
-        window.__viewer.sectionBox.setBox(user.sectionBox, 0)
+        setSectionBox(user.sectionBox, 0)
+        sectionBoxOn()
+      } else {
+        sectionBoxOff()
       }
       this.$mixpanel.track('Bubbles Action', { type: 'action', name: 'avatar-click' })
     },
     async sendUpdateAndPrune() {
-      if (!this.$route.params.resourceId) return
+      if (!this.resourceId) return
       for (const user of this.users) {
         const delta = Date.now() - user.lastUpdate
         if (delta > 20000) {
@@ -260,9 +320,9 @@ export default {
       }
       this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
 
-      if (!this.$loggedIn()) return
+      if (!this.isLoggedIn) return
 
-      const controls = window.__viewer.cameraHandler.activeCam.controls
+      const controls = this.viewer.cameraHandler.activeCam.controls
       const pos = controls.getPosition()
       const target = controls.getTarget()
       const c = [
@@ -272,20 +332,20 @@ export default {
         parseFloat(target.x.toFixed(5)),
         parseFloat(target.y.toFixed(5)),
         parseFloat(target.z.toFixed(5)),
-        window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
+        this.viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
         controls._zoom
       ]
 
       let selectionLocation = this.selectionLocation
-      if (this.$store.state.selectedComment) {
-        selectionLocation = this.$store.state.selectedComment.data.location
+      if (this.viewerState.selectedCommentMetaData) {
+        selectionLocation = this.viewerState.selectedCommentMetaData.selectionLocation
       }
 
       const data = {
-        filter: this.$store.state.appliedFilter,
-        selection: this.selectedIds,
+        filter: getLocalFilterState(),
+        selection: this.viewerState.selectedObjects.map((o) => o.id),
         selectionLocation,
-        sectionBox: window.__viewer.sectionBox.getCurrentBox(),
+        sectionBox: this.viewer.getCurrentSectionBox(),
         selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
@@ -294,7 +354,7 @@ export default {
         status: 'viewing'
       }
 
-      if (!this.$route.params.streamId) return
+      if (!this.streamId) return
       await this.$apollo.mutate({
         mutation: gql`
           mutation userViewerActivityBroadcast(
@@ -310,15 +370,15 @@ export default {
           }
         `,
         variables: {
-          streamId: this.$route.params.streamId,
-          resourceId: this.$route.params.resourceId,
+          streamId: this.streamId,
+          resourceId: this.resourceId,
           data
         }
       })
     },
     async sendDisconnect() {
-      if (!this.$loggedIn()) return
-      if (!this.$route.params.streamId) return
+      if (!this.isLoggedIn) return
+      if (!this.streamId) return
 
       await this.$apollo.mutate({
         mutation: gql`
@@ -335,17 +395,16 @@ export default {
           }
         `,
         variables: {
-          streamId: this.$route.params.streamId,
-          resourceId: this.resourceId || window.__resourceId,
+          streamId: this.streamId,
+          resourceId: this.resourceId,
           data: { userId: this.$userId(), uuid: this.uuid, status: 'disconnect' }
         }
       })
-      delete window.__resourceId
     },
     updateBubbles(transition = true) {
       if (!this.$refs.parent) return
 
-      const cam = window.__viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       const selectedObjects = []
       for (const user of this.users) {
@@ -388,7 +447,6 @@ export default {
           .multiplyScalar(70)
         const newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
 
-        // TODO: clamp sides
         const paddingX = 42
         const paddingYTop = 86
         const paddingYBottom = 68
@@ -442,7 +500,17 @@ export default {
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
 
-      window.__viewer.interactions.overlayObjects(selectedObjects)
+      selectedObjects.sort((a, b) => a.localeCompare(b))
+
+      const isSame =
+        JSON.stringify(selectedObjects) ===
+        JSON.stringify([...this.otherUsersSelectedObjects])
+
+      if (this.showBubbles && !isSame) {
+        highlightObjects(selectedObjects)
+      }
+
+      this.otherUsersSelectedObjects = selectedObjects
     }
   }
 }

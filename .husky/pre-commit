@@ -1,6 +1,32 @@
-#!/bin/sh
-[ -n "$CI" ] && exit 0
+#!/usr/bin/env sh
+# shellcheck disable=SC1091
+set -e
 
-. "$(dirname "$0")/_/husky.sh"
+if [ -n "$CI" ] 
+then
+  echo "running eslint"
+  yarn lint
+  yarn prettier:check
+else
+# shellcheck disable=SC1090
+  . "$(dirname "$0")/_/husky.sh"
+  yarn lint-staged
+fi
 
-yarn lint-staged
+
+echo "🔍 looking for additional linter dependencies"
+
+check_dependencies_available() {
+  for i in "${@}"
+  do
+    if ! command -v "${i}"; then
+      echo "No ${i} executable found skipping additional checks" >&2
+      exit 0
+    fi
+  done
+}
+
+check_dependencies_available pre-commit hadolint helm shellcheck 
+
+echo "All systems functional, running additional pre-commit checks..."
+pre-commit run --all-files

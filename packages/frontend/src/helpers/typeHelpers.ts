@@ -1,10 +1,32 @@
+import { ReactiveVar } from '@apollo/client/core'
+import { isUndefined } from 'lodash'
 import Vue, { VueConstructor } from 'vue'
+import { LooseRequired } from 'vue/types/common'
 
 export type Nullable<T> = T | null
 
 export type Optional<T> = T | undefined
 
 export type MaybeFalsy<T> = T | null | undefined | false | '' | 0
+
+export type MaybeNullOrUndefined<T> = T | null | undefined
+
+export type MaybeAsync<T> = T | Promise<T>
+
+/**
+ * In TS undefined !== void, so use this type guard to check for both
+ */
+export const isUndefinedOrVoid = (val: unknown): val is void | undefined =>
+  isUndefined(val)
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GetReactiveVarType<V extends ReactiveVar<any>> = V extends ReactiveVar<
+  infer T
+>
+  ? T
+  : unknown
+
+export type SetupProps<P = unknown> = Readonly<LooseRequired<P>>
 
 // Copied from Vue typings & improved ergonomics
 export type CombinedVueInstance<
@@ -40,7 +62,7 @@ export type VueWithMixins<
 
 /**
  * Create Vue base class with the specified mixins and correctly returned TypeScript types
- * TODO: Can this be re-written to accept an arbitrary amount of mixins?
+ * @deprecated Use Composition API instead
  * @returns
  */
 export function vueWithMixins<

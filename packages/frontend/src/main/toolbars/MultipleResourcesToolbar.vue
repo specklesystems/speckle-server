@@ -1,5 +1,9 @@
 <template>
-  <portal v-if="canRenderToolbarPortal" to="toolbar">
+  <prioritized-portal
+    to="toolbar"
+    identity="stream-commit-multiple-resources"
+    :priority="1"
+  >
     <div class="d-flex align-center">
       <div class="text-truncate flex-shrink-0 flex-lg-shrink-1">
         <router-link
@@ -20,26 +24,16 @@
           Multiple Resources
         </div>
       </div>
-      <!-- <div>
-        <v-btn icon><v-icon small>mdi-information</v-icon></v-btn>
-      </div> -->
     </div>
-  </portal>
+  </prioritized-portal>
 </template>
 <script>
-import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
+import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 
 export default {
-  mixins: [
-    buildPortalStateMixin(
-      [STANDARD_PORTAL_KEYS.Toolbar],
-      'stream-commit-multiple-resources',
-      1
-    )
-  ],
+  components: {
+    PrioritizedPortal
+  },
   props: {
     stream: {
       type: Object,

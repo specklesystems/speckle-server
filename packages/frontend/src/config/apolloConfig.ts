@@ -1,6 +1,12 @@
 import Vue from 'vue'
 import { createApolloProvider, ApolloProvider } from '@vue/apollo-option'
-import { ApolloClient, ApolloLink, InMemoryCache, split } from '@apollo/client/core'
+import {
+  ApolloClient,
+  ApolloLink,
+  InMemoryCache,
+  split,
+  TypePolicies
+} from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -13,6 +19,8 @@ import {
   buildAbstractCollectionMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '@/main/lib/core/helpers/apolloSetupHelper'
+import { merge } from 'lodash'
+import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -21,7 +29,7 @@ const httpEndpoint = `${window.location.origin}/graphql`
 // WS endpoint
 const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
 // app version
-const appVersion = process.env.SPECKLE_SERVER_VERSION || 'unknown'
+const appVersion = import.meta.env.SPECKLE_SERVER_VERSION || 'unknown'
 
 function hasAuthToken() {
   return !!AppLocalStorage.get(AUTH_TOKEN)
@@ -38,98 +46,123 @@ function createCache(): InMemoryCache {
      *
      * Read more: https://www.apollographql.com/docs/react/caching/cache-field-behavior
      */
-    typePolicies: {
-      Query: {
-        fields: {
-          user: {
-            read(original, { args, toReference }) {
-              if (args?.id) {
-                return toReference({ __typename: 'User', id: args.id })
-              }
+    typePolicies: merge<TypePolicies, TypePolicies>(
+      {
+        Query: {
+          fields: {
+            otherUser: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'LimitedUser', id: args.id })
+                }
 
-              return original
-            }
-          },
-          stream: {
-            read(original, { args, toReference }) {
-              if (args?.id) {
-                return toReference({ __typename: 'Stream', id: args.id })
+                return original
               }
+            },
+            user: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'User', id: args.id })
+                }
 
-              return original
+                return original
+              }
+            },
+            stream: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'Stream', id: args.id })
+                }
+
+                return original
+              }
+            },
+            streams: {
+              keyArgs: ['query'],
+              merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+                checkIdentity: true
+              })
             }
-          },
-          streams: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
-              checkIdentity: true
-            })
           }
+        },
+        LimitedUser: {
+          fields: {
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        User: {
+          fields: {
+            timeline: {
+              keyArgs: ['after', 'before'],
+              merge: buildAbstractCollectionMergeFunction('ActivityCollection')
+            },
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+                checkIdentity: true
+              })
+            },
+            favoriteStreams: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        Stream: {
+          fields: {
+            activity: {
+              keyArgs: ['after', 'before', 'actionType'],
+              merge: buildAbstractCollectionMergeFunction('ActivityCollection')
+            },
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+                checkIdentity: true
+              })
+            },
+            pendingCollaborators: {
+              merge: incomingOverwritesExistingMergeFunction
+            },
+            pendingAccessRequests: {
+              merge: incomingOverwritesExistingMergeFunction
+            }
+          }
+        },
+        Branch: {
+          fields: {
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        BranchCollection: {
+          merge: true
+        },
+        ServerStats: {
+          merge: true
+        },
+        WebhookEventCollection: {
+          merge: true
+        },
+        ServerInfo: {
+          merge: true
+        },
+        CommentThreadActivityMessage: {
+          merge: true
         }
       },
-      User: {
-        fields: {
-          timeline: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('ActivityCollection')
-          },
-          commits: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollectionUser', {
-              checkIdentity: true
-            })
-          },
-          favoriteStreams: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
-              checkIdentity: true
-            })
-          }
-        }
-      },
-      Stream: {
-        fields: {
-          activity: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('ActivityCollection')
-          },
-          commits: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
-              checkIdentity: true
-            })
-          },
-          pendingCollaborators: {
-            merge: incomingOverwritesExistingMergeFunction
-          }
-        }
-      },
-      Branch: {
-        fields: {
-          commits: {
-            keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
-              checkIdentity: true
-            })
-          }
-        }
-      },
-      BranchCollection: {
-        merge: true
-      },
-      ServerStats: {
-        merge: true
-      },
-      WebhookEventCollection: {
-        merge: true
-      },
-      ServerInfo: {
-        merge: true
-      },
-      CommentThreadActivityMessage: {
-        merge: true
-      }
-    }
+      commitObjectViewerStatePolicies
+    )
   })
 }
 
@@ -187,7 +220,7 @@ function createApolloClient() {
     link,
     cache,
     ssrForceFetchDelay: 100,
-    connectToDevTools: process.env.NODE_ENV !== 'production',
+    connectToDevTools: import.meta.env.DEV,
     name: 'web',
     version: appVersion
   })

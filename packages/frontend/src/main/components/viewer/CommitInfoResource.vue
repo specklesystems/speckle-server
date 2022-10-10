@@ -1,7 +1,7 @@
 <template>
   <div @mouseenter="hovered = true" @mouseleave="hovered = false">
     <v-card
-      class="mx-2 my-4 rounded-lg"
+      class="mx-2 rounded-lg"
       :elevation="`${hovered ? 10 : 2}`"
       style="transition: all 0.2s ease"
     >
@@ -22,7 +22,7 @@
         <source-app-avatar :application-name="commit.sourceApplication" />
         <v-spacer />
         <v-btn
-          v-if="$route.params.resourceId !== resource.id"
+          v-if="resourceId !== resource.id"
           v-tooltip="'Remove'"
           small
           icon
@@ -77,17 +77,47 @@
   </div>
 </template>
 <script>
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import { computed } from 'vue'
+import {
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects,
+  useCommitObjectViewerParams
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { Ripple } from 'vuetify/lib/directives'
+
 export default {
   components: {
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
   },
+  directives: {
+    Ripple
+  },
   props: {
     resource: {
       type: Object,
       default: () => null
     }
+  },
+  setup() {
+    const { streamId, resourceId } = useCommitObjectViewerParams()
+    const { result: viewerStateResult } = useQuery(gql`
+      query {
+        commitObjectViewerState @client {
+          currentFilterState
+        }
+      }
+    `)
+    const viewerState = computed(
+      () => viewerStateResult.value?.commitObjectViewerState || {}
+    )
+
+    return { viewerState, streamId, resourceId }
   },
   data() {
     return {
@@ -100,46 +130,36 @@ export default {
       return this.resource.data.commit
     },
     isolated() {
-      return (
-        this.$store.state.isolateValues.indexOf(
-          this.resource.data.commit.referencedObject
-        ) !== -1
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
+      return this.viewerState.currentFilterState?.isolatedObjects?.includes(
+        this.resource.data.commit.referencedObject
       )
     },
     visible() {
-      return (
-        this.$store.state.hideValues.indexOf(
-          this.resource.data.commit.referencedObject
-        ) === -1
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
+
+      return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
+        this.resource.data.commit.referencedObject
       )
     }
   },
   methods: {
     isolate() {
       const id = this.resource.data.commit.referencedObject
-      if (this.isolated)
-        this.$store.commit('unisolateObjects', {
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        this.$store.commit('isolateObjects', {
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.isolated) {
+        unIsolateObjects([id], 'ui-iso', true)
+      } else {
+        isolateObjects([id], 'ui-iso', true)
+      }
     },
     toggleVisibility() {
       const id = this.resource.data.commit.referencedObject
-      if (this.visible)
-        this.$store.commit('hideObjects', {
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        this.$store.commit('showObjects', {
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.visible) {
+        hideObjects([id], 'ui-vis', true)
+      } else {
+        showObjects([id], 'ui-vis', true)
+      }
     }
   }
 }

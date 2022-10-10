@@ -6,7 +6,6 @@ const debug = require('debug')
 const { createBranch } = require('@/modules/core/services/branches')
 const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
-  BASE_STREAM_COLUMNS,
   getStream,
   getFavoritedStreams,
   getFavoritedStreamsCount,
@@ -18,38 +17,30 @@ const { StreamAccessUpdateError } = require('@/modules/core/errors/stream')
 const {
   inviteUsersToStream
 } = require('@/modules/serverinvites/services/inviteCreationService')
-
-/**
- * Get base query for finding or counting user streams
- * @param {object} p
- * @param {string} [p.searchQuery] Filter by name/description/id
- * @param {boolean} [p.publicOnly] Whether to only look for public streams
- * @param {string} p.userId The user's ID
- */
-function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
-  const query = StreamAcl.knex()
-    .where(StreamAcl.col.userId, userId)
-    .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
-
-  if (publicOnly) query.andWhere(Streams.col.isPublic, true)
-
-  if (searchQuery)
-    query.andWhere(function () {
-      this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
-        .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
-        .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
-    })
-
-  return query
-}
+const { omitBy, isNull, isUndefined, has } = require('lodash')
 
 module.exports = {
-  async createStream({ name, description, isPublic, ownerId, withContributors }) {
+  /**
+   * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
+   * @returns {Promise<string>}
+   */
+  async createStream({
+    name,
+    description,
+    isPublic,
+    ownerId,
+    withContributors,
+    isDiscoverable
+  }) {
+    const shouldBePublic = isPublic !== false
+    const shouldBeDiscoverable = isDiscoverable !== false && shouldBePublic
+
     const stream = {
       id: crs({ length: 10 }),
       name: name || generateStreamName(),
       description: description || '',
-      isPublic: isPublic !== false,
+      isPublic: shouldBePublic,
+      isDiscoverable: shouldBeDiscoverable,
       updatedAt: knex.fn.now()
     }
 
@@ -79,15 +70,24 @@ module.exports = {
 
   getStream,
 
-  async updateStream({ streamId, name, description, isPublic, allowPublicComments }) {
+  /**
+   * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
+   */
+  async updateStream(update) {
+    const { id: streamId } = update
+    const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
+
+    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+      validUpdate.isDiscoverable = false
+    }
+
+    if (!Object.keys(validUpdate).length) return null
+
     const [{ id }] = await Streams.knex()
       .returning('id')
       .where({ id: streamId })
       .update({
-        name,
-        description,
-        isPublic,
-        allowPublicComments,
+        ...validUpdate,
         updatedAt: knex.fn.now()
       })
     return id
@@ -181,38 +181,6 @@ module.exports = {
     return await Streams.knex().where({ id: streamId }).del()
   },
 
-  /**
-   * Get the streams the user has access to
-   * @param {object} p
-   * @param {string} p.searchQuery Filter by name/description/id
-   * @param {boolean} p.publicOnly Whether to only look for public streams
-   * @param {string} p.userId The user's ID
-   * @param {number} p.limit Max amount of items to return
-   * @param {string} p.cursor Timestamp after which to look for items
-   * @returns {{streams: Array, cursor: string|null}}
-   */
-  async getUserStreams({ userId, limit, cursor, publicOnly, searchQuery }) {
-    const finalLimit = limit || 25
-    const isPublicOnly = publicOnly !== false //defaults to true if not provided
-
-    const query = getUserStreamsQueryBase({
-      userId,
-      publicOnly: isPublicOnly,
-      searchQuery
-    })
-    query.columns(BASE_STREAM_COLUMNS).select()
-
-    if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
-
-    query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
-
-    const rows = await query
-    return {
-      streams: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
-    }
-  },
-
   async getStreams({ offset, limit, orderBy, visibility, searchQuery }) {
     const query = knex
       .column(
@@ -259,27 +227,6 @@ module.exports = {
     const rows = await query.orderBy(`${columnName}`, order).offset(offset).limit(limit)
 
     return { streams: rows, totalCount: count }
-  },
-
-  /**
-   * Get the total amount of streams the user has access to
-   * @param {object} p
-   * @param {string} p.searchQuery Filter by name/description/id
-   * @param {boolean} p.publicOnly Whether to only look for public streams
-   * @param {string} p.userId The user's ID
-   */
-  async getUserStreamsCount({ userId, publicOnly, searchQuery }) {
-    const isPublicOnly = publicOnly !== false //defaults to true if not provided
-
-    const query = getUserStreamsQueryBase({
-      userId,
-      publicOnly: isPublicOnly,
-      searchQuery
-    })
-    query.count()
-
-    const [res] = await query
-    return parseInt(res.count)
   },
 
   async getStreamUsers({ streamId }) {

@@ -37,8 +37,8 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app } = await beforeEachContext())
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ app, server } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
@@ -302,32 +302,32 @@ describe('GraphQL API Core @core-api', () => {
     describe('User role change', () => {
       it('User role is changed', async () => {
         let queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.user.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
         let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.user.role).to.equal('server:admin')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:admin')
         expect(queriedUserB.body.data)
         query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:user"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.user.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
       })
 
       it('Only admins can change user role', async () => {
         const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
         const res = await sendRequest(userB.token, { query })
         const queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
         expect(res.body.errors).to.exist
-        expect(queriedUserB.body.data.user.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
       })
     })
 
@@ -423,17 +423,24 @@ describe('GraphQL API Core @core-api', () => {
         expect(resS1.body.data.streamUpdate).to.equal(true)
       })
 
-      it('Should not allow updating permissions if target user isnt added to stream yet', async () => {
-        const res = await sendRequest(userA.token, {
-          query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
-        })
+      const publicPrivateDataset = [
+        { display: 'public', isPublic: true },
+        { display: 'private', isPublic: false }
+      ]
+      publicPrivateDataset.forEach(({ display, isPublic }) => {
+        it(`Should not allow updating permissions if target user isnt a collaborator on a ${display} stream`, async () => {
+          const streamId = isPublic ? ts2 : ts1
+          const res = await sendRequest(userA.token, {
+            query: `mutation{ streamUpdatePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}" role: "stream:owner"}) }`
+          })
 
-        expect(res).to.be.json
-        expect(res.body.errors).to.be.ok
-        expect(res.body.data.streamUpdatePermission).to.be.not.ok
-        expect(res.body.errors.map((e) => e.message).join('|')).to.contain(
-          "Cannot grant permissions to users who aren't collaborators already"
-        )
+          expect(res).to.be.json
+          expect(res.body.errors).to.be.ok
+          expect(res.body.data.streamUpdatePermission).to.be.not.ok
+          expect(res.body.errors.map((e) => e.message).join('|')).to.contain(
+            "Cannot grant permissions to users who aren't collaborators already"
+          )
+        })
       })
 
       it('Should be able to update some permissions', async () => {
@@ -570,14 +577,6 @@ describe('GraphQL API Core @core-api', () => {
         expect(res.body.errors).to.not.exist
         expect(res.body.data).to.have.property('streamDelete')
         expect(res.body.data.streamDelete).to.equal(true)
-      })
-
-      it('Should query streams', async () => {
-        const streamResults = await sendRequest(userA.token, {
-          query: '{ streams(limit: 200) { totalCount items { id name } } }'
-        })
-        expect(streamResults.body.errors).to.exist
-        expect(streamResults.body.errors[0].extensions.code).to.equal('BAD_USER_INPUT')
       })
 
       it('Should be forbidden to query admin streams if not admin', async () => {
@@ -1136,6 +1135,10 @@ describe('GraphQL API Core @core-api', () => {
     })
 
     describe('Different Users` Profile', () => {
+      /**
+       * TODO: These user() queries should be swapped to otherUser() afterwards
+       */
+
       it('Should retrieve a different profile profile', async () => {
         const res = await sendRequest(userA.token, {
           query: ` { user(id:"${userB.id}") { id name email } }`
@@ -1603,7 +1606,15 @@ describe('GraphQL API Core @core-api', () => {
 
   describe('Generic / Server Info', () => {
     it('Should eval string for password strength', async () => {
-      const query = 'query { userPwdStrength( pwd: "garbage" ) } '
+      const query = `query {
+                      userPwdStrength(pwd: "garbage") {
+                        score
+                        feedback {
+                          warning
+                          suggestions
+                        }
+                      }
+                    } `
       const res = await sendRequest(null, { query })
       expect(res).to.be.json
       expect(res.body.errors).to.not.exist

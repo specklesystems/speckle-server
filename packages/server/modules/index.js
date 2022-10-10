@@ -1,12 +1,47 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
-const { appRoot } = require('@/bootstrap')
-const autoload = require('auto-load')
-const { values, merge } = require('lodash')
-const { scalarResolvers, scalarSchemas } = require('./core/graph/scalars')
+const { appRoot, packageRoot } = require('@/bootstrap')
+const { values, merge, camelCase } = require('lodash')
+const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
+const { scalarResolvers } = require('./core/graph/scalars')
+const { modulesDebug } = require('@/modules/shared/utils/logger')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
 
-exports.init = async (app) => {
+/**
+ * Cached speckle module requires
+ * @type {import('@/modules/shared/helpers/typeHelper').SpeckleModule[]}
+ * */
+const loadedModules = []
+
+/**
+ * Module init will be ran multiple times in tests, so it's useful for modules to know
+ * when an initialization is a repeat one, so as to not introduce unnecessary resources/listeners
+ */
+let hasInitializationOccurred = false
+
+function autoloadFromDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) return
+
+  const results = {}
+  fs.readdirSync(dirPath).forEach((file) => {
+    const pathToFile = path.join(dirPath, file)
+    const stat = fs.statSync(pathToFile)
+    if (stat.isFile()) {
+      const ext = path.extname(file)
+      if (['.js', '.ts'].includes(ext)) {
+        const name = camelCase(path.basename(file, ext))
+        results[name] = require(pathToFile)
+      }
+    }
+  })
+
+  return results
+}
+
+async function getSpeckleModules() {
+  if (loadedModules.length) return loadedModules
+
   const moduleDirs = [
     './core',
     './auth',
@@ -17,79 +52,84 @@ exports.init = async (app) => {
     './previews',
     './fileuploads',
     './comments',
-    './blobstorage'
+    './blobstorage',
+    './notifications',
+    './activitystream',
+    './accessrequests'
   ]
 
-  // Stage 1: initialise all modules
   for (const dir of moduleDirs) {
-    await require(dir).init(app)
+    loadedModules.push(require(dir))
+  }
+
+  return loadedModules
+}
+
+exports.init = async (app) => {
+  const modules = await getSpeckleModules()
+  const isInitial = !hasInitializationOccurred
+
+  // Stage 1: initialise all modules
+  for (const module of modules) {
+    await module.init(app, isInitial)
   }
 
   // Stage 2: finalize init all modules
-  for (const dir of moduleDirs) {
-    await require(dir).finalize(app)
+  for (const module of modules) {
+    await module.finalize?.(app, isInitial)
   }
+
+  hasInitializationOccurred = true
 }
 
-exports.graph = () => {
-  const dirs = fs.readdirSync(`${appRoot}/modules`)
-  // Base query and mutation to allow for type extension by modules.
-  const typeDefs = [
-    `
-      ${scalarSchemas}
-      directive @hasScope(scope: String!) on FIELD_DEFINITION
-      directive @hasScopes(scopes: [String]!) on FIELD_DEFINITION
-      directive @hasRole(role: String!) on FIELD_DEFINITION
-      directive @hasStreamRole(role: StreamRole!) on FIELD_DEFINITION
+exports.shutdown = async () => {
+  modulesDebug('Triggering module shutdown...')
+  const modules = await getSpeckleModules()
 
-      type Query {
-      """
-      Stare into the void.
-      """
-        _: String
-      }
-      type Mutation{
-      """
-      The void stares back.
-      """
-      _: String
-      }
-      type Subscription{
-        """
-        It's lonely in the void.
-        """
-        _: String
-      }`
-  ]
+  for (const module of modules) {
+    await module.shutdown?.()
+  }
+  modulesDebug('...module shutdown finished')
+}
+
+/**
+ * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
+ */
+const graphComponents = () => {
+  // Base query and mutation to allow for type extension by modules.
+  const typeDefs = [baseTypeDefs]
 
   let resolverObjs = []
-  let schemaDirectives = {}
+  let directiveBuilders = {}
 
-  dirs.forEach((file) => {
-    const fullPath = path.join(`${appRoot}/modules`, file)
-
-    // load and merge the type definitions
-    if (fs.existsSync(path.join(fullPath, 'graph', 'schemas'))) {
-      const moduleSchemas = fs.readdirSync(path.join(fullPath, 'graph', 'schemas'))
+  // load typedefs from /assets
+  const assetModuleDirs = fs.readdirSync(`${packageRoot}/assets`)
+  assetModuleDirs.forEach((dir) => {
+    const typeDefDirPath = path.join(`${packageRoot}/assets`, dir, 'typedefs')
+    if (fs.existsSync(typeDefDirPath)) {
+      const moduleSchemas = fs.readdirSync(typeDefDirPath)
       moduleSchemas.forEach((schema) => {
-        typeDefs.push(
-          fs.readFileSync(path.join(fullPath, 'graph', 'schemas', schema), 'utf8')
-        )
+        typeDefs.push(fs.readFileSync(path.join(typeDefDirPath, schema), 'utf8'))
       })
     }
+  })
+
+  // load code modules from /modules
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  codeModuleDirs.forEach((file) => {
+    const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
-    if (fs.existsSync(path.join(fullPath, 'graph', 'resolvers'))) {
-      resolverObjs = [
-        ...resolverObjs,
-        ...values(autoload(path.join(fullPath, 'graph', 'resolvers')))
-      ]
+    const resolversPath = path.join(fullPath, 'graph', 'resolvers')
+    if (fs.existsSync(resolversPath)) {
+      resolverObjs = [...resolverObjs, ...values(autoloadFromDirectory(resolversPath))]
     }
 
     // load directives
-    if (fs.existsSync(path.join(fullPath, 'graph', 'directives'))) {
-      schemaDirectives = Object.assign(
-        ...values(autoload(path.join(fullPath, 'graph', 'directives')))
+    const directivesPath = path.join(fullPath, 'graph', 'directives')
+    if (fs.existsSync(directivesPath)) {
+      directiveBuilders = Object.assign(
+        ...values(autoloadFromDirectory(directivesPath))
       )
     }
   })
@@ -99,5 +139,32 @@ exports.graph = () => {
     merge(resolvers, o)
   })
 
-  return { resolvers, typeDefs, schemaDirectives }
+  return { resolvers, typeDefs, directiveBuilders }
+}
+
+exports.graphSchema = () => {
+  const { resolvers, typeDefs, directiveBuilders } = graphComponents()
+
+  /** @type {string[]} */
+  const directiveTypedefs = []
+  /** @type {import('@/modules/core/graph/helpers/directiveHelper').SchemaTransformer[]} */
+  const directiveSchemaTransformers = []
+  for (const directiveBuilder of Object.values(directiveBuilders)) {
+    const { typeDefs, schemaTransformer } = directiveBuilder()
+    directiveTypedefs.push(typeDefs)
+    directiveSchemaTransformers.push(schemaTransformer)
+  }
+
+  // Init schema w/ base resolvers & typedefs
+  let schema = makeExecutableSchema({
+    resolvers,
+    typeDefs: [...directiveTypedefs, ...typeDefs]
+  })
+
+  // Apply directives
+  for (const schemaTransformer of directiveSchemaTransformers) {
+    schema = schemaTransformer(schema)
+  }
+
+  return schema
 }

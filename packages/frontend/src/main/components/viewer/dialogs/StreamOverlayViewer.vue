@@ -2,7 +2,7 @@
   <v-card>
     <v-card-title
       class="blue dark d-flex align-center flex-grow-1 elevation-3"
-      style="position: sticky; width: 100%; top: 0; z-index: 100"
+      style="position: sticky; width: 100%; top: 0; z-index: 10"
     >
       <div class="flex-shrink-1">
         <v-select
@@ -18,8 +18,8 @@
         />
       </div>
       <div class="text-right flex-grow-1">
-        <v-btn dark small icon class="ml-2" @click="showObjectDialog = true">
-          <v-icon small>mdi-cube-outline</v-icon>
+        <v-btn x-small rounded class="ml-2" @click="showObjectDialog = true">
+          Add by object url
         </v-btn>
         <v-btn dark icon class="ml-2" @click="$emit('close')">
           <v-icon>mdi-close</v-icon>
@@ -100,7 +100,6 @@ export default {
       default: () => null
     }
   },
-  apollo: {},
   data() {
     return {
       items: ['All Commits'],
@@ -158,7 +157,7 @@ export default {
       }
       if (pcs.length !== 1) {
         const streamId = pcs[2]
-        if (streamId !== this.$route.params.streamId) {
+        if (streamId !== this.streamId) {
           this.objectIdError = 'Objects do not belong to the same stream.'
           this.objectId = null
           return

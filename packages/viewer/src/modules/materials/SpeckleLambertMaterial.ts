@@ -61,39 +61,35 @@ class SpeckleLambertMaterial extends MeshLambertMaterial {
       value: new Vector3()
     }
 
-    if (Geometry.USE_RTE) {
-      this.defines['USE_RTE'] = ' '
-    }
+    this.defines['USE_RTE'] = ' '
 
     return this
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (Geometry.USE_RTE) {
-      SpeckleLambertMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleLambertMaterial.matBuff.elements[12] = 0
-      SpeckleLambertMaterial.matBuff.elements[13] = 0
-      SpeckleLambertMaterial.matBuff.elements[14] = 0
-      SpeckleLambertMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleLambertMaterial.matBuff)
+    SpeckleLambertMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleLambertMaterial.matBuff.elements[12] = 0
+    SpeckleLambertMaterial.matBuff.elements[13] = 0
+    SpeckleLambertMaterial.matBuff.elements[14] = 0
+    SpeckleLambertMaterial.matBuff.multiply(object.matrixWorld)
+    object.modelViewMatrix.copy(SpeckleLambertMaterial.matBuff)
 
-      SpeckleLambertMaterial.vecBuff0.set(
-        camera.matrixWorld.elements[12],
-        camera.matrixWorld.elements[13],
-        camera.matrixWorld.elements[14]
-      )
+    SpeckleLambertMaterial.vecBuff0.set(
+      camera.matrixWorld.elements[12],
+      camera.matrixWorld.elements[13],
+      camera.matrixWorld.elements[14]
+    )
 
-      Geometry.DoubleToHighLowVector(
-        SpeckleLambertMaterial.vecBuff0,
-        SpeckleLambertMaterial.vecBuff1,
-        SpeckleLambertMaterial.vecBuff2
-      )
+    Geometry.DoubleToHighLowVector(
+      SpeckleLambertMaterial.vecBuff0,
+      SpeckleLambertMaterial.vecBuff1,
+      SpeckleLambertMaterial.vecBuff2
+    )
 
-      this.userData.uViewer_low.value.copy(SpeckleLambertMaterial.vecBuff1)
-      this.userData.uViewer_high.value.copy(SpeckleLambertMaterial.vecBuff2)
+    this.userData.uViewer_low.value.copy(SpeckleLambertMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleLambertMaterial.vecBuff2)
 
-      this.needsUpdate = true
-    }
+    this.needsUpdate = true
   }
 }
 

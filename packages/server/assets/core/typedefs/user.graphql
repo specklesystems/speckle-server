@@ -1,0 +1,160 @@
+extend type Query {
+  """
+  Gets the profile of the authenticated user or null if not authenticated
+  """
+  activeUser: User
+
+  """
+  Get the (limited) profile information of another server user
+  """
+  otherUser(id: String!): LimitedUser
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:read")
+
+  """
+  Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
+  """
+  user(id: String): User
+    @deprecated(
+      reason: "To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user."
+    )
+
+  """
+  Get all (or search for specific) users, registered or invited, from the server in a paginated view.
+  The query looks for matches in name, company and email.
+  """
+  adminUsers(
+    limit: Int! = 25
+    offset: Int! = 0
+    query: String = null
+  ): AdminUsersListCollection
+    @hasRole(role: "server:admin")
+    @hasScope(scope: "users:read")
+
+  """
+  Search for users and return limited metadata about them, if you have the server:user role.
+  The query looks for matches in name & email
+  """
+  userSearch(
+    query: String!
+    limit: Int! = 25
+    cursor: String
+    archived: Boolean = false
+  ): UserSearchResultCollection
+
+  """
+  Validate password strength
+  """
+  userPwdStrength(pwd: String!): PasswordStrengthCheckResults!
+}
+
+type PasswordStrengthCheckResults {
+  """
+  Integer from 0-4 (useful for implementing a strength bar):
+  0 too guessable: risky password. (guesses < 10^3)
+  1 very guessable: protection from throttled online attacks. (guesses < 10^6)
+  2 somewhat guessable: protection from unthrottled online attacks. (guesses < 10^8)
+  3 safely unguessable: moderate protection from offline slow-hash scenario. (guesses < 10^10)
+  4 very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)
+  """
+  score: Int!
+
+  """
+  Verbal feedback to help choose better passwords. set when score <= 2.
+  """
+  feedback: PasswordStrengthCheckFeedback!
+}
+
+type PasswordStrengthCheckFeedback {
+  warning: String
+  suggestions: [String!]!
+}
+
+"""
+Full user type, should only be used in the context of admin operations or
+when a user is reading/writing info about himself
+"""
+type User {
+  id: String!
+  """
+  E-mail can be null, if it's requested for a user other than the authenticated one
+  and the user isn't an admin
+  """
+  email: String
+  name: String
+  bio: String
+  company: String
+  avatar: String
+  verified: Boolean
+  profiles: JSONObject
+  role: String
+}
+
+"""
+Limited user type, for showing public info about a user
+to another user
+"""
+type LimitedUser {
+  id: String!
+  name: String
+  bio: String
+  company: String
+  avatar: String
+  verified: Boolean
+  role: String
+}
+
+"""
+A representation of a registered or invited user in the admin users list. Either registeredUser
+or invitedUser will always be set, both values can't be null.
+"""
+type AdminUsersListItem {
+  registeredUser: User
+  invitedUser: ServerInvite
+  id: String!
+}
+
+type AdminUsersListCollection {
+  totalCount: Int!
+  items: [AdminUsersListItem!]!
+}
+
+type UserSearchResultCollection {
+  cursor: String
+  items: [LimitedUser]
+}
+
+extend type Mutation {
+  """
+  Edits a user's profile.
+  """
+  userUpdate(user: UserUpdateInput!): Boolean!
+
+  """
+  Delete a user's account.
+  """
+  userDelete(userConfirmation: UserDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:delete")
+
+  adminDeleteUser(userConfirmation: UserDeleteInput!): Boolean!
+    @hasRole(role: "server:admin")
+
+  userRoleChange(userRoleInput: UserRoleInput!): Boolean! @hasRole(role: "server:admin")
+}
+
+input UserRoleInput {
+  id: String!
+  role: String!
+}
+
+input UserUpdateInput {
+  name: String
+  company: String
+  bio: String
+  avatar: String
+}
+
+input UserDeleteInput {
+  email: String
+}

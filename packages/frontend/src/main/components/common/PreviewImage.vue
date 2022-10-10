@@ -43,11 +43,13 @@
   </div>
 </template>
 <script>
+import { AppLocalStorage } from '@/utils/localStorage'
+
 export default {
   props: {
     url: {
       type: String,
-      default: ''
+      default: () => ''
     },
     color: {
       type: Boolean,
@@ -168,11 +170,10 @@ export default {
       this.imageIndex = index
     },
     async getPreviewImage(angle = 0) {
+      const authToken = AppLocalStorage.get('AuthToken')
       const res = await fetch(this.url + `/${angle}`, {
         signal: this.controller.signal,
-        headers: localStorage.getItem('AuthToken')
-          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
-          : {}
+        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
       })
 
       if (res.headers.has('X-Preview-Error')) {

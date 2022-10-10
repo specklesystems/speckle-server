@@ -1,10 +1,12 @@
-{{ if .Values.db.useCertificate }}
+{{ if ( and .Values.db.useCertificate .Values.db.certificate ) }}
 
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-certificate
   namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
 data:
   ca-certificate.crt: |
 {{ .Values.db.certificate | indent 4 }}

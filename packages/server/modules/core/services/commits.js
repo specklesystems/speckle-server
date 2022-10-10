@@ -10,6 +10,38 @@ const BranchCommits = () => knex('branch_commits')
 const { getBranchByNameAndStreamId } = require('./branches')
 const { getObject } = require('./objects')
 
+const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
+  publicOnly = publicOnly !== false
+
+  const query = Commits()
+    .columns([
+      { id: 'commits.id' },
+      'message',
+      'referencedObject',
+      'sourceApplication',
+      'totalChildrenCount',
+      'parents',
+      'commits.createdAt',
+      { branchName: 'branches.name' },
+      { streamId: 'stream_commits.streamId' },
+      { streamName: 'streams.name' },
+      { authorName: 'users.name' },
+      { authorId: 'users.id' },
+      { authorAvatar: 'users.avatar' }
+    ])
+    .select()
+    .join('stream_commits', 'commits.id', 'stream_commits.commitId')
+    .join('streams', 'stream_commits.streamId', 'streams.id')
+    .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+    .join('branches', 'branches.id', 'branch_commits.branchId')
+    .leftJoin('users', 'commits.author', 'users.id')
+    .where('author', userId)
+
+  if (publicOnly) query.andWhere('streams.isPublic', true)
+
+  return query
+}
+
 module.exports = {
   async createCommitByBranchId({
     streamId,
@@ -252,27 +284,7 @@ module.exports = {
     limit = limit || 25
     publicOnly = publicOnly !== false
 
-    const query = Commits()
-      .columns([
-        { id: 'commits.id' },
-        'message',
-        'referencedObject',
-        'sourceApplication',
-        'totalChildrenCount',
-        'parents',
-        'commits.createdAt',
-        { branchName: 'branches.name' },
-        { streamId: 'stream_commits.streamId' },
-        { streamName: 'streams.name' }
-      ])
-      .select()
-      .join('stream_commits', 'commits.id', 'stream_commits.commitId')
-      .join('streams', 'stream_commits.streamId', 'streams.id')
-      .join('branch_commits', 'commits.id', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .where('author', userId)
-
-    if (publicOnly) query.andWhere('streams.isPublic', true)
+    const query = getCommitsByUserIdBase({ userId, publicOnly })
 
     if (cursor) query.andWhere('commits.createdAt', '<', cursor)
 
@@ -285,8 +297,12 @@ module.exports = {
     }
   },
 
-  async getCommitsTotalCountByUserId({ userId }) {
-    const [res] = await Commits().count().where('author', userId)
+  async getCommitsTotalCountByUserId({ userId, publicOnly }) {
+    const query = getCommitsByUserIdBase({ userId, publicOnly })
+    query.clearSelect()
+    query.select(knex.raw('COUNT(*) as count'))
+
+    const [res] = await query
     return parseInt(res.count)
   }
 }

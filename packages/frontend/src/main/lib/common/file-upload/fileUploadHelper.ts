@@ -139,22 +139,25 @@ export function isFileTypeSpecifier(type: string): type is FileTypeSpecifier {
  * Create a human readable file size string from the numeric size in bytes
  */
 export function prettyFileSize(sizeInBytes: number): string {
+  const removeTrailingZeroes = (fileSize: number) =>
+    parseFloat(fileSize.toFixed(2)).toString()
+
   if (sizeInBytes < 1024) {
     return `${sizeInBytes}bytes`
   }
 
   const kbSize = sizeInBytes / 1024
   if (kbSize < 1024) {
-    return `${kbSize.toFixed(2)}kb`
+    return `${removeTrailingZeroes(kbSize)}KB`
   }
 
   const mbSize = kbSize / 1024
   if (mbSize < 1024) {
-    return `${mbSize.toFixed(2)}mb`
+    return `${removeTrailingZeroes(mbSize)}MB`
   }
 
   const gbSize = mbSize / 1024
-  return `${gbSize.toFixed(2)}gb`
+  return `${removeTrailingZeroes(gbSize)}GB`
 }
 
 /**

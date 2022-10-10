@@ -1,3 +1,4 @@
+import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import { limitedUserFieldsFragment } from '@/graphql/fragments/user'
 import { commonStreamFieldsFragment } from '@/graphql/streams'
 import { gql } from '@apollo/client/core'
@@ -5,16 +6,15 @@ import { gql } from '@apollo/client/core'
 export const commonUserFieldsFragment = gql`
   fragment CommonUserFields on User {
     id
-    suuid
     email
     name
     bio
     company
     avatar
     verified
+    hasPendingVerification
     profiles
     role
-    suuid
     streams {
       totalCount
     }
@@ -33,7 +33,7 @@ export const commonUserFieldsFragment = gql`
  */
 export const userFavoriteStreamsQuery = gql`
   query UserFavoriteStreams($cursor: String) {
-    user {
+    activeUser {
       ...CommonUserFields
       favoriteStreams(cursor: $cursor, limit: 10) {
         totalCount
@@ -54,7 +54,7 @@ export const userFavoriteStreamsQuery = gql`
  */
 export const mainUserDataQuery = gql`
   query MainUserData {
-    user {
+    activeUser {
       ...CommonUserFields
     }
   }
@@ -66,10 +66,11 @@ export const mainUserDataQuery = gql`
  * Main metadata + extra info shown on profile page
  */
 export const profileSelfQuery = gql`
-  query ExtraUserData {
-    user {
+  query ProfileSelf {
+    activeUser {
       ...CommonUserFields
       totalOwnedStreamsFavorites
+      notificationPreferences
     }
   }
 
@@ -97,7 +98,7 @@ export const userSearchQuery = gql`
  */
 export const isLoggedInQuery = gql`
   query IsLoggedIn {
-    user {
+    activeUser {
       id
     }
   }
@@ -114,7 +115,6 @@ export const adminUsersListQuery = gql`
         id
         registeredUser {
           id
-          suuid
           email
           name
           bio
@@ -142,22 +142,52 @@ export const adminUsersListQuery = gql`
 
 export const userTimelineQuery = gql`
   query UserTimeline($cursor: DateTime) {
-    user {
+    activeUser {
       id
       timeline(cursor: $cursor) {
         totalCount
         cursor
         items {
-          actionType
-          userId
-          streamId
-          resourceId
-          resourceType
-          time
-          info
-          message
+          ...ActivityMainFields
         }
       }
     }
+  }
+
+  ${activityMainFieldsFragment}
+`
+
+export const validatePasswordStrengthQuery = gql`
+  query ValidatePasswordStrength($pwd: String!) {
+    userPwdStrength(pwd: $pwd) {
+      score
+      feedback {
+        warning
+        suggestions
+      }
+    }
+  }
+`
+
+export const emailVerificationBannerStateQuery = gql`
+  query EmailVerificationBannerState {
+    activeUser {
+      id
+      email
+      verified
+      hasPendingVerification
+    }
+  }
+`
+
+export const requestVerificationMutation = gql`
+  mutation RequestVerification {
+    requestVerification
+  }
+`
+
+export const updateUserNotificationPreferencesMutation = gql`
+  mutation UpdateUserNotificationPreferences($preferences: JSONObject!) {
+    userNotificationPreferencesUpdate(preferences: $preferences)
   }
 `

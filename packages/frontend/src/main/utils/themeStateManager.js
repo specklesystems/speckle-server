@@ -1,3 +1,4 @@
+import { AppLocalStorage } from '@/utils/localStorage'
 import Vue from 'vue'
 
 /**
@@ -16,11 +17,7 @@ export function setDarkTheme(val, save = false) {
   themeState.dark = !!val
 
   if (!save) return
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, val ? THEME_DARK : THEME_LIGHT)
-  } catch (e) {
-    // Suppressing missing localStorage errors
-  }
+  AppLocalStorage.set(LOCAL_STORAGE_KEY, val ? THEME_DARK : THEME_LIGHT)
 }
 
 export function isDarkTheme() {
@@ -28,14 +25,10 @@ export function isDarkTheme() {
 }
 
 export function initialize() {
-  try {
-    const storageSetting = localStorage.getItem(LOCAL_STORAGE_KEY)
-    if (storageSetting) {
-      setDarkTheme(storageSetting === THEME_DARK)
-      return
-    }
-  } catch (e) {
-    // Suppressing missing localStorage errors
+  const storageSetting = AppLocalStorage.get(LOCAL_STORAGE_KEY)
+  if (storageSetting) {
+    setDarkTheme(storageSetting === THEME_DARK)
+    return
   }
 
   const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)').matches
