@@ -18,6 +18,8 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import { getCommitStreams } from '@/modules/core/repositories/commits'
+import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { getCommentsResources } from '@/modules/comments/repositories/comments'
 
 /**
  * Build request-scoped dataloaders
@@ -92,6 +94,12 @@ export function buildRequestLoaders(ctx: AuthContext) {
           return commitIds.map((id) => results[id] || null)
         }
       )
+    },
+    comments: {
+      getResources: new DataLoader<string, ResourceIdentifier[]>(async (commentIds) => {
+        const results = await getCommentsResources(commentIds.slice())
+        return commentIds.map((id) => results[id]?.resources || [])
+      })
     },
     users: {
       /**

@@ -1,6 +1,8 @@
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
-import { Comments, knex } from '@/modules/core/dbSchema'
+import { CommentLinks, Comments, knex } from '@/modules/core/dbSchema'
+import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { keyBy } from 'lodash'
 
 export type ExtendedComment = CommentRecord & {
   /**
@@ -36,4 +38,24 @@ export async function getComment(params: { id: string; userId?: string }) {
   }
   query.where({ id }).first()
   return (await query) as Optional<ExtendedComment>
+}
+
+/**
+ * Get resources array for the specified comments. Results object is keyed by comment ID.
+ */
+export async function getCommentsResources(commentIds: string[]) {
+  if (!commentIds.length) return {}
+
+  const q = CommentLinks.knex()
+    .select<{ commentId: string; resources: ResourceIdentifier[] }[]>([
+      CommentLinks.col.commentId,
+      knex.raw(
+        `JSON_AGG(json_build_object('resourceId', "resourceId", 'resourceType', "resourceType")) as resources`
+      )
+    ])
+    .whereIn(CommentLinks.col.commentId, commentIds)
+    .groupBy(CommentLinks.col.commentId)
+
+  const results = await q
+  return keyBy(results, 'commentId')
 }

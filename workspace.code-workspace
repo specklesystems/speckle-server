@@ -33,6 +33,10 @@
       "name": "🌐 objectloader"
     },
     {
+      "path": "packages/shared",
+      "name": "📚 shared"
+    },
+    {
       "path": "utils/helm",
       "name": "⛵ helm"
     },
