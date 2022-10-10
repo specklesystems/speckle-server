@@ -1,10 +1,14 @@
 import {
+  AddEquation,
   Camera,
   Color,
+  CustomBlending,
   Matrix4,
   NoBlending,
+  OneFactor,
   OrthographicCamera,
   PerspectiveCamera,
+  ReverseSubtractEquation,
   ShaderMaterial,
   Texture,
   Vector2,
@@ -31,6 +35,7 @@ export class SpeckleStaticAOGeneratePass extends Pass {
   private _generationBuffer: WebGLRenderTarget
   private _accumulationBuffer: WebGLRenderTarget
   private fsQuad: FullScreenQuad
+  private frameIndex = 0
 
   public set depthTexture(value: Texture) {
     this._depthTexture = value
@@ -75,7 +80,7 @@ export class SpeckleStaticAOGeneratePass extends Pass {
         bias: { value: 0 },
 
         minResolution: { value: 0.0 },
-        kernelRadius: { value: 10.0 },
+        kernelRadius: { value: 15.0 },
         randomSeed: { value: 0.0 },
 
         frameIndex: { value: 0 }
@@ -96,12 +101,18 @@ export class SpeckleStaticAOGeneratePass extends Pass {
       }
     })
     this.accumulateMaterial.uniforms['tDiffuse'].value = this._generationBuffer.texture
-    this.accumulateMaterial.blending = NoBlending
+    this.accumulateMaterial.blending = CustomBlending
+    this.accumulateMaterial.blendSrc = OneFactor
+    this.accumulateMaterial.blendDst = OneFactor
+    this.accumulateMaterial.blendEquation = ReverseSubtractEquation
+    this.accumulateMaterial.blendSrcAlpha = OneFactor
+    this.accumulateMaterial.blendDstAlpha = OneFactor
+    this.accumulateMaterial.blendEquationAlpha = AddEquation
 
     this.fsQuad = new FullScreenQuad(this.aoMaterial)
   }
 
-  public update(camera: Camera) {
+  public update(camera: Camera, frameIndex: number) {
     this.aoMaterial.uniforms['cameraNear'].value = (
       camera as PerspectiveCamera | OrthographicCamera
     ).near
@@ -121,7 +132,9 @@ export class SpeckleStaticAOGeneratePass extends Pass {
       .isPerspectiveCamera
       ? 1
       : 0
+    this.aoMaterial.uniforms['frameIndex'].value = frameIndex
     this.aoMaterial.needsUpdate = true
+    this.frameIndex = frameIndex
   }
 
   public render(renderer, writeBuffer, readBuffer) {
@@ -134,16 +147,14 @@ export class SpeckleStaticAOGeneratePass extends Pass {
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
 
-    this.renderFrame(renderer, 0)
+    this.renderFrame(renderer)
     // restore original state
     renderer.autoClear = originalAutoClear
     renderer.setClearColor(originalClearColor)
     renderer.setClearAlpha(originalClearAlpha)
   }
 
-  private renderFrame(renderer: WebGLRenderer, frameIndex: number) {
-    this.aoMaterial.uniforms['frameIndex'].value = frameIndex
-
+  private renderFrame(renderer: WebGLRenderer) {
     renderer.setRenderTarget(this._generationBuffer)
     renderer.autoClear = false
     renderer.setClearColor(0x000000)
@@ -153,9 +164,11 @@ export class SpeckleStaticAOGeneratePass extends Pass {
     this.fsQuad.render(renderer)
 
     renderer.setRenderTarget(this._accumulationBuffer)
-    renderer.setClearColor(0x000000)
-    renderer.setClearAlpha(1)
-    renderer.clear()
+    if (this.frameIndex === 0) {
+      renderer.setClearColor(0xffffff)
+      renderer.setClearAlpha(1)
+      renderer.clear()
+    }
     this.fsQuad.material = this.accumulateMaterial
     this.fsQuad.render(renderer)
   }

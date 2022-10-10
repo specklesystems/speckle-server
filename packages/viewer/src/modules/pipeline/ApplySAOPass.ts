@@ -1,4 +1,14 @@
-import { NoBlending, ShaderMaterial, Texture, UniformsUtils } from 'three'
+import {
+  AddEquation,
+  CustomBlending,
+  DstAlphaFactor,
+  DstColorFactor,
+  NoBlending,
+  ShaderMaterial,
+  Texture,
+  UniformsUtils,
+  ZeroFactor
+} from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 
@@ -6,7 +16,7 @@ export class ApplySAOPass extends Pass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
 
-  constructor(srcSao: Texture) {
+  constructor() {
     super()
     this.materialCopy = new ShaderMaterial({
       uniforms: UniformsUtils.clone(CopyShader.uniforms),
@@ -14,16 +24,16 @@ export class ApplySAOPass extends Pass {
       fragmentShader: CopyShader.fragmentShader,
       blending: NoBlending
     })
-    // this.materialCopy.transparent = true
-    // this.materialCopy.depthTest = false
-    // this.materialCopy.depthWrite = false
-    // this.materialCopy.blending = CustomBlending
-    // this.materialCopy.blendSrc = DstColorFactor
-    // this.materialCopy.blendDst = ZeroFactor
-    // this.materialCopy.blendEquation = AddEquation
-    // this.materialCopy.blendSrcAlpha = DstAlphaFactor
-    // this.materialCopy.blendDstAlpha = ZeroFactor
-    // this.materialCopy.blendEquationAlpha = AddEquation
+    this.materialCopy.transparent = true
+    this.materialCopy.depthTest = false
+    this.materialCopy.depthWrite = false
+    this.materialCopy.blending = CustomBlending
+    this.materialCopy.blendSrc = DstColorFactor
+    this.materialCopy.blendDst = ZeroFactor
+    this.materialCopy.blendEquation = AddEquation
+    this.materialCopy.blendSrcAlpha = DstAlphaFactor
+    this.materialCopy.blendDstAlpha = ZeroFactor
+    this.materialCopy.blendEquationAlpha = AddEquation
 
     // this.materialCopy.blending = CustomBlending
     // this.materialCopy.blendSrc = OneFactor
@@ -32,9 +42,13 @@ export class ApplySAOPass extends Pass {
     // this.materialCopy.blendSrcAlpha = OneFactor
     // this.materialCopy.blendDstAlpha = OneFactor
     // this.materialCopy.blendEquationAlpha = AddEquation
-    this.materialCopy.uniforms['tDiffuse'].value = srcSao
     this.materialCopy.needsUpdate = true
     this.fsQuad = new FullScreenQuad(this.materialCopy)
+  }
+
+  public setAoTexture(texture: Texture) {
+    this.materialCopy.uniforms['tDiffuse'].value = texture
+    this.materialCopy.needsUpdate = true
   }
 
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {

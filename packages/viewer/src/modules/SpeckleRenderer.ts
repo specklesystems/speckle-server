@@ -178,13 +178,13 @@ export default class SpeckleRenderer {
       helpers.add(camHelper)
     }
     this.viewer.cameraHandler.controls.restThreshold = 0.001
-    this.viewer.cameraHandler.controls.addEventListener('sleep', (event) => {
+    this.viewer.cameraHandler.controls.addEventListener('sleep', () => {
       this.pipeline.onStationaryBegin()
     })
-    this.viewer.cameraHandler.controls.addEventListener('rest', (event) => {
-      this.pipeline.onStationaryBegin()
-    })
-    this.viewer.cameraHandler.controls.addEventListener('wake', (event) => {
+    // this.viewer.cameraHandler.controls.addEventListener('rest', (event) => {
+    //   this.pipeline.onStationaryBegin()
+    // })
+    this.viewer.cameraHandler.controls.addEventListener('wake', () => {
       this.pipeline.onStationaryEnd()
     })
   }
@@ -318,12 +318,12 @@ export default class SpeckleRenderer {
     // this.lastPolar = currentPolar
     // this.lastDistance = currentDistance
     // this.lastTarget.copy(currentTarget)
-    this.viewer.needsRender = this.pipeline.needsRender
   }
 
-  public render(camera: Camera) {
+  public render(camera: Camera): boolean {
     this.batcher.render(this.renderer)
-    this.pipeline.render(this.scene, camera)
+    const needsRender = this.pipeline.render(this.scene, camera)
+    return needsRender
     // this.renderer.render(this.scene, camera)
   }
 

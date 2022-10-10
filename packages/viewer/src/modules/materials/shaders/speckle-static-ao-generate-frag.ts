@@ -214,5 +214,6 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
 			gl_FragColor.xyz *=  ambientOcclusion;
+			gl_FragColor.a = 1.;//1. / float(NUM_FRAMES);
 			// gl_FragColor.xyz = getViewNormal(viewPosition, vUv, centerDepth);
 		}`

@@ -7,6 +7,11 @@ import { ApplySAOPass } from './ApplySAOPass'
 import { NormalsType, SpeckleDynamicSAOPass } from './SpeckleDynamicSAOPass'
 import { SpeckleStaticAOGeneratePass } from './SpeckleStaticAOGeneratePass'
 
+enum RenderType {
+  NORMAL,
+  ACCUMULATION
+}
+
 export interface PipelineOptions {
   saoEnabled?: boolean
   saoParams?: Partial<SAOPassParams>
@@ -41,7 +46,9 @@ export class Pipeline {
   private applySaoPass: ApplySAOPass = null
   private staticAOGenerationPass: SpeckleStaticAOGeneratePass = null
   private drawingSize: Vector2 = new Vector2()
-  public needsRender = true
+  private _renderType: RenderType = RenderType.NORMAL
+  private accumulationFrame = 0
+  private readonly NUM_ACCUMULATION_FRAMES = 16
 
   public set pipelineOptions(options: PipelineOptions) {
     Object.assign(this._pipelineOptions, options)
@@ -51,6 +58,10 @@ export class Pipeline {
       this.saoPass.params.saoScale += this._pipelineOptions.saoScaleOffset
       this.saoPass.normalsRendering = this._pipelineOptions.saoNormalsRendering
     }
+  }
+
+  private set renderType(value: RenderType) {
+    this._renderType = value
   }
 
   public constructor(renderer: WebGLRenderer, batcher: Batcher) {
@@ -74,12 +85,11 @@ export class Pipeline {
     this.composer.addPass(this.saoPass)
     this.renderPass = new RenderPass(scene, camera)
     this.renderPass.renderToScreen = true
-    this.renderPass.enabled = false
+    // this.renderPass.enabled = false
     this.composer.addPass(this.renderPass)
     this.composer.addPass(this.staticAOGenerationPass)
-    this.applySaoPass = new ApplySAOPass(
-      this.staticAOGenerationPass.outputTexture.texture
-    )
+    this.applySaoPass = new ApplySAOPass()
+    this.applySaoPass.setAoTexture(this.saoPass.saoRenderTarget.texture)
     this.applySaoPass.renderToScreen = true
     this.composer.addPass(this.applySaoPass)
   }
@@ -89,17 +99,32 @@ export class Pipeline {
     this.saoPass.normalMaterial.clippingPlanes = planes
   }
 
-  public render(scene: Scene, camera: Camera) {
+  public render(scene: Scene, camera: Camera): boolean {
     this._renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return
 
-    this._renderer.clear(true)
-    this.renderPass.scene = scene
-    this.renderPass.camera = camera
-    this.saoPass.scene = scene
-    this.saoPass.camera = camera
-    this.staticAOGenerationPass.update(camera)
-    this.composer.render()
+    if (this._renderType === RenderType.NORMAL) {
+      this._renderer.clear(true)
+      this.applySaoPass.setAoTexture(this.saoPass.saoRenderTarget.texture)
+      this.renderPass.scene = scene
+      this.renderPass.camera = camera
+      this.saoPass.scene = scene
+      this.saoPass.camera = camera
+      this.composer.render()
+      return true
+    } else {
+      this._renderer.clear(true)
+      this.applySaoPass.setAoTexture(this.staticAOGenerationPass.outputTexture.texture)
+      this.renderPass.scene = scene
+      this.renderPass.camera = camera
+      this.saoPass.scene = scene
+      this.saoPass.camera = camera
+      this.staticAOGenerationPass.update(camera, this.accumulationFrame)
+      this.composer.render()
+      this.accumulationFrame++
+      console.warn('rendering stationary frame => ', this.accumulationFrame)
+      return this.accumulationFrame < this.NUM_ACCUMULATION_FRAMES ? true : false
+    }
   }
 
   public resize(width: number, height: number) {
@@ -107,10 +132,15 @@ export class Pipeline {
   }
 
   public onStationaryBegin() {
-    this.needsRender = true
+    this.renderType = RenderType.ACCUMULATION
+    this.staticAOGenerationPass.enabled = true
+    this.accumulationFrame = 0
+    console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
-    this.needsRender = true
+    this.renderType = RenderType.NORMAL
+    this.staticAOGenerationPass.enabled = false
+    console.warn('Ending stationary')
   }
 }

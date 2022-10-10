@@ -6,6 +6,6 @@ export const speckleStaticAoAccumulateFrag = /* glsl */ `
 
     void main() {
         vec4 frameSample = texture2D( tDiffuse, vUv );
-        gl_FragColor.xyz = frameSample.rgb * 1./float(NUM_FRAMES);
+        gl_FragColor.xyz = (frameSample.rgb) * 1./float(NUM_FRAMES);
         gl_FragColor.a = 1.;//*= opacity;
     }`
