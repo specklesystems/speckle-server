@@ -9,14 +9,14 @@
 1. Backup. This backup, when loaded, will clear any existing data.
 
    ```shell
-   ./utils/migrations/postgres/backup.sh --output-path ./speckle-postgres-dump.sql
+   ./utils/migrations/postgres/backup.sh --output-path=./speckle-postgres-dump.sql
    ```
 
 1. Please verify the contents of `./speckle-postgres-dump.sql`. You may wish to start a separate database (or entire speckle cluster) and load the contents into it, verifying they are complete and accurate.
 1. Stop postgres and delete the postgres volume. ⚠️ **This is destructive and will result in downtime for your server**.
 
    ```shell
-   docker-compose --file ./docker-compose-deps down --timeout 30 --volumes
+   docker-compose --file ./docker-compose-deps.yml down --timeout 30 --volumes
    ```
 
 1. Update the docker-compose file, if necessary, and start a new postgres database using docker-compose:
@@ -28,7 +28,7 @@
 1. Now load the database, this will wipe any existing data and create the data exactly as before.
 
    ```shell
-   ./utils/migrations/postgres/restore.sh --backup-file ./speckle-postgres-dump.sql
+   ./utils/migrations/postgres/restore.sh --backup-file=./speckle-postgres-dump.sql
    ```
 
 ### Using pgadmin
