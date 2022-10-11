@@ -158,6 +158,7 @@ export async function buildApolloServer(
     introspection: true,
     cache: 'bounded',
     persistedQueries: false,
+    csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
     debug,
     ...optionOverrides
