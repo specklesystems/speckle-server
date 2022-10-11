@@ -1,5 +1,6 @@
 <template>
   <v-app
+    id="speckle"
     :class="`embed-viewer no-scrollbar ${
       transparent ? '' : $vuetify.theme.dark ? 'background-dark' : 'background-light'
     }`"
@@ -204,7 +205,7 @@ export default defineComponent({
     })
 
     const updateTransparency = () => {
-      const appEl = document.getElementById('app')
+      const appEl = document.getElementById('speckle')
       const classList = appEl!.classList
       if (transparent.value) {
         document.body.style.background = 'none'

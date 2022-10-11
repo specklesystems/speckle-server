@@ -1,5 +1,5 @@
 <template>
-  <!-- 
+  <!--
     HIC SVNT DRACONES
   -->
   <div
@@ -159,7 +159,6 @@
     </portal>
     <portal to="viewercontrols" :order="5">
       <v-btn
-        key="comment-toggle-button"
         v-tooltip="currentCommentVisStatus"
         rounded
         icon
