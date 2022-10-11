@@ -44,10 +44,21 @@
    - for `port`, use `5432` (you can check this is port number used for the `postgres` container in [`./docker-compose-deps.yml`](../../../docker-compose-deps.yml))
    - for `database`, `username`, and `password` use the values in the file assigned to the respective `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` keys. By default the value of these are all `speckle`.
 1. Click `save`
-1. You can now select the drop down menu `tools>backup`, and follow [pgadmin's backup instructions](https://www.pgadmin.org/docs/pgadmin4/6.13/backup_and_restore.html).
-1. Stop the docker-compose dependencies with `docker-compose -f ./docker-compose-deps.yml down`
-1. List the volumes that docker has: `docker volume ls`
-1. Remove the existing postgres volume with: `docker volume rm speckle-server_postgres-data` (the name `speckle-server_postgres-data` should match a value from the list in the previous step, amend as necessary)
-1. Deploy the docker-compose file with the updated postgres version.
-1. Open pgadmin and connect to the server, using the instructions above
-1. use `tools>restore` and select the backup file.
+1. You can now select the database from the browser window (typically found on the left hand side).
+1. Expand `docker-compose` and `databases`, the right-click on the database you wish to backup.
+1. Choose a filename
+1. Stop the docker-compose dependencies with:
+
+   ```shell
+   docker-compose -f ./docker-compose-deps.yml down --volumes
+   ```
+
+1. Deploy the docker-compose file with the updated postgres version:
+
+   ```shell
+   docker-compose -f ./docker-compose-deps.yml up --detach
+   ```
+
+1. Open pgadmin and connect to the server, using the instructions above.
+1. Right click `databases` from the browser window, and click `create`
+1. Right click the created database and click `restore`, selecting your previously stored backup.

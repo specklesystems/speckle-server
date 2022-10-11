@@ -6,7 +6,7 @@ DB_USER="speckle"
 SERVICE_NAME="postgres"
 DOCKER_COMPOSE_FILE="docker-compose-deps.yml"
 OUTPUT_PATH="speckle_postgres_dump_$(date +%Y-%m-%d_%H_%M_%S).sql"
-DBDUMP_ARGS="-c"
+DBDUMP_ARGS=""
 
 # parse flags
 for i in "$@"; do
@@ -27,8 +27,8 @@ for i in "$@"; do
       OUTPUT_PATH="${i#*=}"
       shift # past argument=value
       ;;
-    --clear=false)
-      DBDUMP_ARGS=""
+    --clear=true)
+      DBDUMP_ARGS="-c"
       shift # past argument
       ;;
     -h|--help)
