@@ -13,16 +13,16 @@
    ```
 
 1. Please verify the contents of `./speckle-postgres-dump.sql`. You may wish to start a separate database (or entire speckle cluster) and load the contents into it, verifying they are complete and accurate.
-1. Stop postgres and delete the postgres volume. This will result in downtime for your server.
+1. Stop postgres and delete the postgres volume. ⚠️ **This is destructive and will result in downtime for your server**.
 
    ```shell
-   ./utils/migrations/postgres/purge.sh
+   docker-compose --file ./docker-compose-deps down --timeout 30 --volumes
    ```
 
-1. Start a new postgres database using docker-compose:
+1. Update the docker-compose file, if necessary, and start a new postgres database using docker-compose:
 
    ```shell
-   docker-compose --file ./docker-compose-deps.yml start --detach
+   docker-compose --file ./docker-compose-deps.yml up --detach
    ```
 
 1. Now load the database, this will wipe any existing data and create the data exactly as before.
