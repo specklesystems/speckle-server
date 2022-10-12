@@ -2,6 +2,8 @@
 
 ## docker-compose
 
+Backing up and restoring postgres data stored in our local development docker volumes when upgrading to new postgres versions
+
 ### Using the provided scripts
 
 1. Please ensure you are in a bash terminal (linux, including ubuntu for windows, \*nix, or mac), have docker and docker-compose installed.
