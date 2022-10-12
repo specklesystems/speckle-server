@@ -174,7 +174,6 @@ export class SpeckleStaticAOGeneratePass extends Pass {
   public render(renderer, writeBuffer, readBuffer) {
     writeBuffer
     readBuffer
-
     // save original state
     const originalClearColor = new Color()
     renderer.getClearColor(originalClearColor)

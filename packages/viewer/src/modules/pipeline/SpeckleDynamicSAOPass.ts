@@ -1,25 +1,23 @@
 import {
-  AdditiveBlending,
   Camera,
-  DoubleSide,
+  Color,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
-  RGBADepthPacking,
   Scene,
   ShaderMaterial,
+  Texture,
   UniformsUtils,
-  Vector2
+  Vector2,
+  WebGLRenderTarget
 } from 'three'
-import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
-import { SAOPass } from 'three/examples/jsm/postprocessing/SAOPass.js'
-import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
+import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
 import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
-import Batcher from '../batching/Batcher'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
-import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
+import { DepthLimitedBlurShader } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
+import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
+import { SpecklePass } from './Pipeline'
 
 export enum NormalsType {
   DEFAULT = 0,
@@ -27,62 +25,75 @@ export enum NormalsType {
   ACCURATE = 2
 }
 
+export interface SpeckleDynamicSAOPassParams {
+  intensity: number
+  scale: number
+  kernelRadius: number
+  bias: number
+  normalsType: NormalsType
+  blurEnabled: boolean
+  blurRadius: number
+  blurStdDev: number
+  blurDepthCutoff: number
+}
+
+export const DefaultSpeckleDynamicSAOPassParams = {
+  intensity: 1.25,
+  scale: 0,
+  kernelRadius: 10,
+  bias: 0.15,
+  normalsType: NormalsType.ACCURATE,
+  blurEnabled: true,
+  blurRadius: 4,
+  blurStdDev: 4,
+  blurDepthCutoff: 0.0007
+}
+
 /**
  * SAO implementation inspired from bhouston previous SAO work
  */
 
-export class SpeckleDynamicSAOPass extends SAOPass {
-  private _oldClearColor
-  private prevStdDev
-  private prevNumSamples
-  private batcher: Batcher = null
-  private normalsType: NormalsType = NormalsType.IMPROVED
+export class SpeckleDynamicSAOPass extends Pass implements SpecklePass {
+  private params: SpeckleDynamicSAOPassParams
+  private colorBuffer: Color = new Color()
+  private saoMaterial: ShaderMaterial = null
+  private vBlurMaterial: ShaderMaterial = null
+  private hBlurMaterial: ShaderMaterial = null
+  private saoRenderTarget: WebGLRenderTarget = null
+  private blurIntermediateRenderTarget: WebGLRenderTarget = null
+  private fsQuad: FullScreenQuad = null
 
-  public set normalsRendering(type: NormalsType) {
-    this.normalsType = type
-    this.saoMaterial.defines['NORMAL_TEXTURE'] =
-      this.normalsType === NormalsType.DEFAULT ? 1 : 0
-    this.saoMaterial.defines['IMPROVED_NORMAL_RECONSTRUCTION'] =
-      this.normalsType === NormalsType.IMPROVED ? 1 : 0
-    this.saoMaterial.defines['ACCURATE_NORMAL_RECONSTRUCTION'] =
-      this.normalsType === NormalsType.ACCURATE ? 1 : 0
-    this.saoMaterial.needsUpdate = true
+  private prevStdDev: number
+  private prevNumSamples: number
+
+  get displayName(): string {
+    return 'SAO'
   }
 
-  constructor(
-    scene: Scene,
-    camera: Camera,
-    batcher: Batcher,
-    useDepthTexture = false,
-    normalsType: NormalsType,
-    resolution = new Vector2(256, 256)
-  ) {
-    super(scene, camera, useDepthTexture, true, resolution)
+  get outputTexture(): Texture {
+    return this.saoRenderTarget.texture
+  }
 
-    this.batcher = batcher
+  public setDepthTexture(texture: Texture) {
+    this.saoMaterial.uniforms['tDepth'].value = texture
+    this.vBlurMaterial.uniforms['tDepth'].value = texture
+    this.hBlurMaterial.uniforms['tDepth'].value = texture
+    this.saoMaterial.needsUpdate = true
+    this.vBlurMaterial.needsUpdate = true
+    this.hBlurMaterial.needsUpdate = true
+  }
 
-    /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
-     *  We're not really using a stencil buffer at all, we're just forcing
-     *  three.js to use a 24 bit depth render buffer
-     */
-    this.depthRenderTarget.depthBuffer = true
-    this.depthRenderTarget.stencilBuffer = true
-    this.normalRenderTarget.depthBuffer = true
-    this.normalRenderTarget.stencilBuffer = true
+  constructor() {
+    super()
 
-    this.depthMaterial = new SpeckleDepthMaterial(
-      {
-        depthPacking: RGBADepthPacking
-      },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
-    )
-    this.depthMaterial.blending = NoBlending
-    this.depthMaterial.side = DoubleSide
+    // this.normalRenderTarget.depthBuffer = true
+    // this.normalRenderTarget.stencilBuffer = true
 
-    this.normalMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
-    this.normalMaterial.blending = NoBlending
-    this.normalMaterial.side = DoubleSide
-
+    // this.normalMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
+    // this.normalMaterial.blending = NoBlending
+    // this.normalMaterial.side = DoubleSide
+    this.saoRenderTarget = new WebGLRenderTarget(256, 256)
+    this.blurIntermediateRenderTarget = new WebGLRenderTarget(256, 256)
     this.saoMaterial = new ShaderMaterial({
       defines: {
         NUM_SAMPLES: 7,
@@ -96,211 +107,184 @@ export class SpeckleDynamicSAOPass extends SAOPass {
       vertexShader: speckleSaoVert,
       uniforms: UniformsUtils.clone(SAOShader.uniforms)
     })
-    this.normalsRendering = normalsType
     this.saoMaterial.extensions.derivatives = true
-    this.saoMaterial.defines['DEPTH_PACKING'] = this.supportsDepthTextureExtension
-      ? 0
-      : 1
-    this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (this.camera as PerspectiveCamera)
+    this.saoMaterial.defines['DEPTH_PACKING'] = 1
+    this.saoMaterial.uniforms['tDepth'].value = null
+    this.saoMaterial.uniforms['tNormal'].value = null
+    this.saoMaterial.uniforms['size'].value.set(256, 256)
+    this.saoMaterial.uniforms['minResolution'].value = 0
+    this.saoMaterial.blending = NoBlending
+
+    this.vBlurMaterial = new ShaderMaterial({
+      uniforms: UniformsUtils.clone(DepthLimitedBlurShader.uniforms),
+      defines: Object.assign({}, DepthLimitedBlurShader.defines),
+      vertexShader: DepthLimitedBlurShader.vertexShader,
+      fragmentShader: DepthLimitedBlurShader.fragmentShader
+    })
+    this.vBlurMaterial.defines['DEPTH_PACKING'] = 1
+
+    this.vBlurMaterial.uniforms['tDiffuse'].value = this.saoRenderTarget.texture
+    this.vBlurMaterial.uniforms['tDepth'].value = null
+    this.vBlurMaterial.uniforms['size'].value.set(256, 256)
+    this.vBlurMaterial.blending = NoBlending
+
+    this.hBlurMaterial = new ShaderMaterial({
+      uniforms: UniformsUtils.clone(DepthLimitedBlurShader.uniforms),
+      defines: Object.assign({}, DepthLimitedBlurShader.defines),
+      vertexShader: DepthLimitedBlurShader.vertexShader,
+      fragmentShader: DepthLimitedBlurShader.fragmentShader
+    })
+    this.hBlurMaterial.defines['DEPTH_PACKING'] = 1
+
+    this.hBlurMaterial.uniforms['tDiffuse'].value =
+      this.blurIntermediateRenderTarget.texture
+    this.hBlurMaterial.uniforms['tDepth'].value = null
+    this.hBlurMaterial.uniforms['size'].value.set(256, 256)
+    this.hBlurMaterial.blending = NoBlending
+
+    this.fsQuad = new FullScreenQuad(this.saoMaterial)
+  }
+
+  public update(scene: Scene, camera: Camera) {
+    /** SAO DEFINES */
+    this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
       ? 1
       : 0
-    this.saoMaterial.uniforms['tDepth'].value = this.supportsDepthTextureExtension
-      ? this.beautyRenderTarget.depthTexture
-      : this.depthRenderTarget.texture
-    this.saoMaterial.uniforms['tNormal'].value = this.normalRenderTarget.texture
-    this.saoMaterial.uniforms['size'].value.set(this.resolution.x, this.resolution.y)
+
+    this.saoMaterial.defines['NORMAL_TEXTURE'] =
+      this.params.normalsType === NormalsType.DEFAULT ? 1 : 0
+    this.saoMaterial.defines['IMPROVED_NORMAL_RECONSTRUCTION'] =
+      this.params.normalsType === NormalsType.IMPROVED ? 1 : 0
+    this.saoMaterial.defines['ACCURATE_NORMAL_RECONSTRUCTION'] =
+      this.params.normalsType === NormalsType.ACCURATE ? 1 : 0
+
+    /** SAO UNIFORMS */
+    this.saoMaterial.uniforms['cameraNear'].value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).near
+    this.saoMaterial.uniforms['cameraFar'].value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).far
     this.saoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
-      this.camera.projectionMatrixInverse
+      camera.projectionMatrixInverse
     )
-    this.saoMaterial.uniforms['cameraProjectionMatrix'].value =
-      this.camera.projectionMatrix
-    this.saoMaterial.blending = NoBlending
+    this.saoMaterial.uniforms['cameraProjectionMatrix'].value = camera.projectionMatrix
+
+    /** SAO UNIFORM PARAMS */
+    this.saoMaterial.uniforms['intensity'].value = this.params.intensity
+    this.saoMaterial.uniforms['scale'].value = this.params.scale
+    this.saoMaterial.uniforms['kernelRadius'].value = this.params.kernelRadius
+    this.saoMaterial.uniforms['bias'].value = this.params.bias
+
+    this.saoMaterial.needsUpdate = true
+
+    /** BLUR DEFINES */
+    this.vBlurMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
+      .isPerspectiveCamera
+      ? 1
+      : 0
+    this.hBlurMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
+      .isPerspectiveCamera
+      ? 1
+      : 0
+
+    /** BLUR UNIFORMS */
+    this.vBlurMaterial.uniforms['cameraNear'].value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).near
+    this.vBlurMaterial.uniforms['cameraFar'].value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).far
+    this.hBlurMaterial.uniforms['cameraNear'].value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).near
+    this.hBlurMaterial.uniforms['cameraFar'].value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).far
+
+    /** BLUR UNIFORM PARAMS */
+    const depthCutoff =
+      this.params.blurDepthCutoff *
+      ((camera as PerspectiveCamera | OrthographicCamera).far -
+        (camera as PerspectiveCamera | OrthographicCamera).near)
+    this.vBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
+    this.hBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
+
+    this.params.blurRadius = Math.floor(this.params.blurRadius)
+    if (
+      this.prevStdDev !== this.params.blurStdDev ||
+      this.prevNumSamples !== this.params.blurRadius
+    ) {
+      BlurShaderUtils.configure(
+        this.vBlurMaterial,
+        this.params.blurRadius,
+        this.params.blurStdDev,
+        new Vector2(0, 1)
+      )
+      BlurShaderUtils.configure(
+        this.hBlurMaterial,
+        this.params.blurRadius,
+        this.params.blurStdDev,
+        new Vector2(1, 0)
+      )
+      this.prevStdDev = this.params.blurStdDev
+      this.prevNumSamples = this.params.blurRadius
+    }
+    this.vBlurMaterial.needsUpdate = true
+    this.hBlurMaterial.needsUpdate = true
   }
 
   public render(renderer, writeBuffer, readBuffer) {
     writeBuffer
     readBuffer
-    if (this.params.output === 1) {
-      return
-    }
 
-    renderer.getClearColor(this._oldClearColor)
-    this.oldClearAlpha = renderer.getClearAlpha()
-    renderer.autoClear = false
-
-    renderer.setRenderTarget(this.depthRenderTarget)
-    renderer.clear()
-    this.saoMaterial.blending = AdditiveBlending
-    this.saoMaterial.uniforms['bias'].value = this.params.saoBias
-    this.saoMaterial.uniforms['intensity'].value = this.params.saoIntensity
-    this.saoMaterial.uniforms['scale'].value = this.params.saoScale
-    this.saoMaterial.uniforms['kernelRadius'].value = this.params.saoKernelRadius
-    this.saoMaterial.uniforms['minResolution'].value = this.params.saoMinResolution
-    this.saoMaterial.uniforms['cameraNear'].value = (
-      this.camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.saoMaterial.uniforms['cameraFar'].value = (
-      this.camera as PerspectiveCamera | OrthographicCamera
-    ).far
-    this.saoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
-      this.camera.projectionMatrixInverse
-    )
-    this.saoMaterial.uniforms['cameraProjectionMatrix'].value =
-      this.camera.projectionMatrix
-    // this.saoMaterial.uniforms['randomSeed'].value = Math.random()
-
-    const depthCutoff =
-      this.params.saoBlurDepthCutoff *
-      ((this.camera as PerspectiveCamera | OrthographicCamera).far -
-        (this.camera as PerspectiveCamera | OrthographicCamera).near)
-    this.vBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
-    this.hBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
-
-    this.vBlurMaterial.uniforms['cameraNear'].value = (
-      this.camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.vBlurMaterial.uniforms['cameraFar'].value = (
-      this.camera as PerspectiveCamera | OrthographicCamera
-    ).far
-    this.hBlurMaterial.uniforms['cameraNear'].value = (
-      this.camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.hBlurMaterial.uniforms['cameraFar'].value = (
-      this.camera as PerspectiveCamera | OrthographicCamera
-    ).far
-
-    this.params.saoBlurRadius = Math.floor(this.params.saoBlurRadius)
-    if (
-      this.prevStdDev !== this.params.saoBlurStdDev ||
-      this.prevNumSamples !== this.params.saoBlurRadius
-    ) {
-      BlurShaderUtils.configure(
-        this.vBlurMaterial,
-        this.params.saoBlurRadius,
-        this.params.saoBlurStdDev,
-        new Vector2(0, 1)
-      )
-      BlurShaderUtils.configure(
-        this.hBlurMaterial,
-        this.params.saoBlurRadius,
-        this.params.saoBlurStdDev,
-        new Vector2(1, 0)
-      )
-      this.prevStdDev = this.params.saoBlurStdDev
-      this.prevNumSamples = this.params.saoBlurRadius
-    }
-
-    const restoreVisibility = this.batcher.saveVisiblity()
-    const opaque = this.batcher.getOpaque()
-    this.batcher.applyVisibility(opaque)
-    // Re-render scene if depth texture extension is not supported
-    if (!this.supportsDepthTextureExtension) {
-      // Clear rule : far clipping plane in both RGBA and Basic encoding
-      this.renderOverride(
-        renderer,
-        this.depthMaterial,
-        this.depthRenderTarget,
-        0x000000,
-        1.0
-      )
-    }
-
-    if (this.normalsType === NormalsType.DEFAULT) {
-      if (this.supportsNormalTexture) {
-        // Clear rule : default normal is facing the camera
-        this.renderOverride(
-          renderer,
-          this.normalMaterial,
-          this.normalRenderTarget,
-          0x7777ff,
-          1.0
-        )
-      }
-    }
-    this.batcher.applyVisibility(restoreVisibility)
+    // const restoreVisibility = this.batcher.saveVisiblity()
+    // const opaque = this.batcher.getOpaque()
+    // this.batcher.applyVisibility(opaque)
+    // this.batcher.applyVisibility(restoreVisibility)
 
     // Rendering SAO texture
-    this.renderPass(renderer, this.saoMaterial, this.saoRenderTarget, 0x000000, 1.0)
-
-    // Blurring SAO texture
-    if (this.params.saoBlur) {
-      this.renderPass(
-        renderer,
-        this.vBlurMaterial,
-        this.blurIntermediateRenderTarget,
-        0xffffff,
-        1.0
-      )
-      this.renderPass(renderer, this.hBlurMaterial, this.saoRenderTarget, 0xffffff, 1.0)
-    }
-  }
-
-  public renderPass(
-    renderer,
-    passMaterial,
-    renderTarget,
-    clearColor = undefined,
-    clearAlpha = undefined
-  ) {
-    // save original state
-    renderer.getClearColor(this.originalClearColor)
+    renderer.getClearColor(this.colorBuffer)
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
 
-    renderer.setRenderTarget(renderTarget)
+    renderer.setRenderTarget(this.saoRenderTarget)
 
     // setup pass state
     renderer.autoClear = false
-    if (clearColor !== undefined && clearColor !== null) {
-      renderer.setClearColor(clearColor)
-      renderer.setClearAlpha(clearAlpha || 0.0)
+    renderer.setClearColor(0xffffff)
+    renderer.setClearAlpha(1.0)
+    renderer.clear()
+    this.fsQuad.material = this.saoMaterial
+    this.fsQuad.render(renderer)
+
+    if (this.params.blurEnabled) {
+      renderer.setRenderTarget(this.blurIntermediateRenderTarget)
+      renderer.setClearColor(0xffffff)
+      renderer.setClearAlpha(1.0)
       renderer.clear()
+      this.fsQuad.material = this.vBlurMaterial
+      this.fsQuad.render(renderer)
+
+      renderer.setRenderTarget(this.saoRenderTarget)
+      this.fsQuad.material = this.hBlurMaterial
+      this.fsQuad.render(renderer)
     }
-    ;(this.fsQuad as FullScreenQuad).material = passMaterial
-    ;(this.fsQuad as FullScreenQuad).render(renderer)
 
     // restore original state
     renderer.autoClear = originalAutoClear
-    renderer.setClearColor(this.originalClearColor)
+    renderer.setClearColor(this.colorBuffer)
     renderer.setClearAlpha(originalClearAlpha)
   }
 
-  public renderOverride(
-    renderer,
-    overrideMaterial,
-    renderTarget,
-    clearColor,
-    clearAlpha
-  ) {
-    renderer.getClearColor(this.originalClearColor)
-    const originalClearAlpha = renderer.getClearAlpha()
-    const originalAutoClear = renderer.autoClear
+  public setSize(width: number, height: number) {
+    this.saoRenderTarget.setSize(width, height)
+    this.blurIntermediateRenderTarget.setSize(width, height)
 
-    renderer.setRenderTarget(renderTarget)
-    renderer.autoClear = false
-
-    clearColor = overrideMaterial.clearColor || clearColor
-    clearAlpha = overrideMaterial.clearAlpha || clearAlpha
-    if (clearColor !== undefined && clearColor !== null) {
-      renderer.setClearColor(clearColor)
-      renderer.setClearAlpha(clearAlpha || 0.0)
-      renderer.clear()
-    }
-
-    const shadowmapEnabled = renderer.shadowMap.enabled
-    const shadowmapNeedsUpdate = renderer.shadowMap.needsUpdate
-    this.scene.overrideMaterial = overrideMaterial
-    renderer.shadowMap.enabled = false
-    renderer.shadowMap.needsUpdate = false
-    renderer.render(this.scene, this.camera)
-    renderer.shadowMap.enabled = shadowmapEnabled
-    renderer.shadowMap.needsUpdate = shadowmapNeedsUpdate
-    this.scene.overrideMaterial = null
-
-    // restore original state
-    renderer.autoClear = originalAutoClear
-    renderer.setClearColor(this.originalClearColor)
-    renderer.setClearAlpha(originalClearAlpha)
+    this.saoMaterial.uniforms['size'].value.set(width, height)
+    this.vBlurMaterial.uniforms['size'].value.set(width, height)
+    this.hBlurMaterial.uniforms['size'].value.set(width, height)
+    this.saoMaterial.needsUpdate = true
   }
 }
