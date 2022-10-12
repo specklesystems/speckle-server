@@ -2,7 +2,7 @@ import { VueRenderer } from '@tiptap/vue-2'
 import SmartTextEditorMentionList from '@/main/components/common/text-editor/SmartTextEditorMentionList.vue'
 import Popper from 'popper.js'
 import vuetify from '@/plugins/vuetify'
-import { apolloProvider } from '@/main/app'
+import { getApolloProvider } from '@/config/apolloConfig'
 import { userSearchQuery } from '@/graphql/user'
 
 /**
@@ -15,7 +15,7 @@ export const suggestion = {
     }
 
     // Execute users search query
-    const client = apolloProvider.defaultClient
+    const client = getApolloProvider().defaultClient
     const { data } = await client.query({
       query: userSearchQuery,
       variables: {
