@@ -72,7 +72,6 @@
     <portal to="viewercontrols" :order="4">
       <v-btn
         v-show="users.length !== 0"
-        key="bubbles-toggle-button"
         v-tooltip="`Toggle real time user bubbles`"
         small
         rounded

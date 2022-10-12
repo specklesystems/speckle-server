@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
+    "@speckle/shared": "workspace:^",
     "@speckle/viewer": "workspace:^",
     "@tiptap/core": "^2.0.0-beta.176",
     "@tiptap/extension-bold": "^2.0.0-beta.26",
@@ -75,8 +76,8 @@
     "@types/lodash": "^4.14.180",
     "@types/mixpanel-browser": "^2.38.0",
     "@types/node": "^17.0.43",
-    "@typescript-eslint/eslint-plugin": "^5.21.0",
-    "@typescript-eslint/parser": "^5.21.0",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
     "@vitejs/plugin-vue2": "^1.1.2",
     "@vue/eslint-config-typescript": "^11.0.1",
     "babel-plugin-lodash": "^3.3.4",
@@ -91,7 +92,7 @@
     "vite": "^3.1.0",
     "vite-bundle-visualizer": "^0.4.1",
     "vite-plugin-simple-gql": "^0.5.0",
-    "vue-tsc": "^0.40.13"
+    "vue-tsc": "^1.0.3"
   },
   "engines": {
     "node": "^16.0.0"

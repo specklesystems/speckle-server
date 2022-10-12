@@ -25,6 +25,10 @@ const {
   ensureCommentSchema
 } = require('@/modules/comments/services/commentTextService')
 const { withFilter } = require('graphql-subscriptions')
+const { has } = require('lodash')
+const {
+  documentToBasicString
+} = require('@/modules/core/services/richTextEditorService')
 
 const authorizeStreamAccess = async ({
   streamId,
@@ -51,6 +55,7 @@ const authorizeStreamAccess = async ({
   return stream
 }
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {
     async comment(parent, args, context) {
@@ -92,6 +97,19 @@ module.exports = {
     text(parent) {
       const commentText = parent?.text || ''
       return ensureCommentSchema(commentText)
+    },
+
+    rawText(parent) {
+      const { doc } = ensureCommentSchema(parent.text || '')
+      return documentToBasicString(doc)
+    },
+
+    /**
+     * Resolve resources, if they weren't already preloaded
+     */
+    async resources(parent, _args, ctx) {
+      if (has(parent, 'resources')) return parent.resources
+      return await ctx.loaders.comments.getResources.load(parent.id)
     }
   },
   Stream: {
