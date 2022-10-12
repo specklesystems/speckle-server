@@ -156,7 +156,8 @@ module.exports = {
       await pubsub.publish('VIEWER_ACTIVITY', {
         userViewerActivity: args.data,
         streamId: args.streamId,
-        resourceId: args.resourceId
+        resourceId: args.resourceId,
+        authorId: context.userId
       })
       return true
     },
@@ -342,6 +343,11 @@ module.exports = {
 
           if (!stream.allowPublicComments && !stream.role)
             throw new ApolloForbiddenError('You are not authorized.')
+
+          // dont report users activity to himself
+          if (context.userId && context.userId === payload.authorId) {
+            return false
+          }
 
           return (
             payload.streamId === variables.streamId &&
