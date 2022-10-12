@@ -2,7 +2,7 @@
 
 ## docker-compose
 
-Backing up and restoring postgres data stored in our local development docker volumes when upgrading to new postgres versions
+Backing up and restoring postgres data stored in our local development docker volumes when upgrading to new postgres versions.
 
 ### Using the provided scripts
 
