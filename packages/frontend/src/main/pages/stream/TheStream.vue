@@ -267,7 +267,7 @@ export default defineComponent({
           return !this.isLoggedIn
         }
       }
-    }
+    } as never // for some reason Vue Apollo Options API being used for subscriptions breaks all types in this SFC
   },
   mounted() {
     this.$eventHub.$on(StreamEvents.Refetch, () => {
