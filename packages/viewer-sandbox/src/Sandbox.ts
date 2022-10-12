@@ -36,7 +36,7 @@ export default class Sandbox {
       saoBias: 0.15,
       saoIntensity: 1.25,
       saoScale: 434,
-      saoKernelRadius: 10,
+      saoKernelRadius: 15,
       saoMinResolution: 0,
       saoBlur: true,
       saoBlurRadius: 4,
@@ -44,7 +44,12 @@ export default class Sandbox {
       saoBlurDepthCutoff: 0.0007
     },
     saoScaleOffset: 0,
-    saoNormalsRendering: 2
+    saoNormalsRendering: 2,
+    minDistance: 0.0,
+    maxDistance: 0.008,
+    ssaoKernelRadius: 0.5,
+    progressiveAO: 0,
+    progressive: true
   }
 
   public static lightParams: SunLightConfiguration = {
@@ -424,6 +429,41 @@ export default class Sandbox {
 
     postFolder
       .addInput(Sandbox.postParams.saoParams, 'saoBlurRadius', { min: 0, max: 10 })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    postFolder
+      .addInput(Sandbox.postParams, 'minDistance', { min: 0, max: 100, step: 0.000001 })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+
+    postFolder
+      .addInput(Sandbox.postParams, 'maxDistance', { min: 0, max: 100, step: 0.000001 })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+    postFolder
+      .addInput(Sandbox.postParams, 'ssaoKernelRadius', { min: 0, max: 100 })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.requestRender()
+      })
+    postFolder.addInput(Sandbox.postParams, 'progressive', {}).on('change', () => {
+      this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+      this.viewer.requestRender()
+    })
+    postFolder
+      .addInput(Sandbox.postParams, 'progressiveAO', {
+        options: {
+          SAO: 0,
+          SSAO: 1
+        }
+      })
       .on('change', () => {
         this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
         this.viewer.requestRender()

@@ -3,15 +3,21 @@ import {
   Camera,
   Color,
   CustomBlending,
+  DataTexture,
+  FloatType,
+  MathUtils,
   Matrix4,
   NoBlending,
   OneFactor,
   OrthographicCamera,
   PerspectiveCamera,
+  RedFormat,
+  RepeatWrapping,
   ReverseSubtractEquation,
   ShaderMaterial,
   Texture,
   Vector2,
+  Vector3,
   WebGLRenderer,
   WebGLRenderTarget
 } from 'three'
@@ -22,13 +28,14 @@ import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static
 import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag'
 import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert'
 import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag'
+import { SimplexNoise } from 'three/examples/jsm//math/SimplexNoise.js'
 /**
  * SAO implementation inspired from bhouston previous SAO work
  */
 
 export class SpeckleStaticAOGeneratePass extends Pass {
   private batcher: Batcher = null
-  private aoMaterial: ShaderMaterial = null
+  public aoMaterial: ShaderMaterial = null
   private accumulateMaterial: ShaderMaterial = null
   private _depthTexture: Texture
   private _normalTexture: Texture
@@ -36,6 +43,14 @@ export class SpeckleStaticAOGeneratePass extends Pass {
   private _accumulationBuffer: WebGLRenderTarget
   private fsQuad: FullScreenQuad
   private frameIndex = 0
+  private kernels: Array<Array<Vector3>> = new Array(16)
+  private kernelSize = 16
+  private noiseTextures: Array<Texture> = []
+  public minDistance = 0.02
+  public maxDistance = 0.3
+  public ssaoKernelRadius = 1
+  public progressiveAO = 0
+  public kernelRadius = 15
 
   public set depthTexture(value: Texture) {
     this._depthTexture = value
@@ -83,7 +98,13 @@ export class SpeckleStaticAOGeneratePass extends Pass {
         kernelRadius: { value: 15.0 },
         randomSeed: { value: 0.0 },
 
-        frameIndex: { value: 0 }
+        frameIndex: { value: 0 },
+
+        tNoise: { value: null },
+        kernel: { value: null },
+        minDistance: { value: 0.0 },
+        maxDistance: { value: 0.008 },
+        ssaoKernelRadius: { value: 0.5 }
       }
     })
 
@@ -132,9 +153,22 @@ export class SpeckleStaticAOGeneratePass extends Pass {
       .isPerspectiveCamera
       ? 1
       : 0
+    this.aoMaterial.uniforms['kernelRadius'].value = this.kernelRadius
     this.aoMaterial.uniforms['frameIndex'].value = frameIndex
-    this.aoMaterial.needsUpdate = true
     this.frameIndex = frameIndex
+
+    if (!this.kernels[frameIndex]) {
+      this.generateSampleKernel(frameIndex)
+    }
+    if (!this.noiseTextures[frameIndex]) {
+      this.generateRandomKernelRotations(frameIndex)
+    }
+    this.aoMaterial.uniforms['kernel'].value = this.kernels[frameIndex]
+    this.aoMaterial.uniforms['tNoise'].value = this.noiseTextures[frameIndex]
+    this.aoMaterial.uniforms['ssaoKernelRadius'].value = this.ssaoKernelRadius
+    this.aoMaterial.uniforms['minDistance'].value = this.minDistance
+    this.aoMaterial.uniforms['maxDistance'].value = this.maxDistance
+    this.aoMaterial.needsUpdate = true
   }
 
   public render(renderer, writeBuffer, readBuffer) {
@@ -179,5 +213,58 @@ export class SpeckleStaticAOGeneratePass extends Pass {
 
     this.aoMaterial.uniforms['size'].value.set(width, height)
     this.aoMaterial.needsUpdate = true
+  }
+
+  private generateSampleKernel(frameIndex: number) {
+    const kernelSize = this.kernelSize
+    this.kernels[frameIndex] = []
+
+    for (let i = 0; i < kernelSize; i++) {
+      const sample = new Vector3()
+      sample.x = Math.random() * 2 - 1
+      sample.y = Math.random() * 2 - 1
+      sample.z = Math.random()
+
+      sample.normalize()
+
+      let scale = i / kernelSize
+      scale = MathUtils.lerp(0.1, 1, scale * scale)
+      sample.multiplyScalar(scale)
+
+      this.kernels[frameIndex].push(sample)
+    }
+  }
+
+  private generateRandomKernelRotations(frameIndex: number) {
+    const width = 4,
+      height = 4
+
+    if (SimplexNoise === undefined) {
+      console.error('THREE.SSAOPass: The pass relies on SimplexNoise.')
+    }
+
+    const simplex = new SimplexNoise()
+
+    const size = width * height
+    const data = new Float32Array(size)
+
+    for (let i = 0; i < size; i++) {
+      const x = Math.random() * 2 - 1
+      const y = Math.random() * 2 - 1
+      const z = 0
+
+      data[i] = simplex.noise3d(x, y, z)
+    }
+
+    this.noiseTextures[frameIndex] = new DataTexture(
+      data,
+      width,
+      height,
+      RedFormat,
+      FloatType
+    )
+    this.noiseTextures[frameIndex].wrapS = RepeatWrapping
+    this.noiseTextures[frameIndex].wrapT = RepeatWrapping
+    this.noiseTextures[frameIndex].needsUpdate = true
   }
 }

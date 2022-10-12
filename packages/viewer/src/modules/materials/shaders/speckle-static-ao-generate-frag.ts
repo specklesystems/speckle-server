@@ -17,6 +17,13 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		uniform float minResolution;
         uniform float frameIndex;
 
+		#define KERNEL_SIZE 16
+		uniform sampler2D tNoise;
+		uniform vec3 kernel[ KERNEL_SIZE ];
+		uniform float minDistance;
+		uniform float maxDistance;
+		uniform float ssaoKernelRadius;
+
         #define NUM_SAMPLES 16
         #define SPIRAL_TURNS 2
         #define NUM_FRAMES 16
@@ -24,8 +31,6 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		#define NORMAL_TEXTURE 0
 		#define IMPROVED_NORMAL_RECONSTRUCTION 0
 		#define ACCURATE_NORMAL_RECONSTRUCTION 1
-
-		#define AO_ESTIMATOR 0
 		
 		// RGBA depth
 		#include <packing>
@@ -35,6 +40,16 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 
 		float getDepth( const in vec2 screenPosition ) {
 			return unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
+		}
+
+		float getLinearDepth( const in vec2 screenPosition ) {
+			#if PERSPECTIVE_CAMERA == 1
+				float fragCoordZ = getDepth(screenPosition);
+				float viewZ = perspectiveDepthToViewZ( fragCoordZ, cameraNear, cameraFar );
+				return viewZToOrthographicDepth( viewZ, cameraNear, cameraFar );
+			#else
+				return texture2D( tDepth, screenPosition ).x;
+			#endif
 		}
 
 		float getViewZ( const in float depth ) {
@@ -194,16 +209,70 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
                     }
                     float sampleViewZ = getViewZ( sampleDepth );
                     vec3 sampleViewPosition = getViewPosition( sampleUv, sampleDepth, sampleViewZ );
-                    vec3 viewDelta = sampleViewPosition - centerViewPosition;
-                    float viewDistance = length( viewDelta );
-                    float scaledScreenDistance = scaleDividedByCameraFar * viewDistance;
-                    occlusionSum += max(0.0, (dot(centerViewNormal, viewDelta) - minResolutionMultipliedByCameraFar) / scaledScreenDistance - bias) / (1.0 + pow2( scaledScreenDistance ) );
+
+					vec3 v = sampleViewPosition - centerViewPosition;
+  
+					float vv = dot(v, v);
+					float vn = dot(v, centerViewNormal);// - uBias;
+					
+					// #if VARIATION == 0
+					
+					// (from the HPG12 paper)
+					// Note large epsilon to avoid overdarkening within cracks
+					float radius2 = 2.;//uSampleRadiusWS * uSampleRadiusWS
+					float epsilon = 0.01;
+					// occlusionSum += float(vv < radius2) * max(vn / (epsilon + vv), 0.0) / 4.;
+					
+					// #elif VARIATION == 1 // default / recommended
+					
+					// Smoother transition to zero (lowers contrast, smoothing out corners). [Recommended]
+					float f = max(radius2 - vv, 0.0) / radius2;
+					occlusionSum += f * f * f * max(vn / (epsilon + vv), 0.0) / 4.;
+					
+					// #elif VARIATION == 2
+					
+					// // Medium contrast (which looks better at high radii), no division.  Note that the 
+					// // contribution still falls off with radius^2, but we've adjusted the rate in a way that is
+					// // more computationally efficient and happens to be aesthetically pleasing.
+					// float invRadius2 = 1.0 / radius2;
+					// return 4.0 * max(1.0 - vv * invRadius2, 0.0) * max(vn, 0.0);
+
+
+
+                    // vec3 viewDelta = sampleViewPosition - centerViewPosition;
+                    // float viewDistance = length( viewDelta );
+                    // float scaledScreenDistance = scaleDividedByCameraFar * viewDistance;
+                    // occlusionSum += max(0.0, (dot(centerViewNormal, viewDelta) - minResolutionMultipliedByCameraFar) / scaledScreenDistance - bias) / (1.0 + pow2( scaledScreenDistance ) );
                     weightSum += 1.0;
                 }
                 if( weightSum == 0.0 ) discard;
                 return occlusionSum * ( intensity / weightSum );
-            #endif
-		}
+			#elif AO_ESTIMATOR == 1
+				vec3 viewPosition = centerViewPosition;
+				vec3 viewNormal = getViewNormal( centerViewPosition, vUv, centerDepth );
+				vec2 noiseScale = vec2( size.x / 4.0, size.y / 4.0 );
+				vec3 random = vec3( texture2D( tNoise, vUv * noiseScale ).r );
+				// compute matrix used to reorient a kernel vector
+				vec3 tangent = normalize( random - viewNormal * dot( random, viewNormal ) );
+				vec3 bitangent = cross( viewNormal, tangent );
+				mat3 kernelMatrix = mat3( tangent, bitangent, viewNormal );
+				float occlusion = 0.0;
+				for ( int i = 0; i < KERNEL_SIZE; i ++ ) {
+					vec3 sampleVector = kernelMatrix * kernel[ i ]; // reorient sample vector in view space
+					vec3 samplePoint = viewPosition + ( sampleVector * ssaoKernelRadius ); // calculate sample point
+					vec4 samplePointNDC = cameraProjectionMatrix * vec4( samplePoint, 1.0 ); // project point and calculate NDC
+					samplePointNDC /= samplePointNDC.w;
+					vec2 samplePointUv = samplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
+					float realDepth = getLinearDepth( samplePointUv ); // get linear depth from depth texture
+					float sampleDepth = viewZToOrthographicDepth( samplePoint.z, cameraNear, cameraFar ); // compute linear depth of the sample view Z value
+					float delta = sampleDepth - realDepth;
+					if ( delta > minDistance && delta < maxDistance ) { // if fragment is before sample point, increase occlusion
+						occlusion += 1.0;
+					}
+				}
+				return clamp( occlusion / float( KERNEL_SIZE ), 0.0, 1.0 );
+			#endif
+			}
 		void main() {
 			float centerDepth = getDepth( vUv );
 			if( centerDepth >= ( 1.0 - EPSILON ) ) {

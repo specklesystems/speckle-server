@@ -17,6 +17,11 @@ export interface PipelineOptions {
   saoParams?: Partial<SAOPassParams>
   saoScaleOffset?: number
   saoNormalsRendering?: NormalsType
+  minDistance?: number
+  maxDistance?: number
+  ssaoKernelRadius?: number
+  progressiveAO?: number
+  progressive?: boolean
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
@@ -33,7 +38,12 @@ export const DefaultPipelineOptions: PipelineOptions = {
     saoBlurDepthCutoff: 0.0007
   },
   saoScaleOffset: 0,
-  saoNormalsRendering: NormalsType.ACCURATE
+  saoNormalsRendering: NormalsType.ACCURATE,
+  minDistance: 0,
+  maxDistance: 0.008,
+  ssaoKernelRadius: 0.5,
+  progressiveAO: 0,
+  progressive: true
 }
 
 export class Pipeline {
@@ -49,6 +59,7 @@ export class Pipeline {
   private _renderType: RenderType = RenderType.NORMAL
   private accumulationFrame = 0
   private readonly NUM_ACCUMULATION_FRAMES = 16
+  private enableProgressive = true
 
   public set pipelineOptions(options: PipelineOptions) {
     Object.assign(this._pipelineOptions, options)
@@ -57,6 +68,43 @@ export class Pipeline {
       Object.assign(this.saoPass.params, this._pipelineOptions.saoParams)
       this.saoPass.params.saoScale += this._pipelineOptions.saoScaleOffset
       this.saoPass.normalsRendering = this._pipelineOptions.saoNormalsRendering
+      if (
+        this.staticAOGenerationPass.minDistance !== this._pipelineOptions.minDistance ||
+        this.staticAOGenerationPass.maxDistance !== this._pipelineOptions.maxDistance
+      )
+        this.accumulationFrame = 0
+      if (
+        this._pipelineOptions.ssaoKernelRadius !== undefined &&
+        this.staticAOGenerationPass.ssaoKernelRadius !==
+          this._pipelineOptions.ssaoKernelRadius
+      ) {
+        this.accumulationFrame = 0
+        this.staticAOGenerationPass.ssaoKernelRadius =
+          this._pipelineOptions.ssaoKernelRadius
+      }
+      if (
+        this._pipelineOptions.progressiveAO !== undefined &&
+        this.staticAOGenerationPass.progressiveAO !==
+          this._pipelineOptions.progressiveAO
+      ) {
+        this.accumulationFrame = 0
+        this.staticAOGenerationPass.progressiveAO = this._pipelineOptions.progressiveAO
+        this.staticAOGenerationPass.aoMaterial.defines['AO_ESTIMATOR'] =
+          this._pipelineOptions.progressiveAO
+        this.staticAOGenerationPass.aoMaterial.needsUpdate = true
+      }
+      this.staticAOGenerationPass.minDistance = this._pipelineOptions.minDistance
+      this.staticAOGenerationPass.maxDistance = this._pipelineOptions.maxDistance
+      if (
+        this._pipelineOptions.saoParams.saoKernelRadius !== undefined &&
+        this.staticAOGenerationPass.kernelRadius !==
+          this._pipelineOptions.saoParams.saoKernelRadius
+      ) {
+        this.accumulationFrame = 0
+        this.staticAOGenerationPass.kernelRadius =
+          this._pipelineOptions.saoParams.saoKernelRadius
+      }
+      this.enableProgressive = this._pipelineOptions.progressive
     }
   }
 
@@ -112,7 +160,7 @@ export class Pipeline {
       this.saoPass.camera = camera
       this.composer.render()
       return true
-    } else {
+    } else if (this.enableProgressive) {
       this._renderer.clear(true)
       this.applySaoPass.setAoTexture(this.staticAOGenerationPass.outputTexture.texture)
       this.renderPass.scene = scene
