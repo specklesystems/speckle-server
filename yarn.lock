@@ -4865,7 +4865,7 @@ __metadata:
     "@types/node": ^17.0.43
     "@typescript-eslint/eslint-plugin": ^5.39.0
     "@typescript-eslint/parser": ^5.39.0
-    "@vitejs/plugin-vue2": ^1.1.2
+    "@vitejs/plugin-vue2": ^2.0.0
     "@vue/apollo-composable": ^4.0.0-alpha.19
     "@vue/apollo-option": ^4.0.0-alpha.20
     "@vue/eslint-config-typescript": ^11.0.1
@@ -6549,13 +6549,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vitejs/plugin-vue2@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "@vitejs/plugin-vue2@npm:1.1.2"
+"@vitejs/plugin-vue2@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@vitejs/plugin-vue2@npm:2.0.0"
   peerDependencies:
-    vite: ">=2.5.10"
+    vite: ^3.0.0
     vue: ^2.7.0-0
-  checksum: a0b4ca94489f7dbb5d8f44f9fed8c6ad094456ec014096157054ed2b2432f56462400882a1639ca695bad2010d341b5b1a43f8b9f54c7a5eb8a399c1174c52ba
+  checksum: c249a601c506b0c2b5f81fdf06257098b55751d8db335ee0211c2976cd6424abc5e472b67688418f42149916d69f059458306ffb0087bace90f9557f39515d32
   languageName: node
   linkType: hard
 
