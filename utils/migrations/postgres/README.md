@@ -4,7 +4,7 @@
 
 Backing up and restoring postgres data stored in our local development docker volumes when upgrading to new postgres versions.
 
-### Using the provided scripts
+### Using the provided scripts (DOESN'T WORK - REMOVE?)
 
 1. Please ensure you are in a bash terminal (linux, including ubuntu for windows, \*nix, or mac), have docker and docker-compose installed.
 
@@ -42,13 +42,14 @@ Backing up and restoring postgres data stored in our local development docker vo
 1. Click `add new server`
 1. In the dialog box in the `General` tab, enter the name `docker-compose` (or any other value that you wish).
 1. In the dialog box in the `Connection` tab:
-   - for the `Host name/addresses` enter `speckle-server-postgres-1` (you can check the container name by running `docker ps -a` in the command line, or viewing the container in the Docker dashboard.)
+   - for the `Host name/addresses` enter `postgres` (its the name of the postgres container in the docker-compose config)
    - for `port`, use `5432` (you can check this is port number used for the `postgres` container in [`./docker-compose-deps.yml`](../../../docker-compose-deps.yml))
    - for `database`, `username`, and `password` use the values in the file assigned to the respective `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` keys. By default the value of these are all `speckle`.
 1. Click `save`
 1. You can now select the database from the browser window (typically found on the left hand side).
 1. Expand `docker-compose` and `databases`, the right-click on the database you wish to backup.
-1. Choose a filename
+1. Choose a filename and start the backup process
+1. Once the backup is done, make sure you click on the "Click to open file location" button and download the backup to your host machine
 1. Stop the docker-compose dependencies with:
 
    ```shell
@@ -63,4 +64,4 @@ Backing up and restoring postgres data stored in our local development docker vo
 
 1. Open pgadmin and connect to the server, using the instructions above.
 1. Right click `databases` from the browser window, and click `create`
-1. Right click the created database and click `restore`, selecting your previously stored backup.
+1. Right click the created database and click `restore`, selecting your previously stored backup. You will need to upload the backup you previously downloaded back into pgadmin first.
