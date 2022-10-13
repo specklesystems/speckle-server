@@ -14,7 +14,7 @@ import { Commit, Object as SpeckleObject } from '@/test/graphql/generated/graphq
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { createCommitByBranchId } from '@/modules/core/services/commits'
-import { Roles } from '@speckle/shared'
+import { Roles, wait } from '@speckle/shared'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createObject } from '@/modules/core/services/objects'
 import { ObjectRecord } from '@/modules/core/helpers/types'
@@ -26,6 +26,8 @@ type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
 type GraphQLClient = ApolloClient<NormalizedCacheObject>
 
 const COMMIT_URL_RGX = /((https?:\/\/)?[\w.]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
+const MAX_CONCURRENT_REQ_COUNT = 50
+const RETRY_DELAY = 1000
 
 const testQuery = gql`
   query CommitDownloadTest {
@@ -246,6 +248,7 @@ const loadObjects = async (
   }
 ) => {
   const objectMap = new Map<string, Promise<ObjectRecord>>()
+  const ongoingRequests = new Set<string>()
   const { parentObjectId, targetStreamId, sourceStreamId, totalChildrenCount } = params
 
   let remainingChildrenCount = totalChildrenCount
@@ -255,6 +258,7 @@ const loadObjects = async (
     if (pendingLoad) return false
 
     const load = async () => {
+      ongoingRequests.add(sourceObjectId)
       const sourceObject = await getObjectMetadata(client, {
         streamId: sourceStreamId,
         objectId: sourceObjectId
@@ -262,13 +266,39 @@ const loadObjects = async (
       const newObj = await createNewObject(sourceObject, targetStreamId)
 
       cliDebug(
-        `Importing an object. Remaining: ${--remainingChildrenCount}/${totalChildrenCount}`
+        `Imported object ${sourceObjectId}. Remaining: ${--remainingChildrenCount}/${totalChildrenCount}`
       )
+      ongoingRequests.delete(sourceObjectId)
 
       return newObj
     }
 
-    const result = load()
+    const retryableWaitableLoad = async (
+      remainingRetries = 5
+    ): Promise<ObjectRecord> => {
+      if (remainingRetries <= 0) {
+        throw new Error(`All retries for loading ${sourceObjectId} failed!`)
+      }
+
+      if (ongoingRequests.size >= MAX_CONCURRENT_REQ_COUNT) {
+        cliDebug(
+          `Import of ${sourceObjectId} can't be queued due to req amount. Retrying (${remainingRetries})`
+        )
+        await wait(RETRY_DELAY)
+        return retryableWaitableLoad(--remainingRetries)
+      }
+
+      try {
+        return load()
+      } catch (e) {
+        cliDebug(
+          `Import of ${sourceObjectId} failed - ${e}. Retrying (${remainingRetries})`
+        )
+        return retryableWaitableLoad(--remainingRetries)
+      }
+    }
+
+    const result = retryableWaitableLoad()
     objectMap.set(sourceObjectId, result)
     return result
   }
