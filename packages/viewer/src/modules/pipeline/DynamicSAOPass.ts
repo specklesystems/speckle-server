@@ -17,7 +17,7 @@ import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
 import { DepthLimitedBlurShader } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
-import { SpecklePass } from './Pipeline'
+import { InputDepthTextureUniform, SpecklePass } from './SpecklePass'
 
 export enum NormalsType {
   DEFAULT = 0,
@@ -49,12 +49,8 @@ export const DefaultSpeckleDynamicSAOPassParams = {
   blurDepthCutoff: 0.0007
 }
 
-/**
- * SAO implementation inspired from bhouston previous SAO work
- */
-
-export class SpeckleDynamicSAOPass extends Pass implements SpecklePass {
-  private params: SpeckleDynamicSAOPassParams
+export class DynamicSAOPass extends Pass implements SpecklePass {
+  private params: SpeckleDynamicSAOPassParams = DefaultSpeckleDynamicSAOPassParams
   private colorBuffer: Color = new Color()
   private saoMaterial: ShaderMaterial = null
   private vBlurMaterial: ShaderMaterial = null
@@ -66,32 +62,22 @@ export class SpeckleDynamicSAOPass extends Pass implements SpecklePass {
   private prevStdDev: number
   private prevNumSamples: number
 
-  get displayName(): string {
+  public get displayName(): string {
     return 'SAO'
   }
 
-  get outputTexture(): Texture {
+  public get outputTexture(): Texture {
     return this.saoRenderTarget.texture
   }
 
-  public setDepthTexture(texture: Texture) {
-    this.saoMaterial.uniforms['tDepth'].value = texture
-    this.vBlurMaterial.uniforms['tDepth'].value = texture
-    this.hBlurMaterial.uniforms['tDepth'].value = texture
-    this.saoMaterial.needsUpdate = true
-    this.vBlurMaterial.needsUpdate = true
-    this.hBlurMaterial.needsUpdate = true
+  public set outputReconstructedNormals(value: boolean) {
+    if (value) this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] = ''
+    else delete this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS']
   }
 
   constructor() {
     super()
 
-    // this.normalRenderTarget.depthBuffer = true
-    // this.normalRenderTarget.stencilBuffer = true
-
-    // this.normalMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
-    // this.normalMaterial.blending = NoBlending
-    // this.normalMaterial.side = DoubleSide
     this.saoRenderTarget = new WebGLRenderTarget(256, 256)
     this.blurIntermediateRenderTarget = new WebGLRenderTarget(256, 256)
     this.saoMaterial = new ShaderMaterial({
@@ -145,7 +131,21 @@ export class SpeckleDynamicSAOPass extends Pass implements SpecklePass {
     this.fsQuad = new FullScreenQuad(this.saoMaterial)
   }
 
+  public setParams(params: unknown) {
+    Object.assign(this.params, params)
+  }
+
+  public setTexture(uName: InputDepthTextureUniform, texture: Texture) {
+    this.saoMaterial.uniforms['tDepth'].value = texture
+    this.vBlurMaterial.uniforms['tDepth'].value = texture
+    this.hBlurMaterial.uniforms['tDepth'].value = texture
+    this.saoMaterial.needsUpdate = true
+    this.vBlurMaterial.needsUpdate = true
+    this.hBlurMaterial.needsUpdate = true
+  }
+
   public update(scene: Scene, camera: Camera) {
+    this.params.scale = (camera as PerspectiveCamera | OrthographicCamera).far
     /** SAO DEFINES */
     this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
@@ -235,15 +235,9 @@ export class SpeckleDynamicSAOPass extends Pass implements SpecklePass {
     this.hBlurMaterial.needsUpdate = true
   }
 
-  public render(renderer, writeBuffer, readBuffer) {
-    writeBuffer
-    readBuffer
-
-    // const restoreVisibility = this.batcher.saveVisiblity()
-    // const opaque = this.batcher.getOpaque()
-    // this.batcher.applyVisibility(opaque)
-    // this.batcher.applyVisibility(restoreVisibility)
-
+  public render(renderer) {
+    const outputNormals =
+      this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] !== undefined
     // Rendering SAO texture
     renderer.getClearColor(this.colorBuffer)
     const originalClearAlpha = renderer.getClearAlpha()
@@ -259,7 +253,7 @@ export class SpeckleDynamicSAOPass extends Pass implements SpecklePass {
     this.fsQuad.material = this.saoMaterial
     this.fsQuad.render(renderer)
 
-    if (this.params.blurEnabled) {
+    if (this.params.blurEnabled && !outputNormals) {
       renderer.setRenderTarget(this.blurIntermediateRenderTarget)
       renderer.setClearColor(0xffffff)
       renderer.setClearAlpha(1.0)

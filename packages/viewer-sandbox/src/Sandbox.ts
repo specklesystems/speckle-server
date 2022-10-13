@@ -30,26 +30,20 @@ export default class Sandbox {
     tonemapping: 4 //'ACESFilmicToneMapping'
   }
 
-  public static postParams = {
-    saoEnabled: true,
-    saoParams: {
-      saoBias: 0.15,
-      saoIntensity: 1.25,
-      saoScale: 434,
-      saoKernelRadius: 15,
-      saoMinResolution: 0,
-      saoBlur: true,
-      saoBlurRadius: 4,
-      saoBlurStdDev: 4,
-      saoBlurDepthCutoff: 0.0007
-    },
-    saoScaleOffset: 0,
-    saoNormalsRendering: 2,
-    minDistance: 0.0,
-    maxDistance: 0.008,
-    ssaoKernelRadius: 0.5,
-    progressiveAO: 0,
-    progressive: true
+  public static pipelineParams = {
+    pipelineOutput: 8,
+    dynamicAoEnabled: true,
+    dynamicAoParams: {
+      intensity: 1.25,
+      scale: 0,
+      kernelRadius: 10,
+      bias: 0.15,
+      normalsType: 2,
+      blurEnabled: true,
+      blurRadius: 4,
+      blurStdDev: 4,
+      blurDepthCutoff: 0.0007
+    }
   }
 
   public static lightParams: SunLightConfiguration = {
@@ -343,33 +337,88 @@ export default class Sandbox {
         this.viewer.getRenderer().renderer.toneMapping = Sandbox.sceneParams.tonemapping
         this.viewer.requestRender()
       })
-    postFolder
-      .addInput(Sandbox.postParams, 'saoEnabled', { label: 'SAO-ENABLED' })
+
+    const pipelineFolder = this.tabs.pages[1].addFolder({
+      title: 'Pipeline',
+      expanded: true
+    })
+    pipelineFolder
+      .addInput(Sandbox.pipelineParams, 'pipelineOutput', {
+        options: {
+          DEPTH_RGBA: 0,
+          DEPTH: 1,
+          COLOR: 2,
+          GEOMETRY_NORMALS: 3,
+          RECONSTRUCTED_NORMALS: 4,
+          DYNAMIC_AO: 5,
+          DYNAMIC_AO_BLURED: 6,
+          PROGRESSIVE_AO: 7,
+          FINAL: 8
+        }
+      })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
         this.viewer.requestRender()
       })
-    postFolder
-      .addInput(Sandbox.postParams.saoParams, 'saoBias', {
-        min: -1,
-        max: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
-    postFolder
-      .addInput(Sandbox.postParams.saoParams, 'saoIntensity', {
-        min: 0,
-        max: 5
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
+    // postFolder
+    //   .addInput(Sandbox.postParams, 'saoEnabled', { label: 'SAO-ENABLED' })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoBias', {
+    //     min: -1,
+    //     max: 1
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoIntensity', {
+    //     min: 0,
+    //     max: 5
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // // postFolder
+    // //   .addInput(Sandbox.postParams.saoParams, 'saoScale', {
+    // //     min: 0,
+    // //     max: 100
+    // //   })
+    // //   .on('change', () => {
+    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    // //     this.viewer.requestRender()
+    // //   })
+    // postFolder
+    //   .addInput(Sandbox.postParams, 'saoScaleOffset', {
+    //     min: -100,
+    //     max: 100
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
 
     // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoScale', {
+    //   .addInput(Sandbox.postParams, 'saoNormalsRendering', {
+    //     options: {
+    //       DEFAULT: 0,
+    //       ADVANCED: 1,
+    //       ACCURATE: 2
+    //     }
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoKernelRadius', {
     //     min: 0,
     //     max: 100
     //   })
@@ -377,97 +426,65 @@ export default class Sandbox {
     //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
     //     this.viewer.requestRender()
     //   })
-    postFolder
-      .addInput(Sandbox.postParams, 'saoScaleOffset', {
-        min: -100,
-        max: 100
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
 
-    postFolder
-      .addInput(Sandbox.postParams, 'saoNormalsRendering', {
-        options: {
-          DEFAULT: 0,
-          ADVANCED: 1,
-          ACCURATE: 2
-        }
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
-
-    postFolder
-      .addInput(Sandbox.postParams.saoParams, 'saoKernelRadius', {
-        min: 0,
-        max: 100
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
+    // // postFolder
+    // //   .addInput(Sandbox.postParams.saoParams, 'saoMinResolution', {
+    // //     min: 0,
+    // //     max: 1
+    // //   })
+    // //   .on('change', () => {
+    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    // //     this.viewer.requestRender()
+    // //   })
 
     // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoMinResolution', {
-    //     min: 0,
-    //     max: 1
-    //   })
+    //   .addInput(Sandbox.postParams.saoParams, 'saoBlur', {})
     //   .on('change', () => {
     //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
     //     this.viewer.requestRender()
     //   })
 
-    postFolder
-      .addInput(Sandbox.postParams.saoParams, 'saoBlur', {})
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
+    // postFolder
+    //   .addInput(Sandbox.postParams.saoParams, 'saoBlurRadius', { min: 0, max: 10 })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
 
-    postFolder
-      .addInput(Sandbox.postParams.saoParams, 'saoBlurRadius', { min: 0, max: 10 })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
+    // postFolder
+    //   .addInput(Sandbox.postParams, 'minDistance', { min: 0, max: 100, step: 0.000001 })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
 
-    postFolder
-      .addInput(Sandbox.postParams, 'minDistance', { min: 0, max: 100, step: 0.000001 })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
-
-    postFolder
-      .addInput(Sandbox.postParams, 'maxDistance', { min: 0, max: 100, step: 0.000001 })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
-    postFolder
-      .addInput(Sandbox.postParams, 'ssaoKernelRadius', { min: 0, max: 100 })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
-    postFolder.addInput(Sandbox.postParams, 'progressive', {}).on('change', () => {
-      this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-      this.viewer.requestRender()
-    })
-    postFolder
-      .addInput(Sandbox.postParams, 'progressiveAO', {
-        options: {
-          SAO: 0,
-          SSAO: 1
-        }
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-        this.viewer.requestRender()
-      })
+    // postFolder
+    //   .addInput(Sandbox.postParams, 'maxDistance', { min: 0, max: 100, step: 0.000001 })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+    // postFolder
+    //   .addInput(Sandbox.postParams, 'ssaoKernelRadius', { min: 0, max: 100 })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
+    // postFolder.addInput(Sandbox.postParams, 'progressive', {}).on('change', () => {
+    //   this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //   this.viewer.requestRender()
+    // })
+    // postFolder
+    //   .addInput(Sandbox.postParams, 'progressiveAO', {
+    //     options: {
+    //       SAO: 0,
+    //       SSAO: 1
+    //     }
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.requestRender()
+    //   })
 
     // postFolder
     //   .addInput(Sandbox.postParams.saoParams, 'saoBlurStdDev', {

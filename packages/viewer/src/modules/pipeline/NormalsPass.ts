@@ -4,18 +4,17 @@ import {
   DoubleSide,
   NoBlending,
   Plane,
-  RGBADepthPacking,
   Scene,
   Texture,
   WebGLRenderTarget
 } from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
+import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
 import { SpecklePass } from './SpecklePass'
 
-export class DepthPass extends Pass implements SpecklePass {
+export class NormalsPass extends Pass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
-  private depthMaterial: SpeckleDepthMaterial = null
+  private normalsMaterial: SpeckleNormalMaterial = null
   private scene: Scene
   private camera: Camera
 
@@ -25,7 +24,7 @@ export class DepthPass extends Pass implements SpecklePass {
   public onAfterRender: () => void = null
 
   get displayName(): string {
-    return 'DEPTH'
+    return 'GEOMETRY-NORMALS'
   }
 
   get outputTexture(): Texture {
@@ -43,18 +42,13 @@ export class DepthPass extends Pass implements SpecklePass {
     this.renderTarget.depthBuffer = true
     this.renderTarget.stencilBuffer = true
 
-    this.depthMaterial = new SpeckleDepthMaterial(
-      {
-        depthPacking: RGBADepthPacking
-      },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
-    )
-    this.depthMaterial.blending = NoBlending
-    this.depthMaterial.side = DoubleSide
+    this.normalsMaterial = new SpeckleNormalMaterial({}, ['USE_RTE'])
+    this.normalsMaterial.blending = NoBlending
+    this.normalsMaterial.side = DoubleSide
   }
 
   public setClippingPlanes(planes: Plane[]) {
-    this.depthMaterial.clippingPlanes = planes
+    this.normalsMaterial.clippingPlanes = planes
   }
 
   public update(scene: Scene, camera: Camera) {
@@ -80,7 +74,7 @@ export class DepthPass extends Pass implements SpecklePass {
 
     const shadowmapEnabled = renderer.shadowMap.enabled
     const shadowmapNeedsUpdate = renderer.shadowMap.needsUpdate
-    this.scene.overrideMaterial = this.depthMaterial
+    this.scene.overrideMaterial = this.normalsMaterial
     renderer.shadowMap.enabled = false
     renderer.shadowMap.needsUpdate = false
     renderer.render(this.scene, this.camera)

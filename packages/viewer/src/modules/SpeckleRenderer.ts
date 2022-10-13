@@ -50,7 +50,7 @@ import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pi
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
-  public scene: Scene
+  public _scene: Scene
   private rootGroup: Group
   private batcher: Batcher
   private intersections: Intersections
@@ -62,19 +62,12 @@ export default class SpeckleRenderer {
   private filterBatchRecording: string[]
   private pipeline: Pipeline
 
-  private lastAzimuth: number
-  private lastPolar: number
-  private lastDistance: number
-  private lastTarget: Vector3 = new Vector3()
-  private lasMaxCameraMotion: number
-  private readonly CAMERA_MOTION_EPSILON: number = 0.0001
-
   public get renderer(): WebGLRenderer {
     return this._renderer
   }
 
   public set indirectIBL(texture: Texture) {
-    this.scene.environment = texture
+    this._scene.environment = texture
   }
 
   public set indirectIBLIntensity(value: number) {
@@ -92,11 +85,11 @@ export default class SpeckleRenderer {
 
   /** TEMPORARY for backwards compatibility */
   public get allObjects() {
-    return this.scene.getObjectByName('ContentGroup')
+    return this._scene.getObjectByName('ContentGroup')
   }
 
   public subtree(subtreeId: string) {
-    return this.scene.getObjectByName(subtreeId)
+    return this._scene.getObjectByName(subtreeId)
   }
 
   public get sceneBox() {
@@ -115,15 +108,23 @@ export default class SpeckleRenderer {
     return this.sun
   }
 
+  public get camera() {
+    return this.viewer.cameraHandler.activeCam.camera
+  }
+
+  public get scene() {
+    return this._scene
+  }
+
   public set pipelineOptions(value: PipelineOptions) {
     this.pipeline.pipelineOptions = value
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
-    this.scene = new Scene()
+    this._scene = new Scene()
     this.rootGroup = new Group()
     this.rootGroup.name = 'ContentGroup'
-    this.scene.add(this.rootGroup)
+    this._scene.add(this.rootGroup)
 
     this.batcher = new Batcher()
     this.intersections = new Intersections()
@@ -151,7 +152,7 @@ export default class SpeckleRenderer {
     container.appendChild(this._renderer.domElement)
 
     this.pipeline = new Pipeline(this._renderer, this.batcher)
-    this.pipeline.configure(this.scene, this.viewer.cameraHandler.activeCam.camera)
+    this.pipeline.configure(this._scene, this.viewer.cameraHandler.activeCam.camera)
     this.pipeline.pipelineOptions = DefaultPipelineOptions
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
@@ -163,7 +164,7 @@ export default class SpeckleRenderer {
     if (this.SHOW_HELPERS) {
       const helpers = new Group()
       helpers.name = 'Helpers'
-      this.scene.add(helpers)
+      this._scene.add(helpers)
 
       const sceneBoxHelper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
       sceneBoxHelper.name = 'SceneBoxHelper'
@@ -287,7 +288,8 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
-    this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
+
+    this.pipeline.update(this)
 
     // const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
     // const currentPolar = this.viewer.cameraHandler.controls.polarAngle
@@ -321,8 +323,9 @@ export default class SpeckleRenderer {
   }
 
   public render(camera: Camera): boolean {
+    camera
     this.batcher.render(this.renderer)
-    const needsRender = this.pipeline.render(this.scene, camera)
+    const needsRender = this.pipeline.render()
     return needsRender
     // this.renderer.render(this.scene, camera)
   }
@@ -431,7 +434,7 @@ export default class SpeckleRenderer {
   private addDirectLights() {
     this.sun = new DirectionalLight(0xffffff, 5)
     this.sun.name = 'sun'
-    this.scene.add(this.sun)
+    this._scene.add(this.sun)
 
     this.sun.castShadow = true
 
@@ -450,7 +453,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.radius = 2
 
     this.sunTarget = new Object3D()
-    this.scene.add(this.sunTarget)
+    this._scene.add(this.sunTarget)
     this.sunTarget.position.copy(this.sceneCenter)
     this.sun.target = this.sunTarget
   }
@@ -529,12 +532,14 @@ export default class SpeckleRenderer {
 
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
-      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
       // Thank you prettier, this looks so much better
-      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+      ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
         this.sceneBox
       )
-      ;(this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
+      ;(
+        this._scene.getObjectByName('DirLightHelper') as DirectionalLightHelper
+      ).update()
     }
   }
 
@@ -575,7 +580,7 @@ export default class SpeckleRenderer {
 
   private onObjectClick(e) {
     const results: Array<Intersection> = this.intersections.intersect(
-      this.scene,
+      this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
@@ -614,7 +619,7 @@ export default class SpeckleRenderer {
 
   private onObjectDoubleClick(e) {
     const results: Array<Intersection> = this.intersections.intersect(
-      this.scene,
+      this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
@@ -899,7 +904,7 @@ export default class SpeckleRenderer {
   /** DEBUG */
   public onObjectClickDebug(e) {
     const results: Array<Intersection> = this.intersections.intersect(
-      this.scene,
+      this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,

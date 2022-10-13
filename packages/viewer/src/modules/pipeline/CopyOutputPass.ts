@@ -1,43 +1,34 @@
-import {
-  AddEquation,
-  CustomBlending,
-  DstAlphaFactor,
-  DstColorFactor,
-  NoBlending,
-  ShaderMaterial,
-  Texture,
-  UniformsUtils,
-  ZeroFactor
-} from 'three'
+import { NoBlending, ShaderMaterial, Texture, UniformsUtils } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
+import { speckleCopyOutputFrag } from '../materials/shaders/speckle-copy-output-frag'
+import { speckleCopyOutputVert } from '../materials/shaders/speckle-copy-output-vert'
+import { PipelineOutputType } from './Pipeline'
 import { InputColorTextureUniform, SpecklePass } from './SpecklePass'
 
-export class ApplySAOPass extends Pass implements SpecklePass {
+export class CopyOutputPass extends Pass implements SpecklePass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
 
   constructor() {
     super()
     this.materialCopy = new ShaderMaterial({
+      defines: {
+        INPUT_TYPE: 0
+      },
       uniforms: UniformsUtils.clone(CopyShader.uniforms),
-      vertexShader: CopyShader.vertexShader,
-      fragmentShader: CopyShader.fragmentShader,
+      vertexShader: speckleCopyOutputVert,
+      fragmentShader: speckleCopyOutputFrag,
       blending: NoBlending
     })
-    this.materialCopy.transparent = true
-    this.materialCopy.depthTest = false
-    this.materialCopy.depthWrite = false
-    this.materialCopy.blending = CustomBlending
-    this.materialCopy.blendSrc = DstColorFactor
-    this.materialCopy.blendDst = ZeroFactor
-    this.materialCopy.blendEquation = AddEquation
-    this.materialCopy.blendSrcAlpha = DstAlphaFactor
-    this.materialCopy.blendDstAlpha = ZeroFactor
-    this.materialCopy.blendEquationAlpha = AddEquation
 
     this.materialCopy.needsUpdate = true
     this.fsQuad = new FullScreenQuad(this.materialCopy)
+  }
+
+  public setOutputType(type: PipelineOutputType) {
+    this.materialCopy.defines['OUTPUT_TYPE'] = type
+    this.materialCopy.needsUpdate = true
   }
 
   public setTexture(uName: InputColorTextureUniform, texture: Texture) {
@@ -46,15 +37,11 @@ export class ApplySAOPass extends Pass implements SpecklePass {
   }
 
   get displayName(): string {
-    return 'APPLYSAO'
+    return 'COPY-OUTPUT'
   }
 
   get outputTexture(): Texture {
     return null
-  }
-
-  setParams(params: unknown) {
-    params
   }
 
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {
