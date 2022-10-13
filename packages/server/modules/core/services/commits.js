@@ -43,6 +43,9 @@ const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
 }
 
 module.exports = {
+  /**
+   * @returns {Promise<string>}
+   */
   async createCommitByBranchId({
     streamId,
     branchId,

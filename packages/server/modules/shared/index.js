@@ -13,6 +13,12 @@ const StreamPubsubEvents = Object.freeze({
   StreamDeleted: 'STREAM_DELETED'
 })
 
+const CommitPubsubEvents = Object.freeze({
+  CommitCreated: 'COMMIT_CREATED',
+  CommitUpdated: 'COMMIT_UPDATED',
+  CommitDeleted: 'COMMIT_DELETED'
+})
+
 /**
  * GraphQL Subscription PubSub instance
  */
@@ -210,5 +216,6 @@ module.exports = {
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents
+  StreamPubsubEvents,
+  CommitPubsubEvents
 }
