@@ -50,9 +50,6 @@ const commitMetadataQuery = gql`
   }
 `
 
-/**
- * TODO: can't resolve totalChildrenCountByDepth - is that ok?
- */
 const objectMetadataQuery = gql`
   query CommitDownloadObjectMetadata($streamId: String!, $objectId: String!) {
     stream(id: $streamId) {
@@ -318,91 +315,6 @@ const loadAllObjectsFromParent = async (
     queuableObjectIds = await downloadParentChildren(firstSetOfChildrenIds, jobId++)
   }
 }
-
-// const loadObjects = async (
-//   client: GraphQLClient,
-//   params: {
-//     newCommitId: string
-//     targetStreamId: string
-//     parentObjectId: string
-//     sourceStreamId: string
-//     totalChildrenCount: number
-//   }
-// ) => {
-//   const objectMap = new Map<string, Promise<ObjectRecord>>()
-//   const ongoingRequests = new Set<string>()
-//   const { parentObjectId, targetStreamId, sourceStreamId, totalChildrenCount } = params
-
-//   let remainingChildrenCount = totalChildrenCount
-
-//   const loadObject = async (sourceObjectId: string) => {
-//     const pendingLoad = objectMap.get(sourceObjectId)
-//     if (pendingLoad) return false
-
-//     const load = async () => {
-//       ongoingRequests.add(sourceObjectId)
-//       const sourceObject = await getObjectMetadata(client, {
-//         streamId: sourceStreamId,
-//         objectId: sourceObjectId
-//       })
-//       const newObj = await createNewObject(sourceObject, targetStreamId)
-
-//       cliDebug(
-//         `Imported object ${sourceObjectId}. Remaining: ${--remainingChildrenCount}/${totalChildrenCount}`
-//       )
-//       ongoingRequests.delete(sourceObjectId)
-
-//       return newObj
-//     }
-
-//     const retryableWaitableLoad = async (
-//       remainingRetries = 5
-//     ): Promise<ObjectRecord> => {
-//       if (remainingRetries <= 0) {
-//         throw new Error(`All retries for loading ${sourceObjectId} failed!`)
-//       }
-
-//       if (ongoingRequests.size >= MAX_CONCURRENT_REQ_COUNT) {
-//         cliDebug(
-//           `Import of ${sourceObjectId} can't be queued due to req amount. Retrying (${remainingRetries})`
-//         )
-//         await wait(RETRY_DELAY)
-//         return retryableWaitableLoad(--remainingRetries)
-//       }
-
-//       try {
-//         return load()
-//       } catch (e) {
-//         cliDebug(
-//           `Import of ${sourceObjectId} failed - ${e}. Retrying (${remainingRetries})`
-//         )
-//         return retryableWaitableLoad(--remainingRetries)
-//       }
-//     }
-
-//     const result = retryableWaitableLoad()
-//     objectMap.set(sourceObjectId, result)
-//     return result
-//   }
-
-//   const recursivelyLoadObjects = async (sourceObjectId: string) => {
-//     // Load first object - the parent one
-//     const topLevelObject = await loadObject(sourceObjectId)
-//     if (topLevelObject === false) {
-//       // Object's already being processed
-//       return
-//     }
-
-//     const childrenIds = getObjectChildrenIds(topLevelObject)
-
-//     // Load all children
-//     for (const childObjectId of childrenIds) {
-//       await recursivelyLoadObjects(childObjectId)
-//     }
-//   }
-
-//   await recursivelyLoadObjects(parentObjectId)
-// }
 
 const command: CommandModule<
   unknown,
