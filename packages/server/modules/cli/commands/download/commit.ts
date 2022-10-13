@@ -9,16 +9,16 @@ import {
 } from '@apollo/client/core'
 import { cliDebug } from '@/modules/shared/utils/logger'
 import { CommandModule } from 'yargs'
-import { getServerVersion } from '@/modules/shared/helpers/envHelper'
+import { getBaseUrl, getServerVersion } from '@/modules/shared/helpers/envHelper'
 import { Commit, Object as SpeckleObject } from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { createCommitByBranchId } from '@/modules/core/services/commits'
-import { Roles, wait } from '@speckle/shared'
+import { Roles, batchAsyncOperations } from '@speckle/shared'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createObject } from '@/modules/core/services/objects'
 import { ObjectRecord } from '@/modules/core/helpers/types'
-import { uniq } from 'lodash'
+import { difference, uniq } from 'lodash'
 import { getObject } from '@/modules/core/repositories/objects'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
@@ -26,8 +26,6 @@ type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
 type GraphQLClient = ApolloClient<NormalizedCacheObject>
 
 const COMMIT_URL_RGX = /((https?:\/\/)?[\w.]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
-const MAX_CONCURRENT_REQ_COUNT = 50
-const RETRY_DELAY = 1000
 
 const testQuery = gql`
   query CommitDownloadTest {
@@ -237,7 +235,20 @@ const getObjectChildrenIds = (obj: ObjectRecord) => {
   return uniq(Object.keys(__closure || {}))
 }
 
-const loadObjects = async (
+const downloadObject = async (
+  client: GraphQLClient,
+  params: { sourceStreamId: string; objectId: string; targetStreamId: string }
+) => {
+  const { sourceStreamId, objectId, targetStreamId } = params
+
+  const sourceObject = await getObjectMetadata(client, {
+    streamId: sourceStreamId,
+    objectId
+  })
+  return await createNewObject(sourceObject, targetStreamId)
+}
+
+const loadAllObjectsFromParent = async (
   client: GraphQLClient,
   params: {
     newCommitId: string
@@ -247,80 +258,151 @@ const loadObjects = async (
     totalChildrenCount: number
   }
 ) => {
-  const objectMap = new Map<string, Promise<ObjectRecord>>()
-  const ongoingRequests = new Set<string>()
   const { parentObjectId, targetStreamId, sourceStreamId, totalChildrenCount } = params
 
-  let remainingChildrenCount = totalChildrenCount
+  // Download parent and collect the first set of children
+  const parentObject = await downloadObject(client, {
+    sourceStreamId,
+    objectId: parentObjectId,
+    targetStreamId
+  })
+  const firstSetOfChildrenIds = getObjectChildrenIds(parentObject)
 
-  const loadObject = async (sourceObjectId: string) => {
-    const pendingLoad = objectMap.get(sourceObjectId)
-    if (pendingLoad) return false
+  let traversedObjectIds: string[] = []
 
-    const load = async () => {
-      ongoingRequests.add(sourceObjectId)
-      const sourceObject = await getObjectMetadata(client, {
-        streamId: sourceStreamId,
-        objectId: sourceObjectId
-      })
-      const newObj = await createNewObject(sourceObject, targetStreamId)
+  /**
+   * Download all children objects in a batched manner and return newly discovered object IDs
+   * that will need to be downloaded
+   */
+  const downloadParentChildren = async (newObjectIds: string[], jobId: number) => {
+    const uniqueNewObjectIds = difference(newObjectIds, traversedObjectIds)
+    if (!uniqueNewObjectIds.length) return [] // no more work here
 
-      cliDebug(
-        `Imported object ${sourceObjectId}. Remaining: ${--remainingChildrenCount}/${totalChildrenCount}`
-      )
-      ongoingRequests.delete(sourceObjectId)
+    // Mark object ids as traversed
+    traversedObjectIds = uniq(traversedObjectIds.concat(uniqueNewObjectIds))
 
-      return newObj
-    }
+    let newlyDiscoveredObjectIds: string[] = []
+    await batchAsyncOperations(
+      `Loading ${newObjectIds.length} children objects <Job #${jobId + 1}>`,
+      newObjectIds,
+      async (oid) => {
+        const dowloadedChild = await downloadObject(client, {
+          sourceStreamId,
+          objectId: oid,
+          targetStreamId
+        })
 
-    const retryableWaitableLoad = async (
-      remainingRetries = 5
-    ): Promise<ObjectRecord> => {
-      if (remainingRetries <= 0) {
-        throw new Error(`All retries for loading ${sourceObjectId} failed!`)
+        // Find new object IDs to load
+        const newChildrenIds = getObjectChildrenIds(dowloadedChild)
+        const newUniqueChildrenIds = difference(newChildrenIds, traversedObjectIds)
+        if (newUniqueChildrenIds.length) {
+          newlyDiscoveredObjectIds =
+            newlyDiscoveredObjectIds.concat(newUniqueChildrenIds)
+        }
+      },
+      {
+        logger: cliDebug,
+        dropReturns: true
       }
+    )
 
-      if (ongoingRequests.size >= MAX_CONCURRENT_REQ_COUNT) {
-        cliDebug(
-          `Import of ${sourceObjectId} can't be queued due to req amount. Retrying (${remainingRetries})`
-        )
-        await wait(RETRY_DELAY)
-        return retryableWaitableLoad(--remainingRetries)
-      }
-
-      try {
-        return load()
-      } catch (e) {
-        cliDebug(
-          `Import of ${sourceObjectId} failed - ${e}. Retrying (${remainingRetries})`
-        )
-        return retryableWaitableLoad(--remainingRetries)
-      }
-    }
-
-    const result = retryableWaitableLoad()
-    objectMap.set(sourceObjectId, result)
-    return result
+    return newlyDiscoveredObjectIds
   }
 
-  const recursivelyLoadObjects = async (sourceObjectId: string) => {
-    // Load first object - the parent one
-    const topLevelObject = await loadObject(sourceObjectId)
-    if (topLevelObject === false) {
-      // Object's already being processed
-      return
-    }
+  let jobId = 0
+  let queuableObjectIds: string[] = firstSetOfChildrenIds
+  let remainingItemCount = totalChildrenCount
 
-    const childrenIds = getObjectChildrenIds(topLevelObject)
-
-    // Load all children
-    for (const childObjectId of childrenIds) {
-      await recursivelyLoadObjects(childObjectId)
-    }
+  while (queuableObjectIds.length && remainingItemCount > 0) {
+    remainingItemCount -= queuableObjectIds.length
+    queuableObjectIds = await downloadParentChildren(firstSetOfChildrenIds, jobId++)
   }
-
-  await recursivelyLoadObjects(parentObjectId)
 }
+
+// const loadObjects = async (
+//   client: GraphQLClient,
+//   params: {
+//     newCommitId: string
+//     targetStreamId: string
+//     parentObjectId: string
+//     sourceStreamId: string
+//     totalChildrenCount: number
+//   }
+// ) => {
+//   const objectMap = new Map<string, Promise<ObjectRecord>>()
+//   const ongoingRequests = new Set<string>()
+//   const { parentObjectId, targetStreamId, sourceStreamId, totalChildrenCount } = params
+
+//   let remainingChildrenCount = totalChildrenCount
+
+//   const loadObject = async (sourceObjectId: string) => {
+//     const pendingLoad = objectMap.get(sourceObjectId)
+//     if (pendingLoad) return false
+
+//     const load = async () => {
+//       ongoingRequests.add(sourceObjectId)
+//       const sourceObject = await getObjectMetadata(client, {
+//         streamId: sourceStreamId,
+//         objectId: sourceObjectId
+//       })
+//       const newObj = await createNewObject(sourceObject, targetStreamId)
+
+//       cliDebug(
+//         `Imported object ${sourceObjectId}. Remaining: ${--remainingChildrenCount}/${totalChildrenCount}`
+//       )
+//       ongoingRequests.delete(sourceObjectId)
+
+//       return newObj
+//     }
+
+//     const retryableWaitableLoad = async (
+//       remainingRetries = 5
+//     ): Promise<ObjectRecord> => {
+//       if (remainingRetries <= 0) {
+//         throw new Error(`All retries for loading ${sourceObjectId} failed!`)
+//       }
+
+//       if (ongoingRequests.size >= MAX_CONCURRENT_REQ_COUNT) {
+//         cliDebug(
+//           `Import of ${sourceObjectId} can't be queued due to req amount. Retrying (${remainingRetries})`
+//         )
+//         await wait(RETRY_DELAY)
+//         return retryableWaitableLoad(--remainingRetries)
+//       }
+
+//       try {
+//         return load()
+//       } catch (e) {
+//         cliDebug(
+//           `Import of ${sourceObjectId} failed - ${e}. Retrying (${remainingRetries})`
+//         )
+//         return retryableWaitableLoad(--remainingRetries)
+//       }
+//     }
+
+//     const result = retryableWaitableLoad()
+//     objectMap.set(sourceObjectId, result)
+//     return result
+//   }
+
+//   const recursivelyLoadObjects = async (sourceObjectId: string) => {
+//     // Load first object - the parent one
+//     const topLevelObject = await loadObject(sourceObjectId)
+//     if (topLevelObject === false) {
+//       // Object's already being processed
+//       return
+//     }
+
+//     const childrenIds = getObjectChildrenIds(topLevelObject)
+
+//     // Load all children
+//     for (const childObjectId of childrenIds) {
+//       await recursivelyLoadObjects(childObjectId)
+//     }
+//   }
+
+//   await recursivelyLoadObjects(parentObjectId)
+// }
 
 const command: CommandModule<
   unknown,
@@ -364,13 +446,16 @@ const command: CommandModule<
     cliDebug(`Created new local commit: ${newCommitId}`)
 
     cliDebug(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
-    await loadObjects(client, {
+    await loadAllObjectsFromParent(client, {
       newCommitId,
       targetStreamId,
       parentObjectId: commit.referencedObject,
       sourceStreamId: parsedCommitUrl.streamId,
       totalChildrenCount: commit.totalChildrenCount || 0
     })
+
+    const linkToNewCommit = `${getBaseUrl()}/streams/${targetStreamId}/commits/${newCommitId}`
+    cliDebug(`All done! Find your commit here: ${linkToNewCommit}`)
   }
 }
 

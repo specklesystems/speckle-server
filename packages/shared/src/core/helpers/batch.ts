@@ -8,6 +8,8 @@ import { range } from 'lodash'
  * to the amount of async operations that will be invoked.
  * 'operationPromiseGenerator' will be invoked sequentially with each params of 'operationParams' and with it
  * you can specify what the actual async operation should be
+ *
+ * TODO: Some tests would be nice, although it does work when tested through `yarn cli download commit` in speckle-server
  */
 export async function batchAsyncOperations<Params = unknown, Res = unknown>(
   name: string,
