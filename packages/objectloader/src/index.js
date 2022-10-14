@@ -7,6 +7,7 @@ import {
   ObjectLoaderConfigurationError,
   ObjectLoaderRuntimeError
 } from './errors/index.js'
+import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
 
 /**
  * Simple client that streams object info from a Speckle Server.
@@ -421,9 +422,15 @@ export default class ObjectLoader {
         headers: { ...this.headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ objects: JSON.stringify(splitHttpRequests[i]) })
       }).then((crtResponse) => {
-        const crtReader = crtResponse.body.getReader()
+        // Polyfill web streams so that we can work with them the same way we do in Node
+        if (crtResponse.body.getReader) {
+          polyfillReadableStreamForAsyncIterator(crtResponse.body)
+        }
+
+        // Get stream async iterator
+        const crtReader = crtResponse.body.iterator()
         readers[i] = crtReader
-        const crtReadPromise = crtReader.read().then((x) => {
+        const crtReadPromise = crtReader.next().then((x) => {
           x.reqId = i
           return x
         })
@@ -453,7 +460,7 @@ export default class ObjectLoader {
 
       // Replace read promise on this request with a new `read` call
       if (!readerDone) {
-        const crtReadPromise = readers[reqId].read().then((x) => {
+        const crtReadPromise = readers[reqId].next().then((x) => {
           x.reqId = reqId
           return x
         })
