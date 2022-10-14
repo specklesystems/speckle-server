@@ -2,6 +2,7 @@ import { Camera, Plane, Scene, Texture } from 'three'
 
 export type InputColorTextureUniform = 'tDiffuse'
 export type InputDepthTextureUniform = 'tDepth'
+export type InputNormalsTextureUniform = 'tNormal'
 
 export interface SpecklePass {
   onBeforeRender?: () => void

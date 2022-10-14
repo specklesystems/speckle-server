@@ -10,8 +10,10 @@ import { NormalsPass } from './NormalsPass'
 import {
   DefaultSpeckleDynamicSAOPassParams,
   DynamicSAOPass,
-  SpeckleDynamicSAOPassParams
-} from './DynamicSAOPass'
+  DynamicAOOutputType,
+  DynamicAOPassParams,
+  NormalsType
+} from './DynamicAOPass'
 // import { SpecklePass } from './SpecklePass'
 // import { SpeckleStaticAOGeneratePass } from './SpeckleStaticAOGeneratePass'
 
@@ -30,7 +32,7 @@ export enum PipelineOutputType {
 export interface PipelineOptions {
   pipelineOutput: PipelineOutputType
   dynamicAoEnabled: boolean
-  dynamicAoParams: SpeckleDynamicSAOPassParams
+  dynamicAoParams: DynamicAOPassParams
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
@@ -63,12 +65,46 @@ export class Pipeline {
 
   public set pipelineOptions(options: Partial<PipelineOptions>) {
     Object.assign(this._pipelineOptions, options)
-    this.pipelineOutput = options.pipelineOutput
+    if (options.dynamicAoEnabled) {
+      this.dynamicAoPass.enabled = true
+      this.renderPass.enabled = true
+      this.applySaoPass.enabled = true
+      this.normalsPass.enabled =
+        options.dynamicAoParams.normalsType === NormalsType.DEFAULT ? true : false
+      this.depthPass.enabled = true
+      this.copyOutputPass.enabled = false
+    } else {
+      this.depthPass.enabled = false
+      this.dynamicAoPass.enabled = false
+      this.applySaoPass.enabled = false
+      this.copyOutputPass.enabled = false
+      this.normalsPass.enabled = false
+      this.renderPass.enabled = true
+    }
     this.dynamicAoPass.setParams(options.dynamicAoParams)
+
+    this.pipelineOutput = options.pipelineOutput
   }
 
   public set pipelineOutput(outputType: PipelineOutputType) {
     switch (outputType) {
+      case PipelineOutputType.FINAL:
+        this.dynamicAoPass.enabled = true
+        this.renderPass.enabled = true
+        this.applySaoPass.enabled = true
+        this.normalsPass.enabled =
+          this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+            ? true
+            : false
+        this.depthPass.enabled = true
+        this.copyOutputPass.enabled = false
+        this.dynamicAoPass.setOutputType(
+          this._pipelineOptions.dynamicAoParams.blurEnabled
+            ? DynamicAOOutputType.AO_BLURRED
+            : DynamicAOOutputType.AO
+        )
+        break
+
       case PipelineOutputType.DEPTH_RGBA:
         this.dynamicAoPass.enabled = false
         this.renderPass.enabled = false
@@ -120,7 +156,37 @@ export class Pipeline {
         this.copyOutputPass.enabled = true
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
-        this.dynamicAoPass.outputReconstructedNormals = true
+        this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
+        break
+
+      case PipelineOutputType.DYNAMIC_AO:
+        this.depthPass.enabled = true
+        this.dynamicAoPass.enabled = true
+        this.applySaoPass.enabled = false
+        this.renderPass.enabled = false
+        this.normalsPass.enabled =
+          this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+            ? true
+            : false
+        this.copyOutputPass.enabled = true
+        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+        this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
+        this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO)
+        break
+
+      case PipelineOutputType.DYNAMIC_AO_BLURED:
+        this.depthPass.enabled = true
+        this.dynamicAoPass.enabled = true
+        this.applySaoPass.enabled = false
+        this.renderPass.enabled = false
+        this.normalsPass.enabled =
+          this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+            ? true
+            : false
+        this.copyOutputPass.enabled = true
+        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+        this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
+        this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
         break
       default:
         break
@@ -155,6 +221,7 @@ export class Pipeline {
     this.composer.addPass(this.copyOutputPass)
 
     this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTexture)
+    this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
 
     let restoreVisibility

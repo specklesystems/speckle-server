@@ -360,96 +360,74 @@ export default class Sandbox {
         this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
         this.viewer.requestRender()
       })
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'saoEnabled', { label: 'SAO-ENABLED' })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoBias', {
-    //     min: -1,
-    //     max: 1
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoIntensity', {
-    //     min: 0,
-    //     max: 5
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
+    const dynamicAoFolder = pipelineFolder.addFolder({
+      title: 'Dynamic AO',
+      expanded: true
+    })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'kernelRadius', {
+        min: 0,
+        max: 500
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'bias', {
+        min: -1,
+        max: 1
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'normalsType', {
+        options: {
+          DEFAULT: 0,
+          ADVANCED: 1,
+          ACCURATE: 2
+        }
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
 
-    // // postFolder
-    // //   .addInput(Sandbox.postParams.saoParams, 'saoScale', {
-    // //     min: 0,
-    // //     max: 100
-    // //   })
-    // //   .on('change', () => {
-    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    // //     this.viewer.requestRender()
-    // //   })
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'saoScaleOffset', {
-    //     min: -100,
-    //     max: 100
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'blurEnabled', {})
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
 
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'saoNormalsRendering', {
-    //     options: {
-    //       DEFAULT: 0,
-    //       ADVANCED: 1,
-    //       ACCURATE: 2
-    //     }
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'blurRadius', {
+        min: 0,
+        max: 10
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
 
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoKernelRadius', {
-    //     min: 0,
-    //     max: 100
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // // postFolder
-    // //   .addInput(Sandbox.postParams.saoParams, 'saoMinResolution', {
-    // //     min: 0,
-    // //     max: 1
-    // //   })
-    // //   .on('change', () => {
-    // //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    // //     this.viewer.requestRender()
-    // //   })
-
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoBlur', {})
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoBlurRadius', { min: 0, max: 10 })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
+    dynamicAoFolder
+      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
+        min: 0,
+        max: 1,
+        step: 0.00001
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
 
     // postFolder
     //   .addInput(Sandbox.postParams, 'minDistance', { min: 0, max: 100, step: 0.000001 })
@@ -480,26 +458,6 @@ export default class Sandbox {
     //       SAO: 0,
     //       SSAO: 1
     //     }
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoBlurStdDev', {
-    //     min: 0,
-    //     max: 150
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-
-    // postFolder
-    //   .addInput(Sandbox.postParams.saoParams, 'saoBlurDepthCutoff', {
-    //     min: 0,
-    //     max: 10
     //   })
     //   .on('change', () => {
     //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams

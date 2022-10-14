@@ -17,7 +17,11 @@ import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
 import { DepthLimitedBlurShader } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
-import { InputDepthTextureUniform, SpecklePass } from './SpecklePass'
+import {
+  InputDepthTextureUniform,
+  InputNormalsTextureUniform,
+  SpecklePass
+} from './SpecklePass'
 
 export enum NormalsType {
   DEFAULT = 0,
@@ -25,7 +29,13 @@ export enum NormalsType {
   ACCURATE = 2
 }
 
-export interface SpeckleDynamicSAOPassParams {
+export enum DynamicAOOutputType {
+  RECONSTRUCTED_NORMALS,
+  AO,
+  AO_BLURRED
+}
+
+export interface DynamicAOPassParams {
   intensity: number
   scale: number
   kernelRadius: number
@@ -50,7 +60,7 @@ export const DefaultSpeckleDynamicSAOPassParams = {
 }
 
 export class DynamicSAOPass extends Pass implements SpecklePass {
-  private params: SpeckleDynamicSAOPassParams = DefaultSpeckleDynamicSAOPassParams
+  private params: DynamicAOPassParams = DefaultSpeckleDynamicSAOPassParams
   private colorBuffer: Color = new Color()
   private saoMaterial: ShaderMaterial = null
   private vBlurMaterial: ShaderMaterial = null
@@ -58,6 +68,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
   private saoRenderTarget: WebGLRenderTarget = null
   private blurIntermediateRenderTarget: WebGLRenderTarget = null
   private fsQuad: FullScreenQuad = null
+  private _outputType: DynamicAOOutputType = DynamicAOOutputType.AO_BLURRED
 
   private prevStdDev: number
   private prevNumSamples: number
@@ -68,11 +79,6 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
 
   public get outputTexture(): Texture {
     return this.saoRenderTarget.texture
-  }
-
-  public set outputReconstructedNormals(value: boolean) {
-    if (value) this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] = ''
-    else delete this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS']
   }
 
   constructor() {
@@ -135,16 +141,34 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     Object.assign(this.params, params)
   }
 
-  public setTexture(uName: InputDepthTextureUniform, texture: Texture) {
-    this.saoMaterial.uniforms['tDepth'].value = texture
-    this.vBlurMaterial.uniforms['tDepth'].value = texture
-    this.hBlurMaterial.uniforms['tDepth'].value = texture
+  public setOutputType(type: DynamicAOOutputType) {
+    this._outputType = type
+  }
+
+  public setTexture(
+    uName: InputDepthTextureUniform | InputNormalsTextureUniform,
+    texture: Texture
+  ) {
+    if (uName === 'tDepth') {
+      this.saoMaterial.uniforms['tDepth'].value = texture
+      this.vBlurMaterial.uniforms['tDepth'].value = texture
+      this.hBlurMaterial.uniforms['tDepth'].value = texture
+    }
+    if (uName === 'tNormal') {
+      this.saoMaterial.uniforms['tNormal'].value = texture
+    }
     this.saoMaterial.needsUpdate = true
     this.vBlurMaterial.needsUpdate = true
     this.hBlurMaterial.needsUpdate = true
   }
 
   public update(scene: Scene, camera: Camera) {
+    if (this._outputType === DynamicAOOutputType.RECONSTRUCTED_NORMALS) {
+      this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] = ''
+    } else {
+      delete this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS']
+    }
+
     this.params.scale = (camera as PerspectiveCamera | OrthographicCamera).far
     /** SAO DEFINES */
     this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
@@ -236,8 +260,6 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
   }
 
   public render(renderer) {
-    const outputNormals =
-      this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] !== undefined
     // Rendering SAO texture
     renderer.getClearColor(this.colorBuffer)
     const originalClearAlpha = renderer.getClearAlpha()
@@ -253,7 +275,10 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     this.fsQuad.material = this.saoMaterial
     this.fsQuad.render(renderer)
 
-    if (this.params.blurEnabled && !outputNormals) {
+    if (
+      this.params.blurEnabled &&
+      this._outputType === DynamicAOOutputType.AO_BLURRED
+    ) {
       renderer.setRenderTarget(this.blurIntermediateRenderTarget)
       renderer.setClearColor(0xffffff)
       renderer.setClearAlpha(1.0)
