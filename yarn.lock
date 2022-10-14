@@ -5095,6 +5095,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/shared@workspace:packages/shared"
   dependencies:
+    "@tiptap/core": ^2.0.0-beta.176
     "@types/lodash": ^4.14.184
     "@typescript-eslint/eslint-plugin": ^5.39.0
     "@typescript-eslint/parser": ^5.39.0
