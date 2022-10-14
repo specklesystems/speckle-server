@@ -19363,6 +19363,8 @@ __metadata:
     husky: ^7.0.4
     lint-staged: ^12.3.7
     prettier: ^2.5.1
+    ts-node: ^10.9.1
+    tsconfig-paths: ^4.0.0
   languageName: unknown
   linkType: soft
 
