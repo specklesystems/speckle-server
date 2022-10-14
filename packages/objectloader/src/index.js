@@ -2,6 +2,12 @@
 import 'core-js'
 import 'regenerator-runtime/runtime'
 
+import { SafeLocalStorage } from '@speckle/shared'
+import {
+  ObjectLoaderConfigurationError,
+  ObjectLoaderRuntimeError
+} from './errors/index.js'
+
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -27,12 +33,23 @@ export default class ObjectLoader {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
-    this.serverUrl = serverUrl || window.location.origin
+    this.serverUrl = serverUrl || globalThis?.location?.origin
+    if (!this.serverUrl) {
+      throw new ObjectLoaderConfigurationError('Invalid serverUrl specified!')
+    }
+
     this.streamId = streamId
     this.objectId = objectId
+    if (!this.streamId) {
+      throw new ObjectLoaderConfigurationError('Invalid streamId specified!')
+    }
+    if (!this.objectId) {
+      throw new ObjectLoaderConfigurationError('Invalid objectId specified!')
+    }
+
     console.log('Object loader constructor called!')
     try {
-      this.token = token || localStorage.getItem('AuthToken')
+      this.token = token || SafeLocalStorage.get('AuthToken')
     } catch (error) {
       // Accessing localStorage may throw when executing on sandboxed document, ignore.
     }
@@ -56,6 +73,7 @@ export default class ObjectLoader {
     this.options = options
     this.options.numConnections = this.options.numConnections || 4
 
+    /** @type {IDBDatabase | null} */
     this.cacheDB = null
 
     this.lastAsyncPause = Date.now()
@@ -64,8 +82,16 @@ export default class ObjectLoader {
     // we can't simply bind fetch to this.fetch, so instead we have to do some acrobatics:
     // https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
     this.preferredFetch = options.fetch
+
+    /** @type {globalThis.fetch} */
     this.fetch = function (...args) {
       const currentFetch = this.preferredFetch || fetch
+      if (!currentFetch) {
+        throw new ObjectLoaderRuntimeError(
+          "Couldn't find fetch implementation! If running in a node environment, make sure you pass it in through the constructor!"
+        )
+      }
+
       return currentFetch(...args)
     }
   }
@@ -261,14 +287,23 @@ export default class ObjectLoader {
     return { id: pieces[0], obj: JSON.parse(pieces[1]) }
   }
 
+  supportsCache() {
+    return !!(this.options.enableCaching && globalThis.indexedDB)
+  }
+
+  async setupCacheDb() {
+    if (!this.supportsCache() || this.cacheDB !== null) return
+
+    // Initialize
+    await safariFix()
+    const idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
+    idbOpenRequest.onupgradeneeded = () =>
+      idbOpenRequest.result.createObjectStore('objects')
+    this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
+  }
+
   async *getRawObjectIterator() {
-    if (this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
-      await safariFix()
-      const idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
-      idbOpenRequest.onupgradeneeded = () =>
-        idbOpenRequest.result.createObjectStore('objects')
-      this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
-    }
+    await this.setupCacheDb()
 
     const rootObjJson = await this.getRawRootObject()
     // console.log("Root in: ", Date.now() - tSTART)
@@ -465,7 +500,7 @@ export default class ObjectLoader {
   }
 
   async cacheGetObjects(ids) {
-    if (!this.options.enableCaching || !window.indexedDB) {
+    if (!this.supportsCache()) {
       return {}
     }
 
@@ -496,7 +531,7 @@ export default class ObjectLoader {
   }
 
   cacheStoreObjects(objects) {
-    if (!this.options.enableCaching || !window.indexedDB) {
+    if (!this.supportsCache()) {
       return {}
     }
 
@@ -512,7 +547,10 @@ export default class ObjectLoader {
   }
 }
 
-// Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+/**
+ * Fixes a Safari bug where IndexedDB requests get lost and never resolve - invoke before you use IndexedDB
+ * @link Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+ */
 function safariFix() {
   const isSafari =
     !navigator.userAgentData &&
