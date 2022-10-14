@@ -10,20 +10,24 @@ import {
 import { cliDebug } from '@/modules/shared/utils/logger'
 import { CommandModule } from 'yargs'
 import { getBaseUrl, getServerVersion } from '@/modules/shared/helpers/envHelper'
-import { Commit, Object as SpeckleObject } from '@/test/graphql/generated/graphql'
+import { Commit } from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { createCommitByBranchId } from '@/modules/core/services/commits'
-import { Roles, batchAsyncOperations } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createObject } from '@/modules/core/services/objects'
-import { ObjectRecord } from '@/modules/core/helpers/types'
-import { difference, uniq } from 'lodash'
 import { getObject } from '@/modules/core/repositories/objects'
+import ObjectLoader from '@speckle/objectloader'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
 type GraphQLClient = ApolloClient<NormalizedCacheObject>
+type ObjectLoaderObject = Record<string, unknown> & {
+  id: string
+  speckle_type: string
+  totalChildrenCount: number
+}
 
 const COMMIT_URL_RGX = /((https?:\/\/)?[\w.]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
 
@@ -45,20 +49,6 @@ const commitMetadataQuery = gql`
         sourceApplication
         totalChildrenCount
         parents
-      }
-    }
-  }
-`
-
-const objectMetadataQuery = gql`
-  query CommitDownloadObjectMetadata($streamId: String!, $objectId: String!) {
-    stream(id: $streamId) {
-      object(id: $objectId) {
-        id
-        speckleType
-        totalChildrenCount
-        createdAt
-        data
       }
     }
   }
@@ -192,31 +182,21 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
   return id
 }
 
-const getObjectMetadata = async (
-  client: GraphQLClient,
-  params: { streamId: string; objectId: string }
+const createNewObject = async (
+  newObject: ObjectLoaderObject,
+  targetStreamId: string
 ) => {
-  const { streamId, objectId } = params
-  const results = await client.query({
-    query: objectMetadataQuery,
-    variables: { streamId, objectId }
-  })
-  assertValidGraphQLResult(results, 'Object Metadata Query')
-
-  const object = results.data?.stream?.object
-  if (!object) {
-    throw new Error('Unexpectedly received invalid object structure')
+  if (!newObject) {
+    cliDebug('Encountered falsy object!')
+    return
   }
 
-  return object as SpeckleObject
-}
-
-const createNewObject = async (newObject: SpeckleObject, targetStreamId: string) => {
   const newObjectId = await createObject(targetStreamId, {
-    ...(newObject.data || {}),
+    ...newObject,
     id: newObject.id,
-    speckleType: newObject.speckleType || 'Base'
+    speckleType: newObject.speckleType || newObject.speckle_type || 'Base'
   })
+
   const newRecord = await getObject(newObjectId)
   if (!newRecord) {
     throw new Error("Unexpected error! Just inserted an object, but can't find it!")
@@ -225,94 +205,35 @@ const createNewObject = async (newObject: SpeckleObject, targetStreamId: string)
   return newRecord
 }
 
-const getObjectChildrenIds = (obj: ObjectRecord) => {
-  const { __closure } = (obj.data || {}) as {
-    __closure?: Record<string, number>
-  }
-  return uniq(Object.keys(__closure || {}))
-}
-
-const downloadObject = async (
-  client: GraphQLClient,
-  params: { sourceStreamId: string; objectId: string; targetStreamId: string }
-) => {
-  const { sourceStreamId, objectId, targetStreamId } = params
-
-  const sourceObject = await getObjectMetadata(client, {
-    streamId: sourceStreamId,
-    objectId
-  })
-  return await createNewObject(sourceObject, targetStreamId)
-}
-
 const loadAllObjectsFromParent = async (
   client: GraphQLClient,
   params: {
-    newCommitId: string
     targetStreamId: string
-    parentObjectId: string
-    sourceStreamId: string
-    totalChildrenCount: number
+    sourceCommit: Commit
+    parsedCommitUrl: ParsedCommitUrl
   }
 ) => {
-  const { parentObjectId, targetStreamId, sourceStreamId, totalChildrenCount } = params
+  const {
+    targetStreamId,
+    sourceCommit,
+    parsedCommitUrl: { origin, streamId: sourceStreamId }
+  } = params
 
-  // Download parent and collect the first set of children
-  const parentObject = await downloadObject(client, {
-    sourceStreamId,
-    objectId: parentObjectId,
-    targetStreamId
+  // Initialize ObjectLoader
+  const objectLoader = new ObjectLoader({
+    serverUrl: origin,
+    streamId: sourceStreamId,
+    objectId: sourceCommit.referencedObject,
+    options: { fetch, customLogger: () => void 0 }
   })
-  const firstSetOfChildrenIds = getObjectChildrenIds(parentObject)
 
-  let traversedObjectIds: string[] = []
-
-  /**
-   * Download all children objects in a batched manner and return newly discovered object IDs
-   * that will need to be downloaded
-   */
-  const downloadParentChildren = async (newObjectIds: string[], jobId: number) => {
-    const uniqueNewObjectIds = difference(newObjectIds, traversedObjectIds)
-    if (!uniqueNewObjectIds.length) return [] // no more work here
-
-    // Mark object ids as traversed
-    traversedObjectIds = uniq(traversedObjectIds.concat(uniqueNewObjectIds))
-
-    let newlyDiscoveredObjectIds: string[] = []
-    await batchAsyncOperations(
-      `Loading ${newObjectIds.length} children objects <Job #${jobId + 1}>`,
-      newObjectIds,
-      async (oid) => {
-        const dowloadedChild = await downloadObject(client, {
-          sourceStreamId,
-          objectId: oid,
-          targetStreamId
-        })
-
-        // Find new object IDs to load
-        const newChildrenIds = getObjectChildrenIds(dowloadedChild)
-        const newUniqueChildrenIds = difference(newChildrenIds, traversedObjectIds)
-        if (newUniqueChildrenIds.length) {
-          newlyDiscoveredObjectIds =
-            newlyDiscoveredObjectIds.concat(newUniqueChildrenIds)
-        }
-      },
-      {
-        logger: cliDebug,
-        dropReturns: true
-      }
-    )
-
-    return newlyDiscoveredObjectIds
-  }
-
-  let jobId = 0
-  let queuableObjectIds: string[] = firstSetOfChildrenIds
-  let remainingItemCount = totalChildrenCount
-
-  while (queuableObjectIds.length && remainingItemCount > 0) {
-    remainingItemCount -= queuableObjectIds.length
-    queuableObjectIds = await downloadParentChildren(firstSetOfChildrenIds, jobId++)
+  // Iterate over all objects and download them into the DB
+  const totalObjectCount = (sourceCommit.totalChildrenCount || 0) + 1
+  let processedObjectCount = 1
+  for await (const obj of objectLoader.getObjectIterator()) {
+    const typedObj = obj as ObjectLoaderObject
+    cliDebug(`Processing ${obj.id} - ${processedObjectCount++}/${totalObjectCount}`)
+    await createNewObject(typedObj, targetStreamId)
   }
 }
 
@@ -359,11 +280,9 @@ const command: CommandModule<
 
     cliDebug(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
     await loadAllObjectsFromParent(client, {
-      newCommitId,
       targetStreamId,
-      parentObjectId: commit.referencedObject,
-      sourceStreamId: parsedCommitUrl.streamId,
-      totalChildrenCount: commit.totalChildrenCount || 0
+      sourceCommit: commit,
+      parsedCommitUrl
     })
 
     const linkToNewCommit = `${getBaseUrl()}/streams/${targetStreamId}/commits/${newCommitId}`

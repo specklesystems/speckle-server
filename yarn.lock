@@ -4991,6 +4991,7 @@ __metadata:
     "@graphql-tools/schema": ^9.0.4
     "@sentry/node": ^6.17.9
     "@sentry/tracing": ^6.17.9
+    "@speckle/objectloader": "workspace:^"
     "@speckle/shared": "workspace:^"
     "@swc/core": ^1.2.222
     "@tiptap/core": ^2.0.0-beta.176

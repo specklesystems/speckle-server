@@ -4,6 +4,7 @@
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "dist/objectloader.js",
   "module": "dist/objectloader.esm.js",
+  "types": "types/index.d.ts",
   "homepage": "https://speckle.systems",
   "repository": {
     "type": "git",

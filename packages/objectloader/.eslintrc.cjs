@@ -13,7 +13,7 @@ const config = {
     sourceType: 'module',
     ecmaVersion: 2022
   },
-  ignorePatterns: ['examples/browser/objectloader.web.js']
+  ignorePatterns: ['examples/browser/objectloader.web.js', 'types/**/*']
 }
 
 module.exports = config

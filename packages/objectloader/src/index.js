@@ -28,9 +28,14 @@ export default class ObjectLoader {
       enableCaching: true,
       fullyTraverseArrays: false,
       excludeProps: [],
-      fetch: null
+      fetch: null,
+      customLogger: undefined,
+      customWarner: undefined
     }
   }) {
+    this.logger = options.customLogger || console.log
+    this.warner = options.customWarner || console.warn
+
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
@@ -48,7 +53,7 @@ export default class ObjectLoader {
       throw new ObjectLoaderConfigurationError('Invalid objectId specified!')
     }
 
-    console.log('Object loader constructor called!')
+    this.logger('Object loader constructor called!')
     try {
       this.token = token || SafeLocalStorage.get('AuthToken')
     } catch (error) {
@@ -108,7 +113,7 @@ export default class ObjectLoader {
       await this.existingAsyncPause
       this.existingAsyncPause = null
       if (Date.now() - this.lastAsyncPause > 500)
-        console.log('Loader Event loop lag: ', Date.now() - this.lastAsyncPause)
+        this.logger('Loader Event loop lag: ', Date.now() - this.lastAsyncPause)
     }
   }
 
@@ -264,7 +269,7 @@ export default class ObjectLoader {
     }
 
     if (this.intervals[id].elapsed > this.TIMEOUT_MS) {
-      console.warn(`Timeout resolving ${id}. HIC SVNT DRACONES.`)
+      this.warner(`Timeout resolving ${id}. HIC SVNT DRACONES.`)
       clearInterval(this.intervals[id].interval)
       this.promises.filter((p) => p.id === id).forEach((p) => p.reject())
       this.promises = this.promises.filter((p) => p.id !== p.id) // clear out
@@ -280,7 +285,7 @@ export default class ObjectLoader {
       count += 1
       yield obj
     }
-    console.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
+    this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
   processLine(chunk) {
@@ -307,7 +312,7 @@ export default class ObjectLoader {
     await this.setupCacheDb()
 
     const rootObjJson = await this.getRawRootObject()
-    // console.log("Root in: ", Date.now() - tSTART)
+    // this.logger("Root in: ", Date.now() - tSTART)
 
     yield `${this.objectId}\t${rootObjJson}`
 
@@ -340,7 +345,7 @@ export default class ObjectLoader {
         splitBeforeCacheCheck[3].push(childrenIds[crtChildIndex])
       }
 
-      console.log('Cache check for: ', splitBeforeCacheCheck)
+      this.logger('Cache check for: ', splitBeforeCacheCheck)
 
       const newChildren = []
       let nextCachePromise = this.cacheGetObjects(splitBeforeCacheCheck[0])
@@ -524,7 +529,7 @@ export default class ObjectLoader {
       )
       const cachedData = await Promise.all(idbChildrenPromises)
 
-      // console.log("Cache check for : ", idsChunk.length, Date.now() - t0)
+      // this.logger("Cache check for : ", idsChunk.length, Date.now() - t0)
 
       for (const cachedObj of cachedData) {
         if (!cachedObj.data)
