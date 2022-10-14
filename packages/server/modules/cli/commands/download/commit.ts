@@ -19,6 +19,7 @@ import { addCommitCreatedActivity } from '@/modules/activitystream/services/comm
 import { createObject } from '@/modules/core/services/objects'
 import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
+import { noop } from 'lodash'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
@@ -205,14 +206,11 @@ const createNewObject = async (
   return newRecord
 }
 
-const loadAllObjectsFromParent = async (
-  client: GraphQLClient,
-  params: {
-    targetStreamId: string
-    sourceCommit: Commit
-    parsedCommitUrl: ParsedCommitUrl
-  }
-) => {
+const loadAllObjectsFromParent = async (params: {
+  targetStreamId: string
+  sourceCommit: Commit
+  parsedCommitUrl: ParsedCommitUrl
+}) => {
   const {
     targetStreamId,
     sourceCommit,
@@ -224,7 +222,7 @@ const loadAllObjectsFromParent = async (
     serverUrl: origin,
     streamId: sourceStreamId,
     objectId: sourceCommit.referencedObject,
-    options: { fetch, customLogger: () => void 0 }
+    options: { fetch, customLogger: noop }
   })
 
   // Iterate over all objects and download them into the DB
@@ -279,7 +277,7 @@ const command: CommandModule<
     cliDebug(`Created new local commit: ${newCommitId}`)
 
     cliDebug(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
-    await loadAllObjectsFromParent(client, {
+    await loadAllObjectsFromParent({
       targetStreamId,
       sourceCommit: commit,
       parsedCommitUrl

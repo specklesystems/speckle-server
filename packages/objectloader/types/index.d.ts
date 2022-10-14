@@ -2,11 +2,11 @@
  * This is written manually & should be kept up to date when the API changes
  */
 
-type SpeckleObject = Record<string, unknown> & {
+export interface SpeckleObject extends Record<string, unknown> {
   totalChildrenCount?: number
 }
 
-type Logger = (...args: unknown) => void
+type Logger = (...args: unknown[]) => void
 
 export type ProgressStage = 'download' | 'construction'
 
