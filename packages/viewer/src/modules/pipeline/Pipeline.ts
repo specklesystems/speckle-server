@@ -309,6 +309,7 @@ export class Pipeline {
 
   public resize(width: number, height: number) {
     this.composer.setSize(width, height)
+    this.accumulationFrame = 0
   }
 
   public onStationaryBegin() {
