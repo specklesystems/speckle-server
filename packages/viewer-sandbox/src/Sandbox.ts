@@ -32,6 +32,7 @@ export default class Sandbox {
 
   public static pipelineParams = {
     pipelineOutput: 8,
+    accumulationFrames: 16,
     dynamicAoEnabled: true,
     dynamicAoParams: {
       intensity: 1.25,
@@ -43,6 +44,14 @@ export default class Sandbox {
       blurRadius: 4,
       blurStdDev: 4,
       blurDepthCutoff: 0.0007
+    },
+    staticAoEnabled: true,
+    staticAoParams: {
+      intensity: 1,
+      kernelRadius: 0.5, // World space
+      kernelSize: 16,
+      minDistance: 0,
+      maxDistance: 0.008
     }
   }
 
@@ -360,16 +369,30 @@ export default class Sandbox {
         this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
         this.viewer.requestRender()
       })
+
+    pipelineFolder
+      .addInput(Sandbox.pipelineParams, 'accumulationFrames', {
+        min: 1,
+        max: 128,
+        step: 1
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
+
     const dynamicAoFolder = pipelineFolder.addFolder({
       title: 'Dynamic AO',
       expanded: true
     })
+
     dynamicAoFolder
       .addInput(Sandbox.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
       .on('change', () => {
         this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
         this.viewer.requestRender()
       })
+
     dynamicAoFolder
       .addInput(Sandbox.pipelineParams.dynamicAoParams, 'kernelRadius', {
         min: 0,
@@ -379,6 +402,7 @@ export default class Sandbox {
         this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
         this.viewer.requestRender()
       })
+
     dynamicAoFolder
       .addInput(Sandbox.pipelineParams.dynamicAoParams, 'bias', {
         min: -1,
@@ -429,40 +453,57 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'minDistance', { min: 0, max: 100, step: 0.000001 })
+    const staticAoFolder = pipelineFolder.addFolder({
+      title: 'Static AO',
+      expanded: true
+    })
+    // staticAoFolder
+    //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
     //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
     //     this.viewer.requestRender()
     //   })
+    staticAoFolder
+      .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
+        min: 0,
+        max: 100,
+        step: 0.000001
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
 
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'maxDistance', { min: 0, max: 100, step: 0.000001 })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'ssaoKernelRadius', { min: 0, max: 100 })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
-    // postFolder.addInput(Sandbox.postParams, 'progressive', {}).on('change', () => {
-    //   this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //   this.viewer.requestRender()
-    // })
-    // postFolder
-    //   .addInput(Sandbox.postParams, 'progressiveAO', {
-    //     options: {
-    //       SAO: 0,
-    //       SSAO: 1
-    //     }
-    //   })
-    //   .on('change', () => {
-    //     this.viewer.getRenderer().pipelineOptions = Sandbox.postParams
-    //     this.viewer.requestRender()
-    //   })
+    staticAoFolder
+      .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
+        min: 0,
+        max: 100,
+        step: 0.000001
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
+    staticAoFolder
+      .addInput(Sandbox.pipelineParams.staticAoParams, 'kernelRadius', {
+        min: 0,
+        max: 100
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
+
+    staticAoFolder
+      .addInput(Sandbox.pipelineParams.staticAoParams, 'kernelSize', {
+        min: 1,
+        max: 128,
+        step: 1
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
 
     const lightsFolder = this.tabs.pages[1].addFolder({
       title: 'Lights',

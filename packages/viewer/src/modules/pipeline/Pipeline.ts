@@ -8,14 +8,22 @@ import { CopyOutputPass } from './CopyOutputPass'
 import { DepthPass } from './DepthPass'
 import { NormalsPass } from './NormalsPass'
 import {
-  DefaultSpeckleDynamicSAOPassParams,
+  DefaultDynamicAOPassParams,
   DynamicSAOPass,
   DynamicAOOutputType,
   DynamicAOPassParams,
   NormalsType
 } from './DynamicAOPass'
-// import { SpecklePass } from './SpecklePass'
-// import { SpeckleStaticAOGeneratePass } from './SpeckleStaticAOGeneratePass'
+import {
+  DefaultStaticAoPassParams,
+  StaticAOPass,
+  StaticAoPassParams
+} from './StaticAOPass'
+
+export enum RenderType {
+  NORMAL,
+  ACCUMULATION
+}
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -31,24 +39,25 @@ export enum PipelineOutputType {
 
 export interface PipelineOptions {
   pipelineOutput: PipelineOutputType
+  accumulationFrames: number
   dynamicAoEnabled: boolean
   dynamicAoParams: DynamicAOPassParams
+  staticAoEnabled: boolean
+  staticAoParams: StaticAoPassParams
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
   pipelineOutput: PipelineOutputType.FINAL,
+  accumulationFrames: 16,
   dynamicAoEnabled: true,
-  dynamicAoParams: DefaultSpeckleDynamicSAOPassParams
-  // saoScaleOffset: 0,
-  // saoNormalsRendering: NormalsType.ACCURATE,
-  // minDistance: 0,
-  // maxDistance: 0.008,
-  // ssaoKernelRadius: 0.5,
-  // progressiveAO: 0,
-  // progressive: true
+  dynamicAoParams: DefaultDynamicAOPassParams,
+  staticAoEnabled: true,
+  staticAoParams: DefaultStaticAoPassParams
 }
 
 export class Pipeline {
+  public static ACCUMULATE_FRAMES = 16
+
   private _renderer: WebGLRenderer = null
   private _batcher: Batcher = null
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
@@ -61,7 +70,11 @@ export class Pipeline {
   private applySaoPass: ApplySAOPass = null
   private copyOutputPass: CopyOutputPass = null
 
+  private staticAoPass: StaticAOPass = null
+
   private drawingSize: Vector2 = new Vector2()
+  private renderType: RenderType = RenderType.NORMAL
+  private accumulationFrame = 0
 
   public set pipelineOptions(options: Partial<PipelineOptions>) {
     Object.assign(this._pipelineOptions, options)
@@ -82,6 +95,9 @@ export class Pipeline {
       this.renderPass.enabled = true
     }
     this.dynamicAoPass.setParams(options.dynamicAoParams)
+    this.staticAoPass.setParams(options.staticAoParams)
+    this.accumulationFrame = 0
+    Pipeline.ACCUMULATE_FRAMES = options.accumulationFrames
 
     this.pipelineOutput = options.pipelineOutput
   }
@@ -188,6 +204,19 @@ export class Pipeline {
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
         break
+
+      case PipelineOutputType.PROGRESSIVE_AO:
+        this.depthPass.enabled = true
+        this.normalsPass.enabled = false
+        this.dynamicAoPass.enabled = false
+        this.renderPass.enabled = false
+        this.applySaoPass.enabled = false
+        this.staticAoPass.enabled = true
+        this.copyOutputPass.enabled = true
+        this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
+        this.copyOutputPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
+        this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
+        break
       default:
         break
     }
@@ -210,12 +239,17 @@ export class Pipeline {
     this.renderPass.renderToScreen = true
     this.applySaoPass = new ApplySAOPass()
     this.applySaoPass.renderToScreen = true
+
+    this.staticAoPass = new StaticAOPass()
+    this.staticAoPass.enabled = false
+
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
     this.copyOutputPass.enabled = false
     this.composer.addPass(this.depthPass)
     this.composer.addPass(this.normalsPass)
     this.composer.addPass(this.dynamicAoPass)
+    this.composer.addPass(this.staticAoPass)
     this.composer.addPass(this.renderPass)
     this.composer.addPass(this.applySaoPass)
     this.composer.addPass(this.copyOutputPass)
@@ -223,6 +257,7 @@ export class Pipeline {
     this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTexture)
     this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+    this.staticAoPass.setTexture('tDepth', this.depthPass.outputTexture)
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {
@@ -252,6 +287,8 @@ export class Pipeline {
     this.depthPass.update(renderer.scene, renderer.camera)
     this.dynamicAoPass.update(renderer.scene, renderer.camera)
     this.normalsPass.update(renderer.scene, renderer.camera)
+    this.staticAoPass.update(renderer.scene, renderer.camera)
+    this.staticAoPass.setFrameIndex(this.accumulationFrame)
   }
 
   public render(): boolean {
@@ -259,8 +296,15 @@ export class Pipeline {
     if (this.drawingSize.length() === 0) return
 
     this._renderer.clear(true)
-    this.composer.render()
-    return true
+    if (this.renderType === RenderType.NORMAL) {
+      this.composer.render()
+      return true
+    } else {
+      console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
+      this.composer.render()
+      this.accumulationFrame++
+      return this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+    }
   }
 
   public resize(width: number, height: number) {
@@ -268,15 +312,24 @@ export class Pipeline {
   }
 
   public onStationaryBegin() {
-    // this.renderType = RenderType.ACCUMULATION
-    // this.staticAOGenerationPass.enabled = true
-    // this.accumulationFrame = 0
+    this.renderType = RenderType.ACCUMULATION
+    this.accumulationFrame = 0
+    this.depthPass.enabled = true
+    this.normalsPass.enabled = false
+    this.dynamicAoPass.enabled = false
+    this.renderPass.enabled = true
+    this.applySaoPass.enabled = true
+    this.staticAoPass.enabled = true
+    this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
-    // this.renderType = RenderType.NORMAL
-    // this.staticAOGenerationPass.enabled = false
+    this.renderType = RenderType.NORMAL
+    this.staticAoPass.enabled = false
+    this.applySaoPass.enabled = true
+    this.dynamicAoPass.enabled = true
+    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     console.warn('Ending stationary')
   }
 }

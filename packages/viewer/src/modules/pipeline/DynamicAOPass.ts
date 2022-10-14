@@ -47,7 +47,7 @@ export interface DynamicAOPassParams {
   blurDepthCutoff: number
 }
 
-export const DefaultSpeckleDynamicSAOPassParams = {
+export const DefaultDynamicAOPassParams = {
   intensity: 1.25,
   scale: 0,
   kernelRadius: 10,
@@ -60,7 +60,7 @@ export const DefaultSpeckleDynamicSAOPassParams = {
 }
 
 export class DynamicSAOPass extends Pass implements SpecklePass {
-  private params: DynamicAOPassParams = DefaultSpeckleDynamicSAOPassParams
+  private params: DynamicAOPassParams = DefaultDynamicAOPassParams
   private colorBuffer: Color = new Color()
   private saoMaterial: ShaderMaterial = null
   private vBlurMaterial: ShaderMaterial = null

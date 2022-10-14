@@ -14,6 +14,7 @@ import {
   RedFormat,
   RepeatWrapping,
   ReverseSubtractEquation,
+  Scene,
   ShaderMaterial,
   Texture,
   Vector2,
@@ -23,61 +24,76 @@ import {
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
 
-import Batcher from '../batching/Batcher'
 import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static-ao-generate-vert'
 import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag'
 import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert'
 import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag'
 import { SimplexNoise } from 'three/examples/jsm//math/SimplexNoise.js'
+import {
+  InputDepthTextureUniform,
+  InputNormalsTextureUniform,
+  SpeckleProgressivePass
+} from './SpecklePass'
+import { Pipeline } from './Pipeline'
 /**
  * SAO implementation inspired from bhouston previous SAO work
  */
 
-export class SpeckleStaticAOGeneratePass extends Pass {
-  private batcher: Batcher = null
+export interface StaticAoPassParams {
+  intensity: number
+  kernelRadius: number
+  kernelSize: number
+  minDistance: number
+  maxDistance: number
+}
+
+export const DefaultStaticAoPassParams = {
+  intensity: 1,
+  kernelRadius: 0.5, // World space
+  kernelSize: 16,
+  minDistance: 0,
+  maxDistance: 0.008
+}
+
+export class StaticAOPass extends Pass implements SpeckleProgressivePass {
   public aoMaterial: ShaderMaterial = null
   private accumulateMaterial: ShaderMaterial = null
-  private _depthTexture: Texture
-  private _normalTexture: Texture
   private _generationBuffer: WebGLRenderTarget
   private _accumulationBuffer: WebGLRenderTarget
+  private params: StaticAoPassParams = DefaultStaticAoPassParams
   private fsQuad: FullScreenQuad
   private frameIndex = 0
-  private kernels: Array<Array<Vector3>> = new Array(16)
-  private kernelSize = 16
+  private kernels: Array<Array<Vector3>> = []
   private noiseTextures: Array<Texture> = []
-  public minDistance = 0.02
-  public maxDistance = 0.3
-  public ssaoKernelRadius = 1
-  public progressiveAO = 0
-  public kernelRadius = 15
 
-  public set depthTexture(value: Texture) {
-    this._depthTexture = value
-    this.aoMaterial.uniforms['tDepth'].value = value
+  public setTexture(
+    uName: InputDepthTextureUniform | InputNormalsTextureUniform,
+    texture: Texture
+  ) {
+    if (uName === 'tDepth') {
+      this.aoMaterial.uniforms['tDepth'].value = texture
+    }
+    if (uName === 'tNormal') {
+      this.aoMaterial.uniforms['tNormal'].value = texture
+    }
     this.aoMaterial.needsUpdate = true
   }
 
-  public set normalTexture(value: Texture) {
-    this._normalTexture = value
-  }
-
   public get outputTexture() {
-    return this._accumulationBuffer
+    return this._accumulationBuffer.texture
   }
 
-  constructor(batcher: Batcher) {
+  public get displayName(): string {
+    return 'STATIC-AO'
+  }
+
+  constructor() {
     super()
 
-    this.batcher = batcher
     this._generationBuffer = new WebGLRenderTarget(256, 256)
     this._accumulationBuffer = new WebGLRenderTarget(256, 256)
-    const aoDefines = {
-      AO_ESTIMATOR: 0
-    }
 
     this.aoMaterial = new ShaderMaterial({
-      defines: aoDefines,
       fragmentShader: speckleStaticAoGenerateFrag,
       vertexShader: speckleStaticAoGenerateVert,
       uniforms: {
@@ -95,16 +111,14 @@ export class SpeckleStaticAOGeneratePass extends Pass {
         bias: { value: 0 },
 
         minResolution: { value: 0.0 },
-        kernelRadius: { value: 15.0 },
-        randomSeed: { value: 0.0 },
+        kernelRadius: { value: 0.5 }, // World space
 
         frameIndex: { value: 0 },
 
         tNoise: { value: null },
         kernel: { value: null },
         minDistance: { value: 0.0 },
-        maxDistance: { value: 0.008 },
-        ssaoKernelRadius: { value: 0.5 }
+        maxDistance: { value: 1 }
       }
     })
 
@@ -133,7 +147,26 @@ export class SpeckleStaticAOGeneratePass extends Pass {
     this.fsQuad = new FullScreenQuad(this.aoMaterial)
   }
 
-  public update(camera: Camera, frameIndex: number) {
+  public setParams(params: unknown) {
+    Object.assign(this.params, params)
+    this.kernels = []
+    this.noiseTextures = []
+  }
+
+  public setFrameIndex(index: number) {
+    this.frameIndex = index
+  }
+
+  public update(scene: Scene, camera: Camera) {
+    /** DEFINES */
+    this.aoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
+      .isPerspectiveCamera
+      ? 1
+      : 0
+    this.aoMaterial.defines['NUM_FRAMES'] = Pipeline.ACCUMULATE_FRAMES
+    this.aoMaterial.defines['KERNEL_SIZE'] = this.params.kernelSize
+    this.accumulateMaterial.defines['NUM_FRAMES'] = Pipeline.ACCUMULATE_FRAMES
+    /** UNIFORMS */
     this.aoMaterial.uniforms['cameraNear'].value = (
       camera as PerspectiveCamera | OrthographicCamera
     ).near
@@ -146,29 +179,22 @@ export class SpeckleStaticAOGeneratePass extends Pass {
     this.aoMaterial.uniforms['cameraProjectionMatrix'].value.copy(
       camera.projectionMatrix
     )
-    this.aoMaterial.uniforms['scale'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
-    this.aoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
-      .isPerspectiveCamera
-      ? 1
-      : 0
-    this.aoMaterial.uniforms['kernelRadius'].value = this.kernelRadius
-    this.aoMaterial.uniforms['frameIndex'].value = frameIndex
-    this.frameIndex = frameIndex
+    if (!this.kernels[this.frameIndex]) {
+      this.generateSampleKernel(this.frameIndex)
+    }
+    if (!this.noiseTextures[this.frameIndex]) {
+      this.generateRandomKernelRotations(this.frameIndex)
+    }
+    this.aoMaterial.uniforms['kernel'].value = this.kernels[this.frameIndex]
+    this.aoMaterial.uniforms['tNoise'].value = this.noiseTextures[this.frameIndex]
 
-    if (!this.kernels[frameIndex]) {
-      this.generateSampleKernel(frameIndex)
-    }
-    if (!this.noiseTextures[frameIndex]) {
-      this.generateRandomKernelRotations(frameIndex)
-    }
-    this.aoMaterial.uniforms['kernel'].value = this.kernels[frameIndex]
-    this.aoMaterial.uniforms['tNoise'].value = this.noiseTextures[frameIndex]
-    this.aoMaterial.uniforms['ssaoKernelRadius'].value = this.ssaoKernelRadius
-    this.aoMaterial.uniforms['minDistance'].value = this.minDistance
-    this.aoMaterial.uniforms['maxDistance'].value = this.maxDistance
+    this.aoMaterial.uniforms['kernelRadius'].value = this.params.kernelRadius
+    this.aoMaterial.uniforms['frameIndex'].value = this.frameIndex
+
+    this.aoMaterial.uniforms['minDistance'].value = this.params.minDistance
+    this.aoMaterial.uniforms['maxDistance'].value = this.params.maxDistance
     this.aoMaterial.needsUpdate = true
+    this.accumulateMaterial.needsUpdate = true
   }
 
   public render(renderer, writeBuffer, readBuffer) {
@@ -192,7 +218,7 @@ export class SpeckleStaticAOGeneratePass extends Pass {
     renderer.autoClear = false
     renderer.setClearColor(0x000000)
     renderer.setClearAlpha(1)
-    renderer.clear()
+    renderer.clear(true)
     this.fsQuad.material = this.aoMaterial
     this.fsQuad.render(renderer)
 
@@ -200,8 +226,9 @@ export class SpeckleStaticAOGeneratePass extends Pass {
     if (this.frameIndex === 0) {
       renderer.setClearColor(0xffffff)
       renderer.setClearAlpha(1)
-      renderer.clear()
+      renderer.clear(true)
     }
+
     this.fsQuad.material = this.accumulateMaterial
     this.fsQuad.render(renderer)
   }
@@ -215,7 +242,7 @@ export class SpeckleStaticAOGeneratePass extends Pass {
   }
 
   private generateSampleKernel(frameIndex: number) {
-    const kernelSize = this.kernelSize
+    const kernelSize = this.params.kernelSize
     this.kernels[frameIndex] = []
 
     for (let i = 0; i < kernelSize; i++) {

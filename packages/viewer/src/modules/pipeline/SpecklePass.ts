@@ -16,3 +16,7 @@ export interface SpecklePass {
   setParams?(params: unknown)
   setClippingPlanes?(planes: Plane[])
 }
+
+export interface SpeckleProgressivePass extends SpecklePass {
+  setFrameIndex(index: number)
+}
