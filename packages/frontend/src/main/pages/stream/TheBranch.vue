@@ -60,12 +60,14 @@
                 :key="item.id + 'list'"
                 :commit="item"
                 :stream-id="streamId"
+                :shareable="true"
                 :selectable="true"
                 :select-disabled-message="disabledCheckboxMessage"
                 :select-disabled="!isStreamOwner && !isCommitOwner(item)"
                 :selected.sync="selectedCommitsState[item.id]"
                 show-received-receipts
                 class="mb-1 rounded"
+                @share="shareDialogCommitId = $event.id"
               ></list-item-commit>
             </v-list>
           </v-col>

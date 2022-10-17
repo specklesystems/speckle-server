@@ -63,6 +63,7 @@
           v-if="showSourceApp"
           :application-name="commit.sourceApplication"
         />
+        <commit-share-btn v-if="shareable" @share="onShareClicked" />
       </div>
     </div>
   </div>
@@ -71,9 +72,11 @@
 import { gql } from '@apollo/client/core'
 import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
 import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
+import CommitShareBtn from '@/main/components/stream/commit/CommitShareBtn.vue'
 
 export default {
   components: {
+    CommitShareBtn,
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     CommitReceivedReceipts: () =>
@@ -139,12 +142,20 @@ export default {
     selected: {
       type: Boolean,
       default: false
+    },
+    /**
+     * Whether to show the share button
+     */
+    shareable: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props, ctx) {
     const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+    const onShareClicked = () => ctx.emit('share', props.commit)
 
-    return { highlighted, selectedState, onSelect }
+    return { highlighted, selectedState, onSelect, onShareClicked }
   },
   apollo: {
     activity: {

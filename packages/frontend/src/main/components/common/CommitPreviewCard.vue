@@ -97,23 +97,14 @@
           />
         </div>
         <div class="card-top__right flex-column align-start">
-          <v-btn
-            v-if="shareable"
-            v-tooltip="shareDisabled ? shareDisabledMessage : undefined"
-            class="primary"
-            icon
-            small
-            :disabled="shareDisabled"
-            @click="onShareClicked"
-          >
-            <v-icon small>mdi-share-variant</v-icon>
-          </v-btn>
+          <commit-share-btn v-if="shareable" @share="onShareClicked" />
         </div>
       </div>
     </v-card>
   </v-hover>
 </template>
 <script>
+import CommitShareBtn from '@/main/components/stream/commit/CommitShareBtn.vue'
 import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
 
 export default {
@@ -121,7 +112,8 @@ export default {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
     CommitReceivedReceipts: () =>
       import('@/main/components/common/CommitReceivedReceipts'),
-    SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
+    SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
+    CommitShareBtn
   },
   props: {
     commit: { type: Object, default: () => null },
@@ -161,14 +153,6 @@ export default {
     shareable: {
       type: Boolean,
       default: false
-    },
-    shareDisabled: {
-      type: Boolean,
-      default: false
-    },
-    shareDisabledMessage: {
-      type: String,
-      default: undefined
     }
   },
   setup(props, ctx) {
