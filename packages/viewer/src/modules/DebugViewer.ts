@@ -5,7 +5,7 @@ export class DebugViewer extends Viewer {
     return this.speckleRenderer
   }
   requestRender() {
-    this.needsRender = true
+    this.speckleRenderer.needsRender = true
   }
   requestRenderShadowmap() {
     this.getRenderer().updateDirectLights()

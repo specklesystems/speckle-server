@@ -148,18 +148,13 @@ export class Viewer extends EventEmitter implements IViewer {
 
   private update() {
     const delta = this.clock.getDelta()
-    this.needsRender = this.cameraHandler.controls.update(delta)
     this.speckleRenderer.update(delta)
     this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))
   }
 
   private render() {
-    if (this.needsRender) {
-      this._needsRender = this.speckleRenderer.render(
-        this.cameraHandler.activeCam.camera
-      )
-    }
+    this.speckleRenderer.render()
   }
 
   public async init(): Promise<void> {

@@ -2,7 +2,6 @@ import {
   ACESFilmicToneMapping,
   Box3,
   Box3Helper,
-  Camera,
   CameraHelper,
   Color,
   DirectionalLight,
@@ -51,6 +50,7 @@ export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   private _renderer: WebGLRenderer
   public _scene: Scene
+  private _needsRender: boolean
   private rootGroup: Group
   private batcher: Batcher
   private intersections: Intersections
@@ -61,9 +61,17 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
   private pipeline: Pipeline
+  private lastAzimuth: number
+  private lastPolar: number
+  private lastCameraPosition: Vector3 = new Vector3()
+  private lastCameraMotionDelta: number
 
   public get renderer(): WebGLRenderer {
     return this._renderer
+  }
+
+  public set needsRender(value: boolean) {
+    this._needsRender ||= value
   }
 
   public set indirectIBL(texture: Texture) {
@@ -178,19 +186,10 @@ export default class SpeckleRenderer {
       camHelper.name = 'CamHelper'
       helpers.add(camHelper)
     }
-    this.viewer.cameraHandler.controls.restThreshold = 0.001
-    this.viewer.cameraHandler.controls.addEventListener('sleep', () => {
-      this.pipeline.onStationaryBegin()
-    })
-    // this.viewer.cameraHandler.controls.addEventListener('rest', (event) => {
-    //   this.pipeline.onStationaryBegin()
-    // })
-    this.viewer.cameraHandler.controls.addEventListener('wake', () => {
-      this.pipeline.onStationaryEnd()
-    })
   }
 
   public update(deltaTime: number) {
+    this.viewer.cameraHandler.controls.update(deltaTime)
     this.batcher.update(deltaTime)
 
     const viewer = new Vector3()
@@ -289,50 +288,43 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
+    const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
+    const currentPolar = this.viewer.cameraHandler.controls.polarAngle
+    const currentPosition = this.viewer.cameraHandler.activeCam.camera.position
+    const dAzimuth = Math.max(0, Math.abs(currentAzimuth - this.lastAzimuth) - 0.0001)
+    const dPolar = Math.max(0, Math.abs(currentPolar - this.lastPolar) - 0.0001)
+    const dPosition = Math.max(
+      0,
+      currentPosition.distanceTo(this.lastCameraPosition) - 0.001
+    )
+    const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dPosition))
+    if (motionMaxDelta === 0 && this.lastCameraMotionDelta > 0) {
+      this.pipeline.onStationaryBegin()
+    }
+    if (motionMaxDelta > 0 && this.lastCameraMotionDelta === 0) {
+      this._needsRender = true
+      this.pipeline.onStationaryEnd()
+    }
+    this.lastCameraMotionDelta = motionMaxDelta
+    this.lastAzimuth = currentAzimuth
+    this.lastPolar = currentPolar
+    this.lastCameraPosition.copy(currentPosition)
+
     this.pipeline.update(this)
-
-    // const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
-    // const currentPolar = this.viewer.cameraHandler.controls.polarAngle
-    // const currentDistance = this.viewer.cameraHandler.controls.distance
-    // const currentTarget = this.viewer.cameraHandler.controls.getTarget(new Vector3())
-    // /** This looks so much better */
-    // const dAzimuth = Math.max(
-    //   0,
-    //   Math.abs(currentAzimuth - this.lastAzimuth) - this.CAMERA_MOTION_EPSILON
-    // )
-    // const dPolar = Math.max(
-    //   0,
-    //   Math.abs(currentPolar - this.lastPolar) - this.CAMERA_MOTION_EPSILON
-    // )
-    // const dDistance = Math.max(
-    //   0,
-    //   Math.abs(currentDistance - this.lastDistance) - this.CAMERA_MOTION_EPSILON
-    // )
-    // const dTarget = currentTarget.distanceTo(this.lastTarget)
-
-    // const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dDistance, dTarget))
-    // if (motionMaxDelta === 0 && this.lasMaxCameraMotion > 0) {
-    //   console.log('Stopped')
-    // }
-    // this.lasMaxCameraMotion = motionMaxDelta
-
-    // this.lastAzimuth = currentAzimuth
-    // this.lastPolar = currentPolar
-    // this.lastDistance = currentDistance
-    // this.lastTarget.copy(currentTarget)
   }
 
-  public render(camera: Camera): boolean {
-    camera
-    this.batcher.render(this.renderer)
-    const needsRender = this.pipeline.render()
-    return needsRender
-    // this.renderer.render(this.scene, camera)
+  public render(): void {
+    if (this._needsRender) {
+      this.batcher.render(this.renderer)
+      this._needsRender = this.pipeline.render()
+      // this.renderer.render(this.scene, camera)
+    }
   }
 
   public resize(width: number, height: number) {
     this.renderer.setSize(width, height)
     this.pipeline.resize(width, height)
+    this._needsRender = true
   }
 
   public addRenderTree(subtreeId: string) {

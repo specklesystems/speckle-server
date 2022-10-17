@@ -313,6 +313,10 @@ export class Pipeline {
   }
 
   public onStationaryBegin() {
+    if (this.renderType === RenderType.ACCUMULATION) {
+      this.accumulationFrame = 0
+      return
+    }
     this.renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
     this.depthPass.enabled = true
@@ -326,6 +330,7 @@ export class Pipeline {
   }
 
   public onStationaryEnd() {
+    if (this.renderType === RenderType.NORMAL) return
     this.renderType = RenderType.NORMAL
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
