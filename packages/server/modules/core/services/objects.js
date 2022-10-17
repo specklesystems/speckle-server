@@ -11,6 +11,9 @@ const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
 
 module.exports = {
+  /**
+   * @returns {Promise<string>}
+   */
   async createObject(streamId, object) {
     const insertionObject = prepInsertionObject(streamId, object)
 

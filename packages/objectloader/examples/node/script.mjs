@@ -1,5 +1,7 @@
-// Since Node v<18 does not provide fetch, we need to pass it in the options object. Note that fetch must return a WHATWG compliant stream, so cross-fetch won't work, but node/undici's implementation will.
-import { fetch } from 'undici'
+/**
+ * Since Node v<18 does not provide fetch, we need to pass it in the options object. Popular fetch implementations like cross-fetch or node-fetch should work
+ */
+import fetch from 'cross-fetch'
 import ObjectLoader from '../../dist/objectloader.js'
 
 const loader = new ObjectLoader({
