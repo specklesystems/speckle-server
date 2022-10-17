@@ -75,7 +75,6 @@
       </v-card>
     </v-dialog>
   </div>
-  <div v-else>Hi</div>
 </template>
 <script>
 import { gql } from '@apollo/client/core'
@@ -103,7 +102,6 @@ export default {
   data() {
     return { showAllActivityDialog: false }
   },
-  // TODO: Undo test
   apollo: {
     activity: {
       query: gql`
@@ -112,7 +110,7 @@ export default {
             id
             commit(id: $commitId) {
               id
-              activity(actionType: "commit_create", limit: 200) {
+              activity(actionType: "commit_receive", limit: 200) {
                 items {
                   ...LimitedCommitActivityFields
                 }
