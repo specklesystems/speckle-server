@@ -31,6 +31,7 @@
     "cm": "cz"
   },
   "devDependencies": {
+    "@swc/core": "^1.2.222",
     "@types/eslint": "^8.4.1",
     "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",

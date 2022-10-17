@@ -64,6 +64,16 @@ export function useEmbedViewerUrlManager(params: {
   const hideSelectionInfo = ref(false)
   const hideLogo = ref(false)
   const commentSlideshow = ref(false)
+  const options = {
+    transparent,
+    autoload,
+    hideControls,
+    noScroll,
+    hideSidebar,
+    hideSelectionInfo,
+    hideLogo,
+    commentSlideshow
+  }
 
   const url = computed(() =>
     buildEmbedUrl(unref(embedParams), {
@@ -80,6 +90,12 @@ export function useEmbedViewerUrlManager(params: {
 
   const iFrameUrl = computed(() => wrapUrlInIFrame(url.value))
 
+  const resetOptions = () => {
+    for (const optionRef of Object.values(options)) {
+      optionRef.value = false
+    }
+  }
+
   return {
     options: {
       transparent,
@@ -92,6 +108,7 @@ export function useEmbedViewerUrlManager(params: {
       commentSlideshow
     },
     url,
-    iFrameUrl
+    iFrameUrl,
+    resetOptions
   }
 }

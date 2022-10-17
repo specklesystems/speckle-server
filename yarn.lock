@@ -4843,6 +4843,7 @@ __metadata:
     "@rushstack/eslint-patch": ^1.1.3
     "@speckle/shared": "workspace:^"
     "@speckle/viewer": "workspace:^"
+    "@swc/core": ^1.2.222
     "@tiptap/core": ^2.0.0-beta.176
     "@tiptap/extension-bold": ^2.0.0-beta.26
     "@tiptap/extension-document": ^2.0.0-beta.15
@@ -4889,6 +4890,8 @@ __metadata:
     regenerator-runtime: ^0.13.9
     sass: ~1.32.6
     subscriptions-transport-ws: ^0.11.0
+    ts-node: ^10.9.1
+    tsconfig-paths: ^4.0.0
     tween: ^0.9.0
     type-fest: ^2.13.1
     typescript: ~4.5.5
@@ -19355,6 +19358,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root@workspace:."
   dependencies:
+    "@swc/core": ^1.2.222
     "@types/eslint": ^8.4.1
     commitizen: ^4.2.4
     cz-conventional-changelog: ^3.3.0

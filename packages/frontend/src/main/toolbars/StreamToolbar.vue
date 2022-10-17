@@ -55,13 +55,12 @@
         <v-icon small>mdi-share-variant</v-icon>
       </v-btn>
     </portal>
-    <v-dialog
-      v-model="shareStream"
-      max-width="600"
-      :fullscreen="$vuetify.breakpoint.xsOnly"
-    >
-      <share-stream-dialog :stream="stream" @close="shareStream = false" />
-    </v-dialog>
+    <share-stream-dialog
+      :show.sync="shareStream"
+      :stream-id="stream.id"
+      :branch-name="$route.params.branchName"
+      :resource-id="$route.params.resourceId"
+    />
   </div>
 </template>
 <script>
