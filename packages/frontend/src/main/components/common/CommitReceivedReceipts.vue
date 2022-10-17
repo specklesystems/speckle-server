@@ -8,7 +8,7 @@
     @click="showAllActivityDialog = true"
   >
     <div
-      style="cursor: pointer; min-height: 33px; line-height: 33px"
+      style="cursor: pointer"
       :class="`${$vuetify.theme.dark ? 'black' : 'grey lighten-3'} ${
         shadow ? 'elevation-3' : ''
       } rounded-xl px-2`"
@@ -75,6 +75,7 @@
       </v-card>
     </v-dialog>
   </div>
+  <div v-else>Hi</div>
 </template>
 <script>
 import { gql } from '@apollo/client/core'
@@ -102,6 +103,7 @@ export default {
   data() {
     return { showAllActivityDialog: false }
   },
+  // TODO: Undo test
   apollo: {
     activity: {
       query: gql`
@@ -110,7 +112,7 @@ export default {
             id
             commit(id: $commitId) {
               id
-              activity(actionType: "commit_receive", limit: 200) {
+              activity(actionType: "commit_create", limit: 200) {
                 items {
                   ...LimitedCommitActivityFields
                 }

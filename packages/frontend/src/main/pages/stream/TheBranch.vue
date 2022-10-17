@@ -44,9 +44,11 @@
               :commit="commit"
               :show-stream-and-branch="false"
               :selectable="true"
+              :shareable="true"
               :select-disabled-message="disabledCheckboxMessage"
               :select-disabled="!isStreamOwner && !isCommitOwner(commit)"
               :selected.sync="selectedCommitsState[commit.id]"
+              @share="shareDialogCommitId = $event.id"
             />
           </v-col>
         </v-row>
@@ -109,6 +111,11 @@
     >
       <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
     </error-placeholder>
+    <share-stream-dialog
+      :show.sync="showShareDialog"
+      :stream-id="streamId"
+      :resource-id="shareDialogCommitId"
+    />
   </div>
 </template>
 <script>
@@ -116,7 +123,7 @@ import { gql } from '@apollo/client/core'
 import branchQuery from '@/graphql/branch.gql'
 import { STANDARD_PORTAL_KEYS, usePortalState } from '@/main/utils/portalStateManager'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
@@ -141,7 +148,8 @@ export default {
     BranchEditDialog: () => import('@/main/dialogs/BranchEditDialog'),
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
-    CommitMultiSelectToolbar
+    CommitMultiSelectToolbar,
+    ShareStreamDialog: () => import('@/main/dialogs/ShareStreamDialog.vue')
   },
   setup() {
     const eventHub = useEventHub()
@@ -205,6 +213,16 @@ export default {
       eventHub.$emit(StreamEvents.RefetchBranches)
     }
 
+    const shareDialogCommitId = ref(null)
+    const showShareDialog = computed({
+      get: () => !!shareDialogCommitId.value,
+      set: (newVal) => {
+        if (!newVal) {
+          shareDialogCommitId.value = null
+        }
+      }
+    })
+
     return {
       stream,
       streamFetchMore,
@@ -220,7 +238,9 @@ export default {
       isStreamOwner,
       isCommitOwner,
       onBatchCommitActionFinish,
-      disabledCheckboxMessage
+      disabledCheckboxMessage,
+      shareDialogCommitId,
+      showShareDialog
     }
   },
   data() {

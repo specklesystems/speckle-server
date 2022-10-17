@@ -70,23 +70,45 @@
           </router-link>
         </div>
       </div>
-      <div style="position: absolute; top: 10px; right: 20px">
-        <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
-      </div>
-      <div style="position: absolute; top: 10px; left: 12px">
-        <v-chip
-          v-if="commit.commentCount !== 0"
-          v-tooltip="
-            `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
-          "
-          small
-          class="caption primary"
-          dark
-        >
-          <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
-          {{ commit.commentCount }}
-        </v-chip>
-        <source-app-avatar :application-name="commit.sourceApplication" />
+      <div class="card-top justify-space-between align-start">
+        <div class="card-top__left flex-column align-start">
+          <div>
+            <source-app-avatar
+              :application-name="commit.sourceApplication"
+              style="margin: 0 !important"
+            />
+          </div>
+          <v-chip
+            v-if="commit.commentCount !== 0"
+            v-tooltip="
+              `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
+            "
+            small
+            class="caption primary"
+            dark
+          >
+            <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
+            {{ commit.commentCount }}
+          </v-chip>
+          <commit-received-receipts
+            :stream-id="streamId"
+            :commit-id="commit.id"
+            shadow
+          />
+        </div>
+        <div class="card-top__right flex-column align-start">
+          <v-btn
+            v-if="shareable"
+            v-tooltip="shareDisabled ? shareDisabledMessage : undefined"
+            class="primary"
+            icon
+            small
+            :disabled="shareDisabled"
+            @click="onShareClicked"
+          >
+            <v-icon small>mdi-share-variant</v-icon>
+          </v-btn>
+        </div>
       </div>
     </v-card>
   </v-hover>
@@ -132,12 +154,28 @@ export default {
     selected: {
       type: Boolean,
       default: false
+    },
+    /**
+     * Whether to show a share button
+     */
+    shareable: {
+      type: Boolean,
+      default: false
+    },
+    shareDisabled: {
+      type: Boolean,
+      default: false
+    },
+    shareDisabledMessage: {
+      type: String,
+      default: undefined
     }
   },
   setup(props, ctx) {
     const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+    const onShareClicked = () => ctx.emit('share', props.commit)
 
-    return { highlighted, selectedState, onSelect }
+    return { highlighted, selectedState, onSelect, onShareClicked }
   },
   computed: {
     streamId() {
@@ -154,3 +192,24 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.card-top {
+  $base: &;
+
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  left: 12px;
+
+  display: flex;
+
+  #{$base}__left,
+  #{$base}__right {
+    display: flex;
+
+    & > * {
+      margin-bottom: 4px !important;
+    }
+  }
+}
+</style>
