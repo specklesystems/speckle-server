@@ -48,15 +48,21 @@ export function useCommitMultiActions() {
  * Use inside a component that represents a commit that can be selected (e.g. for batch actions)
  */
 export function useSelectableCommit(
-  props: SetupProps<{ allowSelect: boolean; selected: boolean; highlight: boolean }>,
+  props: SetupProps<{
+    selectable: boolean
+    selectDisabled: boolean
+    selected: boolean
+  }>,
   ctx: SetupContext
 ) {
-  const highlighted = computed(() => props.highlight || props.selected)
+  const canBeSelected = computed(() => props.selectable && !props.selectDisabled)
+
   const selectedState = computed({
-    get: () => props.selected,
-    set: (newVal) => ctx.emit('update:selected', !!newVal)
+    get: () => (canBeSelected.value ? props.selected : false),
+    set: (newVal) => ctx.emit('update:selected', canBeSelected.value ? !!newVal : false)
   })
-  const onSelect = () => ctx.emit('select', { value: props.selected })
+  const highlighted = computed(() => selectedState.value)
+  const onSelect = () => ctx.emit('select', { value: selectedState.value })
 
   return {
     highlighted,

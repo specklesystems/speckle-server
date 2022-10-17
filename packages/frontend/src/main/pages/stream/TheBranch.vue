@@ -43,7 +43,9 @@
             <commit-preview-card
               :commit="commit"
               :show-stream-and-branch="false"
-              :allow-select="isStreamOwner || isCommitOwner(commit)"
+              :selectable="true"
+              :select-disabled-message="disabledCheckboxMessage"
+              :select-disabled="!isStreamOwner && !isCommitOwner(commit)"
               :selected.sync="selectedCommitsState[commit.id]"
             />
           </v-col>
@@ -56,7 +58,9 @@
                 :key="item.id + 'list'"
                 :commit="item"
                 :stream-id="streamId"
-                :allow-select="isStreamOwner || isCommitOwner(item)"
+                :selectable="true"
+                :select-disabled-message="disabledCheckboxMessage"
+                :select-disabled="!isStreamOwner && !isCommitOwner(item)"
                 :selected.sync="selectedCommitsState[item.id]"
                 show-received-receipts
                 class="mb-1 rounded"
@@ -118,7 +122,8 @@ import { AppLocalStorage } from '@/utils/localStorage'
 import { useCommitMultiActions } from '@/main/lib/stream/composables/commitMultiActions'
 import {
   BatchActionType,
-  deleteCommitsFromCachedCommitsQuery
+  deleteCommitsFromCachedCommitsQuery,
+  disabledCheckboxMessage
 } from '@/main/lib/stream/services/commitMultiActions'
 import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
 import { Roles } from '@/helpers/mainConstants'
@@ -214,7 +219,8 @@ export default {
       canRenderToolbarPortal,
       isStreamOwner,
       isCommitOwner,
-      onBatchCommitActionFinish
+      onBatchCommitActionFinish,
+      disabledCheckboxMessage
     }
   },
   data() {

@@ -4,14 +4,20 @@
       :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`"
       :style="`${highlighted ? 'outline: 0.2rem solid #047EFB;' : ''}`"
     >
-      <v-checkbox
-        v-if="allowSelect"
-        v-model="selectedState"
-        dense
-        hide-details
-        class="mt-0 ml-2 pa-0"
-        @change="onSelect"
-      />
+      <div
+        v-tooltip="selectDisabled ? selectDisabledMessage : undefined"
+        class="checkbox-hover-wrapper"
+      >
+        <v-checkbox
+          v-if="selectable"
+          v-model="selectedState"
+          :disabled="selectDisabled"
+          dense
+          hide-details
+          class="mt-0 ml-2 pa-0"
+          @change="onSelect"
+        />
+      </div>
       <div class="flex-shrink-0">
         <user-avatar :id="commit.authorId" :size="30" />
       </div>
@@ -106,14 +112,30 @@ export default {
       type: Boolean,
       default: true
     },
-    highlight: {
+    /**
+     * Whether to show a checkbox that would allow selecting this card
+     */
+    selectable: {
       type: Boolean,
       default: false
     },
-    allowSelect: {
+    /**
+     * Whether selection of this card is disabled
+     */
+    selectDisabled: {
       type: Boolean,
       default: false
     },
+    /**
+     * Message to show in a tooltip for a disabled card
+     */
+    selectDisabledMessage: {
+      type: String,
+      default: undefined
+    },
+    /**
+     * Whether the card is currently selected
+     */
     selected: {
       type: Boolean,
       default: false

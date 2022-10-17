@@ -26,7 +26,9 @@
         <commit-preview-card
           :commit="commit"
           :preview-height="180"
-          :allow-select="isCommitOrStreamOwner(commit)"
+          :selectable="true"
+          :select-disabled-message="disabledCheckboxMessage"
+          :select-disabled="!isCommitOrStreamOwner(commit)"
           :selected.sync="selectedCommitsState[commit.id]"
         />
       </v-col>
@@ -82,7 +84,10 @@ import {
 } from '@/main/lib/stream/composables/commitMultiActions'
 import { Roles } from '@/helpers/mainConstants'
 import { getCacheId } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
-import { deleteCommitsFromCachedCommitsQuery } from '@/main/lib/stream/services/commitMultiActions'
+import {
+  deleteCommitsFromCachedCommitsQuery,
+  disabledCheckboxMessage
+} from '@/main/lib/stream/services/commitMultiActions'
 
 export default defineComponent({
   name: 'TheCommits',
@@ -171,7 +176,8 @@ export default defineComponent({
       clearSelectedCommits,
       selectedCommitsState,
       onBatchCommitActionFinish,
-      isCommitOrStreamOwner
+      isCommitOrStreamOwner,
+      disabledCheckboxMessage
     }
   },
   methods: {

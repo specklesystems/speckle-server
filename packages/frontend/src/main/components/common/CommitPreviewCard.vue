@@ -14,19 +14,25 @@
       </router-link>
       <v-toolbar class="transparent elevation-0" dense>
         <v-toolbar-title class="d-flex" style="overflow: visible; width: 100%">
-          <v-checkbox
-            v-if="allowSelect"
-            v-model="selectedState"
-            dense
-            hide-details
-            @change="onSelect"
-          />
+          <div
+            v-tooltip="selectDisabled ? selectDisabledMessage : undefined"
+            class="checkbox-hover-wrapper"
+          >
+            <v-checkbox
+              v-if="selectable"
+              v-model="selectedState"
+              :disabled="selectDisabled"
+              dense
+              hide-details
+              @change="onSelect"
+            />
+          </div>
           <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
             <router-link
               class="text-decoration-none"
               :to="`/streams/${streamId}/commits/${commit.id}`"
             >
-              <v-icon v-if="!allowSelect" small>mdi-source-commit</v-icon>
+              <v-icon v-if="!selectable" small>mdi-source-commit</v-icon>
               {{ commit.message }}
             </router-link>
           </div>
@@ -99,11 +105,30 @@ export default {
     commit: { type: Object, default: () => null },
     previewHeight: { type: Number, default: () => 180 },
     showStreamAndBranch: { type: Boolean, default: true },
-    highlight: { type: Boolean, default: false },
-    allowSelect: {
+    /**
+     * Whether to show a checkbox that would allow selecting this card
+     */
+    selectable: {
       type: Boolean,
       default: false
     },
+    /**
+     * Whether selection of this card is disabled
+     */
+    selectDisabled: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Message to show in a tooltip for a disabled card
+     */
+    selectDisabledMessage: {
+      type: String,
+      default: undefined
+    },
+    /**
+     * Whether the card is currently selected
+     */
     selected: {
       type: Boolean,
       default: false
