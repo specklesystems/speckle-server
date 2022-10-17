@@ -22,47 +22,41 @@
           @focus="copyToClipboard"
         ></v-text-field>
         <v-text-field
-          v-if="$route.params.branchName"
-          ref="branchUrl"
+          v-if="branchName"
           dark
           filled
           rounded
           hint="Branch url copied to clipboard. Most connectors can receive the latest commit from a branch by using this url."
           style="color: blue"
           prepend-inner-icon="mdi-source-branch"
-          :value="streamUrl + '/branches/' + $route.params.branchName"
+          :value="streamUrl + '/branches/' + branchName"
           @focus="copyToClipboard"
         ></v-text-field>
         <v-text-field
-          v-if="
-            $route.params.resourceId &&
-            $resourceType($route.params.resourceId) === 'commit'
-          "
-          ref="commitUrl"
+          v-if="resourceId && $resourceType(resourceId) === 'commit'"
           dark
           filled
           rounded
           hint="Commit url copied to clipboard. Most connectors can receive a specific commit by using this url."
           style="color: blue"
           prepend-inner-icon="mdi-source-commit"
-          :value="streamUrl + '/commits/' + $route.params.resourceId"
+          :value="streamUrl + '/commits/' + resourceId"
           @focus="copyToClipboard"
         ></v-text-field>
         <v-text-field
-          v-if="$route.params.resourceId && $route.params.resourceId.length !== 10"
-          ref="commitUrl"
+          v-if="resourceId && $resourceType(resourceId) === 'object'"
           dark
           filled
           rounded
           hint="Object url copied to clipboard. Most connectors can receive a specific object by using this url."
           style="color: blue"
           prepend-inner-icon="mdi-cube-outline"
-          :value="streamUrl + '/objects/' + $route.params.resourceId"
+          :value="streamUrl + '/objects/' + resourceId"
           @focus="copyToClipboard"
         ></v-text-field>
       </v-card-text>
     </v-sheet>
-    <v-sheet v-if="$route.params.resourceId || true">
+    <v-sheet v-if="resourceId || true">
       <v-toolbar dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>mdi-camera</v-icon>
@@ -83,7 +77,7 @@
           <div class="d-flex align-center mt-4">
             <v-text-field
               dense
-              :value="getIframeUrl()"
+              :value="iFrameUrl"
               hint="Copied to clipboard!"
               filled
               rounded
@@ -95,7 +89,7 @@
               <v-expansion-panel-header>Embed Options</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <v-checkbox
-                  v-model="transparentBg"
+                  v-model="transparent"
                   class="ml-2 caption"
                   label="Transparent background"
                   dense
@@ -119,7 +113,7 @@
                   label="Hide object selection info"
                 ></v-checkbox>
                 <v-checkbox
-                  v-model="preventScroll"
+                  v-model="noScroll"
                   dense
                   class="ml-2 caption"
                   label="Prevent scrolling (zooming)"
@@ -131,7 +125,7 @@
                   label="Load model automatically"
                 ></v-checkbox>
                 <v-checkbox
-                  v-model="slideshow"
+                  v-model="commentSlideshow"
                   dense
                   class="ml-2 caption"
                   label="Comment slideshow mode"
@@ -172,7 +166,7 @@
         stream.
       </v-card-text>
     </v-sheet>
-    <v-sheet v-if="stream">
+    <v-sheet v-if="stream && stream.collaborators">
       <v-toolbar
         v-tooltip="
           `${
@@ -247,18 +241,31 @@
           Send Invite
         </v-btn>
       </v-toolbar>
-      <invite-dialog
-        :stream-id="$route.params.streamId"
-        :visible.sync="inviteDialogVisible"
-      />
+      <invite-dialog :stream-id="streamId" :visible.sync="inviteDialogVisible" />
     </v-sheet>
   </v-card>
 </template>
-<script>
-import { gql } from '@apollo/client/core'
-import { commonStreamFieldsFragment } from '@/graphql/streams'
+<script lang="ts">
 import InviteDialog from '@/main/dialogs/InviteDialog.vue'
 import UserAvatar from '@/main/components/common/UserAvatar.vue'
+import { useEmbedViewerUrlManager } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
+import { computed } from 'vue'
+import { useRoute } from '@/main/lib/core/composables/router'
+import { getResourceType } from '@/main/lib/viewer/core/helpers/resourceHelper'
+import { EmbedParams } from '@/main/lib/viewer/commit-object-viewer/services/embed'
+import { ensureError } from '@/main/lib/common/general/helpers/errorHelper'
+import { UpdateStreamSettingsDocument } from '@/graphql/generated/graphql'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+
+/**
+ * Stream prop needs the following keys:
+ * - isPublic
+ * - role
+ * - collaborators
+ *
+ * what about embedType? can that be cleaned up? and all other url params?
+ * can we add embed button back to embed viewer then?
+ */
 
 export default {
   name: 'ShareStreamDialog',
@@ -269,34 +276,71 @@ export default {
   props: {
     stream: {
       type: Object,
-      default: () => null
+      required: true
+    }
+  },
+  setup() {
+    const route = useRoute()
+
+    const streamId = computed(() => route.params.streamId)
+    const branchName = computed(() => route.params.branchName || undefined)
+    const resourceId = computed(() => route.params.resourceId)
+    const resourceType = computed(() =>
+      resourceId.value ? getResourceType(resourceId.value) : ''
+    )
+    const objectId = computed(() =>
+      resourceType.value === 'object' ? resourceId.value : undefined
+    )
+    const commitId = computed(() =>
+      resourceType.value === 'commit' ? resourceId.value : undefined
+    )
+
+    const embedParams = computed(
+      (): EmbedParams => ({
+        streamId: streamId.value,
+        branchName: branchName.value || undefined,
+        objectId: objectId.value,
+        commitId: commitId.value,
+        overlay: (route.query.overlay as string) || undefined,
+        c: (route.query.c as string) || undefined,
+        filter: (route.query.filter as string) || undefined
+      })
+    )
+
+    const { options, url, iFrameUrl } = useEmbedViewerUrlManager({
+      embedParams
+    })
+
+    return {
+      streamId,
+      branchName,
+      resourceId,
+      resourceType,
+      objectId,
+      commitId,
+      ...options,
+      url,
+      iFrameUrl
     }
   },
   data() {
     return {
       swapPermsLoading: false,
-      transparentBg: false,
-      hideControls: false,
-      hideSidebar: false,
-      hideSelectionInfo: false,
-      preventScroll: false,
-      autoload: false,
-      slideshow: false,
       inviteDialogVisible: false
     }
   },
   computed: {
     streamUrl() {
-      return `${window.location.origin}/streams/${this.$route.params.streamId}`
+      return `${window.location.origin}/streams/${this.streamId}`
     },
     embedType() {
-      if (this.$route.params.branchName) return 'Branch'
-      if (this.$route.params.resourceId) return 'Model'
+      if (this.branchName) return 'Branch'
+      if (this.resourceId) return 'Model'
       return 'Stream'
     },
     embedDescription() {
-      if (this.$route.params.branchName) return 'the latest commit in this branch'
-      if (this.$route.params.resourceId) return 'model'
+      if (this.branchName) return 'the latest commit in this branch'
+      if (this.resourceId) return 'model'
       return 'the latest commit in this stream'
     }
   },
@@ -307,101 +351,54 @@ export default {
     })
   },
   methods: {
-    copyToClipboard(e) {
-      // this.$clipboard(e.target.value)
-      // console.log(e.target.value)
-      e.target.select()
+    copyToClipboard(e: MouseEvent) {
+      const target = e.target as HTMLInputElement
+      target.select()
       document.execCommand('copy')
     },
     goToStreamCollabs() {
-      this.$router.push(`/streams/${this.$route.params.streamId}/collaborators`)
+      this.$router.push(`/streams/${this.streamId}/collaborators`)
       this.$emit('close')
     },
     showStreamInviteDialog() {
       this.inviteDialogVisible = true
-    },
-    getIframeUrl() {
-      let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
-
-      if (this.$route.params.branchName) {
-        base += `&branch=${this.$route.params.branchName}`
-        return this.wrapUrlInIframe(base)
-      }
-
-      const resourceId = this.$route.params.resourceId
-      if (!resourceId) return this.wrapUrlInIframe(base)
-
-      base += `&${this.$resourceType(resourceId)}=${this.$route.params.resourceId}`
-
-      if (this.$route.query.overlay) {
-        base += `&overlay=${this.$route.query.overlay}`
-      }
-      if (this.$route.query.c) {
-        base += `&c=${encodeURIComponent(this.$route.query.c)}`
-      }
-      if (this.$route.query.filter) {
-        base += `&filter=${encodeURIComponent(this.$route.query.filter)}`
-      }
-
-      return this.wrapUrlInIframe(base)
-    },
-    wrapUrlInIframe(url) {
-      if (this.transparentBg) {
-        url += `&transparent=true`
-      }
-
-      if (this.hideControls) url += `&hidecontrols=true`
-      if (this.hideSidebar) url += `&hidesidebar=true`
-      if (this.hideSelectionInfo) url += `&hideselectioninfo=true`
-      if (this.autoload) url += `&autoload=true`
-      if (this.preventScroll) url += `&noscroll=true`
-      if (this.slideshow) url += `&commentslideshow=true`
-
-      return `<iframe src="${url}" width="600" height="400" frameborder="0"></iframe>`
     },
     async changeVisibility() {
       this.swapPermsLoading = true
 
       const newIsPublic = !this.stream.isPublic
       try {
-        await this.$apollo.mutate({
-          mutation: gql`
-            mutation editDescription($input: StreamUpdateInput!) {
-              streamUpdate(stream: $input)
-            }
-          `,
-          variables: {
-            input: {
-              id: this.$route.params.streamId,
-              isPublic: newIsPublic
-            }
-          },
-          optimisticResponse: {
-            __typename: 'Mutation',
-            streamUpdate: newIsPublic
-          },
-          update: (cache, { data: { streamUpdate: isSuccessFul } }) => {
-            // Update stream public value in cache
-            const normalizedId = `Stream:${this.stream.id}`
-            const cachedStream = cache.readFragment({
-              id: normalizedId,
-              fragment: commonStreamFieldsFragment
-            })
+        await this.$apollo
+          .mutate({
+            mutation: UpdateStreamSettingsDocument,
+            variables: {
+              input: {
+                id: this.streamId,
+                isPublic: newIsPublic
+              }
+            },
+            optimisticResponse: {
+              __typename: 'Mutation',
+              streamUpdate: newIsPublic
+            },
+            update: (cache, { data }) => {
+              const isSuccess = !!data?.streamUpdate
+              if (!isSuccess) return
 
-            cache.writeFragment({
-              id: normalizedId,
-              fragment: commonStreamFieldsFragment,
-              data: {
-                ...cachedStream,
-                isPublic: isSuccessFul ? newIsPublic : !newIsPublic
-              },
-              overwrite: true
-            })
-          }
-        })
-      } catch (e) {
-        this.$eventHub.$emit('notification', {
-          text: e.message ? e.message : 'Something went wrong.'
+              // Update stream public value in cache
+              cache.modify({
+                id: cache.identify(this.stream),
+                fields: {
+                  isPublic: () => newIsPublic
+                }
+              })
+            }
+          })
+          .catch(convertThrowIntoFetchResult)
+      } catch (e: unknown) {
+        this.$triggerNotification({
+          text: ensureError(e, 'Something went wrong').message,
+          type: 'error'
         })
       }
       this.swapPermsLoading = false

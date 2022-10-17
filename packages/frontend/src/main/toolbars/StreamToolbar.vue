@@ -45,7 +45,7 @@
       </span>
       <v-btn
         v-if="stream"
-        v-tooltip="'Share this stream'"
+        v-tooltip="'Share this stream/commit'"
         xxxelevation="0"
         rounded
         class="mr-2 ml-2 px-0 primary"

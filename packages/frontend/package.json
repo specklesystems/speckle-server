@@ -92,7 +92,7 @@
     "vite": "^3.1.0",
     "vite-bundle-visualizer": "^0.4.1",
     "vite-plugin-simple-gql": "^0.5.0",
-    "vue-tsc": "^1.0.3"
+    "vue-tsc": "^1.0.8"
   },
   "engines": {
     "node": "^16.0.0"
