@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
 import Batcher from '../batching/Batcher'
 import SpeckleRenderer from '../SpeckleRenderer'
-import { ApplySAOPass } from './ApplySAOPass'
+import { ApplySAOPass } from './ApplyAOPass'
 import { CopyOutputPass } from './CopyOutputPass'
 import { DepthPass } from './DepthPass'
 import { NormalsPass } from './NormalsPass'
@@ -257,6 +257,7 @@ export class Pipeline {
     this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTexture)
     this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.staticAoPass.setTexture('tDepth', this.depthPass.outputTexture)
 
     let restoreVisibility
@@ -288,7 +289,10 @@ export class Pipeline {
     this.dynamicAoPass.update(renderer.scene, renderer.camera)
     this.normalsPass.update(renderer.scene, renderer.camera)
     this.staticAoPass.update(renderer.scene, renderer.camera)
+    this.applySaoPass.update(renderer.scene, renderer.camera)
+
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
+    this.applySaoPass.setFrameIndex(this.accumulationFrame)
   }
 
   public render(): boolean {
@@ -326,16 +330,20 @@ export class Pipeline {
     this.applySaoPass.enabled = true
     this.staticAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
+    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
+    this.applySaoPass.setRenderType(this.renderType)
     console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
     if (this.renderType === RenderType.NORMAL) return
+    this.accumulationFrame = 0
     this.renderType = RenderType.NORMAL
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+    this.applySaoPass.setRenderType(this.renderType)
     console.warn('Ending stationary')
   }
 }

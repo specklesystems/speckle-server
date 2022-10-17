@@ -1,28 +1,43 @@
 import {
   AddEquation,
+  Camera,
   CustomBlending,
   DstAlphaFactor,
   DstColorFactor,
   NoBlending,
+  Scene,
   ShaderMaterial,
   Texture,
-  UniformsUtils,
   ZeroFactor
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
-import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
-import { InputColorTextureUniform, SpecklePass } from './SpecklePass'
+import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag'
+import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert'
+import { Pipeline, RenderType } from './Pipeline'
+import {
+  InputColorTextureUniform,
+  InputColorInterpolateTextureUniform,
+  SpeckleProgressivePass
+} from './SpecklePass'
 
-export class ApplySAOPass extends Pass implements SpecklePass {
+export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
+  private frameIndex = 0
 
   constructor() {
     super()
     this.materialCopy = new ShaderMaterial({
-      uniforms: UniformsUtils.clone(CopyShader.uniforms),
-      vertexShader: CopyShader.vertexShader,
-      fragmentShader: CopyShader.fragmentShader,
+      defines: {
+        ACCUMULATE: 0
+      },
+      uniforms: {
+        tDiffuse: { value: null },
+        tDiffuseInterp: { value: null },
+        frameIndex: { value: 0 }
+      },
+      vertexShader: speckleApplyAoVert,
+      fragmentShader: speckleApplyAoFrag,
       blending: NoBlending
     })
     this.materialCopy.transparent = true
@@ -40,7 +55,10 @@ export class ApplySAOPass extends Pass implements SpecklePass {
     this.fsQuad = new FullScreenQuad(this.materialCopy)
   }
 
-  public setTexture(uName: InputColorTextureUniform, texture: Texture) {
+  public setTexture(
+    uName: InputColorTextureUniform | InputColorInterpolateTextureUniform,
+    texture: Texture
+  ) {
     this.materialCopy.uniforms[uName].value = texture
     this.materialCopy.needsUpdate = true
   }
@@ -55,6 +73,28 @@ export class ApplySAOPass extends Pass implements SpecklePass {
 
   setParams(params: unknown) {
     params
+  }
+
+  setFrameIndex(index: number) {
+    this.frameIndex = index
+  }
+
+  setRenderType(type: RenderType) {
+    if (type === RenderType.NORMAL) {
+      this.materialCopy.defines['ACCUMULATE'] = 0
+    } else {
+      this.materialCopy.defines['ACCUMULATE'] = 1
+      this.frameIndex = 0
+    }
+    this.materialCopy.needsUpdate = true
+  }
+
+  public update(scene: Scene, camera: Camera) {
+    scene
+    camera
+    this.materialCopy.defines['NUM_FRAMES'] = Pipeline.ACCUMULATE_FRAMES
+    this.materialCopy.uniforms['frameIndex'].value = this.frameIndex
+    this.materialCopy.needsUpdate = true
   }
 
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {
