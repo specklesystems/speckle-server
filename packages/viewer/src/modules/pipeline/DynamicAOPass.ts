@@ -54,7 +54,7 @@ export const DefaultDynamicAOPassParams = {
   bias: 0.15,
   normalsType: NormalsType.ACCURATE,
   blurEnabled: true,
-  blurRadius: 4,
+  blurRadius: 2,
   blurStdDev: 4,
   blurDepthCutoff: 0.0007
 }
@@ -69,6 +69,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
   private blurIntermediateRenderTarget: WebGLRenderTarget = null
   private fsQuad: FullScreenQuad = null
   private _outputType: DynamicAOOutputType = DynamicAOOutputType.AO_BLURRED
+  private outputScale = 0.5
 
   private prevStdDev: number
   private prevNumSamples: number
@@ -297,7 +298,9 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     renderer.setClearAlpha(originalClearAlpha)
   }
 
-  public setSize(width: number, height: number) {
+  public setSize(inputWidth: number, inputHeight: number) {
+    const width = inputWidth * this.outputScale
+    const height = inputHeight * this.outputScale
     this.saoRenderTarget.setSize(width, height)
     this.blurIntermediateRenderTarget.setSize(width, height)
 
