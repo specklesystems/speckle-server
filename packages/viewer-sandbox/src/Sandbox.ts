@@ -47,8 +47,8 @@ export default class Sandbox {
     },
     staticAoEnabled: true,
     staticAoParams: {
-      intensity: 1,
-      kernelRadius: 0.5, // World space
+      intensity: 0.8,
+      kernelRadius: 0.35, // World space
       kernelSize: 16,
       minDistance: 0,
       maxDistance: 0.008
@@ -463,6 +463,16 @@ export default class Sandbox {
     //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
     //     this.viewer.requestRender()
     //   })
+    staticAoFolder
+      .addInput(Sandbox.pipelineParams.staticAoParams, 'intensity', {
+        min: 0,
+        max: 5,
+        step: 0.01
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.requestRender()
+      })
     staticAoFolder
       .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
         min: 0,

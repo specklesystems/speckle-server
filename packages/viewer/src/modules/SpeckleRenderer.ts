@@ -48,6 +48,9 @@ import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pi
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
+  private readonly ANGLE_EPSILON = 0.0001
+  private readonly POSITION_REST_EPSILON = 0.001
+  private readonly POSITION_RESUME_EPSILON = 0.01
   private _renderer: WebGLRenderer
   public _scene: Scene
   private _needsRender: boolean
@@ -291,17 +294,26 @@ export default class SpeckleRenderer {
     const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
     const currentPolar = this.viewer.cameraHandler.controls.polarAngle
     const currentPosition = this.viewer.cameraHandler.activeCam.camera.position
-    const dAzimuth = Math.max(0, Math.abs(currentAzimuth - this.lastAzimuth) - 0.0001)
-    const dPolar = Math.max(0, Math.abs(currentPolar - this.lastPolar) - 0.0001)
+    const dAzimuth = Math.max(
+      0,
+      Math.abs(currentAzimuth - this.lastAzimuth) - this.ANGLE_EPSILON
+    )
+    const dPolar = Math.max(
+      0,
+      Math.abs(currentPolar - this.lastPolar) - this.ANGLE_EPSILON
+    )
     const dPosition = Math.max(
       0,
-      currentPosition.distanceTo(this.lastCameraPosition) - 0.001
+      currentPosition.distanceTo(this.lastCameraPosition) - this.POSITION_REST_EPSILON
     )
     const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dPosition))
     if (motionMaxDelta === 0 && this.lastCameraMotionDelta > 0) {
       this.pipeline.onStationaryBegin()
     }
-    if (motionMaxDelta > 0 && this.lastCameraMotionDelta === 0) {
+    if (
+      motionMaxDelta > this.POSITION_RESUME_EPSILON &&
+      this.lastCameraMotionDelta === 0
+    ) {
       this._needsRender = true
       this.pipeline.onStationaryEnd()
     }

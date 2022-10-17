@@ -48,8 +48,8 @@ export interface StaticAoPassParams {
 }
 
 export const DefaultStaticAoPassParams = {
-  intensity: 1,
-  kernelRadius: 0.5, // World space
+  intensity: 0.8,
+  kernelRadius: 0.35, // World space
   kernelSize: 16,
   minDistance: 0,
   maxDistance: 0.008
@@ -188,6 +188,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.aoMaterial.uniforms['kernel'].value = this.kernels[this.frameIndex]
     this.aoMaterial.uniforms['tNoise'].value = this.noiseTextures[this.frameIndex]
 
+    this.aoMaterial.uniforms['intensity'].value = this.params.intensity
     this.aoMaterial.uniforms['kernelRadius'].value = this.params.kernelRadius
     this.aoMaterial.uniforms['frameIndex'].value = this.frameIndex
 

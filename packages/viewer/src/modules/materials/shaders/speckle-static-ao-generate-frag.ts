@@ -255,7 +255,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 						occlusion += 1.0;
 					}
 				}
-				return clamp( occlusion / float( KERNEL_SIZE ), 0.0, 1.0 );
+				return clamp( occlusion * intensity / float( KERNEL_SIZE ), 0.0, 1.0 );
 			#endif
 			}
 		void main() {
@@ -268,6 +268,5 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
 			gl_FragColor.xyz *=  ambientOcclusion;
-			gl_FragColor.a = 1.;//1. / float(NUM_FRAMES);
-			// gl_FragColor.xyz = getViewNormal(viewPosition, vUv, centerDepth);
+			gl_FragColor.a = 1.;
 		}`
