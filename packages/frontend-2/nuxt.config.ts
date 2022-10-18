@@ -3,5 +3,7 @@ export default defineNuxtConfig({
   typescript: {
     shim: false,
     strict: true
-  }
+  },
+
+  modules: ['@nuxtjs/tailwindcss']
 })
