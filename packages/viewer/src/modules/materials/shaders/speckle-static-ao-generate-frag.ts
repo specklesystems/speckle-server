@@ -38,18 +38,9 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		vec4 getDefaultColor( const in vec2 screenPosition ) {
 			return vec4( 1.0 );
 		}
-		
-		highp float decode32(highp vec4 rgba) {
-			highp float Sign = 1.0 - step(128.0,rgba[0])*2.0;
-			highp float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0; 
-			highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3] + float(0x800000);
-			highp float Result =  Sign * exp2(Exponent) * (Mantissa * exp2(-23.0 )); 
-			return Result;
-		}
 
 		float getDepth( const in vec2 screenPosition ) {
-			vec4 plm = texture2D( tDepth, screenPosition ) * 255.;
-			return decode32( plm.rgba );
+			return unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
 		}
 
 		float getLinearDepth( const in vec2 screenPosition ) {
@@ -192,6 +183,13 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			#endif
 		}
 
+		highp float decode32(highp vec4 rgba) {
+			highp float Sign = 1.0 - step(128.0,rgba[0])*2.0;
+			highp float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0; 
+			highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3] + float(0x800000);
+			highp float Result =  Sign * exp2(Exponent) * (Mantissa * exp2(-23.0 )); 
+			return Result;
+		}
 
 
 		float scaleDividedByCameraFar;

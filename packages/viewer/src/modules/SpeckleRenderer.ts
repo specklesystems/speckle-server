@@ -264,32 +264,32 @@ export default class SpeckleRenderer {
       }
     }
 
-    const v = new Vector3()
-    const box = this.sceneBox
-    const camPos = new Vector3().copy(
-      this.viewer.cameraHandler.activeCam.camera.position
-    )
-    let d = 0
-    v.set(box.min.x, box.min.y, box.min.z) // 000
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.min.y, box.max.z) // 001
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.max.y, box.min.z) // 010
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.max.y, box.max.z) // 011
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.min.y, box.min.z) // 100
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.min.y, box.max.z) // 101
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.max.y, box.min.z) // 110
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.max.y, box.max.z) // 111
-    d = Math.max(camPos.distanceTo(v), d)
-    this.viewer.cameraHandler.camera.far = d
-    this.viewer.cameraHandler.activeCam.camera.far = d
-    this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
-    this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    // const v = new Vector3()
+    // const box = this.sceneBox
+    // const camPos = new Vector3().copy(
+    //   this.viewer.cameraHandler.activeCam.camera.position
+    // )
+    // let d = 0
+    // v.set(box.min.x, box.min.y, box.min.z) // 000
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.min.x, box.min.y, box.max.z) // 001
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.min.x, box.max.y, box.min.z) // 010
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.min.x, box.max.y, box.max.z) // 011
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.max.x, box.min.y, box.min.z) // 100
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.max.x, box.min.y, box.max.z) // 101
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.max.x, box.max.y, box.min.z) // 110
+    // d = Math.max(camPos.distanceTo(v), d)
+    // v.set(box.max.x, box.max.y, box.max.z) // 111
+    // d = Math.max(camPos.distanceTo(v), d)
+    // this.viewer.cameraHandler.camera.far = d
+    // this.viewer.cameraHandler.activeCam.camera.far = d
+    // this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
+    // this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
     const currentPolar = this.viewer.cameraHandler.controls.polarAngle

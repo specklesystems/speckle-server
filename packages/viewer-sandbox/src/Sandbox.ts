@@ -336,6 +336,30 @@ export default class Sandbox {
       })
 
     postFolder
+      .addInput({ near: 0.01 }, 'near', {
+        min: 0,
+        max: 2,
+        step: 0.001
+      })
+      .on('change', (ev) => {
+        this.viewer.cameraHandler.activeCam.camera.near = ev.value
+        this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
+        this.viewer.requestRender()
+      })
+
+    postFolder
+      .addInput({ far: 10 }, 'far', {
+        min: 0,
+        max: 10000,
+        step: 1
+      })
+      .on('change', (ev) => {
+        this.viewer.cameraHandler.activeCam.camera.far = ev.value
+        this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
+        this.viewer.requestRender()
+      })
+
+    postFolder
       .addInput(Sandbox.sceneParams, 'tonemapping', {
         options: {
           Linear: 1,
