@@ -5559,6 +5559,7 @@ __metadata:
   resolution: "@speckle/frontend-2@workspace:packages/frontend-2"
   dependencies:
     "@nuxtjs/tailwindcss": ^5.3.5
+    "@speckle/shared": "workspace:^"
     "@tailwindcss/forms": ^0.5.3
     "@tailwindcss/line-clamp": ^0.4.2
     "@types/eslint": ^8.4.5
