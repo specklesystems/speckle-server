@@ -40,7 +40,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		}
 
 		float getDepth( const in vec2 screenPosition ) {
-			return unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
+			return texture2D( tDepth, screenPosition ).x;//unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
 		}
 
 		float getLinearDepth( const in vec2 screenPosition ) {
