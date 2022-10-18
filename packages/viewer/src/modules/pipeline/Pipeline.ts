@@ -1,6 +1,8 @@
 import { Camera, Plane, Scene, Vector2, WebGLRenderer } from 'three'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import {
+  EffectComposer,
+  Pass
+} from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import Batcher from '../batching/Batcher'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
@@ -19,6 +21,8 @@ import {
   StaticAOPass,
   StaticAoPassParams
 } from './StaticAOPass'
+import { SpecklePass } from './SpecklePass'
+import { ColorPass } from './ColorPass'
 
 export enum RenderType {
   NORMAL,
@@ -61,15 +65,15 @@ export class Pipeline {
   private _renderer: WebGLRenderer = null
   private _batcher: Batcher = null
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
+  private _needsProgressive = false
   private composer: EffectComposer = null
 
   private depthPass: DepthPass = null
   private normalsPass: NormalsPass = null
-  private renderPass: RenderPass = null
+  private renderPass: ColorPass = null
   private dynamicAoPass: DynamicSAOPass = null
   private applySaoPass: ApplySAOPass = null
   private copyOutputPass: CopyOutputPass = null
-
   private staticAoPass: StaticAOPass = null
 
   private drawingSize: Vector2 = new Vector2()
@@ -78,22 +82,6 @@ export class Pipeline {
 
   public set pipelineOptions(options: Partial<PipelineOptions>) {
     Object.assign(this._pipelineOptions, options)
-    if (options.dynamicAoEnabled) {
-      this.dynamicAoPass.enabled = true
-      this.renderPass.enabled = true
-      this.applySaoPass.enabled = true
-      this.normalsPass.enabled =
-        options.dynamicAoParams.normalsType === NormalsType.DEFAULT ? true : false
-      this.depthPass.enabled = true
-      this.copyOutputPass.enabled = false
-    } else {
-      this.depthPass.enabled = false
-      this.dynamicAoPass.enabled = false
-      this.applySaoPass.enabled = false
-      this.copyOutputPass.enabled = false
-      this.normalsPass.enabled = false
-      this.renderPass.enabled = true
-    }
     this.dynamicAoPass.setParams(options.dynamicAoParams)
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
@@ -103,123 +91,110 @@ export class Pipeline {
   }
 
   public set pipelineOutput(outputType: PipelineOutputType) {
+    let pipeline = []
+    this.clearPipeline()
     switch (outputType) {
       case PipelineOutputType.FINAL:
-        this.dynamicAoPass.enabled = true
-        this.renderPass.enabled = true
-        this.applySaoPass.enabled = true
-        this.normalsPass.enabled =
-          this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
-            ? true
-            : false
-        this.depthPass.enabled = true
-        this.copyOutputPass.enabled = false
-        this.dynamicAoPass.setOutputType(
-          this._pipelineOptions.dynamicAoParams.blurEnabled
-            ? DynamicAOOutputType.AO_BLURRED
-            : DynamicAOOutputType.AO
-        )
+        pipeline = this.getDefaultPipeline()
+        this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
+        this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
+        this.needsProgressive = true
         break
 
       case PipelineOutputType.DEPTH_RGBA:
-        this.dynamicAoPass.enabled = false
-        this.renderPass.enabled = false
-        this.applySaoPass.enabled = false
-        this.normalsPass.enabled = false
-        this.depthPass.enabled = true
-        this.copyOutputPass.enabled = true
+        pipeline.push(this.depthPass)
+        pipeline.push(this.copyOutputPass)
         this.copyOutputPass.setTexture('tDiffuse', this.depthPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.DEPTH_RGBA)
+        this.needsProgressive = false
         break
 
       case PipelineOutputType.DEPTH:
-        this.dynamicAoPass.enabled = false
-        this.renderPass.enabled = false
-        this.applySaoPass.enabled = false
-        this.depthPass.enabled = true
-        this.normalsPass.enabled = false
-        this.copyOutputPass.enabled = true
+        pipeline.push(this.depthPass)
+        pipeline.push(this.copyOutputPass)
         this.copyOutputPass.setTexture('tDiffuse', this.depthPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.DEPTH)
+        this.needsProgressive = false
         break
 
       case PipelineOutputType.COLOR:
-        this.depthPass.enabled = false
-        this.dynamicAoPass.enabled = false
-        this.applySaoPass.enabled = false
-        this.copyOutputPass.enabled = false
-        this.normalsPass.enabled = false
-        this.renderPass.enabled = true
+        pipeline.push(this.renderPass)
         break
 
       case PipelineOutputType.GEOMETRY_NORMALS:
-        this.depthPass.enabled = false
-        this.dynamicAoPass.enabled = false
-        this.applySaoPass.enabled = false
-        this.renderPass.enabled = false
+        pipeline.push(this.normalsPass)
+        pipeline.push(this.copyOutputPass)
         this.normalsPass.enabled = true
-        this.copyOutputPass.enabled = true
         this.copyOutputPass.setTexture('tDiffuse', this.normalsPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
+        this.needsProgressive = false
         break
 
       case PipelineOutputType.RECONSTRUCTED_NORMALS:
-        this.depthPass.enabled = true
+        pipeline.push(this.depthPass)
+        pipeline.push(this.dynamicAoPass)
+        pipeline.push(this.copyOutputPass)
         this.dynamicAoPass.enabled = true
-        this.applySaoPass.enabled = false
-        this.renderPass.enabled = false
-        this.normalsPass.enabled = false
-        this.copyOutputPass.enabled = true
+        this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
-        this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
+        this.needsProgressive = false
         break
 
       case PipelineOutputType.DYNAMIC_AO:
-        this.depthPass.enabled = true
-        this.dynamicAoPass.enabled = true
-        this.applySaoPass.enabled = false
-        this.renderPass.enabled = false
+        pipeline.push(this.depthPass)
+        pipeline.push(this.normalsPass)
+        pipeline.push(this.dynamicAoPass)
+        pipeline.push(this.copyOutputPass)
         this.normalsPass.enabled =
           this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
             ? true
             : false
-        this.copyOutputPass.enabled = true
+        this.dynamicAoPass.enabled = true
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO)
+        this.needsProgressive = false
         break
 
       case PipelineOutputType.DYNAMIC_AO_BLURED:
-        this.depthPass.enabled = true
-        this.dynamicAoPass.enabled = true
-        this.applySaoPass.enabled = false
-        this.renderPass.enabled = false
+        pipeline.push(this.depthPass)
+        pipeline.push(this.normalsPass)
+        pipeline.push(this.dynamicAoPass)
+        pipeline.push(this.copyOutputPass)
         this.normalsPass.enabled =
           this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
             ? true
             : false
-        this.copyOutputPass.enabled = true
+        this.dynamicAoPass.enabled = true
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
+        this.needsProgressive = false
         break
 
       case PipelineOutputType.PROGRESSIVE_AO:
-        this.depthPass.enabled = true
-        this.normalsPass.enabled = false
-        this.dynamicAoPass.enabled = false
-        this.renderPass.enabled = false
-        this.applySaoPass.enabled = false
-        this.staticAoPass.enabled = true
-        this.copyOutputPass.enabled = true
-        this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
+        pipeline.push(this.depthPass)
+        // pipeline.push(this.normalsPass)
+        pipeline.push(this.dynamicAoPass)
+        pipeline.push(this.staticAoPass)
+        pipeline.push(this.copyOutputPass)
         this.copyOutputPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
+        this.needsProgressive = true
         break
       default:
         break
     }
+    this.setPipeline(pipeline)
+  }
+
+  public set needsProgressive(value: boolean) {
+    this._needsProgressive = value
+    if (!value) this.renderType = RenderType.NORMAL
+    if (value && this.renderType === RenderType.NORMAL)
+      this.renderType = RenderType.ACCUMULATION
+    this.accumulationFrame = 0
   }
 
   public constructor(renderer: WebGLRenderer, batcher: Batcher) {
@@ -233,32 +208,13 @@ export class Pipeline {
   public configure(scene: Scene, camera: Camera) {
     this.depthPass = new DepthPass()
     this.normalsPass = new NormalsPass()
-    this.normalsPass.enabled = false
     this.dynamicAoPass = new DynamicSAOPass()
-    this.renderPass = new RenderPass(scene, camera)
-    this.renderPass.renderToScreen = true
+    this.renderPass = new ColorPass(scene, camera)
     this.applySaoPass = new ApplySAOPass()
-    this.applySaoPass.renderToScreen = true
-
     this.staticAoPass = new StaticAOPass()
-    this.staticAoPass.enabled = false
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
-    this.copyOutputPass.enabled = false
-    this.composer.addPass(this.depthPass)
-    this.composer.addPass(this.normalsPass)
-    this.composer.addPass(this.dynamicAoPass)
-    this.composer.addPass(this.staticAoPass)
-    this.composer.addPass(this.renderPass)
-    this.composer.addPass(this.applySaoPass)
-    this.composer.addPass(this.copyOutputPass)
-
-    this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTexture)
-    this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
-    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
-    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
-    this.staticAoPass.setTexture('tDepth', this.depthPass.outputTexture)
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {
@@ -277,6 +233,51 @@ export class Pipeline {
     }
     this.normalsPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+    }
+
+    this.setPipeline(this.getDefaultPipeline())
+  }
+
+  private getDefaultPipeline(): Array<SpecklePass> {
+    this.renderPass.renderToScreen = true
+    this.normalsPass.enabled =
+      this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+        ? true
+        : false
+    this.dynamicAoPass.setOutputType(
+      this._pipelineOptions.dynamicAoParams.blurEnabled
+        ? DynamicAOOutputType.AO_BLURRED
+        : DynamicAOOutputType.AO
+    )
+    this.applySaoPass.renderToScreen = true
+
+    this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTexture)
+    this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
+    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
+    this.staticAoPass.setTexture('tDepth', this.depthPass.outputTexture)
+
+    const pipeline = []
+    pipeline.push(this.depthPass)
+    pipeline.push(this.normalsPass)
+    pipeline.push(this.dynamicAoPass)
+    pipeline.push(this.staticAoPass)
+    pipeline.push(this.renderPass)
+    pipeline.push(this.applySaoPass)
+
+    this.needsProgressive = true
+    return pipeline
+  }
+
+  private clearPipeline() {
+    while (this.composer.passes.length > 0) {
+      this.composer.removePass(this.composer.passes[0])
+    }
+  }
+
+  private setPipeline(pipeline: Array<SpecklePass>) {
+    for (let k = 0; k < pipeline.length; k++) {
+      this.composer.addPass(pipeline[k] as unknown as Pass)
     }
   }
 
@@ -317,12 +318,14 @@ export class Pipeline {
   }
 
   public onStationaryBegin() {
+    if (!this._needsProgressive) return
     if (this.renderType === RenderType.ACCUMULATION) {
       this.accumulationFrame = 0
       return
     }
     this.renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
+
     this.depthPass.enabled = true
     this.normalsPass.enabled = false
     this.dynamicAoPass.enabled = false
@@ -331,18 +334,22 @@ export class Pipeline {
     this.staticAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
+
     this.applySaoPass.setRenderType(this.renderType)
     console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
+    if (!this._needsProgressive) return
     if (this.renderType === RenderType.NORMAL) return
     this.accumulationFrame = 0
     this.renderType = RenderType.NORMAL
+
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+
     this.applySaoPass.setRenderType(this.renderType)
     console.warn('Ending stationary')
   }

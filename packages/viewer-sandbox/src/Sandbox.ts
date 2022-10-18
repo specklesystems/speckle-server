@@ -41,7 +41,7 @@ export default class Sandbox {
       bias: 0.15,
       normalsType: 2,
       blurEnabled: true,
-      blurRadius: 4,
+      blurRadius: 1,
       blurStdDev: 4,
       blurDepthCutoff: 0.0007
     },

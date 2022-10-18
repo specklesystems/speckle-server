@@ -54,7 +54,7 @@ export const DefaultDynamicAOPassParams = {
   bias: 0.15,
   normalsType: NormalsType.ACCURATE,
   blurEnabled: true,
-  blurRadius: 2,
+  blurRadius: 1,
   blurStdDev: 4,
   blurDepthCutoff: 0.0007
 }
