@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Don't pollute this - it's going to be bundled in all pages!
+ */

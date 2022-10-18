@@ -1,0 +1,8 @@
+{
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "stylelint.validate": ["css", "scss", "vue", "postcss"],
+  "stylelint.enable": true,
+  "stylelint.configFile": "${workspaceFolder}/stylelint.config.js"
+}
