@@ -2,7 +2,6 @@ import {
   Camera,
   Color,
   DoubleSide,
-  FloatType,
   NoBlending,
   Plane,
   RGBADepthPacking,
@@ -36,10 +35,7 @@ export class DepthPass extends Pass implements SpecklePass {
   constructor() {
     super()
 
-    this.renderTarget = new WebGLRenderTarget(256, 256, {
-      type: FloatType,
-      generateMipmaps: false
-    })
+    this.renderTarget = new WebGLRenderTarget(256, 256)
     /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
      *  We're not really using a stencil buffer at all, we're just forcing
      *  three.js to use a 24 bit depth render buffer
