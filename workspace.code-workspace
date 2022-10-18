@@ -9,6 +9,10 @@
       "name": "🪟 frontend"
     },
     {
+      "path": "packages/frontend-2",
+      "name": "🏬 frontend 2.0"
+    },
+    {
       "path": "packages/preview-service",
       "name": "🖼️ preview-service"
     },
@@ -77,11 +81,11 @@
     "recommendations": [
       "dbaeumer.vscode-eslint",
       "esbenp.prettier-vscode",
-      "octref.vetur",
       "hbenl.vscode-mocha-test-adapter",
-      "ryanluker.vscode-coverage-gutters"
+      "ryanluker.vscode-coverage-gutters",
+      "Vue.volar"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-    "unwantedRecommendations": []
+    "unwantedRecommendations": ["octref.vetur", "vscode.typescript-language-features"]
   }
 }
