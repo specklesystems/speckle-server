@@ -7,6 +7,8 @@ coverage
 packages/server/reports*
 packages/objectloader/examples/browser/objectloader.web.js
 packages/viewer/example/speckleviewer.web.js
+packages/frontend-2/.output
+packages/frontend-2/.nuxt
 package-lock.json
 yarn.lock
 .yarn
