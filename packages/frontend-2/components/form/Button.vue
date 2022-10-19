@@ -5,7 +5,7 @@
     :type="buttonType"
     :external="external"
     :class="[
-      'inline-flex items-center rounded-md border border-transparent font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
+      'inline-flex items-center rounded-md border border-transparent font-medium shadow-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-offset-2',
       computedClasses
     ]"
     :disabled="disabled"

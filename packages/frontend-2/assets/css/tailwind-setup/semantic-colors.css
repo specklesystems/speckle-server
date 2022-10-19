@@ -1,0 +1,43 @@
+/*
+  Currently not possible to define different color values for the same color name just through
+  the tailwind config, so using CSS variables instead.
+
+  Only use colors from the default tailwind color palette so that migrating away from this (if ever needed)
+  is easy
+ */
+
+:root {
+  /* background */
+  --theme-color-background: #fff; /* white */
+  --theme-color-background-2: #f3f4f6; /* gray-100 */
+  --theme-color-background-3: #e5e7eb; /* gray-200 */
+
+  /* foreground */
+  --theme-color-foreground: #111827; /* gray-900 */
+  --theme-color-foreground-2: #374151; /* gray-700 */
+  --theme-color-foreground-3: #6b7280; /* gray-500 */
+  --theme-color-foreground-4: #d1d5db; /* gray-300 */
+
+  /* link */
+  --theme-color-link: #2563eb; /* blue-600 */
+  --theme-color-link-inverted: #60a5fa; /* blue-400 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* background */
+    --theme-color-background: #111827; /* gray-900 */
+    --theme-color-background-2: #1f2937; /* gray-800 */
+    --theme-color-background-3: #374151; /* gray-700 */
+
+    /* foreground */
+    --theme-color-foreground: #fff; /* white */
+    --theme-color-foreground-2: #e5e7eb; /* gray-200 */
+    --theme-color-foreground-3: #9ca3af; /* gray-400 */
+    --theme-color-foreground-4: #4b5563; /* gray-600 */
+
+    /* link */
+    --theme-color-link: #60a5fa; /* blue-400 */
+    --theme-color-link-inverted: #2563eb; /* blue-600 */
+  }
+}
