@@ -1,3 +1,7 @@
+/* stylelint-disable selector-id-pattern */
+
+/** Main sans-serif font TODO: preload/prefetch */
+@import 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap';
 @import './tailwind-setup/semantic-colors.css';
 
 @tailwind base;
@@ -7,3 +11,21 @@
 /**
  * Don't pollute this - it's going to be bundled in all pages!
  */
+
+/**
+ * Ensuring ring offset color always defaults to bg color
+ */
+* {
+  @apply ring-offset-background;
+}
+
+/**
+ * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
+ */
+html,
+body,
+body > div:first-child,
+div#__nuxt,
+div#__nuxt > div {
+  height: 100%;
+}
