@@ -1,0 +1,51 @@
+{
+  "name": "@speckle/shared",
+  "version": "0.1.0",
+  "description": "Shared code between various Speckle JS packages",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/shared"
+  },
+  "main": "./dist-cjs/index.js",
+  "types": "./dist-esm/index.d.ts",
+  "module": "./dist-esm/index.js",
+  "scripts": {
+    "build": "NODE_ENV=production rollup --config",
+    "build:dev": "rollup --config",
+    "dev": "rollup --config --watch",
+    "prepack": "yarn build",
+    "lint:eslint": "eslint . --ext .js,.ts",
+    "lint:tsc": "tsc --noEmit",
+    "lint": "yarn lint:eslint && yarn lint:tsc"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "AEC Systems",
+  "license": "Apache-2.0",
+  "keywords": [
+    "speckle",
+    "aec",
+    "3d"
+  ],
+  "dependencies": {
+    "lodash": "^4.17.0"
+  },
+  "peerDependencies": {
+    "@tiptap/core": "^2.0.0-beta.176"
+  },
+  "devDependencies": {
+    "@tiptap/core": "^2.0.0-beta.176",
+    "@types/lodash": "^4.14.184",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "@typescript-eslint/parser": "^5.39.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "rollup": "^2.79.1",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-typescript2": "^0.34.1",
+    "typescript": "^4.5.4"
+  }
+}

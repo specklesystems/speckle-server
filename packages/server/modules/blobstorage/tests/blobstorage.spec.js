@@ -30,11 +30,6 @@ describe('Blob storage @blobstorage', () => {
   describe('Upload file stream', () => {
     const data = [
       [
-        'blob',
-        { streamId: 'a'.padStart(10, 'a'), userId: 'a'.padStart(10, 'b') },
-        { blobId: 'a'.padStart(1, 'c') }
-      ],
-      [
         'stream',
         { streamId: 'a'.padStart(1, 'a'), userId: 'a'.padStart(10, 'b') },
         { blobId: 'a'.padStart(10, 'c') }
@@ -56,6 +51,7 @@ describe('Blob storage @blobstorage', () => {
         }
       })
     )
+
     it('Should store file stream', async () => {
       const fileName = `testFile_${fakeIdGenerator()}`
       const streamId = fakeIdGenerator()

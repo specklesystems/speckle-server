@@ -2,21 +2,18 @@
   <!-- eslint-disable vue/no-v-html -->
   <div
     class="d-flex align-center comment-thread-reply"
+    :class="
+      isUserOwned ? 'comment-thread-reply--author' : 'comment-thread-reply--visitor'
+    "
     @mouseenter="hover = true"
     @mouseleave="hover = false"
   >
     <div
-      :class="`flex-grow-1 d-flex flex-column px-2 py-1 mb-2 rounded-xl elevation-2 ${
-        $userId() === reply.authorId ? 'primary white--text' : 'background'
-      }`"
+      :class="`comment-thread-reply__inner flex-grow-1 d-flex flex-column px-2 py-1 mb-2 rounded-xl elevation-2`"
       style="width: 290px"
     >
       <div class="d-flex">
-        <div
-          :class="`d-inline-block ${
-            $userId() === reply.authorId ? 'xxx-order-last' : ''
-          }`"
-        >
+        <div :class="`d-inline-block`">
           <user-avatar :id="reply.authorId" :size="30" />
         </div>
         <div
@@ -32,7 +29,7 @@
           <comment-thread-reply-attachments
             v-if="reply.text.attachments && reply.text.attachments.length"
             :attachments="reply.text.attachments"
-            :primary="$userId() === reply.authorId"
+            :primary="isUserOwned"
           />
         </div>
       </div>
@@ -84,6 +81,8 @@ import SmartTextEditor from '@/main/components/common/text-editor/SmartTextEdito
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import CommentThreadReplyAttachments from '@/main/components/comments/CommentThreadReplyAttachments.vue'
 import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
+import { computed } from 'vue'
 
 export default {
   components: {
@@ -96,9 +95,14 @@ export default {
     stream: { type: Object, default: () => null },
     index: { type: Number, default: 0 }
   },
-  setup() {
+  setup(props) {
     const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
-    return { streamId, resourceId, isEmbed }
+    const { userId } = useIsLoggedIn()
+    const isUserOwned = computed(
+      () => !!(userId.value && userId.value === props.reply?.authorId)
+    )
+
+    return { streamId, resourceId, isEmbed, isUserOwned }
   },
   data() {
     return {
@@ -111,8 +115,7 @@ export default {
     canArchive() {
       if (this.isEmbed) return false
       if (!this.reply || !this.stream) return false
-      if (this.stream.role === 'stream:owner' || this.reply.authorId === this.$userId())
-        return true
+      if (this.stream.role === 'stream:owner' || this.isUserOwned) return true
       return false
     }
   },
@@ -145,18 +148,47 @@ export default {
   }
 }
 </script>
-<style scoped lang="scss">
-:deep(.smart-text-editor),
-:deep(.comment-attachments) {
+<style lang="scss">
+// Theme-specific coloring
+.comment-thread-reply {
+  $base: &;
+
+  // Active user's reply
+  &.comment-thread-reply--author {
+    & > #{$base}__inner {
+      background-color: var(--v-primary-base);
+      border-color: var(--v-primary-base);
+
+      &,
+      a {
+        color: #ffffff;
+      }
+    }
+  }
+
+  // Guest's reply
+  &.comment-thread-reply--visitor {
+    & > #{$base}__inner {
+      background-color: var(--v-background-base);
+      border-color: var(--v-background-base);
+
+      &,
+      a {
+        color: var(--v-text-base);
+      }
+    }
+  }
+}
+.smart-text-editor,
+.comment-attachments {
   a {
     font-weight: bold;
-    color: white;
     text-decoration: none;
     word-break: break-all;
   }
 }
 
-:deep(.smart-text-editor) {
+.smart-text-editor {
   a:after {
     content: ' ↗ ';
   }

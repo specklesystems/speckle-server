@@ -93,7 +93,7 @@ module.exports = {
       blobIds: input.blobIds
     })
 
-    await Comments().insert(comment)
+    const [newComment] = await Comments().insert(comment, '*')
     try {
       await module.exports.streamResourceCheck({
         streamId: input.streamId,
@@ -112,9 +112,6 @@ module.exports = {
     }
     await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
 
-    // Get new comment from DB, that way we don't have to mock/fill in the missing
-    // values
-    const newComment = await module.exports.getComment({ id: comment.id, userId })
     await CommentsEmitter.emit(CommentsEvents.Created, {
       comment: newComment
     })
@@ -140,7 +137,7 @@ module.exports = {
       parentComment: parentCommentId
     }
 
-    await Comments().insert(comment)
+    const [newComment] = await Comments().insert(comment, '*')
     try {
       const commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
       await module.exports.streamResourceCheck({
@@ -154,12 +151,6 @@ module.exports = {
     }
     await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
 
-    // Get new comment from DB, that way we don't have to mock/fill in the missing
-    // values
-    const newComment = await module.exports.getComment({
-      id: comment.id,
-      userId: authorId
-    })
     await CommentsEmitter.emit(CommentsEvents.Created, {
       comment: newComment
     })
@@ -179,11 +170,10 @@ module.exports = {
       doc: input.text,
       blobIds: input.blobIds
     })
-    await Comments().where({ id: input.id }).update({ text: newText })
+    const [updatedComment] = await Comments()
+      .where({ id: input.id })
+      .update({ text: newText }, '*')
 
-    // Get new comment from DB, that way we don't have to mock/fill in the missing
-    // values
-    const updatedComment = await module.exports.getComment({ id: input.id, userId })
     await CommentsEmitter.emit(CommentsEvents.Updated, {
       previousComment: editedComment,
       newComment: updatedComment
