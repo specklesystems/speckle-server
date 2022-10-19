@@ -26,7 +26,7 @@
         :type="type"
         :name="name"
         :class="[
-          'block w-full shadow-sm rounded-md focus:outline-none sm:text-sm',
+          'block w-full shadow-sm rounded-md focus:outline-none sm:text-sm text-black',
           'disabled:cursor-not-allowed  disabled:bg-background-2 disabled:text-foreground-3',
           computedClasses
         ]"

@@ -48,7 +48,9 @@
 /**
  * Ensuring ring offset color always defaults to bg color
  */
-* {
+*,
+[type='checkbox']:focus,
+[type='radio']:focus {
   @apply ring-offset-background;
 }
 
