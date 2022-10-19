@@ -170,6 +170,10 @@ const config = {
       64: '16rem',
       96: '24rem',
       128: '32rem'
+    },
+    configViewer: {
+      fonts:
+        'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap'
     }
   },
   plugins: [
