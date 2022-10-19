@@ -94,7 +94,9 @@ const config = {
           inverted: 'var(--theme-color-link-inverted)'
         },
         secondary: {
-          DEFAULT: colors.gray['500']
+          DEFAULT: colors.gray['500'],
+          lighter: colors.gray['400'],
+          darker: colors.gray['600']
         },
         danger: {
           DEFAULT: colors.red['600'],

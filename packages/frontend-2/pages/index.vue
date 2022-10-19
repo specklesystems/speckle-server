@@ -77,8 +77,6 @@
                   |
                   <TextLink to="/" secondary>Secondary Link</TextLink>
                   |
-                  <TextLink to="/" primary>Primary colored Link</TextLink>
-                  |
                   <TextLink to="/" disabled>Disabled Link</TextLink>
                 </div>
               </div>
@@ -187,3 +185,7 @@
     </main>
   </div>
 </template>
+<script setup lang="ts">
+import { Form } from 'vee-validate'
+const onSubmit = (values: unknown) => console.log(values)
+</script>
