@@ -19,7 +19,13 @@ import { PropType } from 'vue'
 import { Optional } from '@speckle/shared'
 
 type FormButtonSize = 'big' | 'normal' | 'small'
-type FormButtonType = 'primary' | 'secondary' | 'danger' | 'outline'
+type FormButtonType =
+  | 'primary'
+  | 'secondary'
+  | 'danger'
+  | 'outline'
+  | 'success'
+  | 'warning'
 
 const emit = defineEmits<{ (e: 'click', val: MouseEvent): void }>()
 
@@ -76,6 +82,14 @@ const colorClasses = computed(() => {
       return `${
         isDisabled ? 'bg-danger-darker' : 'bg-danger'
       } text-white hover:bg-danger-darker focus:ring-danger-lighter`
+    case 'success':
+      return `${
+        isDisabled ? 'bg-success-darker' : 'bg-success'
+      } text-white hover:bg-success-darker focus:ring-success-lighter`
+    case 'warning':
+      return `${
+        isDisabled ? 'bg-warning-darker' : 'bg-warning'
+      } text-white hover:bg-warning-darker focus:ring-warning-lighter`
     case 'secondary':
       return `${
         isDisabled ? 'bg-secondary-darker' : 'bg-secondary'

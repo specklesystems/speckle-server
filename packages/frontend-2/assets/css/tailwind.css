@@ -12,6 +12,39 @@
  * Don't pollute this - it's going to be bundled in all pages!
  */
 
+@layer components {
+  /**
+   * Common text styles
+   */
+  .h1 {
+    @apply text-5xl leading-normal font-bold;
+  }
+
+  .h2 {
+    @apply text-4xl leading-normal font-bold;
+  }
+
+  .h3 {
+    @apply text-3xl leading-normal font-bold;
+  }
+
+  .normal {
+    @apply text-base;
+  }
+
+  .label {
+    @apply text-sm font-medium;
+
+    &--light {
+      @apply font-normal;
+    }
+  }
+
+  .caption {
+    @apply text-xs;
+  }
+}
+
 /**
  * Ensuring ring offset color always defaults to bg color
  */
@@ -27,5 +60,5 @@ body,
 body > div:first-child,
 div#__nuxt,
 div#__nuxt > div {
-  height: 100%;
+  min-height: 100%;
 }
