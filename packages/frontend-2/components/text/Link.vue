@@ -56,7 +56,7 @@ const computedClasses = computed(() => {
     if (isSecondary) {
       classParts.push('hover:text-secondary-lighter')
     } else {
-      classParts.push('hover:text-link-inverted')
+      classParts.push('hover:text-link-lighter')
     }
   }
 

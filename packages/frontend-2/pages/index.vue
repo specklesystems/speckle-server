@@ -19,6 +19,7 @@
                 <div class="h3">Heading 3</div>
                 <div class="normal">Normal text</div>
                 <div class="label">Label text</div>
+                <div class="label label--light">Label text (light)</div>
                 <div class="caption">Caption text</div>
               </div>
               <div class="my-8 flex flex-col space-y-4">
