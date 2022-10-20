@@ -28,6 +28,14 @@
     @apply text-3xl leading-normal font-bold;
   }
 
+  .h4 {
+    @apply text-2xl leading-normal font-bold;
+  }
+
+  .h5 {
+    @apply text-xl leading-normal font-bold;
+  }
+
   .normal {
     @apply text-base;
   }
