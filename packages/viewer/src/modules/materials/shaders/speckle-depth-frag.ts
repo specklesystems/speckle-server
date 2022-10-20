@@ -17,22 +17,6 @@ export const speckleDepthFrag = /* glsl */ `
 #include <clipping_planes_pars_fragment>
 varying vec2 vHighPrecisionZW;
 
-vec3 packLinearDepth(const in float depth) {
-	const vec3 code = vec3(1.0, 255.0, 65025.0);
-    vec3 pack = vec3(code * depth);
-    pack.gb = fract(pack.gb);
-    pack.rg -= pack.gb * (1.0 / 256.0);
-    return pack;
-}
-
-vec3 encode24(const in float x) {
-    const vec3 code = vec3(1.0, 255.0, 65025.0);
-    vec3 pack = vec3(code * x);
-    pack.gb = fract(pack.gb);
-    pack.rg -= pack.gb * (1.0 / 256.0);
-    return pack;
-}
-
 void main() {
 	#include <clipping_planes_fragment>
 	vec4 diffuseColor = vec4( 1.0 );
@@ -53,7 +37,7 @@ void main() {
 	// Higher precision equivalent of gl_FragCoord.z. This assumes depthRange has been left to its default values.
 	#ifdef LINEAR_DEPTH
 		/** View z is negative moving away from the camera */
-		gl_FragColor = vec4(encode24((vViewPosition.z + near) / (near - far)), 1.);
+		gl_FragColor = packDepthToRGBA((vViewPosition.z + near) / (near - far));
 	#else
 		float fragCoordZ = (0.5 * vHighPrecisionZW[0] / vHighPrecisionZW[1] + 0.5);
 		#if DEPTH_PACKING == 3200

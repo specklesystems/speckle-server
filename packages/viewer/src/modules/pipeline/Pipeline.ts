@@ -175,11 +175,10 @@ export class Pipeline {
 
       case PipelineOutputType.PROGRESSIVE_AO:
         pipeline.push(this.depthPass)
-        pipeline.push(this.normalsPass)
+        // pipeline.push(this.normalsPass)
         pipeline.push(this.dynamicAoPass)
         pipeline.push(this.staticAoPass)
         pipeline.push(this.copyOutputPass)
-        this.normalsPass.enabled
         this.copyOutputPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.needsProgressive = true
@@ -241,10 +240,9 @@ export class Pipeline {
 
   private getDefaultPipeline(): Array<SpecklePass> {
     this.renderPass.renderToScreen = true
-    this.normalsPass.enabled = true
-    // this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
-    //   ? true
-    //   : false
+    this.normalsPass.enabled = this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+      ? true
+      : false
     this.dynamicAoPass.setOutputType(
       this._pipelineOptions.dynamicAoParams.blurEnabled
         ? DynamicAOOutputType.AO_BLURRED
@@ -329,7 +327,7 @@ export class Pipeline {
     this.accumulationFrame = 0
 
     this.depthPass.enabled = true
-    // this.normalsPass.enabled = false
+    this.normalsPass.enabled = false
     this.dynamicAoPass.enabled = false
     this.renderPass.enabled = true
     this.applySaoPass.enabled = true
