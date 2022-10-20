@@ -20,7 +20,7 @@
 
   /* link */
   --theme-color-link: #2563eb; /* blue-600 */
-  --theme-color-link-inverted: #60a5fa; /* blue-400 */
+  --theme-color-link-lighter: #3b82f6; /* blue-500 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -37,7 +37,7 @@
     --theme-color-foreground-4: #4b5563; /* gray-600 */
 
     /* link */
-    --theme-color-link: #60a5fa; /* blue-400 */
-    --theme-color-link-inverted: #2563eb; /* blue-600 */
+    --theme-color-link: #3b82f6; /* blue-500 */
+    --theme-color-link-lighter: #60a5fa; /* blue-400 */
   }
 }

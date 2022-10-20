@@ -91,7 +91,7 @@ const config = {
         },
         link: {
           DEFAULT: 'var(--theme-color-link)',
-          inverted: 'var(--theme-color-link-inverted)'
+          lighter: 'var(--theme-color-link-lighter)'
         },
         secondary: {
           DEFAULT: colors.gray['500'],
