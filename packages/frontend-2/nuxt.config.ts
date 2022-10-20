@@ -1,3 +1,5 @@
+const { API_ORIGIN } = process.env
+
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   typescript: {
@@ -5,7 +7,23 @@ export default defineNuxtConfig({
     strict: true
   },
 
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: [
+    '@nuxtjs/tailwindcss',
+    [
+      '~/lib/core/nuxt-modules/apollo/module.ts',
+      {
+        configResolvers: {
+          default: '~/lib/core/configs/apollo.ts'
+        }
+      }
+    ]
+  ],
+
+  runtimeConfig: {
+    public: {
+      API_ORIGIN
+    }
+  },
 
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
@@ -17,6 +35,6 @@ export default defineNuxtConfig({
     }
   },
   build: {
-    transpile: ['@apollo/client', 'ts-invariant/process', '@vue/apollo-composable']
+    transpile: [/^@apollo\/client/, 'ts-invariant/process', '@vue/apollo-composable']
   }
 })

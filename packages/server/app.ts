@@ -34,6 +34,7 @@ import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 
 import { get, has, isString, toNumber } from 'lodash'
+import { corsMiddleware } from '@/modules/core/configs/cors'
 
 let graphqlServer: ApolloServer
 
@@ -188,6 +189,7 @@ export async function init() {
     app.use(compression())
   }
 
+  app.use(corsMiddleware())
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
 
@@ -256,8 +258,8 @@ export async function startHttp(
       target: `http://${frontendHost}:${frontendPort}`,
       changeOrigin: true,
       ws: false,
-      logLevel: 'silent',
-      agent: defaultAgent
+      agent: defaultAgent,
+      pathFilter: (path: string) => !path.match(/^\/(auth|graphql)\//)
     })
     app.use('/', frontendProxy)
 

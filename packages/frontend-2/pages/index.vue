@@ -14,7 +14,10 @@
             </template>
             <template #default>
               <div>
-                <div>Hello! Here are some design system examples:</div>
+                <div>
+                  Hello, {{ user?.name || 'guest' }}! Here are some design system
+                  examples:
+                </div>
                 <div class="my-8">
                   <div class="h1">Heading 1</div>
                   <div class="h2">Heading 2</div>
@@ -204,5 +207,21 @@
 </template>
 <script setup lang="ts">
 import { Form } from 'vee-validate'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
+
+const activeUserQuery = graphql(`
+  query GetActiveUser {
+    activeUser {
+      id
+      name
+      role
+    }
+  }
+`)
+
+const { result: activeUserResult } = useQuery(activeUserQuery)
+const user = computed(() => activeUserResult.value?.activeUser || null)
+
 const onSubmit = (values: unknown) => console.log(values)
 </script>

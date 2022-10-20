@@ -14,13 +14,19 @@ yarn install
 
 And create an `.env` file from `.env.example`.
 
-## Development Server
+## Development
 
 Start the development server on http://localhost:8081
 
 ```bash
 yarn dev
 ```
+
+### Typed GraphQL
+
+Type your queries & fragments using the `graphql()` helper from `~~/lib/common/generated/gql` and then run `yarn gqlgen` (or `yarn gqlgen:watch` to run it in watch mode) to generated TS typing information for these GQL documents.
+
+More info: https://the-guild.dev/blog/unleash-the-power-of-fragments-with-graphql-codegen
 
 ## Production
 
