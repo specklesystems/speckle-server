@@ -90,7 +90,7 @@ spec:
 
       containers:
         - name: main
-          image: redis:6.0-alpine
+          image: redis:7.0-alpine
 
           resources:
             limits:
