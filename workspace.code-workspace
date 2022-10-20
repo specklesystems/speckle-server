@@ -69,7 +69,6 @@
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "files.eol": "\n",
-    "volar.completion.preferredTagNameCase": "kebab",
     "volar.vueserver.maxOldSpaceSize": 4000,
     "vscode-graphql.cacheSchemaFileForLookup": true,
     "tailwindCSS.experimental.configFile": {

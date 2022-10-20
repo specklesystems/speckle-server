@@ -72,3 +72,9 @@ div#__nuxt,
 div#__nuxt > div {
   min-height: 100%;
 }
+
+html,
+body,
+body > div:first-child {
+  height: 100%;
+}
