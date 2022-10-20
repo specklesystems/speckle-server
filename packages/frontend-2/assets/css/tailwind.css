@@ -67,7 +67,6 @@
  */
 html,
 body,
-body > div:first-child,
 div#__nuxt,
 div#__nuxt > div {
   min-height: 100%;
@@ -75,6 +74,6 @@ div#__nuxt > div {
 
 html,
 body,
-body > div:first-child {
+div#__nuxt {
   height: 100%;
 }
