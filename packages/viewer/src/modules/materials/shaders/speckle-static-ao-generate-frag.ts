@@ -39,10 +39,6 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			return vec4( 1.0 );
 		}
 
-		float decode24(const in vec3 x) {
-			const vec3 decode = 1.0 / vec3(1.0, 255.0, 65025.0);
-			return dot(x, decode);
-		}
 
 		float getDepth( const in vec2 screenPosition ) {
 			return texture2D( tDepth, screenPosition ).y;//unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
@@ -207,6 +203,11 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			return Result;
 		}
 
+		float decode24(const in vec3 x) {
+			const vec3 decode = 1.0 / vec3(1.0, 255.0, 65025.0);
+			return dot(x, decode);
+		}
+
 
 		float scaleDividedByCameraFar;
 		float minResolutionMultipliedByCameraFar;
@@ -273,7 +274,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 					vec4 samplePointNDC = cameraProjectionMatrix * vec4( samplePoint, 1.0 ); // project point and calculate NDC
 					samplePointNDC /= samplePointNDC.w;
 					vec2 samplePointUv = samplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
-					float realDepth = unpackRGBAToDepth( texture2D( tDepth, samplePointUv ) );//getLinearDepth( samplePointUv ); // get linear depth from depth texture
+					float realDepth = decode24( texture2D( tDepth, samplePointUv ).rgb );//getLinearDepth( samplePointUv ); // get linear depth from depth texture
 					// float realDepth = getLinearDepth( samplePointUv ); // get linear depth from depth texture
 					float sampleDepth = viewZToOrthographicDepth( samplePoint.z, cameraNear, cameraFar ); // compute linear depth of the sample view Z value
 					float delta = sampleDepth - realDepth;
@@ -285,7 +286,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			#endif
 			}
 		void main() {
-			float linearDepth = unpackRGBAToDepth( texture2D( tDepth, vUv ) );
+			float linearDepth = decode24( texture2D( tDepth, vUv ).rgb );
 			// float convertedViewZ = orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
 			// float centerDepth = viewZToPerspectiveDepth(convertedViewZ, cameraNear, cameraFar);
 			float centerDepth = getPerspectiveDepth(vUv);
