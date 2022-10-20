@@ -4,5 +4,6 @@
   "scss.validate": false,
   "stylelint.validate": ["css", "scss", "vue", "postcss"],
   "stylelint.enable": true,
-  "stylelint.configFile": "${workspaceFolder}/stylelint.config.js"
+  "stylelint.configFile": "${workspaceFolder}/stylelint.config.js",
+  "volar.completion.preferredTagNameCase": "pascal"
 }
