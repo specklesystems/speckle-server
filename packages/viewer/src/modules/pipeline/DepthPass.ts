@@ -3,6 +3,8 @@ import {
   Color,
   DoubleSide,
   NoBlending,
+  OrthographicCamera,
+  PerspectiveCamera,
   Plane,
   RGBADepthPacking,
   Scene,
@@ -47,7 +49,7 @@ export class DepthPass extends Pass implements SpecklePass {
       {
         depthPacking: RGBADepthPacking
       },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
+      ['USE_RTE', 'ALPHATEST_REJECTION', 'LINEAR_DEPTH']
     )
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide
@@ -60,6 +62,13 @@ export class DepthPass extends Pass implements SpecklePass {
   public update(scene: Scene, camera: Camera) {
     this.camera = camera
     this.scene = scene
+    this.depthMaterial.userData.near.value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).near
+    this.depthMaterial.userData.far.value = (
+      camera as PerspectiveCamera | OrthographicCamera
+    ).far
+    this.depthMaterial.needsUpdate = true
   }
 
   public render(renderer, writeBuffer, readBuffer) {

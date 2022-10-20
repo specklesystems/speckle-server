@@ -117,7 +117,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
 
         tNoise: { value: null },
         kernel: { value: null },
-        minDistance: { value: 0.0 },
+        minDistance: { value: 0.001 },
         maxDistance: { value: 1 }
       }
     })
