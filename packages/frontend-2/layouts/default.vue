@@ -4,5 +4,6 @@
     <div class="py-8 container mx-auto">
       <slot />
     </div>
+    <SingletonManagers />
   </div>
 </template>
