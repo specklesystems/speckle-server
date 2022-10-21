@@ -2,6 +2,13 @@
 import 'core-js'
 import 'regenerator-runtime/runtime'
 
+import { SafeLocalStorage } from '@speckle/shared'
+import {
+  ObjectLoaderConfigurationError,
+  ObjectLoaderRuntimeError
+} from './errors/index.js'
+import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
+
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -21,18 +28,34 @@ export default class ObjectLoader {
       enableCaching: true,
       fullyTraverseArrays: false,
       excludeProps: [],
-      fetch: null
+      fetch: null,
+      customLogger: undefined,
+      customWarner: undefined
     }
   }) {
+    this.logger = options.customLogger || console.log
+    this.warner = options.customWarner || console.warn
+
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
-    this.serverUrl = serverUrl || window.location.origin
+    this.serverUrl = serverUrl || globalThis?.location?.origin
+    if (!this.serverUrl) {
+      throw new ObjectLoaderConfigurationError('Invalid serverUrl specified!')
+    }
+
     this.streamId = streamId
     this.objectId = objectId
-    console.log('Object loader constructor called!')
+    if (!this.streamId) {
+      throw new ObjectLoaderConfigurationError('Invalid streamId specified!')
+    }
+    if (!this.objectId) {
+      throw new ObjectLoaderConfigurationError('Invalid objectId specified!')
+    }
+
+    this.logger('Object loader constructor called!')
     try {
-      this.token = token || localStorage.getItem('AuthToken')
+      this.token = token || SafeLocalStorage.get('AuthToken')
     } catch (error) {
       // Accessing localStorage may throw when executing on sandboxed document, ignore.
     }
@@ -56,6 +79,7 @@ export default class ObjectLoader {
     this.options = options
     this.options.numConnections = this.options.numConnections || 4
 
+    /** @type {IDBDatabase | null} */
     this.cacheDB = null
 
     this.lastAsyncPause = Date.now()
@@ -64,8 +88,16 @@ export default class ObjectLoader {
     // we can't simply bind fetch to this.fetch, so instead we have to do some acrobatics:
     // https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
     this.preferredFetch = options.fetch
+
+    /** @type {globalThis.fetch} */
     this.fetch = function (...args) {
       const currentFetch = this.preferredFetch || fetch
+      if (!currentFetch) {
+        throw new ObjectLoaderRuntimeError(
+          "Couldn't find fetch implementation! If running in a node environment, make sure you pass it in through the constructor!"
+        )
+      }
+
       return currentFetch(...args)
     }
   }
@@ -81,7 +113,7 @@ export default class ObjectLoader {
       await this.existingAsyncPause
       this.existingAsyncPause = null
       if (Date.now() - this.lastAsyncPause > 500)
-        console.log('Loader Event loop lag: ', Date.now() - this.lastAsyncPause)
+        this.logger('Loader Event loop lag: ', Date.now() - this.lastAsyncPause)
     }
   }
 
@@ -237,7 +269,7 @@ export default class ObjectLoader {
     }
 
     if (this.intervals[id].elapsed > this.TIMEOUT_MS) {
-      console.warn(`Timeout resolving ${id}. HIC SVNT DRACONES.`)
+      this.warner(`Timeout resolving ${id}. HIC SVNT DRACONES.`)
       clearInterval(this.intervals[id].interval)
       this.promises.filter((p) => p.id === id).forEach((p) => p.reject())
       this.promises = this.promises.filter((p) => p.id !== p.id) // clear out
@@ -253,7 +285,7 @@ export default class ObjectLoader {
       count += 1
       yield obj
     }
-    console.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
+    this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
   processLine(chunk) {
@@ -261,17 +293,26 @@ export default class ObjectLoader {
     return { id: pieces[0], obj: JSON.parse(pieces[1]) }
   }
 
+  supportsCache() {
+    return !!(this.options.enableCaching && globalThis.indexedDB)
+  }
+
+  async setupCacheDb() {
+    if (!this.supportsCache() || this.cacheDB !== null) return
+
+    // Initialize
+    await safariFix()
+    const idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
+    idbOpenRequest.onupgradeneeded = () =>
+      idbOpenRequest.result.createObjectStore('objects')
+    this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
+  }
+
   async *getRawObjectIterator() {
-    if (this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
-      await safariFix()
-      const idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
-      idbOpenRequest.onupgradeneeded = () =>
-        idbOpenRequest.result.createObjectStore('objects')
-      this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
-    }
+    await this.setupCacheDb()
 
     const rootObjJson = await this.getRawRootObject()
-    // console.log("Root in: ", Date.now() - tSTART)
+    // this.logger("Root in: ", Date.now() - tSTART)
 
     yield `${this.objectId}\t${rootObjJson}`
 
@@ -304,7 +345,7 @@ export default class ObjectLoader {
         splitBeforeCacheCheck[3].push(childrenIds[crtChildIndex])
       }
 
-      console.log('Cache check for: ', splitBeforeCacheCheck)
+      this.logger('Cache check for: ', splitBeforeCacheCheck)
 
       const newChildren = []
       let nextCachePromise = this.cacheGetObjects(splitBeforeCacheCheck[0])
@@ -386,9 +427,15 @@ export default class ObjectLoader {
         headers: { ...this.headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ objects: JSON.stringify(splitHttpRequests[i]) })
       }).then((crtResponse) => {
-        const crtReader = crtResponse.body.getReader()
+        // Polyfill web streams so that we can work with them the same way we do in Node
+        if (crtResponse.body.getReader) {
+          polyfillReadableStreamForAsyncIterator(crtResponse.body)
+        }
+
+        // Get stream async iterator
+        const crtReader = crtResponse.body.iterator()
         readers[i] = crtReader
-        const crtReadPromise = crtReader.read().then((x) => {
+        const crtReadPromise = crtReader.next().then((x) => {
           x.reqId = i
           return x
         })
@@ -418,7 +465,7 @@ export default class ObjectLoader {
 
       // Replace read promise on this request with a new `read` call
       if (!readerDone) {
-        const crtReadPromise = readers[reqId].read().then((x) => {
+        const crtReadPromise = readers[reqId].next().then((x) => {
           x.reqId = reqId
           return x
         })
@@ -465,7 +512,7 @@ export default class ObjectLoader {
   }
 
   async cacheGetObjects(ids) {
-    if (!this.options.enableCaching || !window.indexedDB) {
+    if (!this.supportsCache()) {
       return {}
     }
 
@@ -482,7 +529,7 @@ export default class ObjectLoader {
       )
       const cachedData = await Promise.all(idbChildrenPromises)
 
-      // console.log("Cache check for : ", idsChunk.length, Date.now() - t0)
+      // this.logger("Cache check for : ", idsChunk.length, Date.now() - t0)
 
       for (const cachedObj of cachedData) {
         if (!cachedObj.data)
@@ -496,7 +543,7 @@ export default class ObjectLoader {
   }
 
   cacheStoreObjects(objects) {
-    if (!this.options.enableCaching || !window.indexedDB) {
+    if (!this.supportsCache()) {
       return {}
     }
 
@@ -512,7 +559,10 @@ export default class ObjectLoader {
   }
 }
 
-// Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+/**
+ * Fixes a Safari bug where IndexedDB requests get lost and never resolve - invoke before you use IndexedDB
+ * @link Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+ */
 function safariFix() {
   const isSafari =
     !navigator.userAgentData &&

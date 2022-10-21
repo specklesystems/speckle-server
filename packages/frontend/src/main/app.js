@@ -1,3 +1,8 @@
+/**
+ * Don't export anything out of this file and import it in other files, this borks Vite HMR for some reason
+ * (runs app.js twice in the browser)!
+ */
+
 import '@/bootstrapper'
 import Vue from 'vue'
 
@@ -96,5 +101,3 @@ async function init() {
   postAuthInit()
 }
 init()
-
-export { apolloProvider }

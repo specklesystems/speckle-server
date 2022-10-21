@@ -120,5 +120,7 @@ await sandbox.loadUrl(
   // REVIT test stream
   // 'https://latest.speckle.dev/streams/c544db35f5/commits/7c29374369'
   // Arcs
-  'https://latest.speckle.dev/streams/0c6ad366c4/commits/912d83412e'
+  //'https://latest.speckle.dev/streams/0c6ad366c4/commits/912d83412e'
+  // Freezers
+  'https://speckle.xyz/streams/f0532359ac/commits/98678e2a3d?c=%5B2455.15367,2689.87156,4366.68444,205.422,-149.41199,148.749,0,1%5D'
 )

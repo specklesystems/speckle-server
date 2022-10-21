@@ -300,19 +300,37 @@ export class FilteringManager {
   }
 
   private populateGenericState(objectIds, state) {
-    const ids = [...objectIds, ...this.getDescendantIds(objectIds)]
+    let ids = [...objectIds, ...this.getDescendantIds(objectIds)]
+    /** There's a log of duplicate ids coming in from 'getDescendantIds'. We remove them
+     *  to avoid the large redundancy they incurr otherwise.
+     */
+    ids = [...Array.from(new Set(ids.map((value) => value)))]
     state.rvs = []
-    state.ids = ids
+    state.ids = []
+    const nodes = []
     if (ids.length !== 0) {
+      /** This walk still takes longer than we'd like */
       WorldTree.getInstance().walk((node: TreeNode) => {
-        if (!node.model.atomic) return true
-        if (!node.model.raw) return true
         if (ids.indexOf(node.model.raw.id) !== -1) {
-          state.rvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(node, node))
+          nodes.push(node)
         }
         return true
       })
+      for (let k = 0; k < nodes.length; k++) {
+        /** There's also quite a lot of redundancy here as well. The nodes coming are
+         * hierarchical and we end up getting the same render views more than once.
+         */
+        const rvs = WorldTree.getRenderTree().getRenderViewNodesForNode(
+          nodes[k],
+          nodes[k]
+        )
+        if (rvs) {
+          state.rvs.push(...rvs.map((e) => e.model.renderView))
+          state.ids.push(...rvs.map((e) => e.model.raw.id))
+        }
+      }
     }
+
     return this.setFilters()
   }
 
