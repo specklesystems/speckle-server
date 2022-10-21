@@ -1,4 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import { trimEnd } from 'lodash'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -44,7 +45,7 @@ export function getBaseUrl() {
     throw new MisconfiguredEnvironmentError('CANONICAL_URL env var not configured')
   }
 
-  return process.env.CANONICAL_URL
+  return trimEnd(process.env.CANONICAL_URL, '/')
 }
 
 /**

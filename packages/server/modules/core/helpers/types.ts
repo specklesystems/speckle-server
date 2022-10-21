@@ -110,3 +110,13 @@ export type ScheduledTaskRecord = {
   taskName: string
   lockExpiresAt: Date
 }
+
+export type ObjectRecord = {
+  id: string
+  speckleType: string
+  totalChildrenCount: Nullable<number>
+  totalChildrenCountByDepth: Nullable<Record<string, unknown>>
+  createdAt: Date
+  data: Nullable<Record<string, unknown>>
+  streamId: string
+}

@@ -21,6 +21,7 @@ import {
 } from '@/main/lib/core/helpers/apolloSetupHelper'
 import { merge } from 'lodash'
 import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
+import { Optional } from '@speckle/shared'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -30,6 +31,8 @@ const httpEndpoint = `${window.location.origin}/graphql`
 const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
 // app version
 const appVersion = import.meta.env.SPECKLE_SERVER_VERSION || 'unknown'
+
+let instance: Optional<ApolloProvider> = undefined
 
 function hasAuthToken() {
   return !!AppLocalStorage.get(AUTH_TOKEN)
@@ -232,7 +235,7 @@ function createApolloClient() {
 }
 
 /**
- * Create a Vue Apollo provider instance
+ * Create and set a global Vue Apollo provider instance
  */
 export function createProvider(): ApolloProvider {
   // Create apollo client
@@ -243,8 +246,17 @@ export function createProvider(): ApolloProvider {
   const apolloProvider = createApolloProvider({
     defaultClient: apolloClient
   })
+  instance = apolloProvider
 
   return apolloProvider
+}
+
+export function getApolloProvider(): ApolloProvider {
+  if (!instance) {
+    throw new Error('Attempting to use unitialized global Apollo Provider')
+  }
+
+  return instance
 }
 
 export function installVueApollo(apolloProvider: ApolloProvider): void {
