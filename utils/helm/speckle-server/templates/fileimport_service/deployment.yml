@@ -1,4 +1,4 @@
-{{- if .Values.s3.endpoint }}
+{{- if ( or .Values.s3.endpoint .Values.s3.configMap.enabled ) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +12,8 @@ spec:
     matchLabels:
       app: speckle-fileimport-service
       project: speckle-server
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -64,13 +66,13 @@ spec:
 
         env:
           - name: SPECKLE_SERVER_URL
-            value: "http://speckle-server:3000"
+            value: {{ printf "http://%s:%s" ( include "server.service.fqdn" $ ) ( include "server.port" $ ) }}
 
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: postgres_url
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
           - name: DEBUG
             value: "fileimport-service:*"

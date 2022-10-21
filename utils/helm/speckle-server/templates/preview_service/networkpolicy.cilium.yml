@@ -1,0 +1,40 @@
+{{- if (and (.Values.preview_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "preview_service.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "preview_service.labels" . | indent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+{{ include "preview_service.selectorLabels" . | indent 6 }}
+{{- if .Values.enable_prometheus_monitoring }}
+  ingress:
+    - fromEndpoints:
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.cilium.fromEndpoints | toYaml | indent 10 }}
+      toPorts:
+        - ports:
+            - port: "metrics"
+              protocol: TCP
+{{- else }}
+  ingressDeny:
+    - fromEntities:
+      - "all"
+{{- end }}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+{{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres.cilium" $ | indent 4 }}
+{{- end }}

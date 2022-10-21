@@ -1,6 +1,6 @@
 # @speckle/viewer-sandbox
 
-Sandbox for testing, debugging & developing the viewer package
+Sandbox for testing, debugging & developing the viewer package.
 
 ## Setup
 
@@ -8,7 +8,7 @@ Sandbox for testing, debugging & developing the viewer package
 
 - Node ^16
 
-### Instructions
+### Setup Instructions
 
 - `yarn` in the repo root to configure project dependencies
 - `yarn build` in repo root to build all dependencies

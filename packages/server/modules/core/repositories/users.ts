@@ -6,6 +6,7 @@ import { isArray } from 'lodash'
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
    * Available, if query joined this data from server_acl
+   * (this can be the server role or stream role depending on how and where this was retrieved)
    */
   role?: string
 }
@@ -63,4 +64,18 @@ export async function getUserByEmail(email: string) {
   const q = Users.knex<UserRecord[]>().whereRaw('lower(email) = lower(?)', [email])
   const user = await q.first()
   return user ? sanitizeUserRecord(user) : null
+}
+
+/**
+ * Mark a user as verified by e-mail address, and return true on success
+ */
+export async function markUserAsVerified(email: string) {
+  const UserCols = Users.with({ withoutTablePrefix: true }).col
+  const q = Users.knex()
+    .whereRaw('lower(email) = lower(?)', [email])
+    .update({
+      [UserCols.verified]: true
+    })
+
+  return !!(await q)
 }

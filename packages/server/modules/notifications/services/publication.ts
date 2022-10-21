@@ -1,5 +1,5 @@
 import {
-  NotificationType,
+  NotificationPublisher,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
 import { publishMessage } from '@/modules/notifications/services/queue'
@@ -7,14 +7,11 @@ import { publishMessage } from '@/modules/notifications/services/queue'
 /**
  * Publish a notification
  */
-export async function publishNotification<T extends NotificationType>(
-  type: T,
-  params: Omit<NotificationTypeMessageMap[T], 'type'>
-) {
+export const publishNotification: NotificationPublisher = async (type, params) => {
   const msg = {
     type,
     ...params
-  } as NotificationTypeMessageMap[T]
+  } as NotificationTypeMessageMap[typeof type]
 
   return await publishMessage(msg)
 }

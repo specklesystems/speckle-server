@@ -65,13 +65,13 @@ export default defineComponent({
     const { result, fetchMore: userFetchMore } = useQuery(UserFavoriteStreamsDocument, {
       cursor: null as Nullable<string>
     })
-    const user = computed(() => result.value?.user)
+    const user = computed(() => result.value?.activeUser)
 
     return { canRenderToolbarPortal, user, userFetchMore }
   },
   computed: {
     streams(): NonNullable<
-      Get<UserFavoriteStreamsQuery, 'user.favoriteStreams.items'>
+      Get<UserFavoriteStreamsQuery, 'activeUser.favoriteStreams.items'>
     > {
       return this.user?.favoriteStreams?.items || []
     },
@@ -100,7 +100,7 @@ export default defineComponent({
         }
       })
 
-      const newItems = result?.data?.user?.favoriteStreams?.items || []
+      const newItems = result?.data?.activeUser?.favoriteStreams?.items || []
       if (!newItems.length) {
         $state.complete()
       } else {

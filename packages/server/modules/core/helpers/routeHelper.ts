@@ -1,4 +1,5 @@
 import { InvalidArgumentError } from '@/modules/shared/errors'
+import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
 
 /**
@@ -29,4 +30,20 @@ export function getCommentRoute(
 
   const objectOrCommitPart = commitId ? `commits/${commitId}` : `objects/${objectId}`
   return `/streams/${streamId}/${objectOrCommitPart}?cId=${commentId}`
+}
+
+export function getPasswordResetFinalizationRoute(tokenId: string): string {
+  return `/authn/resetpassword/finalize?t=${tokenId}`
+}
+
+export function getEmailVerificationFinalizationRoute(tokenId: string): string {
+  return `/auth/verifyemail?t=${tokenId}`
+}
+
+export function getStreamCollaboratorsRoute(streamId: string): string {
+  return `${getStreamRoute(streamId)}/collaborators`
+}
+
+export function buildAbsoluteUrlFromRoute(route: string): string {
+  return new URL(route, getBaseUrl()).toString()
 }

@@ -1,15 +1,21 @@
 <template>
   <div>
-    <portal v-if="canRenderToolbarPortal" to="toolbar">
+    <commit-multi-select-toolbar
+      v-if="hasSelectedCommits"
+      :selected-commit-ids="selectedCommitIds"
+      @clear="clearSelectedCommits"
+      @finish="onBatchCommitActionFinish"
+    />
+    <prioritized-portal to="toolbar" identity="commits" :priority="0">
       <div class="font-weight-bold">
         Your Latest Commits
-        <span v-if="user" class="caption">({{ user.commits.totalCount }})</span>
+        <span v-if="user" class="caption">({{ totalCommitCount }})</span>
       </div>
-    </portal>
+    </prioritized-portal>
 
-    <v-row v-if="user && user.commits.totalCount !== 0">
+    <v-row v-if="commitItems.length">
       <v-col
-        v-for="commit in user.commits.items.filter((c) => c.branchName !== 'globals')"
+        v-for="commit in commitItems"
         :key="commit.id"
         cols="12"
         sm="6"
@@ -17,7 +23,12 @@
         lg="4"
         xl="3"
       >
-        <commit-preview-card :commit="commit" :preview-height="180" />
+        <commit-preview-card
+          :commit="commit"
+          :preview-height="180"
+          :allow-select="isCommitOrStreamOwner(commit)"
+          :selected.sync="selectedCommitsState[commit.id]"
+        />
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading spinner="waveDots" @infinite="infiniteHandler">
@@ -61,25 +72,31 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { computed, defineComponent } from 'vue'
+import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
+import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
 import {
-  STANDARD_PORTAL_KEYS,
-  buildPortalStateMixin
-} from '@/main/utils/portalStateManager'
-import { useQuery } from '@vue/apollo-composable'
-import { computed } from 'vue'
+  BatchActionType,
+  useCommitMultiActions
+} from '@/main/lib/stream/composables/commitMultiActions'
+import { Roles } from '@/helpers/mainConstants'
+import { getCacheId } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { deleteCommitsFromCachedCommitsQuery } from '@/main/lib/stream/services/commitMultiActions'
 
-export default {
+export default defineComponent({
   name: 'TheCommits',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
-    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
+    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
+    PrioritizedPortal,
+    CommitMultiSelectToolbar
   },
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'commits', 0)],
   setup() {
     const { result, fetchMore: userFetchMore } = useQuery(gql`
-      query ($cursor: String) {
-        user {
+      query PaginatedUserCommits($cursor: String) {
+        activeUser {
           id
           name
           commits(limit: 10, cursor: $cursor) {
@@ -89,22 +106,72 @@ export default {
               id
               referencedObject
               message
-              streamName
-              streamId
+              authorId
               createdAt
               sourceApplication
               branchName
               commentCount
+              stream {
+                id
+                role
+                name
+              }
             }
           }
         }
       }
     `)
-    const user = computed(() => result.value?.user)
+    const user = computed(() => result.value?.activeUser)
+
+    const commitItems = computed(() =>
+      (user.value?.commits.items || []).filter((c) => c.branchName !== 'globals')
+    )
+    const totalCommitCount = computed(() => {
+      const realTotalCount = user.value?.commits.totalCount || 0
+      const globalCommitCount = (user.value?.commits.items || []).filter(
+        (c) => c.branchName === 'globals'
+      ).length
+      return realTotalCount - globalCommitCount
+    })
+
+    const isCommitOrStreamOwner = (commit) => {
+      const userId = user.value.id
+      return commit.stream.role === Roles.Stream.Owner || commit.authorId === userId
+    }
+
+    const {
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState
+    } = useCommitMultiActions()
+
+    const apolloCache = useApolloClient().client.cache
+    const onBatchCommitActionFinish = ({ type, variables }) => {
+      const commitIds = variables.input?.commitIds || []
+      if (!commitIds.length) return
+
+      // Update cache
+      if (type === BatchActionType.Delete) {
+        deleteCommitsFromCachedCommitsQuery(
+          apolloCache,
+          getCacheId('User', user.value.id),
+          commitIds
+        )
+      }
+    }
 
     return {
       user,
-      userFetchMore
+      commitItems,
+      totalCommitCount,
+      userFetchMore,
+      selectedCommitIds,
+      hasSelectedCommits,
+      clearSelectedCommits,
+      selectedCommitsState,
+      onBatchCommitActionFinish,
+      isCommitOrStreamOwner
     }
   },
   methods: {
@@ -115,7 +182,7 @@ export default {
         }
       })
 
-      const newItems = result.data?.user?.commits?.items || []
+      const newItems = result.data?.activeUser?.commits?.items || []
       if (!newItems.length) {
         $state.complete()
       } else {
@@ -123,5 +190,5 @@ export default {
       }
     }
   }
-}
+})
 </script>

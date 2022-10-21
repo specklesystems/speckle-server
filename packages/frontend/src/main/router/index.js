@@ -3,6 +3,7 @@ import { AppLocalStorage } from '@/utils/localStorage'
 import { GlobalEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import { getMixpanel } from '@/mixpanelManager'
 
 Vue.use(VueRouter)
 
@@ -338,8 +339,9 @@ function shouldForceToLogin(isLoggedIn, to) {
 
   const allowedForUnauthedNames = [
     'stream',
-    'commit',
     'branch',
+    'commit',
+    'objects',
     'Embedded Viewer',
     'Login',
     'Register',
@@ -396,6 +398,15 @@ router.afterEach((to) => {
 
   Vue.nextTick(() => {
     document.title = (to.meta && to.meta.title) || 'Speckle'
+  })
+
+  // Report route to mixpanel
+  const mp = getMixpanel()
+  const pathDefinition = to.matched[to.matched.length - 1].path
+  const path = to.path
+  mp.track('Route Visited', {
+    path,
+    pathDefinition
   })
 })
 

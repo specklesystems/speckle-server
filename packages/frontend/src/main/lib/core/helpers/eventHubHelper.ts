@@ -29,12 +29,17 @@ export const GlobalEvents = Object.freeze({
  */
 export const StreamEvents = Object.freeze({
   /**
-   * For triggering a refetch of stream data
+   * For triggering a refetch of main stream data
    */
   Refetch: 'stream:refetch',
 
   /**
    * For triggering a refetch of stream collaborator data
    */
-  RefetchCollaborators: 'stream:refetch:collaborators'
+  RefetchCollaborators: 'stream:refetch:collaborators',
+
+  /**
+   * For triggering a refetch of stream branch data
+   */
+  RefetchBranches: 'stream:refetch:branches'
 })

@@ -72,7 +72,6 @@
     <portal to="viewercontrols" :order="4">
       <v-btn
         v-show="users.length !== 0"
-        key="bubbles-toggle-button"
         v-tooltip="`Toggle real time user bubbles`"
         small
         rounded
@@ -92,13 +91,20 @@ import { gql } from '@apollo/client/core'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash/debounce'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import { useIsLoggedIn } from '@/main/lib/core/composables/core'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import {
   resetFilter,
   setFilterDirectly,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  getLocalFilterState,
+  setSectionBox,
+  sectionBoxOn,
+  sectionBoxOff,
+  highlightObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'ViewerBubbles',
@@ -110,14 +116,15 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             name
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
-        return !this.$loggedIn()
+        return !this.isLoggedIn
       }
     },
     $subscribe: {
@@ -134,7 +141,7 @@ export default {
           }
         },
         skip() {
-          return !this.resourceId || !this.$loggedIn()
+          return !this.resourceId || !this.isLoggedIn
         },
         result(res) {
           const data = res.data
@@ -188,12 +195,13 @@ export default {
   setup() {
     const { streamId, resourceId } = useCommitObjectViewerParams()
     const { viewer } = useInjectedViewer()
+    const { isLoggedIn } = useIsLoggedIn()
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
           selectedCommentMetaData
           addingComment
-          appliedFilter
+          selectedObjects
         }
       }
     `)
@@ -201,16 +209,29 @@ export default {
       () => viewerStateResult.value?.commitObjectViewerState || {}
     )
 
-    return { viewer, viewerState, streamId, resourceId }
+    return { viewer, viewerState, streamId, resourceId, isLoggedIn }
   },
   data() {
+    const ownActivityUpdateInterval = 60 * 1000
     return {
       uuid: uuid(),
       selectedIds: [],
       selectionLocation: null,
       selectionCenter: null,
       users: [],
-      showBubbles: true
+      showBubbles: true,
+      otherUsersSelectedObjects: [],
+      // How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
+      ownActivityUpdateInterval,
+      // How often we check for user staleness
+      userUpdateInterval: 2000,
+      // How much time must pass after an update from user after which we consider them "stale" or "disconnected"
+      userStaleAfterPeriod: 2 * ownActivityUpdateInterval
+    }
+  },
+  watch: {
+    showBubbles(newVal) {
+      if (!newVal) highlightObjects([])
     }
   },
   mounted() {
@@ -228,64 +249,113 @@ export default {
       this.updateBubbles(false)
     )
 
-    this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
+    this.updateInterval = window.setInterval(
+      this.sendUpdateAndPrune,
+      this.ownActivityUpdateInterval
+    )
+    this.pruneInterval = window.setInterval(
+      this.pruneStaleUsers,
+      this.userUpdateInterval
+    )
+
     window.addEventListener('beforeunload', async () => {
-      await this.sendDisconnect()
+      await this.safelyDisconnect()
     })
+
     this.viewer.on(
-      'select',
+      ViewerEvent.ObjectDoubleClicked,
       debounce((selectionInfo) => {
-        this.selectedIds = selectionInfo.userData.map((o) => o.id)
-        this.selectionLocation = selectionInfo.location
-        this.selectionCenter = selectionInfo.selectionCenter
-        this.sendUpdateAndPrune()
+        this.sendSelectionUpdate(selectionInfo)
       }, 50)
     )
-    this.viewer.on('object-doubleclicked', () => {})
+    this.viewer.on(
+      ViewerEvent.ObjectClicked,
+      debounce((selectionInfo) => {
+        this.sendSelectionUpdate(selectionInfo)
+      }, 50)
+    )
   },
   async beforeDestroy() {
-    await this.sendDisconnect()
-    window.clearInterval(this.updateInterval)
+    await this.safelyDisconnect()
   },
   methods: {
+    async safelyDisconnect() {
+      // clear all intervals
+      window.clearInterval(this.updateInterval)
+      window.clearInterval(this.pruneInterval)
+
+      // send out disconnect msg
+      await this.sendDisconnect()
+    },
+    sendSelectionUpdate(selectionInfo) {
+      if (!selectionInfo) {
+        this.sendUpdateAndPrune()
+        return
+      }
+
+      const firstHit = selectionInfo?.hits[0]
+      this.selectedIds = firstHit.object.id
+      this.selectionLocation = firstHit.point
+      this.selectionCenter = firstHit.point
+      this.sendUpdateAndPrune()
+    },
     setUserPow(user) {
       const camToSet = user.camera
       if (camToSet[6] === 1) {
         this.viewer.toggleCameraProjection()
       }
-      this.viewer.interactions.setLookAt(
-        { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
-        { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
-      )
-      if (camToSet[6] === 1) {
-        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
-      }
+
+      this.viewer.setView({
+        position: new THREE.Vector3(camToSet[0], camToSet[1], camToSet[2]),
+        target: new THREE.Vector3(camToSet[3], camToSet[4], camToSet[5])
+      })
+      // NOTE: disabled as parallel projection cam is not enabled anymore, see other comments
+      // if (camToSet[6] === 1) {
+      //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+      // }
 
       if (user.filter) setFilterDirectly({ filter: user.filter })
       else resetFilter()
 
       if (user.sectionBox) {
-        this.viewer.sectionBox.on()
-        this.viewer.sectionBox.setBox(user.sectionBox, 0)
+        setSectionBox(user.sectionBox, 0)
+        sectionBoxOn()
+      } else {
+        sectionBoxOff()
       }
       this.$mixpanel.track('Bubbles Action', { type: 'action', name: 'avatar-click' })
     },
-    async sendUpdateAndPrune() {
-      if (!this.resourceId) return
+    /**
+     * Hide stale users that haven't reported activity for a while
+     */
+    pruneStaleUsers() {
+      const stalenessLimit = this.userStaleAfterPeriod
+      if (!this.users?.length) return
+
+      // Hide if stale
       for (const user of this.users) {
-        const delta = Date.now() - user.lastUpdate
-        if (delta > 20000) {
+        const delta = Math.abs(Date.now() - user.lastUpdate)
+        if (delta > stalenessLimit) {
           user.hidden = true
           user.status = 'stale'
         }
-        if (delta < 20000) {
+        if (delta < stalenessLimit) {
           user.hidden = false
           user.status = ''
         }
       }
-      this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
 
-      if (!this.$loggedIn()) return
+      // Remove altogether if stale for a while
+      this.users = this.users.filter(
+        (u) => Date.now() - u.lastUpdate < stalenessLimit * 2
+      )
+    },
+    /**
+     * Send out user activity broadcast
+     */
+    async sendUpdateAndPrune() {
+      this.pruneStaleUsers()
+      if (!this.resourceId || !this.isLoggedIn) return
 
       const controls = this.viewer.cameraHandler.activeCam.controls
       const pos = controls.getPosition()
@@ -307,10 +377,10 @@ export default {
       }
 
       const data = {
-        filter: this.viewerState.appliedFilter,
-        selection: this.selectedIds,
+        filter: getLocalFilterState(),
+        selection: this.viewerState.selectedObjects.map((o) => o.id),
         selectionLocation,
-        sectionBox: this.viewer.sectionBox.getCurrentBox(),
+        sectionBox: this.viewer.getCurrentSectionBox(),
         selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
@@ -341,8 +411,11 @@ export default {
         }
       })
     },
+    /**
+     * Send out notification that the active user has disconnected
+     */
     async sendDisconnect() {
-      if (!this.$loggedIn()) return
+      if (!this.isLoggedIn) return
       if (!this.streamId) return
 
       await this.$apollo.mutate({
@@ -412,7 +485,6 @@ export default {
           .multiplyScalar(70)
         const newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
 
-        // TODO: clamp sides
         const paddingX = 42
         const paddingYTop = 86
         const paddingYBottom = 68
@@ -466,7 +538,17 @@ export default {
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
 
-      this.viewer.interactions.overlayObjects(selectedObjects)
+      selectedObjects.sort((a, b) => a.localeCompare(b))
+
+      const isSame =
+        JSON.stringify(selectedObjects) ===
+        JSON.stringify([...this.otherUsersSelectedObjects])
+
+      if (this.showBubbles && !isSame) {
+        highlightObjects(selectedObjects)
+      }
+
+      this.otherUsersSelectedObjects = selectedObjects
     }
   }
 }

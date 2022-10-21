@@ -8,7 +8,11 @@ import {
   ReadStreamQueryVariables,
   ReadStreamQuery,
   ReadDiscoverableStreamsQueryVariables,
-  ReadDiscoverableStreamsQuery
+  ReadDiscoverableStreamsQuery,
+  GetUserStreamsQueryVariables,
+  GetUserStreamsQuery,
+  GetLimitedUserStreamsQuery,
+  GetLimitedUserStreamsQueryVariables
 } from '@/test/graphql/generated/graphql'
 import { executeOperation } from '@/test/graphqlHelper'
 import { ApolloServer, gql } from 'apollo-server-express'
@@ -74,6 +78,42 @@ const readDiscoverableStreamsQuery = gql`
   ${basicStreamFieldsFragment}
 `
 
+/**
+ * @deprecated Leaving this behind while we still have the old user() query. This should
+ * be deleted afterwards
+ */
+const getUserStreamsQuery = gql`
+  query GetUserStreams($userId: String, $limit: Int! = 25, $cursor: String) {
+    user(id: $userId) {
+      streams(limit: $limit, cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...BasicStreamFields
+        }
+      }
+    }
+  }
+
+  ${basicStreamFieldsFragment}
+`
+
+const getLimitedUserStreamsQuery = gql`
+  query GetLimitedUserStreams($userId: String!, $limit: Int! = 25, $cursor: String) {
+    otherUser(id: $userId) {
+      streams(limit: $limit, cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...BasicStreamFields
+        }
+      }
+    }
+  }
+
+  ${basicStreamFieldsFragment}
+`
+
 export const leaveStream = (
   apollo: ApolloServer,
   variables: LeaveStreamMutationVariables
@@ -118,5 +158,25 @@ export const readDiscoverableStreams = (
   executeOperation<ReadDiscoverableStreamsQuery, ReadDiscoverableStreamsQueryVariables>(
     apollo,
     readDiscoverableStreamsQuery,
+    variables
+  )
+
+export const getUserStreams = (
+  apollo: ApolloServer,
+  variables: GetUserStreamsQueryVariables
+) =>
+  executeOperation<GetUserStreamsQuery, GetUserStreamsQueryVariables>(
+    apollo,
+    getUserStreamsQuery,
+    variables
+  )
+
+export const getLimitedUserStreams = (
+  apollo: ApolloServer,
+  variables: GetLimitedUserStreamsQueryVariables
+) =>
+  executeOperation<GetLimitedUserStreamsQuery, GetLimitedUserStreamsQueryVariables>(
+    apollo,
+    getLimitedUserStreamsQuery,
     variables
   )

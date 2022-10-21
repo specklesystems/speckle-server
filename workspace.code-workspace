@@ -33,6 +33,10 @@
       "name": "🌐 objectloader"
     },
     {
+      "path": "packages/shared",
+      "name": "📚 shared"
+    },
+    {
       "path": "utils/helm",
       "name": "⛵ helm"
     },
@@ -60,7 +64,10 @@
     "[html]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "volar.completion.preferredTagNameCase": "kebab",
+    "volar.vueserver.maxOldSpaceSize": 4000,
+    "vscode-graphql.cacheSchemaFileForLookup": true
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

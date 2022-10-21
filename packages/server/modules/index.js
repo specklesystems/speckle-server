@@ -6,6 +6,7 @@ const { values, merge, camelCase } = require('lodash')
 const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { modulesDebug } = require('@/modules/shared/utils/logger')
+const { makeExecutableSchema } = require('@graphql-tools/schema')
 
 /**
  * Cached speckle module requires
@@ -52,7 +53,9 @@ async function getSpeckleModules() {
     './fileuploads',
     './comments',
     './blobstorage',
-    './notifications'
+    './notifications',
+    './activitystream',
+    './accessrequests'
   ]
 
   for (const dir of moduleDirs) {
@@ -90,14 +93,14 @@ exports.shutdown = async () => {
 }
 
 /**
- * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs' | 'schemaDirectives'>}
+ * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
  */
-exports.graph = () => {
+const graphComponents = () => {
   // Base query and mutation to allow for type extension by modules.
   const typeDefs = [baseTypeDefs]
 
   let resolverObjs = []
-  let schemaDirectives = {}
+  let directiveBuilders = {}
 
   // load typedefs from /assets
   const assetModuleDirs = fs.readdirSync(`${packageRoot}/assets`)
@@ -125,7 +128,9 @@ exports.graph = () => {
     // load directives
     const directivesPath = path.join(fullPath, 'graph', 'directives')
     if (fs.existsSync(directivesPath)) {
-      schemaDirectives = Object.assign(...values(autoloadFromDirectory(directivesPath)))
+      directiveBuilders = Object.assign(
+        ...values(autoloadFromDirectory(directivesPath))
+      )
     }
   })
 
@@ -134,5 +139,32 @@ exports.graph = () => {
     merge(resolvers, o)
   })
 
-  return { resolvers, typeDefs, schemaDirectives }
+  return { resolvers, typeDefs, directiveBuilders }
+}
+
+exports.graphSchema = () => {
+  const { resolvers, typeDefs, directiveBuilders } = graphComponents()
+
+  /** @type {string[]} */
+  const directiveTypedefs = []
+  /** @type {import('@/modules/core/graph/helpers/directiveHelper').SchemaTransformer[]} */
+  const directiveSchemaTransformers = []
+  for (const directiveBuilder of Object.values(directiveBuilders)) {
+    const { typeDefs, schemaTransformer } = directiveBuilder()
+    directiveTypedefs.push(typeDefs)
+    directiveSchemaTransformers.push(schemaTransformer)
+  }
+
+  // Init schema w/ base resolvers & typedefs
+  let schema = makeExecutableSchema({
+    resolvers,
+    typeDefs: [...directiveTypedefs, ...typeDefs]
+  })
+
+  // Apply directives
+  for (const schemaTransformer of directiveSchemaTransformers) {
+    schema = schemaTransformer(schema)
+  }
+
+  return schema
 }

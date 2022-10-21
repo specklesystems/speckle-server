@@ -12,16 +12,17 @@ import { formatNumber } from '@/plugins/formatNumber'
 // Accepts 'max' parameter to set it's formatting while being animated
 Vue.filter('prettynum', formatNumber)
 
-// process.env.NODE_ENV is injected by Webpack
-Vue.config.productionTip = process.env.NODE_ENV === 'development'
+// env vars injected by Vite
+const enableDevMode = !!import.meta.env.FORCE_VUE_DEVTOOLS || !!import.meta.env.DEV
+
+Vue.config.productionTip = enableDevMode
+Vue.config.devtools = enableDevMode
 
 Vue.use(VTooltip, {
   defaultDelay: 300,
   defaultBoundariesElement: document.body,
   defaultHtml: false
 })
-
-// RANDOM CHANGE! (testing out gitguardian)
 
 // In highly restrictive sandboxed environments mixpanel init might fail due to document.cookie access
 Vue.use(VueMixpanel, {

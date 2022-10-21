@@ -11,7 +11,7 @@
 
 <p align="center">
 <a href="https://github.com/Speckle-Next/SpeckleServer/"><img src="https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&amp;circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29" alt="Speckle-Next">
-</a> 
+</a>
 <a href="https://codecov.io/gh/specklesystems/speckle-server">
 <img src="https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg" alt="codecov">
 </a>
@@ -103,6 +103,13 @@ to be able to run the apps on your machine.
 The suggested IDE for working in this repo is VSCode, because the repo has special configs to improve the DX there (auto-format & auto-lint, recommended extensions etc.).
 
 This repository relies on [VSCode multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces), so for the best DX and proper formatting/linting make sure you open the project using the `workspace.code-workspace` file instead of just opening the folder in VSCode.
+
+#### Proper TypeScript support
+
+To get proper TS support in standard TS files as well as Vue files, we rely on the **Volar** VSCode extension - not **Vetur**! When you open the workspace for the very first time, VSCode should already prompt you to install this extension.
+The default Volar setup can be quite resource intensive, however, because there end up being standard TS Language Server instances running as well as Vue TS Language server instances. To resolve this issue we rely on Volar's [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471).
+
+Essentially, ensure you have **Volar** enabled, and the built in **TypeScript and JavaScript Language Features** extension disabled (for this workspace)!
 
 ### Useful containers
 

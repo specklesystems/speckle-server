@@ -17,5 +17,6 @@ export type VFormInstance = CombinedVueInstance<
     validate(): boolean
   },
   unknown,
+  unknown,
   unknown
 >

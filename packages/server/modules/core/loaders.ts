@@ -17,6 +17,9 @@ import {
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { getCommitStreams } from '@/modules/core/repositories/commits'
+import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { getCommentsResources } from '@/modules/comments/repositories/comments'
 
 /**
  * Build request-scoped dataloaders
@@ -78,7 +81,24 @@ export function buildRequestLoaders(ctx: AuthContext) {
         if (!userId) return streamIds.map(() => null)
 
         const results = await getStreamRoles(userId, streamIds.slice())
-        return streamIds.map((id) => results[id])
+        return streamIds.map((id) => results[id] || null)
+      })
+    },
+    commits: {
+      /**
+       * Get a commit's stream from DB
+       */
+      getCommitStream: new DataLoader<string, Nullable<StreamRecord>>(
+        async (commitIds) => {
+          const results = await getCommitStreams(commitIds.slice())
+          return commitIds.map((id) => results[id] || null)
+        }
+      )
+    },
+    comments: {
+      getResources: new DataLoader<string, ResourceIdentifier[]>(async (commentIds) => {
+        const results = await getCommentsResources(commentIds.slice())
+        return commentIds.map((id) => results[id]?.resources || [])
       })
     },
     users: {

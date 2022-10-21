@@ -6,7 +6,18 @@ extend type Stream {
 }
 
 extend type User {
-  commits(limit: Int! = 25, cursor: String): CommitCollectionUser
+  """
+  Get commits authored by the user. If requested for another user, then only commits
+  from public streams will be returned.
+  """
+  commits(limit: Int! = 25, cursor: String): CommitCollection
+}
+
+extend type LimitedUser {
+  """
+  Get public stream commits authored by the user
+  """
+  commits(limit: Int! = 25, cursor: String): CommitCollection
 }
 
 type Branch {
@@ -30,37 +41,25 @@ type Commit {
   authorId: String
   authorAvatar: String
   createdAt: DateTime
-}
-
-type CommitCollectionUserNode {
-  id: String!
-  referencedObject: String!
-  message: String
-  sourceApplication: String
-  totalChildrenCount: Int
-  branchName: String
-  parents: [String]
-  streamId: String
-  streamName: String
-  createdAt: DateTime
+  streamId: String @deprecated(reason: "Use the stream field instead")
+  streamName: String @deprecated(reason: "Use the stream field instead")
+  """
+  Will throw an authorization error if active user isn't authorized to see it, for example,
+  if a stream isn't public and the user doesn't have the appropriate rights.
+  """
+  stream: Stream! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 type BranchCollection {
   totalCount: Int!
   cursor: String
-  items: [Branch]
+  items: [Branch!]
 }
 
 type CommitCollection {
   totalCount: Int!
   cursor: String
-  items: [Commit]
-}
-
-type CommitCollectionUser {
-  totalCount: Int!
-  cursor: String
-  items: [CommitCollectionUserNode]
+  items: [Commit!]
 }
 
 extend type Mutation {
@@ -84,6 +83,20 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
   commitDelete(commit: CommitDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Move a batch of commits to a new branch
+  """
+  commitsMove(input: CommitsMoveInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Delete a batch of commits
+  """
+  commitsDelete(input: CommitsDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 }
@@ -157,7 +170,7 @@ input CommitCreateInput {
   """
   **DEPRECATED** Use the `parents` field.
   """
-  previousCommitIds: [String]
+  previousCommitIds: [String] @deprecated
   parents: [String]
 }
 
@@ -181,4 +194,13 @@ input CommitReceivedInput {
 input CommitDeleteInput {
   streamId: String!
   id: String!
+}
+
+input CommitsMoveInput {
+  targetBranch: String!
+  commitIds: [String!]!
+}
+
+input CommitsDeleteInput {
+  commitIds: [String!]!
 }

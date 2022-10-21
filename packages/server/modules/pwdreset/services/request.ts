@@ -1,3 +1,4 @@
+import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -50,7 +51,7 @@ async function initializeNewToken(email: string) {
 type PasswordRecoveryRequestState = Awaited<ReturnType<typeof initializeNewToken>>
 
 function buildResetLink(token: PasswordResetTokenRecord) {
-  return new URL(`/authn/resetpassword/finalize?t=${token.id}`, getBaseUrl()).toString()
+  return new URL(getPasswordResetFinalizationRoute(token.id), getBaseUrl()).toString()
 }
 
 function buildHtmlBody() {

@@ -21,10 +21,12 @@ COPY package.json yarn.lock ./
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN yarn workspaces focus -A && yarn
 
 # Onyl copy in the relevant source files for the dependencies
+COPY packages/shared ./packages/shared/
 COPY packages/objectloader ./packages/objectloader/
 COPY packages/viewer ./packages/viewer/
 COPY packages/preview-service ./packages/preview-service/
@@ -90,6 +92,7 @@ COPY packages/preview-service/package.json ./packages/preview-service/
 
 WORKDIR /speckle-server/packages
 
+COPY --from=build-stage /speckle-server/packages/shared ./shared
 COPY --from=build-stage /speckle-server/packages/objectloader ./objectloader
 COPY --from=build-stage /speckle-server/packages/viewer ./viewer
 COPY --from=build-stage /speckle-server/packages/preview-service ./preview-service

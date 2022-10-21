@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <div style="height: 100vh; position: relative" class="speckle-viewer transparent">
     <div
       id="rendererparent"
@@ -15,8 +15,15 @@
 </template>
 <script>
 import throttle from 'lodash/throttle'
+import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
-import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import {
+  useCommitObjectViewerParams,
+  handleViewerSelection,
+  resetSelection,
+  handleViewerDoubleClick
+} from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'SpeckleViewer',
@@ -36,7 +43,6 @@ export default {
       isEmbed
     }
   },
-  // TODO: pause rendering on destroy, reinit on mounted.
   async mounted() {
     // NOTE: we're doing some globals and dom shennanigans in here for the purpose
     // of having a unique global renderer and it's container dom element. The principles
@@ -66,12 +72,12 @@ export default {
       // this.viewer.cameraHandler.controls.mouseButtons.wheel = 8
     }
 
-    this.viewer.onWindowResize()
+    this.viewer.resize()
     this.viewer.cameraHandler.onWindowResize()
     this.setupEvents()
     this.$emit('viewer-init')
     this.$eventHub.$on('resize-viewer', () => {
-      this.viewer.onWindowResize()
+      this.viewer.resize()
       this.viewer.cameraHandler.onWindowResize()
     })
   },
@@ -93,10 +99,21 @@ export default {
       })
 
       this.viewer.on(
-        'load-progress',
-        throttle((args) => this.$emit('load-progress', args), 250)
+        ViewerEvent.LoadProgress,
+        throttle((args) => this.$emit(ViewerEvent.LoadProgress, args), 250)
       )
-      this.viewer.on('select', (objects) => this.$emit('selection', objects))
+
+      this.viewer.on(ViewerEvent.ObjectClicked, (selectionInfo) => {
+        handleViewerSelection(selectionInfo)
+      })
+
+      this.viewer.on(ViewerEvent.ObjectDoubleClicked, (selectionInfo) => {
+        handleViewerDoubleClick(selectionInfo)
+      })
+
+      onKeyStroke('Escape', () => {
+        resetSelection()
+      })
     }
   }
 }

@@ -7,21 +7,16 @@ extend type Query {
 
 type CommitObjectViewerState {
   viewerBusy: Boolean!
-  appliedFilter: JSONObject
-  isolateKey: String
-  isolateValues: [String!]!
-  hideKey: String
-  hideValues: [String!]!
-  colorLegend: JSONObject!
-  isolateCategoryKey: String
-  isolateCategoryValues: [String!]!
-  hideCategoryKey: String
-  hideCategoryValues: [String!]!
   selectedCommentMetaData: SelectedCommentMetaData
   addingComment: Boolean!
   preventCommentCollapse: Boolean!
   commentReactions: [String!]!
   emojis: [String!]!
+  currentFilterState: JSONObject
+  selectedObjects: [JSONObject]
+  objectProperties: [JSONObject]
+  localFilterPropKey: String
+  sectionBox: Boolean
 }
 
 type SelectedCommentMetaData {

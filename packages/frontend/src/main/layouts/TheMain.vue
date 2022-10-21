@@ -5,7 +5,9 @@
       v-model="drawer"
       app
       floating
-      :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
+      :class="`main-nav-drawer grey ${
+        $vuetify.theme.dark ? 'darken-4' : 'lighten-4'
+      } elevation-1`"
       :width="navWidth"
       style="z-index: 100"
     >
@@ -46,8 +48,7 @@
     </v-app-bar>
     <v-main class="background">
       <email-verification-banner
-        v-if="!hideEmailBanner && user && !user.verified"
-        :user="user"
+        v-if="!hideEmailBanner"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
       <v-container fluid class="px-4">
@@ -62,9 +63,9 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
-import { mainUserDataQuery } from '@/graphql/user'
 import { useNavigationDrawerAutoResize } from '../lib/core/composables/dom'
 import { ref } from 'vue'
+import { useIsLoggedIn } from '../lib/core/composables/core'
 
 export default {
   name: 'TheMain',
@@ -78,12 +79,6 @@ export default {
       import('@/main/components/user/EmailVerificationBanner')
   },
   apollo: {
-    user: {
-      query: mainUserDataQuery,
-      skip() {
-        return !this.$loggedIn()
-      }
-    },
     $subscribe: {
       userStreamAdded: {
         query: gql`
@@ -103,7 +98,7 @@ export default {
           })
         },
         skip() {
-          return !this.user
+          return !this.isLoggedIn
         }
       }
     }
@@ -115,10 +110,13 @@ export default {
       drawerRef: navDrawer
     })
 
+    const { isLoggedIn } = useIsLoggedIn()
+
     // drawer ref must be returned, for it to be filled
     return {
       navDrawer,
-      navWidth
+      navWidth,
+      isLoggedIn
     }
   },
   data() {
@@ -134,15 +132,37 @@ export default {
         this.hideEmailBanner = !!to.meta.hideEmailBanner
       },
       immediate: true
+    },
+    '$route.query.emailverifiedstatus': {
+      handler(emailVerifiedStatus, oldStatus) {
+        if (!oldStatus && emailVerifiedStatus === 'true') {
+          this.$triggerNotification({
+            text: '✉️ Email successfully verified!',
+            type: 'success'
+          })
+
+          this.cleanQuery()
+        }
+      },
+      immediate: true
+    },
+    '$route.query.emailverifiederror': {
+      handler(emailVerifiedError, oldError) {
+        if (!oldError && emailVerifiedError) {
+          this.$triggerNotification({
+            text: `✉️ ${emailVerifiedError}`,
+            type: 'error'
+          })
+
+          this.cleanQuery()
+        }
+      },
+      immediate: true
     }
   },
-  mounted() {
-    if (this.$route.query.emailverfiedstatus) {
-      setTimeout(() => {
-        this.$eventHub.$emit('notification', {
-          text: '✉️ Email successfully verfied!'
-        })
-      }, 1000) // todo: ask fabian if there's a better way, feels icky
+  methods: {
+    cleanQuery() {
+      this.$router.replace({ ...this.$router.currentRoute, query: '' })
     }
   }
 }

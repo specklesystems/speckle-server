@@ -20,6 +20,17 @@ export async function initializeConsumption(
   const allHandlers: Partial<NotificationTypeHandlers> = {
     [NotificationType.MentionedInComment]: (
       await import('@/modules/notifications/services/handlers/mentionedInComment')
+    ).default,
+    [NotificationType.NewStreamAccessRequest]: (
+      await import('@/modules/notifications/services/handlers/newStreamAccessRequest')
+    ).default,
+    [NotificationType.StreamAccessRequestApproved]: (
+      await import(
+        '@/modules/notifications/services/handlers/streamAccessRequestApproved'
+      )
+    ).default,
+    [NotificationType.ActivityDigest]: (
+      await import('@/modules/notifications/services/handlers/activityDigest')
     ).default
   }
 
