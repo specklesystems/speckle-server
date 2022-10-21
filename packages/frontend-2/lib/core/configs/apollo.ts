@@ -1,20 +1,24 @@
 import { ApolloLink, InMemoryCache, split } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
-import { SafeLocalStorage } from '~~/../shared/dist-esm'
-import { LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { OperationDefinitionNode, Kind } from 'graphql'
+import { useAuthToken, TokenRetriever } from '~~/lib/auth/utils/authState'
 
 // TODO: Store common apollo configs & helpers in @speckle/shared
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
 
-function createWsClient(wsEndpoint: string): SubscriptionClient {
+function createWsClient(params: {
+  wsEndpoint: string
+  getToken: TokenRetriever
+}): SubscriptionClient {
+  const { wsEndpoint, getToken } = params
+
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const wsImplementation = process.server ? (require('ws') as unknown) : undefined
   return new SubscriptionClient(
@@ -22,7 +26,7 @@ function createWsClient(wsEndpoint: string): SubscriptionClient {
     {
       reconnect: true,
       connectionParams: () => {
-        const authToken = SafeLocalStorage.get(LocalStorageKeys.AuthToken)
+        const authToken = getToken()
         const Authorization = authToken ? `Bearer ${authToken}` : null
         return Authorization ? { Authorization, headers: { Authorization } } : {}
       }
@@ -31,7 +35,13 @@ function createWsClient(wsEndpoint: string): SubscriptionClient {
   )
 }
 
-function createLink(httpEndpoint: string, wsClient?: SubscriptionClient): ApolloLink {
+function createLink(params: {
+  httpEndpoint: string
+  wsClient?: SubscriptionClient
+  getToken: TokenRetriever
+}): ApolloLink {
+  const { httpEndpoint, wsClient, getToken } = params
+
   // Prepare links
   const httpLink = createUploadLink({
     uri: httpEndpoint
@@ -39,7 +49,7 @@ function createLink(httpEndpoint: string, wsClient?: SubscriptionClient): Apollo
 
   const authLink = setContext(
     (_, { headers }: { headers: Record<string, unknown> }) => {
-      const authToken = SafeLocalStorage.get(LocalStorageKeys.AuthToken)
+      const authToken = getToken()
       const authHeader = authToken ? { Authorization: `Bearer ${authToken}` } : {}
       return {
         headers: {
@@ -77,8 +87,9 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const httpEndpoint = `${API_ORIGIN}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
-  const wsClient = createWsClient(wsEndpoint)
-  const link = createLink(httpEndpoint, wsClient)
+  const getToken = useAuthToken()
+  const wsClient = createWsClient({ wsEndpoint, getToken })
+  const link = createLink({ httpEndpoint, wsClient, getToken })
 
   return {
     cache: new InMemoryCache(),
