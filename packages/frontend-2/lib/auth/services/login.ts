@@ -1,9 +1,9 @@
-import { SafeLocalStorage } from '@speckle/shared'
 import {
   InvalidLoginParametersError,
   LoginFailedError
 } from '~~/lib/auth/errors/errors'
-import { LocalStorageKeys } from '~~/lib/common/helpers/constants'
+import { LogicError } from '~~/lib/core/errors/base'
+import { setToken } from '~~/lib/auth/utils/authState'
 
 // TODO: Should these differ from the old frontend values?
 const appId = 'spklwebapp'
@@ -98,12 +98,17 @@ async function getTokenFromAccessCode(params: TokenParams) {
 }
 
 export async function login(params: LoginParams) {
+  if (process.server) {
+    throw new LogicError('Logging in during SSR is not supported!')
+  }
+
   const { apiOrigin, challenge } = params
 
   const accessCode = await getAccessCode(params)
   const token = await getTokenFromAccessCode({ accessCode, apiOrigin, challenge })
 
-  SafeLocalStorage.set(LocalStorageKeys.AuthToken, token)
+  // save token
+  setToken(token)
 
   // reload page & go to index
   window.location.href = '/'

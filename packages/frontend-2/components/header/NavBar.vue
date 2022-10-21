@@ -160,7 +160,7 @@ const navigation = [
   { name: 'Calendar', href: '#', current: false }
 ]
 const userNavigation = [
-  { name: 'Your Profile', href: '#', current: true },
+  { name: 'Your Profile', href: '/login', current: true },
   { name: 'Settings', href: '#' },
   { name: 'Sign out', href: '#' }
 ]
