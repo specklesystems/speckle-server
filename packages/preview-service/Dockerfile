@@ -72,8 +72,8 @@ RUN apt-get update && \
   libxrandr2=2:1.5.1-1 \
   wget=1.21-1+deb11u1 \
   xdg-utils=1.1.3-4.1 \
-  chromium-common=103.0.5060.53-1~deb11u1 \
-  chromium=103.0.5060.53-1~deb11u1 \
+  chromium-common=104.0.5112.79-1~deb11u1 \
+  chromium=104.0.5112.79-1~deb11u1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
