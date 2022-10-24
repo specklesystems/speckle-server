@@ -15,7 +15,7 @@ const config = {
   },
   extends: [...mainExtends],
   plugins: ['@typescript-eslint'],
-  ignorePatterns: ['**/templates/*.{js,ts}', 'coverage'],
+  ignorePatterns: ['**/templates/*', 'coverage', 'lib/common/generated/**/*'],
   rules: {
     camelcase: [
       'error',

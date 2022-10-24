@@ -16,7 +16,8 @@ export function setToken(token: string) {
 
   SafeLocalStorage.set(LocalStorageKeys.AuthToken, token)
   Cookies.set(CookieKeys.AuthToken, token, {
-    sameSite: 'lax'
+    sameSite: 'lax',
+    expires: 31 // 31 days
   })
 }
 

@@ -11,6 +11,7 @@ packages/viewer/example/speckleviewer.web.js
 packages/frontend-2/.output
 packages/frontend-2/.nuxt
 packages/frontend-2/lib/core/nuxt-modules/**/templates/*.js
+packages/frontend-2/lib/common/generated/**/*
 
 package-lock.json
 yarn.lock
