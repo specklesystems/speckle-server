@@ -25,6 +25,7 @@
     "gqlgen": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run gqlgen",
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend": "yarn workspace @speckle/frontend dev",
+    "dev:frontend-2": "yarn workspace @speckle/frontend-2 dev",
     "dev:shared": "yarn workspace @speckle/shared dev",
     "prepare": "husky install",
     "postinstall": "husky install",
