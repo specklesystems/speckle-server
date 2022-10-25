@@ -1,8 +1,14 @@
 #!/bin/bash
 
-set -e
+set -eo pipefail
 
+SHOULD_PUBLISH="${SHOULD_PUBLISH:-false}"
 RELEASE_VERSION=${IMAGE_VERSION_TAG}
+
+if [[ "${SHOULD_PUBLISH}" != "true" ]]; then
+  echo "🚪 We should not publish the helm chart. Exiting"
+  exit 1
+fi
 
 echo "Releasing Helm Chart version $RELEASE_VERSION"
 
@@ -20,7 +26,7 @@ echo "${CURRENT_VERSION}"
 .circleci/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
 if [ $? -eq 1 ] 
 then 
-  echo "The current helm chart version is newer than the currently built. Exiting" 
+  echo "The current helm chart version is newer than the currently built. Exiting"
   exit 1
 fi
 
