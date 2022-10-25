@@ -41,6 +41,7 @@ let _zColumn
 
 export class SpeckleCameraControls extends CameraControls {
   private _didDolly = false
+  private _didDollyLastFrame = false
   public _isTrucking = false
   private _hasRestedLastFrame = false
   static install() {
@@ -258,7 +259,7 @@ export class SpeckleCameraControls extends CameraControls {
     } else if (!updated && this._updatedLastTime) {
       this.dispatchEvent({ type: 'sleep' })
     }
-    if (this._didDolly) {
+    if (this._didDollyLastFrame) {
       if (
         approxZero(deltaTheta, this.restThreshold) &&
         approxZero(deltaPhi, this.restThreshold) &&
@@ -272,9 +273,15 @@ export class SpeckleCameraControls extends CameraControls {
         !this._isTrucking
       ) {
         this.dispatchEvent({ type: 'rest' })
-        this._didDolly = false
+        this._didDollyLastFrame = false
       }
     }
+
+    if (this._didDolly) {
+      this._didDolly = false
+      this._didDollyLastFrame = true
+    }
+
     this._updatedLastTime = updated
     this._needsUpdate = false
     return updated && !this._hasRested

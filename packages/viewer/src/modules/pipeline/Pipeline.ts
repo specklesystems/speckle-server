@@ -66,6 +66,7 @@ export class Pipeline {
   private _batcher: Batcher = null
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
   private _needsProgressive = false
+  private _resetFrame = false
   private composer: EffectComposer = null
 
   private depthPass: DepthPass = null
@@ -151,6 +152,7 @@ export class Pipeline {
             ? true
             : false
         this.dynamicAoPass.enabled = true
+        this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO)
@@ -167,6 +169,7 @@ export class Pipeline {
             ? true
             : false
         this.dynamicAoPass.enabled = true
+        this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
@@ -179,7 +182,7 @@ export class Pipeline {
         pipeline.push(this.dynamicAoPass)
         pipeline.push(this.staticAoPass)
         pipeline.push(this.copyOutputPass)
-        this.normalsPass.enabled
+        this.depthPass.depthType = DepthType.LINEAR_DEPTH
         this.copyOutputPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.needsProgressive = true
@@ -288,6 +291,11 @@ export class Pipeline {
     this.depthPass.setClippingPlanes(planes)
   }
 
+  public reset() {
+    this._resetFrame = true
+    this.onStationaryEnd()
+  }
+
   public update(renderer: SpeckleRenderer) {
     this.depthPass.update(renderer.scene, renderer.camera)
     this.dynamicAoPass.update(renderer.scene, renderer.camera)
@@ -306,7 +314,12 @@ export class Pipeline {
     this._renderer.clear(true)
     if (this.renderType === RenderType.NORMAL) {
       this.composer.render()
-      return false
+      const ret = false || this._resetFrame
+      if (this._resetFrame) {
+        this._resetFrame = false
+        this.onStationaryBegin()
+      }
+      return ret
     } else {
       console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
       this.composer.render()
@@ -330,7 +343,7 @@ export class Pipeline {
     this.accumulationFrame = 0
     this.depthPass.enabled = true
     this.depthPass.depthType = DepthType.LINEAR_DEPTH
-    // this.normalsPass.enabled = false
+    this.normalsPass.enabled = false
     this.dynamicAoPass.enabled = false
     this.renderPass.enabled = true
     this.applySaoPass.enabled = true

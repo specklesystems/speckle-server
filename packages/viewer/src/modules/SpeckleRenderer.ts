@@ -342,6 +342,11 @@ export default class SpeckleRenderer {
     this.pipeline.update(this)
   }
 
+  public resetPipeline() {
+    this._needsRender = true
+    this.pipeline.reset()
+  }
+
   public render(): void {
     if (this._needsRender) {
       this.batcher.render(this.renderer)
@@ -405,6 +410,7 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
+    this.resetPipeline()
   }
 
   public removeRenderTree(subtreeId: string) {
