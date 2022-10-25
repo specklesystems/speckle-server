@@ -33,7 +33,7 @@
   "devDependencies": {
     "@swc/core": "^1.2.222",
     "@types/eslint": "^8.4.1",
-    "commitizen": "^4.2.4",
+    "commitizen": "^4.2.5",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
