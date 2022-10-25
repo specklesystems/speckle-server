@@ -21,15 +21,12 @@
         </v-list-item-content>
       </v-list-item>
       <div class="caption px-3 my-4">
-        <perfect-scrollbar
-          style="max-height: 100px"
-          :options="{ suppressScrollX: true }"
-        >
+        <div class="simple-scrollbar" style="max-height: 100px; overflow-y: auto">
           <span v-if="stream && stream.description">
             {{ stream.description }}
           </span>
           <span v-else class="font-italic">No description provided</span>
-        </perfect-scrollbar>
+        </div>
         <router-link
           v-if="stream.role === 'stream:owner'"
           :to="`/streams/${$route.params.streamId}/settings`"

@@ -130,7 +130,7 @@
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "http-proxy-middleware": "^1.0.6",
-    "mocha": "^7.2.0",
+    "mocha": "^10.1.0",
     "mocha-junit-reporter": "^2.0.2",
     "mock-require": "^3.0.3",
     "nodemon": "^2.0.6",

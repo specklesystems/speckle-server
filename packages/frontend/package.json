@@ -57,7 +57,6 @@
     "vue-mixpanel": "1.0.7",
     "vue-router": "^3.4.9",
     "vue-timeago": "^5.1.2",
-    "vue2-perfect-scrollbar": "^1.5.2",
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.3.21",
     "vuetify-image-input": "^19.1.0"
