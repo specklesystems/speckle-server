@@ -45,7 +45,7 @@
       </span>
       <v-btn
         v-if="stream"
-        v-tooltip="'Share this stream'"
+        v-tooltip="'Share this stream/commit'"
         xxxelevation="0"
         rounded
         class="mr-2 ml-2 px-0 primary"
@@ -55,13 +55,12 @@
         <v-icon small>mdi-share-variant</v-icon>
       </v-btn>
     </portal>
-    <v-dialog
-      v-model="shareStream"
-      max-width="600"
-      :fullscreen="$vuetify.breakpoint.xsOnly"
-    >
-      <share-stream-dialog :stream="stream" @close="shareStream = false" />
-    </v-dialog>
+    <share-stream-dialog
+      :show.sync="shareStream"
+      :stream-id="stream.id"
+      :branch-name="$route.params.branchName"
+      :resource-id="$route.params.resourceId"
+    />
   </div>
 </template>
 <script>

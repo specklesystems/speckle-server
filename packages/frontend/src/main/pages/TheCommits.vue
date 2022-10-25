@@ -26,8 +26,12 @@
         <commit-preview-card
           :commit="commit"
           :preview-height="180"
-          :allow-select="isCommitOrStreamOwner(commit)"
+          :shareable="true"
+          :selectable="true"
+          :select-disabled-message="disabledCheckboxMessage"
+          :select-disabled="!isCommitOrStreamOwner(commit)"
           :selected.sync="selectedCommitsState[commit.id]"
+          @share="shareDialogCommit = $event"
         />
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
@@ -68,12 +72,18 @@
         </v-list>
       </template>
     </no-data-placeholder>
+    <share-stream-dialog
+      v-if="shareDialogStreamId"
+      :show.sync="showShareDialog"
+      :stream-id="shareDialogStreamId"
+      :resource-id="shareDialogCommitId"
+    />
   </div>
 </template>
 <script>
 import { gql } from '@apollo/client/core'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import { computed, defineComponent } from 'vue'
+import { computed, defineComponent, ref } from 'vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 import CommitMultiSelectToolbar from '@/main/components/stream/commit/CommitMultiSelectToolbar.vue'
 import {
@@ -82,7 +92,10 @@ import {
 } from '@/main/lib/stream/composables/commitMultiActions'
 import { Roles } from '@/helpers/mainConstants'
 import { getCacheId } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
-import { deleteCommitsFromCachedCommitsQuery } from '@/main/lib/stream/services/commitMultiActions'
+import {
+  deleteCommitsFromCachedCommitsQuery,
+  disabledCheckboxMessage
+} from '@/main/lib/stream/services/commitMultiActions'
 
 export default defineComponent({
   name: 'TheCommits',
@@ -90,6 +103,7 @@ export default defineComponent({
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
+    ShareStreamDialog: () => import('@/main/dialogs/ShareStreamDialog.vue'),
     PrioritizedPortal,
     CommitMultiSelectToolbar
   },
@@ -161,6 +175,18 @@ export default defineComponent({
       }
     }
 
+    const shareDialogCommit = ref(null)
+    const showShareDialog = computed({
+      get: () => !!shareDialogCommit.value,
+      set: (newVal) => {
+        if (!newVal) {
+          shareDialogCommit.value = null
+        }
+      }
+    })
+    const shareDialogCommitId = computed(() => shareDialogCommit.value?.id)
+    const shareDialogStreamId = computed(() => shareDialogCommit.value?.stream.id)
+
     return {
       user,
       commitItems,
@@ -171,7 +197,12 @@ export default defineComponent({
       clearSelectedCommits,
       selectedCommitsState,
       onBatchCommitActionFinish,
-      isCommitOrStreamOwner
+      isCommitOrStreamOwner,
+      disabledCheckboxMessage,
+      shareDialogCommitId,
+      shareDialogStreamId,
+      shareDialogCommit,
+      showShareDialog
     }
   },
   methods: {

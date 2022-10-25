@@ -29,7 +29,7 @@
     "knex": "^2.0.0",
     "pg": "^8.7.3",
     "prom-client": "^14.0.1",
-    "undici": "^5.4.0",
+    "undici": "^5.8.2",
     "valid-filename": "^3.1.0",
     "web-ifc": "^0.0.35"
   },

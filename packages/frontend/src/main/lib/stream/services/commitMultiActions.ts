@@ -1,5 +1,8 @@
 import { ApolloCache } from '@apollo/client/cache'
 
+export const disabledCheckboxMessage =
+  "To select this commit you must be its or its stream's owner"
+
 export enum BatchActionType {
   Move = 'move',
   Delete = 'delete'
