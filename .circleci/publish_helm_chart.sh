@@ -6,7 +6,7 @@ SHOULD_PUBLISH="${SHOULD_PUBLISH:-false}"
 RELEASE_VERSION=${IMAGE_VERSION_TAG}
 
 if [[ "${SHOULD_PUBLISH}" != "true" ]]; then
-  echo "🚪 We should not publish the helm chart. Exiting" 
+  echo "🚪 We should not publish the helm chart. Exiting"
   exit 1
 fi
 
