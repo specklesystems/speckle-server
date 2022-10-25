@@ -4822,7 +4822,7 @@ __metadata:
     pg: ^8.7.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
-    undici: ^5.4.0
+    undici: ^5.8.2
     valid-filename: ^3.1.0
     web-ifc: ^0.0.35
   languageName: unknown
@@ -5085,7 +5085,7 @@ __metadata:
     tsconfig-paths: ^4.0.0
     type-fest: ^2.19.0
     typescript: ^4.6.4
-    undici: ^5.4.0
+    undici: ^5.8.2
     verror: ^1.10.1
     ws: ^7.5.7
     xml-escape: ^1.1.0
@@ -21336,7 +21336,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.1.0, undici@npm:^5.4.0":
+"undici@npm:^5.1.0":
   version: 5.5.1
   resolution: "undici@npm:5.5.1"
   checksum: c041c9093df7ec683479a9555581206a7c7bebfc1ed6e8669920e55618461fc4ce08938e2fbf8ef7d692c2813c44392b5ed25c58396ee4a72ffd1f1f953712c9
@@ -21347,6 +21347,15 @@ __metadata:
   version: 5.8.0
   resolution: "undici@npm:5.8.0"
   checksum: 7b486ad064da00628d3906e140b86223023cd3494c811da8d7aa1375c2392fe6a6ac421af236c056fd3d3136bba3a91b99e0505dde071dd946070946eb0718b8
+  languageName: node
+  linkType: hard
+
+"undici@npm:^5.8.2":
+  version: 5.11.0
+  resolution: "undici@npm:5.11.0"
+  dependencies:
+    busboy: ^1.6.0
+  checksum: 20669ef4023d24a75e81ed8142829f525f16af14d61f833b5f19cfc6bed7c706adde343a190d764dcceb227eba3211222d2b194010462a2ca221a7da0487f563
   languageName: node
   linkType: hard
 
