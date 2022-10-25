@@ -1,0 +1,60 @@
+extend type Project {
+  model(id: String!): String!
+  models(limit: Int! = 20, cursor: String, query: ModelQuery): ModelCollection
+}
+
+# FKA Branch
+type Model {
+  id: String!
+  name: String!
+  description: String!
+  createdAt: DateTime
+  # The user that created the model. (branch authorId)
+  creator: LimitedUser
+  # A list of the unique users that contributed versions to this model.
+  authors: [LimitedUser]
+  # A list of the unique source applications that contributed versions to this model.
+  sourceApplications: [String!]
+  versions(limit: Int! = 20, cursor: String, query: VersionQuery): VersionCollection
+}
+
+# FKA Commit
+type Version {
+  id: String!
+  message: String
+  createdAt: DateTime
+  # The id of the actual object containing the data from this version.
+  referencedObject: String!
+  # The name of the source application that this version originated from.
+  sourceApplication: String!
+  # The name of the file that this version originated from. NOTE: needs schema extending!
+  sourceFileName: String
+  # If set by the host application connector, the id of the previous verison.
+  parents: [String]
+  author: LimitedUser
+}
+
+type ModelCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Model!]
+}
+
+input ModelQuery {
+  name: String
+}
+
+type VersionCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Version!]
+}
+
+input VersionQuery {
+  # text search by the version's message
+  message: String
+  # search by author
+  authorId: String
+  # search by source application
+  sourceApplication: String
+}

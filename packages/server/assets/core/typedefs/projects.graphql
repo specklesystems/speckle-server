@@ -1,0 +1,64 @@
+extend type Query {
+  project(id: String!): Project
+  projects(limit: Int! = 20, cursor: String, query: ProjectQuery): ProjectCollection
+}
+
+# FKA Stream
+type Project {
+  id: String!
+  name: String!
+  description: String
+  # Whether the project can be viewed by non-contributors
+  isPublic: Boolean!
+  # Whether the project (if public) can be found on public project exploration pages and searches
+  isDiscoverable: Boolean!
+  # Whether this project allows comments from any logged in user.
+  allowPublicComments: Boolean!
+  # Your role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
+  role: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  # The people that have access to this stream.
+  team: [LimitedUser!]!
+  # Collaborators who have been invited, but not yet accepted.
+  pendingTeamMemembers: [PendingProjectTeamMember!] @hasStreamRole(role: STREAM_OWNER)
+  size: String
+  # Date when you favorited this project. `null` if project isn't viewed from a specific user's perspective or if it isn't favorited.
+  favoritedDate: DateTime
+  # How many times this project has been favorited
+  favoritesCount: Int!
+}
+
+type ProjectCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Project!]
+}
+
+input ProjectQuery {
+  filter: ProjectFilter = all
+  query: String
+}
+
+enum ProjectFilter {
+  all
+  owner
+  contributor
+  reviewer
+  # favourite
+}
+
+type PendingProjectTeamMember {
+  id: String!
+  inviteId: String!
+  streamId: String!
+  streamName: String!
+  # E-mail address or name of the invited user
+  title: String!
+  role: String!
+  invitedBy: LimitedUser!
+  # Set only if user is registered
+  user: LimitedUser
+  # Only available if the active user is the pending stream collaborator
+  token: String
+}
