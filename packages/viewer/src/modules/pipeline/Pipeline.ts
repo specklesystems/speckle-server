@@ -178,7 +178,7 @@ export class Pipeline {
 
       case PipelineOutputType.PROGRESSIVE_AO:
         pipeline.push(this.depthPass)
-        pipeline.push(this.normalsPass)
+        // pipeline.push(this.normalsPass)
         pipeline.push(this.dynamicAoPass)
         pipeline.push(this.staticAoPass)
         pipeline.push(this.copyOutputPass)
