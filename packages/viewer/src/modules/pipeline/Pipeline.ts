@@ -241,10 +241,11 @@ export class Pipeline {
 
   private getDefaultPipeline(): Array<SpecklePass> {
     this.renderPass.renderToScreen = true
-    this.normalsPass.enabled = true
-    // this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
-    //   ? true
-    //   : false
+    this.normalsPass.enabled =
+      this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+        ? true
+        : false
+
     this.dynamicAoPass.setOutputType(
       this._pipelineOptions.dynamicAoParams.blurEnabled
         ? DynamicAOOutputType.AO_BLURRED
