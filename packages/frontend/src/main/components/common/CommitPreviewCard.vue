@@ -14,19 +14,25 @@
       </router-link>
       <v-toolbar class="transparent elevation-0" dense>
         <v-toolbar-title class="d-flex" style="overflow: visible; width: 100%">
-          <v-checkbox
-            v-if="allowSelect"
-            v-model="selectedState"
-            dense
-            hide-details
-            @change="onSelect"
-          />
+          <div
+            v-tooltip="selectDisabled ? selectDisabledMessage : undefined"
+            class="checkbox-hover-wrapper"
+          >
+            <v-checkbox
+              v-if="selectable"
+              v-model="selectedState"
+              :disabled="selectDisabled"
+              dense
+              hide-details
+              @change="onSelect"
+            />
+          </div>
           <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
             <router-link
               class="text-decoration-none"
               :to="`/streams/${streamId}/commits/${commit.id}`"
             >
-              <v-icon v-if="!allowSelect" small>mdi-source-commit</v-icon>
+              <v-icon v-if="!selectable" small>mdi-source-commit</v-icon>
               {{ commit.message }}
             </router-link>
           </div>
@@ -64,28 +70,41 @@
           </router-link>
         </div>
       </div>
-      <div style="position: absolute; top: 10px; right: 20px">
-        <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
-      </div>
-      <div style="position: absolute; top: 10px; left: 12px">
-        <v-chip
-          v-if="commit.commentCount !== 0"
-          v-tooltip="
-            `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
-          "
-          small
-          class="caption primary"
-          dark
-        >
-          <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
-          {{ commit.commentCount }}
-        </v-chip>
-        <source-app-avatar :application-name="commit.sourceApplication" />
+      <div class="card-top justify-space-between align-start">
+        <div class="card-top__left flex-column align-start">
+          <div>
+            <source-app-avatar
+              :application-name="commit.sourceApplication"
+              style="margin: 0 !important"
+            />
+          </div>
+          <v-chip
+            v-if="commit.commentCount !== 0"
+            v-tooltip="
+              `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
+            "
+            small
+            class="caption primary"
+            dark
+          >
+            <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
+            {{ commit.commentCount }}
+          </v-chip>
+          <commit-received-receipts
+            :stream-id="streamId"
+            :commit-id="commit.id"
+            shadow
+          />
+        </div>
+        <div class="card-top__right flex-column align-start">
+          <commit-share-btn v-if="shareable" @share="onShareClicked" />
+        </div>
       </div>
     </v-card>
   </v-hover>
 </template>
 <script>
+import CommitShareBtn from '@/main/components/stream/commit/CommitShareBtn.vue'
 import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
 
 export default {
@@ -93,26 +112,54 @@ export default {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
     CommitReceivedReceipts: () =>
       import('@/main/components/common/CommitReceivedReceipts'),
-    SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
+    SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
+    CommitShareBtn
   },
   props: {
     commit: { type: Object, default: () => null },
     previewHeight: { type: Number, default: () => 180 },
     showStreamAndBranch: { type: Boolean, default: true },
-    highlight: { type: Boolean, default: false },
-    allowSelect: {
+    /**
+     * Whether to show a checkbox that would allow selecting this card
+     */
+    selectable: {
       type: Boolean,
       default: false
     },
+    /**
+     * Whether selection of this card is disabled
+     */
+    selectDisabled: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Message to show in a tooltip for a disabled card
+     */
+    selectDisabledMessage: {
+      type: String,
+      default: undefined
+    },
+    /**
+     * Whether the card is currently selected
+     */
     selected: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Whether to show a share button
+     */
+    shareable: {
       type: Boolean,
       default: false
     }
   },
   setup(props, ctx) {
     const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+    const onShareClicked = () => ctx.emit('share', props.commit)
 
-    return { highlighted, selectedState, onSelect }
+    return { highlighted, selectedState, onSelect, onShareClicked }
   },
   computed: {
     streamId() {
@@ -129,3 +176,24 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.card-top {
+  $base: &;
+
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  left: 12px;
+
+  display: flex;
+
+  #{$base}__left,
+  #{$base}__right {
+    display: flex;
+
+    & > * {
+      margin-bottom: 4px !important;
+    }
+  }
+}
+</style>

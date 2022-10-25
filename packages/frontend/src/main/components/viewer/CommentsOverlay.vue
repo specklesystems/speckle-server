@@ -262,7 +262,12 @@ export default {
             this.localComments.push({ ...c })
           }
         }
-        return data
+
+        // If slideshow mode, focus on the 1st comment
+        if (this.commentSlideShow && this.activeComments?.length) {
+          const c = this.activeComments[0]
+          this.expandComment(c)
+        }
       },
       subscribeToMore: {
         document: gql`

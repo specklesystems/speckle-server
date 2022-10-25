@@ -36,6 +36,11 @@ declare module 'vue/types/vue' {
      * @deprecated Use `isLoggedInQuery`/`isLoggedInMixin`/`useIsLoggedIn` instead
      */
     $loggedIn: () => boolean
+
+    /**
+     * Resolve a resourceId's type
+     */
+    $resourceType: typeof import('@/main/lib/viewer/core/helpers/resourceHelper').getResourceType
   }
 
   export interface VueConfiguration {

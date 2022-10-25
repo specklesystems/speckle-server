@@ -5,6 +5,7 @@ schema:
 documents:
   - 'src/graphql/**/*.gql'
   - 'src/**/*.{ts,tsx,js,jsx,vue}'
+  - '!src/graphql/generated/**/*'
 generates:
   src/graphql/generated/graphql.ts:
     plugins:
@@ -13,7 +14,11 @@ generates:
       - 'typescript-document-nodes'
       - 'typed-document-node'
     config:
-      scalars:
-        JSONObject: Record<string, unknown>
-        DateTime: string
       dedupeFragments: true
+config:
+  scalars:
+    JSONObject: Record<string, unknown>
+    DateTime: string
+require:
+  - ts-node/register
+  - tsconfig-paths/register
