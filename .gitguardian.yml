@@ -3,5 +3,5 @@ secret:
     - 'packages/server/modules/emails/tests'
   ignored-matches:
     - match: acd87c5a50b56df91a795e999812a3a4
-      name: '/Users/iainsproat/workspace/speckle-server/packages/frontend/src/bootstrapper.ts - token acd87c5a50b56df91a795e999812a3a4'
+      name: 'packages/frontend/src/bootstrapper.ts - token acd87c5a50b56df91a795e999812a3a4'
 version: 2
