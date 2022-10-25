@@ -53,7 +53,7 @@ export default {
       currItems: 20,
       loading: false,
       ignoredProps: [
-        // '__closure',
+        '__closure',
         // 'displayMesh',
         // 'displayValue',
         '__importedUrl',

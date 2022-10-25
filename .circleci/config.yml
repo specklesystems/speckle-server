@@ -286,8 +286,8 @@ jobs:
   test-server:
     docker:
       - image: cimg/node:16.15
-      - image: cimg/redis:6.2.6
-      - image: 'cimg/postgres:14.2'
+      - image: cimg/redis:7.0.5
+      - image: 'cimg/postgres:14.5'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -319,8 +319,8 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn workspaces focus
-          working_directory: 'packages/server'
+          command: yarn
+          # working_directory: 'packages/server'
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -329,7 +329,13 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
 
-      - run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Wait for dependencies to start
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
           command: touch .env.test
@@ -351,9 +357,9 @@ jobs:
       - store_test_results:
           path: packages/server/reports
 
-      - store_artifacts:
-          path: packages/server/coverage/lcov-report
-          destination: package/server/coverage
+      # - store_artifacts:
+      # path: packages/server/coverage/lcov-report
+      # destination: package/server/coverage
 
   docker-build: &build-job
     docker: &docker-image

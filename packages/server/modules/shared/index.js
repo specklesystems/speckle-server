@@ -13,6 +13,12 @@ const StreamPubsubEvents = Object.freeze({
   StreamDeleted: 'STREAM_DELETED'
 })
 
+const CommitPubsubEvents = Object.freeze({
+  CommitCreated: 'COMMIT_CREATED',
+  CommitUpdated: 'COMMIT_UPDATED',
+  CommitDeleted: 'COMMIT_DELETED'
+})
+
 /**
  * GraphQL Subscription PubSub instance
  */
@@ -163,10 +169,9 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     )
   }
 
-  const userAclEntry = await knex(role.aclTableName)
-    .select('*')
-    .where({ resourceId, userId })
-    .first()
+  const userAclEntry = userId
+    ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
+    : null
 
   if (!userAclEntry)
     throw new ForbiddenError('You do not have access to this resource.')
@@ -211,5 +216,6 @@ module.exports = {
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents
+  StreamPubsubEvents,
+  CommitPubsubEvents
 }

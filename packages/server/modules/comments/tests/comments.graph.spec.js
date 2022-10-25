@@ -461,7 +461,7 @@ const queryCommitCollectionCommentCount = async ({
   const res = await apollo.executeOperation({
     query: gql`
       query ($id: String!) {
-        user(id: $id) {
+        otherUser(id: $id) {
           commits {
             items {
               commentCount
@@ -473,7 +473,7 @@ const queryCommitCollectionCommentCount = async ({
     variables: { id: resources.testActorId }
   })
   testResult(shouldSucceed, res, (res) => {
-    res.data.user.commits.items
+    res.data.otherUser.commits.items
       .map((i) => i.commentCount)
       .map((commentCount) => {
         expect(commentCount).to.be.greaterThanOrEqual(1)

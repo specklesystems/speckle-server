@@ -1,11 +1,4 @@
-import {
-  BoxBufferGeometry,
-  EllipseCurve,
-  Line3,
-  Matrix4,
-  Vector2,
-  Vector3
-} from 'three'
+import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
 import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
@@ -397,17 +390,13 @@ export class GeometryConverter {
       node.raw.midPoint.z
     )
 
-    const chord = new Line3(startPoint, endPoint)
-    // This the projection of the origin on the chord
-    const chordCenter = chord.getCenter(new Vector3())
-    // Direction from the origin to the mid point
-    const d0 = new Vector3().subVectors(midPoint, origin)
-    d0.normalize()
-    // Direction from the origin to it;s projection on the chord
-    const d1 = new Vector3().subVectors(chordCenter, origin)
-    d1.normalize()
-    // If the two above directions point in opposite directions, we need to reverse the arc's winding order
-    const _clockwise = d0.dot(d1) < 0
+    /** The arc's 'midPoint' is not really a 'mid' point. It's just another point along the arc going from
+     *  start point to the end point. We get the arc's winding by using the directions from start and end
+     *  towards the mid point
+     */
+    const dd0 = new Vector3().subVectors(startPoint, midPoint).normalize()
+    const dd1 = new Vector3().subVectors(endPoint, midPoint).normalize()
+    const _clockwise = dd0.dot(dd1) > 0
 
     // Here we compute arc's orthonormal basis vectors using the origin and the two end points.
     const v0 = new Vector3().subVectors(startPoint, origin)

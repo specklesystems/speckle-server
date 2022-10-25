@@ -2,7 +2,7 @@
 
 const { ForbiddenError, UserInputError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
-const { authorizeResolver, pubsub } = require('@/modules/shared')
+const { authorizeResolver, pubsub, CommitPubsubEvents } = require('@/modules/shared')
 const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
@@ -30,11 +30,36 @@ const {
   validateStreamAccess
 } = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const {
+  addCommitCreatedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 // subscription events
-const COMMIT_CREATED = 'COMMIT_CREATED'
-const COMMIT_UPDATED = 'COMMIT_UPDATED'
-const COMMIT_DELETED = 'COMMIT_DELETED'
+const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
+const COMMIT_UPDATED = CommitPubsubEvents.CommitUpdated
+const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
+
+/**
+ * @param {boolean} publicOnly
+ * @param {string} userId
+ * @param {{limit: number, cursor: string}} args
+ * @returns
+ */
+const getUserCommits = async (publicOnly, userId, args) => {
+  const totalCount = await getCommitsTotalCountByUserId({ userId, publicOnly })
+  if (args.limit && args.limit > 100)
+    throw new UserInputError(
+      'Cannot return more than 100 items, please use pagination.'
+    )
+  const { commits: items, cursor } = await getCommitsByUserId({
+    userId,
+    limit: args.limit,
+    cursor: args.cursor,
+    publicOnly
+  })
+
+  return { items, cursor, totalCount }
+}
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -97,22 +122,14 @@ module.exports = {
       return c
     }
   },
+  LimitedUser: {
+    async commits(parent, args) {
+      return await getUserCommits(true, parent.id, args)
+    }
+  },
   User: {
     async commits(parent, args, context) {
-      const publicOnly = context.userId !== parent.id
-      const totalCount = await getCommitsTotalCountByUserId({ userId: parent.id })
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { commits: items, cursor } = await getCommitsByUserId({
-        userId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor,
-        publicOnly
-      })
-
-      return { items, cursor, totalCount }
+      return await getUserCommits(context.userId !== parent.id, parent.id, args)
     }
   },
   Branch: {
@@ -150,18 +167,12 @@ module.exports = {
         authorId: context.userId
       })
       if (id) {
-        await saveActivity({
+        await addCommitCreatedActivity({
+          commitId: id,
           streamId: args.commit.streamId,
-          resourceType: 'commit',
-          resourceId: id,
-          actionType: ActionTypes.Commit.Create,
           userId: context.userId,
-          info: { id, commit: args.commit },
-          message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
-        })
-        await pubsub.publish(COMMIT_CREATED, {
-          commitCreated: { ...args.commit, id, authorId: context.userId },
-          streamId: args.commit.streamId
+          commit: args.commit,
+          branchName: args.commit.branchName
         })
       }
 

@@ -166,7 +166,8 @@ Creates a Kubernetes network policy egress definition for connecting to S3 compa
   {{- if .Values.s3.networkPolicy.inCluster.enabled -}}
 {{ include "speckle.networkpolicy.egress.internal" (dict "podSelector" .Values.s3.networkPolicy.inCluster.kubernetes.podSelector "namespaceSelector" .Values.s3.networkPolicy.inCluster.kubernetes.namespaceSelector "port" $port) }}
   {{- else if .Values.s3.networkPolicy.externalToCluster.enabled -}}
-    {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" .Values.s3.endpoint ) -}}
+    {{- $s3Values := ( include "server.s3Values" . | fromJson ) -}}
+    {{- $ip := ( include "speckle.networkPolicy.domainFromUrl" $s3Values.endpoint ) -}}
 {{ include "speckle.networkpolicy.egress.external" (dict "ip" $ip "port" $port) }}
   {{- end -}}
 {{- end }}
@@ -302,8 +303,10 @@ Limitations:
         # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
         cidr: 0.0.0.0/0
         # except to kubernetes pods or services
-        except:
-          - 10.0.0.0/8
+        except: []
+          # unfortunately cannot limit to typical kubernetes pod CIDR,
+          # as some cloud vendor private IPs (e.g. for hosted databases) are also in this range
+          # - 10.0.0.0/8
     {{- end }}
   ports:
     - port: {{ printf "%s" .port }}
@@ -336,9 +339,10 @@ Limitations:
 - toCIDRSet:
       # Kubernetes network policy does not support fqdn, so we have to allow egress anywhere
     - cidr: 0.0.0.0/0
-      # except to kubernetes pods or services
-      except:
-        - 10.0.0.0/8
+      # ideally would like to prevent access to kubernetes pods or services
+      # but some cloud provider private IPs (e.g. for hosted services) are in this range
+      except: []
+        # - 10.0.0.0/8
 {{- end }}
   toPorts:
     - ports:
@@ -481,21 +485,6 @@ Usage:
 {{- end -}}
 
 {{/*
-Selector labels for Prometheus
-*/}}
-{{- define "speckle.prometheus.selectorLabels" -}}
-{{ include "speckle.prometheus.selectorLabels.release" . }}
-io.kubernetes.pod.namespace: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
-{{- end }}
-
-{{/*
-Selector labels for Prometheus release
-*/}}
-{{- define "speckle.prometheus.selectorLabels.release" -}}
-prometheus: {{ default "kube-prometheus-stack" .Values.prometheusMonitoring.release }}-prometheus
-{{- end }}
-
-{{/*
 Ingress pod selector
 */}}
 {{- define "speckle.ingress.selector.pod" -}}
@@ -509,12 +498,19 @@ Usage:
 {{ include "speckle.getSecret" (dict  "secret_name" "server-vars" "secret_key" "postgres_url" "context" $ )}}
 
 Params:
+  - secret_name - Required, the name of the secret.
   - secret_key - Required, the key within the secret.
   - context - Required, must be global context.  Values of global context must include 'namespace' and 'secretName' keys.
 */}}
 {{- define "speckle.getSecret" -}}
 {{- $secretResource := (lookup "v1" "Secret" .context.Values.namespace .secret_name ) -}}
+{{- if not $secretResource -}}
+    {{- printf "\nERROR: Could not discover a secret \"%s\" in namespace \"%s\".\n       Try `kubectl get secret --namespace %s` to view available secrets." .secret_name .context.Values.namespace .context.Values.namespace | fail -}}
+{{- end -}}
 {{- $secret := ( index $secretResource.data .secret_key ) -}}
+{{- if not $secret -}}
+    {{- printf "\nERROR: Could not find a secret key \"%s\" of secret \"%s\" in namespace \"%s\".\n       Try `kubectl describe secret --namespace %s %s` to view available keys in the secret." .secret_key .secret_name .context.Values.namespace .context.Values.namespace .secret_name | fail -}}
+{{- end -}}
 {{- $secretDecoded := (b64dec $secret) -}}
 {{- printf "%s" $secretDecoded }}
 {{- end }}

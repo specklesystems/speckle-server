@@ -34,15 +34,15 @@ export default {
   apollo: {
     targetUser: {
       query: gql`
-        query targetUser($id: String) {
-          user(id: $id) {
+        query targetUser($id: String!) {
+          otherUser(id: $id) {
             name
             avatar
             id
           }
         }
       `,
-      update: (data) => data.user,
+      update: (data) => data.otherUser,
       variables() {
         return {
           id: this.userId

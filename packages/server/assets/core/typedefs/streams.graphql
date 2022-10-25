@@ -76,7 +76,7 @@ extend type User {
   Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
   authenticated user, then this will only return discoverable streams.
   """
-  streams(limit: Int! = 25, cursor: String): StreamCollection
+  streams(limit: Int! = 25, cursor: String): StreamCollection!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -84,7 +84,21 @@ extend type User {
   All the streams that a active user has favorited.
   Note: You can't use this to retrieve another user's favorite streams.
   """
-  favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection
+  favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  """
+  Total amount of favorites attached to streams owned by the user
+  """
+  totalOwnedStreamsFavorites: Int!
+}
+
+extend type LimitedUser {
+  """
+  Returns all discoverable streams that the user is a collaborator on
+  """
+  streams(limit: Int! = 25, cursor: String): StreamCollection!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

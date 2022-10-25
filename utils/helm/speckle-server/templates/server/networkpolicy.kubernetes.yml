@@ -34,9 +34,6 @@ spec:
     - to:
       - ipBlock:
           cidr: 0.0.0.0/0
-          # except to kubernetes pods or services
-          except:
-            - 10.0.0.0/8
       ports:
         - port: 443
 {{- end }}
@@ -70,14 +67,12 @@ spec:
       ports:
         - port: http
 {{- if .Values.enable_prometheus_monitoring }}
-    # allow ingress from servicemonitor/prometheus
+    # allow ingress from pod prometheus
     - from:
         - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | toYaml | indent 12 }}
           podSelector:
-            matchLabels:
-              {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | toYaml | indent 12 }}
       ports:
         - port: http
 {{- end }}
