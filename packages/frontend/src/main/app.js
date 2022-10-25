@@ -30,15 +30,10 @@ Vue.use(VueFilterDateParse)
 import VueFilterDateFormat from '@vuejs-community/vue-filter-date-format'
 Vue.use(VueFilterDateFormat)
 
-import PerfectScrollbar from 'vue2-perfect-scrollbar'
-import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
-
 // adds various helper methods
 import '@/plugins/helpers'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
-
-Vue.use(PerfectScrollbar)
 
 // Async ApexChart load
 Vue.component('ApexChart', async () => {

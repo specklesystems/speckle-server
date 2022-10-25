@@ -5,7 +5,7 @@
       $vuetify.breakpoint.xs ? '90%' : '300px'
     }; height: 100vh; position: absolute; padding-top: 72px`"
   >
-    <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
+    <div style="height: 100vh; overflow-y: auto" class="simple-scrollbar">
       <div class="d-flex align-center" style="pointer-events: auto">
         <span class="caption">Selection Info</span>
         <v-spacer />
@@ -58,7 +58,7 @@
       >
         Hint: hold shift to select multiple objects.
       </div>
-    </perfect-scrollbar>
+    </div>
   </div>
 </template>
 <script>

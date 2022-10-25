@@ -54,3 +54,6 @@ packages/server/.vscode/*.log
 # ST workspace files
 ./speckle.sublime-project
 ./speckle.sublime-workspace
+
+# GitGuardian
+.cache_ggshield
