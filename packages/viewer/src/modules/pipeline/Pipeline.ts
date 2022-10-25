@@ -7,7 +7,7 @@ import Batcher from '../batching/Batcher'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
 import { CopyOutputPass } from './CopyOutputPass'
-import { DepthPass } from './DepthPass'
+import { DepthPass, DepthType } from './DepthPass'
 import { NormalsPass } from './NormalsPass'
 import {
   DefaultDynamicAOPassParams,
@@ -328,6 +328,7 @@ export class Pipeline {
     this.renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
     this.depthPass.enabled = true
+    this.depthPass.depthType = DepthType.LINEAR_DEPTH
     // this.normalsPass.enabled = false
     this.dynamicAoPass.enabled = false
     this.renderPass.enabled = true
@@ -344,6 +345,7 @@ export class Pipeline {
     if (this.renderType === RenderType.NORMAL) return
     this.accumulationFrame = 0
     this.renderType = RenderType.NORMAL
+    this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true

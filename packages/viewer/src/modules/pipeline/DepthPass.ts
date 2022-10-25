@@ -15,6 +15,11 @@ import { Pass } from 'three/examples/jsm/postprocessing/Pass'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import { SpecklePass } from './SpecklePass'
 
+export enum DepthType {
+  PERSPECTIVE_DEPTH,
+  LINEAR_DEPTH
+}
+
 export class DepthPass extends Pass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
   private depthMaterial: SpeckleDepthMaterial = null
@@ -34,6 +39,13 @@ export class DepthPass extends Pass implements SpecklePass {
     return this.renderTarget.texture
   }
 
+  public set depthType(value: DepthType) {
+    if (value === DepthType.LINEAR_DEPTH)
+      this.depthMaterial.defines['LINEAR_DEPTH'] = ' '
+    else delete this.depthMaterial.defines['LINEAR_DEPTH']
+    this.depthMaterial.needsUpdate = true
+  }
+
   constructor() {
     super()
 
@@ -49,7 +61,7 @@ export class DepthPass extends Pass implements SpecklePass {
       {
         depthPacking: RGBADepthPacking
       },
-      ['USE_RTE', 'ALPHATEST_REJECTION', 'LINEAR_DEPTH']
+      ['USE_RTE', 'ALPHATEST_REJECTION']
     )
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide

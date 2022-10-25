@@ -251,7 +251,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 					vec4 samplePointNDC = cameraProjectionMatrix * vec4( samplePoint, 1.0 ); // project point and calculate NDC
 					samplePointNDC /= samplePointNDC.w;
 					vec2 samplePointUv = samplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
-					float realDepth = unpackRGBAToDepth( texture2D( tDepth, samplePointUv ) );//getLinearDepth( samplePointUv ); // get linear depth from depth texture
+					float realDepth = getLinearDepth( samplePointUv ); // get linear depth from depth texture
 					float sampleDepth = viewZToOrthographicDepth( samplePoint.z + bias, cameraNear, cameraFar ); // compute linear depth of the sample view Z value
 					float delta = sampleDepth - realDepth;
 					if ( delta > minDistance && delta < maxDistance ) { // if fragment is before sample point, increase occlusion

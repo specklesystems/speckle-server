@@ -69,7 +69,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
   private blurIntermediateRenderTarget: WebGLRenderTarget = null
   private fsQuad: FullScreenQuad = null
   private _outputType: DynamicAOOutputType = DynamicAOOutputType.AO_BLURRED
-  private outputScale = 0.5
+  private outputScale = 1
 
   private prevStdDev: number
   private prevNumSamples: number
