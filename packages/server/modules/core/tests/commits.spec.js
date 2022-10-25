@@ -17,11 +17,8 @@ const {
   getCommitsByBranchName,
   getCommitsByStreamId,
   getCommitsTotalCountByStreamId,
-  getCommitsByUserId,
-  getCommitsTotalCountByUserId
+  getCommitsByUserId
 } = require('../services/commits')
-const { times } = require('lodash')
-const { sleep } = require('@/test/helpers')
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -235,91 +232,6 @@ describe('Commits @core-commits', () => {
 
     const c = await getCommitsTotalCountByStreamId({ streamId })
     expect(c).to.equal(15)
-  })
-
-  describe('when reading user commits', async () => {
-    const otherUser = {
-      name: 'Dimitrie Other',
-      email: 'otthhherrdidimitrie4342@gmail.com',
-      password: 'sn3aky-1337-b1m'
-    }
-
-    const otherStream = {
-      name: 'Other Test Stream References',
-      description: 'Whatever goes in here usually...'
-    }
-
-    const mainCommitCount = 16
-
-    before(async () => {
-      otherUser.id = await createUser(otherUser)
-      otherStream.id = await generateStream(otherStream, otherUser.id)
-
-      // create objects
-      const objectIds = await Promise.all(
-        times(mainCommitCount, () => generateObject(otherStream.id))
-      )
-
-      // create commits (sequentially to avoid duplicate cursors)
-      for (const oid of objectIds) {
-        await createCommitByBranchName({
-          streamId: otherStream.id,
-          branchName: 'main',
-          message: 'first commit',
-          sourceApplication: 'tests',
-          objectId: oid,
-          authorId: otherUser.id
-        })
-        await sleep(1)
-      }
-    })
-
-    it('Should get the commits of a user', async () => {
-      const { commits, cursor } = await getCommitsByUserId({
-        userId: otherUser.id,
-        limit: 3
-      })
-
-      const { commits: commits2 } = await getCommitsByUserId({
-        userId: otherUser.id,
-        limit: 100,
-        cursor
-      })
-
-      expect(commits.length).to.equal(3)
-      expect(commits2.length).to.equal(mainCommitCount - 3)
-    })
-
-    it('Should get the public commits of an user only', async () => {
-      const privateStreamId = await createStream({
-        name: 'private',
-        isPublic: false,
-        ownerId: otherUser.id
-      })
-      const objectId = await createObject(privateStreamId, testObject)
-      const commitId = await createCommitByBranchName({
-        streamId: privateStreamId,
-        branchName: 'main',
-        message: 'first commit',
-        sourceApplication: 'tests',
-        objectId,
-        authorId: otherUser.id
-      })
-
-      const { commits } = await getCommitsByUserId({
-        userId: otherUser.id,
-        limit: 1000
-      })
-      expect(commits.length).to.equal(mainCommitCount)
-
-      // clean up
-      await deleteCommit({ id: commitId })
-    })
-
-    it('Should get the commit count of an user', async () => {
-      const c = await getCommitsTotalCountByUserId({ userId: otherUser.id })
-      expect(c).to.equal(mainCommitCount)
-    })
   })
 
   it('Commits should have source, total count, branch name and parents fields', async () => {

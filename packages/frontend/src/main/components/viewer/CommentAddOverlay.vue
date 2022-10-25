@@ -1,5 +1,5 @@
 <template>
-  <!-- 
+  <!--
     HIC SVNT DRACONES
   -->
   <div
@@ -267,12 +267,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             name
             id
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
         return !this.$loggedIn()
       }

@@ -208,10 +208,10 @@
       </v-card>
     </v-dialog>
   </div>
-  <!-- 
+  <!--
     Note: portaling out the mobile view of comment threads because of
     stacking chaos caused by transforms, etc. in positioning from the default
-    view. 
+    view.
   -->
   <div v-else-if="comment.expanded">
     <portal to="mobile-comment-thread">
@@ -253,9 +253,9 @@
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
-          <!-- 
+          <!--
             I know, this is bad copy paste. Sigh. Currently, one can only wish for a better world
-            with less technical debt. 
+            with less technical debt.
           -->
           <div
             style="width: 100%"
@@ -465,12 +465,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             name
             id
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
         return !this.$loggedIn()
       }

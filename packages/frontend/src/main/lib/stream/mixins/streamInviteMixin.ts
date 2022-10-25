@@ -106,7 +106,8 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
                 ...singleStreamInviteCacheFilter,
                 data: {
                   streamInvite: null
-                }
+                },
+                overwrite: true
               })
             }
 
@@ -135,7 +136,8 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
                   data: {
                     ...allUsersStreamInvitesQueryData,
                     streamInvites: newInvites
-                  }
+                  },
+                  overwrite: true
                 })
               }
             }

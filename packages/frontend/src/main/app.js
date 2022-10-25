@@ -1,3 +1,8 @@
+/**
+ * Don't export anything out of this file and import it in other files, this borks Vite HMR for some reason
+ * (runs app.js twice in the browser)!
+ */
+
 import '@/bootstrapper'
 import Vue from 'vue'
 
@@ -27,9 +32,11 @@ Vue.use(VueFilterDateFormat)
 
 import PerfectScrollbar from 'vue2-perfect-scrollbar'
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
+
 // adds various helper methods
 import '@/plugins/helpers'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 
 Vue.use(PerfectScrollbar)
 
@@ -48,37 +55,8 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
-const AuthToken = AppLocalStorage.get(LocalStorageKeys.AuthToken)
-const RefreshToken = AppLocalStorage.get(LocalStorageKeys.RefreshToken)
-
 const apolloProvider = createProvider()
 installVueApollo(apolloProvider)
-
-// TODO: Sort out error handling here, if something goes wrong it just goes into an infinite loop
-if (AuthToken) {
-  prefetchUserAndSetID(apolloProvider.defaultClient)
-    .then(() => {
-      postAuthInit()
-    })
-    .catch(() => {
-      if (RefreshToken) {
-        // TODO: try to rotate token & prefetch user, etc.
-      }
-
-      window.location = `${window.location.origin}/authn/login`
-    })
-} else {
-  checkAccessCodeAndGetTokens()
-    .then(() => {
-      return prefetchUserAndSetID(apolloProvider.defaultClient)
-    })
-    .then(() => {
-      postAuthInit()
-    })
-    .catch(() => {
-      postAuthInit()
-    })
-}
 
 function postAuthInit() {
   // Init mixpanel
@@ -97,4 +75,29 @@ function postAuthInit() {
   }).$mount('#app')
 }
 
-export { apolloProvider }
+async function init() {
+  const authToken = AppLocalStorage.get(LocalStorageKeys.AuthToken)
+
+  // no auth token - check if we can resolve it from access code
+  if (!authToken) {
+    await checkAccessCodeAndGetTokens()
+  }
+
+  // try to retrieve user info with auth token
+  try {
+    await prefetchUserAndSetID(apolloProvider.defaultClient)
+  } catch (e) {
+    if (e instanceof InvalidAuthTokenError) {
+      // data retrieval failed and user was logged out - go to login page
+      window.location = `${window.location.origin}/authn/login`
+      return
+    }
+
+    // Log and continue
+    console.error(e)
+  }
+
+  // Init app
+  postAuthInit()
+}
+init()

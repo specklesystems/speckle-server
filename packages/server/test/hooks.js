@@ -38,10 +38,14 @@ exports.truncateTables = async (tableNames) => {
   await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
-const initializeTestServer = async (app) => {
+/**
+ * @param {import('http').Server} server
+ * @param {import('express').Express} app
+ */
+const initializeTestServer = async (server, app) => {
   let serverAddress
   let wsAddress
-  const { server } = await startHttp(app, 0)
+  await startHttp(server, app, 0)
 
   app.on('appStarted', () => {
     const port = server.address().port
@@ -81,8 +85,8 @@ exports.mochaHooks = {
 }
 
 exports.buildApp = async () => {
-  const { app, graphqlServer } = await init()
-  return { app, graphqlServer }
+  const { app, graphqlServer, server } = await init()
+  return { app, graphqlServer, server }
 }
 
 exports.beforeEachContext = async () => {

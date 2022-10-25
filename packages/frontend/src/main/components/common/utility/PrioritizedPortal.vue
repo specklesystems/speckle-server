@@ -32,6 +32,8 @@ export default defineComponent({
     /**
      * Priority helps figure out which portal entrypoint should take precedence if multiple portals
      * attempt to use the same portal-target. A higher number = higher priority.
+     *
+     * Note: This value isn't reactive and can't be changed during runtime
      */
     priority: {
       type: Number,

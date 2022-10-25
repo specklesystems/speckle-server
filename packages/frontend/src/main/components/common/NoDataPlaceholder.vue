@@ -151,7 +151,7 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             authorizedApps {
               id
@@ -159,7 +159,8 @@ export default {
             }
           }
         }
-      `
+      `,
+      update: (data) => data.activeUser
     }
   },
   data() {

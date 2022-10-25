@@ -21,7 +21,7 @@ describe('Blobs graphql @blobstorage', () => {
   before(async () => {
     await truncateTables(['blob_storage', Users.name, Streams.name])
     user.id = await createUser(user)
-    apollo = buildApolloServer({
+    apollo = await buildApolloServer({
       context: () =>
         addLoadersToCtx({
           auth: true,

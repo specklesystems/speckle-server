@@ -1,8 +1,6 @@
 overwrite: true
 schema:
-  - 'modules/core/graph/schema/baseTypeDefs.js'
-  - 'assets/**/*.graphql'
-  - 'assets/**/*.gql'
+  - 'modules/schema.js'
 documents: null
 generates:
   modules/core/graph/generated/graphql.ts:
@@ -14,6 +12,7 @@ generates:
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
+        LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

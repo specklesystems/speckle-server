@@ -150,7 +150,8 @@ export default {
       query: mainUserDataQuery,
       skip() {
         return !this.$loggedIn()
-      }
+      },
+      update: (data) => data.activeUser
     }
   },
   data() {

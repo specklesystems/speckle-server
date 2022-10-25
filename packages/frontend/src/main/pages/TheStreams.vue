@@ -106,7 +106,8 @@ export default {
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'streams', 0)],
   apollo: {
     user: {
-      query: mainUserDataQuery
+      query: mainUserDataQuery,
+      update: (data) => data.activeUser
     }
   },
   setup() {

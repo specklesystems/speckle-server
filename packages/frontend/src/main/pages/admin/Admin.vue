@@ -42,12 +42,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             role
             id
           }
         }
       `,
+      update: (data) => data.activeUser,
       prefetch: true
     }
   },

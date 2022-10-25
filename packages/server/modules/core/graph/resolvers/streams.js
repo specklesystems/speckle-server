@@ -1,10 +1,6 @@
 'use strict'
-const {
-  ApolloError,
-  ForbiddenError,
-  UserInputError,
-  withFilter
-} = require('apollo-server-express')
+const { ApolloError, ForbiddenError, UserInputError } = require('apollo-server-express')
+const { withFilter } = require('graphql-subscriptions')
 
 const {
   createStream,
@@ -94,6 +90,19 @@ const _deleteStream = async (parent, args, context) => {
   // Delete after event so we can do authz
   await deleteStream({ streamId: args.id })
   return true
+}
+
+const getUserStreamsCore = async (forOtherUser, parent, args) => {
+  const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
+
+  const { cursor, streams } = await getUserStreams({
+    userId: parent.id,
+    limit: args.limit,
+    cursor: args.cursor,
+    forOtherUser
+  })
+
+  return { totalCount, cursor, items: streams }
 }
 
 /**
@@ -191,16 +200,7 @@ module.exports = {
     async streams(parent, args, context) {
       // Return only the user's public streams if parent.id !== context.userId
       const forOtherUser = parent.id !== context.userId
-      const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
-
-      const { cursor, streams } = await getUserStreams({
-        userId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor,
-        forOtherUser
-      })
-
-      return { totalCount, cursor, items: streams }
+      return await getUserStreamsCore(forOtherUser, parent, args)
     },
 
     async favoriteStreams(parent, args, context) {
@@ -216,11 +216,18 @@ module.exports = {
 
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
-
       return await getOwnedFavoritesCount({ ctx, userId })
     }
   },
-
+  LimitedUser: {
+    async streams(parent, args) {
+      return await getUserStreamsCore(true, parent, args)
+    },
+    async totalOwnedStreamsFavorites(parent, _args, ctx) {
+      const { id: userId } = parent
+      return await getOwnedFavoritesCount({ ctx, userId })
+    }
+  },
   Mutation: {
     async streamCreate(parent, args, context) {
       if (

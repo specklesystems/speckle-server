@@ -57,7 +57,7 @@ export default defineComponent({
   setup() {
     const { result } = useQuery(EmailVerificationBannerStateDocument)
 
-    const user = computed(() => result.value?.user || null)
+    const user = computed(() => result.value?.activeUser || null)
     const shouldShowBanner = computed(() => {
       if (!user.value) return false
       if (user.value.verified) return false
