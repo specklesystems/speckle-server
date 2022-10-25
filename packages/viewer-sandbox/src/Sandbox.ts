@@ -529,7 +529,7 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
-      staticAoFolder
+    staticAoFolder
       .addInput(Sandbox.pipelineParams.staticAoParams, 'bias', {
         min: -1,
         max: 1,

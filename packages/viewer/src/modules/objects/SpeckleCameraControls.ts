@@ -63,13 +63,46 @@ export class SpeckleCameraControls extends CameraControls {
     this._isTrucking = value
   }
 
+  protected _dollyInternal = (delta: number, x: number, y: number): void => {
+    const dollyScale = Math.pow(0.95, -delta * this.dollySpeed)
+    const distance = this._sphericalEnd.radius * dollyScale
+    const prevRadius = this._sphericalEnd.radius
+    const signedPrevRadius = prevRadius * (delta >= 0 ? -1 : 1)
+
+    this.dollyTo(distance)
+
+    if (
+      this.infinityDolly &&
+      (distance < this.minDistance || this.maxDistance === this.minDistance)
+    ) {
+      this._camera.getWorldDirection(_v3A)
+      this._targetEnd.add(_v3A.normalize().multiplyScalar(signedPrevRadius))
+      this._target.add(_v3A.normalize().multiplyScalar(signedPrevRadius))
+    }
+
+    if (this.dollyToCursor) {
+      this._dollyControlAmount += this._sphericalEnd.radius - prevRadius
+
+      if (
+        this.infinityDolly &&
+        (distance < this.minDistance || this.maxDistance === this.minDistance)
+      ) {
+        this._dollyControlAmount -= signedPrevRadius
+      }
+
+      this._dollyControlCoord.set(x, y)
+    }
+
+    return
+  }
+
   /**
    * Dolly in/out camera position to given distance.
    * @param distance Distance of dolly.
    * @param enableTransition Whether to move smoothly or immediately.
    * @category Methods
    */
-  dollyTo(distance: number, enableTransition = false): Promise<void> {
+  dollyTo(distance: number, enableTransition = true): Promise<void> {
     const lastRadius = this._sphericalEnd.radius
     const newRadius = MathUtils.clamp(distance, this.minDistance, this.maxDistance)
     const hasCollider = this.colliderMeshes.length >= 1
@@ -111,6 +144,7 @@ export class SpeckleCameraControls extends CameraControls {
     this._hasRestedLastFrame = this._hasRested
     const dampingFactor =
       this._state === ACTION.NONE ? this.dampingFactor : this.draggingDampingFactor
+    const dampingFactorDolly = 0.9
     const lerpRatio = Math.min(dampingFactor * delta * 60, 1)
     const deltaTheta = this._sphericalEnd.theta - this._spherical.theta
     const deltaPhi = this._sphericalEnd.phi - this._spherical.phi
@@ -129,7 +163,7 @@ export class SpeckleCameraControls extends CameraControls {
       !approxZero(deltaOffset.z)
     ) {
       this._spherical.set(
-        this._spherical.radius + deltaRadius * lerpRatio,
+        this._spherical.radius + deltaRadius * dampingFactorDolly,
         this._spherical.phi + deltaPhi * lerpRatio,
         this._spherical.theta + deltaTheta * lerpRatio
       )
