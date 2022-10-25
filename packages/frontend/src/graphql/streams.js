@@ -1,3 +1,4 @@
+import { fullStreamAccessRequestFieldsFragment } from '@/graphql/fragments/accessRequests'
 import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
 import {
   limitedUserFieldsFragment,
@@ -19,11 +20,7 @@ export const commonStreamFieldsFragment = gql`
     updatedAt
     commentCount
     collaborators {
-      id
-      name
-      company
-      avatar
-      role
+      ...StreamCollaboratorFields
     }
     commits(limit: 1) {
       totalCount
@@ -34,6 +31,8 @@ export const commonStreamFieldsFragment = gql`
     favoritedDate
     favoritesCount
   }
+
+  ${streamCollaboratorFieldsFragment}
 `
 
 /**
@@ -70,10 +69,14 @@ export const streamWithCollaboratorsQuery = gql`
           ...LimitedUserFields
         }
       }
+      pendingAccessRequests {
+        ...FullStreamAccessRequestFields
+      }
     }
   }
   ${limitedUserFieldsFragment}
   ${streamCollaboratorFieldsFragment}
+  ${fullStreamAccessRequestFieldsFragment}
 `
 
 export const streamWithActivityQuery = gql`
@@ -155,4 +158,59 @@ export const streamBranchFirstCommitQuery = gql`
       }
     }
   }
+`
+
+export const streamSettingsQuery = gql`
+  query StreamSettings($id: String!) {
+    stream(id: $id) {
+      id
+      name
+      description
+      isPublic
+      isDiscoverable
+      allowPublicComments
+      role
+    }
+  }
+`
+
+export const searchStreamsQuery = gql`
+  query SearchStreams($query: String) {
+    streams(query: $query) {
+      totalCount
+      cursor
+      items {
+        id
+        name
+        updatedAt
+      }
+    }
+  }
+`
+
+export const updateStreamSettingsMutation = gql`
+  mutation UpdateStreamSettings($input: StreamUpdateInput!) {
+    streamUpdate(stream: $input)
+  }
+`
+
+export const deleteStreamMutation = gql`
+  mutation DeleteStream($id: String!) {
+    streamDelete(id: $id)
+  }
+`
+
+export const shareableStreamQuery = gql`
+  query ShareableStream($id: String!) {
+    stream(id: $id) {
+      id
+      isPublic
+      role
+      collaborators {
+        ...StreamCollaboratorFields
+      }
+    }
+  }
+
+  ${streamCollaboratorFieldsFragment}
 `

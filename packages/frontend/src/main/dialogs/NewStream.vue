@@ -31,7 +31,7 @@
           row-height="15"
           label="Description (optional)"
         />
-        <StreamVisibilityToggle
+        <stream-visibility-toggle
           :disabled="isLoading"
           :is-public.sync="isPublic"
           :is-discoverable.sync="isDiscoverable"

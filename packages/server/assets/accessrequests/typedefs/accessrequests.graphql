@@ -1,0 +1,47 @@
+extend type Query {
+  """
+  Get authed user's stream access request
+  """
+  streamAccessRequest(streamId: String!): StreamAccessRequest
+    @hasRole(role: "server:user")
+}
+
+extend type Stream {
+  """
+  Pending stream access requests
+  """
+  pendingAccessRequests: [StreamAccessRequest!] @hasStreamRole(role: STREAM_OWNER)
+}
+
+extend type Mutation {
+  """
+  Accept or decline a stream access request. Must be a stream owner to invoke this.
+  """
+  streamAccessRequestUse(
+    requestId: String!
+    accept: Boolean!
+    role: StreamRole! = STREAM_CONTRIBUTOR
+  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "users:invite")
+
+  """
+  Request access to a specific stream
+  """
+  streamAccessRequestCreate(streamId: String!): StreamAccessRequest!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+}
+
+"""
+Created when a user requests to become a contributor on a stream
+"""
+type StreamAccessRequest {
+  id: ID!
+  requester: LimitedUser!
+  requesterId: String!
+  streamId: String!
+  """
+  Can only be selected if authed user has proper access
+  """
+  stream: Stream!
+  createdAt: DateTime!
+}

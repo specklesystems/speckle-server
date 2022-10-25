@@ -6,8 +6,12 @@
         <user-info-card :user="user" @update="update"></user-info-card>
       </v-col>
       <v-col cols="12" lg="8">
-        <section-card expandable>
-          <template #header><b>Authorised Apps</b></template>
+        <section-card v-if="user && user.notificationPreferences" expandable>
+          <template #header><b>Notification preferences</b></template>
+          <user-notification-preferences :user="user" />
+        </section-card>
+        <section-card expandable class="my-10">
+          <template #header><b>Authorized Apps</b></template>
           <user-authorised-apps />
         </section-card>
         <section-card expandable class="mt-6 mb-10">
@@ -45,6 +49,7 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import UserNotificationPreferences from '@/main/components/user/UserNotificationPreferences'
 
 export default {
   name: 'TheProfileSelf',
@@ -54,14 +59,16 @@ export default {
     UserAccessTokens: () => import('@/main/components/user/UserAccessTokens'),
     UserApps: () => import('@/main/components/user/UserApps'),
     UserAuthorisedApps: () => import('@/main/components/user/UserAuthorisedApps'),
-    UserDeleteCard: () => import('@/main/components/user/UserDeleteCard')
+    UserDeleteCard: () => import('@/main/components/user/UserDeleteCard'),
+    UserNotificationPreferences
   },
   mixins: [
     buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'user-profile-self', 1)
   ],
   apollo: {
     user: {
-      query: profileSelfQuery
+      query: profileSelfQuery,
+      update: (data) => data.activeUser
     }
   },
   methods: {

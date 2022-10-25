@@ -40,7 +40,7 @@ module.exports = (app) => {
       return res.redirect(`${app.redirectUrl}?access_code=${ac}`)
     } catch (err) {
       sentry({ err })
-      debug('speckle:errors')(err)
+      debug('speckle:error')(err)
       return res.status(400).send(err.message)
     }
   })

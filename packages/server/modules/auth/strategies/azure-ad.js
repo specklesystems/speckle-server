@@ -120,7 +120,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return next()
       } catch (err) {
-        debug('speckle:errors')(err)
+        debug('speckle:error')(err)
         return next()
       }
     },

@@ -59,15 +59,20 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import gql from 'graphql-tag'
 import {
-  hideObjects,
   isolateObjects,
+  unIsolateObjects,
+  hideObjects,
   showObjects,
-  unisolateObjects,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { Ripple } from 'vuetify/lib/directives'
+
 export default {
   components: {
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
+  },
+  directives: {
+    Ripple
   },
   props: {
     resource: {
@@ -80,8 +85,7 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          isolateValues
-          hideValues
+          currentFilterState
         }
       }
     `)
@@ -98,38 +102,30 @@ export default {
   },
   computed: {
     isolated() {
-      return this.viewerState.isolateValues.indexOf(this.resource.data.object.id) !== -1
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
+      return this.viewerState.currentFilterState?.isolatedObjects?.includes(
+        this.resource.data.object.id
+      )
     },
     visible() {
-      return this.viewerState.hideValues.indexOf(this.resource.data.object.id) === -1
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
+
+      return !this.viewerState.currentFilterState?.hiddenObjects?.includes(
+        this.resource.data.object.id
+      )
     }
   },
   methods: {
     isolate() {
       const id = this.resource.data.object.id
-      if (this.isolated)
-        unisolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        isolateObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.isolated) unIsolateObjects([id], 'ui-res', true)
+      else isolateObjects([id], 'ui-res', true)
     },
     toggleVisibility() {
       const id = this.resource.data.object.id
-      if (this.visible)
-        hideObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
-      else
-        showObjects({
-          filterKey: '__parents',
-          filterValues: [id]
-        })
+      if (this.visible) hideObjects([id], 'ui-res', true)
+      else showObjects([id], 'ui-res', true)
     }
   }
 }

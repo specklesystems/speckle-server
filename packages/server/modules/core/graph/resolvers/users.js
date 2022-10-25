@@ -13,6 +13,7 @@ const {
   archiveUser
 } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
+const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 const {
@@ -20,12 +21,27 @@ const {
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {
     async _() {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
     },
+    async activeUser(_parent, _args, context) {
+      const activeUserId = context.userId
+      if (!activeUserId) return null
 
+      // Only if authenticated - check for server roles & scopes
+      await validateServerRole(context, 'server:user')
+      await validateScopes(context.scopes, 'profile:read')
+
+      return await getUser(activeUserId)
+    },
+    async otherUser(_parent, args) {
+      const { id } = args
+      if (!id) return null
+      return await getUser(id)
+    },
     async user(parent, args, context) {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
@@ -95,12 +111,15 @@ module.exports = {
         return null
       }
     },
-
     async role(parent) {
       return await getUserRole(parent.id)
     }
   },
-
+  LimitedUser: {
+    async role(parent) {
+      return await getUserRole(parent.id)
+    }
+  },
   Mutation: {
     async userUpdate(parent, args, context) {
       await validateServerRole(context, 'server:user')
@@ -113,7 +132,7 @@ module.exports = {
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,
-        actionType: 'user_update',
+        actionType: ActionTypes.User.Update,
         userId: context.userId,
         info: { old: oldValue, new: args.user },
         message: 'User updated'
@@ -159,7 +178,7 @@ module.exports = {
         streamId: null,
         resourceType: 'user',
         resourceId: context.userId,
-        actionType: 'user_delete',
+        actionType: ActionTypes.User.Delete,
         userId: context.userId,
         info: {},
         message: 'User deleted'

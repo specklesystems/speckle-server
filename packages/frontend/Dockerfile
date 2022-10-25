@@ -14,6 +14,7 @@ COPY package.json yarn.lock ./
 COPY packages/frontend/package.json ./packages/frontend/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN yarn workspaces focus -A
 
@@ -21,9 +22,10 @@ RUN yarn workspaces focus -A
 COPY packages/objectloader ./packages/objectloader/
 COPY packages/viewer ./packages/viewer/
 COPY packages/frontend ./packages/frontend/
+COPY packages/shared ./packages/shared/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach -pt run build
+RUN yarn workspaces foreach run build
 
 # production stage
 

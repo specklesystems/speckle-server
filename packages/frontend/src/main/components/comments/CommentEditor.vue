@@ -54,8 +54,6 @@ import { deleteBlob, uploadFiles } from '@/main/lib/common/file-upload/blobStora
 import { JSONContent } from '@tiptap/core'
 import { computed } from 'vue'
 
-// TODO: Styling for adding attachments & rendering them
-
 type FileUploadZoneInstance = InstanceType<typeof FileUploadZone>
 
 export default Vue.extend({

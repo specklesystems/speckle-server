@@ -14,6 +14,7 @@ const {
 
 let sendRequest
 let server
+let app
 
 describe('GraphQL @apps-api', () => {
   let testUser
@@ -22,8 +23,8 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    const { app } = await beforeEachContext()
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ app, server } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',

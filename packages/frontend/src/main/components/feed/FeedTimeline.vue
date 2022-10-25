@@ -82,6 +82,7 @@ import { UserTimelineDocument } from '@/graphql/generated/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { SKIPPABLE_ACTION_TYPES } from '@/main/lib/feed/helpers/activityStream'
 
 export default {
   name: 'FeedTimeline',
@@ -106,14 +107,17 @@ export default {
       { fetchPolicy: 'cache-and-network' }
     )
     const timeline = computed(() => {
-      return timelineResult.value?.user?.timeline || null
+      return timelineResult.value?.activeUser?.timeline || null
     })
     const groupedTimeline = computed(() => {
       const data = timelineResult.value
       if (!data) return []
 
-      const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
-      const groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
+      const skippableActionTypes = SKIPPABLE_ACTION_TYPES
+      const groupedTimeline = data.activeUser.timeline.items.reduce(function (
+        prev,
+        curr
+      ) {
         if (skippableActionTypes.includes(curr.actionType)) {
           return prev
         }
@@ -158,7 +162,8 @@ export default {
           prev.push([curr])
         }
         return prev
-      }, [])
+      },
+      [])
 
       return groupedTimeline
     })
@@ -166,7 +171,7 @@ export default {
     // Quick user info
     const { result: quickUserResult, loading: quickUserLoading } = useQuery(gql`
       query {
-        quickUser: user {
+        quickUser: activeUser {
           id
           name
         }
@@ -223,7 +228,7 @@ export default {
         }
       })
 
-      const newItems = result.data?.user?.timeline?.items || []
+      const newItems = result.data?.activeUser?.timeline?.items || []
       if (!newItems.length) {
         $state.complete()
       } else {

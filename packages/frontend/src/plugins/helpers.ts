@@ -4,6 +4,8 @@ import { NotificationEventPayload } from '@/main/lib/core/helpers/eventHubHelper
 import { AppLocalStorage } from '@/utils/localStorage'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { getInviteTokenFromURL } from '@/main/lib/auth/services/authService'
+import { triggerToastNotification } from '@/main/lib/core/composables/notifications'
+import { getResourceType } from '@/main/lib/viewer/core/helpers/resourceHelper'
 
 Vue.prototype.$userId = function () {
   return AppLocalStorage.get(LocalStorageKeys.Uuid)
@@ -26,7 +28,7 @@ Vue.prototype.$isMobile = function () {
 }
 
 Vue.prototype.$resourceType = function (resourceId: string) {
-  return resourceId.length === 10 ? 'commit' : 'object'
+  return getResourceType(resourceId)
 }
 
 /**
@@ -46,5 +48,5 @@ Vue.prototype.$loginAndSetRedirect = function () {
  * Trigger a toast notification from anywhere
  */
 Vue.prototype.$triggerNotification = function (args: NotificationEventPayload) {
-  this.$eventHub.$emit('notification', args)
+  triggerToastNotification(this.$eventHub, args)
 }

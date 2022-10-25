@@ -93,7 +93,7 @@ def import_obj():
         client.branch.create(stream_id, branch_name, 'File upload branch' if branch_name == 'uploads' else '')
 
     transport = ServerTransport(client=client, stream_id=stream_id)
-    id = operations.send(base=speckle_root, transports=[transport])
+    id = operations.send(base=speckle_root, transports=[transport], use_default_cache=False)
 
     commit_id = client.commit.create(
         stream_id=stream_id,

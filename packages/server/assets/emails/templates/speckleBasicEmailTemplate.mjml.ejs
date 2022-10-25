@@ -1,0 +1,40 @@
+<mjml>
+  <mj-include path="./components/head.mjml" />
+  <mj-body>
+    <!-- Header -->
+    <mj-include path="./components/headerLogo.mjml" />
+
+    <!-- Body -->
+    <mj-section>
+      <mj-column>
+        <%- params.body.mjml -%>
+      </mj-column>
+    </mj-section>
+
+    <% if (params.cta) { %>
+    <mj-include path="./components/ctaButton.mjml" />
+    <% } %>
+
+    <!-- Body - End -->
+    <% if (params.bodyEnd?.mjml?.length) { %>
+    <mj-section>
+      <mj-column>
+        <%- params.bodyEnd?.mjml -%>
+      </mj-column>
+    </mj-section>
+    <% } %>
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="12px" color="#999" align="center">
+          <p>
+            If you don't want to receive these emails, update your preferences
+            <a href="<%- params.serverInfo.canonicalUrl -%>/profile/<%- params.user.id -%>">here</a>
+            .
+          </p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-include path="./components/footer.mjml" />
+  </mj-body>
+</mjml>

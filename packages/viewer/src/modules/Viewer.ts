@@ -1,84 +1,69 @@
 import * as THREE from 'three'
-
 import Stats from 'three/examples/jsm/libs/stats.module'
 
-import ObjectManager from './SceneObjectManager'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
-import InteractionHandler from './InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Clock, CubeCamera, Texture, Vector3 } from 'three'
-import { Scene } from 'three'
-import { WebGLRenderer } from 'three'
+import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
-import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
+import {
+  CanonicalView,
+  DefaultViewerParams,
+  InlineView,
+  IViewer,
+  PolarView,
+  SpeckleView,
+  SunLightConfiguration,
+  ViewerEvent,
+  ViewerParams
+} from '../IViewer'
 import { World } from './World'
-import { Geometry } from './converter/Geometry'
+import { TreeNode, WorldTree } from './tree/WorldTree'
+import SpeckleRenderer from './SpeckleRenderer'
+import { FilteringManager, FilteringState } from './filtering/FilteringManager'
+import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
+import { SpeckleType } from './converter/GeometryConverter'
+import { DataTree } from './tree/DataTree'
 
 export class Viewer extends EventEmitter implements IViewer {
-  private clock: Clock
+  /** Container and optional stats element */
   private container: HTMLElement
-  private cubeCamera: CubeCamera
   private stats: Optional<Stats>
-  private loaders: { [id: string]: ViewerObjectLoader } = {}
-  private needsRender: boolean
-  private inProgressOperations: number
 
-  public scene: Scene
-  public sectionBox: SectionBox
-  public sceneManager: ObjectManager
-  public interactions: InteractionHandler
-  public renderer: WebGLRenderer
-  public cameraHandler: CameraHandler
-  private sceneURL = '' // Temporary
+  /** Viewer params used at init time */
   private startupParams: ViewerParams
 
+  /** Viewer components */
+  private static world: World = new World()
   public static Assets: Assets
+  protected speckleRenderer: SpeckleRenderer
+  private filteringManager: FilteringManager
+  /** Legacy viewer components (will revisit soon) */
+  public sectionBox: SectionBox
+  public cameraHandler: CameraHandler
 
-  private _worldOrigin: Vector3 = new Vector3()
-  public get worldSize() {
-    World.worldBox.getCenter(this._worldOrigin)
-    const size = new Vector3().subVectors(World.worldBox.max, World.worldBox.min)
-    return {
-      x: size.x,
-      y: size.y,
-      z: size.z
-    }
+  /** Render flag for on-demand rendering */
+  private _needsRender: boolean
+
+  /** Misc members */
+  private inProgressOperations: number
+  private clock: Clock
+  private loaders: { [id: string]: ViewerObjectLoader } = {}
+
+  public get needsRender(): boolean {
+    return this._needsRender
   }
 
-  public get worldOrigin() {
-    return this._worldOrigin
+  public set needsRender(value: boolean) {
+    this._needsRender = value || this._needsRender
   }
 
-  public get RTE(): boolean {
-    return Geometry.USE_RTE
-  }
-
-  public set RTE(value: boolean) {
-    ;(async () => {
-      await this.unloadAll()
-      Geometry.USE_RTE = value
-      this.sceneManager.initMaterials()
-      World.resetWorld()
-      await this.loadObject(this.sceneURL, undefined, undefined)
-    })()
-  }
-
-  public get thickLines(): boolean {
-    return Geometry.THICK_LINES
-  }
-
-  public set thickLines(value: boolean) {
-    ;(async () => {
-      await this.unloadAll()
-      Geometry.THICK_LINES = value
-      this.sceneManager.initMaterials()
-      World.resetWorld()
-      await this.loadObject(this.sceneURL, undefined, undefined)
-    })()
+  /** Gets the World object. Currently it's used for info mostly */
+  public static get World(): World {
+    return this.world
   }
 
   public constructor(
@@ -87,67 +72,98 @@ export class Viewer extends EventEmitter implements IViewer {
   ) {
     super()
 
-    window.THREE = THREE
-    this.startupParams = params
-    this.clock = new THREE.Clock()
-
     this.container = container || document.getElementById('renderer')
-    this.scene = new THREE.Scene()
-
-    this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      preserveDrawingBuffer: true
-    })
-    this.renderer.setClearColor(0xcccccc, 0)
-    this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.renderer.outputEncoding = THREE.sRGBEncoding
-    this.renderer.toneMapping = THREE.LinearToneMapping
-    this.renderer.toneMappingExposure = 0.5
-    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
-    this.container.appendChild(this.renderer.domElement)
-
-    Viewer.Assets = new Assets(this.renderer)
-
-    this.cameraHandler = new CameraHandler(this)
-
-    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(512, {
-      format: THREE.RGBFormat,
-      generateMipmaps: true,
-      minFilter: THREE.LinearMipmapLinearFilter
-    })
-    this.cubeCamera = new THREE.CubeCamera(0.1, 10_000, cubeRenderTarget)
-    this.scene.add(this.cubeCamera)
-
     if (params.showStats) {
       this.stats = Stats()
       this.container.appendChild(this.stats.dom)
     }
-
-    window.addEventListener('resize', this.onWindowResize.bind(this), false)
-
     this.loaders = {}
+    this.startupParams = params
+    this.clock = new THREE.Clock()
+    this.inProgressOperations = 0
+
+    this.cameraHandler = new CameraHandler(this)
+
+    this.speckleRenderer = new SpeckleRenderer(this)
+    this.speckleRenderer.create(this.container)
+    window.addEventListener('resize', this.resize.bind(this), false)
+
+    new Assets(this.speckleRenderer.renderer)
+    this.filteringManager = new FilteringManager(this.speckleRenderer)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any)._V = this // For debugging!
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.off()
+    this.sectionBox.controls.addEventListener('change', () => {
+      this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
+    })
 
-    this.sceneManager = new ObjectManager(this)
-    this.interactions = new InteractionHandler(this)
-
-    this.sceneLights()
-    this.animate()
-    this.onWindowResize()
-    this.interactions.zoomExtents()
+    this.frame()
+    this.resize()
     this.needsRender = true
 
-    this.inProgressOperations = 0
+    this.on(ViewerEvent.LoadComplete, (url) => {
+      WorldTree.getRenderTree(url).buildRenderTree()
+      this.speckleRenderer.addRenderTree(url)
+      this.zoom()
+    })
+  }
+  public setSectionBox(
+    box?: {
+      min: {
+        x: number
+        y: number
+        z: number
+      }
+      max: { x: number; y: number; z: number }
+    },
+    offset?: number
+  ) {
+    if (!box) {
+      box = this.speckleRenderer.sceneBox
+    }
+    this.sectionBox.setBox(box, offset)
+  }
+  public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
+    this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
+  }
+
+  public getCurrentSectionBox() {
+    return this.sectionBox.getCurrentBox()
+  }
+
+  public resize() {
+    this.speckleRenderer.resize(this.container.offsetWidth, this.container.offsetHeight)
+    this.needsRender = true
+  }
+
+  private frame() {
+    this.update()
+    this.render()
+  }
+
+  private update() {
+    const delta = this.clock.getDelta()
+    this.needsRender = this.cameraHandler.controls.update(delta)
+    this.speckleRenderer.update(delta)
+    this.stats?.update()
+    requestAnimationFrame(this.frame.bind(this))
+  }
+
+  private render() {
+    if (this.needsRender) {
+      this.speckleRenderer.render(this.cameraHandler.activeCam.camera)
+      // this._needsRender = false
+    }
   }
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      Viewer.Assets.getEnvironment(this.startupParams.environmentSrc)
+      Assets.getEnvironment(this.startupParams.environmentSrc)
         .then((value: Texture) => {
-          this.scene.environment = value
+          this.speckleRenderer.indirectIBL = value
         })
         .catch((reason) => {
           console.warn(reason)
@@ -156,94 +172,130 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  private sceneLights() {
-    // const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
-    // dirLight.color.setHSL( 0.1, 1, 0.95 )
-    // dirLight.position.set( -1, 1.75, 1 )
-    // dirLight.position.multiplyScalar( 1000 )
-    // this.scene.add( dirLight )
-
-    // const dirLight2 = new THREE.DirectionalLight( 0xffffff, 0.9 )
-    // dirLight2.color.setHSL( 0.1, 1, 0.95 )
-    // dirLight2.position.set( 0, -1.75, 1 )
-    // dirLight2.position.multiplyScalar( 1000 )
-    // this.scene.add( dirLight2 )
-
-    // const hemiLight2 = new THREE.HemisphereLight( 0xffffff, new THREE.Color( '#232323' ), 1.9 )
-    // hemiLight2.color.setHSL( 1, 1, 1 )
-    // // hemiLight2.groundColor = new THREE.Color( '#232323' )
-    // hemiLight2.up.set( 0, 0, 1 )
-    // this.scene.add( hemiLight2 )
-
-    // let axesHelper = new THREE.AxesHelper( 1 )
-    // this.scene.add( axesHelper )
-
-    // return
-
-    const ambientLight = new THREE.AmbientLight(0xffffff)
-    this.scene.add(ambientLight)
-
-    const lights = []
-    lights[0] = new THREE.PointLight(0xffffff, 0.21, 0)
-    lights[1] = new THREE.PointLight(0xffffff, 0.21, 0)
-    lights[2] = new THREE.PointLight(0xffffff, 0.21, 0)
-    lights[3] = new THREE.PointLight(0xffffff, 0.21, 0)
-
-    const factor = 1000
-    lights[0].position.set(1 * factor, 1 * factor, 1 * factor)
-    lights[1].position.set(1 * factor, -1 * factor, 1 * factor)
-    lights[2].position.set(-1 * factor, -1 * factor, 1 * factor)
-    lights[3].position.set(-1 * factor, 1 * factor, 1 * factor)
-
-    this.scene.add(lights[0])
-    this.scene.add(lights[1])
-    this.scene.add(lights[2])
-    this.scene.add(lights[3])
-
-    // let sphereSize = 0.2
-    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
-
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x0, 0.2)
-    hemiLight.color.setHSL(1, 1, 1)
-    hemiLight.groundColor.setHSL(0.095, 1, 0.75)
-    hemiLight.up.set(0, 0, 1)
-    this.scene.add(hemiLight)
-
-    const group = new THREE.Group()
-    this.scene.add(group)
+  public on(eventType: ViewerEvent, listener: (arg) => void): void {
+    super.on(eventType, listener)
   }
 
-  onWindowResize() {
-    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
-    this.needsRender = true
+  public getObjectProperties(
+    resourceURL: string = null,
+    bypassCache = true
+  ): PropertyInfo[] {
+    return PropertyManager.getProperties(resourceURL, bypassCache)
   }
 
-  private animate() {
-    const delta = this.clock.getDelta()
-
-    const hasControlsUpdated = this.cameraHandler.controls.update(delta)
-
-    requestAnimationFrame(this.animate.bind(this))
-
-    // you can skip this condition to render though
-    if (hasControlsUpdated || this.needsRender) {
-      this.needsRender = false
-      if (this.stats) this.stats.begin()
-      this.render()
-
-      const infoDrawsEl = document.getElementById('info-draws')
-      if (this.stats && infoDrawsEl) {
-        infoDrawsEl.textContent = '' + this.renderer.info.render.calls
-      }
-      if (this.stats) this.stats.end()
-    }
+  public selectObjects(objectIds: string[]): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.selectObjects(objectIds))
+    })
   }
 
-  private render() {
-    this.renderer.render(this.scene, this.cameraHandler.activeCam.camera)
+  public resetSelection(): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.resetSelection())
+    })
+  }
+
+  public hideObjects(
+    objectIds: string[],
+    stateKey: string = null,
+    includeDescendants = false,
+    ghost = false
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.hideObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
+      )
+    })
+  }
+
+  public showObjects(
+    objectIds: string[],
+    stateKey: string = null,
+    includeDescendants = false
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.showObjects(objectIds, stateKey, includeDescendants)
+      )
+    })
+  }
+
+  public isolateObjects(
+    objectIds: string[],
+    stateKey: string = null,
+    includeDescendants = false,
+    ghost = true
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.isolateObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
+      )
+    })
+  }
+
+  public unIsolateObjects(
+    objectIds: string[],
+    stateKey: string = null,
+    includeDescendants = false
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(
+        this.filteringManager.unIsolateObjects(objectIds, stateKey, includeDescendants)
+      )
+    })
+  }
+
+  public highlightObjects(objectIds: string[], ghost = false): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.highlightObjects(objectIds, ghost))
+    })
+  }
+
+  public resetHighlight(): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.resetHighlight())
+    })
+  }
+
+  public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.setColorFilter(property, ghost))
+    })
+  }
+
+  public removeColorFilter(): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.removeColorFilter())
+    })
+  }
+
+  public resetFilters(): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.reset())
+    })
+  }
+
+  /**
+   * LEGACY: Handles (or tries to handle) old viewer filtering.
+   * @param args legacy filter object
+   */
+  public async applyFilter(filter: unknown) {
+    filter
+    // return this.FilteringManager.handleLegacyFilter(filter)
+  }
+
+  public getDataTree(): DataTree {
+    return WorldTree.getDataTree()
   }
 
   public toggleSectionBox() {
@@ -258,8 +310,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.sectionBox.on()
   }
 
-  public zoomExtents(fit?: number, transition?: boolean) {
-    this.interactions.zoomExtents(fit, transition)
+  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
+    this.speckleRenderer.zoom(objectIds, fit, transition)
   }
 
   public setProjectionMode(mode: typeof CameraHandler.prototype.activeCam) {
@@ -270,16 +322,60 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.toggleCameras()
   }
 
-  public async loadObject(url: string, token?: string, enableCaching = true) {
+  public setLightConfiguration(config: SunLightConfiguration): void {
+    this.speckleRenderer.setSunLightConfiguration(config)
+  }
+
+  public getViews(): SpeckleView[] {
+    return WorldTree.getInstance()
+      .findAll((node: TreeNode) => {
+        return node.model.renderView?.speckleType === SpeckleType.View3D
+      })
+      .map((v) => {
+        return {
+          name: v.model.raw.applicationId,
+          id: v.model.id,
+          view: v.model.raw
+        } as SpeckleView
+      })
+  }
+
+  public setView(
+    view: CanonicalView | SpeckleView | InlineView | PolarView,
+    transition = true
+  ): void {
+    this.speckleRenderer.setView(view, transition)
+    this.needsRender = true
+  }
+
+  public screenshot(): Promise<string> {
+    return new Promise((resolve) => {
+      const sectionBoxVisible = this.sectionBox.display.visible
+      if (sectionBoxVisible) {
+        this.sectionBox.displayOff()
+      }
+      const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
+      if (sectionBoxVisible) {
+        this.sectionBox.displayOn()
+      }
+      resolve(screenshot)
+    })
+  }
+
+  /**
+   * OBJECT LOADING/UNLOADING
+   */
+  public async loadObject(url: string, token: string = null, enableCaching = true) {
     try {
-      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
+      if (++this.inProgressOperations === 1)
+        (this as EventEmitter).emit(ViewerEvent.Busy, true)
 
       const loader = new ViewerObjectLoader(this, url, token, enableCaching)
       this.loaders[url] = loader
       await loader.load()
     } finally {
-      if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
-      this.sceneURL = url
+      if (--this.inProgressOperations === 0)
+        (this as EventEmitter).emit(ViewerEvent.Busy, false)
     }
   }
 
@@ -293,36 +389,42 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async unloadObject(url: string) {
     try {
-      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
-
-      await this.loaders[url].unload()
+      if (++this.inProgressOperations === 1)
+        (this as EventEmitter).emit(ViewerEvent.Busy, true)
       delete this.loaders[url]
+      this.speckleRenderer.removeRenderTree(url)
+      WorldTree.getRenderTree(url).purge()
+      WorldTree.getInstance().purge(url)
     } finally {
-      if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
+      if (--this.inProgressOperations === 0) {
+        ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
+        console.warn(`Removed subtree ${url}`)
+        ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, url)
+      }
     }
   }
 
   public async unloadAll() {
-    const loaders = Object.values(this.loaders)
-    this.loaders = {}
-
-    await Promise.all(loaders.map((l) => l.unload()))
-    await this.applyFilter(null)
-  }
-
-  public async applyFilter(filter: unknown) {
     try {
-      if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
+      if (++this.inProgressOperations === 1)
+        (this as EventEmitter).emit(ViewerEvent.Busy, true)
+      for (const key of Object.keys(this.loaders)) {
+        delete this.loaders[key]
+      }
+      this.filteringManager.reset()
+      WorldTree.getInstance().root.children.forEach((node) => {
+        this.speckleRenderer.removeRenderTree(node.model.id)
+        WorldTree.getRenderTree().purge()
+      })
 
-      this.interactions.deselectObjects()
-      return await this.sceneManager.sceneObjects.applyFilter(filter)
+      WorldTree.getInstance().purge()
     } finally {
-      if (--this.inProgressOperations === 0) (this as EventEmitter).emit('busy', false)
+      if (--this.inProgressOperations === 0) {
+        ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
+        console.warn(`Removed all subtrees`)
+        ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
+      }
     }
-  }
-
-  public getObjectsProperties(includeAll = true) {
-    return this.sceneManager.sceneObjects.getObjectsProperties(includeAll)
   }
 
   public dispose() {

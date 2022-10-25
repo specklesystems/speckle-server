@@ -148,20 +148,22 @@ describe('[Admin users list]', () => {
 
     // Create a few more stream invites to registered users, which should not appear in
     // the users list
-    const createdInvitesData = await Promise.all(
-      times(3, () => {
-        const { id: streamId, ownerId } = randomEl(streamData)
-        const userId = randomEl(userIds.filter((i) => i !== ownerId))
+    // (doing these sequentially, otherwise operations can interfere with each other, cause of the target being chosen randomly)
+    const createdInvitesData = <Array<{ inviteId: string; token: string }>>[]
+    for (let i = 0; i < 3; i++) {
+      const { id: streamId, ownerId } = randomEl(streamData)
+      const userId = randomEl(userIds.filter((i) => i !== ownerId))
 
-        return createInviteDirectly(
+      createdInvitesData.push(
+        await createInviteDirectly(
           {
             streamId,
             userId
           },
           ownerId
         )
-      })
-    )
+      )
+    }
 
     if (!createdInvitesData.every(({ inviteId, token }) => inviteId && token))
       throw new Error('Stream invite generation failed')
@@ -170,7 +172,7 @@ describe('[Admin users list]', () => {
     orderedInviteIds = await getOrderedInviteIds()
     orderedUserIds = await getOrderedUserIds()
 
-    apollo = buildApolloServer({
+    apollo = await buildApolloServer({
       context: () =>
         addLoadersToCtx({
           auth: true,

@@ -5,11 +5,6 @@ const commentsServiceMock = mockRequireModule(
   ['@/modules/comments/graph/resolvers/comments']
 )
 
-const mailerMock = mockRequireModule(
-  ['@/modules/emails/services/sending'],
-  ['@/modules/notifications/index']
-)
-
 const path = require('path')
 const { packageRoot } = require('@/bootstrap')
 const expect = require('chai').expect
@@ -51,6 +46,7 @@ const {
   purgeNotifications
 } = require('@/test/notificationsHelper')
 const { NotificationType } = require('@/modules/notifications/helpers/types')
+const { EmailSendingServiceMock } = require('@/test/mocks/global')
 
 function buildCommentInputFromString(textString) {
   return convertBasicStringToDocument(textString)
@@ -59,6 +55,8 @@ function buildCommentInputFromString(textString) {
 function generateRandomCommentText() {
   return buildCommentInputFromString(crs({ length: 10 }))
 }
+
+const mailerMock = EmailSendingServiceMock
 
 describe('Comments @comments', () => {
   /** @type {import('express').Express} */
@@ -131,15 +129,11 @@ describe('Comments @comments', () => {
   after(() => {
     notificationsState.destroy()
     commentsServiceMock.destroy()
-    mailerMock.destroy()
   })
 
   afterEach(() => {
     commentsServiceMock.disable()
     commentsServiceMock.resetMockedFunctions()
-
-    mailerMock.disable()
-    mailerMock.resetMockedFunctions()
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -995,7 +989,7 @@ describe('Comments @comments', () => {
       const scopes = AllScopes
 
       // Init apollo instance w/ authenticated context
-      apollo = buildApolloServer({
+      apollo = await buildApolloServer({
         context: () =>
           addLoadersToCtx({
             auth: true,
@@ -1041,6 +1035,7 @@ describe('Comments @comments', () => {
       })
 
     describe('when reading comments', () => {
+      let parentCommentId
       let emptyCommentId
 
       before(async () => {
@@ -1052,7 +1047,7 @@ describe('Comments @comments', () => {
           text: generateRandomCommentText(),
           blobIds: [blob1.blobId]
         })
-        const parentCommentId = createCommentResult.data.commentCreate
+        parentCommentId = createCommentResult.data.commentCreate
         if (!parentCommentId) throw new Error('Comment creation failed!')
 
         // Create a reply with a blob
@@ -1236,6 +1231,34 @@ describe('Comments @comments', () => {
         ).to.deep.equalInAnyOrder(expectedMetadata)
       })
 
+      it('returns raw text correctly', async () => {
+        const {
+          data: { commentReply: commentId }
+        } = await createReply({
+          text: {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+                content: [
+                  { type: 'mention', attrs: { label: 'Heyyoo', id: '123' } },
+                  { type: 'text', text: ' ' },
+                  { type: 'text', text: 'helloooo!' }
+                ]
+              }
+            ]
+          },
+          blobIds: [],
+          parentComment: parentCommentId
+        })
+
+        const results = await readComment({
+          id: commentId
+        })
+        expect(results).to.not.haveGraphQLErrors()
+        expect(results.data?.comment?.rawText).to.eq('@Heyyoo helloooo!')
+      })
+
       it('returns a blob comment without text correctly', async () => {
         const { data, errors } = await readComment({
           id: emptyCommentId
@@ -1338,7 +1361,12 @@ describe('Comments @comments', () => {
             blobIds: [],
             display: 'invalid input text'
           },
-          { text: null, blobIds: [], display: 'no attachments & text' }
+          { text: null, blobIds: [], display: 'no attachments & text' },
+          {
+            text: buildCommentInputFromString(' \n\n'),
+            blobIds: [],
+            display: 'no attachments & empty text'
+          }
         ]
         invalidInputDataSet.forEach(({ text, blobIds, display }) => {
           it(`input with ${display} throws an error`, async () => {
@@ -1364,6 +1392,27 @@ describe('Comments @comments', () => {
           expect(errors || []).to.be.empty
         })
 
+        it('a document with only a single mention an be successfully posted', async () => {
+          const results = await createOrReplyComment({
+            blobIds: [],
+            text: {
+              type: 'doc',
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [
+                    { type: 'mention', attrs: { label: 'Some Guy', id: 'aabbcc' } }
+                  ]
+                }
+              ]
+            }
+          })
+
+          const data = getResult(results.data)
+          expect(results).to.not.haveGraphQLErrors()
+          expect(data).to.be.ok
+        })
+
         describe('and mentioning a user', () => {
           const createOrReplyCommentWithMention = (targetUserId, input = {}) =>
             createOrReplyComment({
@@ -1387,12 +1436,10 @@ describe('Comments @comments', () => {
             })
 
           it('a valid mention triggers a notification', async () => {
-            /** @type {import('@/modules/emails/services/sending').SendEmailParams | undefined} */
-            let emailParams
-            mailerMock.enable()
-            mailerMock.mockFunction('sendEmail', (params) => {
-              emailParams = params
-            })
+            const sendEmailInvocations = mailerMock.hijackFunction(
+              'sendEmail',
+              async () => false
+            )
 
             const waitForAck = notificationsState.waitForAck(
               (e) => e.result?.type === NotificationType.MentionedInComment
@@ -1407,6 +1454,7 @@ describe('Comments @comments', () => {
             // Wait for
             await waitForAck
 
+            const emailParams = sendEmailInvocations.args[0][0]
             expect(emailParams).to.be.ok
             expect(emailParams.subject).to.contain('mentioned in a Speckle comment')
             expect(emailParams.to).to.eq(otherUser.email)

@@ -1,11 +1,14 @@
+export { isUndefinedOrVoid } from '@speckle/shared'
+export type {
+  Nullable,
+  Optional,
+  MaybeNullOrUndefined,
+  MaybeAsync,
+  MaybeFalsy
+} from '@speckle/shared'
 import { ReactiveVar } from '@apollo/client/core'
 import Vue, { VueConstructor } from 'vue'
-
-export type Nullable<T> = T | null
-
-export type Optional<T> = T | undefined
-
-export type MaybeFalsy<T> = T | null | undefined | false | '' | 0
+import { LooseRequired } from 'vue/types/common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GetReactiveVarType<V extends ReactiveVar<any>> = V extends ReactiveVar<
@@ -13,6 +16,8 @@ export type GetReactiveVarType<V extends ReactiveVar<any>> = V extends ReactiveV
 >
   ? T
   : unknown
+
+export type SetupProps<P = unknown> = Readonly<LooseRequired<P>>
 
 // Copied from Vue typings & improved ergonomics
 export type CombinedVueInstance<

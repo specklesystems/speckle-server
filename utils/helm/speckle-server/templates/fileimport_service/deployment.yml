@@ -1,4 +1,4 @@
-{{- if .Values.s3.endpoint }}
+{{- if ( or .Values.s3.endpoint .Values.s3.configMap.enabled ) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,8 +71,8 @@ spec:
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: postgres_url
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
           - name: DEBUG
             value: "fileimport-service:*"
