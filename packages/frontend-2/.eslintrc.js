@@ -1,6 +1,7 @@
 const mainExtends = [
   'plugin:nuxt/recommended',
   'plugin:vue/vue3-recommended',
+  'plugin:storybook/recommended',
   'prettier'
 ]
 
@@ -15,7 +16,12 @@ const config = {
   },
   extends: [...mainExtends],
   plugins: ['@typescript-eslint'],
-  ignorePatterns: ['**/templates/*', 'coverage', 'lib/common/generated/**/*'],
+  ignorePatterns: [
+    '**/templates/*',
+    'coverage',
+    'lib/common/generated/**/*',
+    '!.storybook'
+  ],
   rules: {
     camelcase: [
       'error',
