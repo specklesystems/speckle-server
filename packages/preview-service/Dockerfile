@@ -2,7 +2,7 @@
 
 
 # build stage
-FROM node:16.18.0-bullseye-slim as build-stage
+FROM node:16.15-buster-slim as build-stage
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -32,7 +32,7 @@ RUN yarn workspaces foreach -pt run build
 
 
 
-FROM node:16.18.0-bullseye-slim as node
+FROM node:16.15-bullseye-slim as node
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
