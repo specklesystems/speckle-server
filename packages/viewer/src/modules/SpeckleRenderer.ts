@@ -189,10 +189,32 @@ export default class SpeckleRenderer {
       camHelper.name = 'CamHelper'
       helpers.add(camHelper)
     }
+
+    this.viewer.cameraHandler.controls.restThreshold = 0.001
+    this.viewer.cameraHandler.controls.addEventListener('rest', () => {
+      this._needsRender = true
+      this.pipeline.onStationaryBegin()
+    })
+    this.viewer.cameraHandler.controls.addEventListener('controlstart', () => {
+      this._needsRender = true
+      this.pipeline.onStationaryEnd()
+    })
+
+    this.viewer.cameraHandler.controls.addEventListener('controlend', () => {
+      this._needsRender = true
+      if (this.viewer.cameraHandler.controls.hasRested)
+        this.pipeline.onStationaryBegin()
+    })
+
+    this.viewer.cameraHandler.controls.addEventListener('control', () => {
+      this._needsRender = true
+      this.pipeline.onStationaryEnd()
+    })
   }
 
   public update(deltaTime: number) {
-    this.viewer.cameraHandler.controls.update(deltaTime)
+    this.needsRender = this.viewer.cameraHandler.controls.update(deltaTime)
+
     this.batcher.update(deltaTime)
 
     const viewer = new Vector3()
@@ -291,37 +313,31 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
-    const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
-    const currentPolar = this.viewer.cameraHandler.controls.polarAngle
-    const currentPosition = this.viewer.cameraHandler.activeCam.camera.position
-    const dAzimuth = Math.max(
-      0,
-      Math.abs(currentAzimuth - this.lastAzimuth) - this.ANGLE_EPSILON
-    )
-    const dPolar = Math.max(
-      0,
-      Math.abs(currentPolar - this.lastPolar) - this.ANGLE_EPSILON
-    )
-    const dPosition = Math.max(
-      0,
-      currentPosition.distanceTo(this.lastCameraPosition) - this.POSITION_REST_EPSILON
-    )
-    const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dPosition))
-    // console.log(motionMaxDelta, this.lastCameraMotionDelta)
-    if (motionMaxDelta === 0 && this.lastCameraMotionDelta > 0) {
-      this.pipeline.onStationaryBegin()
-    }
-    if (
-      motionMaxDelta > this.POSITION_RESUME_EPSILON &&
-      this.lastCameraMotionDelta === 0
-    ) {
-      this._needsRender = true
-      this.pipeline.onStationaryEnd()
-    }
-    this.lastCameraMotionDelta = motionMaxDelta
-    this.lastAzimuth = currentAzimuth
-    this.lastPolar = currentPolar
-    this.lastCameraPosition.copy(currentPosition)
+    // const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
+    // const currentPolar = this.viewer.cameraHandler.controls.polarAngle
+    // const currentPosition = this.viewer.cameraHandler.activeCam.camera.position
+    // const dAzimuth = Math.max(0, Math.abs(currentAzimuth - this.lastAzimuth))
+    // const dPolar = Math.max(0, Math.abs(currentPolar - this.lastPolar))
+    // const dPosition = Math.max(0, currentPosition.distanceTo(this.lastCameraPosition))
+    // const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dPosition))
+    // // console.log(dPosition, this.lastCameraMotionDelta)
+    // console.log(
+    //   currentPosition.distanceTo(this.viewer.cameraHandler.controls['_targetEnd'])
+    // )
+    // if (motionMaxDelta === 0 && this.lastCameraMotionDelta > 0) {
+    //   this.pipeline.onStationaryBegin()
+    // }
+    // if (
+    //   motionMaxDelta > this.POSITION_RESUME_EPSILON &&
+    //   this.lastCameraMotionDelta === 0
+    // ) {
+    //   this._needsRender = true
+    //   this.pipeline.onStationaryEnd()
+    // }
+    // this.lastCameraMotionDelta = motionMaxDelta
+    // this.lastAzimuth = currentAzimuth
+    // this.lastPolar = currentPolar
+    // this.lastCameraPosition.copy(currentPosition)
 
     this.pipeline.update(this)
   }

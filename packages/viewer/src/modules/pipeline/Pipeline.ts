@@ -305,7 +305,7 @@ export class Pipeline {
     this._renderer.clear(true)
     if (this.renderType === RenderType.NORMAL) {
       this.composer.render()
-      return true
+      return false
     } else {
       console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
       this.composer.render()
@@ -327,7 +327,6 @@ export class Pipeline {
     }
     this.renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
-
     this.depthPass.enabled = true
     // this.normalsPass.enabled = false
     this.dynamicAoPass.enabled = false
@@ -336,7 +335,6 @@ export class Pipeline {
     this.staticAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
-
     this.applySaoPass.setRenderType(this.renderType)
     console.warn('Starting stationary')
   }
@@ -346,12 +344,10 @@ export class Pipeline {
     if (this.renderType === RenderType.NORMAL) return
     this.accumulationFrame = 0
     this.renderType = RenderType.NORMAL
-
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
-
     this.applySaoPass.setRenderType(this.renderType)
     console.warn('Ending stationary')
   }

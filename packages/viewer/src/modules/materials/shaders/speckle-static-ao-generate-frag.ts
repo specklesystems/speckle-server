@@ -29,9 +29,9 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		
         // #define NUM_FRAMES 16
 
-		#define NORMAL_TEXTURE 1
+		#define NORMAL_TEXTURE 0
 		#define IMPROVED_NORMAL_RECONSTRUCTION 0
-		#define ACCURATE_NORMAL_RECONSTRUCTION 0
+		#define ACCURATE_NORMAL_RECONSTRUCTION 1
 		
 		// RGBA depth
 		#include <packing>
@@ -39,34 +39,20 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			return vec4( 1.0 );
 		}
 
-		float decode24(const in vec3 x) {
-			const vec3 decode = 1.0 / vec3(1.0, 255.0, 65025.0);
-			return dot(x, decode);
-		}
 
-		float getDepth( const in vec2 screenPosition ) {
-			return texture2D( tDepth, screenPosition ).y;//unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
+		float getLinearDepth( const in vec2 screenPosition ) {
+			return unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
 		}
 
 		float getPerspectiveDepth(const in vec2 coords) {
 			float linearDepth = unpackRGBAToDepth( texture2D( tDepth, coords ) );
-			float convertedViewZ = orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
-			float centerDepth = viewZToPerspectiveDepth(convertedViewZ, cameraNear, cameraFar);
+			float viewZ = orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
+			float centerDepth = viewZToPerspectiveDepth(viewZ, cameraNear, cameraFar);
 			return centerDepth;
 		}
 
 		float getViewDepth(const in float linearDepth) {
 			return orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
-		}
-
-		float getLinearDepth( const in vec2 screenPosition ) {
-			#if PERSPECTIVE_CAMERA == 1
-				float fragCoordZ = getDepth(screenPosition);
-				float viewZ = perspectiveDepthToViewZ( fragCoordZ, cameraNear, cameraFar );
-				return viewZToOrthographicDepth( viewZ, cameraNear, cameraFar );
-			#else
-				return texture2D( tDepth, screenPosition ).x;
-			#endif
 		}
 
 		float getViewZ( const in float depth ) {
@@ -91,21 +77,21 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			highp vec2 ddx = vec2(dd.x, 0.);
 			highp vec2 ddy = vec2(0., dd.y);
 
-			float sampleDepth = getDepth( uv - ddy );
+			float sampleDepth = getPerspectiveDepth( uv - ddy );
 			float sampleViewZ = getViewZ( sampleDepth );
 			highp vec3 top = getViewPosition( uv - ddy, sampleDepth, sampleViewZ );
 
-			sampleDepth = getDepth( uv + ddy );
+			sampleDepth = getPerspectiveDepth( uv + ddy );
 			sampleViewZ = getViewZ( sampleDepth );
 			highp vec3 bottom = getViewPosition( uv + ddy, sampleDepth, sampleViewZ );
 
 			highp vec3 center = origin;
 			
-			sampleDepth = getDepth( uv - ddx );
+			sampleDepth = getPerspectiveDepth( uv - ddx );
 			sampleViewZ = getViewZ( sampleDepth );
 			highp vec3 left = getViewPosition( uv - ddx, sampleDepth, sampleViewZ );
 
-			sampleDepth = getDepth( uv + ddx );
+			sampleDepth = getPerspectiveDepth( uv + ddx );
 			sampleViewZ = getViewZ( sampleDepth );
 			highp vec3 right = getViewPosition( uv + ddx, sampleDepth, sampleViewZ );
 
@@ -156,18 +142,18 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 
 			// get depth values at 1 & 2 pixels offsets from current along the horizontal axis
 			vec4 H = vec4(
-				getPerspectiveDepth(uv - ddx),
-				getPerspectiveDepth(uv + ddx),
-				getPerspectiveDepth(uv - 2. * ddx),
-				getPerspectiveDepth(uv + 2. * ddx)
+				getLinearDepth(uv - ddx),
+				getLinearDepth(uv + ddx),
+				getLinearDepth(uv - 2. * ddx),
+				getLinearDepth(uv + 2. * ddx)
 			);
 
 			// get depth values at 1 & 2 pixels offsets from current along the vertical axis
 			vec4 V = vec4(
-				getPerspectiveDepth(uv - ddy),
-				getPerspectiveDepth(uv + ddy),
-				getPerspectiveDepth(uv - 2. * ddy),
-				getPerspectiveDepth(uv + 2. * ddy)
+				getLinearDepth(uv - ddy),
+				getLinearDepth(uv + ddy),
+				getLinearDepth(uv - 2. * ddy),
+				getLinearDepth(uv + 2. * ddy)
 			);
 
 			// current pixel's depth difference from slope of offset depth samples
@@ -199,14 +185,6 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			#endif
 		}
 
-		highp float decode32(highp vec4 rgba) {
-			highp float Sign = 1.0 - step(128.0,rgba[0])*2.0;
-			highp float Exponent = 2.0 * mod(rgba[0],128.0) + step(128.0,rgba[1]) - 127.0; 
-			highp float Mantissa = mod(rgba[1],128.0)*65536.0 + rgba[2]*256.0 +rgba[3] + float(0x800000);
-			highp float Result =  Sign * exp2(Exponent) * (Mantissa * exp2(-23.0 )); 
-			return Result;
-		}
-
 
 		float scaleDividedByCameraFar;
 		float minResolutionMultipliedByCameraFar;
@@ -229,7 +207,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
                     vec2 radius = (kernelRadius / size) * pow( alpha, 1.1 );
                     vec2 sampleUv = vUv + vec2( cos( angle + frameIndex * offset ), sin( angle + frameIndex * offset ) ) * radius;
 
-                    float sampleDepth = getDepth( sampleUv );
+                    float sampleDepth = getPerspectiveDepth( sampleUv );
                     if( sampleDepth >= ( 1.0 - EPSILON ) ) {
                         continue;
                     }
@@ -274,8 +252,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 					samplePointNDC /= samplePointNDC.w;
 					vec2 samplePointUv = samplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
 					float realDepth = unpackRGBAToDepth( texture2D( tDepth, samplePointUv ) );//getLinearDepth( samplePointUv ); // get linear depth from depth texture
-					// float realDepth = getLinearDepth( samplePointUv ); // get linear depth from depth texture
-					float sampleDepth = viewZToOrthographicDepth( samplePoint.z, cameraNear, cameraFar ); // compute linear depth of the sample view Z value
+					float sampleDepth = viewZToOrthographicDepth( samplePoint.z + bias, cameraNear, cameraFar ); // compute linear depth of the sample view Z value
 					float delta = sampleDepth - realDepth;
 					if ( delta > minDistance && delta < maxDistance ) { // if fragment is before sample point, increase occlusion
 						occlusion += 1.0;
@@ -286,31 +263,15 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 			}
 		void main() {
 			float linearDepth = unpackRGBAToDepth( texture2D( tDepth, vUv ) );
-			// float convertedViewZ = orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
-			// float centerDepth = viewZToPerspectiveDepth(convertedViewZ, cameraNear, cameraFar);
 			float centerDepth = getPerspectiveDepth(vUv);
 			if( centerDepth >= ( 1.0 - EPSILON ) ) {
 				discard;
 			}
 			float centerViewZ = getViewDepth(linearDepth);
 			vec3 viewPosition = getViewPosition( vUv, centerDepth, centerViewZ );
-			vec3 viewNormal = getViewNormal(viewPosition, vUv, centerDepth);
+			vec3 viewNormal = getViewNormal(viewPosition, vUv, linearDepth);
 			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
 			gl_FragColor.xyz *=  ambientOcclusion;
 			gl_FragColor.a = 1.;
-			// gl_FragColor.xyz = vec3(linearDepth);//vec3(getDepth( vUv ));//vec3((viewPosition.z + cameraNear) / (cameraNear-cameraFar));
-
-			// float centerDepth = getDepth(vUv);//getDepth( vUv );
-			// if( centerDepth >= ( 1.0 - EPSILON ) ) {
-			// 	discard;
-			// }
-			// float centerViewZ = getViewZ( centerDepth );
-			// vec3 viewPosition = getViewPosition( vUv, centerDepth, centerViewZ );
-			// vec3 viewNormal = getViewNormal(viewPosition, vUv, centerDepth);
-			// float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
-			// gl_FragColor = getDefaultColor( vUv );
-			// gl_FragColor.xyz *=  ambientOcclusion;
-			// gl_FragColor.a = 1.;
-			// // gl_FragColor.xyz = vec3(centerDepth);//vec3(getDepth( vUv ));//vec3((viewPosition.z + cameraNear) / (cameraNear-cameraFar));
 		}`
