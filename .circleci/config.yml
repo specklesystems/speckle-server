@@ -14,8 +14,11 @@ workflows:
       - get-version:
           filters: *filters-allow-all
 
-      - should-build:
-          filters: *filters-allow-all
+      - build-approval:
+          type: approval
+          filters: &filters-ignore-main-branch
+            branches:
+              ignore: main
 
       - should-publish:
           filters: *filters-allow-all
@@ -30,47 +33,47 @@ workflows:
           requires:
             - test-server
             - get-version
-            - should-build
+            - build-approval
 
       - docker-build-frontend:
           filters: *filters-build
           requires:
             - get-version
-            - should-build
+            - build-approval
 
       - docker-build-webhooks:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
+            - build-approval
 
       - docker-build-file-imports:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
+            - build-approval
 
       - docker-build-previews:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
+            - build-approval
 
       - docker-build-test-container:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
+            - build-approval
 
       - docker-build-monitor-container:
           filters: *filters-build
           requires:
             - get-version
-            - should-build
+            - build-approval
 
       - docker-publish-server:
           context: &docker-hub-context
@@ -210,25 +213,6 @@ jobs:
           root: workspace
           paths:
             - should-publish
-
-  should-build:
-    docker:
-      - image: cimg/base:2022.08
-    working_directory: *work-dir
-    environment: *publishable-tags-branches
-    steps:
-      - checkout
-      - run: mkdir -p workspace
-      - run:
-          name: determine whether to build
-          command: |
-            echo "export SHOULD_BUILD=$(.circleci/should_build.sh)" >> workspace/should-build
-      - run: cat workspace/should-build >> $BASH_ENV
-      - run: echo "SHOULD_BUILD=${SHOULD_BUILD}"
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - should-build
 
   pre-commit:
     parameters:
@@ -371,12 +355,6 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: cat workspace/should-build >> $BASH_ENV
-      - run:
-          name: 'Check if should proceed'
-          command: |
-            [[ "${SHOULD_BUILD}" != true ]] && echo "Should not build, stopping" && circleci-agent step halt
-            echo 'Proceeding with build'
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it
