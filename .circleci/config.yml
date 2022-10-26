@@ -20,9 +20,6 @@ workflows:
             branches:
               ignore: main
 
-      - should-publish:
-          filters: *filters-allow-all
-
       - pre-commit:
           filters: *filters-allow-all
 
@@ -75,6 +72,10 @@ workflows:
             - get-version
             - build-approval
 
+      - publish-approval:
+          type: approval
+          filters: *filters-ignore-main-branch
+
       - docker-publish-server:
           context: &docker-hub-context
             - docker-hub
@@ -85,7 +86,7 @@ workflows:
               only: /.*/
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-server
             - pre-commit
 
@@ -94,7 +95,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-frontend
             - pre-commit
 
@@ -103,7 +104,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-webhooks
             - pre-commit
 
@@ -112,7 +113,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-file-imports
             - pre-commit
 
@@ -121,7 +122,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-previews
             - pre-commit
 
@@ -130,7 +131,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-test-container
             - pre-commit
 
@@ -139,7 +140,7 @@ workflows:
           filters: *filters-publish
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-build-monitor-container
             - pre-commit
 
@@ -153,7 +154,7 @@ workflows:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
             - get-version
-            - should-publish
+            - publish-approval
             - docker-publish-server
             - docker-publish-frontend
             - docker-publish-webhooks
@@ -171,6 +172,7 @@ workflows:
           context:
             - npm-registry
           requires:
+            - publish-approval
             - get-version
 
 jobs:
@@ -191,28 +193,6 @@ jobs:
           root: workspace
           paths:
             - env-vars
-
-  should-publish:
-    docker:
-      - image: cimg/base:2022.08
-    working_directory: *work-dir
-    environment: &publishable-tags-branches
-      PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
-      # £ delimited strings of regex for matches which should be published
-      PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
-    steps:
-      - checkout
-      - run: mkdir -p workspace
-      - run:
-          name: determine whether to publish
-          command: |
-            echo "export SHOULD_PUBLISH=$(.circleci/should_publish.sh)" >> workspace/should-publish
-      - run: cat workspace/should-publish >> $BASH_ENV
-      - run: echo "SHOULD_PUBLISH=${SHOULD_PUBLISH}"
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - should-publish
 
   pre-commit:
     parameters:
@@ -415,12 +395,6 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: cat workspace/should-publish >> $BASH_ENV
-      - run:
-          name: 'Check if should proceed'
-          command: |
-            [[ "${SHOULD_PUBLISH}" != true ]] && echo "Should not publish, stopping" && circleci-agent step halt
-            echo 'Proceeding with publish'
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it

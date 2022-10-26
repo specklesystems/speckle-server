@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-SHOULD_PUBLISH="${SHOULD_PUBLISH:-false}"
-
-if [[ "${SHOULD_PUBLISH}" != "true" ]]; then
-  echo "Not publishing as the SHOULD_PUBLISH environment variable is not 'true'."
-  exit 0
-fi
-
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
 source "${SCRIPT_DIR}/common.sh"
