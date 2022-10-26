@@ -326,7 +326,7 @@ jobs:
 
   docker-build: &build-job
     docker: &docker-image
-      - image: cimg/node:16.15
+      - image: cimg/python:3.9.15-node
     resource_class: medium
     working_directory: *work-dir
     steps:
