@@ -18,7 +18,7 @@ workflows:
           type: approval
           filters: &filters-ignore-main-branch
             branches:
-              ignore: 'iain/circleci-manual-hold'
+              ignore: main
 
       - should-publish:
           filters: *filters-allow-all
