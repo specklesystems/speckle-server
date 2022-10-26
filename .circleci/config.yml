@@ -6,22 +6,22 @@ workflows:
   test-build:
     jobs:
       - test-server:
-          filters: &filters-everything
+          filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
 
       - get-version:
-          filters: *filters-everything
+          filters: *filters-allow-all
 
       - should-build:
-          filters: *filters-everything
+          filters: *filters-allow-all
 
       - should-publish:
-          filters: *filters-everything
+          filters: *filters-allow-all
 
       - pre-commit:
-          filters: *filters-everything
+          filters: *filters-allow-all
 
       - docker-build-server:
           filters: &filters-build
