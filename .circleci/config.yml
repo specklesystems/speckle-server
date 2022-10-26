@@ -172,7 +172,6 @@ workflows:
           context:
             - npm-registry
           requires:
-            - publish-approval
             - get-version
 
 jobs:
@@ -341,7 +340,7 @@ jobs:
           version: 20.10.12
           docker_layer_caching: true
       - run:
-          name: Build and Publish
+          name: Build and Save
           command: ./.circleci/build.sh
       - persist_to_workspace:
           root: workspace
