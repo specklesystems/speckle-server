@@ -21,9 +21,16 @@ export enum DepthType {
   LINEAR_DEPTH
 }
 
+export enum DepthSize {
+  FULL,
+  HALF
+}
+
 export class DepthPass extends Pass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
+  private renderTargetHalf: WebGLRenderTarget
   private depthMaterial: SpeckleDepthMaterial = null
+  private depthBufferSize: DepthSize = DepthSize.FULL
   private scene: Scene
   private camera: Camera
 
@@ -40,11 +47,19 @@ export class DepthPass extends Pass implements SpecklePass {
     return this.renderTarget.texture
   }
 
+  get outputTextureHalf(): Texture {
+    return this.renderTargetHalf.texture
+  }
+
   public set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
       this.depthMaterial.defines['LINEAR_DEPTH'] = ' '
     else delete this.depthMaterial.defines['LINEAR_DEPTH']
     this.depthMaterial.needsUpdate = true
+  }
+
+  public set depthSize(value: DepthSize) {
+    this.depthBufferSize = value
   }
 
   constructor() {
@@ -54,12 +69,19 @@ export class DepthPass extends Pass implements SpecklePass {
       minFilter: NearestFilter,
       magFilter: NearestFilter
     })
+    this.renderTargetHalf = new WebGLRenderTarget(256, 256, {
+      minFilter: NearestFilter,
+      magFilter: NearestFilter
+    })
+
     /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
      *  We're not really using a stencil buffer at all, we're just forcing
      *  three.js to use a 24 bit depth render buffer
      */
     this.renderTarget.depthBuffer = true
     this.renderTarget.stencilBuffer = true
+    this.renderTargetHalf.depthBuffer = true
+    this.renderTargetHalf.stencilBuffer = true
 
     this.depthMaterial = new SpeckleDepthMaterial(
       {
@@ -96,7 +118,7 @@ export class DepthPass extends Pass implements SpecklePass {
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
 
-    renderer.setRenderTarget(this.renderTarget)
+    renderer.setRenderTarget(this.depthBufferSize === DepthSize.FULL ? this.renderTarget: this.renderTargetHalf)
     renderer.autoClear = false
 
     renderer.setClearColor(0x000000)
@@ -122,5 +144,6 @@ export class DepthPass extends Pass implements SpecklePass {
 
   public setSize(width: number, height: number) {
     this.renderTarget.setSize(width, height)
+    this.renderTargetHalf.setSize(width * 0.5, height * 0.5)
   }
 }

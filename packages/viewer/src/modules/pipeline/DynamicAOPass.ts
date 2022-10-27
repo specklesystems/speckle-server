@@ -48,13 +48,13 @@ export interface DynamicAOPassParams {
 }
 
 export const DefaultDynamicAOPassParams = {
-  intensity: 1.25,
+  intensity: 1.5,
   scale: 0,
-  kernelRadius: 5,
-  bias: 0.15,
+  kernelRadius: 10,
+  bias: 0.2,
   normalsType: NormalsType.ACCURATE,
   blurEnabled: true,
-  blurRadius: 4,
+  blurRadius: 2,
   blurStdDev: 4,
   blurDepthCutoff: 0.0007
 }

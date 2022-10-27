@@ -7,7 +7,7 @@ import Batcher from '../batching/Batcher'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
 import { CopyOutputPass } from './CopyOutputPass'
-import { DepthPass, DepthType } from './DepthPass'
+import { DepthPass, DepthSize, DepthType } from './DepthPass'
 import { NormalsPass } from './NormalsPass'
 import {
   DefaultDynamicAOPassParams,
@@ -97,6 +97,7 @@ export class Pipeline {
     switch (outputType) {
       case PipelineOutputType.FINAL:
         pipeline = this.getDefaultPipeline()
+        this.depthPass.depthSize = DepthSize.FULL
         this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
         this.needsProgressive = true
@@ -105,6 +106,7 @@ export class Pipeline {
       case PipelineOutputType.DEPTH_RGBA:
         pipeline.push(this.depthPass)
         pipeline.push(this.copyOutputPass)
+        this.depthPass.depthSize = DepthSize.FULL
         this.copyOutputPass.setTexture('tDiffuse', this.depthPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.DEPTH_RGBA)
         this.needsProgressive = false
@@ -113,6 +115,7 @@ export class Pipeline {
       case PipelineOutputType.DEPTH:
         pipeline.push(this.depthPass)
         pipeline.push(this.copyOutputPass)
+        this.depthPass.depthSize = DepthSize.FULL
         this.copyOutputPass.setTexture('tDiffuse', this.depthPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.DEPTH)
         this.needsProgressive = false
@@ -137,6 +140,7 @@ export class Pipeline {
         pipeline.push(this.copyOutputPass)
         this.dynamicAoPass.enabled = true
         this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
+        this.depthPass.depthSize = DepthSize.HALF
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
@@ -171,6 +175,7 @@ export class Pipeline {
             : false
         this.dynamicAoPass.enabled = true
         this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
+        this.depthPass.depthSize = DepthSize.HALF
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
@@ -184,6 +189,7 @@ export class Pipeline {
         pipeline.push(this.staticAoPass)
         pipeline.push(this.copyOutputPass)
         this.depthPass.depthType = DepthType.LINEAR_DEPTH
+        this.depthPass.depthSize = DepthSize.FULL
         this.copyOutputPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.needsProgressive = true
@@ -257,7 +263,7 @@ export class Pipeline {
     )
     this.applySaoPass.renderToScreen = true
 
-    this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTexture)
+    this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTextureHalf)
     this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
@@ -344,6 +350,7 @@ export class Pipeline {
     this.accumulationFrame = 0
     this.depthPass.enabled = true
     this.depthPass.depthType = DepthType.LINEAR_DEPTH
+    this.depthPass.depthSize = DepthSize.FULL
     this.normalsPass.enabled = false
     this.dynamicAoPass.enabled = false
     this.renderPass.enabled = true
@@ -361,6 +368,7 @@ export class Pipeline {
     this.accumulationFrame = 0
     this.renderType = RenderType.NORMAL
     this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
+    this.depthPass.depthSize = DepthSize.HALF
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true

@@ -35,10 +35,10 @@ export default class Sandbox {
     accumulationFrames: 16,
     dynamicAoEnabled: true,
     dynamicAoParams: {
-      intensity: 1.25,
+      intensity: 1.5,
       scale: 0,
-      kernelRadius: 5,
-      bias: 0.15,
+      kernelRadius: 10,
+      bias: 0.2,
       normalsType: 2,
       blurEnabled: true,
       blurRadius: 2,
