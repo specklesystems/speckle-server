@@ -1,3 +1,4 @@
+// import Unimport from 'unimport/unplugin'
 import { flatten } from 'lodash-es'
 import type { StorybookConfig } from '@storybook/builder-vite'
 import { mergeConfig, InlineConfig } from 'vite'
@@ -32,17 +33,25 @@ const config: StorybookConfig = {
     options: {}
   },
   async viteFinal(config) {
+    const nuxt = await nuxtViteConfigUtil.initializeNuxt()
+    const nuxtViteConfig = await nuxtViteConfigUtil.getNuxtViteConfig(nuxt)
+    // const unimportOptions = await nuxtViteConfigUtil.getNuxtUnimportConfig(nuxt)
+
     const customConfig: InlineConfig = {
       resolve: {
         alias: {
           // not sure why, but storybook tries to bundle "crypto"
           crypto: require.resolve('rollup-plugin-node-builtins')
         }
-      }
+      },
+      plugins: [
+        // Auto-imports managed by unimport
+        // TODO: Is this already handled through nuxtViteConfig? Global functions seem to work without this
+        // Unimport.vite(unimportOptions)
+      ]
     }
-    const nuxtConfig = await nuxtViteConfigUtil.getNuxtViteConfig()
 
-    let final = mergeConfig(config, nuxtConfig)
+    let final = mergeConfig(config, nuxtViteConfig)
     final = mergeConfig(final, customConfig)
 
     return final
