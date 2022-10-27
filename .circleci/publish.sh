@@ -20,7 +20,7 @@ if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:-alpha\.[0-9]+)?$ ]]; 
   fi
 else
   echo "🏷 Tagging image as '${DOCKER_IMAGE_TAG}:$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}'"
-  docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}"
+  docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}"
 fi
 
 echo "🐳 Publishing image"
