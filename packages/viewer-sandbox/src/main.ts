@@ -86,7 +86,7 @@ await sandbox.loadUrl(
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
-  'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
   // IFC story, a subtree of the above
   // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
   // Small scale lines
@@ -97,7 +97,7 @@ await sandbox.loadUrl(
   // AutoCAD
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
   //Blizzard world
-  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+  'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
   //Car
   // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
   // Jonathon's

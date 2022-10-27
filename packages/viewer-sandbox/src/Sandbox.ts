@@ -48,7 +48,7 @@ export default class Sandbox {
     staticAoEnabled: true,
     staticAoParams: {
       intensity: 0.8,
-      kernelRadius: 0.35, // World space
+      kernelRadius: 20, // Screen space
       kernelSize: 16,
       bias: 0.01,
       minDistance: 0,
@@ -522,7 +522,7 @@ export default class Sandbox {
     staticAoFolder
       .addInput(Sandbox.pipelineParams.staticAoParams, 'kernelRadius', {
         min: 0,
-        max: 100
+        max: 1000
       })
       .on('change', () => {
         this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams

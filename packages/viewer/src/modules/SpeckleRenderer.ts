@@ -312,7 +312,6 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
-
     // const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
     // const currentPolar = this.viewer.cameraHandler.controls.polarAngle
     // const currentPosition = this.viewer.cameraHandler.activeCam.camera.position

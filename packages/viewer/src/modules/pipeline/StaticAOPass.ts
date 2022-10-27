@@ -40,17 +40,17 @@ import { Pipeline } from './Pipeline'
  */
 
 export interface StaticAoPassParams {
-  intensity: number
-  kernelRadius: number
-  kernelSize: number
-  bias: number
-  minDistance: number
-  maxDistance: number
+  intensity?: number
+  kernelRadius?: number
+  kernelSize?: number
+  bias?: number
+  minDistance?: number
+  maxDistance?: number
 }
 
 export const DefaultStaticAoPassParams = {
   intensity: 0.8,
-  kernelRadius: 0.35, // World space
+  kernelRadius: 20, // Screen space
   kernelSize: 16,
   bias: 0.01,
   minDistance: 0,
@@ -107,6 +107,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
         cameraFar: { value: 100 },
         cameraProjectionMatrix: { value: new Matrix4() },
         cameraInverseProjectionMatrix: { value: new Matrix4() },
+        tanFov: { value: 0 },
 
         scale: { value: 1.0 },
         intensity: { value: 1 },
@@ -181,6 +182,9 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.aoMaterial.uniforms['cameraProjectionMatrix'].value.copy(
       camera.projectionMatrix
     )
+    const fov = (((camera as PerspectiveCamera).fov / 2) * Math.PI) / 180.0
+    this.aoMaterial.uniforms['tanFov'].value = Math.tan(fov)
+
     if (!this.kernels[this.frameIndex]) {
       this.generateSampleKernel(this.frameIndex)
     }

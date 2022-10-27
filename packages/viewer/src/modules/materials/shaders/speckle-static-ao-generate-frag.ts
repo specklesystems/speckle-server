@@ -16,6 +16,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 		uniform float kernelRadius;
 		uniform float minResolution;
         uniform float frameIndex;
+		uniform float tanFov;
 
 		#define AO_ESTIMATOR 1
 		// #define KERNEL_SIZE 16
@@ -191,7 +192,16 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
         // moving costly divides into consts
 		const float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
         const float offset = PI2 / float(NUM_FRAMES);
-		
+
+		float computeKernelSize(float d, float r) {
+			// Apparently this is wrong
+			// return (r * tan(fov) * d) / (size.y * 0.5);
+			// And this is correct
+			float rp = r / (size.y * 0.5);
+			return sqrt((rp*rp*tanFov*tanFov*d*d)/(1. + rp*rp*tanFov*tanFov));
+			// return r;
+		}
+
 		float getAmbientOcclusion( const in vec3 centerViewPosition, in float centerDepth ) {
             #if AO_ESTIMATOR == 0
                 // precompute some variables require in getOcclusion.
@@ -245,9 +255,10 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 				vec3 bitangent = cross( viewNormal, tangent );
 				mat3 kernelMatrix = mat3( tangent, bitangent, viewNormal );
 				float occlusion = 0.0;
+				float kernelSize_ws = computeKernelSize(-viewPosition.z, kernelRadius);
 				for ( int i = 0; i < KERNEL_SIZE; i ++ ) {
 					vec3 sampleVector = kernelMatrix * kernel[ i ]; // reorient sample vector in view space
-					vec3 samplePoint = viewPosition + ( sampleVector * kernelRadius ); // calculate sample point
+					vec3 samplePoint = viewPosition + ( sampleVector * kernelSize_ws ); // calculate sample point
 					vec4 samplePointNDC = cameraProjectionMatrix * vec4( samplePoint, 1.0 ); // project point and calculate NDC
 					samplePointNDC /= samplePointNDC.w;
 					vec2 samplePointUv = samplePointNDC.xy * 0.5 + 0.5; // compute uv coordinates
