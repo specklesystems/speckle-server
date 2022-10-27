@@ -16,9 +16,11 @@ workflows:
 
       - build-approval:
           type: approval
-          filters: &filters-ignore-main-branch
+          filters: &filters-ignore-main-branch-all-tags
             branches:
               ignore: main
+            tags:
+              ignore: /.*/
 
       - pre-commit:
           filters: *filters-allow-all
@@ -74,7 +76,7 @@ workflows:
 
       - publish-approval:
           type: approval
-          filters: *filters-ignore-main-branch
+          filters: *filters-ignore-main-branch-all-tags
 
       - docker-publish-server:
           context: &docker-hub-context
