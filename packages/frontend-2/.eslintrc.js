@@ -53,7 +53,7 @@ const config = {
       parserOptions: {
         parser: '@typescript-eslint/parser',
         tsconfigRootDir: __dirname,
-        project: ['./tsconfig.json', './.nuxt/tsconfig.json'],
+        project: ['./tsconfig.json'],
         extraFileExtensions: ['.vue']
       },
       extends: ['plugin:@typescript-eslint/recommended', ...mainExtends],
