@@ -25,7 +25,7 @@ if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:-alpha\.[0-9]+)?$ ]]; 
     docker push "${DOCKER_IMAGE_TAG}:2"
   fi
 else
-  BRANCH_TAG="${NEXT_RELEASE}-branch.${BRANCH_NAME_TRUNCATED}""
+  BRANCH_TAG="${NEXT_RELEASE}-branch.${BRANCH_NAME_TRUNCATED}"
   echo "🏷 Tagging image as '${DOCKER_IMAGE_TAG}:${BRANCH_TAG}'"
   docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:${BRANCH_TAG}"
   docker push "${DOCKER_IMAGE_TAG}:${BRANCH_TAG}"
