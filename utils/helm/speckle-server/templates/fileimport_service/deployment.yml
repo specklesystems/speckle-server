@@ -1,4 +1,4 @@
-{{- if .Values.s3.endpoint }}
+{{- if ( or .Values.s3.endpoint .Values.s3.configMap.enabled ) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -1,7 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 
 # build stage
-FROM node:16.15-bullseye-slim as build-stage
+FROM node:16.18.0-bullseye-slim as build-stage
 ARG SPECKLE_SERVER_VERSION=custom
  
 
@@ -14,6 +14,7 @@ COPY package.json yarn.lock ./
 COPY packages/frontend/package.json ./packages/frontend/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
+COPY packages/shared/package.json ./packages/shared/
 
 RUN yarn workspaces focus -A
 
@@ -21,14 +22,15 @@ RUN yarn workspaces focus -A
 COPY packages/objectloader ./packages/objectloader/
 COPY packages/viewer ./packages/viewer/
 COPY packages/frontend ./packages/frontend/
+COPY packages/shared ./packages/shared/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach -pt run build
+RUN yarn workspaces foreach run build
 
 # production stage
 
 
-FROM openresty/openresty:1.21.4.1-bullseye as production-stage
+FROM openresty/openresty:1.21.4.1-3-jammy-amd64 as production-stage
 ENV FILE_SIZE_LIMIT_MB=100
 COPY --from=build-stage /speckle-server/packages/frontend/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf

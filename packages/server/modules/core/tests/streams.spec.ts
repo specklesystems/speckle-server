@@ -26,7 +26,11 @@ import {
   buildAuthenticatedApolloServer,
   buildUnauthenticatedApolloServer
 } from '@/test/serverHelper'
-import { getUserStreams, leaveStream } from '@/test/graphql/streams'
+import {
+  getLimitedUserStreams,
+  getUserStreams,
+  leaveStream
+} from '@/test/graphql/streams'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   BasicTestStream,
@@ -34,12 +38,17 @@ import {
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
 import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { times } from 'lodash'
+import { has, times } from 'lodash'
 import { Streams } from '@/modules/core/dbSchema'
 import { ApolloServer } from 'apollo-server-express'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { sleep } from '@/test/helpers'
 import dayjs, { Dayjs } from 'dayjs'
+import {
+  GetLimitedUserStreamsQuery,
+  GetUserStreamsQuery
+} from '@/test/graphql/generated/graphql'
+import { Get } from 'type-fest'
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -71,6 +80,11 @@ describe('Streams @core-streams', () => {
     ownerId: '',
     id: ''
   }
+
+  const userLimitedUserDataSet = [
+    { display: 'User', limitedUser: false },
+    { display: 'LimitedUser', limitedUser: true }
+  ]
 
   before(async () => {
     await beforeEachContext()
@@ -192,7 +206,7 @@ describe('Streams @core-streams', () => {
         userOne.id
       )
 
-      const apollo = buildAuthenticatedApolloServer(userTwo.id)
+      const apollo = await buildAuthenticatedApolloServer(userTwo.id)
       const { data, errors } = await leaveStream(apollo, { streamId })
 
       expect(errors).to.be.not.ok
@@ -383,6 +397,10 @@ describe('Streams @core-streams', () => {
       { display: 'without pagination', pagination: false }
     ]
 
+    const isLimitedUserStreams = (
+      data: GetLimitedUserStreamsQuery | GetUserStreamsQuery
+    ): data is GetLimitedUserStreamsQuery => has(data, 'otherUser')
+
     /**
      * Base test for testing paginated & unpaginated User.streams query in various circumstances
      */
@@ -390,23 +408,37 @@ describe('Streams @core-streams', () => {
       apollo: ApolloServer,
       pagination: boolean,
       userId: string,
-      isOtherUser: boolean
+      isOtherUser: boolean,
+      options: Partial<{ limitedUserQuery: boolean }> = {}
     ) => {
+      const { limitedUserQuery } = options
       const expectedTotalCount = isOtherUser
         ? SHARED_STREAM_COUNT + DISCOVERABLE_STREAM_COUNT // only shared streams + discoverable ones
         : TOTAL_OWN_STREAM_COUNT // all owned & shared streams
 
       const requestPage = async (cursor?: Nullable<string>) => {
-        const results = await getUserStreams(apollo, {
+        const vars = {
           userId,
           limit: pagination ? PAGE_LIMIT : 100,
           cursor
-        })
+        }
+        const results = limitedUserQuery
+          ? await getLimitedUserStreams(apollo, vars)
+          : await getUserStreams(apollo, vars)
 
         expect(results).to.not.haveGraphQLErrors()
-        if (!results.data?.user?.streams) throw new Error('Unexpected issue')
-        expect(results.data.user.streams.totalCount).to.eq(expectedTotalCount)
-        return results.data.user.streams
+        if (!results.data) throw new Error('Unexpected issue')
+
+        let streams: Get<GetUserStreamsQuery, 'user.streams'>
+        if (isLimitedUserStreams(results.data)) {
+          streams = results.data.otherUser?.streams
+        } else {
+          streams = results.data.user?.streams
+        }
+
+        if (!streams) throw new Error('Unexpected issue')
+        expect(streams.totalCount).to.eq(expectedTotalCount)
+        return streams
       }
 
       let cursor: Nullable<string> = null
@@ -467,7 +499,7 @@ describe('Streams @core-streams', () => {
 
       before(async () => {
         activeUserId = userOne.id
-        apollo = buildAuthenticatedApolloServer(activeUserId)
+        apollo = await buildAuthenticatedApolloServer(activeUserId)
       })
 
       paginationDataset.forEach(({ display, pagination }) => {
@@ -475,8 +507,16 @@ describe('Streams @core-streams', () => {
           await testPaginatedUserStreams(apollo, pagination, activeUserId, false)
         })
 
-        it(`User.streams() ${display} for a different user only returns that users discoverable streams`, async () => {
-          await testPaginatedUserStreams(apollo, pagination, userTwo.id, true)
+        userLimitedUserDataSet.forEach(({ limitedUser }) => {
+          const prefix = limitedUser
+            ? 'LimitedUser.streams()'
+            : 'User.streams() for a different user'
+
+          it(`${prefix} ${display} returns that users discoverable streams`, async () => {
+            await testPaginatedUserStreams(apollo, pagination, userTwo.id, true, {
+              limitedUserQuery: limitedUser
+            })
+          })
         })
       })
     })
@@ -485,12 +525,17 @@ describe('Streams @core-streams', () => {
       let apollo: ApolloServer
 
       before(async () => {
-        apollo = buildUnauthenticatedApolloServer()
+        apollo = await buildUnauthenticatedApolloServer()
       })
 
-      it('User.streams is inaccessible', async () => {
-        const results = await getUserStreams(apollo, { userId: userOne.id })
-        expect(results).to.haveGraphQLErrors('you must provide an auth token')
+      userLimitedUserDataSet.forEach(({ display, limitedUser }) => {
+        it(`${display}.streams is inaccessible`, async () => {
+          const results = limitedUser
+            ? await getLimitedUserStreams(apollo, { userId: userOne.id })
+            : await getUserStreams(apollo, { userId: userOne.id })
+          expect(results).to.haveGraphQLErrors()
+          expect(results.data?.otherUser || results.data?.user).to.be.not.ok
+        })
       })
     })
   })

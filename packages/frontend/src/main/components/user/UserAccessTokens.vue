@@ -49,7 +49,7 @@ export default {
     tokens: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             apiTokens {
               id
@@ -62,7 +62,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.user.apiTokens
+      update: (data) => data.activeUser.apiTokens
     }
   },
   methods: {

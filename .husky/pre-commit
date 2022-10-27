@@ -26,7 +26,13 @@ check_dependencies_available() {
   done
 }
 
-check_dependencies_available pre-commit hadolint helm shellcheck 
+additional_dependencies=""
+if [ -z "${CI}" ]; then
+  additional_dependencies=" ggshield"
+fi
+
+# shellcheck disable=SC2086
+check_dependencies_available pre-commit hadolint helm shellcheck circleci${additional_dependencies}
 
 echo "All systems functional, running additional pre-commit checks..."
 pre-commit run --all-files

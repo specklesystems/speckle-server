@@ -1,18 +1,21 @@
 <template>
-  <div class="comment-attachments d-flex">
+  <div
+    class="comment-attachments d-flex"
+    :class="primary ? 'comment-attachments--primary' : 'comment-attachments--secondary'"
+  >
     <div class="text-caption d-flex flex-column">
       <a
         v-for="attachment in attachments"
         :key="attachment.id"
         v-tooltip="attachment.fileName"
         href="javascript:;"
-        :class="`my-1 ${primary ? '' : 'blue--text'}`"
+        :class="`my-1`"
         @click="
           showAttachmentPreview = true
           selectedAttachment = attachment
         "
       >
-        <v-icon small :class="`${primary ? 'white--text' : 'blue--text'}`">
+        <v-icon small>
           {{ icon(attachment.fileType) }}
         </v-icon>
         {{ attachment.fileName.substring(0, 22) }}
@@ -76,3 +79,22 @@ export default Vue.extend({
   }
 })
 </script>
+<style scoped lang="scss">
+.comment-attachments {
+  $base: &;
+
+  &#{$base}--primary {
+    a,
+    i {
+      color: #ffffff !important;
+    }
+  }
+
+  &#{$base}--secondary {
+    a,
+    i {
+      color: var(--v-primary-base) !important;
+    }
+  }
+}
+</style>

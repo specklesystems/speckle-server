@@ -1,18 +1,21 @@
-const { RichTextParseError } = require('@/modules/shared/errors')
-const {
+import { RichTextParseError } from '@/modules/shared/errors'
+import {
   isTextEditorValueSchema,
   isTextEditorDoc,
   convertBasicStringToDocument,
-  isSerializedTextEditorValueSchema
-} = require('@/modules/core/services/richTextEditorService')
-const { isString, uniq } = require('lodash')
-const { getBlobs } = require('@/modules/blobstorage/services')
-const { InvalidAttachmentsError } = require('@/modules/comments/errors')
+  isSerializedTextEditorValueSchema,
+  SmartTextEditorValueSchema,
+  isDocEmpty
+} from '@/modules/core/services/richTextEditorService'
+import { isString, uniq } from 'lodash'
+import { getBlobs } from '@/modules/blobstorage/services'
+import { InvalidAttachmentsError } from '@/modules/comments/errors'
+import { JSONContent } from '@tiptap/core'
 
 const COMMENT_SCHEMA_VERSION = '1.0.0'
 const COMMENT_SCHEMA_TYPE = 'stream_comment'
 
-async function validateInputAttachments(streamId, blobIds) {
+export async function validateInputAttachments(streamId: string, blobIds: string[]) {
   blobIds = uniq(blobIds || [])
   if (!blobIds.length) return
 
@@ -24,20 +27,21 @@ async function validateInputAttachments(streamId, blobIds) {
 
 /**
  * Build comment.text value from a ProseMirror doc
- * @param {{
- *  doc: import("@tiptap/core").JSONContent | undefined,
- *  blobIds: string[]
- * }} param1
- * @returns {import('@/modules/core/services/richTextEditorService').SmartTextEditorValueSchema}
  */
-function buildCommentTextFromInput({ doc = undefined, blobIds = [] }) {
-  if (!isTextEditorDoc(doc) && !blobIds.length) {
+export function buildCommentTextFromInput({
+  doc = undefined,
+  blobIds = []
+}: Partial<{
+  doc: JSONContent
+  blobIds: string[]
+}>) {
+  if ((!isTextEditorDoc(doc) || isDocEmpty(doc)) && !blobIds.length) {
     throw new RichTextParseError(
       'Attempting to build comment text without document & attachments!'
     )
   }
 
-  return {
+  return <SmartTextEditorValueSchema>{
     version: COMMENT_SCHEMA_VERSION,
     type: COMMENT_SCHEMA_TYPE,
     doc,
@@ -47,10 +51,10 @@ function buildCommentTextFromInput({ doc = undefined, blobIds = [] }) {
 
 /**
  * Ensure a comment value pulled from db (string or schema JSON) is formatted to be a text editor schema
- * @param {string|import('@/modules/core/services/richTextEditorService').SmartTextEditorValueSchema} stringOrSchema
- * @returns {import('@/modules/core/services/richTextEditorService').SmartTextEditorValueSchema}
  */
-function ensureCommentSchema(stringOrSchema) {
+export function ensureCommentSchema(
+  stringOrSchema: SmartTextEditorValueSchema | string
+) {
   if (isTextEditorValueSchema(stringOrSchema)) return stringOrSchema
   if (isString(stringOrSchema)) {
     const deserializedSchema = isSerializedTextEditorValueSchema(stringOrSchema)
@@ -62,10 +66,4 @@ function ensureCommentSchema(stringOrSchema) {
   }
 
   throw new RichTextParseError('Unexpected comment schema format')
-}
-
-module.exports = {
-  buildCommentTextFromInput,
-  ensureCommentSchema,
-  validateInputAttachments
 }

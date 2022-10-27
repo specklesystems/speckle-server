@@ -15,6 +15,7 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { times } from 'lodash'
+import { describe } from 'mocha'
 
 enum BatchActionType {
   Move,
@@ -138,7 +139,7 @@ describe('Batch commits', () => {
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = buildAuthenticatedApolloServer(me.id)
+      apollo = await buildAuthenticatedApolloServer(me.id)
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 
@@ -269,7 +270,7 @@ describe('Batch commits', () => {
     let invokeBatchAction: BatchActionInvoker
 
     before(async () => {
-      apollo = buildUnauthenticatedApolloServer()
+      apollo = await buildUnauthenticatedApolloServer()
       invokeBatchAction = buildBatchActionInvoker(apollo)
     })
 

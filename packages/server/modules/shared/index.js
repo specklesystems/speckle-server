@@ -13,6 +13,12 @@ const StreamPubsubEvents = Object.freeze({
   StreamDeleted: 'STREAM_DELETED'
 })
 
+const CommitPubsubEvents = Object.freeze({
+  CommitCreated: 'COMMIT_CREATED',
+  CommitUpdated: 'COMMIT_UPDATED',
+  CommitDeleted: 'COMMIT_DELETED'
+})
+
 /**
  * GraphQL Subscription PubSub instance
  */
@@ -30,7 +36,7 @@ const pubsub = new RedisPubSub({
  * @param {import('@/modules/shared/authz').AuthContext} ctx
  * @returns {GraphQLContext}
  */
-async function addLoadersToCtx(ctx) {
+function addLoadersToCtx(ctx) {
   const loaders = buildRequestLoaders(ctx)
   ctx.loaders = loaders
   return ctx
@@ -38,7 +44,7 @@ async function addLoadersToCtx(ctx) {
 
 /**
  * Build context for GQL operations
- * @returns {GraphQLContext}
+ * @returns {Promise<GraphQLContext>}
  */
 async function buildContext({ req, connection }) {
   // Parsing auth info
@@ -50,7 +56,7 @@ async function buildContext({ req, connection }) {
 
 /**
  * Not just Graphql server context helper: sets req.context to have an auth prop (true/false), userId and server role.
- * @returns {import('@/modules/shared/authz').AuthContext}
+ * @returns {Promise<import('@/modules/shared/authz').AuthContext>}
  */
 async function contextApiTokenHelper({ req, connection }) {
   let token = null
@@ -101,9 +107,8 @@ const getRoles = async () => {
 
 /**
  * Validates a server role against the req's context object.
- * @param  {[type]} context      [description]
- * @param  {[type]} requiredRole [description]
- * @return {[type]}              [description]
+ * @param  {import('@/modules/shared/helpers/typeHelper').GraphQLContext} context
+ * @param  {string} requiredRole
  */
 async function validateServerRole(context, requiredRole) {
   const roles = await getRoles()
@@ -164,10 +169,9 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     )
   }
 
-  const userAclEntry = await knex(role.aclTableName)
-    .select('*')
-    .where({ resourceId, userId })
-    .first()
+  const userAclEntry = userId
+    ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
+    : null
 
   if (!userAclEntry)
     throw new ForbiddenError('You do not have access to this resource.')
@@ -212,5 +216,6 @@ module.exports = {
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents
+  StreamPubsubEvents,
+  CommitPubsubEvents
 }

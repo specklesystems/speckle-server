@@ -35,8 +35,8 @@ describe('Auth @auth', () => {
     }
 
     before(async () => {
-      ;({ app } = await beforeEachContext())
-      ;({ server, sendRequest } = await initializeTestServer(app))
+      ;({ app, server } = await beforeEachContext())
+      ;({ sendRequest } = await initializeTestServer(server, app))
 
       // Register a user for testing login flows
       await createUser(me).then((id) => (me.id = id))

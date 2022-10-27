@@ -67,7 +67,8 @@ export default {
   ],
   apollo: {
     user: {
-      query: profileSelfQuery
+      query: profileSelfQuery,
+      update: (data) => data.activeUser
     }
   },
   methods: {

@@ -57,7 +57,7 @@ export default defineComponent({
         mentionedInComment: 'Mentioned in comment',
         newStreamAccessRequest: 'Stream access request',
         streamAccessRequestApproved: 'Stream access request approved'
-      }
+      } as Record<string, string>
     }
   },
   computed: {

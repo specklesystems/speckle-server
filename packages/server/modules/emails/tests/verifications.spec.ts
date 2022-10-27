@@ -74,7 +74,7 @@ describe('Email verifications @emails', () => {
     let apollo: ApolloServer
 
     before(async () => {
-      apollo = buildAuthenticatedApolloServer(userA.id)
+      apollo = await buildAuthenticatedApolloServer(userA.id)
     })
 
     it('pending verification is reported correctly', async () => {
@@ -100,9 +100,9 @@ describe('Email verifications @emails', () => {
     })
 
     describe('and requesting verification', () => {
-      const invokeRequestVerification = (user: BasicTestUser) => {
-        const apollo = buildAuthenticatedApolloServer(user.id)
-        return requestVerification(apollo, {})
+      const invokeRequestVerification = async (user: BasicTestUser) => {
+        const apollo = await buildAuthenticatedApolloServer(user.id)
+        return await requestVerification(apollo, {})
       }
 
       it('it succeeds', async () => {
@@ -150,7 +150,7 @@ describe('Email verifications @emails', () => {
     let apollo: ApolloServer
 
     before(async () => {
-      apollo = buildUnauthenticatedApolloServer()
+      apollo = await buildUnauthenticatedApolloServer()
     })
 
     it('cant request an account verification', async () => {

@@ -273,4 +273,19 @@ export const Branches = buildTableHelper('branches', [
   'updatedAt'
 ])
 
+export const ScheduledTasks = buildTableHelper('scheduled_tasks', [
+  'taskName',
+  'lockExpiresAt'
+])
+
+export const Objects = buildTableHelper('objects', [
+  'id',
+  'speckleType',
+  'totalChildrenCount',
+  'totalChildrenCountByDepth',
+  'createdAt',
+  'data',
+  'streamId'
+])
+
 export { knex }

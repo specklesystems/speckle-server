@@ -37,8 +37,8 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app } = await beforeEachContext())
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ app, server } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
@@ -302,32 +302,32 @@ describe('GraphQL API Core @core-api', () => {
     describe('User role change', () => {
       it('User role is changed', async () => {
         let queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.user.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
         let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.user.role).to.equal('server:admin')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:admin')
         expect(queriedUserB.body.data)
         query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:user"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.user.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
       })
 
       it('Only admins can change user role', async () => {
         const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
         const res = await sendRequest(userB.token, { query })
         const queriedUserB = await sendRequest(userA.token, {
-          query: ` { user(id:"${userB.id}") { id name email role } }`
+          query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
         expect(res.body.errors).to.exist
-        expect(queriedUserB.body.data.user.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
       })
     })
 
@@ -1135,6 +1135,10 @@ describe('GraphQL API Core @core-api', () => {
     })
 
     describe('Different Users` Profile', () => {
+      /**
+       * TODO: These user() queries should be swapped to otherUser() afterwards
+       */
+
       it('Should retrieve a different profile profile', async () => {
         const res = await sendRequest(userA.token, {
           query: ` { user(id:"${userB.id}") { id name email } }`

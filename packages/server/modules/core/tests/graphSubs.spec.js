@@ -1,10 +1,10 @@
 /* eslint-disable no-undef */
-/* istanbul ignore file */
 const expect = require('chai').expect
 const request = require('supertest')
-const gql = require('graphql-tag')
-const { execute } = require('apollo-link')
-const { WebSocketLink } = require('apollo-link-ws')
+const { gql } = require('apollo-server-express')
+const { WebSocketLink } = require('@apollo/client/link/ws')
+const { execute } = require('@apollo/client/core')
+
 const { SubscriptionClient } = require('subscriptions-transport-ws')
 const ws = require('ws')
 
@@ -39,11 +39,13 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     email: 'd.3@speckle.systems',
     password: 'wow8charsplease'
   }
+
+  /** @type {import('child_process').ChildProcessWithoutNullStreams} */
   let serverProcess
 
   const getWsClient = (wsurl, authToken) => {
     const client = new SubscriptionClient(
-      wsAddr,
+      wsurl,
       {
         reconnect: true,
         connectionParams: { headers: { Authorization: authToken } }
@@ -67,6 +69,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
     const childProcess = require('child_process')
     console.log('  Starting server... this might take a bit.')
+
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',
       ['run', 'dev:server:test'],

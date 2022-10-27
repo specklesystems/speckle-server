@@ -1,12 +1,13 @@
+import {
+  Nullable,
+  Optional,
+  MaybeNullOrUndefined,
+  MaybeAsync,
+  MaybeFalsy
+} from '@speckle/shared'
 import { RequestDataLoaders } from '@/modules/core/loaders'
 import { AuthContext } from '@/modules/shared/authz'
 import { Express } from 'express'
-
-export type Nullable<T> = T | null
-export type Optional<T> = T | undefined
-export type MaybeNullOrUndefined<T> = T | null | undefined
-export type MaybeAsync<T> = T | Promise<T>
-export type MaybeFalsy<T> = T | null | undefined | false | '' | 0
 
 export type SpeckleModule<T extends Record<string, unknown> = Record<string, unknown>> =
   {
@@ -39,3 +40,5 @@ export type GraphQLContext = AuthContext & {
    */
   loaders: RequestDataLoaders
 }
+
+export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

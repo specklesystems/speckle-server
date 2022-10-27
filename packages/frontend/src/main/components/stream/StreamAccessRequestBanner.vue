@@ -48,7 +48,7 @@
 </template>
 <script setup lang="ts">
 import { computed, PropType, ref } from 'vue'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import {
   StreamRole,
   StreamWithCollaboratorsQuery,

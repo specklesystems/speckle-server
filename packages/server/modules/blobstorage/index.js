@@ -17,6 +17,7 @@ const {
   getObjectAttributes
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
+
 const {
   uploadFileStream,
   getFileStream,
@@ -26,8 +27,10 @@ const {
   deleteBlob,
   getBlobMetadata,
   getBlobMetadataCollection,
+  getAllStreamBlobIds,
   getFileSizeLimit
 } = require('@/modules/blobstorage/services')
+
 const {
   NotFoundError,
   ResourceMismatch,
@@ -86,6 +89,7 @@ exports.init = async (app) => {
         limits: { fileSize: getFileSizeLimit() }
       })
       const streamId = req.params.streamId
+
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
         const fileType = fileName.split('.').pop().toLowerCase()
@@ -95,12 +99,20 @@ exports.init = async (app) => {
           )
         }
 
-        const blobId = crs({ length: 10 })
+        let blobId = crs({ length: 10 })
+        let clientHash = null
+        if (formKey.includes('hash:')) {
+          clientHash = formKey.split(':')[1]
+          if (clientHash && clientHash !== '') {
+            // console.log(`I have a client hash (${clientHash})`)
+            blobId = clientHash
+          }
+        }
 
         uploadOperations[blobId] = uploadFileStream(
           storeFileStream,
           { streamId, userId: req.context.userId },
-          { blobId, fileName, fileType, fileStream: file }
+          { blobId, fileName, fileType, fileStream: file, clientHash }
         )
 
         //this file level 'close' is fired when a single file upload finishes
@@ -112,12 +124,14 @@ exports.init = async (app) => {
 
           registerUploadResult(markUploadSuccess(getObjectAttributes, streamId, blobId))
         })
+
         file.on('limit', async () => {
           await uploadOperations[blobId]
           registerUploadResult(
             markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
           )
         })
+
         file.on('error', (err) => {
           registerUploadResult(markUploadError(deleteObject, blobId, err.message))
         })
@@ -152,6 +166,24 @@ exports.init = async (app) => {
     }
   )
 
+  app.post(
+    '/api/stream/:streamId/blob/diff',
+    contextMiddleware,
+    authMiddlewareCreator([
+      ...streamReadPermissions,
+      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+      allowAnonymousUsersOnPublicStreams
+    ]),
+    async (req, res) => {
+      const bq = await getAllStreamBlobIds({ streamId: req.params.streamId })
+      const unknownBlobIds = req.body.filter(
+        (id) => bq.findIndex((bInfo) => bInfo.id === id) === -1
+      )
+      res.send(unknownBlobIds)
+    }
+  )
+
   app.get(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
@@ -180,6 +212,7 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
@@ -195,6 +228,7 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.get(
     '/api/stream/:streamId/blobs',
     contextMiddleware,
@@ -212,6 +246,7 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.delete(
     '/api/stream/:streamId/blobs',
     contextMiddleware,

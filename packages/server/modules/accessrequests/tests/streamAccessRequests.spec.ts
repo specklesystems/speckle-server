@@ -4,7 +4,12 @@ import {
 } from '@/modules/accessrequests/repositories'
 import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
-import { ServerAccessRequests, StreamActivity } from '@/modules/core/dbSchema'
+import {
+  ServerAccessRequests,
+  StreamActivity,
+  Streams,
+  Users
+} from '@/modules/core/dbSchema'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getStreamCollaborators } from '@/modules/core/repositories/streams'
@@ -16,6 +21,7 @@ import { NotificationType } from '@/modules/notifications/helpers/types'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   createStreamAccessRequest,
+  getFullStreamAccessRequest,
   getPendingStreamAccessRequests,
   getStreamAccessRequest,
   useStreamAccessRequest
@@ -37,6 +43,10 @@ import { noop } from 'lodash'
 const createReqAndGetId = async (userId: string, streamId: string) => {
   const createReqRes = await requestStreamAccess(userId, streamId)
   return createReqRes.id
+}
+
+const cleanup = async () => {
+  await truncateTables([Streams.name, ServerAccessRequests.name, Users.name])
 }
 
 describe('Stream access requests', () => {
@@ -83,13 +93,14 @@ describe('Stream access requests', () => {
   }
 
   before(async () => {
+    await cleanup()
     await createTestUsers([me, otherGuy, anotherGuy])
     await createTestStreams([
       [otherGuysPrivateStream, otherGuy],
       [otherGuysPublicStream, otherGuy],
       [myPrivateStream, me]
     ])
-    apollo = buildAuthenticatedApolloServer(me.id)
+    apollo = await buildAuthenticatedApolloServer(me.id)
     notificationsStateManager = buildNotificationsStateTracker()
   })
 
@@ -195,17 +206,21 @@ describe('Stream access requests', () => {
   describe('when being read', () => {
     let myRequestId: string
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let myPublicReqId: string
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let anotherGuysRequestId: string
 
     beforeEach(async () => {
       await truncateTables([ServerAccessRequests.name])
 
-      const [myNewReqId, anotherGuysNewReqId] = await Promise.all([
+      const [myNewReqId, anotherGuysNewReqId, myNewPublicReqId] = await Promise.all([
         createReqAndGetId(me.id, otherGuysPrivateStream.id),
-        createReqAndGetId(anotherGuy.id, otherGuysPrivateStream.id)
+        createReqAndGetId(anotherGuy.id, otherGuysPrivateStream.id),
+        createReqAndGetId(me.id, otherGuysPublicStream.id)
       ])
       myRequestId = myNewReqId
       anotherGuysRequestId = anotherGuysNewReqId
+      myPublicReqId = myNewPublicReqId
     })
 
     it('returns the request correctly', async () => {
@@ -226,6 +241,25 @@ describe('Stream access requests', () => {
       const results = await getReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
       expect(results.data?.streamAccessRequest).to.eq(null)
+    })
+
+    it('throws error if attempting to read private stream metadata before has access to it', async () => {
+      const results = await getFullStreamAccessRequest(apollo, {
+        streamId: otherGuysPrivateStream.id
+      })
+
+      expect(results).to.haveGraphQLErrors(
+        'User does not have required access to stream'
+      )
+    })
+
+    it('doesnt throw if attempting to read stream metadata on accessible stream', async () => {
+      const results = await getFullStreamAccessRequest(apollo, {
+        streamId: otherGuysPublicStream.id
+      })
+
+      expect(results).to.not.haveGraphQLErrors()
+      expect(results.data?.streamAccessRequest?.stream.id).to.be.ok
     })
   })
 

@@ -2,9 +2,14 @@
   <mj-column>
     <mj-text font-size="12px" line-height="18px" align="center" color="#999">
       Sent from <%- params.serverInfo.name -%> at
-      <a href="#"><%- params.serverInfo.canonicalUrl -%></a>
+      <a href="<%- params.serverInfo.canonicalUrl -%>">
+        <%- params.serverInfo.canonicalUrl -%>
+      </a>
       , deployed and managed by <%- params.serverInfo.company -%>. Your admin contact is
-      <%- params.serverInfo.adminContact -%>.
+      <a href="mailto:<%- params.serverInfo.adminContact -%>">
+        <%- params.serverInfo.adminContact -%>
+      </a>
+      .
     </mj-text>
   </mj-column>
 </mj-section>

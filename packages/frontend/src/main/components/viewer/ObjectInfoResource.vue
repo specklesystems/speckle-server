@@ -65,9 +65,14 @@ import {
   showObjects,
   useCommitObjectViewerParams
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { Ripple } from 'vuetify/lib/directives'
+
 export default {
   components: {
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
+  },
+  directives: {
+    Ripple
   },
   props: {
     resource: {

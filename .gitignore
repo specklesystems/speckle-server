@@ -2,8 +2,12 @@
 packages/server/.env
 packages/server/dist
 packages/frontend/dist
+packages/frontend/profiler
 packages/viewer/dist
 packages/objectloader/dist
+packages/*/dist
+packages/*/dist-esm
+packages/*/dist-cjs
 *.env
 *.env.test
 *.crt
@@ -50,3 +54,6 @@ packages/server/.vscode/*.log
 # ST workspace files
 ./speckle.sublime-project
 ./speckle.sublime-workspace
+
+# GitGuardian
+.cache_ggshield

@@ -45,6 +45,9 @@ export default {
         return {
           id: this.id
         }
+      },
+      update(data) {
+        return data.otherUser
       }
     }
   },

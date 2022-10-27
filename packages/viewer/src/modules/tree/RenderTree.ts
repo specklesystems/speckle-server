@@ -118,6 +118,16 @@ export class RenderTree {
       .map((val: TreeNode) => val.model.renderView)
   }
 
+  public getRenderViewNodesForNode(node: TreeNode, parent?: TreeNode): TreeNode[] {
+    if (node.model.atomic && node.model.renderView) {
+      return [node]
+    }
+
+    return (parent ? parent : node.parent).all((_node: TreeNode): boolean => {
+      return _node.model.renderView !== null && _node.model.renderView.hasGeometry
+    })
+  }
+
   public getAtomicParent(node: TreeNode) {
     if (node.model.atomic) {
       return node.model.renderView

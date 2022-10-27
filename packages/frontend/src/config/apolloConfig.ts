@@ -20,7 +20,8 @@ import {
   incomingOverwritesExistingMergeFunction
 } from '@/main/lib/core/helpers/apolloSetupHelper'
 import { merge } from 'lodash'
-import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManager'
+import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
+import { Optional } from '@speckle/shared'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -29,7 +30,9 @@ const httpEndpoint = `${window.location.origin}/graphql`
 // WS endpoint
 const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
 // app version
-const appVersion = process.env.SPECKLE_SERVER_VERSION || 'unknown'
+const appVersion = import.meta.env.SPECKLE_SERVER_VERSION || 'unknown'
+
+let instance: Optional<ApolloProvider> = undefined
 
 function hasAuthToken() {
   return !!AppLocalStorage.get(AUTH_TOKEN)
@@ -50,6 +53,15 @@ function createCache(): InMemoryCache {
       {
         Query: {
           fields: {
+            otherUser: {
+              read(original, { args, toReference }) {
+                if (args?.id) {
+                  return toReference({ __typename: 'LimitedUser', id: args.id })
+                }
+
+                return original
+              }
+            },
             user: {
               read(original, { args, toReference }) {
                 if (args?.id) {
@@ -71,6 +83,16 @@ function createCache(): InMemoryCache {
             streams: {
               keyArgs: ['query'],
               merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+                checkIdentity: true
+              })
+            }
+          }
+        },
+        LimitedUser: {
+          fields: {
+            commits: {
+              keyArgs: false,
+              merge: buildAbstractCollectionMergeFunction('CommitCollection', {
                 checkIdentity: true
               })
             }
@@ -201,7 +223,7 @@ function createApolloClient() {
     link,
     cache,
     ssrForceFetchDelay: 100,
-    connectToDevTools: process.env.NODE_ENV !== 'production',
+    connectToDevTools: import.meta.env.DEV,
     name: 'web',
     version: appVersion
   })
@@ -213,7 +235,7 @@ function createApolloClient() {
 }
 
 /**
- * Create a Vue Apollo provider instance
+ * Create and set a global Vue Apollo provider instance
  */
 export function createProvider(): ApolloProvider {
   // Create apollo client
@@ -224,8 +246,17 @@ export function createProvider(): ApolloProvider {
   const apolloProvider = createApolloProvider({
     defaultClient: apolloClient
   })
+  instance = apolloProvider
 
   return apolloProvider
+}
+
+export function getApolloProvider(): ApolloProvider {
+  if (!instance) {
+    throw new Error('Attempting to use unitialized global Apollo Provider')
+  }
+
+  return instance
 }
 
 export function installVueApollo(apolloProvider: ApolloProvider): void {
