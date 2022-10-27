@@ -12,12 +12,15 @@ export default {
   }
 } as Meta
 
-const Template: Story = () => ({
-  components: { SemanticColorsComponent },
-  template: `<semantic-colors-component/>`
-})
-
-export const SemanticColors = Template.bind({})
+export const SemanticColors: Story = {
+  render: () => ({
+    components: { SemanticColorsComponent },
+    template: `<semantic-colors-component/>`
+  }),
+  parameters: {
+    viewMode: 'docs'
+  }
+}
 SemanticColors.parameters = {
   viewMode: 'docs'
 }

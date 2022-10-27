@@ -1,6 +1,9 @@
 {
   // https://v3.nuxtjs.org/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
-  "exclude": ["./lib/core/nuxt-modules/**/templates/*.js"],
+  "exclude": [
+    "./lib/core/nuxt-modules/**/templates/*.js",
+    "./type-augmentations/eslint-only/*.d.ts"
+  ],
   "include": ["./.nuxt/nuxt.d.ts", "**/*", ".storybook/**/*"]
 }
