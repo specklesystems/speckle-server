@@ -45,21 +45,10 @@ export class Viewer extends EventEmitter implements IViewer {
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
 
-  /** Render flag for on-demand rendering */
-  private _needsRender: boolean
-
   /** Misc members */
   private inProgressOperations: number
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
-
-  public get needsRender(): boolean {
-    return this._needsRender
-  }
-
-  public set needsRender(value: boolean) {
-    this._needsRender = value || this._needsRender
-  }
 
   /** Gets the World object. Currently it's used for info mostly */
   public static get World(): World {
@@ -96,13 +85,12 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.off()
-    this.sectionBox.controls.addEventListener('change', () => {
+    this.on(ViewerEvent.SectionBoxUpdated, () => {
       this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
     })
 
     this.frame()
     this.resize()
-    this.needsRender = true
 
     this.on(ViewerEvent.LoadComplete, (url) => {
       WorldTree.getRenderTree(url).buildRenderTree()
@@ -138,7 +126,11 @@ export class Viewer extends EventEmitter implements IViewer {
     const width = this.container.offsetWidth
     const height = this.container.offsetHeight
     this.speckleRenderer.resize(width, height)
-    this.needsRender = true
+  }
+
+  public requestRender() {
+    this.speckleRenderer.needsRender = true
+    this.speckleRenderer.resetPipeline()
   }
 
   private frame() {
@@ -343,7 +335,6 @@ export class Viewer extends EventEmitter implements IViewer {
     transition = true
   ): void {
     this.speckleRenderer.setView(view, transition)
-    this.needsRender = true
   }
 
   public screenshot(): Promise<string> {

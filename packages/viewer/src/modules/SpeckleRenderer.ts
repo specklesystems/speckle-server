@@ -312,31 +312,6 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
-    // const currentAzimuth = this.viewer.cameraHandler.controls.azimuthAngle
-    // const currentPolar = this.viewer.cameraHandler.controls.polarAngle
-    // const currentPosition = this.viewer.cameraHandler.activeCam.camera.position
-    // const dAzimuth = Math.max(0, Math.abs(currentAzimuth - this.lastAzimuth))
-    // const dPolar = Math.max(0, Math.abs(currentPolar - this.lastPolar))
-    // const dPosition = Math.max(0, currentPosition.distanceTo(this.lastCameraPosition))
-    // const motionMaxDelta = Math.max(0, Math.max(dAzimuth, dPolar, dPosition))
-    // // console.log(dPosition, this.lastCameraMotionDelta)
-    // console.log(
-    //   currentPosition.distanceTo(this.viewer.cameraHandler.controls['_targetEnd'])
-    // )
-    // if (motionMaxDelta === 0 && this.lastCameraMotionDelta > 0) {
-    //   this.pipeline.onStationaryBegin()
-    // }
-    // if (
-    //   motionMaxDelta > this.POSITION_RESUME_EPSILON &&
-    //   this.lastCameraMotionDelta === 0
-    // ) {
-    //   this._needsRender = true
-    //   this.pipeline.onStationaryEnd()
-    // }
-    // this.lastCameraMotionDelta = motionMaxDelta
-    // this.lastAzimuth = currentAzimuth
-    // this.lastPolar = currentPolar
-    // this.lastCameraPosition.copy(currentPosition)
 
     this.pipeline.update(this)
   }
@@ -455,6 +430,7 @@ export default class SpeckleRenderer {
     })
     this.pipeline.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
+    this.resetPipeline()
   }
 
   private addDirectLights() {
@@ -544,7 +520,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
-    this.viewer.needsRender = true
+    this.needsRender = true
     this.updateHelpers()
   }
 

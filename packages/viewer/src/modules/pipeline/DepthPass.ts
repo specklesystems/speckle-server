@@ -118,7 +118,11 @@ export class DepthPass extends Pass implements SpecklePass {
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
 
-    renderer.setRenderTarget(this.depthBufferSize === DepthSize.FULL ? this.renderTarget: this.renderTargetHalf)
+    renderer.setRenderTarget(
+      this.depthBufferSize === DepthSize.FULL
+        ? this.renderTarget
+        : this.renderTargetHalf
+    )
     renderer.autoClear = false
 
     renderer.setClearColor(0x000000)

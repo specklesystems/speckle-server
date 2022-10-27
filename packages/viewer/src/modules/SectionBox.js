@@ -153,10 +153,11 @@ export default class SectionBox {
   _draggingChangeHandler() {
     if (!this.display.visible) return
     this.boxHelper.update()
-    this._generateOrUpdatePlanes()
+    // this._generateOrUpdatePlanes()
 
     // Dragging a side / plane
     if (this.dragging && this.currentRange) {
+      this._generateOrUpdatePlanes()
       if (this.prevPosition === null)
         this.prevPosition = this.hoverPlane.position.clone()
       this.prevPosition.sub(this.hoverPlane.position)
@@ -178,6 +179,7 @@ export default class SectionBox {
 
     // Dragging the whole section box
     if (this.dragging && !this.currentRange) {
+      this._generateOrUpdatePlanes()
       if (this.prevPosition === null) this.prevPosition = this.sphere.position.clone()
       this.prevPosition.sub(this.sphere.position)
       this.prevPosition.negate()
@@ -196,6 +198,7 @@ export default class SectionBox {
     }
     this.viewer.needsRender = true
     this.viewer.emit('section-box-changed', this.getCurrentBox())
+    this.viewer.requestRender()
   }
 
   _clickHandler(args) {
@@ -327,6 +330,7 @@ export default class SectionBox {
       plane.setFromCoplanarPoints(a, b, c)
       index++
     }
+    this.viewer.emit('section-box-updated', this.getCurrentBox())
   }
 
   _attachControlsToBox() {
