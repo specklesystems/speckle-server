@@ -386,7 +386,7 @@ jobs:
 
   docker-publish: &publish-job
     docker: &base-image
-      - image: cimg/base:2022.08
+      - image: cimg/python:3.9.15-node
     resource_class: medium
     working_directory: *work-dir
     steps:
