@@ -37,18 +37,18 @@ export default class Sandbox {
     dynamicAoParams: {
       intensity: 1.5,
       scale: 0,
-      kernelRadius: 10,
+      kernelRadius: 5,
       bias: 0.2,
       normalsType: 2,
       blurEnabled: true,
       blurRadius: 2,
       blurStdDev: 4,
-      blurDepthCutoff: 0.0007
+      blurDepthCutoff: 0.007
     },
     staticAoEnabled: true,
     staticAoParams: {
-      intensity: 0.8,
-      kernelRadius: 20, // Screen space
+      intensity: 1,
+      kernelRadius: 30, // Screen space
       kernelSize: 16,
       bias: 0.01,
       minDistance: 0,

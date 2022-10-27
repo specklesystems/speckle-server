@@ -50,13 +50,13 @@ export interface DynamicAOPassParams {
 export const DefaultDynamicAOPassParams = {
   intensity: 1.5,
   scale: 0,
-  kernelRadius: 10,
+  kernelRadius: 5,
   bias: 0.2,
   normalsType: NormalsType.ACCURATE,
   blurEnabled: true,
   blurRadius: 2,
   blurStdDev: 4,
-  blurDepthCutoff: 0.0007
+  blurDepthCutoff: 0.007
 }
 
 export class DynamicSAOPass extends Pass implements SpecklePass {

@@ -49,8 +49,8 @@ export interface StaticAoPassParams {
 }
 
 export const DefaultStaticAoPassParams = {
-  intensity: 0.8,
-  kernelRadius: 20, // Screen space
+  intensity: 1,
+  kernelRadius: 30, // Screen space
   kernelSize: 16,
   bias: 0.01,
   minDistance: 0,
