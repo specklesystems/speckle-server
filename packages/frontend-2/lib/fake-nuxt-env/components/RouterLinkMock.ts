@@ -15,7 +15,7 @@ const defaultRoute = {
 }
 
 export const RouterLinkMock = defineComponent({
-  name: 'RouterLinkStub',
+  name: 'RouterLinkMock',
   compatConfig: { MODE: 3 },
   props: {
     to: {
