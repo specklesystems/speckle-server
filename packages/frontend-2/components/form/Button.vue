@@ -18,6 +18,17 @@
 import { PropType } from 'vue'
 import { Optional } from '@speckle/shared'
 
+// Tests that show this functionality works in Storybook (TODO: Move to separate component)
+const counter = useState('counter', () => 100)
+const runtimeConfig = useRuntimeConfig()
+const nuxt = useNuxtApp()
+
+onMounted(() => {
+  console.log(counter.value)
+  console.log(runtimeConfig)
+  console.log(nuxt)
+})
+
 type FormButtonSize = 'big' | 'normal' | 'small'
 type FormButtonType =
   | 'primary'
