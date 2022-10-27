@@ -11,7 +11,11 @@
     :disabled="disabled"
     @click="onClick"
   >
-    <slot>Submit</slot>
+    <slot>
+      Submit
+      <NuxtLink>ay</NuxtLink>
+      <FormCheckbox name="ooo" />
+    </slot>
   </Component>
 </template>
 <script setup lang="ts">
