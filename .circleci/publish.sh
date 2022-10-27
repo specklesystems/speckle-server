@@ -22,7 +22,9 @@ else
   echo "🏷 Tagging image as '${DOCKER_IMAGE_TAG}:$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}'"
   docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}"
 fi
+echo "📜 Listing all image tags"
+docker image ls
 
 echo "🐳 Publishing image"
-echo "${DOCKER_REG_PASS}" | docker login -u "${DOCKER_REG_USER}" --password-stdin "${DOCKER_REG_URL}"
-docker push --all-tags "${DOCKER_IMAGE_TAG}"
+# echo "${DOCKER_REG_PASS}" | docker login -u "${DOCKER_REG_USER}" --password-stdin "${DOCKER_REG_URL}"
+# docker push --all-tags "${DOCKER_IMAGE_TAG}"
