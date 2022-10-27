@@ -41,14 +41,6 @@ export async function getNuxtUnimportConfig(nuxt) {
   }
 }
 
-/**
- * @param {import('@nuxt/schema').Nuxt} nuxt
- */
-export async function invokeResolveAndTemplates(nuxt) {
-  nuxt.callHook('app:resolve', {})
-  nuxt.callHook('app:templates', {})
-}
-
 export async function integrateNuxtIntoStorybook() {
   const nuxt = await initializeNuxt()
 
