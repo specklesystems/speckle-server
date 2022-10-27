@@ -1,4 +1,4 @@
-// import Unimport from 'unimport/unplugin'
+import Unimport from 'unimport/unplugin'
 import { flatten } from 'lodash-es'
 import type { StorybookConfig } from '@storybook/builder-vite'
 import { mergeConfig, InlineConfig } from 'vite'
@@ -35,9 +35,10 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     const now = performance.now()
     console.log('Integrating Nuxt into Storybook...')
-    const { resolvedViteConfig } = await nuxtViteConfigUtil.integrateNuxtIntoStorybook()
+    const { resolvedViteConfig, nuxt } =
+      await nuxtViteConfigUtil.integrateNuxtIntoStorybook()
+    const { unimportOptions } = await nuxtViteConfigUtil.getNuxtModuleConfigs(nuxt)
     console.log(`...done [${Math.ceil(performance.now() - now)}ms]`)
-    // const unimportOptions = await nuxtViteConfigUtil.getNuxtUnimportConfig(nuxt)
 
     const customConfig: InlineConfig = {
       resolve: {
@@ -49,7 +50,7 @@ const config: StorybookConfig = {
       plugins: [
         // Auto-imports managed by unimport
         // TODO: Is this already handled through nuxtViteConfig? Global functions seem to work without this
-        // Unimport.vite(unimportOptions)
+        Unimport.vite(unimportOptions)
       ]
     }
 

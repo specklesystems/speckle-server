@@ -21,23 +21,28 @@ export async function initializeNuxt() {
 
 /**
  * @param {import('@nuxt/schema').Nuxt} nuxt
- * @returns {Promise<import('unimport').UnimportOptions>}
+ * @returns {Promise<{unimportOptions: import('unimport').UnimportOptions}>}
  */
-export async function getNuxtUnimportConfig(nuxt) {
+export async function getNuxtModuleConfigs(nuxt) {
   const implicitModules = nuxt.options._modules
 
+  // getting out unimport options:
   // only array module currently is the unimport one
   const arrayModule = implicitModules.find((m) => isArray(m))
-
   /** @type {import('@nuxt/schema').NuxtModule} */
   const nuxtModule = arrayModule[0]
   const options = await nuxtModule.getOptions()
   const presets = options.presets
 
+  const [pagesModule] = implicitModules
+
   return {
-    addons: { vueTemplate: true },
-    imports: [],
-    presets
+    unimportOptions: {
+      addons: { vueTemplate: true },
+      imports: [],
+      presets
+    },
+    pagesModule
   }
 }
 
