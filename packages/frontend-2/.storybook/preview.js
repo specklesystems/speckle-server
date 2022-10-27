@@ -1,41 +1,89 @@
 import '~~/assets/css/tailwind.css'
-// import entry from '#app/entry'
+
+import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
 import { setup } from '@storybook/vue3'
-import { createNuxtApp, callWithNuxt, useNuxtApp } from '#app'
 
-/**
- * Hax upon hax using Nuxt internals over here, but that's what you need to do
- * to get Nuxt-like env setup in Storybook
- */
 setup((app) => {
-  // Setup nuxt singleton, only if it's not already done
-  if (!useNuxtApp()) {
-    // Making sure Nuxt knows we're on the client side
-    window.process.client = true
-
-    // We can inject nuxt.payload.config through this variable
-    // which is necessary cause otherwise `createNuxtApp` throws
-    window.__NUXT__ = {
-      config: {
-        test: 1
-        // TODO: public runtimeConfig goes here
-      }
-    }
-    const nuxtApp = createNuxtApp({
-      vueApp: app
-    })
-
-    // This sets up the global Nuxt singleton, so that it's accessible in `useNuxtApp` etc.
-    callWithNuxt(nuxtApp, () => void 0)
-  }
+  setupVueApp(app)
 })
 
 export const parameters = {
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
     matchers: {
-      color: /(background|color)$/i,
+      color: /^(background|color)$/i,
       date: /Date$/
     }
+  },
+  viewport: {
+    viewports: {
+      mobile1: {
+        name: 'Small mobile',
+        styles: { width: '320px', height: '568px' }, // ratio 0.56
+        type: 'mobile'
+      },
+      mobile2: {
+        name: 'Large mobile',
+        styles: { width: '414px', height: '896px' }, // ratio 0.46
+        type: 'mobile'
+      },
+      SM: {
+        name: 'SM',
+        styles: { width: '640px', height: '1024px' },
+        type: 'mobile'
+      },
+      MD: {
+        name: 'MD',
+        styles: { width: '768px', height: '1024px' },
+        type: 'tablet'
+      },
+      LG: {
+        name: 'LG',
+        styles: { width: '1024px', height: '768px' },
+        type: 'desktop'
+      },
+      XL: {
+        name: 'XL',
+        styles: { width: '1280px', height: '768px' },
+        type: 'desktop'
+      },
+      '2XL': {
+        name: '2XL',
+        styles: { width: '1536px', height: '1024px' },
+        type: 'desktop'
+      }
+    }
+  },
+  backgrounds: {
+    // Using tailwind theme bg-background values
+    default: 'background',
+    values: [
+      {
+        name: 'background',
+        value: 'var(--theme-color-background)'
+      },
+      {
+        name: 'background-2',
+        value: 'var(--theme-color-background-2)'
+      },
+      {
+        name: 'background-3',
+        value: 'var(--theme-color-background-3)'
+      }
+    ]
   }
 }
+
+export const decorators = [
+  (story) => ({
+    components: {
+      Story: story()
+    },
+    inheritAttrs: false,
+    template: `
+      <div class="text-foreground">
+        <Story v-bind="$attrs" />
+      </div>
+    `
+  })
+]
