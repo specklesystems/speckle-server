@@ -56,6 +56,7 @@
     "@types/lodash-es": "^4.17.6",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
+    "browserify-zlib": "^0.2.0",
     "concurrently": "^7.5.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",

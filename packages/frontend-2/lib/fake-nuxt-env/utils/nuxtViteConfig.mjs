@@ -1,12 +1,7 @@
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
-import { loadNuxt } from '@nuxt/kit'
-import { bundle } from '@nuxt/vite-builder'
+import { loadNuxt, buildNuxt } from '@nuxt/kit'
 import { isArray } from 'lodash'
-
-/**
- * This script is a demo of how it's possible to get Nuxt's vite config
- */
 
 const ROOT_DIRECTORY = resolve(dirname(fileURLToPath(import.meta.url)), '../../../')
 
@@ -22,35 +17,6 @@ export async function initializeNuxt() {
     },
     cwd: ROOT_DIRECTORY
   })
-}
-
-/**
- * @param {import('@nuxt/schema').Nuxt} nuxt
- * @returns {Promise<import('vite').InlineConfig>}
- */
-export async function getNuxtViteConfig(nuxt) {
-  let resolvedViteConfig = undefined
-  nuxt.hook('vite:extend', (ctx) => {
-    const { config } = ctx
-    resolvedViteConfig = config
-
-    // Throwing error to cancel actual bundling/building
-    throw new BuildCancelationError('Canceling build')
-  })
-
-  try {
-    await bundle(nuxt)
-  } catch (e) {
-    if (!(e instanceof BuildCancelationError)) {
-      throw e
-    }
-  }
-
-  if (!resolvedViteConfig) {
-    throw new Error("Couldn't resolve vite config")
-  }
-
-  return resolvedViteConfig
 }
 
 /**
@@ -73,4 +39,49 @@ export async function getNuxtUnimportConfig(nuxt) {
     imports: [],
     presets
   }
+}
+
+/**
+ * @param {import('@nuxt/schema').Nuxt} nuxt
+ */
+export async function invokeResolveAndTemplates(nuxt) {
+  nuxt.callHook('app:resolve', {})
+  nuxt.callHook('app:templates', {})
+}
+
+export async function integrateNuxtIntoStorybook() {
+  const nuxt = await initializeNuxt()
+
+  // Setting up hook where we will take out the final config and short-circuit the nuxt build
+  /** @type {import('vite').InlineConfig} */
+  let resolvedViteConfig = undefined
+  nuxt.hook('vite:extend', (ctx) => {
+    const { config } = ctx
+    resolvedViteConfig = config
+
+    // Throwing error to cancel actual bundling/building
+    throw new BuildCancelationError('Canceling build')
+  })
+
+  try {
+    // This triggers bundle() through which we can get the vite config
+    // and also invokes all kinds of hooks that will configure component auto-import etc.
+    await buildNuxt(nuxt)
+  } catch (e) {
+    if (!(e instanceof BuildCancelationError)) {
+      throw e
+    }
+  }
+
+  if (!resolvedViteConfig) {
+    throw new Error("Couldn't resolve vite config")
+  }
+
+  // Calling hooks that will extend the config
+  await nuxt.callHook('vite:extendConfig', resolvedViteConfig, {
+    isClient: true,
+    isServer: false
+  })
+
+  return { resolvedViteConfig, nuxt }
 }

@@ -33,8 +33,10 @@ const config: StorybookConfig = {
     options: {}
   },
   async viteFinal(config) {
-    const nuxt = await nuxtViteConfigUtil.initializeNuxt()
-    const nuxtViteConfig = await nuxtViteConfigUtil.getNuxtViteConfig(nuxt)
+    const now = performance.now()
+    console.log('Integrating Nuxt into Storybook...')
+    const { resolvedViteConfig } = await nuxtViteConfigUtil.integrateNuxtIntoStorybook()
+    console.log(`...done [${Math.ceil(performance.now() - now)}ms]`)
     // const unimportOptions = await nuxtViteConfigUtil.getNuxtUnimportConfig(nuxt)
 
     const customConfig: InlineConfig = {
@@ -51,7 +53,7 @@ const config: StorybookConfig = {
       ]
     }
 
-    let final = mergeConfig(config, nuxtViteConfig)
+    let final = mergeConfig(config, resolvedViteConfig)
     final = mergeConfig(final, customConfig)
 
     return final
