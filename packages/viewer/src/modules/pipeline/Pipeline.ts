@@ -136,6 +136,7 @@ export class Pipeline {
         pipeline.push(this.dynamicAoPass)
         pipeline.push(this.copyOutputPass)
         this.dynamicAoPass.enabled = true
+        this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)

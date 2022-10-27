@@ -219,7 +219,7 @@ export const speckleSaoFrag = /* glsl */ `
 				#else
 					normal = normalize( cross( dFdx( viewPosition ), dFdy( viewPosition ) ) );
 				#endif
-				gl_FragColor.rgb = packNormalToRGB(viewNormalImproved(vUv, viewPosition));
+				gl_FragColor.rgb = packNormalToRGB(normal);
 				gl_FragColor.a = 1.;
 				return;
 			#endif
@@ -227,5 +227,4 @@ export const speckleSaoFrag = /* glsl */ `
 			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
 			gl_FragColor.xyz *=  1. - ambientOcclusion;
-			// gl_FragColor.xyz = depth_cross(vUv, viewPosition) * 0.5 + 0.5;
 		}`

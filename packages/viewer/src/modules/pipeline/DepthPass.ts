@@ -2,6 +2,7 @@ import {
   Camera,
   Color,
   DoubleSide,
+  NearestFilter,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
@@ -49,7 +50,10 @@ export class DepthPass extends Pass implements SpecklePass {
   constructor() {
     super()
 
-    this.renderTarget = new WebGLRenderTarget(256, 256)
+    this.renderTarget = new WebGLRenderTarget(256, 256, {
+      minFilter: NearestFilter,
+      magFilter: NearestFilter
+    })
     /** On Chromium, on MacOS the 16 bit depth render buffer appears broken.
      *  We're not really using a stencil buffer at all, we're just forcing
      *  three.js to use a 24 bit depth render buffer

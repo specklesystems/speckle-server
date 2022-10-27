@@ -21,9 +21,9 @@ export const speckleCopyOutputFrag = `
         #if OUTPUT_TYPE == 1
             outSample.rgb = vec3(unpackRGBAToDepth(inSample));
         #endif
-        #if OUTPUT_TYPE == 3
-            outSample.rgb = unpackRGBToNormal(inSample.rgb);
-        #endif
+        // #if OUTPUT_TYPE == 3
+        //     outSample.rgb = unpackRGBToNormal(inSample.rgb);
+        // #endif
 
         gl_FragColor.rgb = outSample;
         gl_FragColor.a = 1.;
