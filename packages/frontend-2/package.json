@@ -8,6 +8,7 @@
     "dev": "concurrently \"yarn start:dev\" \"yarn gqlgen:watch\" -k -n nuxt,gql-codegen",
     "start:dev": "nuxt dev",
     "preview": "nuxt preview",
+    "analyze": "nuxt analyze",
     "postinstall": "nuxt prepare",
     "lint:js": "eslint --ext \".js,.ts,.vue\" .",
     "lint:tsc": "vue-tsc --noEmit",
@@ -17,7 +18,9 @@
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "storybook:test": "test-storybook",
+    "storybook:test:watch": "test-storybook --watch"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
@@ -36,6 +39,10 @@
     "ws": "^8.9.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.19.6",
+    "@babel/preset-env": "^7.19.4",
+    "@babel/preset-react": "^7.18.6",
+    "@babel/preset-typescript": "^7.18.6",
     "@graphql-codegen/cli": "^2.13.6",
     "@graphql-codegen/client-preset": "^1.0.6",
     "@nuxtjs/tailwindcss": "^5.3.5",
@@ -44,12 +51,15 @@
     "@storybook/addon-essentials": "^7.0.0-alpha.42",
     "@storybook/addon-interactions": "^7.0.0-alpha.42",
     "@storybook/addon-links": "^7.0.0-alpha.42",
+    "@storybook/jest": "^0.0.10",
+    "@storybook/test-runner": "0.10.0-next.1",
     "@storybook/testing-library": "^0.0.13",
     "@storybook/vue3": "^7.0.0-alpha.42",
     "@storybook/vue3-vite": "^7.0.0-alpha.42",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/line-clamp": "^0.4.2",
     "@tailwindcss/typography": "^0.5.7",
+    "@testing-library/vue": "^6.6.1",
     "@types/apollo-upload-client": "^17.0.1",
     "@types/eslint": "^8.4.5",
     "@types/js-cookie": "^3.0.2",
@@ -64,6 +74,7 @@
     "eslint-plugin-storybook": "^0.6.6",
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
+    "jest": "27",
     "nuxt": "3.0.0-rc.11",
     "postcss-html": "^1.5.0",
     "postcss-nesting": "^10.2.0",
