@@ -34,6 +34,7 @@
         :disabled="disabled"
         :aria-invalid="error ? 'true' : 'false'"
         :aria-describedby="helpTipId"
+        role="textbox"
       />
       <div
         v-if="error"
@@ -61,38 +62,65 @@ import { Optional } from '@speckle/shared'
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
 
 const props = defineProps({
+  /**
+   * Input "type" value (changes behaviour & look)
+   */
   type: {
     type: String as PropType<InputType>,
     default: 'text'
   },
+  /**
+   * Unique ID for the input (must be unique page-wide)
+   */
   name: {
     type: String,
     required: true
   },
+  /**
+   * Optional help text
+   */
   help: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * Placeholder text
+   */
   placeholder: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * Set label text explicitly
+   */
   label: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * Whether to show the red "required" asterisk
+   */
   showRequired: {
     type: Boolean,
     default: false
   },
+  /**
+   * Whether to disable the component, blocking it from user input
+   */
   disabled: {
     type: Boolean,
     default: false
   },
+  /**
+   * vee-validate validation rules
+   */
   rules: {
     type: [String, Object, Function, Array] as PropType<RuleExpression<string>>,
     default: undefined
   },
+  /**
+   * vee-validate validation() on component mount
+   */
   validateOnMount: {
     type: Boolean,
     default: false
@@ -127,7 +155,7 @@ const computedClasses = computed((): string => {
 
 const title = computed(() => props.label || props.name)
 
-const helpTip = computed(() => props.help || error.value)
+const helpTip = computed(() => error.value || props.help)
 const hasHelpTip = computed(() => !!helpTip.value)
 const helpTipId = computed(() => (hasHelpTip.value ? `${props.name}-help` : undefined))
 const helpTipClasses = computed((): string =>

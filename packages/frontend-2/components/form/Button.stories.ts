@@ -1,12 +1,12 @@
 import { userEvent, within } from '@storybook/testing-library'
-import Button from '~~/components/form/Button.vue'
+import FormButton from '~~/components/form/Button.vue'
 import { Story, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 
 export default {
   title: 'Speckle/Form/Button',
-  component: Button,
+  component: FormButton,
   argTypes: {
     to: {
       type: 'string'
@@ -66,7 +66,7 @@ const leftClickPlay = clickPlayBuilder(false)
 
 export const Default: Story = {
   render: (args) => ({
-    components: { FormButton: Button },
+    components: { FormButton },
     setup() {
       return { args }
     },
