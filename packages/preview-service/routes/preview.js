@@ -29,10 +29,11 @@ async function pageFunction(objectUrl) {
   window.v.zoom(undefined, 0.95, false)
   await waitForAnimation(100)
 
-  // full 360
+  // full 360. This needs testing with the new progressive pipeline
   for (let i = 0; i < 24; i++) {
     window.v.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
-    await waitForAnimation()
+    window.v.getRenderer().resetPipeline(true)
+    await waitForAnimation(1000)
     ret.scr[i + ''] = await window.v.screenshot()
   }
 

@@ -265,6 +265,7 @@ export default class Sandbox {
         })
       for (let i = 0; i < 24; i++) {
         this.viewer.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
+        this.viewer.getRenderer().resetPipeline(true)
         await waitForAnimation(1000)
       }
     })
