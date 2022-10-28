@@ -16,7 +16,7 @@ export default {
       description: 'Default slot holds button contents'
     },
     click: {
-      action: 'clicked',
+      action: 'click',
       type: 'function'
     },
     size: {
