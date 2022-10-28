@@ -316,9 +316,9 @@ export default class SpeckleRenderer {
     this.pipeline.update(this)
   }
 
-  public resetPipeline() {
+  public resetPipeline(force = false) {
     this._needsRender = true
-    this.pipeline.reset()
+    if (this.viewer.cameraHandler.controls.hasRested || force) this.pipeline.reset()
   }
 
   public render(): void {
@@ -384,7 +384,7 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
-    this.resetPipeline()
+    this.resetPipeline(true)
   }
 
   public removeRenderTree(subtreeId: string) {
@@ -800,6 +800,7 @@ export default class SpeckleRenderer {
     if (this.isPolarView(view)) {
       this.setViewPolar(view, transition)
     }
+    this.pipeline.onStationaryEnd()
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {
