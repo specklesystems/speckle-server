@@ -4,6 +4,10 @@ The replacement for our old Vue 2 Vue CLI frontend SPA app. This one's built wit
 
 Look at the [nuxt 3 documentation](https://v3.nuxtjs.org) to learn more.
 
+## TODO
+
+- Validate client-side build, it seems to over-bundle lodash and potentially some other things
+
 ## Setup
 
 Make sure to install the dependencies:

@@ -13,14 +13,16 @@ import { useAuthToken, TokenRetriever } from '~~/lib/auth/utils/authState'
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
 
-function createWsClient(params: {
+async function createWsClient(params: {
   wsEndpoint: string
   getToken: TokenRetriever
-}): SubscriptionClient {
+}): Promise<SubscriptionClient> {
   const { wsEndpoint, getToken } = params
 
+  // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
+  // SO DON'T RUN createWsClient in SSR
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const wsImplementation = process.server ? (require('ws') as unknown) : undefined
+  const wsImplementation = process.server ? (await import('ws')).default : undefined
   return new SubscriptionClient(
     wsEndpoint,
     {
@@ -79,7 +81,7 @@ function createLink(params: {
   return link
 }
 
-const defaultConfigResolver: ApolloConfigResolver = () => {
+const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
     public: { API_ORIGIN }
   } = useRuntimeConfig()
@@ -88,7 +90,9 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const getToken = useAuthToken()
-  const wsClient = createWsClient({ wsEndpoint, getToken })
+  const wsClient = process.client
+    ? await createWsClient({ wsEndpoint, getToken })
+    : undefined
   const link = createLink({ httpEndpoint, wsClient, getToken })
 
   return {

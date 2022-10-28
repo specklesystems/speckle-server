@@ -4,6 +4,9 @@ import type { StorybookConfig } from '@storybook/builder-vite'
 import { mergeConfig, InlineConfig } from 'vite'
 import jiti from 'jiti'
 
+// used in nuxt.config.ts
+process.env.IS_STORYBOOK_BUILD = 'true'
+
 // having to use jiti cause of weird transpilation stuff going on during the storybook build
 const jitiImport = jiti(import.meta.url, {
   cache: false,
@@ -41,12 +44,6 @@ const config: StorybookConfig = {
     console.log(`...done [${Math.ceil(performance.now() - now)}ms]`)
 
     const customConfig: InlineConfig = {
-      resolve: {
-        alias: {
-          // not sure why, but storybook tries to bundle "crypto"
-          crypto: require.resolve('rollup-plugin-node-builtins')
-        }
-      },
       plugins: [
         // Auto-imports managed by unimport
         // TODO: Is this already handled through nuxtViteConfig? Global functions seem to work without this
@@ -58,7 +55,8 @@ const config: StorybookConfig = {
     final = mergeConfig(final, customConfig)
 
     return final
-  }
+  },
+  features: { storyStoreV7: true, interactionsDebugger: true }
 }
 
 export default config

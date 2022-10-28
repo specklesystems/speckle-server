@@ -27,36 +27,63 @@ type FormButtonType =
   | 'success'
   | 'warning'
 
-const emit = defineEmits<{ (e: 'click', val: MouseEvent): void }>()
+const emit = defineEmits<{
+  /**
+   * Emit MouseEvent on click
+   */
+  (e: 'click', val: MouseEvent): void
+}>()
 
 const props = defineProps({
+  /**
+   * URL to which to navigate - can be a relative (app) path or an absolute link for an external URL
+   */
   to: {
     type: String as PropType<Optional<string>>,
     required: false,
     default: undefined
   },
+  /**
+   * Choose from one of many button sizes
+   */
   size: {
     type: String as PropType<FormButtonSize>,
     default: 'normal'
   },
+  /**
+   * If set, will make the button take up all available space horizontally
+   */
   fullWidth: {
     type: Boolean,
     default: false
   },
+  /**
+   * Choose semantic color of the button
+   */
   type: {
     type: String as PropType<FormButtonType>,
     default: 'primary'
   },
+  /**
+   * Whether the target location should be forcefully treated as an external URL
+   * (for relative paths this will likely cause a redirect)
+   */
   external: {
     type: Boolean as PropType<Optional<boolean>>,
     required: false,
     default: undefined
   },
+  /**
+   * Whether to disable the button so that it can't be pressed
+   */
   disabled: {
     type: Boolean as PropType<Optional<boolean>>,
     required: false,
     default: undefined
   },
+  /**
+   * If set, will have type set to "submit" to enable it to submit any parent forms
+   */
   submit: {
     type: Boolean,
     default: false
