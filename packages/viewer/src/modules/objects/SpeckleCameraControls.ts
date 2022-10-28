@@ -96,6 +96,22 @@ export class SpeckleCameraControls extends CameraControls {
     return
   }
 
+  protected _zoomInternal = (delta: number, x: number, y: number): void => {
+    const zoomScale = Math.pow(0.95, delta * this.dollySpeed)
+
+    // for both PerspectiveCamera and OrthographicCamera
+    this.zoomTo(this._zoom * zoomScale)
+    this._didDolly = true
+    this.dispatchEvent({ type: 'controlstart' })
+    if (this.dollyToCursor) {
+      this._dollyControlAmount = this._zoomEnd
+
+      this._dollyControlCoord.set(x, y)
+    }
+
+    return
+  }
+
   /**
    * Dolly in/out camera position to given distance.
    * @param distance Distance of dolly.
