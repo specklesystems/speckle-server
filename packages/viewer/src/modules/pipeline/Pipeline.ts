@@ -78,7 +78,7 @@ export class Pipeline {
   private staticAoPass: StaticAOPass = null
 
   private drawingSize: Vector2 = new Vector2()
-  private renderType: RenderType = RenderType.NORMAL
+  private _renderType: RenderType = RenderType.NORMAL
   private accumulationFrame = 0
 
   public set pipelineOptions(options: Partial<PipelineOptions>) {
@@ -202,10 +202,14 @@ export class Pipeline {
 
   public set needsProgressive(value: boolean) {
     this._needsProgressive = value
-    if (!value) this.renderType = RenderType.NORMAL
-    if (value && this.renderType === RenderType.NORMAL)
-      this.renderType = RenderType.ACCUMULATION
+    if (!value) this._renderType = RenderType.NORMAL
+    if (value && this._renderType === RenderType.NORMAL)
+      this._renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
+  }
+
+  public get renderType() {
+    return this._renderType
   }
 
   public constructor(renderer: WebGLRenderer, batcher: Batcher) {
@@ -320,7 +324,7 @@ export class Pipeline {
     if (this.drawingSize.length() === 0) return
 
     this._renderer.clear(true)
-    if (this.renderType === RenderType.NORMAL) {
+    if (this._renderType === RenderType.NORMAL) {
       this.composer.render()
       const ret = false || this._resetFrame
       if (this._resetFrame) {
@@ -343,11 +347,11 @@ export class Pipeline {
 
   public onStationaryBegin() {
     if (!this._needsProgressive) return
-    if (this.renderType === RenderType.ACCUMULATION) {
+    if (this._renderType === RenderType.ACCUMULATION) {
       this.accumulationFrame = 0
       return
     }
-    this.renderType = RenderType.ACCUMULATION
+    this._renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
     this.depthPass.enabled = true
     this.depthPass.depthType = DepthType.LINEAR_DEPTH
@@ -359,22 +363,22 @@ export class Pipeline {
     this.staticAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
-    this.applySaoPass.setRenderType(this.renderType)
+    this.applySaoPass.setRenderType(this._renderType)
     console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
     if (!this._needsProgressive) return
-    if (this.renderType === RenderType.NORMAL) return
+    if (this._renderType === RenderType.NORMAL) return
     this.accumulationFrame = 0
-    this.renderType = RenderType.NORMAL
+    this._renderType = RenderType.NORMAL
     this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
     this.depthPass.depthSize = DepthSize.HALF
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
-    this.applySaoPass.setRenderType(this.renderType)
+    this.applySaoPass.setRenderType(this._renderType)
     console.warn('Ending stationary')
   }
 }

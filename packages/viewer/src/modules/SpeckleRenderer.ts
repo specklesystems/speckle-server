@@ -44,7 +44,12 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
-import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
+import {
+  DefaultPipelineOptions,
+  Pipeline,
+  PipelineOptions,
+  RenderType
+} from './pipeline/Pipeline'
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
@@ -209,6 +214,15 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.addEventListener('control', () => {
       this._needsRender = true
       this.pipeline.onStationaryEnd()
+    })
+    this.viewer.cameraHandler.controls.addEventListener('update', () => {
+      if (
+        !this.viewer.cameraHandler.controls.hasRested &&
+        this.pipeline.renderType === RenderType.ACCUMULATION
+      ) {
+        this._needsRender = true
+        this.pipeline.onStationaryEnd()
+      }
     })
   }
 
@@ -412,6 +426,7 @@ export default class SpeckleRenderer {
 
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
+    this.updateClippingPlanes(this.viewer.sectionBox.planes)
     this.renderer.shadowMap.needsUpdate = true
   }
 
@@ -523,6 +538,7 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.needsUpdate = true
     this.needsRender = true
     this.updateHelpers()
+    this.resetPipeline()
   }
 
   public setSunLightConfiguration(config: SunLightConfiguration) {
