@@ -333,7 +333,7 @@ export class Pipeline {
       }
       return ret
     } else {
-      console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
+      // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
       this.composer.render()
       this.accumulationFrame++
       return this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
@@ -364,7 +364,7 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    console.warn('Starting stationary')
+    // console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
@@ -379,6 +379,6 @@ export class Pipeline {
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    console.warn('Ending stationary')
+    // console.warn('Ending stationary')
   }
 }
