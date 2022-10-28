@@ -384,7 +384,8 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
-    this.resetPipeline(true)
+    // this.resetPipeline(true)
+    this._needsRender = true
   }
 
   public removeRenderTree(subtreeId: string) {
@@ -682,9 +683,11 @@ export default class SpeckleRenderer {
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
+      this.pipeline.onStationaryEnd()
       return
     }
     this.zoomToBox(this.boxFromObjects(objectIds), fit, transition)
+    this.pipeline.onStationaryEnd()
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
