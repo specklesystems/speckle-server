@@ -304,6 +304,7 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
+    this.renderPass.camera = renderer.camera
     this.depthPass.update(renderer.scene, renderer.camera)
     this.dynamicAoPass.update(renderer.scene, renderer.camera)
     this.normalsPass.update(renderer.scene, renderer.camera)

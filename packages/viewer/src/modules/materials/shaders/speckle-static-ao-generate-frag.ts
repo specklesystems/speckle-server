@@ -47,9 +47,13 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 
 		float getPerspectiveDepth(const in vec2 coords) {
 			float linearDepth = unpackRGBAToDepth( texture2D( tDepth, coords ) );
-			float viewZ = orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
-			float centerDepth = viewZToPerspectiveDepth(viewZ, cameraNear, cameraFar);
-			return centerDepth;
+			#if PERSPECTIVE_CAMERA == 1
+				float viewZ = orthographicDepthToViewZ(linearDepth, cameraNear, cameraFar);
+				float centerDepth = viewZToPerspectiveDepth(viewZ, cameraNear, cameraFar);
+				return centerDepth;
+			#else
+				return linearDepth;
+			#endif
 		}
 
 		float getViewDepth(const in float linearDepth) {
@@ -194,12 +198,16 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
         const float offset = PI2 / float(NUM_FRAMES);
 
 		float computeKernelSize(float d, float r) {
-			// Apparently this is wrong
-			// return (r * tan(fov) * d) / (size.y * 0.5);
-			// And this is correct
-			float rp = r / (size.y * 0.5);
-			return sqrt((rp*rp*tanFov*tanFov*d*d)/(1. + rp*rp*tanFov*tanFov));
-			// return r;
+			#if PERSPECTIVE_CAMERA == 1
+				// Apparently this is wrong
+				// return (r * tan(fov) * d) / (size.y * 0.5);
+				// And this is correct
+				float rp = r / (size.y * 0.5);
+				return sqrt((rp*rp*tanFov*tanFov*d*d)/(1. + rp*rp*tanFov*tanFov));
+			#else
+				float twoOrthoSize = size.y / (2./ cameraProjectionMatrix[1][1]);
+				return r / twoOrthoSize;
+			#endif
 		}
 
 		float getAmbientOcclusion( const in vec3 centerViewPosition, in float centerDepth ) {
