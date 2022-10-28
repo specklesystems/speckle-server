@@ -9,6 +9,7 @@
       computedClasses
     ]"
     :disabled="disabled"
+    role="button"
     @click="onClick"
   >
     <slot>Submit</slot>
