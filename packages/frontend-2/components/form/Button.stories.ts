@@ -2,7 +2,7 @@ import { userEvent, within } from '@storybook/testing-library'
 import Button from '~~/components/form/Button.vue'
 import { Story, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
-import { VuePlayFunction } from '~~/lib/common/helpers/storybook'
+import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 
 export default {
   title: 'Speckle/Form/Button',
@@ -79,14 +79,19 @@ export const Default: Story = {
     default: 'Click me to open Google!',
     size: 'normal',
     type: 'primary'
+  },
+  parameters: {
+    docs: {
+      source: {
+        code: '<FormButton to="/">Hello World!</FormButton>'
+      }
+    }
   }
 }
 
-export const Disabled: Story = {
-  ...Default,
+export const Disabled: Story = mergeStories(Default, {
   play: leftClickPlay,
   args: {
-    ...Default.args,
     disabled: true,
     default: 'Disabled button'
   },
@@ -97,94 +102,76 @@ export const Disabled: Story = {
       }
     }
   }
-}
+})
 
-export const NoTarget: Story = {
-  ...Default,
+export const NoTarget: Story = mergeStories(Default, {
   play: leftClickPlay,
   args: {
-    ...Default.args,
-    to: undefined,
+    to: null,
     default: 'No URL, only for tracking click events'
   }
-}
+})
 
-export const Small: Story = {
-  ...Default,
+export const Small: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     size: 'small',
     default: 'Small button'
   }
-}
+})
 
-export const Big: Story = {
-  ...Default,
+export const Big: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     size: 'big',
     default: 'Big button'
   }
-}
+})
 
-export const FullWidth: Story = {
-  ...Default,
+export const FullWidth: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     fullWidth: true,
     default: 'Full width button'
   }
-}
+})
 
-export const Secondary: Story = {
-  ...Default,
+export const Secondary: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     type: 'secondary',
     default: 'Secondary variant'
   }
-}
+})
 
-export const Danger: Story = {
-  ...Default,
+export const Danger: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     type: 'danger',
     default: 'Danger variant'
   }
-}
+})
 
-export const Outline: Story = {
-  ...Default,
+export const Outline: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     type: 'outline',
     default: 'Outline variant'
   }
-}
+})
 
-export const Success: Story = {
+export const Success: Story = mergeStories(Default, {
   ...Default,
   args: {
     ...Default.args,
     type: 'success',
     default: 'Success variant'
   }
-}
+})
 
-export const Warning: Story = {
-  ...Default,
+export const Warning: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     type: 'warning',
     default: 'Warning variant'
   }
-}
+})
 
-export const External: Story = {
-  ...Default,
+export const External: Story = mergeStories(Default, {
   args: {
-    ...Default.args,
     external: true,
     to: '/',
     default: 'External link'
@@ -196,14 +183,12 @@ export const External: Story = {
       }
     }
   }
-}
+})
 
-export const Submit: Story = {
-  ...Default,
+export const Submit: Story = mergeStories(Default, {
   play: leftClickPlay,
   args: {
-    ...Default.args,
-    to: undefined,
+    to: null,
     submit: true,
     default: 'Submit button'
   },
@@ -214,4 +199,4 @@ export const Submit: Story = {
       }
     }
   }
-}
+})
