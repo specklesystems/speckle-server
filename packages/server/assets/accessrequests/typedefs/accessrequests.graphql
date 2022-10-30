@@ -1,9 +1,15 @@
 extend type Query {
   """
-  Get authed user's stream access request
+  RENAMED: Get authed user's stream access request
   """
   streamAccessRequest(streamId: String!): StreamAccessRequest
     @hasRole(role: "server:user")
+    @deprecated(reason: "Streams are deprecated in favour of projects.")
+
+  """
+  Get authed user's project access request
+  """
+  projectAccessReuqest(projectId: String!): ProjectAccessRequest
 }
 
 extend type Stream {
@@ -13,22 +19,64 @@ extend type Stream {
   pendingAccessRequests: [StreamAccessRequest!] @hasStreamRole(role: STREAM_OWNER)
 }
 
+extend type Project {
+  """
+  Pending project access requests.
+  """
+  pendingAccessRequests: [ProjectAccessRequest!] @hasStreamRole(role: STREAM_OWNER)
+}
+
 extend type Mutation {
+  """
+  DEPRECATED: Accept or decline a stream access request. Must be a stream owner to invoke this.
+  """
+  streamAccessRequestUse(
+    requestId: String!
+    accept: Boolean!
+    role: StreamRole! = STREAM_CONTRIBUTOR
+  ): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+    @deprecated(reason: "Streams are deprecated in favour of projects.")
+
   """
   Accept or decline a stream access request. Must be a stream owner to invoke this.
   """
-  streamAccessRequestUse(
+  projectAccessRequestUse(
     requestId: String!
     accept: Boolean!
     role: StreamRole! = STREAM_CONTRIBUTOR
   ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "users:invite")
 
   """
-  Request access to a specific stream
+  DEPRECATED: Request access to a specific stream
   """
   streamAccessRequestCreate(streamId: String!): StreamAccessRequest!
     @hasRole(role: "server:user")
     @hasScope(scope: "users:invite")
+    @deprecated(reason: "Streams are deprecated in favour of projects.")
+
+  """
+  Request access to a specific project.
+  """
+  projectAccessRequestCreate(projectId: String!): ProjectAccessRequest!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+}
+
+"""
+RENAMED: Created when a user requests to become a contributor on a project
+"""
+type ProjectAccessRequest {
+  id: ID!
+  requester: LimitedUser!
+  requesterId: String!
+  projectId: String!
+  """
+  Can only be selected if authed user has proper access
+  """
+  project: Project!
+  createdAt: DateTime!
 }
 
 """

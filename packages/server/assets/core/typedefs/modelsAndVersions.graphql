@@ -1,5 +1,5 @@
 extend type Project {
-  model(id: String!): Model
+  model(id: String!): Model # note we're not using branch (model) names anymore
   models(limit: Int! = 20, cursor: String, query: ModelQuery): ModelCollection
   version(id: String!): Version
   # Note: exposing all versions at a stream top level could be interesting (for later)
@@ -70,3 +70,111 @@ input ModelVersionQuery {
   # search by source application
   sourceApplication: String
 }
+
+extend type Mutation {
+  # Models C(R)UD
+  modelCreate(model: ModelCreateInput!): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  modelUpdate(model: ModelUpdateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  modelDelete(model: ModelDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  # Versions C(R)UD
+  versionCreate(version: VersionCreateInput!): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  versionUpdate(version: VersionUpdateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  versionReceive(input: VersionReceivedInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  versionDelete(version: VersionDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Move a batch of versions to a new branch
+  """
+  versionsMove(input: VersionsMoveInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Delete a batch of versions
+  """
+  versionsDelete(input: VersionsDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+}
+
+input ModelCreateInput {
+  projectId: String!
+  name: String!
+  description: String
+}
+
+input ModelUpdateInput {
+  projectId: String!
+  id: String!
+  name: String
+  description: String
+}
+
+input ModelDeleteInput {
+  projectId: String!
+  id: String!
+}
+
+input VersionCreateInput {
+  projectId: String!
+  modelId: String! # Note: we're no longer using branch names -> swithcing to pure model ids.
+  objectId: String!
+  message: String
+  sourceApplication: String
+  sourceFileName: String # Note: db schema extension needed
+  totalChildrenCount: Int
+  parents: [String]
+}
+
+input VersionUpdateInput {
+  projectId: String!
+  id: String!
+  message: String
+  """
+  To move the commit to a different model, please the id of the model.
+  """
+  newModelId: String
+}
+
+input VersionReceivedInput {
+  projectId: String!
+  versionId: String!
+  sourceApplication: String!
+  message: String
+}
+
+input VersionDeleteInput {
+  projectId: String!
+  id: String!
+}
+
+input VersionsMoveInput {
+  targetModelId: String!
+  versionIds: [String!]!
+}
+
+input VersionsDeleteInput {
+  versionIds: [String!]!
+}
+
+# extend type Subscription {} # TODO

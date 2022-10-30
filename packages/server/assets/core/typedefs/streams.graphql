@@ -4,6 +4,7 @@ extend type Query {
   to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
   """
   stream(id: String!): Stream
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 
   """
   Returns all streams that the active user is a collaborator on.
@@ -12,6 +13,7 @@ extend type Query {
   streams(query: String, limit: Int = 25, cursor: String): StreamCollection
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 
   """
   All the streams of the server. Available to admins only.
@@ -35,6 +37,7 @@ extend type Query {
     """
     sort: DiscoverableStreamsSortingInput
   ): StreamCollection
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 }
 
 type Stream {
@@ -101,6 +104,7 @@ extend type LimitedUser {
   streams(limit: Int! = 25, cursor: String): StreamCollection!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 
   """
   Total amount of favorites attached to streams owned by the user
@@ -150,41 +154,53 @@ extend type Mutation {
   streamCreate(stream: StreamCreateInput!): String
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
+
   """
   Updates an existing stream.
   """
   streamUpdate(stream: StreamUpdateInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
+
   """
   Deletes an existing stream.
   """
   streamDelete(id: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 
   streamsDelete(ids: [String!]): Boolean! @hasRole(role: "server:admin")
+
   """
   Update permissions of a user on a given stream.
   """
   streamUpdatePermission(permissionParams: StreamUpdatePermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
+
   """
   Revokes the permissions of a user on a given stream.
   """
   streamRevokePermission(permissionParams: StreamRevokePermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 
   # Favorite/unfavorite the given stream
   streamFavorite(streamId: String!, favorited: Boolean!): Stream
     @hasRole(role: "server:user")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 
   """
   Remove yourself from stream collaborators (not possible for the owner)
   """
-  streamLeave(streamId: String!): Boolean! @hasRole(role: "server:user")
+  streamLeave(streamId: String!): Boolean!
+    @hasRole(role: "server:user")
+    @deprecated(reason: "Streams will be deprecated and are replaced by projects.")
 }
 
 extend type Subscription {

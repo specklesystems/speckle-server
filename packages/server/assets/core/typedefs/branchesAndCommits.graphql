@@ -1,8 +1,12 @@
 extend type Stream {
   commits(limit: Int! = 25, cursor: String): CommitCollection
+    @deprecated(reason: "Commits are deprecated in favour of versions.")
   commit(id: String): Commit
+    @deprecated(reason: "Commits are deprecated in favour of versions.")
   branches(limit: Int! = 25, cursor: String): BranchCollection
+    @deprecated(reason: "Branches are deprecated in favour of models.")
   branch(name: String = "main"): Branch
+    @deprecated(reason: "Branches are deprecated in favour of models.")
 }
 
 extend type User {
@@ -11,6 +15,7 @@ extend type User {
   from public streams will be returned.
   """
   commits(limit: Int! = 25, cursor: String): CommitCollection
+    @deprecated(reason: "Commits are deprecated in favour of models.")
 }
 
 extend type LimitedUser {
@@ -18,6 +23,7 @@ extend type LimitedUser {
   Get public stream commits authored by the user
   """
   commits(limit: Int! = 25, cursor: String): CommitCollection
+    @deprecated(reason: "Commits are deprecated in favour of models.")
 }
 
 type Branch {
@@ -66,25 +72,32 @@ extend type Mutation {
   branchCreate(branch: BranchCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Branches are replaced by models.")
   branchUpdate(branch: BranchUpdateInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Branches are replaced by models.")
   branchDelete(branch: BranchDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Branches are replaced by models.")
 
   commitCreate(commit: CommitCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Commits are replaced by versions.")
   commitUpdate(commit: CommitUpdateInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Commits are replaced by versions.")
   commitReceive(input: CommitReceivedInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Commits are replaced by versions.")
   commitDelete(commit: CommitDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Commits are replaced by versions.")
 
   """
   Move a batch of commits to a new branch
@@ -92,6 +105,7 @@ extend type Mutation {
   commitsMove(input: CommitsMoveInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Commits are replaced by versions.")
 
   """
   Delete a batch of commits
@@ -99,6 +113,7 @@ extend type Mutation {
   commitsDelete(input: CommitsDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+    @deprecated(reason: "Commits are replaced by versions.")
 }
 
 extend type Subscription {

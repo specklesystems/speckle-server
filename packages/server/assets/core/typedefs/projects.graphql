@@ -1,31 +1,56 @@
 extend type Query {
+  """
+  Get a specific project.
+  """
   project(id: String!): Project
+  """
+  Get all the projects you have access to.
+  """
   projects(limit: Int! = 20, cursor: String, query: ProjectQuery): ProjectCollection
+  # discoverableProjects(limit: Int! = 20, cursor: String): ProjectCollection # TODO, stage 2
 }
 
-# FKA Stream
+"""
+Formerly known as 'stream'.
+"""
 type Project {
   id: String!
   name: String!
   description: String
-  # Whether the project can be viewed by non-contributors
+  """
+  Whether the project can be viewed by non-contributors
+  """
   isPublic: Boolean!
-  # Whether the project (if public) can be found on public project exploration pages and searches
+  """
+  Whether the project (if public) can be found on public project exploration pages and searches
+  """
   isDiscoverable: Boolean!
-  # Whether this project allows comments from any logged in user.
+  """
+  Whether this project allows comments from any logged in user.
+  """
   allowPublicComments: Boolean!
-  # Your role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
+  """
+  Your role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
+  """
   role: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  # The people that have access to this stream.
+  """
+  The people that have access to this project.
+  """
   team: [LimitedUser!]!
-  # Collaborators who have been invited, but not yet accepted.
+  """
+  Collaborators who have been invited, but not yet accepted.
+  """
   pendingTeamMemembers: [PendingProjectTeamMember!] @hasStreamRole(role: STREAM_OWNER)
   size: String
-  # Date when you favorited this project. `null` if project isn't viewed from a specific user's perspective or if it isn't favorited.
+  """
+  Date when you favorited this project. `null` if project isn't viewed from a specific user's perspective or if it isn't favorited.
+  """
   favoritedDate: DateTime
-  # How many times this project has been favorited
+  """
+  How many times this project has been favorited
+  """
   favoritesCount: Int!
 }
 
@@ -36,8 +61,14 @@ type ProjectCollection {
 }
 
 input ProjectQuery {
+  """
+  Filters by ownership type or favourites.
+  """
   filter: ProjectFilter = all
-  query: String
+  """
+  Searches by a specific project name.
+  """
+  nameQuery: String
 }
 
 enum ProjectFilter {
@@ -45,20 +76,180 @@ enum ProjectFilter {
   owner
   contributor
   reviewer
-  # favourite
+  favourite
 }
 
 type PendingProjectTeamMember {
   id: String!
   inviteId: String!
-  streamId: String!
-  streamName: String!
-  # E-mail address or name of the invited user
+  projectId: String!
+  projectName: String!
+  """
+  E-mail address or name of the invited user
+  """
   title: String!
   role: String!
   invitedBy: LimitedUser!
-  # Set only if user is registered
+  """
+  Set only if user is registered
+  """
   user: LimitedUser
-  # Only available if the active user is the pending stream collaborator
+  """
+  Only available if the active user is the pending project collaborator
+  """
   token: String
+}
+
+extend type LimitedUser {
+  """
+  Returns all discoverable projects that the user is a collaborator on
+  """
+  projects(limit: Int! = 20, cursor: String): ProjectCollection!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  """
+  Total amount of favorites attached to projects owned by the user
+  """
+  totalOwnedProjectsFavorites: Int!
+}
+
+extend type Mutation {
+  """
+  Creates a new project.
+  """
+  projectCreate(project: ProjectCreateInput!): String
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Updates an existing project.
+  """
+  projectUpdate(project: ProjectUpdateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Deletes an existing project.
+  """
+  projectDelete(id: String!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Bulk deletes a set of projects.
+  """
+  projectsDelete(ids: [String!]): Boolean! @hasRole(role: "server:admin")
+
+  """
+  Update permissions of a user on a given project.
+  """
+  projectUpdatePermission(permissionParams: ProjectUpdatePermissionInput!): Boolean
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Revokes the permissions of a user on a given project.
+  """
+  projectRevokePermission(permissionParams: ProjectRevokePermissionInput!): Boolean
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Favorite/unfavorite the given project.
+  """
+  projectFavorite(id: String!, favorited: Boolean!): Project
+    @hasRole(role: "server:user")
+
+  """
+  Remove yourself from project collaborators (not possible for the owner)
+  """
+  projectLeave(id: String!): Boolean! @hasRole(role: "server:user")
+}
+
+input ProjectCreateInput {
+  name: String
+  description: String
+  """
+  Whether the stream can be viewed by non-contributors
+  """
+  isPublic: Boolean
+  """
+  Whether the stream (if public) can be found on public stream exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean
+  """
+  Optionally specify user IDs of users that you want to invite to be contributors to this stream
+  """
+  withContributors: [String!]
+}
+
+input ProjectUpdateInput {
+  id: String!
+  name: String
+  description: String
+  """
+  Whether the project can be viewed by non-contributors
+  """
+  isPublic: Boolean
+  """
+  Whether the project (if public) can be found on public project exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean
+  allowPublicComments: Boolean
+}
+
+input ProjectUpdatePermissionInput {
+  id: String!
+  userId: String!
+  role: String!
+}
+
+input ProjectRevokePermissionInput {
+  id: String!
+  userId: String!
+}
+
+extend type Subscription {
+  #
+  # User bound subscriptions that operate on the project collection of an user
+  # Example relevant view/usecase: updating the list of projects for a user.
+  #
+
+  """
+  Subscribes to new project added event for your profile. Use this to display an up-to-date list of projects.
+  **NOTE**: If someone shares a project with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
+  """
+  userProjectAdded: JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
+
+  """
+  Subscribes to project removed event for your profile. Use this to display an up-to-date list of projects for your profile.
+  **NOTE**: If someone revokes your permissions on a project, this subscription will be triggered with an extra value of `revokedBy` in the payload.
+  """
+  userProjectRemoved: JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
+
+  #
+  # Project bound subscriptions that operate on the project itself.
+  # Example relevant view/usecase: a single project connector, or view, or component in a web app
+  #
+
+  """
+  Subscribes to project updated event. Use this in clients/components that pertain only to this project. You will be notified of changes to the project's name and/or description.
+  """
+  projectUpdated(id: String): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  """
+  Subscribes to project deleted event. Use this in clients/components that pertain only to this project.
+  """
+  projectDeleted(id: String): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 }

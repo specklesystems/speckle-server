@@ -1,5 +1,6 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
+    @deprecated(reason: "Please use the project comment field.")
   """
   This query can be used in the following ways:
   - get all the comments for a stream: **do not pass in any resource identifiers**.
@@ -12,6 +13,7 @@ extend type Query {
     cursor: String
     archived: Boolean! = false
   ): CommentCollection
+    @deprecated(reason: "Please use the project or model comment field.")
 }
 
 extend type Project {
@@ -50,6 +52,7 @@ extend type Stream {
   ```
   """
   commentCount: Int!
+    @deprecated(reason: "Streams will be deprecated in favour of projects.")
 }
 
 extend type Commit {
@@ -64,6 +67,7 @@ extend type Commit {
   ```
   """
   commentCount: Int!
+    @deprecated(reason: "Commits will be deprecated in favour of versions.")
 }
 
 extend type Object {
@@ -113,7 +117,7 @@ type Comment {
 
 type CommentCollection {
   totalCount: Int!
-  cursor: DateTime
+  cursor: DateTime # Note: this will need to be an opaque string given that we're having more options for comment collection filtering.
   items: [Comment!]!
 }
 
@@ -147,6 +151,9 @@ input CommentCreateInput {
   ProseMirror document object
   """
   text: JSONObject
+  """
+  Stores various information related to the comment, such as camera position, filter, etc.
+  """
   data: JSONObject!
   """
   IDs of uploaded blobs that should be attached to this comment
@@ -163,10 +170,13 @@ input ReplyCreateInput {
   """
   text: JSONObject
   """
+  Stores various information related to the comment, such as camera position, filter, etc.
+  """
+  data: JSONObject!
+  """
   IDs of uploaded blobs that should be attached to this reply
   """
   blobIds: [String!]!
-  data: JSONObject
 }
 
 input CommentEditInput {
