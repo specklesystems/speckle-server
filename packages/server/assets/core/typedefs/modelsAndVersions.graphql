@@ -1,6 +1,9 @@
 extend type Project {
-  model(id: String!): String!
+  model(id: String!): Model
   models(limit: Int! = 20, cursor: String, query: ModelQuery): ModelCollection
+  version(id: String!): Version
+  # Note: exposing all versions at a stream top level could be interesting (for later)
+  # versions(limit: Int! = 20, cursor: String, query: ModelQuery): ModelCollection
 }
 
 # FKA Branch
@@ -15,7 +18,15 @@ type Model {
   authors: [LimitedUser]
   # A list of the unique source applications that contributed versions to this model.
   sourceApplications: [String!]
-  versions(limit: Int! = 20, cursor: String, query: VersionQuery): VersionCollection
+  # Optional: for ease of use in FE. Would replace getting versions(limit:1) and digging through it.
+  # This would be used to populate the screenshot of the model card.
+  latestVersion: Version
+  # The list of this model's versions.
+  versions(
+    limit: Int! = 20
+    cursor: String
+    query: ModelVersionQuery
+  ): VersionCollection
 }
 
 # FKA Commit
@@ -29,7 +40,7 @@ type Version {
   sourceApplication: String!
   # The name of the file that this version originated from. NOTE: needs schema extending!
   sourceFileName: String
-  # If set by the host application connector, the id of the previous verison.
+  # If set by the host application connector, the id of the previous version.
   parents: [String]
   author: LimitedUser
 }
@@ -42,6 +53,7 @@ type ModelCollection {
 
 input ModelQuery {
   name: String
+  # TODO: will be expanded
 }
 
 type VersionCollection {
@@ -50,7 +62,7 @@ type VersionCollection {
   items: [Version!]
 }
 
-input VersionQuery {
+input ModelVersionQuery {
   # text search by the version's message
   message: String
   # search by author

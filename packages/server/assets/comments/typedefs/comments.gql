@@ -14,6 +14,30 @@ extend type Query {
   ): CommentCollection
 }
 
+extend type Project {
+  commentCount: Int!
+  comment(id: String!): Comment
+  # Should return a list of top level comments (threads -  where parent comment is null)
+  comments(limit: Int! = 20, cursor: String, query: CommentQuery): CommentCollection
+}
+
+extend type Model {
+  commentCount: Int!
+  # Should return a list of top level comments (threads -  where parent comment is null) for this specific model (fka branch)
+  comments(limit: Int! = 20, cursor: String): CommentCollection
+}
+
+input CommentQuery {
+  archived: Boolean = false # whether to return "archived" comments or not
+  sort: CommentSort = lastreply
+}
+
+enum CommentSort {
+  lastreply
+  createdAtDescending
+  createdAtAscending
+}
+
 extend type Stream {
   """
   The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:
