@@ -1,3 +1,4 @@
+import dotenv from 'dotenv'
 import Unimport from 'unimport/unplugin'
 import { flatten } from 'lodash-es'
 import type { StorybookConfig } from '@storybook/builder-vite'
@@ -6,6 +7,12 @@ import jiti from 'jiti'
 
 // used in nuxt.config.ts
 process.env.IS_STORYBOOK_BUILD = 'true'
+
+// make nuxt env vars available here
+dotenv.config()
+
+// add env vars to storybook
+process.env.STORYBOOK_API_ORIGIN = process.env.API_ORIGIN
 
 // having to use jiti cause of weird transpilation stuff going on during the storybook build
 const jitiImport = jiti(import.meta.url, {
@@ -23,6 +30,9 @@ const storiesPairs = storyPaths.map((p) => [
 ])
 const stories = flatten(storiesPairs)
 
+/**
+ * STORYBOOK CONFIG STARTS HERE
+ */
 const config: StorybookConfig = {
   stories,
   addons: [
@@ -35,6 +45,7 @@ const config: StorybookConfig = {
     name: '@storybook/vue3-vite',
     options: {}
   },
+  features: { storyStoreV7: true, interactionsDebugger: true },
   async viteFinal(config) {
     const now = performance.now()
     console.log('Integrating Nuxt into Storybook...')
@@ -55,8 +66,7 @@ const config: StorybookConfig = {
     final = mergeConfig(final, customConfig)
 
     return final
-  },
-  features: { storyStoreV7: true, interactionsDebugger: true }
+  }
 }
 
 export default config

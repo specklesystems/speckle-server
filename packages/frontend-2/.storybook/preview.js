@@ -1,14 +1,15 @@
 import '~~/assets/css/tailwind.css'
 
-import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
+import { buildVueAppSetup } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
 import { setup } from '@storybook/vue3'
+
+const setupVueApp = await buildVueAppSetup()
 
 setup((app) => {
   setupVueApp(app)
 })
 
 export const parameters = {
-  actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
     matchers: {
       color: /^(background|color)$/i,

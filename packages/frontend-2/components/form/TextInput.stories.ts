@@ -5,12 +5,12 @@ import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 import { wait } from '@speckle/shared'
 
 export default {
-  title: 'Speckle/Form/TextInput',
   component: FormTextInput,
   parameters: {
     docs: {
       description: {
-        component: 'A standard button to be used anywhere you need any kind of button'
+        component:
+          'A text input box, integrated with vee-validate for validation. Feed in rules through the `rules` prop.'
       }
     }
   },
@@ -21,6 +21,10 @@ export default {
     },
     rules: {
       type: 'function'
+    },
+    'update:modelValue': {
+      type: 'function',
+      action: 'v-model'
     }
   }
 } as Meta
@@ -46,10 +50,11 @@ export const Default: Story = {
     setup() {
       return { args }
     },
-    template: `<form-text-input v-bind="args"/>`
+    template: `<form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>`
   }),
   play: buildTextWriterPlayFunction('Hello world!'),
   args: {
+    modelValue: '',
     type: 'text',
     name: generateRandomName('default'),
     help: 'Some help text',
@@ -62,7 +67,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       source: {
-        code: '<FormTextInput name="unique-id" />'
+        code: `<FormTextInput name="unique-id" v-model="model" :rules="(val) => val ? true : 'Value is required!'"/>`
       }
     }
   }
