@@ -3,7 +3,7 @@ import SemanticColorsDocs from '~~/stories/styling/semantic-colors/SemanticColor
 import { Story, Meta } from '@storybook/vue3'
 
 export default {
-  title: 'Speckle/Styling/Semantic Colors',
+  title: 'Overview/Styling/Semantic Colors',
   component: SemanticColorsComponent,
   parameters: {
     docs: {

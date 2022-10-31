@@ -12,7 +12,11 @@ const config = {
   },
   parserOptions: {
     ecmaVersion: 2020,
-    sourceType: 'module'
+    sourceType: 'module',
+    parser: '@typescript-eslint/parser',
+    tsconfigRootDir: __dirname,
+    project: ['./tsconfig.eslint.json'],
+    extraFileExtensions: ['.vue']
   },
   extends: [...mainExtends],
   plugins: ['@typescript-eslint'],
@@ -50,12 +54,6 @@ const config = {
     },
     {
       files: '*.{ts,tsx,vue}',
-      parserOptions: {
-        parser: '@typescript-eslint/parser',
-        tsconfigRootDir: __dirname,
-        project: ['./tsconfig.eslint.json'],
-        extraFileExtensions: ['.vue']
-      },
       extends: ['plugin:@typescript-eslint/recommended', ...mainExtends],
       rules: {
         '@typescript-eslint/no-explicit-any': ['error'],

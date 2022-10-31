@@ -5,8 +5,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "concurrently \"yarn start:dev\" \"yarn gqlgen:watch\" -k -n nuxt,gql-codegen",
-    "start:dev": "nuxt dev",
+    "dev": "nuxt dev",
     "preview": "nuxt preview",
     "analyze": "nuxt analyze",
     "postinstall": "nuxt prepare",

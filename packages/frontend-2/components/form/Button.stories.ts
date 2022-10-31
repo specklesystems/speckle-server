@@ -5,7 +5,6 @@ import { wait } from '@speckle/shared'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 
 export default {
-  title: 'Speckle/Form/Button',
   component: FormButton,
   argTypes: {
     to: {

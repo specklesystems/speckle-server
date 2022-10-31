@@ -58,6 +58,7 @@ import {
 } from '@heroicons/vue/20/solid'
 import { PropType } from 'vue'
 import { Optional } from '@speckle/shared'
+import { ChangeEvent } from 'rollup'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
 
@@ -124,11 +125,18 @@ const props = defineProps({
   validateOnMount: {
     type: Boolean,
     default: false
+  },
+  modelValue: {
+    type: String,
+    default: ''
   }
 })
 
+defineEmits<{ (e: 'update:modelValue', val: ChangeEvent): void }>()
+
 const { value, errorMessage: error } = useField(props.name, props.rules, {
-  validateOnMount: props.validateOnMount
+  validateOnMount: props.validateOnMount,
+  initialValue: props.modelValue || undefined
 })
 
 const leadingIconClasses = ref('h-4 w-4 text-foreground-3')

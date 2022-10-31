@@ -945,6 +945,8 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
+  testList: Array<TestItem>;
+  testNumber?: Maybe<Scalars['Int']>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -1494,6 +1496,12 @@ export type SubscriptionUserViewerActivityArgs = {
   streamId: Scalars['String'];
 };
 
+export type TestItem = {
+  __typename?: 'TestItem';
+  bar: Scalars['String'];
+  foo: Scalars['String'];
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -1685,6 +1693,11 @@ export type WebhookUpdateInput = {
   url?: InputMaybe<Scalars['String']>;
 };
 
+export type TestDataQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TestDataQuery = { __typename?: 'Query', testNumber?: number | null, testList: Array<{ __typename?: 'TestItem', foo: string, bar: string }> };
+
 export type IsLoggedInQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1696,5 +1709,6 @@ export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 export type GetActiveUserQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, name?: string | null, role?: string | null } | null };
 
 
+export const TestDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TestData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testNumber"}},{"kind":"Field","name":{"kind":"Name","value":"testList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"foo"}},{"kind":"Field","name":{"kind":"Name","value":"bar"}}]}}]}}]} as unknown as DocumentNode<TestDataQuery, TestDataQueryVariables>;
 export const IsLoggedInDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IsLoggedIn"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<IsLoggedInQuery, IsLoggedInQueryVariables>;
 export const GetActiveUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActiveUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}}]} as unknown as DocumentNode<GetActiveUserQuery, GetActiveUserQueryVariables>;

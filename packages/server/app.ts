@@ -36,6 +36,9 @@ import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 
+import { IMocks } from '@graphql-tools/mock'
+import { faker } from '@faker-js/faker'
+
 let graphqlServer: ApolloServer
 
 /**
@@ -125,6 +128,25 @@ function buildApolloSubscriptionServer(
 }
 
 /**
+ * Define mocking config in dev env
+ * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
+ */
+function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolean } {
+  const isDebugEnv = isDevEnv() || isTestEnv()
+  if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
+
+  return {
+    mocks: {
+      Query: () => ({
+        testNumber: () => faker.datatype.number(),
+        testList: () => [...new Array(faker.datatype.number({ min: 1, max: 10 }))]
+      })
+    },
+    mockEntireSchema: false
+  }
+}
+
+/**
  * Create Apollo Server instance
  * @param optionOverrides Optionally override ctor options
  * @param subscriptionServerResolver If you expect to use subscriptions on this instance,
@@ -136,6 +158,7 @@ export async function buildApolloServer(
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
   const schema = ModulesSetup.graphSchema()
+  const { mockEntireSchema, mocks } = buildMocksConfig()
 
   const server = new ApolloServer({
     schema,
@@ -162,6 +185,8 @@ export async function buildApolloServer(
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
     debug,
+    mocks,
+    mockEntireSchema,
     ...optionOverrides
   })
   await server.start()
