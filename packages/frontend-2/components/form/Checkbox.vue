@@ -3,16 +3,19 @@
     <div class="flex h-6 items-center">
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
       <input
-        :id="name"
-        v-model="value"
+        :checked="finalChecked"
         :aria-describedby="descriptionId"
         :name="name"
+        :value="value"
+        :disabled="disabled"
         type="checkbox"
-        class="h-4 w-4 rounded text-primary focus:ring-primary-lighter"
+        class="h-4 w-4 rounded text-primary focus:ring-primary-lighter disabled:cursor-not-allowed disabled:bg-background-2 disabled:text-foreground-3"
         :class="computedClasses"
+        v-bind="$attrs"
+        @change="onChange"
       />
     </div>
-    <div class="ml-2 text-sm">
+    <div class="ml-2 text-sm" style="padding-top: 3px">
       <label :for="name" class="font-medium text-foreground-2">
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
@@ -23,45 +26,108 @@
     </div>
   </div>
 </template>
+<script lang="ts">
+import { defineComponent } from 'vue'
+export default defineComponent({
+  inheritAttrs: false
+})
+</script>
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
 import { PropType } from 'vue'
-import { Optional } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 
 const props = defineProps({
+  /**
+   * Input "type" value (changes behaviour & look). In a checkbox group, all checkboxes must have the same name and different values.
+   */
   name: {
     type: String,
     required: true
   },
+  /**
+   * Whether the input is disabled
+   */
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Set label text
+   */
   label: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * Help text
+   */
   description: {
     type: String as PropType<Optional<string>>,
     default: undefined
   },
+  /**
+   * Whether to inline the help description
+   */
   inlineDescription: {
     type: Boolean,
     default: false
   },
+  /**
+   * vee-validate validation rules
+   */
   rules: {
-    type: [String, Object, Function, Array] as PropType<RuleExpression<boolean>>,
+    type: [String, Object, Function, Array] as PropType<RuleExpression<string>>,
     default: undefined
   },
+  /**
+   * vee-validate validation() on component mount
+   */
   validateOnMount: {
     type: Boolean,
     default: false
   },
+  /**
+   * Whether to show the red "required" asterisk
+   */
   showRequired: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Checkbox group's value
+   */
+  modelValue: {
+    type: String as PropType<Nullable<string>>,
+    default: null
+  },
+  /**
+   * Checkbox's own string value. If it is checked, modelValue will include this value (amongst any other checked values from the same group)
+   */
+  value: {
+    type: String,
+    required: true
   }
 })
 
-const { value, errorMessage } = useField<boolean>(props.name, props.rules, {
-  validateOnMount: props.validateOnMount
+defineEmits<{
+  (e: 'update:modelValue', val: unknown): void
+}>()
+
+const {
+  checked: finalChecked,
+  errorMessage,
+  handleChange
+} = useField<string>(props.name, props.rules, {
+  validateOnMount: props.validateOnMount,
+  type: 'checkbox',
+  checkedValue: props.value
 })
+
+const onChange = (e: unknown) => {
+  if (props.disabled) return
+  handleChange(e)
+}
 
 const title = computed(() => props.label || props.name)
 

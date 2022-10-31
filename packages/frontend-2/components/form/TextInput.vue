@@ -35,6 +35,7 @@
         :aria-invalid="error ? 'true' : 'false'"
         :aria-describedby="helpTipId"
         role="textbox"
+        v-bind="$attrs"
       />
       <div
         v-if="error"
@@ -48,7 +49,12 @@
     </p>
   </div>
 </template>
-
+<script lang="ts">
+import { defineComponent } from 'vue'
+export default defineComponent({
+  inheritAttrs: false
+})
+</script>
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
 import {
