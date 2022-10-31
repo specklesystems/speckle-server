@@ -61,8 +61,8 @@ export default class Sandbox {
     castShadow: true,
     intensity: 5,
     color: 0xffffff,
-    elevation: 1.33,
     azimuth: 0.75,
+    elevation: 1.33,
     radius: 0,
     indirectLightIntensity: 1.2
   }

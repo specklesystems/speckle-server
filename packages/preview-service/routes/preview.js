@@ -29,11 +29,15 @@ async function pageFunction(objectUrl) {
   window.v.zoom(undefined, 0.95, false)
   await waitForAnimation(100)
 
-  // full 360. This needs testing with the new progressive pipeline
   for (let i = 0; i < 24; i++) {
     window.v.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
     window.v.getRenderer().resetPipeline(true)
-    await waitForAnimation(1000)
+    /** Not sure what the frame time when running pupeteer is, but it's not 16ms.
+     *  That's why we're allowing more time between frames than probably needed
+     *  In a future update, we'll have the viewer signal when convergence is complete
+     *  regradless of how many frames/time that takes
+     */
+    await waitForAnimation(2500)
     ret.scr[i + ''] = await window.v.screenshot()
   }
 
