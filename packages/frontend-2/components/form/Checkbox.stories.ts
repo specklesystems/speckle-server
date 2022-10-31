@@ -65,7 +65,8 @@ export const Default: Story = {
     showRequired: false,
     validateOnMount: false,
     inlineDescription: false,
-    value: 'test1'
+    value: 'test1',
+    disabled: false
   }
 }
 
