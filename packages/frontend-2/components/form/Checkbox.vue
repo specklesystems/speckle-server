@@ -35,7 +35,9 @@ export default defineComponent({
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
 import { PropType } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
+
+type ValueType = Optional<string> | string[]
 
 const props = defineProps({
   /**
@@ -77,7 +79,7 @@ const props = defineProps({
    * vee-validate validation rules
    */
   rules: {
-    type: [String, Object, Function, Array] as PropType<RuleExpression<string>>,
+    type: [String, Object, Function, Array] as PropType<RuleExpression<ValueType>>,
     default: undefined
   },
   /**
@@ -98,27 +100,27 @@ const props = defineProps({
    * Checkbox group's value
    */
   modelValue: {
-    type: String as PropType<Nullable<string>>,
-    default: null
+    type: String as PropType<ValueType>,
+    default: undefined
   },
   /**
    * Checkbox's own string value. If it is checked, modelValue will include this value (amongst any other checked values from the same group)
    */
   value: {
-    type: String,
+    type: String as PropType<string>,
     required: true
   }
 })
 
 defineEmits<{
-  (e: 'update:modelValue', val: unknown): void
+  (e: 'update:modelValue', val: ValueType): void
 }>()
 
 const {
   checked: finalChecked,
   errorMessage,
   handleChange
-} = useField<string>(props.name, props.rules, {
+} = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   type: 'checkbox',
   checkedValue: props.value
