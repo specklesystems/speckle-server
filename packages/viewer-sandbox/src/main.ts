@@ -122,4 +122,6 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/f0532359ac/commits/98678e2a3d?c=%5B2455.15367,2689.87156,4366.68444,205.422,-149.41199,148.749,0,1%5D'
   //Gergo's house
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
+  // Point cloud
+  // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
 )
