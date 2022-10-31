@@ -3,6 +3,7 @@ import SelectionHelper from './legacy/SelectionHelper'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { Box3 } from 'three'
 import { ViewerEvent } from '../IViewer'
+import { ObjectLayers } from './SpeckleRenderer'
 
 export default class SectionBox {
   constructor(viewer) {
@@ -13,6 +14,7 @@ export default class SectionBox {
     this.dragging = false
     this.display = new THREE.Group()
     this.display.name = 'SectionBox'
+    this.display.layers.set(ObjectLayers.PROPS)
     this.viewer.speckleRenderer.scene.add(this.display)
 
     // box
@@ -25,11 +27,13 @@ export default class SectionBox {
     })
     this.cube = new THREE.Mesh(this.boxGeometry, this.material)
     this.cube.visible = false
+    this.cube.layers.set(ObjectLayers.PROPS)
 
     this.display.add(this.cube)
 
     this.boxHelper = new THREE.BoxHelper(this.cube, 0x0a66ff)
     this.boxHelper.material.opacity = 0.4
+    this.boxHelper.layers.set(ObjectLayers.PROPS)
     this.display.add(this.boxHelper)
 
     // we're attaching the gizmo mover to this sphere in the box centre
@@ -38,6 +42,7 @@ export default class SectionBox {
       sphere,
       new THREE.MeshStandardMaterial({ color: 0x00ffff })
     )
+    this.sphere.layers.set(ObjectLayers.PROPS)
     this.sphere.visible = false
     this.display.add(this.sphere)
 
@@ -56,6 +61,7 @@ export default class SectionBox {
       })
     )
     this.hoverPlane.visible = false
+    this.hoverPlane.layers.set(ObjectLayers.PROPS)
     this.display.add(this.hoverPlane)
 
     this.dragging = false
@@ -125,6 +131,12 @@ export default class SectionBox {
       this.viewer.cameraHandler.activeCam.camera,
       this.viewer.speckleRenderer.renderer.domElement
     )
+    for (let k = 0; k < this.controls.children.length; k++) {
+      this.controls.children[k].traverse((obj) => {
+        obj.layers.set(ObjectLayers.PROPS)
+      })
+    }
+    this.controls.getRaycaster().layers.set(ObjectLayers.PROPS)
     this.controls.setSize(0.75)
     this.display.add(this.controls)
     this.controls.addEventListener('change', this._draggingChangeHandler.bind(this))

@@ -8,11 +8,10 @@ import {
   Texture,
   WebGLRenderTarget
 } from 'three'
-import { Pass } from 'three/examples/jsm/postprocessing/Pass'
 import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
-import { SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
-export class NormalsPass extends Pass implements SpecklePass {
+export class NormalsPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
   private normalsMaterial: SpeckleNormalMaterial = null
   private scene: Scene
@@ -77,6 +76,7 @@ export class NormalsPass extends Pass implements SpecklePass {
     this.scene.overrideMaterial = this.normalsMaterial
     renderer.shadowMap.enabled = false
     renderer.shadowMap.needsUpdate = false
+    this.applyLayers(this.camera)
     renderer.render(this.scene, this.camera)
     renderer.shadowMap.enabled = shadowmapEnabled
     renderer.shadowMap.needsUpdate = shadowmapNeedsUpdate

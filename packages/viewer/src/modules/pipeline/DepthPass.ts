@@ -12,9 +12,8 @@ import {
   Texture,
   WebGLRenderTarget
 } from 'three'
-import { Pass } from 'three/examples/jsm/postprocessing/Pass'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
-import { SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
 export enum DepthType {
   PERSPECTIVE_DEPTH,
@@ -26,7 +25,7 @@ export enum DepthSize {
   HALF
 }
 
-export class DepthPass extends Pass implements SpecklePass {
+export class DepthPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
   private renderTargetHalf: WebGLRenderTarget
   private depthMaterial: SpeckleDepthMaterial = null
@@ -134,6 +133,7 @@ export class DepthPass extends Pass implements SpecklePass {
     this.scene.overrideMaterial = this.depthMaterial
     renderer.shadowMap.enabled = false
     renderer.shadowMap.needsUpdate = false
+    this.applyLayers(this.camera)
     renderer.render(this.scene, this.camera)
     renderer.shadowMap.enabled = shadowmapEnabled
     renderer.shadowMap.needsUpdate = shadowmapNeedsUpdate

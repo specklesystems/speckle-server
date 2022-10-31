@@ -51,6 +51,11 @@ import {
   RenderType
 } from './pipeline/Pipeline'
 
+export enum ObjectLayers {
+  STREAM_CONTENT = 1,
+  PROPS = 2
+}
+
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   private readonly ANGLE_EPSILON = 0.0001
@@ -140,6 +145,7 @@ export default class SpeckleRenderer {
     this._scene = new Scene()
     this.rootGroup = new Group()
     this.rootGroup.name = 'ContentGroup'
+    this.rootGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this._scene.add(this.rootGroup)
 
     this.batcher = new Batcher()
@@ -168,7 +174,7 @@ export default class SpeckleRenderer {
     container.appendChild(this._renderer.domElement)
 
     this.pipeline = new Pipeline(this._renderer, this.batcher)
-    this.pipeline.configure(this._scene, this.viewer.cameraHandler.activeCam.camera)
+    this.pipeline.configure()
     this.pipeline.pipelineOptions = DefaultPipelineOptions
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
@@ -184,14 +190,17 @@ export default class SpeckleRenderer {
 
       const sceneBoxHelper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
       sceneBoxHelper.name = 'SceneBoxHelper'
+      sceneBoxHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(sceneBoxHelper)
 
       const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
       dirLightHelper.name = 'DirLightHelper'
+      dirLightHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(dirLightHelper)
 
       const camHelper = new CameraHelper(this.sun.shadow.camera)
       camHelper.name = 'CamHelper'
+      camHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(camHelper)
     }
 
@@ -376,11 +385,13 @@ export default class SpeckleRenderer {
 
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
+    subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this.rootGroup.add(subtreeGroup)
 
     const batches = this.batcher.getBatches(subtreeId)
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
+      batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
       subtreeGroup.add(batch.renderObject)
       if (batch.geometryType === GeometryType.MESH) {
         const mesh = batchRenderable as unknown as Mesh
@@ -452,6 +463,7 @@ export default class SpeckleRenderer {
   private addDirectLights() {
     this.sun = new DirectionalLight(0xffffff, 5)
     this.sun.name = 'sun'
+    this.sun.layers.set(ObjectLayers.STREAM_CONTENT)
     this._scene.add(this.sun)
 
     this.sun.castShadow = true

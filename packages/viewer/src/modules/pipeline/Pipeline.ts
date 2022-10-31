@@ -1,10 +1,10 @@
-import { Camera, Plane, Scene, Vector2, WebGLRenderer } from 'three'
+import { Plane, Vector2, WebGLRenderer } from 'three'
 import {
   EffectComposer,
   Pass
 } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import Batcher from '../batching/Batcher'
-import SpeckleRenderer from '../SpeckleRenderer'
+import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
 import { CopyOutputPass } from './CopyOutputPass'
 import { DepthPass, DepthSize, DepthType } from './DepthPass'
@@ -220,16 +220,20 @@ export class Pipeline {
     this.composer.writeBuffer = null
   }
 
-  public configure(scene: Scene, camera: Camera) {
+  public configure() {
     this.depthPass = new DepthPass()
     this.normalsPass = new NormalsPass()
     this.dynamicAoPass = new DynamicSAOPass()
-    this.renderPass = new ColorPass(scene, camera)
+    this.renderPass = new ColorPass()
     this.applySaoPass = new ApplySAOPass()
     this.staticAoPass = new StaticAOPass()
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
+
+    this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT])
+    this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT])
+    this.renderPass.setLayers([ObjectLayers.PROPS, ObjectLayers.STREAM_CONTENT])
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {
@@ -308,7 +312,7 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
-    this.renderPass.camera = renderer.camera
+    this.renderPass.update(renderer.scene, renderer.camera)
     this.depthPass.update(renderer.scene, renderer.camera)
     this.dynamicAoPass.update(renderer.scene, renderer.camera)
     this.normalsPass.update(renderer.scene, renderer.camera)

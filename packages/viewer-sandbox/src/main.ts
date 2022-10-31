@@ -124,4 +124,6 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
   // Point cloud
   // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+  // Luis sphere
+  // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
 )
