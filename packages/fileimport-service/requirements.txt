@@ -1,2 +1,2 @@
-numpy-stl==2.16.3
-specklepy==2.5.1
+numpy-stl==2.17.1
+specklepy==2.9.0
