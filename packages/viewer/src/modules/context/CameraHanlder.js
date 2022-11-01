@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import CameraControls from 'camera-controls'
-import { KeyboardKeyHold } from 'hold-event'
+import { HOLD_EVENT_TYPE, KeyboardKeyHold } from 'hold-event'
+import { SpeckleCameraControls } from '../objects/SpeckleCameraControls'
 
 export default class CameraHandler {
   constructor(viewer) {
@@ -30,7 +31,8 @@ export default class CameraHandler {
     this.orthoCamera.updateProjectionMatrix()
 
     CameraControls.install({ THREE })
-    this.controls = new CameraControls(this.camera, this.viewer.container)
+    SpeckleCameraControls.install()
+    this.controls = new SpeckleCameraControls(this.camera, this.viewer.container)
     this.controls.maxPolarAngle = Math.PI / 2
     this.setupWASDControls()
 
@@ -185,36 +187,101 @@ export default class CameraHandler {
     const aKey = new KeyboardKeyHold(KEYCODE.A, 16.666)
     const sKey = new KeyboardKeyHold(KEYCODE.S, 16.666)
     const dKey = new KeyboardKeyHold(KEYCODE.D, 16.666)
+    const isTruckingGroup = new Array(4)
+
+    const setTrucking = (index, value) => {
+      isTruckingGroup[index] = value
+      if (isTruckingGroup.every((element) => element === false)) {
+        this.controls.isTrucking = false
+        this.controls.dispatchEvent({ type: 'rest' })
+      } else this.controls.isTrucking = true
+    }
+
+    aKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_START,
+      function () {
+        this.controls.dispatchEvent({ type: 'controlstart' })
+      }.bind(this)
+    )
     aKey.addEventListener(
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
+        setTrucking(0, true)
         this.controls.truck(-0.01 * event.deltaTime, 0, false)
         return
+      }.bind(this)
+    )
+    aKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_END,
+      function () {
+        setTrucking(0, false)
+      }.bind(this)
+    )
+
+    dKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_START,
+      function () {
+        this.controls.dispatchEvent({ type: 'controlstart' })
       }.bind(this)
     )
     dKey.addEventListener(
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
+        setTrucking(1, true)
         this.controls.truck(0.01 * event.deltaTime, 0, false)
         return
+      }.bind(this)
+    )
+    dKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_END,
+      function () {
+        setTrucking(1, false)
+      }.bind(this)
+    )
+
+    wKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_START,
+      function () {
+        this.controls.dispatchEvent({ type: 'controlstart' })
       }.bind(this)
     )
     wKey.addEventListener(
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
+        setTrucking(2, true)
         this.controls.forward(0.01 * event.deltaTime, false)
         return
+      }.bind(this)
+    )
+    wKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_END,
+      function () {
+        setTrucking(2, false)
+      }.bind(this)
+    )
+
+    sKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_START,
+      function () {
+        this.controls.dispatchEvent({ type: 'controlstart' })
       }.bind(this)
     )
     sKey.addEventListener(
       'holding',
       function (event) {
         if (this.viewer.mouseOverRenderer === false) return
+        setTrucking(3, true)
         this.controls.forward(-0.01 * event.deltaTime, false)
         return
+      }.bind(this)
+    )
+    sKey.addEventListener(
+      HOLD_EVENT_TYPE.HOLD_END,
+      function () {
+        setTrucking(3, false)
       }.bind(this)
     )
   }

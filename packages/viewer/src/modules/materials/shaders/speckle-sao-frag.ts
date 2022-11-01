@@ -209,8 +209,22 @@ export const speckleSaoFrag = /* glsl */ `
 			}
 			float centerViewZ = getViewZ( centerDepth );
 			vec3 viewPosition = getViewPosition( vUv, centerDepth, centerViewZ );
+
+			#ifdef OUTPUT_RECONSTRUCTED_NORMALS
+				vec3 normal;
+				#if IMPROVED_NORMAL_RECONSTRUCTION == 1
+					normal = viewNormalImproved(vUv, viewPosition);
+				#elif ACCURATE_NORMAL_RECONSTRUCTION == 1
+					normal = viewNormalAccurate(vUv, viewPosition, centerDepth);
+				#else
+					normal = normalize( cross( dFdx( viewPosition ), dFdy( viewPosition ) ) );
+				#endif
+				gl_FragColor.rgb = packNormalToRGB(normal);
+				gl_FragColor.a = 1.;
+				return;
+			#endif
+			
 			float ambientOcclusion = getAmbientOcclusion( viewPosition, centerDepth );
 			gl_FragColor = getDefaultColor( vUv );
-			gl_FragColor.xyz *=  1.0 - ambientOcclusion;
-			// gl_FragColor.xyz = depth_cross(vUv, viewPosition) * 0.5 + 0.5;
+			gl_FragColor.xyz *=  1. - ambientOcclusion;
 		}`
