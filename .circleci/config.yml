@@ -332,6 +332,8 @@ jobs:
             echo "${CIRCLE_PULL_REQUEST}"
             [[ -z "${CIRCLE_PULL_REQUEST}" ]] && echo "-z is true"
             [[ -n "${CIRCLE_PULL_REQUEST}" ]] && echo "-n is true"
+            [[ "${CIRCLE_BRANCH}" != "main" ]] && echo "branch is not main"
+            [[ "${CIRCLE_BRANCH}" != "main" && -z "${CIRCLE_PULL_REQUEST}" ]] && echo "branch is not main and does not have a pull request"
             [[ "${CIRCLE_BRANCH}" != "main" && -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
