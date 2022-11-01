@@ -28,7 +28,7 @@ COPY packages/viewer ./packages/viewer/
 COPY packages/preview-service ./packages/preview-service/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach -pt run build
+RUN yarn workspaces foreach run build
 
 
 

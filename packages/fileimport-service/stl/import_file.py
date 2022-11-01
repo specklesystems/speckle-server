@@ -66,6 +66,7 @@ if __name__ == '__main__':
         results = {'success': True, 'commitId': commit_id}
     except Exception as ex:
         results = {'success': False, 'error': str(ex)}
+        print(ex)
 
     with open(TMP_RESULTS_PATH, 'w') as f:
         json.dump(results, f)
