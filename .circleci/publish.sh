@@ -15,7 +15,7 @@ echo "${DOCKER_REG_PASS}" | docker login -u "${DOCKER_REG_USER}" --password-stdi
 echo "⏫ Pushing loaded image: '${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}'"
 docker push "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}"
 
-if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:-alpha\.[0-9]+)?$ ]]; then
+if [[ "${IMAGE_VERSION_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-alpha\.[0-9]+)?$ ]]; then
   echo "🏷 Tagging and pushing image as '${DOCKER_IMAGE_TAG}:latest'"
   docker tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" "${DOCKER_IMAGE_TAG}:latest"
   docker push "${DOCKER_IMAGE_TAG}:latest"
