@@ -149,7 +149,7 @@ export default class SpeckleRenderer {
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
-    this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
+    // this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
