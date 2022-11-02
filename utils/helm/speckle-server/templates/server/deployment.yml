@@ -70,7 +70,7 @@ spec:
             command:
               - node
               - -e
-              - require('request')({headers: {'Content-Type': 'application/json'}, uri: 'http://localhost:3000/graphql?query={serverInfo{version}}', method: 'GET' }, (e,r,b) => process.exit(r.statusCode != 200 || b.toLowerCase().includes('error')))
+              - "require('request')({headers: {'Content-Type': 'application/json'}, uri: 'http://localhost:3000/graphql?query={serverInfo{version}}', method: 'GET' }, (e,r,b) => process.exit(r.statusCode != 200 || b.toLowerCase().includes('error')))"
 
         readinessProbe:
           initialDelaySeconds: 5
@@ -80,7 +80,7 @@ spec:
             command:
               - node
               - -e
-              - require('request')({headers: {'Content-Type': 'application/json'}, uri: 'http://localhost:3000/graphql?query={serverInfo{version}}', method: 'GET' }, (e,r,b) => process.exit(r.statusCode != 200 || b.toLowerCase().includes('error')))
+              - "require('request')({headers: {'Content-Type': 'application/json'}, uri: 'http://localhost:3000/graphql?query={serverInfo{version}}', method: 'GET' }, (e,r,b) => process.exit(r.statusCode != 200 || b.toLowerCase().includes('error')))"
 
         env:
           - name: CANONICAL_URL
