@@ -3,6 +3,7 @@
     <div class="flex h-6 items-center">
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
       <input
+        :id="finalId"
         :checked="finalChecked"
         :aria-describedby="descriptionId"
         :name="name"
@@ -16,7 +17,7 @@
       />
     </div>
     <div class="ml-2 text-sm" style="padding-top: 3px">
-      <label :for="name" class="font-medium text-foreground-2">
+      <label :for="finalId" class="font-medium text-foreground-2">
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
       </label>
@@ -109,8 +110,18 @@ const props = defineProps({
   value: {
     type: String as PropType<string>,
     required: true
+  },
+  /**
+   * HTML ID to use, must be globally unique. If not specified, a random ID will be generated. One is necessary to properly associate the label and checkbox.
+   */
+  id: {
+    type: String as PropType<Optional<string>>,
+    default: undefined
   }
 })
+
+const generateRandomId = (prefix: string) =>
+  `${prefix}-${Math.ceil(Math.random() * 100000000)}-${Date.now()}`
 
 defineEmits<{
   (e: 'update:modelValue', val: ValueType): void
@@ -156,4 +167,7 @@ const descriptionClasses = computed((): string => {
 
   return classParts.join(' ')
 })
+
+const implicitId = ref<Optional<string>>(generateRandomId('checkbox'))
+const finalId = computed(() => props.id || implicitId.value)
 </script>

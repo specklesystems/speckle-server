@@ -106,6 +106,13 @@ const config = {
       rules: {
         'no-var': 'off'
       }
+    },
+    {
+      files: '*.stories.{js,ts}',
+      rules: {
+        // this one feels busted, tells me to await synchronous calls
+        'storybook/await-interactions': 'off'
+      }
     }
   ]
 }
