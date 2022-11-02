@@ -54,7 +54,7 @@ export const DefaultStaticAoPassParams = {
   kernelSize: 16,
   bias: 0.01,
   minDistance: 0,
-  maxDistance: 0.008
+  maxDistance: 1 //0.008
 }
 
 export class StaticAOPass extends Pass implements SpeckleProgressivePass {
