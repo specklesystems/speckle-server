@@ -15,11 +15,11 @@
             <template #default>
               <div>
                 <div>
-                  Hello, {{ user?.name || 'guest' }}! Here are some design system
+                  Hello!!!!, {{ user?.name || 'guest' }}! Here are some design system
                   examples:
                 </div>
                 <div class="my-8">
-                  <div class="h1">Heading 1</div>
+                  <div class="h1">Heading 1 YOLO</div>
                   <div class="h2">Heading 2</div>
                   <div class="h3">Heading 3</div>
                   <div class="h4">Heading 4</div>

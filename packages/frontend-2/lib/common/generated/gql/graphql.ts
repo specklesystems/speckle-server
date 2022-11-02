@@ -396,7 +396,7 @@ export type LimitedUser = {
   /** Get public stream commits authored by the user */
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
+  id: Scalars['ID'];
   name?: Maybe<Scalars['String']>;
   role?: Maybe<Scalars['String']>;
   /** Returns all discoverable streams that the user is a collaborator on */
@@ -896,6 +896,16 @@ export type PendingStreamCollaborator = {
   user?: Maybe<LimitedUser>;
 };
 
+export type Project = {
+  __typename?: 'Project';
+  editedAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  modelCount: Scalars['Int'];
+  name: Scalars['String'];
+  role: Scalars['String'];
+  team: Array<LimitedUser>;
+};
+
 export type Query = {
   __typename?: 'Query';
   /** Stare into the void. */
@@ -924,6 +934,7 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
+  projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -1536,7 +1547,7 @@ export type User = {
   favoriteStreams: StreamCollection;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
-  id: Scalars['String'];
+  id: Scalars['ID'];
   name?: Maybe<Scalars['String']>;
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
@@ -1698,17 +1709,25 @@ export type TestDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type TestDataQuery = { __typename?: 'Query', testNumber?: number | null, testList: Array<{ __typename?: 'TestItem', foo: string, bar: string }> };
 
+export type ProjectsDashboardListQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ProjectsDashboardListQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> }> };
+
 export type IsLoggedInQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type IsLoggedInQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string } | null };
+
+export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetActiveUserQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, name?: string | null, role?: string | null } | null };
 
-
+export const ProjectListItemFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectListItemFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"editedAt"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]} as unknown as DocumentNode<ProjectListItemFragmentFragment, unknown>;
 export const TestDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TestData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testNumber"}},{"kind":"Field","name":{"kind":"Name","value":"testList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"foo"}},{"kind":"Field","name":{"kind":"Name","value":"bar"}}]}}]}}]} as unknown as DocumentNode<TestDataQuery, TestDataQueryVariables>;
+export const ProjectsDashboardListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectsDashboardList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projects"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectListItemFragment"}}]}}]}},...ProjectListItemFragmentFragmentDoc.definitions]} as unknown as DocumentNode<ProjectsDashboardListQuery, ProjectsDashboardListQueryVariables>;
 export const IsLoggedInDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"IsLoggedIn"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<IsLoggedInQuery, IsLoggedInQueryVariables>;
 export const GetActiveUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActiveUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}}]} as unknown as DocumentNode<GetActiveUserQuery, GetActiveUserQueryVariables>;

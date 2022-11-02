@@ -1,0 +1,12 @@
+extend type Query {
+  projects: [Project!]!
+}
+
+type Project {
+  id: ID!
+  name: String!
+  modelCount: Int!
+  role: String!
+  editedAt: DateTime!
+  team: [LimitedUser!]!
+}

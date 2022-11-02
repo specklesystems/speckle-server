@@ -139,8 +139,11 @@ function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolea
     mocks: {
       Query: () => ({
         testNumber: () => faker.datatype.number(),
-        testList: () => [...new Array(faker.datatype.number({ min: 1, max: 10 }))]
-      })
+        testList: () => [...new Array(faker.datatype.number({ min: 1, max: 10 }))],
+        projects: () => [...new Array(faker.datatype.number({ min: 1, max: 12 }))]
+      }),
+      DateTime: () => faker.datatype.datetime(),
+      ID: () => faker.unique(faker.random.alphaNumeric, [10])
     },
     mockEntireSchema: false
   }
