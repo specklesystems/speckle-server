@@ -71,7 +71,8 @@ if __name__ == "__main__":
         commit_id = import_stl()
         results = {"success": True, "commitId": commit_id}
     except Exception as ex:
-        results = {"success": False, "error": str(ex)}
+        results = {'success': False, 'error': str(ex)}
+        print(ex)
 
     print(results)
     Path(TMP_RESULTS_PATH).write_text(json.dumps(results))

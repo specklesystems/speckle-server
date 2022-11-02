@@ -14,14 +14,6 @@ workflows:
       - get-version:
           filters: *filters-allow-all
 
-      - build-approval:
-          type: approval
-          filters: &filters-ignore-main-branch-all-tags
-            branches:
-              ignore: main
-            tags:
-              ignore: /.*/
-
       - pre-commit:
           filters: *filters-allow-all
 
@@ -32,51 +24,48 @@ workflows:
           requires:
             - test-server
             - get-version
-            - build-approval
 
       - docker-build-frontend:
           filters: *filters-build
           requires:
             - get-version
-            - build-approval
 
       - docker-build-webhooks:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - build-approval
 
       - docker-build-file-imports:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - build-approval
 
       - docker-build-previews:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - build-approval
 
       - docker-build-test-container:
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - build-approval
 
       - docker-build-monitor-container:
           filters: *filters-build
           requires:
             - get-version
-            - build-approval
 
       - publish-approval:
           type: approval
-          filters: *filters-ignore-main-branch-all-tags
+          filters: &filters-ignore-main-branch-or-all-tags
+            branches:
+              ignore: main
+            tags:
+              ignore: /.*/
 
       - docker-publish-server:
           context: &docker-hub-context
@@ -336,6 +325,11 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${CIRCLE_BRANCH}" != "main" && -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
+            echo "proceeding"
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it

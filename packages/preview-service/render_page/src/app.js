@@ -1,6 +1,6 @@
-import { Viewer, DefaultViewerParams } from '@speckle/viewer'
+import { DebugViewer, DefaultViewerParams } from '@speckle/viewer'
 
-const v = new Viewer(document.getElementById('renderer'), DefaultViewerParams)
+const v = new DebugViewer(document.getElementById('renderer'), DefaultViewerParams)
 window.v = v
 
 // v.on( ViewerEvent.LoadProgress, args => console.log( args ) )
