@@ -6,6 +6,7 @@ import { Form, SubmissionHandler } from 'vee-validate'
 import { VuePlayFunction } from '~~/lib/common/helpers/storybook'
 import { userEvent, within } from '@storybook/testing-library'
 import { wait } from '@speckle/shared'
+import { expect } from '@storybook/jest'
 
 export default {
   component: FormCheckbox,
@@ -27,6 +28,9 @@ export default {
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
+    },
+    id: {
+      type: 'string'
     }
   }
 } as Meta
@@ -49,7 +53,7 @@ export const Default: Story = {
 
       return { args, vModelAction }
     },
-    template: `<form-checkbox v-bind="args" @update:modelValue="vModelAction"/>`
+    template: `<FormCheckbox v-bind="args" @update:modelValue="vModelAction"/>`
   }),
   parameters: {
     docs: {
@@ -139,6 +143,18 @@ export const InlineDescription: Story = {
 
 export const Disabled: Story = {
   ...Default,
+  play: (params) => {
+    const canvas = within(params.canvasElement)
+    const checkbox = canvas.getByRole('checkbox')
+
+    const isChecked = (checkbox as HTMLInputElement).checked
+
+    // click and assert that checkbox checked state hasn't changed
+    userEvent.click(checkbox)
+
+    const newIsChecked = (checkbox as HTMLInputElement).checked
+    expect(isChecked).toBe(newIsChecked)
+  },
   args: {
     name: 'disabled1',
     value: 'disabled1-value',
