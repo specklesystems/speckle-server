@@ -5169,6 +5169,7 @@ __metadata:
     rollup-plugin-typescript2: ^0.31.2
     string-to-color: ^2.2.2
     three: ^0.140.0
+    three-mesh-bvh: 0.5.17
     tree-model: 1.0.7
     typescript: ^4.5.4
   languageName: unknown
@@ -19500,6 +19501,15 @@ __metadata:
   version: 0.2.0
   resolution: "text-table@npm:0.2.0"
   checksum: b6937a38c80c7f84d9c11dd75e49d5c44f71d95e810a3250bd1f1797fc7117c57698204adf676b71497acc205d769d65c16ae8fa10afad832ae1322630aef10a
+  languageName: node
+  linkType: hard
+
+"three-mesh-bvh@npm:0.5.17":
+  version: 0.5.17
+  resolution: "three-mesh-bvh@npm:0.5.17"
+  peerDependencies:
+    three: ">= 0.123.0"
+  checksum: 93c54889bf289c6fbb0e8b262f030d533ca5374b009b27cb3d31c75a0e0f0bc909e377149054404ff98d20512ae52008ae5fefcb54ffe2098ddd07ea04c73a10
   languageName: node
   linkType: hard
 

@@ -9,6 +9,7 @@ import {
   Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
+import { estimateMemoryInBytes, MeshBVH } from 'three-mesh-bvh'
 import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
@@ -29,6 +30,7 @@ export default class MeshBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
+  public boundsTree: MeshBVH
   private gradientIndexBuffer: BufferAttribute
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
@@ -419,7 +421,9 @@ export default class MeshBatch implements Batch {
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
-        geometry.attributes.INDEX.length
+        geometry.attributes.INDEX.length,
+        offset / 3,
+        offset / 3 + geometry.attributes.POSITION.length / 3
       )
 
       offset += geometry.attributes.POSITION.length
@@ -430,18 +434,28 @@ export default class MeshBatch implements Batch {
       position,
       this.batchMaterial.vertexColors ? color : null
     )
-    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
+
+    this.boundsTree = Geometry.buildBVH(indices, position)
+    console.warn('Memory', estimateMemoryInBytes(this.boundsTree))
+
+    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
   }
 
   public getRenderView(index: number): NodeRenderView {
     for (let k = 0; k < this.renderViews.length; k++) {
+      // if (
+      //   index * 3 >= this.renderViews[k].batchStart &&
+      //   index * 3 < this.renderViews[k].batchEnd
+      // ) {
+      //   return this.renderViews[k]
+      // }
+      const vertIndex = this.boundsTree.geometry.index.array[index * 3]
       if (
-        index * 3 >= this.renderViews[k].batchStart &&
-        index * 3 < this.renderViews[k].batchEnd
-      ) {
+        vertIndex >= this.renderViews[k].vertStart &&
+        vertIndex < this.renderViews[k].vertEnd
+      )
         return this.renderViews[k]
-      }
     }
   }
 

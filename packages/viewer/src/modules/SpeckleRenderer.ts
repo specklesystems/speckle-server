@@ -50,6 +50,7 @@ import {
   PipelineOptions,
   RenderType
 } from './pipeline/Pipeline'
+import { MeshBVHVisualizer } from 'three-mesh-bvh'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -348,7 +349,9 @@ export default class SpeckleRenderer {
     if (this._needsRender) {
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
-      // this.renderer.render(this.scene, camera)
+
+      // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
+      // this._needsRender = true
     }
   }
 
@@ -392,7 +395,14 @@ export default class SpeckleRenderer {
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
       batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
+      const bvhHelper = new MeshBVHVisualizer(batchRenderable as Mesh, 10)
+      bvhHelper.traverse((obj) => {
+        obj.layers.set(ObjectLayers.PROPS)
+      })
+
+      bvhHelper.update()
       subtreeGroup.add(batch.renderObject)
+      subtreeGroup.add(bvhHelper)
       if (batch.geometryType === GeometryType.MESH) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
