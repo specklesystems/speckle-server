@@ -19,3 +19,7 @@ export abstract class BaseError extends Error {
 export class LogicError extends BaseError {
   static defaultMessage = 'An unexpected logic error occurred!'
 }
+
+export class UninitializedResourceAccessError extends BaseError {
+  static defaultMessage = 'Attempting to access an uninitialized resource'
+}

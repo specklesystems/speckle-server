@@ -8,11 +8,15 @@
         </li>
       </ul>
     </div>
+    Also here's serverInfo loaded through storybook loaders:
+    <div v-if="serverInfo">{{ JSON.stringify(serverInfo) }}</div>
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
+import { PropType } from 'vue'
+import { IntegrationStoryDemoServerInfoQuery } from '~~/lib/common/generated/gql/graphql'
 
 const testDataQuery = graphql(`
   query TestData {
@@ -23,6 +27,13 @@ const testDataQuery = graphql(`
     }
   }
 `)
+
+defineProps({
+  serverInfo: {
+    type: Object as PropType<IntegrationStoryDemoServerInfoQuery>,
+    required: true
+  }
+})
 
 const { result } = useQuery(testDataQuery)
 </script>
