@@ -14,6 +14,9 @@ import { Optional } from '@speckle/shared'
  * Apollo operations in our stories
  */
 
+/**
+ * Keys of Storybook's `parameters.apolloClient` object that can be used to configure Apollo mocks
+ */
 export interface MockedProviderOptions<TSerializedCache = Record<string, unknown>> {
   mocks?: ReadonlyArray<MockedResponse>
   addTypename?: boolean
