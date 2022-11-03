@@ -37,6 +37,8 @@ RUN rm /etc/nginx/conf.d/default.conf
 
 COPY packages/frontend/nginx/ /etc/nginx/
 
+# temporary workaround as openssl is not yet patched in openresty/openresty.
+# remove this layer if openresty patches openssl version to 3.0.2-0ubuntu1.7 or later
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
