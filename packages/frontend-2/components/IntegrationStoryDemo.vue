@@ -41,8 +41,6 @@ graphql(`
   }
 `)
 
-// Example of internal query
-
 defineProps({
   serverInfo: {
     type: Object as PropType<IntegrationStoryDemoServerInfoQueryFragmentFragment>,
