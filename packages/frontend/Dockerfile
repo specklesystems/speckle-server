@@ -40,7 +40,9 @@ COPY packages/frontend/nginx/ /etc/nginx/
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
-  openssl=3.0.2-0ubuntu1.7
+  openssl=3.0.2-0ubuntu1.7 \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # prepare the environment
 ENTRYPOINT ["/etc/nginx/docker-entrypoint.sh"]
