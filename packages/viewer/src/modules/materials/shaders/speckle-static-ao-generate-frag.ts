@@ -265,6 +265,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 				float occlusion = 0.0;
 				float kernelSize_ws = computeKernelSize(-viewPosition.z, kernelRadius);
 				float div = float( KERNEL_SIZE);
+				float maxDist = kernelSize_ws / (cameraFar - cameraNear);
 				for ( int i = 0; i < KERNEL_SIZE; i ++ ) {
 					vec3 sampleVector = kernelMatrix * kernel[ i ]; // reorient sample vector in view space
 					vec3 samplePoint = viewPosition + ( sampleVector * kernelSize_ws ); // calculate sample point
@@ -274,7 +275,7 @@ export const speckleStaticAoGenerateFrag = /* glsl */ `
 					float realDepth = getLinearDepth( samplePointUv ); // get linear depth from depth texture
 					float sampleDepth = viewZToOrthographicDepth( samplePoint.z + bias, cameraNear, cameraFar ); // compute linear depth of the sample view Z value
 					float delta = sampleDepth - realDepth;
-					if ( delta > minDistance && delta < kernelSize_ws / (cameraFar - cameraNear) ) { // if fragment is before sample point, increase occlusion
+					if ( delta > 0. && delta < maxDist ) { // if fragment is before sample point, increase occlusion
 						occlusion += 1.0;
 					}
 				}
