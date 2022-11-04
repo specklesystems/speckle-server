@@ -1,25 +1,24 @@
 <template>
-  <a href="/mocks/project" class="group">
+  <a :href="`/project/${project.id}`" class="group">
     <div
-      class="flex items-center justify-between px-4 rounded-lg shadow background-2 h-16 hover:shadow-xl transition hover:dark:bg-zinc-800"
+      class="group background hover:background-highlight flex items-center justify-between px-4 mb-4 rounded-lg shadow h-16 hover:shadow-xl transition"
     >
       <div class="flex items-center gap-4">
-        <div
-          class="font-bold text-sm truncate group-hover:text-neutral-800 dark:group-hover:text-neutral-200"
-        >
+        <div class="font-bold text-sm truncate">
           {{ project.name }}
         </div>
-        <div class="hidden sm:flex items-center caption text-neutral-500">
+        <div
+          class="hidden sm:flex items-center caption text-neutral-500 group-hover:text-gray-200"
+        >
           <RectangleGroupIcon class="w-4 h-4 mr-2" />
           <span>{{ project.modelCount }} models</span>
         </div>
-        <div class="hidden sm:flex caption text-neutral-500">
+        <div class="hidden sm:flex caption text-neutral-500 group-hover:text-gray-200">
           {{ project.role }}
         </div>
-        <div class="hidden sm:flex caption text-neutral-500">
+        <div class="hidden sm:flex caption group-hover:text-gray-200">
           {{ project.editedAt }}
         </div>
-        <div class="bg-pink-200"></div>
       </div>
       <div class="flex items-center">
         <div class="flex -space-x-1">

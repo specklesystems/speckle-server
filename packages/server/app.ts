@@ -131,6 +131,9 @@ function buildApolloSubscriptionServer(
  * Define mocking config in dev env
  * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
  */
+
+const roles = ['owner', 'contributor', 'reviewer']
+
 function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolean } {
   const isDebugEnv = isDevEnv() || isTestEnv()
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
@@ -140,10 +143,28 @@ function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolea
       Query: () => ({
         testNumber: () => faker.datatype.number(),
         testList: () => [...new Array(faker.datatype.number({ min: 1, max: 10 }))],
-        projects: () => [...new Array(faker.datatype.number({ min: 1, max: 12 }))]
+        projects: () => [...new Array(faker.datatype.number({ min: 5, max: 12 }))]
       }),
       DateTime: () => faker.datatype.datetime(),
-      ID: () => faker.unique(faker.random.alphaNumeric, [10])
+      ID: () => faker.unique(faker.random.alphaNumeric, [10]),
+      Project: () => ({
+        team: [...new Array(faker.datatype.number({ min: 1, max: 5 }))],
+        name:
+          faker.commerce.productAdjective() +
+          ' ' +
+          faker.commerce.productMaterial() +
+          ' ' +
+          faker.commerce.product() +
+          ' ' +
+          faker.commerce.product(),
+        modelCount: faker.datatype.number({ min: 0, max: 100 }),
+        role: roles[
+          faker.datatype.number({
+            min: 0,
+            max: roles.length - 1
+          })
+        ]
+      })
     },
     mockEntireSchema: false
   }

@@ -1,35 +1,36 @@
 <template>
-  <Disclosure v-slot="{ open }" as="nav" class="bg-background shadow-sm">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 justify-between">
+  <Disclosure
+    v-slot="{ open }"
+    as="nav"
+    class="group background shadow-md hover:shadow-lg transition fixed w-full"
+  >
+    <div class="mx-auto px-4">
+      <div class="flex h-14 group-hover:h-16 transition-all justify-between">
         <div class="flex">
-          <div class="flex flex-shrink-0 items-center">
-            <HeaderLogoBlock minimal />
-          </div>
-          <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-            <a
-              v-for="item in navigation"
-              :key="item.name"
-              :href="item.href"
-              :class="[
-                item.current
-                  ? 'border-primary text-foreground'
-                  : 'border-transparent text-foreground-3 hover:text-foreground-2 hover:border-foreground-4',
-                'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium'
-              ]"
-              :aria-current="item.current ? 'page' : undefined"
-            >
-              {{ item.name }}
-            </a>
+          <HeaderLogoBlock :active="false" class="mr-1" />
+          <div class="hidden sm:flex flex-shrink-0 items-center">
+            <HeaderNavLink to="/" name="Dashboard" :separator="false" class="ml-2" />
+            <TransitionGroup name="fade">
+              <HeaderNavLink
+                v-for="(nl, i) in nav.filter((n) => !!n)"
+                :key="nl.to"
+                :to="nl.to"
+                :name="nl.name"
+                :separator="nl.separator"
+              />
+            </TransitionGroup>
+            <!-- <HeaderNavLink to="/test" name="Long Project Name" /> -->
+            <!-- <code class="text-xs">{{ nav }}</code> -->
           </div>
         </div>
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           <button
             type="button"
-            class="rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            class="rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
+            @click="swapTheme()"
           >
-            <span class="sr-only">View notifications</span>
-            <BellIcon class="h-6 w-6" aria-hidden="true" />
+            <SunIcon v-if="darkMode" class="h-4 w-4" aria-hidden="true" />
+            <MoonIcon v-else class="h-4 w-4" aria-hidden="true" />
           </button>
 
           <!-- Profile dropdown -->
@@ -75,7 +76,7 @@
         <div class="-mr-2 flex items-center sm:hidden">
           <!-- Mobile menu button -->
           <DisclosureButton
-            class="inline-flex items-center justify-center rounded-md bg-background p-2 text-foreground-3 hover:bg-background-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            class="inline-flex items-center justify-center rounded-md bg-background p-2 text-foreground-3 hover:bg-background-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
           >
             <span class="sr-only">Open main menu</span>
             <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
@@ -86,22 +87,15 @@
     </div>
 
     <DisclosurePanel class="sm:hidden">
-      <div class="space-y-1 pt-2 pb-4">
-        <DisclosureButton
-          v-for="item in navigation"
-          :key="item.name"
-          as="a"
-          :href="item.href"
-          :class="[
-            item.current
-              ? 'bg-background-2 border-primary-lighter text-foreground-2'
-              : 'border-transparent text-foreground-3 hover:text-foreground-2 hover:bg-background-2 hover:border-foreground-4',
-            'block pl-4 pr-4 py-2 border-l-4 text-base font-medium'
-          ]"
-          :aria-current="item.current ? 'page' : undefined"
-        >
-          {{ item.name }}
-        </DisclosureButton>
+      <div class="space-y-6 pt-2 pb-6 px-5">
+        <HeaderNavLink to="/" name="Dashboard" class="" />
+        <HeaderNavLink
+          v-for="(nl, i) in nav.filter((n) => !!n)"
+          :key="nl.to"
+          :to="nl.to"
+          :name="nl.name"
+          :separator="nl.separator"
+        />
       </div>
       <div class="border-t border-background-3 pt-4 pb-4">
         <div class="flex items-center px-4">
@@ -145,7 +139,13 @@ import {
   MenuItem,
   MenuItems
 } from '@headlessui/vue'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import {
+  Bars3Icon,
+  BellIcon,
+  XMarkIcon,
+  SunIcon,
+  MoonIcon
+} from '@heroicons/vue/24/solid'
 
 const user = {
   name: 'Tom Cook',
@@ -153,6 +153,7 @@ const user = {
   imageUrl:
     'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
 }
+
 const navigation = [
   { name: 'Dashboard', href: '#', current: true },
   { name: 'Team', href: '#', current: false },
@@ -164,4 +165,17 @@ const userNavigation = [
   { name: 'Settings', href: '#' },
   { name: 'Sign out', href: '#' }
 ]
+
+const darkMode = useCookie('darkMode')
+const swapTheme = () => {
+  if (!darkMode.value) {
+    document.documentElement.classList.add('dark')
+    darkMode.value = true
+  } else {
+    document.documentElement.classList.remove('dark')
+    darkMode.value = false
+  }
+}
+
+const nav = useNav()
 </script>

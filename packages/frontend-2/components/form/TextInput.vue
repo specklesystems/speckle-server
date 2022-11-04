@@ -1,6 +1,6 @@
 <template>
   <div>
-    <label :for="name" class="block text-foreground-2 label">
+    <label :for="name" class="block label">
       <span>{{ title }}</span>
       <span v-if="showRequired" class="text-danger ml-1">*</span>
     </label>
@@ -26,8 +26,8 @@
         :type="type"
         :name="name"
         :class="[
-          'block w-full shadow-sm rounded-md focus:outline-none sm:text-sm text-black',
-          'disabled:cursor-not-allowed  disabled:bg-background-2 disabled:text-foreground-3',
+          'block w-full rounded-xl focus:outline-none sm:text-sm background',
+          'disabled:cursor-not-allowed disabled:bg-background-2 disabled:text-foreground-3',
           computedClasses
         ]"
         :placeholder="placeholder"
@@ -161,7 +161,7 @@ const computedClasses = computed((): string => {
       'pr-8 border-danger-lighter text-danger-darker placeholder-danger-lighter focus:border-danger focus:ring-danger'
     )
   } else {
-    classParts.push('border-foreground-4 focus:border-primary focus:ring-primary')
+    classParts.push('border-foreground-4 focus:ring-primary')
   }
 
   return classParts.join(' ')

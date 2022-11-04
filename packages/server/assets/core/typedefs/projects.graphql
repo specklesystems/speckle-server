@@ -1,5 +1,6 @@
 extend type Query {
   projects: [Project!]!
+  project(id: String): Project!
 }
 
 type Project {
@@ -9,4 +10,12 @@ type Project {
   role: String!
   editedAt: DateTime!
   team: [LimitedUser!]!
+}
+
+type Model {
+  id: ID!
+  name: String!
+  versionCount: Int!
+  author: LimitedUser!
+  sourceApp: String!
 }

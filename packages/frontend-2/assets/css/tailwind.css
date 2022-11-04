@@ -1,7 +1,8 @@
 /* stylelint-disable selector-id-pattern */
 
 /** Main sans-serif font TODO: preload/prefetch */
-@import 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap';
+/* @import 'https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;800&display=swap'; */
+@import 'https://fonts.googleapis.com/css2?family=Inter:wght@100;400;500;600;800&family=Montserrat:wght@100;200;300;400;500;600;700;800;900&display=swap';
 @import './tailwind-setup/semantic-colors.css';
 
 @tailwind base;
@@ -17,23 +18,23 @@
    * Common text styles
    */
   .h1 {
-    @apply text-5xl leading-normal font-bold;
+    @apply text-5xl;
   }
 
   .h2 {
-    @apply text-4xl leading-normal font-bold;
+    @apply text-4xl;
   }
 
   .h3 {
-    @apply text-3xl leading-normal font-bold;
+    @apply text-3xl;
   }
 
   .h4 {
-    @apply text-2xl leading-normal font-bold;
+    @apply text-2xl;
   }
 
   .h5 {
-    @apply text-xl leading-normal font-bold;
+    @apply text-xl;
   }
 
   .normal {
@@ -51,15 +52,32 @@
   .caption {
     @apply text-xs;
   }
-}
 
-/**
- * Ensuring ring offset color always defaults to bg color
- */
-*,
-[type='checkbox']:focus,
-[type='radio']:focus {
-  @apply ring-offset-background;
+  .default-width {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .background-base {
+    @apply bg-slate-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300;
+  }
+
+  .background {
+    @apply bg-white dark:bg-black text-neutral-600 dark:text-neutral-300;
+  }
+
+  .background-highlight {
+    @apply bg-blue-500 dark:bg-blue-700 text-white dark:text-neutral-300;
+  }
+
+  /* bg-gradient-to-bl from-gray-700 via-gray-900 to-black */
+  .background-highlight-2 {
+    @apply bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-50 via-blue-100 to-blue-400 dark:bg-blue-700 dark:from-sky-400 dark:via-blue-700 dark:to-indigo-900  text-white dark:text-neutral-300;
+  }
+  /* }bg-[radial-gradient(ellipse_at_right,_var(--tw-gradient-stops))] */
+
+  .link {
+    @apply text-blue-500 dark:text-blue-600;
+  }
 }
 
 /**
@@ -76,4 +94,9 @@ html,
 body,
 div#__nuxt {
   height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
 }
