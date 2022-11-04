@@ -24,13 +24,7 @@
           </div>
         </div>
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
-          <button
-            type="button"
-            class="rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          >
-            <span class="sr-only">View notifications</span>
-            <BellIcon class="h-6 w-6" aria-hidden="true" />
-          </button>
+          <HeaderThemeToggle />
 
           <!-- Profile dropdown -->
           <Menu as="div" class="relative ml-4">
@@ -112,13 +106,7 @@
             <div class="text-base font-medium text-foreground">{{ user.name }}</div>
             <div class="text-sm font-medium text-foreground-3">{{ user.email }}</div>
           </div>
-          <button
-            type="button"
-            class="ml-auto flex-shrink-0 rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          >
-            <span class="sr-only">View notifications</span>
-            <BellIcon class="h-6 w-6" aria-hidden="true" />
-          </button>
+          <HeaderThemeToggle class="ml-auto flex-shrink-0" />
         </div>
         <div class="mt-4 space-y-1">
           <DisclosureButton
@@ -145,7 +133,7 @@ import {
   MenuItem,
   MenuItems
 } from '@headlessui/vue'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const user = {
   name: 'Tom Cook',

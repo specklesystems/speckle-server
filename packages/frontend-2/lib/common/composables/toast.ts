@@ -1,7 +1,6 @@
 import { useEventBus, useTimeoutFn } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-
-const triggerNotificationEvent = 'speckle.globalToast.trigger'
+import { EventBusEvents } from '../helpers/constants'
 
 export enum ToastNotificationType {
   Success,
@@ -28,7 +27,7 @@ export type ToastNotification = {
 }
 
 const useTriggerNotificationEventBus = () =>
-  useEventBus<ToastNotification>(triggerNotificationEvent)
+  useEventBus<ToastNotification>(EventBusEvents.TriggerToast)
 
 /**
  * Set up a new global toast manager/renderer (don't use this in multiple components that live at the same time)

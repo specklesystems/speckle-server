@@ -9,5 +9,14 @@ export const LocalStorageKeys = Object.freeze({
  * Key values for JS-accessible cookies
  */
 export const CookieKeys = Object.freeze({
-  AuthToken: 'authn'
+  AuthToken: 'authn',
+  Theme: 'theme'
+})
+
+/**
+ * Global event bus event names
+ */
+export const EventBusEvents = Object.freeze({
+  TriggerToast: 'triggerToastNotification',
+  ThemeUpdated: 'themeCookieUpdated'
 })
