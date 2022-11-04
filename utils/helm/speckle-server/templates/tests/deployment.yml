@@ -1,49 +1,53 @@
 {{- if .Values.helm_test_enabled }}
-apiVersion: v1
-kind: Pod
+
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: "speckle-test-deployment"
+  name: "speckle-test"
   namespace: {{ .Values.namespace }}
   annotations:
-    "helm.sh/hook": test
+    helm.sh/hook: test
   labels:
 {{ include "test.labels" . | indent 4 }}
 spec:
-  containers:
-    - name: test-deployment
-      image: speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}
-      env:
-        - name: SPECKLE_SERVER
-          value: https://{{ .Values.domain }}
-        - name: SERVER_VERSION
-          value: {{ .Values.docker_image_tag }}
-      resources:
-        requests:
-          cpu: {{ .Values.test.requests.cpu }}
-          memory: {{ .Values.test.requests.memory }}
-        limits:
-          cpu: {{ .Values.test.limits.cpu }}
-          memory: {{ .Values.test.limits.memory }}
+  backoffLimit: 1
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      containers:
+        - name: test-deployment
+          image: speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}
+          env:
+            - name: SPECKLE_SERVER
+              value: https://{{ .Values.domain }}
+            - name: SERVER_VERSION
+              value: {{ .Values.docker_image_tag }}
+          resources:
+            requests:
+              cpu: {{ .Values.test.requests.cpu }}
+              memory: {{ .Values.test.requests.memory }}
+            limits:
+              cpu: {{ .Values.test.limits.cpu }}
+              memory: {{ .Values.test.limits.memory }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 20000
+      restartPolicy: Never
       securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
-        privileged: false
-        readOnlyRootFilesystem: true
         runAsNonRoot: true
         runAsUser: 20000
+        runAsGroup: 30000
+        seccompProfile:
+          type: RuntimeDefault
 
-  restartPolicy: Never
-
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 20000
-    runAsGroup: 30000
-    seccompProfile:
-      type: RuntimeDefault
-
-  {{- if .Values.test.serviceAccount.create }}
-  serviceAccountName: {{ include "test.name" $ }}
-  {{- end }}
+      {{- if .Values.test.serviceAccount.create }}
+      serviceAccountName: {{ include "test.name" $ }}
+      {{- end }}
 {{- end }}
