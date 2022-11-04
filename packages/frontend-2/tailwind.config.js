@@ -57,8 +57,9 @@ const typographyTheme = (theme, type) => ({
   ...typographyDark(theme, type)
 })
 
-/** @type {import('tailwindcss/tailwind-config').TailwindConfig} */
+/** @type {import('tailwindcss').Config} */
 const config = {
+  darkMode: 'class',
   content: [
     `./components/**/*.{vue,js,ts}`,
     `./layouts/**/*.vue`,
