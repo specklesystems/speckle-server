@@ -11,9 +11,6 @@ process.env.IS_STORYBOOK_BUILD = 'true'
 // make nuxt env vars available here
 dotenv.config()
 
-// add env vars to storybook
-process.env.STORYBOOK_API_ORIGIN = process.env.API_ORIGIN
-
 // having to use jiti cause of weird transpilation stuff going on during the storybook build
 const jitiImport = jiti(import.meta.url, {
   cache: false,
@@ -59,7 +56,11 @@ const config: StorybookConfig = {
         // Auto-imports managed by unimport
         // TODO: Is this already handled through nuxtViteConfig? Global functions seem to work without this
         Unimport.vite(unimportOptions)
-      ]
+      ],
+      define: {
+        // TODO: Unsafe for prod, we'll need to limit the env vars built here
+        NUXT_ENV_VARS: process.env
+      }
     }
 
     let final = mergeConfig(config, resolvedViteConfig)

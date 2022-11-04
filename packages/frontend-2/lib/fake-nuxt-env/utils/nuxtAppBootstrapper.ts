@@ -42,9 +42,7 @@ const initNuxtApp = () => {
   // which is necessary cause otherwise `createNuxtApp` throws
   window.__NUXT__ = {
     config: {
-      public: {
-        API_ORIGIN: import.meta.env.STORYBOOK_API_ORIGIN
-      }
+      public: NUXT_ENV_VARS
     }
   }
   const nuxtApp = createNuxtApp({
