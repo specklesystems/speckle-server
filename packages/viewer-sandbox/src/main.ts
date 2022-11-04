@@ -97,7 +97,7 @@ await sandbox.loadUrl(
   // AutoCAD
   // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
   //Blizzard world
-  'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
   //Car
   // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
   // Jonathon's
@@ -127,7 +127,7 @@ await sandbox.loadUrl(
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Building AO params
-  // 'https://latest.speckle.dev/streams/0dd74866d0/commits/317e210afa'
+  'https://latest.speckle.dev/streams/0dd74866d0/commits/317e210afa'
   // Murder Cube
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7f0c4d2fc1/'
   // Classroom
