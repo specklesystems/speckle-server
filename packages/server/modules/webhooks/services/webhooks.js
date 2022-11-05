@@ -107,6 +107,8 @@ module.exports = {
       }
     }
 
+    // with this select, we must have the streamid available on the webhook config,
+    // even when the stream is deleted, to dispatch the stream deleted webhook events
     const { rows } = await knex.raw(
       `
       SELECT * FROM webhooks_config WHERE "streamId" = ?
