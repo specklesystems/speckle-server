@@ -1,6 +1,7 @@
-import { useEventBus, useTimeoutFn } from '@vueuse/core'
+import { useTimeoutFn } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-import { EventBusEvents } from '../helpers/constants'
+import { useScopedState } from '~/lib/common/composables/scopedState'
+import { Ref } from 'vue'
 
 export enum ToastNotificationType {
   Success,
@@ -26,61 +27,61 @@ export type ToastNotification = {
   }
 }
 
-const useTriggerNotificationEventBus = () =>
-  useEventBus<ToastNotification>(EventBusEvents.TriggerToast)
+const useGlobalToastState = () =>
+  useScopedState<Ref<Nullable<ToastNotification>>>('global-toast-state', () =>
+    ref(null)
+  )
 
 /**
  * Set up a new global toast manager/renderer (don't use this in multiple components that live at the same time)
  */
 export function useGlobalToastManager() {
-  const bus = useTriggerNotificationEventBus()
+  const stateNotification = useGlobalToastState()
 
-  const activeNotification = ref<Nullable<ToastNotification>>(null)
-  const currentNotification = computed(() => activeNotification.value)
+  const currentNotification = ref(stateNotification.value)
+  const readOnlyNotification = computed(() => currentNotification.value)
 
   const { start, stop } = useTimeoutFn(() => {
     dismiss()
   }, 4000)
 
-  onMounted(() => {
-    bus.on((e) => {
+  watch(
+    stateNotification,
+    (newVal) => {
       // First dismiss old notification, then set a new one on next tick
       // this is so that the old one actually disappears from the screen for the user,
       // instead of just having its contents replaced
       dismiss()
 
       nextTick(() => {
-        activeNotification.value = e
+        currentNotification.value = newVal
 
         // (re-)init timeout
         stop()
         start()
       })
-    })
-  })
-
-  onUnmounted(() => {
-    bus.reset()
-  })
+    },
+    { deep: true }
+  )
 
   const dismiss = () => {
-    activeNotification.value = null
+    currentNotification.value = null
   }
 
-  return { currentNotification, dismiss }
+  return { currentNotification: readOnlyNotification, dismiss }
 }
 
 /**
  * Trigger global toast notifications
  */
 export function useGlobalToast() {
-  const bus = useTriggerNotificationEventBus()
+  const stateNotification = useGlobalToastState()
 
   /**
    * Trigger a new toast notification
    */
   const triggerNotification = (notification: ToastNotification) => {
-    bus.emit(notification)
+    stateNotification.value = notification
   }
 
   return { triggerNotification }

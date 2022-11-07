@@ -6,7 +6,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useTheme } from '~~/lib/core/utils/themeState'
+import { useTheme } from '~~/lib/core/composables/theme'
 
 const { isDarkTheme } = useTheme()
 

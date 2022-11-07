@@ -9,12 +9,11 @@
   </button>
 </template>
 <script setup lang="ts">
-import { SunIcon } from '@heroicons/vue/24/outline'
-import { MoonIcon } from '@heroicons/vue/24/solid'
-import { useTheme, AppTheme } from '~~/lib/core/utils/themeState'
+import { SunIcon, MoonIcon } from '@heroicons/vue/24/solid'
+import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
 
 const { isDarkTheme, setTheme } = useTheme()
-const Icon = computed(() => (isDarkTheme.value ? MoonIcon : SunIcon))
+const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 
 const onClick = () => {
   if (isDarkTheme.value) {

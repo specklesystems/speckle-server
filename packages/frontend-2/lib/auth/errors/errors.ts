@@ -7,7 +7,3 @@ export class InvalidLoginParametersError extends BaseError {
 export class LoginFailedError extends BaseError {
   static defaultMessage = 'Logging in failed!'
 }
-
-export class AuthStateRuntimeError extends BaseError {
-  static defaultMessage = 'Unexpected issue while working with the apps auth state!'
-}
