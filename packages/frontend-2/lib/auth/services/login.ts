@@ -3,7 +3,8 @@ import {
   LoginFailedError
 } from '~~/lib/auth/errors/errors'
 import { LogicError } from '~~/lib/core/errors/base'
-import { setToken } from '~~/lib/auth/utils/authState'
+import { CookieRef } from '#app'
+import { Optional } from '@speckle/shared'
 
 // TODO: Should these differ from the old frontend values?
 const appId = 'spklwebapp'
@@ -14,6 +15,7 @@ type LoginParams = {
   email: string
   password: string
   challenge: string
+  authTokenRef: CookieRef<Optional<string>>
 }
 
 type TokenParams = {
@@ -102,13 +104,13 @@ export async function login(params: LoginParams) {
     throw new LogicError('Logging in during SSR is not supported!')
   }
 
-  const { apiOrigin, challenge } = params
+  const { apiOrigin, challenge, authTokenRef } = params
 
   const accessCode = await getAccessCode(params)
   const token = await getTokenFromAccessCode({ accessCode, apiOrigin, challenge })
 
-  // save token
-  setToken(token)
+  // save token in cookie
+  authTokenRef.value = token
 
   // reload page & go to index
   window.location.href = '/'

@@ -4,7 +4,6 @@ import { buildVueAppSetup } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper
 import { MockedProvider } from '~~/lib/fake-nuxt-env/components/MockedProvider'
 import { setup } from '@storybook/vue3'
 
-// TODO: Undo async vue app setup with apollo
 const setupVueApp = await buildVueAppSetup()
 
 setup((app) => {

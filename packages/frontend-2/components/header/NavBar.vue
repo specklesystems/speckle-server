@@ -58,6 +58,7 @@
                       active ? 'bg-background-2' : '',
                       'block px-4 py-2 text-sm text-foreground-2'
                     ]"
+                    @click="item.onClick"
                   >
                     {{ item.name }}
                   </a>
@@ -134,6 +135,9 @@ import {
   MenuItems
 } from '@headlessui/vue'
 import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { useAuth } from '~/lib/auth/utils/authState'
+
+const authToken = useAuth()
 
 const user = {
   name: 'Tom Cook',
@@ -148,8 +152,14 @@ const navigation = [
   { name: 'Calendar', href: '#', current: false }
 ]
 const userNavigation = [
-  { name: 'Your Profile', href: '/login', current: true },
-  { name: 'Settings', href: '#' },
-  { name: 'Sign out', href: '#' }
+  { name: 'Login', href: '/login', current: true },
+  {
+    name: 'Sign out',
+    href: '#',
+    onClick: () => {
+      authToken.value = undefined
+      window.location.href = '/'
+    }
+  }
 ]
 </script>
