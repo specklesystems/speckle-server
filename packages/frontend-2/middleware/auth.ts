@@ -1,4 +1,4 @@
-import { isLoggedInQuery } from '~~/lib/auth/graphql/queries'
+import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 
 /**
@@ -10,7 +10,7 @@ export default defineNuxtRouteMiddleware(async () => {
 
   const { data } = await client
     .query({
-      query: isLoggedInQuery
+      query: activeUserQuery
     })
     .catch(convertThrowIntoFetchResult)
 

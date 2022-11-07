@@ -22,9 +22,9 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
-import { useLogin } from '~~/lib/auth/composables/login'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 
 type FormValues = { email: string; password: string }
 
@@ -32,12 +32,12 @@ const { handleSubmit } = useForm<FormValues>()
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
-const { login } = useLogin()
+const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {
-    await login(email, password)
+    await loginWithEmail(email, password)
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Login successful'

@@ -207,21 +207,10 @@
 </template>
 <script setup lang="ts">
 import { Form } from 'vee-validate'
-import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
-const activeUserQuery = graphql(`
-  query GetActiveUser {
-    activeUser {
-      id
-      name
-      role
-    }
-  }
-`)
-
-const { result: activeUserResult } = useQuery(activeUserQuery)
-const user = computed(() => activeUserResult.value?.activeUser || null)
+const { activeUser } = useActiveUser()
+const user = computed(() => activeUser.value || null)
 
 const onSubmit = (values: unknown) => console.log(values)
 </script>

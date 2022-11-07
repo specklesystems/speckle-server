@@ -33,7 +33,13 @@
                 class="flex rounded-full bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <span class="sr-only">Open user menu</span>
-                <img class="h-8 w-8 rounded-full" :src="user.imageUrl" alt="" />
+                <img
+                  v-if="activeUserImageUrl"
+                  class="h-8 w-8 rounded-full"
+                  :src="activeUserImageUrl"
+                  alt=""
+                />
+                <UserCircleIcon v-else class="h-8 w-8 rounded-full" />
               </MenuButton>
             </div>
             <Transition
@@ -56,7 +62,7 @@
                     :href="item.href"
                     :class="[
                       active ? 'bg-background-2' : '',
-                      'block px-4 py-2 text-sm text-foreground-2'
+                      'cursor-pointer block px-4 py-2 text-sm text-foreground-2'
                     ]"
                     @click="item.onClick"
                   >
@@ -101,11 +107,21 @@
       <div class="border-t border-background-3 pt-4 pb-4">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
-            <img class="h-12 w-12 rounded-full" :src="user.imageUrl" alt="" />
+            <img
+              v-if="activeUserImageUrl"
+              class="h-12 w-12 rounded-full"
+              :src="activeUserImageUrl"
+              alt=""
+            />
+            <UserCircleIcon v-else class="h-12 w-12 rounded-full" />
           </div>
           <div class="ml-4">
-            <div class="text-base font-medium text-foreground">{{ user.name }}</div>
-            <div class="text-sm font-medium text-foreground-3">{{ user.email }}</div>
+            <div class="text-base font-medium text-foreground">
+              {{ activeUser ? activeUser.name : 'Guest' }}
+            </div>
+            <div v-if="activeUser" class="text-sm font-medium text-foreground-3">
+              {{ activeUser.email }}
+            </div>
           </div>
           <HeaderThemeToggle class="ml-auto flex-shrink-0" />
         </div>
@@ -115,7 +131,7 @@
             :key="item.name"
             as="a"
             :href="item.href"
-            class="block px-4 py-2 text-base font-medium text-foreground-3 hover:bg-background-2 hover:text-foreground-2"
+            class="cursor-pointer block px-4 py-2 text-base font-medium text-foreground-3 hover:bg-background-2 hover:text-foreground-2"
           >
             {{ item.name }}
           </DisclosureButton>
@@ -124,7 +140,7 @@
     </DisclosurePanel>
   </Disclosure>
 </template>
-<script setup>
+<script setup lang="ts">
 import {
   Disclosure,
   DisclosureButton,
@@ -134,32 +150,41 @@ import {
   MenuItem,
   MenuItems
 } from '@headlessui/vue'
-import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { useAuth } from '~/lib/auth/utils/authState'
+import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 
-const authToken = useAuth()
-
-const user = {
-  name: 'Tom Cook',
-  email: 'tom@example.com',
-  imageUrl:
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+type UserNavigationLink = {
+  name: string
+  href?: string
+  onClick?: () => void
 }
+
+const { logout } = useAuthManager()
+const { isLoggedIn, activeUser } = useActiveUser()
+
 const navigation = [
   { name: 'Dashboard', href: '#', current: true },
   { name: 'Team', href: '#', current: false },
   { name: 'Projects', href: '#', current: false },
   { name: 'Calendar', href: '#', current: false }
 ]
-const userNavigation = [
-  { name: 'Login', href: '/login', current: true },
-  {
-    name: 'Sign out',
-    href: '#',
-    onClick: () => {
-      authToken.value = undefined
-      window.location.href = '/'
-    }
-  }
-]
+
+const userNavigation = computed((): UserNavigationLink[] => [
+  ...(isLoggedIn.value
+    ? [
+        {
+          name: 'Sign out',
+          onClick: logout
+        }
+      ]
+    : [
+        { name: 'Login', href: '/login' },
+        { name: 'Register', href: '/register' }
+      ])
+])
+
+const activeUserImageUrl = computed(() =>
+  activeUser.value ? `https://robohash.org/test.png?size=120x120` : null
+)
 </script>
