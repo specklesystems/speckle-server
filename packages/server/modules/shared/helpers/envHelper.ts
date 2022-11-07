@@ -1,6 +1,21 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 
+const assertServingNewFrontend = (key: string) => {
+  if (!useNewFrontend()) {
+    throw new MisconfiguredEnvironmentError(
+      `${key} env var available only in Frontend 2.0 mode`
+    )
+  }
+}
+
+/**
+ * Whether the server is supposed to serve frontend 2.0
+ */
+export function useNewFrontend() {
+  return ['1', 'true'].includes(process.env.USE_FRONTEND_2 || 'false')
+}
+
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
 }
@@ -55,4 +70,16 @@ export function shouldDisableNotificationsConsumption() {
   return ['1', 'true'].includes(
     process.env.DISABLE_NOTIFICATIONS_CONSUMPTION || 'false'
   )
+}
+
+/**
+ * Get frontend app origin/base URL
+ */
+export function getFrontendOrigin() {
+  assertServingNewFrontend('FRONTEND_ORIGIN')
+  if (!process.env.FRONTEND_ORIGIN) {
+    throw new MisconfiguredEnvironmentError('FRONTEND_ORIGIN env var not configured')
+  }
+
+  return process.env.FRONTEND_ORIGIN
 }

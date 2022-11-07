@@ -6,9 +6,9 @@ import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { OperationDefinitionNode, Kind } from 'graphql'
-import { useAuth } from '~~/lib/auth/utils/authState'
 import { CookieRef } from '#app'
 import { Optional } from '@speckle/shared'
+import { useAuthCookie } from '~~/lib/auth/composables/auth'
 
 // TODO: Store common apollo configs & helpers in @speckle/shared
 
@@ -91,7 +91,7 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const httpEndpoint = `${API_ORIGIN}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
-  const authToken = useAuth()
+  const authToken = useAuthCookie()
   const wsClient = process.client
     ? await createWsClient({ wsEndpoint, authToken })
     : undefined
