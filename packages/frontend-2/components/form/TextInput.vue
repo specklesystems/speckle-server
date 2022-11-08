@@ -26,7 +26,7 @@
         :name="name"
         :class="[
           'block h-12 w-full rounded-xl focus:outline-none sm:text-sm bg-base-page text-foreground transition-all',
-          'disabled:cursor-not-allowed disabled:bg-disabled-lighter disabled:text-white',
+          'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
           computedClasses
         ]"
         :placeholder="placeholder"

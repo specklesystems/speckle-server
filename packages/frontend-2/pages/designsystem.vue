@@ -63,25 +63,27 @@
             <div>
               <div>Here are the available background colors:</div>
               <div
-                class="bg-background px-4 py-12 mt-2 block rounded-lg border-4 border-base-2"
+                class="bg-base-page px-4 py-12 mt-2 block rounded-lg border-2 border-neutral"
               >
-                <b>bg-background</b>
-                - for use in any element that needs to stand out from the page.
-              </div>
-              <div
-                class="bg-background-base px-4 py-12 mt-2 block rounded-lg border-4 border-base-2"
-              >
-                <b>bg-background-base</b>
+                <b>bg-page</b>
                 - for use as the page background.
               </div>
               <div
-                class="bg-base-2 px-4 py-12 mt-2 block rounded-lg border-4 border-base-2"
+                class="bg-base px-4 py-12 mt-2 block rounded-lg border-2 border-neutral"
+              >
+                <b>bg-base</b>
+                - for use in any element that
+                <b>sits</b>
+                on the page.
+              </div>
+              <div
+                class="bg-base-2 px-4 py-12 mt-2 block rounded-lg border-2 border-neutral-2"
               >
                 <b>bg-base-2</b>
                 - for use as the background for anything that needs to stand out.
               </div>
               <div
-                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-4 border-primary"
+                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-2 border-neutral"
               >
                 <b>bg-primary</b>
                 - for use when you want to something to really pop.
@@ -125,7 +127,7 @@
                   >
                     type="pop"
                   </code>
-                  Pop buttons for accented element backgrounds
+                  Pop buttons for accented element backgrounds (or normal ones)
                 </p>
                 <hr class="border-base" />
                 <div>
