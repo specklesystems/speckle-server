@@ -83,18 +83,29 @@ export const parameters = {
 
 /** @type {import('@storybook/csf').DecoratorFunction[]} */
 export const decorators = [
-  // Global CSS class setup decorator
-  (story) => ({
-    components: {
-      Story: story()
-    },
-    inheritAttrs: false,
-    template: `
-      <div class="text-foreground">
-        <Story v-bind="$attrs" />
-      </div>
-    `
-  }),
+  // Global CSS class setup decorator + theme support
+  (story, ctx) => {
+    const theme = ctx.globals.theme
+    const isDarkMode = theme === 'dark'
+
+    if (isDarkMode) {
+      document.querySelector('html').classList.add('dark')
+    } else {
+      document.querySelector('html').classList.remove('dark')
+    }
+
+    return {
+      components: {
+        Story: story()
+      },
+      inheritAttrs: false,
+      template: `
+        <div class="text-foreground">
+          <Story v-bind="$attrs" />
+        </div>
+      `
+    }
+  },
   // Apollo Mocked Provider decorator
   (story, ctx) => {
     const {
@@ -117,3 +128,20 @@ export const decorators = [
     }
   }
 ]
+
+export const globalTypes = {
+  theme: {
+    name: 'Theme',
+    description: 'Global theme for components',
+    defaultValue: 'light',
+    toolbar: {
+      icon: 'circlehollow',
+      // Array of plain string values or MenuItem shape (see below)
+      items: ['light', 'dark'],
+      // Property that specifies if the name of the item will be displayed
+      title: 'Theme',
+      // Change title based on selected value
+      dynamicTitle: true
+    }
+  }
+}
