@@ -2,23 +2,23 @@
   <Disclosure
     v-slot="{ open }"
     as="nav"
-    class="group background shadow-md hover:shadow-lg transition fixed w-full"
+    class="group bg-background shadow-md hover:shadow-lg transition fixed w-full z-10"
   >
-    <div class="mx-auto px-4">
+    <div class="mx-auto px-4 default-width">
       <div class="flex h-14 group-hover:h-16 transition-all justify-between">
         <div class="flex">
           <HeaderLogoBlock :active="false" class="mr-1" />
           <div class="hidden sm:flex flex-shrink-0 items-center">
             <HeaderNavLink to="/" name="Dashboard" :separator="false" class="ml-2" />
-            <TransitionGroup name="fade">
-              <HeaderNavLink
-                v-for="(nl, i) in nav.filter((n) => !!n)"
-                :key="nl.to"
-                :to="nl.to"
-                :name="nl.name"
-                :separator="nl.separator"
-              />
-            </TransitionGroup>
+
+            <HeaderNavLink
+              v-for="(nl, i) in nav.filter((n) => !!n)"
+              :key="nl.to"
+              :to="nl.to"
+              :name="nl.name"
+              :separator="nl.separator"
+            />
+
             <!-- <HeaderNavLink to="/test" name="Long Project Name" /> -->
             <!-- <code class="text-xs">{{ nav }}</code> -->
           </div>
@@ -26,7 +26,7 @@
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           <button
             type="button"
-            class="rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
+            class="rounded-full bg-background p-1 text-foreground hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
             @click="swapTheme()"
           >
             <SunIcon v-if="darkMode" class="h-4 w-4" aria-hidden="true" />
@@ -86,8 +86,8 @@
       </div>
     </div>
 
-    <DisclosurePanel class="sm:hidden">
-      <div class="space-y-6 pt-2 pb-6 px-5">
+    <DisclosurePanel class="sm:hidden" on-pointerleave="">
+      <div class="flex flex-col space-y-6 pt-2 pb-6 px-5">
         <HeaderNavLink to="/" name="Dashboard" class="" />
         <HeaderNavLink
           v-for="(nl, i) in nav.filter((n) => !!n)"
@@ -97,7 +97,7 @@
           :separator="nl.separator"
         />
       </div>
-      <div class="border-t border-background-3 pt-4 pb-4">
+      <!-- <div class="border-t border-background-3 pt-4 pb-4">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
             <img class="h-12 w-12 rounded-full" :src="user.imageUrl" alt="" />
@@ -125,7 +125,7 @@
             {{ item.name }}
           </DisclosureButton>
         </div>
-      </div>
+      </div> -->
     </DisclosurePanel>
   </Disclosure>
 </template>
@@ -139,13 +139,7 @@ import {
   MenuItem,
   MenuItems
 } from '@headlessui/vue'
-import {
-  Bars3Icon,
-  BellIcon,
-  XMarkIcon,
-  SunIcon,
-  MoonIcon
-} from '@heroicons/vue/24/solid'
+import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/vue/24/solid'
 
 const user = {
   name: 'Tom Cook',
@@ -154,12 +148,8 @@ const user = {
     'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
 }
 
-const navigation = [
-  { name: 'Dashboard', href: '#', current: true },
-  { name: 'Team', href: '#', current: false },
-  { name: 'Projects', href: '#', current: false },
-  { name: 'Calendar', href: '#', current: false }
-]
+const mobileMenuOpen = ref(false)
+
 const userNavigation = [
   { name: 'Your Profile', href: '/login', current: true },
   { name: 'Settings', href: '#' },

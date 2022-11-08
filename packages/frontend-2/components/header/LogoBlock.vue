@@ -6,7 +6,7 @@
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
     />
-    <div v-if="!minimal" class="text-blue-500 mt-0 h6 font-bold">Speckle</div>
+    <div v-if="!minimal" class="text-primary mt-0 h6 font-bold">Speckle</div>
   </NuxtLink>
 </template>
 <script setup lang="ts">

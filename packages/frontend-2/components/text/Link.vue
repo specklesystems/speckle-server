@@ -43,9 +43,9 @@ const computedClasses = computed(() => {
   const classParts: string[] = ['font-medium']
 
   if (isSecondary) {
-    classParts.push('text-secondary')
+    classParts.push('text-primary')
   } else {
-    classParts.push('text-link')
+    classParts.push('text-primary')
   }
 
   if (props.disabled) {
@@ -54,9 +54,9 @@ const computedClasses = computed(() => {
     classParts.push('cursor-pointer')
 
     if (isSecondary) {
-      classParts.push('hover:text-secondary-lighter')
+      classParts.push('hover:text-primary-focus')
     } else {
-      classParts.push('hover:text-link-lighter')
+      classParts.push('hover:text-primary-focus')
     }
   }
 

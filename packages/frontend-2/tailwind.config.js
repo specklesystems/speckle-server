@@ -74,45 +74,28 @@ const config = {
   theme: {
     extend: {
       colors: {
-        // background: {
-        //   DEFAULT: 'var(--theme-color-background)',
-        //   2: 'var(--theme-color-background-2)',
-        //   3: 'var(--theme-color-background-3)'
-        // },
+        background: {
+          DEFAULT: 'var(--bg-default)',
+          base: 'var(--bg-base)',
+          accent: 'var(--bg-accent)'
+        },
         foreground: {
-          DEFAULT: 'var(--theme-color-foreground)',
-          2: 'var(--theme-color-foreground-2)',
-          3: 'var(--theme-color-foreground-3)',
-          4: 'var(--theme-color-foreground-4)'
+          DEFAULT: 'var(--foreground)',
+          dim: 'var(--foreground-dim)'
         },
         primary: {
-          DEFAULT: colors.blue['600'],
-          darker: colors.blue['700'],
-          lighter: colors.blue['500']
-        },
-        link: {
-          DEFAULT: 'var(--theme-color-link)',
-          lighter: 'var(--theme-color-link-lighter)'
-        },
-        secondary: {
-          DEFAULT: colors.gray['500'],
-          lighter: colors.gray['400'],
-          darker: colors.gray['600']
+          DEFAULT: 'var(--primary)',
+          focus: 'var(--primary-focus)'
         },
         danger: {
-          DEFAULT: colors.red['600'],
+          DEFAULT: colors.red['500'],
           lighter: colors.red['400'],
-          darker: colors.red['700']
+          darker: colors.red['600']
         },
         warning: {
-          DEFAULT: colors.amber['600'],
+          DEFAULT: colors.amber['500'],
           lighter: colors.amber['400'],
-          darker: colors.amber['700']
-        },
-        success: {
-          DEFAULT: colors.green['600'],
-          lighter: colors.green['400'],
-          darker: colors.green['700']
+          darker: colors.amber['600']
         }
       },
       typography: ({ theme }) => ({
@@ -143,13 +126,6 @@ const config = {
           }
         }
       })
-    },
-    // fontFamily: {
-    //   // sans: ['Montserrat', 'sans-serif']
-    // },
-    configViewer: {
-      fonts:
-        'https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;800&display=swap'
     }
   },
   plugins: [

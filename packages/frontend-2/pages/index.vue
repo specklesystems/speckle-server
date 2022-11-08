@@ -1,19 +1,18 @@
 <template>
   <div>
-    <header class="default-width">
-      <section
-        xxxclass="p-10 rounded-xl siz background border-l-4 border-l-blue-500 shadow-lg dark:shadow-gray-400/20"
-      >
-        <h1 class="h3">Henlo 👋</h1>
-        <p>
+    <!-- <header class="default-width">
+      <section>
+        <h1 class="h3 text-foreground">Henlo 👋</h1>
+        <p class="text-foreground">
           Welcome {{ user?.name }}! This is a super big work in progress currently.
           <NuxtLink class="link" to="/designsystem">Design System Demo</NuxtLink>
         </p>
       </section>
-    </header>
+    </header> -->
     <main class="default-width">
-      <ModelDashboardList />
-      <ProjectList />
+      <NotificationsDashboardList />
+      <ModelDashboardList :num-models="Math.floor(Math.random() * 5 + 1)" />
+      <ProjectList :num-projects="Math.floor(Math.random() * 15 + 1)" />
     </main>
   </div>
 </template>

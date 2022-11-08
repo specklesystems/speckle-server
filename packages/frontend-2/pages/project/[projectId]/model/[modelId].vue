@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header class="default-width">
+    <header class="default-width text-foreground">
       <h1 class="h4 font-bold flex items-center">
         Project
         <span class="text-blue-500">Model</span>

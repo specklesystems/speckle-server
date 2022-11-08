@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header class="default-width">
+    <header class="default-width text-foreground">
       <h1 class="h4 font-bold flex items-center">Project Webhook Route</h1>
       <NuxtLink :to="`/project/${$route.params.projectId}`">to stream home</NuxtLink>
     </header>

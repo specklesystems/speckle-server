@@ -1,33 +1,42 @@
+/* stylelint-disable custom-property-empty-line-before */
+/* stylelint-disable comment-empty-line-before */
 /*
   Currently not possible to define different color values for the same color name just through
   the tailwind config, so using CSS variables instead.
-
+  
+  Palette reference: https://tailwindcss.com/docs/customizing-colors
+  
   Only use colors from the default tailwind color palette so that migrating away from this (if ever needed)
-  is easy
+  is easy.
  */
 
 :root {
-  --theme-color-background: #f8fafc; /* slate 50 */
-  --theme-color-background-2: #fff;
-  --theme-color-background-3: #f1f5f9; /* slate 100 */
+  /* blank background */
+  --bg-base: #f1f5f9;
+  /* background for elements that need to sand out from the blank backgorund, e.g. cards. */
+  --bg-default: #fff;
+  /* background used to higlight elements. */
+  --bg-accent: #dbeafe;
 
-  --theme-color-foreground: #404040; /* neutral 700 */
-  --theme-color-foreground-2: #52525b; /* neutral 600 */
-  --theme-color-foreground-3: #404040; /* neutral 700 */
+  /* default foreground color */
+  --foreground: #334155;
+  /* dimmer foreground color, e.g. caption text */
+  --foreground-dim: #94a3b8;
 
-  --theme-color-link: #2563eb;
-  --theme-color-link-lighter: #3b82f6;
+  /* primary color */
+  --primary: #3b82f6;
+  /* focused primary color */
+  --primary-focus: #2563eb;
 }
 
 :root.dark {
-  --theme-color-background: #171717; /* neutral 800 */
-  --theme-color-background-2: #000;
-  --theme-color-background-3: #262626; /* neutral 900 */
+  --bg-base: #000;
+  --bg-default: #171717;
+  --bg-accent: #1e293b;
 
-  --theme-color-foreground: #fff;
-  --theme-color-foreground-2: #e5e7eb;
-  --theme-color-foreground-3: #9ca3af;
+  --foreground: #d4d4d4;
+  --foreground-dim: #737373;
 
-  --theme-color-link: #3b82f6;
-  --theme-color-link-lighter: #60a5fa;
+  --primary: #2563eb;
+  --primary-focus: #3b82f6;
 }
