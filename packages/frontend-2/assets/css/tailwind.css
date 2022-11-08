@@ -37,10 +37,6 @@
     @apply text-xl;
   }
 
-  .normal {
-    @apply text-base;
-  }
-
   .label {
     @apply text-sm font-medium;
 
@@ -49,20 +45,27 @@
     }
   }
 
+  [type='checkbox']:focus,
+  [type='radio']:focus {
+    @apply ring-offset-base;
+  }
+
   .caption {
     @apply text-xs;
   }
 
-  .default-width {
+  .layout-columns-single {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
   .background-special {
-    @apply bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-background-primary to-primary dark:bg-blue-700 dark:from-sky-400 dark:via-blue-700 dark:to-indigo-900;
+    @apply bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-base to-primary dark:bg-blue-700 dark:from-sky-400 dark:via-blue-700 dark:to-indigo-900;
   }
 
-  .link {
-    @apply text-blue-500 dark:text-blue-600;
+  /* Note: we need to check how this looks on windows :) */
+  .system-font-family {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+      sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
   }
 }
 
@@ -83,6 +86,5 @@ div#__nuxt {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+  @apply system-font-family;
 }

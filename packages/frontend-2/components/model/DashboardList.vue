@@ -1,24 +1,24 @@
 <template>
   <section>
     <div class="flex items-center justify-between gap-4 mt-8 mb-4">
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
         <h1 class="h4 text-foreground font-bold flex items-center">
           {{ title }}
-          <span class="ml-2 caption">{{ numModels }}</span>
+          <span class="ml-2 caption text-foreground-2">{{ numModels }}</span>
         </h1>
       </div>
       <div v-if="enableSearch">
         <FormTextInput
-          name=""
+          name="model search"
           label=""
           placeholder="search"
-          class="bg-background shadow hover:shadow-lg"
+          class="bg-base shadow hover:shadow-lg"
         />
       </div>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <ModelCard
-        v-for="model in models.splice(0, numModels)"
+        v-for="model in models.slice(0, numModels)"
         :key="model.name"
         :model="model"
       />
@@ -27,9 +27,6 @@
   </section>
 </template>
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
-
 defineProps({
   /** Enable search or not */
   enableSearch: {

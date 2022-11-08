@@ -15,14 +15,14 @@
       >
         <div
           v-if="currentNotification"
-          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-background shadow-lg ring-1 ring-black ring-opacity-5"
+          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-base shadow-lg ring-1 ring-black ring-opacity-5"
         >
           <div class="p-4">
             <div class="flex items-start">
               <div class="flex-shrink-0">
                 <CheckCircleIcon
                   v-if="currentNotification.type === ToastNotificationType.Success"
-                  class="h-6 w-6 text-success"
+                  class="h-6 w-6 text-foreground"
                   aria-hidden="true"
                 />
                 <XCircleIcon
@@ -68,7 +68,7 @@
               >
                 <button
                   type="button"
-                  class="inline-flex rounded-md bg-background text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  class="inline-flex rounded-md bg-base text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   @click="dismiss"
                 >
                   <span class="sr-only">Close</span>

@@ -10,7 +10,7 @@
         :value="value"
         :disabled="disabled"
         type="checkbox"
-        class="h-4 w-4 rounded text-primary focus:ring-primary bg-background-base disabled:cursor-not-allowed disabled:bg-background-2 disabled:text-foreground-3"
+        class="h-4 w-4 rounded text-primary focus:ring-primary bg-base disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-2"
         :class="computedClasses"
         v-bind="$attrs"
         @change="onChange"
@@ -162,7 +162,7 @@ const descriptionClasses = computed((): string => {
   if (errorMessage.value) {
     classParts.push('text-danger')
   } else {
-    classParts.push('text-foreground-dim')
+    classParts.push('text-foreground-2')
   }
 
   return classParts.join(' ')

@@ -11,32 +11,43 @@
  */
 
 :root {
-  /* blank background */
-  --bg-base: #f1f5f9;
-  /* background for elements that need to sand out from the blank backgorund, e.g. cards. */
-  --bg-default: #fff;
-  /* background used to higlight elements. */
-  --bg-accent: #dbeafe;
+  /* used only as the page background */
+  --base-page: #f1f5f9;
+  /* used as the background for any element that sits on the page */
+  --base: #fff;
+  /* used as the background for any element that you want to emphasize */
+  --base-2: #dbeafe;
 
   /* default foreground color */
   --foreground: #334155;
   /* dimmer foreground color, e.g. caption text */
-  --foreground-dim: #94a3b8;
+  --foreground-2: #94a3b8;
 
   /* primary color */
   --primary: #3b82f6;
   /* focused primary color */
   --primary-focus: #2563eb;
+  /* muted primary color */
+  --primary-muted: #dbeafe;
+
+  /* disabled color */
+  --disabled: #d4d4d4;
+  /* disabled foreground color */
+  --disabled-muted: #fafafa;
 }
 
 :root.dark {
-  --bg-base: #000;
-  --bg-default: #171717;
-  --bg-accent: #1e293b;
+  --base-page: #000;
+  --base: #171717;
+  --base-2: #1e293b;
 
   --foreground: #d4d4d4;
-  --foreground-dim: #737373;
+  --foreground-2: #737373;
 
   --primary: #2563eb;
   --primary-focus: #3b82f6;
+  --primary-muted: #1e293b;
+
+  --disabled: #525252;
+  --disabled-muted: #a3a3a3;
 }

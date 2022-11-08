@@ -4,26 +4,22 @@
       <div class="flex items-center gap-4">
         <h1 class="h4 text-foreground font-bold flex items-center">
           Projects
-          <span class="ml-2 caption text-foreground-dim">{{ count }}</span>
+          <span class="ml-2 caption text-foreground-2">{{ count }}</span>
         </h1>
-        <button
-          class="rounded-lg bg-blue-100 hover:bg-blue-200 dark:bg-slate-800 hover:dark:bg-slate-900 text-blue-500 xxxdark:text-gray-500 text-sm shadow hover:shadow-md px-4 py-2 cursor-pointer transition"
-        >
-          New +
-        </button>
+        <FormButton class="mt-1">New +</FormButton>
       </div>
       <div v-if="enableSearch">
         <FormTextInput
-          name=""
+          name="project search"
           label=""
           placeholder="search"
-          class="bg-background shadow hover:shadow-lg"
+          class="bg-base shadow hover:shadow-lg"
         />
       </div>
     </div>
     <div v-if="count > 0">
       <ProjectListItem
-        v-for="project in [...projects].splice(0, numProjects)"
+        v-for="project in projects.slice(0, numProjects)"
         :key="project.id"
         :project="project"
       />

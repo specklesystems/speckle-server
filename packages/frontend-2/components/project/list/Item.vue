@@ -1,20 +1,20 @@
 <template>
   <a :href="`/project/${project.id}`" class="group">
     <div
-      class="group bg-background hover:bg-background-accent flex items-center justify-between px-4 mb-4 rounded-lg shadow h-16 hover:shadow-xl transition"
+      class="group bg-base hover:bg-base-2 flex items-center justify-between px-4 mb-4 rounded-lg shadow h-16 hover:shadow-xl transition"
     >
       <div class="flex items-center gap-4">
         <div class="font-bold text-foreground truncate">
           {{ project.name }}
         </div>
-        <div class="hidden text-foreground-dim sm:flex items-center caption">
+        <div class="hidden text-foreground-2 sm:flex items-center caption">
           <RectangleGroupIcon class="w-4 h-4 mr-2" />
           <span>{{ project.modelCount }} models</span>
         </div>
-        <div class="hidden text-foreground-dim sm:flex caption">
+        <div class="hidden text-foreground-2 sm:flex caption">
           {{ project.role }}
         </div>
-        <div class="hidden text-foreground-dim sm:flex caption">
+        <div class="hidden text-foreground-2 sm:flex caption">
           {{ project.editedAt }}
         </div>
       </div>

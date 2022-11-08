@@ -4,7 +4,7 @@
       <h1 class="h4 font-bold flex items-center">
         Project
         <span class="text-blue-500">Model</span>
-        Route
+        Route AKA 3D Viewer
       </h1>
       <NuxtLink :to="`/project/${$route.params.projectId}`">to stream home</NuxtLink>
     </header>

@@ -1,9 +1,9 @@
 <template>
   <div class="min-h-full">
     <HeaderNavBar />
-    <div class="pt-20 pb-3 container mx-auto">
+    <main class="pt-20 pb-3 container layout-columns-single">
       <slot />
-    </div>
+    </main>
     <SingletonManagers />
   </div>
 </template>

@@ -1,10 +1,6 @@
 <template>
   <div>
     <Title>{{ project?.name }}</Title>
-    <!-- <header class="default-width">
-      <h1 class="h4 font-bold flex items-center">Project Parent Route</h1>
-    </header> -->
-
     <NuxtPage />
   </div>
 </template>
@@ -13,7 +9,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
-
 const projectQuery = graphql(
   `
     query ProjectLandingPage($id: String!) {
@@ -45,15 +40,6 @@ onMounted(() => {
     name: computed(() => result.value?.project.name || 'loading'),
     separator: true
   })
-  //   nav.value.splice(
-  //     0,
-  //     0,
-  //     reactive({
-  //       to: route.path,
-  //       name: computed(() => result.value?.project.name || 'loading'),
-  //       separator: true
-  //     })
-  //   )
 })
 
 onUnmounted(() => {

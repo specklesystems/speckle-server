@@ -106,39 +106,39 @@ const colorClasses = computed(() => {
     case 'outline':
       return `${
         isDisabled
-          ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-100 dark:text-neutral-400 focus:ring-0 hover:ring-0'
+          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
           : 'text-primary'
-      } border-2 border-primary ring-background-accent`
+      } border-2 border-primary ring-primary-muted`
     case 'danger':
       return `${
         isDisabled
-          ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-100 dark:text-neutral-400 focus:ring-0 hover:ring-0'
+          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
           : 'bg-danger'
       } text-white hover:bg-danger-darker ring-danger-lighter`
     case 'warning':
       return `${
         isDisabled
-          ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-100 dark:text-neutral-400 focus:ring-0 hover:ring-0'
+          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
           : 'bg-warning'
       } text-white hover:bg-warning-darker ring-warning-lighter`
     case 'pop':
       return `${
         isDisabled
-          ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-100 dark:text-neutral-400 focus:ring-0 hover:ring-0'
+          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
           : 'bg-primary'
       } text-white hover:bg-primary-focus `
     case 'invert':
       return `${
         isDisabled
-          ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-100 dark:text-neutral-400 focus:ring-0 hover:ring-0'
-          : 'bg-white/90 text-primary'
+          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
+          : 'bg-white/95 text-primary'
       } hover:bg-white ring-white/50`
     default:
     case 'primary':
       return `${
         isDisabled
-          ? 'bg-neutral-300 dark:bg-neutral-800 text-neutral-100 dark:text-neutral-400 focus:ring-0 hover:ring-0'
-          : 'bg-background-accent text-primary hover:bg-primary hover:text-white'
+          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
+          : 'bg-primary-muted text-primary hover:bg-primary hover:text-white'
       }`
   }
 })
@@ -146,9 +146,9 @@ const colorClasses = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'small':
-      return 'px-2 py-1 text-xs'
+      return 'px-2 py-1 text-xs rounded-lg'
     case 'big':
-      return 'px-6 py-4 text-base'
+      return 'px-6 py-4'
     default:
     case 'normal':
       return 'px-4 py-2 text-sm'

@@ -1,9 +1,7 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
-    class="group bg-background hover:bg-primary rounded-xl shadow hover:shadow-xl hover:scale-[1.04] transition-all dark:shadow-slate-500/10 hover:cursor-pointer"
-    @mouseenter="hover = true"
-    @mouseleave="hover = false"
+    class="group bg-base hover:bg-primary rounded-xl shadow hover:shadow-xl hover:scale-[1.02] transition-all hover:cursor-pointer"
   >
     <NuxtLink to="/project/bla/model/bla">
       <div class="mb-2 h-52 flex items-center justify-center">
@@ -20,7 +18,7 @@
         <Disclosure v-slot="{ open }" as="div" class="relative">
           <div>
             <DisclosureButton
-              class="text-foreground-dim group-hover:text-white flex items-center rounded-xl transition-colors hover:bg-primary-lighter p-2 text-center"
+              class="text-foreground-2 group-hover:text-white flex items-center rounded-xl transition-colors hover:bg-primary-lighter p-2 text-center"
             >
               <div class="caption">{{ model.numVersions }}</div>
               <ClockIcon class="w-3 h-3 ml-1" />
@@ -41,13 +39,13 @@
                   class="absolute caption left-0 z-10 ml-0 -mt-1 w-36 origin-top-right"
                 >
                   <div
-                    class="shadow-xl bg-background text-foreground dark:shadow-slate-600/25 outline-0 dark:outline overflow-clip rounded-md divide-y dark:divide-neutral-800"
+                    class="shadow-xl bg-base text-foreground dark:shadow-slate-600/25 outline-0 dark:outline overflow-clip rounded-md divide-y dark:divide-neutral-800"
                   >
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-background-accent',
-                          active ? 'bg-background-accent' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-base-2',
+                          active ? 'bg-base-2' : ''
                         ]"
                       >
                         Share
@@ -56,8 +54,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-background-accent',
-                          active ? 'bg-background-accent' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-base-2',
+                          active ? 'bg-base-2' : ''
                         ]"
                       >
                         View Versions
@@ -66,8 +64,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-background-accent',
-                          active ? 'bg-background-accent' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-base-2',
+                          active ? 'bg-base-2' : ''
                         ]"
                       >
                         Open Project
@@ -76,8 +74,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-background-accent',
-                          active ? 'bg-background-accent' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-base-2',
+                          active ? 'bg-base-2' : ''
                         ]"
                       >
                         Delete
@@ -120,6 +118,4 @@ defineProps({
     required: true
   }
 })
-
-const hover = ref(false)
 </script>

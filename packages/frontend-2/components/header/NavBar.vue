@@ -2,10 +2,10 @@
   <Disclosure
     v-slot="{ open }"
     as="nav"
-    class="group bg-background shadow-md hover:shadow-lg transition fixed w-full z-10"
+    class="bg-base shadow-md hover:shadow-lg transition fixed w-full z-10"
   >
-    <div class="mx-auto px-4 default-width">
-      <div class="flex h-14 group-hover:h-16 transition-all justify-between">
+    <div class="container layout-columns-single">
+      <div class="flex h-14 transition-all justify-between">
         <div class="flex">
           <HeaderLogoBlock :active="false" class="mr-1" />
           <div class="hidden sm:flex flex-shrink-0 items-center">
@@ -26,7 +26,7 @@
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
           <button
             type="button"
-            class="rounded-full bg-background p-1 text-foreground hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
+            class="rounded-full bg-base p-1 text-foreground hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
             @click="swapTheme()"
           >
             <SunIcon v-if="darkMode" class="h-4 w-4" aria-hidden="true" />
@@ -37,7 +37,7 @@
           <Menu as="div" class="relative ml-4">
             <div>
               <MenuButton
-                class="flex rounded-full bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                class="flex rounded-full bg-base text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <span class="sr-only">Open user menu</span>
                 <img class="h-8 w-8 rounded-full" :src="user.imageUrl" alt="" />
@@ -52,7 +52,7 @@
               leave-to-class="transform opacity-0 scale-95"
             >
               <MenuItems
-                class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-background py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-base py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
               >
                 <MenuItem
                   v-for="item in userNavigation"
@@ -62,8 +62,8 @@
                   <a
                     :href="item.href"
                     :class="[
-                      active ? 'bg-background-2' : '',
-                      'block px-4 py-2 text-sm text-foreground-2'
+                      active ? 'bg-base-2' : '',
+                      'block px-4 py-2 text-sm text-foreground'
                     ]"
                   >
                     {{ item.name }}
@@ -76,7 +76,7 @@
         <div class="-mr-2 flex items-center sm:hidden">
           <!-- Mobile menu button -->
           <DisclosureButton
-            class="inline-flex items-center justify-center rounded-md bg-background p-2 text-foreground-3 hover:bg-background-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
+            class="inline-flex items-center justify-center rounded-md bg-base p-2 text-foreground-3 hover:bg-base-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
           >
             <span class="sr-only">Open main menu</span>
             <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
@@ -108,7 +108,7 @@
           </div>
           <button
             type="button"
-            class="ml-auto flex-shrink-0 rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            class="ml-auto flex-shrink-0 rounded-full bg-base p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
           >
             <span class="sr-only">View notifications</span>
             <BellIcon class="h-6 w-6" aria-hidden="true" />
@@ -120,7 +120,7 @@
             :key="item.name"
             as="a"
             :href="item.href"
-            class="block px-4 py-2 text-base font-medium text-foreground-3 hover:bg-background-2 hover:text-foreground-2"
+            class="block px-4 py-2 text-base font-medium text-foreground-3 hover:bg-base-2 hover:text-foreground-2"
           >
             {{ item.name }}
           </DisclosureButton>

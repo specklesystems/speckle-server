@@ -25,8 +25,8 @@
         :type="type"
         :name="name"
         :class="[
-          'block h-12 w-full rounded-xl focus:outline-none sm:text-sm bg-background-base text-foreground transition-all',
-          'disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:dark:bg-neutral-800 disabled:text-neutral-100 disabled:dark:text-neutral-400',
+          'block h-12 w-full rounded-xl focus:outline-none sm:text-sm bg-base-page text-foreground transition-all',
+          'disabled:cursor-not-allowed disabled:bg-disabled-lighter disabled:text-white',
           computedClasses
         ]"
         :placeholder="placeholder"
@@ -159,7 +159,7 @@ const { value, errorMessage: error } = useField(props.name, props.rules, {
   initialValue: props.modelValue || undefined
 })
 
-const leadingIconClasses = ref('h-4 w-4 text-foreground-dim')
+const leadingIconClasses = ref('h-4 w-4 text-foreground-2')
 
 const hasLeadingIcon = computed(() => ['email', 'password'].includes(props.type))
 
@@ -175,9 +175,7 @@ const computedClasses = computed((): string => {
       'pr-8 border-danger-lighter text-danger-darker placeholder-danger-lighter focus:border-danger focus:ring-danger'
     )
   } else {
-    classParts.push(
-      'border-0 focus:ring-4 focus:ring-background-accent focus:shadow-xl'
-    )
+    classParts.push('border-0 focus:ring-4 focus:ring-primary-muted focus:shadow-xl')
   }
 
   return classParts.join(' ')
@@ -189,6 +187,6 @@ const helpTip = computed(() => error.value || props.help)
 const hasHelpTip = computed(() => !!helpTip.value)
 const helpTipId = computed(() => (hasHelpTip.value ? `${props.name}-help` : undefined))
 const helpTipClasses = computed((): string =>
-  error.value ? 'text-danger' : 'text-foreground-dim'
+  error.value ? 'text-danger' : 'text-foreground-2'
 )
 </script>

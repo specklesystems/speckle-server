@@ -1,5 +1,5 @@
 <template>
-  <div id="speckle" class="bg-background-base">
+  <div id="speckle" class="bg-base-page">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

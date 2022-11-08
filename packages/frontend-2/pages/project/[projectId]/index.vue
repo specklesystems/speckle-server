@@ -1,13 +1,13 @@
 <template>
-  <main class="default-width mt-4">
+  <div class="">
     <div class="flex justify-end gap-2">
       <div class="grow">
         <div
-          class="group h-full w-max flex gap-4 items-center bg-background hover:bg-background-accent cursor-pointer overflow-hidden rounded-lg px-4 py-5 shadow-lg hover:shadow-xl transition sm:p-6"
+          class="group h-full w-max flex gap-4 items-center bg-base hover:bg-base-2 cursor-pointer overflow-hidden rounded-lg px-4 py-5 shadow-lg hover:shadow-xl transition sm:p-6"
         >
           <div>
             <dt
-              class="truncate text-sm font-medium text-foreground-dim group-hover:text-primary"
+              class="truncate text-sm font-medium text-foreground-2 group-hover:text-primary"
             >
               Team
             </dt>
@@ -23,9 +23,9 @@
       <div
         v-for="item in stats"
         :key="item.name"
-        class="w-36 bg-background overflow-hidden rounded-lg px-4 py-5 sm:p-6"
+        class="w-36 bg-base overflow-hidden rounded-lg px-4 py-5 sm:p-6"
       >
-        <dt class="truncate text-sm font-medium text-foreground-dim">
+        <dt class="truncate text-sm font-medium text-foreground-2">
           {{ item.name }}
         </dt>
         <dd class="mt-1 text-3xl font-semibold tracking-tight text-foreground">
@@ -44,7 +44,7 @@
         TO Model Page
       </NuxtLink>
     </p>
-  </main>
+  </div>
 </template>
 <script setup lang="ts">
 import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/solid'

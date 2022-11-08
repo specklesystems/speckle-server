@@ -7,9 +7,8 @@
     <div>
       <NuxtLink
         :to="to"
-        :class="`px-3 py-1 h6 font-bold rounded-full transition hover:bg-background-accent text-foreground hover:text-primary
-          ${active ? 'bg-background-accent text-primary-focus' : ''}
-        `"
+        class="px-3 py-1 h6 font-bold rounded-full transition hover:bg-primary-muted text-foreground hover:text-primary"
+        active-class="bg-primary-muted text-primary-focus"
       >
         {{ name || to }}
       </NuxtLink>

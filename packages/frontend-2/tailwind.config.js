@@ -74,18 +74,19 @@ const config = {
   theme: {
     extend: {
       colors: {
-        background: {
-          DEFAULT: 'var(--bg-default)',
-          base: 'var(--bg-base)',
-          accent: 'var(--bg-accent)'
+        base: {
+          DEFAULT: 'var(--base)',
+          2: 'var(--base-2)',
+          page: 'var(--base-page)'
         },
         foreground: {
           DEFAULT: 'var(--foreground)',
-          dim: 'var(--foreground-dim)'
+          2: 'var(--foreground-2)'
         },
         primary: {
           DEFAULT: 'var(--primary)',
-          focus: 'var(--primary-focus)'
+          focus: 'var(--primary-focus)',
+          muted: 'var(--primary-muted)'
         },
         danger: {
           DEFAULT: colors.red['500'],
@@ -96,6 +97,10 @@ const config = {
           DEFAULT: colors.amber['500'],
           lighter: colors.amber['400'],
           darker: colors.amber['600']
+        },
+        disabled: {
+          DEFAULT: 'var(--disabled)',
+          muted: 'var(--disabled-muted)'
         }
       },
       typography: ({ theme }) => ({

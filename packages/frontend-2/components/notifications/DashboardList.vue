@@ -1,6 +1,6 @@
 <template>
   <div class="grid gap-y-2 mt-">
-    <p class="caption text-foreground-dim">Pending Invites</p>
+    <p class="caption text-foreground-2">Pending Invites</p>
     <div
       class="flex items-center justify-between rounded-xl text-white pl-4 pr-2 py-2 shadow hover:shadow-lg transition bg-primary"
     >
@@ -13,7 +13,7 @@
     </div>
     <template v-for="(notification, index) in notifications" :key="index">
       <div
-        class="flex items-center justify-between rounded-xl bg-background text-foreground pl-4 pr-2 py-2 shadow hover:shadow-lg transition"
+        class="flex items-center justify-between rounded-xl bg-base text-foreground pl-4 pr-2 py-2 shadow hover:shadow-lg transition"
       >
         <div class="text-sm">
           {{ notification.message }}

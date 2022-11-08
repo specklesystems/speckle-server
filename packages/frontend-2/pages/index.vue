@@ -9,11 +9,9 @@
         </p>
       </section>
     </header> -->
-    <main class="default-width">
-      <NotificationsDashboardList />
-      <ModelDashboardList :num-models="Math.floor(Math.random() * 5 + 1)" />
-      <ProjectList :num-projects="Math.floor(Math.random() * 15 + 1)" />
-    </main>
+    <NotificationsDashboardList />
+    <ModelDashboardList :num-models="Math.floor(Math.random() * 5 + 1)" />
+    <ProjectList :num-projects="Math.floor(Math.random() * 15 + 1)" />
   </div>
 </template>
 <script setup lang="ts">
