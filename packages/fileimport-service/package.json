@@ -12,7 +12,7 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "engines": {
-    "node": "^16.0.0"
+    "node": "^18.0.0"
   },
   "scripts": {
     "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development SPECKLE_SERVER_URL=http://localhost:3000 nodemon ./src/daemon.js",
