@@ -350,6 +350,9 @@ jobs:
             - .yarn/unplugged
       - snyk/scan:
           fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/server/package.json
+          fail-on-issues: false
 
   docker-build: &build-job
     docker: &docker-image
