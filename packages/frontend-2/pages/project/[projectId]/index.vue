@@ -3,7 +3,7 @@
     <div class="flex justify-end gap-2">
       <div class="grow">
         <div
-          class="group h-full w-max flex gap-4 items-center bg-base hover:bg-base-2 cursor-pointer overflow-hidden rounded-lg px-4 py-5 shadow-lg hover:shadow-xl transition sm:p-6"
+          class="group h-full w-max flex gap-4 items-center bg-foundation hover:bg-foundation-2 cursor-pointer overflow-hidden rounded-lg px-4 py-5 shadow-lg hover:shadow-xl transition sm:p-6"
         >
           <div>
             <dt
@@ -23,7 +23,7 @@
       <div
         v-for="item in stats"
         :key="item.name"
-        class="w-36 bg-base overflow-hidden rounded-lg px-4 py-5 sm:p-6"
+        class="w-36 bg-foundation overflow-hidden rounded-lg px-4 py-5 sm:p-6"
       >
         <dt class="truncate text-sm font-medium text-foreground-2">
           {{ item.name }}
@@ -47,9 +47,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/solid'
-
-const route = useRoute()
 const stats = [
   {
     name: 'Versions',

@@ -77,10 +77,10 @@ const config = {
     },
     extend: {
       colors: {
-        base: {
-          DEFAULT: 'var(--base)',
-          2: 'var(--base-2)',
-          page: 'var(--base-page)'
+        foundation: {
+          DEFAULT: 'var(--foundation)',
+          2: 'var(--foundation-2)',
+          page: 'var(--foundation-page)'
         },
         foreground: {
           DEFAULT: 'var(--foreground)',

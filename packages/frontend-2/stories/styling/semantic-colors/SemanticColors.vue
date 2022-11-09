@@ -2,9 +2,11 @@
   <div class="bg-background p-4 text-foreground space-y-4">
     <div>
       <div>Here are the available background colors:</div>
-      <code class="bg-base-page p-4 m-4 block rounded-lg">bg-base-page</code>
-      <code class="bg-base p-4 m-4 block rounded-lg">bg-base</code>
-      <code class="bg-base-2 p-4 m-4 block rounded-lg">bg-base-2</code>
+      <code class="bg-foundation-page p-4 m-4 block rounded-lg">
+        bg-foundation-page
+      </code>
+      <code class="bg-foundation p-4 m-4 block rounded-lg">bg-foundation</code>
+      <code class="bg-foundation-2 p-4 m-4 block rounded-lg">bg-foundation-2</code>
     </div>
     <div>
       <div>Here are the available foreground colors:</div>

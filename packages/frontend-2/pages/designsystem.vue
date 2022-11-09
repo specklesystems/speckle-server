@@ -27,7 +27,7 @@
             <div class="label label--light">Label text (light)</div>
             <div class="caption">Caption text</div>
           </div>
-          <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-base-2">
+          <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-2">
             <b>Font faces?</b>
             system ui only - using github's stack. Lighter, better performance, no more
             google fonts trakcing and a more native look.
@@ -55,7 +55,7 @@
         <template #default>
           <div>Here are the available foreground colors:</div>
           <div class="mt-4">
-            <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-base-2">
+            <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-2">
               <b class="text-primary">Text colors? &nbsp;</b>
               <span class="text-foreground">
                 <b>foreground</b>
@@ -77,27 +77,27 @@
             <div>
               <div>Here are the available background colors:</div>
               <div
-                class="bg-base-page px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
+                class="bg-foundation-page px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
               >
-                <b>bg-base-page</b>
+                <b>bg-foundation-page</b>
                 - for use as the page background.
               </div>
               <div
-                class="bg-base px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
+                class="bg-foundation px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
               >
-                <b>bg-base</b>
+                <b>bg-foundation</b>
                 - for use in any element that
                 <b>sits</b>
                 on the page.
               </div>
               <div
-                class="bg-base-2 px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
+                class="bg-foundation-2 px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
               >
-                <b>bg-base-2</b>
+                <b>bg-foundation-2</b>
                 - for use as the background for anything that needs to stand out.
               </div>
               <div
-                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
+                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
               >
                 <b>bg-primary</b>
                 - for use when you want to something to really pop.
@@ -134,7 +134,7 @@
                   <FormButton to="/" size="big">Big primary button</FormButton>
                 </div>
               </div>
-              <div class="flex flex-col gap-y-4 p-6 rounded-lg bg-base-2">
+              <div class="flex flex-col gap-y-4 p-6 rounded-lg bg-foundation-2">
                 <p class="text-foreground">
                   <code
                     class="bg-primary text-white text-xs pl-2 pr-0 py-1 mr-2 rounded"
@@ -143,7 +143,7 @@
                   </code>
                   Pop buttons for accented element backgrounds (or normal ones)
                 </p>
-                <hr class="border-base" />
+                <hr class="border-foundation" />
                 <div>
                   <FormButton to="/" type="pop" size="small">
                     Small pop button

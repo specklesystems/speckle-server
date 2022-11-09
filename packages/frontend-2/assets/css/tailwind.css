@@ -43,7 +43,7 @@
 
   [type='checkbox']:focus,
   [type='radio']:focus {
-    @apply ring-offset-base;
+    @apply ring-offset-foundation;
   }
 
   .caption {

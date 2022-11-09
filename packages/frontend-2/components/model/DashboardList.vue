@@ -12,7 +12,7 @@
           name="model-search"
           label="Search Models"
           placeholder="search"
-          class="bg-base shadow hover:shadow-lg"
+          class="bg-foundation shadow hover:shadow-lg"
         />
       </div>
     </div>

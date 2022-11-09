@@ -3,20 +3,20 @@
 /*
   Currently not possible to define different color values for the same color name just through
   the tailwind config, so using CSS variables instead.
-  
+
   Palette reference: https://tailwindcss.com/docs/customizing-colors
-  
+
   Only use colors from the default tailwind color palette so that migrating away from this (if ever needed)
   is easy.
  */
 
 :root {
   /* used only as the page background */
-  --base-page: #f1f5f9;
+  --foundation-page: #f1f5f9;
   /* used as the background for any element that sits on the page */
-  --base: #fff;
+  --foundation: #fff;
   /* used as the background for any element that you want to emphasize */
-  --base-2: #dbeafe;
+  --foundation-2: #dbeafe;
 
   /* default foreground color */
   --foreground: #334155;
@@ -37,9 +37,9 @@
 }
 
 :root.dark {
-  --base-page: #000;
-  --base: #171717;
-  --base-2: #1e293b;
+  --foundation-page: #000;
+  --foundation: #171717;
+  --foundation-2: #1e293b;
 
   --foreground: #d4d4d4;
   --foreground-2: #737373;

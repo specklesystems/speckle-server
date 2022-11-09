@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev:app": "nuxt dev",
+    "dev": "concurrently \"yarn dev:app\" \"yarn gqlgen:watch\" \"yarn storybook\" -n nuxt,gqlgen,storybook",
     "preview": "nuxt preview",
     "analyze": "nuxt analyze",
     "postinstall": "nuxt prepare",
@@ -17,7 +18,7 @@
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "storybook:build": "storybook build",
     "storybook:test": "test-storybook",
     "storybook:test:watch": "test-storybook --watch"
   },

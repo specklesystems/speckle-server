@@ -1,7 +1,7 @@
 <template>
   <Component
     :is="form ? 'form' : 'div'"
-    class="divide-y divide-base-2 overflow-hidden rounded-lg bg-base text-foreground shadow-md"
+    class="divide-y divide-foundation-2 overflow-hidden rounded-lg bg-foundation text-foreground shadow-md"
     @submit="emit('submit', $event)"
   >
     <div v-if="$slots.header" class="px-4 py-4 sm:px-6">

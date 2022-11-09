@@ -11,9 +11,9 @@
         </FormButton>
       </div>
     </div>
-    <template v-for="(notification, index) in notifications" :key="index">
+    <template v-for="(notification, i) in notifications" :key="i">
       <div
-        class="flex items-center justify-between rounded-xl bg-base text-foreground pl-4 pr-2 py-2 shadow hover:shadow-lg transition"
+        class="flex items-center justify-between rounded-xl bg-foundation text-foreground pl-4 pr-2 py-2 shadow hover:shadow-lg transition"
       >
         <div class="text-sm">
           {{ notification.message }}

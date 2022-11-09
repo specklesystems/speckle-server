@@ -58,20 +58,20 @@ export const parameters = {
     }
   },
   backgrounds: {
-    // Using tailwind theme bg-background values
-    default: 'background',
+    // Using tailwind theme bg values
+    default: 'foundation-page',
     values: [
       {
-        name: 'background',
-        value: 'var(--theme-color-background)'
+        name: 'foundation-page',
+        value: 'var(--foundation-page)'
       },
       {
-        name: 'background-2',
-        value: 'var(--theme-color-background-2)'
+        name: 'foundation',
+        value: 'var(--foundation)'
       },
       {
-        name: 'background-3',
-        value: 'var(--theme-color-background-3)'
+        name: 'foundation-2',
+        value: 'var(--foundation-2)'
       }
     ]
   },

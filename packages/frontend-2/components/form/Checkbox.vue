@@ -10,7 +10,7 @@
         :value="checkboxValue"
         :disabled="disabled"
         type="checkbox"
-        class="h-4 w-4 rounded text-primary focus:ring-primary bg-base disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-2"
+        class="h-4 w-4 rounded text-primary focus:ring-primary bg-foundation disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-2"
         :class="computedClasses"
         v-bind="$attrs"
         @change="onChange"

@@ -1,7 +1,7 @@
 <template>
   <a :href="`/project/${project.id}`" class="group">
     <div
-      class="group bg-base hover:bg-base-2 flex items-center justify-between px-4 mb-4 rounded-lg shadow h-16 hover:shadow-xl transition"
+      class="group bg-foundation hover:bg-foundation-2 flex items-center justify-between px-4 mb-4 rounded-lg shadow h-16 hover:shadow-xl transition"
     >
       <div class="flex items-center gap-4">
         <div class="font-bold text-foreground truncate">

@@ -2,7 +2,7 @@
   <Disclosure
     v-slot="{ open }"
     as="nav"
-    class="bg-base shadow-md hover:shadow-lg transition fixed w-full z-10"
+    class="bg-foundation shadow-md hover:shadow-lg transition fixed w-full z-10"
   >
     <div class="layout-columns-single">
       <div class="flex h-14 transition-all justify-between">
@@ -30,7 +30,7 @@
           <Menu as="div" class="relative ml-4">
             <div>
               <MenuButton
-                class="flex rounded-full bg-base text-sm ring-offset-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                class="flex rounded-full bg-foundation text-sm ring-offset-foundation focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <span class="sr-only">Open user menu</span>
                 <img
@@ -51,7 +51,7 @@
               leave-to-class="transform opacity-0 scale-95"
             >
               <MenuItems
-                class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-base py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-foundation py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
               >
                 <MenuItem
                   v-for="item in userNavigation"
@@ -61,8 +61,8 @@
                   <a
                     :href="item.href"
                     :class="[
-                      active ? 'bg-base-2' : '',
-                      'block px-4 py-2 text-sm text-foreground'
+                      active ? 'bg-foundation-2' : '',
+                      'block px-4 py-2 text-sm text-foreground cursor-pointer'
                     ]"
                     @click="item.onClick"
                   >
@@ -76,7 +76,7 @@
         <div class="-mr-2 flex items-center sm:hidden">
           <!-- Mobile menu button -->
           <DisclosureButton
-            class="inline-flex items-center justify-center rounded-md bg-base p-2 text-foreground-3 hover:bg-base-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
+            class="inline-flex items-center justify-center rounded-md bg-foundation p-2 text-foreground-3 hover:bg-foundation-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
           >
             <span class="sr-only">Open main menu</span>
             <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
@@ -97,7 +97,7 @@
           :separator="nl.separator"
         />
       </div>
-      <!-- <div class="border-t border-background-3 pt-4 pb-4">
+      <div class="border-t border-foundation-2 pt-4 pb-4">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
             <img
@@ -112,7 +112,7 @@
             <div class="text-base font-medium text-foreground">
               {{ activeUser ? activeUser.name : 'Guest' }}
             </div>
-            <div v-if="activeUser" class="text-sm font-medium text-foreground-3">
+            <div v-if="activeUser" class="text-sm font-medium text-foreground-2">
               {{ activeUser.email }}
             </div>
           </div>
@@ -124,12 +124,12 @@
             :key="item.name"
             as="a"
             :href="item.href"
-            class="block px-4 py-2 text-base font-medium text-foreground-3 hover:bg-base-2 hover:text-foreground-2"
+            class="block px-4 py-2 text-base font-medium text-foreground hover:bg-foundation-2 hover:text-foreground-2"
           >
             {{ item.name }}
           </DisclosureButton>
         </div>
-      </div> -->
+      </div>
     </DisclosurePanel>
   </Disclosure>
 </template>

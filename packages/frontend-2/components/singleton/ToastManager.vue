@@ -15,7 +15,7 @@
       >
         <div
           v-if="currentNotification"
-          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-base dark:bg-base text-foreground shadow-lg ring-1 ring-primary-muted ring-opacity-5"
+          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-foundation text-foreground shadow-lg ring-1 ring-primary-muted ring-opacity-5"
         >
           <div class="p-4">
             <div class="flex items-start">
@@ -68,7 +68,7 @@
               >
                 <button
                   type="button"
-                  class="inline-flex rounded-md bg-base text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                   @click="dismiss"
                 >
                   <span class="sr-only">Close</span>

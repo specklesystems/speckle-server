@@ -13,7 +13,7 @@
           name="project search"
           label=""
           placeholder="search"
-          class="bg-base shadow hover:shadow-lg"
+          class="bg-foundation shadow hover:shadow-lg"
         />
       </div>
     </div>
