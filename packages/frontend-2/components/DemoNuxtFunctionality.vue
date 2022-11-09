@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-background text-foreground p-12">
+  <div class="bg-base text-foreground p-12">
     <NuxtLink to="http://example.com">Link</NuxtLink>
     <FormCheckbox name="Checkbox" value="test-checkbox" />
   </div>

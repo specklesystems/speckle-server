@@ -15,7 +15,7 @@
       </div>
     </template>
     <template #footer>
-      <FormButton submit>Submit</FormButton>
+      <FormButton submit size="" full-width>Submit</FormButton>
     </template>
   </LayoutPanel>
 </template>
@@ -34,9 +34,9 @@ const { handleSubmit } = useForm<FormValues>()
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
-definePageMeta({
-  middleware: ['guest']
-})
+// definePageMeta({
+//   middleware: ['guest']
+// })
 
 const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()

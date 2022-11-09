@@ -1,7 +1,4 @@
 /* stylelint-disable selector-id-pattern */
-
-/** Main sans-serif font TODO: preload/prefetch */
-@import 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap';
 @import './tailwind-setup/semantic-colors.css';
 
 @tailwind base;
@@ -17,27 +14,23 @@
    * Common text styles
    */
   .h1 {
-    @apply text-5xl leading-normal font-bold;
+    @apply text-5xl;
   }
 
   .h2 {
-    @apply text-4xl leading-normal font-bold;
+    @apply text-4xl;
   }
 
   .h3 {
-    @apply text-3xl leading-normal font-bold;
+    @apply text-3xl;
   }
 
   .h4 {
-    @apply text-2xl leading-normal font-bold;
+    @apply text-2xl;
   }
 
   .h5 {
-    @apply text-xl leading-normal font-bold;
-  }
-
-  .normal {
-    @apply text-base;
+    @apply text-xl;
   }
 
   .label {
@@ -48,18 +41,18 @@
     }
   }
 
+  [type='checkbox']:focus,
+  [type='radio']:focus {
+    @apply ring-offset-base;
+  }
+
   .caption {
     @apply text-xs;
   }
-}
 
-/**
- * Ensuring ring offset color always defaults to bg color
- */
-*,
-[type='checkbox']:focus,
-[type='radio']:focus {
-  @apply ring-offset-background;
+  .layout-columns-single {
+    @apply container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
 }
 
 /**
@@ -76,4 +69,8 @@ html,
 body,
 div#__nuxt {
   height: 100%;
+}
+
+body {
+  @apply font-sans;
 }

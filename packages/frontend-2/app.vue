@@ -1,5 +1,5 @@
 <template>
-  <div id="speckle" class="bg-background-2 text-foreground">
+  <div id="speckle" class="bg-base-page">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
@@ -7,7 +7,6 @@
 </template>
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'
-
 const { isDarkTheme } = useTheme()
 
 useHead({

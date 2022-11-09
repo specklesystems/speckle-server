@@ -26,7 +26,7 @@ export default {
       type: 'boolean'
     },
     type: {
-      options: ['primary', 'secondary', 'danger', 'outline', 'success', 'warning'],
+      options: ['primary', 'pop', 'danger', 'outline', 'success', 'warning', 'invert'],
       control: { type: 'select' }
     },
     external: {
@@ -132,10 +132,17 @@ export const FullWidth: Story = mergeStories(Default, {
   }
 })
 
-export const Secondary: Story = mergeStories(Default, {
+export const Pop: Story = mergeStories(Default, {
   args: {
-    type: 'secondary',
-    default: 'Secondary variant'
+    type: 'pop',
+    default: 'Pop variant'
+  }
+})
+
+export const Invert: Story = mergeStories(Default, {
+  args: {
+    type: 'invert',
+    default: 'Inverted variant'
   }
 })
 

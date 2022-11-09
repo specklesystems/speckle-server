@@ -1,11 +1,11 @@
 <template>
   <button
     type="button"
-    class="rounded-full bg-background p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+    class="rounded-full bg-base p-1 text-foreground hover:text-primary ring-offset-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition"
     @click="onClick"
   >
     <span class="sr-only">Toggle dark mode</span>
-    <Icon class="h-6 w-6" aria-hidden="true" />
+    <Icon class="h-4 w-4" aria-hidden="true" />
   </button>
 </template>
 <script setup lang="ts">

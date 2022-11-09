@@ -10,14 +10,14 @@
         :value="checkboxValue"
         :disabled="disabled"
         type="checkbox"
-        class="h-4 w-4 rounded text-primary focus:ring-primary-lighter disabled:cursor-not-allowed disabled:bg-background-2 disabled:text-foreground-3"
+        class="h-4 w-4 rounded text-primary focus:ring-primary bg-base disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-2"
         :class="computedClasses"
         v-bind="$attrs"
         @change="onChange"
       />
     </div>
     <div class="ml-2 text-sm" style="padding-top: 3px">
-      <label :for="finalId" class="font-medium text-foreground-2">
+      <label :for="finalId" class="font-medium text-foreground">
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
       </label>
@@ -165,7 +165,7 @@ const descriptionClasses = computed((): string => {
   if (errorMessage.value) {
     classParts.push('text-danger')
   } else {
-    classParts.push('text-foreground-3')
+    classParts.push('text-foreground-2')
   }
 
   return classParts.join(' ')

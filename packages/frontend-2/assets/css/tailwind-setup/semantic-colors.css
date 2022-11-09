@@ -1,41 +1,53 @@
+/* stylelint-disable custom-property-empty-line-before */
+/* stylelint-disable comment-empty-line-before */
 /*
   Currently not possible to define different color values for the same color name just through
   the tailwind config, so using CSS variables instead.
-
+  
+  Palette reference: https://tailwindcss.com/docs/customizing-colors
+  
   Only use colors from the default tailwind color palette so that migrating away from this (if ever needed)
-  is easy
+  is easy.
  */
 
 :root {
-  /* background */
-  --theme-color-background: #fff; /* white */
-  --theme-color-background-2: #f3f4f6; /* gray-100 */
-  --theme-color-background-3: #e5e7eb; /* gray-200 */
+  /* used only as the page background */
+  --base-page: #f1f5f9;
+  /* used as the background for any element that sits on the page */
+  --base: #fff;
+  /* used as the background for any element that you want to emphasize */
+  --base-2: #dbeafe;
 
-  /* foreground */
-  --theme-color-foreground: #111827; /* gray-900 */
-  --theme-color-foreground-2: #374151; /* gray-700 */
-  --theme-color-foreground-3: #6b7280; /* gray-500 */
-  --theme-color-foreground-4: #d1d5db; /* gray-300 */
+  /* default foreground color */
+  --foreground: #334155;
+  /* dimmer foreground color, e.g. caption text */
+  --foreground-2: #94a3b8;
 
-  /* link */
-  --theme-color-link: #2563eb; /* blue-600 */
-  --theme-color-link-lighter: #3b82f6; /* blue-500 */
+  /* primary color */
+  --primary: #3b82f6;
+  /* focused primary color */
+  --primary-focus: #2563eb;
+  /* muted primary color */
+  --primary-muted: #dbeafe;
+
+  /* disabled color */
+  --disabled: #d4d4d4;
+  /* disabled foreground color */
+  --disabled-muted: #fafafa;
 }
 
 :root.dark {
-  /* background */
-  --theme-color-background: #111827; /* gray-900 */
-  --theme-color-background-2: #1f2937; /* gray-800 */
-  --theme-color-background-3: #374151; /* gray-700 */
+  --base-page: #000;
+  --base: #171717;
+  --base-2: #1e293b;
 
-  /* foreground */
-  --theme-color-foreground: #fff; /* white */
-  --theme-color-foreground-2: #e5e7eb; /* gray-200 */
-  --theme-color-foreground-3: #9ca3af; /* gray-400 */
-  --theme-color-foreground-4: #4b5563; /* gray-600 */
+  --foreground: #d4d4d4;
+  --foreground-2: #737373;
 
-  /* link */
-  --theme-color-link: #3b82f6; /* blue-500 */
-  --theme-color-link-lighter: #60a5fa; /* blue-400 */
+  --primary: #2563eb;
+  --primary-focus: #3b82f6;
+  --primary-muted: #1e293b;
+
+  --disabled: #2b2b2b;
+  --disabled-muted: #717171;
 }

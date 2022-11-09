@@ -5,7 +5,7 @@
     :type="buttonType"
     :external="external"
     :class="[
-      'inline-flex items-center rounded-md border border-transparent font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
+      'inline-flex items-center rounded-xl focus:outline-none hover:ring-4 focus:ring-4 transition',
       computedClasses
     ]"
     :disabled="disabled"
@@ -22,11 +22,13 @@ import { Optional } from '@speckle/shared'
 type FormButtonSize = 'big' | 'normal' | 'small'
 type FormButtonType =
   | 'primary'
+  | 'pop'
   | 'secondary'
   | 'danger'
   | 'outline'
   | 'success'
   | 'warning'
+  | 'invert'
 
 const emit = defineEmits<{
   /**
@@ -101,40 +103,45 @@ const buttonType = computed(() => {
 
 const colorClasses = computed(() => {
   const isDisabled = props.disabled
+  const disabledClasses = 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
+
   switch (props.type) {
     case 'outline':
       return `${
-        isDisabled ? 'text-foreground-3' : 'text-foreground'
-      } bg-transparent border-foreground-3 focus:ring-primary-lighter`
+        isDisabled ? disabledClasses : 'text-primary'
+      } border-2 border-primary ring-primary-muted`
     case 'danger':
       return `${
-        isDisabled ? 'bg-danger-darker' : 'bg-danger'
-      } text-white hover:bg-danger-darker focus:ring-danger-lighter`
-    case 'success':
-      return `${
-        isDisabled ? 'bg-success-darker' : 'bg-success'
-      } text-white hover:bg-success-darker focus:ring-success-lighter`
+        isDisabled ? disabledClasses : 'bg-danger'
+      } text-white hover:bg-danger-darker ring-danger-lighter`
     case 'warning':
       return `${
-        isDisabled ? 'bg-warning-darker' : 'bg-warning'
-      } text-white hover:bg-warning-darker focus:ring-warning-lighter`
-    case 'secondary':
+        isDisabled ? disabledClasses : 'bg-warning'
+      } text-white hover:bg-warning-darker ring-warning-lighter`
+    case 'pop':
       return `${
-        isDisabled ? 'bg-secondary-darker' : 'bg-secondary'
-      } text-white hover:bg-secondary-darker focus:ring-secondary-lighter`
+        isDisabled ? disabledClasses : 'bg-primary'
+      } text-white hover:bg-primary-focus `
+    case 'invert':
+      return `${
+        isDisabled ? disabledClasses : 'bg-white/95 text-primary'
+      } hover:bg-white ring-white/50`
     default:
     case 'primary':
       return `${
-        isDisabled ? 'bg-primary-darker' : 'bg-primary'
-      } text-white hover:bg-primary-darker focus:ring-primary-lighter`
+        isDisabled
+          ? disabledClasses
+          : 'bg-primary-muted text-primary hover:bg-primary hover:text-white'
+      }`
   }
 })
+
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'small':
-      return 'px-2 py-1 text-xs'
+      return 'px-2 py-1 text-xs rounded-lg'
     case 'big':
-      return 'px-6 py-4 text-base'
+      return 'px-6 py-4'
     default:
     case 'normal':
       return 'px-4 py-2 text-sm'

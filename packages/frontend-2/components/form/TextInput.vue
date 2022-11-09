@@ -1,10 +1,9 @@
 <template>
   <div>
-    <label :for="name" class="block text-foreground-2 label">
+    <label :for="name" class="block label" :class="{ 'sr-only': !showLabel }">
       <span>{{ title }}</span>
-      <span v-if="showRequired" class="text-danger ml-1">*</span>
     </label>
-    <div class="relative mt-1 rounded-md shadow-sm">
+    <div class="relative mt-1 rounded-md">
       <div
         v-if="hasLeadingIcon"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
@@ -26,8 +25,8 @@
         :type="type"
         :name="name"
         :class="[
-          'block w-full shadow-sm rounded-md focus:outline-none sm:text-sm text-black',
-          'disabled:cursor-not-allowed  disabled:bg-background-2 disabled:text-foreground-3',
+          'block h-12 w-full rounded-xl focus:outline-none sm:text-sm bg-base-page text-foreground transition-all',
+          'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
           computedClasses
         ]"
         :placeholder="placeholder"
@@ -43,8 +42,19 @@
       >
         <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
       </div>
+      <div
+        v-if="showRequired && !error"
+        class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-primary opacity-50"
+      >
+        *
+      </div>
     </div>
-    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-sm" :class="helpTipClasses">
+    <p
+      v-if="helpTipId"
+      :id="helpTipId"
+      class="mt-2 ml-3 text-sm"
+      :class="helpTipClasses"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -82,6 +92,13 @@ const props = defineProps({
   name: {
     type: String,
     required: true
+  },
+  /**
+   * Whether to show label (label will always be shown to screen readers)
+   */
+  showLabel: {
+    type: Boolean,
+    required: false
   },
   /**
    * Optional help text
@@ -145,7 +162,7 @@ const { value, errorMessage: error } = useField(props.name, props.rules, {
   initialValue: props.modelValue || undefined
 })
 
-const leadingIconClasses = ref('h-4 w-4 text-foreground-3')
+const leadingIconClasses = ref('h-4 w-4 text-foreground-2')
 
 const hasLeadingIcon = computed(() => ['email', 'password'].includes(props.type))
 
@@ -161,7 +178,7 @@ const computedClasses = computed((): string => {
       'pr-8 border-danger-lighter text-danger-darker placeholder-danger-lighter focus:border-danger focus:ring-danger'
     )
   } else {
-    classParts.push('border-foreground-4 focus:border-primary focus:ring-primary')
+    classParts.push('border-0 focus:ring-2 focus:ring-primary-muted')
   }
 
   return classParts.join(' ')
@@ -173,6 +190,6 @@ const helpTip = computed(() => error.value || props.help)
 const hasHelpTip = computed(() => !!helpTip.value)
 const helpTipId = computed(() => (hasHelpTip.value ? `${props.name}-help` : undefined))
 const helpTipClasses = computed((): string =>
-  error.value ? 'text-danger' : 'text-foreground-3'
+  error.value ? 'text-danger' : 'text-foreground-2'
 )
 </script>

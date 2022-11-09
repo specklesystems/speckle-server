@@ -29,7 +29,9 @@ type TokenParams = {
 function resolveAccessCode(body: AccessCodeResponse): string {
   const accessCode = body?.accessCode
   if (!accessCode) {
-    throw new LoginFailedError('Unable to resolve access_code from redirect url')
+    throw new LoginFailedError(
+      'Invalid email/password (unable to resolve access_code from redirect url).'
+    )
   }
 
   return accessCode
@@ -83,7 +85,7 @@ async function getTokenFromAccessCode(params: TokenParams) {
   // TODO: Do we wanna start using refresh tokens?
   const data = (await response.json()) as { token: string; refreshToken: string }
   if (!data.token) {
-    throw new LoginFailedError("Couldn't resolve token through access code!")
+    throw new LoginFailedError("Couldn't resolve token through access code.")
   }
 
   return data.token

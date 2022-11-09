@@ -72,47 +72,43 @@ const config = {
     // `./lib/**/*.{js,ts,vue}`, // TODO: Wait for fix https://github.com/nuxt/framework/issues/2886#issuecomment-1108312903
   ],
   theme: {
+    fontFamily: {
+      sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';"
+    },
     extend: {
       colors: {
-        background: {
-          DEFAULT: 'var(--theme-color-background)',
-          2: 'var(--theme-color-background-2)',
-          3: 'var(--theme-color-background-3)'
+        base: {
+          DEFAULT: 'var(--base)',
+          2: 'var(--base-2)',
+          page: 'var(--base-page)'
         },
         foreground: {
-          DEFAULT: 'var(--theme-color-foreground)',
-          2: 'var(--theme-color-foreground-2)',
-          3: 'var(--theme-color-foreground-3)',
-          4: 'var(--theme-color-foreground-4)'
+          DEFAULT: 'var(--foreground)',
+          2: 'var(--foreground-2)'
         },
         primary: {
-          DEFAULT: colors.blue['600'],
-          darker: colors.blue['700'],
-          lighter: colors.blue['500']
-        },
-        link: {
-          DEFAULT: 'var(--theme-color-link)',
-          lighter: 'var(--theme-color-link-lighter)'
-        },
-        secondary: {
-          DEFAULT: colors.gray['500'],
-          lighter: colors.gray['400'],
-          darker: colors.gray['600']
+          DEFAULT: 'var(--primary)',
+          focus: 'var(--primary-focus)',
+          muted: 'var(--primary-muted)'
         },
         danger: {
-          DEFAULT: colors.red['600'],
+          DEFAULT: colors.red['500'],
           lighter: colors.red['400'],
-          darker: colors.red['700']
+          darker: colors.red['600']
         },
         warning: {
-          DEFAULT: colors.amber['600'],
+          DEFAULT: colors.amber['500'],
           lighter: colors.amber['400'],
-          darker: colors.amber['700']
+          darker: colors.amber['600']
         },
         success: {
-          DEFAULT: colors.green['600'],
+          DEFAULT: colors.green['500'],
           lighter: colors.green['400'],
-          darker: colors.green['700']
+          darker: colors.green['600']
+        },
+        disabled: {
+          DEFAULT: 'var(--disabled)',
+          muted: 'var(--disabled-muted)'
         }
       },
       typography: ({ theme }) => ({
@@ -143,40 +139,6 @@ const config = {
           }
         }
       })
-    },
-    fontFamily: {
-      sans: ['Roboto', 'sans-serif']
-    },
-    colors: {
-      transparent: 'transparent',
-      current: 'currentColor',
-      black: colors.black,
-      white: colors.white,
-      gray: colors.gray,
-      blue: colors.blue
-    },
-    spacing: {
-      0: '0px',
-      1: '0.25rem',
-      2: '0.5rem',
-      4: '1rem',
-      6: '1.5rem',
-      8: '2rem',
-      12: '3rem',
-      16: '4rem',
-      20: '5rem',
-      24: '6rem',
-      32: '8rem',
-      40: '10rem',
-      48: '12rem',
-      56: '14rem',
-      64: '16rem',
-      96: '24rem',
-      128: '32rem'
-    },
-    configViewer: {
-      fonts:
-        'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap'
     }
   },
   plugins: [

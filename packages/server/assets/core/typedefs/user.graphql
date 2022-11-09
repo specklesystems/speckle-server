@@ -75,7 +75,7 @@ Full user type, should only be used in the context of admin operations or
 when a user is reading/writing info about himself
 """
 type User {
-  id: String!
+  id: ID!
   """
   E-mail can be null, if it's requested for a user other than the authenticated one
   and the user isn't an admin
@@ -95,7 +95,7 @@ Limited user type, for showing public info about a user
 to another user
 """
 type LimitedUser {
-  id: String!
+  id: ID!
   name: String
   bio: String
   company: String

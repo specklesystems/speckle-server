@@ -8,7 +8,11 @@ const config: CodegenConfig = {
     './lib/common/generated/gql/': {
       preset: 'client',
       config: {
-        useTypeImports: true
+        useTypeImports: true,
+        fragmentMasking: false
+      },
+      presetConfig: {
+        fragmentMasking: false
       },
       plugins: []
     }
