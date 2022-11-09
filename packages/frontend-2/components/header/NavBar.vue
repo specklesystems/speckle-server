@@ -12,7 +12,7 @@
             <HeaderNavLink to="/" name="Dashboard" :separator="false" class="ml-2" />
 
             <HeaderNavLink
-              v-for="(nl, i) in nav.filter((n) => !!n)"
+              v-for="nl in nav.filter((n) => !!n)"
               :key="nl.to"
               :to="nl.to"
               :name="nl.name"
@@ -90,7 +90,7 @@
       <div class="flex flex-col space-y-6 pt-2 pb-6 px-5">
         <HeaderNavLink to="/" name="Dashboard" class="" />
         <HeaderNavLink
-          v-for="(nl, i) in nav.filter((n) => !!n)"
+          v-for="nl in nav.filter((n) => !!n)"
           :key="nl.to"
           :to="nl.to"
           :name="nl.name"
@@ -157,13 +157,6 @@ const nav = useNav()
 
 const { logout } = useAuthManager()
 const { isLoggedIn, activeUser } = useActiveUser()
-
-const navigation = [
-  { name: 'Dashboard', href: '#', current: true },
-  { name: 'Team', href: '#', current: false },
-  { name: 'Projects', href: '#', current: false },
-  { name: 'Calendar', href: '#', current: false }
-]
 
 const userNavigation = computed((): UserNavigationLink[] => [
   ...(isLoggedIn.value
