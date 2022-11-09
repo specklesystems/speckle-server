@@ -2,7 +2,7 @@ import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 
 /**
- * Apply this to a page to prevent unauthenticated access
+ * Apply this to a page to prevent authenticated access
  */
 export default defineNuxtRouteMiddleware(async () => {
   const { $apollo } = useNuxtApp()
@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async () => {
     .catch(convertThrowIntoFetchResult)
 
   // Redirect home, if not logged in
-  if (!data?.activeUser?.id) {
+  if (data?.activeUser?.id) {
     return navigateTo('/')
   }
 })

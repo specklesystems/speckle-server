@@ -7,7 +7,6 @@ import express, { Express } from 'express'
 import 'express-async-errors'
 import compression from 'compression'
 import logger from 'morgan-debug'
-import debug from 'debug'
 
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
@@ -29,7 +28,7 @@ import { buildContext } from '@/modules/shared'
 import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
-import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { isDevEnv, isTestEnv, useNewFrontend } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 
@@ -38,6 +37,7 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 
 import { IMocks } from '@graphql-tools/mock'
 import { faker } from '@faker-js/faker'
+import { startupDebug, shutdownDebug } from '@/modules/shared/utils/logger'
 
 let graphqlServer: ApolloServer
 
@@ -222,6 +222,10 @@ export async function buildApolloServer(
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
+  if (useNewFrontend()) {
+    startupDebug('🖼️ Serving new frontend...')
+  }
+
   const app = express()
 
   Logging(app)
@@ -312,8 +316,8 @@ export async function startHttp(
     })
     app.use('/', frontendProxy)
 
-    debug('speckle:startup')('✨ Proxying frontend (dev mode):')
-    debug('speckle:startup')(`👉 main application: http://localhost:${port}/`)
+    startupDebug('✨ Proxying frontend (dev mode):')
+    startupDebug(`👉 main application: http://localhost:${port}/`)
   }
 
   // Production mode
@@ -333,13 +337,13 @@ export async function startHttp(
     signals: ['SIGTERM', 'SIGINT'],
     timeout: 5 * 60 * 1000,
     beforeShutdown: async () => {
-      debug('speckle:shutdown')('Shutting down (signal received)...')
+      shutdownDebug('Shutting down (signal received)...')
     },
     onSignal: async () => {
       await shutdown()
     },
     onShutdown: () => {
-      debug('speckle:shutdown')('Shutdown completed')
+      shutdownDebug('Shutdown completed')
       process.exit(0)
     }
   })
@@ -349,7 +353,7 @@ export async function startHttp(
     const addressString = isString(address) ? address : address?.address
     const port = isString(address) ? null : address?.port
 
-    debug('speckle:startup')(
+    startupDebug(
       `🚀 My name is Speckle Server, and I'm running at ${addressString}:${port}`
     )
     app.emit('appStarted')

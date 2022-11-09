@@ -6,12 +6,15 @@
   </div>
 </template>
 <script setup lang="ts">
-const darkMode = useCookie('darkMode')
+import { useTheme } from '~~/lib/core/composables/theme'
+const { isDarkTheme } = useTheme()
 
 useHead({
   // Title suffix
   titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} - Speckle` : 'Speckle'),
-  // Dark mode FOUC prevention
-  htmlAttrs: { class: darkMode.value ? 'dark' : '' }
+  htmlAttrs: {
+    class: computed(() => (isDarkTheme.value ? `dark` : ``)),
+    lang: 'en'
+  }
 })
 </script>

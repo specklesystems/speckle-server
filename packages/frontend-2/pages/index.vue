@@ -15,21 +15,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
+import { Form } from 'vee-validate'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
-const activeUserQuery = graphql(`
-  query GetActiveUser {
-    activeUser {
-      id
-      name
-      role
-    }
-  }
-`)
-
-const { result: activeUserResult } = useQuery(activeUserQuery)
-const user = computed(() => activeUserResult.value?.activeUser || null)
+const { activeUser } = useActiveUser()
+const user = computed(() => activeUser.value || null)
 
 definePageMeta({
   title: 'Dashboard'

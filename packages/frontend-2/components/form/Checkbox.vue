@@ -7,7 +7,7 @@
         :checked="finalChecked"
         :aria-describedby="descriptionId"
         :name="name"
-        :value="value"
+        :value="checkboxValue"
         :disabled="disabled"
         type="checkbox"
         class="h-4 w-4 rounded text-primary focus:ring-primary bg-base disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-2"
@@ -42,7 +42,7 @@ type ValueType = Optional<string> | string[]
 
 const props = defineProps({
   /**
-   * Input "type" value (changes behaviour & look). In a checkbox group, all checkboxes must have the same name and different values.
+   * Input name/id. In a checkbox group, all checkboxes must have the same name and different values.
    */
   name: {
     type: String,
@@ -105,11 +105,12 @@ const props = defineProps({
     default: undefined
   },
   /**
-   * Checkbox's own string value. If it is checked, modelValue will include this value (amongst any other checked values from the same group)
+   * Checkbox's own string value. If it is checked, modelValue will include this value (amongst any other checked values from the same group).
+   * If not set will default to 'name' value.
    */
   value: {
-    type: String as PropType<string>,
-    required: true
+    type: String as PropType<Optional<string>>,
+    default: undefined
   },
   /**
    * HTML ID to use, must be globally unique. If not specified, a random ID will be generated. One is necessary to properly associate the label and checkbox.
@@ -127,6 +128,8 @@ defineEmits<{
   (e: 'update:modelValue', val: ValueType): void
 }>()
 
+const checkboxValue = computed(() => props.value || props.name)
+
 const {
   checked: finalChecked,
   errorMessage,
@@ -134,7 +137,7 @@ const {
 } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   type: 'checkbox',
-  checkedValue: props.value
+  checkedValue: checkboxValue
 })
 
 const onChange = (e: unknown) => {

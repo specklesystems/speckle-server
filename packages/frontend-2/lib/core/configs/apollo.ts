@@ -6,7 +6,9 @@ import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { OperationDefinitionNode, Kind } from 'graphql'
-import { useAuthToken, TokenRetriever } from '~~/lib/auth/utils/authState'
+import { CookieRef } from '#app'
+import { Optional } from '@speckle/shared'
+import { useAuthCookie } from '~~/lib/auth/composables/auth'
 
 // TODO: Store common apollo configs & helpers in @speckle/shared
 
@@ -15,9 +17,9 @@ const appName = 'frontend-2'
 
 async function createWsClient(params: {
   wsEndpoint: string
-  getToken: TokenRetriever
+  authToken: CookieRef<Optional<string>>
 }): Promise<SubscriptionClient> {
-  const { wsEndpoint, getToken } = params
+  const { wsEndpoint, authToken } = params
 
   // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
   // SO DON'T RUN createWsClient in SSR
@@ -28,8 +30,7 @@ async function createWsClient(params: {
     {
       reconnect: true,
       connectionParams: () => {
-        const authToken = getToken()
-        const Authorization = authToken ? `Bearer ${authToken}` : null
+        const Authorization = authToken.value ? `Bearer ${authToken.value}` : null
         return Authorization ? { Authorization, headers: { Authorization } } : {}
       }
     },
@@ -40,9 +41,9 @@ async function createWsClient(params: {
 function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
-  getToken: TokenRetriever
+  authToken: CookieRef<Optional<string>>
 }): ApolloLink {
-  const { httpEndpoint, wsClient, getToken } = params
+  const { httpEndpoint, wsClient, authToken } = params
 
   // Prepare links
   const httpLink = createUploadLink({
@@ -51,8 +52,9 @@ function createLink(params: {
 
   const authLink = setContext(
     (_, { headers }: { headers: Record<string, unknown> }) => {
-      const authToken = getToken()
-      const authHeader = authToken ? { Authorization: `Bearer ${authToken}` } : {}
+      const authHeader = authToken.value
+        ? { Authorization: `Bearer ${authToken.value}` }
+        : {}
       return {
         headers: {
           ...headers,
@@ -89,11 +91,11 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const httpEndpoint = `${API_ORIGIN}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
-  const getToken = useAuthToken()
+  const authToken = useAuthCookie()
   const wsClient = process.client
-    ? await createWsClient({ wsEndpoint, getToken })
+    ? await createWsClient({ wsEndpoint, authToken })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, getToken })
+  const link = createLink({ httpEndpoint, wsClient, authToken })
 
   return {
     cache: new InMemoryCache(),

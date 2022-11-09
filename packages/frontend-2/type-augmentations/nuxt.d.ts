@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module 'nuxt/dist/app/nuxt' {
   interface NuxtApp {
     /**
@@ -6,6 +7,11 @@ declare module 'nuxt/dist/app/nuxt' {
     $apollo: {
       default: import('@apollo/client/core').ApolloClient<unknown>
     }
+
+    /**
+     * Used by useScopedState
+     */
+    __scopedStates?: Record<string | symbol, any>
   }
 }
 

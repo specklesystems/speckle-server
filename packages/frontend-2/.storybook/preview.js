@@ -1,6 +1,7 @@
 import '~~/assets/css/tailwind.css'
 
 import { buildVueAppSetup } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
+import { MockedProvider } from '~~/lib/fake-nuxt-env/components/MockedProvider'
 import { setup } from '@storybook/vue3'
 
 const setupVueApp = await buildVueAppSetup()
@@ -10,6 +11,7 @@ setup((app) => {
 })
 
 export const parameters = {
+  // Main storybook params
   controls: {
     matchers: {
       color: /^(background|color)$/i,
@@ -72,19 +74,74 @@ export const parameters = {
         value: 'var(--theme-color-background-3)'
       }
     ]
+  },
+  // Custom params
+  apolloClient: {
+    MockedProvider
   }
 }
 
+/** @type {import('@storybook/csf').DecoratorFunction[]} */
 export const decorators = [
-  (story) => ({
-    components: {
-      Story: story()
-    },
-    inheritAttrs: false,
-    template: `
-      <div class="text-foreground">
-        <Story v-bind="$attrs" />
-      </div>
-    `
-  })
+  // Global CSS class setup decorator + theme support
+  (story, ctx) => {
+    const theme = ctx.globals.theme
+    const isDarkMode = theme === 'dark'
+
+    if (isDarkMode) {
+      document.querySelector('html').classList.add('dark')
+    } else {
+      document.querySelector('html').classList.remove('dark')
+    }
+
+    return {
+      components: {
+        Story: story()
+      },
+      inheritAttrs: false,
+      template: `
+        <div class="text-foreground">
+          <Story v-bind="$attrs" />
+        </div>
+      `
+    }
+  },
+  // Apollo Mocked Provider decorator
+  (story, ctx) => {
+    const {
+      parameters: {
+        apolloClient: { MockedProvider, ...providerProps }
+      }
+    } = ctx
+
+    if (!MockedProvider) {
+      console.error('Apollo MockedProvider missing from parameters in preview.js!')
+      return { template: `<Story/>`, components: { Story: story() } }
+    }
+
+    return {
+      data: () => ({ providerProps }),
+      components: { MockedProvider, Story: story() },
+      template: `
+        <MockedProvider :options="providerProps || {}"><Story/></MockedProvider>
+      `
+    }
+  }
 ]
+
+export const globalTypes = {
+  theme: {
+    name: 'Theme',
+    description: 'Global theme for components',
+    defaultValue: 'light',
+    toolbar: {
+      icon: 'circlehollow',
+      // Array of plain string values or MenuItem shape (see below)
+      items: ['light', 'dark'],
+      // Property that specifies if the name of the item will be displayed
+      title: 'Theme',
+      // Change title based on selected value
+      dynamicTitle: true
+    }
+  }
+}

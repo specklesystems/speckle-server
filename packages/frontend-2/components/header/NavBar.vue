@@ -24,14 +24,7 @@
           </div>
         </div>
         <div class="hidden sm:ml-6 sm:flex sm:items-center">
-          <button
-            type="button"
-            class="rounded-full bg-base p-1 text-foreground hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900"
-            @click="swapTheme()"
-          >
-            <SunIcon v-if="darkMode" class="h-4 w-4" aria-hidden="true" />
-            <MoonIcon v-else class="h-4 w-4" aria-hidden="true" />
-          </button>
+          <HeaderThemeToggle />
 
           <!-- Profile dropdown -->
           <Menu as="div" class="relative ml-4">
@@ -40,7 +33,13 @@
                 class="flex rounded-full bg-base text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <span class="sr-only">Open user menu</span>
-                <img class="h-8 w-8 rounded-full" :src="user.imageUrl" alt="" />
+                <img
+                  v-if="activeUserImageUrl"
+                  class="h-8 w-8 rounded-full"
+                  :src="activeUserImageUrl"
+                  alt=""
+                />
+                <UserCircleIcon v-else class="h-8 w-8 rounded-full" />
               </MenuButton>
             </div>
             <Transition
@@ -65,6 +64,7 @@
                       active ? 'bg-base-2' : '',
                       'block px-4 py-2 text-sm text-foreground'
                     ]"
+                    @click="item.onClick"
                   >
                     {{ item.name }}
                   </a>
@@ -100,19 +100,23 @@
       <!-- <div class="border-t border-background-3 pt-4 pb-4">
         <div class="flex items-center px-4">
           <div class="flex-shrink-0">
-            <img class="h-12 w-12 rounded-full" :src="user.imageUrl" alt="" />
+            <img
+              v-if="activeUserImageUrl"
+              class="h-12 w-12 rounded-full"
+              :src="activeUserImageUrl"
+              alt=""
+            />
+            <UserCircleIcon v-else class="h-12 w-12 rounded-full" />
           </div>
           <div class="ml-4">
-            <div class="text-base font-medium text-foreground">{{ user.name }}</div>
-            <div class="text-sm font-medium text-foreground-3">{{ user.email }}</div>
+            <div class="text-base font-medium text-foreground">
+              {{ activeUser ? activeUser.name : 'Guest' }}
+            </div>
+            <div v-if="activeUser" class="text-sm font-medium text-foreground-3">
+              {{ activeUser.email }}
+            </div>
           </div>
-          <button
-            type="button"
-            class="ml-auto flex-shrink-0 rounded-full bg-base p-1 text-foreground-3 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          >
-            <span class="sr-only">View notifications</span>
-            <BellIcon class="h-6 w-6" aria-hidden="true" />
-          </button>
+          <HeaderThemeToggle class="ml-auto flex-shrink-0" />
         </div>
         <div class="mt-4 space-y-1">
           <DisclosureButton
@@ -129,7 +133,7 @@
     </DisclosurePanel>
   </Disclosure>
 </template>
-<script setup>
+<script setup lang="ts">
 import {
   Disclosure,
   DisclosureButton,
@@ -139,33 +143,43 @@ import {
   MenuItem,
   MenuItems
 } from '@headlessui/vue'
-import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/vue/24/solid'
+import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 
-const user = {
-  name: 'Tom Cook',
-  email: 'tom@example.com',
-  imageUrl:
-    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-}
-
-const mobileMenuOpen = ref(false)
-
-const userNavigation = [
-  { name: 'Your Profile', href: '/login', current: true },
-  { name: 'Settings', href: '#' },
-  { name: 'Sign out', href: '#' }
-]
-
-const darkMode = useCookie('darkMode')
-const swapTheme = () => {
-  if (!darkMode.value) {
-    document.documentElement.classList.add('dark')
-    darkMode.value = true
-  } else {
-    document.documentElement.classList.remove('dark')
-    darkMode.value = false
-  }
+type UserNavigationLink = {
+  name: string
+  href?: string
+  onClick?: () => void
 }
 
 const nav = useNav()
+
+const { logout } = useAuthManager()
+const { isLoggedIn, activeUser } = useActiveUser()
+
+const navigation = [
+  { name: 'Dashboard', href: '#', current: true },
+  { name: 'Team', href: '#', current: false },
+  { name: 'Projects', href: '#', current: false },
+  { name: 'Calendar', href: '#', current: false }
+]
+
+const userNavigation = computed((): UserNavigationLink[] => [
+  ...(isLoggedIn.value
+    ? [
+        {
+          name: 'Sign out',
+          onClick: logout
+        }
+      ]
+    : [
+        { name: 'Login', href: '/login' },
+        { name: 'Register', href: '/register' }
+      ])
+])
+
+const activeUserImageUrl = computed(() =>
+  activeUser.value ? `https://robohash.org/test.png?size=120x120` : null
+)
 </script>

@@ -1,13 +1,17 @@
+import { ApolloClient } from '@apollo/client/core'
 import {
   InvalidLoginParametersError,
   LoginFailedError
 } from '~~/lib/auth/errors/errors'
 import { LogicError } from '~~/lib/core/errors/base'
-import { setToken } from '~~/lib/auth/utils/authState'
 
 // TODO: Should these differ from the old frontend values?
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
+
+type AccessCodeResponse = {
+  accessCode?: string
+}
 
 type LoginParams = {
   apiOrigin: string
@@ -22,12 +26,8 @@ type TokenParams = {
   challenge: string
 }
 
-function resolveAccessCode(res: Response): string {
-  if (!res.redirected) {
-    throw new LoginFailedError('Response did not return a redirect status code')
-  }
-
-  const accessCode = new URL(res.url).searchParams.get('access_code')
+function resolveAccessCode(body: AccessCodeResponse): string {
+  const accessCode = body?.accessCode
   if (!accessCode) {
     throw new LoginFailedError('Unable to resolve access_code from redirect url')
   }
@@ -58,17 +58,9 @@ async function getAccessCode(params: LoginParams) {
     body: JSON.stringify({ email, password })
   })
 
-  if (!res.redirected) {
-    const data = (await res.json()) as Record<string, unknown> &
-      Partial<{ err: boolean; message: string }>
-    if (data.err && data.message) {
-      throw new LoginFailedError(data.message)
-    } else {
-      throw new LoginFailedError()
-    }
-  }
+  const body = (await res.json()) as AccessCodeResponse
 
-  return resolveAccessCode(res)
+  return resolveAccessCode(body)
 }
 
 async function getTokenFromAccessCode(params: TokenParams) {
@@ -97,7 +89,9 @@ async function getTokenFromAccessCode(params: TokenParams) {
   return data.token
 }
 
-export async function login(params: LoginParams) {
+// TODO: Re-introduce way to redirect user to page X post-login
+
+export async function login(params: LoginParams): Promise<string> {
   if (process.server) {
     throw new LogicError('Logging in during SSR is not supported!')
   }
@@ -105,11 +99,12 @@ export async function login(params: LoginParams) {
   const { apiOrigin, challenge } = params
 
   const accessCode = await getAccessCode(params)
-  const token = await getTokenFromAccessCode({ accessCode, apiOrigin, challenge })
+  return await getTokenFromAccessCode({ accessCode, apiOrigin, challenge })
+}
 
-  // save token
-  setToken(token)
-
-  // reload page & go to index
-  window.location.href = '/'
+/**
+ * Evict cache that depends on auth state (e.g. 'me' query)
+ */
+export function resetAuthState(client: ApolloClient<unknown>) {
+  client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
 }

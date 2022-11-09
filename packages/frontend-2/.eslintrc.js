@@ -104,7 +104,8 @@ const config = {
     {
       files: '*.d.ts',
       rules: {
-        'no-var': 'off'
+        'no-var': 'off',
+        '@typescript-eslint/no-explicit-any': 'off'
       }
     },
     {

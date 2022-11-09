@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable vue/one-component-per-file */
 import { RouterLinkMock } from '~~/lib/fake-nuxt-env/components/RouterLinkMock'
 import { createNuxtApp, callWithNuxt, useNuxtApp, defineNuxtLink, NuxtApp } from '#app'
 import { App, defineComponent } from 'vue'
-import apolloPlugin from '~~/lib/fake-nuxt-env/plugins/apollo'
 import { Optional } from '@speckle/shared'
 import { merge } from 'lodash-es'
 
@@ -42,9 +42,7 @@ const initNuxtApp = () => {
   // which is necessary cause otherwise `createNuxtApp` throws
   window.__NUXT__ = {
     config: {
-      public: {
-        API_ORIGIN: import.meta.env.STORYBOOK_API_ORIGIN
-      }
+      public: NUXT_ENV_VARS
     }
   }
   const nuxtApp = createNuxtApp({
@@ -66,21 +64,20 @@ const registerVueWithNuxtApp = (app: App<Element>) => {
 
 /**
  * Prepares async plugin installers and returns a synchronous Vue plugin for configuring the main
- * Vue instance
+ * Vue instance. The separation of an async and sync part are due to `setup` in preview.js not accepting
+ * an async callback.
  *
- * Hax upon hax using Nuxt internals over here, but that's what you need to do
- * to get Nuxt-like env setup in Storybook
+ * Function is async so that we can initialize any kind of async Vue plugins we need
+ *
+ * (Hax upon hax using Nuxt internals over here, but that's what you need to do
+ * to get Nuxt-like env setup in Storybook)
  */
 export const buildVueAppSetup = async () => {
   const { initVueApp } = initNuxtApp() || {}
-  const { vuePlugin } = await apolloPlugin()
 
   return (app: App<Element>) => {
     // feeding in original app incase any important properties were attached to it
     registerVueWithNuxtApp(initVueApp ? merge(app, initVueApp) : app)
-
-    // Running plugins that currently can't get auto-bootstrapped
-    vuePlugin(app)
 
     // Implementing & mocking links
     app.component('RouterLink', RouterLinkMock)

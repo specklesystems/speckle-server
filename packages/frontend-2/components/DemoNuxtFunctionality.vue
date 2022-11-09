@@ -1,7 +1,7 @@
 <template>
   <div class="bg-base text-foreground p-12">
     <NuxtLink to="http://example.com">Link</NuxtLink>
-    <FormCheckbox name="Checkbox" />
+    <FormCheckbox name="Checkbox" value="test-checkbox" />
   </div>
 </template>
 <script setup lang="ts">
