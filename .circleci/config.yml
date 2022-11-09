@@ -340,16 +340,15 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-      - run:
-          name: Build packages
-          command: yarn workspaces foreach run build
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
           paths:
             - .yarn/cache
             - .yarn/unplugged
-
+      - run:
+          name: Build packages
+          command: yarn workspaces foreach -ptv run build
       - snyk/scan:
           target-file: package.json
           fail-on-issues: false
