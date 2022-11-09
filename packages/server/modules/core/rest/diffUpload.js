@@ -15,11 +15,12 @@ module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
-    await rejectsRequestWithRatelimitStatusIfNeeded({
+    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
       action: 'POST /api/diff/:streamId',
       req,
       res
     })
+    if (rejected) return rejected
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req
