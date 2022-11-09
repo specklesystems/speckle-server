@@ -5,6 +5,7 @@ const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { buildRequestLoaders } = require('@/modules/core/loaders')
 const { validateToken } = require(`@/modules/core/services/tokens`)
+const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -49,7 +50,7 @@ function addLoadersToCtx(ctx) {
 async function buildContext({ req, connection }) {
   // Parsing auth info
   const ctx = await contextApiTokenHelper({ req, connection })
-
+  ctx.ip = getIpFromRequest(req)
   // Adding request data loaders
   return addLoadersToCtx(ctx)
 }

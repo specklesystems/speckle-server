@@ -25,7 +25,13 @@ const LIMITS = {
   BRANCHES: parseInt(process.env.LIMIT_BRANCHES) || 1000, // per stream
   TOKENS: parseInt(process.env.LIMIT_TOKENS) || 1000, // per user
   ACTIVE_SUBSCRIPTIONS: parseInt(process.env.LIMIT_ACTIVE_SUBSCRIPTIONS) || 100, // per user
-  ACTIVE_CONNECTIONS: parseInt(process.env.LIMIT_ACTIVE_CONNECTIONS) || 100 // per source ip
+  ACTIVE_CONNECTIONS: parseInt(process.env.LIMIT_ACTIVE_CONNECTIONS) || 100, // per source ip
+
+  'POST /api/getobjects/:streamId': 200, // for 1 minute
+  'POST /api/diff/:streamId': 200, // for 1 minute
+  'POST /objects/:streamId': 200, // for 1 minute
+  'GET /objects/:streamId/:objectId': 200, // for 1 minute
+  'GET /objects/:streamId/:objectId/single': 200 // for 1 minute
 }
 
 const LIMIT_INTERVAL = {
@@ -42,7 +48,13 @@ const LIMIT_INTERVAL = {
   BRANCHES: 0,
   TOKENS: 0,
   ACTIVE_SUBSCRIPTIONS: 0,
-  ACTIVE_CONNECTIONS: 0
+  ACTIVE_CONNECTIONS: 0,
+
+  'POST /api/getobjects/:streamId': 60,
+  'POST /api/diff/:streamId': 60,
+  'POST /objects/:streamId': 60,
+  'GET /objects/:streamId/:objectId': 60,
+  'GET /objects/:streamId/:objectId/single': 60
 }
 
 const rateLimitedCache = {}
@@ -74,22 +86,31 @@ async function shouldRateLimitNext({ action, source }) {
   return shouldRateLimit
 }
 
+// returns true if the action is fine, false if it should be blocked because of exceeding limit
+async function respectsLimits({ action, source }) {
+  const rateLimitKey = `${action} ${source}`
+  const promise = shouldRateLimitNext({ action, source }).then((shouldRateLimit) => {
+    if (shouldRateLimit) rateLimitedCache[rateLimitKey] = true
+    else delete rateLimitedCache[rateLimitKey]
+  })
+  if (rateLimitedCache[rateLimitKey]) {
+    await promise
+  }
+
+  if (rateLimitedCache[rateLimitKey]) limitsReached.labels(action).inc()
+  return !rateLimitedCache[rateLimitKey]
+}
+
+async function rejectsRequestWithRatelimitStatusIfNeeded({ action, req, res }) {
+  const source = req.context.userId || req.context.ip
+  if (!(await respectsLimits({ action, source })))
+    return res.status(429).set('X-Speckle-Meditation', 'https://http.cat/429').send({
+      err: 'You are sending too many requests. You have been rate limited. Please try again later.'
+    })
+}
 module.exports = {
   LIMITS,
   LIMIT_INTERVAL,
-
-  // returns true if the action is fine, false if it should be blocked because of exceeding limit
-  async respectsLimits({ action, source }) {
-    const rateLimitKey = `${action} ${source}`
-    const promise = shouldRateLimitNext({ action, source }).then((shouldRateLimit) => {
-      if (shouldRateLimit) rateLimitedCache[rateLimitKey] = true
-      else delete rateLimitedCache[rateLimitKey]
-    })
-    if (rateLimitedCache[rateLimitKey]) {
-      await promise
-    }
-
-    if (rateLimitedCache[rateLimitKey]) limitsReached.labels(action).inc()
-    return !rateLimitedCache[rateLimitKey]
-  }
+  respectsLimits,
+  rejectsRequestWithRatelimitStatusIfNeeded
 }
