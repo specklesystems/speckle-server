@@ -352,8 +352,7 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
       - snyk/scan:
-          target-file: package.json
-          additional-arguments: --yarn-workspaces
+          additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
 
   docker-build: &build-job
