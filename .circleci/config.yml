@@ -1,11 +1,16 @@
 version: 2.1
 
+orbs:
+  snyk: snyk/snyk@1.4.0
+
 workflows:
   version: 2
 
   test-build:
     jobs:
       - test-server:
+          context: &snyk-context
+            - snyk
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
@@ -286,6 +291,9 @@ jobs:
       - run:
           name: Build public packages
           command: yarn build:public
+
+      - snyk/scan:
+          fail-on-issues: false
 
       - run:
           name: Wait for dependencies to start
