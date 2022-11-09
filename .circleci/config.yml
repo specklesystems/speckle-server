@@ -356,12 +356,36 @@ jobs:
           # the workspace needs to have a node_modules directory.
           # this forces the population of node_modules in each workspace
           name: build public packages
-          command: yarn workspaces foreach -ptv --no-private install
+          command: yarn workspaces foreach -ptv install
       - snyk/scan:
           target-file: package.json
           fail-on-issues: false
       - snyk/scan:
+          target-file: packages/frontend/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/fileimport-service/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/objectloader/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/preview-service/package.json
+          fail-on-issues: false
+      - snyk/scan:
           target-file: packages/server/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/shared/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/viewer/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/viewer-sandbox/package.json
+          fail-on-issues: false
+      - snyk/scan:
+          target-file: packages/webhook-service/package.json
           fail-on-issues: false
 
   docker-build: &build-job
