@@ -327,6 +327,11 @@ jobs:
       # destination: package/server/coverage
 
   vulnerability-scan:
+    # snyk can undertake most types of scans through GitHub integration
+    # which does not require integration with the CI
+    # but it is not possible to scan npm/yarn package.json
+    # because it requires node_modules
+    # therefore this scanning has to be triggered via the cli
     docker: &docker-image
       - image: cimg/python:3.9.15-node
     resource_class: small
@@ -347,8 +352,11 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
       - run:
-          name: Build packages
-          command: yarn workspaces foreach -ptv run build
+          # for snyk to scan package.json in each workspace
+          # the workspace needs to have a node_modules directory.
+          # this forces the population of node_modules in each workspace
+          name: build public packages
+          command: yarn workspaces foreach -ptv --no-private install
       - snyk/scan:
           target-file: package.json
           fail-on-issues: false
