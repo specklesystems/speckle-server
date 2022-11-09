@@ -8,9 +8,15 @@ workflows:
 
   test-build:
     jobs:
-      - test-server:
+      - vulnerability-scan:
           context: &snyk-context
             - snyk
+          filters: &filters-allow-all
+            tags:
+              # run tests for any commit on any branch, including any tags
+              only: /.*/
+
+      - test-server:
           filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
@@ -292,9 +298,6 @@ jobs:
           name: Build public packages
           command: yarn build:public
 
-      - snyk/scan:
-          fail-on-issues: false
-
       - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
@@ -322,6 +325,31 @@ jobs:
       # - store_artifacts:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
+
+  vulnerability-scan:
+    docker: &docker-image
+      - image: cimg/python:3.9.15-node
+    resource_class: small
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+          # working_directory: 'packages/server'
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - snyk/scan:
+          fail-on-issues: false
 
   docker-build: &build-job
     docker: &docker-image
