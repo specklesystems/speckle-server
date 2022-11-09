@@ -9,8 +9,8 @@
       </div>
       <div v-if="enableSearch">
         <FormTextInput
-          name="model search"
-          label=""
+          name="model-search"
+          label="Search Models"
           placeholder="search"
           class="bg-base shadow hover:shadow-lg"
         />

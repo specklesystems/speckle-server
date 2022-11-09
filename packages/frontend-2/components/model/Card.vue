@@ -105,22 +105,14 @@
 </template>
 <script setup lang="ts">
 import { PropType } from 'vue'
-import {
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel
-} from '@headlessui/vue'
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { ClockIcon } from '@heroicons/vue/24/outline'
 import { EllipsisVerticalIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 
 type Model = {
   name: string
   previewUrl: string
-  preview360Url: string
+  preview360Url?: string
   numVersions: number
 }
 

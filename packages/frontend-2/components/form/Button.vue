@@ -28,6 +28,7 @@ type FormButtonType =
   | 'outline'
   | 'success'
   | 'warning'
+  | 'invert'
 
 const emit = defineEmits<{
   /**
@@ -102,42 +103,34 @@ const buttonType = computed(() => {
 
 const colorClasses = computed(() => {
   const isDisabled = props.disabled
+  const disabledClasses = 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
+
   switch (props.type) {
     case 'outline':
       return `${
-        isDisabled
-          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
-          : 'text-primary'
+        isDisabled ? disabledClasses : 'text-primary'
       } border-2 border-primary ring-primary-muted`
     case 'danger':
       return `${
-        isDisabled
-          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
-          : 'bg-danger'
+        isDisabled ? disabledClasses : 'bg-danger'
       } text-white hover:bg-danger-darker ring-danger-lighter`
     case 'warning':
       return `${
-        isDisabled
-          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
-          : 'bg-warning'
+        isDisabled ? disabledClasses : 'bg-warning'
       } text-white hover:bg-warning-darker ring-warning-lighter`
     case 'pop':
       return `${
-        isDisabled
-          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
-          : 'bg-primary'
+        isDisabled ? disabledClasses : 'bg-primary'
       } text-white hover:bg-primary-focus `
     case 'invert':
       return `${
-        isDisabled
-          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
-          : 'bg-white/95 text-primary'
+        isDisabled ? disabledClasses : 'bg-white/95 text-primary'
       } hover:bg-white ring-white/50`
     default:
     case 'primary':
       return `${
         isDisabled
-          ? 'bg-disabled text-disabled-muted focus:ring-0 hover:ring-0'
+          ? disabledClasses
           : 'bg-primary-muted text-primary hover:bg-primary hover:text-white'
       }`
   }

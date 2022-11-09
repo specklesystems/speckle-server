@@ -57,7 +57,7 @@ const typographyTheme = (theme, type) => ({
   ...typographyDark(theme, type)
 })
 
-/** @type {import('tailwindcss/tailwind-config').TailwindConfig} */
+/** @type {import('tailwindcss').Config} */
 const config = {
   darkMode: 'class',
   content: [
@@ -72,6 +72,9 @@ const config = {
     // `./lib/**/*.{js,ts,vue}`, // TODO: Wait for fix https://github.com/nuxt/framework/issues/2886#issuecomment-1108312903
   ],
   theme: {
+    fontFamily: {
+      sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';"
+    },
     extend: {
       colors: {
         base: {
@@ -97,6 +100,11 @@ const config = {
           DEFAULT: colors.amber['500'],
           lighter: colors.amber['400'],
           darker: colors.amber['600']
+        },
+        success: {
+          DEFAULT: colors.green['500'],
+          lighter: colors.green['400'],
+          darker: colors.green['600']
         },
         disabled: {
           DEFAULT: 'var(--disabled)',

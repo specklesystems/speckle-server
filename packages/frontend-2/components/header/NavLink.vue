@@ -17,7 +17,7 @@
 </template>
 <script setup lang="ts">
 import { ChevronRightIcon, MinusIcon } from '@heroicons/vue/20/solid'
-const props = defineProps({
+defineProps({
   separator: {
     type: Boolean,
     default: true
@@ -30,9 +30,5 @@ const props = defineProps({
     type: String,
     default: null
   }
-})
-const route = useRoute()
-const active = computed(() => {
-  return route.path === props.to
 })
 </script>

@@ -34,6 +34,7 @@ import { Optional } from '@/modules/shared/helpers/typeHelper'
 
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
+import { Roles } from '@speckle/shared'
 
 import { IMocks } from '@graphql-tools/mock'
 import { faker } from '@faker-js/faker'
@@ -131,10 +132,8 @@ function buildApolloSubscriptionServer(
  * Define mocking config in dev env
  * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
  */
-
-const roles = ['owner', 'contributor', 'reviewer']
-
 function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolean } {
+  const roles = Object.values(Roles.Stream)
   const isDebugEnv = isDevEnv() || isTestEnv()
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 

@@ -33,8 +33,24 @@
 import { PropType } from 'vue'
 import { RectangleGroupIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ProjectListItemFragmentFragment } from '~~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
 
-import { useQuery } from '@vue/apollo-composable'
+// no need to store it in a const or export it, cause you can refer to it without
+// importing it in queries
+graphql(`
+  fragment ProjectListItemFragment on Project {
+    id
+    name
+    modelCount
+    role
+    editedAt
+    team {
+      id
+      name
+      avatar
+    }
+  }
+`)
 
 defineProps({
   project: {

@@ -1726,6 +1726,8 @@ export type ProjectsDashboardListQueryVariables = Exact<{ [key: string]: never; 
 
 export type ProjectsDashboardListQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> }> };
 
+export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> };
+
 export type ActiveUserMainMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1735,8 +1737,6 @@ export type InternalTestDataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type InternalTestDataQuery = { __typename?: 'Query', testNumber?: number | null, testList: Array<{ __typename?: 'TestItem', foo: string, bar: string }> };
-
-export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 

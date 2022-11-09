@@ -61,6 +61,7 @@ export const Default: Story = {
     placeholder: 'Placeholder text!',
     label: 'Text input w/ Label:',
     showRequired: false,
+    showLabel: true,
     disabled: false,
     validateOnMount: false
   },

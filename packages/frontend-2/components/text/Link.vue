@@ -4,7 +4,7 @@
     :to="to"
     :external="external"
     :class="computedClasses"
-    @click="onClick"
+    @click.capture="onClick"
   >
     <slot>Link</slot>
   </Component>
@@ -30,34 +30,20 @@ const props = defineProps({
     type: Boolean as PropType<Optional<boolean>>,
     required: false,
     default: undefined
-  },
-  secondary: {
-    type: Boolean as PropType<Optional<boolean>>,
-    default: undefined
   }
 })
 
 const NuxtLink = resolveComponent('NuxtLink')
 const computedClasses = computed(() => {
-  const isSecondary = props.secondary
   const classParts: string[] = ['font-medium']
 
-  if (isSecondary) {
-    classParts.push('text-primary')
-  } else {
-    classParts.push('text-primary')
-  }
-
   if (props.disabled) {
+    classParts.push('text-disabled')
     classParts.push('cursor-not-allowed')
   } else {
+    classParts.push('text-primary')
     classParts.push('cursor-pointer')
-
-    if (isSecondary) {
-      classParts.push('hover:text-primary-focus')
-    } else {
-      classParts.push('hover:text-primary-focus')
-    }
+    classParts.push('hover:text-primary-focus')
   }
 
   return classParts.join(' ')

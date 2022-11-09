@@ -31,7 +31,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 
-const props = defineProps({
+defineProps({
   /** Enable search or not */
   enableSearch: {
     type: Boolean,
@@ -55,7 +55,4 @@ const { result: projectResult } = useQuery(projectsQuery)
 
 const count = computed(() => projectResult.value?.projects.length || 0)
 const projects = computed(() => projectResult.value?.projects || [])
-const loadedProjects = computed(() =>
-  projects.value.length > 0 ? [...projects.value].splice(0, props.numProjects) : []
-)
 </script>

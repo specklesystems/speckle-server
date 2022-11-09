@@ -1,6 +1,6 @@
 <template>
   <div>
-    <label v-show="showLabel" :for="name" class="block label">
+    <label :for="name" class="block label" :class="{ 'sr-only': !showLabel }">
       <span>{{ title }}</span>
     </label>
     <div class="relative mt-1 rounded-md">
@@ -93,6 +93,9 @@ const props = defineProps({
     type: String,
     required: true
   },
+  /**
+   * Whether to show label (label will always be shown to screen readers)
+   */
   showLabel: {
     type: Boolean,
     required: false

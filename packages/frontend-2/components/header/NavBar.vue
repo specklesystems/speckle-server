@@ -4,7 +4,7 @@
     as="nav"
     class="bg-base shadow-md hover:shadow-lg transition fixed w-full z-10"
   >
-    <div class="container layout-columns-single">
+    <div class="layout-columns-single">
       <div class="flex h-14 transition-all justify-between">
         <div class="flex">
           <HeaderLogoBlock :active="false" class="mr-1" />

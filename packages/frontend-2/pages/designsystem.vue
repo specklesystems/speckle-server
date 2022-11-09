@@ -32,6 +32,20 @@
             system ui only - using github's stack. Lighter, better performance, no more
             google fonts trakcing and a more native look.
           </div>
+          <div class="mt-4">
+            <div class="font-sans">Font weights:</div>
+            <ul>
+              <li class="font-thin">Thin</li>
+              <li class="font-extralight">Exta light</li>
+              <li class="font-light">Light</li>
+              <li class="font-normal">Normal</li>
+              <li class="font-medium">Medium</li>
+              <li class="font-semibold">SemiBold</li>
+              <li class="font-bold">Bold</li>
+              <li class="font-extrabold">ExtraBold</li>
+              <li class="font-black">Black</li>
+            </ul>
+          </div>
         </template>
       </LayoutPanel>
       <LayoutPanel class="background text-foreground mb-4">
@@ -186,8 +200,6 @@
             <div>
               <TextLink to="/">Basic Link</TextLink>
               |
-              <TextLink to="/" secondary>Secondary Link</TextLink>
-              |
               <TextLink to="/" disabled>Disabled Link</TextLink>
             </div>
           </div>
@@ -310,7 +322,6 @@ const { result: activeUserResult } = useQuery(activeUserQuery)
 const user = computed(() => activeUserResult.value?.activeUser || null)
 
 const onSubmit = (values: unknown) => console.log(values)
-const route = useRoute()
 const nav = useNav()
 onMounted(() => {
   nav.value[0] = {
