@@ -1,10 +1,22 @@
 version: 2.1
 
+orbs:
+  snyk: snyk/snyk@1.4.0
+
 workflows:
   version: 2
 
   test-build:
     jobs:
+      - vulnerability-scan:
+          context: &snyk-context
+            - snyk
+          filters:
+            branches:
+              only:
+                - main
+                - hotfix*
+
       - test-server:
           filters: &filters-allow-all
             tags:
@@ -314,6 +326,35 @@ jobs:
       # - store_artifacts:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
+
+  vulnerability-scan:
+    # snyk can undertake most types of scans through GitHub integration
+    # which does not require integration with the CI
+    # but it is not possible to scan npm/yarn package.json
+    # because it requires node_modules
+    # therefore this scanning has to be triggered via the cli
+    docker: &docker-image
+      - image: cimg/python:3.9.15-node
+    resource_class: small
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - snyk/scan:
+          additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
+          fail-on-issues: false
 
   docker-build: &build-job
     docker: &docker-image
