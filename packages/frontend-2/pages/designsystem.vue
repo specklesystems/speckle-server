@@ -63,13 +63,13 @@
             <div>
               <div>Here are the available background colors:</div>
               <div
-                class="bg-base-page px-4 py-12 mt-2 block rounded-lg border-2 border-neutral"
+                class="bg-base-page px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
               >
-                <b>bg-page</b>
+                <b>bg-base-page</b>
                 - for use as the page background.
               </div>
               <div
-                class="bg-base px-4 py-12 mt-2 block rounded-lg border-2 border-neutral"
+                class="bg-base px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
               >
                 <b>bg-base</b>
                 - for use in any element that
@@ -77,13 +77,13 @@
                 on the page.
               </div>
               <div
-                class="bg-base-2 px-4 py-12 mt-2 block rounded-lg border-2 border-neutral-2"
+                class="bg-base-2 px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
               >
                 <b>bg-base-2</b>
                 - for use as the background for anything that needs to stand out.
               </div>
               <div
-                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-2 border-neutral"
+                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-2 border-base-page"
               >
                 <b>bg-primary</b>
                 - for use when you want to something to really pop.

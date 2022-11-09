@@ -2,6 +2,8 @@
   <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
     class="group bg-base hover:bg-primary rounded-xl shadow hover:shadow-xl hover:scale-[1.02] transition-all hover:cursor-pointer"
+    @mouseenter="hover = true"
+    @mouseleave="hover = false"
   >
     <NuxtLink to="/project/bla/model/bla">
       <div class="mb-2 h-52 flex items-center justify-center">
@@ -39,7 +41,7 @@
                   class="absolute caption left-0 z-10 ml-0 -mt-1 w-36 origin-top-right"
                 >
                   <div
-                    class="shadow-xl bg-base text-foreground dark:shadow-slate-600/25 outline-0 dark:outline overflow-clip rounded-md divide-y dark:divide-neutral-800"
+                    class="shadow-xl bg-base text-foreground outline-0 dark:outline overflow-clip rounded-md divide-y dark:divide-neutral-800"
                   >
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
@@ -49,6 +51,16 @@
                         ]"
                       >
                         Share
+                      </a>
+                    </DisclosureButton>
+                    <DisclosureButton v-slot="{ active }" as="template">
+                      <a
+                        :class="[
+                          'block py-2 px-2 cursor-pointer hover:bg-base-2',
+                          active ? 'bg-base-2' : ''
+                        ]"
+                      >
+                        Change Name
                       </a>
                     </DisclosureButton>
                     <DisclosureButton v-slot="{ active }" as="template">
@@ -118,4 +130,6 @@ defineProps({
     required: true
   }
 })
+
+const hover = ref(false)
 </script>

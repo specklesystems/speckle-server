@@ -30,7 +30,7 @@
           <Menu as="div" class="relative ml-4">
             <div>
               <MenuButton
-                class="flex rounded-full bg-base text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                class="flex rounded-full bg-base text-sm ring-offset-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               >
                 <span class="sr-only">Open user menu</span>
                 <img
@@ -39,7 +39,7 @@
                   :src="activeUserImageUrl"
                   alt=""
                 />
-                <UserCircleIcon v-else class="h-8 w-8 rounded-full" />
+                <UserCircleIcon v-else class="h-8 w-8 rounded-full text-foreground" />
               </MenuButton>
             </div>
             <Transition
@@ -143,7 +143,7 @@ import {
   MenuItem,
   MenuItems
 } from '@headlessui/vue'
-import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 

@@ -5,7 +5,7 @@
     @click="onClick"
   >
     <span class="sr-only">Toggle dark mode</span>
-    <Icon class="h-6 w-6" aria-hidden="true" />
+    <Icon class="h-4 w-4" aria-hidden="true" />
   </button>
 </template>
 <script setup lang="ts">

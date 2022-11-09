@@ -175,7 +175,7 @@ const computedClasses = computed((): string => {
       'pr-8 border-danger-lighter text-danger-darker placeholder-danger-lighter focus:border-danger focus:ring-danger'
     )
   } else {
-    classParts.push('border-0 focus:ring-4 focus:ring-primary-muted focus:shadow-xl')
+    classParts.push('border-0 focus:ring-2 focus:ring-primary-muted')
   }
 
   return classParts.join(' ')
