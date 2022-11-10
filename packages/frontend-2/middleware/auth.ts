@@ -19,4 +19,6 @@ export default defineNuxtRouteMiddleware(async () => {
   if (!data?.activeUser?.id) {
     return navigateTo(HomeRoute)
   }
+
+  return undefined
 })

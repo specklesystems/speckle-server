@@ -148,6 +148,9 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { LoginRoute, RegisterRoute } from '~~/lib/common/helpers/route'
 
+const a = 1
+console.log(a)
+
 type UserNavigationLink = {
   name: string
   href?: string

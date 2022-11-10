@@ -23,6 +23,12 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
 
+      - chromatic:
+          filters:
+            tags:
+              # frontend-2 prefix only
+              only: /^frontend\-2.*/
+
       - get-version:
           filters: *filters-allow-all
 
@@ -326,6 +332,34 @@ jobs:
       # - store_artifacts:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
+
+  chromatic:
+    docker:
+      - image: cimg/node:16.15
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Open frontend-2 package
+          command: cd ./packages/frontend-2
+
+      - run:
+          name: Run chromatic
+          command: yarn chromatic
 
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
