@@ -1,29 +1,38 @@
-/* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable vue/one-component-per-file */
 import { RouterLinkMock } from '~~/lib/fake-nuxt-env/components/RouterLinkMock'
 import { createNuxtApp, callWithNuxt, useNuxtApp, defineNuxtLink, NuxtApp } from '#app'
 import { App, defineComponent } from 'vue'
 import { Optional } from '@speckle/shared'
-import { merge } from 'lodash-es'
 
-const Head = defineComponent({
-  render: () => h('div', { style: { display: 'none' } })
-})
+const stubGlobalComponents = (app: App<Element>) => {
+  const Head = defineComponent({
+    render: () => h('div', { style: { display: 'none' } })
+  })
 
-const ClientOnly = defineComponent({
-  setup(_, { slots }) {
-    return () => slots.default?.()
-  }
-})
-
-const NuxtLink = defineNuxtLink({ componentName: 'NuxtLink' })
-
-const initNuxtApp = () => {
-  const initVueApp = {
-    config: {
-      globalProperties: {}
+  const ClientOnly = defineComponent({
+    setup(_, { slots }) {
+      return () => slots.default?.()
     }
-  } as App<Element> // fake, but not really needed at this point
+  })
+
+  const NuxtLink = defineNuxtLink({ componentName: 'NuxtLink' })
+
+  // Implementing & mocking links
+  app.component('RouterLink', RouterLinkMock)
+  app.component('NuxtLink', NuxtLink)
+  app.component('ClientOnly', ClientOnly)
+  // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
+  app.component('Head', Head)
+}
+
+const initNuxtApp = (vueApp?: App<Element>) => {
+  const initVueApp =
+    vueApp ||
+    ({
+      config: {
+        globalProperties: {}
+      }
+    } as App<Element>) // fake, but not really needed at this point
 
   // Setup nuxt singleton, only if it's not already done
   let nuxt: Optional<NuxtApp> = undefined
@@ -35,14 +44,11 @@ const initNuxtApp = () => {
 
   if (nuxt) return
 
-  // Making sure Nuxt knows we're on the client side
-  window.process.client = true
-
   // We can inject nuxt.payload.config through this variable
   // which is necessary cause otherwise `createNuxtApp` throws
   window.__NUXT__ = {
     config: {
-      public: NUXT_ENV_VARS
+      public: {}
     }
   }
   const nuxtApp = createNuxtApp({
@@ -57,33 +63,10 @@ const initNuxtApp = () => {
   }
 }
 
-const registerVueWithNuxtApp = (app: App<Element>) => {
-  const nuxt = useNuxtApp()
-  nuxt.vueApp = app
-}
+export const setupVueApp = (app: App<Element>) => {
+  // Initializing nuxt singleton
+  initNuxtApp(app)
 
-/**
- * Prepares async plugin installers and returns a synchronous Vue plugin for configuring the main
- * Vue instance. The separation of an async and sync part are due to `setup` in preview.js not accepting
- * an async callback.
- *
- * Function is async so that we can initialize any kind of async Vue plugins we need
- *
- * (Hax upon hax using Nuxt internals over here, but that's what you need to do
- * to get Nuxt-like env setup in Storybook)
- */
-export const buildVueAppSetup = async () => {
-  const { initVueApp } = initNuxtApp() || {}
-
-  return (app: App<Element>) => {
-    // feeding in original app incase any important properties were attached to it
-    registerVueWithNuxtApp(initVueApp ? merge(app, initVueApp) : app)
-
-    // Implementing & mocking links
-    app.component('RouterLink', RouterLinkMock)
-    app.component('NuxtLink', NuxtLink)
-    app.component('ClientOnly', ClientOnly)
-    // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
-    app.component('Head', Head)
-  }
+  // Implementing & mocking links
+  stubGlobalComponents(app)
 }

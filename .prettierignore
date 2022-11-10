@@ -31,3 +31,5 @@ venv
 .*.{ts,js,vue,tsx,jsx}
 **/generated/**/*
 **/generated/graphql.ts
+
+storybook-static

@@ -18,7 +18,7 @@
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build",
+    "build-storybook": "storybook build",
     "storybook:test": "test-storybook",
     "storybook:test:watch": "test-storybook --watch"
   },
@@ -67,6 +67,7 @@
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "browserify-zlib": "^0.2.0",
+    "chromatic": "^6.11.4",
     "concurrently": "^7.5.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",

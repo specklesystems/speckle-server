@@ -24,6 +24,7 @@ const config = {
     '**/templates/*',
     'coverage',
     'lib/common/generated/**/*',
+    'storybook-static',
     '!.storybook'
   ],
   rules: {

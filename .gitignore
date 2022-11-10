@@ -57,3 +57,5 @@ packages/server/.vscode/*.log
 
 # GitGuardian
 .cache_ggshield
+
+storybook-static

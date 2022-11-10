@@ -58,8 +58,8 @@ const config: StorybookConfig = {
         Unimport.vite(unimportOptions)
       ],
       define: {
-        // TODO: Unsafe for prod, we'll need to limit the env vars built here
-        NUXT_ENV_VARS: process.env
+        'process.server': false,
+        'process.client': true
       }
     }
 
