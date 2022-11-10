@@ -361,7 +361,7 @@ jobs:
 
       - run:
           name: Run chromatic
-          command: pwd && yarn chromatic
+          command: cd ./packages/frontend-2 && pwd && yarn chromatic
 
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
