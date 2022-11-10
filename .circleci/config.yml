@@ -24,6 +24,8 @@ workflows:
               only: /.*/
 
       - chromatic:
+          context:
+            - chromatic
           filters:
             tags:
               # frontend-2 prefix only
