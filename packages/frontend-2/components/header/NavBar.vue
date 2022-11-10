@@ -146,6 +146,7 @@ import {
 import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
+import { LoginRoute, RegisterRoute } from '~~/lib/common/helpers/route'
 
 type UserNavigationLink = {
   name: string
@@ -167,8 +168,8 @@ const userNavigation = computed((): UserNavigationLink[] => [
         }
       ]
     : [
-        { name: 'Login', href: '/login' },
-        { name: 'Register', href: '/register' }
+        { name: 'Login', href: LoginRoute },
+        { name: 'Register', href: RegisterRoute }
       ])
 ])
 

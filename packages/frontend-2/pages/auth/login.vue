@@ -15,7 +15,7 @@
       </div>
     </template>
     <template #footer>
-      <FormButton submit size="" full-width>Submit</FormButton>
+      <FormButton submit full-width>Submit</FormButton>
     </template>
   </LayoutPanel>
 </template>
@@ -26,17 +26,11 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 
-// TODO: Use abstract auth form for login/register
-
 type FormValues = { email: string; password: string }
 
 const { handleSubmit } = useForm<FormValues>()
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
-
-// definePageMeta({
-//   middleware: ['guest']
-// })
 
 const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()

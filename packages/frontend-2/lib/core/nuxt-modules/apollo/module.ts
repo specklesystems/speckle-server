@@ -27,7 +27,7 @@ export default defineNuxtModule<ApolloModuleOptions>({
     name: 'apollo-module',
     configKey: 'apollo',
     compatibility: {
-      nuxt: '>= 3.0.0 || 3.0.0-rc.11'
+      nuxt: '>= 3.0.0 || 3.0.0-rc.13'
     }
   },
   hooks: {},
