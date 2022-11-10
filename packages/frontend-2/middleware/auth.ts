@@ -15,6 +15,13 @@ export default defineNuxtRouteMiddleware(async () => {
     })
     .catch(convertThrowIntoFetchResult)
 
+  // const dataPromise = new Promise<{ activeUser: { id: number } }>((resolve) => {
+  //   setTimeout(() => {
+  //     resolve({ activeUser: { id: 1 } })
+  //   }, 500)
+  // })
+  // const data = await dataPromise
+
   // Redirect home, if not logged in
   if (!data?.activeUser?.id) {
     return navigateTo(HomeRoute)
