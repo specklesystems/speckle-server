@@ -160,15 +160,6 @@ export const Outline: Story = mergeStories(Default, {
   }
 })
 
-export const Success: Story = mergeStories(Default, {
-  ...Default,
-  args: {
-    ...Default.args,
-    type: 'success',
-    default: 'Success variant'
-  }
-})
-
 export const Warning: Story = mergeStories(Default, {
   args: {
     type: 'warning',

@@ -20,7 +20,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "storybook:test": "test-storybook",
-    "storybook:test:watch": "test-storybook --watch"
+    "storybook:test:watch": "test-storybook --watch",
+    "chromatic": "chromatic --exit-zero-on-changes"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
@@ -95,5 +96,7 @@
   },
   "installConfig": {
     "hoistingLimits": "workspaces"
-  }
+  },
+  "readme": "ERROR: No README data found!",
+  "_id": "@speckle/frontend-2@0.0.1"
 }
