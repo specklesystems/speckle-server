@@ -357,11 +357,11 @@ jobs:
 
       - run:
           name: Open frontend-2 package
-          command: cd ./packages/frontend-2
+          command: cd ./packages/frontend-2 && pwd
 
       - run:
           name: Run chromatic
-          command: yarn chromatic
+          command: pwd && yarn chromatic
 
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
