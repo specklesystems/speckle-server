@@ -22,7 +22,7 @@
               <div class="flex-shrink-0">
                 <CheckCircleIcon
                   v-if="currentNotification.type === ToastNotificationType.Success"
-                  class="h-6 w-6 text-foreground"
+                  class="h-6 w-6 text-success"
                   aria-hidden="true"
                 />
                 <XCircleIcon

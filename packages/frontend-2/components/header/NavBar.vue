@@ -58,7 +58,7 @@
                   :key="item.name"
                   v-slot="{ active }"
                 >
-                  <a
+                  <NuxtLink
                     :href="item.href"
                     :class="[
                       active ? 'bg-foundation-2' : '',
@@ -67,7 +67,7 @@
                     @click="item.onClick"
                   >
                     {{ item.name }}
-                  </a>
+                  </NuxtLink>
                 </MenuItem>
               </MenuItems>
             </Transition>
