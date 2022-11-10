@@ -356,12 +356,12 @@ jobs:
             - .yarn/unplugged
 
       - run:
-          name: Open frontend-2 package
-          command: cd ./packages/frontend-2 && pwd
+          name: Build shared packages
+          command: cd ./packages/shared && yarn build
 
       - run:
           name: Run chromatic
-          command: cd ./packages/frontend-2 && pwd && yarn chromatic
+          command: cd ./packages/frontend-2 && yarn chromatic
 
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
