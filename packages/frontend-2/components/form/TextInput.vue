@@ -44,7 +44,7 @@
       </div>
       <div
         v-if="showRequired && !error"
-        class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-primary opacity-50"
+        class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
       >
         *
       </div>

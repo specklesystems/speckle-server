@@ -1,9 +1,13 @@
 import { BaseError } from '~~/lib/core/errors/base'
 
 export class InvalidLoginParametersError extends BaseError {
-  static defaultMessage = 'Invalid parameters for logging int!'
+  static defaultMessage = 'Invalid parameters for logging in!'
 }
 
-export class LoginFailedError extends BaseError {
+export class AuthFailedError extends BaseError {
   static defaultMessage = 'Logging in failed!'
+}
+
+export class InvalidRegisterParametersError extends BaseError {
+  static defaultMessage = 'Invalid parameters for signing up!'
 }

@@ -1,7 +1,8 @@
 import { ApolloClient } from '@apollo/client/core'
 import {
   InvalidLoginParametersError,
-  LoginFailedError
+  AuthFailedError,
+  InvalidRegisterParametersError
 } from '~~/lib/auth/errors/errors'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 
@@ -22,15 +23,26 @@ type TokenParams = {
   challenge: string
 }
 
+type RegisterParams = {
+  apiOrigin: string
+  challenge: string
+  user: {
+    email: string
+    password: string
+    name: string
+    company?: string
+  }
+}
+
 function resolveAccessCode(res: Response): string {
   if (!res.redirected) {
-    throw new LoginFailedError('Authentication request unexpectedly did not redirect')
+    throw new AuthFailedError('Authentication request unexpectedly did not redirect')
   }
 
   const redirectUrl = res.url
   const accessCode = new URL(redirectUrl).searchParams.get('access_code')
   if (!accessCode) {
-    throw new LoginFailedError('Unable to resolver access_code from auth response')
+    throw new AuthFailedError('Unable to resolver access_code from auth response')
   }
 
   // TODO: Re-introduce post login redirect (url coming from server or from client)
@@ -64,6 +76,31 @@ export async function getAccessCode(params: LoginParams) {
   return { accessCode: resolveAccessCode(res) }
 }
 
+export async function registerAndGetAccessCode(params: RegisterParams) {
+  const { apiOrigin, challenge, user } = params
+  if (!user.email || !user.password || !user.name) {
+    throw new InvalidRegisterParametersError(
+      "Can't register without a valid email, password and name!"
+    )
+  }
+
+  const registerUrl = new URL(
+    `/auth/local/register?challenge=${challenge}`,
+    apiOrigin
+  ).toString()
+
+  const res = await fetch(registerUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    redirect: 'follow',
+    body: JSON.stringify(user)
+  })
+
+  return { accessCode: resolveAccessCode(res) }
+}
+
 export async function getTokenFromAccessCode(params: TokenParams) {
   const { apiOrigin, accessCode, challenge } = params
 
@@ -84,7 +121,7 @@ export async function getTokenFromAccessCode(params: TokenParams) {
   // TODO: Do we wanna start using refresh tokens?
   const data = (await response.json()) as { token: string; refreshToken: string }
   if (!data.token) {
-    throw new LoginFailedError("Couldn't resolve token through access code.")
+    throw new AuthFailedError("Couldn't resolve token through access code.")
   }
 
   return data.token

@@ -15,6 +15,7 @@ const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
+const { pick } = require('lodash')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -57,6 +58,8 @@ module.exports = {
    * @returns {Promise<string>}
    */
   async createUser(user) {
+    user = pick(user, ['id', 'email', 'password', 'name', 'company'])
+
     const newId = crs({ length: 10 })
     user.id = newId
     user.email = user.email.toLowerCase()
@@ -186,7 +189,7 @@ module.exports = {
         -- Compute (streamId, ownerCount) table for streams on which the user is owner
         SELECT acl."resourceId", count(*) as cnt
         FROM stream_acl acl
-        INNER JOIN 
+        INNER JOIN
           (
           -- Get streams ids on which the user is owner
           SELECT "resourceId" FROM stream_acl

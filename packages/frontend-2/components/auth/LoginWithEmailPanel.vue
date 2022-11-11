@@ -49,10 +49,6 @@ const { triggerNotification } = useGlobalToast()
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {
     await loginWithEmail({ email, password, challenge: props.challenge })
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Login successful'
-    })
   } catch (e) {
     triggerNotification({
       type: ToastNotificationType.Danger,

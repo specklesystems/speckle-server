@@ -1,16 +1,21 @@
 import {
   resetAuthState,
   getAccessCode,
-  getTokenFromAccessCode
-} from '~~/lib/auth/services/login'
-import { Optional, SafeLocalStorage } from '@speckle/shared'
+  getTokenFromAccessCode,
+  registerAndGetAccessCode
+} from '~~/lib/auth/services/auth'
+import { ensureError, Optional, SafeLocalStorage } from '@speckle/shared'
 import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import { useApolloClient } from '@vue/apollo-composable'
+import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
+import { randomString } from '~~/lib/common/helpers/random'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 /**
  * TODO:
+ * - Invite only servers
  * - Invite redirects from server
  * - Verify overall flow - does this make sense (from a security perspective as well)?
  *  - Does challenge do anything?
@@ -29,13 +34,17 @@ export const useAuthManager = () => {
   const route = useRoute()
   const goHome = useNavigateToHome()
   const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
 
   /**
    * Observable auth cookie
    */
   const authToken = useAuthCookie()
 
-  const saveNewToken = (newToken: string) => {
+  /**
+   * Set/clear new token value and redirect to home
+   */
+  const saveNewToken = (newToken?: string) => {
     // write to cookie
     authToken.value = newToken
 
@@ -74,9 +83,22 @@ export const useAuthManager = () => {
 
     watch(
       () => route.query['access_code'] as Optional<string>,
-      (newVal, oldVal) => {
+      async (newVal, oldVal) => {
         if (newVal && newVal !== oldVal) {
-          finalizeLoginWithAccessCode()
+          try {
+            await finalizeLoginWithAccessCode()
+
+            triggerNotification({
+              type: ToastNotificationType.Success,
+              title: 'Authentication successful'
+            })
+          } catch (e) {
+            triggerNotification({
+              type: ToastNotificationType.Danger,
+              title: 'Authentication failed',
+              description: `${ensureError(e).message}`
+            })
+          }
         }
       },
       { immediate: true }
@@ -105,18 +127,67 @@ export const useAuthManager = () => {
   }
 
   /**
+   * Trigger registration procedure with email & password
+   */
+  const signUpWithEmail = async (params: {
+    user: {
+      email: string
+      password: string
+      name: string
+      company?: string
+    }
+    challenge: string
+  }) => {
+    const { user, challenge } = params
+
+    const { accessCode } = await registerAndGetAccessCode({
+      apiOrigin: API_ORIGIN,
+      challenge,
+      user
+    })
+
+    // eslint-disable-next-line camelcase
+    goHome({ query: { access_code: accessCode } })
+  }
+
+  /**
    * Log out
    */
   const logout = () => {
-    // Wipe cookie
-    authToken.value = undefined
-
-    // Wipe auth state
-    resetAuthState(apollo)
-
-    // Redirect home
-    goHome()
+    saveNewToken()
   }
 
-  return { authToken, loginWithEmail, logout, watchLoginAccessCode }
+  return { authToken, loginWithEmail, signUpWithEmail, logout, watchLoginAccessCode }
+}
+
+const useAuthAppIdAndChallenge = () => {
+  const route = useRoute()
+  const appId = ref('')
+  const challenge = ref('')
+
+  onMounted(() => {
+    // Resolve challenge & appId from querystring or generate them
+    const queryChallenge = route.query.challenge as Optional<string>
+    const queryAppId = route.query.appId as Optional<string>
+
+    appId.value = queryAppId || speckleWebAppId
+
+    if (queryChallenge) {
+      challenge.value = queryChallenge
+    } else if (appId.value === speckleWebAppId) {
+      const newChallenge = randomString(10)
+
+      SafeLocalStorage.set(LocalStorageKeys.AuthAppChallenge, newChallenge)
+      challenge.value = newChallenge
+    }
+  })
+
+  return { appId, challenge }
+}
+
+export const useLoginOrRegisterUtils = () => {
+  const appIdAndChallenge = useAuthAppIdAndChallenge()
+  return {
+    ...appIdAndChallenge
+  }
 }
