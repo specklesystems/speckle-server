@@ -3,15 +3,11 @@ import {
   InvalidLoginParametersError,
   LoginFailedError
 } from '~~/lib/auth/errors/errors'
-import { LogicError } from '~~/lib/core/errors/base'
+import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 
 // TODO: Should these differ from the old frontend values?
-const appId = 'spklwebapp'
-const appSecret = 'spklwebapp'
-
-type AccessCodeResponse = {
-  accessCode?: string
-}
+const appId = speckleWebAppId
+const appSecret = speckleWebAppId
 
 type LoginParams = {
   apiOrigin: string
@@ -26,18 +22,23 @@ type TokenParams = {
   challenge: string
 }
 
-function resolveAccessCode(body: AccessCodeResponse): string {
-  const accessCode = body?.accessCode
-  if (!accessCode) {
-    throw new LoginFailedError(
-      'Invalid email/password (unable to resolve access_code from redirect url).'
-    )
+function resolveAccessCode(res: Response): string {
+  if (!res.redirected) {
+    throw new LoginFailedError('Authentication request unexpectedly did not redirect')
   }
+
+  const redirectUrl = res.url
+  const accessCode = new URL(redirectUrl).searchParams.get('access_code')
+  if (!accessCode) {
+    throw new LoginFailedError('Unable to resolver access_code from auth response')
+  }
+
+  // TODO: Re-introduce post login redirect (url coming from server or from client)
 
   return accessCode
 }
 
-async function getAccessCode(params: LoginParams) {
+export async function getAccessCode(params: LoginParams) {
   const { apiOrigin, email, password, challenge } = params
 
   if (!email || !password) {
@@ -60,12 +61,10 @@ async function getAccessCode(params: LoginParams) {
     body: JSON.stringify({ email, password })
   })
 
-  const body = (await res.json()) as AccessCodeResponse
-
-  return resolveAccessCode(body)
+  return { accessCode: resolveAccessCode(res) }
 }
 
-async function getTokenFromAccessCode(params: TokenParams) {
+export async function getTokenFromAccessCode(params: TokenParams) {
   const { apiOrigin, accessCode, challenge } = params
 
   const url = new URL('/auth/token', apiOrigin)
@@ -89,19 +88,6 @@ async function getTokenFromAccessCode(params: TokenParams) {
   }
 
   return data.token
-}
-
-// TODO: Re-introduce way to redirect user to page X post-login
-
-export async function login(params: LoginParams): Promise<string> {
-  if (process.server) {
-    throw new LogicError('Logging in during SSR is not supported!')
-  }
-
-  const { apiOrigin, challenge } = params
-
-  const accessCode = await getAccessCode(params)
-  return await getTokenFromAccessCode({ accessCode, apiOrigin, challenge })
 }
 
 /**

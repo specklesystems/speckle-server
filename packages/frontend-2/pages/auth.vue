@@ -11,10 +11,10 @@ import { LoginRoute } from '~~/lib/common/helpers/route'
 
 definePageMeta({
   middleware: [
-    // TODO: Issue with middleware
+    // TODO: Issue with middleware, commenting out for now
     // 'guest',
     (to) => {
-      console.log(to.path)
+      // console.log(to.path)
       if (to.path === '/auth') {
         return LoginRoute
       }

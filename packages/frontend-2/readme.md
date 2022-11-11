@@ -32,6 +32,12 @@ Type your queries & fragments using the `graphql()` helper from `~~/lib/common/g
 
 More info: https://the-guild.dev/blog/unleash-the-power-of-fragments-with-graphql-codegen
 
+### Troubleshooting
+
+#### Adding an Apollo based Nuxt middleware makes the page never load
+
+Yea, Vue Apollo seems to be a bit busted in some scenarios: https://github.com/vuejs/apollo/issues/1429
+
 ## Production
 
 Build the application for production:

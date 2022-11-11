@@ -70,7 +70,6 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
-    "vscode-graphql.cacheSchemaFileForLookup": true,
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.js": "packages/frontend-2/**"
     },

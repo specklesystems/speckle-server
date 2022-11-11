@@ -2,7 +2,7 @@ extend type ServerInfo {
   """
   The authentication strategies available on this server.
   """
-  authStrategies: [AuthStrategy]
+  authStrategies: [AuthStrategy!]!
 }
 
 type AuthStrategy {

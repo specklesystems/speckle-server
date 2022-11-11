@@ -1,53 +1,54 @@
 <template>
-  <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
-    <template #header>
-      <span class="h5">Log in</span>
-    </template>
-    <template #default>
-      <div class="flex flex-col space-y-8">
-        <FormTextInput type="email" name="email" label="E-mail" :rules="emailRules" />
-        <FormTextInput
-          type="password"
-          name="password"
-          label="Password"
-          :rules="passwordRules"
-        />
-      </div>
-    </template>
-    <template #footer>
-      <FormButton submit full-width>Submit</FormButton>
-    </template>
-  </LayoutPanel>
+  <div class="space-y-4">
+    <AuthLoginThirdPartyPanel
+      v-if="serverInfo"
+      :server-info="serverInfo"
+      :challenge="challenge"
+      :app-id="appId"
+    />
+    <AuthLoginWithEmailPanel v-if="hasLocalStrategy" :challenge="challenge" />
+  </div>
 </template>
 <script setup lang="ts">
-import { useForm } from 'vee-validate'
-import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { ensureError } from '@speckle/shared'
-import { useAuthManager } from '~~/lib/auth/composables/auth'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useQuery } from '@vue/apollo-composable'
+import { localStrategyId, speckleWebAppId } from '~~/lib/auth/helpers/strategies'
+import { Optional, SafeLocalStorage } from '@speckle/shared'
+import { randomString } from '~~/lib/common/helpers/random'
+import { LocalStorageKeys } from '~~/lib/common/helpers/constants'
 
-type FormValues = { email: string; password: string }
+const loginQuery = graphql(`
+  query LoginServerInfo {
+    serverInfo {
+      ...AuthStategiesServerInfoFragment
+    }
+  }
+`)
+const route = useRoute()
+const { result } = useQuery(loginQuery)
 
-const { handleSubmit } = useForm<FormValues>()
-const emailRules = [isEmail]
-const passwordRules = [isRequired]
+const appId = ref('')
+const challenge = ref('')
 
-const { loginWithEmail } = useAuthManager()
-const { triggerNotification } = useGlobalToast()
+const serverInfo = computed(() => result.value?.serverInfo)
+const hasLocalStrategy = computed(() =>
+  (serverInfo.value?.authStrategies || []).some((s) => s.id === localStrategyId)
+)
 
-const onSubmit = handleSubmit(async ({ email, password }) => {
-  try {
-    await loginWithEmail(email, password)
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Login successful'
-    })
-  } catch (e) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Login failed',
-      description: `${ensureError(e).message}`
-    })
+onMounted(() => {
+  // Resolve challenge & appId from querystring or generate them
+  const queryChallenge = route.query.challenge as Optional<string>
+  const queryAppId = route.query.appId as Optional<string>
+
+  appId.value = queryAppId || speckleWebAppId
+
+  if (queryChallenge) {
+    challenge.value = queryChallenge
+  } else if (appId.value === speckleWebAppId) {
+    const newChallenge = randomString(10)
+
+    SafeLocalStorage.set(LocalStorageKeys.AuthAppChallenge, newChallenge)
+    challenge.value = newChallenge
   }
 })
 </script>

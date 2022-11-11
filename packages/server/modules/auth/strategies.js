@@ -7,7 +7,7 @@ const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
-const { useNewFrontend } = require('@/modules/shared/helpers/envHelper')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -58,16 +58,12 @@ module.exports = async (app) => {
 
       if (req.session) req.session.destroy()
 
-      if (useNewFrontend()) {
-        return res.json({ accessCode: ac })
-      } else {
-        // Resolve redirect URL
-        const urlObj = new URL(req.authRedirectPath || '/', process.env.CANONICAL_URL)
-        urlObj.searchParams.set('access_code', ac)
-        const redirectUrl = urlObj.toString()
+      // Resolve redirect URL
+      const urlObj = new URL(req.authRedirectPath || '/', getFrontendOrigin())
+      urlObj.searchParams.set('access_code', ac)
+      const redirectUrl = urlObj.toString()
 
-        return res.redirect(redirectUrl)
-      }
+      return res.redirect(redirectUrl)
     } catch (err) {
       sentry({ err })
       if (req.session) req.session.destroy()

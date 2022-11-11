@@ -7,6 +7,7 @@
 </template>
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 const { isDarkTheme } = useTheme()
 
 useHead({
@@ -17,4 +18,7 @@ useHead({
     lang: 'en'
   }
 })
+
+const { watchLoginAccessCode } = useAuthManager()
+watchLoginAccessCode()
 </script>
