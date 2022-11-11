@@ -16,15 +16,28 @@
       </ul>
     </div>
     <div>
+      <div>Here are the available primary variants:</div>
+      <div>
+        <div class="bg-primary p-2 text-white">primary</div>
+        <div class="bg-primary-focus p-2 text-white">primary-focus</div>
+        <div class="bg-primary-muted p-2 text-white">primary-muted</div>
+      </div>
+    </div>
+    <div>
       <div>
         Here are the available color variants, each of which also have a 'lighter' and
         'darker' variant to use for hover/focus/highlight states:
       </div>
       <div>
-        <div class="bg-primary p-2 text-white">primary</div>
         <div class="bg-danger p-2 text-white">danger</div>
+        <div class="bg-danger-lighter p-2 text-white">danger-lighter</div>
+        <div class="bg-danger-darker p-2 text-white">danger-darker</div>
         <div class="bg-warning p-2 text-white">warning</div>
+        <div class="bg-warning-lighter p-2 text-white">warning-lighter</div>
+        <div class="bg-warning-darker p-2 text-white">warning-darker</div>
         <div class="bg-success p-2 text-white">success</div>
+        <div class="bg-success-lighter p-2 text-white">success-lighter</div>
+        <div class="bg-success-darker p-2 text-white">success-darker</div>
       </div>
     </div>
     <div>
