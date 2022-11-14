@@ -47,6 +47,7 @@ export class FilteringManager {
   private ColorNumericFilterState = null
   private SelectionState = new GenericRvState()
   private HighlightState = new GenericRvState()
+  private UserspaceColorState = new UserspaceColorState()
 
   public constructor(renderer: SpeckleRenderer) {
     this.WTI = WorldTree.getInstance()
@@ -299,6 +300,43 @@ export class FilteringManager {
     return this.populateGenericState(objectIds, this.HighlightState)
   }
 
+  public setUserObjectColors(groups: [{ objectIds: string[]; color: string }]) {
+    this.UserspaceColorState = new UserspaceColorState()
+    for (const group of groups) {
+      const state = new ColoredGenericRvState()
+      state.ids = [
+        ...new Set([...group.objectIds, ...this.getDescendantIds(group.objectIds)])
+      ]
+      const nodes = []
+
+      WorldTree.getInstance().walk((node: TreeNode) => {
+        if (state.ids.indexOf(node.model.raw.id) !== -1) nodes.push(node)
+        return true
+      })
+      for (let k = 0; k < nodes.length; k++) {
+        const rvs = WorldTree.getRenderTree().getRenderViewNodesForNode(
+          nodes[k],
+          nodes[k]
+        )
+        if (rvs) {
+          state.rvs.push(...rvs.map((e) => e.model.renderView))
+        }
+      }
+
+      this.UserspaceColorState.states.push(state)
+    }
+    const rampTexture = Assets.generateDiscreetRampTexture(
+      groups.map((g) => new Color(g.color).getHex())
+    )
+    this.UserspaceColorState.rampTexture = rampTexture
+    return this.setFilters()
+  }
+
+  public removeUserObjectColors() {
+    this.UserspaceColorState = null
+    return this.setFilters()
+  }
+
   private populateGenericState(objectIds, state) {
     let ids = [...objectIds, ...this.getDescendantIds(objectIds)]
     /** There's a log of duplicate ids coming in from 'getDescendantIds'. We remove them
@@ -351,6 +389,7 @@ export class FilteringManager {
     this.ColorNumericFilterState = null
     this.SelectionState = new GenericRvState()
     this.HighlightState = new GenericRvState()
+    this.UserspaceColorState = null
     this.StateKey = null
     return null
   }
@@ -434,6 +473,19 @@ export class FilteringManager {
           ? FilterMaterialType.GHOST
           : FilterMaterialType.HIDDEN // TODO: ghost
       })
+    }
+
+    if (this.UserspaceColorState) {
+      let m = -1
+      for (const state of this.UserspaceColorState.states) {
+        m++
+        this.Renderer.applyFilter(state.rvs, {
+          filterType: FilterMaterialType.COLORED,
+          rampIndex: m / this.UserspaceColorState.states.length,
+          rampIndexColor: state.color,
+          rampTexture: this.UserspaceColorState.rampTexture
+        })
+      }
     }
 
     if (this.HighlightState.rvs.length !== 0) {
@@ -538,5 +590,21 @@ class GenericRvState {
   public reset() {
     this.rvs = []
     this.ids = []
+  }
+}
+
+class ColoredGenericRvState extends GenericRvState {
+  public color: Color = null
+  public reset(): void {
+    super.reset()
+    this.color = null
+  }
+}
+
+class UserspaceColorState {
+  public states: ColoredGenericRvState[] = []
+  public rampTexture: Texture
+  public reset() {
+    this.states = []
   }
 }
