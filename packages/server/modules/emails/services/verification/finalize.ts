@@ -1,8 +1,9 @@
+import { Optional } from '@speckle/shared'
 import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
 
-async function initializeState(tokenId: string) {
+async function initializeState(tokenId: Optional<string>) {
   if (!tokenId)
     throw new EmailVerificationFinalizationError('Missing verification token')
 
@@ -27,7 +28,7 @@ async function finalizeVerification(state: FinalizationState) {
 /**
  * Finalize the email verification process
  */
-export async function finalizeEmailVerification(tokenId: string) {
+export async function finalizeEmailVerification(tokenId: Optional<string>) {
   const state = await initializeState(tokenId)
   await finalizeVerification(state)
 }

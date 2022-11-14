@@ -1,4 +1,5 @@
 import { ApolloClient } from '@apollo/client/core'
+import { isString } from 'lodash-es'
 import {
   InvalidLoginParametersError,
   AuthFailedError,
@@ -34,8 +35,17 @@ type RegisterParams = {
   }
 }
 
-function resolveAccessCode(res: Response): string {
+async function resolveAccessCode(res: Response): Promise<string> {
   if (!res.redirected) {
+    // for some reason the error response structure differs between /login and /register...
+    const body = (await res.json()) as { err?: boolean | string; message?: string }
+    if (body.err) {
+      const errMsg = isString(body.err)
+        ? body.err
+        : body.message || 'An issue occurred while resolving access code'
+      throw new AuthFailedError(errMsg)
+    }
+
     throw new AuthFailedError('Authentication request unexpectedly did not redirect')
   }
 
@@ -73,7 +83,7 @@ export async function getAccessCode(params: LoginParams) {
     body: JSON.stringify({ email, password })
   })
 
-  return { accessCode: resolveAccessCode(res) }
+  return { accessCode: await resolveAccessCode(res) }
 }
 
 export async function registerAndGetAccessCode(params: RegisterParams) {
@@ -98,7 +108,7 @@ export async function registerAndGetAccessCode(params: RegisterParams) {
     body: JSON.stringify(user)
   })
 
-  return { accessCode: resolveAccessCode(res) }
+  return { accessCode: await resolveAccessCode(res) }
 }
 
 export async function getTokenFromAccessCode(params: TokenParams) {

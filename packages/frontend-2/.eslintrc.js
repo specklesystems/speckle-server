@@ -25,7 +25,9 @@ const config = {
     'coverage',
     'lib/common/generated/**/*',
     'storybook-static',
-    '!.storybook'
+    '!.storybook',
+    '.nuxt',
+    '.output'
   ],
   rules: {
     camelcase: [

@@ -46,6 +46,7 @@ export function getRedisUrl() {
 
 /**
  * Get app base url / canonical url / origin
+ * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead
  * @deprecated Since the new FE both apps (Server & FE) have different base urls, so use `getFrontendOrigin()` or `getServerOrigin()` instead
  */
 export function getBaseUrl() {

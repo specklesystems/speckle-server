@@ -19,6 +19,6 @@ useHead({
   }
 })
 
-const { watchLoginAccessCode } = useAuthManager()
-watchLoginAccessCode()
+const { watchAuthQueryString } = useAuthManager()
+watchAuthQueryString()
 </script>

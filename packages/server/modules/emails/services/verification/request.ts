@@ -10,7 +10,7 @@ import {
   buildBasicTemplateEmail,
   buildBasicTemplateServerInfo
 } from '@/modules/emails/services/templateFormatting'
-import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
 
@@ -52,7 +52,7 @@ function buildTextBody() {
 function buildEmailLink(state: NewEmailVerificationState): string {
   return new URL(
     getEmailVerificationFinalizationRoute(state.verificationId),
-    getBaseUrl()
+    getServerOrigin()
   ).toString()
 }
 

@@ -15,6 +15,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 
 /**
  * TODO:
+ * - OAuth error page w/ message passed from server
  * - Invite only servers
  * - Invite redirects from server
  * - Verify overall flow - does this make sense (from a security perspective as well)?
@@ -54,7 +55,7 @@ export const useAuthManager = () => {
     // Wipe auth state
     resetAuthState(apollo)
 
-    // redirect home
+    // redirect home & wipe access code from querystring
     goHome({ query: {} })
   }
 
@@ -66,13 +67,60 @@ export const useAuthManager = () => {
     const challenge = SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge) || ''
     if (!accessCode) return
 
-    const newToken = await getTokenFromAccessCode({
-      accessCode,
-      challenge,
-      apiOrigin: API_ORIGIN
-    })
+    try {
+      const newToken = await getTokenFromAccessCode({
+        accessCode,
+        challenge,
+        apiOrigin: API_ORIGIN
+      })
 
-    saveNewToken(newToken)
+      saveNewToken(newToken)
+    } catch (error) {
+      saveNewToken(undefined)
+      throw error
+    }
+  }
+
+  /**
+   * Check for 'emailverifiedstatus' in query string and report it to user
+   */
+  const watchEmailVerificationStatus = () => {
+    if (process.server) return
+
+    watch(
+      () =>
+        <const>[
+          route.query['emailverifiedstatus'] as Optional<string>,
+          route.query['emailverifiederror'] as Optional<string>
+        ],
+      (newVals, oldVals) => {
+        const [newStatus, newError] = newVals
+        const [oldStatus, oldError] = oldVals || []
+
+        const isNewStatus = newStatus && newStatus !== oldStatus
+        const isNewError = newError && newError !== oldError
+
+        if (isNewStatus && newStatus === 'true') {
+          triggerNotification({
+            type: ToastNotificationType.Success,
+            title: 'Email successfully verified!'
+          })
+
+          // wipe report
+          goHome({ query: {} })
+        } else if (isNewError) {
+          triggerNotification({
+            type: ToastNotificationType.Danger,
+            title: 'Email verification failed',
+            description: newError
+          })
+
+          // wipe report
+          goHome({ query: {} })
+        }
+      },
+      { immediate: true }
+    )
   }
 
   /**
@@ -103,6 +151,14 @@ export const useAuthManager = () => {
       },
       { immediate: true }
     )
+  }
+
+  /**
+   * Sets up querystring watchers that trigger various auth related activities like email verification status reports etc.
+   */
+  const watchAuthQueryString = () => {
+    watchLoginAccessCode()
+    watchEmailVerificationStatus()
   }
 
   /**
@@ -157,7 +213,7 @@ export const useAuthManager = () => {
     saveNewToken()
   }
 
-  return { authToken, loginWithEmail, signUpWithEmail, logout, watchLoginAccessCode }
+  return { authToken, loginWithEmail, signUpWithEmail, logout, watchAuthQueryString }
 }
 
 const useAuthAppIdAndChallenge = () => {
