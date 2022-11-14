@@ -126,6 +126,12 @@ async function getScreenshot(objectUrl) {
 }
 
 router.get('/:streamId/:objectId', async function (req, res) {
+  const safeParamRgx = /^[\w]+$/i
+  const { streamId, objectId } = req.params || {}
+  if (!safeParamRgx.test(streamId) || !safeParamRgx.test(objectId)) {
+    return res.status(400).json({ error: 'Invalid streamId or objectId!' })
+  }
+
   const objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
   /*
   let authToken = ''
