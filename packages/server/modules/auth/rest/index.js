@@ -31,6 +31,8 @@ module.exports = (app) => {
 
       const challenge = req.query.challenge
       const userToken = req.query.token
+      if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
+      if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
 
       // 1. Validate token
       const { valid, scopes, userId } = await validateToken(userToken)
