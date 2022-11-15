@@ -405,20 +405,8 @@ export default class SpeckleRenderer {
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
       batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
-      const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
-        batchRenderable as Mesh,
-        10
-      )
-      bvhHelper.name = batch.renderObject.id + '_bvh'
-      bvhHelper.traverse((obj) => {
-        obj.layers.set(ObjectLayers.PROPS)
-      })
-      bvhHelper.displayParents = true
-      bvhHelper.visible = false
-      bvhHelper.update()
-
       subtreeGroup.add(batch.renderObject)
-      subtreeGroup.add(bvhHelper)
+
       if (batch.geometryType === GeometryType.MESH) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
@@ -430,6 +418,18 @@ export default class SpeckleRenderer {
           },
           ['USE_RTE', 'ALPHATEST_REJECTION']
         )
+        const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
+          batchRenderable as Mesh,
+          10
+        )
+        bvhHelper.name = batch.renderObject.id + '_bvh'
+        bvhHelper.traverse((obj) => {
+          obj.layers.set(ObjectLayers.PROPS)
+        })
+        bvhHelper.displayParents = true
+        bvhHelper.visible = false
+        bvhHelper.update()
+        subtreeGroup.add(bvhHelper)
       }
     })
 

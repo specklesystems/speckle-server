@@ -85,9 +85,9 @@ export class Intersections {
 
     let results = []
     if (target) {
-      const start = performance.now()
+      // const start = performance.now()
       results = this.raycaster.intersectObjects(target.children)
-      console.warn('Time -> ', performance.now() - start)
+      // console.warn('Time -> ', performance.now() - start)
     }
 
     if (results.length === 0) return null

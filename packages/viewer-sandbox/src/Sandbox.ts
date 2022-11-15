@@ -720,7 +720,7 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
     container.addInput(Sandbox.batchesParams, 'totalBvhSize', {
-      label: 'Total BVH Size (MB)',
+      label: 'BVH Size(MB)',
       disabled: true
     })
   }
@@ -733,6 +733,7 @@ export default class Sandbox {
       // eslint-disable-next-line no-prototype-builtins
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
         size += obj['boundsTreeSizeInBytes']
+        // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }
     })
 

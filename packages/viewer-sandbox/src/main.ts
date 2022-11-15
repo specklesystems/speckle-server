@@ -61,7 +61,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
 
   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-  console.log(ids[0])
+  // console.log(ids[0])
   await viewer.selectObjects(ids as string[])
 })
 

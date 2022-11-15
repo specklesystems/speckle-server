@@ -43,9 +43,7 @@ export class Geometry {
     } else {
       bvhIndices = new Uint16Array(indices.length)
       ;(bvhIndices as Uint16Array).set(indices, 0)
-      bvhGeometry.setIndex(
-        new Uint16BufferAttribute(new Uint16Array(indices.length), 1)
-      )
+      bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
     }
     bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
 
