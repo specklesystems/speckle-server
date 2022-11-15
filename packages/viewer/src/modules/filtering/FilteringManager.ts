@@ -11,11 +11,11 @@ import {
 import SpeckleRenderer from '../SpeckleRenderer'
 
 export type FilteringState = {
-  test?: Record<string, unknown>
   selectedObjects?: string[]
   hiddenObjects?: string[]
   isolatedObjects?: string[]
   colorGroups?: Record<string, string>[]
+  userColorGroups?: { ids: string[]; color: string }[]
   activePropFilterKey?: string
   passMin?: number | null
   passMax?: number | null
@@ -48,6 +48,7 @@ export class FilteringManager {
   private SelectionState = new GenericRvState()
   private HighlightState = new GenericRvState()
   private UserspaceColorState = new UserspaceColorState()
+  private ColorStringFilterState2: ColorStringFilterState = null
 
   public constructor(renderer: SpeckleRenderer) {
     this.WTI = WorldTree.getInstance()
@@ -302,29 +303,34 @@ export class FilteringManager {
 
   public setUserObjectColors(groups: [{ objectIds: string[]; color: string }]) {
     this.UserspaceColorState = new UserspaceColorState()
-    for (const group of groups) {
-      const state = new ColoredGenericRvState()
-      state.ids = [
-        ...new Set([...group.objectIds, ...this.getDescendantIds(group.objectIds)])
-      ]
-      const nodes = []
+    // Resetting any other filtering color ops as they're not compatible
+    this.ColorNumericFilterState = null
+    this.ColorStringFilterState = null
 
-      WorldTree.getInstance().walk((node: TreeNode) => {
-        if (state.ids.indexOf(node.model.raw.id) !== -1) nodes.push(node)
-        return true
-      })
-      for (let k = 0; k < nodes.length; k++) {
-        const rvs = WorldTree.getRenderTree().getRenderViewNodesForNode(
-          nodes[k],
-          nodes[k]
-        )
-        if (rvs) {
-          state.rvs.push(...rvs.map((e) => e.model.renderView))
+    const localGroups: {
+      objectIds: string[]
+      color: string
+      nodes: TreeNode[]
+      rvs: NodeRenderView[]
+    }[] = groups.map((g) => {
+      return { ...g, nodes: [], rvs: [] }
+    })
+
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model?.raw?.id) return true
+      for (const group of localGroups) {
+        if (group.objectIds.includes(node.model.raw.id)) {
+          group.nodes.push(node)
+          const rvsNodes = WorldTree.getRenderTree()
+            .getRenderViewNodesForNode(node, node)
+            .map((rvNode) => rvNode.model.renderView)
+          if (rvsNodes) group.rvs.push(...rvsNodes)
         }
       }
+      return true
+    })
 
-      this.UserspaceColorState.states.push(state)
-    }
+    this.UserspaceColorState.groups = localGroups
     const rampTexture = Assets.generateDiscreetRampTexture(
       groups.map((g) => new Color(g.color).getHex())
     )
@@ -476,14 +482,20 @@ export class FilteringManager {
     }
 
     if (this.UserspaceColorState) {
+      returnState.userColorGroups = []
       let m = -1
-      for (const state of this.UserspaceColorState.states) {
+      for (const group of this.UserspaceColorState.groups) {
         m++
-        this.Renderer.applyFilter(state.rvs, {
+        this.Renderer.applyFilter(group.rvs, {
           filterType: FilterMaterialType.COLORED,
-          rampIndex: m / this.UserspaceColorState.states.length,
-          rampIndexColor: state.color,
+          rampIndex: m / this.UserspaceColorState.groups.length,
+          rampIndexColor: new Color(group.color),
           rampTexture: this.UserspaceColorState.rampTexture
+        })
+
+        returnState.userColorGroups.push({
+          ids: group.objectIds,
+          color: group.color //.getHexString()
         })
       }
     }
@@ -593,18 +605,15 @@ class GenericRvState {
   }
 }
 
-class ColoredGenericRvState extends GenericRvState {
-  public color: Color = null
-  public reset(): void {
-    super.reset()
-    this.color = null
-  }
-}
-
 class UserspaceColorState {
-  public states: ColoredGenericRvState[] = []
+  public groups: {
+    objectIds: string[]
+    color: string
+    nodes: TreeNode[]
+    rvs: NodeRenderView[]
+  }[] = []
   public rampTexture: Texture
   public reset() {
-    this.states = []
+    this.groups = []
   }
 }
