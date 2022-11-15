@@ -503,27 +503,27 @@ export default class Sandbox {
         this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
         this.viewer.requestRender()
       })
-    staticAoFolder
-      .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
-        min: 0,
-        max: 100,
-        step: 0.000001
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-        this.viewer.requestRender()
-      })
+    // staticAoFolder
+    //   .addInput(Sandbox.pipelineParams.staticAoParams, 'minDistance', {
+    //     min: 0,
+    //     max: 100,
+    //     step: 0.000001
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
 
-    staticAoFolder
-      .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
-        min: 0,
-        max: 100,
-        step: 0.000001
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
-        this.viewer.requestRender()
-      })
+    // staticAoFolder
+    //   .addInput(Sandbox.pipelineParams.staticAoParams, 'maxDistance', {
+    //     min: 0,
+    //     max: 100,
+    //     step: 0.000001
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+    //     this.viewer.requestRender()
+    //   })
     staticAoFolder
       .addInput(Sandbox.pipelineParams.staticAoParams, 'kernelRadius', {
         min: 0,

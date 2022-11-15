@@ -12,6 +12,7 @@ const {
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
+const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -57,21 +58,8 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (!req.body.password) throw new Error('Password missing')
 
         const user = req.body
-        user.ip = req.headers['cf-connecting-ip'] || req.connection.remoteAddress || ''
-        const ignorePrefixes = [
-          '192.168.',
-          '10.',
-          '127.',
-          '172.1',
-          '172.2',
-          '172.3',
-          '::'
-        ]
-        for (const ipPrefix of ignorePrefixes)
-          if (user.ip.startsWith(ipPrefix)) {
-            delete user.ip
-            break
-          }
+        const ip = getIpFromRequest(req)
+        if (ip) user.ip = ip
         if (
           user.ip &&
           !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))

@@ -129,4 +129,10 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
   // 'https://speckle.xyz/streams/c239718aff/commits/b3a8cfb97d'
+  // Building AO params
+  // 'https://latest.speckle.dev/streams/0dd74866d0/commits/317e210afa'
+  // Murder Cube
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7f0c4d2fc1/'
+  // Classroom
+  // 'https://speckle.xyz/streams/0208ffb67b/commits/a980292728'
 )

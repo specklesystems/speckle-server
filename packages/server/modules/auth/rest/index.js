@@ -13,6 +13,8 @@ const {
 const { validateToken, revokeTokenById } = require(`@/modules/core/services/tokens`)
 const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
+const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
+const { ForbiddenError } = require('apollo-server-errors')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -24,14 +26,17 @@ module.exports = (app) => {
     try {
       const appId = req.query.appId
       const app = await getApp({ id: appId })
-      if (!app) throw new Error('App does not exist.')
+
+      if (!app) throw new InvalidAccessCodeRequestError('App does not exist.')
 
       const challenge = req.query.challenge
       const userToken = req.query.token
+      if (!challenge) throw new InvalidAccessCodeRequestError('Missing challenge')
+      if (!userToken) throw new InvalidAccessCodeRequestError('Missing token')
 
       // 1. Validate token
       const { valid, scopes, userId } = await validateToken(userToken)
-      if (!valid) throw new Error('Invalid token')
+      if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
 
       // 2. Validate token scopes
       await validateScopes(scopes, 'tokens:write')
@@ -41,7 +46,17 @@ module.exports = (app) => {
     } catch (err) {
       sentry({ err })
       debug('speckle:error')(err)
-      return res.status(400).send(err.message)
+
+      if (
+        err instanceof InvalidAccessCodeRequestError ||
+        err instanceof ForbiddenError
+      ) {
+        return res.status(400).send(err.message)
+      } else {
+        return res
+          .status(500)
+          .send('Something went wrong while processing your request')
+      }
     }
   })
 

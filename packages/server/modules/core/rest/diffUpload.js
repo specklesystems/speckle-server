@@ -5,6 +5,9 @@ const debug = require('debug')
 
 const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
+const {
+  rejectsRequestWithRatelimitStatusIfNeeded
+} = require('@/modules/core/services/ratelimits')
 
 const { hasObjects } = require('../services/objects')
 
@@ -12,6 +15,12 @@ module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
+    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
+      action: 'POST /api/diff/:streamId',
+      req,
+      res
+    })
+    if (rejected) return rejected
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req

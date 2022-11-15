@@ -56,3 +56,10 @@ export function shouldDisableNotificationsConsumption() {
     process.env.DISABLE_NOTIFICATIONS_CONSUMPTION || 'false'
   )
 }
+
+/**
+ * Check whether we're running an SSL server
+ */
+export function isSSLServer() {
+  return /^https:\/\//.test(getBaseUrl())
+}
