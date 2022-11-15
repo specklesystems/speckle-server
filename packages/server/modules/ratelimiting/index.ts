@@ -112,7 +112,9 @@ const sendRateLimitResponse = (
     'X-RateLimit-Reset',
     new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
   )
-  res.status(429).send('Too Many Requests') // TODO we should return a branded page (either here, or via nginx)
+  res.status(429).set('X-Speckle-Meditation', 'https://http.cat/429').send({
+    err: 'You are sending too many requests. You have been rate limited. Please try again later.'
+  }) // TODO we should return a branded page (either here, or via nginx)
 }
 
 export const rateLimiterMiddlewareBuilder = (rateLimiterKey: string) => {
