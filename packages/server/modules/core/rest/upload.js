@@ -8,7 +8,9 @@ const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('../services/objects')
-const { rejectsRequestWithRatelimitStatusIfNeeded } = require('@/modules/ratelimiting')
+const {
+  rejectsRequestWithRatelimitStatusIfNeeded
+} = require('@/modules/core/services/ratelimits')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 

@@ -8,6 +8,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import { AuthContext } from '@/modules/shared/authz'
+import { RateLimitError } from '@/modules/shared/errors'
 
 // typescript definitions
 
@@ -42,10 +43,10 @@ type RateLimiterOptions = {
   [key: string]: RateLimiterOption
 }
 
-const LIMITS: RateLimiterOptions = {
+export const LIMITS: RateLimiterOptions = {
   rate_limiter_all_requests: {
-    limitCount: 200, //FIXME set to a low number for testing, should be higher than REST API limit
-    duration: 2 * TIME.second //FIXME set to a low number for testing. 1 * TIME.minute
+    limitCount: 400, //FIXME set to a low number for testing, should be higher than REST API limit
+    duration: 1 * TIME.second //FIXME set to a low number for testing. 1 * TIME.minute
   },
   USER_CREATE: {
     limitCount: getIntFromEnv('RATELIMIT_USER_CREATE') || 1000,
@@ -134,7 +135,7 @@ export const rateLimiterMiddlewareBuilder = (rateLimiterKey: string) => {
         next()
       })
       .catch((rateLimiterRes) => {
-        console.log('rate limiting on key: ', rateLimitKey)
+        console.log('rate limiting on key: ', rateLimitKey) //HACK remove after debugging
         sendRateLimitResponse(res, rateLimiterRes, rlOpts)
       })
   }
@@ -159,7 +160,36 @@ export const rejectsRequestWithRatelimitStatusIfNeeded = (
       return
     })
     .catch((rateLimiterRes) => {
-      console.log('rate limiting on key: ', rateLimitKey)
+      console.log('rate limiting on key: ', rateLimitKey) //HACK remove after debugging
       return sendRateLimitResponse(res, rateLimiterRes, rlOpts)
+    })
+}
+
+type LimitCheckOptions = {
+  action: string
+  source: string //rate limit key
+}
+
+export const respectsLimits = (
+  opts: LimitCheckOptions
+): Promise<boolean | RateLimitError> => {
+  const rl: RateLimiterRedis = rateLimiters[opts.action]
+  if (!rl)
+    return new Promise(() => {
+      return new RateLimitError(
+        `Rate limiter for the requested action '${opts.action}' was not found.`
+      )
+    })
+
+  return rl
+    .consume(opts.source)
+    .then(() => {
+      return true
+    })
+    .catch(() => {
+      console.log('rate limiting on key: ', opts.source) //HACK remove after debugging
+      throw new RateLimitError(
+        `Rate limited on action '${opts.action}'. Please try again later.`
+      )
     })
 }

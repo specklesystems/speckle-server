@@ -7,7 +7,9 @@ const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
-const { rejectsRequestWithRatelimitStatusIfNeeded } = require('@/modules/ratelimiting')
+const {
+  rejectsRequestWithRatelimitStatusIfNeeded
+} = require('@/modules/core/services/ratelimits')
 
 const { pipeline, PassThrough } = require('stream')
 

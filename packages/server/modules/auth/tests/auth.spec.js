@@ -456,7 +456,7 @@ describe('Auth @auth', () => {
       }
 
       const oldLimit = LIMITS.USER_CREATE
-      LIMITS.USER_CREATE = 5
+      LIMITS.USER_CREATE = { limitCount: 5, duration: 1 }
       // 5 users should be fine
       for (let i = 0; i < 5; i++) {
         await newUser(`test${i}`, '1.2.3.4', 302)

@@ -71,4 +71,10 @@ export class UnexpectedErrorStructureError extends BaseError {
   static defaultMessage = 'An unexpected error type was thrown'
 }
 
+export class RateLimitError extends BaseError {
+  // TODO accept parameter 'rate limiter response', containing msBeforeNext & remainingPoints, to populate error.
+  static code = 'RATE_LIMIT_ERROR'
+  static defaultMessage = 'A rate limit was exceeded, please wait and try again later.'
+}
+
 export { BaseError }

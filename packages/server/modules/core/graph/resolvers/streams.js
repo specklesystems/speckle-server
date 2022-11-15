@@ -230,11 +230,8 @@ module.exports = {
   },
   Mutation: {
     async streamCreate(parent, args, context) {
-      if (
-        !(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))
-      ) {
-        throw new Error('Blocked due to rate-limiting. Try again later')
-      }
+      // respectsLimits will either return 'true' or throw an error
+      await respectsLimits({ action: 'STREAM_CREATE', source: context.userId })
 
       const id = await createStream({ ...args.stream, ownerId: context.userId })
 

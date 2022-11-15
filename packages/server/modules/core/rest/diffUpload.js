@@ -5,7 +5,9 @@ const debug = require('debug')
 
 const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
-const { rejectsRequestWithRatelimitStatusIfNeeded } = require('@/modules/ratelimiting')
+const {
+  rejectsRequestWithRatelimitStatusIfNeeded
+} = require('@/modules/core/services/ratelimits')
 
 const { hasObjects } = require('../services/objects')
 

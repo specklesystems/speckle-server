@@ -156,11 +156,8 @@ module.exports = {
         'stream:contributor'
       )
 
-      if (
-        !(await respectsLimits({ action: 'COMMIT_CREATE', source: context.userId }))
-      ) {
-        throw new Error('Blocked due to rate-limiting. Try again later')
-      }
+      // will either return true or throw an error
+      await respectsLimits({ action: 'COMMIT_CREATE', source: context.userId })
 
       const id = await createCommitByBranchName({
         ...args.commit,

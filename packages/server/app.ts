@@ -25,7 +25,7 @@ import {
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import { rateLimiterMiddlewareBuilder } from '@/modules/ratelimiting'
+import { rateLimiterMiddlewareBuilder } from '@/modules/core/services/ratelimits'
 
 import { buildContext } from '@/modules/shared'
 import knex from '@/db/knex'
