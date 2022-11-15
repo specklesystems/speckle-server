@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
-import { localStrategyId } from '~~/lib/auth/helpers/strategies'
+import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
 
 const loginQuery = graphql(`
@@ -28,6 +28,6 @@ const { appId, challenge } = useLoginOrRegisterUtils()
 
 const serverInfo = computed(() => result.value?.serverInfo)
 const hasLocalStrategy = computed(() =>
-  (serverInfo.value?.authStrategies || []).some((s) => s.id === localStrategyId)
+  (serverInfo.value?.authStrategies || []).some((s) => s.id === AuthStrategy.Local)
 )
 </script>

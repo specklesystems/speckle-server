@@ -23,7 +23,6 @@ type FormButtonSize = 'big' | 'normal' | 'small'
 type FormButtonType =
   | 'primary'
   | 'pop'
-  | 'secondary'
   | 'danger'
   | 'outline'
   | 'success'

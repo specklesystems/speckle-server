@@ -1,4 +1,3 @@
-import { ApolloClient } from '@apollo/client/core'
 import { isString } from 'lodash-es'
 import {
   InvalidLoginParametersError,
@@ -135,11 +134,4 @@ export async function getTokenFromAccessCode(params: TokenParams) {
   }
 
   return data.token
-}
-
-/**
- * Evict cache that depends on auth state (e.g. 'me' query)
- */
-export function resetAuthState(client: ApolloClient<unknown>) {
-  client.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
 }

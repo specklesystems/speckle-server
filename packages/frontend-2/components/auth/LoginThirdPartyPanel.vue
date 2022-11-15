@@ -7,8 +7,9 @@
           v-for="strat in thirdPartyStrategies"
           :key="strat.id"
           :to="buildAuthUrl(strat)"
-          type="danger"
+          :type="buttonType(strat)"
           full-width
+          @click="() => onClick(strat)"
         >
           {{ strat.name }}
         </FormButton>
@@ -18,14 +19,14 @@
 </template>
 <script setup lang="ts">
 import { Get } from 'type-fest'
-import { localStrategyId } from '~~/lib/auth/helpers/strategies'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
+import { AuthStrategy, AuthStrategyStyles } from '~~/lib/auth/helpers/strategies'
 import { graphql } from '~~/lib/common/generated/gql'
 import { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mixpanel'
 
 /**
  * TODO:
- * - Color & icon from backend? Or frontend map? Makes more sense being a frontend concern
- * - Mixpanel track
  * - Invite token
  */
 
@@ -50,9 +51,11 @@ const props = defineProps<{
 const {
   public: { API_ORIGIN }
 } = useRuntimeConfig()
+const mixpanelBuilder = useMixpanel()
+const { inviteToken } = useAuthManager()
 
 const thirdPartyStrategies = computed(() =>
-  props.serverInfo.authStrategies.filter((s) => s.id !== localStrategyId)
+  props.serverInfo.authStrategies.filter((s) => s.id !== AuthStrategy.Local)
 )
 
 const buildAuthUrl = (strat: StrategyType) => {
@@ -60,5 +63,20 @@ const buildAuthUrl = (strat: StrategyType) => {
   url.searchParams.set('appId', props.appId)
   url.searchParams.set('challenge', props.challenge)
   return url.toString()
+}
+
+const buttonType = (strat: StrategyType) => {
+  const stratId = strat.id as AuthStrategy
+  const styleData = AuthStrategyStyles[stratId]
+  return styleData?.buttonType || 'primary'
+}
+
+const onClick = (strat: StrategyType) => {
+  const mp = mixpanelBuilder()
+  mp.track('Log In', {
+    isInvite: !!inviteToken.value,
+    type: 'action',
+    provider: strat.name
+  })
 }
 </script>

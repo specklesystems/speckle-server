@@ -222,7 +222,7 @@ export async function buildApolloServer(
  */
 export async function init() {
   if (useNewFrontend()) {
-    startupDebug('🖼️ Serving new frontend...')
+    startupDebug('🖼️  Serving for frontend-2...')
   }
 
   const app = express()
@@ -315,7 +315,7 @@ export async function startHttp(
     })
     app.use('/', frontendProxy)
 
-    startupDebug('✨ Proxying frontend (dev mode):')
+    startupDebug('✨ Proxying frontend-1 (dev mode):')
     startupDebug(`👉 main application: http://localhost:${port}/`)
   }
 

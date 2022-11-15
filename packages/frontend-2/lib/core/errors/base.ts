@@ -23,3 +23,8 @@ export class LogicError extends BaseError {
 export class UninitializedResourceAccessError extends BaseError {
   static defaultMessage = 'Attempting to access an uninitialized resource'
 }
+
+export class ComposableInvokedOutOfScopeError extends BaseError {
+  static defaultMessage =
+    'getCurrentInstance() returned null. Method must be called at the top of a setup function'
+}

@@ -1,4 +1,5 @@
-const { API_ORIGIN, IS_STORYBOOK_BUILD } = process.env
+const { API_ORIGIN, IS_STORYBOOK_BUILD, MIXPANEL_TOKEN_ID, MIXPANEL_API_HOST } =
+  process.env
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
@@ -21,7 +22,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      API_ORIGIN
+      API_ORIGIN,
+      MIXPANEL_API_HOST,
+      MIXPANEL_TOKEN_ID
     }
   },
 

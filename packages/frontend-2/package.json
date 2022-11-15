@@ -35,6 +35,7 @@
     "graphql": "^16.6.0",
     "js-cookie": "^3.0.1",
     "lodash-es": "^4.17.21",
+    "mixpanel-browser": "^2.45.0",
     "subscriptions-transport-ws": "^0.11.0",
     "vee-validate": "^4.7.0",
     "ws": "^8.9.0"
@@ -64,6 +65,7 @@
     "@types/eslint": "^8.4.5",
     "@types/js-cookie": "^3.0.2",
     "@types/lodash-es": "^4.17.6",
+    "@types/mixpanel-browser": "^2.38.0",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "browserify-zlib": "^0.2.0",

@@ -7896,6 +7896,7 @@ __metadata:
     "@types/eslint": ^8.4.5
     "@types/js-cookie": ^3.0.2
     "@types/lodash-es": ^4.17.6
+    "@types/mixpanel-browser": ^2.38.0
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
     "@vue/apollo-composable": 4.0.0-beta.1
@@ -7915,6 +7916,7 @@ __metadata:
     jest: 27
     js-cookie: ^3.0.1
     lodash-es: ^4.17.21
+    mixpanel-browser: ^2.45.0
     nuxt: rc
     postcss-html: ^1.5.0
     postcss-nesting: ^10.2.0
@@ -27756,7 +27758,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mixpanel-browser@npm:^2.39.0":
+"mixpanel-browser@npm:^2.39.0, mixpanel-browser@npm:^2.45.0":
   version: 2.45.0
   resolution: "mixpanel-browser@npm:2.45.0"
   checksum: 43722dd5019ece65302e933f3d5812ea015aff8525b3ba5347da9cd8694871ed85179047bf2bc7f47cd58c050158ea4ce84cc2810e128988c151fe4457f52f55
