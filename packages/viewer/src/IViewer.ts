@@ -187,6 +187,9 @@ export interface IViewer {
   resetHighlight(): Promise<FilteringState>
 
   setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
+  setUserObjectColors(
+    groups: [{ objectIds: string[]; color: string }]
+  ): Promise<FilteringState>
   removeColorFilter(): Promise<FilteringState>
   resetFilters(): Promise<FilteringState>
 

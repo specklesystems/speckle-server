@@ -269,6 +269,14 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
+  public setUserObjectColors(
+    groups: [{ objectIds: string[]; color: string }]
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.setUserObjectColors(groups))
+    })
+  }
+
   public resetFilters(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(this.filteringManager.reset())
