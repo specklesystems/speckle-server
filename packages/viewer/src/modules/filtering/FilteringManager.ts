@@ -345,7 +345,7 @@ export class FilteringManager {
 
   private populateGenericState(objectIds, state) {
     let ids = [...objectIds, ...this.getDescendantIds(objectIds)]
-    /** There's a log of duplicate ids coming in from 'getDescendantIds'. We remove them
+    /** There's a lot of duplicate ids coming in from 'getDescendantIds'. We remove them
      *  to avoid the large redundancy they incurr otherwise.
      */
     ids = [...Array.from(new Set(ids.map((value) => value)))]
