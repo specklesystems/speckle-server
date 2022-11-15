@@ -20,7 +20,7 @@ import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
 import { ForgottenPasswordRoute } from '~~/lib/common/helpers/route'
 import { useMixpanel } from '~~/lib/core/composables/mixpanel'
 
-const mixpanelBuilder = useMixpanel()
+const mixpanel = useMixpanel()
 
 const loginQuery = graphql(`
   query LoginServerInfo {
@@ -39,7 +39,6 @@ const hasLocalStrategy = computed(() =>
 )
 
 onMounted(() => {
-  const mp = mixpanelBuilder()
-  mp.track('Visit Log In')
+  mixpanel.track('Visit Log In')
 })
 </script>

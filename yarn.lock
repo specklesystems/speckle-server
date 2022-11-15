@@ -11997,9 +11997,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-composable@npm:4.0.0-beta.1":
-  version: 4.0.0-beta.1
-  resolution: "@vue/apollo-composable@npm:4.0.0-beta.1"
+"@vue/apollo-composable@portal:/home/fabis/Code/random/vue-apollo/packages/vue-apollo-composable::locator=root%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "@vue/apollo-composable@portal:/home/fabis/Code/random/vue-apollo/packages/vue-apollo-composable::locator=root%40workspace%3A."
   dependencies:
     throttle-debounce: ^3.0.1
     ts-essentials: ^9.1.2
@@ -12012,28 +12012,8 @@ __metadata:
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
-  checksum: 6694690c00ba95186b743a182c869503a954402345df2262eb19638a6f2616a551897643588896153e0d61e6e3693888b11c5a293675ff1415ab157279903dff
   languageName: node
-  linkType: hard
-
-"@vue/apollo-composable@npm:^4.0.0-alpha.19":
-  version: 4.0.0-alpha.19
-  resolution: "@vue/apollo-composable@npm:4.0.0-alpha.19"
-  dependencies:
-    throttle-debounce: ^3.0.1
-    ts-essentials: ^9.1.2
-    vue-demi: ^0.13.1
-  peerDependencies:
-    "@apollo/client": ^3.4.13
-    "@vue/composition-api": ^1.0.0
-    graphql: ">=15"
-    vue: ^2.6.0 || ^3.1.0
-  peerDependenciesMeta:
-    "@vue/composition-api":
-      optional: true
-  checksum: da31140a3f9af4cc6a2357088cffc5460e6ce685d1c948ad98d70983806f211b718412b6c2d6e8db9b983b1919e7df20e82793f2da8884ff283c7bddcca8038e
-  languageName: node
-  linkType: hard
+  linkType: soft
 
 "@vue/apollo-option@npm:^4.0.0-alpha.20":
   version: 4.0.0-alpha.20

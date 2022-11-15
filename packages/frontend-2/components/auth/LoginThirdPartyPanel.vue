@@ -51,7 +51,7 @@ const props = defineProps<{
 const {
   public: { API_ORIGIN }
 } = useRuntimeConfig()
-const mixpanelBuilder = useMixpanel()
+const mixpanel = useMixpanel()
 const { inviteToken } = useAuthManager()
 
 const thirdPartyStrategies = computed(() =>
@@ -72,8 +72,7 @@ const buttonType = (strat: StrategyType) => {
 }
 
 const onClick = (strat: StrategyType) => {
-  const mp = mixpanelBuilder()
-  mp.track('Log In', {
+  mixpanel.track('Log In', {
     isInvite: !!inviteToken.value,
     type: 'action',
     provider: strat.name

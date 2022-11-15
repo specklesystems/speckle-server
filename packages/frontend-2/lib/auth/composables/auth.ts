@@ -15,6 +15,7 @@ import {
   useMixpanel,
   useMixpanelUserIdentification
 } from '~~/lib/core/composables/mixpanel'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 /**
  * TODO:
@@ -33,14 +34,18 @@ import {
  */
 const useResetAuthState = () => {
   const apollo = useApolloClient().client
-  const reidentifyUser = useMixpanelUserIdentification()
+  const { reidentify } = useMixpanelUserIdentification()
+  const { refetch } = useActiveUser()
 
-  return () => {
+  return async () => {
     // evict cache
     apollo.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
 
+    // wait till active user is reloaded
+    await refetch()
+
     // re-identify mixpanel user
-    reidentifyUser()
+    reidentify()
   }
 }
 
@@ -52,12 +57,11 @@ export const useAuthManager = () => {
     public: { API_ORIGIN }
   } = useRuntimeConfig()
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const resetAuthState = useResetAuthState()
   const route = useRoute()
   const goHome = useNavigateToHome()
   const { triggerNotification } = useGlobalToast()
-  const mixpanelBuilder = useMixpanel()
+  const mixpanel = useMixpanel()
 
   /**
    * Invite token, if any
@@ -72,23 +76,18 @@ export const useAuthManager = () => {
   /**
    * Set/clear new token value and redirect to home
    */
-  const saveNewToken = (newToken?: string) => {
+  const saveNewToken = async (newToken?: string) => {
     // write to cookie
     authToken.value = newToken
 
     // reset challenge
     SafeLocalStorage.remove(LocalStorageKeys.AuthAppChallenge)
 
-    // TODO: This doesn't work properly because of Apollo Client queries getting stuck
-    // So for now we're opting to reload the page instead...
+    // Wipe auth state
+    await resetAuthState()
 
-    // // Wipe auth state
-    // resetAuthState()
-
-    // // redirect home & wipe access code from querystring
-    // goHome({ query: {} })
-
-    window.location.href = '/'
+    // redirect home & wipe access code from querystring
+    goHome({ query: {} })
   }
 
   /**
@@ -106,9 +105,9 @@ export const useAuthManager = () => {
         apiOrigin: API_ORIGIN
       })
 
-      saveNewToken(newToken)
+      await saveNewToken(newToken)
     } catch (error) {
-      saveNewToken(undefined)
+      await saveNewToken(undefined)
       throw error
     }
   }
@@ -213,7 +212,7 @@ export const useAuthManager = () => {
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
 
-    mixpanelBuilder().track('Log In', { type: 'action' })
+    mixpanel.track('Log In', { type: 'action' })
   }
 
   /**
@@ -239,7 +238,7 @@ export const useAuthManager = () => {
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
 
-    mixpanelBuilder().track('Sign Up', {
+    mixpanel.track('Sign Up', {
       type: 'action',
       isInvite: !!inviteToken.value
     })
@@ -248,8 +247,8 @@ export const useAuthManager = () => {
   /**
    * Log out
    */
-  const logout = () => {
-    saveNewToken()
+  const logout = async () => {
+    await saveNewToken()
   }
 
   return {

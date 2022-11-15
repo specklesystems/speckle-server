@@ -37,6 +37,7 @@ export default defineNuxtConfig({
     crypto: require.resolve('rollup-plugin-node-builtins'),
     zlib: require.resolve('browserify-zlib')
   },
+
   vite: {
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }]
@@ -45,8 +46,15 @@ export default defineNuxtConfig({
       ? {}
       : {
           assetsInclude: ['**/*.mdx']
-        })
+        }),
+    server: {
+      fs: {
+        // Allowing symlinks
+        allow: ['/home/fabis/Code/random/vue-apollo/']
+      }
+    }
   },
+
   build: {
     transpile: [
       /^@apollo\/client/,

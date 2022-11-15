@@ -1,6 +1,6 @@
 import type { OverridedMixpanel } from 'mixpanel-browser'
 import { getCurrentInstance } from 'vue'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useActiveUser, useWaitForActiveUser } from '~~/lib/auth/composables/activeUser'
 import md5 from '~~/lib/common/helpers/md5'
 import { ComposableInvokedOutOfScopeError } from '~~/lib/core/errors/base'
 import { useTheme } from '~~/lib/core/composables/theme'
@@ -18,13 +18,18 @@ function getMixpanelServerId(): string {
 /**
  * Get Mixpanel instance
  * Note: Mixpanel is not available during SSR because mixpanel-browser only works in the browser!
+ * If this composable is invoked during SSR it will return undefined!
  */
-export function useMixpanel(): () => OverridedMixpanel {
+export function useMixpanel(): OverridedMixpanel {
+  // we're making TS lie here cause we don't want to constantly check if the return of this
+  // is undefined
+  if (process.server) return undefined as unknown as OverridedMixpanel
+
   const vm = getCurrentInstance()
   const proxy = vm?.proxy
   if (!proxy) throw new ComposableInvokedOutOfScopeError()
 
-  return proxy.$mixpanel
+  return proxy.$mixpanel()
 }
 
 /**
@@ -33,31 +38,31 @@ export function useMixpanel(): () => OverridedMixpanel {
  * Note: The returned function will only work on the client-side
  */
 export function useMixpanelUserIdentification() {
-  if (process.server) return () => void 0
+  if (process.server) return { reidentify: () => void 0 }
 
-  const mixpanelBuilder = useMixpanel()
+  const mp = useMixpanel()
   const { distinctId } = useActiveUser()
   const { isDarkTheme } = useTheme()
 
-  return () => {
-    const mp = mixpanelBuilder()
+  return {
+    reidentify: () => {
+      // Reset previous user data, if any
+      mp.reset()
 
-    // Reset previous user data, if any
-    mp.reset()
+      // Register session
+      mp.register({
+        // eslint-disable-next-line camelcase
+        server_id: getMixpanelServerId(),
+        hostApp: HOST_APP
+      })
 
-    // Register session
-    mp.register({
-      // eslint-disable-next-line camelcase
-      server_id: getMixpanelServerId(),
-      hostApp: HOST_APP
-    })
-
-    // TODO: This doesn't work properly, we need to fix Apollo queries getting stuck first...
-    // Identify user, if any
-    if (distinctId.value) {
-      mp.identify(distinctId.value)
-      mp.people.set('Identified', true)
-      mp.people.set('Theme Web', isDarkTheme.value ? 'dark' : 'light')
+      // TODO: This doesn't work properly, we need to fix Apollo queries getting stuck first...
+      // Identify user, if any
+      if (distinctId.value) {
+        mp.identify(distinctId.value)
+        mp.people.set('Identified', true)
+        mp.people.set('Theme Web', isDarkTheme.value ? 'dark' : 'light')
+      }
     }
   }
 }
@@ -66,19 +71,16 @@ export function useMixpanelUserIdentification() {
  * Composable that builds the mixpanel initialization function
  * Note: The returned function will only initialize mixpanel on the client-side
  */
-export function useMixpanelInitialization() {
-  if (process.server) return () => void 0
+export async function useMixpanelInitialization() {
+  if (process.server) return
 
-  const mixpanelBuilder = useMixpanel()
-  const identifyUser = useMixpanelUserIdentification()
+  const mp = useMixpanel()
+  const { reidentify } = useMixpanelUserIdentification()
 
-  return () => {
-    const mp = mixpanelBuilder()
+  await useWaitForActiveUser()
 
-    // Identify user
-    identifyUser()
+  reidentify()
 
-    // Track app visit
-    mp.track(`Visit ${HOST_APP_DISPLAY_NAME}`)
-  }
+  // Track app visit
+  mp.track(`Visit ${HOST_APP_DISPLAY_NAME}`)
 }

@@ -23,6 +23,6 @@ useHead({
 const { watchAuthQueryString } = useAuthManager()
 watchAuthQueryString()
 
-const initMixpanel = useMixpanelInitialization()
-initMixpanel()
+// Awaiting to block the app from continuing until mixpanel tracking is fully initialized
+await useMixpanelInitialization()
 </script>
