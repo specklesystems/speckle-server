@@ -59,6 +59,7 @@ export enum ObjectLayers {
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
+  public SHOW_BVH = false
   private readonly ANGLE_EPSILON = 0.0001
   private readonly POSITION_REST_EPSILON = 0.001
   private readonly POSITION_RESUME_EPSILON = 0.001
@@ -142,6 +143,15 @@ export default class SpeckleRenderer {
     this.pipeline.pipelineOptions = value
   }
 
+  public set showBVH(value: boolean) {
+    this.SHOW_BVH = value
+    this.allObjects.traverse((obj) => {
+      if (obj.name.includes('_bvh')) {
+        obj.visible = this.SHOW_BVH
+      }
+    })
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this._scene = new Scene()
     this.rootGroup = new Group()
@@ -180,7 +190,7 @@ export default class SpeckleRenderer {
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
-    // this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
+    this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
@@ -395,12 +405,18 @@ export default class SpeckleRenderer {
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
       batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
-      const bvhHelper = new MeshBVHVisualizer(batchRenderable as Mesh, 10)
+      const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
+        batchRenderable as Mesh,
+        10
+      )
+      bvhHelper.name = batch.renderObject.id + '_bvh'
       bvhHelper.traverse((obj) => {
         obj.layers.set(ObjectLayers.PROPS)
       })
-
+      bvhHelper.displayParents = true
+      bvhHelper.visible = false
       bvhHelper.update()
+
       subtreeGroup.add(batch.renderObject)
       subtreeGroup.add(bvhHelper)
       if (batch.geometryType === GeometryType.MESH) {
@@ -630,6 +646,13 @@ export default class SpeckleRenderer {
 
     if (!results) {
       this.viewer.emit(ViewerEvent.ObjectClicked, null)
+      if (this.SHOW_BVH) {
+        this.allObjects.traverse((obj) => {
+          if (obj.name.includes('_bvh')) {
+            obj.visible = true
+          }
+        })
+      }
       return
     }
 
@@ -972,6 +995,14 @@ export default class SpeckleRenderer {
     this.batcher.resetBatchesDrawRanges()
 
     this.batcher.isolateRenderViewBatch(hitId)
+    if (this.SHOW_BVH) {
+      this.allObjects.traverse((obj) => {
+        if (obj.name.includes('_bvh')) {
+          obj.visible = false
+        }
+      })
+      this.scene.getObjectByName(result.object.id + '_bvh').visible = true
+    }
   }
 
   public debugShowBatches() {

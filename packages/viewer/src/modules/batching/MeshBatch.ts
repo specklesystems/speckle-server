@@ -9,7 +9,7 @@ import {
   Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
-import { estimateMemoryInBytes, MeshBVH } from 'three-mesh-bvh'
+import { MeshBVH } from 'three-mesh-bvh'
 import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
@@ -436,8 +436,6 @@ export default class MeshBatch implements Batch {
     )
 
     this.boundsTree = Geometry.buildBVH(indices, position)
-    console.warn('Memory', estimateMemoryInBytes(this.boundsTree))
-
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
   }
@@ -468,12 +466,11 @@ export default class MeshBatch implements Batch {
     if (position.length >= 65535 || indices.length >= 65535) {
       this.indexBuffer0 = new Uint32BufferAttribute(indices, 1)
       this.indexBuffer1 = new Uint32BufferAttribute(new Uint32Array(indices.length), 1)
-      this.geometry.setIndex(this.indexBuffer0)
     } else {
       this.indexBuffer0 = new Uint16BufferAttribute(indices, 1)
       this.indexBuffer1 = new Uint16BufferAttribute(new Uint16Array(indices.length), 1)
-      this.geometry.setIndex(new Uint16BufferAttribute(indices, 1))
     }
+    this.geometry.setIndex(this.indexBuffer0)
 
     if (position) {
       /** When RTE enabled, we'll be storing the high component of the encoding here,
