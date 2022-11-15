@@ -59,7 +59,6 @@
     "@storybook/vue3-vite": "^7.0.0-alpha.42",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/line-clamp": "^0.4.2",
-    "@tailwindcss/typography": "^0.5.7",
     "@testing-library/vue": "^6.6.1",
     "@types/apollo-upload-client": "^17.0.1",
     "@types/eslint": "^8.4.5",

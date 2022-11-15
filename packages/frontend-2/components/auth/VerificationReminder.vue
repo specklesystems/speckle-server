@@ -1,22 +1,24 @@
 <template>
-  <LayoutPanel v-if="shouldShowBanner">
-    <div class="flex justify-between">
-      <div>{{ verifyBannerText }}</div>
-      <div class="flex items-center space-x-4">
-        <FormButton
-          type="outline"
-          size="small"
-          :disabled="loading"
-          @click="requestVerification"
-        >
-          {{ verifyBannerCtaText }}
-        </FormButton>
-        <TextLink @click="dismiss">
-          <XMarkIcon class="h-6 w-6" />
-        </TextLink>
+  <div>
+    <LayoutPanel v-if="shouldShowBanner">
+      <div class="flex justify-between">
+        <div>{{ verifyBannerText }}</div>
+        <div class="flex items-center space-x-4">
+          <FormButton
+            type="outline"
+            size="small"
+            :disabled="loading"
+            @click="requestVerification"
+          >
+            {{ verifyBannerCtaText }}
+          </FormButton>
+          <TextLink @click="dismiss">
+            <XMarkIcon class="h-6 w-6" />
+          </TextLink>
+        </div>
       </div>
-    </div>
-  </LayoutPanel>
+    </LayoutPanel>
+  </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'

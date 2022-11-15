@@ -13,7 +13,7 @@ import {
   getPendingToken,
   PasswordResetTokenRecord
 } from '@/modules/pwdreset/repositories'
-import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 const EMAIL_SUBJECT = 'Speckle Account Password Reset'
 
@@ -51,7 +51,10 @@ async function initializeNewToken(email: string) {
 type PasswordRecoveryRequestState = Awaited<ReturnType<typeof initializeNewToken>>
 
 function buildResetLink(token: PasswordResetTokenRecord) {
-  return new URL(getPasswordResetFinalizationRoute(token.id), getBaseUrl()).toString()
+  return new URL(
+    getPasswordResetFinalizationRoute(token.id),
+    getFrontendOrigin()
+  ).toString()
 }
 
 function buildHtmlBody() {

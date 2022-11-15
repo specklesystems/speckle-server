@@ -11,3 +11,7 @@ export class AuthFailedError extends BaseError {
 export class InvalidRegisterParametersError extends BaseError {
   static defaultMessage = 'Invalid parameters for signing up!'
 }
+
+export class PasswordResetError extends BaseError {
+  static defaultMessage = 'Something went wrong while resetting password'
+}
