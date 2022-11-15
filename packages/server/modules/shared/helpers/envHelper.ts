@@ -37,6 +37,10 @@ export function getRedisUrl() {
   return process.env.REDIS_URL
 }
 
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
+}
+
 /**
  * Get app base url / canonical url / origin
  */
