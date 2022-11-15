@@ -25,6 +25,8 @@ import {
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
+import { rateLimiterMiddleware } from '@/modules/ratelimiting'
+
 import { buildContext } from '@/modules/shared'
 import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
@@ -190,6 +192,7 @@ export async function init() {
 
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
+  app.use(rateLimiterMiddleware)
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
