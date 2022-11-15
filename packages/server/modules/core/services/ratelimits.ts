@@ -173,6 +173,10 @@ type LimitCheckOptions = {
 export const respectsLimits = (
   opts: LimitCheckOptions
 ): Promise<boolean | RateLimitError> => {
+  if (isTestEnv())
+    return new Promise(() => {
+      return true
+    })
   const rl: RateLimiterRedis = rateLimiters[opts.action]
   if (!rl)
     return new Promise(() => {
