@@ -9,9 +9,7 @@ const { validatePermissionsReadStream } = require('./authUtils')
 const { getObject, getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
+const { rejectsRequestWithRatelimitStatusIfNeeded } = require('@/modules/ratelimiting')
 
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', cors())

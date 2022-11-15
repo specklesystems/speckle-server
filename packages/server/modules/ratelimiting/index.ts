@@ -104,7 +104,7 @@ const sendRateLimitResponse = (
   res: express.Response,
   rateLimiterRes: RateLimiterRes,
   opts: RateLimiterOption
-) => {
+): express.Response => {
   res.setHeader('Retry-After', rateLimiterRes.msBeforeNext / 1000)
   res.setHeader('X-RateLimit-Limit', opts.limitCount)
   res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints)
@@ -112,14 +112,16 @@ const sendRateLimitResponse = (
     'X-RateLimit-Reset',
     new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
   )
-  res.status(429).set('X-Speckle-Meditation', 'https://http.cat/429').send({
+  res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
+  return res.status(429).send({
     err: 'You are sending too many requests. You have been rate limited. Please try again later.'
   }) // TODO we should return a branded page (either here, or via nginx)
 }
 
 export const rateLimiterMiddlewareBuilder = (rateLimiterKey: string) => {
-  const rl: RateLimiterRedis = rateLimiters[rateLimiterKey]
   const rlOpts: RateLimiterOption = LIMITS[rateLimiterKey]
+  const rl: RateLimiterRedis = rateLimiters[rateLimiterKey]
+
   return (req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (isTestEnv()) next()
 
@@ -136,4 +138,28 @@ export const rateLimiterMiddlewareBuilder = (rateLimiterKey: string) => {
         sendRateLimitResponse(res, rateLimiterRes, rlOpts)
       })
   }
+}
+
+export const rejectsRequestWithRatelimitStatusIfNeeded = (
+  action: string,
+  req: express.Request,
+  res: express.Response
+) => {
+  if (isTestEnv()) return
+
+  const rlOpts: RateLimiterOption = LIMITS[action]
+  const rl: RateLimiterRedis = rateLimiters[action]
+
+  const rateLimitKey: string = (req as RequestWithContext)?.context?.userId
+    ? ((req as RequestWithContext)?.context?.userId as string)
+    : req.ip
+
+  rl.consume(rateLimitKey)
+    .then(() => {
+      return
+    })
+    .catch((rateLimiterRes) => {
+      console.log('rate limiting on key: ', rateLimitKey)
+      return sendRateLimitResponse(res, rateLimiterRes, rlOpts)
+    })
 }
