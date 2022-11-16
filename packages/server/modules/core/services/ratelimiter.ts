@@ -1,7 +1,11 @@
 /* eslint-disable camelcase */
 import express from 'express'
 import Redis from 'ioredis'
-import { getRedisUrl, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import {
+  getRedisUrl,
+  isTestEnv,
+  getIntFromEnv
+} from '@/modules/shared/helpers/envHelper'
 import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
@@ -24,6 +28,38 @@ export const LIMITS: RateLimiterOptions = {
   ALL_REQUESTS: {
     limitCount: 300, //FIXME set to a low number for testing, should be higher than REST API limit
     duration: 3 * TIME.second //FIXME set to a low number for testing. 1 * TIME.minute
+  },
+  USER_CREATE: {
+    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE') || 1000,
+    duration: 1 * TIME.week
+  },
+  STREAM_CREATE: {
+    limitCount: getIntFromEnv('RATELIMIT_STREAM_CREATE') || 10000,
+    duration: 1 * TIME.week
+  },
+  COMMIT_CREATE: {
+    limitCount: getIntFromEnv('RATELIMIT_COMMIT_CREATE') || 86400,
+    duration: 1 * TIME.day
+  },
+  'POST /api/getobjects/:streamId': {
+    limitCount: getIntFromEnv('RATELIMIT_POST_GETOBJECTS_STREAMID') || 200,
+    duration: 1 * TIME.minute
+  },
+  'POST /api/diff/:streamId': {
+    limitCount: getIntFromEnv('RATELIMIT_POST_DIFF_STREAMID') || 200,
+    duration: 1 * TIME.minute
+  },
+  'POST /objects/:streamId': {
+    limitCount: getIntFromEnv('RATELIMIT_POST_OBJECTS_STREAMID') || 200,
+    duration: 1 * TIME.minute
+  },
+  'GET /objects/:streamId/:objectId': {
+    limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID') || 200,
+    duration: 1 * TIME.minute
+  },
+  'GET /objects/:streamId/:objectId/single': {
+    limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID_SINGLE') || 200,
+    duration: 1 * TIME.minute
   }
 }
 
