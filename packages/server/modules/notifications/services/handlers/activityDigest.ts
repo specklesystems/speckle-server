@@ -15,14 +15,15 @@ import { getUserNotificationPreferences } from '@/modules/notifications/services
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
+import { EmailBody, EmailInput } from '@/modules/emails/helpers/types'
 import path from 'path'
 import * as ejs from 'ejs'
-import mjml2html from 'mjml'
 import {
   ActivitySummary,
   createActivitySummary,
   StreamActivitySummary
 } from '@/modules/activitystream/services/summary'
+import { renderEmailWithSpeckleBasicTemplate } from '@/modules/emails/services/templateRendering'
 
 const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
   const {
@@ -48,7 +49,7 @@ const digestNotificationEmailHandler = async (
   // if there are no activities stop early
   if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)
     return null
-  const serverInfo = (await getServerInfo()) as ServerInfo
+  const serverInfo = await getServerInfo()
   const digest = digestSummaryData(activitySummary, serverInfo)
   if (!digest) return null
   const emailInput = await prepareSummaryEmail(digest, serverInfo)
@@ -364,20 +365,19 @@ export const prepareSummaryEmail = async (
   serverInfo: ServerInfo
 ): Promise<EmailInput> => {
   const body = await renderEmailBody(digest, serverInfo)
-  return await renderEmailShell(body, serverInfo, digest.user)
-}
+  const cta = {
+    title: 'Check activities',
+    url: serverInfo.canonicalUrl
+  }
 
-type EmailInput = {
-  from?: string
-  to: string
-  subject: string
-  text: string
-  html: string
-}
-
-type EmailBody = {
-  text: string
-  mjml: string
+  const subject = 'Speckle weekly digest'
+  return await renderEmailWithSpeckleBasicTemplate(
+    subject,
+    body,
+    cta,
+    serverInfo,
+    digest.user
+  )
 }
 
 export const renderEmailBody = async (
@@ -416,39 +416,4 @@ Here's a summary of what happened in the past week
 
   mjml += mjmlTopics.join('\n')
   return { text, mjml }
-}
-
-const renderEmailShell = async (
-  body: EmailBody,
-  serverInfo: ServerInfo,
-  user: UserRecord
-): Promise<EmailInput> => {
-  const mjmlPath = path.resolve(
-    packageRoot,
-    'assets/emails/templates/speckleBasicEmailTemplate.mjml.ejs'
-  )
-  const cta = {
-    title: 'Check activities',
-    url: serverInfo.canonicalUrl
-  }
-  const params = {
-    cta,
-    body,
-    user,
-    serverInfo
-  }
-  const fullMjml = await ejs.renderFile(
-    mjmlPath,
-    { params },
-    { cache: false, outputFunctionName: 'print' }
-  )
-  const fullHtml = mjml2html(fullMjml, { filePath: mjmlPath })
-  const renderedHtml = ejs.render(fullHtml.html, { params })
-
-  return {
-    to: user.email,
-    subject: 'Speckle weekly digest',
-    text: body.text,
-    html: renderedHtml
-  }
 }
