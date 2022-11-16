@@ -2,6 +2,7 @@ import '~~/assets/css/tailwind.css'
 import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
 import { MockedProvider } from '~~/lib/fake-nuxt-env/components/MockedProvider'
 import { setup } from '@storybook/vue3'
+import SingletonManagers from '~~/components/singleton/Managers.vue'
 
 setup((app) => {
   setupVueApp(app)
@@ -80,7 +81,11 @@ export const parameters = {
 
 /** @type {import('@storybook/csf').DecoratorFunction[]} */
 export const decorators = [
-  // Global CSS class setup decorator + theme support
+  /**
+   * - Global CSS class setup
+   * - Theme support
+   * - Global singletons
+   */
   (story, ctx) => {
     const theme = ctx.globals.theme
     const isDarkMode = theme === 'dark'
@@ -93,12 +98,14 @@ export const decorators = [
 
     return {
       components: {
-        Story: story()
+        Story: story(),
+        SingletonManagers
       },
       inheritAttrs: false,
       template: `
         <div class="text-foreground">
           <Story v-bind="$attrs" />
+          <SingletonManagers />
         </div>
       `
     }

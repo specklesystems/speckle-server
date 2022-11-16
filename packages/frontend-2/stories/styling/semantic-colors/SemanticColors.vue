@@ -30,6 +30,7 @@
 <script setup lang="ts">
 import { markClassesUsed } from '~~/lib/common/helpers/tailwind'
 import { useClipboard } from '@vueuse/core'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 /** Suffix on top of the color base name (e.g., focus if danger-focus) or null if no suffix (e.g., danger) */
 type ColorVariation = string | null
@@ -68,6 +69,7 @@ const colorDefinitions: Record<string, ColorDefinition> = {
   }
 }
 
+const { triggerNotification } = useGlobalToast()
 const { copy } = useClipboard()
 
 const buildColorString = (colorBase: string, variation: ColorVariation) => {
@@ -82,6 +84,10 @@ const buildColorString = (colorBase: string, variation: ColorVariation) => {
 const onVariationClick = (colorBase: string, variation: ColorVariation) => {
   const colorString = buildColorString(colorBase, variation)
   copy(colorString)
+  triggerNotification({
+    type: ToastNotificationType.Info,
+    title: 'Copied!'
+  })
 }
 
 markClassesUsed([
