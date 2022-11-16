@@ -77,18 +77,23 @@ const redisClient = new Redis(getRedisUrl(), {
   maxRetriesPerRequest: null
 })
 
-const sendRateLimitResponse = (
+export const sendRateLimitResponse = (
   res: express.Response,
-  rateLimiterRes: RateLimiterRes,
-  opts: RateLimiterOption
+  rateLimiterRes: RateLimiterRes | undefined,
+  opts: RateLimiterOption | undefined
 ): express.Response => {
-  res.setHeader('Retry-After', rateLimiterRes.msBeforeNext / 1000)
-  res.setHeader('X-RateLimit-Limit', opts.limitCount)
-  res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints)
-  res.setHeader(
-    'X-RateLimit-Reset',
-    new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
-  )
+  if (rateLimiterRes) {
+    res.setHeader('Retry-After', rateLimiterRes.msBeforeNext / 1000)
+    res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints)
+    res.setHeader(
+      'X-RateLimit-Reset',
+      new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
+    )
+  }
+  if (opts) {
+    res.setHeader('X-RateLimit-Limit', opts.limitCount)
+  }
+
   res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
   return res.status(429).send({
     err: 'You are sending too many requests. You have been rate limited. Please try again later.'

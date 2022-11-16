@@ -6,7 +6,8 @@ const { createStream } = require('@/modules/core/services/streams')
 
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
-const { LIMITS } = require('@/modules/core/services/ratelimits')
+const { TIME } = require('@speckle/shared')
+const { LIMITS } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { getInvite } = require('@/modules/serverinvites/repositories')
@@ -456,13 +457,16 @@ describe('Auth @auth', () => {
       }
 
       const oldLimit = LIMITS.USER_CREATE
-      LIMITS.USER_CREATE = 5
+      LIMITS.USER_CREATE = {
+        limitCount: 5,
+        duration: 10 * TIME.second
+      }
       // 5 users should be fine
       for (let i = 0; i < 5; i++) {
         await newUser(`test${i}`, '1.2.3.4', 302)
       }
       // should fail the 6th user
-      await newUser(`test${5}`, '1.2.3.4', 400)
+      await newUser(`test${5}`, '1.2.3.4', 429)
 
       // should be able to create from different ip
       for (let i = 0; i < 5; i++) {

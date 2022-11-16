@@ -7,6 +7,7 @@ const {
 } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
+  sendRateLimitResponse,
   respectsLimits,
   RateLimitError
 } = require('@/modules/core/services/ratelimiter')
@@ -98,6 +99,9 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         return next()
       } catch (err) {
         debug('speckle:error')(err)
+        if (err instanceof RateLimitError) {
+          return sendRateLimitResponse(res)
+        }
         return res.status(400).send({ err: err.message })
       }
     },
