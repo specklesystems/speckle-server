@@ -1,4 +1,4 @@
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import cron from 'node-cron'
 import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
@@ -9,6 +9,7 @@ import { scheduleExecution } from '@/modules/core/services/taskScheduler'
 const activitiesDebug = modulesDebug.extend('activities')
 
 let scheduledTask: cron.ScheduledTask | null = null
+let quitListeners: Optional<() => void> = undefined
 
 const scheduleWeeklyActivityNotifications = () => {
   // just to test stuff
@@ -39,11 +40,12 @@ const activityModule: SpeckleModule = {
   init: async (_, isInitial) => {
     modulesDebug('🤺 Init activity module')
     if (isInitial) {
-      initializeEventListener()
+      quitListeners = initializeEventListener()
       scheduledTask = scheduleWeeklyActivityNotifications()
     }
   },
   shutdown: () => {
+    quitListeners?.()
     if (scheduledTask) scheduledTask.stop()
   }
 }
