@@ -9,6 +9,7 @@ const { createUser } = require('@/modules/core/services/users')
 const { addLoadersToCtx } = require('@/modules/shared')
 const { truncateTables } = require('@/test/hooks')
 const { gql } = require('apollo-server-express')
+const { sleep } = require('@/test/helpers')
 
 /**
  * Cleaning up relevant tables
@@ -174,7 +175,9 @@ describe('Favorite streams', () => {
       it(`can be favorited if ${msgSuffix}`, async () => {
         const streamId = id()
         const beforeTime = Date.now()
+        await sleep(1)
         const result = await favoriteStream(streamId, true)
+        await sleep(1)
         const afterTime = Date.now()
 
         expect(result.errors).to.not.be.ok
