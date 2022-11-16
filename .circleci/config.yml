@@ -382,7 +382,7 @@ jobs:
       - run:
           name: 'Check if should proceed'
           command: |
-            [[ "${CIRCLE_BRANCH}" != "main" && -z "${CIRCLE_PULL_REQUEST}" && "${IS_DRAFT_PR}" != "FALSE" ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
+            [[ "${CIRCLE_BRANCH}" != "main" && ("${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}") ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
             echo "proceeding"
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
