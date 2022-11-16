@@ -126,6 +126,7 @@
               as="a"
               :href="item.href"
               class="block px-4 py-2 text-base font-medium text-foreground hover:bg-foundation-2 hover:text-foreground-2"
+              @click="item.onClick"
             >
               {{ item.name }}
             </DisclosureButton>
@@ -149,9 +150,6 @@ import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { LoginRoute, RegisterRoute } from '~~/lib/common/helpers/route'
-
-// const a = 1
-// console.log(a)
 
 type UserNavigationLink = {
   name: string

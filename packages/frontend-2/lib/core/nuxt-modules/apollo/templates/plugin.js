@@ -33,8 +33,7 @@ export default defineNuxtPlugin(async (nuxt) => {
   for (const [key, config] of Object.entries(keyedConfigs)) {
     const client = new ApolloClient({
       ...config,
-      ssrMode: !!process.server,
-      ssrForceFetchDelay: process.client ? 100 : undefined
+      ...(process.server ? {ssrMode: true} : {ssrForceFetchDelay: 100}),
     });
     if (key === 'default') {
       defaultClient = client;
@@ -60,7 +59,7 @@ export default defineNuxtPlugin(async (nuxt) => {
       ...keyedClients
     };
     nuxt.vueApp.provide(ApolloClients, providedClients)
-    
+
     // For global access through $apollo
     nuxt.provide("apollo", providedClients)
 });

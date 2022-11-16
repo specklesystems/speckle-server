@@ -56,7 +56,6 @@ export function useMixpanelUserIdentification() {
         hostApp: HOST_APP
       })
 
-      // TODO: This doesn't work properly, we need to fix Apollo queries getting stuck first...
       // Identify user, if any
       if (distinctId.value) {
         mp.identify(distinctId.value)
