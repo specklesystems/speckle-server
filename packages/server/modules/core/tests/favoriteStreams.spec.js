@@ -178,10 +178,10 @@ describe('Favorite streams', () => {
         const afterTime = Date.now()
 
         expect(result.errors).to.not.be.ok
-        expect(result.data?.streamFavorite?.favoritedDate).to.be.a('date')
-        expect(result.data?.streamFavorite?.favoritedDate.getTime()).to.satisfy(
-          (t) => t > beforeTime && t < afterTime
-        )
+        const favoritedDate = result.data?.streamFavorite?.favoritedDate
+        expect(favoritedDate).to.be.a('date')
+        expect(favoritedDate.getTime()).to.be.greaterThanOrEqual(beforeTime)
+        expect(favoritedDate.getTime()).to.be.lessThanOrEqual(afterTime)
         expect(result.data?.streamFavorite?.id).to.equal(streamId)
         expect(result.data?.streamFavorite?.favoritesCount).to.equal(1)
       })

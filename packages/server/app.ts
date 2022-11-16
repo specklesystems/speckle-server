@@ -32,6 +32,7 @@ import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { rateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
 
@@ -173,6 +174,7 @@ export async function buildApolloServer(
  */
 export async function init() {
   const app = express()
+  app.disable('x-powered-by')
 
   Logging(app)
 
@@ -217,6 +219,7 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
+  app.use(rateLimiterMiddleware)
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
