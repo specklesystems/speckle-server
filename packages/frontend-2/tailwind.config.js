@@ -1,5 +1,3 @@
-const colors = require('tailwindcss/colors')
-
 /**
  * This theme is largely based on the one we have for the Speckle website - similar color palette etc.
  *
@@ -24,41 +22,52 @@ const config = {
     fontFamily: {
       sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'"
     },
-    extend: {
-      colors: {
-        foundation: {
-          DEFAULT: 'var(--foundation)',
-          2: 'var(--foundation-2)',
-          page: 'var(--foundation-page)'
-        },
-        foreground: {
-          DEFAULT: 'var(--foreground)',
-          2: 'var(--foreground-2)'
-        },
-        primary: {
-          DEFAULT: 'var(--primary)',
-          focus: 'var(--primary-focus)',
-          muted: 'var(--primary-muted)'
-        },
-        danger: {
-          DEFAULT: colors.red['500'],
-          lighter: colors.red['400'],
-          darker: colors.red['600']
-        },
-        warning: {
-          DEFAULT: colors.amber['500'],
-          lighter: colors.amber['400'],
-          darker: colors.amber['600']
-        },
-        success: {
-          DEFAULT: colors.green['500'],
-          lighter: colors.green['400'],
-          darker: colors.green['600']
-        },
-        disabled: {
-          DEFAULT: 'var(--disabled)',
-          muted: 'var(--disabled-muted)'
-        }
+    colors: {
+      foundation: {
+        page: 'var(--foundation-page)',
+        DEFAULT: 'var(--foundation)',
+        2: 'var(--foundation-2)',
+        disabled: 'var(--foundation-disabled)'
+      },
+      foreground: {
+        DEFAULT: 'var(--foreground)',
+        2: 'var(--foreground-2)',
+        disabled: 'var(--foreground-disabled)',
+        'on-primary': 'var(--foreground-on-primary)'
+      },
+      primary: {
+        DEFAULT: 'var(--primary)',
+        focus: 'var(--primary-focus)',
+        muted: 'var(--primary-muted)',
+        outline: 'var(--primary-outline)',
+        'outline-2': 'var(--primary-outline-2)'
+      },
+      success: {
+        DEFAULT: 'var(--success)',
+        lighter: 'var(--success-lighter)',
+        darker: 'var(--success-darker)'
+      },
+      warning: {
+        DEFAULT: 'var(--warning)',
+        lighter: 'var(--warning-lighter)',
+        darker: 'var(--warning-darker)'
+      },
+      info: {
+        DEFAULT: 'var(--info)',
+        lighter: 'var(--info-lighter)',
+        darker: 'var(--info-darker)'
+      },
+      danger: {
+        DEFAULT: 'var(--danger)',
+        lighter: 'var(--danger-lighter)',
+        darker: 'var(--danger-darker)'
+      },
+      /**
+       * TODO: Remove, not in the design system anymore
+       */
+      disabled: {
+        DEFAULT: 'var(--disabled)',
+        muted: 'var(--disabled-muted)'
       }
     }
   },

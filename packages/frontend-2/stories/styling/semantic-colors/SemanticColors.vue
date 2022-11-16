@@ -1,60 +1,114 @@
 <template>
-  <div class="bg-background p-4 text-foreground space-y-4">
-    <div>
-      <div>Here are the available background colors:</div>
-      <code class="bg-foundation-page p-4 m-4 block rounded-lg">
-        bg-foundation-page
-      </code>
-      <code class="bg-foundation p-4 m-4 block rounded-lg">bg-foundation</code>
-      <code class="bg-foundation-2 p-4 m-4 block rounded-lg">bg-foundation-2</code>
+  <div class="bg-foundation-page p-4 text-foreground space-y-4">
+    <div class="font-bold">
+      Click on any of the color links to copy the color name to your clipboard!
     </div>
-    <div>
-      <div>Here are the available foreground colors:</div>
-      <ul class="font-bold">
-        <li class="text-foreground">text-foreground</li>
-        <li class="text-foreground-2">text-foreground-2</li>
-      </ul>
-    </div>
-    <div>
-      <div>Here are the available primary variants:</div>
-      <div>
-        <div class="bg-primary p-2 text-white">primary</div>
-        <div class="bg-primary-focus p-2 text-white">primary-focus</div>
-        <div class="bg-primary-muted p-2 text-white">primary-muted</div>
-      </div>
-    </div>
-    <div>
-      <div>
-        Here are the available color variants, each of which also have a 'lighter' and
-        'darker' variant to use for hover/focus/highlight states:
-      </div>
-      <div>
-        <div class="bg-danger p-2 text-white">danger</div>
-        <div class="bg-danger-lighter p-2 text-white">danger-lighter</div>
-        <div class="bg-danger-darker p-2 text-white">danger-darker</div>
-        <div class="bg-warning p-2 text-white">warning</div>
-        <div class="bg-warning-lighter p-2 text-white">warning-lighter</div>
-        <div class="bg-warning-darker p-2 text-white">warning-darker</div>
-        <div class="bg-success p-2 text-white">success</div>
-        <div class="bg-success-lighter p-2 text-white">success-lighter</div>
-        <div class="bg-success-darker p-2 text-white">success-darker</div>
-      </div>
-    </div>
-    <div>
-      <div>There are also the disabled state colors:</div>
-      <div>
-        <div class="bg-disabled p-2 text-white">disabled</div>
-        <div class="bg-disabled-muted p-2 text-black">disabled-muted</div>
-      </div>
-    </div>
-    <div>
-      <div>
-        Here are the available link colors, they're essentially just the primary colors.
-      </div>
-      <div>
-        <div class="bg-primary p-2 text-white">link</div>
-        <div class="bg-primary-focus p-2 text-white">link (focused)</div>
+    <div
+      v-for="(definition, colorBase) in colorDefinitions"
+      :key="colorBase"
+      class="flex flex-col space-y-4"
+    >
+      <span class="h3 uppercase block">{{ colorBase }}</span>
+      <p class="block">{{ definition.description }}</p>
+      <div class="flex flex-wrap gap-4">
+        <div
+          v-for="(variation, i) in definition.variations"
+          :key="i"
+          class="flex flex-col items-center"
+        >
+          <div
+            :class="['h-40 w-40', `bg-${buildColorString(colorBase, variation)}`]"
+          ></div>
+          <TextLink @click="onVariationClick(colorBase, variation)">
+            {{ buildColorString(colorBase, variation) }}
+          </TextLink>
+        </div>
       </div>
     </div>
   </div>
 </template>
+<script setup lang="ts">
+import { markClassesUsed } from '~~/lib/common/helpers/tailwind'
+import { useClipboard } from '@vueuse/core'
+
+/** Suffix on top of the color base name (e.g., focus if danger-focus) or null if no suffix (e.g., danger) */
+type ColorVariation = string | null
+type ColorDefinition = { description: string; variations: ColorVariation[] }
+
+const lighterDarkerVariations: ColorVariation[] = [null, 'lighter', 'darker']
+
+const colorDefinitions: Record<string, ColorDefinition> = {
+  foundation: {
+    description: 'Meant to be used as page/panel background colors',
+    variations: [null, 'page', '2', 'disabled']
+  },
+  foreground: {
+    description: 'Meant to be used as foreground (text) colors',
+    variations: [null, '2', 'disabled', 'on-primary']
+  },
+  primary: {
+    description: 'Primary branding color of Speckle',
+    variations: [null, 'focus', 'muted', 'outline', 'outline-2']
+  },
+  success: {
+    description: 'For success messages/icons/notifications',
+    variations: lighterDarkerVariations
+  },
+  warning: {
+    description: 'For warning messages/icons/notifications',
+    variations: lighterDarkerVariations
+  },
+  info: {
+    description: 'For info messages/icons/notifications',
+    variations: lighterDarkerVariations
+  },
+  danger: {
+    description: 'For error messages/icons/notifications',
+    variations: lighterDarkerVariations
+  }
+}
+
+const { copy } = useClipboard()
+
+const buildColorString = (colorBase: string, variation: ColorVariation) => {
+  let base = colorBase
+  if (variation) {
+    base += `-${variation}`
+  }
+
+  return base
+}
+
+const onVariationClick = (colorBase: string, variation: ColorVariation) => {
+  const colorString = buildColorString(colorBase, variation)
+  copy(colorString)
+}
+
+markClassesUsed([
+  'bg-foundation',
+  'bg-foundation-page',
+  'bg-foundation-2',
+  'bg-foundation-disabled',
+  'bg-foreground',
+  'bg-foreground-2',
+  'bg-foreground-disabled',
+  'bg-foreground-on-primary',
+  'bg-primary',
+  'bg-primary-focus',
+  'bg-primary-muted',
+  'bg-primary-outline',
+  'bg-primary-outline-2',
+  'bg-success',
+  'bg-success-lighter',
+  'bg-success-darker',
+  'bg-warning',
+  'bg-warning-lighter',
+  'bg-warning-darker',
+  'bg-info',
+  'bg-info-lighter',
+  'bg-info-darker',
+  'bg-danger',
+  'bg-danger-lighter',
+  'bg-danger-darker'
+])
+</script>

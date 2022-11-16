@@ -17,11 +17,17 @@
   --foundation: #fff;
   /* used as the background for any element that you want to emphasize */
   --foundation-2: #dbeafe;
+  /* for disabled backgrounds */
+  --foundation-disabled: #cbd5e1;
 
   /* default foreground color */
   --foreground: #334155;
   /* dimmer foreground color, e.g. caption text */
   --foreground-2: #94a3b8;
+  /* disabled foreground color */
+  --foreground-disabled: #93c5fd;
+  /* foreground color when put on top of a primary colored background */
+  --foreground-on-primary: #fff;
 
   /* primary color */
   --primary: #3b82f6;
@@ -29,7 +35,34 @@
   --primary-focus: #2563eb;
   /* muted primary color */
   --primary-muted: #dbeafe;
+  /* primary outline */
+  --primary-outline: #3b82f6;
+  /* secondary variant of primary outline */
+  --primary-outline-2: rgb(59 130 246 / 50%);
 
+  /* success variations */
+  --success: #10b981;
+  --success-lighter: #d1fae5;
+  --success-darker: #064e3b;
+
+  /* warning variations */
+  --warning: #f59e0b;
+  --warning-lighter: #fef3c7;
+  --warning-darker: #78350f;
+
+  /* info variations */
+  --info: #0ea5e9;
+  --info-lighter: #e0f2fe;
+  --info-darker: #0c4a6e;
+
+  /* danger variations */
+  --danger: #ef4444;
+  --danger-lighter: #fee2e2;
+  --danger-darker: #7f1d1d;
+
+  /**
+    * TODO: Remove, not in the design system anymore
+    */
   /* disabled color */
   --disabled: #d4d4d4;
   /* disabled foreground color */
@@ -37,17 +70,58 @@
 }
 
 :root.dark {
-  --foundation-page: #000;
+  /* used only as the page background */
+  --foundation-page: #121212;
+  /* used as the background for any element that sits on the page */
   --foundation: #171717;
+  /* used as the background for any element that you want to emphasize */
   --foundation-2: #1e293b;
+  /* for disabled backgrounds */
+  --foundation-disabled: #2b2b2b;
 
+  /* default foreground color */
   --foreground: #d4d4d4;
+  /* dimmer foreground color, e.g. caption text */
   --foreground-2: #737373;
+  /* disabled foreground color */
+  --foreground-disabled: #717171;
+  /* foreground color when put on top of a primary colored background */
+  --foreground-on-primary: #fff;
 
+  /* primary color */
   --primary: #2563eb;
+  /* focused primary color */
   --primary-focus: #3b82f6;
+  /* muted primary color */
   --primary-muted: #1e293b;
+  /* primary outline */
+  --primary-outline: #475569;
+  /* secondary variant of primary outline */
+  --primary-outline-2: rgb(59 130 246 / 50%);
 
+  /* success variations */
+  --success: #10b981;
+  --success-lighter: #d1fae5;
+  --success-darker: #064e3b;
+
+  /* warning variations */
+  --warning: #f59e0b;
+  --warning-lighter: #fef3c7;
+  --warning-darker: #78350f;
+
+  /* info variations */
+  --info: #0ea5e9;
+  --info-lighter: #e0f2fe;
+  --info-darker: #0c4a6e;
+
+  /* danger variations */
+  --danger: #ef4444;
+  --danger-lighter: #fee2e2;
+  --danger-darker: #7f1d1d;
+
+  /**
+  * TODO: Remove, not in the design system anymore
+  */
   --disabled: #2b2b2b;
   --disabled-muted: #717171;
 }
