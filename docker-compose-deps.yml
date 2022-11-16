@@ -35,6 +35,7 @@ services:
 
   maildev:
     image: maildev/maildev
+    restart: always
     ports:
       - '127.0.0.1:1080:1080'
       - '127.0.0.1:1025:1025'
