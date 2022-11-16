@@ -25,7 +25,10 @@ const {
 } = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
-const { respectsLimits } = require('@/modules/core/services/ratelimits')
+const {
+  respectsLimits,
+  RateLimitError
+} = require('@/modules/core/services/ratelimiter')
 const {
   getPendingStreamCollaborators
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
@@ -233,7 +236,7 @@ module.exports = {
       if (
         !(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))
       ) {
-        throw new Error('Blocked due to rate-limiting. Try again later')
+        throw new RateLimitError()
       }
 
       const id = await createStream({ ...args.stream, ownerId: context.userId })

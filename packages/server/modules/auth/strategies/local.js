@@ -6,7 +6,10 @@ const {
   getUserByEmail
 } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
-const { respectsLimits } = require('@/modules/core/services/ratelimits')
+const {
+  respectsLimits,
+  RateLimitError
+} = require('@/modules/core/services/ratelimiter')
 const {
   validateServerInvite,
   finalizeInvitedServerRegistration,
@@ -64,7 +67,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           user.ip &&
           !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))
         ) {
-          throw new Error('Blocked due to rate-limiting. Try again later')
+          throw new RateLimitError()
         }
 
         // 1. if the server is invite only you must have an invite
