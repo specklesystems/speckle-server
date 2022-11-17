@@ -160,3 +160,28 @@ export async function respectsLimits({
       return false
     })
 }
+
+interface requestContext {
+  userId: string
+  ip: string
+}
+
+interface expressRequestWithContext extends express.Request {
+  context: requestContext
+}
+
+interface rejectsRequestsParameters {
+  action: string
+  req: expressRequestWithContext
+  res: express.Response
+}
+
+export async function rejectsRequestWithRatelimitStatusIfNeeded({
+  action,
+  req,
+  res
+}: rejectsRequestsParameters) {
+  const source = req.context.userId || req.context.ip
+  if (!(await respectsLimits({ action, source })))
+    return sendRateLimitResponse(res, undefined, undefined)
+}

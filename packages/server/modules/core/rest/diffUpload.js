@@ -7,7 +7,7 @@ const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 const {
   rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
+} = require('@/modules/core/services/ratelimiter')
 
 const { hasObjects } = require('../services/objects')
 

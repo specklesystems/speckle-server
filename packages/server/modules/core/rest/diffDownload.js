@@ -9,7 +9,7 @@ const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
 const {
   rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
+} = require('@/modules/core/services/ratelimiter')
 
 const { pipeline, PassThrough } = require('stream')
 

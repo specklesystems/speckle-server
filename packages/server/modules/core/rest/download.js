@@ -11,7 +11,7 @@ const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const {
   rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
+} = require('@/modules/core/services/ratelimiter')
 
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', cors())
