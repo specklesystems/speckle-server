@@ -6,7 +6,11 @@ import {
   isTestEnv,
   getIntFromEnv
 } from '@/modules/shared/helpers/envHelper'
-import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
+import {
+  RateLimiterMemory,
+  RateLimiterRedis,
+  RateLimiterRes
+} from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { BaseError } from '@/modules/shared/errors'
@@ -159,11 +163,21 @@ export async function isWithinRateLimits({
   const rlOpts = LIMITS[action]
   if (!rlOpts) return Promise.reject(null) // the rate limits for the action have not been defined, so prevent use of the action
 
+  // provides a backup store for the rate limiter
+  // incase Redis is unreachable
+  const rateLimiterMemory = new RateLimiterMemory({
+    points: rlOpts.limitCount,
+    duration: rlOpts.duration
+  })
+
   const rateLimiter = new RateLimiterRedis({
     storeClient: redisClient,
     keyPrefix: action,
     points: rlOpts.limitCount,
-    duration: rlOpts.duration
+    duration: rlOpts.duration,
+    inMemoryBlockOnConsumed: rlOpts.limitCount + 1, // stops additional requests going to Redis once the limit is reached
+    inMemoryBlockDuration: rlOpts.duration,
+    insuranceLimiter: rateLimiterMemory
   })
 
   return rateLimiter.consume(source)
