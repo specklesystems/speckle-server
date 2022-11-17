@@ -14,7 +14,6 @@ import {
 import { TIME } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { BaseError } from '@/modules/shared/errors'
-import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import Sentry from '@sentry/node'
 
 export class RateLimitError extends BaseError {
@@ -53,11 +52,11 @@ interface isWithinRateLimitsConfig {
 
 export const LIMITS: RateLimiterOptions = {
   ALL_REQUESTS_BURST: {
-    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '1500'), // 500 per second
+    limitCount: getIntFromEnv('RATELIMIT_ALL_REQUESTS_BURST', '1500'), // 500 per second
     duration: 3 * TIME.second
   },
   ALL_REQUESTS: {
-    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '864000'), // 10 per second
+    limitCount: getIntFromEnv('RATELIMIT_ALL_REQUESTS', '864000'), // 10 per second
     duration: 1 * TIME.day
   },
   USER_CREATE: {
@@ -94,10 +93,38 @@ export const LIMITS: RateLimiterOptions = {
   }
 }
 
+const memoryRateLimiters: { [key: RateLimitAction]: RateLimiterMemory } = (function () {
+  const store: { [key: RateLimitAction]: RateLimiterMemory } = {}
+  for (const [key, value] of Object.entries(LIMITS)) {
+    store[key] = new RateLimiterMemory({
+      points: value.limitCount,
+      duration: value.duration
+    })
+  }
+  return store
+})()
+
 const redisClient = new Redis(getRedisUrl(), {
   enableReadyCheck: false,
   maxRetriesPerRequest: null
 })
+
+export const redisRateLimiters: { [key: RateLimitAction]: RateLimiterRedis } =
+  (function () {
+    const store: { [key: RateLimitAction]: RateLimiterRedis } = {}
+    for (const [key, value] of Object.entries(LIMITS)) {
+      store[key] = new RateLimiterRedis({
+        storeClient: redisClient,
+        keyPrefix: key,
+        points: value.limitCount,
+        duration: value.duration,
+        inMemoryBlockOnConsumed: value.limitCount + 1, // stops additional requests going to Redis once the limit is reached
+        inMemoryBlockDuration: value.duration,
+        insuranceLimiter: memoryRateLimiters[key] // fall back to memory store if redis is unavailable
+      })
+    }
+    return store
+  })()
 
 export const sendRateLimitResponse = (
   res: express.Response,
@@ -111,6 +138,7 @@ export const sendRateLimitResponse = (
       err: 'Error when attempting to determine rate limit. Please try again later.'
     })
   }
+
   if (rateLimiterRes) {
     res.setHeader('Retry-After', rateLimiterRes.msBeforeNext / 1000)
     res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints)
@@ -119,6 +147,7 @@ export const sendRateLimitResponse = (
       new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
     )
   }
+
   if (action) {
     const opts = LIMITS[action]
     if (!rateLimiterRes) res.setHeader('Retry-After', opts.duration)
@@ -148,43 +177,27 @@ export const rateLimiterMiddleware = async (
 
   const source: string = (req as RequestWithContext)?.context?.userId
     ? ((req as RequestWithContext)?.context?.userId as string)
-    : getIpFromRequest(req)
+    : req.ip
 
   isWithinRateLimits({ action, source })
-    .catch((rateLimiterResponse) => {
-      sendRateLimitResponse(res, action, rateLimiterResponse)
+    .catch((rateLimiterRes) => {
+      return sendRateLimitResponse(res, action, rateLimiterRes)
     })
     .then(() => isWithinRateLimits({ action: burstAction, source }))
-    .catch((rateLimiterResponse) => {
-      sendRateLimitResponse(res, burstAction, rateLimiterResponse)
+    .catch((rateLimiterRes) => {
+      return sendRateLimitResponse(res, burstAction, rateLimiterRes)
     })
-    .then(() => next())
+    .then(() => {
+      next()
+    })
 }
 
-// Promise will reject if the source is not within limits for the action, resolve otherwise
+// Promise will reject if the source is not within limits for the action, and pass a RateLimiterRes, resolve otherwise.
 export async function isWithinRateLimits({
   action,
   source
 }: isWithinRateLimitsConfig): Promise<RateLimiterRes> {
   const rlOpts = LIMITS[action]
   if (!rlOpts) return Promise.reject(null) // the rate limits for the action have not been defined, so prevent use of the action
-
-  // provides a backup store for the rate limiter
-  // incase Redis is unreachable
-  const rateLimiterMemory = new RateLimiterMemory({
-    points: rlOpts.limitCount,
-    duration: rlOpts.duration
-  })
-
-  const rateLimiter = new RateLimiterRedis({
-    storeClient: redisClient,
-    keyPrefix: action,
-    points: rlOpts.limitCount,
-    duration: rlOpts.duration,
-    inMemoryBlockOnConsumed: rlOpts.limitCount + 1, // stops additional requests going to Redis once the limit is reached
-    inMemoryBlockDuration: rlOpts.duration,
-    insuranceLimiter: rateLimiterMemory
-  })
-
-  return rateLimiter.consume(source)
+  return redisRateLimiters[action].consume(source)
 }

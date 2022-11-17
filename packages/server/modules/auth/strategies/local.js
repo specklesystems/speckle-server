@@ -62,13 +62,17 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         const user = req.body
         const ip = getIpFromRequest(req)
-        if (ip) user.ip = ip
-        if (user.ip)
+        if (ip) {
+          user.ip = ip
+          let shouldExit = false
           await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }).catch(
-            (rateLimiterResponse) => {
-              return sendRateLimitResponse(res, 'USER_CREATE', rateLimiterResponse)
+            (rateLimiterRes) => {
+              shouldExit = true
+              return sendRateLimitResponse(res, 'USER_CREATE', rateLimiterRes)
             }
           )
+          if (shouldExit) return
+        }
 
         // 1. if the server is invite only you must have an invite
         if (serverInfo.inviteOnly && !req.session.token)

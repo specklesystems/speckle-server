@@ -159,12 +159,14 @@ module.exports = {
         'stream:contributor'
       )
 
+      let shouldThrowError = false
       await isWithinRateLimits({
         action: 'COMMIT_CREATE',
         source: context.userId
       }).catch(() => {
-        throw new RateLimitError()
+        shouldThrowError = true
       })
+      if (shouldThrowError) throw new RateLimitError()
 
       const id = await createCommitByBranchName({
         ...args.commit,
