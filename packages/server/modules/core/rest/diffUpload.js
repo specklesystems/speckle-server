@@ -17,7 +17,7 @@ module.exports = (app) => {
   app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
     const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
       action: 'POST /api/diff/:streamId',
-      req,
+      source: req.context.userId || req.context.ip,
       res
     })
     if (rejected) return rejected

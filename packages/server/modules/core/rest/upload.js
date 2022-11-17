@@ -20,7 +20,7 @@ module.exports = (app) => {
   app.post('/objects/:streamId', cors(), contextMiddleware, async (req, res) => {
     const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
       action: 'POST /objects/:streamId',
-      req,
+      source: req.context.userId || req.context.ip,
       res
     })
     if (rejected) return rejected

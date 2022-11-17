@@ -10,6 +10,7 @@ import { RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { BaseError } from '@/modules/shared/errors'
+import { getIpFromRequest } from '@/modules/shared/utils/ip'
 
 export class RateLimitError extends BaseError {
   static defaultMessage =
@@ -18,13 +19,16 @@ export class RateLimitError extends BaseError {
 }
 
 // typescript definitions
+type RateLimitAction = string
+type RateLimitSource = string
+
 type RateLimiterOption = {
   limitCount: number
   duration: number
 }
 
 type RateLimiterOptions = {
-  [key: string]: RateLimiterOption
+  [key: RateLimitAction]: RateLimiterOption
 }
 
 interface RateLimitContext extends AuthContext {
@@ -35,15 +39,13 @@ interface RequestWithContext extends express.Request {
   context: RateLimitContext
 }
 
-interface rejectsRequestsConfig {
-  action: string
-  req: RequestWithContext
+interface rejectsRequestsConfig extends respectsLimitsConfig {
   res: express.Response
 }
 
 interface respectsLimitsConfig {
-  action: string
-  source: string
+  action: RateLimitAction
+  source: RateLimitSource
 }
 
 // data
@@ -133,7 +135,7 @@ export const rateLimiterMiddleware = async (
 
   const rateLimitKey: string = (req as RequestWithContext)?.context?.userId
     ? ((req as RequestWithContext)?.context?.userId as string)
-    : req.ip
+    : getIpFromRequest(req)
 
   rateLimiter
     .consume(rateLimitKey)
@@ -141,7 +143,6 @@ export const rateLimiterMiddleware = async (
       next()
     })
     .catch((rateLimiterResponse) => {
-      console.log(`Rate limiting action '${action}' on key '${rateLimitKey}'`) //HACK remove after debugging
       sendRateLimitResponse(res, rateLimiterResponse, rlOpts)
     })
 }
@@ -173,10 +174,9 @@ export async function respectsLimits({
 
 export async function rejectsRequestWithRatelimitStatusIfNeeded({
   action,
-  req,
+  source,
   res
 }: rejectsRequestsConfig) {
-  const source = req.context.userId || req.context.ip
   if (!(await respectsLimits({ action, source })))
     return sendRateLimitResponse(res, undefined, undefined)
 }

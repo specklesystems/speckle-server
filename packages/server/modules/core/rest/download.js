@@ -23,7 +23,7 @@ module.exports = (app) => {
     async (req, res) => {
       const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
         action: 'GET /objects/:streamId/:objectId',
-        req,
+        source: req.context.userId || req.context.ip,
         res
       })
       if (rejected) return rejected
@@ -97,7 +97,7 @@ module.exports = (app) => {
     async (req, res) => {
       const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
         action: 'GET /objects/:streamId/:objectId/single',
-        req,
+        source: req.context.userId || req.context.ip,
         res
       })
       if (rejected) return rejected
