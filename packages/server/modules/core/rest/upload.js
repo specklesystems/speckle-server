@@ -23,7 +23,7 @@ module.exports = (app) => {
       action: 'POST /objects/:streamId',
       source: req.context.userId || req.context.ip
     }).catch((rateLimiterResponse) => {
-      return sendRateLimitResponse(res, rateLimiterResponse)
+      return sendRateLimitResponse(res, 'POST /objects/:streamId', rateLimiterResponse)
     })
 
     const hasStreamAccess = await validatePermissionsWriteStream(

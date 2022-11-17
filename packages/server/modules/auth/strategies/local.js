@@ -66,7 +66,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (user.ip)
           await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }).catch(
             (rateLimiterResponse) => {
-              return sendRateLimitResponse(res, rateLimiterResponse)
+              return sendRateLimitResponse(res, 'USER_CREATE', rateLimiterResponse)
             }
           )
 

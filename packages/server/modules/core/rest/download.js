@@ -26,7 +26,11 @@ module.exports = (app) => {
         action: 'GET /objects/:streamId/:objectId',
         source: req.context.userId || req.context.ip
       }).catch((rateLimiterResponse) => {
-        return sendRateLimitResponse(res, rateLimiterResponse)
+        return sendRateLimitResponse(
+          res,
+          'GET /objects/:streamId/:objectId',
+          rateLimiterResponse
+        )
       })
 
       const hasStreamAccess = await validatePermissionsReadStream(
@@ -100,7 +104,11 @@ module.exports = (app) => {
         action: 'GET /objects/:streamId/:objectId/single',
         source: req.context.userId || req.context.ip
       }).catch((rateLimiterResponse) => {
-        return sendRateLimitResponse(res, rateLimiterResponse)
+        return sendRateLimitResponse(
+          res,
+          'GET /objects/:streamId/:objectId/single',
+          rateLimiterResponse
+        )
       })
 
       const hasStreamAccess = await validatePermissionsReadStream(

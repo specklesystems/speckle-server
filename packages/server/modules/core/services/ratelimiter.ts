@@ -48,20 +48,24 @@ interface isWithinRateLimitsConfig {
 // data
 
 export const LIMITS: RateLimiterOptions = {
+  ALL_REQUESTS_BURST: {
+    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '1500'), // 500 per second
+    duration: 3 * TIME.second
+  },
   ALL_REQUESTS: {
-    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '300'), //FIXME set to a low number for testing, should be higher than REST API limit
-    duration: 3 * TIME.second //FIXME set to a low number for testing. 1 * TIME.minute
+    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '864000'), // 10 per second
+    duration: 1 * TIME.day
   },
   USER_CREATE: {
     limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '1000'),
     duration: 1 * TIME.week
   },
   STREAM_CREATE: {
-    limitCount: getIntFromEnv('RATELIMIT_STREAM_CREATE', '10000'),
+    limitCount: getIntFromEnv('RATELIMIT_STREAM_CREATE', '10000'), // 0.11 per second
     duration: 1 * TIME.week
   },
   COMMIT_CREATE: {
-    limitCount: getIntFromEnv('RATELIMIT_COMMIT_CREATE', '86400'),
+    limitCount: getIntFromEnv('RATELIMIT_COMMIT_CREATE', '86400'), // 1 per second
     duration: 1 * TIME.day
   },
   'POST /api/getobjects/:streamId': {
@@ -93,8 +97,8 @@ const redisClient = new Redis(getRedisUrl(), {
 
 export const sendRateLimitResponse = (
   res: express.Response,
-  rateLimiterRes: RateLimiterRes | undefined,
-  opts: RateLimiterOption | undefined
+  action: string,
+  rateLimiterRes: RateLimiterRes | undefined
 ): express.Response => {
   if (rateLimiterRes instanceof Error) {
     Sentry.captureException(rateLimiterRes)
@@ -111,7 +115,8 @@ export const sendRateLimitResponse = (
       new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
     )
   }
-  if (opts) {
+  if (action) {
+    const opts = LIMITS[action]
     res.setHeader('X-RateLimit-Limit', opts.limitCount)
   }
 
@@ -128,20 +133,22 @@ export const rateLimiterMiddleware = async (
 ) => {
   if (isTestEnv()) next()
 
+  const burstAction = 'ALL_REQUESTS_BURST'
   const action = 'ALL_REQUESTS'
-  const rlOpts = LIMITS[action]
 
-  const rateLimitKey: string = (req as RequestWithContext)?.context?.userId
+  const source: string = (req as RequestWithContext)?.context?.userId
     ? ((req as RequestWithContext)?.context?.userId as string)
     : getIpFromRequest(req)
 
-  isWithinRateLimits({ action, source: rateLimitKey })
-    .then(() => {
-      next()
-    })
+  isWithinRateLimits({ action, source })
     .catch((rateLimiterResponse) => {
-      sendRateLimitResponse(res, rateLimiterResponse, rlOpts)
+      sendRateLimitResponse(res, action, rateLimiterResponse)
     })
+    .then(() => isWithinRateLimits({ action: burstAction, source }))
+    .catch((rateLimiterResponse) => {
+      sendRateLimitResponse(res, burstAction, rateLimiterResponse)
+    })
+    .then(() => next())
 }
 
 // Promise will reject if the source is not within limits for the action, resolve otherwise
