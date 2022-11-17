@@ -1,11 +1,19 @@
 import { userEvent, within } from '@storybook/testing-library'
-import FormButton from '~~/components/form/Button.vue'
-import { Story, Meta } from '@storybook/vue3'
+import { Meta, Story } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
-import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
+import TextLink from '~~/components/text/Link.vue'
+import { mergeStories, VuePlayFunction } from '~~/lib/common/helpers/storybook'
 
 export default {
-  component: FormButton,
+  component: TextLink,
+  parameters: {
+    docs: {
+      description: {
+        component:
+          'A text link. The difference between this and a Link Button is that the button still has the padding around it and is sized more like a button.'
+      }
+    }
+  },
   argTypes: {
     to: {
       type: 'string'
@@ -18,32 +26,15 @@ export default {
       action: 'click',
       type: 'function'
     },
-    size: {
-      options: ['xs', 'sm', 'base', 'lg', 'xl'],
-      control: { type: 'select' }
-    },
-    fullWidth: {
-      type: 'boolean'
-    },
-    type: {
-      options: ['standard', 'pill', 'outline', 'link'],
-      control: { type: 'select' }
-    },
     external: {
       type: 'boolean'
     },
     disabled: {
       type: 'boolean'
     },
-    submit: {
-      type: 'boolean'
-    }
-  },
-  parameters: {
-    docs: {
-      description: {
-        component: 'A standard button to be used anywhere you need any kind of button'
-      }
+    size: {
+      options: ['xs', 'sm', 'base', 'lg', 'xl'],
+      control: { type: 'select' }
     }
   }
 } as Meta
@@ -52,7 +43,7 @@ const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
   (rightClick) =>
   async ({ canvasElement }) => {
     const canvas = within(canvasElement)
-    const button = canvas.getByRole('button')
+    const button = canvas.getByRole('link')
 
     userEvent.click(button, rightClick ? { button: 2 } : undefined)
 
@@ -65,54 +56,27 @@ const leftClickPlay = clickPlayBuilder(false)
 
 export const Default: Story = {
   render: (args) => ({
-    components: { FormButton },
+    components: { TextLink },
     setup() {
       return { args }
     },
-    template: `<form-button v-bind="args" @click="args.click">{{ args.default || 'Submit' }}</form-button>`
+    template: `<TextLink v-bind="args" @click="args.click">{{ args.default || 'Link' }}</TextLink>`
   }),
   play: rightClickPlay,
   args: {
-    target: '_blank',
     to: 'https://google.com',
-    default: 'Button text',
-    size: 'base',
-    type: 'standard'
+    disabled: false,
+    default: 'Click me!',
+    size: 'base'
   },
   parameters: {
     docs: {
       source: {
-        code: '<FormButton to="/">Hello World!</FormButton>'
+        code: '<TextLink to="/">Hello World!</TextLink>'
       }
     }
   }
 }
-
-export const Pill: Story = mergeStories(Default, {
-  args: {
-    type: 'pill'
-  }
-})
-
-export const Outline: Story = mergeStories(Default, {
-  args: {
-    type: 'outline'
-  }
-})
-
-export const Link: Story = mergeStories(Default, {
-  args: {
-    type: 'link'
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'A link type button differs from a basic text link in that it contains a padding around it'
-      }
-    }
-  }
-})
 
 export const Small: Story = mergeStories(Default, {
   args: {
@@ -160,13 +124,6 @@ export const NoTarget: Story = mergeStories(Default, {
   }
 })
 
-export const FullWidth: Story = mergeStories(Default, {
-  args: {
-    fullWidth: true,
-    default: 'Full width button'
-  }
-})
-
 export const External: Story = mergeStories(Default, {
   args: {
     external: true,
@@ -177,22 +134,6 @@ export const External: Story = mergeStories(Default, {
     docs: {
       description: {
         story: 'Forces target to be treated as an external link'
-      }
-    }
-  }
-})
-
-export const Submit: Story = mergeStories(Default, {
-  play: leftClickPlay,
-  args: {
-    to: null,
-    submit: true,
-    default: 'Submit button'
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Rendered as button w/ type=submit, which will submit any parent forms'
       }
     }
   }
