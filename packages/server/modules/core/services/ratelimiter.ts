@@ -39,10 +39,6 @@ interface RequestWithContext extends express.Request {
   context: RateLimitContext
 }
 
-interface rejectsRequestsConfig extends isWithinRateLimitsConfig {
-  res: express.Response
-}
-
 interface isWithinRateLimitsConfig {
   action: RateLimitAction
   source: RateLimitSource
@@ -156,15 +152,4 @@ export async function isWithinRateLimits({
   })
 
   return rateLimiter.consume(source)
-}
-
-export async function rejectsRequestWithRatelimitStatusIfNeeded({
-  action,
-  source,
-  res
-}: rejectsRequestsConfig) {
-  const rlOpts = LIMITS[action]
-  await isWithinRateLimits({ action, source }).catch((rateLimiterResponse) => {
-    return sendRateLimitResponse(res, rateLimiterResponse, rlOpts)
-  })
 }

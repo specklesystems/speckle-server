@@ -9,7 +9,8 @@ const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('../services/objects')
 const {
-  rejectsRequestWithRatelimitStatusIfNeeded
+  isWithinRateLimits,
+  sendRateLimitResponse
 } = require('@/modules/core/services/ratelimiter')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
@@ -18,12 +19,12 @@ module.exports = (app) => {
   app.options('/objects/:streamId', cors())
 
   app.post('/objects/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
+    await isWithinRateLimits({
       action: 'POST /objects/:streamId',
-      source: req.context.userId || req.context.ip,
-      res
+      source: req.context.userId || req.context.ip
+    }).catch((rateLimiterResponse) => {
+      return sendRateLimitResponse(res, rateLimiterResponse)
     })
-    if (rejected) return rejected
 
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
