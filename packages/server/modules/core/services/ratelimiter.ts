@@ -39,11 +39,11 @@ interface RequestWithContext extends express.Request {
   context: RateLimitContext
 }
 
-interface rejectsRequestsConfig extends respectsLimitsConfig {
+interface rejectsRequestsConfig extends isWithinRateLimitsConfig {
   res: express.Response
 }
 
-interface respectsLimitsConfig {
+interface isWithinRateLimitsConfig {
   action: RateLimitAction
   source: RateLimitSource
 }
@@ -148,10 +148,10 @@ export const rateLimiterMiddleware = async (
 }
 
 // returns true if the action is fine, false if it should be blocked because of exceeding limit
-export async function respectsLimits({
+export async function isWithinRateLimits({
   action,
   source
-}: respectsLimitsConfig): Promise<boolean> {
+}: isWithinRateLimitsConfig): Promise<boolean> {
   const rlOpts = LIMITS[action]
   if (!rlOpts) return false // the rate limits for the action have not been defined, so prevent use of the action
 
@@ -177,6 +177,6 @@ export async function rejectsRequestWithRatelimitStatusIfNeeded({
   source,
   res
 }: rejectsRequestsConfig) {
-  if (!(await respectsLimits({ action, source })))
+  if (!(await isWithinRateLimits({ action, source })))
     return sendRateLimitResponse(res, undefined, undefined)
 }

@@ -8,7 +8,7 @@ const {
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   sendRateLimitResponse,
-  respectsLimits,
+  isWithinRateLimits,
   RateLimitError
 } = require('@/modules/core/services/ratelimiter')
 const {
@@ -66,7 +66,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (ip) user.ip = ip
         if (
           user.ip &&
-          !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))
+          !(await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }))
         ) {
           throw new RateLimitError()
         }

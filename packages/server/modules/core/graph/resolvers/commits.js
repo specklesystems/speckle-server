@@ -22,7 +22,7 @@ const {
 const { getUser } = require('../../services/users')
 
 const {
-  respectsLimits,
+  isWithinRateLimits,
   RateLimitError
 } = require('@/modules/core/services/ratelimiter')
 const {
@@ -160,7 +160,7 @@ module.exports = {
       )
 
       if (
-        !(await respectsLimits({ action: 'COMMIT_CREATE', source: context.userId }))
+        !(await isWithinRateLimits({ action: 'COMMIT_CREATE', source: context.userId }))
       ) {
         throw new RateLimitError()
       }

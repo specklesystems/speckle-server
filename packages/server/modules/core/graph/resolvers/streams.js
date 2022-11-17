@@ -26,7 +26,7 @@ const {
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const {
-  respectsLimits,
+  isWithinRateLimits,
   RateLimitError
 } = require('@/modules/core/services/ratelimiter')
 const {
@@ -234,7 +234,7 @@ module.exports = {
   Mutation: {
     async streamCreate(parent, args, context) {
       if (
-        !(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))
+        !(await isWithinRateLimits({ action: 'STREAM_CREATE', source: context.userId }))
       ) {
         throw new RateLimitError()
       }
