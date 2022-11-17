@@ -8,8 +8,7 @@ const {
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   sendRateLimitResponse,
-  isWithinRateLimits,
-  RateLimitError
+  isWithinRateLimits
 } = require('@/modules/core/services/ratelimiter')
 const {
   validateServerInvite,
@@ -66,8 +65,8 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (ip) user.ip = ip
         if (user.ip)
           await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }).catch(
-            () => {
-              throw new RateLimitError()
+            (rateLimiterResponse) => {
+              return sendRateLimitResponse(res, rateLimiterResponse)
             }
           )
 
@@ -99,9 +98,6 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         return next()
       } catch (err) {
         debug('speckle:error')(err)
-        if (err instanceof RateLimitError) {
-          return sendRateLimitResponse(res)
-        }
         return res.status(400).send({ err: err.message })
       }
     },

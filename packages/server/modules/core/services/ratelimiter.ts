@@ -11,6 +11,7 @@ import { TIME } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { BaseError } from '@/modules/shared/errors'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
+import Sentry from '@sentry/node'
 
 export class RateLimitError extends BaseError {
   static defaultMessage =
@@ -95,6 +96,13 @@ export const sendRateLimitResponse = (
   rateLimiterRes: RateLimiterRes | undefined,
   opts: RateLimiterOption | undefined
 ): express.Response => {
+  if (rateLimiterRes instanceof Error) {
+    Sentry.captureException(rateLimiterRes)
+    res.setHeader('X-Speckle-Meditation', 'https://http.cat/500')
+    return res.status(500).send({
+      err: 'Error when attempting to determine rate limit. Please try again later.'
+    })
+  }
   if (rateLimiterRes) {
     res.setHeader('Retry-After', rateLimiterRes.msBeforeNext / 1000)
     res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints)
@@ -136,7 +144,7 @@ export const rateLimiterMiddleware = async (
     })
 }
 
-// returns true if the action is fine, false if it should be blocked because of exceeding limit
+// Promise will reject if the source is not within limits for the action, resolve otherwise
 export async function isWithinRateLimits({
   action,
   source
