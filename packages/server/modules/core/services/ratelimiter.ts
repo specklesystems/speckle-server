@@ -27,8 +27,23 @@ type RateLimiterOptions = {
   [key: string]: RateLimiterOption
 }
 
+interface RateLimitContext extends AuthContext {
+  ip: string
+}
+
 interface RequestWithContext extends express.Request {
-  context: AuthContext
+  context: RateLimitContext
+}
+
+interface rejectsRequestsConfig {
+  action: string
+  req: RequestWithContext
+  res: express.Response
+}
+
+interface respectsLimitsConfig {
+  action: string
+  source: string
 }
 
 // data
@@ -131,11 +146,6 @@ export const rateLimiterMiddleware = async (
     })
 }
 
-interface respectsLimitsConfig {
-  action: string
-  source: string
-}
-
 // returns true if the action is fine, false if it should be blocked because of exceeding limit
 export async function respectsLimits({
   action,
@@ -161,26 +171,11 @@ export async function respectsLimits({
     })
 }
 
-interface requestContext {
-  userId: string
-  ip: string
-}
-
-interface expressRequestWithContext extends express.Request {
-  context: requestContext
-}
-
-interface rejectsRequestsParameters {
-  action: string
-  req: expressRequestWithContext
-  res: express.Response
-}
-
 export async function rejectsRequestWithRatelimitStatusIfNeeded({
   action,
   req,
   res
-}: rejectsRequestsParameters) {
+}: rejectsRequestsConfig) {
   const source = req.context.userId || req.context.ip
   if (!(await respectsLimits({ action, source })))
     return sendRateLimitResponse(res, undefined, undefined)
