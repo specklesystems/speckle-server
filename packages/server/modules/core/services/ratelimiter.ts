@@ -121,7 +121,13 @@ export const sendRateLimitResponse = (
   }
   if (action) {
     const opts = LIMITS[action]
+    if (!rateLimiterRes) res.setHeader('Retry-After', opts.duration)
     res.setHeader('X-RateLimit-Limit', opts.limitCount)
+  }
+
+  if (!action && !rateLimiterRes) {
+    // set a default value of 1 day
+    res.setHeader('Retry-After', 24 * 60 * 60)
   }
 
   res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
