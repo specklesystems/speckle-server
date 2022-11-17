@@ -64,12 +64,12 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         const user = req.body
         const ip = getIpFromRequest(req)
         if (ip) user.ip = ip
-        if (
-          user.ip &&
-          !(await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }))
-        ) {
-          throw new RateLimitError()
-        }
+        if (user.ip)
+          await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }).catch(
+            () => {
+              throw new RateLimitError()
+            }
+          )
 
         // 1. if the server is invite only you must have an invite
         if (serverInfo.inviteOnly && !req.session.token)

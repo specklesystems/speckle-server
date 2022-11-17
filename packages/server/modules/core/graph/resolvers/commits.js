@@ -159,11 +159,12 @@ module.exports = {
         'stream:contributor'
       )
 
-      if (
-        !(await isWithinRateLimits({ action: 'COMMIT_CREATE', source: context.userId }))
-      ) {
+      await isWithinRateLimits({
+        action: 'COMMIT_CREATE',
+        source: context.userId
+      }).catch(() => {
         throw new RateLimitError()
-      }
+      })
 
       const id = await createCommitByBranchName({
         ...args.commit,

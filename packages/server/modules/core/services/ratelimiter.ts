@@ -126,19 +126,12 @@ export const rateLimiterMiddleware = async (
 
   const action = 'ALL_REQUESTS'
   const rlOpts = LIMITS[action]
-  const rateLimiter = new RateLimiterRedis({
-    storeClient: redisClient,
-    keyPrefix: action,
-    points: rlOpts.limitCount,
-    duration: rlOpts.duration
-  })
 
   const rateLimitKey: string = (req as RequestWithContext)?.context?.userId
     ? ((req as RequestWithContext)?.context?.userId as string)
     : getIpFromRequest(req)
 
-  rateLimiter
-    .consume(rateLimitKey)
+  isWithinRateLimits({ action, source: rateLimitKey })
     .then(() => {
       next()
     })
@@ -151,9 +144,9 @@ export const rateLimiterMiddleware = async (
 export async function isWithinRateLimits({
   action,
   source
-}: isWithinRateLimitsConfig): Promise<boolean> {
+}: isWithinRateLimitsConfig): Promise<RateLimiterRes> {
   const rlOpts = LIMITS[action]
-  if (!rlOpts) return false // the rate limits for the action have not been defined, so prevent use of the action
+  if (!rlOpts) return Promise.reject(null) // the rate limits for the action have not been defined, so prevent use of the action
 
   const rateLimiter = new RateLimiterRedis({
     storeClient: redisClient,
@@ -162,14 +155,7 @@ export async function isWithinRateLimits({
     duration: rlOpts.duration
   })
 
-  return rateLimiter
-    .consume(source)
-    .then(() => {
-      return true
-    })
-    .catch(() => {
-      return false
-    })
+  return rateLimiter.consume(source)
 }
 
 export async function rejectsRequestWithRatelimitStatusIfNeeded({
@@ -177,6 +163,8 @@ export async function rejectsRequestWithRatelimitStatusIfNeeded({
   source,
   res
 }: rejectsRequestsConfig) {
-  if (!(await isWithinRateLimits({ action, source })))
-    return sendRateLimitResponse(res, undefined, undefined)
+  const rlOpts = LIMITS[action]
+  await isWithinRateLimits({ action, source }).catch((rateLimiterResponse) => {
+    return sendRateLimitResponse(res, rateLimiterResponse, rlOpts)
+  })
 }
