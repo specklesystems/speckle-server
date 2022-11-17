@@ -37,7 +37,7 @@
                 />
                 <InformationCircleIcon
                   v-else-if="currentNotification.type === ToastNotificationType.Info"
-                  class="h-6 w-6 text-primary"
+                  class="h-6 w-6 text-info"
                   aria-hidden="true"
                 />
               </div>

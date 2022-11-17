@@ -6,9 +6,7 @@
     >
       <div class="text-sm">Check out the Design System.</div>
       <div>
-        <FormButton class="ml-2" size="small" to="/designsystem" type="invert">
-          Take me there
-        </FormButton>
+        <FormButton class="ml-2" size="sm" to="/designsystem">Take me there</FormButton>
       </div>
     </div>
     <template v-for="(notification, i) in notifications" :key="i">
@@ -23,9 +21,9 @@
             v-for="(action, index) in notification.actions"
             :key="index"
             class="ml-2"
-            size="small"
+            size="sm"
             to="/designsystem"
-            :type="index == 0 ? 'pop' : undefined"
+            :type="index == 0 ? 'standard' : 'outline'"
           >
             {{ action }}
           </FormButton>

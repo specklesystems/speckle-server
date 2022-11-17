@@ -105,93 +105,9 @@
       </LayoutPanel>
       <LayoutPanel class="background text-foreground mb-4">
         <template #header>
-          <span class="h3">Buttons</span>
+          <span class="h3">Links & form elements</span>
         </template>
         <template #default>
-          <div class="flex flex-col space-y-4">
-            <div>Here are some buttons:</div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div
-                class="flex flex-col gap-y-4 p-6 rounded-lg border-4 border-primary-muted"
-              >
-                <p class="text-foreground">
-                  <code
-                    class="bg-primary-muted text-primary-focus text-xs pl-2 pr-0 py-1 mr-2 rounded"
-                  >
-                    type="primary"
-                  </code>
-                  Primary buttons for default element backgrounds
-                </p>
-                <hr class="border-primary-muted" />
-                <div>
-                  <FormButton to="/" size="small">Small primary button</FormButton>
-                </div>
-                <div><FormButton to="/">Basic primary button</FormButton></div>
-                <div>
-                  <FormButton to="/" size="big">Big primary button</FormButton>
-                </div>
-              </div>
-              <div class="flex flex-col gap-y-4 p-6 rounded-lg bg-foundation-2">
-                <p class="text-foreground">
-                  <code
-                    class="bg-primary text-white text-xs pl-2 pr-0 py-1 mr-2 rounded"
-                  >
-                    type="pop"
-                  </code>
-                  Pop buttons for accented element backgrounds (or normal ones)
-                </p>
-                <hr class="border-foundation" />
-                <div>
-                  <FormButton to="/" type="pop" size="small">
-                    Small pop button
-                  </FormButton>
-                </div>
-                <div><FormButton to="/" type="pop">Basic pop button</FormButton></div>
-                <div>
-                  <FormButton to="/" type="pop" size="big">Big pop button</FormButton>
-                </div>
-              </div>
-              <div class="flex flex-col gap-y-4 p-6 rounded-lg bg-primary">
-                <p class="text-white">
-                  <code
-                    class="bg-white text-primary text-xs pl-2 pr-0 py-1 mr-2 rounded"
-                  >
-                    type="invert"
-                  </code>
-                  Inverted buttons for accented element backgrounds
-                </p>
-                <hr class="border-primary-muted" />
-                <div>
-                  <FormButton to="/" type="invert" size="small">
-                    Small invert button
-                  </FormButton>
-                </div>
-                <div>
-                  <FormButton to="/" type="invert">Basic invert button</FormButton>
-                </div>
-                <div>
-                  <FormButton to="/" type="invert" size="big">
-                    Big inverted button
-                  </FormButton>
-                </div>
-              </div>
-            </div>
-            <div>
-              <FormButton to="/" full-width>Full-width button</FormButton>
-            </div>
-            <div>
-              <FormButton to="/" disabled>Disabled primary button</FormButton>
-            </div>
-            <div>
-              <FormButton to="/" type="danger">Danger button</FormButton>
-            </div>
-            <div>
-              <FormButton to="/" type="warning">Warning button</FormButton>
-            </div>
-            <div>
-              <FormButton to="/" type="outline">Basic outline button</FormButton>
-            </div>
-          </div>
           <div class="my-8">
             <div>Link:</div>
             <div>
@@ -286,7 +202,7 @@
                   validate-on-mount
                 />
               </div>
-              <div><FormButton submit full-width type="pop">Submit</FormButton></div>
+              <div><FormButton submit full-width>Submit</FormButton></div>
             </Form>
           </div>
         </template>

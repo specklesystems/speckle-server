@@ -19,14 +19,14 @@ export default {
       type: 'function'
     },
     size: {
-      options: ['big', 'normal', 'small'],
+      options: ['xs', 'sm', 'base', 'lg', 'xl'],
       control: { type: 'select' }
     },
     fullWidth: {
       type: 'boolean'
     },
     type: {
-      options: ['primary', 'pop', 'danger', 'outline', 'success', 'warning', 'invert'],
+      options: ['standard', 'pill', 'outline', 'link'],
       control: { type: 'select' }
     },
     external: {
@@ -75,9 +75,9 @@ export const Default: Story = {
   args: {
     target: '_blank',
     to: 'https://google.com',
-    default: 'Click me to open Google!',
-    size: 'normal',
-    type: 'primary'
+    default: 'Button text',
+    size: 'base',
+    type: 'standard'
   },
   parameters: {
     docs: {
@@ -88,11 +88,52 @@ export const Default: Story = {
   }
 }
 
+export const Pill: Story = mergeStories(Default, {
+  args: {
+    type: 'pill'
+  }
+})
+
+export const Outline: Story = mergeStories(Default, {
+  args: {
+    type: 'outline'
+  }
+})
+
+export const Link: Story = mergeStories(Default, {
+  args: {
+    type: 'link'
+  }
+})
+
+export const Small: Story = mergeStories(Default, {
+  args: {
+    size: 'sm'
+  }
+})
+
+export const ExtraSmall: Story = mergeStories(Default, {
+  args: {
+    size: 'xs'
+  }
+})
+
+export const Large: Story = mergeStories(Default, {
+  args: {
+    size: 'lg'
+  }
+})
+
+export const ExtraLarge: Story = mergeStories(Default, {
+  args: {
+    size: 'xl'
+  }
+})
+
 export const Disabled: Story = mergeStories(Default, {
   play: leftClickPlay,
   args: {
-    disabled: true,
-    default: 'Disabled button'
+    disabled: true
   },
   parameters: {
     docs: {
@@ -111,59 +152,10 @@ export const NoTarget: Story = mergeStories(Default, {
   }
 })
 
-export const Small: Story = mergeStories(Default, {
-  args: {
-    size: 'small',
-    default: 'Small button'
-  }
-})
-
-export const Big: Story = mergeStories(Default, {
-  args: {
-    size: 'big',
-    default: 'Big button'
-  }
-})
-
 export const FullWidth: Story = mergeStories(Default, {
   args: {
     fullWidth: true,
     default: 'Full width button'
-  }
-})
-
-export const Pop: Story = mergeStories(Default, {
-  args: {
-    type: 'pop',
-    default: 'Pop variant'
-  }
-})
-
-export const Invert: Story = mergeStories(Default, {
-  args: {
-    type: 'invert',
-    default: 'Inverted variant'
-  }
-})
-
-export const Danger: Story = mergeStories(Default, {
-  args: {
-    type: 'danger',
-    default: 'Danger variant'
-  }
-})
-
-export const Outline: Story = mergeStories(Default, {
-  args: {
-    type: 'outline',
-    default: 'Outline variant'
-  }
-})
-
-export const Warning: Story = mergeStories(Default, {
-  args: {
-    type: 'warning',
-    default: 'Warning variant'
   }
 })
 

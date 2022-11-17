@@ -69,6 +69,11 @@ const config = {
         DEFAULT: 'var(--disabled)',
         muted: 'var(--disabled-muted)'
       }
+    },
+    extend: {
+      borderRadius: {
+        '4xl': '2rem'
+      }
     }
   },
   plugins: [require('@tailwindcss/forms'), require('@tailwindcss/line-clamp')]
