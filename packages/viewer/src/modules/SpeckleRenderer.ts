@@ -2,16 +2,24 @@ import {
   ACESFilmicToneMapping,
   Box3,
   Box3Helper,
+  BufferAttribute,
+  BufferGeometry,
   CameraHelper,
   Color,
   DirectionalLight,
   DirectionalLightHelper,
+  DynamicDrawUsage,
   Group,
   Intersection,
+  Line3,
+  LineBasicMaterial,
+  LineSegments,
   Matrix4,
   Mesh,
   Object3D,
   Plane,
+  Points,
+  PointsMaterial,
   RGBADepthPacking,
   Scene,
   Sphere,
@@ -51,6 +59,7 @@ import {
   RenderType
 } from './pipeline/Pipeline'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
+import MeshBatch from './batching/MeshBatch'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -484,6 +493,102 @@ export default class SpeckleRenderer {
     this.pipeline.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
+  }
+
+  public clipTest() {
+    const batches: MeshBatch[] = this.batcher.getBatches(
+      undefined,
+      GeometryType.MESH
+    ) as MeshBatch[]
+    for (let b = 0; b < batches.length; b++) {
+      const tempVector = new Vector3()
+      const tempVector1 = new Vector3()
+      const tempVector2 = new Vector3()
+      const tempVector3 = new Vector3()
+      const tempLine = new Line3()
+      const lineGeometry = new BufferGeometry()
+      const linePosAttr = new BufferAttribute(new Float32Array(50000), 3, false)
+      linePosAttr.setUsage(DynamicDrawUsage)
+      lineGeometry.setAttribute('position', linePosAttr)
+      const outlineLines = new LineSegments(lineGeometry, new LineBasicMaterial())
+      outlineLines.material.color.set(0x00acc1).convertSRGBToLinear()
+      outlineLines.frustumCulled = false
+      outlineLines.renderOrder = 3
+      outlineLines.layers.set(ObjectLayers.PROPS)
+      this.allObjects.add(outlineLines)
+
+      const points = new Points(
+        lineGeometry,
+        new PointsMaterial({ color: 0xff0000, size: 0.05 })
+      )
+      points.renderOrder = 4
+      points.layers.set(ObjectLayers.PROPS)
+      // this.allObjects.add(points)
+
+      const posAttr = outlineLines.geometry.attributes.position
+      let index = 0
+      batches[b].boundsTree.shapecast({
+        intersectsBounds: (box) => {
+          const localPlane = this.viewer.sectionBox.planes[2]
+          return localPlane.intersectsBox(box)
+        },
+
+        intersectsTriangle: (tri) => {
+          // check each triangle edge to see if it intersects with the plane. If so then
+          // add it to the list of segments.
+          const localPlane = this.viewer.sectionBox.planes[2]
+          let count = 0
+
+          tempLine.start.copy(tri.a)
+          tempLine.end.copy(tri.b)
+          if (localPlane.intersectLine(tempLine, tempVector)) {
+            posAttr.setXYZ(index, tempVector.x, tempVector.y, tempVector.z)
+            index++
+            count++
+          }
+
+          tempLine.start.copy(tri.b)
+          tempLine.end.copy(tri.c)
+          if (localPlane.intersectLine(tempLine, tempVector)) {
+            posAttr.setXYZ(index, tempVector.x, tempVector.y, tempVector.z)
+            count++
+            index++
+          }
+
+          tempLine.start.copy(tri.c)
+          tempLine.end.copy(tri.a)
+          if (localPlane.intersectLine(tempLine, tempVector)) {
+            posAttr.setXYZ(index, tempVector.x, tempVector.y, tempVector.z)
+            count++
+            index++
+          }
+
+          // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
+          if (count === 3) {
+            tempVector1.fromBufferAttribute(posAttr, index - 3)
+            tempVector2.fromBufferAttribute(posAttr, index - 2)
+            tempVector3.fromBufferAttribute(posAttr, index - 1)
+            // If the last point is a duplicate intersection
+            if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
+              count--
+              index--
+            } else if (tempVector1.equals(tempVector2)) {
+              // If the last point is not a duplicate intersection
+              // Set the penultimate point as a distinct point and delete the last point
+              posAttr.setXYZ(index - 2, tempVector3.x, tempVector3.y, tempVector3.z)
+              count--
+              index--
+            }
+          }
+
+          // If we only intersected with one or three sides then just remove it. This could be handled
+          // more gracefully.
+          if (count !== 2) {
+            index -= count
+          }
+        }
+      })
+    }
   }
 
   private addDirectLights() {
