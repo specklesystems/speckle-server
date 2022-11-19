@@ -36,7 +36,8 @@ import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { get, has, isString, toNumber } from 'lodash'
 
 let graphqlServer: ApolloServer
-
+const startupLogger = Logger.child({ phase: 'startup' })
+const shutdownLogger = Logger.child({ phase: 'shutdown' })
 /**
  * TODO: subscriptions-transport-ws is no longer maintained, we should migrate to graphql-ws insted. The problem
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients
@@ -261,8 +262,8 @@ export async function startHttp(
     })
     app.use('/', frontendProxy)
 
-    Logger.info('✨ Proxying frontend (dev mode):')
-    Logger.info(`👉 main application: http://localhost:${port}/`)
+    startupLogger.info('✨ Proxying frontend (dev mode):')
+    startupLogger.info(`👉 main application: http://localhost:${port}/`)
   }
 
   // Production mode
@@ -282,13 +283,13 @@ export async function startHttp(
     signals: ['SIGTERM', 'SIGINT'],
     timeout: 5 * 60 * 1000,
     beforeShutdown: async () => {
-      Logger.info('Shutting down (signal received)...')
+      shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
       await shutdown()
     },
     onShutdown: () => {
-      Logger.info('Shutdown completed')
+      shutdownLogger.info('Shutdown completed')
       process.exit(0)
     }
   })
@@ -298,7 +299,7 @@ export async function startHttp(
     const addressString = isString(address) ? address : address?.address
     const port = isString(address) ? null : address?.port
 
-    Logger.info(
+    startupLogger.info(
       `🚀 My name is Speckle Server, and I'm running at ${addressString}:${port}`
     )
     app.emit('appStarted')
