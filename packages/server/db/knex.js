@@ -3,10 +3,8 @@
 
 const env = process.env.NODE_ENV || 'development'
 const configs = require('@/knexfile.js')
-const { phaseDbStartup } = require('@/logging/logConstants')
-const Logger = require('@/logging/logging')
+const dbStartupLogger = require('@/logging/logging')
 const config = configs[env]
-const dbStartupLogger = Logger.child(phaseDbStartup)
 
 config.log = {
   warn(message) {

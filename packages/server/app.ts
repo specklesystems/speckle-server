@@ -10,7 +10,7 @@ import compression from 'compression'
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
-import { Logger } from '@/logging/logging'
+import { startupLogger, shutdownLogger } from '@/logging/logging'
 import { LoggingExpressMiddleware } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
@@ -34,11 +34,9 @@ import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 
 import { get, has, isString, toNumber } from 'lodash'
-import { phaseShutdown, phaseStartup } from '@/logging/logConstants'
 
 let graphqlServer: ApolloServer
-const startupLogger = Logger.child(phaseStartup)
-const shutdownLogger = Logger.child(phaseShutdown)
+
 /**
  * TODO: subscriptions-transport-ws is no longer maintained, we should migrate to graphql-ws insted. The problem
  * is that graphql-ws uses an entirely different protocol, so the client-side has to change as well, and so old clients

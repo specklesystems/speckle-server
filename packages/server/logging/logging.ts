@@ -12,3 +12,11 @@ export const Logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   timestamp: pino.stdTimeFunctions.isoTime
 })
+
+// loggers for phases of operation
+export const startupLogger = Logger.child({ phase: 'startup' })
+export const dbStartupLogger = Logger.child({ phase: 'db-startup' })
+export const shutdownLogger = Logger.child({ phase: 'shutdown' })
+
+// loggers for specific components within normal operation
+export const moduleLogger = Logger.child({ component: 'modules' })
