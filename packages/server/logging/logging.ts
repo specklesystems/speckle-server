@@ -20,3 +20,4 @@ export const shutdownLogger = Logger.child({ phase: 'shutdown' })
 
 // loggers for specific components within normal operation
 export const moduleLogger = Logger.child({ component: 'modules' })
+export const activitiesLogger = Logger.child({ component: 'modules/activities' })
