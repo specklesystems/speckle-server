@@ -6,12 +6,12 @@ import express, { Express } from 'express'
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
 import compression from 'compression'
-import logger from 'morgan-debug'
-import debug from 'debug'
 
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
+import { Logger } from '@/logging/logging'
+import { LoggingExpressMiddleware } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
@@ -181,7 +181,7 @@ export async function init() {
   await knex.migrate.latest()
 
   if (process.env.NODE_ENV !== 'test') {
-    app.use(logger('speckle', 'dev', {}))
+    app.use(LoggingExpressMiddleware)
   }
 
   if (process.env.COMPRESSION) {
@@ -261,8 +261,8 @@ export async function startHttp(
     })
     app.use('/', frontendProxy)
 
-    debug('speckle:startup')('✨ Proxying frontend (dev mode):')
-    debug('speckle:startup')(`👉 main application: http://localhost:${port}/`)
+    Logger.info('✨ Proxying frontend (dev mode):')
+    Logger.info(`👉 main application: http://localhost:${port}/`)
   }
 
   // Production mode
@@ -282,13 +282,13 @@ export async function startHttp(
     signals: ['SIGTERM', 'SIGINT'],
     timeout: 5 * 60 * 1000,
     beforeShutdown: async () => {
-      debug('speckle:shutdown')('Shutting down (signal received)...')
+      Logger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
       await shutdown()
     },
     onShutdown: () => {
-      debug('speckle:shutdown')('Shutdown completed')
+      Logger.info('Shutdown completed')
       process.exit(0)
     }
   })
@@ -298,7 +298,7 @@ export async function startHttp(
     const addressString = isString(address) ? address : address?.address
     const port = isString(address) ? null : address?.port
 
-    debug('speckle:startup')(
+    Logger.info(
       `🚀 My name is Speckle Server, and I'm running at ${addressString}:${port}`
     )
     app.emit('appStarted')
