@@ -1,10 +1,14 @@
+// Note logging is imported by www & ts-www, prior to init() being called
+// so we can't use imports with '@' etc., as they aren't yet defined.
 import pino from 'pino'
 
 export const Logger = pino({
-  level: process.env.PINO_LOG_LEVEL || 'info',
+  base: undefined, // Set to undefined to avoid adding pid, hostname properties to each log.
   formatters: {
     level: (label) => {
       return { level: label }
     }
-  }
+  },
+  level: process.env.LOG_LEVEL || 'info',
+  timestamp: pino.stdTimeFunctions.isoTime
 })
