@@ -66,8 +66,6 @@
     "lodash": "^4.17.21",
     "mjml": "^4.13.0",
     "module-alias": "^2.2.2",
-    "morgan": "^1.10.0",
-    "morgan-debug": "^2.0.0",
     "node-cron": "^3.0.2",
     "node-machine-id": "^1.1.12",
     "nodemailer": "^6.5.0",

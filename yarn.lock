@@ -5068,8 +5068,6 @@ __metadata:
     mocha-junit-reporter: ^2.0.2
     mock-require: ^3.0.3
     module-alias: ^2.2.2
-    morgan: ^1.10.0
-    morgan-debug: ^2.0.0
     node-cron: ^3.0.2
     node-machine-id: ^1.1.12
     nodemailer: ^6.5.0
@@ -7977,7 +7975,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"basic-auth@npm:^2.0.1, basic-auth@npm:~2.0.0, basic-auth@npm:~2.0.1":
+"basic-auth@npm:^2.0.1, basic-auth@npm:~2.0.0":
   version: 2.0.1
   resolution: "basic-auth@npm:2.0.1"
   dependencies:
@@ -15592,31 +15590,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"morgan-debug@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "morgan-debug@npm:2.0.0"
-  dependencies:
-    through2: ~2.0.1
-  peerDependencies:
-    debug: "*"
-    morgan: 1.x
-  checksum: 3519f2a61dfede9c89c31c906da4fc9459ad49664cd562cf5dd3d6c7ce4f4d335064034a843597552a95f9fdfdcc998d365817e30086b84872aa69b151a50ab2
-  languageName: node
-  linkType: hard
-
-"morgan@npm:^1.10.0":
-  version: 1.10.0
-  resolution: "morgan@npm:1.10.0"
-  dependencies:
-    basic-auth: ~2.0.1
-    debug: 2.6.9
-    depd: ~2.0.0
-    on-finished: ~2.3.0
-    on-headers: ~1.0.2
-  checksum: fb41e226ab5a1abf7e8909e486b387076534716d60207e361acfb5df78b84d703a7b7ea58f3046a9fd0b83d3c94bfabde32323341a1f1b26ce50680abd2ea5dd
-  languageName: node
-  linkType: hard
-
 "morgan@npm:~1.9.1":
   version: 1.9.1
   resolution: "morgan@npm:1.9.1"
@@ -17764,7 +17737,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readable-stream@npm:^2.0.1, readable-stream@npm:^2.0.6, readable-stream@npm:^2.3.5, readable-stream@npm:~2.3.6":
+"readable-stream@npm:^2.0.1, readable-stream@npm:^2.0.6, readable-stream@npm:^2.3.5":
   version: 2.3.7
   resolution: "readable-stream@npm:2.3.7"
   dependencies:
@@ -19904,16 +19877,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"through2@npm:~2.0.1":
-  version: 2.0.5
-  resolution: "through2@npm:2.0.5"
-  dependencies:
-    readable-stream: ~2.3.6
-    xtend: ~4.0.1
-  checksum: beb0f338aa2931e5660ec7bf3ad949e6d2e068c31f4737b9525e5201b824ac40cac6a337224856b56bd1ddd866334bbfb92a9f57cd6f66bc3f18d3d86fc0fe50
-  languageName: node
-  linkType: hard
-
 "through@npm:^2.3.6, through@npm:^2.3.8":
   version: 2.3.8
   resolution: "through@npm:2.3.8"
@@ -21570,7 +21533,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xtend@npm:^4.0.0, xtend@npm:~4.0.1":
+"xtend@npm:^4.0.0":
   version: 4.0.2
   resolution: "xtend@npm:4.0.2"
   checksum: ac5dfa738b21f6e7f0dd6e65e1b3155036d68104e67e5d5d1bde74892e327d7e5636a076f625599dc394330a731861e87343ff184b0047fef1360a7ec0a5a36a
