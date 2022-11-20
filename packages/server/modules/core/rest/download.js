@@ -1,6 +1,5 @@
 'use strict'
 const zlib = require('zlib')
-const debug = require('debug')
 const cors = require('cors')
 
 const { contextMiddleware } = require('@/modules/shared')
@@ -12,6 +11,7 @@ const { pipeline, PassThrough } = require('stream')
 const {
   rejectsRequestWithRatelimitStatusIfNeeded
 } = require('@/modules/core/services/ratelimits')
+const { Logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', cors())
@@ -70,13 +70,13 @@ module.exports = (app) => {
         res,
         (err) => {
           if (err) {
-            debug('speckle:error')(
+            Logger.error(
               `[User ${req.context.userId || '-'}] Error downloading object ${
                 req.params.objectId
               } from stream ${req.params.streamId}: ${err}`
             )
           } else {
-            debug('speckle:info')(
+            Logger.info(
               `[User ${req.context.userId || '-'}] Downloaded object ${
                 req.params.objectId
               } from stream ${req.params.streamId} (size: ${
@@ -119,7 +119,7 @@ module.exports = (app) => {
         return res.status(404).send('Failed to find object.')
       }
 
-      debug('speckle:info')(
+      Logger.info(
         `[User ${req.context.userId || '-'}] Downloaded single object ${
           req.params.objectId
         } from stream ${req.params.streamId}`

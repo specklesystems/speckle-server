@@ -1,7 +1,6 @@
 'use strict'
 const zlib = require('zlib')
 const cors = require('cors')
-const debug = require('debug')
 
 const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
@@ -10,6 +9,7 @@ const {
 } = require('@/modules/core/services/ratelimits')
 
 const { hasObjects } = require('../services/objects')
+const { Logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
@@ -31,7 +31,7 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    debug('speckle:info')(
+    Logger.info(
       `[User ${req.context.userId || '-'}] Diffing ${
         objectList.length
       } objects for stream ${req.params.streamId}`

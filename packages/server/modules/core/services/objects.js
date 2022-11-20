@@ -3,9 +3,8 @@ const { performance } = require('perf_hooks')
 const crypto = require('crypto')
 const { set, get, chunk } = require('lodash')
 
-const debug = require('debug')('speckle:services')
-
 const knex = require(`@/db/knex`)
+const { servicesLogger } = require('@/logging/logging')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
@@ -103,7 +102,7 @@ module.exports = {
           const q = Objects().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
         })
-        debug(`Inserted ${batch.length} objects`)
+        servicesLogger.info(`Inserted ${batch.length} objects`)
       }
     }
 
@@ -117,7 +116,7 @@ module.exports = {
           const q = Closures().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
         })
-        debug(`Inserted ${batch.length} closures`)
+        servicesLogger.info(`Inserted ${batch.length} closures`)
       }
     }
     return true
@@ -190,7 +189,7 @@ module.exports = {
       }
 
       const t1 = performance.now()
-      debug(
+      servicesLogger.info(
         `Batch ${index + 1}/${batches.length}: Stored ${
           closures.length + objsToInsert.length
         } objects in ${t1 - t0}ms.`

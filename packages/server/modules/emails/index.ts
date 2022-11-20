@@ -1,17 +1,15 @@
 /* istanbul ignore file */
+import { moduleLogger } from '@/logging/logging'
 import * as SendingService from '@/modules/emails/services/sending'
 import { initializeVerificationOnRegistration } from '@/modules/emails/services/verification/request'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import dbg from 'debug'
 
-const debug = dbg('speckle')
-const modulesDebug = debug.extend('modules')
 let quitVerificationListeners: Optional<() => void> = undefined
 
 const emailsModule: SpeckleModule = {
   init: async (app, isInitial) => {
-    modulesDebug('📧 Init emails module')
+    moduleLogger.info('📧 Init emails module')
 
     // init transporter
     await initializeTransporter()

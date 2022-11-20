@@ -7,7 +7,6 @@ import {
   NOTIFICATIONS_QUEUE,
   buildNotificationsQueue
 } from '@/modules/notifications/services/queue'
-import { cliDebug } from '@/modules/shared/utils/logger'
 import { noop } from 'lodash'
 import { cliLogger } from '@/logging/logging'
 
@@ -46,8 +45,8 @@ const command: CommandModule<unknown, { testQueueId: string }> = {
     app.use(serverAdapter.getRouter())
 
     app.listen(PORT, () => {
-      cliDebug(`Running on ${PORT}...`)
-      cliDebug(
+      cliLogger.info(`Running on ${PORT}...`)
+      cliLogger.info(
         `For the UI, open http://localhost:${PORT}/, and make sure Redis is running`
       )
     })

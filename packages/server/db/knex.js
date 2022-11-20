@@ -3,7 +3,7 @@
 
 const env = process.env.NODE_ENV || 'development'
 const configs = require('@/knexfile.js')
-const dbStartupLogger = require('@/logging/logging')
+const { dbStartupLogger } = require('@/logging/logging')
 const config = configs[env]
 
 config.log = {
