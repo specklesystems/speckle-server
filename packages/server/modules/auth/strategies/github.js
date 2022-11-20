@@ -4,7 +4,6 @@
 const passport = require('passport')
 const GithubStrategy = require('passport-github2')
 const URL = require('url').URL
-const debug = require('debug')
 const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
@@ -13,6 +12,7 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
+const { Logger } = require('@/logging/logging')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -91,7 +91,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return done(null, myUser)
       } catch (err) {
-        debug('speckle:error')(err)
+        Logger.error(err)
         return done(null, false, { message: err.message })
       }
     }

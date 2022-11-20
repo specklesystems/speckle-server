@@ -1,5 +1,4 @@
 'use strict'
-const debug = require('debug')
 const cors = require('cors')
 
 const sentry = require(`@/logging/sentryHelper`)
@@ -15,6 +14,7 @@ const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { ForbiddenError } = require('apollo-server-errors')
+const { Logger } = require('@/logging/logging')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -45,7 +45,7 @@ module.exports = (app) => {
       return res.redirect(`${app.redirectUrl}?access_code=${ac}`)
     } catch (err) {
       sentry({ err })
-      debug('speckle:error')(err)
+      Logger.error(err)
 
       if (
         err instanceof InvalidAccessCodeRequestError ||
