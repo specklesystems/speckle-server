@@ -2,7 +2,7 @@ import { CommandModule } from 'yargs'
 import { initializeQueue } from '@/modules/notifications/services/queue'
 import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { cliDebug } from '@/modules/shared/utils/logger'
+import { cliLogger } from '@/logging/logging'
 
 const command: CommandModule = {
   command: 'send [days]',
@@ -22,7 +22,7 @@ const command: CommandModule = {
     const start = new Date(end.getTime())
     start.setDate(start.getDate() - numberOfDays)
     await sendActivityNotifications(start, end, publishNotification)
-    cliDebug('Sent activity notifications')
+    cliLogger.info('Sent activity notifications')
   }
 }
 
