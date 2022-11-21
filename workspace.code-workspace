@@ -74,7 +74,8 @@
       "packages/frontend-2/tailwind.config.js": "packages/frontend-2/**"
     },
     "vue-semantic-server.trace.server": "off",
-    "vue-syntactic-server.trace.server": "off"
+    "vue-syntactic-server.trace.server": "off",
+    "svg.preview.background": "transparent"
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

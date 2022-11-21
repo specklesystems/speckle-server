@@ -1,26 +1,20 @@
 <template>
-  <LayoutPanel class="mx-auto max-w-screen-md">
-    <template #header>Sign in with</template>
-    <template #default>
-      <div class="flex flex-col space-y-8">
-        <FormButton
-          v-for="strat in thirdPartyStrategies"
-          :key="strat.id"
-          :to="buildAuthUrl(strat)"
-          :type="buttonType(strat)"
-          full-width
-          @click="() => onClick(strat)"
-        >
-          {{ strat.name }}
-        </FormButton>
-      </div>
-    </template>
-  </LayoutPanel>
+  <div>
+    <div class="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+      <Component
+        :is="getButtonComponent(strat)"
+        v-for="strat in thirdPartyStrategies"
+        :key="strat.id"
+        :to="buildAuthUrl(strat)"
+        @click="() => onClick(strat)"
+      />
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { Get } from 'type-fest'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { AuthStrategy, AuthStrategyStyles } from '~~/lib/auth/helpers/strategies'
+import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { graphql } from '~~/lib/common/generated/gql'
 import { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mixpanel'
@@ -54,6 +48,11 @@ const {
 const mixpanel = useMixpanel()
 const { inviteToken } = useAuthManager()
 
+const NuxtLink = resolveComponent('NuxtLink')
+const GoogleButton = resolveComponent('AuthThirdPartyLoginButtonGoogle')
+const MicrosoftButton = resolveComponent('AuthThirdPartyLoginButtonMicrosoft')
+const GithubButton = resolveComponent('AuthThirdPartyLoginButtonGithub')
+
 const thirdPartyStrategies = computed(() =>
   props.serverInfo.authStrategies.filter((s) => s.id !== AuthStrategy.Local)
 )
@@ -65,10 +64,18 @@ const buildAuthUrl = (strat: StrategyType) => {
   return url.toString()
 }
 
-const buttonType = (strat: StrategyType) => {
+const getButtonComponent = (strat: StrategyType) => {
   const stratId = strat.id as AuthStrategy
-  const styleData = AuthStrategyStyles[stratId]
-  return styleData?.buttonType || 'primary'
+  switch (stratId) {
+    case AuthStrategy.Google:
+      return GoogleButton
+    case AuthStrategy.Github:
+      return GithubButton
+    case AuthStrategy.AzureAD:
+      return MicrosoftButton
+  }
+
+  return NuxtLink
 }
 
 const onClick = (strat: StrategyType) => {

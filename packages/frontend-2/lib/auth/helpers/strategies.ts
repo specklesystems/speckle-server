@@ -9,17 +9,3 @@ export enum AuthStrategy {
   Github = 'github',
   AzureAD = 'azuread'
 }
-
-export const AuthStrategyStyles: Partial<
-  Record<AuthStrategy, { buttonType: 'danger' | 'outline' | 'pop' }>
-> = {
-  [AuthStrategy.Google]: {
-    buttonType: 'danger'
-  },
-  [AuthStrategy.Github]: {
-    buttonType: 'outline'
-  },
-  [AuthStrategy.AzureAD]: {
-    buttonType: 'pop'
-  }
-}

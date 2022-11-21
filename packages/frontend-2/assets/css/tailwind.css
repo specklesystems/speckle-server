@@ -22,23 +22,31 @@
   }
 
   .h3 {
-    @apply text-3xl;
+    @apply text-3xl font-bold leading-9;
   }
 
   .h4 {
-    @apply text-2xl;
+    @apply text-2xl font-bold leading-8;
   }
 
   .h5 {
     @apply text-xl;
   }
 
+  .h6 {
+    @apply text-lg font-medium leading-7;
+  }
+
   .label {
-    @apply text-sm font-medium;
+    @apply text-sm font-medium leading-5;
 
     &--light {
       @apply font-normal;
     }
+  }
+
+  .normal {
+    @apply text-base font-normal;
   }
 
   [type='checkbox']:focus,

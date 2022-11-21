@@ -11,3 +11,14 @@ export function markClassesUsed(classes: string[]) {
   // invocations of this function
   false && classes
 }
+
+/**
+ * Default tailwind breakpoint set. Each value is the minimum width (in pixels) expected for each breakpoint.
+ */
+export enum TailwindBreakpoints {
+  sm = 640,
+  md = 746,
+  lg = 1024,
+  xl = 1280,
+  '2xl' = 1536
+}

@@ -1,12 +1,16 @@
 <template>
   <div>
-    <label :for="name" class="block label" :class="{ 'sr-only': !showLabel }">
+    <label
+      :for="name"
+      class="block label text-foreground"
+      :class="{ 'sr-only': !showLabel }"
+    >
       <span>{{ title }}</span>
     </label>
     <div class="relative mt-1 rounded-md">
       <div
         v-if="hasLeadingIcon"
-        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
+        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"
       >
         <EnvelopeIcon
           v-if="type === 'email'"
@@ -25,8 +29,9 @@
         :type="type"
         :name="name"
         :class="[
-          'block h-12 w-full rounded-xl focus:outline-none sm:text-sm bg-foundation-page text-foreground transition-all',
+          'block h-12 w-full rounded-xl focus:outline-none bg-foundation-page text-foreground transition-all',
           'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
+          'placeholder:text-foreground-2',
           computedClasses
         ]"
         :placeholder="placeholder"
@@ -162,7 +167,7 @@ const { value, errorMessage: error } = useField(props.name, props.rules, {
   initialValue: props.modelValue || undefined
 })
 
-const leadingIconClasses = ref('h-4 w-4 text-foreground-2')
+const leadingIconClasses = ref('h-5 w-5 text-foreground-2')
 
 const hasLeadingIcon = computed(() => ['email', 'password'].includes(props.type))
 
@@ -170,12 +175,12 @@ const computedClasses = computed((): string => {
   const classParts: string[] = []
 
   if (hasLeadingIcon.value) {
-    classParts.push('pl-8')
+    classParts.push('pl-10')
   }
 
   if (error.value) {
     classParts.push(
-      'pr-8 border-danger-lighter text-danger-darker placeholder-danger-lighter focus:border-danger focus:ring-danger'
+      'pr-8 border-danger-lighter text-danger-darker placeholder:text-danger focus:border-danger focus:ring-danger'
     )
   } else {
     classParts.push('border-0 focus:ring-2 focus:ring-primary-muted')

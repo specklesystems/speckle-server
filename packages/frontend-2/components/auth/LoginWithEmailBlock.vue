@@ -1,30 +1,32 @@
 <template>
-  <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
-    <template #header>
-      <span class="h5">Sign in with email & password</span>
-    </template>
-    <template #default>
-      <div class="flex flex-col space-y-8">
-        <FormTextInput
-          type="email"
-          name="email"
-          label="E-mail"
-          :rules="emailRules"
-          show-label
-        />
-        <FormTextInput
-          type="password"
-          name="password"
-          label="Password"
-          :rules="passwordRules"
-          show-label
-        />
-      </div>
-    </template>
-    <template #footer>
-      <FormButton submit full-width>Submit</FormButton>
-    </template>
-  </LayoutPanel>
+  <form @submit="onSubmit">
+    <div class="flex flex-col space-y-4">
+      <FormTextInput
+        type="email"
+        name="email"
+        label="E-mail"
+        placeholder="E-mail"
+        :rules="emailRules"
+        show-label
+      />
+      <FormTextInput
+        type="password"
+        name="password"
+        label="Password"
+        placeholder="Password"
+        :rules="passwordRules"
+        show-label
+      />
+    </div>
+    <div class="mt-1">
+      <TextLink :to="ForgottenPasswordRoute">Forgot your password?</TextLink>
+    </div>
+    <FormButton submit full-width class="my-8">Log in</FormButton>
+    <div class="text-center">
+      <span class="mr-2">Don't have an account?</span>
+      <TextLink :to="RegisterRoute">Register</TextLink>
+    </div>
+  </form>
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
@@ -32,6 +34,7 @@ import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
+import { ForgottenPasswordRoute, RegisterRoute } from '~~/lib/common/helpers/route'
 
 type FormValues = { email: string; password: string }
 
