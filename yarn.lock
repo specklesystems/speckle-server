@@ -4830,6 +4830,7 @@ __metadata:
     knex: ^2.0.0
     nodemon: ^2.0.13
     pg: ^8.7.3
+    pino: ^8.7.0
     prettier: ^2.5.1
     prom-client: ^14.0.1
     undici: ^5.8.2
