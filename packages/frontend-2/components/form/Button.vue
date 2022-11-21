@@ -94,7 +94,11 @@ const typeClasses = computed(() => {
   const classParts: string[] = []
 
   const disabled = props.disabled
+
+  const isXs = props.size === 'xs'
+  const isSm = props.size === 'sm'
   const isXl = props.size === 'xl'
+  const isBase = props.size === 'base'
 
   // Rounded borders
   if (['pill', 'outline'].includes(props.type)) {
@@ -112,13 +116,6 @@ const typeClasses = computed(() => {
         ? 'text-foreground-disabled'
         : 'text-primary hover:text-primary-focus focus:text-primary-focus'
     )
-
-    if (props.type === 'outline') {
-      // ring
-      classParts.push(
-        disabled ? 'ring-foreground-disabled ring' : 'ring-primary-outline ring'
-      )
-    }
   } else {
     // bg
     classParts.push(
@@ -130,10 +127,33 @@ const typeClasses = computed(() => {
     classParts.push(
       disabled ? 'text-foreground-disabled' : 'text-foreground-on-primary'
     )
+  }
 
-    // focus & hover rings
-    if (!disabled) {
-      classParts.push('ring-primary-outline-2 focus:ring hover:ring')
+  // Rings
+  if (props.type !== 'link') {
+    const ringClass = isXs ? 'ring-1' : isBase || isSm ? 'ring-2' : 'ring'
+
+    if (props.type === 'outline') {
+      classParts.push(
+        disabled
+          ? `ring-foreground-disabled ${ringClass}`
+          : `ring-primary-outline ${ringClass}`
+      )
+    } else if (!disabled) {
+      classParts.push('ring-primary-outline-2')
+
+      switch (props.size) {
+        case 'xs':
+          classParts.push('focus:ring-1 hover:ring-1')
+          break
+        case 'sm':
+        case 'base':
+          classParts.push('focus:ring-2 hover:ring-2')
+          break
+        default:
+          classParts.push('focus:ring hover:ring')
+          break
+      }
     }
   }
 

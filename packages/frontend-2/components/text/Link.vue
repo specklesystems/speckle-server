@@ -41,7 +41,7 @@ const props = defineProps({
 
 const NuxtLink = resolveComponent('NuxtLink')
 
-// TODO: Composables are similar to FormButton ones, extract to a common one
+// TODO: Composables are similar to FormButton ones, extract to a common one. Or maybe just add this as another variation of "FormButton"?
 
 const typeClasses = computed(() => {
   const classParts: string[] = []
