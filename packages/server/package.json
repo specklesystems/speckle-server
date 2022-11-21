@@ -17,17 +17,17 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
     "build:watch": "tsc -p ./tsconfig.build.json -w",
-    "run:watch": "cross-env NODE_ENV=development DEBUG='speckle:*' nodemon ./bin/www --watch ./dist --watch ./assets --watch ./bin/www -e js,ts,graphql,env,gql",
+    "run:watch": "cross-env NODE_ENV=development nodemon ./bin/www --watch ./dist --watch ./assets --watch ./bin/www -e js,ts,graphql,env,gql",
     "dev": "concurrently -r \"npm:build:watch\" \"npm:run:watch\"",
-    "dev:server:test": "cross-env DISABLE_NOTIFICATIONS_CONSUMPTION=true NODE_ENV=test DEBUG='speckle:*' node ./bin/ts-www",
+    "dev:server:test": "cross-env DISABLE_NOTIFICATIONS_CONSUMPTION=true NODE_ENV=test node ./bin/ts-www",
     "test": "cross-env NODE_ENV=test mocha",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter lcov mocha",
     "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "eslint . --ext .js,.ts",
     "lint:tsc": "tsc --noEmit",
-    "cli": "cross-env NODE_ENV=development DEBUG='speckle:*' ts-node ./modules/cli/index.js",
+    "cli": "cross-env NODE_ENV=development ts-node ./modules/cli/index.js",
     "migrate": "yarn cli db migrate",
-    "migrate:test": "cross-env NODE_ENV=test DEBUG='speckle:*' ts-node ./modules/cli/index.js db migrate",
+    "migrate:test": "cross-env NODE_ENV=test ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
