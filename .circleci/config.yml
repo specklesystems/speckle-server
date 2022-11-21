@@ -30,6 +30,8 @@ workflows:
           filters: *filters-allow-all
 
       - docker-build-server:
+          context: &build-context
+            - github-readonly-public-repos
           filters: &filters-build
             tags:
               only: /.*/
@@ -38,35 +40,41 @@ workflows:
             - get-version
 
       - docker-build-frontend:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
 
       - docker-build-webhooks:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-file-imports:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-previews:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-test-container:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-monitor-container:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
@@ -365,11 +373,16 @@ jobs:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
+      - run:
+          name: determine if draft PR
+          command: |
+            echo "export IS_DRAFT_PR=$(.circleci/is_draft.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
+      - run: echo "IS_DRAFT_PR=${IS_DRAFT_PR}"
       - run:
           name: 'Check if should proceed'
           command: |
-            [[ "${CIRCLE_BRANCH}" != "main" && -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
+            [[ "${CIRCLE_BRANCH}" != "main" && ("${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}") ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
             echo "proceeding"
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
