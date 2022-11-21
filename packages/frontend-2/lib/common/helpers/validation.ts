@@ -1,4 +1,4 @@
-import { isString } from 'lodash-es'
+import { isString, isUndefined } from 'lodash-es'
 import { GenericValidateFunction } from 'vee-validate'
 
 /**
@@ -27,4 +27,38 @@ export const isSameAs: (
       : `Value must be the same as in field '${
           otherFieldDisplayName || otherFieldName
         }'`
+  }
+
+export const isStringOfLength =
+  (params: {
+    minLength?: number
+    maxLength?: number
+  }): GenericValidateFunction<string> =>
+  (val) => {
+    const { minLength, maxLength } = params
+
+    if (!isString(val)) return 'Value should be a text string'
+    if (!isUndefined(minLength) && val.length < minLength)
+      return `Value needs to be at least ${minLength} characters long`
+    if (!isUndefined(maxLength) && val.length > maxLength)
+      return `Value needs to be no more than ${maxLength} characters long`
+    return true
+  }
+
+export const stringContains =
+  (params: {
+    match: string | RegExp
+    message: string
+  }): GenericValidateFunction<string> =>
+  (val) => {
+    const { match, message } = params
+
+    if (!isString(val)) return 'Value should be a text string'
+    if (!match) return true
+
+    if (isString(match)) {
+      return val.includes(match) ? true : message
+    } else {
+      return match.test(val) ? true : message
+    }
   }

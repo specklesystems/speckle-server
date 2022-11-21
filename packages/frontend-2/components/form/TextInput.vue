@@ -17,7 +17,7 @@
           :class="leadingIconClasses"
           aria-hidden="true"
         />
-        <LockClosedIcon
+        <KeyIcon
           v-if="type === 'password'"
           :class="leadingIconClasses"
           aria-hidden="true"
@@ -72,11 +72,7 @@ export default defineComponent({
 </script>
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
-import {
-  ExclamationCircleIcon,
-  EnvelopeIcon,
-  LockClosedIcon
-} from '@heroicons/vue/20/solid'
+import { ExclamationCircleIcon, EnvelopeIcon, KeyIcon } from '@heroicons/vue/20/solid'
 import { PropType } from 'vue'
 import { Optional } from '@speckle/shared'
 import { ChangeEvent } from 'rollup'
