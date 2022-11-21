@@ -1,8 +1,6 @@
 import type { OverridedMixpanel } from 'mixpanel-browser'
-import { getCurrentInstance } from 'vue'
 import { useActiveUser, useWaitForActiveUser } from '~~/lib/auth/composables/activeUser'
 import md5 from '~~/lib/common/helpers/md5'
-import { ComposableInvokedOutOfScopeError } from '~~/lib/core/errors/base'
 import { useTheme } from '~~/lib/core/composables/theme'
 
 const HOST_APP = 'web-2'
@@ -25,11 +23,10 @@ export function useMixpanel(): OverridedMixpanel {
   // is undefined
   if (process.server) return undefined as unknown as OverridedMixpanel
 
-  const vm = getCurrentInstance()
-  const proxy = vm?.proxy
-  if (!proxy) throw new ComposableInvokedOutOfScopeError()
+  const nuxt = useNuxtApp()
+  const $mixpanel = nuxt.$mixpanel as () => OverridedMixpanel
 
-  return proxy.$mixpanel()
+  return $mixpanel()
 }
 
 /**

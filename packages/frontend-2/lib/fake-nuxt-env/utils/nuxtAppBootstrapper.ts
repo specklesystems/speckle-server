@@ -3,6 +3,7 @@ import { RouterLinkMock } from '~~/lib/fake-nuxt-env/components/RouterLinkMock'
 import { createNuxtApp, callWithNuxt, useNuxtApp, defineNuxtLink, NuxtApp } from '#app'
 import { App, defineComponent } from 'vue'
 import { Optional } from '@speckle/shared'
+import { noop } from 'lodash-es'
 
 const stubGlobalComponents = (app: App<Element>) => {
   const Head = defineComponent({
@@ -54,6 +55,12 @@ const initNuxtApp = (vueApp?: App<Element>) => {
   const nuxtApp = createNuxtApp({
     vueApp: initVueApp
   })
+
+  // Mocked useRoute() (no param & no query)
+  nuxtApp['_route'] = { query: {}, param: {} }
+
+  // TODO: Fake mixpanel through nuxtApp.$mixpanel
+  nuxtApp['$mixpanel'] = () => ({ track: noop })
 
   // This sets up the global Nuxt singleton, so that it's accessible in `useNuxtApp` etc.
   callWithNuxt(nuxtApp, () => void 0)
