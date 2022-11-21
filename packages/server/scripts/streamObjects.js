@@ -8,6 +8,7 @@ const { fetch } = require('undici')
 const { init } = require(`@/app`)
 const request = require('supertest')
 const { exit } = require('yargs')
+const { Logger } = require('@/logging/logging')
 
 const main = async () => {
   const testStream = {
@@ -53,7 +54,7 @@ const main = async () => {
     .set('Content-type', 'multipart/form-data')
     .attach('batch1', Buffer.from(JSON.stringify(objBatch), 'utf8'))
 
-  console.log(uploadRes.status)
+  Logger.info(uploadRes.status)
   const objectIds = objBatch.map((obj) => obj.id)
 
   const res = await fetch(`http://localhost:3000/api/getobjects/${testStream.id}`, {
@@ -66,8 +67,8 @@ const main = async () => {
     body: JSON.stringify({ objects: JSON.stringify(objectIds) })
   })
   const data = await res.body.getReader().read()
-  console.log(data)
+  Logger.info(data)
   exit(0)
 }
 
-main().then(console.log('created')).catch(console.log('failed'))
+main().then(Logger.info('created')).catch(Logger.error('failed'))

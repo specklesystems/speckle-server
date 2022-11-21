@@ -1,4 +1,5 @@
 require('../bootstrap')
+const { Logger } = require('@/logging/logging')
 const { createUser } = require('@/modules/core/services/users')
 const axios = require('axios').default
 
@@ -15,4 +16,4 @@ const main = async () => {
   await Promise.all(userInputs.map((userInput) => createUser(userInput)))
 }
 
-main().then(console.log('created')).catch(console.log('failed'))
+main().then(Logger.info('created')).catch(Logger.error('failed'))

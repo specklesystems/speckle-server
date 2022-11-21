@@ -106,7 +106,7 @@ exports.init = async (app) => {
         if (formKey.includes('hash:')) {
           clientHash = formKey.split(':')[1]
           if (clientHash && clientHash !== '') {
-            // console.log(`I have a client hash (${clientHash})`)
+            // Logger.debug(`I have a client hash (${clientHash})`)
             blobId = clientHash
           }
         }

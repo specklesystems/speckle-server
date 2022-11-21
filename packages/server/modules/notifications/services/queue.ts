@@ -16,7 +16,7 @@ import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { extendLoggerComponent, notificationsLogger } from '@/logging/logging'
+import { extendLoggerComponent, Logger, notificationsLogger } from '@/logging/logging'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -39,8 +39,8 @@ export const NOTIFICATIONS_QUEUE = isTestEnv()
   : NOTIFICATIONS_QUEUE_MAIN_BASE
 
 if (isTestEnv()) {
-  console.log('Notifications test queue ID: ' + NOTIFICATIONS_QUEUE)
-  console.log(`Monitor using: 'yarn cli bull monitor ${NOTIFICATIONS_QUEUE}'`)
+  Logger.info('Notifications test queue ID: ' + NOTIFICATIONS_QUEUE)
+  Logger.info(`Monitor using: 'yarn cli bull monitor ${NOTIFICATIONS_QUEUE}'`)
 }
 
 let queue: Optional<Bull.Queue>

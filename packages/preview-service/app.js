@@ -4,16 +4,16 @@ const createError = require('http-errors')
 const express = require('express')
 const path = require('path')
 const cookieParser = require('cookie-parser')
-const logger = require('morgan')
 
 const indexRouter = require('./routes/index')
 const previewRouter = require('./routes/preview')
 const objectsRouter = require('./routes/objects')
 const apiRouter = require('./routes/api')
+const { LoggingExpressMiddleware } = require('./observability/expressLogging')
 
 const app = express()
 
-app.use(logger('dev'))
+app.use(LoggingExpressMiddleware())
 
 app.use(express.json({ limit: '100mb' }))
 app.use(express.urlencoded({ limit: '100mb', extended: false }))

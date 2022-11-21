@@ -41,7 +41,7 @@ module.exports = (app) => {
       streamId: req.params.streamId,
       objectIds: objectList
     })
-    // console.log(response)
+    // Logger.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': 'application/json'

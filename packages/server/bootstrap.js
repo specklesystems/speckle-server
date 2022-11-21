@@ -24,6 +24,7 @@ const {
   getApolloServerVersion,
   getServerVersion
 } = require('./modules/shared/helpers/envHelper')
+const { Logger } = require('@/logging/logging')
 
 if (isApolloMonitoringEnabled() && !getApolloServerVersion()) {
   process.env.APOLLO_SERVER_USER_VERSION = getServerVersion()
@@ -37,7 +38,7 @@ if (isTestEnv()) {
     const e = new Error(
       'Attempting to run tests without an .env.test file properly set up! Check readme!'
     )
-    console.error(e)
+    Logger.error(e)
     process.exit(1)
   }
 }

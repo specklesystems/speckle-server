@@ -1,13 +1,14 @@
 const knex = require('@/db/knex')
+const { Logger } = require('@/logging/logging')
 
 /** @type {import('yargs').CommandModule} */
 const command = {
   command: 'up',
   describe: 'Run next migration that has not yet been run',
   async handler() {
-    console.log('Running...')
+    Logger.info('Running next migration...')
     await knex.migrate.up()
-    console.log('...done')
+    Logger.info('Completed running next migration')
   }
 }
 
