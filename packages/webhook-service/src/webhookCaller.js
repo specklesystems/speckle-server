@@ -51,7 +51,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
       size: 500 * 1000 // 500kb max response size, to accommodate various error responses (defaults to no limit)
     }).then(async (res) => ({ status: res.status, body: await res.text() }))
 
-    // webhookServiceLogger.error( 'Server response:', response )
+    // webhookServiceLogger.debug( 'Server response:', response )
     const error =
       httpSuccessCodes.indexOf(response.status) === -1
         ? `HTTP response code: ${response.status}`

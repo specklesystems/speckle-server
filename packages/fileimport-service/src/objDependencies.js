@@ -49,7 +49,7 @@ module.exports = {
         continue
       }
       if (!isValidFilename(mtlFile)) {
-        fileimportServiceLogger.info(
+        fileimportServiceLogger.warn(
           `Invalid filename reference in OBJ dependencies: ${mtlFile}`
         )
         continue

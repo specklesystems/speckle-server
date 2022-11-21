@@ -25,6 +25,5 @@ const extendLoggerComponent = function (otherChild, ...subComponent) {
 const webhookServiceLogger = extendLoggerComponent(Logger, 'webhook-service')
 
 module.exports = {
-  Logger,
   webhookServiceLogger
 }

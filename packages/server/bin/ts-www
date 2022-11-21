@@ -12,6 +12,6 @@ const { init, startHttp } = require('../app')
 
 init()
   .then(({ app, server }) => startHttp(server, app))
-  .catch((err) => Logger.debug(err))
+  .catch((err) => Logger.error(err))
 
 // 💥

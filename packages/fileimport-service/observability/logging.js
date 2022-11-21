@@ -25,6 +25,5 @@ const extendLoggerComponent = function (otherChild, ...subComponent) {
 const fileimportServiceLogger = extendLoggerComponent(Logger, 'fileimport-service')
 
 module.exports = {
-  Logger,
   fileimportServiceLogger
 }
