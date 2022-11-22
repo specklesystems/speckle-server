@@ -88,6 +88,10 @@ type User {
   verified: Boolean
   profiles: JSONObject
   role: String
+  """
+  Whether post-sign up onboarding has been finished or skipped entirely
+  """
+  accountSetupDone: Boolean @isOwner
 }
 
 """

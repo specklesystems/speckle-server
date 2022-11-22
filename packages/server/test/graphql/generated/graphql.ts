@@ -399,7 +399,7 @@ export type LimitedUser = {
   /** Get public stream commits authored by the user */
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
+  id: Scalars['ID'];
   name?: Maybe<Scalars['String']>;
   role?: Maybe<Scalars['String']>;
   /** Returns all discoverable streams that the user is a collaborator on */
@@ -454,6 +454,15 @@ export type LimitedUserTimelineArgs = {
   before?: InputMaybe<Scalars['DateTime']>;
   cursor?: InputMaybe<Scalars['DateTime']>;
   limit?: Scalars['Int'];
+};
+
+export type Model = {
+  __typename?: 'Model';
+  author: LimitedUser;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  sourceApp: Scalars['String'];
+  versionCount: Scalars['Int'];
 };
 
 export type Mutation = {
@@ -899,6 +908,16 @@ export type PendingStreamCollaborator = {
   user?: Maybe<LimitedUser>;
 };
 
+export type Project = {
+  __typename?: 'Project';
+  editedAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  modelCount: Scalars['Int'];
+  name: Scalars['String'];
+  role: Scalars['String'];
+  team: Array<LimitedUser>;
+};
+
 export type Query = {
   __typename?: 'Query';
   /** Stare into the void. */
@@ -927,6 +946,8 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
+  project: Project;
+  projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -948,6 +969,8 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
+  testList: Array<TestItem>;
+  testNumber?: Maybe<Scalars['Int']>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -1008,6 +1031,11 @@ export type QueryDiscoverableStreamsArgs = {
 
 export type QueryOtherUserArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryProjectArgs = {
+  id?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1127,7 +1155,7 @@ export type ServerInfo = {
   __typename?: 'ServerInfo';
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
-  authStrategies?: Maybe<Array<Maybe<AuthStrategy>>>;
+  authStrategies: Array<AuthStrategy>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
@@ -1497,12 +1525,20 @@ export type SubscriptionUserViewerActivityArgs = {
   streamId: Scalars['String'];
 };
 
+export type TestItem = {
+  __typename?: 'TestItem';
+  bar: Scalars['String'];
+  foo: Scalars['String'];
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
  */
 export type User = {
   __typename?: 'User';
+  /** Whether post-sign up onboarding has been finished or skipped entirely */
+  accountSetupDone?: Maybe<Scalars['Boolean']>;
   /** All the recent activity from this user in chronological order */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
@@ -1531,7 +1567,7 @@ export type User = {
   favoriteStreams: StreamCollection;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
-  id: Scalars['String'];
+  id: Scalars['ID'];
   name?: Maybe<Scalars['String']>;
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
