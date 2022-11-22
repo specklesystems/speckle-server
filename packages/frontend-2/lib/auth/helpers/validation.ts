@@ -1,8 +1,4 @@
-import {
-  isRequired,
-  isStringOfLength,
-  stringContains
-} from '~~/lib/common/helpers/validation'
+import { isStringOfLength, stringContains } from '~~/lib/common/helpers/validation'
 
 export const passwordLongEnough = isStringOfLength({ minLength: 8 })
 export const passwordHasAtLeastOneNumber = stringContains({
@@ -19,7 +15,6 @@ export const passwordHasAtLeastOneUppercaseLetter = stringContains({
 })
 
 export const passwordRules = [
-  isRequired,
   passwordLongEnough,
   passwordHasAtLeastOneNumber,
   passwordHasAtLeastOneLowercaseLetter,

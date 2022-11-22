@@ -1,5 +1,12 @@
 import { isString, isUndefined } from 'lodash-es'
 import { GenericValidateFunction } from 'vee-validate'
+import { isNullOrUndefined } from '@speckle/shared'
+
+/**
+ * Note about new validators:
+ * Make sure you use the word "Value" to refer to the value being validated in all error messages, cause the dynamic string replace
+ * that replaces that part with the actual field name works based on that
+ */
 
 /**
  * E-mail validation rule (not perfect, but e-mails should be validated by sending out confirmation e-mails anyway)
@@ -36,6 +43,7 @@ export const isStringOfLength =
   }): GenericValidateFunction<string> =>
   (val) => {
     const { minLength, maxLength } = params
+    val = isNullOrUndefined(val) ? '' : val
 
     if (!isString(val)) return 'Value should be a text string'
     if (!isUndefined(minLength) && val.length < minLength)

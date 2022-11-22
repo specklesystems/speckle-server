@@ -157,6 +157,20 @@ const props = defineProps({
     default: false
   },
   /**
+   * Whether to trigger validation whenever the value changes
+   */
+  validateOnValueUpdate: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Will replace the generic "Value" text with the name of the input in error messages
+   */
+  useLabelInErrors: {
+    type: Boolean,
+    default: true
+  },
+  /**
    * Set a custom icon to use inside the input
    */
   customIcon: {
@@ -173,6 +187,7 @@ defineEmits<{ (e: 'update:modelValue', val: ChangeEvent): void }>()
 
 const { value, errorMessage: error } = useField(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
+  validateOnValueUpdate: props.validateOnValueUpdate,
   initialValue: props.modelValue || undefined
 })
 
@@ -211,8 +226,13 @@ const computedClasses = computed((): string => {
 })
 
 const title = computed(() => props.label || props.name)
+const errorMessage = computed(() => {
+  const base = error.value
+  if (!base || !props.useLabelInErrors) return base
+  return base.replace('Value', title.value)
+})
 
-const helpTip = computed(() => error.value || props.help)
+const helpTip = computed(() => errorMessage.value || props.help)
 const hasHelpTip = computed(() => !!helpTip.value)
 const helpTipId = computed(() => (hasHelpTip.value ? `${props.name}-help` : undefined))
 const helpTipClasses = computed((): string =>
