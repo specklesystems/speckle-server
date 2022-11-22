@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import express from 'express'
 import Redis from 'ioredis'
 import {
@@ -7,6 +6,8 @@ import {
   getIntFromEnv
 } from '@/modules/shared/helpers/envHelper'
 import {
+  BurstyRateLimiter,
+  RateLimiterAbstract,
   RateLimiterMemory,
   RateLimiterRedis,
   RateLimiterRes
@@ -15,25 +16,58 @@ import { TIME } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { BaseError } from '@/modules/shared/errors'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import Sentry from '@sentry/node'
+import { Options } from 'verror'
 
 export class RateLimitError extends BaseError {
   static defaultMessage =
     'You have sent too many requests. You are being rate limited. Please try again later.'
   static code = 'RATE_LIMIT_ERROR'
+
+  action: RateLimitAction
+  rateLimitBreached: RateLimitBreached
+
+  constructor(
+    action: RateLimitAction,
+    rateLimitBreached: RateLimitBreached,
+    message?: string | null | undefined,
+    options: Options | Error | undefined = undefined
+  ) {
+    super(message ?? RateLimitError.defaultMessage, options)
+    this.action = action
+    this.rateLimitBreached = rateLimitBreached
+  }
 }
 
 // typescript definitions
-type RateLimitAction = string
-type RateLimitSource = string
+// type RateLimitAction = string
+// type RateLimitSource = string
 
-type RateLimiterOption = {
+type BurstyRateLimiterOptions = {
+  regularOptions: RateLimits
+  burstOptions: RateLimits
+}
+
+type RateLimits = {
   limitCount: number
   duration: number
 }
 
+enum RateLimitAction {
+  // ALL_REQUESTS_BURST = 'ALL_REQUESTS_BURST',
+  ALL_REQUESTS = 'ALL_REQUESTS',
+  GRAPHQL_REQUESTS = 'GRAPHQL_REQUESTS',
+  USER_CREATE = 'USER_CREATE',
+  STREAM_CREATE = 'STREAM_CREATE',
+  COMMIT_CREATE = 'COMMIT_CREATE',
+  'POST /api/getobjects/:streamId' = 'POST /api/getobjects/:streamId',
+  'POST /api/diff/:streamId' = 'POST /api/diff/:streamId',
+  'POST /objects/:streamId' = 'POST /objects/:streamId',
+  'GET /objects/:streamId/:objectId' = 'GET /objects/:streamId/:objectId',
+  'GET /objects/:streamId/:objectId/single' = 'GET /objects/:streamId/:objectId/single'
+}
+
 type RateLimiterOptions = {
-  [key: RateLimitAction]: RateLimiterOption
+  [key in RateLimitAction]: BurstyRateLimiterOptions
 }
 
 interface RateLimitContext extends AuthContext {
@@ -44,18 +78,7 @@ interface RequestWithContext extends express.Request {
   context: RateLimitContext
 }
 
-interface isWithinRateLimitsConfig {
-  action: RateLimitAction
-  source: RateLimitSource
-}
-
-// data
-
 export const LIMITS: RateLimiterOptions = {
-  ALL_REQUESTS_BURST: {
-    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '1500'), // 500 per second
-    duration: 3 * TIME.second
-  },
   ALL_REQUESTS: {
     limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '864000'), // 10 per second
     duration: 1 * TIME.day
@@ -91,43 +114,41 @@ export const LIMITS: RateLimiterOptions = {
   'GET /objects/:streamId/:objectId/single': {
     limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID_SINGLE', '200'),
     duration: 1 * TIME.minute
-  }
+  },
+  'POST /graphql': {}
 }
-
-const redisClient = new Redis(getRedisUrl(), {
-  enableReadyCheck: false,
-  maxRetriesPerRequest: null
-})
 
 export const sendRateLimitResponse = (
   res: express.Response,
-  action: string,
-  rateLimiterRes: RateLimiterRes | undefined
+  rateLimitBreached: RateLimitBreached
 ): express.Response => {
-  if (rateLimiterRes instanceof Error) {
-    Sentry.captureException(rateLimiterRes)
-    res.setHeader('X-Speckle-Meditation', 'https://http.cat/500')
-    return res.status(500).send({
-      err: 'Error when attempting to determine rate limit. Please try again later.'
-    })
-  }
-  if (rateLimiterRes) {
-    res.setHeader('Retry-After', rateLimiterRes.msBeforeNext / 1000)
-    res.setHeader('X-RateLimit-Remaining', rateLimiterRes.remainingPoints)
-    res.setHeader(
-      'X-RateLimit-Reset',
-      new Date(Date.now() + rateLimiterRes.msBeforeNext).toISOString()
-    )
-  }
-  if (action) {
-    const opts = LIMITS[action]
-    res.setHeader('X-RateLimit-Limit', opts.limitCount)
-  }
-
+  res.setHeader('Retry-After', rateLimitBreached.msBeforeNext / 1000)
+  res.removeHeader('X-RateLimit-Remaining')
+  res.setHeader(
+    'X-RateLimit-Reset',
+    new Date(Date.now() + rateLimitBreached.msBeforeNext).toISOString()
+  )
   res.setHeader('X-Speckle-Meditation', 'https://http.cat/429')
   return res.status(429).send({
     err: 'You are sending too many requests. You have been rate limited. Please try again later.'
-  }) // TODO we should return a branded page (either here, or via nginx)
+  })
+}
+
+const getActionForPath = (path: string, verb: string): RateLimitAction => {
+  try {
+    const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
+    return RateLimitAction[maybeAction]
+  } catch {
+    return RateLimitAction.ALL_REQUESTS
+  }
+}
+
+const getSourceFromRequest = (req: express.Request): string => {
+  let source: string | null =
+    ((req as RequestWithContext)?.context?.userId as string) ?? getIpFromRequest(req)
+
+  if (!source) source = 'unknown'
+  return source
 }
 
 export const rateLimiterMiddleware = async (
@@ -137,48 +158,117 @@ export const rateLimiterMiddleware = async (
 ) => {
   if (isTestEnv()) next()
 
-  const burstAction = 'ALL_REQUESTS_BURST'
-  const action = 'ALL_REQUESTS'
+  const action = getActionForPath(req.path, req.method)
+  const source = getSourceFromRequest(req)
 
-  const source: string = (req as RequestWithContext)?.context?.userId
-    ? ((req as RequestWithContext)?.context?.userId as string)
-    : getIpFromRequest(req)
-
-  isWithinRateLimits({ action, source })
-    .catch((rateLimiterResponse) => {
-      sendRateLimitResponse(res, action, rateLimiterResponse)
-    })
-    .then(() => isWithinRateLimits({ action: burstAction, source }))
-    .catch((rateLimiterResponse) => {
-      sendRateLimitResponse(res, burstAction, rateLimiterResponse)
-    })
-    .then(() => next())
+  const rateLimitResult = await getRateLimitResult(action, source)
+  if (isRateLimitBreached(rateLimitResult)) {
+    return sendRateLimitResponse(res, rateLimitResult)
+  } else {
+    try {
+      res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+      next()
+    } catch (err) {
+      if (!(err instanceof RateLimitError)) throw err
+      return sendRateLimitResponse(res, err.rateLimitBreached)
+    }
+  }
 }
 
-// Promise will reject if the source is not within limits for the action, resolve otherwise
-export async function isWithinRateLimits({
-  action,
-  source
-}: isWithinRateLimitsConfig): Promise<RateLimiterRes> {
-  const rlOpts = LIMITS[action]
-  if (!rlOpts) return Promise.reject(null) // the rate limits for the action have not been defined, so prevent use of the action
+type RateLimiterMapping = {
+  [key in RateLimitAction]: (
+    source: string
+  ) => Promise<RateLimitSuccess | RateLimitBreached>
+}
 
-  // provides a backup store for the rate limiter
-  // incase Redis is unreachable
-  const rateLimiterMemory = new RateLimiterMemory({
-    points: rlOpts.limitCount,
-    duration: rlOpts.duration
+// we need to take the Bursty specific type because its not an Abstract.
+// why define the Abstract then?
+export const createConsumer =
+  (rateLimiter: RateLimiterAbstract | BurstyRateLimiter) =>
+  async (source: string): Promise<RateLimitSuccess | RateLimitBreached> => {
+    try {
+      const rateLimitRes = await rateLimiter.consume(source)
+      return {
+        isWithinLimits: true,
+        remainingPoints: rateLimitRes.remainingPoints
+      }
+    } catch (err) {
+      if (err instanceof RateLimiterRes)
+        return { isWithinLimits: false, msBeforeNext: err.msBeforeNext }
+      throw err
+    }
+  }
+
+const initializeRedisRateLimiters = (): RateLimiterMapping => {
+  const redisClient = new Redis(getRedisUrl(), {
+    enableReadyCheck: false,
+    maxRetriesPerRequest: null
   })
+  const allActions = Object.values(RateLimitAction)
+  const mapping = Object.fromEntries(
+    allActions.map((action) => {
+      const limits = LIMITS[action]
+      const burstyLimiter = new BurstyRateLimiter(
+        new RateLimiterRedis({
+          storeClient: redisClient,
+          keyPrefix: action,
+          points: limits.regularOptions.limitCount,
+          duration: limits.regularOptions.duration,
+          inMemoryBlockOnConsumed: limits.regularOptions.limitCount, // stops additional requests going to Redis once the limit is reached
+          inMemoryBlockDuration: limits.regularOptions.duration,
+          insuranceLimiter: new RateLimiterMemory({
+            keyPrefix: action,
+            points: limits.regularOptions.limitCount,
+            duration: limits.regularOptions.duration
+          })
+        }),
+        new RateLimiterRedis({
+          storeClient: redisClient,
+          keyPrefix: `BURST_${action}`,
+          points: limits.burstOptions.limitCount,
+          duration: limits.burstOptions.duration,
+          inMemoryBlockOnConsumed: limits.burstOptions.limitCount,
+          inMemoryBlockDuration: limits.burstOptions.duration,
+          insuranceLimiter: new RateLimiterMemory({
+            keyPrefix: `BURST_${action}`,
+            points: limits.burstOptions.limitCount,
+            duration: limits.burstOptions.duration
+          })
+        })
+      )
 
-  const rateLimiter = new RateLimiterRedis({
-    storeClient: redisClient,
-    keyPrefix: action,
-    points: rlOpts.limitCount,
-    duration: rlOpts.duration,
-    inMemoryBlockOnConsumed: rlOpts.limitCount + 1, // stops additional requests going to Redis once the limit is reached
-    inMemoryBlockDuration: rlOpts.duration,
-    insuranceLimiter: rateLimiterMemory
-  })
+      return [action, createConsumer(burstyLimiter)]
+    })
+  )
+  // i know that all the values are in there, but TS doesn't...
+  return mapping as RateLimiterMapping
+}
 
-  return rateLimiter.consume(source)
+const RATE_LIMITERS = initializeRedisRateLimiters()
+
+interface RateLimitResult {
+  isWithinLimits: boolean
+}
+
+interface RateLimitSuccess extends RateLimitResult {
+  isWithinLimits: true
+  remainingPoints: number
+}
+
+interface RateLimitBreached extends RateLimitResult {
+  isWithinLimits: false
+  msBeforeNext: number
+}
+
+const isRateLimitBreached = (
+  rateLimitResult: RateLimitResult
+): rateLimitResult is RateLimitBreached => !rateLimitResult.isWithinLimits
+
+export async function getRateLimitResult(
+  action: RateLimitAction,
+  source: string,
+  rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
+): Promise<RateLimitSuccess | RateLimitBreached> {
+  const consumerFunc = rateLimiterMapping[action]
+  return await consumerFunc(source)
 }

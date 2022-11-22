@@ -823,8 +823,6 @@ describe('Comments @comments', () => {
     expect(commentText.doc).to.deep.equalInAnyOrder(properText)
   })
 
-  it('Should be able to toggle reactions for a comment')
-
   it('Should be able to archive a comment', async () => {
     const { id: commentId } = await createComment({
       userId: user.id,

@@ -195,6 +195,12 @@ export async function init() {
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
+  // Trust X-Forwarded-* headers (for https protocol detection)
+  app.enable('trust proxy')
+
+  // Log errors
+  app.use(errorLoggingMiddleware)
+  app.use(rateLimiterMiddleware)
 
   // Initialize graphql server
   // (Apollo Server v3 has an ugly API here - the ApolloServer ctor needs SubscriptionServer,
@@ -213,13 +219,6 @@ export async function init() {
       res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
     }
   })
-
-  // Trust X-Forwarded-* headers (for https protocol detection)
-  app.enable('trust proxy')
-
-  // Log errors
-  app.use(errorLoggingMiddleware)
-  app.use(rateLimiterMiddleware)
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
