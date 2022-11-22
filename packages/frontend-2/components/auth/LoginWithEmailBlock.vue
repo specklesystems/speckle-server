@@ -5,7 +5,7 @@
         type="email"
         name="email"
         label="E-mail"
-        placeholder="E-mail"
+        placeholder="Enter your email"
         :rules="emailRules"
         show-label
       />
@@ -13,7 +13,7 @@
         type="password"
         name="password"
         label="Password"
-        placeholder="Password"
+        placeholder="Enter your password"
         :rules="passwordRules"
         show-label
       />

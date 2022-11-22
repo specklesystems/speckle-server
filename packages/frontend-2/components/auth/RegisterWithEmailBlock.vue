@@ -7,13 +7,14 @@
         label="Name"
         placeholder="John Doe"
         :rules="nameRules"
+        :custom-icon="UserIcon"
         show-label
       />
       <FormTextInput
         type="email"
         name="email"
         label="E-mail"
-        placeholder="E-mail"
+        placeholder="example@email.com"
         :rules="emailRules"
         show-label
       />
@@ -22,7 +23,7 @@
         type="password"
         name="password"
         label="Password"
-        placeholder="Password"
+        placeholder="Type a strong password"
         :rules="passwordRules"
         show-label
       />
@@ -48,6 +49,7 @@ import { LoginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
+import { UserIcon } from '@heroicons/vue/20/solid'
 
 /**
  * TODO:

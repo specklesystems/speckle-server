@@ -10,6 +10,7 @@ import { LoginRoute } from '~~/lib/common/helpers/route'
  */
 
 definePageMeta({
+  layout: 'auth',
   middleware: [
     'guest',
     (to) => {

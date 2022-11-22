@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center">
-    <LogoTextWhite class="mb-6 sm:mb-14" />
-    <LayoutPanel class="max-w-2xl mx-auto w-full">
+    <LogoTextWhite class="my-6 sm:mb-14" />
+    <LayoutPanel class="max-w-screen-sm mx-auto w-full">
       <div class="space-y-8">
         <h1 class="h4 sm:h3 text-center">Log into my account</h1>
         <AuthThirdPartyLoginBlock

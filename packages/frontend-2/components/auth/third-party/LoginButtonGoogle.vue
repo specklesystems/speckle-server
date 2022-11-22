@@ -3,7 +3,7 @@
     <img
       src="~/assets/images/auth/google_icon_w_bg.svg"
       alt="Google Sign In"
-      class="w-11 bg-white"
+      class="w-11 bg-[#ffffff]"
     />
     <div>Google</div>
   </AuthThirdPartyLoginButtonBase>

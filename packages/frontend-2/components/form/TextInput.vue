@@ -12,13 +12,19 @@
         v-if="hasLeadingIcon"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"
       >
+        <Component
+          :is="customIcon"
+          v-if="customIcon"
+          :class="leadingIconClasses"
+          aria-hidden="true"
+        />
         <EnvelopeIcon
-          v-if="type === 'email'"
+          v-else-if="type === 'email'"
           :class="leadingIconClasses"
           aria-hidden="true"
         />
         <KeyIcon
-          v-if="type === 'password'"
+          v-else-if="type === 'password'"
           :class="leadingIconClasses"
           aria-hidden="true"
         />
@@ -73,7 +79,7 @@ export default defineComponent({
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
 import { ExclamationCircleIcon, EnvelopeIcon, KeyIcon } from '@heroicons/vue/20/solid'
-import { PropType } from 'vue'
+import { ConcreteComponent, PropType } from 'vue'
 import { Optional } from '@speckle/shared'
 import { ChangeEvent } from 'rollup'
 
@@ -150,6 +156,13 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  /**
+   * Set a custom icon to use inside the input
+   */
+  customIcon: {
+    type: [Object, Function] as PropType<Optional<ConcreteComponent>>,
+    default: undefined
+  },
   modelValue: {
     type: String,
     default: ''
@@ -165,7 +178,9 @@ const { value, errorMessage: error } = useField(props.name, props.rules, {
 
 const leadingIconClasses = ref('h-5 w-5 text-foreground-2')
 
-const hasLeadingIcon = computed(() => ['email', 'password'].includes(props.type))
+const hasLeadingIcon = computed(
+  () => ['email', 'password'].includes(props.type) || props.customIcon
+)
 
 const computedClasses = computed((): string => {
   const classParts: string[] = []
