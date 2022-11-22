@@ -5,7 +5,7 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import CameraHandler from './context/CameraHanlder'
 
-import SectionBox from './SectionBox'
+import SectionBox, { SectionBoxEvent } from './SectionBox'
 import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
@@ -84,10 +84,18 @@ export class Viewer extends EventEmitter implements IViewer {
     ;(window as any)._V = this // For debugging!
 
     this.sectionBox = new SectionBox(this)
-    this.sectionBox.off()
+    this.sectionBox.disable()
     this.on(ViewerEvent.SectionBoxUpdated, () => {
       this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
     })
+    this.sectionBox.on(
+      SectionBoxEvent.DRAG_START,
+      this.speckleRenderer.onSectionBoxDragStart.bind(this.speckleRenderer)
+    )
+    this.sectionBox.on(
+      SectionBoxEvent.DRAG_END,
+      this.speckleRenderer.onSectionBoxDragEnd.bind(this.speckleRenderer)
+    )
 
     this.frame()
     this.resize()
@@ -301,11 +309,11 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public sectionBoxOff() {
-    this.sectionBox.off()
+    this.sectionBox.disable()
   }
 
   public sectionBoxOn() {
-    this.sectionBox.on()
+    this.sectionBox.enable()
   }
 
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
