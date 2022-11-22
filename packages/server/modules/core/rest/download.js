@@ -22,16 +22,19 @@ module.exports = (app) => {
     cors(),
     contextMiddleware,
     async (req, res) => {
+      let shouldExit = false
       await isWithinRateLimits({
         action: 'GET /objects/:streamId/:objectId',
         source: req.context.userId || req.context.ip
-      }).catch((rateLimiterResponse) => {
+      }).catch((rateLimiterRes) => {
+        shouldExit = true
         return sendRateLimitResponse(
           res,
           'GET /objects/:streamId/:objectId',
-          rateLimiterResponse
+          rateLimiterRes
         )
       })
+      if (shouldExit) return
 
       const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,
@@ -100,16 +103,19 @@ module.exports = (app) => {
     cors(),
     contextMiddleware,
     async (req, res) => {
+      let shouldExit = false
       await isWithinRateLimits({
         action: 'GET /objects/:streamId/:objectId/single',
         source: req.context.userId || req.context.ip
-      }).catch((rateLimiterResponse) => {
+      }).catch((rateLimiterRes) => {
+        shouldExit = true
         return sendRateLimitResponse(
           res,
           'GET /objects/:streamId/:objectId/single',
-          rateLimiterResponse
+          rateLimiterRes
         )
       })
+      if (shouldExit) return
 
       const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,

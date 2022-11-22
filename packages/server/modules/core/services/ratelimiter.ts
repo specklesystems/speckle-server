@@ -80,7 +80,7 @@ interface RequestWithContext extends express.Request {
 
 export const LIMITS: RateLimiterOptions = {
   ALL_REQUESTS: {
-    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '864000'), // 10 per second
+    limitCount: getIntFromEnv('RATELIMIT_ALL_REQUESTS', '864000'), // 10 per second
     duration: 1 * TIME.day
   },
   USER_CREATE: {

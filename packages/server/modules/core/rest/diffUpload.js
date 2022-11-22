@@ -16,12 +16,16 @@ module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
+    let shouldExit = false
     await isWithinRateLimits({
       action: 'POST /api/diff/:streamId',
       source: req.context.userId || req.context.ip
-    }).catch((rateLimiterResponse) => {
-      return sendRateLimitResponse(res, 'POST /api/diff/:streamId', rateLimiterResponse)
+    }).catch((rateLimiterRes) => {
+      shouldExit = true
+      return sendRateLimitResponse(res, 'POST /api/diff/:streamId', rateLimiterRes)
     })
+    if (shouldExit) return
+
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req

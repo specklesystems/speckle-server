@@ -233,12 +233,12 @@ module.exports = {
   },
   Mutation: {
     async streamCreate(parent, args, context) {
+      let shouldThrowError = false
       await isWithinRateLimits({
         action: 'STREAM_CREATE',
         source: context.userId
-      }).catch(() => {
-        throw new RateLimitError()
-      })
+      }).catch(() => (shouldThrowError = true))
+      if (shouldThrowError) throw new RateLimitError()
 
       const id = await createStream({ ...args.stream, ownerId: context.userId })
 
