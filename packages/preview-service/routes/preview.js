@@ -37,7 +37,8 @@ async function pageFunction(objectUrl) {
      *  In a future update, we'll have the viewer signal when convergence is complete
      *  regradless of how many frames/time that takes
      */
-    await waitForAnimation(2500)
+    /** 22.11.2022 Alex: Commenting this out for now */
+    // await waitForAnimation(2500)
     ret.scr[i + ''] = await window.v.screenshot()
   }
 
