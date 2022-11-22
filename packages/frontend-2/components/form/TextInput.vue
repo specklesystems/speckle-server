@@ -176,7 +176,17 @@ const { value, errorMessage: error } = useField(props.name, props.rules, {
   initialValue: props.modelValue || undefined
 })
 
-const leadingIconClasses = ref('h-5 w-5 text-foreground-2')
+const leadingIconClasses = computed(() => {
+  const classParts: string[] = ['h-5 w-5']
+
+  if (error.value) {
+    classParts.push('text-danger')
+  } else {
+    classParts.push('text-foreground-2')
+  }
+
+  return classParts.join(' ')
+})
 
 const hasLeadingIcon = computed(
   () => ['email', 'password'].includes(props.type) || props.customIcon
@@ -191,7 +201,7 @@ const computedClasses = computed((): string => {
 
   if (error.value) {
     classParts.push(
-      'pr-8 border-danger-lighter text-danger-darker placeholder:text-danger focus:border-danger focus:ring-danger'
+      'pr-8 border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
     )
   } else {
     classParts.push('border-0 focus:ring-2 focus:ring-primary-muted')
