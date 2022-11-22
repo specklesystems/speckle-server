@@ -182,23 +182,25 @@ const sizeClasses = computed(() => {
   }
 
   // padding
-  switch (props.size) {
-    case 'xs':
-      classParts.push('px-2 py-1')
-      break
-    case 'sm':
-      classParts.push('p-2')
-      break
-    case 'xl':
-      classParts.push('px-5 py-4')
-      break
-    case 'lg':
-      classParts.push('px-4 py-3')
-      break
-    case 'base':
-    default:
-      classParts.push('px-3 py-2')
-      break
+  if (props.type !== 'link') {
+    switch (props.size) {
+      case 'xs':
+        classParts.push('px-2 py-1')
+        break
+      case 'sm':
+        classParts.push('p-2')
+        break
+      case 'xl':
+        classParts.push('px-5 py-4')
+        break
+      case 'lg':
+        classParts.push('px-4 py-3')
+        break
+      case 'base':
+      default:
+        classParts.push('px-3 py-2')
+        break
+    }
   }
 
   return classParts.join(' ')

@@ -9,8 +9,7 @@ export default {
   parameters: {
     docs: {
       description: {
-        component:
-          'A text link. The difference between this and a Link Button is that the button still has the padding around it and is sized more like a button.'
+        component: 'Basically just a wrapper over FormButton w/ type link'
       }
     }
   },

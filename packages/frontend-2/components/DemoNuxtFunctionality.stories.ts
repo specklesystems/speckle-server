@@ -2,7 +2,7 @@ import DemoNuxtFunctionality from '~~/components/DemoNuxtFunctionality.vue'
 import { Story, Meta } from '@storybook/vue3'
 
 export default {
-  title: 'Overview/Demo Nuxt Functionality (test)',
+  title: 'Test/Demo Nuxt Functionality (test)',
   component: DemoNuxtFunctionality,
   parameters: {
     docs: {

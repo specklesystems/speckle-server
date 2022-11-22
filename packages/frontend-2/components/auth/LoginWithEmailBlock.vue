@@ -19,7 +19,7 @@
       />
     </div>
     <div class="mt-1">
-      <TextLink :to="ForgottenPasswordRoute">Forgot your password?</TextLink>
+      <TextLink :to="ForgottenPasswordRoute" size="sm">Forgot your password?</TextLink>
     </div>
     <FormButton submit full-width class="my-8">Log in</FormButton>
     <div class="text-center">

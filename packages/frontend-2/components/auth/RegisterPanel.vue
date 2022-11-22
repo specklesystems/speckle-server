@@ -14,26 +14,23 @@
           <div class="text-center label text-foreground-2 mb-3">
             Or sign up with your email
           </div>
-          <AuthRegisterWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
+          <AuthRegisterWithEmailBlock
+            v-if="serverInfo && hasLocalStrategy"
+            :challenge="challenge"
+            :server-info="serverInfo"
+          />
         </div>
       </div>
     </LayoutPanel>
   </div>
 </template>
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
+import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 
-const loginQuery = graphql(`
-  query LoginServerInfo {
-    serverInfo {
-      ...AuthStategiesServerInfoFragment
-    }
-  }
-`)
-const { result } = useQuery(loginQuery)
+const { result } = useQuery(loginServerInfoQuery)
 const { appId, challenge } = useLoginOrRegisterUtils()
 
 const serverInfo = computed(() => result.value?.serverInfo)

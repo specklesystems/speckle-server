@@ -4,6 +4,7 @@ import ProjectList from '~~/components/project/List.vue'
 console.log(ProjectList)
 
 export default {
+  title: 'Test/Project (test)',
   component: ProjectList,
   parameters: {
     docs: {

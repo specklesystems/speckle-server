@@ -2,7 +2,7 @@ import { Meta, Story } from '@storybook/vue3'
 import AuthLoginPanel from '~~/components/auth/LoginPanel.vue'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
-import { LoginServerInfoQuery } from '~~/lib/common/generated/gql/graphql'
+import { AuthServerInfoQuery } from '~~/lib/common/generated/gql/graphql'
 import { MockedProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedProvider'
 
 export default {
@@ -48,9 +48,11 @@ export const Default: Story = {
                     name: 'Azure',
                     url: 'https://microsoft.com'
                   }
-                ]
+                ],
+                termsOfService:
+                  'This piece of text is managed by server admins! You agree to our Terms of Use and Privacy policy.'
               }
-            } as LoginServerInfoQuery
+            } as AuthServerInfoQuery
           }
         }
       ]

@@ -8,7 +8,7 @@ import { MockedProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedPro
 import { fakeInternalQuery } from '~~/lib/fake-nuxt-env/graphql/integrationStoryDemo'
 
 export default {
-  title: 'Overview/Demo Apollo Queries (test)',
+  title: 'Test/Demo Apollo Queries (test)',
   component: IntegrationStoryDemo
 } as Meta
 

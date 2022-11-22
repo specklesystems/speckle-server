@@ -38,8 +38,8 @@ const listItemClasses = (rule: GenericValidateFunction<string>) => [
 
     &::before {
       content: '✓';
-      color: #10b981;
       margin-right: 6px;
+      @apply text-success;
     }
   }
 }

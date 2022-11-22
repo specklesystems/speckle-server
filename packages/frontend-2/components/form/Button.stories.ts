@@ -107,8 +107,7 @@ export const Link: Story = mergeStories(Default, {
   parameters: {
     docs: {
       description: {
-        story:
-          'A link type button differs from a basic text link in that it contains a padding around it'
+        story: 'Basically just a link (TextLink is an alias for this)'
       }
     }
   }
