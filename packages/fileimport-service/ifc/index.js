@@ -42,8 +42,7 @@ async function parseAndCreateCommit({
     })
   }
 
-  const userToken =
-    process.env.USER_TOKEN || 'cb1d6e2e2d97450738eb0f6b07c596acad625a720c'
+  const userToken = process.env.USER_TOKEN
 
   const serverBaseUrl = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
   const response = await fetch(serverBaseUrl + '/graphql', {
