@@ -8,10 +8,11 @@ async function parseAndCreateCommit({
   streamId,
   branchName = 'uploads',
   userId,
-  message = 'Manual IFC file upload'
+  message = 'Manual IFC file upload',
+  fileId
 }) {
   const serverApi = new ServerAPI({ streamId })
-  const myParser = new Parser({ serverApi })
+  const myParser = new Parser({ serverApi, fileId })
 
   const start = performance.now()
   const { id, tCount } = await myParser.parse(data)

@@ -10,18 +10,19 @@ const {
 } = require('./utils')
 
 module.exports = class IFCParser {
-  constructor({ serverApi }) {
+  constructor({ serverApi, fileId }) {
     this.ifcapi = new WebIFC.IfcAPI()
     this.ifcapi.SetWasmPath('./', false)
     this.serverApi = serverApi
+    this.fileId = fileId
   }
 
   async parse(data) {
     await this.ifcapi.Init()
     this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), { USE_FAST_BOOLS: true })
+    this.startTime = performance.now()
 
     // prepoulate types
-    const p1 = performance.now()
     this.types = await this.getAllTypesOfModel()
 
     // prime caches for property sets and their relating objects, as well as,
@@ -32,23 +33,15 @@ module.exports = class IFCParser {
     this.properties = properties
 
     this.propCache = {}
-    // create and save the geometries; we're storing only references locally.
-    const p2 = performance.now()
-    console.log(`prop warmup ${(p2 - p1).toFixed(2)}ms`)
-    this.geometryReferences = await this.createAndSaveMeshes()
 
-    const p3 = performance.now()
-    console.log(`geometry warmup ${(p3 - p2).toFixed(2)}ms`)
+    // create and save the geometries; we're storing only references locally.
+    this.geometryReferences = await this.createAndSaveMeshes()
 
     // create and save the spatial tree, populating both properties and geometry references
     // where appropriate
     this.spatialNodeCount = 0
     this.nodeBatch = []
     const structure = await this.createSpatialStructure()
-    const p4 = performance.now()
-    console.log(`structure ${(p4 - p3).toFixed(2)}ms`)
-    console.log(`total time spent: ${(p4 - p1).toFixed(2)}ms`)
-    console.log(structure.id)
     return { id: structure.id, tCount: structure.closureLen }
   }
 
@@ -65,6 +58,10 @@ module.exports = class IFCParser {
     }
 
     await this.populateSpatialNode(project, chunks, [])
+
+    this.endTime = performance.now()
+    project.parseTime = (this.endTime - this.startTime).toFixed(2) + 'ms'
+    project.fileId = this.fileId
     if (this.nodeBatch.length !== 0) {
       await this.flushNodeBatch()
     }
@@ -93,7 +90,7 @@ module.exports = class IFCParser {
     node.closureLen = node.closure.length
     node.__closure = this.formatClosure(node.closure)
     node.id = getHash(node)
-    // delete node.closure
+
     this.nodeBatch.push(node)
 
     if (this.nodeBatch.length > 3000) {
