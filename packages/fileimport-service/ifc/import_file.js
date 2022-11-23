@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const TMP_RESULTS_PATH = './import_result.json'
+const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
 const { parseAndCreateCommit } = require('./index')
 
