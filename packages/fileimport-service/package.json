@@ -16,7 +16,7 @@
   },
   "scripts": {
     "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development SPECKLE_SERVER_URL=http://localhost:3000 nodemon ./src/daemon.js",
-    "parse:ifc": "node ./ifc/import_file.js ./ifc/ifcs/example-lg.ifc 256bd419e4 a6425f5aab main ifc parsing test",
+    "parse:ifc": "node ./ifc/import_file.js /tmp/file_to_import/file 33763848d6 2e4bfb467a main File upload: steelplates.ifc",
     "lint": "eslint . --ext .js,.ts"
   },
   "bugs": {
@@ -31,7 +31,7 @@
     "prom-client": "^14.0.1",
     "undici": "^5.8.2",
     "valid-filename": "^3.1.0",
-    "web-ifc": "latest"
+    "web-ifc": "^0.0.35"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
