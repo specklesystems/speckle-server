@@ -4828,13 +4828,14 @@ __metadata:
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
     knex: ^2.0.0
+    lodash: ^4.17.21
     nodemon: ^2.0.13
     pg: ^8.7.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     undici: ^5.8.2
     valid-filename: ^3.1.0
-    web-ifc: ^0.0.35
+    web-ifc: latest
   languageName: unknown
   linkType: soft
 
@@ -20689,10 +20690,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-ifc@npm:^0.0.35":
-  version: 0.0.35
-  resolution: "web-ifc@npm:0.0.35"
-  checksum: 5ad1f61a7ad043d4484444e899f34a0e0397b02e1181cd40642a16ab4fa484dc2a5489307bfd202450ef9d5cbb1293dd7cf927089dac344823ad57f993ada06f
+"web-ifc@npm:latest":
+  version: 0.0.36
+  resolution: "web-ifc@npm:0.0.36"
+  checksum: 930ad124c22527454888644940ec97b5e5990690d1ba9d8c2eea08d1f8429fbf614a32c3881f38184ceb6f18d5be845420dd2f90d06603a1e556f10d2a825402
   languageName: node
   linkType: hard
 
