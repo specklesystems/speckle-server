@@ -361,10 +361,6 @@ module.exports = class IFCParser {
       }
     })
 
-    // for (const p of speckleMeshes) {
-    //   await this.serverApi.saveObject(p)
-    // }
-
     await this.serverApi.saveObjectBatch(speckleMeshes)
 
     return geometryReferences
