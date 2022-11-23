@@ -113,9 +113,6 @@ module.exports = {
     },
     async role(parent) {
       return await getUserRole(parent.id)
-    },
-    async accountSetupDone(parent) {
-      return false
     }
   },
   LimitedUser: {

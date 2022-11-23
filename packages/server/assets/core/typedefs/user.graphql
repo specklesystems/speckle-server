@@ -91,7 +91,7 @@ type User {
   """
   Whether post-sign up onboarding has been finished or skipped entirely
   """
-  accountSetupDone: Boolean @isOwner
+  isOnboardingFinished: Boolean @isOwner
 }
 
 """
