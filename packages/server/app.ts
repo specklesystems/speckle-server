@@ -32,7 +32,7 @@ import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { rateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
+import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
 
@@ -200,7 +200,7 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
-  app.use(rateLimiterMiddleware)
+  app.use(createRateLimiterMiddleware())
 
   // Initialize graphql server
   // (Apollo Server v3 has an ugly API here - the ApolloServer ctor needs SubscriptionServer,

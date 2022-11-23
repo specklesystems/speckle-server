@@ -1,10 +1,6 @@
 import express from 'express'
 import Redis from 'ioredis'
-import {
-  getRedisUrl,
-  isTestEnv,
-  getIntFromEnv
-} from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl, getIntFromEnv } from '@/modules/shared/helpers/envHelper'
 import {
   BurstyRateLimiter,
   RateLimiterAbstract,
@@ -213,27 +209,29 @@ export const getSourceFromRequest = (req: express.Request): string => {
   return source
 }
 
-export const rateLimiterMiddleware = async (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
+export const createRateLimiterMiddleware = (
+  rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
 ) => {
-  if (isTestEnv()) next()
+  return async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    const path = req.originalUrl ? req.originalUrl : req.path
+    const action = getActionForPath(path, req.method)
+    const source = getSourceFromRequest(req)
 
-  const path = req.originalUrl ? req.originalUrl : req.path
-  const action = getActionForPath(path, req.method)
-  const source = getSourceFromRequest(req)
-
-  const rateLimitResult = await getRateLimitResult(action, source)
-  if (isRateLimitBreached(rateLimitResult)) {
-    return sendRateLimitResponse(res, rateLimitResult)
-  } else {
-    try {
-      res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
-      next()
-    } catch (err) {
-      if (!(err instanceof RateLimitError)) throw err
-      return sendRateLimitResponse(res, err.rateLimitBreached)
+    const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
+    if (isRateLimitBreached(rateLimitResult)) {
+      return sendRateLimitResponse(res, rateLimitResult)
+    } else {
+      try {
+        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+        return await next()
+      } catch (err) {
+        if (!(err instanceof RateLimitError)) throw err
+        return sendRateLimitResponse(res, err.rateLimitBreached)
+      }
     }
   }
 }

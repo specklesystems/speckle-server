@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 import { TIME } from '@/../shared/dist-esm'
 import {
+  createRateLimiterMiddleware,
   getRateLimitResult,
   initializeRedisRateLimiters,
   isRateLimitBreached,
@@ -13,25 +14,35 @@ import {
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
 
+const createTestRateLimiterMappings = () => {
+  const rateLimiterOptions = LIMITS
+  rateLimiterOptions.STREAM_CREATE = {
+    regularOptions: {
+      limitCount: 1,
+      duration: 5 * TIME.second
+    },
+    burstOptions: {
+      limitCount: 1,
+      duration: 5 * TIME.second
+    }
+  }
+  rateLimiterOptions['POST /graphql'] = {
+    regularOptions: {
+      limitCount: 1,
+      duration: 5 * TIME.second
+    },
+    burstOptions: {
+      limitCount: 1,
+      duration: 5 * TIME.second
+    }
+  }
+  return initializeRedisRateLimiters(rateLimiterOptions)
+}
+
 describe('Rate Limiting', () => {
   describe('isRateLimitBreached', () => {
-    before(async () => {
-      return
-    })
-
     it('should rate limit known actions', async () => {
-      const rateLimiterOptions = LIMITS
-      rateLimiterOptions.STREAM_CREATE = {
-        regularOptions: {
-          limitCount: 1,
-          duration: 5 * TIME.second
-        },
-        burstOptions: {
-          limitCount: 1,
-          duration: 5 * TIME.second
-        }
-      }
-      const rateLimiterMapping = initializeRedisRateLimiters(rateLimiterOptions)
+      const rateLimiterMapping = createTestRateLimiterMappings()
       const source = '255.255.255.255'
 
       // first will exhaust limits of regular rate limiter
@@ -82,19 +93,60 @@ describe('Rate Limiting', () => {
       assert429response(response)
     })
   })
+
   describe('rateLimiterMiddleware', () => {
     it('should set header with remaining points if not rate limited', async () => {
-      // TODO expect(false).to.be.true('')
+      const request = httpMocks.createRequest({
+        path: '/graphql',
+        method: 'POST'
+      })
+      const response = httpMocks.createResponse()
+      let nextCalled = 0
+      const next = () => {
+        nextCalled++
+      }
+
+      await createRateLimiterMiddleware()(request, response, next)
+      expect(nextCalled).to.equal(1)
+      expect(response.getHeader('X-RateLimit-Remaining')).to.equal(49)
     })
+
     it('should return 429 if rate limited', async () => {
-      // TODO expect(false).to.be.true('')
+      const rateLimiterMapping = createTestRateLimiterMappings()
+      const request = httpMocks.createRequest({
+        path: '/graphql',
+        method: 'POST',
+        ip: '123.45.67.89' // unique IP for this test, to prevent pollution with other tests using POST /graphql
+      })
+
+      let response = httpMocks.createResponse()
+      let nextCalled = 0
+      const next = () => {
+        nextCalled++
+      }
+      const SUT = createRateLimiterMiddleware(rateLimiterMapping)
+
+      // two calls should be within normal and burst rate limit
+      for (let i = 0; i < 2; i++) {
+        response = httpMocks.createResponse()
+        await SUT(request, response, next)
+        expect(nextCalled).to.equal(i + 1)
+      }
+
+      // but third call should fail
+      response = httpMocks.createResponse()
+      await SUT(request, response, next)
+
+      expect(nextCalled).to.equal(2)
+      assert429response(response)
     })
   })
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const assert429response = (response: any) => {
   expect(response.getHeader('X-RateLimit-Remaining')).to.be.undefined
-  expect(response.getHeader('Retry-After')).to.equal(4.9)
+  expect(response.getHeader('Retry-After')).to.be.greaterThanOrEqual(4)
   expect(response.getHeader('X-RateLimit-Reset')).to.not.be.undefined
   expect(response.statusCode).to.equal(429)
 }
