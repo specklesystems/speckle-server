@@ -27,9 +27,9 @@ async function main() {
     success: false,
     error: 'Unknown error'
   }
-  const commitId = await parseAndCreateCommit(ifcInput)
 
   try {
+    const commitId = await parseAndCreateCommit(ifcInput)
     output = {
       success: true,
       commitId
