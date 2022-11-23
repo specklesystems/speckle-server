@@ -83,7 +83,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -135,5 +135,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7f0c4d2fc1/'
   // Classroom
   // 'https://speckle.xyz/streams/0208ffb67b/commits/a980292728'
-  'https://latest.speckle.dev/streams/4658eb53b9/commits/328bd99997'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/328bd99997'
 )

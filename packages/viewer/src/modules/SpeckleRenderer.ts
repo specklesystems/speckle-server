@@ -514,15 +514,11 @@ export default class SpeckleRenderer {
         'clip-outline'
       ) as LineSegments2
       if (!clipOutline) {
-        // const lineGeometry = new BufferGeometry()
-        // const linePosAttr = new BufferAttribute(new Float32Array(50000), 3, false)
         const lineGeometry = new LineSegmentsGeometry()
         lineGeometry.setPositions(new Float32Array(60000))
-        // linePosAttr.setUsage(DynamicDrawUsage)
-        // lineGeometry.setAttribute('position', linePosAttr)
         const material = new LineMaterial({
           color: 0x047efb,
-          linewidth: 5, // in world units with size attenuation, pixels otherwise
+          linewidth: 2,
           worldUnits: false,
           vertexColors: false,
           alphaToCoverage: false,
@@ -530,7 +526,7 @@ export default class SpeckleRenderer {
         })
         material.color = new Color(0x047efb)
         material.color.convertSRGBToLinear()
-        material.linewidth = 5
+        material.linewidth = 2
         material.clipIntersection = true
         material.worldUnits = false
 
@@ -645,10 +641,10 @@ export default class SpeckleRenderer {
           }
         })
         posAttr.needsUpdate = true
-        posAttr.updateRange = { offset: 0, count: posArray.length }
+        posAttr.updateRange = { offset: 0, count: index * 3 }
       }
       clipOutline.visible = true
-      // clipOutline.geometry.setDrawRange(0, index)
+      clipOutline.geometry.instanceCount = index / 2
       clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
       clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
       clipOutline.geometry.computeBoundingBox()
