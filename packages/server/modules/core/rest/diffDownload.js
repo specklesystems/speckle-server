@@ -10,7 +10,8 @@ const { getObjectsStream } = require('../services/objects')
 const {
   sendRateLimitResponse,
   getRateLimitResult,
-  isRateLimitBreached
+  isRateLimitBreached,
+  getSourceFromRequest
 } = require('@/modules/core/services/ratelimiter')
 
 const { pipeline, PassThrough } = require('stream')
@@ -21,7 +22,7 @@ module.exports = (app) => {
   app.post('/api/getobjects/:streamId', cors(), contextMiddleware, async (req, res) => {
     const rateLimitResult = await getRateLimitResult(
       'POST /api/getobjects/:streamId',
-      req.context.userId || req.context.ip
+      getSourceFromRequest(req)
     )
     if (isRateLimitBreached(rateLimitResult)) {
       return sendRateLimitResponse(res, rateLimitResult)

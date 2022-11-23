@@ -48,7 +48,6 @@ type RateLimits = {
 }
 
 export enum RateLimitAction {
-  // ALL_REQUESTS_BURST = 'ALL_REQUESTS_BURST',
   ALL_REQUESTS = 'ALL_REQUESTS',
   USER_CREATE = 'USER_CREATE',
   STREAM_CREATE = 'STREAM_CREATE',
@@ -195,7 +194,7 @@ export const sendRateLimitResponse = (
   })
 }
 
-const getActionForPath = (path: string, verb: string): RateLimitAction => {
+export const getActionForPath = (path: string, verb: string): RateLimitAction => {
   try {
     const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
     const action = RateLimitAction[maybeAction]
@@ -206,7 +205,7 @@ const getActionForPath = (path: string, verb: string): RateLimitAction => {
   }
 }
 
-const getSourceFromRequest = (req: express.Request): string => {
+export const getSourceFromRequest = (req: express.Request): string => {
   let source: string | null =
     ((req as RequestWithContext)?.context?.userId as string) ?? getIpFromRequest(req)
 
