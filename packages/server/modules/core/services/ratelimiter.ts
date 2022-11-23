@@ -23,24 +23,19 @@ export class RateLimitError extends BaseError {
     'You have sent too many requests. You are being rate limited. Please try again later.'
   static code = 'RATE_LIMIT_ERROR'
 
-  action: RateLimitAction
   rateLimitBreached: RateLimitBreached
 
   constructor(
-    action: RateLimitAction,
     rateLimitBreached: RateLimitBreached,
     message?: string | null | undefined,
     options: Options | Error | undefined = undefined
   ) {
     super(message ?? RateLimitError.defaultMessage, options)
-    this.action = action
     this.rateLimitBreached = rateLimitBreached
   }
 }
 
 // typescript definitions
-// type RateLimitAction = string
-// type RateLimitSource = string
 
 type BurstyRateLimiterOptions = {
   regularOptions: RateLimits
@@ -52,10 +47,9 @@ type RateLimits = {
   duration: number
 }
 
-enum RateLimitAction {
+export enum RateLimitAction {
   // ALL_REQUESTS_BURST = 'ALL_REQUESTS_BURST',
   ALL_REQUESTS = 'ALL_REQUESTS',
-  GRAPHQL_REQUESTS = 'GRAPHQL_REQUESTS',
   USER_CREATE = 'USER_CREATE',
   STREAM_CREATE = 'STREAM_CREATE',
   COMMIT_CREATE = 'COMMIT_CREATE',
@@ -63,7 +57,8 @@ enum RateLimitAction {
   'POST /api/diff/:streamId' = 'POST /api/diff/:streamId',
   'POST /objects/:streamId' = 'POST /objects/:streamId',
   'GET /objects/:streamId/:objectId' = 'GET /objects/:streamId/:objectId',
-  'GET /objects/:streamId/:objectId/single' = 'GET /objects/:streamId/:objectId/single'
+  'GET /objects/:streamId/:objectId/single' = 'GET /objects/:streamId/:objectId/single',
+  'POST /graphql' = 'POST /graphql'
 }
 
 type RateLimiterOptions = {
@@ -80,42 +75,108 @@ interface RequestWithContext extends express.Request {
 
 export const LIMITS: RateLimiterOptions = {
   ALL_REQUESTS: {
-    limitCount: getIntFromEnv('RATELIMIT_ALL_REQUESTS', '864000'), // 10 per second
-    duration: 1 * TIME.day
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_ALL_REQUESTS', '500'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_ALL_REQUESTS', '2000'),
+      duration: 1 * TIME.minute
+    }
   },
   USER_CREATE: {
-    limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '1000'),
-    duration: 1 * TIME.week
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_USER_CREATE', '6'),
+      duration: 1 * TIME.hour
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_USER_CREATE', '1000'),
+      duration: 1 * TIME.week
+    }
   },
   STREAM_CREATE: {
-    limitCount: getIntFromEnv('RATELIMIT_STREAM_CREATE', '10000'), // 0.11 per second
-    duration: 1 * TIME.week
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_STREAM_CREATE', '1'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_STREAM_CREATE', '100'),
+      duration: 1 * TIME.minute
+    }
   },
   COMMIT_CREATE: {
-    limitCount: getIntFromEnv('RATELIMIT_COMMIT_CREATE', '86400'), // 1 per second
-    duration: 1 * TIME.day
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_COMMIT_CREATE', '1'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_COMMIT_CREATE', '100'),
+      duration: 1 * TIME.minute
+    }
   },
   'POST /api/getobjects/:streamId': {
-    limitCount: getIntFromEnv('RATELIMIT_POST_GETOBJECTS_STREAMID', '200'),
-    duration: 1 * TIME.minute
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_POST_GETOBJECTS_STREAMID', '3'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_GETOBJECTS_STREAMID', '200'),
+      duration: 1 * TIME.minute
+    }
   },
   'POST /api/diff/:streamId': {
-    limitCount: getIntFromEnv('RATELIMIT_POST_DIFF_STREAMID', '200'),
-    duration: 1 * TIME.minute
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_POST_DIFF_STREAMID', '3'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_DIFF_STREAMID', '200'),
+      duration: 1 * TIME.minute
+    }
   },
   'POST /objects/:streamId': {
-    limitCount: getIntFromEnv('RATELIMIT_POST_OBJECTS_STREAMID', '200'),
-    duration: 1 * TIME.minute
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_POST_OBJECTS_STREAMID', '3'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_OBJECTS_STREAMID', '200'),
+      duration: 1 * TIME.minute
+    }
   },
   'GET /objects/:streamId/:objectId': {
-    limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID', '200'),
-    duration: 1 * TIME.minute
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID', '3'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_OBJECTS_STREAMID_OBJECTID', '200'),
+      duration: 1 * TIME.minute
+    }
   },
   'GET /objects/:streamId/:objectId/single': {
-    limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID_SINGLE', '200'),
-    duration: 1 * TIME.minute
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID_SINGLE', '3'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv(
+        'RATELIMIT_BURST_GET_OBJECTS_STREAMID_OBJECTID_SINGLE',
+        '200'
+      ),
+      duration: 1 * TIME.minute
+    }
   },
-  'POST /graphql': {}
+  'POST /graphql': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_POST_GRAPHQL', '50'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_GRAPHQL', '200'),
+      duration: 1 * TIME.minute
+    }
+  }
 }
 
 export const sendRateLimitResponse = (
@@ -137,7 +198,9 @@ export const sendRateLimitResponse = (
 const getActionForPath = (path: string, verb: string): RateLimitAction => {
   try {
     const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
-    return RateLimitAction[maybeAction]
+    const action = RateLimitAction[maybeAction]
+    if (!action) throw new Error()
+    return action
   } catch {
     return RateLimitAction.ALL_REQUESTS
   }
@@ -158,7 +221,8 @@ export const rateLimiterMiddleware = async (
 ) => {
   if (isTestEnv()) next()
 
-  const action = getActionForPath(req.path, req.method)
+  const path = req.originalUrl ? req.originalUrl : req.path
+  const action = getActionForPath(path, req.method)
   const source = getSourceFromRequest(req)
 
   const rateLimitResult = await getRateLimitResult(action, source)
@@ -184,22 +248,25 @@ type RateLimiterMapping = {
 // we need to take the Bursty specific type because its not an Abstract.
 // why define the Abstract then?
 export const createConsumer =
-  (rateLimiter: RateLimiterAbstract | BurstyRateLimiter) =>
+  (action: RateLimitAction, rateLimiter: RateLimiterAbstract | BurstyRateLimiter) =>
   async (source: string): Promise<RateLimitSuccess | RateLimitBreached> => {
     try {
       const rateLimitRes = await rateLimiter.consume(source)
       return {
+        action,
         isWithinLimits: true,
         remainingPoints: rateLimitRes.remainingPoints
       }
     } catch (err) {
       if (err instanceof RateLimiterRes)
-        return { isWithinLimits: false, msBeforeNext: err.msBeforeNext }
+        return { action, isWithinLimits: false, msBeforeNext: err.msBeforeNext }
       throw err
     }
   }
 
-const initializeRedisRateLimiters = (): RateLimiterMapping => {
+export const initializeRedisRateLimiters = (
+  options: RateLimiterOptions = LIMITS
+): RateLimiterMapping => {
   const redisClient = new Redis(getRedisUrl(), {
     enableReadyCheck: false,
     maxRetriesPerRequest: null
@@ -207,7 +274,7 @@ const initializeRedisRateLimiters = (): RateLimiterMapping => {
   const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {
-      const limits = LIMITS[action]
+      const limits = options[action]
       const burstyLimiter = new BurstyRateLimiter(
         new RateLimiterRedis({
           storeClient: redisClient,
@@ -237,7 +304,7 @@ const initializeRedisRateLimiters = (): RateLimiterMapping => {
         })
       )
 
-      return [action, createConsumer(burstyLimiter)]
+      return [action, createConsumer(action, burstyLimiter)]
     })
   )
   // i know that all the values are in there, but TS doesn't...
@@ -248,6 +315,7 @@ const RATE_LIMITERS = initializeRedisRateLimiters()
 
 interface RateLimitResult {
   isWithinLimits: boolean
+  action: RateLimitAction
 }
 
 interface RateLimitSuccess extends RateLimitResult {
@@ -260,7 +328,7 @@ interface RateLimitBreached extends RateLimitResult {
   msBeforeNext: number
 }
 
-const isRateLimitBreached = (
+export const isRateLimitBreached = (
   rateLimitResult: RateLimitResult
 ): rateLimitResult is RateLimitBreached => !rateLimitResult.isWithinLimits
 

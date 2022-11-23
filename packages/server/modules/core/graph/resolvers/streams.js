@@ -26,8 +26,10 @@ const {
 const { saveActivity } = require(`@/modules/activitystream/services`)
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const {
-  isWithinRateLimits,
-  RateLimitError
+  RateLimitError,
+  RateLimitAction,
+  getRateLimitResult,
+  isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 const {
   getPendingStreamCollaborators
@@ -233,12 +235,13 @@ module.exports = {
   },
   Mutation: {
     async streamCreate(parent, args, context) {
-      let shouldThrowError = false
-      await isWithinRateLimits({
-        action: 'STREAM_CREATE',
-        source: context.userId
-      }).catch(() => (shouldThrowError = true))
-      if (shouldThrowError) throw new RateLimitError()
+      const rateLimitResult = await getRateLimitResult(
+        RateLimitAction.STREAM_CREATE,
+        context.userId
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
+      }
 
       const id = await createStream({ ...args.stream, ownerId: context.userId })
 

@@ -10,8 +10,9 @@ const { getObject, getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const {
-  isWithinRateLimits,
-  sendRateLimitResponse
+  sendRateLimitResponse,
+  getRateLimitResult,
+  isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 
 module.exports = (app) => {
@@ -22,19 +23,13 @@ module.exports = (app) => {
     cors(),
     contextMiddleware,
     async (req, res) => {
-      let shouldExit = false
-      await isWithinRateLimits({
-        action: 'GET /objects/:streamId/:objectId',
-        source: req.context.userId || req.context.ip
-      }).catch((rateLimiterRes) => {
-        shouldExit = true
-        return sendRateLimitResponse(
-          res,
-          'GET /objects/:streamId/:objectId',
-          rateLimiterRes
-        )
-      })
-      if (shouldExit) return
+      const rateLimitResult = await getRateLimitResult(
+        'GET /objects/:streamId/:objectId',
+        req.context.userId || req.context.ip
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        return sendRateLimitResponse(res, rateLimitResult)
+      }
 
       const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,
@@ -103,19 +98,13 @@ module.exports = (app) => {
     cors(),
     contextMiddleware,
     async (req, res) => {
-      let shouldExit = false
-      await isWithinRateLimits({
-        action: 'GET /objects/:streamId/:objectId/single',
-        source: req.context.userId || req.context.ip
-      }).catch((rateLimiterRes) => {
-        shouldExit = true
-        return sendRateLimitResponse(
-          res,
-          'GET /objects/:streamId/:objectId/single',
-          rateLimiterRes
-        )
-      })
-      if (shouldExit) return
+      const rateLimitResult = await getRateLimitResult(
+        'GET /objects/:streamId/:objectId/single',
+        req.context.userId || req.context.ip
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        return sendRateLimitResponse(res, rateLimitResult)
+      }
 
       const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,

@@ -22,8 +22,10 @@ const {
 const { getUser } = require('../../services/users')
 
 const {
-  isWithinRateLimits,
-  RateLimitError
+  isRateLimitBreached,
+  getRateLimitResult,
+  RateLimitError,
+  RateLimitAction
 } = require('@/modules/core/services/ratelimiter')
 const {
   batchMoveCommits,
@@ -159,14 +161,13 @@ module.exports = {
         'stream:contributor'
       )
 
-      let shouldThrowError = false
-      await isWithinRateLimits({
-        action: 'COMMIT_CREATE',
-        source: context.userId
-      }).catch(() => {
-        shouldThrowError = true
-      })
-      if (shouldThrowError) throw new RateLimitError()
+      const rateLimitResult = await getRateLimitResult(
+        RateLimitAction.COMMIT_CREATE,
+        context.userId
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
+      }
 
       const id = await createCommitByBranchName({
         ...args.commit,

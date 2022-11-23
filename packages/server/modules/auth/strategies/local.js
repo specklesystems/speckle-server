@@ -8,7 +8,9 @@ const {
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   sendRateLimitResponse,
-  isWithinRateLimits
+  getRateLimitResult,
+  isRateLimitBreached,
+  RateLimitAction
 } = require('@/modules/core/services/ratelimiter')
 const {
   validateServerInvite,
@@ -64,14 +66,13 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         const ip = getIpFromRequest(req)
         if (ip) {
           user.ip = ip
-          let shouldExit = false
-          await isWithinRateLimits({ action: 'USER_CREATE', source: user.ip }).catch(
-            (rateLimiterRes) => {
-              shouldExit = true
-              return sendRateLimitResponse(res, 'USER_CREATE', rateLimiterRes)
-            }
+          const rateLimitResult = await getRateLimitResult(
+            RateLimitAction.USER_CREATE,
+            ip
           )
-          if (shouldExit) return
+          if (isRateLimitBreached(rateLimitResult)) {
+            return sendRateLimitResponse(res, rateLimitResult)
+          }
         }
 
         // 1. if the server is invite only you must have an invite

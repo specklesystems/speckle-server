@@ -7,13 +7,10 @@ const { createStream } = require('@/modules/core/services/streams')
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
-const { LIMITS, redisRateLimiters } = require('@/modules/core/services/ratelimiter')
+const { LIMITS } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { getInvite } = require('@/modules/serverinvites/repositories')
-const Redis = require('ioredis')
-const { getRedisUrl } = require('@/modules/shared/helpers/envHelper')
-const { RateLimiterRedis } = require('rate-limiter-flexible')
 
 const expect = chai.expect
 
@@ -460,25 +457,19 @@ describe('Auth @auth', () => {
           .expect(expectCode)
       }
 
-      const redisClient = new Redis(getRedisUrl(), {
-        enableReadyCheck: false,
-        maxRetriesPerRequest: null
-      })
-
       const oldLimit = LIMITS.USER_CREATE
+
       LIMITS.USER_CREATE = {
-        limitCount: 5,
-        duration: 3 * TIME.second
+        regularOptions: {
+          limitCount: 5,
+          duration: 10 * TIME.second
+        },
+        burstOptions: {
+          limitCount: 5,
+          duration: 10 * TIME.second
+        }
       }
-      const oldRedisRateLimiter = redisRateLimiters.USER_CREATE
-      redisRateLimiters.USER_CREATE = new RateLimiterRedis({
-        storeClient: redisClient,
-        keyPrefix: 'USER_CREATE',
-        points: LIMITS.USER_CREATE.limitCount,
-        duration: LIMITS.USER_CREATE.duration,
-        inMemoryBlockOnConsumed: LIMITS.USER_CREATE.limitCount + 1, // stops additional requests going to Redis once the limit is reached
-        inMemoryBlockDuration: LIMITS.USER_CREATE.duration
-      })
+
       // 5 users should be fine
       for (let i = 0; i < 5; i++) {
         await newUser(`test${i}`, '1.2.3.4', 302)
@@ -497,7 +488,6 @@ describe('Auth @auth', () => {
       }
 
       LIMITS.USER_CREATE = oldLimit
-      redisRateLimiters.USER_CREATE = oldRedisRateLimiter
     })
   })
 })

@@ -6,8 +6,9 @@ const debug = require('debug')
 const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 const {
-  isWithinRateLimits,
-  sendRateLimitResponse
+  sendRateLimitResponse,
+  getRateLimitResult,
+  isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 
 const { hasObjects } = require('../services/objects')
@@ -16,15 +17,13 @@ module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
-    let shouldExit = false
-    await isWithinRateLimits({
-      action: 'POST /api/diff/:streamId',
-      source: req.context.userId || req.context.ip
-    }).catch((rateLimiterRes) => {
-      shouldExit = true
-      return sendRateLimitResponse(res, 'POST /api/diff/:streamId', rateLimiterRes)
-    })
-    if (shouldExit) return
+    const rateLimitResult = await getRateLimitResult(
+      'POST /api/diff/:streamId',
+      req.context.userId || req.context.ip
+    )
+    if (isRateLimitBreached(rateLimitResult)) {
+      return sendRateLimitResponse(res, rateLimitResult)
+    }
 
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,

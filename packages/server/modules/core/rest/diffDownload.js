@@ -8,8 +8,9 @@ const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
 const {
-  isWithinRateLimits,
-  sendRateLimitResponse
+  sendRateLimitResponse,
+  getRateLimitResult,
+  isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 
 const { pipeline, PassThrough } = require('stream')
@@ -18,19 +19,13 @@ module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
   app.post('/api/getobjects/:streamId', cors(), contextMiddleware, async (req, res) => {
-    let shouldExit = false
-    await isWithinRateLimits({
-      action: 'POST /api/getobjects/:streamId',
-      source: req.context.userId || req.context.ip
-    }).catch((rateLimiterRes) => {
-      shouldExit = true
-      return sendRateLimitResponse(
-        res,
-        'POST /api/getobjects/:streamId',
-        rateLimiterRes
-      )
-    })
-    if (shouldExit) return
+    const rateLimitResult = await getRateLimitResult(
+      'POST /api/getobjects/:streamId',
+      req.context.userId || req.context.ip
+    )
+    if (isRateLimitBreached(rateLimitResult)) {
+      return sendRateLimitResponse(res, rateLimitResult)
+    }
 
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
