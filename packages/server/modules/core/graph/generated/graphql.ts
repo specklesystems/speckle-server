@@ -1543,8 +1543,6 @@ export type TestItem = {
  */
 export type User = {
   __typename?: 'User';
-  /** Whether post-sign up onboarding has been finished or skipped entirely */
-  accountSetupDone?: Maybe<Scalars['Boolean']>;
   /** All the recent activity from this user in chronological order */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
@@ -1574,6 +1572,8 @@ export type User = {
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
+  /** Whether post-sign up onboarding has been finished or skipped entirely */
+  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
   name?: Maybe<Scalars['String']>;
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
@@ -2542,7 +2542,6 @@ export type TestItemResolvers<ContextType = GraphQLContext, ParentType extends R
 };
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
-  accountSetupDone?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserActivityArgs, 'limit'>>;
   apiTokens?: Resolver<Maybe<Array<Maybe<ResolversTypes['ApiToken']>>>, ParentType, ContextType>;
   authorizedApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
@@ -2555,6 +2554,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   favoriteStreams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;

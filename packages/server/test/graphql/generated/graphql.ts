@@ -1537,8 +1537,6 @@ export type TestItem = {
  */
 export type User = {
   __typename?: 'User';
-  /** Whether post-sign up onboarding has been finished or skipped entirely */
-  accountSetupDone?: Maybe<Scalars['Boolean']>;
   /** All the recent activity from this user in chronological order */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
@@ -1568,6 +1566,8 @@ export type User = {
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
   id: Scalars['ID'];
+  /** Whether post-sign up onboarding has been finished or skipped entirely */
+  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
   name?: Maybe<Scalars['String']>;
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
