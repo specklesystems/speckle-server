@@ -342,7 +342,7 @@ module.exports = class IFCParser {
           units: 'm',
           volume: 0,
           area: 0,
-          random: Math.random(), // TODO: remove, this is here just for performance benchmarking
+          // random: Math.random(), // TODO: remove, this is here just for performance benchmarking
           vertices,
           faces,
           renderMaterial: placedGeometry.color

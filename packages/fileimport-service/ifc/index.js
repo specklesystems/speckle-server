@@ -1,7 +1,6 @@
 const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
-const Parser = require('./parser')
-const Parser2 = require('./parser_v2')
+const Parser = require('./parser_v2')
 const ServerAPI = require('./api.js')
 
 async function parseAndCreateCommit({
@@ -13,27 +12,11 @@ async function parseAndCreateCommit({
 }) {
   const serverApi = new ServerAPI({ streamId })
   const myParser = new Parser({ serverApi })
-  const myParser2 = new Parser2({ serverApi })
 
-  const start2 = performance.now()
-  const { id, tCount } = await myParser2.parse(data)
-  const end2 = performance.now()
-
-  // const start = performance.now()
-  // const { id, tCount } = await myParser.parse(data)
-  // const end = performance.now()
-
-  //   console.log(`
-
-  // Total processing time V1: ${(end - start).toFixed(2)}ms
-  // Total processing time V2: ${(end2 - start2).toFixed(2)}ms
-
-  //   `)
-  console.log(`
-
-Total processing time V2: ${(end2 - start2).toFixed(2)}ms
-
-  `)
+  const start = performance.now()
+  const { id, tCount } = await myParser.parse(data)
+  const end = performance.now()
+  console.log(`Total processing time V2: ${(end - start).toFixed(2)}ms`)
 
   const commit = {
     streamId,
