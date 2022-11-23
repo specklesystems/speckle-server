@@ -21,12 +21,14 @@
       />
     </div>
     <div class="mt-1">
-      <TextLink :to="ForgottenPasswordRoute" size="sm">Forgot your password?</TextLink>
+      <CommonTextLink :to="ForgottenPasswordRoute" size="sm">
+        Forgot your password?
+      </CommonTextLink>
     </div>
     <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
     <div class="text-center">
       <span class="mr-2">Don't have an account?</span>
-      <TextLink :to="RegisterRoute">Register</TextLink>
+      <CommonTextLink :to="RegisterRoute">Register</CommonTextLink>
     </div>
   </form>
 </template>

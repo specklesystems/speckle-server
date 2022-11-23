@@ -38,7 +38,7 @@
     </div>
     <div class="mt-8 text-center">
       <span class="mr-2">Already have an account?</span>
-      <TextLink :to="LoginRoute">Log in</TextLink>
+      <CommonTextLink :to="LoginRoute">Log in</CommonTextLink>
     </div>
   </form>
 </template>
