@@ -79,6 +79,13 @@ const props = defineProps({
   submit: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Use foreground color variation of the link button
+   */
+  foregroundLink: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -110,12 +117,17 @@ const typeClasses = computed(() => {
   if (['outline', 'link'].includes(props.type)) {
     // bg
     classParts.push('bg-inherit')
+
     // text
-    classParts.push(
-      disabled
-        ? 'text-foreground-disabled'
-        : 'text-primary hover:text-primary-focus focus:text-primary-focus'
-    )
+    if (disabled) {
+      classParts.push('text-foreground-disabled')
+    } else {
+      classParts.push(
+        props.foregroundLink
+          ? 'text-foreground'
+          : 'text-primary hover:text-primary-focus focus:text-primary-focus'
+      )
+    }
   } else {
     // bg
     classParts.push(
