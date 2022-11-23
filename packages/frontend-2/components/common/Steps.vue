@@ -9,9 +9,14 @@
           @click="() => switchStep(i)"
         >
           <span class="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
-            <CheckCircleIcon class="h-full w-full text-primary" aria-hidden="true" />
+            <span v-if="basic" class="h-3 w-3 rounded-full bg-foreground-2" />
+            <CheckCircleIcon
+              v-else
+              class="h-full w-full text-primary"
+              aria-hidden="true"
+            />
           </span>
-          <span class="ml-3 text-foreground h6">
+          <span :class="['text-foreground', labelClasses]">
             {{ step.name }}
           </span>
         </a>
@@ -26,10 +31,15 @@
             class="relative flex h-5 w-5 flex-shrink-0 items-center justify-center"
             aria-hidden="true"
           >
-            <span class="absolute h-4 w-4 rounded-full bg-primary-outline-2" />
-            <span class="relative block h-2 w-2 rounded-full bg-primary-focus" />
+            <template v-if="basic">
+              <span class="h-3 w-3 rounded-full bg-foreground" />
+            </template>
+            <template v-else>
+              <span class="absolute h-4 w-4 rounded-full bg-primary-outline-2" />
+              <span class="relative block h-2 w-2 rounded-full bg-primary-focus" />
+            </template>
           </span>
-          <span class="ml-3 text-primary-focus h6">
+          <span :class="['text-primary-focus', labelClasses]">
             {{ step.name }}
           </span>
         </a>
@@ -38,9 +48,10 @@
             class="relative flex h-5 w-5 flex-shrink-0 items-center justify-center"
             aria-hidden="true"
           >
-            <div class="h-2 w-2 rounded-full bg-foreground-2" />
+            <span v-if="basic" class="h-3 w-3 rounded-full bg-foreground-2" />
+            <div v-else class="h-2 w-2 rounded-full bg-foreground-2" />
           </div>
-          <p class="ml-3 text-foreground h6">
+          <p :class="['text-foreground', labelClasses]">
             {{ step.name }}
           </p>
         </a>
@@ -73,11 +84,28 @@ const orientation = computed(
   (): HorizontalOrVertical =>
     props.orientation === 'vertical' ? 'vertical' : 'horizontal'
 )
-const listClasses = computed(() =>
-  orientation.value === 'vertical'
-    ? 'flex flex-col space-y-4 justify-center'
-    : 'flex space-x-8 items-center'
-)
+const listClasses = computed(() => {
+  const classParts: string[] = ['flex']
+
+  if (orientation.value === 'vertical') {
+    classParts.push('flex flex-col space-y-4 justify-center')
+  } else {
+    classParts.push('flex items-center')
+    classParts.push(props.basic ? 'space-x-4' : 'space-x-8')
+  }
+
+  return classParts.join(' ')
+})
+
+const labelClasses = computed(() => {
+  const classParts: string[] = ['ml-3 h6']
+
+  if (props.basic) {
+    classParts.push('sr-only')
+  }
+
+  return classParts.join(' ')
+})
 
 const value = computed({
   get: () => props.modelValue || 0,

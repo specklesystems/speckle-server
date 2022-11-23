@@ -9,9 +9,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { $apollo } = useNuxtApp()
   const client = $apollo.default
 
-  // Skip if going to onboarding2 (test)
-  if (to.path === '/onboarding2') return
-
   const { data } = await client
     .query({
       query: activeUserQuery
