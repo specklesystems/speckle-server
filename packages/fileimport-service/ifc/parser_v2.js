@@ -43,6 +43,7 @@ module.exports = class IFCParser {
     // create and save the spatial tree, populating both properties and geometry references
     // where appropriate
     this.spatialNodeCount = 0
+    this.nodeBatch = []
     const structure = await this.createSpatialStructure()
     const p4 = performance.now()
     console.log(`structure ${(p4 - p3).toFixed(2)}ms`)
@@ -64,6 +65,9 @@ module.exports = class IFCParser {
     }
 
     await this.populateSpatialNode(project, chunks, [])
+    if (this.nodeBatch.length !== 0) {
+      await this.flushNodeBatch()
+    }
     return project
   }
 
@@ -90,8 +94,18 @@ module.exports = class IFCParser {
     node.__closure = this.formatClosure(node.closure)
     node.id = getHash(node)
     // delete node.closure
-    await this.serverApi.saveObject(node)
+    this.nodeBatch.push(node)
+
+    if (this.nodeBatch.length > 3000) {
+      await this.flushNodeBatch()
+    }
     return node.id
+  }
+
+  async flushNodeBatch() {
+    if (this.nodeBatch.length === 0) return
+    await this.serverApi.saveObjectBatch(this.nodeBatch)
+    this.nodeBatch = []
   }
 
   formatClosure(idsArray) {
@@ -116,6 +130,7 @@ module.exports = class IFCParser {
     }
 
     node[prop] = nodes.map((node) => ({
+      // eslint-disable-next-line camelcase
       speckle_type: 'reference',
       referencedId: node.id
     }))
@@ -178,7 +193,7 @@ module.exports = class IFCParser {
   saveChunk(chunks, propName, rel) {
     const relating = rel[propName.relating].value
     const related = rel[propName.related].map((r) => r.value)
-    if (chunks[relating] == undefined) {
+    if (chunks[relating] === undefined) {
       chunks[relating] = related
     } else {
       chunks[relating] = chunks[relating].concat(related)
@@ -253,6 +268,7 @@ module.exports = class IFCParser {
   createNode(id) {
     const typeName = this.getNodeType(id)
     return {
+      // eslint-disable-next-line camelcase
       speckle_type: typeName,
       expressID: id,
       type: typeName,
@@ -321,11 +337,12 @@ module.exports = class IFCParser {
         const faces = this.extractFaces(indices)
 
         const speckleMesh = {
+          // eslint-disable-next-line camelcase
           speckle_type: 'Objects.Geometry.Mesh',
           units: 'm',
           volume: 0,
           area: 0,
-          random: Math.random(),
+          random: Math.random(), // TODO: remove, this is here just for performance benchmarking
           vertices,
           faces,
           renderMaterial: placedGeometry.color
@@ -340,6 +357,7 @@ module.exports = class IFCParser {
 
         speckleMeshes.push(speckleMesh)
         geometryReferences[mesh.expressID].push({
+          // eslint-disable-next-line camelcase
           speckle_type: 'reference',
           referencedId: speckleMesh.id
         })
@@ -396,6 +414,7 @@ module.exports = class IFCParser {
       opacity: color.w,
       metalness: 0,
       roughness: 1,
+      // eslint-disable-next-line camelcase
       speckle_type: 'Objects.Other.RenderMaterial'
     }
   }

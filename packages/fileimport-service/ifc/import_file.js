@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const TMP_RESULTS_PATH = '/tmp/import_result.json'
+const TMP_RESULTS_PATH = './import_result.json'
 
 const { parseAndCreateCommit } = require('./index')
 
@@ -18,27 +18,27 @@ async function main() {
     data,
     streamId,
     userId,
-    message: commitMessage || 'Imported file'
+    message: filePath + commitMessage || ' Imported file'
   }
   if (branchName) ifcInput.branchName = branchName
 
-  let output = {
+  const output = {
     success: false,
     error: 'Unknown error'
   }
+  const commitId = await parseAndCreateCommit(ifcInput)
 
-  try {
-    const commitId = await parseAndCreateCommit(ifcInput)
-    output = {
-      success: true,
-      commitId
-    }
-  } catch (err) {
-    output = {
-      success: false,
-      error: err.toString()
-    }
-  }
+  // try {
+  //   output = {
+  //     success: true,
+  //     commitId
+  //   }
+  // } catch (err) {
+  //   output = {
+  //     success: false,
+  //     error: err.toString()
+  //   }
+  // }
 
   fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
 
