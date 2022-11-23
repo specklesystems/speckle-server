@@ -58,8 +58,35 @@
     @apply text-xs;
   }
 
-  .layout-columns-single {
-    @apply container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  /**
+   * Grid/Layout container that limits max width to expected sizes that we use in our designs
+   * (see Figma - Design System - Foundations - Grid & Layout)
+   */
+  .layout-container {
+    @apply mx-auto;
+
+    /* base/mobile - fluid, no max width, just padding */
+    @apply px-4;
+
+    /* sm+ - also fluid, increased padding */
+    @media (min-width: theme('screens.sm')) {
+      @apply px-8;
+    }
+
+    /* lg+ (from this point on, no padding just limited max width) */
+    @media (min-width: theme('screens.lg')) {
+      @apply px-0 max-w-[928px];
+    }
+
+    /* xl+ */
+    @media (min-width: theme('screens.xl')) {
+      @apply max-w-[1216px];
+    }
+
+    /* 2xl+ */
+    @media (min-width: theme('screens.2xl')) {
+      @apply max-w-[1312px];
+    }
   }
 }
 

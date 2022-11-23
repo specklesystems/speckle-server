@@ -1,6 +1,9 @@
-<template>Ayyy dude</template>
+<template>
+  <AuthOnboardingPanel />
+</template>
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['auth'],
+  layout: 'empty'
 })
 </script>

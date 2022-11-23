@@ -8,6 +8,7 @@
         placeholder="Enter your email"
         :rules="emailRules"
         show-label
+        :disabled="loading"
       />
       <FormTextInput
         type="password"
@@ -16,12 +17,13 @@
         placeholder="Enter your password"
         :rules="passwordRules"
         show-label
+        :disabled="loading"
       />
     </div>
     <div class="mt-1">
       <TextLink :to="ForgottenPasswordRoute" size="sm">Forgot your password?</TextLink>
     </div>
-    <FormButton submit full-width class="my-8">Log in</FormButton>
+    <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
     <div class="text-center">
       <span class="mr-2">Don't have an account?</span>
       <TextLink :to="RegisterRoute">Register</TextLink>
@@ -43,6 +45,8 @@ const props = defineProps<{
 }>()
 
 const { handleSubmit } = useForm<FormValues>()
+
+const loading = ref(false)
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
@@ -51,6 +55,7 @@ const { triggerNotification } = useGlobalToast()
 
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {
+    loading.value = true
     await loginWithEmail({ email, password, challenge: props.challenge })
   } catch (e) {
     triggerNotification({
@@ -58,6 +63,8 @@ const onSubmit = handleSubmit(async ({ email, password }) => {
       title: 'Login failed',
       description: `${ensureError(e).message}`
     })
+  } finally {
+    loading.value = false
   }
 })
 </script>

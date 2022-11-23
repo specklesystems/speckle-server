@@ -1,6 +1,6 @@
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { OnboardingRoute } from '~~/lib/common/helpers/route'
+import { HomeRoute, OnboardingRoute } from '~~/lib/common/helpers/route'
 
 /**
  * Redirect user to /onboarding, if they haven't done it yet
@@ -8,9 +8,6 @@ import { OnboardingRoute } from '~~/lib/common/helpers/route'
 export default defineNuxtRouteMiddleware(async (to) => {
   const { $apollo } = useNuxtApp()
   const client = $apollo.default
-
-  // If already going to onboarding, continue
-  if (to.path === OnboardingRoute) return
 
   const { data } = await client
     .query({
@@ -22,7 +19,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!data?.activeUser?.id) return
 
   const isOnboardingFinished = data.activeUser.isOnboardingFinished
-  if (!isOnboardingFinished) {
+  const isGoingToOnboarding = to.path === OnboardingRoute
+
+  if (!isOnboardingFinished && !isGoingToOnboarding) {
     return navigateTo(OnboardingRoute)
+  } else if (isOnboardingFinished && isGoingToOnboarding) {
+    return navigateTo(HomeRoute)
   }
 })
