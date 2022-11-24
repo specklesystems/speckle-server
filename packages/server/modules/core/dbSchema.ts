@@ -137,7 +137,8 @@ export const Users = buildTableHelper('users', [
   'avatar',
   'profiles',
   'passwordDigest',
-  'ip'
+  'ip',
+  'isOnboardingFinished'
 ])
 
 export const ServerAcl = buildTableHelper('server_acl', ['userId', 'role'])

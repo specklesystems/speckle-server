@@ -20,6 +20,7 @@ const {
   getAdminUsersListCollection
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
+const { markOnboardingComplete } = require('@/modules/core/repositories/users')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -185,6 +186,13 @@ module.exports = {
       })
 
       return true
+    },
+
+    activeUserMutations: () => ({})
+  },
+  ActiveUserMutations: {
+    async finishOnboarding(_parent, _args, ctx) {
+      return await markOnboardingComplete(ctx.userId || '')
     }
   }
 }

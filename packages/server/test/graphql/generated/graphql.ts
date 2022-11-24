@@ -19,6 +19,12 @@ export type Scalars = {
   JSONObject: Record<string, unknown>;
 };
 
+export type ActiveUserMutations = {
+  __typename?: 'ActiveUserMutations';
+  /** Mark onboarding as complete */
+  finishOnboarding: Scalars['Boolean'];
+};
+
 export type Activity = {
   __typename?: 'Activity';
   actionType: Scalars['String'];
@@ -469,6 +475,8 @@ export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
   _?: Maybe<Scalars['String']>;
+  /** Various Active User oriented mutations */
+  activeUserMutations: ActiveUserMutations;
   adminDeleteUser: Scalars['Boolean'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String'];
@@ -539,6 +547,7 @@ export type Mutation = {
   /** Update permissions of a user on a given stream. */
   streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
+  testtest?: Maybe<Scalars['Boolean']>;
   /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */

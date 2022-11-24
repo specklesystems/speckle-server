@@ -79,3 +79,16 @@ export async function markUserAsVerified(email: string) {
 
   return !!(await q)
 }
+
+export async function markOnboardingComplete(userId: string) {
+  if (!userId) return false
+
+  const UserCols = Users.withoutTablePrefix.col
+  const q = Users.knex()
+    .where(Users.col.id, userId)
+    .update({
+      [UserCols.isOnboardingFinished]: true
+    })
+
+  return !!(await q)
+}
