@@ -7,7 +7,8 @@ const { validatePermissionsWriteStream } = require('./authUtils')
 const {
   sendRateLimitResponse,
   getRateLimitResult,
-  isRateLimitBreached
+  isRateLimitBreached,
+  getSourceFromRequest
 } = require('@/modules/core/services/ratelimiter')
 
 const { hasObjects } = require('../services/objects')
@@ -18,7 +19,7 @@ module.exports = (app) => {
   app.post('/api/diff/:streamId', cors(), async (req, res) => {
     const rateLimitResult = await getRateLimitResult(
       'POST /api/diff/:streamId',
-      req.context.userId || req.context.ip
+      getSourceFromRequest(req)
     )
     if (isRateLimitBreached(rateLimitResult)) {
       return sendRateLimitResponse(res, rateLimitResult)

@@ -31,7 +31,7 @@ import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { rateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
+import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
 import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
@@ -196,7 +196,7 @@ export async function init() {
   // Log errors
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
-  app.use(rateLimiterMiddleware)
+  app.use(createRateLimiterMiddleware())
 
   app.use(Sentry.Handlers.errorHandler())
 

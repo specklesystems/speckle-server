@@ -10,7 +10,8 @@ const { createObjectsBatched } = require('../services/objects')
 const {
   sendRateLimitResponse,
   getRateLimitResult,
-  isRateLimitBreached
+  isRateLimitBreached,
+  getSourceFromRequest
 } = require('@/modules/core/services/ratelimiter')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
@@ -21,7 +22,7 @@ module.exports = (app) => {
   app.post('/objects/:streamId', cors(), async (req, res) => {
     const rateLimitResult = await getRateLimitResult(
       'POST /objects/:streamId',
-      req.context.userId || req.context.ip
+      getSourceFromRequest(req)
     )
     if (isRateLimitBreached(rateLimitResult)) {
       return sendRateLimitResponse(res, rateLimitResult)

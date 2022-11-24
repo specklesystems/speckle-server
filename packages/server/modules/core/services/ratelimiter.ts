@@ -2,8 +2,8 @@ import express from 'express'
 import Redis from 'ioredis'
 import {
   getRedisUrl,
-  isTestEnv,
-  getIntFromEnv
+  getIntFromEnv,
+  isTestEnv
 } from '@/modules/shared/helpers/envHelper'
 import {
   BurstyRateLimiter,
@@ -48,7 +48,6 @@ type RateLimits = {
 }
 
 export enum RateLimitAction {
-  // ALL_REQUESTS_BURST = 'ALL_REQUESTS_BURST',
   ALL_REQUESTS = 'ALL_REQUESTS',
   USER_CREATE = 'USER_CREATE',
   STREAM_CREATE = 'STREAM_CREATE',
@@ -195,7 +194,7 @@ export const sendRateLimitResponse = (
   })
 }
 
-const getActionForPath = (path: string, verb: string): RateLimitAction => {
+export const getActionForPath = (path: string, verb: string): RateLimitAction => {
   try {
     const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
     const action = RateLimitAction[maybeAction]
@@ -206,7 +205,7 @@ const getActionForPath = (path: string, verb: string): RateLimitAction => {
   }
 }
 
-const getSourceFromRequest = (req: express.Request): string => {
+export const getSourceFromRequest = (req: express.Request): string => {
   let source: string | null =
     ((req as RequestWithContext)?.context?.userId as string) ?? getIpFromRequest(req)
 
@@ -214,27 +213,30 @@ const getSourceFromRequest = (req: express.Request): string => {
   return source
 }
 
-export const rateLimiterMiddleware = async (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
+export const createRateLimiterMiddleware = (
+  rateLimiterMapping: RateLimiterMapping = RATE_LIMITERS
 ) => {
-  if (isTestEnv()) return next()
+  return async (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    if (isTestEnv()) return next()
+    const path = req.originalUrl ? req.originalUrl : req.path
+    const action = getActionForPath(path, req.method)
+    const source = getSourceFromRequest(req)
 
-  const path = req.originalUrl ? req.originalUrl : req.path
-  const action = getActionForPath(path, req.method)
-  const source = getSourceFromRequest(req)
-
-  const rateLimitResult = await getRateLimitResult(action, source)
-  if (isRateLimitBreached(rateLimitResult)) {
-    return sendRateLimitResponse(res, rateLimitResult)
-  } else {
-    try {
-      res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
-      next()
-    } catch (err) {
-      if (!(err instanceof RateLimitError)) throw err
-      return sendRateLimitResponse(res, err.rateLimitBreached)
+    const rateLimitResult = await getRateLimitResult(action, source, rateLimiterMapping)
+    if (isRateLimitBreached(rateLimitResult)) {
+      return sendRateLimitResponse(res, rateLimitResult)
+    } else {
+      try {
+        res.setHeader('X-RateLimit-Remaining', rateLimitResult.remainingPoints)
+        return next()
+      } catch (err) {
+        if (!(err instanceof RateLimitError)) throw err
+        return sendRateLimitResponse(res, err.rateLimitBreached)
+      }
     }
   }
 }

@@ -134,6 +134,7 @@
     "mocha": "^10.1.0",
     "mocha-junit-reporter": "^2.0.2",
     "mock-require": "^3.0.3",
+    "node-mocks-http": "^1.12.1",
     "nodemon": "^2.0.6",
     "nyc": "^15.0.1",
     "prettier": "^2.5.1",

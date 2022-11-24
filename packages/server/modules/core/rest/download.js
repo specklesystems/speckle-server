@@ -11,7 +11,8 @@ const { pipeline, PassThrough } = require('stream')
 const {
   sendRateLimitResponse,
   getRateLimitResult,
-  isRateLimitBreached
+  isRateLimitBreached,
+  getSourceFromRequest
 } = require('@/modules/core/services/ratelimiter')
 
 module.exports = (app) => {
@@ -20,7 +21,7 @@ module.exports = (app) => {
   app.get('/objects/:streamId/:objectId', cors(), async (req, res) => {
     const rateLimitResult = await getRateLimitResult(
       'GET /objects/:streamId/:objectId',
-      req.context.userId || req.context.ip
+      getSourceFromRequest(req)
     )
     if (isRateLimitBreached(rateLimitResult)) {
       return sendRateLimitResponse(res, rateLimitResult)
@@ -90,7 +91,7 @@ module.exports = (app) => {
   app.get('/objects/:streamId/:objectId/single', cors(), async (req, res) => {
     const rateLimitResult = await getRateLimitResult(
       'GET /objects/:streamId/:objectId/single',
-      req.context.userId || req.context.ip
+      getSourceFromRequest(req)
     )
     if (isRateLimitBreached(rateLimitResult)) {
       return sendRateLimitResponse(res, rateLimitResult)
