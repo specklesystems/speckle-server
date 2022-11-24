@@ -163,6 +163,7 @@ describe('[Stream & Server Invites]', () => {
         expect(result.errors).to.be.not.ok
 
         // Check that email was sent out
+        expect(sendEmailInvocations.args).to.have.lengthOf(1)
         const emailParams = sendEmailInvocations.args[0][0]
         expect(emailParams).to.be.ok
         expect(emailParams.to).to.eq(targetEmail)
