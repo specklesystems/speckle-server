@@ -45,7 +45,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (!user) throw new Error('Invalid credentials')
         req.user = { id: user.id }
 
-        next()
+        return next()
       } catch (err) {
         return res.status(401).send({ err: true, message: 'Invalid credentials' })
       }

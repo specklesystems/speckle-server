@@ -219,7 +219,7 @@ export const rateLimiterMiddleware = async (
   res: express.Response,
   next: express.NextFunction
 ) => {
-  if (isTestEnv()) next()
+  if (isTestEnv()) return next()
 
   const path = req.originalUrl ? req.originalUrl : req.path
   const action = getActionForPath(path, req.method)

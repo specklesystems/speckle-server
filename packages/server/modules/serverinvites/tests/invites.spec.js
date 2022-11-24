@@ -3,7 +3,7 @@ const { buildApolloServer } = require('@/app')
 const { Streams, Users, ServerInvites } = require('@/modules/core/dbSchema')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createUser } = require('@/modules/core/services/users')
-const { addLoadersToCtx } = require('@/modules/shared')
+const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const {
   createServerInvite,
   createStreamInvite,

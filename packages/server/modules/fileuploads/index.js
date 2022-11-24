@@ -2,13 +2,10 @@
 'use strict'
 
 const debug = require('debug')
-const { contextMiddleware } = require('@/modules/shared')
 const { saveUploadFile } = require('./services/fileuploads')
 const request = require('request')
-const {
-  authMiddlewareCreator,
-  streamWritePermissions
-} = require('@/modules/shared/authz')
+const { streamWritePermissions } = require('@/modules/shared/authz')
+const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -36,7 +33,6 @@ exports.init = async (app) => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       req.pipe(

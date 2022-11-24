@@ -25,7 +25,6 @@ import {
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import { buildContext } from '@/modules/shared'
 import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
@@ -35,6 +34,7 @@ import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { rateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
+import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
 
@@ -105,10 +105,7 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({
-            connection: { context: { token } },
-            req: undefined
-          })
+          return await buildContext({ req: null, token })
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
@@ -193,14 +190,18 @@ export async function init() {
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
 
-  // Initialize default modules, including rest api handlers
-  await ModulesSetup.init(app)
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
 
   // Log errors
   app.use(errorLoggingMiddleware)
+  app.use(authContextMiddleware)
   app.use(rateLimiterMiddleware)
+
+  app.use(Sentry.Handlers.errorHandler())
+
+  // Initialize default modules, including rest api handlers
+  await ModulesSetup.init(app)
 
   // Initialize graphql server
   // (Apollo Server v3 has an ugly API here - the ApolloServer ctor needs SubscriptionServer,
@@ -231,6 +232,26 @@ export async function shutdown(): Promise<void> {
   await ModulesSetup.shutdown()
 }
 
+const shouldUseFrontendProxy = () => process.env.NODE_ENV === 'development'
+
+async function createFrontendProxy() {
+  const frontendHost = process.env.FRONTEND_HOST || 'localhost'
+  const frontendPort = process.env.FRONTEND_PORT || 8080
+  const { createProxyMiddleware } = await import('http-proxy-middleware')
+
+  // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
+  // slowing everything down
+  const defaultAgent = new http.Agent()
+
+  return createProxyMiddleware({
+    target: `http://${frontendHost}:${frontendPort}`,
+    changeOrigin: true,
+    ws: false,
+    logLevel: 'silent',
+    agent: defaultAgent
+  })
+}
+
 /**
  * Starts a http server, hoisting the express app to it.
  */
@@ -242,26 +263,12 @@ export async function startHttp(
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
-  const frontendHost = process.env.FRONTEND_HOST || 'localhost'
-  const frontendPort = process.env.FRONTEND_PORT || 8080
-
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
-  if (process.env.NODE_ENV === 'development') {
-    const { createProxyMiddleware } = await import('http-proxy-middleware')
-
-    // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
-    // slowing everything down
-    const defaultAgent = new http.Agent()
-
-    const frontendProxy = createProxyMiddleware({
-      target: `http://${frontendHost}:${frontendPort}`,
-      changeOrigin: true,
-      ws: false,
-      logLevel: 'silent',
-      agent: defaultAgent
-    })
-    app.use('/', frontendProxy)
+  if (customPortOverride || customPortOverride === 0) port = customPortOverride
+  if (shouldUseFrontendProxy()) {
+    // app.use('/', frontendProxy)
+    app.use(await createFrontendProxy())
 
     debug('speckle:startup')('✨ Proxying frontend (dev mode):')
     debug('speckle:startup')(`👉 main application: http://localhost:${port}/`)
@@ -274,10 +281,7 @@ export async function startHttp(
 
   monitorActiveConnections(server)
 
-  if (customPortOverride || customPortOverride === 0) port = customPortOverride
   app.set('port', port)
-
-  app.use(Sentry.Handlers.errorHandler())
 
   // large timeout to allow large downloads on slow connections to finish
   createTerminus(server, {

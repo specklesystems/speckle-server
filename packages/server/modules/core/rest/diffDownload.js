@@ -3,7 +3,6 @@ const zlib = require('zlib')
 const debug = require('debug')
 const cors = require('cors')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
@@ -18,7 +17,7 @@ const { pipeline, PassThrough } = require('stream')
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
-  app.post('/api/getobjects/:streamId', cors(), contextMiddleware, async (req, res) => {
+  app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
     const rateLimitResult = await getRateLimitResult(
       'POST /api/getobjects/:streamId',
       req.context.userId || req.context.ip
