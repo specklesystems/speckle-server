@@ -3,6 +3,7 @@ import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
 import { MockedProvider } from '~~/lib/fake-nuxt-env/components/MockedProvider'
 import { setup } from '@storybook/vue3'
 import SingletonManagers from '~~/components/singleton/Managers.vue'
+import { useArgs } from '@storybook/client-api'
 
 setup((app) => {
   setupVueApp(app)
@@ -57,7 +58,7 @@ export const parameters = {
   },
   backgrounds: {
     // Using tailwind theme bg values
-    default: 'foundation',
+    default: 'foundation-page',
     values: [
       {
         name: 'foundation-page',
@@ -81,6 +82,12 @@ export const parameters = {
 
 /** @type {import('@storybook/csf').DecoratorFunction[]} */
 export const decorators = [
+  // Feed in updateArgs() into stories
+  (story, ctx) => {
+    const [, updateArgs] = useArgs()
+    return story({ ...ctx, updateArgs })
+  },
+
   /**
    * - Global CSS class setup
    * - Theme support

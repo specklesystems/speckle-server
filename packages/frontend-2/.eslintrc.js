@@ -115,7 +115,9 @@ const config = {
       files: '*.stories.{js,ts}',
       rules: {
         // this one feels busted, tells me to await synchronous calls
-        'storybook/await-interactions': 'off'
+        'storybook/await-interactions': 'off',
+        // storybook types suck and can't be augmented
+        '@typescript-eslint/no-unsafe-call': 'off'
       }
     }
   ]

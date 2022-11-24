@@ -108,7 +108,7 @@ const labelClasses = computed(() => {
 })
 
 const value = computed({
-  get: () => props.modelValue || 0,
+  get: () => clamp(props.modelValue || 0, 0, props.steps.length),
   set: (newVal) => emit('update:modelValue', clamp(newVal, 0, props.steps.length))
 })
 
@@ -119,8 +119,6 @@ const switchStep = (newStep: number) => {
   value.value = newStep
 
   const stepObj = props.steps[value.value]
-  if (stepObj?.onClick) {
-    stepObj.onClick()
-  }
+  stepObj?.onClick?.()
 }
 </script>
