@@ -10,7 +10,6 @@ import {
   DirectionalLightHelper,
   DynamicDrawUsage,
   Group,
-  InterleavedBufferAttribute,
   Intersection,
   Line3,
   LineBasicMaterial,
@@ -27,7 +26,6 @@ import {
   Spherical,
   sRGBEncoding,
   Texture,
-  Vector2,
   Vector3,
   VSMShadowMap,
   WebGLRenderer
@@ -62,9 +60,7 @@ import {
 } from './pipeline/Pipeline'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { SectionBoxCapper } from './SectionBoxCapper'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -94,6 +90,9 @@ export default class SpeckleRenderer {
   private lastPolar: number
   private lastCameraPosition: Vector3 = new Vector3()
   private lastCameraMotionDelta: number
+  private lastSectionPlanes: Plane[] = []
+  private sectionPlanesChanged: Plane[] = []
+  private sectionBoxCapper: SectionBoxCapper = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -176,6 +175,14 @@ export default class SpeckleRenderer {
     this.batcher = new Batcher()
     this.intersections = new Intersections()
     this.viewer = viewer
+    this.lastSectionPlanes.push(
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane()
+    )
   }
 
   public create(container: HTMLElement) {
@@ -201,6 +208,11 @@ export default class SpeckleRenderer {
     this.pipeline = new Pipeline(this._renderer, this.batcher)
     this.pipeline.configure()
     this.pipeline.pipelineOptions = DefaultPipelineOptions
+
+    this.sectionBoxCapper = new SectionBoxCapper()
+    const sectionBoxCapperGroup = new Group()
+    sectionBoxCapperGroup.name = 'SectionBoxCapper'
+    this.scene.add(sectionBoxCapperGroup)
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -501,6 +513,15 @@ export default class SpeckleRenderer {
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
   }
 
+  private setSectionPlaneChanged(planes: Plane[]) {
+    this.sectionPlanesChanged.length = 0
+    for (let k = 0; k < planes.length; k++) {
+      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
+        this.sectionPlanesChanged.push(planes[k])
+      this.lastSectionPlanes[k].copy(planes[k])
+    }
+  }
+
   public onSectionBoxDragStart() {
     const clipOutline: Mesh = this.allObjects.getObjectByName('clip-outline') as Mesh
     if (clipOutline) {
@@ -510,147 +531,146 @@ export default class SpeckleRenderer {
 
   public onSectionBoxDragEnd() {
     const generate = () => {
-      let clipOutline: LineSegments2 = this.allObjects.getObjectByName(
-        'clip-outline'
-      ) as LineSegments2
-      if (!clipOutline) {
-        const lineGeometry = new LineSegmentsGeometry()
-        lineGeometry.setPositions(new Float32Array(60000))
-        const material = new LineMaterial({
-          color: 0x047efb,
-          linewidth: 2,
-          worldUnits: false,
-          vertexColors: false,
-          alphaToCoverage: false,
-          resolution: new Vector2(919, 848)
-        })
-        material.color = new Color(0x047efb)
-        material.color.convertSRGBToLinear()
-        material.linewidth = 2
-        material.clipIntersection = true
-        material.worldUnits = false
-
-        clipOutline = new LineSegments2(lineGeometry, material)
-        clipOutline.name = 'clip-outline'
-        clipOutline.frustumCulled = false
-        clipOutline.renderOrder = 1
-        clipOutline.layers.set(ObjectLayers.PROPS)
-        // ;(clipOutline.material as Material).clipIntersection = true
-        this.allObjects.add(clipOutline)
-      }
-
-      const tempVector = new Vector3()
-      const tempVector1 = new Vector3()
-      const tempVector2 = new Vector3()
-      const tempVector3 = new Vector3()
-      const tempLine = new Line3()
-
-      const batches: MeshBatch[] = this.batcher.getBatches(
-        undefined,
-        GeometryType.MESH
-      ) as MeshBatch[]
-      let index = 0
-      for (let b = 0; b < batches.length; b++) {
-        const posAttr = (
-          clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
-        ).data
-        posAttr.setUsage(DynamicDrawUsage)
-        const posArray = posAttr.array as number[]
-        batches[b].boundsTree.shapecast({
-          intersectsBounds: (box) => {
-            const localPlane = this.viewer.sectionBox.planes[2]
-            return localPlane.intersectsBox(box)
-          },
-
-          intersectsTriangle: (tri) => {
-            // check each triangle edge to see if it intersects with the plane. If so then
-            // add it to the list of segments.
-            const localPlane = this.viewer.sectionBox.planes[2]
-            let count = 0
-
-            tempLine.start.copy(tri.a)
-            tempLine.end.copy(tri.b)
-            if (localPlane.intersectLine(tempLine, tempVector)) {
-              posArray[index * 3] = tempVector.x
-              posArray[index * 3 + 1] = tempVector.y
-              posArray[index * 3 + 2] = tempVector.z
-              index++
-              count++
-            }
-
-            tempLine.start.copy(tri.b)
-            tempLine.end.copy(tri.c)
-            if (localPlane.intersectLine(tempLine, tempVector)) {
-              posArray[index * 3] = tempVector.x
-              posArray[index * 3 + 1] = tempVector.y
-              posArray[index * 3 + 2] = tempVector.z
-              count++
-              index++
-            }
-
-            tempLine.start.copy(tri.c)
-            tempLine.end.copy(tri.a)
-            if (localPlane.intersectLine(tempLine, tempVector)) {
-              posArray[index * 3] = tempVector.x
-              posArray[index * 3 + 1] = tempVector.y
-              posArray[index * 3 + 2] = tempVector.z
-              count++
-              index++
-            }
-
-            // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
-            if (count === 3) {
-              // tempVector1.fromBufferAttribute(posAttr, index - 3)
-              // tempVector2.fromBufferAttribute(posAttr, index - 2)
-              // tempVector3.fromBufferAttribute(posAttr, index - 1)
-              tempVector1.set(
-                posArray[(index - 3) * 3],
-                posArray[(index - 3) * 3 + 1],
-                posArray[(index - 3) * 3 + 2]
-              )
-              tempVector2.set(
-                posArray[(index - 2) * 3],
-                posArray[(index - 2) * 3 + 1],
-                posArray[(index - 2) * 3 + 2]
-              )
-              tempVector3.set(
-                posArray[(index - 1) * 3],
-                posArray[(index - 1) * 3 + 1],
-                posArray[(index - 1) * 3 + 2]
-              )
-              // If the last point is a duplicate intersection
-              if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
-                count--
-                index--
-              } else if (tempVector1.equals(tempVector2)) {
-                // If the last point is not a duplicate intersection
-                // Set the penultimate point as a distinct point and delete the last point
-                posArray[(index - 2) * 3] = tempVector.x
-                posArray[(index - 2) * 3 + 1] = tempVector.y
-                posArray[(index - 2) * 3 + 2] = tempVector.z
-                count--
-                index--
-              }
-            }
-
-            // If we only intersected with one or three sides then just remove it. This could be handled
-            // more gracefully.
-            if (count !== 2) {
-              index -= count
-            }
-          }
-        })
-        posAttr.needsUpdate = true
-        posAttr.updateRange = { offset: 0, count: index * 3 }
-      }
-      clipOutline.visible = true
-      clipOutline.geometry.instanceCount = index / 2
-      clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
-      clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
-      clipOutline.geometry.computeBoundingBox()
-      clipOutline.geometry.computeBoundingSphere()
-      // console.log('Index -> ', index)
+      this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
+      console.warn(this.sectionPlanesChanged)
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
+      // let clipOutline: LineSegments2 = this.allObjects.getObjectByName(
+      //   'clip-outline'
+      // ) as LineSegments2
+      // if (!clipOutline) {
+      //   const lineGeometry = new LineSegmentsGeometry()
+      //   lineGeometry.setPositions(new Float32Array(60000))
+      //   const material = new LineMaterial({
+      //     color: 0x047efb,
+      //     linewidth: 2,
+      //     worldUnits: false,
+      //     vertexColors: false,
+      //     alphaToCoverage: false,
+      //     resolution: new Vector2(919, 848)
+      //   })
+      //   material.color = new Color(0x047efb)
+      //   material.color.convertSRGBToLinear()
+      //   material.linewidth = 2
+      //   // material.clipIntersection = true
+      //   material.worldUnits = false
+
+      //   clipOutline = new LineSegments2(lineGeometry, material)
+      //   clipOutline.name = 'clip-outline'
+      //   clipOutline.frustumCulled = false
+      //   clipOutline.renderOrder = 1
+      //   clipOutline.layers.set(ObjectLayers.PROPS)
+      //   // ;(clipOutline.material as Material).clipIntersection = true
+      //   this.allObjects.add(clipOutline)
+      // }
+
+      // const tempVector = new Vector3()
+      // const tempVector1 = new Vector3()
+      // const tempVector2 = new Vector3()
+      // const tempVector3 = new Vector3()
+      // const tempLine = new Line3()
+
+      // const batches: MeshBatch[] = this.batcher.getBatches(
+      //   undefined,
+      //   GeometryType.MESH
+      // ) as MeshBatch[]
+      // let index = 0
+      // for (let b = 0; b < batches.length; b++) {
+      //   const posAttr = (
+      //     clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+      //   ).data
+      //   posAttr.setUsage(DynamicDrawUsage)
+      //   const posArray = posAttr.array as number[]
+      //   batches[b].boundsTree.shapecast({
+      //     intersectsBounds: (box) => {
+      //       const localPlane = this.viewer.sectionBox.planes[2]
+      //       return localPlane.intersectsBox(box)
+      //     },
+
+      //     intersectsTriangle: (tri) => {
+      //       // check each triangle edge to see if it intersects with the plane. If so then
+      //       // add it to the list of segments.
+      //       const localPlane = this.viewer.sectionBox.planes[2]
+      //       let count = 0
+
+      //       tempLine.start.copy(tri.a)
+      //       tempLine.end.copy(tri.b)
+      //       if (localPlane.intersectLine(tempLine, tempVector)) {
+      //         posArray[index * 3] = tempVector.x
+      //         posArray[index * 3 + 1] = tempVector.y
+      //         posArray[index * 3 + 2] = tempVector.z
+      //         index++
+      //         count++
+      //       }
+
+      //       tempLine.start.copy(tri.b)
+      //       tempLine.end.copy(tri.c)
+      //       if (localPlane.intersectLine(tempLine, tempVector)) {
+      //         posArray[index * 3] = tempVector.x
+      //         posArray[index * 3 + 1] = tempVector.y
+      //         posArray[index * 3 + 2] = tempVector.z
+      //         count++
+      //         index++
+      //       }
+
+      //       tempLine.start.copy(tri.c)
+      //       tempLine.end.copy(tri.a)
+      //       if (localPlane.intersectLine(tempLine, tempVector)) {
+      //         posArray[index * 3] = tempVector.x
+      //         posArray[index * 3 + 1] = tempVector.y
+      //         posArray[index * 3 + 2] = tempVector.z
+      //         count++
+      //         index++
+      //       }
+
+      //       // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
+      //       if (count === 3) {
+      //         tempVector1.set(
+      //           posArray[(index - 3) * 3],
+      //           posArray[(index - 3) * 3 + 1],
+      //           posArray[(index - 3) * 3 + 2]
+      //         )
+      //         tempVector2.set(
+      //           posArray[(index - 2) * 3],
+      //           posArray[(index - 2) * 3 + 1],
+      //           posArray[(index - 2) * 3 + 2]
+      //         )
+      //         tempVector3.set(
+      //           posArray[(index - 1) * 3],
+      //           posArray[(index - 1) * 3 + 1],
+      //           posArray[(index - 1) * 3 + 2]
+      //         )
+      //         // If the last point is a duplicate intersection
+      //         if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
+      //           count--
+      //           index--
+      //         } else if (tempVector1.equals(tempVector2)) {
+      //           // If the last point is not a duplicate intersection
+      //           // Set the penultimate point as a distinct point and delete the last point
+      //           posArray[(index - 2) * 3] = tempVector.x
+      //           posArray[(index - 2) * 3 + 1] = tempVector.y
+      //           posArray[(index - 2) * 3 + 2] = tempVector.z
+      //           count--
+      //           index--
+      //         }
+      //       }
+
+      //       // If we only intersected with one or three sides then just remove it. This could be handled
+      //       // more gracefully.
+      //       if (count !== 2) {
+      //         index -= count
+      //       }
+      //     }
+      //   })
+      //   posAttr.needsUpdate = true
+      //   posAttr.updateRange = { offset: 0, count: index * 3 }
+      // }
+      // clipOutline.visible = true
+      // clipOutline.geometry.instanceCount = index / 2
+      // clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
+      // clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
+      // clipOutline.geometry.computeBoundingBox()
+      // clipOutline.geometry.computeBoundingSphere()
+      // console.log('Index -> ', index)
     }
     this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
   }
