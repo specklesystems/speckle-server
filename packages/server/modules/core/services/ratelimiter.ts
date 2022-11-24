@@ -313,7 +313,7 @@ export const initializeRedisRateLimiters = (
   return mapping as RateLimiterMapping
 }
 
-const RATE_LIMITERS = initializeRedisRateLimiters()
+export const RATE_LIMITERS = initializeRedisRateLimiters()
 
 export interface RateLimitResult {
   isWithinLimits: boolean
