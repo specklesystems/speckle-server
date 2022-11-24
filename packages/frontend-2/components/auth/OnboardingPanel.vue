@@ -39,8 +39,11 @@
 </template>
 <script setup lang="ts">
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
+import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { OnboardingState } from '~~/lib/auth/helpers/onboarding'
 import { StepType } from '~~/lib/common/helpers/components'
+
+const { finishOnboarding } = useProcessOnboarding()
 
 const topSteps: StepType[] = [{ name: 'Sign Up' }, { name: 'Set up' }]
 const topStep = computed(() => 1) // read-only
@@ -57,11 +60,11 @@ watch(state, (newState, oldState) => {
   if (newState.industry !== oldState.industry) {
     goToSecondStep()
   } else if (newState.role !== oldState.role) {
-    finish()
+    finish(newState)
   }
 })
 
-const finish = () => {
-  console.log('DONE!')
+const finish = async (state: OnboardingState) => {
+  await finishOnboarding(state)
 }
 </script>
