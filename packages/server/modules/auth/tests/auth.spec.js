@@ -479,14 +479,13 @@ describe('Auth @auth', () => {
       // 1 users should be fine
       await newUser(`test0`, '1.2.3.4', 302)
 
-      // should fail the 5th user
+      // should fail the next user
       await newUser(`test1`, '1.2.3.4', 429)
 
       // should be able to create from different ip
       await newUser(`othertest0`, '1.2.3.5', 302)
 
       // should be limited from unknown ip addresses
-
       await newUser(`unknown0`, '', 302)
 
       // should fail the additional user from unknown ip address

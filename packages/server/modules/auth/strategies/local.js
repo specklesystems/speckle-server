@@ -64,15 +64,14 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         const user = req.body
         const ip = getIpFromRequest(req)
-        if (ip) {
-          user.ip = ip
-          const rateLimitResult = await getRateLimitResult(
-            RateLimitAction.USER_CREATE,
-            ip
-          )
-          if (isRateLimitBreached(rateLimitResult)) {
-            return sendRateLimitResponse(res, rateLimitResult)
-          }
+        if (ip) user.ip = ip
+        const source = ip ? ip : 'unknown'
+        const rateLimitResult = await getRateLimitResult(
+          RateLimitAction.USER_CREATE,
+          source
+        )
+        if (isRateLimitBreached(rateLimitResult)) {
+          return sendRateLimitResponse(res, rateLimitResult)
         }
 
         // 1. if the server is invite only you must have an invite
