@@ -547,7 +547,6 @@ export type Mutation = {
   /** Update permissions of a user on a given stream. */
   streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
-  testtest?: Maybe<Scalars['Boolean']>;
   /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
