@@ -3,69 +3,71 @@ import { TIME } from '@/../shared/dist-esm'
 import {
   createRateLimiterMiddleware,
   getRateLimitResult,
-  initializeRedisRateLimiters,
   isRateLimitBreached,
-  LIMITS,
   RateLimitAction,
   getActionForPath,
   sendRateLimitResponse,
-  RateLimitBreached
+  RateLimitBreached,
+  RateLimits,
+  createConsumer,
+  RateLimiterMapping
 } from '@/modules/core/services/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
+import { RateLimiterMemory } from 'rate-limiter-flexible'
+
+type RateLimiterOptions = {
+  [key in RateLimitAction]: RateLimits
+}
+
+const initializeInMemoryRateLimiters = (
+  options: RateLimiterOptions
+): RateLimiterMapping => {
+  const allActions = Object.values(RateLimitAction)
+  const mapping = Object.fromEntries(
+    allActions.map((action) => {
+      const limits = options[action]
+      const limiter = new RateLimiterMemory({
+        keyPrefix: action,
+        points: limits.limitCount,
+        duration: limits.duration
+      })
+
+      return [action, createConsumer(action, limiter)]
+    })
+  )
+  return mapping as RateLimiterMapping
+}
 
 const createTestRateLimiterMappings = () => {
-  const rateLimiterOptions = LIMITS
-  rateLimiterOptions.STREAM_CREATE = {
-    regularOptions: {
-      limitCount: 1,
-      duration: 5 * TIME.second
-    },
-    burstOptions: {
-      limitCount: 1,
-      duration: 5 * TIME.second
-    }
-  }
-  rateLimiterOptions['POST /graphql'] = {
-    regularOptions: {
-      limitCount: 1,
-      duration: 5 * TIME.second
-    },
-    burstOptions: {
-      limitCount: 1,
-      duration: 5 * TIME.second
-    }
-  }
-  return initializeRedisRateLimiters(rateLimiterOptions)
+  const allActions = Object.values(RateLimitAction)
+  const mapping = Object.fromEntries(
+    allActions.map((action) => {
+      return [action, { limitCount: 0, duration: 1 * TIME.week }]
+    })
+  )
+  const rateLimiterOptions = mapping as RateLimiterOptions
+  return initializeInMemoryRateLimiters(rateLimiterOptions)
+}
+
+const generateRandomIP = () => {
+  return `${Math.floor(Math.random() * 255) + 1}.${Math.floor(
+    Math.random() * 255
+  )}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
 }
 
 describe('Rate Limiting', () => {
   describe('isRateLimitBreached', () => {
     it('should rate limit known actions', async () => {
       const rateLimiterMapping = createTestRateLimiterMappings()
-      const source = '255.255.255.255'
-
-      // first will exhaust limits of regular rate limiter
-      // second will fall through to the burst rate limiter and exhaust its limits
-      for (let i = 0; i < 2; i++) {
-        const result = await getRateLimitResult(
-          RateLimitAction.STREAM_CREATE,
-          source,
-          rateLimiterMapping
-        )
-        expect(isRateLimitBreached(result)).to.be.false
-        expect(result.action).to.equal(RateLimitAction.STREAM_CREATE)
-      }
-
-      // third will fail on both regular and burst rate limiters
-      const third = await getRateLimitResult(
+      const result = await getRateLimitResult(
         RateLimitAction.STREAM_CREATE,
-        source,
+        generateRandomIP(),
         rateLimiterMapping
       )
 
-      expect(isRateLimitBreached(third)).to.be.true
-      expect(third.action).to.equal(RateLimitAction.STREAM_CREATE)
+      expect(isRateLimitBreached(result)).to.be.true
+      expect(result.action).to.equal(RateLimitAction.STREAM_CREATE)
     })
   })
 
@@ -106,17 +108,33 @@ describe('Rate Limiting', () => {
         nextCalled++
       }
 
-      await createRateLimiterMiddleware()(request, response, next)
+      const action = 'POST /graphql'
+      const testMappings = createTestRateLimiterMappings()
+      const limit = 100
+      testMappings[action] = createConsumer(
+        RateLimitAction[action],
+        new RateLimiterMemory({
+          keyPrefix: action,
+          points: limit,
+          duration: 1 * TIME.week
+        })
+      )
+
+      const SUT = createRateLimiterMiddleware(testMappings)
+
+      await temporarilyDisableTestEnv(async () => {
+        await SUT(request, response, next)
+      })
+
       expect(nextCalled).to.equal(1)
-      expect(response.getHeader('X-RateLimit-Remaining')).to.equal(49)
+      expect(response.getHeader('X-RateLimit-Remaining')).to.equal(limit - 1)
     })
 
     it('should return 429 if rate limited', async () => {
-      const rateLimiterMapping = createTestRateLimiterMappings()
       const request = httpMocks.createRequest({
         path: '/graphql',
         method: 'POST',
-        ip: '123.45.67.89' // unique IP for this test, to prevent pollution with other tests using POST /graphql
+        ip: generateRandomIP()
       })
 
       let response = httpMocks.createResponse()
@@ -124,24 +142,27 @@ describe('Rate Limiting', () => {
       const next = () => {
         nextCalled++
       }
-      const SUT = createRateLimiterMiddleware(rateLimiterMapping)
 
-      // two calls should be within normal and burst rate limit
-      for (let i = 0; i < 2; i++) {
-        response = httpMocks.createResponse()
-        await SUT(request, response, next)
-        expect(nextCalled).to.equal(i + 1)
-      }
-
-      // but third call should fail
+      const SUT = createRateLimiterMiddleware(createTestRateLimiterMappings())
       response = httpMocks.createResponse()
-      await SUT(request, response, next)
 
-      expect(nextCalled).to.equal(2)
+      await temporarilyDisableTestEnv(async () => {
+        await SUT(request, response, next)
+      })
+
+      expect(nextCalled).to.equal(0)
       assert429response(response)
     })
   })
 })
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const temporarilyDisableTestEnv = async (callback: () => Promise<any>) => {
+  const oldNodeEnv = process.env.NODE_ENV
+  process.env.NODE_ENV = 'temporarily-disabled-test'
+  await callback()
+  process.env.NODE_ENV = oldNodeEnv
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const assert429response = (response: any) => {

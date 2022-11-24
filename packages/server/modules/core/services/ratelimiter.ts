@@ -42,7 +42,7 @@ type BurstyRateLimiterOptions = {
   burstOptions: RateLimits
 }
 
-type RateLimits = {
+export type RateLimits = {
   limitCount: number
   duration: number
 }
@@ -241,7 +241,7 @@ export const createRateLimiterMiddleware = (
   }
 }
 
-type RateLimiterMapping = {
+export type RateLimiterMapping = {
   [key in RateLimitAction]: (
     source: string
   ) => Promise<RateLimitSuccess | RateLimitBreached>
