@@ -315,17 +315,17 @@ export const initializeRedisRateLimiters = (
 
 const RATE_LIMITERS = initializeRedisRateLimiters()
 
-interface RateLimitResult {
+export interface RateLimitResult {
   isWithinLimits: boolean
   action: RateLimitAction
 }
 
-interface RateLimitSuccess extends RateLimitResult {
+export interface RateLimitSuccess extends RateLimitResult {
   isWithinLimits: true
   remainingPoints: number
 }
 
-interface RateLimitBreached extends RateLimitResult {
+export interface RateLimitBreached extends RateLimitResult {
   isWithinLimits: false
   msBeforeNext: number
 }
