@@ -35,6 +35,7 @@ async function main() {
       commitId
     }
   } catch (err) {
+    console.log(err)
     output = {
       success: false,
       error: err.toString()

@@ -1,6 +1,5 @@
 const { performance } = require('perf_hooks')
 const WebIFC = require('web-ifc/web-ifc-api-node')
-// import { getHash, IfcElements, PropNames, GeometryTypes, IfcTypesMap } from './utils'
 const {
   getHash,
   IfcElements,
@@ -34,13 +33,15 @@ module.exports = class IFCParser {
 
     this.propCache = {}
 
+    // This is used to pre-batch ifc objects that need to be persisted.
+    this.objectBucket = []
+
     // create and save the geometries; we're storing only references locally.
     this.geometryReferences = await this.createAndSaveMeshes()
 
     // create and save the spatial tree, populating both properties and geometry references
     // where appropriate
     this.spatialNodeCount = 0
-    this.nodeBatch = []
     const structure = await this.createSpatialStructure()
     return { id: structure.id, tCount: structure.closureLen }
   }
@@ -57,22 +58,25 @@ module.exports = class IFCParser {
       children: []
     }
 
-    await this.populateSpatialNode(project, chunks, [])
+    await this.populateSpatialNode(project, chunks, [], 0)
 
     this.endTime = performance.now()
     project.parseTime = (this.endTime - this.startTime).toFixed(2) + 'ms'
     project.fileId = this.fileId
-    if (this.nodeBatch.length !== 0) {
-      await this.flushNodeBatch()
+
+    // Last save to db call, empty the last bucket
+    if (this.objectBucket.length !== 0) {
+      await this.flushObjectBucket()
     }
     return project
   }
 
-  async populateSpatialNode(node, chunks, closures) {
+  async populateSpatialNode(node, chunks, closures, depth) {
+    depth++
     process.stdout.write(`${this.spatialNodeCount++} nodes generated \r`)
     closures.push([])
-    await this.getChildren(node, chunks, PropNames.aggregates, closures)
-    await this.getChildren(node, chunks, PropNames.spatial, closures)
+    await this.getChildren(node, chunks, PropNames.aggregates, closures, depth)
+    await this.getChildren(node, chunks, PropNames.spatial, closures, depth)
 
     node.closure = [...new Set(closures.pop())]
 
@@ -87,22 +91,27 @@ module.exports = class IFCParser {
         ...this.geometryReferences[node.expressID].map((ref) => ref.referencedId)
       )
     }
-    node.closureLen = node.closure.length
+    // node.closureLen = node.closure.length
     node.__closure = this.formatClosure(node.closure)
     node.id = getHash(node)
 
-    this.nodeBatch.push(node)
+    // Save to db
+    this.objectBucket.push(node)
+    if (this.objectBucket.length > 3000) {
+      await this.flushObjectBucket()
+    }
 
-    if (this.nodeBatch.length > 3000) {
-      await this.flushNodeBatch()
+    // remove project level node closure
+    if (depth === 1) {
+      delete node.closure
     }
     return node.id
   }
 
-  async flushNodeBatch() {
-    if (this.nodeBatch.length === 0) return
-    await this.serverApi.saveObjectBatch(this.nodeBatch)
-    this.nodeBatch = []
+  async flushObjectBucket() {
+    if (this.objectBucket.length === 0) return
+    await this.serverApi.saveObjectBatch(this.objectBucket)
+    this.objectBucket = []
   }
 
   formatClosure(idsArray) {
@@ -114,19 +123,23 @@ module.exports = class IFCParser {
   async getChildren(node, chunks, propName, closures) {
     const children = chunks[node.expressID]
     if (!children) return
-    const prop = propName.key
     const nodes = []
     for (let i = 0; i < children.length; i++) {
-      const child = children[i]
-      const node = this.createNode(child)
-      node.properties = await this.getItemProperties(node.expressID)
-      node.id = await this.populateSpatialNode(node, chunks, closures)
-      for (const closure of closures) closure.push(node.id, ...node.closure)
-      delete node.closure
-      nodes.push(node)
+      const childId = children[i]
+      let childNode = this.createNode(childId)
+      childNode = {
+        ...childNode,
+        ...(await this.getItemProperties(childNode.expressID))
+      }
+      childNode.id = await this.populateSpatialNode(childNode, chunks, closures)
+      childNode.name = childNode.Name || childNode.type
+      delete childNode.Name
+      for (const closure of closures) closure.push(childNode.id, ...childNode.closure)
+      delete childNode.closure
+      nodes.push(childNode)
     }
 
-    node[prop] = nodes.map((node) => ({
+    node.children = nodes.map((node) => ({
       // eslint-disable-next-line camelcase
       speckle_type: 'reference',
       referencedId: node.id
@@ -299,14 +312,10 @@ module.exports = class IFCParser {
     let count = 0
     const speckleMeshes = []
 
-    this.ifcapi.StreamAllMeshes(this.modelId, (mesh) => {
+    this.ifcapi.StreamAllMeshes(this.modelId, async (mesh) => {
       const placedGeometries = mesh.geometries
       geometryReferences[mesh.expressID] = []
-
       for (let i = 0; i < placedGeometries.size(); i++) {
-        process.stdout.write(
-          `${(count++).toFixed(3)} geoms generated out of ${this.geometryIdsCount} \r`
-        )
         const placedGeometry = placedGeometries.get(i)
         const geometry = this.ifcapi.GetGeometry(
           this.modelId,
@@ -339,7 +348,7 @@ module.exports = class IFCParser {
           units: 'm',
           volume: 0,
           area: 0,
-          // random: Math.random(), // TODO: remove, this is here just for performance benchmarking
+          // random: Math.random(), // TODO: remove, this is here just for performance benchmarking/explicit cache poisoning
           vertices,
           faces,
           renderMaterial: placedGeometry.color
@@ -349,7 +358,7 @@ module.exports = class IFCParser {
 
         speckleMesh.id = getHash(speckleMesh)
         // Note: the web-ifc api disposes of the data post callback, and doesn't know that it's async;
-        // we cannot and should not await things in here.
+        // we cannot and should not await things in here. I'm not entirely sure what's going on :)
         // await this.serverApi.saveObject(speckleMesh)
 
         speckleMeshes.push(speckleMesh)
@@ -358,11 +367,11 @@ module.exports = class IFCParser {
           speckle_type: 'reference',
           referencedId: speckleMesh.id
         })
+        process.stdout.write(`${(count++).toFixed(3)} geoms generated\r`)
       }
     })
 
     await this.serverApi.saveObjectBatch(speckleMeshes)
-
     return geometryReferences
   }
 
