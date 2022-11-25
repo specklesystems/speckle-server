@@ -5,6 +5,7 @@
     :external="external"
     :disabled="disabled"
     :size="size"
+    :foreground-link="foregroundLink"
     role="link"
     @click.capture="onClick"
   >
@@ -37,6 +38,10 @@ const props = defineProps({
   size: {
     type: String as PropType<LinkSize>,
     default: 'base'
+  },
+  foregroundLink: {
+    type: Boolean,
+    default: false
   }
 })
 

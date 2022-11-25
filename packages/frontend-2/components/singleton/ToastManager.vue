@@ -52,14 +52,14 @@
                   {{ currentNotification.description }}
                 </p>
                 <div v-if="currentNotification.cta" class="flex justify-start mt-2">
-                  <TextLink
+                  <CommonTextLink
                     :to="currentNotification.cta.url"
                     class="label"
                     primary
                     @click="onCtaClick"
                   >
                     {{ currentNotification.cta.title }}
-                  </TextLink>
+                  </CommonTextLink>
                 </div>
               </div>
               <div

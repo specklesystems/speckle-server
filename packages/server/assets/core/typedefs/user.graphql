@@ -88,6 +88,10 @@ type User {
   verified: Boolean
   profiles: JSONObject
   role: String
+  """
+  Whether post-sign up onboarding has been finished or skipped entirely
+  """
+  isOnboardingFinished: Boolean @isOwner
 }
 
 """
@@ -124,6 +128,13 @@ type UserSearchResultCollection {
   items: [LimitedUser]
 }
 
+type ActiveUserMutations {
+  """
+  Mark onboarding as complete
+  """
+  finishOnboarding: Boolean!
+}
+
 extend type Mutation {
   """
   Edits a user's profile.
@@ -141,6 +152,11 @@ extend type Mutation {
     @hasRole(role: "server:admin")
 
   userRoleChange(userRoleInput: UserRoleInput!): Boolean! @hasRole(role: "server:admin")
+
+  """
+  Various Active User oriented mutations
+  """
+  activeUserMutations: ActiveUserMutations! @hasRole(role: "server:user")
 }
 
 input UserRoleInput {

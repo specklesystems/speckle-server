@@ -111,9 +111,9 @@
           <div class="my-8">
             <div>Link:</div>
             <div>
-              <TextLink to="/">Basic Link</TextLink>
+              <CommonTextLink to="/">Basic Link</CommonTextLink>
               |
-              <TextLink to="/" disabled>Disabled Link</TextLink>
+              <CommonTextLink to="/" disabled>Disabled Link</CommonTextLink>
             </div>
           </div>
           <div class="my-8">

@@ -9,6 +9,7 @@
         :rules="nameRules"
         :custom-icon="UserIcon"
         show-label
+        :disabled="loading"
       />
       <FormTextInput
         type="email"
@@ -17,6 +18,7 @@
         placeholder="example@email.com"
         :rules="emailRules"
         show-label
+        :disabled="loading"
       />
       <FormTextInput
         v-model="password"
@@ -26,16 +28,17 @@
         placeholder="Type a strong password"
         :rules="passwordRules"
         show-label
+        :disabled="loading"
       />
     </div>
     <AuthPasswordChecks :password="password" class="mt-4" />
-    <FormButton submit full-width class="mt-8">Sign up</FormButton>
+    <FormButton submit full-width class="mt-8" :disabled="loading">Sign up</FormButton>
     <div v-if="serverInfo.termsOfService" class="mt-8">
       {{ serverInfo.termsOfService }}
     </div>
     <div class="mt-8 text-center">
       <span class="mr-2">Already have an account?</span>
-      <TextLink :to="LoginRoute">Log in</TextLink>
+      <CommonTextLink :to="LoginRoute">Log in</CommonTextLink>
     </div>
   </form>
 </template>
@@ -53,7 +56,6 @@ import { UserIcon } from '@heroicons/vue/20/solid'
 
 /**
  * TODO:
- * - Disabled states for login/register
  * - (BE) Password strength check? Do we want to use it anymore?
  */
 
@@ -72,6 +74,7 @@ const props = defineProps<{
 
 const { handleSubmit } = useForm<FormValues>()
 
+const loading = ref(false)
 const password = ref('')
 
 const emailRules = [isEmail]
@@ -82,6 +85,7 @@ const { triggerNotification } = useGlobalToast()
 
 const onSubmit = handleSubmit(async (fullUser) => {
   try {
+    loading.value = true
     const user = fullUser
     await signUpWithEmail({ user, challenge: props.challenge })
   } catch (e) {
@@ -90,6 +94,8 @@ const onSubmit = handleSubmit(async (fullUser) => {
       title: 'Registration failed',
       description: `${ensureError(e).message}`
     })
+  } finally {
+    loading.value = false
   }
 })
 </script>

@@ -19,9 +19,9 @@
           <div
             :class="['h-40 w-40', `bg-${buildColorString(colorBase, variation)}`]"
           ></div>
-          <TextLink @click="onVariationClick(colorBase, variation)">
+          <CommonTextLink @click="onVariationClick(colorBase, variation)">
             {{ buildColorString(colorBase, variation) }}
-          </TextLink>
+          </CommonTextLink>
         </div>
       </div>
     </div>

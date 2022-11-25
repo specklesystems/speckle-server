@@ -15,3 +15,7 @@ export class InvalidRegisterParametersError extends BaseError {
 export class PasswordResetError extends BaseError {
   static defaultMessage = 'Something went wrong while resetting password'
 }
+
+export class OnboardingError extends BaseError {
+  static defaultMessage = 'Something went wrong while onboarding the user'
+}

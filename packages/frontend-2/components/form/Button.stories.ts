@@ -107,7 +107,7 @@ export const Link: Story = mergeStories(Default, {
   parameters: {
     docs: {
       description: {
-        story: 'Basically just a link (TextLink is an alias for this)'
+        story: 'Basically just a link (CommonTextLink is an alias for this)'
       }
     }
   }

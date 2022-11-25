@@ -6,15 +6,15 @@
         <div class="flex items-center space-x-4">
           <FormButton
             type="outline"
-            size="small"
+            size="sm"
             :disabled="loading"
             @click="requestVerification"
           >
             {{ verifyBannerCtaText }}
           </FormButton>
-          <TextLink @click="dismiss">
+          <CommonTextLink @click="dismiss">
             <XMarkIcon class="h-6 w-6" />
-          </TextLink>
+          </CommonTextLink>
         </div>
       </div>
     </LayoutPanel>

@@ -1,11 +1,11 @@
 import { userEvent, within } from '@storybook/testing-library'
 import { Meta, Story } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
-import TextLink from '~~/components/text/Link.vue'
+import CommonTextLink from '~~/components/common/text/Link.vue'
 import { mergeStories, VuePlayFunction } from '~~/lib/common/helpers/storybook'
 
 export default {
-  component: TextLink,
+  component: CommonTextLink,
   parameters: {
     docs: {
       description: {
@@ -55,11 +55,11 @@ const leftClickPlay = clickPlayBuilder(false)
 
 export const Default: Story = {
   render: (args) => ({
-    components: { TextLink },
+    components: { CommonTextLink },
     setup() {
       return { args }
     },
-    template: `<TextLink v-bind="args" @click="args.click">{{ args.default || 'Link' }}</TextLink>`
+    template: `<CommonTextLink v-bind="args" @click="args.click">{{ args.default || 'Link' }}</CommonTextLink>`
   }),
   play: rightClickPlay,
   args: {
@@ -71,7 +71,7 @@ export const Default: Story = {
   parameters: {
     docs: {
       source: {
-        code: '<TextLink to="/">Hello World!</TextLink>'
+        code: '<CommonTextLink to="/">Hello World!</CommonTextLink>'
       }
     }
   }

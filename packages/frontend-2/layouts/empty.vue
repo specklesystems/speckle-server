@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-full">
-    <main class="layout-columns-single">
+    <main class="layout-container">
       <slot />
     </main>
     <SingletonManagers />

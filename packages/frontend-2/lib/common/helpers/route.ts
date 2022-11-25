@@ -4,6 +4,7 @@ export const HomeRoute = '/'
 export const LoginRoute = '/auth/login'
 export const RegisterRoute = '/auth/register'
 export const ForgottenPasswordRoute = '/auth/forgotten-password'
+export const OnboardingRoute = '/onboarding'
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

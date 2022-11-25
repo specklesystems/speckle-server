@@ -10,6 +10,7 @@ export const activeUserQuery = graphql(`
       name
       role
       avatar
+      isOnboardingFinished
     }
   }
 `)

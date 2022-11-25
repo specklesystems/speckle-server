@@ -28,3 +28,11 @@ export class ComposableInvokedOutOfScopeError extends BaseError {
   static defaultMessage =
     'getCurrentInstance() returned null. Method must be called at the top of a setup function'
 }
+
+/**
+ * Throw this when something that's only supported during CSR is invoked during SSR or vice versa
+ */
+export class UnsupportedEnvironmentError extends BaseError {
+  static defaultMessage =
+    'Operation not supported in current (server or client) environment'
+}
