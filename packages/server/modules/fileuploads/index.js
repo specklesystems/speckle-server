@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
+const debug = require('debug')
 const { contextMiddleware } = require('@/modules/shared')
 const { saveUploadFile } = require('./services/fileuploads')
 const request = require('request')
@@ -8,7 +9,6 @@ const {
   authMiddlewareCreator,
   streamWritePermissions
 } = require('@/modules/shared/authz')
-const { moduleLogger, logger } = require('@/logging/logging')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -28,10 +28,10 @@ const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) 
 
 exports.init = async (app) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
-    moduleLogger.warn('📄 FileUploads module is DISABLED')
+    debug('speckle:modules')('📄 FileUploads module is DISABLED')
     return
   } else {
-    moduleLogger.info('📄 Init FileUploads module')
+    debug('speckle:modules')('📄 Init FileUploads module')
   }
 
   app.post(
@@ -44,7 +44,7 @@ exports.init = async (app) => {
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
-              logger.error(err)
+              debug('speckle:error')(err.message)
               res.status(500).send(err.message)
               return
             }

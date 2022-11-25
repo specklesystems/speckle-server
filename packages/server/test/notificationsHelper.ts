@@ -2,7 +2,6 @@ import { getQueue, NotificationJobResult } from '@/modules/notifications/service
 import { EventEmitter } from 'events'
 import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
 import { pick } from 'lodash'
-import { logger } from '@/logging/logging'
 
 type AckEvent = {
   result?: NotificationJobResult
@@ -143,13 +142,13 @@ export async function debugJobs() {
     { items: failed, display: 'Failed' }
   ]
 
-  logger.debug('------------- START debugJobs() --------------')
+  console.log('------------- START debugJobs() --------------')
 
   for (const { items, display } of jobCollections) {
-    logger.debug(`${display}: ` + waiting.length)
-    logger.debug(`${display} jobs: `)
+    console.log(`${display}: ` + waiting.length)
+    console.log(`${display} jobs: `)
     for (const job of items) {
-      logger.debug(
+      console.log(
         ` - ${JSON.stringify(
           pick(job, [
             'timestamp',
@@ -163,6 +162,6 @@ export async function debugJobs() {
       )
     }
   }
-  logger.debug({ workers })
-  logger.debug('------------- END debugJobs() --------------')
+  console.log({ workers })
+  console.log('------------- END debugJobs() --------------')
 }

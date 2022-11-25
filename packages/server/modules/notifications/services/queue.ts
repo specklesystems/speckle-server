@@ -12,11 +12,11 @@ import {
   NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
+import { notificationsDebug } from '@/modules/shared/utils/logger'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { extendLoggerComponent, logger, notificationsLogger } from '@/logging/logging'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -39,8 +39,8 @@ export const NOTIFICATIONS_QUEUE = isTestEnv()
   : NOTIFICATIONS_QUEUE_MAIN_BASE
 
 if (isTestEnv()) {
-  logger.info('Notifications test queue ID: ' + NOTIFICATIONS_QUEUE)
-  logger.info(`Monitor using: 'yarn cli bull monitor ${NOTIFICATIONS_QUEUE}'`)
+  console.log('Notifications test queue ID: ' + NOTIFICATIONS_QUEUE)
+  console.log(`Monitor using: 'yarn cli bull monitor ${NOTIFICATIONS_QUEUE}'`)
 }
 
 let queue: Optional<Bull.Queue>
@@ -117,7 +117,7 @@ export async function consumeIncomingNotifications() {
   queue.process(async (job): Promise<NotificationJobResult> => {
     let notificationType: Optional<NotificationType>
     try {
-      notificationsLogger.info('New notification received...')
+      notificationsDebug('New notification received...')
 
       // Parse
       const payload = job.data
@@ -139,17 +139,17 @@ export async function consumeIncomingNotifications() {
         throw new UnhandledNotificationError(null, { info: { payload, type } })
       }
 
-      const notificationLogger = extendLoggerComponent(notificationsLogger, type)
-      notificationLogger.info('Starting processing notification...')
-      await Promise.resolve(handler(typedPayload, { job, logger: notificationLogger }))
-      notificationLogger.info('...successfully processed notification')
+      const notificationDebug = notificationsDebug.extend(type)
+      notificationDebug('Starting processing notification...')
+      await Promise.resolve(handler(typedPayload, { job, debug: notificationDebug }))
+      notificationDebug('...successfully processed notification')
 
       return {
         status: NotificationJobResultsStatus.Success,
         type
       }
     } catch (e: unknown) {
-      notificationsLogger.error(e)
+      notificationsDebug(e)
       const err =
         e instanceof Error ? e : new Error('Unexpected notification consumption error')
 

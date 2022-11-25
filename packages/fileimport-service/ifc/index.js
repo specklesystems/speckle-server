@@ -1,7 +1,6 @@
 const { fetch } = require('undici')
 const Parser = require('./parser')
 const ServerAPI = require('./api.js')
-const { logger } = require('../observability/logging')
 
 async function parseAndCreateCommit({
   data,
@@ -57,7 +56,8 @@ async function parseAndCreateCommit({
   })
 
   const json = await response.json()
-  logger.info(json)
+  // eslint-disable-next-line no-console
+  console.log(json)
 
   return json.data.commitCreate
 }

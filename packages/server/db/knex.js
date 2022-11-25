@@ -3,7 +3,6 @@
 
 const env = process.env.NODE_ENV || 'development'
 const configs = require('@/knexfile.js')
-const { dbStartupLogger } = require('@/logging/logging')
 const config = configs[env]
 
 config.log = {
@@ -16,7 +15,9 @@ config.log = {
   }
 }
 
-dbStartupLogger.info(`Loaded knex conf for ${env}`)
+const debug = require('debug')
+
+debug('speckle:db-startup')(`Loaded knex conf for ${env}`)
 
 /**
  * Need to override type because type def file incorrectly uses ES6

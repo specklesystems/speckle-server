@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable camelcase */
 const WebIFC = require('web-ifc/web-ifc-api-node')
-const { logger } = require('../observability/logging.js')
 const ServerAPI = require('./api.js')
 
 module.exports = class IFCParser {
@@ -30,7 +29,7 @@ module.exports = class IFCParser {
     // as reference objects in this.productGeo
     this.productGeo = {}
     await this.createGeometries()
-    logger.info(`Geometries created: ${Object.keys(this.productGeo).length} meshes.`)
+    console.log(`Geometries created: ${Object.keys(this.productGeo).length} meshes.`)
 
     // Lastly, traverse the ifc project object and parse it into something friendly; as well as
     // replace all its geometries with actual references to speckle meshes from the productGeo map
@@ -134,7 +133,7 @@ module.exports = class IFCParser {
     if (this.cache[element.expressID.toString()])
       return this.cache[element.expressID.toString()]
     // If you got here -> It's an IFC Element: create base object, upload and return ref.
-    // logger.debug( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
+    // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
     // Traverse all key/value pairs first.
     for (const key of Object.keys(element)) {
@@ -253,7 +252,7 @@ module.exports = class IFCParser {
         element.propertySets ||
         element.typeProps
       ) {
-        logger.info(
+        console.log(
           `${element.constructor.name} ${element.GlobalId}:\n\tchildren count: ${
             element.children ? element.children.length : '0'
           };\n\tspatial children count: ${

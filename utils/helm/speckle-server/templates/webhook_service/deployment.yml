@@ -70,8 +70,8 @@ spec:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
-          - name: LOG_LEVEL
-            value: {{ .Values.webhook_service.logLevel }}
+          - name: DEBUG
+            value: "webhook-service:*"
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS

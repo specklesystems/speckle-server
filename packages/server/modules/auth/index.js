@@ -1,9 +1,9 @@
 'use strict'
+const debug = require('debug')
 const { registerOrUpdateScope } = require('@/modules/shared')
-const { moduleLogger } = require('@/logging/logging')
 
 exports.init = async (app) => {
-  moduleLogger.info('🔑 Init auth module')
+  debug('speckle:modules')('🔑 Init auth module')
 
   // Initialize authn strategies
   exports.authStrategies = await require('./strategies')(app)
