@@ -16,6 +16,7 @@ const { spawn } = require('child_process')
 
 const ServerAPI = require('../ifc/api')
 const objDependencies = require('./objDependencies')
+const { logger } = require('../observability/logging')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -56,7 +57,7 @@ async function doTask(task) {
 
   const metricDurationEnd = metricDuration.startTimer()
   try {
-    console.log('Doing task ', task)
+    logger.info('Doing task ', task)
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
@@ -161,7 +162,7 @@ async function doTask(task) {
       [commitId, task.id]
     )
   } catch (err) {
-    console.log('Error: ', err)
+    logger.error(err)
     await knex.raw(
       `
       UPDATE file_uploads
@@ -188,21 +189,21 @@ async function doTask(task) {
 
 function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
   return new Promise((resolve, reject) => {
-    console.log(`Starting process: ${cmd} ${cmdArgs}`)
+    logger.info(`Starting process: ${cmd} ${cmdArgs}`)
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
     childProc.stdout.on('data', (data) => {
-      console.log('Parser: ', data.toString())
+      logger.info('Parser: ', data.toString())
     })
 
     childProc.stderr.on('data', (data) => {
-      console.error('Parser: ', data.toString())
+      logger.error('Parser: ', data.toString())
     })
 
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      console.log('Process timeout. Killing process...')
+      logger.error('Process timeout. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -210,7 +211,7 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      console.log(`Process exited with code ${code}`)
+      logger.info(`Process exited with code ${code}`)
 
       if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
 
@@ -246,18 +247,18 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metricOperationErrors.labels('main_loop').inc()
-    console.log('Error executing task: ', err)
+    logger.error('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
 }
 
 async function main() {
-  console.log('Starting FileUploads Service...')
+  logger.info('Starting FileUploads Service...')
   initPrometheusMetrics()
 
   process.on('SIGTERM', () => {
     shouldExit = true
-    console.log('Shutting down...')
+    logger.info('Shutting down...')
   })
 
   tick()

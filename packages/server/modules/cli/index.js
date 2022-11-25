@@ -1,3 +1,4 @@
+const { logger } = require('@/logging/logging')
 const path = require('path')
 const yargs = require('yargs')
 require('../../bootstrap')
@@ -10,12 +11,12 @@ const execution = yargs
   .fail((msg, err, yargs) => {
     if (!err) {
       // If validation error (no err instance) then just show help and show the message
-      console.error(yargs.help())
-      console.error('\n', msg)
+      logger.error(yargs.help())
+      logger.error('\n', msg)
     } else {
       // If actual app error occurred, show the msg, but don't show help info
-      console.error(err)
-      console.error('\n', 'Specify --help for available options')
+      logger.error(err)
+      logger.error('\n', 'Specify --help for available options')
     }
 
     process.exit(1)

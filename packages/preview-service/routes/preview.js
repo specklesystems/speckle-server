@@ -4,6 +4,7 @@
 const express = require('express')
 const router = express.Router()
 const puppeteer = require('puppeteer')
+const { logger } = require('../observability/logging')
 
 async function pageFunction(objectUrl) {
   waitForAnimation = async (ms = 70) =>
@@ -65,7 +66,7 @@ async function getScreenshot(objectUrl) {
   const wrapperPromise = (async () => {
     await page.goto('http://127.0.0.1:3001/render/')
 
-    console.log('Page loaded')
+    logger.info('Page loaded')
 
     // Handle page crash (oom?)
     page.on('error', (err) => {
@@ -78,7 +79,7 @@ async function getScreenshot(objectUrl) {
   try {
     ret = await wrapperPromise
   } catch (err) {
-    console.log(`Error generating preview for ${objectUrl}: ${err}`)
+    logger.error(`Error generating preview for ${objectUrl}: ${err}`)
     ret = {
       error: err
     }
@@ -91,7 +92,7 @@ async function getScreenshot(objectUrl) {
     return null
   }
 
-  console.log(
+  logger.info(
     `Generated preview for ${objectUrl} in ${ret.duration} sec with ${
       ret.mem.total / 1000000
     } MB of memory`
@@ -146,7 +147,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
   }
   */
 
-  console.log(objectUrl)
+  logger.info(objectUrl)
 
   const scr = await getScreenshot(objectUrl)
 

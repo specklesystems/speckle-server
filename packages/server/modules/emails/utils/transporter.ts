@@ -1,9 +1,5 @@
-import debug from 'debug'
-
+import { logger, moduleLogger } from '@/logging/logging'
 import { createTransport, Transporter } from 'nodemailer'
-
-const modulesDebug = debug('speckle').extend('modules')
-const errorDebug = debug('speckle').extend('errors')
 
 let transporter: Transporter | undefined = undefined
 
@@ -26,7 +22,7 @@ const initSmtpTransporter = async () => {
     await smtpTransporter.verify()
     return smtpTransporter
   } catch (e) {
-    errorDebug('📧 Email provider is misconfigured, check config variables.', e)
+    logger.error('📧 Email provider is misconfigured, check config variables.', e)
   }
 }
 
@@ -37,7 +33,7 @@ export async function initializeTransporter(): Promise<Transporter | undefined> 
   if (process.env.EMAIL === 'true') newTransporter = await initSmtpTransporter()
 
   if (!newTransporter) {
-    modulesDebug(
+    moduleLogger.warn(
       '📧 Email provider is not configured. Server functionality will be limited.'
     )
   }

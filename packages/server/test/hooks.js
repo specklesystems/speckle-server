@@ -5,6 +5,7 @@ const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
 const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
+const { logger } = require('@/logging/logging')
 
 // Register chai plugins
 chai.use(chaiHttp)
@@ -71,14 +72,14 @@ const initializeTestServer = async (server, app) => {
 
 exports.mochaHooks = {
   beforeAll: async () => {
-    console.log('running before all')
+    logger.info('running before all')
     await unlock()
     await knex.migrate.rollback()
     await knex.migrate.latest()
     await init()
   },
   afterAll: async () => {
-    console.log('running after all')
+    logger.info('running after all')
     await unlock()
     await shutdown()
   }

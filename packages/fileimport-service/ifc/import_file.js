@@ -1,4 +1,5 @@
 const fs = require('fs')
+const { logger } = require('../observability/logging')
 
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
@@ -10,7 +11,7 @@ async function main() {
   const [filePath, userId, streamId, branchName, commitMessage] = cmdArgs
 
   // eslint-disable-next-line no-console
-  console.log('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
+  logger.info('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
 
   const data = fs.readFileSync(filePath)
 

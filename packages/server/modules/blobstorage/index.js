@@ -1,4 +1,3 @@
-const debug = require('debug')
 const { contextMiddleware } = require('@/modules/shared')
 const Busboy = require('busboy')
 const {
@@ -38,18 +37,19 @@ const {
   ResourceMismatch,
   BadRequestError
 } = require('@/modules/shared/errors')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
-    debug('speckle:modules')('📦 Blob storage is DISABLED')
+    moduleLogger.info('📦 Blob storage is DISABLED')
     return
   } else {
-    debug('speckle:modules')('📦 Init BlobStorage module')
+    moduleLogger.info('📦 Init BlobStorage module')
     await ensureStorageAccess()
   }
 
   if (!process.env.S3_BUCKET) {
-    debug('speckle:error')(
+    logger.error(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -106,7 +106,7 @@ exports.init = async (app) => {
         if (formKey.includes('hash:')) {
           clientHash = formKey.split(':')[1]
           if (clientHash && clientHash !== '') {
-            // console.log(`I have a client hash (${clientHash})`)
+            // logger.debug(`I have a client hash (${clientHash})`)
             blobId = clientHash
           }
         }
@@ -150,7 +150,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        debug('speckle:error')(`File upload error: ${err}`)
+        logger.error(`File upload error: ${err}`)
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>
