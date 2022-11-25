@@ -79,12 +79,13 @@ export class SectionBoxCapper {
     const clipOutline = this.planeOutlines[planeId].renderable
 
     let index = 0
+    let posAttr = (
+      clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data
+    /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
+    const scratchBuffer = new Array<number>()
+
     for (let b = 0; b < batches.length; b++) {
-      const posAttr = (
-        clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
-      ).data
-      posAttr.setUsage(DynamicDrawUsage)
-      const posArray = posAttr.array as number[]
       batches[b].boundsTree.shapecast({
         intersectsBounds: (box) => {
           const localPlane = plane
@@ -103,9 +104,9 @@ export class SectionBoxCapper {
             tempVector.add(
               tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
             )
-            posArray[index * 3] = tempVector.x
-            posArray[index * 3 + 1] = tempVector.y
-            posArray[index * 3 + 2] = tempVector.z
+            scratchBuffer[index * 3] = tempVector.x
+            scratchBuffer[index * 3 + 1] = tempVector.y
+            scratchBuffer[index * 3 + 2] = tempVector.z
             index++
             count++
           }
@@ -116,9 +117,9 @@ export class SectionBoxCapper {
             tempVector.add(
               tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
             )
-            posArray[index * 3] = tempVector.x
-            posArray[index * 3 + 1] = tempVector.y
-            posArray[index * 3 + 2] = tempVector.z
+            scratchBuffer[index * 3] = tempVector.x
+            scratchBuffer[index * 3 + 1] = tempVector.y
+            scratchBuffer[index * 3 + 2] = tempVector.z
             count++
             index++
           }
@@ -129,9 +130,9 @@ export class SectionBoxCapper {
             tempVector.add(
               tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
             )
-            posArray[index * 3] = tempVector.x
-            posArray[index * 3 + 1] = tempVector.y
-            posArray[index * 3 + 2] = tempVector.z
+            scratchBuffer[index * 3] = tempVector.x
+            scratchBuffer[index * 3 + 1] = tempVector.y
+            scratchBuffer[index * 3 + 2] = tempVector.z
             count++
             index++
           }
@@ -139,19 +140,19 @@ export class SectionBoxCapper {
           // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
           if (count === 3) {
             tempVector1.set(
-              posArray[(index - 3) * 3],
-              posArray[(index - 3) * 3 + 1],
-              posArray[(index - 3) * 3 + 2]
+              scratchBuffer[(index - 3) * 3],
+              scratchBuffer[(index - 3) * 3 + 1],
+              scratchBuffer[(index - 3) * 3 + 2]
             )
             tempVector2.set(
-              posArray[(index - 2) * 3],
-              posArray[(index - 2) * 3 + 1],
-              posArray[(index - 2) * 3 + 2]
+              scratchBuffer[(index - 2) * 3],
+              scratchBuffer[(index - 2) * 3 + 1],
+              scratchBuffer[(index - 2) * 3 + 2]
             )
             tempVector3.set(
-              posArray[(index - 1) * 3],
-              posArray[(index - 1) * 3 + 1],
-              posArray[(index - 1) * 3 + 2]
+              scratchBuffer[(index - 1) * 3],
+              scratchBuffer[(index - 1) * 3 + 1],
+              scratchBuffer[(index - 1) * 3 + 2]
             )
             // If the last point is a duplicate intersection
             if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
@@ -164,9 +165,9 @@ export class SectionBoxCapper {
               tempVector3.add(
                 tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
               )
-              posArray[(index - 2) * 3] = tempVector3.x
-              posArray[(index - 2) * 3 + 1] = tempVector3.y
-              posArray[(index - 2) * 3 + 2] = tempVector3.z
+              scratchBuffer[(index - 2) * 3] = tempVector3.x
+              scratchBuffer[(index - 2) * 3 + 1] = tempVector3.y
+              scratchBuffer[(index - 2) * 3 + 2] = tempVector3.z
               count--
               index--
             }
@@ -179,9 +180,21 @@ export class SectionBoxCapper {
           }
         }
       })
-      posAttr.needsUpdate = true
-      posAttr.updateRange = { offset: 0, count: index * 3 }
     }
+    if (scratchBuffer.length > posAttr.array.length) {
+      this.resizeGeometryBuffer(this.planeOutlines[planeId], scratchBuffer.length)
+      console.warn(
+        `Resized outline buffer from ${posAttr.array.length} to ${
+          scratchBuffer.length
+        }. ${scratchBuffer.length / 6} instance count`
+      )
+    }
+    posAttr = (
+      clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data
+    posAttr.set(scratchBuffer, 0)
+    posAttr.needsUpdate = true
+    posAttr.updateRange = { offset: 0, count: index * 3 }
     clipOutline.visible = true
     clipOutline.geometry.instanceCount = index / 2
     clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
@@ -194,6 +207,10 @@ export class SectionBoxCapper {
     const buffer = new Float64Array(SectionBoxCapper.INITIAL_BUFFER_SIZE)
     const lineGeometry = new LineSegmentsGeometry()
     lineGeometry.setPositions(new Float32Array(buffer))
+    ;(
+      lineGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data.setUsage(DynamicDrawUsage)
+
     const material = new LineMaterial({
       color: 0x047efb,
       linewidth: 2,
@@ -217,6 +234,20 @@ export class SectionBoxCapper {
       buffer,
       renderable: clipOutline
     }
+  }
+
+  private resizeGeometryBuffer(outline: PlaneOutline, size: number) {
+    outline.renderable.geometry.dispose()
+
+    const buffer = new Float64Array(size)
+    outline.renderable.geometry = new LineSegmentsGeometry()
+    outline.renderable.geometry.setPositions(new Float32Array(buffer))
+    ;(
+      outline.renderable.geometry.attributes[
+        'instanceStart'
+      ] as InterleavedBufferAttribute
+    ).data.setUsage(DynamicDrawUsage)
+    outline.buffer = buffer
   }
 
   private getPlaneId(plane: Plane) {

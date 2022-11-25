@@ -540,12 +540,14 @@ export default class SpeckleRenderer {
   public onSectionBoxDragEnd() {
     const generate = () => {
       this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
+      const start = performance.now()
       for (let k = 0; k < this.sectionPlanesChanged.length; k++) {
         this.sectionBoxCapper.updatePlaneOutline(
           this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
           this.sectionPlanesChanged[k]
         )
       }
+      console.warn('Outline time: ', performance.now() - start)
       this.sectionBoxCapper.enable(true)
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
     }
