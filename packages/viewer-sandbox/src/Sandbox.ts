@@ -256,8 +256,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer.getRenderer().clipTest()
+      console.warn(await this.viewer.screenshot())
     })
 
     const rotate = this.tabs.pages[0].addButton({

@@ -29,15 +29,43 @@ export interface PlaneOutline {
 
 export class SectionBoxCapper {
   private static readonly INITIAL_BUFFER_SIZE = 60000
+  private static readonly Z_OFFSET = -0.001
+
+  private tmpVec: Vector3 = new Vector3()
+  private tmpVec2: Vector3 = new Vector3()
+  private up: Vector3 = new Vector3(0, 1, 0)
+  private down: Vector3 = new Vector3(0, -1, 0)
+  private left: Vector3 = new Vector3(-1, 0, 0)
+  private right: Vector3 = new Vector3(1, 0, 0)
+  private forward: Vector3 = new Vector3(0, 0, 1)
+  private back: Vector3 = new Vector3(0, 0, -1)
 
   private planeOutlines: Record<string, PlaneOutline> = {}
 
   public constructor() {
+    this.planeOutlines[PlaneId.POSITIVE_X] = this.createPlaneOutline(PlaneId.POSITIVE_X)
+    this.planeOutlines[PlaneId.NEGATIVE_X] = this.createPlaneOutline(PlaneId.NEGATIVE_X)
+    this.planeOutlines[PlaneId.POSITIVE_Y] = this.createPlaneOutline(PlaneId.POSITIVE_Y)
+    this.planeOutlines[PlaneId.NEGATIVE_Y] = this.createPlaneOutline(PlaneId.NEGATIVE_Y)
     this.planeOutlines[PlaneId.NEGATIVE_Z] = this.createPlaneOutline(PlaneId.NEGATIVE_Z)
+    this.planeOutlines[PlaneId.POSITIVE_Z] = this.createPlaneOutline(PlaneId.POSITIVE_Z)
   }
 
   public getPlaneOutline(planeId: PlaneId) {
     return this.planeOutlines[planeId]
+  }
+
+  public enable(value: boolean) {
+    for (const k in this.planeOutlines) {
+      this.planeOutlines[k].renderable.visible = value
+    }
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    for (const plane in this.planeOutlines) {
+      const clippingPlanes = planes.filter((value) => this.getPlaneId(value) !== plane)
+      this.planeOutlines[plane].renderable.material.clippingPlanes = clippingPlanes
+    }
   }
 
   public updatePlaneOutline(batches: MeshBatch[], plane: Plane) {
@@ -45,8 +73,11 @@ export class SectionBoxCapper {
     const tempVector1 = new Vector3()
     const tempVector2 = new Vector3()
     const tempVector3 = new Vector3()
+    const tempVector4 = new Vector3()
     const tempLine = new Line3()
-    const clipOutline = this.planeOutlines[this.getPlaneId(plane)].renderable
+    const planeId = this.getPlaneId(plane)
+    const clipOutline = this.planeOutlines[planeId].renderable
+
     let index = 0
     for (let b = 0; b < batches.length; b++) {
       const posAttr = (
@@ -69,6 +100,9 @@ export class SectionBoxCapper {
           tempLine.start.copy(tri.a)
           tempLine.end.copy(tri.b)
           if (localPlane.intersectLine(tempLine, tempVector)) {
+            tempVector.add(
+              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+            )
             posArray[index * 3] = tempVector.x
             posArray[index * 3 + 1] = tempVector.y
             posArray[index * 3 + 2] = tempVector.z
@@ -79,6 +113,9 @@ export class SectionBoxCapper {
           tempLine.start.copy(tri.b)
           tempLine.end.copy(tri.c)
           if (localPlane.intersectLine(tempLine, tempVector)) {
+            tempVector.add(
+              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+            )
             posArray[index * 3] = tempVector.x
             posArray[index * 3 + 1] = tempVector.y
             posArray[index * 3 + 2] = tempVector.z
@@ -89,6 +126,9 @@ export class SectionBoxCapper {
           tempLine.start.copy(tri.c)
           tempLine.end.copy(tri.a)
           if (localPlane.intersectLine(tempLine, tempVector)) {
+            tempVector.add(
+              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+            )
             posArray[index * 3] = tempVector.x
             posArray[index * 3 + 1] = tempVector.y
             posArray[index * 3 + 2] = tempVector.z
@@ -120,9 +160,13 @@ export class SectionBoxCapper {
             } else if (tempVector1.equals(tempVector2)) {
               // If the last point is not a duplicate intersection
               // Set the penultimate point as a distinct point and delete the last point
-              posArray[(index - 2) * 3] = tempVector.x
-              posArray[(index - 2) * 3 + 1] = tempVector.y
-              posArray[(index - 2) * 3 + 2] = tempVector.z
+              tempVector3.set(tempVector.x, tempVector.y, tempVector.z)
+              tempVector3.add(
+                tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+              )
+              posArray[(index - 2) * 3] = tempVector3.x
+              posArray[(index - 2) * 3 + 1] = tempVector3.y
+              posArray[(index - 2) * 3 + 2] = tempVector3.z
               count--
               index--
             }
@@ -161,7 +205,6 @@ export class SectionBoxCapper {
     material.color = new Color(0x047efb)
     material.color.convertSRGBToLinear()
     material.linewidth = 2
-    // material.clipIntersection = true
     material.worldUnits = false
 
     const clipOutline = new LineSegments2(lineGeometry, material)
@@ -177,6 +220,16 @@ export class SectionBoxCapper {
   }
 
   private getPlaneId(plane: Plane) {
-    if (plane.normal.equals(new Vector3(0, 0, -1))) return PlaneId.NEGATIVE_Z
+    this.tmpVec.set(
+      Math.round(plane.normal.x),
+      Math.round(plane.normal.y),
+      Math.round(plane.normal.z)
+    )
+    if (this.tmpVec.equals(this.right)) return PlaneId.POSITIVE_X
+    if (this.tmpVec.equals(this.left)) return PlaneId.NEGATIVE_X
+    if (this.tmpVec.equals(this.up)) return PlaneId.POSITIVE_Y
+    if (this.tmpVec.equals(this.down)) return PlaneId.NEGATIVE_Y
+    if (this.tmpVec.equals(this.back)) return PlaneId.NEGATIVE_Z
+    if (this.tmpVec.equals(this.forward)) return PlaneId.POSITIVE_Z
   }
 }

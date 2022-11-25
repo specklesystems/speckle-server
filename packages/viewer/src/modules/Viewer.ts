@@ -121,6 +121,7 @@ export class Viewer extends EventEmitter implements IViewer {
       box = this.speckleRenderer.sceneBox
     }
     this.sectionBox.setBox(box, offset)
+    this.speckleRenderer.updateSectionBoxCapper()
   }
   public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
     this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
@@ -306,14 +307,17 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleSectionBox() {
     this.sectionBox.toggle()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public sectionBoxOff() {
     this.sectionBox.disable()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public sectionBoxOn() {
     this.sectionBox.enable()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {

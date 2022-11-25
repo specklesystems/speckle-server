@@ -2,24 +2,16 @@ import {
   ACESFilmicToneMapping,
   Box3,
   Box3Helper,
-  BufferAttribute,
-  BufferGeometry,
   CameraHelper,
   Color,
   DirectionalLight,
   DirectionalLightHelper,
-  DynamicDrawUsage,
   Group,
   Intersection,
-  Line3,
-  LineBasicMaterial,
-  LineSegments,
   Matrix4,
   Mesh,
   Object3D,
   Plane,
-  Points,
-  PointsMaterial,
   RGBADepthPacking,
   Scene,
   Sphere,
@@ -60,7 +52,7 @@ import {
 } from './pipeline/Pipeline'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
-import { SectionBoxCapper } from './SectionBoxCapper'
+import { PlaneId, SectionBoxCapper } from './SectionBoxCapper'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -212,7 +204,25 @@ export default class SpeckleRenderer {
     this.sectionBoxCapper = new SectionBoxCapper()
     const sectionBoxCapperGroup = new Group()
     sectionBoxCapperGroup.name = 'SectionBoxCapper'
-    this.scene.add(sectionBoxCapperGroup)
+    this.rootGroup.add(sectionBoxCapperGroup)
+    sectionBoxCapperGroup.add(
+      this.sectionBoxCapper.getPlaneOutline(PlaneId.NEGATIVE_Z).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxCapper.getPlaneOutline(PlaneId.POSITIVE_Z).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxCapper.getPlaneOutline(PlaneId.POSITIVE_X).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxCapper.getPlaneOutline(PlaneId.NEGATIVE_X).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxCapper.getPlaneOutline(PlaneId.POSITIVE_Y).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxCapper.getPlaneOutline(PlaneId.NEGATIVE_Y).renderable
+    )
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -508,6 +518,7 @@ export default class SpeckleRenderer {
       }
     })
     this.pipeline.updateClippingPlanes(planes)
+    this.sectionBoxCapper.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
@@ -523,252 +534,36 @@ export default class SpeckleRenderer {
   }
 
   public onSectionBoxDragStart() {
-    const clipOutline: Mesh = this.allObjects.getObjectByName('clip-outline') as Mesh
-    if (clipOutline) {
-      clipOutline.visible = false
-    }
+    this.sectionBoxCapper.enable(false)
   }
 
   public onSectionBoxDragEnd() {
     const generate = () => {
       this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
-      console.warn(this.sectionPlanesChanged)
+      for (let k = 0; k < this.sectionPlanesChanged.length; k++) {
+        this.sectionBoxCapper.updatePlaneOutline(
+          this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+          this.sectionPlanesChanged[k]
+        )
+      }
+      this.sectionBoxCapper.enable(true)
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
-      // let clipOutline: LineSegments2 = this.allObjects.getObjectByName(
-      //   'clip-outline'
-      // ) as LineSegments2
-      // if (!clipOutline) {
-      //   const lineGeometry = new LineSegmentsGeometry()
-      //   lineGeometry.setPositions(new Float32Array(60000))
-      //   const material = new LineMaterial({
-      //     color: 0x047efb,
-      //     linewidth: 2,
-      //     worldUnits: false,
-      //     vertexColors: false,
-      //     alphaToCoverage: false,
-      //     resolution: new Vector2(919, 848)
-      //   })
-      //   material.color = new Color(0x047efb)
-      //   material.color.convertSRGBToLinear()
-      //   material.linewidth = 2
-      //   // material.clipIntersection = true
-      //   material.worldUnits = false
-
-      //   clipOutline = new LineSegments2(lineGeometry, material)
-      //   clipOutline.name = 'clip-outline'
-      //   clipOutline.frustumCulled = false
-      //   clipOutline.renderOrder = 1
-      //   clipOutline.layers.set(ObjectLayers.PROPS)
-      //   // ;(clipOutline.material as Material).clipIntersection = true
-      //   this.allObjects.add(clipOutline)
-      // }
-
-      // const tempVector = new Vector3()
-      // const tempVector1 = new Vector3()
-      // const tempVector2 = new Vector3()
-      // const tempVector3 = new Vector3()
-      // const tempLine = new Line3()
-
-      // const batches: MeshBatch[] = this.batcher.getBatches(
-      //   undefined,
-      //   GeometryType.MESH
-      // ) as MeshBatch[]
-      // let index = 0
-      // for (let b = 0; b < batches.length; b++) {
-      //   const posAttr = (
-      //     clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
-      //   ).data
-      //   posAttr.setUsage(DynamicDrawUsage)
-      //   const posArray = posAttr.array as number[]
-      //   batches[b].boundsTree.shapecast({
-      //     intersectsBounds: (box) => {
-      //       const localPlane = this.viewer.sectionBox.planes[2]
-      //       return localPlane.intersectsBox(box)
-      //     },
-
-      //     intersectsTriangle: (tri) => {
-      //       // check each triangle edge to see if it intersects with the plane. If so then
-      //       // add it to the list of segments.
-      //       const localPlane = this.viewer.sectionBox.planes[2]
-      //       let count = 0
-
-      //       tempLine.start.copy(tri.a)
-      //       tempLine.end.copy(tri.b)
-      //       if (localPlane.intersectLine(tempLine, tempVector)) {
-      //         posArray[index * 3] = tempVector.x
-      //         posArray[index * 3 + 1] = tempVector.y
-      //         posArray[index * 3 + 2] = tempVector.z
-      //         index++
-      //         count++
-      //       }
-
-      //       tempLine.start.copy(tri.b)
-      //       tempLine.end.copy(tri.c)
-      //       if (localPlane.intersectLine(tempLine, tempVector)) {
-      //         posArray[index * 3] = tempVector.x
-      //         posArray[index * 3 + 1] = tempVector.y
-      //         posArray[index * 3 + 2] = tempVector.z
-      //         count++
-      //         index++
-      //       }
-
-      //       tempLine.start.copy(tri.c)
-      //       tempLine.end.copy(tri.a)
-      //       if (localPlane.intersectLine(tempLine, tempVector)) {
-      //         posArray[index * 3] = tempVector.x
-      //         posArray[index * 3 + 1] = tempVector.y
-      //         posArray[index * 3 + 2] = tempVector.z
-      //         count++
-      //         index++
-      //       }
-
-      //       // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
-      //       if (count === 3) {
-      //         tempVector1.set(
-      //           posArray[(index - 3) * 3],
-      //           posArray[(index - 3) * 3 + 1],
-      //           posArray[(index - 3) * 3 + 2]
-      //         )
-      //         tempVector2.set(
-      //           posArray[(index - 2) * 3],
-      //           posArray[(index - 2) * 3 + 1],
-      //           posArray[(index - 2) * 3 + 2]
-      //         )
-      //         tempVector3.set(
-      //           posArray[(index - 1) * 3],
-      //           posArray[(index - 1) * 3 + 1],
-      //           posArray[(index - 1) * 3 + 2]
-      //         )
-      //         // If the last point is a duplicate intersection
-      //         if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
-      //           count--
-      //           index--
-      //         } else if (tempVector1.equals(tempVector2)) {
-      //           // If the last point is not a duplicate intersection
-      //           // Set the penultimate point as a distinct point and delete the last point
-      //           posArray[(index - 2) * 3] = tempVector.x
-      //           posArray[(index - 2) * 3 + 1] = tempVector.y
-      //           posArray[(index - 2) * 3 + 2] = tempVector.z
-      //           count--
-      //           index--
-      //         }
-      //       }
-
-      //       // If we only intersected with one or three sides then just remove it. This could be handled
-      //       // more gracefully.
-      //       if (count !== 2) {
-      //         index -= count
-      //       }
-      //     }
-      //   })
-      //   posAttr.needsUpdate = true
-      //   posAttr.updateRange = { offset: 0, count: index * 3 }
-      // }
-      // clipOutline.visible = true
-      // clipOutline.geometry.instanceCount = index / 2
-      // clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
-      // clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
-      // clipOutline.geometry.computeBoundingBox()
-      // clipOutline.geometry.computeBoundingSphere()
-      // console.log('Index -> ', index)
     }
     this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
   }
 
-  public clipTest() {
-    const batches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    ) as MeshBatch[]
-    for (let b = 0; b < batches.length; b++) {
-      const tempVector = new Vector3()
-      const tempVector1 = new Vector3()
-      const tempVector2 = new Vector3()
-      const tempVector3 = new Vector3()
-      const tempLine = new Line3()
-      const lineGeometry = new BufferGeometry()
-      const linePosAttr = new BufferAttribute(new Float32Array(50000), 3, false)
-      linePosAttr.setUsage(DynamicDrawUsage)
-      lineGeometry.setAttribute('position', linePosAttr)
-      const outlineLines = new LineSegments(lineGeometry, new LineBasicMaterial())
-      outlineLines.material.color.set(0x00acc1).convertSRGBToLinear()
-      outlineLines.frustumCulled = false
-      outlineLines.renderOrder = 3
-      outlineLines.layers.set(ObjectLayers.PROPS)
-      this.allObjects.add(outlineLines)
-
-      const points = new Points(
-        lineGeometry,
-        new PointsMaterial({ color: 0xff0000, size: 0.05 })
+  public updateSectionBoxCapper() {
+    for (let k = 0; k < this.viewer.sectionBox.planes.length; k++) {
+      this.sectionBoxCapper.updatePlaneOutline(
+        this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+        this.viewer.sectionBox.planes[k]
       )
-      points.renderOrder = 4
-      points.layers.set(ObjectLayers.PROPS)
-      // this.allObjects.add(points)
-
-      const posAttr = outlineLines.geometry.attributes.position
-      let index = 0
-      batches[b].boundsTree.shapecast({
-        intersectsBounds: (box) => {
-          const localPlane = this.viewer.sectionBox.planes[2]
-          return localPlane.intersectsBox(box)
-        },
-
-        intersectsTriangle: (tri) => {
-          // check each triangle edge to see if it intersects with the plane. If so then
-          // add it to the list of segments.
-          const localPlane = this.viewer.sectionBox.planes[2]
-          let count = 0
-
-          tempLine.start.copy(tri.a)
-          tempLine.end.copy(tri.b)
-          if (localPlane.intersectLine(tempLine, tempVector)) {
-            posAttr.setXYZ(index, tempVector.x, tempVector.y, tempVector.z)
-            index++
-            count++
-          }
-
-          tempLine.start.copy(tri.b)
-          tempLine.end.copy(tri.c)
-          if (localPlane.intersectLine(tempLine, tempVector)) {
-            posAttr.setXYZ(index, tempVector.x, tempVector.y, tempVector.z)
-            count++
-            index++
-          }
-
-          tempLine.start.copy(tri.c)
-          tempLine.end.copy(tri.a)
-          if (localPlane.intersectLine(tempLine, tempVector)) {
-            posAttr.setXYZ(index, tempVector.x, tempVector.y, tempVector.z)
-            count++
-            index++
-          }
-
-          // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
-          if (count === 3) {
-            tempVector1.fromBufferAttribute(posAttr, index - 3)
-            tempVector2.fromBufferAttribute(posAttr, index - 2)
-            tempVector3.fromBufferAttribute(posAttr, index - 1)
-            // If the last point is a duplicate intersection
-            if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
-              count--
-              index--
-            } else if (tempVector1.equals(tempVector2)) {
-              // If the last point is not a duplicate intersection
-              // Set the penultimate point as a distinct point and delete the last point
-              posAttr.setXYZ(index - 2, tempVector3.x, tempVector3.y, tempVector3.z)
-              count--
-              index--
-            }
-          }
-
-          // If we only intersected with one or three sides then just remove it. This could be handled
-          // more gracefully.
-          if (count !== 2) {
-            index -= count
-          }
-        }
-      })
     }
+    this.sectionBoxCapper.enable(this.viewer.sectionBox.display.visible)
+  }
+
+  public enableSectionBoxCapper(value: boolean) {
+    this.sectionBoxCapper.enable(value)
   }
 
   private addDirectLights() {
