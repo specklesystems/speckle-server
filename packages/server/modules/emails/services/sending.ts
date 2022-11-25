@@ -1,5 +1,8 @@
-import { logger } from '@/logging/logging'
 import { getTransporter } from '@/modules/emails/utils/transporter'
+import dbg from 'debug'
+
+const debug = dbg('speckle')
+const errorDebug = debug.extend('errors')
 
 export type SendEmailParams = {
   from?: string
@@ -21,7 +24,7 @@ export async function sendEmail({
 }: SendEmailParams): Promise<boolean> {
   const transporter = getTransporter()
   if (!transporter) {
-    logger.error('No email transport present. Cannot send emails.')
+    errorDebug('No email transport present. Cannot send emails.')
     return false
   }
   try {
@@ -34,7 +37,7 @@ export async function sendEmail({
       html
     })
   } catch (error) {
-    logger.error(error)
+    errorDebug(error)
   }
 
   return false

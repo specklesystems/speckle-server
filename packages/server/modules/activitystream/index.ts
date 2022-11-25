@@ -2,9 +2,11 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import cron from 'node-cron'
 import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
+import { modulesDebug } from '@/modules/shared/utils/logger'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { scheduleExecution } from '@/modules/core/services/taskScheduler'
-import { activitiesLogger, moduleLogger } from '@/logging/logging'
+
+const activitiesDebug = modulesDebug.extend('activities')
 
 let scheduledTask: cron.ScheduledTask | null = null
 
@@ -23,7 +25,7 @@ const scheduleWeeklyActivityNotifications = () => {
     'weeklyActivityNotification',
     //task should be locked for 10 minutes
     async (now: Date) => {
-      activitiesLogger.info('Sending weekly activity digests notifications.')
+      activitiesDebug('Sending weekly activity digests notifications.')
       const end = now
       const start = new Date(end.getTime())
       start.setDate(start.getDate() - numberOfDays)
@@ -35,7 +37,7 @@ const scheduleWeeklyActivityNotifications = () => {
 
 const activityModule: SpeckleModule = {
   init: async (_, isInitial) => {
-    moduleLogger.info('🤺 Init activity module')
+    modulesDebug('🤺 Init activity module')
     if (isInitial) {
       initializeEventListener()
       scheduledTask = scheduleWeeklyActivityNotifications()

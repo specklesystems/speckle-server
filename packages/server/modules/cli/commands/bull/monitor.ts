@@ -7,8 +7,8 @@ import {
   NOTIFICATIONS_QUEUE,
   buildNotificationsQueue
 } from '@/modules/notifications/services/queue'
+import { cliDebug } from '@/modules/shared/utils/logger'
 import { noop } from 'lodash'
-import { cliLogger } from '@/logging/logging'
 
 const PORT = 3032
 
@@ -25,15 +25,15 @@ const command: CommandModule<unknown, { testQueueId: string }> = {
   handler: async (argv) => {
     const testQueueId = argv.testQueueId
 
-    cliLogger.info('Initializing bull queues...')
+    cliDebug('Initializing bull queues...')
     const queues = [buildNotificationsQueue(NOTIFICATIONS_QUEUE)]
 
     if (testQueueId) {
-      cliLogger.info('Also initializing queue %s...', testQueueId)
+      cliDebug('Also initializing queue ' + testQueueId + '...')
       queues.push(buildNotificationsQueue(testQueueId))
     }
 
-    cliLogger.info('Initializing monitor...')
+    cliDebug('Initializing monitor...')
     const app = express()
     const serverAdapter = new ExpressAdapter()
 
@@ -45,8 +45,8 @@ const command: CommandModule<unknown, { testQueueId: string }> = {
     app.use(serverAdapter.getRouter())
 
     app.listen(PORT, () => {
-      cliLogger.info(`Running on ${PORT}...`)
-      cliLogger.info(
+      cliDebug(`Running on ${PORT}...`)
+      cliDebug(
         `For the UI, open http://localhost:${PORT}/, and make sure Redis is running`
       )
     })

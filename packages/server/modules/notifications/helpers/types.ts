@@ -2,8 +2,8 @@
 import { StreamAccessRequestRecord } from '@/modules/accessrequests/repositories'
 import { MaybeAsync, Optional } from '@/modules/shared/helpers/typeHelper'
 import { Job } from 'bull'
+import debug from 'debug'
 import { isObject, has } from 'lodash'
-import { Logger } from 'pino'
 
 export enum NotificationType {
   ActivityDigest = 'activityDigest',
@@ -41,7 +41,7 @@ export type NotificationHandler<M extends NotificationMessage = NotificationMess
   msg: M,
   extra: {
     job: Job
-    logger: Logger
+    debug: debug.Debugger
   }
 ) => MaybeAsync<void>
 

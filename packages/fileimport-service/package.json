@@ -28,7 +28,6 @@
     "crypto-random-string": "^3.3.1",
     "knex": "^2.0.0",
     "pg": "^8.7.3",
-    "pino": "^8.7.0",
     "prom-client": "^14.0.1",
     "undici": "^5.8.2",
     "valid-filename": "^3.1.0",

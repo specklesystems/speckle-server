@@ -1,4 +1,5 @@
 'use strict'
+const debug = require('debug')
 const cors = require('cors')
 
 const sentry = require(`@/logging/sentryHelper`)
@@ -14,7 +15,6 @@ const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { ForbiddenError } = require('apollo-server-errors')
-const { moduleLogger } = require('@/logging/logging')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -45,7 +45,7 @@ module.exports = (app) => {
       return res.redirect(`${app.redirectUrl}?access_code=${ac}`)
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
+      debug('speckle:error')(err)
 
       if (
         err instanceof InvalidAccessCodeRequestError ||
@@ -97,7 +97,6 @@ module.exports = (app) => {
       return res.send(authResponse)
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
       return res.status(401).send({ err: err.message })
     }
   })
@@ -118,8 +117,7 @@ module.exports = (app) => {
       return res.status(200).send({ message: 'You have logged out.' })
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
-      return res.status(400).send('Something went wrong while trying to logout.')
+      return res.status(400).send({ err: err.message })
     }
   })
 }

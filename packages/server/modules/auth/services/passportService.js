@@ -1,5 +1,5 @@
 const passport = require('passport')
-const { logger } = require('@/logging/logging')
+const debug = require('debug')
 
 /**
  * Wrapper for passport.authenticate that handles success & failure scenarios correctly
@@ -11,7 +11,7 @@ const { logger } = require('@/logging/logging')
 function passportAuthenticate(strategy, options = undefined) {
   return (req, res, next) =>
     passport.authenticate(strategy, options, (err, user, info) => {
-      if (err) logger.error(err)
+      if (err) debug('speckle:error')(err)
       if (!user) {
         const errMsg = info?.message || 'Failed to authenticate, contact server admins'
         return res.redirect(`/error?message=${errMsg}`)
