@@ -56,11 +56,17 @@ export default defineNuxtConfig({
     }
   },
 
+  routeRules: {
+    // Necessary because of the auth redirect to `/?access_code=...` from the backend in auth flows
+    '/': { cors: true, headers: { 'access-control-allowed-methods': 'GET' } }
+  },
+
   build: {
     transpile: [
       /^@apollo\/client/,
       'ts-invariant/process',
       '@vue/apollo-composable',
+      '@speckle/vue-apollo-composable',
       '@headlessui/vue',
       '@heroicons/vue',
       '@vueuse/core'
