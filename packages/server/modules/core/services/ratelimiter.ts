@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { RequestWithAuthContext } from 'express'
 import Redis from 'ioredis'
 import {
   getRedisUrl,
@@ -13,40 +13,10 @@ import {
   RateLimiterRes
 } from 'rate-limiter-flexible'
 import { TIME } from '@speckle/shared'
-import { AuthContext } from '@/modules/shared/authz'
-import { BaseError } from '@/modules/shared/errors'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { Options } from 'verror'
-
-export class RateLimitError extends BaseError {
-  static defaultMessage =
-    'You have sent too many requests. You are being rate limited. Please try again later.'
-  static code = 'RATE_LIMIT_ERROR'
-
-  rateLimitBreached: RateLimitBreached
-
-  constructor(
-    rateLimitBreached: RateLimitBreached,
-    message?: string | null | undefined,
-    options: Options | Error | undefined = undefined
-  ) {
-    super(message ?? RateLimitError.defaultMessage, options)
-    this.rateLimitBreached = rateLimitBreached
-  }
-}
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 // typescript definitions
-
-type BurstyRateLimiterOptions = {
-  regularOptions: RateLimits
-  burstOptions: RateLimits
-}
-
-export type RateLimits = {
-  limitCount: number
-  duration: number
-}
-
 export enum RateLimitAction {
   ALL_REQUESTS = 'ALL_REQUESTS',
   USER_CREATE = 'USER_CREATE',
@@ -60,16 +30,39 @@ export enum RateLimitAction {
   'POST /graphql' = 'POST /graphql'
 }
 
+export interface RateLimitResult {
+  isWithinLimits: boolean
+  action: RateLimitAction
+}
+
+export interface RateLimitSuccess extends RateLimitResult {
+  isWithinLimits: true
+  remainingPoints: number
+}
+
+export interface RateLimitBreached extends RateLimitResult {
+  isWithinLimits: false
+  msBeforeNext: number
+}
+
+type BurstyRateLimiterOptions = {
+  regularOptions: RateLimits
+  burstOptions: RateLimits
+}
+
+export type RateLimits = {
+  limitCount: number
+  duration: number
+}
+
 type RateLimiterOptions = {
   [key in RateLimitAction]: BurstyRateLimiterOptions
 }
 
-interface RateLimitContext extends AuthContext {
-  ip: string
-}
-
-interface RequestWithContext extends express.Request {
-  context: RateLimitContext
+export type RateLimiterMapping = {
+  [key in RateLimitAction]: (
+    source: string
+  ) => Promise<RateLimitSuccess | RateLimitBreached>
 }
 
 export const LIMITS: RateLimiterOptions = {
@@ -207,7 +200,8 @@ export const getActionForPath = (path: string, verb: string): RateLimitAction =>
 
 export const getSourceFromRequest = (req: express.Request): string => {
   let source: string | null =
-    ((req as RequestWithContext)?.context?.userId as string) ?? getIpFromRequest(req)
+    ((req as RequestWithAuthContext)?.context?.userId as string) ||
+    getIpFromRequest(req)
 
   if (!source) source = 'unknown'
   return source
@@ -239,12 +233,6 @@ export const createRateLimiterMiddleware = (
       }
     }
   }
-}
-
-export type RateLimiterMapping = {
-  [key in RateLimitAction]: (
-    source: string
-  ) => Promise<RateLimitSuccess | RateLimitBreached>
 }
 
 // we need to take the Bursty specific type because its not an Abstract.
@@ -314,21 +302,6 @@ export const initializeRedisRateLimiters = (
 }
 
 export const RATE_LIMITERS = initializeRedisRateLimiters()
-
-export interface RateLimitResult {
-  isWithinLimits: boolean
-  action: RateLimitAction
-}
-
-export interface RateLimitSuccess extends RateLimitResult {
-  isWithinLimits: true
-  remainingPoints: number
-}
-
-export interface RateLimitBreached extends RateLimitResult {
-  isWithinLimits: false
-  msBeforeNext: number
-}
 
 export const isRateLimitBreached = (
   rateLimitResult: RateLimitResult
