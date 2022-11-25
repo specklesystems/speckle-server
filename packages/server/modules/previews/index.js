@@ -1,8 +1,6 @@
 /* istanbul ignore file */
 'use strict'
 
-const debug = require('debug')
-
 const {
   contextMiddleware,
   validateScopes,
@@ -23,6 +21,7 @@ const {
 } = require('./services/previews')
 
 const { makeOgImage } = require('./ogImage')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -32,9 +31,9 @@ const previewErrorImage = require.resolve('#/assets/previews/images/preview_erro
 
 exports.init = (app) => {
   if (process.env.DISABLE_PREVIEWS) {
-    debug('speckle:modules')('📸 Object preview module is DISABLED')
+    moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
-    debug('speckle:modules')('📸 Init object preview module')
+    moduleLogger.info('📸 Init object preview module')
   }
 
   const DEFAULT_ANGLE = '0'
@@ -68,7 +67,7 @@ exports.init = (app) => {
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      debug('speckle:error')(
+      logger.error(
         `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
       )
       return {
@@ -79,7 +78,7 @@ exports.init = (app) => {
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      debug('speckle:error')(`Error: Preview image not found: ${previewImgId}`)
+      logger.error(`Error: Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
         file: previewErrorImage

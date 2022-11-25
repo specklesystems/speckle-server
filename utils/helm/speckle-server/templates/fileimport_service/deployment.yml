@@ -74,8 +74,8 @@ spec:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
-          - name: DEBUG
-            value: "fileimport-service:*"
+          - name: LOG_LEVEL
+            value: {{ .Values.fileimport_service.logLevel | quote }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS

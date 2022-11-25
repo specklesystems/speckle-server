@@ -1,9 +1,9 @@
 'use strict'
-const debug = require('debug')
 const { registerOrUpdateScope, registerOrUpdateRole } = require('@/modules/shared')
+const { moduleLogger } = require('@/logging/logging')
 
 exports.init = async (app) => {
-  debug('speckle:modules')('💥 Init core module')
+  moduleLogger.info('💥 Init core module')
   // Initialize the static route
   require('./rest/static')(app)
 
