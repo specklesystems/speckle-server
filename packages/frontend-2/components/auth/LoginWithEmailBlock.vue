@@ -9,6 +9,7 @@
         :rules="emailRules"
         show-label
         :disabled="loading"
+        auto-focus
       />
       <FormTextInput
         type="password"

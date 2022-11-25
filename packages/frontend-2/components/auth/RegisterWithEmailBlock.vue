@@ -10,6 +10,7 @@
         :custom-icon="UserIcon"
         show-label
         :disabled="loading"
+        auto-focus
       />
       <FormTextInput
         type="email"

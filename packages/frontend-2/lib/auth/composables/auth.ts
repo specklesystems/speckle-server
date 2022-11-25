@@ -169,7 +169,8 @@ export const useAuthManager = () => {
 
             triggerNotification({
               type: ToastNotificationType.Success,
-              title: 'Authentication successful'
+              title: 'Welcome!',
+              description: "You've been successfully logged in"
             })
           } catch (e) {
             triggerNotification({
@@ -249,6 +250,12 @@ export const useAuthManager = () => {
    */
   const logout = async () => {
     await saveNewToken()
+
+    triggerNotification({
+      type: ToastNotificationType.Info,
+      title: 'Goodbye!',
+      description: "You've been logged out"
+    })
   }
 
   return {
