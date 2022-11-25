@@ -1,7 +1,7 @@
 const { logger } = require('./logging')
-const ExpressPinoLogger = require('express-pino-logger')
+const HttpLogger = require('pino-http')()
 
-module.exports.LoggingExpressMiddleware = ExpressPinoLogger({
+module.exports.LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: false
 })

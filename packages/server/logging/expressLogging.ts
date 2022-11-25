@@ -1,7 +1,7 @@
 import { logger } from './logging'
-import ExpressPinoLogger from 'express-pino-logger'
+import HttpLogger from 'pino-http'
 
-export const LoggingExpressMiddleware = ExpressPinoLogger({
+export const LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: false
 })
