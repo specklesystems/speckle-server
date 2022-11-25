@@ -156,6 +156,7 @@ export const useAuthManager = () => {
 
   /**
    * Watch for changes to query string and when access_code is set trigger login finalization
+   * (either used just logged in or registered)
    */
   const watchLoginAccessCode = () => {
     if (process.server) return
@@ -170,7 +171,7 @@ export const useAuthManager = () => {
             triggerNotification({
               type: ToastNotificationType.Success,
               title: 'Welcome!',
-              description: "You've been successfully logged in"
+              description: "You've been successfully authenticated"
             })
           } catch (e) {
             triggerNotification({

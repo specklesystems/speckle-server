@@ -954,7 +954,9 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
+  /** @deprecated only used for testing for now */
   project: Project;
+  /** @deprecated only used for testing for now */
   projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
@@ -1561,6 +1563,7 @@ export type User = {
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<Maybe<ServerApp>>>;
+  createdAt?: Maybe<Scalars['DateTime']>;
   /**
    * E-mail can be null, if it's requested for a user other than the authenticated one
    * and the user isn't an admin
@@ -1579,6 +1582,8 @@ export type User = {
   name?: Maybe<Scalars['String']>;
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
+  /** Get projects that the user participates in */
+  projects: Array<Project>;
   role?: Maybe<Scalars['String']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the

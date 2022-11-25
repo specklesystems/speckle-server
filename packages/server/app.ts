@@ -20,6 +20,7 @@ import {
   ForbiddenError,
   ApolloServerExpressConfig
 } from 'apollo-server-express'
+import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core'
 
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
@@ -188,6 +189,10 @@ export async function buildApolloServer(
     context: buildContext,
     plugins: [
       require('@/logging/apolloPlugin'),
+      ApolloServerPluginLandingPageLocalDefault({
+        embed: true,
+        includeCookies: true
+      }),
       ...(subscriptionServerResolver
         ? [
             {

@@ -65,7 +65,7 @@ export function useGlobalToastManager() {
   )
 
   const dismiss = () => {
-    // currentNotification.value = null
+    currentNotification.value = null
   }
 
   return { currentNotification: readOnlyNotification, dismiss }

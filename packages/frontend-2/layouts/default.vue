@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full">
-    <HeaderNavBar />
-    <AuthVerificationReminder class="my-8 layout-container" />
+    <HeaderNavBar class="mb-10" />
+    <AuthVerificationReminder class="my-4 layout-container" />
     <main class="my-4 layout-container">
       <slot />
     </main>

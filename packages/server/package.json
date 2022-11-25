@@ -29,7 +29,7 @@
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test DEBUG='speckle:*' ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml",
-    "gqlgen:watch": "yarn gqlgen --watch"
+    "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.100.0",
