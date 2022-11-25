@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const knex = require('./knex')
 const fs = require('fs')
 const metrics = require('./observability/prometheusMetrics')
-const { webhookServiceLogger } = require('./observability/logging')
+const { logger } = require('./observability/logging')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
@@ -58,7 +58,7 @@ async function doTask(task) {
       .digest('hex')
     const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 
-    webhookServiceLogger.info(
+    logger.info(
       `Callin webhook ${fullPayload.streamId} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...`
     )
     const result = await makeNetworkRequest({
@@ -67,7 +67,7 @@ async function doTask(task) {
       headersData: postHeaders
     })
 
-    webhookServiceLogger.info(`  Result: ${JSON.stringify(result)}`)
+    logger.info(`  Result: ${JSON.stringify(result)}`)
 
     if (!result.success) {
       throw new Error(result.error)
@@ -125,17 +125,17 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metrics.metricOperationErrors.labels('main_loop').inc()
-    webhookServiceLogger.error('Error executing task: ', err)
+    logger.error('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
 }
 
 async function main() {
-  webhookServiceLogger.info('Starting Webhook Service...')
+  logger.info('Starting Webhook Service...')
 
   process.on('SIGTERM', () => {
     shouldExit = true
-    webhookServiceLogger.info('Shutting down...')
+    logger.info('Shutting down...')
   })
   metrics.initPrometheusMetrics()
 

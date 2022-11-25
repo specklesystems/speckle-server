@@ -1,8 +1,6 @@
-// Note logging is imported by www & ts-www, prior to init() being called
-// so we can't use imports with '@' etc., as they aren't yet defined.
 const { pino } = require('pino')
 
-const Logger = pino({
+const baseLogger = pino({
   base: undefined, // Set to undefined to avoid adding pid, hostname properties to each log.
   formatters: {
     level: (label) => {
@@ -18,12 +16,12 @@ const extendLoggerComponent = function (otherChild, ...subComponent) {
   otherChildBindings.component = [otherChildBindings.component, ...subComponent]
     .filter(Boolean)
     .join('/')
-  return Logger.child(otherChildBindings)
+  return baseLogger.child(otherChildBindings)
 }
 
 // loggers for specific components within normal operation
-const fileimportServiceLogger = extendLoggerComponent(Logger, 'fileimport-service')
+const logger = extendLoggerComponent(baseLogger, 'fileimport-service')
 
 module.exports = {
-  fileimportServiceLogger
+  logger
 }

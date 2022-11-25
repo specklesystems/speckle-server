@@ -1,7 +1,7 @@
 const { fetch } = require('undici')
 const Parser = require('./parser')
 const ServerAPI = require('./api.js')
-const { fileimportServiceLogger } = require('../observability/logging')
+const { logger } = require('../observability/logging')
 
 async function parseAndCreateCommit({
   data,
@@ -57,7 +57,7 @@ async function parseAndCreateCommit({
   })
 
   const json = await response.json()
-  fileimportServiceLogger.info(json)
+  logger.info(json)
 
   return json.data.commitCreate
 }

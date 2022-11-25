@@ -16,7 +16,7 @@ const { spawn } = require('child_process')
 
 const ServerAPI = require('../ifc/api')
 const objDependencies = require('./objDependencies')
-const { fileimportServiceLogger } = require('../observability/logging')
+const { logger } = require('../observability/logging')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -57,7 +57,7 @@ async function doTask(task) {
 
   const metricDurationEnd = metricDuration.startTimer()
   try {
-    fileimportServiceLogger.info('Doing task ', task)
+    logger.info('Doing task ', task)
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
@@ -162,7 +162,7 @@ async function doTask(task) {
       [commitId, task.id]
     )
   } catch (err) {
-    fileimportServiceLogger.error(err)
+    logger.error(err)
     await knex.raw(
       `
       UPDATE file_uploads
@@ -189,21 +189,21 @@ async function doTask(task) {
 
 function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
   return new Promise((resolve, reject) => {
-    fileimportServiceLogger.info(`Starting process: ${cmd} ${cmdArgs}`)
+    logger.info(`Starting process: ${cmd} ${cmdArgs}`)
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
     childProc.stdout.on('data', (data) => {
-      fileimportServiceLogger.info('Parser: ', data.toString())
+      logger.info('Parser: ', data.toString())
     })
 
     childProc.stderr.on('data', (data) => {
-      fileimportServiceLogger.error('Parser: ', data.toString())
+      logger.error('Parser: ', data.toString())
     })
 
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      fileimportServiceLogger.error('Process timeout. Killing process...')
+      logger.error('Process timeout. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -211,7 +211,7 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      fileimportServiceLogger.info(`Process exited with code ${code}`)
+      logger.info(`Process exited with code ${code}`)
 
       if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
 
@@ -247,18 +247,18 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metricOperationErrors.labels('main_loop').inc()
-    fileimportServiceLogger.error('Error executing task: ', err)
+    logger.error('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
 }
 
 async function main() {
-  fileimportServiceLogger.info('Starting FileUploads Service...')
+  logger.info('Starting FileUploads Service...')
   initPrometheusMetrics()
 
   process.on('SIGTERM', () => {
     shouldExit = true
-    fileimportServiceLogger.info('Shutting down...')
+    logger.info('Shutting down...')
   })
 
   tick()
