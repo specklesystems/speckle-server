@@ -4,7 +4,7 @@ const crs = require('crypto-random-string')
 const knex = require(`@/db/knex`)
 
 const { createToken, createBareToken } = require(`@/modules/core/services/tokens`)
-const { Logger } = require('@/logging/logging')
+const { logger } = require('@/logging/logging')
 const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
@@ -130,7 +130,7 @@ module.exports = {
     await module.exports.revokeExistingAppCredentials({ appId: app.id })
 
     if (app.scopes) {
-      Logger.debug(app.scopes, app.id)
+      logger.debug(app.scopes, app.id)
       // Flush existing app scopes
       await ServerAppsScopes().where({ appId: app.id }).del()
       // Update new scopes

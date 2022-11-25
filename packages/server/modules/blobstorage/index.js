@@ -37,7 +37,7 @@ const {
   ResourceMismatch,
   BadRequestError
 } = require('@/modules/shared/errors')
-const { moduleLogger, Logger } = require('@/logging/logging')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -49,7 +49,7 @@ const ensureConditions = async () => {
   }
 
   if (!process.env.S3_BUCKET) {
-    Logger.error(
+    logger.error(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -106,7 +106,7 @@ exports.init = async (app) => {
         if (formKey.includes('hash:')) {
           clientHash = formKey.split(':')[1]
           if (clientHash && clientHash !== '') {
-            // Logger.debug(`I have a client hash (${clientHash})`)
+            // logger.debug(`I have a client hash (${clientHash})`)
             blobId = clientHash
           }
         }
@@ -150,7 +150,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        Logger.error(`File upload error: ${err}`)
+        logger.error(`File upload error: ${err}`)
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>

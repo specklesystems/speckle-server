@@ -3,7 +3,7 @@ import { InvalidArgumentError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { acquireTaskLock } from '@/modules/core/repositories/scheduledTasks'
 import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
-import { activitiesLogger, Logger } from '@/logging/logging'
+import { activitiesLogger, logger } from '@/logging/logging'
 
 export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
@@ -40,7 +40,7 @@ export const scheduledCallbackWrapper = async (
       } seconds`
     )
   } catch (error) {
-    Logger.error(
+    logger.error(
       `The triggered task execution ${taskName} failed at ${scheduledTime}, with error ${
         ensureError(error, 'unknown reason').message
       }`

@@ -1,4 +1,4 @@
-import { Logger } from '@/logging/logging'
+import { logger } from '@/logging/logging'
 import { getTransporter } from '@/modules/emails/utils/transporter'
 
 export type SendEmailParams = {
@@ -21,7 +21,7 @@ export async function sendEmail({
 }: SendEmailParams): Promise<boolean> {
   const transporter = getTransporter()
   if (!transporter) {
-    Logger.error('No email transport present. Cannot send emails.')
+    logger.error('No email transport present. Cannot send emails.')
     return false
   }
   try {
@@ -34,7 +34,7 @@ export async function sendEmail({
       html
     })
   } catch (error) {
-    Logger.error(error)
+    logger.error(error)
   }
 
   return false

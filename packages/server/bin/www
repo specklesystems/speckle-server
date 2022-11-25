@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 'use strict'
 
-const { Logger } = require('../dist/logging/logging')
+const { logger } = require('../dist/logging/logging')
 const { init, startHttp } = require('../dist/app')
 
 init()
   .then(({ app, server }) => startHttp(server, app))
-  .catch((err) => Logger.error(err))
+  .catch((err) => logger.error(err))
 
 // 💥

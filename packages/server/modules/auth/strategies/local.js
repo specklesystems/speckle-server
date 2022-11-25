@@ -12,7 +12,7 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
-const { Logger } = require('@/logging/logging')
+const { logger } = require('@/logging/logging')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -94,7 +94,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         return next()
       } catch (err) {
-        Logger.error(err)
+        logger.error(err)
         return res.status(400).send({ err: err.message })
       }
     },

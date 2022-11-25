@@ -4,7 +4,7 @@
 const sharp = require('sharp')
 const xmlescape = require('xml-escape')
 const pixelWidth = require('string-pixel-width')
-// const { Logger } = require('@/logging/logging')
+// const { logger } = require('@/logging/logging')
 
 module.exports = {
   async makeOgImage(previewBufferOrFilename, streamName) {
@@ -23,7 +23,7 @@ module.exports = {
       }
       title += '...'
     }
-    // Logger.debug( streamName, pixelWidth( title, { font: 'open sans', size: 48 } ), ' / ', imgWidth - 2 * panelPadding - 305 )
+    // logger.debug( streamName, pixelWidth( title, { font: 'open sans', size: 48 } ), ' / ', imgWidth - 2 * panelPadding - 305 )
 
     const logo = await sharp(
       require.resolve('#/assets/previews/images/speckle_logo_and_text.png')

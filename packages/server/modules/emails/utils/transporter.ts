@@ -1,4 +1,4 @@
-import { Logger, moduleLogger } from '@/logging/logging'
+import { logger, moduleLogger } from '@/logging/logging'
 import { createTransport, Transporter } from 'nodemailer'
 
 let transporter: Transporter | undefined = undefined
@@ -22,7 +22,7 @@ const initSmtpTransporter = async () => {
     await smtpTransporter.verify()
     return smtpTransporter
   } catch (e) {
-    Logger.error('📧 Email provider is misconfigured, check config variables.', e)
+    logger.error('📧 Email provider is misconfigured, check config variables.', e)
   }
 }
 

@@ -12,7 +12,7 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { Logger } = require('@/logging/logging')
+const { logger } = require('@/logging/logging')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = new OIDCStrategy(
@@ -120,7 +120,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return next()
       } catch (err) {
-        Logger.error(err)
+        logger.error(err)
         return next()
       }
     },

@@ -16,7 +16,7 @@ const extendLoggerComponent = function (otherChild, ...subComponent) {
   otherChildBindings.component = [otherChildBindings.component, ...subComponent]
     .filter(Boolean)
     .join('/')
-  return baseLogger.child(otherChildBindings)
+  return otherChild.child(otherChildBindings)
 }
 
 // loggers for specific components within normal operation

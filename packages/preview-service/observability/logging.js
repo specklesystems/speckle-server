@@ -2,7 +2,7 @@
 // so we can't use imports with '@' etc., as they aren't yet defined.
 const pino = require('pino')
 
-const Logger = pino({
+const baseLogger = pino({
   base: undefined, // Set to undefined to avoid adding pid, hostname properties to each log.
   formatters: {
     level: (label) => {
@@ -18,15 +18,14 @@ const extendLoggerComponent = function (otherChild, ...subComponent) {
   otherChildBindings.component = [otherChildBindings.component, ...subComponent]
     .filter(Boolean)
     .join('/')
-  return Logger.child(otherChildBindings)
+  return otherChild.child(otherChildBindings)
 }
 
 // loggers for specific components within normal operation
-const previewServiceLogger = extendLoggerComponent(Logger, 'preview-service')
-const serverLogger = extendLoggerComponent(previewServiceLogger, 'server')
+const logger = extendLoggerComponent(baseLogger, 'preview-service')
+const serverLogger = extendLoggerComponent(logger, 'server')
 
 module.exports = {
-  Logger,
-  previewServiceLogger,
+  logger,
   serverLogger
 }

@@ -11,7 +11,7 @@ const {
 } = require('@/modules/core/services/ratelimits')
 
 const { pipeline, PassThrough } = require('stream')
-const { Logger } = require('@/logging/logging')
+const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
@@ -50,13 +50,13 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          Logger.error(
+          logger.error(
             `[User ${
               req.context.userId || '-'
             }] App error streaming objects from stream ${req.params.streamId}: ${err}`
           )
         } else {
-          Logger.info(
+          logger.info(
             `[User ${req.context.userId || '-'}] Streamed ${
               childrenList.length
             } objects from stream ${req.params.streamId} (size: ${
@@ -83,7 +83,7 @@ module.exports = (app) => {
         })
       }
     } catch (ex) {
-      Logger.error(
+      logger.error(
         `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
           req.params.streamId
         }: ${ex}`

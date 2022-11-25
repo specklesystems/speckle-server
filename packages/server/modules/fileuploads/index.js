@@ -8,7 +8,7 @@ const {
   authMiddlewareCreator,
   streamWritePermissions
 } = require('@/modules/shared/authz')
-const { moduleLogger, Logger } = require('@/logging/logging')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -44,7 +44,7 @@ exports.init = async (app) => {
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
-              Logger.error(err)
+              logger.error(err)
               res.status(500).send(err.message)
               return
             }

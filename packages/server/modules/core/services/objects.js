@@ -194,7 +194,7 @@ module.exports = {
           closures.length + objsToInsert.length
         } objects in ${t1 - t0}ms.`
       )
-      // Logger.debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      // logger.debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
     }
 
     const promises = batches.map((batch, index) => insertBatch(batch, index))
@@ -432,7 +432,7 @@ module.exports = {
 
     // Set cursor clause, if present. If it's not present, it's an entry query; this method will return a cursor based on its given query.
     // We have implemented keyset pagination for more efficient searches on larger sets. This approach depends on an order by value provided by the user and a (hidden) primary key.
-    // Logger.debug( cursor )
+    // logger.debug( cursor )
     if (cursor) {
       let castType = 'text'
       if (typeof cursor.value === 'string') castType = 'text'
@@ -488,7 +488,7 @@ module.exports = {
     }
 
     mainQuery.limit(limit)
-    // Logger.debug( mainQuery.toString() )
+    // logger.debug( mainQuery.toString() )
     // Finally, execute the query
     const rows = await mainQuery
     const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0

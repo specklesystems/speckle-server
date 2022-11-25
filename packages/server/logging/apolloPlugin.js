@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-// const { Logger } = require('@/logging/logging')
+// const { logger } = require('@/logging/logging')
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
@@ -28,7 +28,7 @@ module.exports = {
         try {
           const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
           metricCallCount.labels(actionName).inc()
-          // Logger.debug(actionName)
+          // logger.debug(actionName)
         } catch (e) {
           Sentry.captureException(e)
         }

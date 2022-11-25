@@ -2,7 +2,7 @@
 // so we can't use imports with '@' etc., as they aren't yet defined.
 import pino from 'pino'
 
-export const Logger = pino({
+export const logger = pino({
   base: undefined, // Set to undefined to avoid adding pid, hostname properties to each log.
   formatters: {
     level: (label) => {
@@ -14,9 +14,9 @@ export const Logger = pino({
 })
 
 // loggers for phases of operation
-export const startupLogger = Logger.child({ phase: 'startup' })
-export const dbStartupLogger = Logger.child({ phase: 'db-startup' })
-export const shutdownLogger = Logger.child({ phase: 'shutdown' })
+export const startupLogger = logger.child({ phase: 'startup' })
+export const dbStartupLogger = logger.child({ phase: 'db-startup' })
+export const shutdownLogger = logger.child({ phase: 'shutdown' })
 
 export const extendLoggerComponent = function (
   otherChild: pino.Logger,
@@ -26,14 +26,14 @@ export const extendLoggerComponent = function (
   otherChildBindings.component = [otherChildBindings.component, ...subComponent]
     .filter(Boolean)
     .join('/')
-  return Logger.child(otherChildBindings)
+  return otherChild.child(otherChildBindings)
 }
 
 // loggers for specific components within normal operation
-export const moduleLogger = extendLoggerComponent(Logger, 'modules')
+export const moduleLogger = extendLoggerComponent(logger, 'modules')
 export const activitiesLogger = extendLoggerComponent(moduleLogger, 'activities')
-export const cliLogger = extendLoggerComponent(Logger, 'cli')
-export const notificationsLogger = extendLoggerComponent(Logger, 'notifications')
-export const uploadEndpointLogger = extendLoggerComponent(Logger, 'upload-endpoint')
-export const dbLogger = extendLoggerComponent(Logger, 'db')
-export const servicesLogger = extendLoggerComponent(Logger, 'services')
+export const cliLogger = extendLoggerComponent(logger, 'cli')
+export const notificationsLogger = extendLoggerComponent(logger, 'notifications')
+export const uploadEndpointLogger = extendLoggerComponent(logger, 'upload-endpoint')
+export const dbLogger = extendLoggerComponent(logger, 'db')
+export const servicesLogger = extendLoggerComponent(logger, 'services')

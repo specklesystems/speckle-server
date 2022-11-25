@@ -11,7 +11,7 @@ const { pipeline, PassThrough } = require('stream')
 const {
   rejectsRequestWithRatelimitStatusIfNeeded
 } = require('@/modules/core/services/ratelimits')
-const { Logger } = require('@/logging/logging')
+const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', cors())
@@ -70,13 +70,13 @@ module.exports = (app) => {
         res,
         (err) => {
           if (err) {
-            Logger.error(
+            logger.error(
               `[User ${req.context.userId || '-'}] Error downloading object ${
                 req.params.objectId
               } from stream ${req.params.streamId}: ${err}`
             )
           } else {
-            Logger.info(
+            logger.info(
               `[User ${req.context.userId || '-'}] Downloaded object ${
                 req.params.objectId
               } from stream ${req.params.streamId} (size: ${
@@ -119,7 +119,7 @@ module.exports = (app) => {
         return res.status(404).send('Failed to find object.')
       }
 
-      Logger.info(
+      logger.info(
         `[User ${req.context.userId || '-'}] Downloaded single object ${
           req.params.objectId
         } from stream ${req.params.streamId}`

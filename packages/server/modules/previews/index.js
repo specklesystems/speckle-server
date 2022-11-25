@@ -21,7 +21,7 @@ const {
 } = require('./services/previews')
 
 const { makeOgImage } = require('./ogImage')
-const { moduleLogger, Logger } = require('@/logging/logging')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -67,7 +67,7 @@ exports.init = (app) => {
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      Logger.error(
+      logger.error(
         `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
       )
       return {
@@ -78,7 +78,7 @@ exports.init = (app) => {
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      Logger.error(`Error: Preview image not found: ${previewImgId}`)
+      logger.error(`Error: Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
         file: previewErrorImage

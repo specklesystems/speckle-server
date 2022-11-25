@@ -6,7 +6,7 @@ const fetch = require('node-fetch')
 const fs = require('fs')
 const metrics = require('./prometheusMetrics')
 const joinImages = require('join-images')
-const { Logger } = require('../observability/logging')
+const { logger } = require('../observability/logging')
 
 let shouldExit = false
 
@@ -131,22 +131,22 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metrics.metricOperationErrors.labels('main_loop').inc()
-    Logger.error('Error executing task: ', err)
+    logger.error('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
 }
 
 async function startPreviewService() {
-  Logger.info('📸 Started Preview Service')
+  logger.info('📸 Started Preview Service')
 
   process.on('SIGTERM', () => {
     shouldExit = true
-    Logger.info('Shutting down...')
+    logger.info('Shutting down...')
   })
 
   process.on('SIGINT', () => {
     shouldExit = true
-    Logger.info('Shutting down...')
+    logger.info('Shutting down...')
   })
 
   metrics.initPrometheusMetrics()
