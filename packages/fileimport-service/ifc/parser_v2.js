@@ -123,23 +123,26 @@ module.exports = class IFCParser {
   async getChildren(node, chunks, propName, closures) {
     const children = chunks[node.expressID]
     if (!children) return
+    const prop = propName.key
     const nodes = []
     for (let i = 0; i < children.length; i++) {
-      const childId = children[i]
-      let childNode = this.createNode(childId)
-      childNode = {
-        ...childNode,
-        ...(await this.getItemProperties(childNode.expressID))
+      const child = children[i]
+      let cnode = this.createNode(child)
+      cnode = { ...cnode, ...(await this.getItemProperties(cnode.expressID)) }
+      cnode.id = await this.populateSpatialNode(cnode, chunks, closures)
+
+      for (const closure of closures) {
+        closure.push(cnode.id)
+        if (cnode['closure'].length > 30_000)
+          for (const id of cnode['closure']) closure.push(id)
+        else closure.push(...cnode['closure']) // can stack overflow for large arguments
       }
-      childNode.id = await this.populateSpatialNode(childNode, chunks, closures)
-      childNode.name = childNode.Name || childNode.type
-      delete childNode.Name
-      for (const closure of closures) closure.push(childNode.id, ...childNode.closure)
-      delete childNode.closure
-      nodes.push(childNode)
+
+      delete cnode.closure
+      nodes.push(cnode)
     }
 
-    node.children = nodes.map((node) => ({
+    node[prop] = nodes.map((node) => ({
       // eslint-disable-next-line camelcase
       speckle_type: 'reference',
       referencedId: node.id
@@ -370,10 +373,6 @@ module.exports = class IFCParser {
         process.stdout.write(`${(count++).toFixed(3)} geoms generated\r`)
       }
     })
-
-    // for (const p of speckleMeshes) {
-    //   await this.serverApi.saveObject(p)
-    // }
 
     await this.serverApi.saveObjectBatch(speckleMeshes)
     return geometryReferences
