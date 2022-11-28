@@ -49,9 +49,9 @@
             aria-hidden="true"
           >
             <span v-if="basic" class="h-3 w-3 rounded-full bg-foreground-2" />
-            <div v-else class="h-2 w-2 rounded-full bg-foreground-2" />
+            <div v-else class="h-4 w-4 rounded-full bg-foreground-disabled" />
           </div>
-          <p :class="['text-foreground', labelClasses]">
+          <p :class="['text-foreground-disabled', labelClasses]">
             {{ step.name }}
           </p>
         </a>
@@ -61,8 +61,8 @@
 </template>
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/20/solid'
-import { clamp } from 'lodash-es'
-import { StepType } from '~~/lib/common/helpers/components'
+import { useStepsInternals } from '~~/lib/common/composables/steps'
+import { BulletStepType } from '~~/lib/common/helpers/components'
 
 type HorizontalOrVertical = 'horizontal' | 'vertical'
 
@@ -74,9 +74,15 @@ const props = defineProps<{
   ariaLabel?: string
   basic?: boolean
   orientation?: HorizontalOrVertical
-  steps: StepType[]
+  steps: BulletStepType[]
   modelValue?: number
 }>()
+
+const { isCurrentStep, isFinishedStep, switchStep } = useStepsInternals({
+  modelValue: toRef(props, 'modelValue'),
+  steps: toRef(props, 'steps'),
+  emit
+})
 
 const linkClasses = ref('flex items-center cursor-pointer')
 
@@ -106,19 +112,4 @@ const labelClasses = computed(() => {
 
   return classParts.join(' ')
 })
-
-const value = computed({
-  get: () => clamp(props.modelValue || 0, -1, props.steps.length),
-  set: (newVal) => emit('update:modelValue', clamp(newVal, 0, props.steps.length))
-})
-
-const isCurrentStep = (step: number) => step === value.value
-const isFinishedStep = (step: number) => step < value.value
-
-const switchStep = (newStep: number) => {
-  value.value = newStep
-
-  const stepObj = props.steps[value.value]
-  stepObj?.onClick?.()
-}
 </script>

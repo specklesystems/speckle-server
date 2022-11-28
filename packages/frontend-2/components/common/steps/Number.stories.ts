@@ -1,10 +1,28 @@
 import { action } from '@storybook/addon-actions'
 import { Meta, Story } from '@storybook/vue3'
-import CommonStepsBullet from '~~/components/common/steps/Bullet.vue'
-import { BulletStepType } from '~~/lib/common/helpers/components'
+import CommonStepsNumber from '~~/components/common/steps/Number.vue'
+import { NumberStepType } from '~~/lib/common/helpers/components'
 import { mergeStories } from '~~/lib/common/helpers/storybook'
 
-const testSteps: BulletStepType[] = [
+const testStepsWithDescription: NumberStepType[] = [
+  {
+    name: 'First step',
+    onClick: action('step-clicked'),
+    description: 'Some example text'
+  },
+  {
+    name: 'Second step',
+    onClick: action('step-clicked'),
+    description: 'More example text'
+  },
+  {
+    name: 'Third step',
+    onClick: action('step-clicked'),
+    description: 'Final example text'
+  }
+]
+
+const testStepsWithoutDescription: NumberStepType[] = [
   {
     name: 'First step',
     onClick: action('step-clicked')
@@ -20,7 +38,7 @@ const testSteps: BulletStepType[] = [
 ]
 
 export default {
-  component: CommonStepsBullet,
+  component: CommonStepsNumber,
   argTypes: {
     orientation: {
       options: ['horizontal', 'vertical'],
@@ -34,7 +52,7 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'Bullet-based steps component'
+        component: 'Number-based steps component. Also supports optional description.'
       }
     }
   }
@@ -42,9 +60,9 @@ export default {
 
 export const Default: Story = {
   render: (args, ctx) => ({
-    components: { CommonStepsBullet },
+    components: { CommonStepsNumber },
     setup: () => ({ args }),
-    template: `<CommonStepsBullet v-bind="args" @update:modelValue="onModelUpdate"/>`,
+    template: `<CommonStepsNumber v-bind="args" @update:modelValue="onModelUpdate"/>`,
     methods: {
       onModelUpdate(val: boolean) {
         args['update:modelValue'](val)
@@ -54,9 +72,8 @@ export const Default: Story = {
   }),
   args: {
     ariaLabel: 'Steps ARIA title!',
-    basic: false,
     orientation: 'horizontal',
-    steps: testSteps,
+    steps: testStepsWithDescription,
     modelValue: 1
   }
 }
@@ -64,12 +81,6 @@ export const Default: Story = {
 export const Vertical: Story = mergeStories(Default, {
   args: {
     orientation: 'vertical'
-  }
-})
-
-export const VersionBasic: Story = mergeStories(Default, {
-  args: {
-    basic: true
   }
 })
 
@@ -85,3 +96,11 @@ export const StartOnNegativeStep: Story = mergeStories(Default, {
     }
   }
 })
+
+export const NoDescription: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    steps: testStepsWithoutDescription
+  }
+}

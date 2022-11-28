@@ -46,14 +46,14 @@
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { OnboardingState } from '~~/lib/auth/helpers/onboarding'
-import { StepType } from '~~/lib/common/helpers/components'
+import { BulletStepType } from '~~/lib/common/helpers/components'
 
 const { finishOnboarding } = useProcessOnboarding()
 
-const topSteps: StepType[] = [{ name: 'Sign Up' }, { name: 'Set up' }]
+const topSteps: BulletStepType[] = [{ name: 'Sign Up' }, { name: 'Set up' }]
 const topStep = computed(() => 1) // read-only
 
-const bottomSteps: StepType[] = [{ name: 'Industry' }, { name: 'Role' }]
+const bottomSteps: BulletStepType[] = [{ name: 'Industry' }, { name: 'Role' }]
 const bottomStep = ref(0)
 
 const goToFirstStep = () => (bottomStep.value = 0)
