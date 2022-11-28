@@ -98,7 +98,7 @@ const listClasses = computed(() => {
 })
 
 const labelClasses = computed(() => {
-  const classParts: string[] = ['ml-3 h6']
+  const classParts: string[] = ['ml-3 h6 font-medium leading-7']
 
   if (props.basic) {
     classParts.push('sr-only')

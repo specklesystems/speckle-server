@@ -2,7 +2,7 @@
   <section>
     <div class="flex items-center justify-between gap-4 mt-8 mb-4">
       <div class="flex items-center gap-2">
-        <h1 class="h4 text-foreground font-bold flex items-center">
+        <h1 class="h4 font-bold leading-8 text-foreground flex items-center">
           {{ title }}
           <span class="ml-2 caption text-foreground-2">{{ numModels }}</span>
         </h1>

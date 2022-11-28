@@ -8,7 +8,7 @@
       :key="colorBase"
       class="flex flex-col space-y-4"
     >
-      <span class="h3 uppercase block">{{ colorBase }}</span>
+      <span class="h3 font-bold leading-9 uppercase block">{{ colorBase }}</span>
       <p class="block">{{ definition.description }}</p>
       <div class="flex flex-wrap gap-4">
         <div

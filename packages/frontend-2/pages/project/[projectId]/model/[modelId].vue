@@ -1,7 +1,7 @@
 <template>
   <div>
     <header class="default-width text-foreground">
-      <h1 class="h4 font-bold flex items-center">
+      <h1 class="h4 font-bold leading-8 flex items-center">
         Project
         <span class="text-blue-500">Model</span>
         Route AKA 3D Viewer

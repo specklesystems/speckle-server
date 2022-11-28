@@ -1,6 +1,8 @@
 <template>
   <div class="empty-state w-full min-h-[100px] bg-foundation-2 rounded-2xl pt-28 pb-40">
-    <h2 class="block h4 text-center">Welcome to Speckle. What would you like to do?</h2>
+    <h2 class="block h4 font-bold leading-8 text-center">
+      Welcome to Speckle. What would you like to do?
+    </h2>
   </div>
 </template>
 <script setup lang="ts">

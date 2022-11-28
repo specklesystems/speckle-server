@@ -11,30 +11,30 @@
 
 @layer components {
   /**
-   * Common text styles
+   * Heading weights & line heights can differ, which is why we only set the font size
    */
   .h1 {
-    @apply text-5xl font-bold leading-10;
+    @apply text-5xl;
   }
 
   .h2 {
-    @apply text-4xl font-bold leading-10;
+    @apply text-4xl;
   }
 
   .h3 {
-    @apply text-3xl font-bold leading-9;
+    @apply text-3xl;
   }
 
   .h4 {
-    @apply text-2xl font-bold leading-8;
+    @apply text-2xl;
   }
 
   .h5 {
-    @apply text-xl font-medium leading-7;
+    @apply text-xl;
   }
 
   .h6 {
-    @apply text-lg font-medium leading-7;
+    @apply text-lg;
   }
 
   .label {

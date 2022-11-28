@@ -1,7 +1,9 @@
 <template>
   <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
     <template #header>
-      <span class="h5">One step closer to resetting your password.</span>
+      <span class="h5 font-medium leading-7">
+        One step closer to resetting your password.
+      </span>
     </template>
     <template #default>
       <div class="flex flex-col space-y-8">

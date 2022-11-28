@@ -1,7 +1,7 @@
 <template>
   <div>
     <header class="default-width text-foreground">
-      <h1 class="h4 font-bold flex items-center">Project Webhook Route</h1>
+      <h1 class="h4 font-bold leading-8 flex items-center">Project Webhook Route</h1>
       <NuxtLink :to="`/project/${$route.params.projectId}`">to stream home</NuxtLink>
     </header>
   </div>
