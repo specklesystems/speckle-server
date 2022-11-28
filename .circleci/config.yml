@@ -355,7 +355,7 @@ jobs:
 
   test-frontend-2:
     docker:
-      - image: cimg/node:16.15-browsers
+      - image: mcr.microsoft.com/playwright:v1.27.0-focal
     steps:
       - checkout
       - restore_cache:
