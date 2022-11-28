@@ -379,8 +379,7 @@ jobs:
 
       - run:
           name: Install Playwrigth
-          command: npx playwright install --with-deps
-          working_directory: ~/project
+          command: cd ~ && npx playwright install --with-deps
 
       - run:
           name: Start local Storybook
