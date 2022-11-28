@@ -119,7 +119,7 @@ workflows:
             - docker-build-frontend
             - pre-commit
 
-      - docker-publish-frontend:
+      - docker-publish-frontend-2:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
