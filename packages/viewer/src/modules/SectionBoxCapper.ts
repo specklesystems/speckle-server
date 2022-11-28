@@ -7,10 +7,11 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import MeshBatch from './batching/MeshBatch'
+import { Geometry } from './converter/Geometry'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { ObjectLayers } from './SpeckleRenderer'
 
 export enum PlaneId {
@@ -81,6 +82,9 @@ export class SectionBoxCapper {
     let index = 0
     let posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    ).data
+    const posAttrLow = (
+      clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
     ).data
     /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
     const scratchBuffer = new Array<number>()
@@ -192,13 +196,22 @@ export class SectionBoxCapper {
     posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
-    posAttr.set(scratchBuffer, 0)
+    Geometry.DoubleToHighLowBuffer(
+      scratchBuffer,
+      posAttrLow.array as Float32Array,
+      posAttr.array as Float32Array
+    )
+    // posAttr.set(scratchBuffer, 0)
     posAttr.needsUpdate = true
     posAttr.updateRange = { offset: 0, count: index * 3 }
+    posAttrLow.needsUpdate = true
+    posAttrLow.updateRange = { offset: 0, count: index * 3 }
     clipOutline.visible = true
     clipOutline.geometry.instanceCount = index / 2
     clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
     clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
+    clipOutline.geometry.attributes['instanceStartLow'].needsUpdate = true
+    clipOutline.geometry.attributes['instanceEndLow'].needsUpdate = true
     clipOutline.geometry.computeBoundingBox()
     clipOutline.geometry.computeBoundingSphere()
   }
@@ -211,7 +224,8 @@ export class SectionBoxCapper {
       lineGeometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data.setUsage(DynamicDrawUsage)
 
-    const material = new LineMaterial({
+    Geometry.updateRTEGeometry(lineGeometry, buffer)
+    const material = new SpeckleLineMaterial({
       color: 0x047efb,
       linewidth: 2,
       worldUnits: false,
@@ -223,6 +237,7 @@ export class SectionBoxCapper {
     material.color.convertSRGBToLinear()
     material.linewidth = 2
     material.worldUnits = false
+    material.resolution = new Vector2(1513, 1306)
 
     const clipOutline = new LineSegments2(lineGeometry, material)
     clipOutline.name = `${planeId}-outline`
@@ -247,6 +262,7 @@ export class SectionBoxCapper {
         'instanceStart'
       ] as InterleavedBufferAttribute
     ).data.setUsage(DynamicDrawUsage)
+    Geometry.updateRTEGeometry(outline.renderable.geometry, buffer)
     outline.buffer = buffer
   }
 

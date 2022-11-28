@@ -3,6 +3,7 @@ import {
   BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
+  Float64BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
@@ -45,7 +46,7 @@ export class Geometry {
       ;(bvhIndices as Uint16Array).set(indices, 0)
       bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
     }
-    bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+    bvhGeometry.setAttribute('position', new Float64BufferAttribute(position, 3))
 
     return new MeshBVH(bvhGeometry)
   }
