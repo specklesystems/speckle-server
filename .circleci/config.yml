@@ -476,6 +476,11 @@ jobs:
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
 
+  docker-build-frontend-2:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
+
   docker-build-previews:
     <<: *build-job
     environment:
