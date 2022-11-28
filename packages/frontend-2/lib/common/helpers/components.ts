@@ -1,3 +1,5 @@
+export type HorizontalOrVertical = 'horizontal' | 'vertical'
+
 export interface StepCoreType {
   name: string
   href?: string

@@ -18,7 +18,10 @@
           </span>
         </template>
       </ProjectsDashboardEmptyStatePanel>
-      <ProjectsDashboardEmptyStatePanel :icon="CloudArrowUpIcon">
+      <ProjectsDashboardEmptyStatePanel
+        :icon="CloudArrowUpIcon"
+        :to="DownloadManagerRoute"
+      >
         <template #title>Already have a 3D model?</template>
         <template #subtitle>
           Install connectors from Revit, Rhino, AutoCAD, Blender and many others!
@@ -40,11 +43,7 @@ import {
   CloudArrowUpIcon,
   CloudArrowDownIcon
 } from '@heroicons/vue/24/solid'
-
-/**
- * TODO:
- * - Set up merge functions from frontend-1 to get rid of warning in console on homepage
- */
+import { DownloadManagerRoute } from '~~/lib/common/helpers/route'
 </script>
 <style scoped>
 .empty-state {

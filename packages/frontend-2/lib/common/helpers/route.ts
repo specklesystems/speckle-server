@@ -5,6 +5,7 @@ export const LoginRoute = '/auth/login'
 export const RegisterRoute = '/auth/register'
 export const ForgottenPasswordRoute = '/auth/forgotten-password'
 export const OnboardingRoute = '/onboarding'
+export const DownloadManagerRoute = '/download-manager'
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

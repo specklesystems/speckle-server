@@ -12,7 +12,7 @@
             class="flex space-x-3 items-center text-primary-focus normal font-medium leading-5"
           >
             <div
-              class="h-8 w-8 rounded-full bg-primary-focus text-foreground-on-primary inline-flex items-center justify-center"
+              class="shrink-0 h-8 w-8 rounded-full bg-primary-focus text-foreground-on-primary inline-flex items-center justify-center"
             >
               <CheckIcon class="w-5 h-5" />
             </div>
@@ -35,7 +35,7 @@
             class="flex space-x-3 items-center text-primary-focus normal font-medium leading-5"
           >
             <div
-              class="h-8 w-8 rounded-full border-2 border-primary-focus inline-flex items-center justify-center"
+              class="shrink-0 h-8 w-8 rounded-full border-2 border-primary-focus inline-flex items-center justify-center"
             >
               {{ getStepDisplayValue(i) }}
             </div>
@@ -52,7 +52,7 @@
             class="flex space-x-3 items-center text-foreground-disabled normal font-medium leading-5"
           >
             <div
-              class="h-8 w-8 rounded-full border-2 border-foreground-disabled inline-flex items-center justify-center"
+              class="shrink-0 h-8 w-8 rounded-full border-2 border-foreground-disabled inline-flex items-center justify-center"
             >
               {{ getStepDisplayValue(i) }}
             </div>
@@ -71,9 +71,8 @@
 <script setup lang="ts">
 import { CheckIcon } from '@heroicons/vue/20/solid'
 import { useStepsInternals } from '~~/lib/common/composables/steps'
-import { NumberStepType } from '~~/lib/common/helpers/components'
-
-type HorizontalOrVertical = 'horizontal' | 'vertical'
+import { HorizontalOrVertical, NumberStepType } from '~~/lib/common/helpers/components'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: number): void
@@ -84,31 +83,17 @@ const props = defineProps<{
   orientation?: HorizontalOrVertical
   steps: NumberStepType[]
   modelValue?: number
+  goVerticalBelow?: TailwindBreakpoints
 }>()
 
-const { isCurrentStep, isFinishedStep, switchStep, getStepDisplayValue } =
+const { isCurrentStep, isFinishedStep, switchStep, getStepDisplayValue, listClasses } =
   useStepsInternals({
     modelValue: toRef(props, 'modelValue'),
     steps: toRef(props, 'steps'),
+    orientation: toRef(props, 'orientation'),
+    goVerticalBelow: toRef(props, 'goVerticalBelow'),
     emit
   })
 
 const linkClasses = ref('flex items-center cursor-pointer')
-
-const orientation = computed(
-  (): HorizontalOrVertical =>
-    props.orientation === 'vertical' ? 'vertical' : 'horizontal'
-)
-const listClasses = computed(() => {
-  const classParts: string[] = ['flex']
-
-  if (orientation.value === 'vertical') {
-    classParts.push('flex flex-col space-y-4 justify-center')
-  } else {
-    classParts.push('flex items-center')
-    classParts.push('space-x-8')
-  }
-
-  return classParts.join(' ')
-})
 </script>

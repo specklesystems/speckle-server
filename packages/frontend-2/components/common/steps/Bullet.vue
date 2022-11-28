@@ -1,6 +1,6 @@
 <template>
   <nav class="flex justify-center" :aria-label="ariaLabel || 'Progress steps'">
-    <ol :class="listClasses">
+    <ol :class="[listClasses, basic ? 'basic' : '']">
       <li v-for="(step, i) in steps" :key="step.name">
         <a
           v-if="isFinishedStep(i)"
@@ -63,6 +63,7 @@
 import { CheckCircleIcon } from '@heroicons/vue/20/solid'
 import { useStepsInternals } from '~~/lib/common/composables/steps'
 import { BulletStepType } from '~~/lib/common/helpers/components'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 type HorizontalOrVertical = 'horizontal' | 'vertical'
 
@@ -76,32 +77,18 @@ const props = defineProps<{
   orientation?: HorizontalOrVertical
   steps: BulletStepType[]
   modelValue?: number
+  goVerticalBelow?: TailwindBreakpoints
 }>()
 
-const { isCurrentStep, isFinishedStep, switchStep } = useStepsInternals({
+const { isCurrentStep, isFinishedStep, switchStep, listClasses } = useStepsInternals({
   modelValue: toRef(props, 'modelValue'),
   steps: toRef(props, 'steps'),
+  orientation: toRef(props, 'orientation'),
+  goVerticalBelow: toRef(props, 'goVerticalBelow'),
   emit
 })
 
 const linkClasses = ref('flex items-center cursor-pointer')
-
-const orientation = computed(
-  (): HorizontalOrVertical =>
-    props.orientation === 'vertical' ? 'vertical' : 'horizontal'
-)
-const listClasses = computed(() => {
-  const classParts: string[] = ['flex']
-
-  if (orientation.value === 'vertical') {
-    classParts.push('flex flex-col space-y-4 justify-center')
-  } else {
-    classParts.push('flex items-center')
-    classParts.push(props.basic ? 'space-x-4' : 'space-x-8')
-  }
-
-  return classParts.join(' ')
-})
 
 const labelClasses = computed(() => {
   const classParts: string[] = ['ml-3 h6 font-medium leading-7']
@@ -113,3 +100,8 @@ const labelClasses = computed(() => {
   return classParts.join(' ')
 })
 </script>
+<style scoped>
+.basic {
+  @apply space-x-4 !important;
+}
+</style>

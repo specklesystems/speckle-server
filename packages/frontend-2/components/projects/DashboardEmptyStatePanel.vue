@@ -8,7 +8,7 @@
           <slot name="subtitle" />
         </h4>
       </div>
-      <FormButton size="lg" full-width @click="$emit('click', $event)">
+      <FormButton size="lg" full-width :to="to" @click="$emit('click', $event)">
         <slot name="ctaText" />
       </FormButton>
     </div>
@@ -23,5 +23,6 @@ defineEmits<{
 
 defineProps<{
   icon: ConcreteComponent
+  to?: string
 }>()
 </script>
