@@ -29,7 +29,7 @@ export default {
   }
 } as Meta
 
-const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
+const clickPlayBuilder: (rightClick?: boolean) => VuePlayFunction =
   (rightClick) =>
   async ({ canvasElement }) => {
     const canvas = within(canvasElement)

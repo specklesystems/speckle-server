@@ -27,7 +27,7 @@ function createCache(): InMemoryCache {
      * If you define a merge function here, you don't need to duplicate the merge logic inside an `update()` callback
      * of a fetchMore call, for example.
      *
-     * Feel free to re-use utilities in `apolloSetupHelper` for defining merge functions or even use the ones that come from `@apollo/client/utilities`.
+     * Feel free to re-use utilities in the `apolloSetup` helper for defining merge functions or even use the ones that come from `@apollo/client/utilities`.
      *
      * Read more: https://www.apollographql.com/docs/react/caching/cache-field-behavior
      */

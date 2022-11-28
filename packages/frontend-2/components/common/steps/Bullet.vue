@@ -108,7 +108,7 @@ const labelClasses = computed(() => {
 })
 
 const value = computed({
-  get: () => clamp(props.modelValue || 0, 0, props.steps.length),
+  get: () => clamp(props.modelValue || 0, -1, props.steps.length),
   set: (newVal) => emit('update:modelValue', clamp(newVal, 0, props.steps.length))
 })
 
