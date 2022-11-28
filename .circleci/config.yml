@@ -355,7 +355,7 @@ jobs:
 
   test-frontend-2:
     docker:
-      - image: mcr.microsoft.com/playwright:v1.27.0-focal
+      - image: cimg/node:16.15-browsers
     steps:
       - checkout
       - restore_cache:
@@ -365,7 +365,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-          working_directory: 'packages/frontend-2'
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -379,19 +378,23 @@ jobs:
           command: yarn build:public
 
       - run:
+          name: Install Playwrigth
+          command: npx playwright install --with-deps
+
+      - run:
           name: Start local Storybook
           command: yarn storybook
           background: true
           working_directory: 'packages/frontend-2'
 
-      - run:
-          name: Setup dockerize
-          command: |
-            wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz 
-            tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz 
-            rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-          environment:
-            DOCKERIZE_VERSION: v0.6.1
+      # - run:
+      #     name: Setup dockerize
+      #     command: |
+      #       wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+      #       tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+      #       rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+      #     environment:
+      #       DOCKERIZE_VERSION: v0.6.1
 
       - run:
           name: Wait for dependencies to start
