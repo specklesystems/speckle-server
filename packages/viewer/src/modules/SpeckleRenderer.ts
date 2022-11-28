@@ -204,7 +204,7 @@ export default class SpeckleRenderer {
     this.sectionBoxCapper = new SectionBoxCapper()
     const sectionBoxCapperGroup = new Group()
     sectionBoxCapperGroup.name = 'SectionBoxCapper'
-    this.rootGroup.add(sectionBoxCapperGroup)
+    this.scene.add(sectionBoxCapperGroup)
     sectionBoxCapperGroup.add(
       this.sectionBoxCapper.getPlaneOutline(PlaneId.NEGATIVE_Z).renderable
     )
@@ -454,18 +454,20 @@ export default class SpeckleRenderer {
           },
           ['USE_RTE', 'ALPHATEST_REJECTION']
         )
-        const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
-          batchRenderable as Mesh,
-          10
-        )
-        bvhHelper.name = batch.renderObject.id + '_bvh'
-        bvhHelper.traverse((obj) => {
-          obj.layers.set(ObjectLayers.PROPS)
-        })
-        bvhHelper.displayParents = true
-        bvhHelper.visible = false
-        bvhHelper.update()
-        subtreeGroup.add(bvhHelper)
+        if (this.SHOW_BVH) {
+          const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
+            batchRenderable as Mesh,
+            10
+          )
+          bvhHelper.name = batch.renderObject.id + '_bvh'
+          bvhHelper.traverse((obj) => {
+            obj.layers.set(ObjectLayers.PROPS)
+          })
+          bvhHelper.displayParents = true
+          bvhHelper.visible = false
+          bvhHelper.update()
+          subtreeGroup.add(bvhHelper)
+        }
       }
     })
 
