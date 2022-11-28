@@ -3,6 +3,7 @@ import { Meta, Story } from '@storybook/vue3'
 import CommonStepsBullet from '~~/components/common/steps/Bullet.vue'
 import { BulletStepType } from '~~/lib/common/helpers/components'
 import { mergeStories } from '~~/lib/common/helpers/storybook'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const testSteps: BulletStepType[] = [
   {
@@ -83,5 +84,11 @@ export const StartOnNegativeStep: Story = mergeStories(Default, {
         story: 'Start on -1 step (on neither of the steps)'
       }
     }
+  }
+})
+
+export const GoVerticalBelowBreakpoint: Story = mergeStories(Default, {
+  args: {
+    goVerticalBelow: TailwindBreakpoints.md
   }
 })

@@ -3,6 +3,7 @@ import { Meta, Story } from '@storybook/vue3'
 import CommonStepsNumber from '~~/components/common/steps/Number.vue'
 import { NumberStepType } from '~~/lib/common/helpers/components'
 import { mergeStories } from '~~/lib/common/helpers/storybook'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const testStepsWithDescription: NumberStepType[] = [
   {
@@ -104,3 +105,9 @@ export const NoDescription: Story = {
     steps: testStepsWithoutDescription
   }
 }
+
+export const GoVerticalBelowBreakpoint: Story = mergeStories(Default, {
+  args: {
+    goVerticalBelow: TailwindBreakpoints.md
+  }
+})

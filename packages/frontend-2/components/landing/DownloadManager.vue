@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-primary">
+  <div class="bg-primary max-w-full overflow-x-hidden">
     <div class="layout-container pt-14">
       <div class="grid gap-0 sm:gap-8 grid-cols-12">
         <div
