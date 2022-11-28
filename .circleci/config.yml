@@ -380,6 +380,7 @@ jobs:
       - run:
           name: Install Playwrigth
           command: npx playwright install --with-deps
+          working_directory: ~/project
 
       - run:
           name: Start local Storybook
