@@ -85,10 +85,10 @@ function createLink(params: {
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
-    public: { API_ORIGIN }
+    public: { apiOrigin }
   } = useRuntimeConfig()
 
-  const httpEndpoint = `${API_ORIGIN}/graphql`
+  const httpEndpoint = `${apiOrigin}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const authToken = useAuthCookie()

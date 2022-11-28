@@ -5,7 +5,7 @@
 
 export default defineNuxtPlugin(async () => {
   const {
-    public: { MIXPANEL_API_HOST, MIXPANEL_TOKEN_ID }
+    public: { mixpanelApiHost, mixpanelTokenId }
   } = useRuntimeConfig()
 
   const mixpanel = process.client
@@ -23,9 +23,9 @@ export default defineNuxtPlugin(async () => {
 
   // Init
   // TODO: Separate token for new frontend?
-  mixpanel.init(MIXPANEL_TOKEN_ID, {
+  mixpanel.init(mixpanelTokenId, {
     // eslint-disable-next-line camelcase
-    api_host: MIXPANEL_API_HOST
+    api_host: mixpanelApiHost
   })
 
   return {
