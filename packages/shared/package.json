@@ -31,7 +31,8 @@
     "3d"
   ],
   "dependencies": {
-    "lodash": "^4.17.0"
+    "lodash": "^4.17.0",
+    "lodash-es": "^4.17.21"
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176"
