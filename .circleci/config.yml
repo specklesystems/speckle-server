@@ -380,6 +380,7 @@ jobs:
       - run:
           name: Start local Storybook
           command: yarn storybook
+          background: true
           working_directory: 'packages/frontend-2'
 
       - run:
