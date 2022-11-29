@@ -473,6 +473,9 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
+    if (this.viewer.sectionBox.display.visible) {
+      this.viewer.setSectionBox()
+    }
     // this.resetPipeline(true)
     this._needsRender = true
   }
