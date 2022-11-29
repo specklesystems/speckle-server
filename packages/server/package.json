@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
     "build:watch": "tsc -p ./tsconfig.build.json -w",
-    "run:watch": "cross-env NODE_ENV=development DEBUG='speckle:*' nodemon ./bin/www --watch ./dist --watch ./assets --watch ./bin/www -e js,ts,graphql,env,gql",
+    "run:watch": "cross-env NODE_ENV=development DEBUG='speckle:*' nodemon ./bin/www --watch ./dist --watch ./assets --watch ./bin/www --watch .env -e js,ts,graphql,env,gql",
     "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\" \"yarn gqlgen:watch\" -n tsc,server,gqlgen",
     "dev:server:test": "cross-env DISABLE_NOTIFICATIONS_CONSUMPTION=true NODE_ENV=test DEBUG='speckle:*' node ./bin/ts-www",
     "test": "cross-env NODE_ENV=test mocha",

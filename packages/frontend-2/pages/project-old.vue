@@ -27,7 +27,7 @@ const projectQuery = graphql(
   `
 )
 
-const { result, loading } = useQuery(projectQuery, () => {
+const { result } = useQuery(projectQuery, () => {
   return { id: route.params.projectId as string }
 })
 
