@@ -18,7 +18,7 @@ async function main() {
     data,
     streamId,
     userId,
-    message: filePath + commitMessage || ' Imported file',
+    message: commitMessage || ' Imported file',
     fileId
   }
   if (branchName) ifcInput.branchName = branchName
