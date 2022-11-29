@@ -118,11 +118,11 @@ export const LIMITS: RateLimiterOptions = {
   },
   'POST /api/diff/:streamId': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_POST_DIFF_STREAMID', '3'),
+      limitCount: getIntFromEnv('RATELIMIT_POST_DIFF_STREAMID', '10'),
       duration: 1 * TIME.second
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_DIFF_STREAMID', '200'),
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_DIFF_STREAMID', '1000'),
       duration: 1 * TIME.minute
     }
   },
@@ -188,14 +188,8 @@ export const sendRateLimitResponse = (
 }
 
 export const getActionForPath = (path: string, verb: string): RateLimitAction => {
-  try {
-    const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
-    const action = RateLimitAction[maybeAction]
-    if (!action) throw new Error()
-    return action
-  } catch {
-    return RateLimitAction.ALL_REQUESTS
-  }
+  const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
+  return RateLimitAction[maybeAction] || RateLimitAction.ALL_REQUESTS
 }
 
 export const getSourceFromRequest = (req: express.Request): string => {
@@ -235,8 +229,10 @@ export const createRateLimiterMiddleware = (
   }
 }
 
-// we need to take the Bursty specific type because its not an Abstract.
-// why define the Abstract then?
+// we need to take the `BurstyRateLimiter` specific type because
+// its not considered as an RateLimiterAbstract in the rate-limiter-flexible package
+// This is just a rant comment, but why define the Abstract then if not
+// all RateLimiters are implementing it?
 export const createConsumer =
   (action: RateLimitAction, rateLimiter: RateLimiterAbstract | BurstyRateLimiter) =>
   async (source: string): Promise<RateLimitSuccess | RateLimitBreached> => {

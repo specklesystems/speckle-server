@@ -5,7 +5,7 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import express from 'express'
+import { Request, Response, NextFunction, RequestWithAuthContext } from 'express'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { validateToken } from '@/modules/core/services/tokens'
@@ -13,17 +13,13 @@ import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
-interface RequestWithAuthContext extends express.Request {
-  context: AuthContext
-}
-
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
 
   const middleware = async (
     req: RequestWithAuthContext,
-    res: express.Response,
-    next: express.NextFunction
+    res: Response,
+    next: NextFunction
   ) => {
     const { authResult } = await pipeline({
       context: req.context as AuthContext,
@@ -45,9 +41,8 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   return middleware
 }
 
-export const getTokenFromRequest = (
-  req: express.Request | null | undefined
-): string | null => req?.headers?.authorization ?? null
+export const getTokenFromRequest = (req: Request | null | undefined): string | null =>
+  req?.headers?.authorization ?? null
 
 /**
  * Create an AuthContext from a raw token value
@@ -79,9 +74,9 @@ export async function createAuthContextFromToken(
 }
 
 export async function authContextMiddleware(
-  req: express.Request,
-  _res: express.Response,
-  next: express.NextFunction
+  req: Request,
+  _res: Response,
+  next: NextFunction
 ) {
   const token = getTokenFromRequest(req)
   const authContext = await createAuthContextFromToken(token)
@@ -93,11 +88,7 @@ export function addLoadersToCtx(ctx: AuthContext): GraphQLContext {
   const loaders = buildRequestLoaders(ctx)
   return { ...ctx, loaders }
 }
-type MaybeAuthenticatedRequest =
-  | express.Request
-  | RequestWithAuthContext
-  | null
-  | undefined
+type MaybeAuthenticatedRequest = Request | RequestWithAuthContext | null | undefined
 const isRequestWithAuthContext = (
   req: MaybeAuthenticatedRequest
 ): req is RequestWithAuthContext =>

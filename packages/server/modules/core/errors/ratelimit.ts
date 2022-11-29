@@ -11,8 +11,8 @@ export class RateLimitError extends BaseError {
 
   constructor(
     rateLimitBreached: RateLimitBreached,
-    message?: string | null | undefined,
-    options: Options | Error | undefined = undefined
+    message?: string | undefined,
+    options?: Options | Error | undefined
   ) {
     super(message || RateLimitError.defaultMessage, options)
     this.rateLimitBreached = rateLimitBreached
