@@ -6,7 +6,7 @@
           v-if="isFinishedStep(i)"
           :href="step.href"
           :class="linkClasses"
-          @click="() => switchStep(i)"
+          @click="(e) => switchStep(i, e)"
         >
           <span class="relative flex h-5 w-5 flex-shrink-0 items-center justify-center">
             <span v-if="basic" class="h-3 w-3 rounded-full bg-foreground-2" />
@@ -25,7 +25,7 @@
           :href="step.href"
           :class="linkClasses"
           aria-current="step"
-          @click="() => switchStep(i)"
+          @click="(e) => switchStep(i, e)"
         >
           <span
             class="relative flex h-5 w-5 flex-shrink-0 items-center justify-center"
@@ -43,7 +43,12 @@
             {{ step.name }}
           </span>
         </a>
-        <a v-else :href="step.href" :class="linkClasses" @click="() => switchStep(i)">
+        <a
+          v-else
+          :href="step.href"
+          :class="linkClasses"
+          @click="(e) => switchStep(i, e)"
+        >
           <div
             class="relative flex h-5 w-5 flex-shrink-0 items-center justify-center"
             aria-hidden="true"
@@ -62,10 +67,8 @@
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/20/solid'
 import { useStepsInternals } from '~~/lib/common/composables/steps'
-import { BulletStepType } from '~~/lib/common/helpers/components'
+import { BulletStepType, HorizontalOrVertical } from '~~/lib/common/helpers/components'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-
-type HorizontalOrVertical = 'horizontal' | 'vertical'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: number): void
@@ -78,17 +81,14 @@ const props = defineProps<{
   steps: BulletStepType[]
   modelValue?: number
   goVerticalBelow?: TailwindBreakpoints
+  nonInteractive?: boolean
 }>()
 
-const { isCurrentStep, isFinishedStep, switchStep, listClasses } = useStepsInternals({
-  modelValue: toRef(props, 'modelValue'),
-  steps: toRef(props, 'steps'),
-  orientation: toRef(props, 'orientation'),
-  goVerticalBelow: toRef(props, 'goVerticalBelow'),
-  emit
-})
-
-const linkClasses = ref('flex items-center cursor-pointer')
+const { isCurrentStep, isFinishedStep, switchStep, listClasses, linkClasses } =
+  useStepsInternals({
+    props: toRefs(props),
+    emit
+  })
 
 const labelClasses = computed(() => {
   const classParts: string[] = ['ml-3 h6 font-medium leading-7']
