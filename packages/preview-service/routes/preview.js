@@ -39,6 +39,7 @@ async function pageFunction(objectUrl) {
      */
     /** 22.11.2022 Alex: Commenting this out for now */
     // await waitForAnimation(2500)
+    await waitForAnimation()
     ret.scr[i + ''] = await window.v.screenshot()
   }
 
