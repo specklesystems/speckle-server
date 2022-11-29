@@ -9,12 +9,14 @@
       class="flex flex-col space-y-7 items-center md:flex-row md:space-x-7 md:space-y-0 justify-center md:items-stretch px-8"
     >
       <ProjectsDashboardEmptyStatePanel :icon="CubeIcon">
-        <template #title>Start from scratch now</template>
-        <template #subtitle>Create your first project or choose a template</template>
+        <template #title>Explore your first project</template>
+        <template #subtitle>
+          Create your first Speckle project and learn the basics
+        </template>
         <template #ctaText>
           <span class="space-x-2 inline-flex items-center">
-            <PlusIcon class="w-4 h-4" />
-            <span>New Project</span>
+            <ArrowLeftCircleIcon class="w-4 h-4" />
+            <span>Explore</span>
           </span>
         </template>
       </ProjectsDashboardEmptyStatePanel>
@@ -39,9 +41,9 @@
 <script setup lang="ts">
 import {
   CubeIcon,
-  PlusIcon,
   CloudArrowUpIcon,
-  CloudArrowDownIcon
+  CloudArrowDownIcon,
+  ArrowLeftCircleIcon
 } from '@heroicons/vue/24/solid'
 import { DownloadManagerRoute } from '~~/lib/common/helpers/route'
 </script>
