@@ -356,6 +356,7 @@ jobs:
   test-frontend-2:
     docker:
       - image: cimg/node:16.15-browsers
+    resource_class: medium+
     steps:
       - checkout
       - restore_cache:
