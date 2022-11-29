@@ -506,6 +506,9 @@ export default class SpeckleRenderer {
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
     this.updateClippingPlanes(this.viewer.sectionBox.planes)
+    if (this.viewer.sectionBox.display.visible) {
+      this.updateSectionBoxCapper()
+    }
     this.renderer.shadowMap.needsUpdate = true
   }
 
@@ -546,28 +549,23 @@ export default class SpeckleRenderer {
   public onSectionBoxDragEnd() {
     const generate = () => {
       this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
-      const start = performance.now()
-      for (let k = 0; k < this.sectionPlanesChanged.length; k++) {
-        this.sectionBoxOutlines.updatePlaneOutline(
-          this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
-          this.sectionPlanesChanged[k]
-        )
-      }
-      console.warn('Outline time: ', performance.now() - start)
-      this.sectionBoxOutlines.enable(true)
+      this.updateSectionBoxCapper(this.sectionPlanesChanged)
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
     }
     this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
   }
 
-  public updateSectionBoxCapper() {
-    for (let k = 0; k < this.viewer.sectionBox.planes.length; k++) {
+  public updateSectionBoxCapper(planes?: Plane[]) {
+    const start = performance.now()
+    if (!planes) planes = this.viewer.sectionBox.planes
+    for (let k = 0; k < planes.length; k++) {
       this.sectionBoxOutlines.updatePlaneOutline(
         this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
-        this.viewer.sectionBox.planes[k]
+        planes[k]
       )
     }
     this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
+    console.warn('Outline time: ', performance.now() - start)
   }
 
   public enableSectionBoxCapper(value: boolean) {
