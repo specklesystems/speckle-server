@@ -3,7 +3,7 @@
     <LogoTextWhite class="my-6 sm:mb-14" />
     <LayoutPanel class="max-w-screen-sm mx-auto w-full">
       <div class="space-y-8">
-        <h1 class="h4 sm:h3 text-center">Log into my account</h1>
+        <h1 class="h4 sm:h3 font-bold leading-9 text-center">Log into my account</h1>
         <AuthThirdPartyLoginBlock
           v-if="serverInfo"
           :server-info="serverInfo"

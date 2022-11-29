@@ -127,9 +127,14 @@ await sandbox.loadUrl(
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Building AO params
-  'https://latest.speckle.dev/streams/0dd74866d0/commits/317e210afa'
+  // 'https://latest.speckle.dev/streams/0dd74866d0/commits/317e210afa'
   // Murder Cube
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7f0c4d2fc1/'
   // Classroom
   // 'https://speckle.xyz/streams/0208ffb67b/commits/a980292728'
+  // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/f12861736e'
+  // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
+  // Jedd's views
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
+  'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
 )

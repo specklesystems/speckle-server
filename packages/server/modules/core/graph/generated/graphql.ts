@@ -960,7 +960,9 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
+  /** @deprecated only used for testing for now */
   project: Project;
+  /** @deprecated only used for testing for now */
   projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
@@ -1567,6 +1569,7 @@ export type User = {
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<Maybe<ServerApp>>>;
+  createdAt?: Maybe<Scalars['DateTime']>;
   /**
    * E-mail can be null, if it's requested for a user other than the authenticated one
    * and the user isn't an admin
@@ -1585,6 +1588,8 @@ export type User = {
   name?: Maybe<Scalars['String']>;
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
+  /** Get projects that the user participates in */
+  projects: Array<Project>;
   role?: Maybe<Scalars['String']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -1888,7 +1893,7 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
-  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], streams: ResolversTypes['StreamCollection'] }>;
+  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: Array<ResolversTypes['Project']>, streams: ResolversTypes['StreamCollection'] }>;
   UserDeleteInput: UserDeleteInput;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>> }>;
@@ -1981,7 +1986,7 @@ export type ResolversParentTypes = {
   String: Scalars['String'];
   Subscription: {};
   TestItem: TestItem;
-  User: Omit<User, 'commits' | 'favoriteStreams' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], streams: ResolversParentTypes['StreamCollection'] };
+  User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: Array<ResolversParentTypes['Project']>, streams: ResolversParentTypes['StreamCollection'] };
   UserDeleteInput: UserDeleteInput;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['LimitedUser']>>> };
@@ -2566,6 +2571,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerApp']>>>, ParentType, ContextType>;
+  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
@@ -2574,6 +2580,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserStreamsArgs, 'limit'>>;
   timeline?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserTimelineArgs, 'limit'>>;

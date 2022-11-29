@@ -41,13 +41,13 @@
                   aria-hidden="true"
                 />
               </div>
-              <div class="ml-2 w-0 flex-1 pt-0.5 flex flex-col">
-                <p class="label text-foreground">
+              <div class="ml-2 w-0 flex-1 flex flex-col">
+                <p class="text-foreground font-bold">
                   {{ currentNotification.title }}
                 </p>
                 <p
                   v-if="currentNotification.description"
-                  class="mt-1 label label--light text-foreground-3"
+                  class="label label--light text-foreground-2"
                 >
                   {{ currentNotification.description }}
                 </p>

@@ -2,7 +2,7 @@
   <section>
     <div class="flex items-center justify-between gap-4 my-8">
       <div class="flex items-center gap-4">
-        <h1 class="h4 text-foreground font-bold flex items-center">
+        <h1 class="h4 font-bold leading-8 text-foreground flex items-center">
           Projects
           <span class="ml-2 caption text-foreground-2">{{ count }}</span>
         </h1>

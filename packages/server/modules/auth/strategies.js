@@ -8,6 +8,7 @@ const passport = require('passport')
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
+const { isSSLServer } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -25,7 +26,10 @@ module.exports = async (app) => {
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,
-    cookie: { maxAge: 1000 * 60 * 3 } // 3 minutes
+    cookie: {
+      maxAge: 1000 * 60 * 3, // 3 minutes
+      secure: isSSLServer()
+    }
   })
 
   /**

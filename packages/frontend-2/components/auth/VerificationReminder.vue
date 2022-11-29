@@ -1,7 +1,7 @@
 <template>
   <div>
     <LayoutPanel v-if="shouldShowBanner">
-      <div class="flex justify-between">
+      <div class="flex justify-between items-center">
         <div>{{ verifyBannerText }}</div>
         <div class="flex items-center space-x-4">
           <FormButton

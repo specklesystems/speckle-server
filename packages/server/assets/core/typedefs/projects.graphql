@@ -1,6 +1,13 @@
 extend type Query {
+  projects: [Project!]! @deprecated(reason: "only used for testing for now")
+  project(id: String): Project! @deprecated(reason: "only used for testing for now")
+}
+
+extend type User {
+  """
+  Get projects that the user participates in
+  """
   projects: [Project!]!
-  project(id: String): Project!
 }
 
 type Project {

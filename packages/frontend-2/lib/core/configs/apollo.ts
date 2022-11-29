@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ApolloLink, InMemoryCache, split } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -9,11 +11,157 @@ import { OperationDefinitionNode, Kind } from 'graphql'
 import { CookieRef } from '#app'
 import { Optional } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
-
-// TODO: Store common apollo configs & helpers in @speckle/shared
+import {
+  buildAbstractCollectionMergeFunction,
+  buildArrayMergeFunction,
+  incomingOverwritesExistingMergeFunction
+} from '~~/lib/core/helpers/apolloSetup'
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
+
+function createCache(): InMemoryCache {
+  return new InMemoryCache({
+    /**
+     * This is where you configure how various GQL fields should be read, written to or merged when new data comes in.
+     * If you define a merge function here, you don't need to duplicate the merge logic inside an `update()` callback
+     * of a fetchMore call, for example.
+     *
+     * Feel free to re-use utilities in the `apolloSetup` helper for defining merge functions or even use the ones that come from `@apollo/client/utilities`.
+     *
+     * Read more: https://www.apollographql.com/docs/react/caching/cache-field-behavior
+     */
+    typePolicies: {
+      Query: {
+        fields: {
+          otherUser: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'LimitedUser', id: args.id })
+              }
+
+              return original
+            }
+          },
+          activeUser: {
+            merge(existing, incoming, { mergeObjects }) {
+              return mergeObjects(existing, incoming)
+            },
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'User', id: args.id })
+              }
+
+              return original
+            }
+          },
+          user: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'User', id: args.id })
+              }
+
+              return original
+            }
+          },
+          stream: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'Stream', id: args.id })
+              }
+
+              return original
+            }
+          },
+          streams: {
+            keyArgs: ['query'],
+            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+              checkIdentity: true
+            })
+          },
+          projects: {
+            merge: buildArrayMergeFunction()
+          }
+        }
+      },
+      LimitedUser: {
+        fields: {
+          commits: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+              checkIdentity: true
+            })
+          }
+        }
+      },
+      User: {
+        fields: {
+          timeline: {
+            keyArgs: ['after', 'before'],
+            merge: buildAbstractCollectionMergeFunction('ActivityCollection')
+          },
+          commits: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+              checkIdentity: true
+            })
+          },
+          favoriteStreams: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
+              checkIdentity: true
+            })
+          }
+        }
+      },
+      Stream: {
+        fields: {
+          activity: {
+            keyArgs: ['after', 'before', 'actionType'],
+            merge: buildAbstractCollectionMergeFunction('ActivityCollection')
+          },
+          commits: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+              checkIdentity: true
+            })
+          },
+          pendingCollaborators: {
+            merge: incomingOverwritesExistingMergeFunction
+          },
+          pendingAccessRequests: {
+            merge: incomingOverwritesExistingMergeFunction
+          }
+        }
+      },
+      Branch: {
+        fields: {
+          commits: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
+              checkIdentity: true
+            })
+          }
+        }
+      },
+      BranchCollection: {
+        merge: true
+      },
+      ServerStats: {
+        merge: true
+      },
+      WebhookEventCollection: {
+        merge: true
+      },
+      ServerInfo: {
+        merge: true
+      },
+      CommentThreadActivityMessage: {
+        merge: true
+      }
+    }
+  })
+}
 
 async function createWsClient(params: {
   wsEndpoint: string
@@ -98,7 +246,7 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const link = createLink({ httpEndpoint, wsClient, authToken })
 
   return {
-    cache: new InMemoryCache(),
+    cache: createCache(),
     link,
     name: appName,
     version: appVersion

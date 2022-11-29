@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center">
     <LogoTextWhite class="mt-6 mb-4" />
-    <CommonSteps
+    <CommonStepsBullet
       :model-value="topStep"
       :steps="topSteps"
       class="my-6 md:my-12 lg:my-16 xl:my-20"
@@ -9,7 +9,12 @@
     <LayoutPanel class="max-w-3xl w-full">
       <div class="flex flex-col items-center">
         <div class="w-full relative">
-          <CommonSteps v-model="bottomStep" :steps="bottomSteps" basic class="mb-11" />
+          <CommonStepsBullet
+            v-model="bottomStep"
+            :steps="bottomSteps"
+            basic
+            class="mb-11"
+          />
           <CommonTextLink
             v-if="bottomStep === 1"
             class="absolute top-0 left-0"
@@ -41,14 +46,14 @@
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { OnboardingState } from '~~/lib/auth/helpers/onboarding'
-import { StepType } from '~~/lib/common/helpers/components'
+import { BulletStepType } from '~~/lib/common/helpers/components'
 
 const { finishOnboarding } = useProcessOnboarding()
 
-const topSteps: StepType[] = [{ name: 'Sign Up' }, { name: 'Set up' }]
+const topSteps: BulletStepType[] = [{ name: 'Sign Up' }, { name: 'Set up' }]
 const topStep = computed(() => 1) // read-only
 
-const bottomSteps: StepType[] = [{ name: 'Industry' }, { name: 'Role' }]
+const bottomSteps: BulletStepType[] = [{ name: 'Industry' }, { name: 'Role' }]
 const bottomStep = ref(0)
 
 const goToFirstStep = () => (bottomStep.value = 0)

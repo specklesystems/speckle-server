@@ -15,7 +15,8 @@ const config = {
     `./plugins/**/*.{js,ts}`,
     './stories/**/*.{js,ts,vue,mdx}',
     './app.vue',
-    './.storybook/**/*.{js,ts,vue}'
+    './.storybook/**/*.{js,ts,vue}',
+    './lib/**/composables/*.{js,ts}'
     // `./lib/**/*.{js,ts,vue}`, // TODO: Wait for fix https://github.com/nuxt/framework/issues/2886#issuecomment-1108312903
   ],
   theme: {

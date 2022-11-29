@@ -31,6 +31,7 @@
       </div>
       <input
         :id="name"
+        ref="inputElement"
         v-model="value"
         :type="type"
         :name="name"
@@ -80,7 +81,7 @@ export default defineComponent({
 import { RuleExpression, useField } from 'vee-validate'
 import { ExclamationCircleIcon, EnvelopeIcon, KeyIcon } from '@heroicons/vue/20/solid'
 import { ConcreteComponent, PropType } from 'vue'
-import { Optional } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 import { ChangeEvent } from 'rollup'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
@@ -177,6 +178,13 @@ const props = defineProps({
     type: [Object, Function] as PropType<Optional<ConcreteComponent>>,
     default: undefined
   },
+  /**
+   * Whether to focus on the input when component is mounted
+   */
+  autoFocus: {
+    type: Boolean,
+    default: false
+  },
   modelValue: {
     type: String,
     default: ''
@@ -190,6 +198,8 @@ const { value, errorMessage: error } = useField(props.name, props.rules, {
   validateOnValueUpdate: props.validateOnValueUpdate,
   initialValue: props.modelValue || undefined
 })
+
+const inputElement = ref(null as Nullable<HTMLInputElement>)
 
 const leadingIconClasses = computed(() => {
   const classParts: string[] = ['h-5 w-5']
@@ -238,4 +248,16 @@ const helpTipId = computed(() => (hasHelpTip.value ? `${props.name}-help` : unde
 const helpTipClasses = computed((): string =>
   error.value ? 'text-danger' : 'text-foreground-2'
 )
+
+const focus = () => {
+  inputElement.value?.focus()
+}
+
+onMounted(() => {
+  if (props.autoFocus) {
+    focus()
+  }
+})
+
+defineExpose({ focus })
 </script>
