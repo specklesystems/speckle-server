@@ -90,3 +90,10 @@ export function getServerOrigin() {
 
   return trimEnd(process.env.CANONICAL_URL, '/')
 }
+
+/**
+ * Check whether we're running an SSL server
+ */
+export function isSSLServer() {
+  return /^https:\/\//.test(getBaseUrl())
+}
