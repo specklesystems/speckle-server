@@ -11,6 +11,7 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import MeshBatch from './batching/MeshBatch'
 import { Geometry } from './converter/Geometry'
+import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { ObjectLayers } from './SpeckleRenderer'
 
@@ -28,7 +29,7 @@ export interface PlaneOutline {
   renderable: LineSegments2
 }
 
-export class SectionBoxCapper {
+export class SectionBoxOutlines {
   private static readonly INITIAL_BUFFER_SIZE = 60000
   private static readonly Z_OFFSET = -0.001
 
@@ -96,9 +97,17 @@ export class SectionBoxCapper {
           return localPlane.intersectsBox(box)
         },
 
-        intersectsTriangle: (tri) => {
+        intersectsTriangle: (tri, i) => {
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
+          const material = batches[b].getMaterialAtIndex(i)
+          if (
+            material instanceof SpeckleGhostMaterial ||
+            material.visible === false ||
+            material === null
+          )
+            return
+
           const localPlane = plane
           let count = 0
 
@@ -106,7 +115,7 @@ export class SectionBoxCapper {
           tempLine.end.copy(tri.b)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -119,7 +128,7 @@ export class SectionBoxCapper {
           tempLine.end.copy(tri.c)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -132,7 +141,7 @@ export class SectionBoxCapper {
           tempLine.end.copy(tri.a)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -167,7 +176,9 @@ export class SectionBoxCapper {
               // Set the penultimate point as a distinct point and delete the last point
               tempVector3.set(tempVector.x, tempVector.y, tempVector.z)
               tempVector3.add(
-                tempVector4.copy(plane.normal).multiplyScalar(SectionBoxCapper.Z_OFFSET)
+                tempVector4
+                  .copy(plane.normal)
+                  .multiplyScalar(SectionBoxOutlines.Z_OFFSET)
               )
               scratchBuffer[(index - 2) * 3] = tempVector3.x
               scratchBuffer[(index - 2) * 3 + 1] = tempVector3.y
@@ -217,7 +228,7 @@ export class SectionBoxCapper {
   }
 
   private createPlaneOutline(planeId: string): PlaneOutline {
-    const buffer = new Float64Array(SectionBoxCapper.INITIAL_BUFFER_SIZE)
+    const buffer = new Float64Array(SectionBoxOutlines.INITIAL_BUFFER_SIZE)
     const lineGeometry = new LineSegmentsGeometry()
     lineGeometry.setPositions(new Float32Array(buffer))
     ;(
