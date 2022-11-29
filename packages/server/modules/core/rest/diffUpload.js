@@ -3,24 +3,28 @@ const zlib = require('zlib')
 const cors = require('cors')
 const debug = require('debug')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
+  sendRateLimitResponse,
+  getRateLimitResult,
+  isRateLimitBreached,
+  getSourceFromRequest
+} = require('@/modules/core/services/ratelimiter')
 
 const { hasObjects } = require('../services/objects')
 
 module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
-  app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
-      action: 'POST /api/diff/:streamId',
-      req,
-      res
-    })
-    if (rejected) return rejected
+  app.post('/api/diff/:streamId', cors(), async (req, res) => {
+    const rateLimitResult = await getRateLimitResult(
+      'POST /api/diff/:streamId',
+      getSourceFromRequest(req)
+    )
+    if (isRateLimitBreached(rateLimitResult)) {
+      return sendRateLimitResponse(res, rateLimitResult)
+    }
+
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req

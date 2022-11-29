@@ -3,26 +3,30 @@ const zlib = require('zlib')
 const debug = require('debug')
 const cors = require('cors')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
 const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
+  sendRateLimitResponse,
+  getRateLimitResult,
+  isRateLimitBreached,
+  getSourceFromRequest
+} = require('@/modules/core/services/ratelimiter')
 
 const { pipeline, PassThrough } = require('stream')
 
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
-  app.post('/api/getobjects/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
-      action: 'POST /api/getobjects/:streamId',
-      req,
-      res
-    })
-    if (rejected) return rejected
+  app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
+    const rateLimitResult = await getRateLimitResult(
+      'POST /api/getobjects/:streamId',
+      getSourceFromRequest(req)
+    )
+    if (isRateLimitBreached(rateLimitResult)) {
+      return sendRateLimitResponse(res, rateLimitResult)
+    }
+
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
