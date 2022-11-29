@@ -404,7 +404,7 @@ jobs:
 
       - run:
           name: Test via Storybook
-          command: yarn test-storybook:ci
+          command: yarn storybook:test:ci
           working_directory: 'packages/frontend-2'
 
   chromatic:
