@@ -18,11 +18,9 @@
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
     "storybook": "storybook dev -p 6006",
-    "storybook:ci": "storybook dev -p 6006 --ci",
     "build-storybook": "storybook build",
     "storybook:test": "test-storybook",
-    "test-storybook:ci": "concurrently -k -s first -n \"SB,TEST\" -c \"magenta,blue\" \"yarn build-storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && yarn test-storybook\"",
-    "storybook:test:all-browsers": "test-storybook --browsers firefox chromium webkit",
+    "storybook:test:ci": "concurrently -k -s first -n \"SB,TEST\" -c \"magenta,blue\" \"yarn build-storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && yarn test-storybook --browsers firefox chromium webkit\"",
     "storybook:test:watch": "test-storybook --watch",
     "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded"
   },
