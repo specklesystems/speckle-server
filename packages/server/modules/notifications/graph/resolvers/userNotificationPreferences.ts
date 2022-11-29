@@ -7,7 +7,6 @@ import {
 module.exports = {
   User: {
     async notificationPreferences(parent) {
-      // does this need any access control?
       const preferences = await getUserNotificationPreferences(parent.id)
       return preferences
     }
