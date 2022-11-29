@@ -128,11 +128,11 @@ export const LIMITS: RateLimiterOptions = {
   },
   'POST /objects/:streamId': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_POST_OBJECTS_STREAMID', '3'),
+      limitCount: getIntFromEnv('RATELIMIT_POST_OBJECTS_STREAMID', '6'),
       duration: 1 * TIME.second
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_OBJECTS_STREAMID', '200'),
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_OBJECTS_STREAMID', '400'),
       duration: 1 * TIME.minute
     }
   },
