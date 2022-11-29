@@ -18,6 +18,7 @@
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
     "storybook": "storybook dev -p 6006",
+    "storybook:ci": "storybook dev -p 6006 --ci",
     "build-storybook": "storybook build",
     "storybook:test": "test-storybook",
     "storybook:test:all-browsers": "test-storybook --browsers firefox chromium webkit",

@@ -392,22 +392,15 @@ jobs:
 
       - run:
           name: Start local Storybook
-          command: yarn storybook
+          command: yarn storybook:ci
           background: true
           working_directory: 'packages/frontend-2'
 
-      # - run:
-      #     name: Setup dockerize
-      #     command: |
-      #       wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-      #       tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-      #       rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-      #     environment:
-      #       DOCKERIZE_VERSION: v0.6.1
-
       - run:
           name: Wait for dependencies to start
-          command: 'dockerize -wait tcp://localhost:6006 -timeout 1m'
+          command: |
+            dockerize -wait tcp://localhost:6006 -timeout 1m
+            sleep 30
 
       - run:
           name: Test via Storybook
