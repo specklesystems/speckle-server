@@ -17,8 +17,6 @@ export function buildNotificationsStateTracker() {
   const localEvents = new EventEmitter()
 
   const ackHandler = (e: AckEvent) => {
-    console.log('ackHandler', e)
-
     collectedAcks.set(e.jobId, e)
 
     // Emit event to waitForAck promise handlers
@@ -42,7 +40,6 @@ export function buildNotificationsStateTracker() {
      * Quit listening for notification acknowledgements
      */
     destroy: () => {
-      console.log('destroy')
       queue.removeListener('completed', completedHandler)
       queue.removeListener('failed', failedHandler)
       localEvents.removeAllListeners()
@@ -52,7 +49,6 @@ export function buildNotificationsStateTracker() {
      * Reset/clear collected data
      */
     reset: () => {
-      console.log('reset')
       collectedAcks.clear()
     },
 
