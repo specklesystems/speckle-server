@@ -51,6 +51,8 @@ import {
   RenderType
 } from './pipeline/Pipeline'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
+import MeshBatch from './batching/MeshBatch'
+import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -80,6 +82,9 @@ export default class SpeckleRenderer {
   private lastPolar: number
   private lastCameraPosition: Vector3 = new Vector3()
   private lastCameraMotionDelta: number
+  private lastSectionPlanes: Plane[] = []
+  private sectionPlanesChanged: Plane[] = []
+  private sectionBoxOutlines: SectionBoxOutlines = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -162,6 +167,14 @@ export default class SpeckleRenderer {
     this.batcher = new Batcher()
     this.intersections = new Intersections()
     this.viewer = viewer
+    this.lastSectionPlanes.push(
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane()
+    )
   }
 
   public create(container: HTMLElement) {
@@ -187,6 +200,29 @@ export default class SpeckleRenderer {
     this.pipeline = new Pipeline(this._renderer, this.batcher)
     this.pipeline.configure()
     this.pipeline.pipelineOptions = DefaultPipelineOptions
+
+    this.sectionBoxOutlines = new SectionBoxOutlines()
+    const sectionBoxCapperGroup = new Group()
+    sectionBoxCapperGroup.name = 'SectionBoxOutlines'
+    this.scene.add(sectionBoxCapperGroup)
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_Z).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_Z).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_X).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_X).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_Y).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_Y).renderable
+    )
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -418,29 +454,35 @@ export default class SpeckleRenderer {
           },
           ['USE_RTE', 'ALPHATEST_REJECTION']
         )
-        const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
-          batchRenderable as Mesh,
-          10
-        )
-        bvhHelper.name = batch.renderObject.id + '_bvh'
-        bvhHelper.traverse((obj) => {
-          obj.layers.set(ObjectLayers.PROPS)
-        })
-        bvhHelper.displayParents = true
-        bvhHelper.visible = false
-        bvhHelper.update()
-        subtreeGroup.add(bvhHelper)
+        if (this.SHOW_BVH) {
+          const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
+            batchRenderable as Mesh,
+            10
+          )
+          bvhHelper.name = batch.renderObject.id + '_bvh'
+          bvhHelper.traverse((obj) => {
+            obj.layers.set(ObjectLayers.PROPS)
+          })
+          bvhHelper.displayParents = true
+          bvhHelper.visible = false
+          bvhHelper.update()
+          subtreeGroup.add(bvhHelper)
+        }
       }
     })
 
     this.updateDirectLights()
     this.updateHelpers()
+    if (this.viewer.sectionBox.display.visible) {
+      this.viewer.setSectionBox()
+    }
     // this.resetPipeline(true)
     this._needsRender = true
   }
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
+
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
     this.updateHelpers()
@@ -464,6 +506,9 @@ export default class SpeckleRenderer {
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
     this.updateClippingPlanes(this.viewer.sectionBox.planes)
+    if (this.viewer.sectionBox.display.visible) {
+      this.updateSectionBoxCapper()
+    }
     this.renderer.shadowMap.needsUpdate = true
   }
 
@@ -482,8 +527,49 @@ export default class SpeckleRenderer {
       }
     })
     this.pipeline.updateClippingPlanes(planes)
+    this.sectionBoxOutlines.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
+    // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
+  }
+
+  private setSectionPlaneChanged(planes: Plane[]) {
+    this.sectionPlanesChanged.length = 0
+    for (let k = 0; k < planes.length; k++) {
+      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
+        this.sectionPlanesChanged.push(planes[k])
+      this.lastSectionPlanes[k].copy(planes[k])
+    }
+  }
+
+  public onSectionBoxDragStart() {
+    this.sectionBoxOutlines.enable(false)
+  }
+
+  public onSectionBoxDragEnd() {
+    const generate = () => {
+      this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
+      this.updateSectionBoxCapper(this.sectionPlanesChanged)
+      this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
+    }
+    this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
+  }
+
+  public updateSectionBoxCapper(planes?: Plane[]) {
+    const start = performance.now()
+    if (!planes) planes = this.viewer.sectionBox.planes
+    for (let k = 0; k < planes.length; k++) {
+      this.sectionBoxOutlines.updatePlaneOutline(
+        this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+        planes[k]
+      )
+    }
+    this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
+    console.warn('Outline time: ', performance.now() - start)
+  }
+
+  public enableSectionBoxCapper(value: boolean) {
+    this.sectionBoxOutlines.enable(value)
   }
 
   private addDirectLights() {

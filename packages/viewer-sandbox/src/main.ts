@@ -135,4 +135,6 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7f0c4d2fc1/'
   // Classroom
   // 'https://speckle.xyz/streams/0208ffb67b/commits/a980292728'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/328bd99997'
+  // 'https://latest.speckle.dev/streams/83e18d886f/commits/532bd6be3e'
 )

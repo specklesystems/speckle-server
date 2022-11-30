@@ -457,6 +457,33 @@ export default class MeshBatch implements Batch {
     }
   }
 
+  public getMaterialAtIndex(index: number): Material {
+    for (let k = 0; k < this.renderViews.length; k++) {
+      const vertIndex = this.boundsTree.geometry.index.array[index * 3]
+      if (
+        vertIndex >= this.renderViews[k].vertStart &&
+        vertIndex < this.renderViews[k].vertEnd
+      ) {
+        const rv = this.renderViews[k]
+        const group = this.geometry.groups.find((value) => {
+          return (
+            rv.batchStart >= value.start &&
+            rv.batchStart + rv.batchCount <= value.count + value.start
+          )
+        })
+        if (!Array.isArray(this.mesh.material)) {
+          return this.mesh.material
+        } else {
+          if (!group) {
+            console.warn(`Malformed material index!`)
+            return null
+          }
+          return this.mesh.material[group.materialIndex]
+        }
+      }
+    }
+  }
+
   private makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
