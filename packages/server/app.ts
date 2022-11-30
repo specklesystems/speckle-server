@@ -135,7 +135,7 @@ function buildApolloSubscriptionServer(
  */
 function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolean } {
   const roles = Object.values(Roles.Stream)
-  const isDebugEnv = isDevEnv() || isTestEnv()
+  const isDebugEnv = isDevEnv()
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 
   return {
@@ -164,7 +164,8 @@ function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolea
             max: roles.length - 1
           })
         ]
-      })
+      }),
+      JSONObject: () => ({})
     },
     mockEntireSchema: false
   }
