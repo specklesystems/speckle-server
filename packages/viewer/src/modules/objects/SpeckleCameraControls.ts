@@ -44,6 +44,7 @@ export class SpeckleCameraControls extends CameraControls {
   private _didDollyLastFrame = false
   public _isTrucking = false
   private _hasRestedLastFrame = false
+  private overrideDollyLerpRatio = 0
   static install() {
     _v3A = new Vector3()
     _v3B = new Vector3()
@@ -69,7 +70,7 @@ export class SpeckleCameraControls extends CameraControls {
     const prevRadius = this._sphericalEnd.radius
     const signedPrevRadius = prevRadius * (delta >= 0 ? -1 : 1)
 
-    this.dollyTo(distance)
+    this.dollyTo(distance, true, 0.9)
 
     if (
       this.infinityDolly &&
@@ -118,7 +119,11 @@ export class SpeckleCameraControls extends CameraControls {
    * @param enableTransition Whether to move smoothly or immediately.
    * @category Methods
    */
-  dollyTo(distance: number, enableTransition = true): Promise<void> {
+  dollyTo(
+    distance: number,
+    enableTransition = true,
+    lerpRatio = undefined
+  ): Promise<void> {
     const lastRadius = this._sphericalEnd.radius
     const newRadius = MathUtils.clamp(distance, this.minDistance, this.maxDistance)
     const hasCollider = this.colliderMeshes.length >= 1
@@ -139,6 +144,7 @@ export class SpeckleCameraControls extends CameraControls {
     }
 
     this._needsUpdate = true
+    this.overrideDollyLerpRatio = lerpRatio
 
     if (!enableTransition) {
       this._spherical.radius = this._sphericalEnd.radius
@@ -160,7 +166,6 @@ export class SpeckleCameraControls extends CameraControls {
     this._hasRestedLastFrame = this._hasRested
     const dampingFactor =
       this._state === ACTION.NONE ? this.dampingFactor : this.draggingDampingFactor
-    const dampingFactorDolly = 0.9
     const lerpRatio = Math.min(dampingFactor * delta * 60, 1)
     const deltaTheta = this._sphericalEnd.theta - this._spherical.theta
     const deltaPhi = this._sphericalEnd.phi - this._spherical.phi
@@ -179,7 +184,9 @@ export class SpeckleCameraControls extends CameraControls {
       !approxZero(deltaOffset.z)
     ) {
       this._spherical.set(
-        this._spherical.radius + deltaRadius * dampingFactorDolly,
+        this._spherical.radius +
+          deltaRadius *
+            (this.overrideDollyLerpRatio ? this.overrideDollyLerpRatio : lerpRatio),
         this._spherical.phi + deltaPhi * lerpRatio,
         this._spherical.theta + deltaTheta * lerpRatio
       )

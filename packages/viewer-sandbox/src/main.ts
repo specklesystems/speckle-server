@@ -137,4 +137,9 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/0208ffb67b/commits/a980292728'
   // 'https://latest.speckle.dev/streams/4658eb53b9/commits/328bd99997'
   // 'https://latest.speckle.dev/streams/83e18d886f/commits/532bd6be3e'
+  // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/f12861736e'
+  // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
+  // Jedd's views
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
+  // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
 )

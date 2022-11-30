@@ -4,27 +4,16 @@ const cors = require('cors')
 const Busboy = require('busboy')
 const debug = require('debug')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('../services/objects')
-const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 module.exports = (app) => {
   app.options('/objects/:streamId', cors())
 
-  app.post('/objects/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
-      action: 'POST /objects/:streamId',
-      req,
-      res
-    })
-    if (rejected) return rejected
-
+  app.post('/objects/:streamId', cors(), async (req, res) => {
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req
