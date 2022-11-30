@@ -8,6 +8,7 @@ import {
 import {
   BranchCommitRecord,
   CommitRecord,
+  StreamCommitRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
 import { keyBy, uniqBy } from 'lodash'
@@ -18,6 +19,13 @@ const CommitWithStreamBranchMetadataFields = [
   BranchCommits.col.branchId,
   `${Branches.col.name} as branchName`
 ]
+import crs from 'crypto-random-string'
+import {
+  BatchedSelectOptions,
+  executeBatchedSelect
+} from '@/modules/shared/helpers/dbHelper'
+
+export const generateCommitId = () => crs({ length: 10 })
 
 export type CommitWithStreamBranchMetadata = CommitRecord & {
   streamId: string
@@ -90,4 +98,40 @@ export async function moveCommitsToBranch(commitIds: string[], branchId: string)
 
 export async function deleteCommits(commitIds: string[]) {
   return await Commits.knex().whereIn(Commits.col.id, commitIds).del()
+}
+
+export function getBatchedStreamCommits(
+  streamId: string,
+  options?: Partial<BatchedSelectOptions>
+) {
+  const baseQuery = Commits.knex<CommitRecord[]>()
+    .select<CommitRecord[]>(Commits.cols)
+    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+    .where(StreamCommits.col.streamId, streamId)
+    .orderBy(Commits.col.id)
+
+  return executeBatchedSelect(baseQuery, options)
+}
+
+export function getBatchedBranchCommits(
+  branchIds: string[],
+  options?: Partial<BatchedSelectOptions>
+) {
+  const baseQuery = BranchCommits.knex<BranchCommitRecord[]>()
+    .whereIn(BranchCommits.col.branchId, branchIds)
+    .orderBy(BranchCommits.col.branchId)
+
+  return executeBatchedSelect(baseQuery, options)
+}
+
+export async function insertCommits(commits: CommitRecord[]) {
+  return await Commits.knex().insert(commits)
+}
+
+export async function insertStreamCommits(streamCommits: StreamCommitRecord[]) {
+  return await StreamCommits.knex().insert(streamCommits)
+}
+
+export async function insertBranchCommits(branchCommits: BranchCommitRecord[]) {
+  return await BranchCommits.knex().insert(branchCommits)
 }

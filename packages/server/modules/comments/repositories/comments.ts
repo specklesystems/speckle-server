@@ -3,6 +3,13 @@ import { CommentLinks, Comments, knex } from '@/modules/core/dbSchema'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { keyBy } from 'lodash'
+import crs from 'crypto-random-string'
+import {
+  BatchedSelectOptions,
+  executeBatchedSelect
+} from '@/modules/shared/helpers/dbHelper'
+
+export const generateCommentId = () => crs({ length: 10 })
 
 export type ExtendedComment = CommentRecord & {
   /**
@@ -58,4 +65,51 @@ export async function getCommentsResources(commentIds: string[]) {
 
   const results = await q
   return keyBy(results, 'commentId')
+}
+
+type GetBatchedStreamCommentsOptions = BatchedSelectOptions & {
+  /**
+   * Filter out comments with parent comment references
+   * Defaults to: false
+   */
+  withoutParentCommentOnly: boolean
+
+  /**
+   * Filter out comments without parent comment references
+   * Defaults to: false
+   */
+  withParentCommentOnly: boolean
+}
+
+export function getBatchedStreamComments(
+  streamId: string,
+  options?: Partial<GetBatchedStreamCommentsOptions>
+) {
+  const { withoutParentCommentOnly = false, withParentCommentOnly = false } =
+    options || {}
+
+  const baseQuery = Comments.knex<CommentRecord[]>()
+    .where(Comments.col.streamId, streamId)
+    .orderBy(Comments.col.id)
+
+  if (withoutParentCommentOnly) {
+    baseQuery.andWhere(Comments.col.parentComment, null)
+  } else if (withParentCommentOnly) {
+    baseQuery.andWhereNot(Comments.col.parentComment, null)
+  }
+
+  return executeBatchedSelect(baseQuery, options)
+}
+
+export async function getCommentLinks(commentIds: string[]) {
+  const q = CommentLinks.knex<CommentLinkRecord[]>().whereIn(
+    CommentLinks.col.commentId,
+    commentIds
+  )
+
+  return await q
+}
+
+export async function insertComments(comments: CommentRecord[]) {
+  return await Comments.knex().insert(comments)
 }

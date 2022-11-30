@@ -1,7 +1,26 @@
 import { Optional } from '@speckle/shared'
 import { Objects } from '@/modules/core/dbSchema'
 import { ObjectRecord } from '@/modules/core/helpers/types'
+import {
+  BatchedSelectOptions,
+  executeBatchedSelect
+} from '@/modules/shared/helpers/dbHelper'
 
 export async function getObject(objectId: string): Promise<Optional<ObjectRecord>> {
   return await Objects.knex<ObjectRecord[]>().where(Objects.col.id, objectId).first()
+}
+
+export function getBatchedStreamObjects(
+  streamId: string,
+  options?: Partial<BatchedSelectOptions>
+) {
+  const baseQuery = Objects.knex<ObjectRecord[]>()
+    .where(Objects.col.streamId, streamId)
+    .orderBy(Objects.col.id)
+
+  return executeBatchedSelect(baseQuery, options)
+}
+
+export async function insertObjects(objects: ObjectRecord[]) {
+  return await Objects.knex().insert(objects)
 }
