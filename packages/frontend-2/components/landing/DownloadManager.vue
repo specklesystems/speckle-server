@@ -31,6 +31,7 @@
                   :steps="steps"
                   :model-value="-1"
                   :go-vertical-below="TailwindBreakpoints.md"
+                  non-interactive
                   class="mb-8 steps"
                 />
               </div>

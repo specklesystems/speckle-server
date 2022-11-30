@@ -6,7 +6,7 @@
           v-if="isFinishedStep(i)"
           :href="step.href"
           :class="linkClasses"
-          @click="() => switchStep(i)"
+          @click="(e) => switchStep(i, e)"
         >
           <div
             class="flex space-x-3 items-center text-primary-focus normal font-medium leading-5"
@@ -29,7 +29,7 @@
           :href="step.href"
           :class="linkClasses"
           aria-current="step"
-          @click="() => switchStep(i)"
+          @click="(e) => switchStep(i, e)"
         >
           <div
             class="flex space-x-3 items-center text-primary-focus normal font-medium leading-5"
@@ -47,7 +47,12 @@
             </div>
           </div>
         </a>
-        <a v-else :href="step.href" :class="linkClasses" @click="() => switchStep(i)">
+        <a
+          v-else
+          :href="step.href"
+          :class="linkClasses"
+          @click="(e) => switchStep(i, e)"
+        >
           <div
             class="flex space-x-3 items-center text-foreground-disabled normal font-medium leading-5"
           >
@@ -84,16 +89,18 @@ const props = defineProps<{
   steps: NumberStepType[]
   modelValue?: number
   goVerticalBelow?: TailwindBreakpoints
+  nonInteractive?: boolean
 }>()
 
-const { isCurrentStep, isFinishedStep, switchStep, getStepDisplayValue, listClasses } =
-  useStepsInternals({
-    modelValue: toRef(props, 'modelValue'),
-    steps: toRef(props, 'steps'),
-    orientation: toRef(props, 'orientation'),
-    goVerticalBelow: toRef(props, 'goVerticalBelow'),
-    emit
-  })
-
-const linkClasses = ref('flex items-center cursor-pointer')
+const {
+  isCurrentStep,
+  isFinishedStep,
+  switchStep,
+  getStepDisplayValue,
+  listClasses,
+  linkClasses
+} = useStepsInternals({
+  props: toRefs(props),
+  emit
+})
 </script>

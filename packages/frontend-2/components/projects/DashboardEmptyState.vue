@@ -9,12 +9,14 @@
       class="flex flex-col space-y-7 items-center md:flex-row md:space-x-7 md:space-y-0 justify-center md:items-stretch px-8"
     >
       <ProjectsDashboardEmptyStatePanel :icon="CubeIcon">
-        <template #title>Start from scratch now</template>
-        <template #subtitle>Create your first project or choose a template</template>
+        <template #title>Explore your first project</template>
+        <template #subtitle>
+          Create your first Speckle project and learn the basics
+        </template>
         <template #ctaText>
           <span class="space-x-2 inline-flex items-center">
-            <PlusIcon class="w-4 h-4" />
-            <span>New Project</span>
+            <ArrowLeftCircleIcon class="w-4 h-4" />
+            <span>Explore</span>
           </span>
         </template>
       </ProjectsDashboardEmptyStatePanel>
@@ -39,15 +41,15 @@
 <script setup lang="ts">
 import {
   CubeIcon,
-  PlusIcon,
   CloudArrowUpIcon,
-  CloudArrowDownIcon
+  CloudArrowDownIcon,
+  ArrowLeftCircleIcon
 } from '@heroicons/vue/24/solid'
 import { DownloadManagerRoute } from '~~/lib/common/helpers/route'
 </script>
 <style scoped>
 .empty-state {
   /** dashed border, source: https://kovart.github.io/dashed-border-generator/ */
-  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='rgb(59 130 246 / 50%)' stroke-width='1' stroke-dasharray='14' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='16' ry='16' stroke='rgb(59 130 246 / 50%)' stroke-width='2' stroke-dasharray='14' stroke-dashoffset='0' stroke-linecap='round'/%3e%3c/svg%3e");
 }
 </style>

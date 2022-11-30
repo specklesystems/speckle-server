@@ -48,6 +48,8 @@ export function useGlobalToastManager() {
   watch(
     stateNotification,
     (newVal) => {
+      if (!newVal) return
+
       // First dismiss old notification, then set a new one on next tick
       // this is so that the old one actually disappears from the screen for the user,
       // instead of just having its contents replaced
@@ -66,6 +68,7 @@ export function useGlobalToastManager() {
 
   const dismiss = () => {
     currentNotification.value = null
+    stateNotification.value = null
   }
 
   return { currentNotification: readOnlyNotification, dismiss }

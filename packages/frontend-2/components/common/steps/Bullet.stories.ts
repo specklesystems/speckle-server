@@ -58,7 +58,8 @@ export const Default: Story = {
     basic: false,
     orientation: 'horizontal',
     steps: testSteps,
-    modelValue: 1
+    modelValue: 1,
+    nonInteractive: false
   }
 }
 
@@ -90,5 +91,11 @@ export const StartOnNegativeStep: Story = mergeStories(Default, {
 export const GoVerticalBelowBreakpoint: Story = mergeStories(Default, {
   args: {
     goVerticalBelow: TailwindBreakpoints.md
+  }
+})
+
+export const NonInteractive: Story = mergeStories(Default, {
+  args: {
+    nonInteractive: true
   }
 })
