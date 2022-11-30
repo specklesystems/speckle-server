@@ -55,12 +55,12 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
-            - test-frontend-2
 
       - docker-build-frontend-2:
           filters: *filters-build
           requires:
             - get-version
+            - test-frontend-2
 
       - docker-build-webhooks:
           context: *build-context
