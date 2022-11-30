@@ -58,7 +58,7 @@ module.exports = {
    * @returns {Promise<string>}
    */
   async createUser(user) {
-    user = pick(user, ['id', 'email', 'password', 'name', 'company'])
+    user = pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'avatar'])
 
     const newId = crs({ length: 10 })
     user.id = newId
