@@ -16,6 +16,7 @@ COPY packages/shared ./packages/shared/
 COPY packages/frontend-2 ./packages/frontend-2/
 
 RUN yarn workspaces focus -A
+# hadolint ignore=DL3059
 RUN yarn workspaces foreach run build
 
 FROM node:16.18.0-bullseye-slim as production-stage

@@ -277,6 +277,9 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
       - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
           name: Run pre-commit
           command: ./.husky/pre-commit
       - run:

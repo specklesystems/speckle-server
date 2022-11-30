@@ -76,7 +76,7 @@
     "concurrently": "^7.5.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-nuxt": "^3.2.0",
+    "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-storybook": "^0.6.6",
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
