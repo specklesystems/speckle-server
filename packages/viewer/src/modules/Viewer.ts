@@ -330,7 +330,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
-    this.speckleRenderer.resetPipeline()
+    this.speckleRenderer.resetPipeline(true)
   }
 
   public setLightConfiguration(config: SunLightConfiguration): void {
