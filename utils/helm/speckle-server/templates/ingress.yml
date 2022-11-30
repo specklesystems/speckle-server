@@ -24,6 +24,15 @@ spec:
   - host: {{ .Values.domain }}
     http:
       paths:
+      {{- if .Values.frontend_2.enabled }}
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: speckle-frontend-2
+            port:
+              number: 8080
+      {{- end }}
       - pathType: Prefix
         path: "/"
         backend:
