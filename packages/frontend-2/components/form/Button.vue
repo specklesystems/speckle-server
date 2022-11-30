@@ -234,7 +234,7 @@ const generalClasses = computed(() => {
 
 const buttonClasses = computed(() =>
   [
-    'inline-flex justify-center items-center outline-none',
+    'transition inline-flex justify-center items-center outline-none',
     generalClasses.value,
     typeClasses.value,
     sizeClasses.value
