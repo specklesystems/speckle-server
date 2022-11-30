@@ -92,7 +92,8 @@ async function doTask(task) {
           info.userId,
           info.streamId,
           info.branchName,
-          `File upload: ${info.fileName}`
+          `File upload: ${info.fileName}`,
+          info.id
         ],
         {
           USER_TOKEN: tempUserToken

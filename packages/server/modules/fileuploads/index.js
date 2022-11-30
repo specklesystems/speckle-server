@@ -1,13 +1,10 @@
 /* istanbul ignore file */
 'use strict'
 
-const { contextMiddleware } = require('@/modules/shared')
 const { saveUploadFile } = require('./services/fileuploads')
 const request = require('request')
-const {
-  authMiddlewareCreator,
-  streamWritePermissions
-} = require('@/modules/shared/authz')
+const { streamWritePermissions } = require('@/modules/shared/authz')
+const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 const { moduleLogger, logger } = require('@/logging/logging')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
@@ -36,7 +33,6 @@ exports.init = async (app) => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       req.pipe(

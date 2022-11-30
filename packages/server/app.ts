@@ -25,15 +25,16 @@ import {
 import { SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
-import { buildContext } from '@/modules/shared'
 import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
+import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
 
@@ -104,10 +105,7 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({
-            connection: { context: { token } },
-            req: undefined
-          })
+          return await buildContext({ req: null, token })
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
@@ -173,6 +171,7 @@ export async function buildApolloServer(
  */
 export async function init() {
   const app = express()
+  app.disable('x-powered-by')
 
   Logging(app)
 
@@ -190,6 +189,16 @@ export async function init() {
 
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
+
+  // Trust X-Forwarded-* headers (for https protocol detection)
+  app.enable('trust proxy')
+
+  // Log errors
+  app.use(errorLoggingMiddleware)
+  app.use(authContextMiddleware)
+  app.use(createRateLimiterMiddleware())
+
+  app.use(Sentry.Handlers.errorHandler())
 
   // Initialize default modules, including rest api handlers
   await ModulesSetup.init(app)
@@ -212,12 +221,6 @@ export async function init() {
     }
   })
 
-  // Trust X-Forwarded-* headers (for https protocol detection)
-  app.enable('trust proxy')
-
-  // Log errors
-  app.use(errorLoggingMiddleware)
-
   // Init HTTP server & subscription server
   const server = http.createServer(app)
   subscriptionServer = buildApolloSubscriptionServer(graphqlServer, server)
@@ -227,6 +230,26 @@ export async function init() {
 
 export async function shutdown(): Promise<void> {
   await ModulesSetup.shutdown()
+}
+
+const shouldUseFrontendProxy = () => process.env.NODE_ENV === 'development'
+
+async function createFrontendProxy() {
+  const frontendHost = process.env.FRONTEND_HOST || 'localhost'
+  const frontendPort = process.env.FRONTEND_PORT || 8080
+  const { createProxyMiddleware } = await import('http-proxy-middleware')
+
+  // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
+  // slowing everything down
+  const defaultAgent = new http.Agent()
+
+  return createProxyMiddleware({
+    target: `http://${frontendHost}:${frontendPort}`,
+    changeOrigin: true,
+    ws: false,
+    logLevel: 'silent',
+    agent: defaultAgent
+  })
 }
 
 /**
@@ -240,26 +263,12 @@ export async function startHttp(
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
-  const frontendHost = process.env.FRONTEND_HOST || 'localhost'
-  const frontendPort = process.env.FRONTEND_PORT || 8080
-
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
-  if (process.env.NODE_ENV === 'development') {
-    const { createProxyMiddleware } = await import('http-proxy-middleware')
-
-    // even tho it has default values, it fixes http-proxy setting `Connection: close` on each request
-    // slowing everything down
-    const defaultAgent = new http.Agent()
-
-    const frontendProxy = createProxyMiddleware({
-      target: `http://${frontendHost}:${frontendPort}`,
-      changeOrigin: true,
-      ws: false,
-      logLevel: 'silent',
-      agent: defaultAgent
-    })
-    app.use('/', frontendProxy)
+  if (customPortOverride || customPortOverride === 0) port = customPortOverride
+  if (shouldUseFrontendProxy()) {
+    // app.use('/', frontendProxy)
+    app.use(await createFrontendProxy())
 
     startupLogger.info('✨ Proxying frontend (dev mode):')
     startupLogger.info(`👉 main application: http://localhost:${port}/`)
@@ -272,10 +281,7 @@ export async function startHttp(
 
   monitorActiveConnections(server)
 
-  if (customPortOverride || customPortOverride === 0) port = customPortOverride
   app.set('port', port)
-
-  app.use(Sentry.Handlers.errorHandler())
 
   // large timeout to allow large downloads on slow connections to finish
   createTerminus(server, {

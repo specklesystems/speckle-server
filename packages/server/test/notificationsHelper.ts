@@ -85,7 +85,7 @@ export function buildNotificationsStateTracker() {
     /**
      * Wait for an acknowledgement without knowing the msg id
      */
-    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 2000) => {
+    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 3000) => {
       let timeoutRef: NodeJS.Timer
       let eventEmitterHandler: (e: AckEvent) => void
       return new Promise<AckEvent>((resolve, reject) => {

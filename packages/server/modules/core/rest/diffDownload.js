@@ -2,13 +2,9 @@
 const zlib = require('zlib')
 const cors = require('cors')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
-const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
 
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('@/logging/logging')
@@ -16,13 +12,7 @@ const { logger } = require('@/logging/logging')
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
-  app.post('/api/getobjects/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
-      action: 'POST /api/getobjects/:streamId',
-      req,
-      res
-    })
-    if (rejected) return rejected
+  app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req

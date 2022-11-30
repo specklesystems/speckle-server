@@ -26,7 +26,11 @@ export function getApolloServerVersion() {
 }
 
 export function getFileSizeLimitMB() {
-  return parseInt(process.env.FILE_SIZE_LIMIT_MB || '100')
+  return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
+}
+
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
 }
 
 export function getRedisUrl() {

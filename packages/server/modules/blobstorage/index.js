@@ -1,7 +1,5 @@
-const { contextMiddleware } = require('@/modules/shared')
 const Busboy = require('busboy')
 const {
-  authMiddlewareCreator,
   streamReadPermissions,
   streamWritePermissions,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -16,6 +14,7 @@ const {
   getObjectAttributes
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
+const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 
 const {
   uploadFileStream,
@@ -75,7 +74,6 @@ exports.init = async (app) => {
   // eslint-disable-next-line no-unused-vars
   app.post(
     '/api/stream/:streamId/blob',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamWritePermissions,
       // todo should we add public comments upload escape hatch?
@@ -170,7 +168,6 @@ exports.init = async (app) => {
 
   app.post(
     '/api/stream/:streamId/blob/diff',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamReadPermissions,
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -194,7 +191,6 @@ exports.init = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamReadPermissions,
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -223,7 +219,6 @@ exports.init = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
@@ -239,7 +234,6 @@ exports.init = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blobs',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       const fileName = req.query.fileName
@@ -257,7 +251,6 @@ exports.init = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blobs',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions)
     // async (req, res) => {}
   )
