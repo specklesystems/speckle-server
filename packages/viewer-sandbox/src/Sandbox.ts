@@ -67,6 +67,11 @@ export default class Sandbox {
     indirectLightIntensity: 1.2
   }
 
+  public static batchesParams = {
+    showBvh: false,
+    totalBvhSize: 0
+  }
+
   public static filterParams = {
     filterBy: 'Volume'
   }
@@ -79,7 +84,12 @@ export default class Sandbox {
       'position:fixed; top: 5px; right: 5px; width: 300px;'
 
     this.tabs = this.pane.addTab({
-      pages: [{ title: 'General' }, { title: 'Scene' }, { title: 'Filtering' }]
+      pages: [
+        { title: 'General' },
+        { title: 'Scene' },
+        { title: 'Filtering' },
+        { title: 'Batches' }
+      ]
     })
     this.properties = []
 
@@ -87,6 +97,8 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
+      Sandbox.batchesParams.totalBvhSize = this.getBVHSize()
+      this.refresh()
       // const dataTree = this.viewer.getDataTree()
       // const objects = dataTree.findAll((guid, obj) => {
       //   return obj.speckle_type === 'Objects.Geometry.Mesh'
@@ -112,7 +124,7 @@ export default class Sandbox {
   }
 
   private addStreamControls(url: string) {
-    const folder = this.pane.addFolder({
+    const folder = this.tabs.pages[0].addFolder({
       title: `Object: ${url.split('/').reverse()[0]}`
     })
 
@@ -223,14 +235,6 @@ export default class Sandbox {
 
     this.tabs.pages[0].addSeparator()
     this.tabs.pages[0].addSeparator()
-
-    const showBatches = this.tabs.pages[0].addButton({
-      title: 'ShowBatches'
-    })
-    showBatches.on('click', () => {
-      this.viewer.getRenderer().debugShowBatches()
-      this.viewer.requestRender()
-    })
 
     const darkModeToggle = this.tabs.pages[0].addButton({
       title: '🌞 / 🌛'
@@ -695,6 +699,45 @@ export default class Sandbox {
       .on('click', () => {
         this.viewer.resetFilters()
       })
+  }
+
+  public makeBatchesUI() {
+    const container = this.tabs.pages[3]
+    const showBatches = container.addButton({
+      title: 'ShowBatches'
+    })
+    showBatches.on('click', () => {
+      this.viewer.getRenderer().debugShowBatches()
+      this.viewer.requestRender()
+    })
+
+    container
+      .addInput(Sandbox.batchesParams, 'showBvh', {
+        label: 'Show BVH'
+      })
+      .on('change', (ev) => {
+        this.viewer.getRenderer().showBVH = ev.value
+        this.viewer.requestRender()
+      })
+    container.addInput(Sandbox.batchesParams, 'totalBvhSize', {
+      label: 'BVH Size(MB)',
+      disabled: true
+    })
+  }
+
+  private getBVHSize() {
+    let size = 0
+    const objects = this.viewer.getRenderer().allObjects
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    objects.traverse((obj: any) => {
+      // eslint-disable-next-line no-prototype-builtins
+      if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
+        size += obj['boundsTreeSizeInBytes']
+        // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
+      }
+    })
+
+    return size / 1024 / 1024
   }
 
   public async loadUrl(url: string) {
