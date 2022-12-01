@@ -376,18 +376,21 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
     const coreCloneResult = await cloneStreamCore(state)
     const newStreamId = coreCloneResult.newStreamId
 
-    // Clone comments (if this fails/throws, we can keep the stream, we'll just have some comments missing)
+    // Clone comments
     await cloneStreamComments(state, coreCloneResult)
 
     // Create activity item
-    await addStreamClonedActivity({
-      sourceStreamId,
-      newStreamId,
-      clonerId: userId
-    })
+    await addStreamClonedActivity(
+      {
+        sourceStreamId,
+        newStreamId,
+        clonerId: userId
+      },
+      { trx: state.trx }
+    )
 
     // Commit transaction
-    state.trx.commit()
+    await state.trx.commit()
 
     return newStreamId
   } catch (e) {

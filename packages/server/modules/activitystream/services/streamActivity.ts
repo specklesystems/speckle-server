@@ -3,26 +3,34 @@ import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/typ
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { pubsub, StreamPubsubEvents } from '@/modules/shared'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
+import { Knex } from 'knex'
 
 /**
  * Save "user cloned stream X" activity item
  */
-export async function addStreamClonedActivity(params: {
-  sourceStreamId: string
-  newStreamId: string
-  clonerId: string
-}) {
+export async function addStreamClonedActivity(
+  params: {
+    sourceStreamId: string
+    newStreamId: string
+    clonerId: string
+  },
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const { trx } = options || {}
   const { sourceStreamId, newStreamId, clonerId } = params
 
-  await saveActivity({
-    streamId: newStreamId,
-    resourceType: ResourceTypes.Stream,
-    resourceId: newStreamId,
-    actionType: ActionTypes.Stream.Clone,
-    userId: clonerId,
-    info: { sourceStreamId, newStreamId, clonerId },
-    message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
-  })
+  await saveActivity(
+    {
+      streamId: newStreamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: newStreamId,
+      actionType: ActionTypes.Stream.Clone,
+      userId: clonerId,
+      info: { sourceStreamId, newStreamId, clonerId },
+      message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+    },
+    { trx }
+  )
 }
 
 /**

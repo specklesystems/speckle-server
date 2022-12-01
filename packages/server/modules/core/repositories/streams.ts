@@ -88,9 +88,9 @@ const generateStreamName = () => {
  */
 export async function getStreams(
   streamIds: string[],
-  options: Partial<{ userId: string }> = {}
+  options: Partial<{ userId: string; trx: Knex.Transaction }> = {}
 ) {
-  const { userId } = options
+  const { userId, trx } = options
   if (!streamIds?.length) throw new InvalidArgumentError('Empty stream IDs')
 
   const q = Streams.knex<StreamWithOptionalRole[]>().whereIn(Streams.col.id, streamIds)
@@ -110,17 +110,24 @@ export async function getStreams(
     q.groupBy(Streams.col.id)
   }
 
+  if (trx) {
+    q.transacting(trx)
+  }
+
   return await q
 }
 
 /**
  * Get a single stream. If userId is specified, the role will be resolved as well.
  */
-export async function getStream(params: { streamId: string; userId?: string }) {
+export async function getStream(
+  params: { streamId: string; userId?: string },
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
   const { streamId, userId } = params
   if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
 
-  const streams = await getStreams([streamId], { userId })
+  const streams = await getStreams([streamId], { userId, ...(options || {}) })
   return <Optional<StreamWithOptionalRole>>streams[0]
 }
 

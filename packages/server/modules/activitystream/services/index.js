@@ -9,16 +9,12 @@ const StreamAcl = () => knex('stream_acl')
 module.exports = {
   /**
    * @param {Omit<import('@/modules/activitystream/helpers/types').StreamActivityRecord, "time">} param0
+   * @param {{trx?: import('knex').Knex.Transaction}} param1
    */
-  async saveActivity({
-    streamId,
-    resourceType,
-    resourceId,
-    actionType,
-    userId,
-    info,
-    message
-  }) {
+  async saveActivity(
+    { streamId, resourceType, resourceId, actionType, userId, info, message },
+    { trx } = {}
+  ) {
     const dbObject = {
       streamId, // abc
       resourceType, // "commit"
@@ -28,7 +24,11 @@ module.exports = {
       info: JSON.stringify(info), // can be anything with conventions! (TBD)
       message // something human understandable for frontend purposes mostly
     }
-    await StreamActivity().insert(dbObject)
+
+    const q = StreamActivity().insert(dbObject)
+    if (trx) q.transacting(trx)
+    await q
+
     if (streamId) {
       const webhooksPayload = {
         streamId,
@@ -40,11 +40,15 @@ module.exports = {
           data: info
         }
       }
-      await dispatchStreamEvent({
-        streamId,
-        event: actionType,
-        eventPayload: webhooksPayload
-      })
+
+      await dispatchStreamEvent(
+        {
+          streamId,
+          event: actionType,
+          eventPayload: webhooksPayload
+        },
+        { trx }
+      )
     }
   },
 
