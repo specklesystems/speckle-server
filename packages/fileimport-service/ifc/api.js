@@ -2,6 +2,7 @@
 const crypto = require('crypto')
 const crs = require('crypto-random-string')
 const bcrypt = require('bcrypt')
+const { chunk } = require('lodash')
 
 const knex = require('../knex')
 const Streams = () => knex('streams')
@@ -28,6 +29,10 @@ module.exports = class ServerAPI {
     await this.createObject(this.streamId, obj)
 
     return obj.id
+  }
+
+  async saveObjectBatch(objs) {
+    return await this.createObjectsBatched(this.streamId, objs)
   }
 
   async createObject(streamId, object) {
@@ -69,6 +74,76 @@ module.exports = class ServerAPI {
     return insertionObject.id
   }
 
+  async createObjectsBatched(streamId, objects) {
+    const closures = []
+    const objsToInsert = []
+    const ids = []
+
+    // Prep objects up
+    objects.forEach((obj) => {
+      const insertionObject = this.prepInsertionObject(streamId, obj)
+      let totalChildrenCountGlobal = 0
+      const totalChildrenCountByDepth = {}
+
+      if (obj.__closure !== null) {
+        for (const prop in obj.__closure) {
+          closures.push({
+            streamId,
+            parent: insertionObject.id,
+            child: prop,
+            minDepth: obj.__closure[prop]
+          })
+          totalChildrenCountGlobal++
+          if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
+            totalChildrenCountByDepth[obj.__closure[prop].toString()]++
+          else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
+        }
+      }
+
+      insertionObject.totalChildrenCount = totalChildrenCountGlobal
+      insertionObject.totalChildrenCountByDepth = JSON.stringify(
+        totalChildrenCountByDepth
+      )
+
+      delete insertionObject.__tree
+      delete insertionObject.__closure
+
+      objsToInsert.push(insertionObject)
+      ids.push(insertionObject.id)
+    })
+
+    const closureBatchSize = 1000
+    const objectsBatchSize = 500
+
+    // step 1: insert objects
+    if (objsToInsert.length > 0) {
+      const batches = chunk(objsToInsert, objectsBatchSize)
+      for (const batch of batches) {
+        this.prepInsertionObjectBatch(batch)
+        await knex.transaction(async (trx) => {
+          const q = Objects().insert(batch).toString() + ' on conflict do nothing'
+          await trx.raw(q)
+        })
+        console.log(`Inserted ${batch.length} objects`)
+      }
+    }
+
+    // step 2: insert closures
+    if (closures.length > 0) {
+      const batches = chunk(closures, closureBatchSize)
+
+      for (const batch of batches) {
+        this.prepInsertionClosureBatch(batch)
+        await knex.transaction(async (trx) => {
+          const q = Closures().insert(batch).toString() + ' on conflict do nothing'
+          await trx.raw(q)
+        })
+        console.log(`Inserted ${batch.length} closures`)
+      }
+    }
+    return ids
+  }
+
   prepInsertionObject(streamId, obj) {
     const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
@@ -90,6 +165,22 @@ module.exports = class ServerAPI {
       id: obj.id,
       speckleType: obj.speckleType
     }
+  }
+
+  prepInsertionObjectBatch(batch) {
+    batch.sort((a, b) => (a.id > b.id ? 1 : -1))
+  }
+
+  prepInsertionClosureBatch(batch) {
+    batch.sort((a, b) =>
+      a.parent > b.parent
+        ? 1
+        : a.parent === b.parent
+        ? a.child > b.child
+          ? 1
+          : -1
+        : -1
+    )
   }
 
   async getBranchByNameAndStreamId({ streamId, name }) {

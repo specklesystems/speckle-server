@@ -18,7 +18,7 @@ function passportAuthenticate(strategy, options = undefined) {
       }
 
       req.user = user
-      return next()
+      next()
     })(req, res, next)
 }
 

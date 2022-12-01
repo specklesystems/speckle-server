@@ -1,6 +1,6 @@
 import { buildApolloServer } from '@/app'
 import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
-import { addLoadersToCtx } from '@/modules/shared'
+import { addLoadersToCtx } from '@/modules/shared/middleware'
 
 /**
  * Build an ApolloServer instance with an authenticated context

@@ -80,6 +80,7 @@ exports.sleep = (ms) => {
  * @param {*} res
  */
 function noErrors(res) {
+  if (res.error) throw new Error(`Failed GraphQL request: ${res.error.message}`)
   if ('errors' in res.body)
     throw new Error(`Failed GraphQL request: ${res.body.errors[0].message}`)
 }
