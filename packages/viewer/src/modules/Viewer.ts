@@ -104,6 +104,7 @@ export class Viewer extends EventEmitter implements IViewer {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoom()
+      this.speckleRenderer.resetPipeline(true)
     })
   }
   public setSectionBox(
