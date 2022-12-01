@@ -49,6 +49,9 @@ const {
   getUserStreamsCount,
   getUserStreams
 } = require('@/modules/core/repositories/streams')
+const {
+  addStreamCreatedActivity
+} = require('@/modules/activitystream/services/streamActivity')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -245,19 +248,12 @@ module.exports = {
 
       const id = await createStream({ ...args.stream, ownerId: context.userId })
 
-      await saveActivity({
+      await addStreamCreatedActivity({
         streamId: id,
-        resourceType: 'stream',
-        resourceId: id,
-        actionType: ActionTypes.Stream.Create,
-        userId: context.userId,
-        info: { stream: args.stream },
-        message: `Stream '${args.stream.name}' created`
+        stream: args.stream,
+        creatorId: context.userId
       })
-      await pubsub.publish(USER_STREAM_ADDED, {
-        userStreamAdded: { id, ...args.stream },
-        ownerId: context.userId
-      })
+
       return id
     },
 

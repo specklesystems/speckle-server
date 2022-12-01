@@ -35,13 +35,12 @@ import {
   insertComments
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
+import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
 
 /**
  * TODO:
  * - Create empty stream if target not found
  * - Wrap everything in a transaction with the default isolation level, that shouldn't really lock anything?
- * - Create activity item for cloned stream?
- * - Previews busted?
  */
 
 type CloneStreamInitialState = {
@@ -366,6 +365,13 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
 
   // Clone comments (if this fails/throws, we can keep the stream, we'll just have some comments missing)
   await cloneStreamComments(state, coreCloneResult)
+
+  // Create activity item
+  await addStreamClonedActivity({
+    sourceStreamId,
+    newStreamId,
+    clonerId: userId
+  })
 
   return newStreamId
 }

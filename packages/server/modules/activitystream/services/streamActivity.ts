@@ -2,6 +2,55 @@ import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { pubsub, StreamPubsubEvents } from '@/modules/shared'
+import { StreamCreateInput } from '@/test/graphql/generated/graphql'
+
+/**
+ * Save "user cloned stream X" activity item
+ */
+export async function addStreamClonedActivity(params: {
+  sourceStreamId: string
+  newStreamId: string
+  clonerId: string
+}) {
+  const { sourceStreamId, newStreamId, clonerId } = params
+
+  await saveActivity({
+    streamId: newStreamId,
+    resourceType: ResourceTypes.Stream,
+    resourceId: newStreamId,
+    actionType: ActionTypes.Stream.Clone,
+    userId: clonerId,
+    info: { sourceStreamId, newStreamId, clonerId },
+    message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+  })
+}
+
+/**
+ * Save "user created stream" activity item
+ */
+export async function addStreamCreatedActivity(params: {
+  streamId: string
+  creatorId: string
+  stream: StreamCreateInput
+}) {
+  const { streamId, creatorId, stream } = params
+
+  await Promise.all([
+    saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: streamId,
+      actionType: ActionTypes.Stream.Create,
+      userId: creatorId,
+      info: { stream },
+      message: `Stream ${stream.name} created`
+    }),
+    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
+      userStreamAdded: { id: streamId, ...stream },
+      ownerId: creatorId
+    })
+  ])
+}
 
 /**
  * Save "stream permissions granted to user" activity item
