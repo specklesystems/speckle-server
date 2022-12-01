@@ -16,8 +16,8 @@ const props = defineProps<{
 
 const computedClasses = computed(() => {
   const classParts: string[] = [
-    'inline-flex justify-center items-center outline-none',
-    'normal px-16 py-5 shadow rounded'
+    'h-20 inline-flex justify-center items-center outline-none',
+    'normal px-16 py-5 shadow rounded transition active:scale-105'
   ]
 
   if (props.disabled) {
@@ -28,7 +28,7 @@ const computedClasses = computed(() => {
         ? 'bg-primary-focus text-foreground-on-primary'
         : 'bg-foundation text-foreground'
     )
-    classParts.push('ring-primary-outline-2 hover:ring-2')
+    classParts.push('ring-primary-outline-2 hover:ring-4')
   }
 
   return classParts.join(' ')
