@@ -71,18 +71,18 @@
 
 :root.dark {
   /* used only as the page background */
-  --foundation-page: #121212;
+  --foundation-page: #18181b;
   /* used as the background for any element that sits on the page */
-  --foundation: #171717;
+  --foundation: #27272a;
   /* used as the background for any element that you want to emphasize */
   --foundation-2: #1e293b;
   /* for disabled backgrounds */
   --foundation-disabled: #2b2b2b;
 
   /* default foreground color */
-  --foreground: #d4d4d4;
+  --foreground: #fafafa;
   /* dimmer foreground color, e.g. caption text */
-  --foreground-2: #737373;
+  --foreground-2: #c0c0c0;
   /* disabled foreground color */
   --foreground-disabled: #717171;
   /* foreground color when put on top of a primary colored background */
