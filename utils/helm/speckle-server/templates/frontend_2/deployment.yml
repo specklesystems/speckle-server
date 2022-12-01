@@ -9,8 +9,7 @@ spec:
   replicas: {{ .Values.frontend_2.replicas }}
   selector:
     matchLabels:
-      app: speckle-frontend-2
-      project: speckle-server
+{{ include "frontend-2.selectorLabels" . | indent 6 }}
   strategy:
     type: RollingUpdate
   template:
