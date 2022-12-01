@@ -100,7 +100,9 @@ workflows:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore: main
+              ignore:
+                - main
+                - frontend-2
             tags:
               ignore: /.*/
 
@@ -488,6 +490,7 @@ jobs:
           command: |
             [[ "${CIRCLE_TAG}" ]] && echo "proceed because tag is set" && exit 0
             [[ "${CIRCLE_BRANCH}" == "main" ]] && echo "proceed because main branch" && exit 0
+            [[ "${CIRCLE_BRANCH}" == "frontend-2" ]] && echo "proceed because frontend-2 branch" && exit 0
             [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
             echo "proceeding"
       - setup_remote_docker:
