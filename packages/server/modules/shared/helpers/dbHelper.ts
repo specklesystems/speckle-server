@@ -29,7 +29,6 @@ export async function* executeBatchedSelect<
   while (hasMorePages) {
     const q = selectQuery.clone().offset(currentOffset)
     const results = (await q) as TResult
-    yield results
 
     if (!results.length) {
       hasMorePages = false
@@ -37,5 +36,7 @@ export async function* executeBatchedSelect<
     } else {
       currentOffset += results.length
     }
+
+    yield results
   }
 }

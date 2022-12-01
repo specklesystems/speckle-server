@@ -103,7 +103,7 @@ export default {
   },
   computed: {
     objects() {
-      return this.viewerState.selectedObjects
+      return this.viewerState.selectedObjects || []
     },
     props() {
       return this.objects.map((obj) => {

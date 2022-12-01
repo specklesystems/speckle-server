@@ -120,7 +120,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query Stream($id: String!) {
+        query StreamCommentsMetadata($id: String!) {
           stream(id: $id) {
             id
             name
@@ -134,7 +134,11 @@ export default {
     },
     comments: {
       query: gql`
-        query ($streamId: String!, $archived: Boolean!, $cursor: String) {
+        query StreamCommentsPage(
+          $streamId: String!
+          $archived: Boolean!
+          $cursor: String
+        ) {
           comments(
             streamId: $streamId
             limit: 10

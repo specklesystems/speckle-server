@@ -147,7 +147,10 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          selectedCommentMetaData
+          selectedCommentMetaData {
+            id
+            selectionLocation
+          }
         }
       }
     `)

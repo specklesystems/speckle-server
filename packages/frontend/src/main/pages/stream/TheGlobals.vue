@@ -166,7 +166,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query Stream($id: String!) {
+        query StreamGlobalsMetadata($id: String!) {
           stream(id: $id) {
             id
             name

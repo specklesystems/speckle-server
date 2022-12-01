@@ -376,7 +376,10 @@ export default defineComponent({
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          selectedCommentMetaData
+          selectedCommentMetaData {
+            id
+            selectionLocation
+          }
           selectedObjects
           currentFilterState
           sectionBox

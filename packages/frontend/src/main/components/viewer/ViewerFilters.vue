@@ -129,7 +129,7 @@ export default {
   },
   computed: {
     activeFilter() {
-      return this.viewerState.objectProperties.find(
+      return this.propertyFilters.find(
         (prop) => prop.key === this.viewerState.localFilterPropKey
       )
     },

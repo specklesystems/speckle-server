@@ -24,7 +24,8 @@ import { chunk } from 'lodash'
 import {
   getBatchedStreamBranches,
   generateBranchId,
-  insertBranches
+  insertBranches,
+  deleteStreamBranches
 } from '@/modules/core/repositories/branches'
 import {
   generateCommentId,
@@ -32,17 +33,35 @@ import {
   getCommentLinks,
   insertComments
 } from '@/modules/comments/repositories/comments'
+import dayjs from 'dayjs'
 
 /**
  * TODO:
  * - Create empty stream if target not found
  * - Wrap everything in a transaction with the default isolation level, that shouldn't really lock anything?
  * - Create activity item for cloned stream?
+ * - Previews busted?
  */
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
   targetStream: StreamWithOptionalRole
+}
+
+/**
+ * Our batch inserts are very quick, but this causes many items to have the same created date. This causes issues in our pagination, so
+ * this utility is used to make each date instance used comes after the previous one.
+ *
+ * It may be somewhat inaccurate that we manipulate the date instead of waiting between each insertion, but it's definitely faster and the accuracies are very small
+ */
+const incrementingDateGenerator = () => {
+  let date = dayjs()
+  return {
+    getNewDate: () => {
+      date = date.add(1, 'millisecond')
+      return date.toDate()
+    }
+  }
 }
 
 const prepareState = async (
@@ -77,10 +96,11 @@ async function cloneStreamEntity(state: CloneStreamInitialState) {
 }
 
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
+  const { getNewDate } = incrementingDateGenerator()
   for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id)) {
     objectsBatch.forEach((o) => {
       o.streamId = newStreamId
-      o.createdAt = new Date()
+      o.createdAt = getNewDate()
     })
 
     await insertObjects(objectsBatch)
@@ -91,12 +111,13 @@ async function cloneCommits(state: CloneStreamInitialState) {
   // oldCommitId/newCommitId
   const commitIdMap = new Map<string, string>()
 
+  const { getNewDate } = incrementingDateGenerator()
   for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id)) {
     commitsBatch.forEach((c) => {
       const oldId = c.id
       c.id = generateCommitId()
       c.author = state.user.id
-      c.createdAt = new Date()
+      c.createdAt = getNewDate()
 
       commitIdMap.set(oldId, c.id)
     })
@@ -128,13 +149,17 @@ async function createStreamCommitReferences(
 }
 
 async function cloneBranches(state: CloneStreamInitialState, newStreamId: string) {
+  // delete default 'main'
+  await deleteStreamBranches(newStreamId)
+
   // oldBranchId/newBranchId
   const branchIdMap = new Map<string, string>()
 
+  const { getNewDate } = incrementingDateGenerator()
   for await (const branchesBatch of getBatchedStreamBranches(state.targetStream.id)) {
     branchesBatch.forEach((b) => {
       const oldId = b.id
-      const createdDate = new Date()
+      const createdDate = getNewDate()
 
       b.id = generateBranchId()
       b.streamId = newStreamId
@@ -216,6 +241,7 @@ async function cloneComments(
   const commentIdMap = new Map<string, string>()
 
   // First clone parent comments/threads
+  const { getNewDate } = incrementingDateGenerator()
   const cloneComments = async (threads: boolean) => {
     for await (const commentsBatch of getBatchedStreamComments(
       initialState.targetStream.id,
@@ -226,7 +252,7 @@ async function cloneComments(
     )) {
       commentsBatch.forEach((c) => {
         const oldId = c.id
-        const newDate = new Date()
+        const newDate = getNewDate()
 
         c.id = generateCommentId()
         c.streamId = coreResult.newStreamId
@@ -279,7 +305,7 @@ async function cloneCommentLinks(
     const commentLinks = await getCommentLinks(oldCommentIdBatch)
     commentLinks.forEach((cl) => {
       const newCommentId = commentIdMap.get(cl.commentId)
-      if (newCommentId) {
+      if (!newCommentId) {
         throw new StreamCloneError('Mismatched comment_links source comment')
       }
 

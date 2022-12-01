@@ -29,6 +29,10 @@ export function getBatchedStreamBranches(
   return executeBatchedSelect(baseQuery, options)
 }
 
+export async function deleteStreamBranches(streamId: string) {
+  return await Branches.knex().where(Branches.col.streamId, streamId).del()
+}
+
 export async function insertBranches(branches: BranchRecord[]) {
   return await Branches.knex().insert(branches)
 }
