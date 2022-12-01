@@ -143,29 +143,18 @@ const typeClasses = computed(() => {
 
   // Rings
   if (props.type !== 'link') {
-    const ringClass = isXs ? 'ring-1' : isBase || isSm ? 'ring-2' : 'ring'
-
+    // const ringClass = isXs ? 'hover:ring-1' : isBase || isSm ? 'hover:ring-2' : 'ring'
+    const ringClass = 'ring-4'
     if (props.type === 'outline') {
       classParts.push(
         disabled
-          ? `ring-foreground-disabled ${ringClass}`
-          : `ring-primary-outline ${ringClass}`
+          ? `border-2 border-foreground-disabled`
+          : `border-2 border-primary hover:${ringClass}`
       )
     } else if (!disabled) {
       classParts.push('ring-primary-outline-2')
 
-      switch (props.size) {
-        case 'xs':
-          classParts.push('focus:ring-1 hover:ring-1')
-          break
-        case 'sm':
-        case 'base':
-          classParts.push('focus:ring-2 hover:ring-2')
-          break
-        default:
-          classParts.push('focus:ring hover:ring')
-          break
-      }
+      classParts.push(`focus:${ringClass} hover:${ringClass}`)
     }
   }
 
@@ -234,7 +223,7 @@ const generalClasses = computed(() => {
 
 const buttonClasses = computed(() =>
   [
-    'inline-flex justify-center items-center outline-none',
+    'transition inline-flex justify-center items-center outline-none',
     generalClasses.value,
     typeClasses.value,
     sizeClasses.value

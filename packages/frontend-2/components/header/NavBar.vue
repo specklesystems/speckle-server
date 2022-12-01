@@ -9,20 +9,7 @@
         <div class="flex h-14 transition-all justify-between">
           <div class="flex">
             <HeaderLogoBlock :active="false" class="mr-1" />
-            <div class="hidden sm:flex flex-shrink-0 items-center">
-              <HeaderNavLink to="/" name="Dashboard" :separator="false" class="ml-2" />
-
-              <HeaderNavLink
-                v-for="nl in nav.filter((n) => !!n)"
-                :key="nl.to"
-                :to="nl.to"
-                :name="nl.name"
-                :separator="nl.separator"
-              />
-
-              <!-- <HeaderNavLink to="/test" name="Long Project Name" /> -->
-              <!-- <code class="text-xs">{{ nav }}</code> -->
-            </div>
+            <div class="hidden sm:flex flex-shrink-0 items-center"></div>
           </div>
           <div class="hidden sm:ml-6 sm:flex sm:items-center">
             <HeaderThemeToggle />
@@ -52,7 +39,7 @@
                 leave-to-class="transform opacity-0 scale-95"
               >
                 <MenuItems
-                  class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-foundation py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                  class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-foundation py-1 shadow-lg focus:outline-none"
                 >
                   <MenuItem
                     v-for="item in userNavigation"
@@ -88,16 +75,6 @@
       </div>
 
       <DisclosurePanel class="sm:hidden" on-pointerleave="">
-        <div class="flex flex-col space-y-6 pt-2 pb-6 px-5">
-          <HeaderNavLink to="/" name="Dashboard" class="" />
-          <HeaderNavLink
-            v-for="nl in nav.filter((n) => !!n)"
-            :key="nl.to"
-            :to="nl.to"
-            :name="nl.name"
-            :separator="nl.separator"
-          />
-        </div>
         <div class="border-t border-foundation-2 pt-4 pb-4">
           <div class="flex items-center px-4">
             <div class="flex-shrink-0">
@@ -156,8 +133,6 @@ type UserNavigationLink = {
   href?: string
   onClick?: () => void
 }
-
-const nav = useNav()
 
 const { logout } = useAuthManager()
 const { isLoggedIn, activeUser } = useActiveUser()

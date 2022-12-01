@@ -23,55 +23,55 @@ const config = {
     fontFamily: {
       sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'"
     },
-    colors: {
-      foundation: {
-        page: 'var(--foundation-page)',
-        DEFAULT: 'var(--foundation)',
-        2: 'var(--foundation-2)',
-        disabled: 'var(--foundation-disabled)'
-      },
-      foreground: {
-        DEFAULT: 'var(--foreground)',
-        2: 'var(--foreground-2)',
-        disabled: 'var(--foreground-disabled)',
-        'on-primary': 'var(--foreground-on-primary)'
-      },
-      primary: {
-        DEFAULT: 'var(--primary)',
-        focus: 'var(--primary-focus)',
-        muted: 'var(--primary-muted)',
-        outline: 'var(--primary-outline)',
-        'outline-2': 'var(--primary-outline-2)'
-      },
-      success: {
-        DEFAULT: 'var(--success)',
-        lighter: 'var(--success-lighter)',
-        darker: 'var(--success-darker)'
-      },
-      warning: {
-        DEFAULT: 'var(--warning)',
-        lighter: 'var(--warning-lighter)',
-        darker: 'var(--warning-darker)'
-      },
-      info: {
-        DEFAULT: 'var(--info)',
-        lighter: 'var(--info-lighter)',
-        darker: 'var(--info-darker)'
-      },
-      danger: {
-        DEFAULT: 'var(--danger)',
-        lighter: 'var(--danger-lighter)',
-        darker: 'var(--danger-darker)'
-      },
-      /**
-       * TODO: Remove, not in the design system anymore
-       */
-      disabled: {
-        DEFAULT: 'var(--disabled)',
-        muted: 'var(--disabled-muted)'
-      }
-    },
     extend: {
+      colors: {
+        foundation: {
+          page: 'var(--foundation-page)',
+          DEFAULT: 'var(--foundation)',
+          2: 'var(--foundation-2)',
+          disabled: 'var(--foundation-disabled)'
+        },
+        foreground: {
+          DEFAULT: 'var(--foreground)',
+          2: 'var(--foreground-2)',
+          disabled: 'var(--foreground-disabled)',
+          'on-primary': 'var(--foreground-on-primary)'
+        },
+        primary: {
+          DEFAULT: 'var(--primary)',
+          focus: 'var(--primary-focus)',
+          muted: 'var(--primary-muted)',
+          outline: 'var(--primary-outline)',
+          'outline-2': 'var(--primary-outline-2)'
+        },
+        success: {
+          DEFAULT: 'var(--success)',
+          lighter: 'var(--success-lighter)',
+          darker: 'var(--success-darker)'
+        },
+        warning: {
+          DEFAULT: 'var(--warning)',
+          lighter: 'var(--warning-lighter)',
+          darker: 'var(--warning-darker)'
+        },
+        info: {
+          DEFAULT: 'var(--info)',
+          lighter: 'var(--info-lighter)',
+          darker: 'var(--info-darker)'
+        },
+        danger: {
+          DEFAULT: 'var(--danger)',
+          lighter: 'var(--danger-lighter)',
+          darker: 'var(--danger-darker)'
+        },
+        /**
+         * TODO: Remove, not in the design system anymore
+         */
+        disabled: {
+          DEFAULT: 'var(--disabled)',
+          muted: 'var(--disabled-muted)'
+        }
+      },
       borderRadius: {
         '4xl': '2rem'
       }
