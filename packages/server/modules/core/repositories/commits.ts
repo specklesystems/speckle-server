@@ -24,6 +24,7 @@ import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
+import { Knex } from 'knex'
 
 export const generateCommitId = () => crs({ length: 10 })
 
@@ -124,14 +125,29 @@ export function getBatchedBranchCommits(
   return executeBatchedSelect(baseQuery, options)
 }
 
-export async function insertCommits(commits: CommitRecord[]) {
-  return await Commits.knex().insert(commits)
+export async function insertCommits(
+  commits: CommitRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = Commits.knex().insert(commits)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }
 
-export async function insertStreamCommits(streamCommits: StreamCommitRecord[]) {
-  return await StreamCommits.knex().insert(streamCommits)
+export async function insertStreamCommits(
+  streamCommits: StreamCommitRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = StreamCommits.knex().insert(streamCommits)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }
 
-export async function insertBranchCommits(branchCommits: BranchCommitRecord[]) {
-  return await BranchCommits.knex().insert(branchCommits)
+export async function insertBranchCommits(
+  branchCommits: BranchCommitRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = BranchCommits.knex().insert(branchCommits)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }

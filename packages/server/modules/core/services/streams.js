@@ -9,7 +9,8 @@ const {
   getFavoritedStreams,
   getFavoritedStreamsCount,
   setStreamFavorited,
-  canUserFavoriteStream
+  canUserFavoriteStream,
+  createStream: createStreamInDb
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 const { StreamAccessUpdateError } = require('@/modules/core/errors/stream')
@@ -24,33 +25,11 @@ module.exports = {
    * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
    * @returns {Promise<string>}
    */
-  async createStream({
-    name,
-    description,
-    isPublic,
-    ownerId,
-    withContributors,
-    isDiscoverable
-  }) {
-    const shouldBePublic = isPublic !== false
-    const shouldBeDiscoverable = isDiscoverable !== false && shouldBePublic
+  async createStream(params) {
+    const { ownerId, withContributors } = params
 
-    const stream = {
-      id: crs({ length: 10 }),
-      name: name || generateStreamName(),
-      description: description || '',
-      isPublic: shouldBePublic,
-      isDiscoverable: shouldBeDiscoverable,
-      updatedAt: knex.fn.now()
-    }
-
-    // Create the stream & set up permissions
-    const [{ id: streamId }] = await Streams.knex().returning('id').insert(stream)
-    await StreamAcl.knex().insert({
-      userId: ownerId,
-      resourceId: streamId,
-      role: 'stream:owner'
-    })
+    const stream = await createStreamInDb(params, { ownerId })
+    const streamId = stream.id
 
     // Create a default main branch
     await createBranch({
@@ -337,44 +316,4 @@ module.exports = {
 
     return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0
   }
-}
-
-const adjectives = [
-  'Tall',
-  'Curved',
-  'Stacked',
-  'Purple',
-  'Pink',
-  'Rectangular',
-  'Circular',
-  'Oval',
-  'Shiny',
-  'Speckled',
-  'Blue',
-  'Stretched',
-  'Round',
-  'Spherical',
-  'Majestic',
-  'Symmetrical'
-]
-
-const nouns = [
-  'Building',
-  'House',
-  'Treehouse',
-  'Tower',
-  'Tunnel',
-  'Bridge',
-  'Pyramid',
-  'Structure',
-  'Edifice',
-  'Palace',
-  'Castle',
-  'Villa'
-]
-
-const generateStreamName = () => {
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
-    nouns[Math.floor(Math.random() * nouns.length)]
-  }`
 }

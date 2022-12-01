@@ -18,13 +18,15 @@ import {
   DiscoverableStreamsSortingInput,
   DiscoverableStreamsSortType,
   QueryDiscoverableStreamsArgs,
-  SortDirection
+  SortDirection,
+  StreamCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
+import { Knex } from 'knex'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -40,6 +42,46 @@ export type StreamWithOptionalRole = StreamRecord & {
 export const STREAM_WITH_OPTIONAL_ROLE_COLUMNS = [...Streams.cols, StreamAcl.col.role]
 
 export const generateId = () => cryptoRandomString({ length: 10 })
+
+const adjectives = [
+  'Tall',
+  'Curved',
+  'Stacked',
+  'Purple',
+  'Pink',
+  'Rectangular',
+  'Circular',
+  'Oval',
+  'Shiny',
+  'Speckled',
+  'Blue',
+  'Stretched',
+  'Round',
+  'Spherical',
+  'Majestic',
+  'Symmetrical'
+]
+
+const nouns = [
+  'Building',
+  'House',
+  'Treehouse',
+  'Tower',
+  'Tunnel',
+  'Bridge',
+  'Pyramid',
+  'Structure',
+  'Edifice',
+  'Palace',
+  'Castle',
+  'Villa'
+]
+
+const generateStreamName = () => {
+  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
+    nouns[Math.floor(Math.random() * nouns.length)]
+  }`
+}
 
 /**
  * Get multiple streams. If userId is specified, the role will be resolved as well.
@@ -587,4 +629,50 @@ export async function getUserStreamsCount({
 
   const [res] = await countQuery
   return parseInt(res.count)
+}
+
+export async function createStream(
+  input: StreamCreateInput,
+  options?: Partial<{
+    /**
+     * If set, will assign owner permissions to this user
+     */
+    ownerId: string
+    trx: Knex.Transaction
+  }>
+) {
+  const { isPublic, isDiscoverable, name, description } = input
+  const { ownerId, trx } = options || {}
+
+  const shouldBePublic = isPublic !== false
+  const shouldBeDiscoverable = isDiscoverable !== false && shouldBePublic
+
+  const id = generateId()
+  const stream = {
+    id,
+    name: name || generateStreamName(),
+    description: description || '',
+    isPublic: shouldBePublic,
+    isDiscoverable: shouldBeDiscoverable,
+    updatedAt: knex.fn.now()
+  }
+
+  // Create the stream & set up permissions
+  const streamQuery = Streams.knex().insert(stream, '*')
+  if (trx) streamQuery.transacting(trx)
+
+  const insertResults = await streamQuery
+  const newStream = insertResults[0] as StreamRecord
+
+  if (ownerId) {
+    const streamAclQuery = StreamAcl.knex().insert({
+      userId: ownerId,
+      resourceId: id,
+      role: Roles.Stream.Owner
+    })
+    if (trx) streamAclQuery.transacting(trx)
+    await streamAclQuery
+  }
+
+  return newStream
 }

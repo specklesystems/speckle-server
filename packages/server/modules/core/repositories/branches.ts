@@ -5,6 +5,7 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
+import { Knex } from 'knex'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -29,10 +30,11 @@ export function getBatchedStreamBranches(
   return executeBatchedSelect(baseQuery, options)
 }
 
-export async function deleteStreamBranches(streamId: string) {
-  return await Branches.knex().where(Branches.col.streamId, streamId).del()
-}
-
-export async function insertBranches(branches: BranchRecord[]) {
-  return await Branches.knex().insert(branches)
+export async function insertBranches(
+  branches: BranchRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = Branches.knex().insert(branches)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }

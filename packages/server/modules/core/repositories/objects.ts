@@ -5,6 +5,7 @@ import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
+import { Knex } from 'knex'
 
 export async function getObject(objectId: string): Promise<Optional<ObjectRecord>> {
   return await Objects.knex<ObjectRecord[]>().where(Objects.col.id, objectId).first()
@@ -21,6 +22,11 @@ export function getBatchedStreamObjects(
   return executeBatchedSelect(baseQuery, options)
 }
 
-export async function insertObjects(objects: ObjectRecord[]) {
-  return await Objects.knex().insert(objects)
+export async function insertObjects(
+  objects: ObjectRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = Objects.knex().insert(objects)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }

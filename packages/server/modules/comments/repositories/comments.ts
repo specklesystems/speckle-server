@@ -8,6 +8,7 @@ import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
+import { Knex } from 'knex'
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -101,19 +102,34 @@ export function getBatchedStreamComments(
   return executeBatchedSelect(baseQuery, options)
 }
 
-export async function getCommentLinks(commentIds: string[]) {
+export async function getCommentLinks(
+  commentIds: string[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
   const q = CommentLinks.knex<CommentLinkRecord[]>().whereIn(
     CommentLinks.col.commentId,
     commentIds
   )
 
+  if (options?.trx) q.transacting(options.trx)
+
   return await q
 }
 
-export async function insertComments(comments: CommentRecord[]) {
-  return await Comments.knex().insert(comments)
+export async function insertComments(
+  comments: CommentRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = Comments.knex().insert(comments)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }
 
-export async function insertCommentLinks(commentLinks: CommentLinkRecord[]) {
-  return await CommentLinks.knex().insert(commentLinks)
+export async function insertCommentLinks(
+  commentLinks: CommentLinkRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = CommentLinks.knex().insert(commentLinks)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
 }

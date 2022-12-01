@@ -8,6 +8,7 @@ export type BatchedSelectOptions = {
    * Defaults to: 100
    */
   batchSize: number
+  trx: Knex.Transaction
 }
 
 /**
@@ -20,7 +21,9 @@ export async function* executeBatchedSelect<
   selectQuery: Knex.QueryBuilder<TRecord, TResult>,
   options?: Partial<BatchedSelectOptions>
 ): AsyncGenerator<TResult, void, unknown> {
-  const { batchSize = 100 } = options || {}
+  const { batchSize = 100, trx } = options || {}
+
+  if (trx) selectQuery.transacting(trx)
 
   selectQuery.limit(batchSize)
 

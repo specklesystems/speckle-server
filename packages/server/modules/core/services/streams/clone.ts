@@ -1,13 +1,15 @@
-import { Optional } from '@speckle/shared'
 import { StreamCloneError } from '@/modules/core/errors/stream'
 import {
   BranchCommitRecord,
   StreamCommitRecord,
   UserRecord
 } from '@/modules/core/helpers/types'
-import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import {
+  createStream,
+  getStream,
+  StreamWithOptionalRole
+} from '@/modules/core/repositories/streams'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { createStream, deleteStream } from '@/modules/core/services/streams'
 import {
   getBatchedStreamObjects,
   insertObjects
@@ -24,8 +26,7 @@ import { chunk } from 'lodash'
 import {
   getBatchedStreamBranches,
   generateBranchId,
-  insertBranches,
-  deleteStreamBranches
+  insertBranches
 } from '@/modules/core/repositories/branches'
 import {
   generateCommentId,
@@ -36,16 +37,18 @@ import {
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
 import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
+import knex from '@/db/knex'
+import { Knex } from 'knex'
 
 /**
  * TODO:
  * - Create empty stream if target not found
- * - Wrap everything in a transaction with the default isolation level, that shouldn't really lock anything?
  */
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
   targetStream: StreamWithOptionalRole
+  trx: Knex.Transaction
 }
 
 /**
@@ -80,30 +83,41 @@ const prepareState = async (
     throw new StreamCloneError('Clone target user not found')
   }
 
-  return { user, targetStream }
+  const trx = await knex.transaction()
+
+  return { user, targetStream, trx }
 }
 
 async function cloneStreamEntity(state: CloneStreamInitialState) {
-  const { targetStream, user } = state
+  const { targetStream, user, trx } = state
 
-  return await createStream({
-    name: targetStream.name,
-    description: targetStream.description,
-    isPublic: targetStream.isPublic,
-    isDiscoverable: targetStream.isDiscoverable,
-    ownerId: user.id
-  })
+  const newStream = await createStream(
+    {
+      name: targetStream.name,
+      description: targetStream.description,
+      isPublic: targetStream.isPublic,
+      isDiscoverable: targetStream.isDiscoverable
+    },
+    {
+      ownerId: user.id,
+      trx
+    }
+  )
+
+  return newStream.id
 }
 
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
   const { getNewDate } = incrementingDateGenerator()
-  for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id)) {
+  for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id, {
+    trx: state.trx
+  })) {
     objectsBatch.forEach((o) => {
       o.streamId = newStreamId
       o.createdAt = getNewDate()
     })
 
-    await insertObjects(objectsBatch)
+    await insertObjects(objectsBatch, { trx: state.trx })
   }
 }
 
@@ -112,7 +126,9 @@ async function cloneCommits(state: CloneStreamInitialState) {
   const commitIdMap = new Map<string, string>()
 
   const { getNewDate } = incrementingDateGenerator()
-  for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id)) {
+  for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id, {
+    trx: state.trx
+  })) {
     commitsBatch.forEach((c) => {
       const oldId = c.id
       c.id = generateCommitId()
@@ -122,13 +138,14 @@ async function cloneCommits(state: CloneStreamInitialState) {
       commitIdMap.set(oldId, c.id)
     })
 
-    await insertCommits(commitsBatch)
+    await insertCommits(commitsBatch, { trx: state.trx })
   }
 
   return commitIdMap
 }
 
 async function createStreamCommitReferences(
+  state: CloneStreamInitialState,
   commitIdMap: Map<string, string>,
   newStreamId: string
 ) {
@@ -143,20 +160,20 @@ async function createStreamCommitReferences(
           streamId: newStreamId,
           commitId: id
         })
-      )
+      ),
+      { trx: state.trx }
     )
   }
 }
 
 async function cloneBranches(state: CloneStreamInitialState, newStreamId: string) {
-  // delete default 'main'
-  await deleteStreamBranches(newStreamId)
-
   // oldBranchId/newBranchId
   const branchIdMap = new Map<string, string>()
 
   const { getNewDate } = incrementingDateGenerator()
-  for await (const branchesBatch of getBatchedStreamBranches(state.targetStream.id)) {
+  for await (const branchesBatch of getBatchedStreamBranches(state.targetStream.id, {
+    trx: state.trx
+  })) {
     branchesBatch.forEach((b) => {
       const oldId = b.id
       const createdDate = getNewDate()
@@ -170,18 +187,21 @@ async function cloneBranches(state: CloneStreamInitialState, newStreamId: string
       branchIdMap.set(oldId, b.id)
     })
 
-    await insertBranches(branchesBatch)
+    await insertBranches(branchesBatch, { trx: state.trx })
   }
 
   return branchIdMap
 }
 
 async function createBranchCommitReferences(
+  state: CloneStreamInitialState,
   commitIdMap: Map<string, string>,
   branchIdMap: Map<string, string>
 ) {
   const oldBranchIds = [...branchIdMap.keys()]
-  for await (const branchCommits of getBatchedBranchCommits(oldBranchIds)) {
+  for await (const branchCommits of getBatchedBranchCommits(oldBranchIds, {
+    trx: state.trx
+  })) {
     const newBranchCommits = branchCommits.map((bc): BranchCommitRecord => {
       const newBranchId = branchIdMap.get(bc.branchId)
       const newCommitId = commitIdMap.get(bc.commitId)
@@ -199,42 +219,35 @@ async function createBranchCommitReferences(
       return { commitId: newCommitId, branchId: newBranchId }
     })
 
-    await insertBranchCommits(newBranchCommits)
+    await insertBranchCommits(newBranchCommits, { trx: state.trx })
   }
 }
 
 async function cloneStreamCore(state: CloneStreamInitialState) {
-  let newStreamId: Optional<string>
-  try {
-    // Create stream
-    newStreamId = await cloneStreamEntity(state)
+  const newStreamId = await cloneStreamEntity(state)
 
-    // Clone objects
-    await cloneStreamObjects(state, newStreamId)
+  // Clone objects
+  await cloneStreamObjects(state, newStreamId)
 
-    // Clone commits
-    const commitIdMap = await cloneCommits(state)
+  // Clone commits
+  const commitIdMap = await cloneCommits(state)
 
-    // Create stream_commits references
-    await createStreamCommitReferences(commitIdMap, newStreamId)
+  // Create stream_commits references
+  await createStreamCommitReferences(state, commitIdMap, newStreamId)
 
-    // Clone branches
-    const branchIdMap = await cloneBranches(state, newStreamId)
+  // Clone branches
+  const branchIdMap = await cloneBranches(state, newStreamId)
 
-    // Create branch_commits
-    await createBranchCommitReferences(commitIdMap, branchIdMap)
+  // Create branch_commits
+  await createBranchCommitReferences(state, commitIdMap, branchIdMap)
 
-    return { newStreamId, commitIdMap }
-  } catch (e) {
-    if (newStreamId) await deleteStream({ streamId: newStreamId })
-    throw e
-  }
+  return { newStreamId, commitIdMap }
 }
 
 type CoreStreamCloneResult = Awaited<ReturnType<typeof cloneStreamCore>>
 
 async function cloneComments(
-  initialState: CloneStreamInitialState,
+  state: CloneStreamInitialState,
   coreResult: CoreStreamCloneResult
 ) {
   // oldCommentId/newCommentId
@@ -243,13 +256,11 @@ async function cloneComments(
   // First clone parent comments/threads
   const { getNewDate } = incrementingDateGenerator()
   const cloneComments = async (threads: boolean) => {
-    for await (const commentsBatch of getBatchedStreamComments(
-      initialState.targetStream.id,
-      {
-        withoutParentCommentOnly: threads,
-        withParentCommentOnly: !threads
-      }
-    )) {
+    for await (const commentsBatch of getBatchedStreamComments(state.targetStream.id, {
+      withoutParentCommentOnly: threads,
+      withParentCommentOnly: !threads,
+      trx: state.trx
+    })) {
       commentsBatch.forEach((c) => {
         const oldId = c.id
         const newDate = getNewDate()
@@ -265,7 +276,7 @@ async function cloneComments(
             throw new StreamCloneError('Unexpected missing comment mapping', {
               info: {
                 newStreamId: coreResult.newStreamId,
-                oldStreamId: initialState.targetStream.id,
+                oldStreamId: state.targetStream.id,
                 oldParentCommentId: c.parentComment
               }
             })
@@ -277,7 +288,7 @@ async function cloneComments(
         commentIdMap.set(oldId, c.id)
       })
 
-      await insertComments(commentsBatch)
+      await insertComments(commentsBatch, { trx: state.trx })
     }
   }
 
@@ -288,13 +299,14 @@ async function cloneComments(
 }
 
 async function cloneCommentLinks(
-  initialState: CloneStreamInitialState,
+  state: CloneStreamInitialState,
   coreResult: CoreStreamCloneResult,
   commentIdMap: Map<string, string>
 ) {
   const {
-    targetStream: { id: oldStreamId }
-  } = initialState
+    targetStream: { id: oldStreamId },
+    trx
+  } = state
   const { commitIdMap, newStreamId } = coreResult
 
   const batchSize = 100
@@ -302,7 +314,7 @@ async function cloneCommentLinks(
   const batchedOldCommentIds = chunk(oldCommentIds, batchSize)
 
   for (const oldCommentIdBatch of batchedOldCommentIds) {
-    const commentLinks = await getCommentLinks(oldCommentIdBatch)
+    const commentLinks = await getCommentLinks(oldCommentIdBatch, { trx })
     commentLinks.forEach((cl) => {
       const newCommentId = commentIdMap.get(cl.commentId)
       if (!newCommentId) {
@@ -335,7 +347,7 @@ async function cloneCommentLinks(
       }
     })
 
-    await insertCommentLinks(commentLinks)
+    await insertCommentLinks(commentLinks, { trx })
   }
 }
 
@@ -359,19 +371,27 @@ async function cloneStreamComments(
 export async function cloneStream(userId: string, sourceStreamId: string) {
   const state = await prepareState(userId, sourceStreamId)
 
-  // Clone stream/commits/branches/objects
-  const coreCloneResult = await cloneStreamCore(state)
-  const newStreamId = coreCloneResult.newStreamId
+  try {
+    // Clone stream/commits/branches/objects
+    const coreCloneResult = await cloneStreamCore(state)
+    const newStreamId = coreCloneResult.newStreamId
 
-  // Clone comments (if this fails/throws, we can keep the stream, we'll just have some comments missing)
-  await cloneStreamComments(state, coreCloneResult)
+    // Clone comments (if this fails/throws, we can keep the stream, we'll just have some comments missing)
+    await cloneStreamComments(state, coreCloneResult)
 
-  // Create activity item
-  await addStreamClonedActivity({
-    sourceStreamId,
-    newStreamId,
-    clonerId: userId
-  })
+    // Create activity item
+    await addStreamClonedActivity({
+      sourceStreamId,
+      newStreamId,
+      clonerId: userId
+    })
 
-  return newStreamId
+    // Commit transaction
+    state.trx.commit()
+
+    return newStreamId
+  } catch (e) {
+    await state.trx.rollback()
+    throw e
+  }
 }
