@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@speckle/objectloader": "workspace:^",
+    "@speckle/shared": "workspace:^",
     "@speckle/viewer": "workspace:^",
     "cookie-parser": "~1.4.4",
     "crypto": "^1.0.1",

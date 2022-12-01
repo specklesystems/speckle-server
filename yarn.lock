@@ -4821,6 +4821,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/fileimport-service@workspace:packages/fileimport-service"
   dependencies:
+    "@speckle/shared": "workspace:^"
     aws-sdk: ^2.1075.0
     bcrypt: ^5.0.1
     cross-env: ^7.0.3
@@ -4955,6 +4956,7 @@ __metadata:
   dependencies:
     "@babel/core": ^7.17.5
     "@speckle/objectloader": "workspace:^"
+    "@speckle/shared": "workspace:^"
     "@speckle/viewer": "workspace:^"
     babel-loader: ^8.2.2
     clean-webpack-plugin: ^4.0.0-alpha.0
@@ -5180,6 +5182,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/webhook-service@workspace:packages/webhook-service"
   dependencies:
+    "@speckle/shared": "workspace:^"
     cross-env: ^7.0.3
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
