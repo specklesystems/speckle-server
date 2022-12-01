@@ -113,3 +113,7 @@ export async function getCommentLinks(commentIds: string[]) {
 export async function insertComments(comments: CommentRecord[]) {
   return await Comments.knex().insert(comments)
 }
+
+export async function insertCommentLinks(commentLinks: CommentLinkRecord[]) {
+  return await CommentLinks.knex().insert(commentLinks)
+}

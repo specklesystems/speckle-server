@@ -31,6 +31,7 @@ import {
   generateCommentId,
   getBatchedStreamComments,
   getCommentLinks,
+  insertCommentLinks,
   insertComments
 } from '@/modules/comments/repositories/comments'
 import dayjs from 'dayjs'
@@ -334,6 +335,8 @@ async function cloneCommentLinks(
         cl.resourceId = newCommitId
       }
     })
+
+    await insertCommentLinks(commentLinks)
   }
 }
 
