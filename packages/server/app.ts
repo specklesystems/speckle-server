@@ -38,7 +38,6 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import { Roles } from '@speckle/shared'
 
 import { IMocks } from '@graphql-tools/mock'
-import { faker } from '@faker-js/faker'
 import { startupDebug, shutdownDebug } from '@/modules/shared/utils/logger'
 import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
 
@@ -131,10 +130,15 @@ function buildApolloSubscriptionServer(
  * Define mocking config in dev env
  * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
  */
-function buildMocksConfig(): { mocks: boolean | IMocks; mockEntireSchema: boolean } {
+async function buildMocksConfig(): Promise<{
+  mocks: boolean | IMocks
+  mockEntireSchema: boolean
+}> {
   const roles = Object.values(Roles.Stream)
   const isDebugEnv = isDevEnv()
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
+
+  const { faker } = await import('@faker-js/faker')
 
   return {
     mocks: {
@@ -181,7 +185,7 @@ export async function buildApolloServer(
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
   const schema = ModulesSetup.graphSchema()
-  const { mockEntireSchema, mocks } = buildMocksConfig()
+  const { mockEntireSchema, mocks } = await buildMocksConfig()
 
   const server = new ApolloServer({
     schema,

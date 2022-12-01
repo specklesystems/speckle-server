@@ -33,7 +33,6 @@ const stories = flatten(storiesPairs)
 const config: StorybookConfig = {
   stories,
   addons: [
-    '@storybook/addon-coverage',
     '@storybook/addon-links',
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',

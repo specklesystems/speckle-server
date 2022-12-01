@@ -6226,7 +6226,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@istanbuljs/load-nyc-config@npm:^1.0.0, @istanbuljs/load-nyc-config@npm:^1.1.0":
+"@istanbuljs/load-nyc-config@npm:^1.0.0":
   version: 1.1.0
   resolution: "@istanbuljs/load-nyc-config@npm:1.1.0"
   dependencies:
@@ -7881,7 +7881,6 @@ __metadata:
     "@speckle/shared": "workspace:^"
     "@speckle/vue-apollo-composable": ^4.0.0-beta.1
     "@storybook/addon-a11y": ^7.0.0-alpha.42
-    "@storybook/addon-coverage": ^0.0.7
     "@storybook/addon-docs": ^7.0.0-alpha.42
     "@storybook/addon-essentials": ^7.0.0-alpha.42
     "@storybook/addon-interactions": ^7.0.0-alpha.42
@@ -8426,18 +8425,6 @@ __metadata:
     react-dom:
       optional: true
   checksum: cef1f89f0deafd81678d031720296745ad8d520d091f8f10548abf9267b16fa708b1d467d2c137ce7b10446bdbfbe4c01ffdea853461982362db215f528a6c23
-  languageName: node
-  linkType: hard
-
-"@storybook/addon-coverage@npm:^0.0.7":
-  version: 0.0.7
-  resolution: "@storybook/addon-coverage@npm:0.0.7"
-  dependencies:
-    "@types/babel__core": ^7.1.19
-    "@types/istanbul-lib-coverage": ^2.0.4
-    babel-plugin-istanbul: ^6.1.1
-    vite-plugin-istanbul: ^3.0.1
-  checksum: 5425141d05dc7412ef7b245531ded39f2d4d5520d1f6e18339e140b0ea1be562a51cdfbf3eba16cdbb61b1395686be2ace22f287171579fa52dce60e4587215d
   languageName: node
   linkType: hard
 
@@ -10470,19 +10457,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/babel__core@npm:^7.1.19":
-  version: 7.1.20
-  resolution: "@types/babel__core@npm:7.1.20"
-  dependencies:
-    "@babel/parser": ^7.1.0
-    "@babel/types": ^7.0.0
-    "@types/babel__generator": "*"
-    "@types/babel__template": "*"
-    "@types/babel__traverse": "*"
-  checksum: a09c4f0456552547a5b8a5a009a3daec4d362f622168f8e08bda0ded2da0a65ab0b1642e23c433b3616721f5701dc34a996c5bde5baeaea53eda98f438043f2c
-  languageName: node
-  linkType: hard
-
 "@types/babel__generator@npm:*":
   version: 7.6.4
   resolution: "@types/babel__generator@npm:7.6.4"
@@ -10817,7 +10791,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/istanbul-lib-coverage@npm:*, @types/istanbul-lib-coverage@npm:^2.0.0, @types/istanbul-lib-coverage@npm:^2.0.1, @types/istanbul-lib-coverage@npm:^2.0.4":
+"@types/istanbul-lib-coverage@npm:*, @types/istanbul-lib-coverage@npm:^2.0.0, @types/istanbul-lib-coverage@npm:^2.0.1":
   version: 2.0.4
   resolution: "@types/istanbul-lib-coverage@npm:2.0.4"
   checksum: a25d7589ee65c94d31464c16b72a9dc81dfa0bea9d3e105ae03882d616e2a0712a9c101a599ec482d297c3591e16336962878cb3eb1a0a62d5b76d277a890ce7
@@ -36979,18 +36953,6 @@ __metadata:
     vti:
       optional: true
   checksum: eed0b1a07563ca5b0567bbb39348a46208282f2c10c47d86d5c4d334c04bde30a1ce80566359588bdbae61339a8ee4ca609b9d4d779d50c6233d3efa8eb36220
-  languageName: node
-  linkType: hard
-
-"vite-plugin-istanbul@npm:^3.0.1":
-  version: 3.0.2
-  resolution: "vite-plugin-istanbul@npm:3.0.2"
-  dependencies:
-    "@istanbuljs/load-nyc-config": ^1.1.0
-    istanbul-lib-instrument: ^5.1.0
-    picocolors: ^1.0.0
-    test-exclude: ^6.0.0
-  checksum: aea513ca21b700e69bf5aeff48dcbbf5792c9eb00ac7adb98fbcaf9a1909e79238e4941eb6f0ac8f632d247f31489388f3aa26ef417eae8f628e645076393510
   languageName: node
   linkType: hard
 
