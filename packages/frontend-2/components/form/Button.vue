@@ -102,10 +102,10 @@ const typeClasses = computed(() => {
 
   const disabled = props.disabled
 
-  const isXs = props.size === 'xs'
-  const isSm = props.size === 'sm'
+  // const isXs = props.size === 'xs'
+  // const isSm = props.size === 'sm'
   const isXl = props.size === 'xl'
-  const isBase = props.size === 'base'
+  // const isBase = props.size === 'base'
 
   // Rounded borders
   if (['pill', 'outline'].includes(props.type)) {
