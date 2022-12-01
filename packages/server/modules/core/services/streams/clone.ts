@@ -180,7 +180,7 @@ async function createBranchCommitReferences(
   commitIdMap: Map<string, string>,
   branchIdMap: Map<string, string>
 ) {
-  const oldBranchIds = [...branchIdMap.values()]
+  const oldBranchIds = [...branchIdMap.keys()]
   for await (const branchCommits of getBatchedBranchCommits(oldBranchIds)) {
     const newBranchCommits = branchCommits.map((bc): BranchCommitRecord => {
       const newBranchId = branchIdMap.get(bc.branchId)
