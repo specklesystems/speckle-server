@@ -26,6 +26,8 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   }
 
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+    // const shadowcatcher = this.scene.getObjectByName('Shadowcatcher')
+    // if (shadowcatcher) shadowcatcher.visible = false
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
 
@@ -68,7 +70,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
     if (this.overrideMaterial !== undefined) {
       this.scene.overrideMaterial = oldOverrideMaterial
     }
-
+    // if (shadowcatcher) shadowcatcher.visible = true
     renderer.autoClear = oldAutoClear
   }
 }

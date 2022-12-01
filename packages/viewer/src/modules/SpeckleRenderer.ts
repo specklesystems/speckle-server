@@ -12,6 +12,7 @@ import {
   Mesh,
   Object3D,
   Plane,
+  PlaneGeometry,
   RGBADepthPacking,
   Scene,
   Sphere,
@@ -379,7 +380,7 @@ export default class SpeckleRenderer {
     v.set(box.max.x, box.max.y, box.max.z) // 111
     d = Math.max(camPos.distanceTo(v), d)
     this.viewer.cameraHandler.camera.far = d
-    this.viewer.cameraHandler.activeCam.camera.far = d
+    this.viewer.cameraHandler.activeCam.camera.far = d * 2
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
@@ -469,6 +470,24 @@ export default class SpeckleRenderer {
         }
       }
     })
+
+    const boxSize = this.sceneBox.getSize(new Vector3())
+    const boxCenter = this.sceneBox.getCenter(new Vector3())
+    const groundPlaneGeometry = new PlaneGeometry(boxSize.x * 2, boxSize.y * 2, 10, 10)
+    const groundPlane = new Mesh(
+      groundPlaneGeometry,
+      new SpeckleStandardMaterial({ color: 0xffffff }, ['USE_RTE'])
+    )
+    const mat = new Matrix4().makeTranslation(
+      boxCenter.x,
+      boxCenter.y,
+      boxCenter.z - boxSize.z * 0.5
+    )
+    groundPlane.geometry.applyMatrix4(mat)
+
+    groundPlane.layers.set(ObjectLayers.STREAM_CONTENT)
+    groundPlane.name = 'Shadowcatcher'
+    this._scene.add(groundPlane)
 
     this.updateDirectLights()
     this.updateHelpers()
