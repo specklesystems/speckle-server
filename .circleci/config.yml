@@ -395,18 +395,6 @@ jobs:
           name: Install Playwrigth
           command: cd ~ && npx playwright install --with-deps
 
-      # - run:
-      #     name: Start local Storybook
-      #     command: yarn storybook:ci
-      #     background: true
-      #     working_directory: 'packages/frontend-2'
-
-      # - run:
-      #     name: Wait for dependencies to start
-      #     command: |
-      #       dockerize -wait tcp://localhost:6006 -timeout 1m
-      #       sleep 30
-
       - run:
           name: Test via Storybook
           command: yarn storybook:test:ci
