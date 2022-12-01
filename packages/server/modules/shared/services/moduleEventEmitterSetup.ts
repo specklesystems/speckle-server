@@ -1,4 +1,5 @@
-import { extendLoggerComponent, moduleLogger } from '@/logging/logging'
+import { moduleLogger } from '@/logging/logging'
+import { extendLoggerComponent } from '@speckle/shared'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import EventEmitter from 'eventemitter2'
 

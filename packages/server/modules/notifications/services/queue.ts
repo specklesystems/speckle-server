@@ -16,7 +16,7 @@ import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { extendLoggerComponent, logger, notificationsLogger } from '@/logging/logging'
+import { logger, notificationsLogger, extendLoggerComponent } from '@/logging/logging'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
