@@ -20,6 +20,8 @@ WORKDIR /speckle-server
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared ./packages/shared/
 
 WORKDIR /speckle-server/packages/fileimport-service
 COPY packages/fileimport-service/package.json ./
