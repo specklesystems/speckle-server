@@ -24,7 +24,7 @@ spec:
   - host: {{ .Values.domain }}
     http:
       paths:
-      {{- if .Values.frontend_2.enabled -}}
+      {{- if .Values.frontend_2.enabled }}
       - pathType: Prefix
         path: "/"
         backend:
@@ -32,7 +32,7 @@ spec:
             name: speckle-frontend-2
             port:
               number: 8080
-      {{- else -}}
+      {{- else }}
       - pathType: Prefix
         path: "/"
         backend:
@@ -40,7 +40,7 @@ spec:
             name: speckle-frontend
             port:
               number: 80
-      {{- end -}}
+      {{- end }}
       - pathType: Exact
         path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*))"
         backend:
