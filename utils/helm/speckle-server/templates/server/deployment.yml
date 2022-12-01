@@ -96,7 +96,7 @@ spec:
             value: "speckle:*"
           
           - name: USE_FRONTEND_2
-            value: {{ .Values.frontend_2.enabled }}
+            value: {{ .Values.frontend_2.enabled | quote }}
 
           - name: FRONTEND_ORIGIN
             {{- if .Values.ssl_canonical_url }}
