@@ -57,8 +57,13 @@ module.exports = {
    * @param {{}} user
    * @returns {Promise<string>}
    */
-  async createUser(user) {
-    user = pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'avatar'])
+  async createUser(user, options) {
+    // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
+    const { skipPropertyValidation = false } = options || {}
+
+    user = skipPropertyValidation
+      ? user
+      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
 
     const newId = crs({ length: 10 })
     user.id = newId

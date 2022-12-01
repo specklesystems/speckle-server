@@ -8171,6 +8171,7 @@ __metadata:
     morgan-debug: ^2.0.0
     node-cron: ^3.0.2
     node-machine-id: ^1.1.12
+    node-mocks-http: ^1.12.1
     nodemailer: ^6.5.0
     nodemon: ^2.0.6
     nyc: ^15.0.1
@@ -8183,6 +8184,7 @@ __metadata:
     pg-query-stream: ^4.2.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
+    rate-limiter-flexible: ^2.4.1
     redis: ^3.1.1
     request: ^2.88.2
     response-time: ^2.3.2
@@ -12770,7 +12772,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"accepts@npm:^1.3.5, accepts@npm:~1.3.4, accepts@npm:~1.3.5, accepts@npm:~1.3.8":
+"accepts@npm:^1.3.5, accepts@npm:^1.3.7, accepts@npm:~1.3.4, accepts@npm:~1.3.5, accepts@npm:~1.3.8":
   version: 1.3.8
   resolution: "accepts@npm:1.3.8"
   dependencies:
@@ -16137,7 +16139,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"content-disposition@npm:0.5.4, content-disposition@npm:~0.5.2":
+"content-disposition@npm:0.5.4, content-disposition@npm:^0.5.3, content-disposition@npm:~0.5.2":
   version: 0.5.4
   resolution: "content-disposition@npm:0.5.4"
   dependencies:
@@ -17396,7 +17398,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"depd@npm:^1.1.2, depd@npm:~1.1.0, depd@npm:~1.1.2":
+"depd@npm:^1.1.0, depd@npm:^1.1.2, depd@npm:~1.1.0, depd@npm:~1.1.2":
   version: 1.1.2
   resolution: "depd@npm:1.1.2"
   checksum: 6b406620d269619852885ce15965272b829df6f409724415e0002c8632ab6a8c0a08ec1f0bd2add05dc7bd7507606f7e2cc034fa24224ab829580040b835ecd9
@@ -21011,7 +21013,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fresh@npm:0.5.2, fresh@npm:~0.5.2":
+"fresh@npm:0.5.2, fresh@npm:^0.5.2, fresh@npm:~0.5.2":
   version: 0.5.2
   resolution: "fresh@npm:0.5.2"
   checksum: 13ea8b08f91e669a64e3ba3a20eb79d7ca5379a81f1ff7f4310d54e2320645503cc0c78daedc93dfb6191287295f6479544a649c64d8e41a1c0fb0c221552346
@@ -27059,7 +27061,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"merge-descriptors@npm:1.0.1":
+"merge-descriptors@npm:1.0.1, merge-descriptors@npm:^1.0.1":
   version: 1.0.1
   resolution: "merge-descriptors@npm:1.0.1"
   checksum: 5abc259d2ae25bb06d19ce2b94a21632583c74e2a9109ee1ba7fd147aa7362b380d971e0251069f8b3eb7d48c21ac839e21fa177b335e82c76ec172e30c31a26
@@ -27522,7 +27524,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mime@npm:1.6.0, mime@npm:^1.4.1, mime@npm:^1.6.0":
+"mime@npm:1.6.0, mime@npm:^1.3.4, mime@npm:^1.4.1, mime@npm:^1.6.0":
   version: 1.6.0
   resolution: "mime@npm:1.6.0"
   bin:
@@ -28844,6 +28846,24 @@ __metadata:
   version: 1.1.12
   resolution: "node-machine-id@npm:1.1.12"
   checksum: e23088a0fb4a77a1d6484b7f09a22992fd3e0054d4f2e427692b4c7081e6cf30118ba07b6113b6c89f1ce46fd26ec5ab1d76dcaf6c10317717889124511283a5
+  languageName: node
+  linkType: hard
+
+"node-mocks-http@npm:^1.12.1":
+  version: 1.12.1
+  resolution: "node-mocks-http@npm:1.12.1"
+  dependencies:
+    accepts: ^1.3.7
+    content-disposition: ^0.5.3
+    depd: ^1.1.0
+    fresh: ^0.5.2
+    merge-descriptors: ^1.0.1
+    methods: ^1.1.2
+    mime: ^1.3.4
+    parseurl: ^1.3.3
+    range-parser: ^1.2.0
+    type-is: ^1.6.18
+  checksum: 80b2ef4967d95e5804f4be5edd13bab06e6cad7c00813e32fd1958189ee8c4c68b833aabcbb2b39194b412b14504a7724e628d74ca5956a83221e0fa838aaf92
   languageName: node
   linkType: hard
 
@@ -31857,10 +31877,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"range-parser@npm:^1.2.1, range-parser@npm:~1.2.0, range-parser@npm:~1.2.1":
+"range-parser@npm:^1.2.0, range-parser@npm:^1.2.1, range-parser@npm:~1.2.0, range-parser@npm:~1.2.1":
   version: 1.2.1
   resolution: "range-parser@npm:1.2.1"
   checksum: 0a268d4fea508661cf5743dfe3d5f47ce214fd6b7dec1de0da4d669dd4ef3d2144468ebe4179049eff253d9d27e719c88dae55be64f954e80135a0cada804ec9
+  languageName: node
+  linkType: hard
+
+"rate-limiter-flexible@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "rate-limiter-flexible@npm:2.4.1"
+  checksum: 5eea3ffbb6a11f634edd8b9575815c2bf239a8becdfdc82c4183cad92025e853913972a2b2f2d45c16e81aea1a3451fbad8da76dee1ba0e4549c22a0ba58c50f
   languageName: node
   linkType: hard
 
@@ -35880,7 +35907,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-is@npm:^1.6.16, type-is@npm:~1.6.16, type-is@npm:~1.6.18":
+"type-is@npm:^1.6.16, type-is@npm:^1.6.18, type-is@npm:~1.6.16, type-is@npm:~1.6.18":
   version: 1.6.18
   resolution: "type-is@npm:1.6.18"
   dependencies:

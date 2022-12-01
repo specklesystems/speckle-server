@@ -1,4 +1,3 @@
-import Express from 'express'
 import {
   Scopes,
   Roles,
@@ -40,9 +39,10 @@ export interface AuthContext {
   token?: string
   scopes?: string[]
   stream?: Stream
+  err?: Error | BaseError
 }
 
-interface AuthParams {
+export interface AuthParams {
   streamId?: string
 }
 
@@ -77,13 +77,13 @@ interface RoleData<T extends AvailableRoles> {
   name: T
 }
 
-type AuthPipelineFunction = ({
+export type AuthPipelineFunction = ({
   context,
   authResult,
   params
 }: AuthData) => Promise<AuthData>
 
-const authHasFailed = (authResult: AuthResult): authResult is AuthFailedResult =>
+export const authHasFailed = (authResult: AuthResult): authResult is AuthFailedResult =>
   'error' in authResult
 
 interface RoleValidationInput<T extends AvailableRoles> {
@@ -255,41 +255,6 @@ export const authPipelineCreator = (
     return { context, authResult }
   }
   return pipeline
-}
-
-interface RequestWithContext extends Express.Request {
-  context: AuthContext
-}
-
-//we could even add an auth middleware creator
-// todo move this to a webserver related module, it has no place here
-export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
-  const pipeline = authPipelineCreator(steps)
-
-  const middleware = async (
-    req: RequestWithContext,
-    res: Express.Response,
-    next: Express.NextFunction
-  ) => {
-    const { authResult } = await pipeline({
-      context: req.context as AuthContext,
-      params: req.params as AuthParams,
-      authResult: { authorized: false }
-    })
-    if (!authResult.authorized) {
-      let message = 'Unknown AuthZ error'
-      let status = 500
-      if (authHasFailed(authResult)) {
-        message = authResult.error?.message || message
-        if (authResult.error instanceof UnauthorizedError) status = 401
-        if (authResult.error instanceof ForbiddenError) status = 403
-      }
-
-      return res.status(status).json({ error: message })
-    }
-    next()
-  }
-  return middleware
 }
 
 export const streamWritePermissions = [

@@ -6,7 +6,7 @@ const debug = require('debug')
 let unsubFromEvents
 
 exports.init = async (_, isInitial) => {
-  debug('speckle:modules')('🗣 Init comments module')
+  debug('speckle:modules')('🗣  Init comments module')
 
   if (isInitial) {
     unsubFromEvents = await notifyUsersOnCommentEvents()

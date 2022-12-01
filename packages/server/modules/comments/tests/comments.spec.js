@@ -35,7 +35,7 @@ const {
 } = require('@/modules/comments/services/commentTextService')
 const { range } = require('lodash')
 const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared')
+const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createAuthTokenForUser } = require('@/test/authHelper')
 const { uploadBlob } = require('@/test/blobHelper')
@@ -822,8 +822,6 @@ describe('Comments @comments', () => {
     const commentText = ensureCommentSchema(comment.text)
     expect(commentText.doc).to.deep.equalInAnyOrder(properText)
   })
-
-  it('Should be able to toggle reactions for a comment')
 
   it('Should be able to archive a comment', async () => {
     const { id: commentId } = await createComment({

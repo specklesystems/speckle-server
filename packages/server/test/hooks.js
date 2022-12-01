@@ -1,4 +1,8 @@
 require('../bootstrap')
+
+// Register global mocks as early as possible
+require('@/test/mocks/global')
+
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
@@ -10,9 +14,6 @@ const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
-
-// Register global mocks
-require('@/test/mocks/global')
 
 const unlock = async () => {
   const exists = await knex.schema.hasTable('knex_migrations_lock')
