@@ -54,7 +54,7 @@ export const useAuthCookie = () =>
 
 export const useAuthManager = () => {
   const {
-    public: { API_ORIGIN }
+    public: { apiOrigin }
   } = useRuntimeConfig()
 
   const resetAuthState = useResetAuthState()
@@ -102,7 +102,7 @@ export const useAuthManager = () => {
       const newToken = await getTokenFromAccessCode({
         accessCode,
         challenge,
-        apiOrigin: API_ORIGIN
+        apiOrigin
       })
 
       await saveNewToken(newToken)
@@ -207,7 +207,7 @@ export const useAuthManager = () => {
     const { accessCode } = await getAccessCode({
       email,
       password,
-      apiOrigin: API_ORIGIN,
+      apiOrigin,
       challenge
     })
 
@@ -232,7 +232,7 @@ export const useAuthManager = () => {
     const { user, challenge } = params
 
     const { accessCode } = await registerAndGetAccessCode({
-      apiOrigin: API_ORIGIN,
+      apiOrigin,
       challenge,
       user
     })

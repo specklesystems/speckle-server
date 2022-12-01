@@ -17,3 +17,6 @@ s3:
 cert_manager_issuer: ~
 enable_prometheus_monitoring: true
 file_size_limit_mb: 300
+
+frontend_2:
+  enabled: true
