@@ -4830,7 +4830,6 @@ __metadata:
     knex: ^2.0.0
     nodemon: ^2.0.13
     pg: ^8.7.3
-    pino: ^8.7.0
     prettier: ^2.5.1
     prom-client: ^14.0.1
     undici: ^5.8.2
@@ -4973,7 +4972,6 @@ __metadata:
     nodemon: ^2.0.7
     pg: ^8.7.3
     pg-query-stream: ^4.2.3
-    pino: ^8.7.0
     pino-http: ^8.2.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
@@ -5117,6 +5115,7 @@ __metadata:
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
     lodash: ^4.17.0
+    pino: ^8.7.0
     rollup: ^2.79.1
     rollup-plugin-delete: ^2.0.0
     rollup-plugin-typescript2: ^0.34.1
@@ -5187,7 +5186,6 @@ __metadata:
     knex: ^2.0.0
     node-fetch: ^2.6.1
     pg: ^8.7.3
-    pino: ^8.7.0
     prettier: ^2.5.1
     private-ip: ^2.3.3
     prom-client: ^14.0.1
