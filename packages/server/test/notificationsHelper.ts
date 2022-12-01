@@ -94,7 +94,7 @@ export function buildNotificationsStateTracker() {
       // We start tracking even before promise is created so that we can't possibly miss it
       let foundAck: Nullable<AckEvent> = null
       const ackTracker = (e: AckEvent) => {
-        if (predicate(e)) foundAck = e
+        if (predicate && predicate(e)) foundAck = e
       }
       localEvents.on(NEW_ACK_EVENT, ackTracker)
 

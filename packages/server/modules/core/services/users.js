@@ -55,9 +55,10 @@ module.exports = {
 
   /**
    * @param {{}} user
+   * @param {{skipPropertyValidation: boolean } | undefined} options
    * @returns {Promise<string>}
    */
-  async createUser(user, options) {
+  async createUser(user, options = undefined) {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
