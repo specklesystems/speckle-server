@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="empty-state w-full min-h-[100px] bg-foundation-2 rounded-2xl py-20 xl:pt-28 xl:pb-40"
-  >
+  <div class="empty-state w-full min-h-[100px] rounded-2xl py-20 xl:pt-28 xl:pb-40">
     <h2 class="block h4 font-normal leading-8 text-center mb-16">
       Welcome to Speckle. What would you like to do?
     </h2>

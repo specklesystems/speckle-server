@@ -34,14 +34,14 @@
   /* focused primary color */
   --primary-focus: #2563eb;
   /* muted primary color */
-  --primary-muted: #dbeafe;
+  --primary-muted: #93c5fd;
   /* primary outline */
   --primary-outline: #3b82f6;
   /* secondary variant of primary outline */
-  --primary-outline-2: rgb(59 130 246 / 50%);
+  --primary-outline-2: #93c5fd;
 
   /* success variations */
-  --success: #10b981;
+  --success: #34d399;
   --success-lighter: #d1fae5;
   --success-darker: #064e3b;
 
@@ -73,35 +73,35 @@
   /* used only as the page background */
   --foundation-page: #18181b;
   /* used as the background for any element that sits on the page */
-  --foundation: #27272a;
+  --foundation: #232325;
   /* used as the background for any element that you want to emphasize */
-  --foundation-2: #1e293b;
+  --foundation-2: #3f3f46;
   /* for disabled backgrounds */
-  --foundation-disabled: #2b2b2b;
+  --foundation-disabled: #52525b;
 
   /* default foreground color */
-  --foreground: #fafafa;
+  --foreground: #e4e4e7;
   /* dimmer foreground color, e.g. caption text */
-  --foreground-2: #c0c0c0;
+  --foreground-2: #d4d4d8;
   /* disabled foreground color */
-  --foreground-disabled: #717171;
+  --foreground-disabled: #a1a1aa;
   /* foreground color when put on top of a primary colored background */
-  --foreground-on-primary: #fff;
+  --foreground-on-primary: #fafafa;
 
   /* primary color */
-  --primary: #2563eb;
+  --primary: #3b82f6;
   /* focused primary color */
-  --primary-focus: #3b82f6;
+  --primary-focus: #60a5fa;
   /* muted primary color */
-  --primary-muted: #1e293b;
+  --primary-muted: #52525b;
   /* primary outline */
-  --primary-outline: #475569;
+  --primary-outline: #3b82f6;
   /* secondary variant of primary outline */
-  --primary-outline-2: rgb(59 130 246 / 50%);
+  --primary-outline-2: #52525b;
 
   /* success variations */
-  --success: #10b981;
-  --success-lighter: #d1fae5;
+  --success: #34d399;
+  --success-lighter: #a7f3d0;
   --success-darker: #064e3b;
 
   /* warning variations */
