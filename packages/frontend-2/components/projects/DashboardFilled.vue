@@ -25,9 +25,11 @@ import { ProjectsDashboardFilledFragment } from '~~/lib/common/generated/gql/gra
 import {
   convertThrowIntoFetchResult,
   getCacheId,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 
 const props = defineProps<{
   projects: ProjectsDashboardFilledFragment
@@ -64,6 +66,35 @@ const deleteProject = async (id: string) => {
       update: (cache, { data }) => {
         if (!data?.projectMutations.delete) return
 
+        // Update User.projects
+        updateCacheByFilter(
+          cache,
+          { query: { query: projectsDashboardQuery } },
+          (cacheData) => {
+            if (!cacheData.activeUser?.projects) return
+
+            const items = cacheData.activeUser.projects.items
+            const removableItemIdx = items.findIndex((i) => i.id === id)
+            if (removableItemIdx === -1) return
+
+            const newItems = items.filter((i) => i.id !== id)
+            const newCount = Math.max(cacheData.activeUser.projects.totalCount - 1, 0)
+
+            return {
+              ...cacheData,
+              activeUser: {
+                ...cacheData.activeUser,
+                projects: {
+                  ...cacheData.activeUser.projects,
+                  items: newItems,
+                  totalCount: newCount
+                }
+              }
+            }
+          }
+        )
+
+        // Evict project from cache entirely
         cache.evict({
           id: getCacheId('Project', id)
         })

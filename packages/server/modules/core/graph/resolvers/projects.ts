@@ -5,6 +5,7 @@ import {
   getUserStreams
 } from '@/modules/core/repositories/streams'
 import { deleteStreamAndNotify, getStream } from '@/modules/core/services/streams'
+import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
 import { NotFoundError } from '@/modules/shared/errors'
 import { has } from 'lodash'
@@ -32,9 +33,12 @@ export = {
     projectMutations: () => ({})
   },
   ProjectMutations: {
-    async delete(_parents, { id }, { userId }) {
+    async delete(_parent, { id }, { userId }) {
       await authorizeResolver(userId, id, Roles.Stream.Owner)
       return await deleteStreamAndNotify(id, userId!)
+    },
+    async createForOnboarding(_parent, _args, { userId }) {
+      return await createOnboardingStream(userId!)
     }
   },
   User: {

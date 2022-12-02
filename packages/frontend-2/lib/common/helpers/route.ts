@@ -21,3 +21,11 @@ export const useNavigateToLogin = buildNavigationComposable(loginRoute)
 export const useNavigateToRegistration = buildNavigationComposable(registerRoute)
 export const useNavigateToForgottenPassword =
   buildNavigationComposable(forgottenPasswordRoute)
+
+export const useNavigateToProject = () => {
+  const router = useRouter()
+  return (params: { query?: LocationQueryRaw; id: string }) => {
+    const { query, id } = params || {}
+    return router.push({ path: projectRoute(id), query })
+  }
+}

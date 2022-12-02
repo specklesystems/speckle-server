@@ -14,6 +14,13 @@ type ProjectMutations {
   delete(id: String!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+
+  """
+  Create onboarding/tutorial project
+  """
+  createForOnboarding: Project!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
 }
 
 extend type Mutation {

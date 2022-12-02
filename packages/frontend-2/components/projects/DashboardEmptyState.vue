@@ -9,6 +9,7 @@
       <ProjectsDashboardEmptyStatePanel
         :icon="CubeIcon"
         :button-icon="ArrowLeftCircleIcon"
+        @click="createOnboardingProject"
       >
         <template #title>Explore your first project</template>
         <template #subtitle>
@@ -37,7 +38,83 @@ import {
   CloudArrowDownIcon,
   ArrowLeftCircleIcon
 } from '@heroicons/vue/24/solid'
-import { downloadManagerRoute } from '~~/lib/common/helpers/route'
+import { useApolloClient } from '@vue/apollo-composable'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { graphql } from '~~/lib/common/generated/gql'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
+import { downloadManagerRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
+import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
+
+// TOOD: Make mutation return everything needed for project page
+const createOnboardingProjectMutation = graphql(`
+  mutation CreateOnboardingProject {
+    projectMutations {
+      createForOnboarding {
+        id
+        name
+        createdAt
+      }
+    }
+  }
+`)
+
+const apollo = useApolloClient().client
+const { triggerNotification } = useGlobalToast()
+const goToProject = useNavigateToProject()
+
+const createOnboardingProject = async () => {
+  const { data, errors } = await apollo
+    .mutate({
+      mutation: createOnboardingProjectMutation,
+      update: (cache, { data }) => {
+        if (!data?.projectMutations.createForOnboarding.id) return
+
+        const newProjectData = data.projectMutations.createForOnboarding
+
+        // Update User.projects
+        updateCacheByFilter(
+          cache,
+          { query: { query: projectsDashboardQuery } },
+          (cacheData) => {
+            if (!cacheData.activeUser?.projects) return
+            const newItems = [...cacheData.activeUser.projects.items, newProjectData]
+            return {
+              ...cacheData,
+              activeUser: {
+                ...cacheData.activeUser,
+                projects: {
+                  ...cacheData.activeUser.projects,
+                  items: newItems,
+                  totalCount: (cacheData.activeUser.projects.totalCount || 0) + 1
+                }
+              }
+            }
+          }
+        )
+      }
+    })
+    .catch(convertThrowIntoFetchResult)
+
+  const newId = data?.projectMutations.createForOnboarding.id
+  if (!newId) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Project creation failed',
+      description: getFirstErrorMessage(errors)
+    })
+    return
+  }
+
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Project successfully created'
+  })
+  goToProject({ id: newId })
+}
 </script>
 <style scoped>
 .empty-state {

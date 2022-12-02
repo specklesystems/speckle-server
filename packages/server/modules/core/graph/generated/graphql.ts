@@ -945,6 +945,8 @@ export type ProjectCollection = {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Create onboarding/tutorial project */
+  createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
 };
@@ -2427,6 +2429,7 @@ export type ProjectCollectionResolvers<ContextType = GraphQLContext, ParentType 
 };
 
 export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectMutations'] = ResolversParentTypes['ProjectMutations']> = {
+  createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

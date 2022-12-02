@@ -939,6 +939,8 @@ export type ProjectCollection = {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Create onboarding/tutorial project */
+  createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
 };
