@@ -16,8 +16,8 @@ const props = defineProps<{
 
 const computedClasses = computed(() => {
   const classParts: string[] = [
-    'h-20 inline-flex justify-center items-center outline-none',
-    'normal px-16 py-5 shadow rounded transition active:scale-105'
+    'h-20 bg-foundation-2 inline-flex justify-center items-center outline-none',
+    'normal px-16 py-5 shadow rounded transition active:scale-95'
   ]
 
   if (props.disabled) {
