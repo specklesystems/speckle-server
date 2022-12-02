@@ -17,7 +17,7 @@ const projectQuery = graphql(
         name
         modelCount
         role
-        editedAt
+        updatedAt
         team {
           id
           name

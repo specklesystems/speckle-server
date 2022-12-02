@@ -1,3 +1,4 @@
+import { Nullable } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 
@@ -100,4 +101,11 @@ export function getServerOrigin() {
  */
 export function isSSLServer() {
   return /^https:\/\//.test(getBaseUrl())
+}
+
+/**
+ * Source stream for cloning tutorial/guide streams for users
+ */
+export function getOnboardingStreamId(): Nullable<string> {
+  return process.env.ONBOARDING_STREAM_ID || null
 }

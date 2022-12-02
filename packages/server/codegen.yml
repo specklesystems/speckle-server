@@ -11,8 +11,11 @@ generates:
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
+        Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
+        ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

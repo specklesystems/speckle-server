@@ -4,6 +4,48 @@ import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { pubsub, StreamPubsubEvents } from '@/modules/shared'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
+import { getStreamCollaborators } from '@/modules/core/repositories/streams'
+import { chunk } from 'lodash'
+
+/**
+ * Save "stream deleted" activity
+ */
+export async function addStreamDeletedActivity(params: {
+  streamId: string
+  deleterId: string
+}) {
+  const { streamId, deleterId } = params
+
+  // Notify any listeners on streamId
+  await pubsub.publish(StreamPubsubEvents.StreamDeleted, {
+    streamDeleted: { streamId },
+    streamId
+  })
+
+  // Notify all stream users
+  const users = await getStreamCollaborators(streamId)
+  const userBatches = chunk(users, 15)
+  for (const userBatch of userBatches) {
+    await Promise.all(
+      userBatch.map((u) =>
+        pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
+          userStreamRemoved: { id: streamId },
+          ownerId: u.id
+        })
+      )
+    )
+  }
+
+  await saveActivity({
+    streamId,
+    resourceType: ResourceTypes.Stream,
+    resourceId: streamId,
+    actionType: ActionTypes.Stream.Delete,
+    userId: deleterId,
+    info: {},
+    message: `Stream deleted`
+  })
+}
 
 /**
  * Save "user cloned stream X" activity item

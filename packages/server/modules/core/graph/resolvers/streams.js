@@ -7,13 +7,13 @@ const {
   getStream,
   getStreams,
   updateStream,
-  deleteStream,
   getStreamUsers,
   favoriteStream,
   getFavoriteStreamsCollection,
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
-  getOwnedFavoritesCount
+  getOwnedFavoritesCount,
+  deleteStreamAndNotify
 } = require('@/modules/core/services/streams')
 
 const {
@@ -59,45 +59,8 @@ const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
 const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-const _deleteStream = async (parent, args, context) => {
-  await saveActivity({
-    streamId: args.id,
-    resourceType: 'stream',
-    resourceId: args.id,
-    actionType: ActionTypes.Stream.Delete,
-    userId: context.userId,
-    info: {},
-    message: 'Stream deleted'
-  })
-
-  // Notify any listeners on the streamId
-  await pubsub.publish(STREAM_DELETED, {
-    streamDeleted: { streamId: args.id },
-    streamId: args.id
-  })
-
-  // Notify all stream users
-  const users = await getStreamUsers({ streamId: args.id })
-
-  for (const user of users) {
-    await pubsub.publish(USER_STREAM_REMOVED, {
-      userStreamRemoved: { id: args.id },
-      ownerId: user.id
-    })
-  }
-
-  // delay deletion by a bit so we can do auth checks
-  await sleep(250)
-
-  // Delete after event so we can do authz
-  await deleteStream({ streamId: args.id })
-  return true
+const _deleteStream = async (_parent, args, context) => {
+  return await deleteStreamAndNotify(args.id, context.user.id)
 }
 
 const getUserStreamsCore = async (forOtherUser, parent, args) => {

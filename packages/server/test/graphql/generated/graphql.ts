@@ -516,6 +516,8 @@ export type Mutation = {
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
   objectCreate: Array<Maybe<Scalars['String']>>;
+  /** Various Project related mutations */
+  projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
@@ -918,12 +920,32 @@ export type PendingStreamCollaborator = {
 
 export type Project = {
   __typename?: 'Project';
-  editedAt: Scalars['DateTime'];
+  createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   modelCount: Scalars['Int'];
   name: Scalars['String'];
-  role: Scalars['String'];
+  /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
+  role?: Maybe<Scalars['String']>;
   team: Array<LimitedUser>;
+  updatedAt: Scalars['DateTime'];
+};
+
+export type ProjectCollection = {
+  __typename?: 'ProjectCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Project>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProjectMutations = {
+  __typename?: 'ProjectMutations';
+  /** Delete an existing project */
+  delete: Scalars['Boolean'];
+};
+
+
+export type ProjectMutationsDeleteArgs = {
+  id: Scalars['String'];
 };
 
 export type Query = {
@@ -954,8 +976,11 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
-  /** @deprecated only used for testing for now */
-  project: Project;
+  /**
+   * Find a specific project. Will throw an authorization error if active user isn't authorized
+   * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+   */
+  project?: Maybe<Project>;
   /** @deprecated only used for testing for now */
   projects: Array<Project>;
   serverInfo: ServerInfo;
@@ -1045,7 +1070,7 @@ export type QueryOtherUserArgs = {
 
 
 export type QueryProjectArgs = {
-  id?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
 };
 
 
@@ -1198,6 +1223,12 @@ export type ServerInviteCreateInput = {
   email: Scalars['String'];
   message?: InputMaybe<Scalars['String']>;
 };
+
+export enum ServerRole {
+  ServerAdmin = 'SERVER_ADMIN',
+  ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerUser = 'SERVER_USER'
+}
 
 export type ServerStats = {
   __typename?: 'ServerStats';
@@ -1583,7 +1614,7 @@ export type User = {
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   /** Get projects that the user participates in */
-  projects: Array<Project>;
+  projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -1626,6 +1657,16 @@ export type UserCommitsArgs = {
  * when a user is reading/writing info about himself
  */
 export type UserFavoriteStreamsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };

@@ -1,6 +1,7 @@
 <template>
   <div>
-    <ProjectsDashboardFilled v-if="hasProjects" />
+    <h1 class="h2 font-bold leading-10 mb-6 mt-10">Projects</h1>
+    <ProjectsDashboardFilled v-if="projects?.items?.length" :projects="projects" />
     <ProjectsDashboardEmptyState v-else />
   </div>
 </template>
@@ -9,7 +10,5 @@ import { useQuery } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 
 const { result: projectsPanelResult } = useQuery(projectsDashboardQuery)
-const hasProjects = computed(
-  () => (projectsPanelResult.value?.activeUser?.projects || []).length > 0
-)
+const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 </script>

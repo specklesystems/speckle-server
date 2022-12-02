@@ -23,8 +23,8 @@ const command: CommandModule<
     cliDebug(
       `Cloning stream ${sourceStreamId} into the account of user ${targetUserId}...`
     )
-    const newStreamId = await cloneStream(targetUserId, sourceStreamId)
-    cliDebug('Cloning successful! New stream ID: ' + newStreamId)
+    const { id } = await cloneStream(targetUserId, sourceStreamId)
+    cliDebug('Cloning successful! New stream ID: ' + id)
   }
 }
 

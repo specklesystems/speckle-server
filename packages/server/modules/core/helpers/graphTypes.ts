@@ -1,5 +1,11 @@
-import { LimitedUser, Stream, StreamRole } from '@/modules/core/graph/generated/graphql'
-import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import {
+  LimitedUser,
+  Stream,
+  StreamRole,
+  Project,
+  ServerRole
+} from '@/modules/core/graph/generated/graphql'
+import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -31,10 +37,23 @@ export type StreamGraphQLReturn = Omit<
   | 'webhooks'
 >
 
+export type ProjectGraphQLReturn = Omit<Project, 'modelCount' | 'role' | 'team'> & {
+  /**
+   * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
+   * be resolved by the Project.role resolver in an efficient manner.
+   */
+  role?: string | null
+}
+
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
 >
+
+/**
+ * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.
+ */
+export type MutationsObjectGraphQLReturn = Record<string, never>
 
 /**
  * Map GQL StreamRole enum to the value types we use in the backend
@@ -46,7 +65,20 @@ export function mapStreamRoleToValue(graphqlStreamRole: StreamRole): StreamRoles
     case StreamRole.StreamOwner:
       return Roles.Stream.Owner
     case StreamRole.StreamContributor:
-    default:
       return Roles.Stream.Contributor
+  }
+}
+
+/**
+ * Map GQL ServerRole enum to the value types we use in the backend
+ */
+export function mapServerRoleToValue(graphqlServerRole: ServerRole): ServerRoles {
+  switch (graphqlServerRole) {
+    case ServerRole.ServerUser:
+      return Roles.Server.User
+    case ServerRole.ServerAdmin:
+      return Roles.Server.Admin
+    case ServerRole.ServerArchivedUser:
+      return Roles.Server.ArchivedUser
   }
 }

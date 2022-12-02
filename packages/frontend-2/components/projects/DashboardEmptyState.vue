@@ -19,7 +19,7 @@
       <ProjectsDashboardEmptyStatePanel
         :icon="CloudArrowUpIcon"
         :button-icon="CloudArrowDownIcon"
-        :to="DownloadManagerRoute"
+        :to="downloadManagerRoute"
       >
         <template #title>Already have a 3D model?</template>
         <template #subtitle>
@@ -37,7 +37,7 @@ import {
   CloudArrowDownIcon,
   ArrowLeftCircleIcon
 } from '@heroicons/vue/24/solid'
-import { DownloadManagerRoute } from '~~/lib/common/helpers/route'
+import { downloadManagerRoute } from '~~/lib/common/helpers/route'
 </script>
 <style scoped>
 .empty-state {

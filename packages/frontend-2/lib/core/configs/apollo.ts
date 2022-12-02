@@ -111,6 +111,12 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('StreamCollection', {
               checkIdentity: true
             })
+          },
+          projects: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('ProjectCollection', {
+              checkIdentity: true
+            })
           }
         }
       },

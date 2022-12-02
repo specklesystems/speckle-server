@@ -104,7 +104,7 @@ async function cloneStreamEntity(state: CloneStreamInitialState) {
     }
   )
 
-  return newStream.id
+  return newStream
 }
 
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
@@ -224,7 +224,8 @@ async function createBranchCommitReferences(
 }
 
 async function cloneStreamCore(state: CloneStreamInitialState) {
-  const newStreamId = await cloneStreamEntity(state)
+  const newStream = await cloneStreamEntity(state)
+  const { id: newStreamId } = newStream
 
   // Clone objects
   await cloneStreamObjects(state, newStreamId)
@@ -241,7 +242,7 @@ async function cloneStreamCore(state: CloneStreamInitialState) {
   // Create branch_commits
   await createBranchCommitReferences(state, commitIdMap, branchIdMap)
 
-  return { newStreamId, commitIdMap }
+  return { newStreamId, commitIdMap, newStream }
 }
 
 type CoreStreamCloneResult = Awaited<ReturnType<typeof cloneStreamCore>>
@@ -392,7 +393,7 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
     // Commit transaction
     await state.trx.commit()
 
-    return newStreamId
+    return coreCloneResult.newStream
   } catch (e) {
     await state.trx.rollback()
     throw e

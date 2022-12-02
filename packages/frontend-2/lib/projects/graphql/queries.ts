@@ -4,8 +4,8 @@ export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery {
     activeUser {
       projects {
-        id
-        name
+        totalCount
+        ...ProjectsDashboardFilled
       }
     }
   }

@@ -1,11 +1,12 @@
 import { LocationQueryRaw } from 'vue-router'
 
-export const HomeRoute = '/'
-export const LoginRoute = '/auth/login'
-export const RegisterRoute = '/auth/register'
-export const ForgottenPasswordRoute = '/auth/forgotten-password'
-export const OnboardingRoute = '/onboarding'
-export const DownloadManagerRoute = '/download-manager'
+export const homeRoute = '/'
+export const loginRoute = '/auth/login'
+export const registerRoute = '/auth/register'
+export const forgottenPasswordRoute = '/auth/forgotten-password'
+export const onboardingRoute = '/onboarding'
+export const downloadManagerRoute = '/download-manager'
+export const projectRoute = (id: string) => `/projects/${id}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
@@ -15,8 +16,8 @@ const buildNavigationComposable = (route: string) => () => {
   }
 }
 
-export const useNavigateToHome = buildNavigationComposable(HomeRoute)
-export const useNavigateToLogin = buildNavigationComposable(LoginRoute)
-export const useNavigateToRegistration = buildNavigationComposable(RegisterRoute)
+export const useNavigateToHome = buildNavigationComposable(homeRoute)
+export const useNavigateToLogin = buildNavigationComposable(loginRoute)
+export const useNavigateToRegistration = buildNavigationComposable(registerRoute)
 export const useNavigateToForgottenPassword =
-  buildNavigationComposable(ForgottenPasswordRoute)
+  buildNavigationComposable(forgottenPasswordRoute)

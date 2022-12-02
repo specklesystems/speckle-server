@@ -1,21 +1,51 @@
 extend type Query {
   projects: [Project!]! @deprecated(reason: "only used for testing for now")
-  project(id: String): Project! @deprecated(reason: "only used for testing for now")
+  """
+  Find a specific project. Will throw an authorization error if active user isn't authorized
+  to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+  """
+  project(id: String!): Project
+}
+
+type ProjectMutations {
+  """
+  Delete an existing project
+  """
+  delete(id: String!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+}
+
+extend type Mutation {
+  """
+  Various Project related mutations
+  """
+  projectMutations: ProjectMutations!
 }
 
 extend type User {
   """
   Get projects that the user participates in
   """
-  projects: [Project!]!
+  projects(limit: Int! = 25, cursor: String): ProjectCollection! @isOwner
+}
+
+type ProjectCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Project!]!
 }
 
 type Project {
   id: ID!
   name: String!
   modelCount: Int!
-  role: String!
-  editedAt: DateTime!
+  """
+  Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
+  """
+  role: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   team: [LimitedUser!]!
 }
 
