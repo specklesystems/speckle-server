@@ -30,7 +30,7 @@ RUN apt-get update && \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-COPY packages/fileimport-service/requirements.txt /speckle-server
+COPY packages/fileimport-service/requirements.txt /speckle-server/
 RUN pip install --no-cache-dir -r /speckle-server/requirements.txt
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
