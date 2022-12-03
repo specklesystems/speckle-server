@@ -1,6 +1,6 @@
 <template>
   <FormButton
-    type="link"
+    link
     :to="to"
     :external="external"
     :disabled="disabled"

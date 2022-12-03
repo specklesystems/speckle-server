@@ -7,6 +7,16 @@ import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 export default {
   component: FormButton,
   argTypes: {
+    type: {
+      options: ['default', 'invert', 'danger', 'warning'],
+      control: { type: 'select' }
+    },
+    outlined: {
+      type: 'boolean'
+    },
+    rounded: {
+      type: 'boolean'
+    },
     to: {
       type: 'string'
     },
@@ -24,10 +34,6 @@ export default {
     },
     fullWidth: {
       type: 'boolean'
-    },
-    type: {
-      options: ['standard', 'pill', 'outline', 'link'],
-      control: { type: 'select' }
     },
     external: {
       type: 'boolean'
