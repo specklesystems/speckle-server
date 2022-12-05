@@ -1,39 +1,53 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -e
+set -eo pipefail
+set -x
 
-RELEASE_VERSION=${IMAGE_VERSION_TAG}
+GIT_REPO=$( pwd )
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# shellcheck disable=SC1090,SC1091
+source "${SCRIPT_DIR}/common.sh"
 
-echo "Releasing Helm Chart version $RELEASE_VERSION"
+RELEASE_VERSION="${IMAGE_VERSION_TAG}"
+HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
+
+echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 
 git config --global user.email "devops+circleci@speckle.systems"
 git config --global user.name "CI"
 
-git clone git@github.com:specklesystems/helm.git ~/helm
 
-# before overwriting the chart with the build version, check if the current chart version
-# is not newer than the currently build one
+git clone git@github.com:specklesystems/helm.git "${HOME}/helm"
 
-CURRENT_VERSION="$(grep ^version ~/helm/charts/speckle-server/Chart.yaml  | grep -o '2\..*')"
-echo "${CURRENT_VERSION}"
+yq e -i ".version = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+yq e -i ".appVersion = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
-.circleci/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
-if [ $? -eq 1 ] 
-then 
-  echo "The current helm chart version is newer than the currently built. Exiting" 
-  exit 1
+if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; then
+  # before overwriting the chart with the build version, check if the current chart version
+  # is not newer than the currently build one
+
+  CURRENT_VERSION="$(grep ^version "${HOME}/helm/charts/speckle-server/Chart.yaml"  | grep -o '2\..*')"
+  echo "${CURRENT_VERSION}"
+
+  .circleci/check_version.py "${CURRENT_VERSION}" "${RELEASE_VERSION}"
+  if [ $? -eq 1 ]
+  then
+    echo "The current helm chart version '${CURRENT_VERSION}' is newer than the version '${RELEASE_VERSION}' we are attempting to publish. Exiting"
+    exit 1
+  fi
+  rm -rf "${HOME}/helm/charts/speckle-server"
+  cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server"
+else
+  # overwrite the name of the chart
+  yq e -i ".name = \"speckle-server-branch-${BRANCH_NAME_TRUNCATED}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+  rm -rf "${HOME}/helm/charts/speckle-server-branch-${BRANCH_NAME_TRUNCATED}"
+  cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server-branch-${BRANCH_NAME_TRUNCATED}"
 fi
-
-rm -rf ~/helm/charts/speckle-server
-cp -r utils/helm/speckle-server ~/helm/charts/speckle-server
-
-sed -i 's/version: [^\s]*/version: '"${RELEASE_VERSION}"'/g' ~/helm/charts/speckle-server/Chart.yaml
-sed -i 's/appVersion: [^\s]*/appVersion: '\""${RELEASE_VERSION}"\"'/g' ~/helm/charts/speckle-server/Chart.yaml
-
-sed -i 's/docker_image_tag: [^\s]*/docker_image_tag: '"${RELEASE_VERSION}"'/g' ~/helm/charts/speckle-server/values.yaml
 
 cd ~/helm
 
 git add .
-git commit -m "CircleCI commit"
-git push
+git diff --staged
+git commit -m "CircleCI commit for version '${RELEASE_VERSION}'"
+# git push
