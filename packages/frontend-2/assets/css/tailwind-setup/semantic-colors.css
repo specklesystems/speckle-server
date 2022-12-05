@@ -5,56 +5,44 @@
   the tailwind config, so using CSS variables instead.
 
   Palette reference: https://tailwindcss.com/docs/customizing-colors
-
-  Only use colors from the default tailwind color palette so that migrating away from this (if ever needed)
-  is easy.
  */
 
 :root {
   /* used only as the page background */
-  /* slate-100 */
   --foundation-page: #f1f5f9;
-  /* used as the background for any element that sits on the page */
-  /* custom color! */
+  /* used as the background for any elements that sit on the page */
   --foundation: #fcfcfc;
-  /* used as the background for any element that you want to emphasize */
-  /* slate-300 */
-  --foundation-2: #cbd5e1;
+  --foundation-2: #fcfcfc;
+  --foundation-3: #fcfcfc;
+  --foundation-4: #fcfcfc;
+  --foundation-5: #fcfcfc;
+  /* for hover/focus states */
+  --foundation-focus: #cbd5e1;
   /* for disabled backgrounds */
-  /* blue-100 */
   --foundation-disabled: #dbeafe;
 
   /* default foreground color */
-  /* slate-700 */
   --foreground: #334155;
   /* dimmer foreground color, e.g. caption text */
-  /* slate-400 */
   --foreground-2: #94a3b8;
   /* disabled foreground color */
-  /* blue-300 */
   --foreground-disabled: #93c5fd;
-  /* foreground color when put on top of a primary colored background */
-  /* zinc-50 */
-  --foreground-on-primary: #fafafa;
-  /* foreground color on foundation page  */
-  /* blue-500 */
+  /* primary color when used for text directly on top of foundation-page */
   --foreground-primary: #3b82f6;
+  /* foreground color when put on top of a primary colored background */
+  --foreground-on-primary: #fff;
 
   /* primary color */
-  /* blue-500 */
   --primary: #3b82f6;
   /* focused primary color */
-  /* blue-600 */
   --primary-focus: #2563eb;
   /* muted primary color */
-  /* blue-500/5 */
-  --primary-muted: hsla(217deg 91 60 5%);
-  /* primary outline */
-  /* blue-500 */
-  --primary-outline: #3b82f6;
-  /* secondary variant of primary outline */
-  /* blue-300 */
-  --primary-outline-2: #93c5fd;
+  --primary-muted: #3b82f60d;
+
+  /* outline variations */
+  --outline-1: #3b82f6;
+  --outline-2: #93c5fd;
+  --outline-3: #cbd5e1;
 
   /* success variations */
   --success: #34d399;
@@ -62,84 +50,75 @@
   --success-darker: #064e3b;
 
   /* warning variations */
-  --warning: #f59e0b;
+  --warning: #fbbf24;
   --warning-lighter: #fef3c7;
   --warning-darker: #78350f;
 
   /* info variations */
-  --info: #0ea5e9;
+  --info: #38bdf8;
   --info-lighter: #e0f2fe;
   --info-darker: #0c4a6e;
 
   /* danger variations */
-  --danger: #ef4444;
+  --danger: #f87171;
   --danger-lighter: #fee2e2;
   --danger-darker: #7f1d1d;
 }
 
 :root.dark {
   /* used only as the page background */
-  /* zinc-900 */
   --foundation-page: #18181b;
   /* used as the background for any element that sits on the page */
-  /* zinc-800 27272a - color space matching from figma we get the below */
-  --foundation: #232325;
-  /* used as the background for any element that you want to emphasize */
-  /* zinc-700 */
+  --foundation: #27272a;
   --foundation-2: #3f3f46;
+  --foundation-3: #52525b;
+  --foundation-4: #71717a;
+  --foundation-5: #a1a1aa;
+  /* for hover/focus states */
+  --foundation-focus: #52525b;
   /* for disabled backgrounds */
-  /* zinc-600 */
   --foundation-disabled: #52525b;
 
   /* default foreground color */
-  /* zinc-100 */
   --foreground: #f4f4f5;
   /* dimmer foreground color, e.g. caption text */
-  /* zinc-300 */
   --foreground-2: #d4d4d8;
   /* disabled foreground color */
-  /* zinc-400 */
   --foreground-disabled: #a1a1aa;
+  /* primary color when used for text directly on top of foundation-page */
+  --foreground-primary: #bfdbfe;
   /* foreground color when put on top of a primary colored background */
-  /* zinc-50 */
   --foreground-on-primary: #fafafa;
-  /* foreground color on foundation page */
-  /* blue-200 */
-  --foreground-primary: #93c5fd;
 
   /* primary color */
-  /* blue-500 */
   --primary: #3b82f6;
   /* focused primary color */
-  /* blue-400 */
   --primary-focus: #60a5fa;
   /* muted primary color */
-  /* zinc-500/5 */
-  --primary-muted: hsla(240deg 4 46 / 5%);
-  /* primary outline */
-  /* zinc-400 */
-  --primary-outline: #a1a1aa;
-  /* secondary variant of primary outline */
-  /* zinc-600 */
-  --primary-outline-2: #52525b;
+  --primary-muted: #71717a0d;
+
+  /* outline variations */
+  --outline-1: #a1a1aa;
+  --outline-2: #52525b;
+  --outline-3: #3f3f46;
 
   /* success variations */
-  --success-lighter: #a7f3d0;
   --success: #34d399;
+  --success-lighter: #a7f3d0;
   --success-darker: #064e3b;
 
   /* warning variations */
-  --warning-lighter: #fef3c7;
-  --warning: #f59e0b;
+  --warning: #facc15;
+  --warning-lighter: #fef08a;
   --warning-darker: #78350f;
 
   /* info variations */
-  --info-lighter: #bae6fd;
   --info: #38bdf8;
+  --info-lighter: #bae6fd;
   --info-darker: #0c4a6e;
 
   /* danger variations */
-  --danger-lighter: #fecaca;
   --danger: #f87171;
+  --danger-lighter: #fecaca;
   --danger-darker: #7f1d1d;
 }

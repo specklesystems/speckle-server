@@ -5,7 +5,7 @@ import {
 
 export function usePasswordReset() {
   const {
-    public: { API_ORIGIN: apiOrigin }
+    public: { apiOrigin }
   } = useRuntimeConfig()
 
   const sendResetEmail = async (email: string) =>

@@ -15,7 +15,7 @@ module.exports = {
   Mutation: {
     async userNotificationPreferencesUpdate(
       _parent,
-      args: { preferences: Record<string, unknown> },
+      args,
       context: { userId: string }
     ) {
       await updateNotificationPreferences(context.userId, args.preferences)

@@ -7,7 +7,7 @@ const { parseAndCreateCommit } = require('./index')
 async function main() {
   const cmdArgs = process.argv.slice(2)
 
-  const [filePath, userId, streamId, branchName, commitMessage] = cmdArgs
+  const [filePath, userId, streamId, branchName, commitMessage, fileId] = cmdArgs
 
   // eslint-disable-next-line no-console
   console.log('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
@@ -18,7 +18,8 @@ async function main() {
     data,
     streamId,
     userId,
-    message: commitMessage || 'Imported file'
+    message: commitMessage || ' Imported file',
+    fileId
   }
   if (branchName) ifcInput.branchName = branchName
 
@@ -34,6 +35,7 @@ async function main() {
       commitId
     }
   } catch (err) {
+    console.log(err)
     output = {
       success: false,
       error: err.toString()

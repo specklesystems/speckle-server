@@ -20,6 +20,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "storybook:test": "test-storybook",
+    "storybook:test:ci": "concurrently -k -s first -n \"SB,TEST\" -c \"magenta,blue\" \"yarn build-storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && yarn test-storybook --ci\"",
     "storybook:test:watch": "test-storybook --watch",
     "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded"
   },
@@ -75,7 +76,7 @@
     "concurrently": "^7.5.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-nuxt": "^3.2.0",
+    "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-storybook": "^0.6.6",
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
@@ -92,7 +93,8 @@
     "stylelint-config-standard": "^26.0.0",
     "type-fest": "^2.13.1",
     "typescript": "^4.8.3",
-    "vue-tsc": "^1.0.8"
+    "vue-tsc": "^1.0.8",
+    "wait-on": "^6.0.1"
   },
   "engines": {
     "node": "^16.0.0"

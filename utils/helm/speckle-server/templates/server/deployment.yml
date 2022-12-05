@@ -94,6 +94,16 @@ spec:
             value: {{ include "server.port" $ | quote }}
           - name: DEBUG
             value: "speckle:*"
+          
+          - name: USE_FRONTEND_2
+            value: {{ .Values.frontend_2.enabled | quote }}
+
+          - name: FRONTEND_ORIGIN
+            {{- if .Values.ssl_canonical_url }}
+            value: https://{{ .Values.domain }}
+            {{- else }}
+            value: http://{{ .Values.domain }}
+            {{- end }}
 
           - name: SESSION_SECRET
             valueFrom:

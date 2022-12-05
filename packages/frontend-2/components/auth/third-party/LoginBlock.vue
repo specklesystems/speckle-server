@@ -43,7 +43,7 @@ const props = defineProps<{
 }>()
 
 const {
-  public: { API_ORIGIN }
+  public: { apiOrigin }
 } = useRuntimeConfig()
 const mixpanel = useMixpanel()
 const { inviteToken } = useAuthManager()
@@ -58,7 +58,7 @@ const thirdPartyStrategies = computed(() =>
 )
 
 const buildAuthUrl = (strat: StrategyType) => {
-  const url = new URL(strat.url, API_ORIGIN)
+  const url = new URL(strat.url, apiOrigin)
   url.searchParams.set('appId', props.appId)
   url.searchParams.set('challenge', props.challenge)
   return url.toString()

@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-frontend-2
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "frontend-2.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.frontend_2.replicas }}
+  selector:
+    matchLabels:
+{{ include "frontend-2.selectorLabels" . | indent 6 }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+{{ include "frontend-2.labels" . | indent 8 }}
+    spec:
+      containers:
+      - name: main
+        image: speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+
+        ports:
+          - name: www
+            containerPort: 8080
+            protocol: TCP
+
+        resources:
+          requests:
+            cpu: {{ .Values.frontend_2.requests.cpu }}
+            memory: {{ .Values.frontend_2.requests.memory }}
+          limits:
+            cpu: {{ .Values.frontend_2.limits.cpu }}
+            memory: {{ .Values.frontend_2.limits.memory }}
+
+        # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: www
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+        env: 
+          - name: FILE_SIZE_LIMIT_MB
+            value: {{ .Values.file_size_limit_mb | quote }}
+          - name: NUXT_PUBLIC_API_ORIGIN
+            value: {{ .Values.ssl_canonical_url | ternary (printf "https://%s" .Values.domain) (printf "http://%s" .Values.domain) }}
+          - name: NUXT_PUBLIC_MIXPANEL_TOKEN_ID
+            value: {{ .Values.analytics.mixpanel_token_id }}
+          - name: NUXT_PUBLIC_MIXPANEL_API_HOST
+            value: {{ .Values.analytics.mixpanel_api_host }}
+
+      priorityClassName: high-priority
+      {{- if .Values.frontend_2.affinity }}
+      affinity: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.affinity "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend_2.nodeSelector }}
+      nodeSelector: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend_2.tolerations }}
+      tolerations: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend_2.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend_2.serviceAccount.create }}
+      serviceAccountName: {{ include "frontend-2.name" $ }}
+      {{- end }}

@@ -2,6 +2,7 @@ import { getQueue, NotificationJobResult } from '@/modules/notifications/service
 import { EventEmitter } from 'events'
 import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
 import { pick } from 'lodash'
+import { Nullable } from '@speckle/shared'
 
 type AckEvent = {
   result?: NotificationJobResult
@@ -82,18 +83,35 @@ export function buildNotificationsStateTracker() {
     },
 
     /**
-     * Wait for an acknowledgement without knowing the msg id
+     * Wait for an acknowledgement without knowing the msg id.
+     * IMPORTANT NOTE: Create the promise before the operation that creates the message and await it after,
+     * otherwise it might get processed so fast that you miss it
      */
-    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 2000) => {
+    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 3000) => {
       let timeoutRef: NodeJS.Timer
-      let eventEmitterHandler: (e: AckEvent) => void
+      let promiseAckTracker: (e: AckEvent) => void
+
+      // We start tracking even before promise is created so that we can't possibly miss it
+      let foundAck: Nullable<AckEvent> = null
+      const ackTracker = (e: AckEvent) => {
+        if (predicate && predicate(e)) foundAck = e
+      }
+      localEvents.on(NEW_ACK_EVENT, ackTracker)
+
       return new Promise<AckEvent>((resolve, reject) => {
-        // Set ack cb for notifications event handler
-        eventEmitterHandler = (e) => {
+        // Resolve/reject promise based on acks arriving
+        promiseAckTracker = (e) => {
           if (!predicate) return resolve(e)
           if (predicate && predicate(e)) return resolve(e)
         }
-        localEvents.on(NEW_ACK_EVENT, eventEmitterHandler)
+        localEvents.on(NEW_ACK_EVENT, promiseAckTracker)
+
+        // Now that we have the promise tracker in place, its safe to check if ack is
+        // possibly already found and unsubscribe ackTracker
+        localEvents.off(NEW_ACK_EVENT, ackTracker)
+        if (foundAck) {
+          return resolve(foundAck)
+        }
 
         // Set timeout
         timeoutRef = setTimeout(
@@ -102,7 +120,8 @@ export function buildNotificationsStateTracker() {
         )
       }).finally(() => {
         clearTimeout(timeoutRef)
-        localEvents.off(NEW_ACK_EVENT, eventEmitterHandler)
+        localEvents.off(NEW_ACK_EVENT, ackTracker)
+        localEvents.off(NEW_ACK_EVENT, promiseAckTracker)
       })
     }
   }

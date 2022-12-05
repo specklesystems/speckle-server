@@ -23,13 +23,16 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
 
-      - chromatic:
-          context:
-            - chromatic
-          filters:
+      - test-frontend-2:
+          filters: &filters-frontend-2
             tags:
               # frontend-2 prefix only
               only: /^frontend\-2.*/
+
+      - chromatic:
+          context:
+            - chromatic
+          filters: *filters-frontend-2
 
       - get-version:
           filters: *filters-allow-all
@@ -52,6 +55,12 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
+
+      - docker-build-frontend-2:
+          filters: *filters-build
+          requires:
+            - get-version
+            - test-frontend-2
 
       - docker-build-webhooks:
           context: *build-context
@@ -91,7 +100,9 @@ workflows:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore: main
+              ignore:
+                - main
+                - frontend-2
             tags:
               ignore: /.*/
 
@@ -116,6 +127,15 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-frontend
+            - pre-commit
+
+      - docker-publish-frontend-2:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-frontend-2
             - pre-commit
 
       - docker-publish-webhooks:
@@ -176,6 +196,7 @@ workflows:
             - publish-approval
             - docker-publish-server
             - docker-publish-frontend
+            - docker-publish-frontend-2
             - docker-publish-webhooks
             - docker-publish-file-imports
             - docker-publish-previews
@@ -258,6 +279,9 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
       - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
           name: Run pre-commit
           command: ./.husky/pre-commit
       - run:
@@ -302,7 +326,6 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-          # working_directory: 'packages/server'
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -343,6 +366,40 @@ jobs:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
 
+  test-frontend-2:
+    docker:
+      - image: cimg/node:16.15-browsers
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Install Playwrigth
+          command: cd ~ && npx playwright install --with-deps
+
+      - run:
+          name: Test via Storybook
+          command: yarn storybook:test:ci
+          working_directory: 'packages/frontend-2'
+
   chromatic:
     docker:
       - image: cimg/node:16.15
@@ -365,11 +422,12 @@ jobs:
 
       - run:
           name: Build shared packages
-          command: cd ./packages/shared && yarn build
+          command: yarn build:public
 
       - run:
           name: Run chromatic
-          command: cd ./packages/frontend-2 && yarn chromatic
+          command: yarn chromatic
+          working_directory: 'packages/frontend-2'
 
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration
@@ -420,6 +478,7 @@ jobs:
           command: |
             [[ "${CIRCLE_TAG}" ]] && echo "proceed because tag is set" && exit 0
             [[ "${CIRCLE_BRANCH}" == "main" ]] && echo "proceed because main branch" && exit 0
+            [[ "${CIRCLE_BRANCH}" == "frontend-2" ]] && echo "proceed because frontend-2 branch" && exit 0
             [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
             echo "proceeding"
       - setup_remote_docker:
@@ -444,6 +503,11 @@ jobs:
     <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
+
+  docker-build-frontend-2:
+    <<: *build-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
 
   docker-build-previews:
     <<: *build-job
@@ -500,6 +564,11 @@ jobs:
     <<: *publish-job
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
+
+  docker-publish-frontend-2:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend-2
 
   docker-publish-previews:
     <<: *publish-job

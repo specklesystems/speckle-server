@@ -1,13 +1,9 @@
-const { API_ORIGIN, IS_STORYBOOK_BUILD, MIXPANEL_TOKEN_ID, MIXPANEL_API_HOST } =
-  process.env
-
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   typescript: {
     shim: false,
     strict: true
   },
-
   modules: [
     '@nuxtjs/tailwindcss',
     [
@@ -19,12 +15,11 @@ export default defineNuxtConfig({
       }
     ]
   ],
-
   runtimeConfig: {
     public: {
-      API_ORIGIN,
-      MIXPANEL_API_HOST,
-      MIXPANEL_TOKEN_ID
+      apiOrigin: 'UNDEFINED',
+      mixpanelApiHost: 'UNDEFINED',
+      mixpanelTokenId: 'UNDEFINED'
     }
   },
 
@@ -43,7 +38,7 @@ export default defineNuxtConfig({
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }]
     },
-    ...(IS_STORYBOOK_BUILD
+    ...(process.env.IS_STORYBOOK_BUILD
       ? {}
       : {
           assetsInclude: ['**/*.mdx']
