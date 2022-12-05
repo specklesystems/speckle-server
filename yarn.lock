@@ -4834,7 +4834,7 @@ __metadata:
     prom-client: ^14.0.1
     undici: ^5.8.2
     valid-filename: ^3.1.0
-    web-ifc: "https://github.com/IFCjs/web-ifc.git#73e91702127622ce5e18b8ca3ccbe7d853e4bd36"
+    web-ifc: ^0.0.36
   languageName: unknown
   linkType: soft
 
@@ -20726,10 +20726,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-ifc@https://github.com/IFCjs/web-ifc.git#73e91702127622ce5e18b8ca3ccbe7d853e4bd36":
+"web-ifc@npm:^0.0.36":
   version: 0.0.36
-  resolution: "web-ifc@https://github.com/IFCjs/web-ifc.git#commit=73e91702127622ce5e18b8ca3ccbe7d853e4bd36"
-  checksum: 6cb88bf009672237eeec9f9d65e2ac9ba9b80a728dcc2c99a16aa9cde0be2a5c65ef2b1c57bc3c4a5a0e29156fdf41c13154c336c5db4624d409eb9d10a0cbd8
+  resolution: "web-ifc@npm:0.0.36"
+  checksum: 930ad124c22527454888644940ec97b5e5990690d1ba9d8c2eea08d1f8429fbf614a32c3881f38184ceb6f18d5be845420dd2f90d06603a1e556f10d2a825402
   languageName: node
   linkType: hard
 
