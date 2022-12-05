@@ -10,11 +10,11 @@ const {
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
-const debug = require('debug')
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
+const { dbLogger } = require('@/logging/logging')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -176,7 +176,7 @@ module.exports = {
 
   async deleteUser(id) {
     //TODO: check for the last admin user to survive
-    debug('speckle:db')('Deleting user ' + id)
+    dbLogger.info('Deleting user ' + id)
     await _ensureAtleastOneAdminRemains(id)
     const streams = await knex.raw(
       `
