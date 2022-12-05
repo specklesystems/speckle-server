@@ -190,6 +190,7 @@ workflows:
                 - main
                 - hotfix*
                 - frontend-2
+                - iain/publish-helm-chart-for-frontend-2 # FIXME remove after testing
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:

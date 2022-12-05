@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -eo pipefail
-set -x
+set -x  # FIXME remove after testing
 
 GIT_REPO=$( pwd )
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -48,6 +48,6 @@ fi
 cd ~/helm
 
 git add .
-git diff --staged
+git diff --staged  # FIXME remove after testing
 git commit -m "CircleCI commit for version '${RELEASE_VERSION}'"
-# git push
+# git push  # FIXME uncomment after testing
