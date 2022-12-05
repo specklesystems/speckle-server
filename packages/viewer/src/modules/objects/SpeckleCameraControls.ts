@@ -309,10 +309,7 @@ export class SpeckleCameraControls extends CameraControls {
     }
     const zoomDelta = this._zoomEnd - this._zoom
     this._zoom +=
-      zoomDelta *
-      (this.overrideZoomLerpRatio
-        ? this.overrideZoomLerpRatio
-        : this.overrideZoomLerpRatio)
+      zoomDelta * (this.overrideZoomLerpRatio ? this.overrideZoomLerpRatio : lerpRatio)
     if (this._camera.zoom !== this._zoom) {
       if (approxZero(zoomDelta)) {
         this._zoom = this._zoomEnd
@@ -344,7 +341,7 @@ export class SpeckleCameraControls extends CameraControls {
         approxZero(deltaOffset.z, this.restThreshold) &&
         !this._hasRested &&
         !this._isTrucking &&
-        !this._didZoom
+        (isOrthographicCamera(this._camera) ? !this._didZoom : true)
       ) {
         this._hasRested = true
         this.dispatchEvent({ type: 'rest' })
@@ -364,7 +361,7 @@ export class SpeckleCameraControls extends CameraControls {
         approxZero(deltaOffset.y, this.restThreshold) &&
         approxZero(deltaOffset.z, this.restThreshold) &&
         !this._isTrucking &&
-        !this._didZoom
+        (isOrthographicCamera(this._camera) ? !this._didZoom : true)
       ) {
         this.dispatchEvent({ type: 'rest' })
         this._didDollyLastFrame = false
