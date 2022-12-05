@@ -161,18 +161,20 @@ workflows:
               only:
                 - main
                 - hotfix*
+                - iain/publish-helm-chart-for-branches # FIXME temporary while testing
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
             - get-version
-            - publish-approval
-            - docker-publish-server
-            - docker-publish-frontend
-            - docker-publish-webhooks
-            - docker-publish-file-imports
-            - docker-publish-previews
-            - docker-publish-monitor-container
-            - docker-publish-test-container
+            # FIXME temporarily disable while testing
+            # - publish-approval
+            # - docker-publish-server
+            # - docker-publish-frontend
+            # - docker-publish-webhooks
+            # - docker-publish-file-imports
+            # - docker-publish-previews
+            # - docker-publish-monitor-container
+            # - docker-publish-test-container
 
       - publish-npm:
           filters:

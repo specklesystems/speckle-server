@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -eo pipefail
+set -x # FIXME temporarily while testing
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
@@ -37,7 +38,7 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
   fi
   cp -r "${HOME}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server"
 else
-  # always overwrite
+  # overwrite the name of the chart
   sed -i 's/name: [^\s]*/name: '\""${BRANCH_NAME_TRUNCATED}-speckle-server"\"'/g' "${HOME}/utils/helm/speckle-server/Chart.yaml"
   cp -r "${HOME}/utils/helm/speckle-server" "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
 fi
@@ -45,5 +46,6 @@ fi
 cd ~/helm
 
 git add .
+git diff --staged # FIXME temporarily while testing
 git commit -m "CircleCI commit for version '${RELEASE_VERSION}'"
-git push
+# git push # FIXME temporarily disable while testing
