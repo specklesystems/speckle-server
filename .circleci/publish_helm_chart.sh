@@ -23,7 +23,6 @@ yq e -i ".version = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-serv
 yq e -i ".appVersion = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
 yq e -i ".docker_image_tag = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
-rm -rf "${HOME}/helm/charts/speckle-server"
 if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; then
   # before overwriting the chart with the build version, check if the current chart version
   # is not newer than the currently build one
@@ -37,10 +36,12 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
     echo "The current helm chart version is newer than the currently built. Exiting" 
     exit 1
   fi
+  rm -rf "${HOME}/helm/charts/speckle-server"
   cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server"
 else
   # overwrite the name of the chart
   yq e -i ".name = \"${BRANCH_NAME_TRUNCATED}-speckle-server\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+  rm -rf "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
   cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
 fi
 
