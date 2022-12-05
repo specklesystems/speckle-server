@@ -15,6 +15,7 @@ echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 git config --global user.email "devops+circleci@speckle.systems"
 git config --global user.name "CI"
 
+pwd # FIXME temporary for testing
 ls -la # FIXME temporary for testing
 
 git clone git@github.com:specklesystems/helm.git "${HOME}/helm"
