@@ -1,8 +1,9 @@
 // Note logging is imported by www & ts-www, prior to init() being called
 // so we can't use local imports with '@' etc., as they aren't yet defined.
-import { logger, extendLoggerComponent } from '@speckle/shared'
-export { logger, extendLoggerComponent } from '@speckle/shared'
+import { getLogger, extendLoggerComponent } from '@speckle/shared'
+export { extendLoggerComponent } from '@speckle/shared'
 
+export const logger = getLogger(process.env.LOG_LEVEL || 'info')
 // loggers for phases of operation
 export const startupLogger = logger.child({ phase: 'startup' })
 export const dbStartupLogger = logger.child({ phase: 'db-startup' })
