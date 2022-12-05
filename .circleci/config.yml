@@ -190,20 +190,19 @@ workflows:
                 - main
                 - hotfix*
                 - frontend-2
-                - iain/publish-helm-chart-for-frontend-2 # FIXME remove after testing
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
             - get-version
-            # - publish-approval
-            # - docker-publish-server
-            # - docker-publish-frontend
-            # - docker-publish-frontend-2
-            # - docker-publish-webhooks
-            # - docker-publish-file-imports
-            # - docker-publish-previews
-            # - docker-publish-monitor-container
-            # - docker-publish-test-container
+            - publish-approval
+            - docker-publish-server
+            - docker-publish-frontend
+            - docker-publish-frontend-2
+            - docker-publish-webhooks
+            - docker-publish-file-imports
+            - docker-publish-previews
+            - docker-publish-monitor-container
+            - docker-publish-test-container
 
       - publish-npm:
           filters:
