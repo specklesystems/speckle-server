@@ -1,7 +1,7 @@
+const { logger } = require('@/logging/logging')
 const path = require('path')
 const yargs = require('yargs')
 require('../../bootstrap')
-const { logger } = require('@/logging/logging')
 
 const execution = yargs
   .scriptName('yarn cli')
