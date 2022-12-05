@@ -40,9 +40,9 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
   cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server"
 else
   # overwrite the name of the chart
-  yq e -i ".name = \"${BRANCH_NAME_TRUNCATED}-speckle-server\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
-  rm -rf "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
-  cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
+  yq e -i ".name = \"speckle-server-branch-${BRANCH_NAME_TRUNCATED}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+  rm -rf "${HOME}/helm/charts/speckle-server-branch-${BRANCH_NAME_TRUNCATED}"
+  cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server-branch-${BRANCH_NAME_TRUNCATED}"
 fi
 
 cd ~/helm
