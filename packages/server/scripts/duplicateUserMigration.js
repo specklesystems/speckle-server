@@ -1,5 +1,4 @@
 const knex = require('@/db/knex')
-const { logger } = require('@/logging/logging')
 const roles = require('@/modules/core/roles.js')
 
 const Users = () => knex('users')
@@ -25,10 +24,10 @@ const migrateColumnValue = async (tableName, columnName, oldUser, newUser) => {
     const query = knex(tableName)
       .where({ [columnName]: oldUser.id })
       .update({ [columnName]: newUser.id })
-    logger.info(`${query}`)
+    console.log(`${query}`)
     await query
   } catch (err) {
-    logger.error(err)
+    console.log(err)
   }
 }
 
@@ -107,7 +106,7 @@ const getDuplicateUsers = async () => {
 
 const runMigrations = async () => {
   const duplicateUsers = await getDuplicateUsers()
-  logger.info(duplicateUsers)
+  console.log(duplicateUsers)
   await Promise.all(
     duplicateUsers.map(async (userDouble) => {
       const migrations = createMigrations(userDouble)
@@ -126,7 +125,7 @@ const runMigrations = async () => {
     // await createData()
     await runMigrations()
   } catch (err) {
-    logger.error(err)
+    console.log(err)
   } finally {
     process.exit()
   }

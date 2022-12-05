@@ -1,14 +1,13 @@
 const knex = require('@/db/knex')
-const { logger } = require('@/logging/logging')
 
 /** @type {import('yargs').CommandModule} */
 const command = {
   command: 'latest',
   describe: 'Run all migrations that have not yet been run',
   async handler() {
-    logger.info('Running latest migration...')
+    console.log('Running...')
     await knex.migrate.latest()
-    logger.info('Completed running migration')
+    console.log('...done')
   }
 }
 

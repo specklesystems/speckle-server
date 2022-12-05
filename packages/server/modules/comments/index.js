@@ -1,12 +1,12 @@
-const { moduleLogger } = require('@/logging/logging')
 const {
   notifyUsersOnCommentEvents
 } = require('@/modules/comments/services/notifications')
+const debug = require('debug')
 
 let unsubFromEvents
 
 exports.init = async (_, isInitial) => {
-  moduleLogger.info('🗣 Init comments module')
+  debug('speckle:modules')('🗣  Init comments module')
 
   if (isInitial) {
     unsubFromEvents = await notifyUsersOnCommentEvents()

@@ -1,4 +1,3 @@
-const { logger } = require('@/logging/logging')
 const { NotFoundError } = require('@/modules/shared/errors')
 const {
   S3Client,
@@ -89,7 +88,7 @@ const storeFileStream = async ({ objectKey, fileStream }) => {
   })
 
   // parallelUploads3.on('httpUploadProgress', (progress) => {
-  //   logger.debug(progress)
+  //   console.log(progress)
   // })
 
   const data = await parallelUploads3.done()
@@ -115,7 +114,7 @@ const ensureStorageAccess = async () => {
       try {
         await client.send(new CreateBucketCommand({ Bucket }))
       } catch (err) {
-        logger.error(err)
+        console.log(err)
       }
     } else {
       throw new Error(`Can't open S3 bucket '${Bucket}': ${err.toString()}`)

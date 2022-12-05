@@ -1,4 +1,5 @@
 'use strict'
+const debug = require('debug')
 const {
   createUser,
   validatePasssword,
@@ -17,7 +18,6 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
-const { logger } = require('@/logging/logging')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -101,7 +101,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         return next()
       } catch (err) {
-        logger.error(err)
+        debug('speckle:error')(err)
         return res.status(400).send({ err: err.message })
       }
     },

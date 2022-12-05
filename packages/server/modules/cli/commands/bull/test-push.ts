@@ -1,10 +1,10 @@
-import { cliLogger } from '@/logging/logging'
 import {
   MentionedInCommentData,
   NotificationType
 } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { initializeQueue } from '@/modules/notifications/services/queue'
+import { cliDebug } from '@/modules/shared/utils/logger'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule = {
@@ -36,7 +36,7 @@ const command: CommandModule = {
       } as unknown as MentionedInCommentData
     })
 
-    cliLogger.info('Queued a fake notification...')
+    cliDebug('Queued a fake notification...')
   }
 }
 

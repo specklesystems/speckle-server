@@ -5,7 +5,6 @@ const express = require('express')
 const { getObject, getObjectChildrenStream } = require('./services/objects_utils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-const { logger } = require('../observability/logging')
 
 const router = express.Router()
 
@@ -45,11 +44,11 @@ router.get('/:streamId/:objectId', async function (req, res) {
     res,
     (err) => {
       if (err) {
-        logger.error(
+        console.log(
           `Error downloading object ${req.params.objectId} from stream ${req.params.streamId}: ${err}`
         )
       } else {
-        logger.info(
+        console.log(
           `Downloaded object ${req.params.objectId} from stream ${
             req.params.streamId
           } (size: ${gzipStream.bytesWritten / 1000000} MB)`
@@ -69,7 +68,7 @@ router.get('/:streamId/:objectId/single', async (req, res) => {
     return res.status(404).send('Failed to find object.')
   }
 
-  logger.info(
+  console.log(
     `Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}`
   )
 
