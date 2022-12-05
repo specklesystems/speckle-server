@@ -49,7 +49,7 @@
                     <NuxtLink
                       :href="item.href"
                       :class="[
-                        active ? 'bg-foundation-2' : '',
+                        active ? 'bg-foundation-focus' : '',
                         'block px-4 py-2 text-sm text-foreground cursor-pointer'
                       ]"
                       @click="item.onClick"
@@ -64,7 +64,7 @@
           <div class="-mr-2 flex items-center sm:hidden">
             <!-- Mobile menu button -->
             <DisclosureButton
-              class="inline-flex items-center justify-center rounded-md bg-foundation p-2 text-foreground-3 hover:bg-foundation-2 hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
+              class="inline-flex items-center justify-center rounded-md bg-foundation p-2 text-foreground-3 hover:bg-foundation-focus hover:text-foreground-2 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:dark:ring-blue-900 ring-offset-white dark:ring-offset-black focus:ring-offset-2"
             >
               <span class="sr-only">Open main menu</span>
               <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
@@ -75,7 +75,7 @@
       </div>
 
       <DisclosurePanel class="sm:hidden" on-pointerleave="">
-        <div class="border-t border-foundation-2 pt-4 pb-4">
+        <div class="border-t border-foundation-focus pt-4 pb-4">
           <div class="flex items-center px-4">
             <div class="flex-shrink-0">
               <img
@@ -102,7 +102,7 @@
               :key="item.name"
               as="a"
               :href="item.href"
-              class="block px-4 py-2 text-base font-medium text-foreground hover:bg-foundation-2 hover:text-foreground-2"
+              class="block px-4 py-2 text-base font-medium text-foreground hover:bg-foundation-focus hover:text-foreground-2"
               @click="item.onClick"
             >
               {{ item.name }}

@@ -2,7 +2,7 @@
   <Component
     :is="form ? 'form' : 'div'"
     :class="[
-      'divide-y divide-foundation-2 overflow-hidden bg-foundation text-foreground shadow flex flex-col',
+      'divide-y divide-outline-3 overflow-hidden bg-foundation text-foreground shadow flex flex-col',
       computedClasses
     ]"
     @submit="emit('submit', $event)"

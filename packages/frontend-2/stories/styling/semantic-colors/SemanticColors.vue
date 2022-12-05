@@ -31,6 +31,7 @@
 import { markClassesUsed } from '~~/lib/common/helpers/tailwind'
 import { useClipboard } from '@vueuse/core'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { Ref } from 'vue'
 
 /** Suffix on top of the color base name (e.g., focus if danger-focus) or null if no suffix (e.g., danger) */
 type ColorVariation = string | null
@@ -38,10 +39,10 @@ type ColorDefinition = { description: string; variations: ColorVariation[] }
 
 const lighterDarkerVariations: ColorVariation[] = [null, 'lighter', 'darker']
 
-const colorDefinitions: Record<string, ColorDefinition> = {
+const colorDefinitions: Ref<Record<string, ColorDefinition>> = ref({
   foundation: {
     description: 'Meant to be used as page/panel background colors',
-    variations: [null, 'page', '2', 'disabled']
+    variations: ['page', null, '2', '3', '4', '5', 'disabled', 'focus']
   },
   foreground: {
     description: 'Meant to be used as foreground (text) colors',
@@ -49,7 +50,11 @@ const colorDefinitions: Record<string, ColorDefinition> = {
   },
   primary: {
     description: 'Primary branding color of Speckle',
-    variations: [null, 'focus', 'muted', 'outline', 'outline-2']
+    variations: [null, 'focus', 'muted']
+  },
+  outline: {
+    description: 'Outline/border/divider colors',
+    variations: ['1', '2', '3']
   },
   success: {
     description: 'For success messages/icons/notifications',
@@ -67,7 +72,7 @@ const colorDefinitions: Record<string, ColorDefinition> = {
     description: 'For error messages/icons/notifications',
     variations: lighterDarkerVariations
   }
-}
+})
 
 const { triggerNotification } = useGlobalToast()
 const { copy } = useClipboard()
@@ -94,6 +99,10 @@ markClassesUsed([
   'bg-foundation',
   'bg-foundation-page',
   'bg-foundation-2',
+  'bg-foundation-3',
+  'bg-foundation-4',
+  'bg-foundation-5',
+  'bg-foundation-focus',
   'bg-foundation-disabled',
   'bg-foreground',
   'bg-foreground-2',
@@ -103,8 +112,6 @@ markClassesUsed([
   'bg-primary',
   'bg-primary-focus',
   'bg-primary-muted',
-  'bg-primary-outline',
-  'bg-primary-outline-2',
   'bg-success',
   'bg-success-lighter',
   'bg-success-darker',
@@ -116,6 +123,9 @@ markClassesUsed([
   'bg-info-darker',
   'bg-danger',
   'bg-danger-lighter',
-  'bg-danger-darker'
+  'bg-danger-darker',
+  'bg-outline-1',
+  'bg-outline-2',
+  'bg-outline-3'
 ])
 </script>

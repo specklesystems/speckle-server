@@ -46,8 +46,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-foundation-2',
-                          active ? 'bg-foundation-2' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-foundation-focus',
+                          active ? 'bg-foundation-focus' : ''
                         ]"
                       >
                         Share
@@ -56,8 +56,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-foundation-2',
-                          active ? 'bg-foundation-2' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-foundation-focus',
+                          active ? 'bg-foundation-focus' : ''
                         ]"
                       >
                         Change Name
@@ -66,8 +66,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-foundation-2',
-                          active ? 'bg-foundation-2' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-foundation-focus',
+                          active ? 'bg-foundation-focus' : ''
                         ]"
                       >
                         View Versions
@@ -76,8 +76,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-foundation-2',
-                          active ? 'bg-foundation-2' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-foundation-focus',
+                          active ? 'bg-foundation-focus' : ''
                         ]"
                       >
                         Open Project
@@ -86,8 +86,8 @@
                     <DisclosureButton v-slot="{ active }" as="template">
                       <a
                         :class="[
-                          'block py-2 px-2 cursor-pointer hover:bg-foundation-2',
-                          active ? 'bg-foundation-2' : ''
+                          'block py-2 px-2 cursor-pointer hover:bg-foundation-focus',
+                          active ? 'bg-foundation-focus' : ''
                         ]"
                       >
                         Delete

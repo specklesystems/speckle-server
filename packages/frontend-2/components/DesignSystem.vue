@@ -24,7 +24,7 @@
             <div class="label label--light">Label text (light)</div>
             <div class="caption">Caption text</div>
           </div>
-          <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-2">
+          <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-focus">
             <b>Font faces?</b>
             system ui only - using github's stack. Lighter, better performance, no more
             google fonts trakcing and a more native look.
@@ -52,7 +52,7 @@
         <template #default>
           <div>Here are the available foreground colors:</div>
           <div class="mt-4">
-            <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-2">
+            <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-focus">
               <b class="text-primary">Text colors? &nbsp;</b>
               <span class="text-foreground">
                 <b>foreground</b>
@@ -69,37 +69,6 @@
               <li class="text-foreground">text-foreground</li>
               <li class="text-foreground-2">text-foreground-2</li>
             </ul>
-          </div>
-          <div class="my-8">
-            <div>
-              <div>Here are the available background colors:</div>
-              <div
-                class="bg-foundation-page px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
-              >
-                <b>bg-foundation-page</b>
-                - for use as the page background.
-              </div>
-              <div
-                class="bg-foundation px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
-              >
-                <b>bg-foundation</b>
-                - for use in any element that
-                <b>sits</b>
-                on the page.
-              </div>
-              <div
-                class="bg-foundation-2 px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
-              >
-                <b>bg-foundation-2</b>
-                - for use as the background for anything that needs to stand out.
-              </div>
-              <div
-                class="bg-primary text-white px-4 py-12 mt-2 block rounded-lg border-2 border-foundation-page"
-              >
-                <b>bg-primary</b>
-                - for use when you want to something to really pop.
-              </div>
-            </div>
           </div>
         </template>
       </LayoutPanel>

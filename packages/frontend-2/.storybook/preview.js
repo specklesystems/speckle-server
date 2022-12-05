@@ -71,6 +71,26 @@ export const parameters = {
       {
         name: 'foundation-2',
         value: 'var(--foundation-2)'
+      },
+      {
+        name: 'foundation-3',
+        value: 'var(--foundation-3)'
+      },
+      {
+        name: 'foundation-4',
+        value: 'var(--foundation-4)'
+      },
+      {
+        name: 'foundation-5',
+        value: 'var(--foundation-5)'
+      },
+      {
+        name: 'foundation-focus',
+        value: 'var(--foundation-focus)'
+      },
+      {
+        name: 'foundation-disabled',
+        value: 'var(--foundation-disabled)'
       }
     ]
   },

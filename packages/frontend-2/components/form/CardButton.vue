@@ -28,7 +28,7 @@ const computedClasses = computed(() => {
         ? 'bg-primary-focus text-foreground-on-primary'
         : 'bg-foundation text-foreground'
     )
-    classParts.push('ring-primary-outline-2 hover:ring-4')
+    classParts.push('ring-outline-2 hover:ring-4')
   }
 
   return classParts.join(' ')

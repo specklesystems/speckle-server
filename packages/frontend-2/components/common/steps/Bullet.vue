@@ -35,7 +35,7 @@
               <span class="h-3 w-3 rounded-full bg-foreground" />
             </template>
             <template v-else>
-              <span class="absolute h-4 w-4 rounded-full bg-primary-outline-2" />
+              <span class="absolute h-4 w-4 rounded-full bg-outline-2" />
               <span class="relative block h-2 w-2 rounded-full bg-primary-focus" />
             </template>
           </span>

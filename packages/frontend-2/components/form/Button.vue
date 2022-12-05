@@ -143,18 +143,15 @@ const typeClasses = computed(() => {
 
   // Rings
   if (props.type !== 'link') {
-    // const ringClass = isXs ? 'hover:ring-1' : isBase || isSm ? 'hover:ring-2' : 'ring'
-    const ringClass = 'ring-4'
     if (props.type === 'outline') {
       classParts.push(
         disabled
           ? `border-2 border-foreground-disabled`
-          : `border-2 border-primary hover:${ringClass}`
+          : `border-2 border-primary hover:ring-4`
       )
     } else if (!disabled) {
-      classParts.push('ring-primary-outline-2')
-
-      classParts.push(`focus:${ringClass} hover:${ringClass}`)
+      classParts.push('ring-outline-2')
+      classParts.push(`focus:ring-4 hover:ring-4`)
     }
   }
 

@@ -5,18 +5,19 @@
   the tailwind config, so using CSS variables instead.
 
   Palette reference: https://tailwindcss.com/docs/customizing-colors
-
-  Only use colors from the default tailwind color palette so that migrating away from this (if ever needed)
-  is easy.
  */
 
 :root {
   /* used only as the page background */
   --foundation-page: #f1f5f9;
-  /* used as the background for any element that sits on the page */
+  /* used as the background for any elements that sit on the page */
   --foundation: #fcfcfc;
-  /* used as the background for any element that you want to emphasize */
-  --foundation-2: #cbd5e1;
+  --foundation-2: #fcfcfc;
+  --foundation-3: #fcfcfc;
+  --foundation-4: #fcfcfc;
+  --foundation-5: #fcfcfc;
+  /* for hover/focus states */
+  --foundation-focus: #cbd5e1;
   /* for disabled backgrounds */
   --foundation-disabled: #dbeafe;
 
@@ -37,10 +38,11 @@
   --primary-focus: #2563eb;
   /* muted primary color */
   --primary-muted: #3b82f60d;
-  /* primary outline */
-  --primary-outline: #3b82f6;
-  /* secondary variant of primary outline */
-  --primary-outline-2: #93c5fd;
+
+  /* outline variations */
+  --outline-1: #3b82f6;
+  --outline-2: #93c5fd;
+  --outline-3: #cbd5e1;
 
   /* success variations */
   --success: #34d399;
@@ -61,14 +63,6 @@
   --danger: #f87171;
   --danger-lighter: #fee2e2;
   --danger-darker: #7f1d1d;
-
-  /**
-    * TODO: Remove, not in the design system anymore
-    */
-  /* disabled color */
-  --disabled: #d4d4d4;
-  /* disabled foreground color */
-  --disabled-muted: #fafafa;
 }
 
 :root.dark {
@@ -76,8 +70,12 @@
   --foundation-page: #18181b;
   /* used as the background for any element that sits on the page */
   --foundation: #27272a;
-  /* used as the background for any element that you want to emphasize */
   --foundation-2: #3f3f46;
+  --foundation-3: #52525b;
+  --foundation-4: #71717a;
+  --foundation-5: #a1a1aa;
+  /* for hover/focus states */
+  --foundation-focus: #52525b;
   /* for disabled backgrounds */
   --foundation-disabled: #52525b;
 
@@ -98,10 +96,11 @@
   --primary-focus: #60a5fa;
   /* muted primary color */
   --primary-muted: #71717a0d;
-  /* primary outline */
-  --primary-outline: #a1a1aa;
-  /* secondary variant of primary outline */
-  --primary-outline-2: #52525b;
+
+  /* outline variations */
+  --outline-1: #a1a1aa;
+  --outline-2: #52525b;
+  --outline-3: #3f3f46;
 
   /* success variations */
   --success: #34d399;
@@ -122,10 +121,4 @@
   --danger: #f87171;
   --danger-lighter: #fecaca;
   --danger-darker: #7f1d1d;
-
-  /**
-  * TODO: Remove, not in the design system anymore
-  */
-  --disabled: #2b2b2b;
-  --disabled-muted: #717171;
 }

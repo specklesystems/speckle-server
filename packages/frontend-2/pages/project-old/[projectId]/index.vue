@@ -3,7 +3,7 @@
     <div class="flex justify-end gap-2">
       <div class="grow">
         <div
-          class="group h-full w-max flex gap-4 items-center bg-foundation hover:bg-foundation-2 cursor-pointer overflow-hidden rounded-lg px-4 py-5 shadow-lg hover:shadow-xl transition sm:p-6"
+          class="group h-full w-max flex gap-4 items-center bg-foundation hover:bg-foundation-focus cursor-pointer overflow-hidden rounded-lg px-4 py-5 shadow-lg hover:shadow-xl transition sm:p-6"
         >
           <div>
             <dt

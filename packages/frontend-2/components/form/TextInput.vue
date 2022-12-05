@@ -229,7 +229,7 @@ const computedClasses = computed((): string => {
       'pr-8 border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
     )
   } else {
-    classParts.push('border-0 focus:ring-2 focus:ring-primary-outline-2')
+    classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
   }
 
   return classParts.join(' ')

@@ -29,6 +29,10 @@ const config = {
           page: 'var(--foundation-page)',
           DEFAULT: 'var(--foundation)',
           2: 'var(--foundation-2)',
+          3: 'var(--foundation-3)',
+          4: 'var(--foundation-4)',
+          5: 'var(--foundation-5)',
+          focus: 'var(--foundation-focus)',
           disabled: 'var(--foundation-disabled)'
         },
         foreground: {
@@ -41,9 +45,12 @@ const config = {
         primary: {
           DEFAULT: 'var(--primary)',
           focus: 'var(--primary-focus)',
-          muted: 'var(--primary-muted)',
-          outline: 'var(--primary-outline)',
-          'outline-2': 'var(--primary-outline-2)'
+          muted: 'var(--primary-muted)'
+        },
+        outline: {
+          1: 'var(--outline-1)',
+          2: 'var(--outline-2)',
+          3: 'var(--outline-3)'
         },
         success: {
           DEFAULT: 'var(--success)',
@@ -65,13 +72,6 @@ const config = {
           lighter: 'var(--danger-lighter)',
           darker: 'var(--danger-darker)'
         }
-        // /**
-        //  * TODO: Remove, not in the design system anymore
-        //  */
-        // disabled: {
-        //   DEFAULT: 'var(--disabled)',
-        //   muted: 'var(--disabled-muted)'
-        // }
       },
       borderRadius: {
         '4xl': '2rem'
