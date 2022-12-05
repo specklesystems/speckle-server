@@ -6,12 +6,18 @@ const {
   getUserByEmail
 } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
-const { respectsLimits } = require('@/modules/core/services/ratelimits')
+const {
+  sendRateLimitResponse,
+  getRateLimitResult,
+  isRateLimitBreached,
+  RateLimitAction
+} = require('@/modules/core/services/ratelimiter')
 const {
   validateServerInvite,
   finalizeInvitedServerRegistration,
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
+const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -39,7 +45,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (!user) throw new Error('Invalid credentials')
         req.user = { id: user.id }
 
-        next()
+        return next()
       } catch (err) {
         return res.status(401).send({ err: true, message: 'Invalid credentials' })
       }
@@ -57,26 +63,15 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         if (!req.body.password) throw new Error('Password missing')
 
         const user = req.body
-        user.ip = req.headers['cf-connecting-ip'] || req.connection.remoteAddress || ''
-        const ignorePrefixes = [
-          '192.168.',
-          '10.',
-          '127.',
-          '172.1',
-          '172.2',
-          '172.3',
-          '::'
-        ]
-        for (const ipPrefix of ignorePrefixes)
-          if (user.ip.startsWith(ipPrefix)) {
-            delete user.ip
-            break
-          }
-        if (
-          user.ip &&
-          !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))
-        ) {
-          throw new Error('Blocked due to rate-limiting. Try again later')
+        const ip = getIpFromRequest(req)
+        if (ip) user.ip = ip
+        const source = ip ? ip : 'unknown'
+        const rateLimitResult = await getRateLimitResult(
+          RateLimitAction.USER_CREATE,
+          source
+        )
+        if (isRateLimitBreached(rateLimitResult)) {
+          return sendRateLimitResponse(res, rateLimitResult)
         }
 
         // 1. if the server is invite only you must have an invite

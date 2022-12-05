@@ -3,8 +3,6 @@ const Redis = require('ioredis')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
-const { buildRequestLoaders } = require('@/modules/core/loaders')
-const { validateToken } = require(`@/modules/core/services/tokens`)
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -26,76 +24,6 @@ const pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
 })
-
-/**
- * @typedef {import('@/modules/shared/helpers/typeHelper').GraphQLContext} GraphQLContext
- */
-
-/**
- * Add data loaders to auth ctx
- * @param {import('@/modules/shared/authz').AuthContext} ctx
- * @returns {GraphQLContext}
- */
-function addLoadersToCtx(ctx) {
-  const loaders = buildRequestLoaders(ctx)
-  ctx.loaders = loaders
-  return ctx
-}
-
-/**
- * Build context for GQL operations
- * @returns {Promise<GraphQLContext>}
- */
-async function buildContext({ req, connection }) {
-  // Parsing auth info
-  const ctx = await contextApiTokenHelper({ req, connection })
-
-  // Adding request data loaders
-  return addLoadersToCtx(ctx)
-}
-
-/**
- * Not just Graphql server context helper: sets req.context to have an auth prop (true/false), userId and server role.
- * @returns {Promise<import('@/modules/shared/authz').AuthContext>}
- */
-async function contextApiTokenHelper({ req, connection }) {
-  let token = null
-
-  if (connection && connection.context.token) {
-    // Websockets (subscriptions)
-    token = connection.context.token
-  } else if (req && req.headers.authorization) {
-    // Standard http post
-    token = req.headers.authorization
-  }
-  if (token && token.includes('Bearer ')) {
-    token = token.split(' ')[1]
-  }
-
-  if (token === null) return { auth: false }
-
-  try {
-    const { valid, scopes, userId, role } = await validateToken(token)
-
-    if (!valid) {
-      return { auth: false }
-    }
-
-    return { auth: true, userId, role, token, scopes }
-  } catch (e) {
-    // TODO: Think whether perhaps it's better to throw the error
-    return { auth: false, err: e }
-  }
-}
-
-/**
- * Express middleware wrapper around the buildContext function. sets req.context to have an auth prop (true/false), userId and server role.
- */
-async function contextMiddleware(req, res, next) {
-  const result = await buildContext({ req, res })
-  req.context = result
-  next()
-}
 
 let roles
 
@@ -208,9 +136,6 @@ async function registerOrUpdateRole(role) {
 module.exports = {
   registerOrUpdateScope,
   registerOrUpdateRole,
-  buildContext,
-  addLoadersToCtx,
-  contextMiddleware,
   validateServerRole,
   validateScopes,
   authorizeResolver,

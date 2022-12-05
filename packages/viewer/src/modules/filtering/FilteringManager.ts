@@ -11,11 +11,11 @@ import {
 import SpeckleRenderer from '../SpeckleRenderer'
 
 export type FilteringState = {
-  test?: Record<string, unknown>
   selectedObjects?: string[]
   hiddenObjects?: string[]
   isolatedObjects?: string[]
   colorGroups?: Record<string, string>[]
+  userColorGroups?: { ids: string[]; color: string }[]
   activePropFilterKey?: string
   passMin?: number | null
   passMax?: number | null
@@ -47,6 +47,8 @@ export class FilteringManager {
   private ColorNumericFilterState = null
   private SelectionState = new GenericRvState()
   private HighlightState = new GenericRvState()
+  private UserspaceColorState = new UserspaceColorState()
+  private ColorStringFilterState2: ColorStringFilterState = null
 
   public constructor(renderer: SpeckleRenderer) {
     this.WTI = WorldTree.getInstance()
@@ -299,9 +301,51 @@ export class FilteringManager {
     return this.populateGenericState(objectIds, this.HighlightState)
   }
 
+  public setUserObjectColors(groups: [{ objectIds: string[]; color: string }]) {
+    this.UserspaceColorState = new UserspaceColorState()
+    // Resetting any other filtering color ops as they're not compatible
+    this.ColorNumericFilterState = null
+    this.ColorStringFilterState = null
+
+    const localGroups: {
+      objectIds: string[]
+      color: string
+      nodes: TreeNode[]
+      rvs: NodeRenderView[]
+    }[] = groups.map((g) => {
+      return { ...g, nodes: [], rvs: [] }
+    })
+
+    WorldTree.getInstance().walk((node: TreeNode) => {
+      if (!node.model?.raw?.id) return true
+      for (const group of localGroups) {
+        if (group.objectIds.includes(node.model.raw.id)) {
+          group.nodes.push(node)
+          const rvsNodes = WorldTree.getRenderTree()
+            .getRenderViewNodesForNode(node, node)
+            .map((rvNode) => rvNode.model.renderView)
+          if (rvsNodes) group.rvs.push(...rvsNodes)
+        }
+      }
+      return true
+    })
+
+    this.UserspaceColorState.groups = localGroups
+    const rampTexture = Assets.generateDiscreetRampTexture(
+      groups.map((g) => new Color(g.color).getHex())
+    )
+    this.UserspaceColorState.rampTexture = rampTexture
+    return this.setFilters()
+  }
+
+  public removeUserObjectColors() {
+    this.UserspaceColorState = null
+    return this.setFilters()
+  }
+
   private populateGenericState(objectIds, state) {
     let ids = [...objectIds, ...this.getDescendantIds(objectIds)]
-    /** There's a log of duplicate ids coming in from 'getDescendantIds'. We remove them
+    /** There's a lot of duplicate ids coming in from 'getDescendantIds'. We remove them
      *  to avoid the large redundancy they incurr otherwise.
      */
     ids = [...Array.from(new Set(ids.map((value) => value)))]
@@ -351,6 +395,7 @@ export class FilteringManager {
     this.ColorNumericFilterState = null
     this.SelectionState = new GenericRvState()
     this.HighlightState = new GenericRvState()
+    this.UserspaceColorState = null
     this.StateKey = null
     return null
   }
@@ -434,6 +479,25 @@ export class FilteringManager {
           ? FilterMaterialType.GHOST
           : FilterMaterialType.HIDDEN // TODO: ghost
       })
+    }
+
+    if (this.UserspaceColorState) {
+      returnState.userColorGroups = []
+      let m = -1
+      for (const group of this.UserspaceColorState.groups) {
+        m++
+        this.Renderer.applyFilter(group.rvs, {
+          filterType: FilterMaterialType.COLORED,
+          rampIndex: m / this.UserspaceColorState.groups.length,
+          rampIndexColor: new Color(group.color),
+          rampTexture: this.UserspaceColorState.rampTexture
+        })
+
+        returnState.userColorGroups.push({
+          ids: group.objectIds,
+          color: group.color //.getHexString()
+        })
+      }
     }
 
     if (this.HighlightState.rvs.length !== 0) {
@@ -538,5 +602,18 @@ class GenericRvState {
   public reset() {
     this.rvs = []
     this.ids = []
+  }
+}
+
+class UserspaceColorState {
+  public groups: {
+    objectIds: string[]
+    color: string
+    nodes: TreeNode[]
+    rvs: NodeRenderView[]
+  }[] = []
+  public rampTexture: Texture
+  public reset() {
+    this.groups = []
   }
 }

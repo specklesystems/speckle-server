@@ -26,7 +26,11 @@ export function getApolloServerVersion() {
 }
 
 export function getFileSizeLimitMB() {
-  return parseInt(process.env.FILE_SIZE_LIMIT_MB || '100')
+  return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
+}
+
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
 }
 
 export function getRedisUrl() {
@@ -55,4 +59,11 @@ export function shouldDisableNotificationsConsumption() {
   return ['1', 'true'].includes(
     process.env.DISABLE_NOTIFICATIONS_CONSUMPTION || 'false'
   )
+}
+
+/**
+ * Check whether we're running an SSL server
+ */
+export function isSSLServer() {
+  return /^https:\/\//.test(getBaseUrl())
 }

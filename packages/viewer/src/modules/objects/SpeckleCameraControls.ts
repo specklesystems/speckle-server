@@ -44,6 +44,9 @@ export class SpeckleCameraControls extends CameraControls {
   private _didDollyLastFrame = false
   public _isTrucking = false
   private _hasRestedLastFrame = false
+  private _didZoom = false
+  private overrideDollyLerpRatio = 0
+  private overrideZoomLerpRatio = 0
   static install() {
     _v3A = new Vector3()
     _v3B = new Vector3()
@@ -69,7 +72,7 @@ export class SpeckleCameraControls extends CameraControls {
     const prevRadius = this._sphericalEnd.radius
     const signedPrevRadius = prevRadius * (delta >= 0 ? -1 : 1)
 
-    this.dollyTo(distance)
+    this.dollyTo(distance, true, 0.9)
 
     if (
       this.infinityDolly &&
@@ -100,7 +103,7 @@ export class SpeckleCameraControls extends CameraControls {
     const zoomScale = Math.pow(0.95, delta * this.dollySpeed)
 
     // for both PerspectiveCamera and OrthographicCamera
-    this.zoomTo(this._zoom * zoomScale)
+    this.zoomTo(this._zoom * zoomScale, false, 1)
     this._didDolly = true
     this.dispatchEvent({ type: 'controlstart' })
     if (this.dollyToCursor) {
@@ -113,12 +116,40 @@ export class SpeckleCameraControls extends CameraControls {
   }
 
   /**
+   * Zoom in/out camera to given scale. The value overwrites camera zoom.
+   * Limits set with .minZoom and .maxZoom
+   * @param zoom
+   * @param enableTransition
+   * @category Methods
+   */
+  zoomTo(
+    zoom: number,
+    enableTransition = false,
+    lerpRatio: number = undefined
+  ): Promise<void> {
+    this._zoomEnd = MathUtils.clamp(zoom, this.minZoom, this.maxZoom)
+    this._needsUpdate = true
+    this.overrideZoomLerpRatio = enableTransition ? 0.05 : lerpRatio
+    if (!enableTransition) {
+      this._zoom = this._zoomEnd
+    }
+
+    const resolveImmediately =
+      !enableTransition || approxEquals(this._zoom, this._zoomEnd, this.restThreshold)
+    return this._createOnRestPromise(resolveImmediately)
+  }
+
+  /**
    * Dolly in/out camera position to given distance.
    * @param distance Distance of dolly.
    * @param enableTransition Whether to move smoothly or immediately.
    * @category Methods
    */
-  dollyTo(distance: number, enableTransition = true): Promise<void> {
+  dollyTo(
+    distance: number,
+    enableTransition = true,
+    lerpRatio = undefined
+  ): Promise<void> {
     const lastRadius = this._sphericalEnd.radius
     const newRadius = MathUtils.clamp(distance, this.minDistance, this.maxDistance)
     const hasCollider = this.colliderMeshes.length >= 1
@@ -139,6 +170,7 @@ export class SpeckleCameraControls extends CameraControls {
     }
 
     this._needsUpdate = true
+    this.overrideDollyLerpRatio = lerpRatio
 
     if (!enableTransition) {
       this._spherical.radius = this._sphericalEnd.radius
@@ -160,7 +192,6 @@ export class SpeckleCameraControls extends CameraControls {
     this._hasRestedLastFrame = this._hasRested
     const dampingFactor =
       this._state === ACTION.NONE ? this.dampingFactor : this.draggingDampingFactor
-    const dampingFactorDolly = 0.9
     const lerpRatio = Math.min(dampingFactor * delta * 60, 1)
     const deltaTheta = this._sphericalEnd.theta - this._spherical.theta
     const deltaPhi = this._sphericalEnd.phi - this._spherical.phi
@@ -179,7 +210,9 @@ export class SpeckleCameraControls extends CameraControls {
       !approxZero(deltaOffset.z)
     ) {
       this._spherical.set(
-        this._spherical.radius + deltaRadius * dampingFactorDolly,
+        this._spherical.radius +
+          deltaRadius *
+            (this.overrideDollyLerpRatio ? this.overrideDollyLerpRatio : lerpRatio),
         this._spherical.phi + deltaPhi * lerpRatio,
         this._spherical.theta + deltaTheta * lerpRatio
       )
@@ -275,13 +308,19 @@ export class SpeckleCameraControls extends CameraControls {
       )
     }
     const zoomDelta = this._zoomEnd - this._zoom
-    this._zoom += zoomDelta * lerpRatio
+    this._zoom +=
+      zoomDelta * (this.overrideZoomLerpRatio ? this.overrideZoomLerpRatio : lerpRatio)
     if (this._camera.zoom !== this._zoom) {
-      if (approxZero(zoomDelta)) this._zoom = this._zoomEnd
+      if (approxZero(zoomDelta)) {
+        this._zoom = this._zoomEnd
+      }
       this._camera.zoom = this._zoom
       this._camera.updateProjectionMatrix()
       this._updateNearPlaneCorners()
       this._needsUpdate = true
+      this._didZoom = true
+    } else {
+      this._didZoom = false
     }
     const updated = this._needsUpdate
     if (updated && !this._updatedLastTime) {
@@ -301,7 +340,8 @@ export class SpeckleCameraControls extends CameraControls {
         approxZero(deltaOffset.y, this.restThreshold) &&
         approxZero(deltaOffset.z, this.restThreshold) &&
         !this._hasRested &&
-        !this._isTrucking
+        !this._isTrucking &&
+        (isOrthographicCamera(this._camera) ? !this._didZoom : true)
       ) {
         this._hasRested = true
         this.dispatchEvent({ type: 'rest' })
@@ -320,7 +360,8 @@ export class SpeckleCameraControls extends CameraControls {
         approxZero(deltaOffset.x, this.restThreshold) &&
         approxZero(deltaOffset.y, this.restThreshold) &&
         approxZero(deltaOffset.z, this.restThreshold) &&
-        !this._isTrucking
+        !this._isTrucking &&
+        (isOrthographicCamera(this._camera) ? !this._didZoom : true)
       ) {
         this.dispatchEvent({ type: 'rest' })
         this._didDollyLastFrame = false

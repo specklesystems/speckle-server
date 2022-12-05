@@ -1,10 +1,22 @@
 version: 2.1
 
+orbs:
+  snyk: snyk/snyk@1.4.0
+
 workflows:
   version: 2
 
   test-build:
     jobs:
+      - vulnerability-scan:
+          context: &snyk-context
+            - snyk
+          filters:
+            branches:
+              only:
+                - main
+                - hotfix*
+
       - test-server:
           filters: &filters-allow-all
             tags:
@@ -18,6 +30,8 @@ workflows:
           filters: *filters-allow-all
 
       - docker-build-server:
+          context: &build-context
+            - github-readonly-public-repos
           filters: &filters-build
             tags:
               only: /.*/
@@ -26,35 +40,41 @@ workflows:
             - get-version
 
       - docker-build-frontend:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
 
       - docker-build-webhooks:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-file-imports:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-previews:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-test-container:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
 
       - docker-build-monitor-container:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
@@ -315,6 +335,35 @@ jobs:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
 
+  vulnerability-scan:
+    # snyk can undertake most types of scans through GitHub integration
+    # which does not require integration with the CI
+    # but it is not possible to scan npm/yarn package.json
+    # because it requires node_modules
+    # therefore this scanning has to be triggered via the cli
+    docker: &docker-image
+      - image: cimg/python:3.9.15-node
+    resource_class: small
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - snyk/scan:
+          additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
+          fail-on-issues: false
+
   docker-build: &build-job
     docker: &docker-image
       - image: cimg/python:3.9.15-node
@@ -324,11 +373,18 @@ jobs:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
+      - run:
+          name: determine if draft PR
+          command: |
+            echo "export IS_DRAFT_PR=$(.circleci/is_draft.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
+      - run: echo "IS_DRAFT_PR=${IS_DRAFT_PR}"
       - run:
           name: 'Check if should proceed'
           command: |
-            [[ "${CIRCLE_BRANCH}" != "main" && -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build, stopping" && circleci-agent step halt && exit 1
+            [[ "${CIRCLE_TAG}" ]] && echo "proceed because tag is set" && exit 0
+            [[ "${CIRCLE_BRANCH}" == "main" ]] && echo "proceed because main branch" && exit 0
+            [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
             echo "proceeding"
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
