@@ -35,7 +35,8 @@ const config = {
           DEFAULT: 'var(--foreground)',
           2: 'var(--foreground-2)',
           disabled: 'var(--foreground-disabled)',
-          'on-primary': 'var(--foreground-on-primary)'
+          'on-primary': 'var(--foreground-on-primary)',
+          primary: 'var(--foreground-primary)'
         },
         primary: {
           DEFAULT: 'var(--primary)',
@@ -63,14 +64,14 @@ const config = {
           DEFAULT: 'var(--danger)',
           lighter: 'var(--danger-lighter)',
           darker: 'var(--danger-darker)'
-        },
-        /**
-         * TODO: Remove, not in the design system anymore
-         */
-        disabled: {
-          DEFAULT: 'var(--disabled)',
-          muted: 'var(--disabled-muted)'
         }
+        // /**
+        //  * TODO: Remove, not in the design system anymore
+        //  */
+        // disabled: {
+        //   DEFAULT: 'var(--disabled)',
+        //   muted: 'var(--disabled-muted)'
+        // }
       },
       borderRadius: {
         '4xl': '2rem'

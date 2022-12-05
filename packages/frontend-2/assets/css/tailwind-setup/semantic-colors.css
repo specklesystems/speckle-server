@@ -14,11 +14,11 @@
   /* used only as the page background */
   --foundation-page: #f1f5f9;
   /* used as the background for any element that sits on the page */
-  --foundation: #fff;
+  --foundation: #fcfcfc;
   /* used as the background for any element that you want to emphasize */
-  --foundation-2: #dbeafe;
+  --foundation-2: #cbd5e1;
   /* for disabled backgrounds */
-  --foundation-disabled: #cbd5e1;
+  --foundation-disabled: #dbeafe;
 
   /* default foreground color */
   --foreground: #334155;
@@ -26,6 +26,8 @@
   --foreground-2: #94a3b8;
   /* disabled foreground color */
   --foreground-disabled: #93c5fd;
+  /* primary color when used for text directly on top of foundation-page */
+  --foreground-primary: #3b82f6;
   /* foreground color when put on top of a primary colored background */
   --foreground-on-primary: #fff;
 
@@ -34,7 +36,7 @@
   /* focused primary color */
   --primary-focus: #2563eb;
   /* muted primary color */
-  --primary-muted: #93c5fd;
+  --primary-muted: #3b82f60d;
   /* primary outline */
   --primary-outline: #3b82f6;
   /* secondary variant of primary outline */
@@ -46,17 +48,17 @@
   --success-darker: #064e3b;
 
   /* warning variations */
-  --warning: #f59e0b;
+  --warning: #fbbf24;
   --warning-lighter: #fef3c7;
   --warning-darker: #78350f;
 
   /* info variations */
-  --info: #0ea5e9;
+  --info: #38bdf8;
   --info-lighter: #e0f2fe;
   --info-darker: #0c4a6e;
 
   /* danger variations */
-  --danger: #ef4444;
+  --danger: #f87171;
   --danger-lighter: #fee2e2;
   --danger-darker: #7f1d1d;
 
@@ -73,18 +75,20 @@
   /* used only as the page background */
   --foundation-page: #18181b;
   /* used as the background for any element that sits on the page */
-  --foundation: #232325;
+  --foundation: #27272a;
   /* used as the background for any element that you want to emphasize */
   --foundation-2: #3f3f46;
   /* for disabled backgrounds */
   --foundation-disabled: #52525b;
 
   /* default foreground color */
-  --foreground: #e4e4e7;
+  --foreground: #f4f4f5;
   /* dimmer foreground color, e.g. caption text */
   --foreground-2: #d4d4d8;
   /* disabled foreground color */
   --foreground-disabled: #a1a1aa;
+  /* primary color when used for text directly on top of foundation-page */
+  --foreground-primary: #bfdbfe;
   /* foreground color when put on top of a primary colored background */
   --foreground-on-primary: #fafafa;
 
@@ -93,9 +97,9 @@
   /* focused primary color */
   --primary-focus: #60a5fa;
   /* muted primary color */
-  --primary-muted: #52525b;
+  --primary-muted: #71717a0d;
   /* primary outline */
-  --primary-outline: #3b82f6;
+  --primary-outline: #a1a1aa;
   /* secondary variant of primary outline */
   --primary-outline-2: #52525b;
 
@@ -105,18 +109,18 @@
   --success-darker: #064e3b;
 
   /* warning variations */
-  --warning: #f59e0b;
-  --warning-lighter: #fef3c7;
+  --warning: #facc15;
+  --warning-lighter: #fef08a;
   --warning-darker: #78350f;
 
   /* info variations */
-  --info: #0ea5e9;
-  --info-lighter: #e0f2fe;
+  --info: #38bdf8;
+  --info-lighter: #bae6fd;
   --info-darker: #0c4a6e;
 
   /* danger variations */
-  --danger: #ef4444;
-  --danger-lighter: #fee2e2;
+  --danger: #f87171;
+  --danger-lighter: #fecaca;
   --danger-darker: #7f1d1d;
 
   /**

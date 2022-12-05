@@ -45,7 +45,7 @@ const colorDefinitions: Record<string, ColorDefinition> = {
   },
   foreground: {
     description: 'Meant to be used as foreground (text) colors',
-    variations: [null, '2', 'disabled', 'on-primary']
+    variations: [null, '2', 'disabled', 'on-primary', 'primary']
   },
   primary: {
     description: 'Primary branding color of Speckle',
@@ -99,6 +99,7 @@ markClassesUsed([
   'bg-foreground-2',
   'bg-foreground-disabled',
   'bg-foreground-on-primary',
+  'bg-foreground-primary',
   'bg-primary',
   'bg-primary-focus',
   'bg-primary-muted',
