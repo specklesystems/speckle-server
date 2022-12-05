@@ -1,24 +1,3 @@
-FROM node:16.18.0-bullseye-slim as build-stage
-
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
-WORKDIR /speckle-server
-
-COPY .yarnrc.yml .
-COPY .yarn ./.yarn
-COPY package.json yarn.lock ./
-
-COPY packages/fileimport-service/package.json ./packages/fileimport-service/
-COPY packages/shared/package.json ./packages/shared/
-
-RUN yarn workspaces focus -A && yarn
-
-COPY packages/shared ./packages/shared/
-COPY packages/fileimport-service ./packages/fileimport-service/
-
-RUN yarn workspaces foreach run build
-
 FROM node:16.18.0-bullseye-slim as node
 
 RUN apt-get update && \
@@ -29,9 +8,6 @@ RUN apt-get update && \
   tini=0.19.0-1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
-
-COPY packages/fileimport-service/requirements.txt /speckle-server/
-RUN pip install --no-cache-dir -r /speckle-server/requirements.txt
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
 RUN chmod +x /wait
@@ -45,13 +21,13 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-COPY packages/fileimport-service/package.json ./packages/fileimport-service/
-
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/fileimport-service ./packages/fileimport-service
-
 WORKDIR /speckle-server/packages/fileimport-service
+COPY packages/fileimport-service/package.json ./
 RUN yarn workspaces focus --production
 
-ENTRYPOINT [ "tini", "--" ]
+COPY packages/fileimport-service/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY packages/fileimport-service .
+
 CMD ["yarn", "node", "src/daemon.js"]

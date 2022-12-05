@@ -62,6 +62,10 @@
         "--timeout=0"
       ],
       "console": "integratedTerminal",
+      "env": {
+        // "POSTGRES_URL": "postgres://speckle:speckle@localhost/speckle2_test",
+        "DEBUG": "server:*"
+      },
       // "envFile": "${workspaceFolder}/.env",
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],

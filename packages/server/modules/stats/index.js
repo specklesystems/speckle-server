@@ -1,8 +1,8 @@
 'use strict'
-const { moduleLogger } = require('@/logging/logging')
+const debug = require('debug')
 
 exports.init = async () => {
-  moduleLogger.info('📊 Init stats module')
+  debug('speckle:modules')('📊 Init stats module')
   // TODO
 }
 

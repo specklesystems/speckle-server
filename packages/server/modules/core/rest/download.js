@@ -1,5 +1,6 @@
 'use strict'
 const zlib = require('zlib')
+const debug = require('debug')
 const cors = require('cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
@@ -7,7 +8,7 @@ const { validatePermissionsReadStream } = require('./authUtils')
 const { getObject, getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-const { logger } = require('@/logging/logging')
+
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', cors())
 
@@ -54,13 +55,13 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          logger.error(
+          debug('speckle:error')(
             `[User ${req.context.userId || '-'}] Error downloading object ${
               req.params.objectId
             } from stream ${req.params.streamId}: ${err}`
           )
         } else {
-          logger.info(
+          debug('speckle:info')(
             `[User ${req.context.userId || '-'}] Downloaded object ${
               req.params.objectId
             } from stream ${req.params.streamId} (size: ${
@@ -91,7 +92,7 @@ module.exports = (app) => {
       return res.status(404).send('Failed to find object.')
     }
 
-    logger.info(
+    debug('speckle:info')(
       `[User ${req.context.userId || '-'}] Downloaded single object ${
         req.params.objectId
       } from stream ${req.params.streamId}`

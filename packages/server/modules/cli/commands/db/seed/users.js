@@ -1,4 +1,3 @@
-const { logger } = require('@/logging/logging')
 const { Users, ServerAcl } = require('@/modules/core/dbSchema')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { faker } = require('@faker-js/faker')
@@ -46,11 +45,11 @@ async function* batchedOperationGenerator({
   batchSize,
   retryCount = 3
 }) {
-  logger.info('Starting batched operation...')
+  console.log('Starting batched operation...')
   let currentItemCount = 0
   const batchCount = Math.ceil(itemCount / batchSize)
   for (let i = 0; i < batchCount; i++) {
-    logger.info(`Processing batch ${i + 1} out of ${batchCount}...`)
+    console.log(`Processing batch ${i + 1} out of ${batchCount}...`)
 
     const newItemCount = Math.min(currentItemCount + batchSize, itemCount)
     const insertCount = newItemCount - currentItemCount
@@ -60,7 +59,7 @@ async function* batchedOperationGenerator({
     const execute = () =>
       Promise.resolve(batchInsertGenerator(insertCount, currentItemCount))
     let batchPromise = execute().then((res) => {
-      logger.info(`...processed batch ${i + 1} out of ${batchCount}`)
+      console.log(`...processed batch ${i + 1} out of ${batchCount}`)
       return res
     })
 
@@ -71,7 +70,7 @@ async function* batchedOperationGenerator({
       })
     })
     batchPromise = batchPromise.catch((e) => {
-      logger.error('Operation failed all retries: ', e)
+      console.error('Operation failed all retries: ', e)
     })
 
     currentItemCount = newItemCount
@@ -111,14 +110,14 @@ const command = {
     })
 
     for await (const insertedIds of userBatchedInsertionGenerator) {
-      logger.info('Inserting ACL entries for batch...')
+      console.log('Inserting ACL entries for batch...')
       const entries = insertedIds.map((id) => ({
         role: Roles.Server.User,
         userId: id
       }))
 
       await ServerAcl.knex().insert(entries)
-      logger.info('...inserted ACL')
+      console.log('...inserted ACL')
     }
   }
 }

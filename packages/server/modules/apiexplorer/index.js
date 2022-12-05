@@ -1,9 +1,9 @@
 /* istanbul ignore file */
 'use strict'
-const { moduleLogger } = require('@/logging/logging')
+const debug = require('debug')
 
 exports.init = (app) => {
-  moduleLogger.info('💅 Init graphql api explorer module')
+  debug('speckle:modules')('💅 Init graphql api explorer module')
 
   // sweet and simple
   app.get('/explorer', (req, res) => {

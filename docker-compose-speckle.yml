@@ -25,7 +25,7 @@ services:
       SESSION_SECRET: 'TODO:Replace'
 
       STRATEGY_LOCAL: 'true'
-      LOG_LEVEL: 'info'
+      DEBUG: 'speckle:*'
 
       POSTGRES_URL: 'postgres'
       POSTGRES_USER: 'speckle'
@@ -51,7 +51,7 @@ services:
     mem_limit: '3000m'
     memswap_limit: '3000m'
     environment:
-      LOG_LEVEL: 'info'
+      DEBUG: 'preview-service:*'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 
   webhook-service:
@@ -61,7 +61,7 @@ services:
     image: speckle/speckle-webhook-service:local
     restart: always
     environment:
-      LOG_LEVEL: 'info'
+      DEBUG: 'webhook-service:*'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 
   fileimport-service:
@@ -71,6 +71,6 @@ services:
     image: speckle/speckle-fileimport-service:local
     restart: always
     environment:
-      LOG_LEVEL: 'info'
+      DEBUG: 'fileimport-service:*'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'

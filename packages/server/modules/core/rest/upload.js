@@ -2,11 +2,11 @@
 const zlib = require('zlib')
 const cors = require('cors')
 const Busboy = require('busboy')
+const debug = require('debug')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('../services/objects')
-const { logger, uploadEndpointLogger } = require('@/logging/logging')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -48,7 +48,7 @@ module.exports = (app) => {
 
           const gzippedBuffer = Buffer.concat(buffer)
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
-            logger.error(
+            debug('speckle:error')(
               `[User ${
                 req.context.userId || '-'
               }] Upload error: Batch size too large (${
@@ -66,7 +66,7 @@ module.exports = (app) => {
 
           const gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
           if (gunzippedBuffer.length > MAX_FILE_SIZE) {
-            logger.error(
+            debug('speckle:error')(
               `[User ${
                 req.context.userId || '-'
               }] Upload error: Batch size too large (${
@@ -85,7 +85,7 @@ module.exports = (app) => {
           try {
             objs = JSON.parse(gunzippedBuffer)
           } catch (e) {
-            logger.error(
+            debug('speckle:error')(
               `[User ${
                 req.context.userId || '-'
               }] Upload error: Batch not in JSON format`
@@ -104,7 +104,7 @@ module.exports = (app) => {
           }
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            logger.error(
+            debug('speckle:error')(
               `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
             )
             if (!requestDropped)
@@ -119,7 +119,7 @@ module.exports = (app) => {
 
           await promise
 
-          logger.info(
+          debug('speckle:info')(
             `[User ${req.context.userId || '-'}] Uploaded batch of ${
               objs.length
             } objects to stream ${req.params.streamId} (size: ${
@@ -146,7 +146,7 @@ module.exports = (app) => {
           let objs = []
 
           if (buffer.length > MAX_FILE_SIZE) {
-            logger.error(
+            debug('speckle:error')(
               `[User ${
                 req.context.userId || '-'
               }] Upload error: Batch size too large (${
@@ -163,7 +163,7 @@ module.exports = (app) => {
           try {
             objs = JSON.parse(buffer)
           } catch (e) {
-            logger.error(
+            debug('speckle:error')(
               `[User ${
                 req.context.userId || '-'
               }] Upload error: Batch not in JSON format`
@@ -181,7 +181,7 @@ module.exports = (app) => {
           }
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            logger.error(
+            debug('speckle:error')(
               `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
             )
             if (!requestDropped)
@@ -195,7 +195,7 @@ module.exports = (app) => {
           promises.push(promise)
 
           await promise
-          logger.info(
+          debug('speckle:info')(
             `[User ${req.context.userId || '-'}] Uploaded batch of ${
               objs.length
             } objects to stream ${req.params.streamId} (size: ${
@@ -206,7 +206,7 @@ module.exports = (app) => {
           )
         })
       } else {
-        logger.error(
+        debug('speckle:error')(
           `[User ${req.context.userId || '-'}] Invalid ContentType header: ${mimeType}`
         )
         if (!requestDropped)
@@ -222,7 +222,7 @@ module.exports = (app) => {
     busboy.on('finish', async () => {
       if (requestDropped) return
 
-      uploadEndpointLogger.info(
+      debug('speckle:upload-endpoint')(
         `[User ${req.context.userId || '-'}] Upload finished: ${totalProcessed} objs, ${
           process.memoryUsage().heapUsed / 1024 / 1024
         } MB mem`
@@ -238,7 +238,7 @@ module.exports = (app) => {
     })
 
     busboy.on('error', async (err) => {
-      uploadEndpointLogger.info(
+      debug('speckle:upload-endpoint')(
         `[User ${req.context.userId || '-'}] Upload error: ${err}`
       )
       if (!requestDropped)
