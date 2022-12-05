@@ -30,4 +30,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY packages/fileimport-service .
 
-CMD ["yarn", "node", "src/daemon.js"]
+CMD ["yarn", "node", "--no-experimental-fetch", "src/daemon.js"]
