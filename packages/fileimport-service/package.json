@@ -31,7 +31,7 @@
     "prom-client": "^14.0.1",
     "undici": "^5.8.2",
     "valid-filename": "^3.1.0",
-    "web-ifc": "^0.0.36"
+    "web-ifc": "https://github.com/IFCjs/web-ifc.git#73e91702127622ce5e18b8ca3ccbe7d853e4bd36"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
