@@ -3,16 +3,21 @@ import {
   Box3,
   Box3Helper,
   CameraHelper,
+  CanvasTexture,
   Color,
   DirectionalLight,
   DirectionalLightHelper,
+  Float32BufferAttribute,
+  FrontSide,
   Group,
   Intersection,
   Matrix4,
   Mesh,
+  NearestFilter,
   Object3D,
   Plane,
   PlaneGeometry,
+  Ray,
   RGBADepthPacking,
   Scene,
   Sphere,
@@ -54,6 +59,7 @@ import {
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
+import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -473,15 +479,28 @@ export default class SpeckleRenderer {
 
     const boxSize = this.sceneBox.getSize(new Vector3())
     const boxCenter = this.sceneBox.getCenter(new Vector3())
-    const groundPlaneGeometry = new PlaneGeometry(boxSize.x * 2, boxSize.y * 2, 10, 10)
-    const groundPlane = new Mesh(
-      groundPlaneGeometry,
-      new SpeckleStandardMaterial({ color: 0xffffff }, ['USE_RTE'])
+    const aspect = boxSize.x / boxSize.y
+    const groundPlaneGeometry = new PlaneGeometry(
+      boxSize.x * 2,
+      boxSize.y * 2,
+      100,
+      100 / aspect
     )
+    groundPlaneGeometry.setAttribute(
+      'color',
+      new Float32BufferAttribute(
+        new Float32Array(groundPlaneGeometry.attributes.position.count * 3),
+        3
+      )
+    )
+    const material = new SpeckleBasicMaterial({ color: 0xffffff }, ['USE_RTE'])
+    // material.vertexColors = true
+    // material.wireframe = true
+    const groundPlane = new Mesh(groundPlaneGeometry, material)
     const mat = new Matrix4().makeTranslation(
       boxCenter.x,
       boxCenter.y,
-      boxCenter.z - boxSize.z * 0.5
+      boxCenter.z - boxSize.z * 0.5 - 0.01
     )
     groundPlane.geometry.applyMatrix4(mat)
 
@@ -588,6 +607,66 @@ export default class SpeckleRenderer {
 
   public enableSectionBoxCapper(value: boolean) {
     this.sectionBoxOutlines.enable(value)
+  }
+
+  public testTrace() {
+    const start = performance.now()
+    const sampleCount = 10
+    const maxDist = 1
+    const plane: Mesh = this.scene.getObjectByName('Shadowcatcher') as Mesh
+    const vertices = plane.geometry.attributes.position.array
+    const uvs = plane.geometry.attributes.uv.array
+    // const colors = plane.geometry.attributes.color.array as number[]
+    const meshes = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    const canvas = document.createElement('CANVAS') as HTMLCanvasElement
+    canvas.width = 512
+    canvas.height = 512 / 0.4723990432614013
+    const ctx = canvas.getContext('2d')
+    const imageData = new Uint8ClampedArray(canvas.width * canvas.height * 4)
+    const tex = new CanvasTexture(canvas)
+    tex.minFilter = NearestFilter
+    tex.magFilter = NearestFilter
+    for (let i = 0; i < meshes.length; i++) {
+      const invMat = new Matrix4().copy(meshes[i].renderObject.matrixWorld)
+      invMat.invert()
+      for (let k = 0; k < vertices.length; k += 3) {
+        for (let d = 0; d < sampleCount; d++) {
+          const sample = new Vector3()
+          sample.x = Math.random() * 2 - 1
+          sample.y = Math.random() * 2 - 1
+          sample.z = Math.random()
+
+          sample.normalize()
+          const ray = new Ray(
+            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]),
+            sample
+          )
+          ray.applyMatrix4(invMat)
+          const res = meshes[i].boundsTree.raycastFirst(ray, FrontSide)
+          if (res && res.distance < maxDist) {
+            const uvX = uvs[(k / 3) * 2]
+            const uvY = 1 - uvs[(k / 3) * 2 + 1]
+            const x = Math.trunc(uvX * canvas.width)
+            const y = Math.trunc(uvY * canvas.height)
+            const coord = x + y * canvas.width
+
+            imageData[coord * 4] += ((1 - res.distance) / sampleCount) * 255
+            imageData[coord * 4 + 1] += ((1 - res.distance) / sampleCount) * 255
+            imageData[coord * 4 + 2] += ((1 - res.distance) / sampleCount) * 255
+            imageData[coord * 4 + 3] = 255
+            // colors[k] += (1 - res.distance) / sampleCount
+            // colors[k + 1] += (1 - res.distance) / sampleCount
+            // colors[k + 2] += (1 - res.distance) / sampleCount
+          }
+        }
+      }
+    }
+    ctx.putImageData(new ImageData(imageData, canvas.width, canvas.height), 0, 0)
+    tex.needsUpdate = true
+    ;(plane.material as SpeckleBasicMaterial).map = tex
+    console.warn(canvas.toDataURL())
+    // plane.geometry.attributes.color.needsUpdate = true
+    console.warn('Time -> ', performance.now() - start)
   }
 
   private addDirectLights() {

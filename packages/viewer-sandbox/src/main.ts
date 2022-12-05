@@ -142,5 +142,7 @@ await sandbox.loadUrl(
   // Jedd's views
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
   // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
-  'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // MEPs (whatever they are)
+  'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
 )
