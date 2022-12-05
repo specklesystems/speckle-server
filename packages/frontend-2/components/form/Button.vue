@@ -9,10 +9,12 @@
     role="button"
     @click="onClick"
   >
-    <div ref="lefticon" class="mr-2 -ml-1 icon-slot">
-      <slot name="lefticon"></slot>
+    <div ref="iconleft" class="mr-2 -ml-1 icon-slot">
+      <slot name="iconleft"></slot>
     </div>
-    <slot>Submit</slot>
+    <div ref="content">
+      <slot>Submit</slot>
+    </div>
     <div ref="icon" class="ml-2 icon-slot">
       <slot name="icon"></slot>
     </div>
@@ -23,7 +25,7 @@ import { PropType } from 'vue'
 import { Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonType = 'default' | 'invert' | 'danger' | 'warning'
+type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
 
 const emit = defineEmits<{
   /**
@@ -84,21 +86,14 @@ const props = defineProps({
     default: false
   },
   /**
-   * Set if you want to use this button on a primary background.
-   */
-  invert: {
-    type: Boolean,
-    default: false
-  },
-  /**
-   * Types:
-   * default: the default blue.
+   * Colors:
+   * default: the default primary blue.
    * invert: for when you want to use this button on a primary background.
-   * danger: for dangerous actions.
-   * warning: for less dangerous actions.
+   * danger: for dangerous actions (e.g. deletions).
+   * warning: for less dangerous actions (e.g. archival).
    */
-  type: {
-    type: String as PropType<FormButtonType>,
+  color: {
+    type: String as PropType<FormButtonColor>,
     default: 'default'
   },
   /**
@@ -137,7 +132,7 @@ const props = defineProps({
 const NuxtLink = resolveComponent('NuxtLink')
 
 const icon = ref<HTMLElement | null>(null)
-const lefticon = ref<HTMLElement | null>(null)
+const iconleft = ref<HTMLElement | null>(null)
 
 const buttonType = computed(() => {
   if (props.to) return undefined
@@ -157,7 +152,7 @@ const bgAndBorderClasses = computed(() => {
           : 'bg-foundation-disabled border-transparent'
       )
     } else {
-      switch (props.type) {
+      switch (props.color) {
         case 'invert':
           classParts.push(
             props.outlined
@@ -198,7 +193,7 @@ const foregroundClasses = computed(() => {
         props.outlined ? 'text-foreground-disabled' : 'text-foreground-disabled'
       )
     } else {
-      switch (props.type) {
+      switch (props.color) {
         case 'invert':
           classParts.push(
             props.outlined ? 'text-foundation dark:text-foreground' : 'text-primary'
@@ -228,7 +223,7 @@ const foregroundClasses = computed(() => {
     classParts.push(
       props.disabled
         ? 'text-foreground-disabled'
-        : props.type === 'invert'
+        : props.color === 'invert'
         ? 'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground-2'
         : 'text-primary hover:text-primary-focus'
     )
@@ -247,7 +242,7 @@ const roundedClasses = computed(() => {
 const ringClasses = computed(() => {
   const classParts: string[] = []
   if (!props.text && !props.link && !props.disabled) {
-    switch (props.type) {
+    switch (props.color) {
       case 'invert':
         classParts.push('hover:ring-4 ring-white/50')
         break
@@ -326,17 +321,33 @@ const generalClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const buttonClasses = computed(() =>
-  [
-    'transition inline-flex justify-center items-center outline-none active:scale-[0.95]',
+const decoratorClasses = computed(() => {
+  const classParts: string[] = []
+  if (!props.disabled && (!props.link || !props.text)) {
+    classParts.push('active:scale-[0.95]')
+  }
+
+  if (!props.disabled && (props.link || props.text)) {
+    classParts.push(
+      'underline decoration-transparent decoration-2 underline-offset-4	hover:decoration-inherit'
+    )
+  }
+
+  return classParts.join(' ')
+})
+
+const buttonClasses = computed(() => {
+  return [
+    'transition inline-flex justify-center items-center outline-none',
     generalClasses.value,
     bgAndBorderClasses.value,
     foregroundClasses.value,
     sizeClasses.value,
     roundedClasses.value,
-    ringClasses.value
+    ringClasses.value,
+    decoratorClasses.value
   ].join(' ')
-)
+})
 
 onMounted(() => {
   const setIconSize = (icon: SVGElement) => {
@@ -364,10 +375,11 @@ onMounted(() => {
         break
     }
   }
+
   for (const child of (icon.value as HTMLElement).children) {
     setIconSize(child as SVGElement)
   }
-  for (const child of (lefticon.value as HTMLElement).children) {
+  for (const child of (iconleft.value as HTMLElement).children) {
     setIconSize(child as SVGElement)
   }
 })

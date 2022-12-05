@@ -12,9 +12,10 @@
           <span class="h3">Typograhpy</span>
         </template>
         <template #default>
+          <div class="my-10"></div>
           <p>Classic headings:</p>
           <div class="mt-4 flex flex-col gap-y-4">
-            <div class="h1">Heading 1 YOLO</div>
+            <div class="h1">Heading 1</div>
             <div class="h2">Heading 2</div>
             <div class="h3">Heading 3</div>
             <div class="h4">Heading 4</div>
@@ -88,13 +89,13 @@
               </span>
               <div><FormButton :size="size">Button</FormButton></div>
               <div><FormButton :size="size" disabled>Button</FormButton></div>
-              <div><FormButton :size="size" rounded>Button</FormButton></div>
-              <div><FormButton :size="size" rounded disabled>Button</FormButton></div>
+              <!-- <div><FormButton :size="size" rounded>Button</FormButton></div>
+              <div><FormButton :size="size" rounded disabled>Button</FormButton></div> -->
               <div><FormButton :size="size" outlined>Button</FormButton></div>
               <div><FormButton :size="size" outlined disabled>Button</FormButton></div>
-              <div><FormButton :size="size" rounded outlined>Button</FormButton></div>
+              <!-- <div><FormButton :size="size" rounded outlined>Button</FormButton></div> -->
               <div>
-                <FormButton :size="size" rounded outlined disabled>Button</FormButton>
+                <!-- <FormButton :size="size" rounded outlined disabled>Button</FormButton> -->
               </div>
             </div>
             <div
@@ -107,7 +108,7 @@
               </span>
               <div>
                 <FormButton :size="size">
-                  <template #lefticon><XMarkIcon /></template>
+                  <template #iconleft><XMarkIcon /></template>
                   Button
                 </FormButton>
               </div>
@@ -117,7 +118,7 @@
                   <template #icon><ArrowRightCircleIcon /></template>
                 </FormButton>
               </div>
-              <div>
+              <!-- <div>
                 <FormButton :size="size" rounded>
                   Button
                   <template #icon><ArrowRightCircleIcon /></template>
@@ -128,7 +129,7 @@
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-              </div>
+              </div> -->
               <div>
                 <FormButton :size="size" outlined>
                   Button
@@ -141,7 +142,7 @@
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
               </div>
-              <div>
+              <!-- <div>
                 <FormButton :size="size" rounded outlined>
                   Button
                   <template #icon><XMarkIcon /></template>
@@ -152,7 +153,7 @@
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-              </div>
+              </div> -->
             </div>
 
             <div
@@ -163,15 +164,15 @@
               <span class="caption text-center col-span-4 md:col-span-1">
                 {{ type }}
               </span>
-              <div><FormButton :type="type">Delete</FormButton></div>
-              <div><FormButton :type="type" disabled>Delete</FormButton></div>
-              <div><FormButton :type="type" rounded>Delete</FormButton></div>
-              <div><FormButton :type="type" rounded disabled>Delete</FormButton></div>
-              <div><FormButton :type="type" outlined>Delete</FormButton></div>
-              <div><FormButton :type="type" outlined disabled>Delete</FormButton></div>
-              <div><FormButton :type="type" rounded outlined>Delete</FormButton></div>
+              <div><FormButton :color="type">Delete</FormButton></div>
+              <div><FormButton :color="type" disabled>Delete</FormButton></div>
+              <div><FormButton :color="type" rounded>Delete</FormButton></div>
+              <div><FormButton :color="type" rounded disabled>Delete</FormButton></div>
+              <div><FormButton :color="type" outlined>Delete</FormButton></div>
+              <div><FormButton :color="type" outlined disabled>Delete</FormButton></div>
+              <div><FormButton :color="type" rounded outlined>Delete</FormButton></div>
               <div>
-                <FormButton :type="type" rounded outlined disabled>Delete</FormButton>
+                <FormButton :color="type" rounded outlined disabled>Delete</FormButton>
               </div>
             </div>
 
@@ -187,73 +188,73 @@
             </div>
             <div class="bg-primary rounded-md">
               <div class="flex items-center justify-around flex-wrap py-6">
-                <FormButton type="invert" text size="xs">Text</FormButton>
-                <FormButton type="invert" text size="sm">Text</FormButton>
-                <FormButton type="invert" text size="base">Text</FormButton>
-                <FormButton type="invert" text size="lg">Text</FormButton>
-                <FormButton type="invert" text size="xl">Text</FormButton>
-                <FormButton type="invert" text disabled>Text</FormButton>
-                <FormButton type="invert" text disabled>Text</FormButton>
-                <FormButton type="invert" text disabled>Text</FormButton>
+                <FormButton color="invert" text size="xs">Text</FormButton>
+                <FormButton color="invert" text size="sm">Text</FormButton>
+                <FormButton color="invert" text size="base">Text</FormButton>
+                <FormButton color="invert" text size="lg">Text</FormButton>
+                <FormButton color="invert" text size="xl">Text</FormButton>
+                <FormButton color="invert" text disabled>Text</FormButton>
+                <FormButton color="invert" text disabled>Text</FormButton>
+                <FormButton color="invert" text disabled>Text</FormButton>
               </div>
               <div class="flex items-center justify-around flex-wrap py-6">
-                <FormButton type="invert" invert size="xs">
+                <FormButton color="invert" invert size="xs">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" invert size="sm">
+                <FormButton color="invert" invert size="sm">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" invert size="base">
+                <FormButton color="invert" invert size="base">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" invert size="lg">
+                <FormButton color="invert" invert size="lg">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" invert size="xl">
+                <FormButton color="invert" invert size="xl">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" invert rounded>
+                <FormButton color="invert" invert rounded>
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" invert outlined rounded>Button</FormButton>
-                <FormButton type="invert" invert outlined>
+                <FormButton color="invert" invert outlined rounded>Button</FormButton>
+                <FormButton color="invert" invert outlined>
                   <template #icon><XMarkIcon /></template>
                   Button
                 </FormButton>
               </div>
               <div class="flex items-center justify-around flex-wrap py-6">
-                <FormButton type="invert" disabled size="xs">
+                <FormButton color="invert" disabled size="xs">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" disabled size="sm">
+                <FormButton color="invert" disabled size="sm">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" disabled size="base">
+                <FormButton color="invert" disabled size="base">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" disabled size="lg">
+                <FormButton color="invert" disabled size="lg">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" disabled size="xl">
+                <FormButton color="invert" disabled size="xl">
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" disabled rounded>
+                <FormButton color="invert" disabled rounded>
                   Button
                   <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton type="invert" disabled outlined rounded>Button</FormButton>
-                <FormButton type="invert" disabled outlined>
+                <FormButton color="invert" disabled outlined rounded>Button</FormButton>
+                <FormButton color="invert" disabled outlined>
                   <template #icon><XMarkIcon /></template>
                   Button
                 </FormButton>
@@ -380,7 +381,7 @@ import { Form } from 'vee-validate'
 import { XMarkIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid'
 const onSubmit = (values: unknown) => console.log(values)
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonType = 'default' | 'invert' | 'danger' | 'warning'
+type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
 const sizes: FormButtonSize[] = ['xs', 'sm', 'base', 'lg', 'xl']
-const types: FormButtonType[] = ['danger', 'warning']
+const types: FormButtonColor[] = ['danger', 'warning']
 </script>
