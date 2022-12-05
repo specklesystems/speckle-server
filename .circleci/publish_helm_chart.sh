@@ -15,6 +15,8 @@ echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 git config --global user.email "devops+circleci@speckle.systems"
 git config --global user.name "CI"
 
+ls -la # FIXME temporary for testing
+
 git clone git@github.com:specklesystems/helm.git "${HOME}/helm"
 
 
@@ -22,7 +24,7 @@ sed -i 's/version: [^\s]*/version: '"${RELEASE_VERSION}"'/g' "${HOME}/utils/helm
 sed -i 's/appVersion: [^\s]*/appVersion: '\""${RELEASE_VERSION}"\"'/g' "${HOME}/utils/helm/speckle-server/Chart.yaml"
 sed -i 's/docker_image_tag: [^\s]*/docker_image_tag: '"${RELEASE_VERSION}"'/g' "${HOME}/utils/helm/speckle-server/values.yaml"
 
-rm -rf ~/helm/charts/speckle-server
+rm -rf "${HOME}/helm/charts/speckle-server"
 if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; then
   # before overwriting the chart with the build version, check if the current chart version
   # is not newer than the currently build one
