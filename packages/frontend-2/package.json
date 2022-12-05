@@ -28,6 +28,7 @@
     "@headlessui/vue": "^1.7.3",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
+    "@speckle/viewer": "workspace:^",
     "@speckle/vue-apollo-composable": "^4.0.0-beta.1",
     "@vue/apollo-composable": "4.0.0-beta.1",
     "@vue/apollo-ssr": "^4.0.0-alpha.18",
