@@ -5,6 +5,7 @@ const express = require('express')
 const { getObjectsStream } = require('./services/objects_utils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
+const { logger } = require('../observability/logging')
 
 const router = express.Router()
 
@@ -34,11 +35,11 @@ router.post('/getobjects/:streamId', async (req, res) => {
     res,
     (err) => {
       if (err) {
-        console.log(
+        logger.error(
           `Error streaming objects from stream ${req.params.streamId}: ${err}`
         )
       } else {
-        console.log(
+        logger.error(
           `Streamed ${childrenList.length} objects from stream ${
             req.params.streamId
           } (size: ${gzipStream.bytesWritten / 1000000} MB)`

@@ -8,14 +8,14 @@ import {
   NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
-import { modulesDebug } from '@/modules/shared/utils/logger'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
+import { moduleLogger } from '@/logging/logging'
 
 export async function initializeConsumption(
   customHandlers?: Partial<NotificationTypeHandlers>
 ) {
-  modulesDebug('📞 Initializing notification queue consumption...')
+  moduleLogger.info('📞 Initializing notification queue consumption...')
 
   const allHandlers: Partial<NotificationTypeHandlers> = {
     [NotificationType.MentionedInComment]: (
@@ -39,14 +39,14 @@ export async function initializeConsumption(
   initializeQueue()
 
   if (shouldDisableNotificationsConsumption()) {
-    modulesDebug('Skipping notification consumption...')
+    moduleLogger.info('Skipping notification consumption...')
   } else {
     await consumeIncomingNotifications()
   }
 }
 
 export const init: SpeckleModule['init'] = async (_, isInitial) => {
-  modulesDebug('📞 Init notifications module')
+  moduleLogger.info('📞 Init notifications module')
   if (isInitial) {
     await initializeConsumption()
   }

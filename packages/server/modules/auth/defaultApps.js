@@ -1,5 +1,4 @@
 'use strict'
-const debug = require('debug')
 const knex = require('@/db/knex')
 const Scopes = () => knex('scopes')
 const Apps = () => knex('server_apps')
@@ -8,6 +7,7 @@ const AppScopes = () => knex('server_apps_scopes')
 const { getApp } = require('@/modules/auth/services/apps')
 const { Scopes: ScopesConst } = require('@/modules/core/helpers/mainConstants')
 const { difference } = require('lodash')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 let allScopes = []
 
@@ -25,7 +25,7 @@ module.exports = async () => {
 async function registerOrUpdateApp(app) {
   if (app.scopes && app.scopes === 'all') {
     // let scopes = await Scopes( ).select( '*' )
-    // console.log( allScopes.length )
+    // logger.debug( allScopes.length )
     app.scopes = allScopes.map((s) => s.name)
   }
 
@@ -44,7 +44,7 @@ async function registerDefaultApp(app) {
     await Apps().insert(app)
     await AppScopes().insert(scopes)
   } catch (e) {
-    console.log(e)
+    logger.error(e)
   }
 }
 
@@ -57,7 +57,7 @@ async function updateDefaultApp(app, existingApp) {
   let affectedTokenIds = []
 
   if (newScopes.length || removedScopes.length) {
-    debug('speckle:modules')(`🔑 Updating default app ${app.name}`)
+    moduleLogger.info(`🔑 Updating default app ${app.name}`)
     affectedTokenIds = await knex('user_server_app_tokens')
       .where({ appId: app.id })
       .pluck('tokenId')
