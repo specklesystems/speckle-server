@@ -143,43 +143,37 @@ const buttonType = computed(() => {
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
-  if (!props.text && !props.link) {
-    classParts.push('border-2')
-    if (props.disabled) {
-      classParts.push(
-        props.outlined
-          ? 'border-foreground-disabled'
-          : 'bg-foundation-disabled border-transparent'
-      )
-    } else {
-      switch (props.color) {
-        case 'invert':
-          classParts.push(
-            props.outlined
-              ? 'border-foundation dark:border-foreground'
-              : 'bg-foundation dark:bg-foreground border-transparent'
-          )
-          break
-        case 'danger':
-          classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
-          break
-        case 'warning':
-          classParts.push(
-            props.outlined ? 'border-warning' : 'bg-warning border-warning'
-          )
-          break
-        case 'default':
-        default:
-          classParts.push(
-            props.outlined
-              ? 'border-primary hover:border-primary-focus'
-              : 'bg-primary hover:bg-primary-focus border-transparent'
-          )
-          break
-      }
-    }
+  classParts.push('border-2')
+  if (props.disabled) {
+    classParts.push(
+      props.outlined
+        ? 'border-foreground-disabled'
+        : 'bg-foundation-disabled border-transparent'
+    )
   } else {
-    // Link / text buttons have no bg or borders
+    switch (props.color) {
+      case 'invert':
+        classParts.push(
+          props.outlined
+            ? 'border-foundation dark:border-foreground'
+            : 'bg-foundation dark:bg-foreground border-transparent'
+        )
+        break
+      case 'danger':
+        classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
+        break
+      case 'warning':
+        classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
+        break
+      case 'default':
+      default:
+        classParts.push(
+          props.outlined
+            ? 'border-primary hover:border-primary-focus'
+            : 'bg-primary hover:bg-primary-focus border-transparent'
+        )
+        break
+    }
   }
 
   return classParts.join(' ')
@@ -233,15 +227,13 @@ const foregroundClasses = computed(() => {
 
 const roundedClasses = computed(() => {
   const classParts: string[] = []
-  if (!props.text && !props.link) {
-    classParts.push(props.rounded ? 'rounded-full' : 'rounded-md')
-  }
+  classParts.push(props.rounded ? 'rounded-full' : 'rounded-md')
   return classParts.join(' ')
 })
 
 const ringClasses = computed(() => {
   const classParts: string[] = []
-  if (!props.text && !props.link && !props.disabled) {
+  if (!props.disabled) {
     switch (props.color) {
       case 'invert':
         classParts.push('hover:ring-4 ring-white/50')
@@ -337,14 +329,15 @@ const decoratorClasses = computed(() => {
 })
 
 const buttonClasses = computed(() => {
+  const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center items-center outline-none',
+    'transition inline-flex justify-center items-center outline-none select-none',
     generalClasses.value,
-    bgAndBorderClasses.value,
-    foregroundClasses.value,
     sizeClasses.value,
-    roundedClasses.value,
-    ringClasses.value,
+    foregroundClasses.value,
+    isLinkOrText ? '' : bgAndBorderClasses.value,
+    isLinkOrText ? '' : roundedClasses.value,
+    isLinkOrText ? '' : ringClasses.value,
     decoratorClasses.value
   ].join(' ')
 })
