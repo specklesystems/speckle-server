@@ -3,6 +3,7 @@
 set -eo pipefail
 set -x # FIXME temporarily while testing
 
+GIT_REPO=$( pwd )
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # shellcheck disable=SC1090,SC1091
 source "${SCRIPT_DIR}/common.sh"
@@ -15,15 +16,13 @@ echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 git config --global user.email "devops+circleci@speckle.systems"
 git config --global user.name "CI"
 
-pwd # FIXME temporary for testing
-ls -la # FIXME temporary for testing
 
 git clone git@github.com:specklesystems/helm.git "${HOME}/helm"
 
 
-sed -i 's/version: [^\s]*/version: '"${RELEASE_VERSION}"'/g' "${HOME}/utils/helm/speckle-server/Chart.yaml"
-sed -i 's/appVersion: [^\s]*/appVersion: '\""${RELEASE_VERSION}"\"'/g' "${HOME}/utils/helm/speckle-server/Chart.yaml"
-sed -i 's/docker_image_tag: [^\s]*/docker_image_tag: '"${RELEASE_VERSION}"'/g' "${HOME}/utils/helm/speckle-server/values.yaml"
+sed -i 's/version: [^\s]*/version: '"${RELEASE_VERSION}"'/g' "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+sed -i 's/appVersion: [^\s]*/appVersion: '\""${RELEASE_VERSION}"\"'/g' "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+sed -i 's/docker_image_tag: [^\s]*/docker_image_tag: '"${RELEASE_VERSION}"'/g' "${GIT_REPO}/utils/helm/speckle-server/values.yaml"
 
 rm -rf "${HOME}/helm/charts/speckle-server"
 if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; then
@@ -39,11 +38,11 @@ if [[ -n "${CIRCLE_TAG}" || "${CIRCLE_BRANCH}" == "${HELM_STABLE_BRANCH}" ]]; th
     echo "The current helm chart version is newer than the currently built. Exiting" 
     exit 1
   fi
-  cp -r "${HOME}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server"
+  cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/speckle-server"
 else
   # overwrite the name of the chart
-  sed -i 's/name: [^\s]*/name: '\""${BRANCH_NAME_TRUNCATED}-speckle-server"\"'/g' "${HOME}/utils/helm/speckle-server/Chart.yaml"
-  cp -r "${HOME}/utils/helm/speckle-server" "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
+  sed -i 's/name: [^\s]*/name: '\""${BRANCH_NAME_TRUNCATED}-speckle-server"\"'/g' "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
+  cp -r "${GIT_REPO}/utils/helm/speckle-server" "${HOME}/helm/charts/${BRANCH_NAME_TRUNCATED}-speckle-server"
 fi
 
 cd ~/helm
