@@ -1,8 +1,13 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
+ARG NODE_ENV=production
+ARG SPECKLE_SERVER_VERSION=custom
 # build stage
 FROM node:18.12.1-bullseye-slim as build-stage
-ARG SPECKLE_SERVER_VERSION=custom
- 
+ARG NODE_ENV
+ARG SPECKLE_SERVER_VERSION
+
+ENV NODE_ENV=${NODE_ENV}
+
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
@@ -26,10 +31,13 @@ COPY packages/shared ./packages/shared/
 RUN yarn workspaces foreach run build
 
 # production stage
-
-
 FROM openresty/openresty:1.21.4.1-4-jammy-amd64 as production-stage
+ARG NODE_ENV
+ARG SPECKLE_SERVER_VERSION
+
+ENV NODE_ENV=${NODE_ENV}
 ENV FILE_SIZE_LIMIT_MB=100
+
 COPY --from=build-stage /speckle-server/packages/frontend/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 

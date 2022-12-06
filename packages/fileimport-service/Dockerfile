@@ -1,6 +1,8 @@
+ARG NODE_ENV=production
+
 FROM node:18.12.1-bullseye-slim as build-stage
 
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -46,7 +48,7 @@ RUN /venv/bin/pip install --disable-pip-version-check --no-cache-dir --requireme
 FROM node:18.12.1-bullseye-slim as dependency-stage
 # installing just the production dependencies
 # separate stage to avoid including development dependencies
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -60,6 +62,8 @@ RUN yarn workspaces focus --production
 
 FROM gcr.io/distroless/nodejs:18 as distributable-stage
 
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
 WORKDIR /speckle-server
 
 COPY --from=build-stage /speckle-server/tini /usr/bin/tini
