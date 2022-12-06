@@ -87,6 +87,7 @@ async function doTask(task) {
       await runProcessWithTimeout(
         'node',
         [
+          '--no-experimental-fetch',
           './ifc/import_file.js',
           TMP_FILE_PATH,
           info.userId,
