@@ -5,7 +5,7 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import CameraHandler from './context/CameraHanlder'
 
-import SectionBox from './SectionBox'
+import SectionBox, { SectionBoxEvent } from './SectionBox'
 import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
@@ -45,21 +45,10 @@ export class Viewer extends EventEmitter implements IViewer {
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
 
-  /** Render flag for on-demand rendering */
-  private _needsRender: boolean
-
   /** Misc members */
   private inProgressOperations: number
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
-
-  public get needsRender(): boolean {
-    return this._needsRender
-  }
-
-  public set needsRender(value: boolean) {
-    this._needsRender = value || this._needsRender
-  }
 
   /** Gets the World object. Currently it's used for info mostly */
   public static get World(): World {
@@ -95,19 +84,27 @@ export class Viewer extends EventEmitter implements IViewer {
     ;(window as any)._V = this // For debugging!
 
     this.sectionBox = new SectionBox(this)
-    this.sectionBox.off()
-    this.sectionBox.controls.addEventListener('change', () => {
+    this.sectionBox.disable()
+    this.on(ViewerEvent.SectionBoxUpdated, () => {
       this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
     })
+    this.sectionBox.on(
+      SectionBoxEvent.DRAG_START,
+      this.speckleRenderer.onSectionBoxDragStart.bind(this.speckleRenderer)
+    )
+    this.sectionBox.on(
+      SectionBoxEvent.DRAG_END,
+      this.speckleRenderer.onSectionBoxDragEnd.bind(this.speckleRenderer)
+    )
 
     this.frame()
     this.resize()
-    this.needsRender = true
 
     this.on(ViewerEvent.LoadComplete, (url) => {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoom()
+      this.speckleRenderer.resetPipeline(true)
     })
   }
   public setSectionBox(
@@ -125,6 +122,7 @@ export class Viewer extends EventEmitter implements IViewer {
       box = this.speckleRenderer.sceneBox
     }
     this.sectionBox.setBox(box, offset)
+    this.speckleRenderer.updateSectionBoxCapper()
   }
   public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
     this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
@@ -135,8 +133,14 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public resize() {
-    this.speckleRenderer.resize(this.container.offsetWidth, this.container.offsetHeight)
-    this.needsRender = true
+    const width = this.container.offsetWidth
+    const height = this.container.offsetHeight
+    this.speckleRenderer.resize(width, height)
+  }
+
+  public requestRender() {
+    this.speckleRenderer.needsRender = true
+    this.speckleRenderer.resetPipeline()
   }
 
   private frame() {
@@ -146,17 +150,13 @@ export class Viewer extends EventEmitter implements IViewer {
 
   private update() {
     const delta = this.clock.getDelta()
-    this.needsRender = this.cameraHandler.controls.update(delta)
     this.speckleRenderer.update(delta)
     this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))
   }
 
   private render() {
-    if (this.needsRender) {
-      this.speckleRenderer.render(this.cameraHandler.activeCam.camera)
-      // this._needsRender = false
-    }
+    this.speckleRenderer.render()
   }
 
   public async init(): Promise<void> {
@@ -279,6 +279,14 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
+  public setUserObjectColors(
+    groups: [{ objectIds: string[]; color: string }]
+  ): Promise<FilteringState> {
+    return new Promise<FilteringState>((resolve) => {
+      resolve(this.filteringManager.setUserObjectColors(groups))
+    })
+  }
+
   public resetFilters(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(this.filteringManager.reset())
@@ -300,14 +308,17 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleSectionBox() {
     this.sectionBox.toggle()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public sectionBoxOff() {
-    this.sectionBox.off()
+    this.sectionBox.disable()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public sectionBoxOn() {
-    this.sectionBox.on()
+    this.sectionBox.enable()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
@@ -320,6 +331,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
+    this.speckleRenderer.resetPipeline(true)
   }
 
   public setLightConfiguration(config: SunLightConfiguration): void {
@@ -345,7 +357,6 @@ export class Viewer extends EventEmitter implements IViewer {
     transition = true
   ): void {
     this.speckleRenderer.setView(view, transition)
-    this.needsRender = true
   }
 
   public screenshot(): Promise<string> {

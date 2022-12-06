@@ -65,6 +65,11 @@ module.exports = {
     return token
   },
 
+  /**
+   *
+   * @param {string} tokenString
+   * @returns {Promise<import('@/modules/core/helpers/types').TokenValidationResult>}
+   */
   async validateToken(tokenString) {
     const tokenId = tokenString.slice(0, 10)
     const tokenContent = tokenString.slice(10, 42)

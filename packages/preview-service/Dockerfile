@@ -1,8 +1,9 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-# build stage
-FROM node:16.15-bullseye-slim as build-stage
-
 ARG NODE_ENV=production
+
+FROM node:18.12.1-bullseye-slim as build-stage
+
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -32,9 +33,9 @@ COPY packages/viewer ./packages/viewer/
 COPY packages/preview-service ./packages/preview-service/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach -pt run build
+RUN yarn workspaces foreach run build
 
-FROM node:16.15-bullseye-slim as node
+FROM node:18.12.1-bullseye-slim as node
 
 # required for ensuring cross-compatibility
 # https://github.com/puppeteer/puppeteer/issues/7740
@@ -79,7 +80,7 @@ RUN apt-get update && \
 
 COPY --from=build-stage /speckle-server/wait /wait
 
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server

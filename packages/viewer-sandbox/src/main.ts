@@ -61,7 +61,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
 
   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-
+  // console.log(ids[0])
   await viewer.selectObjects(ids as string[])
 })
 
@@ -77,17 +77,15 @@ viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent)
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 sandbox.makeFilteringUI()
+sandbox.makeBatchesUI()
 // Load demo object
 
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
-  // Same sample revit house, local to dim's computer
-  // 'http://localhost:3000/streams/6960695d7b/commits/da0a2343fa'
-  // 'http://100.66.180.109:3000/streams/6960695d7b/commits/417526751d'
   // IFC building (good for a tree based structure)
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
   // IFC story, a subtree of the above
@@ -120,7 +118,28 @@ await sandbox.loadUrl(
   // REVIT test stream
   // 'https://latest.speckle.dev/streams/c544db35f5/commits/7c29374369'
   // Arcs
-  //'https://latest.speckle.dev/streams/0c6ad366c4/commits/912d83412e'
+  // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/912d83412e'
   // Freezers
-  'https://speckle.xyz/streams/f0532359ac/commits/98678e2a3d?c=%5B2455.15367,2689.87156,4366.68444,205.422,-149.41199,148.749,0,1%5D'
+  // 'https://speckle.xyz/streams/f0532359ac/commits/98678e2a3d?c=%5B2455.15367,2689.87156,4366.68444,205.422,-149.41199,148.749,0,1%5D'
+  //Gergo's house
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
+  // Point cloud
+  // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+  // Luis sphere
+  // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
+  // Crankshaft
+  // 'https://speckle.xyz/streams/c239718aff/commits/b3a8cfb97d'
+  // Building AO params
+  // 'https://latest.speckle.dev/streams/0dd74866d0/commits/317e210afa'
+  // Murder Cube
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7f0c4d2fc1/'
+  // Classroom
+  // 'https://speckle.xyz/streams/0208ffb67b/commits/a980292728'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/328bd99997'
+  // 'https://latest.speckle.dev/streams/83e18d886f/commits/532bd6be3e'
+  // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/f12861736e'
+  // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
+  // Jedd's views
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
+  // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
 )

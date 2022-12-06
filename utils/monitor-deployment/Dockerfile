@@ -26,8 +26,8 @@ ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING} \
     NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS}
 
 COPY --from=build-stage /venv /venv
+COPY --from=build-stage /build/tini /usr/bin/tini
 WORKDIR /app
-COPY --from=build-stage /build/tini ./tini
 COPY utils/monitor-deployment .
 
-ENTRYPOINT [ "./tini", "--", "/venv/bin/python3", "-u", "src/run.py"]
+ENTRYPOINT [ "tini", "--", "/venv/bin/python3", "-u", "src/run.py"]

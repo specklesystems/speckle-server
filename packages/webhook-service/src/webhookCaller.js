@@ -4,7 +4,7 @@ const dns = require('dns')
 const isIpPrivate = require('private-ip')
 
 const fetch = require('node-fetch')
-const debug = require('debug')('speckle')
+const { logger } = require('./observability/logging')
 
 async function isLocalNetworkUrl(url) {
   const parsedUrl = new URL(url)
@@ -38,7 +38,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
   const headers = { 'Content-Type': 'application/json' }
   for (const k in headersData) headers[k] = headersData[k]
 
-  debug('POST request to:', url)
+  logger.info('POST request to:', url)
   const t0 = Date.now()
 
   try {
@@ -51,7 +51,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
       size: 500 * 1000 // 500kb max response size, to accommodate various error responses (defaults to no limit)
     }).then(async (res) => ({ status: res.status, body: await res.text() }))
 
-    //console.log( 'Server response:', response )
+    // logger.debug( 'Server response:', response )
     const error =
       httpSuccessCodes.indexOf(response.status) === -1
         ? `HTTP response code: ${response.status}`

@@ -72,6 +72,7 @@ export default class PointBatch implements Batch {
       minOffset,
       maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
     )
+    this.mesh.visible = true
   }
 
   public getVisibleRange() {

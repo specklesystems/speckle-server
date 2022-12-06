@@ -2,6 +2,7 @@ import { getQueue, NotificationJobResult } from '@/modules/notifications/service
 import { EventEmitter } from 'events'
 import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
 import { pick } from 'lodash'
+import { logger } from '@/logging/logging'
 
 type AckEvent = {
   result?: NotificationJobResult
@@ -84,7 +85,7 @@ export function buildNotificationsStateTracker() {
     /**
      * Wait for an acknowledgement without knowing the msg id
      */
-    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 2000) => {
+    waitForAck: async (predicate?: (e: AckEvent) => boolean, timeout = 3000) => {
       let timeoutRef: NodeJS.Timer
       let eventEmitterHandler: (e: AckEvent) => void
       return new Promise<AckEvent>((resolve, reject) => {
@@ -142,13 +143,13 @@ export async function debugJobs() {
     { items: failed, display: 'Failed' }
   ]
 
-  console.log('------------- START debugJobs() --------------')
+  logger.debug('------------- START debugJobs() --------------')
 
   for (const { items, display } of jobCollections) {
-    console.log(`${display}: ` + waiting.length)
-    console.log(`${display} jobs: `)
+    logger.debug(`${display}: ` + waiting.length)
+    logger.debug(`${display} jobs: `)
     for (const job of items) {
-      console.log(
+      logger.debug(
         ` - ${JSON.stringify(
           pick(job, [
             'timestamp',
@@ -162,6 +163,6 @@ export async function debugJobs() {
       )
     }
   }
-  console.log({ workers })
-  console.log('------------- END debugJobs() --------------')
+  logger.debug({ workers })
+  logger.debug('------------- END debugJobs() --------------')
 }

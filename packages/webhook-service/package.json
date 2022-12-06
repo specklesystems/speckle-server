@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "engines": {
-    "node": "^16.0.0"
+    "node": "^18.12.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -21,6 +21,7 @@
     "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
+    "@speckle/shared": "workspace:^",
     "knex": "^2.0.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",

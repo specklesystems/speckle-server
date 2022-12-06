@@ -2,7 +2,6 @@ import {
   ACESFilmicToneMapping,
   Box3,
   Box3Helper,
-  Camera,
   CameraHelper,
   Color,
   DirectionalLight,
@@ -45,12 +44,30 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
-import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
+import {
+  DefaultPipelineOptions,
+  Pipeline,
+  PipelineOptions,
+  RenderType
+} from './pipeline/Pipeline'
+import { MeshBVHVisualizer } from 'three-mesh-bvh'
+import MeshBatch from './batching/MeshBatch'
+import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
+
+export enum ObjectLayers {
+  STREAM_CONTENT = 1,
+  PROPS = 2
+}
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
+  public SHOW_BVH = false
+  private readonly ANGLE_EPSILON = 0.0001
+  private readonly POSITION_REST_EPSILON = 0.001
+  private readonly POSITION_RESUME_EPSILON = 0.001
   private _renderer: WebGLRenderer
-  public scene: Scene
+  public _scene: Scene
+  private _needsRender: boolean
   private rootGroup: Group
   private batcher: Batcher
   private intersections: Intersections
@@ -61,13 +78,24 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
   private pipeline: Pipeline
+  private lastAzimuth: number
+  private lastPolar: number
+  private lastCameraPosition: Vector3 = new Vector3()
+  private lastCameraMotionDelta: number
+  private lastSectionPlanes: Plane[] = []
+  private sectionPlanesChanged: Plane[] = []
+  private sectionBoxOutlines: SectionBoxOutlines = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
   }
 
+  public set needsRender(value: boolean) {
+    this._needsRender ||= value
+  }
+
   public set indirectIBL(texture: Texture) {
-    this.scene.environment = texture
+    this._scene.environment = texture
   }
 
   public set indirectIBLIntensity(value: number) {
@@ -85,11 +113,11 @@ export default class SpeckleRenderer {
 
   /** TEMPORARY for backwards compatibility */
   public get allObjects() {
-    return this.scene.getObjectByName('ContentGroup')
+    return this._scene.getObjectByName('ContentGroup')
   }
 
   public subtree(subtreeId: string) {
-    return this.scene.getObjectByName(subtreeId)
+    return this._scene.getObjectByName(subtreeId)
   }
 
   public get sceneBox() {
@@ -108,19 +136,45 @@ export default class SpeckleRenderer {
     return this.sun
   }
 
+  public get camera() {
+    return this.viewer.cameraHandler.activeCam.camera
+  }
+
+  public get scene() {
+    return this._scene
+  }
+
   public set pipelineOptions(value: PipelineOptions) {
     this.pipeline.pipelineOptions = value
   }
 
+  public set showBVH(value: boolean) {
+    this.SHOW_BVH = value
+    this.allObjects.traverse((obj) => {
+      if (obj.name.includes('_bvh')) {
+        obj.visible = this.SHOW_BVH
+      }
+    })
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
-    this.scene = new Scene()
+    this._scene = new Scene()
     this.rootGroup = new Group()
     this.rootGroup.name = 'ContentGroup'
-    this.scene.add(this.rootGroup)
+    this.rootGroup.layers.set(ObjectLayers.STREAM_CONTENT)
+    this._scene.add(this.rootGroup)
 
     this.batcher = new Batcher()
     this.intersections = new Intersections()
     this.viewer = viewer
+    this.lastSectionPlanes.push(
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane()
+    )
   }
 
   public create(container: HTMLElement) {
@@ -144,8 +198,31 @@ export default class SpeckleRenderer {
     container.appendChild(this._renderer.domElement)
 
     this.pipeline = new Pipeline(this._renderer, this.batcher)
-    this.pipeline.configure(this.scene, this.viewer.cameraHandler.activeCam.camera)
+    this.pipeline.configure()
     this.pipeline.pipelineOptions = DefaultPipelineOptions
+
+    this.sectionBoxOutlines = new SectionBoxOutlines()
+    const sectionBoxCapperGroup = new Group()
+    sectionBoxCapperGroup.name = 'SectionBoxOutlines'
+    this.scene.add(sectionBoxCapperGroup)
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_Z).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_Z).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_X).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_X).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_Y).renderable
+    )
+    sectionBoxCapperGroup.add(
+      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_Y).renderable
+    )
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -156,24 +233,60 @@ export default class SpeckleRenderer {
     if (this.SHOW_HELPERS) {
       const helpers = new Group()
       helpers.name = 'Helpers'
-      this.scene.add(helpers)
+      this._scene.add(helpers)
 
       const sceneBoxHelper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
       sceneBoxHelper.name = 'SceneBoxHelper'
+      sceneBoxHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(sceneBoxHelper)
 
       const dirLightHelper = new DirectionalLightHelper(this.sun, 50, 0xff0000)
       dirLightHelper.name = 'DirLightHelper'
+      dirLightHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(dirLightHelper)
 
       const camHelper = new CameraHelper(this.sun.shadow.camera)
       camHelper.name = 'CamHelper'
+      camHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(camHelper)
     }
+
+    this.viewer.cameraHandler.controls.restThreshold = 0.001
+    this.viewer.cameraHandler.controls.addEventListener('rest', () => {
+      this._needsRender = true
+      this.pipeline.onStationaryBegin()
+    })
+    this.viewer.cameraHandler.controls.addEventListener('controlstart', () => {
+      this._needsRender = true
+      this.pipeline.onStationaryEnd()
+    })
+
+    this.viewer.cameraHandler.controls.addEventListener('controlend', () => {
+      this._needsRender = true
+      if (this.viewer.cameraHandler.controls.hasRested)
+        this.pipeline.onStationaryBegin()
+    })
+
+    this.viewer.cameraHandler.controls.addEventListener('control', () => {
+      this._needsRender = true
+      this.pipeline.onStationaryEnd()
+    })
+    this.viewer.cameraHandler.controls.addEventListener('update', () => {
+      if (
+        !this.viewer.cameraHandler.controls.hasRested &&
+        this.pipeline.renderType === RenderType.ACCUMULATION
+      ) {
+        this._needsRender = true
+        this.pipeline.onStationaryEnd()
+      }
+    })
   }
 
   public update(deltaTime: number) {
+    this.needsRender = this.viewer.cameraHandler.controls.update(deltaTime)
+
     this.batcher.update(deltaTime)
+
     const viewer = new Vector3()
     const viewerLow = new Vector3()
     const viewerHigh = new Vector3()
@@ -269,19 +382,28 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.far = d
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
-    this.pipeline.pipelineOptions = { saoParams: { saoScale: d } }
-    // console.log(d)
+
+    this.pipeline.update(this)
   }
 
-  public render(camera: Camera) {
-    this.batcher.render(this.renderer)
-    this.pipeline.render(this.scene, camera)
-    // this.renderer.render(this.scene, camera)
+  public resetPipeline(force = false) {
+    this._needsRender = true
+    if (this.viewer.cameraHandler.controls.hasRested || force) this.pipeline.reset()
+  }
+
+  public render(): void {
+    if (this._needsRender) {
+      this.batcher.render(this.renderer)
+      this._needsRender = this.pipeline.render()
+      // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
+      // this._needsRender = true
+    }
   }
 
   public resize(width: number, height: number) {
     this.renderer.setSize(width, height)
     this.pipeline.resize(width, height)
+    this._needsRender = true
   }
 
   public addRenderTree(subtreeId: string) {
@@ -311,12 +433,15 @@ export default class SpeckleRenderer {
 
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
+    subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this.rootGroup.add(subtreeGroup)
 
     const batches = this.batcher.getBatches(subtreeId)
     batches.forEach((batch: Batch) => {
       const batchRenderable = batch.renderObject
+      batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
       subtreeGroup.add(batch.renderObject)
+
       if (batch.geometryType === GeometryType.MESH) {
         const mesh = batchRenderable as unknown as Mesh
         const material = mesh.material as SpeckleStandardMaterial
@@ -328,15 +453,35 @@ export default class SpeckleRenderer {
           },
           ['USE_RTE', 'ALPHATEST_REJECTION']
         )
+        if (this.SHOW_BVH) {
+          const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
+            batchRenderable as Mesh,
+            10
+          )
+          bvhHelper.name = batch.renderObject.id + '_bvh'
+          bvhHelper.traverse((obj) => {
+            obj.layers.set(ObjectLayers.PROPS)
+          })
+          bvhHelper.displayParents = true
+          bvhHelper.visible = false
+          bvhHelper.update()
+          subtreeGroup.add(bvhHelper)
+        }
       }
     })
 
     this.updateDirectLights()
     this.updateHelpers()
+    if (this.viewer.sectionBox.display.visible) {
+      this.viewer.setSectionBox()
+    }
+    // this.resetPipeline(true)
+    this._needsRender = true
   }
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
+
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
     this.updateHelpers()
@@ -359,6 +504,10 @@ export default class SpeckleRenderer {
 
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
+    this.updateClippingPlanes(this.viewer.sectionBox.planes)
+    if (this.viewer.sectionBox.display.visible) {
+      this.updateSectionBoxCapper()
+    }
     this.renderer.shadowMap.needsUpdate = true
   }
 
@@ -377,13 +526,56 @@ export default class SpeckleRenderer {
       }
     })
     this.pipeline.updateClippingPlanes(planes)
+    this.sectionBoxOutlines.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
+    this.resetPipeline()
+    // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
+  }
+
+  private setSectionPlaneChanged(planes: Plane[]) {
+    this.sectionPlanesChanged.length = 0
+    for (let k = 0; k < planes.length; k++) {
+      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
+        this.sectionPlanesChanged.push(planes[k])
+      this.lastSectionPlanes[k].copy(planes[k])
+    }
+  }
+
+  public onSectionBoxDragStart() {
+    this.sectionBoxOutlines.enable(false)
+  }
+
+  public onSectionBoxDragEnd() {
+    const generate = () => {
+      this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
+      this.updateSectionBoxCapper(this.sectionPlanesChanged)
+      this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
+    }
+    this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
+  }
+
+  public updateSectionBoxCapper(planes?: Plane[]) {
+    const start = performance.now()
+    if (!planes) planes = this.viewer.sectionBox.planes
+    for (let k = 0; k < planes.length; k++) {
+      this.sectionBoxOutlines.updatePlaneOutline(
+        this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+        planes[k]
+      )
+    }
+    this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
+    console.warn('Outline time: ', performance.now() - start)
+  }
+
+  public enableSectionBoxCapper(value: boolean) {
+    this.sectionBoxOutlines.enable(value)
   }
 
   private addDirectLights() {
     this.sun = new DirectionalLight(0xffffff, 5)
     this.sun.name = 'sun'
-    this.scene.add(this.sun)
+    this.sun.layers.set(ObjectLayers.STREAM_CONTENT)
+    this._scene.add(this.sun)
 
     this.sun.castShadow = true
 
@@ -402,7 +594,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.radius = 2
 
     this.sunTarget = new Object3D()
-    this.scene.add(this.sunTarget)
+    this._scene.add(this.sunTarget)
     this.sunTarget.position.copy(this.sceneCenter)
     this.sun.target = this.sunTarget
   }
@@ -467,8 +659,9 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
-    this.viewer.needsRender = true
+    this.needsRender = true
     this.updateHelpers()
+    this.resetPipeline()
   }
 
   public setSunLightConfiguration(config: SunLightConfiguration) {
@@ -481,12 +674,14 @@ export default class SpeckleRenderer {
 
   public updateHelpers() {
     if (this.SHOW_HELPERS) {
-      ;(this.scene.getObjectByName('CamHelper') as CameraHelper).update()
+      ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
       // Thank you prettier, this looks so much better
-      ;(this.scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
+      ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
         this.sceneBox
       )
-      ;(this.scene.getObjectByName('DirLightHelper') as DirectionalLightHelper).update()
+      ;(
+        this._scene.getObjectByName('DirLightHelper') as DirectionalLightHelper
+      ).update()
     }
   }
 
@@ -527,7 +722,7 @@ export default class SpeckleRenderer {
 
   private onObjectClick(e) {
     const results: Array<Intersection> = this.intersections.intersect(
-      this.scene,
+      this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
@@ -536,6 +731,13 @@ export default class SpeckleRenderer {
 
     if (!results) {
       this.viewer.emit(ViewerEvent.ObjectClicked, null)
+      if (this.SHOW_BVH) {
+        this.allObjects.traverse((obj) => {
+          if (obj.name.includes('_bvh')) {
+            obj.visible = true
+          }
+        })
+      }
       return
     }
 
@@ -566,7 +768,7 @@ export default class SpeckleRenderer {
 
   private onObjectDoubleClick(e) {
     const results: Array<Intersection> = this.intersections.intersect(
-      this.scene,
+      this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
@@ -627,9 +829,11 @@ export default class SpeckleRenderer {
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
+      this.pipeline.onStationaryEnd()
       return
     }
     this.zoomToBox(this.boxFromObjects(objectIds), fit, transition)
+    this.pipeline.onStationaryEnd()
   }
 
   /** Taken from InteractionsHandler. Will revisit in the future */
@@ -745,6 +949,7 @@ export default class SpeckleRenderer {
     if (this.isPolarView(view)) {
       this.setViewPolar(view, transition)
     }
+    this.pipeline.onStationaryEnd()
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {
@@ -851,7 +1056,7 @@ export default class SpeckleRenderer {
   /** DEBUG */
   public onObjectClickDebug(e) {
     const results: Array<Intersection> = this.intersections.intersect(
-      this.scene,
+      this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
       true,
@@ -875,6 +1080,14 @@ export default class SpeckleRenderer {
     this.batcher.resetBatchesDrawRanges()
 
     this.batcher.isolateRenderViewBatch(hitId)
+    if (this.SHOW_BVH) {
+      this.allObjects.traverse((obj) => {
+        if (obj.name.includes('_bvh')) {
+          obj.visible = false
+        }
+      })
+      this.scene.getObjectByName(result.object.id + '_bvh').visible = true
+    }
   }
 
   public debugShowBatches() {

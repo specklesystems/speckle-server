@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+// const { logger } = require('@/logging/logging')
 const crypto = require('crypto')
 
 function generateManyObjects(shitTon, noise) {
@@ -68,7 +69,7 @@ exports.generateManyObjects = generateManyObjects
 exports.getAnIdForThisOnePlease = getAnIdForThisOnePlease
 
 exports.sleep = (ms) => {
-  // console.log( `\t Sleeping ${ms}ms ` )
+  // logger.debug( `\t Sleeping ${ms}ms ` )
   return new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
@@ -80,6 +81,7 @@ exports.sleep = (ms) => {
  * @param {*} res
  */
 function noErrors(res) {
+  if (res.error) throw new Error(`Failed GraphQL request: ${res.error.message}`)
   if ('errors' in res.body)
     throw new Error(`Failed GraphQL request: ${res.body.errors[0].message}`)
 }

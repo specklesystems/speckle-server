@@ -1,2 +1,2 @@
-psycopg2-binary 
-prometheus-client
+psycopg2-binary==2.9.4
+prometheus-client==0.15.0

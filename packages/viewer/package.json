@@ -21,7 +21,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^18.12.1"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
@@ -49,6 +49,7 @@
     "rainbowvis.js": "^1.0.1",
     "string-to-color": "^2.2.2",
     "three": "^0.140.0",
+    "three-mesh-bvh": "0.5.17",
     "tree-model": "1.0.7"
   },
   "devDependencies": {

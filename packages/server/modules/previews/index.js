@@ -1,13 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-const debug = require('debug')
-
-const {
-  contextMiddleware,
-  validateScopes,
-  authorizeResolver
-} = require('@/modules/shared')
+const { validateScopes, authorizeResolver } = require('@/modules/shared')
 
 const { getStream } = require('../core/services/streams')
 const { getObject } = require('../core/services/objects')
@@ -23,6 +17,7 @@ const {
 } = require('./services/previews')
 
 const { makeOgImage } = require('./ogImage')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -32,9 +27,9 @@ const previewErrorImage = require.resolve('#/assets/previews/images/preview_erro
 
 exports.init = (app) => {
   if (process.env.DISABLE_PREVIEWS) {
-    debug('speckle:modules')('📸 Object preview module is DISABLED')
+    moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
-    debug('speckle:modules')('📸 Init object preview module')
+    moduleLogger.info('📸 Init object preview module')
   }
 
   const DEFAULT_ANGLE = '0'
@@ -68,7 +63,7 @@ exports.init = (app) => {
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      debug('speckle:error')(
+      logger.error(
         `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
       )
       return {
@@ -79,7 +74,7 @@ exports.init = (app) => {
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      debug('speckle:error')(`Error: Preview image not found: ${previewImgId}`)
+      logger.error(`Error: Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
         file: previewErrorImage
@@ -158,7 +153,7 @@ exports.init = (app) => {
     return { hasPermissions: true, httpErrorCode: 200 }
   }
 
-  app.get('/preview/:streamId/:angle?', contextMiddleware, async (req, res) => {
+  app.get('/preview/:streamId/:angle?', async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
@@ -184,87 +179,75 @@ exports.init = (app) => {
     )
   })
 
-  app.get(
-    '/preview/:streamId/branches/:branchName/:angle?',
-    contextMiddleware,
-    async (req, res) => {
-      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-      if (!hasPermissions) {
-        // return res.status( httpErrorCode ).end()
-        return res.sendFile(httpErrorImage(httpErrorCode))
-      }
-
-      let commitsObj
-      try {
-        commitsObj = await getCommitsByBranchName({
-          streamId: req.params.streamId,
-          branchName: req.params.branchName,
-          limit: 1
-        })
-      } catch {
-        commitsObj = {}
-      }
-      const { commits } = commitsObj
-      if (!commits || commits.length === 0) {
-        return res.sendFile(noPreviewImage)
-      }
-      const lastCommit = commits[0]
-
-      return sendObjectPreview(
-        req,
-        res,
-        req.params.streamId,
-        lastCommit.referencedObject,
-        req.params.angle || DEFAULT_ANGLE
-      )
+  app.get('/preview/:streamId/branches/:branchName/:angle?', async (req, res) => {
+    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+    if (!hasPermissions) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile(httpErrorImage(httpErrorCode))
     }
-  )
 
-  app.get(
-    '/preview/:streamId/commits/:commitId/:angle?',
-    contextMiddleware,
-    async (req, res) => {
-      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-      if (!hasPermissions) {
-        // return res.status( httpErrorCode ).end()
-        return res.sendFile(httpErrorImage(httpErrorCode))
-      }
-
-      const commit = await getCommitById({
+    let commitsObj
+    try {
+      commitsObj = await getCommitsByBranchName({
         streamId: req.params.streamId,
-        id: req.params.commitId
+        branchName: req.params.branchName,
+        limit: 1
       })
-      if (!commit) return res.sendFile(noPreviewImage)
-
-      return sendObjectPreview(
-        req,
-        res,
-        req.params.streamId,
-        commit.referencedObject,
-        req.params.angle || DEFAULT_ANGLE
-      )
+    } catch {
+      commitsObj = {}
     }
-  )
-
-  app.get(
-    '/preview/:streamId/objects/:objectId/:angle?',
-    contextMiddleware,
-    async (req, res) => {
-      const { hasPermissions } = await checkStreamPermissions(req)
-      if (!hasPermissions) {
-        // return res.status( httpErrorCode ).end()
-        return res.sendFile()
-      }
-
-      return sendObjectPreview(
-        req,
-        res,
-        req.params.streamId,
-        req.params.objectId,
-        req.params.angle || DEFAULT_ANGLE
-      )
+    const { commits } = commitsObj
+    if (!commits || commits.length === 0) {
+      return res.sendFile(noPreviewImage)
     }
-  )
+    const lastCommit = commits[0]
+
+    return sendObjectPreview(
+      req,
+      res,
+      req.params.streamId,
+      lastCommit.referencedObject,
+      req.params.angle || DEFAULT_ANGLE
+    )
+  })
+
+  app.get('/preview/:streamId/commits/:commitId/:angle?', async (req, res) => {
+    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+    if (!hasPermissions) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile(httpErrorImage(httpErrorCode))
+    }
+
+    const commit = await getCommitById({
+      streamId: req.params.streamId,
+      id: req.params.commitId
+    })
+    if (!commit) return res.sendFile(noPreviewImage)
+
+    return sendObjectPreview(
+      req,
+      res,
+      req.params.streamId,
+      commit.referencedObject,
+      req.params.angle || DEFAULT_ANGLE
+    )
+  })
+
+  app.get('/preview/:streamId/objects/:objectId/:angle?', async (req, res) => {
+    const { hasPermissions } = await checkStreamPermissions(req)
+    if (!hasPermissions) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile()
+    }
+
+    return sendObjectPreview(
+      req,
+      res,
+      req.params.streamId,
+      req.params.objectId,
+      req.params.angle || DEFAULT_ANGLE
+    )
+  })
 }
 
 exports.finalize = () => {}

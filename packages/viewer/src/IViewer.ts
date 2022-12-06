@@ -46,7 +46,8 @@ export enum ViewerEvent {
   UnloadComplete = 'unload-complete',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
-  SectionBoxChanged = 'section-box-changed'
+  SectionBoxChanged = 'section-box-changed',
+  SectionBoxUpdated = 'section-box-updated'
 }
 
 export type SelectionEvent = {
@@ -117,7 +118,7 @@ export interface IViewer {
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
-
+  requestRender(): void
   setSectionBox(
     box?: {
       min: { x: number; y: number; z: number }
@@ -186,6 +187,9 @@ export interface IViewer {
   resetHighlight(): Promise<FilteringState>
 
   setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
+  setUserObjectColors(
+    groups: [{ objectIds: string[]; color: string }]
+  ): Promise<FilteringState>
   removeColorFilter(): Promise<FilteringState>
   resetFilters(): Promise<FilteringState>
 
