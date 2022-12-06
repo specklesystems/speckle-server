@@ -7,7 +7,7 @@ import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 export default {
   component: FormButton,
   argTypes: {
-    type: {
+    color: {
       options: ['default', 'invert', 'danger', 'warning'],
       control: { type: 'select' }
     },
@@ -94,21 +94,34 @@ export const Default: Story = {
   }
 }
 
-export const Pill: Story = mergeStories(Default, {
+export const Rounded: Story = mergeStories(Default, {
   args: {
-    type: 'pill'
+    rounded: true
+  }
+})
+
+export const WarningButton: Story = mergeStories(Default, {
+  args: {
+    color: 'warning'
+  }
+})
+
+export const RoundedOutlined: Story = mergeStories(Default, {
+  args: {
+    rounded: true,
+    outlined: true
   }
 })
 
 export const Outline: Story = mergeStories(Default, {
   args: {
-    type: 'outline'
+    outlined: true
   }
 })
 
 export const Link: Story = mergeStories(Default, {
   args: {
-    type: 'link'
+    link: 'true'
   },
   parameters: {
     docs: {

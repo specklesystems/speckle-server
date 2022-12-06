@@ -7,11 +7,12 @@
       <Component :is="icon" class="h-16 w-16" />
       <div class="text-center grow">
         <h3 class="h4 font-bold leading-8 text-foreground"><slot name="title" /></h3>
-        <h4 class="mt-2text-foreground-2">
+        <h4 class="mt-2 text-foreground-2">
           <slot name="subtitle" />
         </h4>
       </div>
       <FormButton size="lg" full-width :to="to" @click="$emit('click', $event)">
+        <template #icon><Component :is="buttonIcon"></Component></template>
         <slot name="ctaText" />
       </FormButton>
     </div>
@@ -26,6 +27,7 @@ defineEmits<{
 
 defineProps<{
   icon: ConcreteComponent
+  buttonIcon: ConcreteComponent
   to?: string
 }>()
 </script>

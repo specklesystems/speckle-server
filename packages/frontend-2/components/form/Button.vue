@@ -119,13 +119,6 @@ const props = defineProps({
   submit: {
     type: Boolean,
     default: false
-  },
-  /**
-   * Use foreground color variation of the link button
-   */
-  foregroundLink: {
-    type: Boolean,
-    default: false
   }
 })
 
