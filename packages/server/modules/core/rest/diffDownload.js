@@ -1,6 +1,5 @@
 'use strict'
 const zlib = require('zlib')
-const debug = require('debug')
 const cors = require('cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
@@ -8,6 +7,7 @@ const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
 
 const { pipeline, PassThrough } = require('stream')
+const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
@@ -40,13 +40,13 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          debug('speckle:error')(
+          logger.error(
             `[User ${
               req.context.userId || '-'
             }] App error streaming objects from stream ${req.params.streamId}: ${err}`
           )
         } else {
-          debug('speckle:info')(
+          logger.info(
             `[User ${req.context.userId || '-'}] Streamed ${
               childrenList.length
             } objects from stream ${req.params.streamId} (size: ${
@@ -73,7 +73,7 @@ module.exports = (app) => {
         })
       }
     } catch (ex) {
-      debug('speckle:error')(
+      logger.error(
         `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
           req.params.streamId
         }: ${ex}`
