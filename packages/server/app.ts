@@ -28,7 +28,12 @@ import { execute, subscribe } from 'graphql'
 import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
-import { isDevEnv, isTestEnv, useNewFrontend } from '@/modules/shared/helpers/envHelper'
+import {
+  getFileSizeLimitMB,
+  isDevEnv,
+  isTestEnv,
+  useNewFrontend
+} from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
@@ -252,7 +257,7 @@ export async function init() {
 
   app.use(corsMiddleware())
   app.use(express.json({ limit: '100mb' }))
-  app.use(express.urlencoded({ limit: '100mb', extended: false }))
+  app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')

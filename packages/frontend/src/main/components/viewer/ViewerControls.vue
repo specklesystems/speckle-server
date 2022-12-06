@@ -30,8 +30,8 @@
         <viewer-help @close="helpDialog = false" />
       </v-dialog>
       <!-- disabling ortho mode because comment intersection are f*ed. -->
-      <!-- <v-btn
-        v-tooltip=" between perspective or ortho camera.`"
+      <v-btn
+        v-tooltip="`between perspective or ortho camera.`"
         :small="small"
         rounded
         icon
@@ -39,7 +39,7 @@
         @click="toggleCamera()"
       >
         <v-icon small>mdi-perspective-less</v-icon>
-      </v-btn> -->
+      </v-btn>
       <v-menu
         :close-on-content-click="false"
         origin="center"

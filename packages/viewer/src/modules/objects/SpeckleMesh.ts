@@ -1,6 +1,8 @@
 import {
   BackSide,
+  BufferGeometry,
   DoubleSide,
+  Material,
   Matrix4,
   Mesh,
   Ray,
@@ -9,6 +11,7 @@ import {
   Vector2,
   Vector3
 } from 'three'
+import { estimateMemoryInBytes, MeshBVH } from 'three-mesh-bvh'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -33,143 +36,163 @@ const _uvC = new Vector2()
 const _intersectionPoint = new Vector3()
 const _intersectionPointWorld = new Vector3()
 
+const ray = /* @__PURE__ */ new Ray()
+const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
+
 export default class SpeckleMesh extends Mesh {
-  raycast(raycaster, intersects) {
-    const geometry = this.geometry
-    const material = this.material
-    const matrixWorld = this.matrixWorld
+  private boundsTree: MeshBVH = null
+  public boundsTreeSizeInBytes = 0
+  private batchMaterial: Material = null
 
-    if (material === undefined) return
+  constructor(geometry: BufferGeometry, material: Material, bvh: MeshBVH) {
+    super(geometry, material)
+    this.batchMaterial = material
+    this.boundsTree = bvh
+    this.geometry.boundsTree = this.boundsTree
+    this.boundsTreeSizeInBytes =
+      estimateMemoryInBytes(this.boundsTree) -
+      (this.geometry.attributes['position'].array as unknown as ArrayBuffer).byteLength
+  }
 
-    // Checking boundingSphere distance to ray
-
-    if (geometry.boundingSphere === null) geometry.computeBoundingSphere()
-
-    _sphere.copy(geometry.boundingSphere)
-    _sphere.applyMatrix4(matrixWorld)
-
-    if (raycaster.ray.intersectsSphere(_sphere) === false) return
-
-    //
-
-    _inverseMatrix.copy(matrixWorld).invert()
-    _ray.copy(raycaster.ray).applyMatrix4(_inverseMatrix)
-
-    // Check boundingBox before continuing
-
-    if (geometry.boundingBox !== null) {
-      if (_ray.intersectsBox(geometry.boundingBox) === false) return
+  // converts the given BVH raycast intersection to align with the three.js raycast
+  // structure (include object, world space distance and point).
+  private convertRaycastIntersect(hit, object, raycaster) {
+    if (hit === null) {
+      return null
     }
 
-    let intersection
+    hit.point.applyMatrix4(object.matrixWorld)
+    hit.distance = hit.point.distanceTo(raycaster.ray.origin)
+    hit.object = object
 
-    const index = geometry.index
-    /** Stored high component if RTE is being used. Regular positions otherwise */
-    const position = geometry.attributes.position
-    /** Stored low component if RTE is being used. undefined otherwise */
-    const positionLow = geometry.attributes['position_low']
-    const morphPosition = geometry.morphAttributes.position
-    const morphTargetsRelative = geometry.morphTargetsRelative
-    const uv = geometry.attributes.uv
-    const uv2 = geometry.attributes.uv2
-    const groups = geometry.groups
-    const drawRange = geometry.drawRange
+    if (hit.distance < raycaster.near || hit.distance > raycaster.far) {
+      return null
+    } else {
+      return hit
+    }
+  }
 
-    if (index !== null) {
-      // indexed buffer geometry
+  raycast(raycaster, intersects) {
+    if (this.boundsTree) {
+      if (this.batchMaterial === undefined) return
 
-      if (Array.isArray(material)) {
-        for (let i = 0, il = groups.length; i < il; i++) {
-          const group = groups[i]
-          const groupMaterial = material[group.materialIndex]
+      tmpInverseMatrix.copy(this.matrixWorld).invert()
+      ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
 
-          const start = Math.max(group.start, drawRange.start)
-          const end = Math.min(
-            index.count,
-            Math.min(group.start + group.count, drawRange.start + drawRange.count)
-          )
-
-          for (let j = start, jl = end; j < jl; j += 3) {
-            const a = index.getX(j)
-            const b = index.getX(j + 1)
-            const c = index.getX(j + 2)
-
-            intersection = checkBufferGeometryIntersection(
-              this,
-              groupMaterial,
-              raycaster,
-              _ray,
-              positionLow,
-              position,
-              morphPosition,
-              morphTargetsRelative,
-              uv,
-              uv2,
-              a,
-              b,
-              c
-            )
-
-            if (intersection) {
-              intersection.faceIndex = Math.floor(j / 3) // triangle number in indexed buffer semantics
-              intersection.face.materialIndex = group.materialIndex
-              intersects.push(intersection)
-            }
-          }
+      const bvh = this.boundsTree
+      if (raycaster.firstHitOnly === true) {
+        const hit = this.convertRaycastIntersect(
+          bvh.raycastFirst(ray, this.batchMaterial),
+          this,
+          raycaster
+        )
+        if (hit) {
+          intersects.push(hit)
         }
       } else {
-        const start = Math.max(0, drawRange.start)
-        const end = Math.min(index.count, drawRange.start + drawRange.count)
-
-        for (let i = start, il = end; i < il; i += 3) {
-          const a = index.getX(i)
-          const b = index.getX(i + 1)
-          const c = index.getX(i + 2)
-
-          intersection = checkBufferGeometryIntersection(
-            this,
-            material,
-            raycaster,
-            _ray,
-            positionLow,
-            position,
-            morphPosition,
-            morphTargetsRelative,
-            uv,
-            uv2,
-            a,
-            b,
-            c
-          )
-
-          if (intersection) {
-            intersection.faceIndex = Math.floor(i / 3) // triangle number in indexed buffer semantics
-            intersects.push(intersection)
+        const hits = bvh.raycast(ray, this.batchMaterial)
+        for (let i = 0, l = hits.length; i < l; i++) {
+          const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
+          if (hit) {
+            intersects.push(hit)
           }
         }
       }
-    } else if (position !== undefined) {
-      // non-indexed buffer geometry
+    } else {
+      const geometry = this.geometry
+      const material = this.material
+      const matrixWorld = this.matrixWorld
 
-      if (Array.isArray(material)) {
-        for (let i = 0, il = groups.length; i < il; i++) {
-          const group = groups[i]
-          const groupMaterial = material[group.materialIndex]
+      if (material === undefined) return
 
-          const start = Math.max(group.start, drawRange.start)
-          const end = Math.min(
-            position.count,
-            Math.min(group.start + group.count, drawRange.start + drawRange.count)
-          )
+      // Checking boundingSphere distance to ray
 
-          for (let j = start, jl = end; j < jl; j += 3) {
-            const a = j
-            const b = j + 1
-            const c = j + 2
+      if (geometry.boundingSphere === null) geometry.computeBoundingSphere()
+
+      _sphere.copy(geometry.boundingSphere)
+      _sphere.applyMatrix4(matrixWorld)
+
+      if (raycaster.ray.intersectsSphere(_sphere) === false) return
+
+      //
+
+      _inverseMatrix.copy(matrixWorld).invert()
+      _ray.copy(raycaster.ray).applyMatrix4(_inverseMatrix)
+
+      // Check boundingBox before continuing
+
+      if (geometry.boundingBox !== null) {
+        if (_ray.intersectsBox(geometry.boundingBox) === false) return
+      }
+
+      let intersection
+
+      const index = geometry.index
+      /** Stored high component if RTE is being used. Regular positions otherwise */
+      const position = geometry.attributes.position
+      /** Stored low component if RTE is being used. undefined otherwise */
+      const positionLow = geometry.attributes['position_low']
+      const morphPosition = geometry.morphAttributes.position
+      const morphTargetsRelative = geometry.morphTargetsRelative
+      const uv = geometry.attributes.uv
+      const uv2 = geometry.attributes.uv2
+      const groups = geometry.groups
+      const drawRange = geometry.drawRange
+
+      if (index !== null) {
+        // indexed buffer geometry
+
+        if (Array.isArray(material)) {
+          for (let i = 0, il = groups.length; i < il; i++) {
+            const group = groups[i]
+            const groupMaterial = material[group.materialIndex]
+
+            const start = Math.max(group.start, drawRange.start)
+            const end = Math.min(
+              index.count,
+              Math.min(group.start + group.count, drawRange.start + drawRange.count)
+            )
+
+            for (let j = start, jl = end; j < jl; j += 3) {
+              const a = index.getX(j)
+              const b = index.getX(j + 1)
+              const c = index.getX(j + 2)
+
+              intersection = checkBufferGeometryIntersection(
+                this,
+                groupMaterial,
+                raycaster,
+                _ray,
+                positionLow,
+                position,
+                morphPosition,
+                morphTargetsRelative,
+                uv,
+                uv2,
+                a,
+                b,
+                c
+              )
+
+              if (intersection) {
+                intersection.faceIndex = Math.floor(j / 3) // triangle number in indexed buffer semantics
+                intersection.face.materialIndex = group.materialIndex
+                intersects.push(intersection)
+              }
+            }
+          }
+        } else {
+          const start = Math.max(0, drawRange.start)
+          const end = Math.min(index.count, drawRange.start + drawRange.count)
+
+          for (let i = start, il = end; i < il; i += 3) {
+            const a = index.getX(i)
+            const b = index.getX(i + 1)
+            const c = index.getX(i + 2)
 
             intersection = checkBufferGeometryIntersection(
               this,
-              groupMaterial,
+              material,
               raycaster,
               _ray,
               positionLow,
@@ -184,40 +207,82 @@ export default class SpeckleMesh extends Mesh {
             )
 
             if (intersection) {
-              intersection.faceIndex = Math.floor(j / 3) // triangle number in non-indexed buffer semantics
-              intersection.face.materialIndex = group.materialIndex
+              intersection.faceIndex = Math.floor(i / 3) // triangle number in indexed buffer semantics
               intersects.push(intersection)
             }
           }
         }
-      } else {
-        const start = Math.max(0, drawRange.start)
-        const end = Math.min(position.count, drawRange.start + drawRange.count)
+      } else if (position !== undefined) {
+        // non-indexed buffer geometry
 
-        for (let i = start, il = end; i < il; i += 3) {
-          const a = i
-          const b = i + 1
-          const c = i + 2
+        if (Array.isArray(material)) {
+          for (let i = 0, il = groups.length; i < il; i++) {
+            const group = groups[i]
+            const groupMaterial = material[group.materialIndex]
 
-          intersection = checkBufferGeometryIntersection(
-            this,
-            material,
-            raycaster,
-            _ray,
-            positionLow,
-            position,
-            morphPosition,
-            morphTargetsRelative,
-            uv,
-            uv2,
-            a,
-            b,
-            c
-          )
+            const start = Math.max(group.start, drawRange.start)
+            const end = Math.min(
+              position.count,
+              Math.min(group.start + group.count, drawRange.start + drawRange.count)
+            )
 
-          if (intersection) {
-            intersection.faceIndex = Math.floor(i / 3) // triangle number in non-indexed buffer semantics
-            intersects.push(intersection)
+            for (let j = start, jl = end; j < jl; j += 3) {
+              const a = j
+              const b = j + 1
+              const c = j + 2
+
+              intersection = checkBufferGeometryIntersection(
+                this,
+                groupMaterial,
+                raycaster,
+                _ray,
+                positionLow,
+                position,
+                morphPosition,
+                morphTargetsRelative,
+                uv,
+                uv2,
+                a,
+                b,
+                c
+              )
+
+              if (intersection) {
+                intersection.faceIndex = Math.floor(j / 3) // triangle number in non-indexed buffer semantics
+                intersection.face.materialIndex = group.materialIndex
+                intersects.push(intersection)
+              }
+            }
+          }
+        } else {
+          const start = Math.max(0, drawRange.start)
+          const end = Math.min(position.count, drawRange.start + drawRange.count)
+
+          for (let i = start, il = end; i < il; i += 3) {
+            const a = i
+            const b = i + 1
+            const c = i + 2
+
+            intersection = checkBufferGeometryIntersection(
+              this,
+              material,
+              raycaster,
+              _ray,
+              positionLow,
+              position,
+              morphPosition,
+              morphTargetsRelative,
+              uv,
+              uv2,
+              a,
+              b,
+              c
+            )
+
+            if (intersection) {
+              intersection.faceIndex = Math.floor(i / 3) // triangle number in non-indexed buffer semantics
+              intersects.push(intersection)
+            }
           }
         }
       }
