@@ -1,4 +1,4 @@
-FROM node:16.18.1-bullseye-slim as node
+FROM node:18.12.1-bullseye-slim as node
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -30,4 +30,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY packages/fileimport-service .
 
-CMD ["yarn", "node", "src/daemon.js"]
+CMD ["node", "--no-experimental-fetch", "src/daemon.js"]
