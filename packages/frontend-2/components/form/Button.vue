@@ -9,20 +9,14 @@
     role="button"
     @click="onClick"
   >
-    <div ref="iconleft" class="mr-2 -ml-1 icon-slot">
-      <slot name="iconleft"></slot>
-    </div>
-    <div ref="content">
-      <slot>Submit</slot>
-    </div>
-    <div ref="icon" class="ml-2 icon-slot">
-      <slot name="icon"></slot>
-    </div>
+    <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
+    <span><slot>Submit</slot></span>
+    <Component :is="iconRight" v-if="iconRight" :class="iconClasses" />
   </Component>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
-import { Optional } from '@speckle/shared'
+import { ConcreteComponent, PropType } from 'vue'
+import { Nullable, Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
@@ -119,13 +113,24 @@ const props = defineProps({
   submit: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Add icon to the left from the text
+   */
+  iconLeft: {
+    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    default: null
+  },
+  /**
+   * Add icon to the right from the text
+   */
+  iconRight: {
+    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    default: null
   }
 })
 
 const NuxtLink = resolveComponent('NuxtLink')
-
-const icon = ref<HTMLElement | null>(null)
-const iconleft = ref<HTMLElement | null>(null)
 
 const buttonType = computed(() => {
   if (props.to) return undefined
@@ -324,7 +329,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center items-center outline-none select-none',
+    'transition inline-flex justify-center items-center space-x-2 outline-none select-none',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,
@@ -335,39 +340,29 @@ const buttonClasses = computed(() => {
   ].join(' ')
 })
 
-onMounted(() => {
-  const setIconSize = (icon: SVGElement) => {
-    switch (props.size) {
-      case 'xs':
-        icon.classList.add('w-3')
-        icon.classList.add('h-3')
-        break
-      case 'sm':
-        icon.classList.add('w-4')
-        icon.classList.add('h-4')
-        break
-      case 'xl':
-        icon.classList.add('w-8')
-        icon.classList.add('h-8')
-        break
-      case 'lg':
-        icon.classList.add('w-6')
-        icon.classList.add('h-6')
-        break
-      case 'base':
-      default:
-        icon.classList.add('w-5')
-        icon.classList.add('h-5')
-        break
-    }
+const iconClasses = computed(() => {
+  const classParts: string[] = ['']
+
+  switch (props.size) {
+    case 'xs':
+      classParts.push('h-3 w-3')
+      break
+    case 'sm':
+      classParts.push('h-4 w-4')
+      break
+    case 'lg':
+      classParts.push('h-6 w-6')
+      break
+    case 'xl':
+      classParts.push('h-8 w-8')
+      break
+    case 'base':
+    default:
+      classParts.push('h-5 w-5')
+      break
   }
 
-  for (const child of (icon.value as HTMLElement).children) {
-    setIconSize(child as SVGElement)
-  }
-  for (const child of (iconleft.value as HTMLElement).children) {
-    setIconSize(child as SVGElement)
-  }
+  return classParts.join(' ')
 })
 
 const onClick = (e: MouseEvent) => {
@@ -381,8 +376,3 @@ const onClick = (e: MouseEvent) => {
   emit('click', e)
 }
 </script>
-<style scoped>
-.icon-slot:empty {
-  display: none;
-}
-</style>

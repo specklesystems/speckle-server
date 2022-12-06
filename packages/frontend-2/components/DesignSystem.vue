@@ -82,7 +82,7 @@
             <div
               v-for="size in sizes"
               :key="size"
-              class="grid grid-cols-4 md:grid-cols-9 gap-10 py-6 rounded-md"
+              class="flex py-6 flex-wrap space-x-4"
             >
               <span class="caption text-center col-span-4 md:col-span-1">
                 {{ size }}
@@ -101,57 +101,37 @@
             <div
               v-for="size in sizes"
               :key="size"
-              class="grid grid-cols-4 md:grid-cols-9 gap-10 py-6 rounded-md"
+              class="flex py-6 flex-wrap space-x-4"
             >
               <span class="caption text-center col-span-4 md:col-span-1">
                 {{ size }}
               </span>
               <div>
-                <FormButton :size="size">
-                  <template #iconleft><XMarkIcon /></template>
+                <FormButton :size="size" :icon-left="XMarkIcon">Button</FormButton>
+              </div>
+              <div>
+                <FormButton :size="size" disabled :icon-right="ArrowRightCircleIcon">
                   Button
                 </FormButton>
               </div>
               <div>
-                <FormButton :size="size" disabled>
+                <FormButton :size="size" outlined :icon-right="XMarkIcon">
                   Button
-                  <template #icon><ArrowRightCircleIcon /></template>
+                </FormButton>
+              </div>
+              <div>
+                <FormButton :size="size" outlined disabled :icon-right="XMarkIcon">
+                  Button
                 </FormButton>
               </div>
               <!-- <div>
-                <FormButton :size="size" rounded>
+                <FormButton :size="size" rounded outlined :icon-right="XMarkIcon">
                   Button
-                  <template #icon><ArrowRightCircleIcon /></template>
                 </FormButton>
               </div>
               <div>
-                <FormButton :size="size" rounded disabled>
+                <FormButton :size="size" rounded outlined disabled :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
-                </FormButton>
-              </div> -->
-              <div>
-                <FormButton :size="size" outlined>
-                  Button
-                  <template #icon><XMarkIcon /></template>
-                </FormButton>
-              </div>
-              <div>
-                <FormButton :size="size" outlined disabled>
-                  Button
-                  <template #icon><XMarkIcon /></template>
-                </FormButton>
-              </div>
-              <!-- <div>
-                <FormButton :size="size" rounded outlined>
-                  Button
-                  <template #icon><XMarkIcon /></template>
-                </FormButton>
-              </div>
-              <div>
-                <FormButton :size="size" rounded outlined disabled>
-                  Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
               </div> -->
             </div>
@@ -159,7 +139,7 @@
             <div
               v-for="type in types"
               :key="type"
-              class="grid grid-cols-4 md:grid-cols-9 gap-10 py-6 rounded-md"
+              class="flex py-6 flex-wrap space-x-4"
             >
               <span class="caption text-center col-span-4 md:col-span-1">
                 {{ type }}
@@ -198,64 +178,50 @@
                 <FormButton color="invert" text disabled>Text</FormButton>
               </div>
               <div class="flex items-center justify-around flex-wrap py-6">
-                <FormButton color="invert" invert size="xs">
+                <FormButton color="invert" invert size="xs" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" invert size="sm">
+                <FormButton color="invert" invert size="sm" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" invert size="base">
+                <FormButton color="invert" invert size="base" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" invert size="lg">
+                <FormButton color="invert" invert size="lg" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" invert size="xl">
+                <FormButton color="invert" invert size="xl" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" invert rounded>
+                <FormButton color="invert" invert rounded :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
                 <FormButton color="invert" invert outlined rounded>Button</FormButton>
-                <FormButton color="invert" invert outlined>
-                  <template #icon><XMarkIcon /></template>
+                <FormButton color="invert" invert outlined :icon-right="XMarkIcon">
                   Button
                 </FormButton>
               </div>
               <div class="flex items-center justify-around flex-wrap py-6">
-                <FormButton color="invert" disabled size="xs">
+                <FormButton color="invert" disabled size="xs" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" disabled size="sm">
+                <FormButton color="invert" disabled size="sm" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" disabled size="base">
+                <FormButton color="invert" disabled size="base" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" disabled size="lg">
+                <FormButton color="invert" disabled size="lg" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" disabled size="xl">
+                <FormButton color="invert" disabled size="xl" :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
-                <FormButton color="invert" disabled rounded>
+                <FormButton color="invert" disabled rounded :icon-right="XMarkIcon">
                   Button
-                  <template #icon><XMarkIcon /></template>
                 </FormButton>
                 <FormButton color="invert" disabled outlined rounded>Button</FormButton>
-                <FormButton color="invert" disabled outlined>
-                  <template #icon><XMarkIcon /></template>
+                <FormButton color="invert" disabled outlined :icon-right="XMarkIcon">
                   Button
                 </FormButton>
               </div>

@@ -7879,6 +7879,7 @@ __metadata:
     "@heroicons/vue": ^2.0.12
     "@nuxtjs/tailwindcss": ^6.1.3
     "@speckle/shared": "workspace:^"
+    "@speckle/viewer": "workspace:^"
     "@speckle/vue-apollo-composable": ^4.0.0-beta.1
     "@storybook/addon-a11y": ^7.0.0-alpha.42
     "@storybook/addon-docs": ^7.0.0-alpha.42

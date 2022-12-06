@@ -11,12 +11,6 @@ setup((app) => {
 
 export const parameters = {
   // Main storybook params
-  controls: {
-    matchers: {
-      color: /^(background|color)$/i,
-      date: /Date$/
-    }
-  },
   viewport: {
     viewports: {
       mobile1: {

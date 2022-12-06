@@ -3,6 +3,7 @@ import FormButton from '~~/components/form/Button.vue'
 import { Story, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
+import { XMarkIcon } from '@heroicons/vue/24/solid'
 
 export default {
   component: FormButton,
@@ -83,7 +84,15 @@ export const Default: Story = {
     to: 'https://google.com',
     default: 'Button text',
     size: 'base',
-    type: 'standard'
+    type: 'standard',
+    fullWidth: false,
+    outlined: false,
+    rounded: false,
+    text: false,
+    link: false,
+    color: 'default',
+    disabled: false,
+    submit: false
   },
   parameters: {
     docs: {
@@ -121,7 +130,7 @@ export const Outline: Story = mergeStories(Default, {
 
 export const Link: Story = mergeStories(Default, {
   args: {
-    link: 'true'
+    link: true
   },
   parameters: {
     docs: {
@@ -213,5 +222,24 @@ export const Submit: Story = mergeStories(Default, {
         story: 'Rendered as button w/ type=submit, which will submit any parent forms'
       }
     }
+  }
+})
+
+export const LeftIcon: Story = mergeStories(Default, {
+  args: {
+    iconLeft: XMarkIcon
+  }
+})
+
+export const RightIcon: Story = mergeStories(Default, {
+  args: {
+    iconRight: XMarkIcon
+  }
+})
+
+export const IconOnBothSides: Story = mergeStories(Default, {
+  args: {
+    iconRight: XMarkIcon,
+    iconLeft: XMarkIcon
   }
 })
