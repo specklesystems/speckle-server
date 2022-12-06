@@ -11,8 +11,13 @@
           <slot name="subtitle" />
         </h4>
       </div>
-      <FormButton size="lg" full-width :to="to" @click="$emit('click', $event)">
-        <template #icon><Component :is="buttonIcon"></Component></template>
+      <FormButton
+        size="lg"
+        full-width
+        :to="to"
+        :icon-left="buttonIcon"
+        @click="$emit('click', $event)"
+      >
         <slot name="ctaText" />
       </FormButton>
     </div>

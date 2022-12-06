@@ -6,32 +6,26 @@
     <div
       class="flex flex-col space-y-7 items-center md:flex-row md:space-x-7 md:space-y-0 justify-center md:items-stretch px-8"
     >
-      <ProjectsDashboardEmptyStatePanel :icon="CubeIcon">
+      <ProjectsDashboardEmptyStatePanel
+        :icon="CubeIcon"
+        :button-icon="ArrowLeftCircleIcon"
+      >
         <template #title>Explore your first project</template>
         <template #subtitle>
           Create your first Speckle project and learn the basics
         </template>
-        <template #ctaText>
-          <span class="space-x-2 inline-flex items-center">
-            <ArrowLeftCircleIcon class="w-4 h-4" />
-            <span>Explore</span>
-          </span>
-        </template>
+        <template #ctaText>Explore</template>
       </ProjectsDashboardEmptyStatePanel>
       <ProjectsDashboardEmptyStatePanel
         :icon="CloudArrowUpIcon"
+        :button-icon="CloudArrowDownIcon"
         :to="DownloadManagerRoute"
       >
         <template #title>Already have a 3D model?</template>
         <template #subtitle>
           Install connectors from Revit, Rhino, AutoCAD, Blender and many others!
         </template>
-        <template #ctaText>
-          <span class="space-x-2 inline-flex items-center">
-            <CloudArrowDownIcon class="w-4 h-4" />
-            <span>Download manager</span>
-          </span>
-        </template>
+        <template #ctaText>Download manager</template>
       </ProjectsDashboardEmptyStatePanel>
     </div>
   </div>

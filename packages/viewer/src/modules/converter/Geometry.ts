@@ -3,11 +3,15 @@ import {
   BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
+  Float64BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
+  Uint16BufferAttribute,
+  Uint32BufferAttribute,
   Vector3
 } from 'three'
+import { MeshBVH } from 'three-mesh-bvh'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -26,6 +30,26 @@ export interface GeometryData {
 
 export class Geometry {
   private static readonly floatArrayBuff: Float32Array = new Float32Array(1)
+
+  public static buildBVH(
+    indices: Uint32Array | Uint16Array,
+    position: Float64Array
+  ): MeshBVH {
+    const bvhGeometry = new BufferGeometry()
+    let bvhIndices = null
+    if (position.length >= 65535 || indices.length >= 65535) {
+      bvhIndices = new Uint32Array(indices.length)
+      ;(bvhIndices as Uint32Array).set(indices, 0)
+      bvhGeometry.setIndex(new Uint32BufferAttribute(bvhIndices, 1))
+    } else {
+      bvhIndices = new Uint16Array(indices.length)
+      ;(bvhIndices as Uint16Array).set(indices, 0)
+      bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
+    }
+    bvhGeometry.setAttribute('position', new Float64BufferAttribute(position, 3))
+
+    return new MeshBVH(bvhGeometry)
+  }
 
   public static updateRTEGeometry(
     geometry: BufferGeometry,

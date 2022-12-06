@@ -189,6 +189,7 @@ workflows:
               only:
                 - main
                 - hotfix*
+                - frontend-2
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:

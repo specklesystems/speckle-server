@@ -509,7 +509,7 @@ export default {
     updateCommentBubble() {
       if (!this.location) return
       if (!this.$refs.commentButton) return
-      const cam = this.viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.activeCam.camera
       cam.updateProjectionMatrix()
       const projectedLocation = this.location.clone()
       projectedLocation.project(cam)
