@@ -15,7 +15,9 @@ export const projectsDashboardQuery = graphql(`
 export const projectPageQuery = graphql(`
   query ProjectPageQuery($id: String!) {
     project(id: $id) {
-      ...ProjectPageProject
+      id
+      createdAt
+      ...ProjectPageProjectHeader
     }
   }
 `)
