@@ -6,7 +6,7 @@
   "name": "root",
   "private": true,
   "engines": {
-    "node": ">=14.0.0 <17.0.0"
+    "node": "^18.12.1"
   },
   "scripts": {
     "build": "yarn workspaces foreach -ptv run build",

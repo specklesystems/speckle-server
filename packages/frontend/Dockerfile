@@ -1,7 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 
 # build stage
-FROM node:16.18.0-bullseye-slim as build-stage
+FROM node:18.12.1-bullseye-slim as build-stage
 ARG SPECKLE_SERVER_VERSION=custom
  
 

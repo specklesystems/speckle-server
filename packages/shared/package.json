@@ -22,7 +22,7 @@
   },
   "sideEffects": false,
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^18.12.1"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",

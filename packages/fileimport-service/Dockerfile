@@ -1,4 +1,4 @@
-FROM node:16.18.0-bullseye-slim as build-stage
+FROM node:18.12.1-bullseye-slim as build-stage
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -19,7 +19,7 @@ COPY packages/fileimport-service ./packages/fileimport-service/
 
 RUN yarn workspaces foreach run build
 
-FROM node:16.18.0-bullseye-slim as node
+FROM node:18.12.1-bullseye-slim as node
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -54,4 +54,4 @@ WORKDIR /speckle-server/packages/fileimport-service
 RUN yarn workspaces focus --production
 
 ENTRYPOINT [ "tini", "--" ]
-CMD ["yarn", "node", "src/daemon.js"]
+CMD ["node", "--no-experimental-fetch", "src/daemon.js"]
