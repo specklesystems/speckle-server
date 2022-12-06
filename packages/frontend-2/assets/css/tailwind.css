@@ -14,27 +14,27 @@
    * Heading weights & line heights can differ, which is why we only set the font size
    */
   .h1 {
-    @apply text-5xl;
+    @apply text-5xl leading-10;
   }
 
   .h2 {
-    @apply text-4xl;
+    @apply text-4xl leading-10;
   }
 
   .h3 {
-    @apply text-3xl;
+    @apply text-3xl leading-9;
   }
 
   .h4 {
-    @apply text-2xl;
+    @apply text-2xl leading-8;
   }
 
   .h5 {
-    @apply text-xl;
+    @apply text-xl leading-7;
   }
 
   .h6 {
-    @apply text-lg;
+    @apply text-lg leading-6;
   }
 
   .label {

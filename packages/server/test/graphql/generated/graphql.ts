@@ -921,6 +921,7 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   modelCount: Scalars['Int'];
   name: Scalars['String'];

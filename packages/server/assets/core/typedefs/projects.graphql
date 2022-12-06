@@ -46,6 +46,7 @@ type ProjectCollection {
 type Project {
   id: ID!
   name: String!
+  description: String
   modelCount: Int!
   """
   Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.

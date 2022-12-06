@@ -927,6 +927,7 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   modelCount: Scalars['Int'];
   name: Scalars['String'];
@@ -2412,6 +2413,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   modelCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
