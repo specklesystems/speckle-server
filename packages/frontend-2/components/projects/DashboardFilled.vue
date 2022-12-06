@@ -1,12 +1,10 @@
 <template>
   <div class="flex flex-col space-y-4">
     <LayoutPanel v-for="project in items" :key="project.id">
-      <div class="flex justify-between">
-        <div>
-          <FormButton type="link" :to="projectRoute(project.id)">
-            {{ project.name }}
-          </FormButton>
-        </div>
+      <div class="flex justify-between items-center">
+        <FormButton link :to="projectRoute(project.id)">
+          {{ project.name }}
+        </FormButton>
         <div>
           {{ project.createdAt }}
         </div>

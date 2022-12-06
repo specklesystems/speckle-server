@@ -54,9 +54,7 @@ const createOnboardingProjectMutation = graphql(`
   mutation CreateOnboardingProject {
     projectMutations {
       createForOnboarding {
-        id
-        name
-        createdAt
+        ...ProjectPageProject
       }
     }
   }

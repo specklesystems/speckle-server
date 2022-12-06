@@ -92,7 +92,8 @@ export const Default: Story = {
     link: false,
     color: 'default',
     disabled: false,
-    submit: false
+    submit: false,
+    hideText: false
   },
   parameters: {
     docs: {
@@ -241,5 +242,12 @@ export const IconOnBothSides: Story = mergeStories(Default, {
   args: {
     iconRight: XMarkIcon,
     iconLeft: XMarkIcon
+  }
+})
+
+export const IconOnly: Story = mergeStories(Default, {
+  args: {
+    iconLeft: XMarkIcon,
+    hideText: true
   }
 })

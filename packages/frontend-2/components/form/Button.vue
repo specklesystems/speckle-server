@@ -10,7 +10,7 @@
     @click="onClick"
   >
     <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
-    <span><slot>Submit</slot></span>
+    <span v-if="!hideText"><slot>Button</slot></span>
     <Component :is="iconRight" v-if="iconRight" :class="iconClasses" />
   </Component>
 </template>
@@ -127,6 +127,13 @@ const props = defineProps({
   iconRight: {
     type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
     default: null
+  },
+  /**
+   * Hide default slot (when you want to show icons only)
+   */
+  hideText: {
+    type: Boolean,
+    default: false
   }
 })
 
