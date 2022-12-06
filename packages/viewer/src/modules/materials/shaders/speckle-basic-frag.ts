@@ -44,7 +44,8 @@ void main() {
 	vec3 outgoingLight = reflectedLight.indirectDiffuse;
 	#include <envmap_fragment>
 	#include <output_fragment>
-	#include <tonemapping_fragment>
+	// #include <tonemapping_fragment>
+	gl_FragColor = vec4( gl_FragColor.rgb, 1. );
 	#include <encodings_fragment>
 	#include <fog_fragment>
 	#include <premultiplied_alpha_fragment>

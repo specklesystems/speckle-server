@@ -100,7 +100,7 @@ await sandbox.loadUrl(
   //Blizzard world
   // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
   //Car
-  // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
+  'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
   // Jonathon's
   // 'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
   // Alex's cube
@@ -144,5 +144,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
   // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
   // MEPs (whatever they are)
-  'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
+  // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
 )
