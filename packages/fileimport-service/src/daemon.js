@@ -85,7 +85,7 @@ async function doTask(task) {
 
     if (info.fileType === 'ifc') {
       await runProcessWithTimeout(
-        'node',
+        process.env['NODE_BINARY_PATH'] || 'node',
         [
           '--no-experimental-fetch',
           './ifc/import_file.js',

@@ -64,6 +64,9 @@ FROM gcr.io/distroless/nodejs:18 as distributable-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
+ARG NODE_BINARY_PATH=/nodejs/bin/node
+ENV NODE_BINARY_PATH=${NODE_BINARY_PATH}
+
 WORKDIR /speckle-server
 
 COPY --from=build-stage /speckle-server/tini /usr/bin/tini
