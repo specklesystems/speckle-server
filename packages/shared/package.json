@@ -20,6 +20,7 @@
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc"
   },
+  "sideEffects": false,
   "engines": {
     "node": ">=14.0.0"
   },

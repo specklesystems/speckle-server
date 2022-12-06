@@ -16,7 +16,7 @@ import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { logger, notificationsLogger, extendLoggerComponent } from '@/logging/logging'
+import { logger, notificationsLogger, Observability } from '@/logging/logging'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -139,7 +139,10 @@ export async function consumeIncomingNotifications() {
         throw new UnhandledNotificationError(null, { info: { payload, type } })
       }
 
-      const notificationLogger = extendLoggerComponent(notificationsLogger, type)
+      const notificationLogger = Observability.extendLoggerComponent(
+        notificationsLogger,
+        type
+      )
       notificationLogger.info('Starting processing notification...')
       await Promise.resolve(handler(typedPayload, { job, logger: notificationLogger }))
       notificationLogger.info('...successfully processed notification')

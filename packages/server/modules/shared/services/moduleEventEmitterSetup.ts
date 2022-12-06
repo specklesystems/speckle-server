@@ -1,4 +1,4 @@
-import { moduleLogger, extendLoggerComponent } from '@/logging/logging'
+import { moduleLogger, Observability } from '@/logging/logging'
 import { MaybeAsync } from '@/modules/shared/helpers/typeHelper'
 import EventEmitter from 'eventemitter2'
 
@@ -26,7 +26,7 @@ export function initializeModuleEventEmitter<P extends Record<string, unknown>>(
   const { moduleName, namespace } = params
   const identifier = namespace ? `${moduleName}-${namespace}` : moduleName
 
-  const logger = extendLoggerComponent(moduleLogger, identifier, 'events')
+  const logger = Observability.extendLoggerComponent(moduleLogger, identifier, 'events')
 
   const errHandler = (e: unknown) => {
     logger.error(`Unhandled ${identifier} event emitter error`, e)

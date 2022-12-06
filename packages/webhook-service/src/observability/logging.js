@@ -1,7 +1,7 @@
-const { getLogger, extendLoggerComponent } = require('@speckle/shared')
+const { Observability } = require('@speckle/shared')
 
-const logger = extendLoggerComponent(
-  getLogger(process.env.LOG_LEVEL || 'info'),
+const logger = Observability.extendLoggerComponent(
+  Observability.getLogger(process.env.LOG_LEVEL || 'info'),
   'webhook-service'
 )
 

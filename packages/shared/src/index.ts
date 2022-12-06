@@ -1,3 +1,3 @@
 export * as RichTextEditor from './rich-text-editor'
-export * from './observability'
+export * as Observability from './observability'
 export * from './core'

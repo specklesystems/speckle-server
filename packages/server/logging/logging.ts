@@ -1,7 +1,9 @@
 // Note logging is imported by www & ts-www, prior to init() being called
 // so we can't use local imports with '@' etc., as they aren't yet defined.
-import { getLogger, extendLoggerComponent } from '@speckle/shared'
-export { extendLoggerComponent } from '@speckle/shared'
+import { Observability } from '@speckle/shared'
+export { Observability } from '@speckle/shared'
+
+const { getLogger, extendLoggerComponent } = Observability
 
 export const logger = getLogger(process.env.LOG_LEVEL || 'info')
 // loggers for phases of operation
