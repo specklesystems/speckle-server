@@ -59,10 +59,5 @@ export default defineConfig({
 
   optimizeDeps: {
     include: ['vuetify', 'vuetify/lib']
-  },
-
-  // TODO: Remove before commit!
-  build: {
-    minify: false
   }
 })
