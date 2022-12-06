@@ -9,15 +9,17 @@
     role="button"
     @click="onClick"
   >
-    <slot>Submit</slot>
+    <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
+    <span><slot>Submit</slot></span>
+    <Component :is="iconRight" v-if="iconRight" :class="iconClasses" />
   </Component>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
-import { Optional } from '@speckle/shared'
+import { ConcreteComponent, PropType } from 'vue'
+import { Nullable, Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonType = 'standard' | 'pill' | 'outline' | 'link'
+type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
 
 const emit = defineEmits<{
   /**
@@ -50,11 +52,43 @@ const props = defineProps({
     default: false
   },
   /**
-   * Choose semantic color of the button
+   * Will outline the button.
    */
-  type: {
-    type: String as PropType<FormButtonType>,
-    default: 'standard'
+  outlined: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Will apply a rounded class.
+   */
+  rounded: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Will remove background.
+   */
+  text: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Will remove paddings and background. Use for links.
+   */
+  link: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Colors:
+   * default: the default primary blue.
+   * invert: for when you want to use this button on a primary background.
+   * danger: for dangerous actions (e.g. deletions).
+   * warning: for less dangerous actions (e.g. archival).
+   */
+  color: {
+    type: String as PropType<FormButtonColor>,
+    default: 'default'
   },
   /**
    * Whether the target location should be forcefully treated as an external URL
@@ -81,11 +115,18 @@ const props = defineProps({
     default: false
   },
   /**
-   * Use foreground color variation of the link button
+   * Add icon to the left from the text
    */
-  foregroundLink: {
-    type: Boolean,
-    default: false
+  iconLeft: {
+    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    default: null
+  },
+  /**
+   * Add icon to the right from the text
+   */
+  iconRight: {
+    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    default: null
   }
 })
 
@@ -97,64 +138,116 @@ const buttonType = computed(() => {
   return 'button'
 })
 
-const typeClasses = computed(() => {
+const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
-  const disabled = props.disabled
-
-  // const isXs = props.size === 'xs'
-  // const isSm = props.size === 'sm'
-  const isXl = props.size === 'xl'
-  // const isBase = props.size === 'base'
-
-  // Rounded borders
-  if (['pill', 'outline'].includes(props.type)) {
-    classParts.push(isXl ? 'rounded-4xl' : 'rounded-3xl')
+  classParts.push('border-2')
+  if (props.disabled) {
+    classParts.push(
+      props.outlined
+        ? 'border-foreground-disabled'
+        : 'bg-foundation-disabled border-transparent'
+    )
   } else {
-    classParts.push('rounded')
+    switch (props.color) {
+      case 'invert':
+        classParts.push(
+          props.outlined
+            ? 'border-foundation dark:border-foreground'
+            : 'bg-foundation dark:bg-foreground border-transparent'
+        )
+        break
+      case 'danger':
+        classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
+        break
+      case 'warning':
+        classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
+        break
+      case 'default':
+      default:
+        classParts.push(
+          props.outlined
+            ? 'border-primary hover:border-primary-focus'
+            : 'bg-primary hover:bg-primary-focus border-transparent'
+        )
+        break
+    }
   }
 
-  if (['outline', 'link'].includes(props.type)) {
-    // bg
-    classParts.push('bg-inherit')
+  return classParts.join(' ')
+})
 
-    // text
-    if (disabled) {
-      classParts.push('text-foreground-disabled')
+const foregroundClasses = computed(() => {
+  const classParts: string[] = []
+  if (!props.text && !props.link) {
+    if (props.disabled) {
+      classParts.push(
+        props.outlined ? 'text-foreground-disabled' : 'text-foreground-disabled'
+      )
     } else {
-      classParts.push(
-        props.foregroundLink
-          ? 'text-foreground'
-          : 'text-primary hover:text-primary-focus focus:text-primary-focus'
-      )
+      switch (props.color) {
+        case 'invert':
+          classParts.push(
+            props.outlined ? 'text-foundation dark:text-foreground' : 'text-primary'
+          )
+          break
+        case 'danger':
+          classParts.push(
+            props.outlined ? 'text-danger' : 'text-foundation dark:text-foreground'
+          )
+          break
+        case 'warning':
+          classParts.push(
+            props.outlined ? 'text-warning' : 'text-foundation dark:text-foreground'
+          )
+          break
+        case 'default':
+        default:
+          classParts.push(
+            props.outlined
+              ? 'text-primary hover:text-primary-focus'
+              : 'text-foundation dark:text-foreground'
+          )
+          break
+      }
     }
   } else {
-    // bg
     classParts.push(
-      disabled
-        ? 'bg-primary-muted'
-        : 'bg-primary hover:bg-primary-focus focus:bg-primary-focus'
-    )
-    // text
-    classParts.push(
-      disabled ? 'text-foreground-disabled' : 'text-foreground-on-primary'
+      props.disabled
+        ? 'text-foreground-disabled'
+        : props.color === 'invert'
+        ? 'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground-2'
+        : 'text-primary hover:text-primary-focus'
     )
   }
+  return classParts.join(' ')
+})
 
-  // Rings
-  if (props.type !== 'link') {
-    if (props.type === 'outline') {
-      classParts.push(
-        disabled
-          ? `border-2 border-foreground-disabled`
-          : `border-2 border-primary hover:ring-4`
-      )
-    } else if (!disabled) {
-      classParts.push('ring-outline-2')
-      classParts.push(`focus:ring-4 hover:ring-4`)
+const roundedClasses = computed(() => {
+  const classParts: string[] = []
+  classParts.push(props.rounded ? 'rounded-full' : 'rounded-md')
+  return classParts.join(' ')
+})
+
+const ringClasses = computed(() => {
+  const classParts: string[] = []
+  if (!props.disabled) {
+    switch (props.color) {
+      case 'invert':
+        classParts.push('hover:ring-4 ring-white/50')
+        break
+      case 'danger':
+        classParts.push('hover:ring-4 ring-danger-lighter dark:ring-danger-darker')
+        break
+      case 'warning':
+        classParts.push('hover:ring-4 ring-warning-lighter dark:ring-warning-darker')
+        break
+      case 'default':
+      default:
+        classParts.push('hover:ring-4')
+        break
     }
   }
-
   return classParts.join(' ')
 })
 
@@ -165,7 +258,7 @@ const sizeClasses = computed(() => {
   if (props.size === 'xl') {
     classParts.push('font-medium')
   } else {
-    classParts.push('font-semibold')
+    classParts.push(props.size === 'xs' ? '' : 'font-semibold')
   }
 
   // font size
@@ -180,7 +273,7 @@ const sizeClasses = computed(() => {
   }
 
   // padding
-  if (props.type !== 'link') {
+  if (!props.link) {
     switch (props.size) {
       case 'xs':
         classParts.push('px-2 py-1')
@@ -218,14 +311,59 @@ const generalClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const buttonClasses = computed(() =>
-  [
-    'transition inline-flex justify-center items-center outline-none',
+const decoratorClasses = computed(() => {
+  const classParts: string[] = []
+  if (!props.disabled && (!props.link || !props.text)) {
+    classParts.push('active:scale-[0.95]')
+  }
+
+  if (!props.disabled && (props.link || props.text)) {
+    classParts.push(
+      'underline decoration-transparent decoration-2 underline-offset-4	hover:decoration-inherit'
+    )
+  }
+
+  return classParts.join(' ')
+})
+
+const buttonClasses = computed(() => {
+  const isLinkOrText = props.link || props.text
+  return [
+    'transition inline-flex justify-center items-center space-x-2 outline-none select-none',
     generalClasses.value,
-    typeClasses.value,
-    sizeClasses.value
+    sizeClasses.value,
+    foregroundClasses.value,
+    isLinkOrText ? '' : bgAndBorderClasses.value,
+    isLinkOrText ? '' : roundedClasses.value,
+    isLinkOrText ? '' : ringClasses.value,
+    decoratorClasses.value
   ].join(' ')
-)
+})
+
+const iconClasses = computed(() => {
+  const classParts: string[] = ['']
+
+  switch (props.size) {
+    case 'xs':
+      classParts.push('h-3 w-3')
+      break
+    case 'sm':
+      classParts.push('h-4 w-4')
+      break
+    case 'lg':
+      classParts.push('h-6 w-6')
+      break
+    case 'xl':
+      classParts.push('h-8 w-8')
+      break
+    case 'base':
+    default:
+      classParts.push('h-5 w-5')
+      break
+  }
+
+  return classParts.join(' ')
+})
 
 const onClick = (e: MouseEvent) => {
   if (props.disabled) {

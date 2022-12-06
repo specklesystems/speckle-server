@@ -3,10 +3,21 @@ import FormButton from '~~/components/form/Button.vue'
 import { Story, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
+import { XMarkIcon } from '@heroicons/vue/24/solid'
 
 export default {
   component: FormButton,
   argTypes: {
+    color: {
+      options: ['default', 'invert', 'danger', 'warning'],
+      control: { type: 'select' }
+    },
+    outlined: {
+      type: 'boolean'
+    },
+    rounded: {
+      type: 'boolean'
+    },
     to: {
       type: 'string'
     },
@@ -24,10 +35,6 @@ export default {
     },
     fullWidth: {
       type: 'boolean'
-    },
-    type: {
-      options: ['standard', 'pill', 'outline', 'link'],
-      control: { type: 'select' }
     },
     external: {
       type: 'boolean'
@@ -77,7 +84,15 @@ export const Default: Story = {
     to: 'https://google.com',
     default: 'Button text',
     size: 'base',
-    type: 'standard'
+    type: 'standard',
+    fullWidth: false,
+    outlined: false,
+    rounded: false,
+    text: false,
+    link: false,
+    color: 'default',
+    disabled: false,
+    submit: false
   },
   parameters: {
     docs: {
@@ -88,21 +103,34 @@ export const Default: Story = {
   }
 }
 
-export const Pill: Story = mergeStories(Default, {
+export const Rounded: Story = mergeStories(Default, {
   args: {
-    type: 'pill'
+    rounded: true
+  }
+})
+
+export const WarningButton: Story = mergeStories(Default, {
+  args: {
+    color: 'warning'
+  }
+})
+
+export const RoundedOutlined: Story = mergeStories(Default, {
+  args: {
+    rounded: true,
+    outlined: true
   }
 })
 
 export const Outline: Story = mergeStories(Default, {
   args: {
-    type: 'outline'
+    outlined: true
   }
 })
 
 export const Link: Story = mergeStories(Default, {
   args: {
-    type: 'link'
+    link: true
   },
   parameters: {
     docs: {
@@ -194,5 +222,24 @@ export const Submit: Story = mergeStories(Default, {
         story: 'Rendered as button w/ type=submit, which will submit any parent forms'
       }
     }
+  }
+})
+
+export const LeftIcon: Story = mergeStories(Default, {
+  args: {
+    iconLeft: XMarkIcon
+  }
+})
+
+export const RightIcon: Story = mergeStories(Default, {
+  args: {
+    iconRight: XMarkIcon
+  }
+})
+
+export const IconOnBothSides: Story = mergeStories(Default, {
+  args: {
+    iconRight: XMarkIcon,
+    iconLeft: XMarkIcon
   }
 })

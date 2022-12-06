@@ -12,9 +12,10 @@
           <span class="h3">Typograhpy</span>
         </template>
         <template #default>
+          <div class="my-10"></div>
           <p>Classic headings:</p>
           <div class="mt-4 flex flex-col gap-y-4">
-            <div class="h1">Heading 1 YOLO</div>
+            <div class="h1">Heading 1</div>
             <div class="h2">Heading 2</div>
             <div class="h3">Heading 3</div>
             <div class="h4">Heading 4</div>
@@ -74,15 +75,171 @@
       </LayoutPanel>
       <LayoutPanel class="background text-foreground mb-4">
         <template #header>
+          <span class="h3">Buttons</span>
+        </template>
+        <template #default>
+          <div class="my-8 flex flex-col gap-y-4 overflow-x-scroll">
+            <div
+              v-for="size in sizes"
+              :key="size"
+              class="flex py-6 flex-wrap space-x-4"
+            >
+              <span class="caption text-center col-span-4 md:col-span-1">
+                {{ size }}
+              </span>
+              <div><FormButton :size="size">Button</FormButton></div>
+              <div><FormButton :size="size" disabled>Button</FormButton></div>
+              <!-- <div><FormButton :size="size" rounded>Button</FormButton></div>
+              <div><FormButton :size="size" rounded disabled>Button</FormButton></div> -->
+              <div><FormButton :size="size" outlined>Button</FormButton></div>
+              <div><FormButton :size="size" outlined disabled>Button</FormButton></div>
+              <!-- <div><FormButton :size="size" rounded outlined>Button</FormButton></div> -->
+              <div>
+                <!-- <FormButton :size="size" rounded outlined disabled>Button</FormButton> -->
+              </div>
+            </div>
+            <div
+              v-for="size in sizes"
+              :key="size"
+              class="flex py-6 flex-wrap space-x-4"
+            >
+              <span class="caption text-center col-span-4 md:col-span-1">
+                {{ size }}
+              </span>
+              <div>
+                <FormButton :size="size" :icon-left="XMarkIcon">Button</FormButton>
+              </div>
+              <div>
+                <FormButton :size="size" disabled :icon-right="ArrowRightCircleIcon">
+                  Button
+                </FormButton>
+              </div>
+              <div>
+                <FormButton :size="size" outlined :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+              </div>
+              <div>
+                <FormButton :size="size" outlined disabled :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+              </div>
+              <!-- <div>
+                <FormButton :size="size" rounded outlined :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+              </div>
+              <div>
+                <FormButton :size="size" rounded outlined disabled :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+              </div> -->
+            </div>
+
+            <div
+              v-for="type in types"
+              :key="type"
+              class="flex py-6 flex-wrap space-x-4"
+            >
+              <span class="caption text-center col-span-4 md:col-span-1">
+                {{ type }}
+              </span>
+              <div><FormButton :color="type">Delete</FormButton></div>
+              <div><FormButton :color="type" disabled>Delete</FormButton></div>
+              <div><FormButton :color="type" rounded>Delete</FormButton></div>
+              <div><FormButton :color="type" rounded disabled>Delete</FormButton></div>
+              <div><FormButton :color="type" outlined>Delete</FormButton></div>
+              <div><FormButton :color="type" outlined disabled>Delete</FormButton></div>
+              <div><FormButton :color="type" rounded outlined>Delete</FormButton></div>
+              <div>
+                <FormButton :color="type" rounded outlined disabled>Delete</FormButton>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-around flex-wrap py-6 rounded-md">
+              <FormButton text size="xs">Text</FormButton>
+              <FormButton text size="sm">Text</FormButton>
+              <FormButton text size="base">Text</FormButton>
+              <FormButton text size="lg">Text</FormButton>
+              <FormButton text size="xl">Text</FormButton>
+              <FormButton text disabled>Text</FormButton>
+              <FormButton text disabled>Text</FormButton>
+              <FormButton text disabled>Text</FormButton>
+            </div>
+            <div class="bg-primary rounded-md">
+              <div class="flex items-center justify-around flex-wrap py-6">
+                <FormButton color="invert" text size="xs">Text</FormButton>
+                <FormButton color="invert" text size="sm">Text</FormButton>
+                <FormButton color="invert" text size="base">Text</FormButton>
+                <FormButton color="invert" text size="lg">Text</FormButton>
+                <FormButton color="invert" text size="xl">Text</FormButton>
+                <FormButton color="invert" text disabled>Text</FormButton>
+                <FormButton color="invert" text disabled>Text</FormButton>
+                <FormButton color="invert" text disabled>Text</FormButton>
+              </div>
+              <div class="flex items-center justify-around flex-wrap py-6">
+                <FormButton color="invert" invert size="xs" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" invert size="sm" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" invert size="base" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" invert size="lg" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" invert size="xl" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" invert rounded :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" invert outlined rounded>Button</FormButton>
+                <FormButton color="invert" invert outlined :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+              </div>
+              <div class="flex items-center justify-around flex-wrap py-6">
+                <FormButton color="invert" disabled size="xs" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" disabled size="sm" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" disabled size="base" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" disabled size="lg" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" disabled size="xl" :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" disabled rounded :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+                <FormButton color="invert" disabled outlined rounded>Button</FormButton>
+                <FormButton color="invert" disabled outlined :icon-right="XMarkIcon">
+                  Button
+                </FormButton>
+              </div>
+            </div>
+          </div>
+        </template>
+      </LayoutPanel>
+      <LayoutPanel class="background text-foreground mb-4">
+        <template #header>
           <span class="h3">Links & form elements</span>
         </template>
         <template #default>
           <div class="my-8">
             <div>Link:</div>
             <div>
-              <CommonTextLink to="/">Basic Link</CommonTextLink>
+              <CommonTextLink>Basic Link</CommonTextLink>
               |
-              <CommonTextLink to="/" disabled>Disabled Link</CommonTextLink>
+              <CommonTextLink disabled>Disabled Link</CommonTextLink>
             </div>
           </div>
           <div class="my-8">
@@ -187,5 +344,10 @@
 </template>
 <script setup lang="ts">
 import { Form } from 'vee-validate'
+import { XMarkIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid'
 const onSubmit = (values: unknown) => console.log(values)
+type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
+const sizes: FormButtonSize[] = ['xs', 'sm', 'base', 'lg', 'xl']
+const types: FormButtonColor[] = ['danger', 'warning']
 </script>
