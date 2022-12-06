@@ -41,9 +41,16 @@ spec:
             exec:
               command: ["sleep", "5"]
 
+        livenessProbe:
+          httpGet:
+            path: /api/v2/healthz/liveness
+            port: www
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
         readinessProbe:
           httpGet:
-            path: /
+            path: /api/v2/healthz/readiness
             port: www
           initialDelaySeconds: 5
           periodSeconds: 5
