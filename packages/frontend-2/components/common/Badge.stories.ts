@@ -15,6 +15,10 @@ export default {
     size: {
       options: ['base', 'lg'],
       control: { type: 'select' }
+    },
+    clickIcon: {
+      action: 'click',
+      type: 'function'
     }
   }
 } as Meta
@@ -23,7 +27,7 @@ export const Default: Story = {
   render: (args) => ({
     components: { CommonBadge },
     setup: () => ({ args }),
-    template: `<CommonBadge v-bind="args">{{ args.default || 'Badge' }}</CommonBadge>`
+    template: `<CommonBadge v-bind="args" @click-icon="args.clickIcon">{{ args.default || 'Badge' }}</CommonBadge>`
   }),
   args: {
     size: 'base',

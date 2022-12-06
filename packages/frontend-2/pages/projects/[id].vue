@@ -11,6 +11,9 @@
               <div class="flex items-center space-x-1.5">
                 <UsersIcon class="h-5 w-5" />
                 <span class="label font-bold">Team</span>
+                <CommonBadge color-classes="text-foreground-on-primary bg-info-darker">
+                  12
+                </CommonBadge>
               </div>
               <div class="caption">
                 <NuxtLink to="javascript:void(0);">View all</NuxtLink>
