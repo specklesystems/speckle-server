@@ -21,7 +21,7 @@
     "lint": "yarn lint:eslint && yarn lint:tsc"
   },
   "engines": {
-    "node": "^18.12.0"
+    "node": "^18.12.1"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",
