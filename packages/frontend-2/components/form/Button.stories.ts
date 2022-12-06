@@ -44,6 +44,12 @@ export default {
     },
     submit: {
       type: 'boolean'
+    },
+    iconLeft: {
+      type: 'function'
+    },
+    iconRight: {
+      type: 'function'
     }
   },
   parameters: {
