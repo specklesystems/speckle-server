@@ -92,8 +92,8 @@ spec:
 
           - name: PORT
             value: {{ include "server.port" $ | quote }}
-          - name: DEBUG
-            value: "speckle:*"
+          - name: LOG_LEVEL
+            value: {{ .Values.server.logLevel }}
 
           - name: SESSION_SECRET
             valueFrom:

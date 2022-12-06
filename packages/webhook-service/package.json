@@ -21,6 +21,7 @@
     "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
+    "@speckle/shared": "workspace:^",
     "knex": "^2.0.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
