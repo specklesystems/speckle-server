@@ -1,14 +1,16 @@
-import { useApolloClient } from '@vue/apollo-composable'
-import { graphql } from '~~/lib/common/generated/gql'
+import * as ApolloComposable from '@vue/apollo-composable'
+import { graphql } from '~/lib/common/generated/gql'
 
 const serverInfoVersionQuery = graphql(`
-  query serverInfo {
-    version
+  query ServerVersion {
+    serverInfo {
+      version
+    }
   }
 `)
 
 export default defineEventHandler(async () => {
-  const client = useApolloClient().client
+  const client = ApolloComposable.useApolloClient().client
   const { data, error } = await client.query({ query: serverInfoVersionQuery })
   if (error) {
     throw createError({
