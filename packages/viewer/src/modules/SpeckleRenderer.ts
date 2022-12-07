@@ -485,19 +485,22 @@ export default class SpeckleRenderer {
     const groundPlaneGeometry = new PlaneGeometry(
       boxSize.x * 2,
       boxSize.y * 2,
-      20,
-      20 / aspect
+      50,
+      50 / aspect
     )
     const colors = new Float32Array(groundPlaneGeometry.attributes.position.count * 3)
     groundPlaneGeometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
     const generateMaterial = new MeshBasicMaterial({ color: 0xffffff })
     generateMaterial.vertexColors = true
+    generateMaterial.toneMapped = false
 
     const displayMaterial = new SpeckleBasicMaterial({ color: 0xffffff }, ['USE_RTE'])
     displayMaterial.vertexColors = false
     displayMaterial.map = this.pipeline.shadowcatcherPass.outputTexture
-    displayMaterial.dithering = true
+    // displayMaterial.dithering = true
     displayMaterial.transparent = true
+    // displayMaterial.blending = MultiplyBlending
+    displayMaterial.toneMapped = false
     // displayMaterial.blendSrc = OneFactor
     // displayMaterial.blendSrcAlpha = OneFactor
     // displayMaterial.blendDst = OneMinusSrcAlphaFactor
@@ -626,7 +629,7 @@ export default class SpeckleRenderer {
   public testTrace() {
     const start = performance.now()
     const sampleCount = 100
-    const maxDist = 1
+    const maxDist = 20
     const plane: Mesh = this.scene.getObjectByName('Shadowcatcher') as Mesh
     const vertices = plane.geometry.attributes.position.array
     const uvs = plane.geometry.attributes.uv.array
@@ -670,9 +673,12 @@ export default class SpeckleRenderer {
             imageData[coord * 4 + 1] += ((1 - res.distance) / sampleCount) * 255
             imageData[coord * 4 + 2] += ((1 - res.distance) / sampleCount) * 255
             imageData[coord * 4 + 3] = 255
-            colors[k] += 1 / sampleCount
-            colors[k + 1] += 1 / sampleCount
-            colors[k + 2] += 1 / sampleCount
+            colors[k] += (1 - res.distance / maxDist) / sampleCount
+            colors[k + 1] += (1 - res.distance / maxDist) / sampleCount
+            colors[k + 2] += (1 - res.distance / maxDist) / sampleCount
+            // colors[k] += 1 / sampleCount
+            // colors[k + 1] += 1 / sampleCount
+            // colors[k + 2] += 1 / sampleCount
           }
         }
         // if (hit > sampleCount * 0.5) console.log(hit)
@@ -684,7 +690,7 @@ export default class SpeckleRenderer {
     // console.warn(canvas.toDataURL())
     plane.geometry.attributes.color.needsUpdate = true
     console.warn('Time -> ', performance.now() - start)
-    this.pipeline.shadowcatcherPass.setOutputSize(512, 512 / 0.4723990432614013)
+    this.pipeline.shadowcatcherPass.setOutputSize(64, 64 / 0.4723990432614013)
     this.pipeline.shadowcatcherPass.needsUpdate = true
   }
 
