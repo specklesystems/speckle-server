@@ -13,7 +13,7 @@
         </FormButton>
       </div>
       <!-- Right heading (filters, grid/list toggle) -->
-      <div class="flex space-x-4">
+      <div class="flex space-x-4 items-center">
         <div>
           <slot name="filters" />
         </div>

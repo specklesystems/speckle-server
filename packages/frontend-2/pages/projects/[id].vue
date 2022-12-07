@@ -13,6 +13,8 @@
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->
         <ProjectPageLatestItemsModels />
+        <!-- Latest comments -->
+        <ProjectPageLatestItemsComments />
       </div>
     </div>
   </div>

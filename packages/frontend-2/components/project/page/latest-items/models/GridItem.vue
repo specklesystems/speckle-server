@@ -1,7 +1,10 @@
 <template>
   <div class="h-52 rounded-lg bg-foundation-2 shadow flex flex-col">
     <!-- Image -->
-    <div class="grow bg-contain" :style="{ backgroundImage: `url('${previewUrl}')` }" />
+    <div
+      class="grow bg-contain bg-no-repeat bg-center"
+      :style="{ backgroundImage: `url('${previewUrl}')` }"
+    />
     <!-- Footer -->
     <div class="py-3 px-2 flex justify-between items-center">
       <div class="text-foreground normal">Model title</div>
