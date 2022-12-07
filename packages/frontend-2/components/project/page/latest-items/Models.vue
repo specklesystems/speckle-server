@@ -1,7 +1,9 @@
 <template>
   <ProjectPageLatestItems :count="8" title="Latest Models">
     <template #default="{ gridOrList }">
-      <template v-if="gridOrList === GridListToggleValue.Grid">GRID</template>
+      <ProjectPageLatestItemsModelsGrid
+        v-if="gridOrList === GridListToggleValue.Grid"
+      />
       <template v-else>LIST VIEW NOT IMPLEMENTED</template>
     </template>
   </ProjectPageLatestItems>
