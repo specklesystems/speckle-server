@@ -15,6 +15,8 @@
         <ProjectPageLatestItemsModels />
         <!-- Latest comments -->
         <ProjectPageLatestItemsComments />
+        <!-- More actions -->
+        <ProjectPageMoreActions />
       </div>
     </div>
   </div>

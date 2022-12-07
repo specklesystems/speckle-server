@@ -23,7 +23,7 @@
         </div>
         <div class="caption text-foreground-2">12 min ago</div>
       </div>
-      <div class="flex space-x-2.5">
+      <div class="flex items-center space-x-2.5">
         <div class="text-foreground inline-flex items-center">
           <ChatBubbleLeftEllipsisIcon class="w-4 h-4 mr-1" />
           <span class="caption">12</span>
