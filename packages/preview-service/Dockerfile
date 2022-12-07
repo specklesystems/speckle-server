@@ -1,19 +1,24 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
+ARG NODE_ENV=production
 
-
-# build stage
 FROM node:18.12.1-bullseye-slim as build-stage
 
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
-
 WORKDIR /speckle-server
+
+# install wait
+ARG WAIT_VERSION=2.8.0
+ENV WAIT_VERSION=${WAIT_VERSION}
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
+RUN chmod +x ./wait
+
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-# Onyl copy in the relevant package.json files for the dependencies
+# Only copy in the relevant package.json files for the dependencies
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
@@ -30,9 +35,12 @@ COPY packages/preview-service ./packages/preview-service/
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach run build
 
-
-
 FROM node:18.12.1-bullseye-slim as node
+
+# required for ensuring cross-compatibility
+# https://github.com/puppeteer/puppeteer/issues/7740
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -65,13 +73,14 @@ RUN apt-get update && \
   libxrandr2=2:1.5.1-1 \
   wget=1.21-1+deb11u1 \
   xdg-utils=1.1.3-4.1 \
+  chromium-common=104.0.5112.79-1~deb11u1 \
+  chromium=104.0.5112.79-1~deb11u1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
+COPY --from=build-stage /speckle-server/wait /wait
 
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -92,5 +101,4 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 WORKDIR /speckle-server/packages/preview-service
 RUN yarn workspaces focus --production
 
-ENTRYPOINT [ "tini", "--" ]
-CMD ["yarn", "node", "bin/www"]
+ENTRYPOINT [ "tini", "--", "node", "bin/www" ]

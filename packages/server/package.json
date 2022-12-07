@@ -39,6 +39,7 @@
     "@sentry/tracing": "^6.17.9",
     "@speckle/shared": "workspace:^",
     "@types/pino-http": "^5.8.1",
+    "@types/uuid": "^9.0.0",
     "apollo-server-express": "^3.10.2",
     "bcrypt": "^5.0.0",
     "bull": "^4.8.5",

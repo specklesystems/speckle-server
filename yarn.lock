@@ -5024,6 +5024,7 @@ __metadata:
     "@types/pino-http": ^5.8.1
     "@types/sanitize-html": ^2.6.2
     "@types/supertest": ^2.0.12
+    "@types/uuid": ^9.0.0
     "@types/verror": ^1.10.6
     "@types/yargs": ^17.0.10
     "@types/zxcvbn": ^4.4.1
@@ -6311,6 +6312,13 @@ __metadata:
   version: 2.0.2
   resolution: "@types/trusted-types@npm:2.0.2"
   checksum: 3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@types/uuid@npm:9.0.0"
+  checksum: 59ae56d9547c8758588659da2a2b4c97cce79c2aae1798c892bb29452ef08e87859dea2ec3a66bfa88d0d2153147520be2b1893be920f9f0bc9c53a3207ea6aa
   languageName: node
   linkType: hard
 

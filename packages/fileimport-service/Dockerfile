@@ -1,57 +1,87 @@
+ARG NODE_ENV=production
+
 FROM node:18.12.1-bullseye-slim as build-stage
 
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
 
+# install tini
+ARG TINI_VERSION=v0.19.0
+ENV TINI_VERSION=${TINI_VERSION}
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
+RUN chmod +x ./tini
+
+# install wait
+ARG WAIT_VERSION=2.8.0
+ENV WAIT_VERSION=${WAIT_VERSION}
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
+RUN chmod +x ./wait
+
+# download yarn dependencies for building shared libraries
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
-
-COPY packages/fileimport-service/package.json ./packages/fileimport-service/
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/fileimport-service/package.json ./packages/fileimport-service/
 
-RUN yarn workspaces focus -A && yarn
+RUN yarn workspaces focus --all
 
+# build shared libraries
 COPY packages/shared ./packages/shared/
 COPY packages/fileimport-service ./packages/fileimport-service/
-
 RUN yarn workspaces foreach run build
 
-FROM node:18.12.1-bullseye-slim as node
-
+# Install python virtual env and python dependencies
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
-  python3=3.9.2-3 \
-  python3-pip=20.3.4-4+deb11u1 \
-  tini=0.19.0-1 \
+  python3-venv=3.9.2-3 \
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && python3 -m venv /venv
 
 COPY packages/fileimport-service/requirements.txt /speckle-server/
-RUN pip install --no-cache-dir -r /speckle-server/requirements.txt
+RUN /venv/bin/pip install --disable-pip-version-check --no-cache-dir --requirement /speckle-server/requirements.txt
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
-
-ARG NODE_ENV=production
+FROM node:18.12.1-bullseye-slim as dependency-stage
+# installing just the production dependencies
+# separate stage to avoid including development dependencies
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
-
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
-
+COPY packages/shared/package.json ./packages/shared/
 COPY packages/fileimport-service/package.json ./packages/fileimport-service/
-
-COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
-COPY --from=build-stage /speckle-server/packages/fileimport-service ./packages/fileimport-service
-
 WORKDIR /speckle-server/packages/fileimport-service
 RUN yarn workspaces focus --production
 
-ENTRYPOINT [ "tini", "--" ]
-CMD ["node", "--no-experimental-fetch", "src/daemon.js"]
+FROM gcr.io/distroless/nodejs:18 as distributable-stage
+
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
+ARG NODE_BINARY_PATH=/nodejs/bin/node
+ENV NODE_BINARY_PATH=${NODE_BINARY_PATH}
+
+WORKDIR /speckle-server
+
+COPY --from=build-stage /speckle-server/tini /usr/bin/tini
+COPY --from=build-stage /speckle-server/wait /usr/bin/wait
+COPY --from=build-stage /speckle-server/packages/shared ./packages/shared
+COPY --from=build-stage /speckle-server/packages/fileimport-service ./packages/fileimport-service
+COPY --from=build-stage /venv /venv
+COPY --from=dependency-stage /speckle-server/node_modules ./node_modules
+
+WORKDIR /speckle-server/packages/fileimport-service
+
+# Prefixing PATH with our virtual environment should seek required binaries
+# from virtual environment first.
+# Unsetting python home
+ENV PATH=/venv/bin:${PATH} \
+    PYTHONHOME=
+
+ENTRYPOINT [ "tini", "--", "/nodejs/bin/node", "--no-experimental-fetch", "src/daemon.js"]
