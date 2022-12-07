@@ -4,12 +4,13 @@
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
-      <div class="grid grid-cols-12 gap-8">
-        <ProjectPageTeamStatsBlock />
-        <ProjectPageVersionsStatsBlock />
-        <ProjectPageModelsStatsBlock />
-        <ProjectPageCommentsStatsBlock />
+      <div class="grid grid-cols-12 gap-8 mb-14">
+        <ProjectPageStatsBlockTeam />
+        <ProjectPageStatsBlockVersions />
+        <ProjectPageStatsBlockModels />
+        <ProjectPageStatsBlockComments />
       </div>
+      <!-- Latest models -->
     </div>
   </div>
 </template>
