@@ -43,14 +43,14 @@ spec:
 
         livenessProbe:
           httpGet:
-            path: /api/meta/v1/healthz/liveness
+            path: /meta/v1/healthz/liveness
             port: www
           initialDelaySeconds: 5
           periodSeconds: 5
 
         readinessProbe:
           httpGet:
-            path: /api/meta/v1/healthz/readiness
+            path: /meta/v1/healthz/readiness
             port: www
           initialDelaySeconds: 5
           periodSeconds: 5
