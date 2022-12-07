@@ -10,7 +10,10 @@
         <ProjectPageStatsBlockModels />
         <ProjectPageStatsBlockComments />
       </div>
-      <!-- Latest models -->
+      <div class="flex flex-col space-y-14">
+        <!-- Latest models -->
+        <ProjectPageLatestItemsModels />
+      </div>
     </div>
   </div>
 </template>
