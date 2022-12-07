@@ -15,10 +15,10 @@ export type Scalars = {
   /** The `BigInt` scalar type represents non-fractional signed whole numeric values. */
   BigInt: any;
   /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
-  DateTime: any;
+  DateTime: string;
   EmailAddress: any;
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSONObject: any;
+  JSONObject: Record<string, unknown>;
 };
 
 export type ActiveUserMutations = {
@@ -1797,18 +1797,18 @@ export type AuthStategiesServerInfoFragmentFragment = { __typename?: 'ServerInfo
 export type ProjectsDashboardListQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProjectsDashboardListQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> }> };
+export type ProjectsDashboardListQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: string, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> }> };
 
-export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> };
+export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: string, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> };
 
 export type ProjectPageProjectHeaderFragment = { __typename?: 'Project', name: string, description?: string | null };
 
 export type CreateOnboardingProjectMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CreateOnboardingProjectMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', createForOnboarding: { __typename?: 'Project', id: string, createdAt: any, name: string, description?: string | null } } };
+export type CreateOnboardingProjectMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', createForOnboarding: { __typename?: 'Project', id: string, createdAt: string, name: string, description?: string | null } } };
 
-export type ProjectsDashboardFilledFragment = { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: any }> };
+export type ProjectsDashboardFilledFragment = { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string }> };
 
 export type DeleteSingleProjectMutationVariables = Exact<{
   id: Scalars['String'];
@@ -1820,7 +1820,7 @@ export type DeleteSingleProjectMutation = { __typename?: 'Mutation', projectMuta
 export type ActiveUserMainMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ActiveUserMainMetadataQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, role?: string | null, avatar?: string | null, isOnboardingFinished?: boolean | null, createdAt?: any | null } | null };
+export type ActiveUserMainMetadataQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, role?: string | null, avatar?: string | null, isOnboardingFinished?: boolean | null, createdAt?: string | null } | null };
 
 export type FinishOnboardingMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -1840,14 +1840,14 @@ export type InternalTestDataQuery = { __typename?: 'Query', testNumber?: number 
 export type ProjectsDashboardQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProjectsDashboardQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'ProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: any }> } } | null };
+export type ProjectsDashboardQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'ProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string }> } } | null };
 
 export type ProjectPageQueryQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
 
 
-export type ProjectPageQueryQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, createdAt: any, name: string, description?: string | null } | null };
+export type ProjectPageQueryQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, createdAt: string, name: string, description?: string | null } | null };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1859,9 +1859,9 @@ export type ProjectLandingPageQueryVariables = Exact<{
 }>;
 
 
-export type ProjectLandingPageQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null }> } | null };
+export type ProjectLandingPageQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: string, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null }> } | null };
 
-export type ProjectPageProjectFragment = { __typename?: 'Project', id: string, createdAt: any, name: string, description?: string | null };
+export type ProjectPageProjectFragment = { __typename?: 'Project', id: string, createdAt: string, name: string, description?: string | null };
 
 export const IntegrationStoryDemoServerInfoQueryFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IntegrationStoryDemoServerInfoQueryFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blobSizeLimitBytes"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"adminContact"}},{"kind":"Field","name":{"kind":"Name","value":"canonicalUrl"}},{"kind":"Field","name":{"kind":"Name","value":"termsOfService"}},{"kind":"Field","name":{"kind":"Name","value":"inviteOnly"}},{"kind":"Field","name":{"kind":"Name","value":"version"}}]}}]} as unknown as DocumentNode<IntegrationStoryDemoServerInfoQueryFragmentFragment, unknown>;
 export const ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ServerTermsOfServicePrivacyPolicyFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"termsOfService"}}]}}]} as unknown as DocumentNode<ServerTermsOfServicePrivacyPolicyFragmentFragment, unknown>;

@@ -17,7 +17,9 @@ import { Optional } from '@speckle/shared'
 /**
  * Keys of Storybook's `parameters.apolloClient` object that can be used to configure Apollo mocks
  */
-export interface MockedProviderOptions<TSerializedCache = Record<string, unknown>> {
+export interface MockedApolloProviderOptions<
+  TSerializedCache = Record<string, unknown>
+> {
   mocks?: ReadonlyArray<MockedResponse>
   addTypename?: boolean
   defaultOptions?: DefaultOptions
@@ -28,11 +30,11 @@ export interface MockedProviderOptions<TSerializedCache = Record<string, unknown
   link?: ApolloLink
 }
 
-export const MockedProvider = defineComponent({
-  name: 'MockedProvider',
+export const MockedApolloProvider = defineComponent({
+  name: 'MockedApolloProvider',
   props: {
     options: {
-      type: Object as PropType<Optional<MockedProviderOptions>>,
+      type: Object as PropType<Optional<MockedApolloProviderOptions>>,
       default: undefined
     }
   },

@@ -4,7 +4,7 @@ import {
   IntegrationStoryDemoServerInfoQueryFragmentFragment,
   InternalTestDataQuery
 } from '~~/lib/common/generated/gql/graphql'
-import { MockedProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedProvider'
+import { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 import { fakeInternalQuery } from '~~/lib/fake-nuxt-env/graphql/integrationStoryDemo'
 
 export default {
@@ -50,6 +50,6 @@ export const Default: Story = {
           }
         }
       ]
-    } as MockedProviderOptions
+    } as MockedApolloProviderOptions
   }
 }

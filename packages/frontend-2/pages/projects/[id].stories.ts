@@ -1,0 +1,43 @@
+import { Meta, Story } from '@storybook/vue3'
+import { ProjectPageQueryQuery } from '~~/lib/common/generated/gql/graphql'
+import { StorybookParameters } from '~~/lib/common/helpers/storybook'
+import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+import ProjectPage from '~~/pages/projects/[id].vue'
+
+const fakeProjectId = 'some-fake-id'
+
+export default {
+  title: 'Pages/Project',
+  component: ProjectPage
+} as Meta
+
+export const Default: Story = {
+  render: (args) => ({
+    components: { ProjectPage },
+    setup: () => ({ args }),
+    template: `<ProjectPage v-bind="args"/>`
+  }),
+  parameters: {
+    apolloClient: {
+      mocks: [
+        {
+          request: { query: projectPageQuery, variables: { id: fakeProjectId } },
+          result: {
+            data: {
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                createdAt: new Date().toISOString(),
+                name: 'Test project',
+                description: 'Test project description'
+              }
+            } as ProjectPageQueryQuery
+          }
+        }
+      ]
+    },
+    vueRouter: {
+      route: { params: { id: fakeProjectId } }
+    }
+  } as StorybookParameters
+}

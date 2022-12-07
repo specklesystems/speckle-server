@@ -1,9 +1,10 @@
 import '~~/assets/css/tailwind.css'
 import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
-import { MockedProvider } from '~~/lib/fake-nuxt-env/components/MockedProvider'
+import { MockedApolloProvider } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 import { setup } from '@storybook/vue3'
 import SingletonManagers from '~~/components/singleton/Managers.vue'
 import { useArgs } from '@storybook/client-api'
+import { provide } from 'vue'
 
 setup((app) => {
   setupVueApp(app)
@@ -90,7 +91,7 @@ export const parameters = {
   },
   // Custom params
   apolloClient: {
-    MockedProvider
+    MockedApolloProvider
   }
 }
 
@@ -135,21 +136,39 @@ export const decorators = [
   (story, ctx) => {
     const {
       parameters: {
-        apolloClient: { MockedProvider, ...providerProps }
+        apolloClient: { MockedApolloProvider, ...providerProps }
       }
     } = ctx
 
-    if (!MockedProvider) {
-      console.error('Apollo MockedProvider missing from parameters in preview.js!')
+    if (!MockedApolloProvider) {
+      console.error(
+        'Apollo MockedApolloProvider missing from parameters in preview.js!'
+      )
       return { template: `<Story/>`, components: { Story: story() } }
     }
 
     return {
       data: () => ({ providerProps }),
-      components: { MockedProvider, Story: story() },
+      components: { MockedApolloProvider, Story: story() },
       template: `
-        <MockedProvider :options="providerProps || {}"><Story/></MockedProvider>
+        <MockedApolloProvider :options="providerProps || {}"><Story/></MockedApolloProvider>
       `
+    }
+  },
+  // Mocked router
+  (story, ctx) => {
+    const {
+      parameters: { vueRouter: { route } = { route: undefined } }
+    } = ctx
+
+    return {
+      components: { Story: story() },
+      setup: () => {
+        if (route) {
+          provide('_route', route)
+        }
+      },
+      template: `<Story/>`
     }
   }
 ]

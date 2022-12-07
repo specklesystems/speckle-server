@@ -38,7 +38,8 @@ const initNuxtApp = (vueApp?: App<Element>) => {
   // Setup nuxt singleton, only if it's not already done
   let nuxt: Optional<NuxtApp> = undefined
   try {
-    nuxt = useNuxtApp()
+    // some busted up TS types here
+    nuxt = useNuxtApp() as unknown as NuxtApp
   } catch (e) {
     // suppressed
   }

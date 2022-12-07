@@ -9,7 +9,11 @@ const config: CodegenConfig = {
       preset: 'client',
       config: {
         useTypeImports: true,
-        fragmentMasking: false
+        fragmentMasking: false,
+        scalars: {
+          JSONObject: 'Record<string, unknown>',
+          DateTime: 'string'
+        }
       },
       presetConfig: {
         fragmentMasking: false
