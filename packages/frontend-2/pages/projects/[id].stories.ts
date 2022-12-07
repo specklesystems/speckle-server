@@ -9,7 +9,13 @@ const fakeProjectId = 'some-fake-id'
 
 export default {
   title: 'Pages/Project',
-  component: ProjectPage
+  component: ProjectPage,
+  parameters: {
+    docs: {
+      inlineStories: false,
+      iframeHeight: 1000
+    }
+  }
 } as Meta
 
 export const Default: Story = {
