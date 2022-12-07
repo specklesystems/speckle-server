@@ -15,6 +15,7 @@ export default defineEventHandler(async () => {
   if (error) {
     throw createError({
       statusCode: 500,
+      cause: error,
       name: 'InternalServerError',
       message:
         'Frontend is unable to reach the Graphql server, or the server is unable to query the database',
@@ -24,7 +25,18 @@ export default defineEventHandler(async () => {
 
   if (data) {
     return {
-      status: 'ready'
+      status: 'ready',
+      server: {
+        version: data.serverInfo.version
+      }
     }
   }
+
+  throw createError({
+    statusCode: 500,
+    name: 'InternalServerError',
+    message:
+      'Frontend was able to reach the Graphql server, but invalid data was returned.',
+    statusMessage: 'Internal Server Error'
+  })
 })
