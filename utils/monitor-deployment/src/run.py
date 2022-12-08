@@ -1,31 +1,39 @@
 #!/usr/bin/env python
 import os
+import sys
 
 import psycopg2
 from prometheus_client import start_http_server, Gauge
 import time
 import structlog
-from logging import INFO
+from logging import INFO, basicConfig
+
+basicConfig(
+  format="%(message)s",
+  stream=sys.stdout,
+  level=INFO
+)
 
 structlog.configure(processors=[
-  structlog.contextvars.merge_contextvars,
-  structlog.processors.add_log_level,
-  structlog.processors.StackInfoRenderer(),
-  structlog.processors.format_exc_info,
-  structlog.processors.TimeStamper(fmt="iso"),
-  structlog.stdlib.PositionalArgumentsFormatter(),
-  structlog.processors.UnicodeDecoder(),
-  structlog.processors.CallsiteParameterAdder(
-    {
-        structlog.processors.CallsiteParameter.FILENAME,
-        structlog.processors.CallsiteParameter.FUNC_NAME,
-        structlog.processors.CallsiteParameter.LINENO,
-    }),
-  structlog.processors.JSONRenderer(),
-],
-wrapper_class=structlog.make_filtering_bound_logger(INFO),
-logger_factory=structlog.stdlib.LoggerFactory(),
-cache_logger_on_first_use=True,)
+    structlog.stdlib.filter_by_level,
+    structlog.contextvars.merge_contextvars,
+    structlog.processors.add_log_level,
+    structlog.processors.StackInfoRenderer(),
+    structlog.processors.format_exc_info,
+    structlog.processors.TimeStamper(fmt="iso"),
+    structlog.stdlib.PositionalArgumentsFormatter(),
+    structlog.processors.UnicodeDecoder(),
+    structlog.processors.CallsiteParameterAdder(
+      {
+          structlog.processors.CallsiteParameter.FILENAME,
+          structlog.processors.CallsiteParameter.FUNC_NAME,
+          structlog.processors.CallsiteParameter.LINENO,
+      }),
+    structlog.processors.JSONRenderer(),
+  ],
+  wrapper_class=structlog.make_filtering_bound_logger(INFO),
+  logger_factory=structlog.stdlib.LoggerFactory(),
+  cache_logger_on_first_use=True)
 LOG = structlog.get_logger()
 PG_CONNECTION_STRING = os.environ['PG_CONNECTION_STRING']
 
