@@ -5,6 +5,7 @@ import psycopg2
 from prometheus_client import start_http_server, Gauge
 import time
 import structlog
+from logging import INFO
 
 structlog.configure(processors=[
   structlog.contextvars.merge_contextvars,
@@ -22,7 +23,7 @@ structlog.configure(processors=[
     }),
   structlog.processors.JSONRenderer(),
 ],
-wrapper_class=structlog.stdlib.BoundLogger,
+wrapper_class=structlog.make_filtering_bound_logger(INFO),
 logger_factory=structlog.stdlib.LoggerFactory(),
 cache_logger_on_first_use=True,)
 LOG = structlog.get_logger()
