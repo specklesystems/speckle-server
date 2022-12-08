@@ -46,7 +46,8 @@ router.get('/:streamId/:objectId', async function (req, res) {
     (err) => {
       if (err) {
         logger.error(
-          `Error downloading object ${req.params.objectId} from stream ${req.params.streamId}: ${err}`
+          err,
+          `Error downloading object ${req.params.objectId} from stream ${req.params.streamId}`
         )
       } else {
         logger.info(

@@ -80,7 +80,7 @@ async function getScreenshot(objectUrl) {
   try {
     ret = await wrapperPromise
   } catch (err) {
-    logger.error(`Error generating preview for ${objectUrl}: ${err}`)
+    logger.error(err, `Error generating preview for ${objectUrl}`)
     ret = {
       error: err
     }

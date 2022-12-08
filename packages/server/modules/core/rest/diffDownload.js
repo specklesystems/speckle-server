@@ -41,9 +41,10 @@ module.exports = (app) => {
       (err) => {
         if (err) {
           logger.error(
+            err,
             `[User ${
               req.context.userId || '-'
-            }] App error streaming objects from stream ${req.params.streamId}: ${err}`
+            }] App error streaming objects from stream ${req.params.streamId}`
           )
         } else {
           logger.info(
@@ -74,9 +75,10 @@ module.exports = (app) => {
       }
     } catch (ex) {
       logger.error(
+        ex,
         `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
           req.params.streamId
-        }: ${ex}`
+        }`
       )
       speckleObjStream.emit('error', new Error('Database streaming error'))
     }

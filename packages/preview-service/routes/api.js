@@ -35,9 +35,7 @@ router.post('/getobjects/:streamId', async (req, res) => {
     res,
     (err) => {
       if (err) {
-        logger.error(
-          `Error streaming objects from stream ${req.params.streamId}: ${err}`
-        )
+        logger.error(err, `Error streaming objects from stream ${req.params.streamId}`)
       } else {
         logger.error(
           `Streamed ${childrenList.length} objects from stream ${

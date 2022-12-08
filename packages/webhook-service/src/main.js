@@ -125,7 +125,7 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metrics.metricOperationErrors.labels('main_loop').inc()
-    logger.error('Error executing task: ', err)
+    logger.error(err, 'Error executing task')
     setTimeout(tick, 5000)
   }
 }

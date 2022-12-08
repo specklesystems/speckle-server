@@ -104,9 +104,7 @@ module.exports = (app) => {
           }
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            logger.error(
-              `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
-            )
+            logger.error(e, `[User ${req.context.userId || '-'}] Upload error.`)
             if (!requestDropped)
               res
                 .status(400)
@@ -181,9 +179,7 @@ module.exports = (app) => {
           }
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            logger.error(
-              `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
-            )
+            logger.error(e, `[User ${req.context.userId || '-'}] Upload error.`)
             if (!requestDropped)
               res
                 .status(400)

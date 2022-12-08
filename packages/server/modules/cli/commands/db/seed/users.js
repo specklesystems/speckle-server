@@ -71,7 +71,7 @@ async function* batchedOperationGenerator({
       })
     })
     batchPromise = batchPromise.catch((e) => {
-      logger.error('Operation failed all retries: ', e)
+      logger.error(e, 'Operation failed all retries')
     })
 
     currentItemCount = newItemCount

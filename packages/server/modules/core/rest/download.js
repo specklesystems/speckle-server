@@ -55,9 +55,10 @@ module.exports = (app) => {
       (err) => {
         if (err) {
           logger.error(
+            err,
             `[User ${req.context.userId || '-'}] Error downloading object ${
               req.params.objectId
-            } from stream ${req.params.streamId}: ${err}`
+            } from stream ${req.params.streamId}`
           )
         } else {
           logger.info(

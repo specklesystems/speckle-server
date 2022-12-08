@@ -41,6 +41,7 @@ export const scheduledCallbackWrapper = async (
     )
   } catch (error) {
     logger.error(
+      error,
       `The triggered task execution ${taskName} failed at ${scheduledTime}, with error ${
         ensureError(error, 'unknown reason').message
       }`
