@@ -68,9 +68,9 @@ export const Default: Story = {
       return { args, selectedUser }
     },
     template: `
-    <FormSelectUsers v-bind="args" @update:modelValue="onModelUpdate">
-      <template #nothing-selected>{{ args['nothing-selected'] }}</template>
-    </FormSelectUsers>
+    <div class="flex justify-center h-72">
+      <FormSelectUsers v-bind="args" @update:modelValue="onModelUpdate" class="max-w-xs w-full"/>
+    </div>
     `,
     methods: {
       onModelUpdate(val: FormUsersSelectItemFragment) {
@@ -80,10 +80,13 @@ export const Default: Story = {
     }
   }),
   args: {
+    search: false,
     multiple: false,
     users: fakeUsers,
     modelValue: undefined,
-    'nothing-selected': 'Choose a user'
+    label: 'Choose a user',
+    showLabel: false,
+    'nothing-selected': undefined
   }
 }
 
@@ -93,5 +96,13 @@ export const Multiple: Story = {
     ...Default.args,
     multiple: true,
     'nothing-selected': 'Choose multiple users'
+  }
+}
+
+export const WithSearch: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    search: true
   }
 }
