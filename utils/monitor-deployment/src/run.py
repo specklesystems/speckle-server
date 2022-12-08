@@ -4,8 +4,28 @@ import os
 import psycopg2
 from prometheus_client import start_http_server, Gauge
 import time
-import logging
-LOG = logging.getLogger(__name__)
+import structlog
+
+structlog.configure(processors=[
+  structlog.contextvars.merge_contextvars,
+  structlog.processors.add_log_level,
+  structlog.processors.StackInfoRenderer(),
+  structlog.processors.format_exc_info,
+  structlog.processors.TimeStamper(fmt="iso"),
+  structlog.stdlib.PositionalArgumentsFormatter(),
+  structlog.processors.UnicodeDecoder(),
+  structlog.processors.CallsiteParameterAdder(
+    {
+        structlog.processors.CallsiteParameter.FILENAME,
+        structlog.processors.CallsiteParameter.FUNC_NAME,
+        structlog.processors.CallsiteParameter.LINENO,
+    }),
+  structlog.processors.JSONRenderer(),
+],
+wrapper_class=structlog.stdlib.BoundLogger,
+logger_factory=structlog.stdlib.LoggerFactory(),
+cache_logger_on_first_use=True,)
+LOG = structlog.get_logger()
 PG_CONNECTION_STRING = os.environ['PG_CONNECTION_STRING']
 
 PROM = {
@@ -118,9 +138,9 @@ def main():
             t1 = time.time()
             tick(cur)
             t2 = time.time()
-            LOG.info("[%s] Updated metrics. (connected in %s, queried in %s)", t2, t1 - t0, t2 - t1)
+            LOG.info("Updated metrics. (connected in %s, queried in %s)", t1 - t0, t2 - t1)
         except Exception as ex:
-            LOG.error("Error: %s", str(ex))
+            LOG.exception(ex)
         finally:
             if cur:
                 cur.close()
@@ -131,5 +151,4 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     main()
