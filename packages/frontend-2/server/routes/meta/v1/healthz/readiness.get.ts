@@ -2,7 +2,7 @@ import * as ApolloComposable from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 
 const serverInfoVersionQuery = graphql(`
-  query ServerVersion {
+  query ReadinessCheckMetadata {
     serverInfo {
       version
     }

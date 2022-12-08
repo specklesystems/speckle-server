@@ -17,6 +17,7 @@ const documents = {
     "\n  query ProjectsDashboardQuery {\n    activeUser {\n      projects {\n        id\n        name\n      }\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
     "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n": types.GetActiveUserDocument,
     "\n    query ProjectLandingPage($id: String!) {\n      project(id: $id) {\n        id\n        name\n        modelCount\n        role\n        editedAt\n        team {\n          id\n          name\n        }\n      }\n    }\n  ": types.ProjectLandingPageDocument,
+    "\n  query ReadinessCheckMetadata {\n    serverInfo {\n      version\n    }\n  }\n": types.ReadinessCheckMetadataDocument,
 };
 
 export function graphql(source: "\n  fragment IntegrationStoryDemoServerInfoQueryFragment on ServerInfo {\n    blobSizeLimitBytes\n    name\n    company\n    description\n    adminContact\n    canonicalUrl\n    termsOfService\n    inviteOnly\n    version\n  }\n"): (typeof documents)["\n  fragment IntegrationStoryDemoServerInfoQueryFragment on ServerInfo {\n    blobSizeLimitBytes\n    name\n    company\n    description\n    adminContact\n    canonicalUrl\n    termsOfService\n    inviteOnly\n    version\n  }\n"];
@@ -33,6 +34,7 @@ export function graphql(source: "\n  query InternalTestData {\n    testNumber\n 
 export function graphql(source: "\n  query ProjectsDashboardQuery {\n    activeUser {\n      projects {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectsDashboardQuery {\n    activeUser {\n      projects {\n        id\n        name\n      }\n    }\n  }\n"];
 export function graphql(source: "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n"): (typeof documents)["\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n"];
 export function graphql(source: "\n    query ProjectLandingPage($id: String!) {\n      project(id: $id) {\n        id\n        name\n        modelCount\n        role\n        editedAt\n        team {\n          id\n          name\n        }\n      }\n    }\n  "): (typeof documents)["\n    query ProjectLandingPage($id: String!) {\n      project(id: $id) {\n        id\n        name\n        modelCount\n        role\n        editedAt\n        team {\n          id\n          name\n        }\n      }\n    }\n  "];
+export function graphql(source: "\n  query ReadinessCheckMetadata {\n    serverInfo {\n      version\n    }\n  }\n"): (typeof documents)["\n  query ReadinessCheckMetadata {\n    serverInfo {\n      version\n    }\n  }\n"];
 
 export function graphql(source: string): unknown;
 export function graphql(source: string) {
