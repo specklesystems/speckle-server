@@ -1,5 +1,5 @@
 <template>
-  <Listbox v-model="value" :multiple="multiple" by="id" as="div">
+  <Listbox v-model="value" :name="name" :multiple="multiple" by="id" as="div">
     <ListboxLabel
       class="block label text-foreground"
       :class="{ 'sr-only': !showLabel }"
@@ -37,9 +37,27 @@
       >
         <ListboxOptions
           class="absolute z-10 mt-1 max-h-60 w-full overflow-auto simple-scrollbar rounded bg-foundation-2 py-1 label label--light shadow-md focus:outline-none"
+          @focus="searchInput?.focus()"
         >
+          <label v-if="search" class="flex flex-col mx-1">
+            <span class="sr-only label text-foreground">Search</span>
+            <div class="relative">
+              <div
+                class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
+              >
+                <MagnifyingGlassIcon class="h-5 w-5 text-foreground" />
+              </div>
+              <input
+                ref="searchInput"
+                v-model="searchValue"
+                type="text"
+                class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
+                :placeholder="searchPlaceholder"
+              />
+            </div>
+          </label>
           <ListboxOption
-            v-for="user in users"
+            v-for="user in filteredItems"
             :key="user.id"
             v-slot="{ active, selected }"
             :value="user"
@@ -78,9 +96,15 @@ import {
   ListboxOptions,
   ListboxLabel
 } from '@headlessui/vue'
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
+import {
+  ChevronDownIcon,
+  CheckIcon,
+  ChevronUpIcon,
+  MagnifyingGlassIcon
+} from '@heroicons/vue/24/solid'
 import { isArray } from 'lodash-es'
 import { PropType } from 'vue'
+import { Nullable, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -122,6 +146,13 @@ const props = defineProps({
     default: false
   },
   /**
+   * Search placeholder text
+   */
+  searchPlaceholder: {
+    type: String,
+    default: 'Search people'
+  },
+  /**
    * Label is required at the very least for screen-readers
    */
   label: {
@@ -134,8 +165,15 @@ const props = defineProps({
   showLabel: {
     type: Boolean,
     default: false
+  },
+  name: {
+    type: String as PropType<Optional<string>>,
+    default: undefined
   }
 })
+
+const searchInput = ref(null as Nullable<HTMLInputElement>)
+const searchValue = ref('')
 
 const value = computed({
   get: () => {
@@ -155,5 +193,13 @@ const value = computed({
 
     emit('update:modelValue', props.multiple ? newVal || [] : newVal)
   }
+})
+
+const filteredItems = computed(() => {
+  const searchVal = searchValue.value
+  if (!props.search || !searchVal?.length) return props.users
+  return props.users.filter((u) =>
+    u.name.toLocaleLowerCase().includes(searchVal.toLocaleLowerCase())
+  )
 })
 </script>
