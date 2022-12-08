@@ -14,7 +14,8 @@ export default {
     docs: {
       inlineStories: false,
       iframeHeight: 1000
-    }
+    },
+    layout: 'fullscreen'
   }
 } as Meta
 
