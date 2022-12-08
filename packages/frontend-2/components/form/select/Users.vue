@@ -36,10 +36,10 @@
         leave-to-class="opacity-0"
       >
         <ListboxOptions
-          class="absolute z-10 mt-1 max-h-60 w-full overflow-auto simple-scrollbar rounded bg-foundation-2 py-1 label label--light shadow-md focus:outline-none"
+          class="absolute z-10 mt-1 w-full rounded bg-foundation-2 py-1 label label--light shadow-md focus:outline-none"
           @focus="searchInput?.focus()"
         >
-          <label v-if="search" class="flex flex-col mx-1">
+          <label v-if="search" class="flex flex-col mx-1 mb-1">
             <span class="sr-only label text-foreground">Search</span>
             <div class="relative">
               <div
@@ -56,33 +56,38 @@
               />
             </div>
           </label>
-          <ListboxOption
-            v-for="user in filteredItems"
-            :key="user.id"
-            v-slot="{ active, selected }"
-            :value="user"
+          <div
+            class="overflow-auto simple-scrollbar"
+            :class="[search ? 'max-h-52' : 'max-h-60']"
           >
-            <li
-              :class="[
-                active ? 'text-primary' : 'text-foreground',
-                'relative cursor-default select-none py-1.5 pl-3 pr-9'
-              ]"
+            <ListboxOption
+              v-for="user in filteredItems"
+              :key="user.id"
+              v-slot="{ active, selected }"
+              :value="user"
             >
-              <span :class="['block truncate']">
-                {{ user.name }}
-              </span>
-
-              <span
-                v-if="selected"
+              <li
                 :class="[
                   active ? 'text-primary' : 'text-foreground',
-                  'absolute inset-y-0 right-0 flex items-center pr-4'
+                  'relative cursor-default select-none py-1.5 pl-3 pr-9'
                 ]"
               >
-                <CheckIcon class="h-5 w-5" aria-hidden="true" />
-              </span>
-            </li>
-          </ListboxOption>
+                <span :class="['block truncate']">
+                  {{ user.name }}
+                </span>
+
+                <span
+                  v-if="selected"
+                  :class="[
+                    active ? 'text-primary' : 'text-foreground',
+                    'absolute inset-y-0 right-0 flex items-center pr-4'
+                  ]"
+                >
+                  <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                </span>
+              </li>
+            </ListboxOption>
+          </div>
         </ListboxOptions>
       </Transition>
     </div>
