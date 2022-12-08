@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <button class="pointer-events-auto group" @click="commentClicked()">
+    <button class="pointer-events-auto group" @click="toggleComment()">
       <div class="animate-ping absolute bg-primary rounded-full h-8 w-8"></div>
       <div
         class="absolute bg-white/80 group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-bold"
@@ -30,14 +30,14 @@
                 :icon-left="ArrowLeftIcon"
                 text
                 size="sm"
-                @click="$emit('next', index - 1), (expanded = false)"
+                @click="commentState--"
               >
                 Previous
               </FormButton>
               <FormButton
                 :icon-right="ArrowRightIcon"
                 size="sm"
-                @click="$emit('next', index + 1), (expanded = false)"
+                @click="commentState++"
               >
                 Next
               </FormButton>
@@ -52,46 +52,40 @@
 import { Viewer } from '@speckle/viewer'
 import { Vector3 } from 'three'
 import { XMarkIcon, ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
+import type { Ref } from 'vue'
 
-const commentState = inject('commentState')
+const commentState = inject('commentState') as Ref<number>
+const locations = inject('locations') as { camPos: number[] }[]
 
 const props = defineProps({
   index: {
     type: Number,
     default: 0
-  },
-  expandedIndex: {
-    type: Number,
-    required: true
-  },
-  camPos: {
-    type: Array,
-    default: () => [1, 1, 1, 1, 1, 1]
-  },
-  expand: { type: Boolean, default: false }
+  }
 })
 
 const viewer = inject('viewer') as Viewer
 
-const expanded = ref(false)
-
-watch(props, (newVal, oldVal) => {
-  console.log(newVal.expand)
-  if (newVal.expand) commentClicked()
+const expanded = computed(() => {
+  return commentState.value === props.index
 })
 
-const commentClicked = () => {
-  expanded.value = !expanded.value
-  if (expanded.value)
-    viewer.setView({
-      position: new Vector3(props.camPos[0], props.camPos[1], props.camPos[2]),
-      target: new Vector3(props.camPos[3], props.camPos[4], props.camPos[5])
-    })
+watchEffect(() => {
+  if (expanded.value) setView()
+})
+
+function toggleComment() {
+  if (expanded.value) commentState.value = -1
+  else {
+    commentState.value = props.index
+  }
 }
 
-onMounted(() => {
-  if (props.expand === true)
-    //expanded.value = true
-    commentClicked()
-})
+function setView() {
+  const camPos = locations[props.index].camPos
+  viewer.setView({
+    position: new Vector3(camPos[0], camPos[1], camPos[2]),
+    target: new Vector3(camPos[3], camPos[4], camPos[5])
+  })
+}
 </script>

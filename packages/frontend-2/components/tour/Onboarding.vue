@@ -101,17 +101,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ArrowRightIcon,
-  CloudArrowDownIcon,
-  PlusCircleIcon
-} from '@heroicons/vue/24/solid'
-import { locations } from '~~/lib/tour/mockedComments'
+import { CloudArrowDownIcon, PlusCircleIcon } from '@heroicons/vue/24/solid'
 import { Viewer } from '@speckle/viewer'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
-  OnboardingState,
   OnboardingIndustry,
   OnboardingRole,
   RoleTitleMap
@@ -138,6 +132,7 @@ const rotateGently = (factor = 1) => {
 }
 
 const setIndustry = () => {
+  // TODO: actually set values and finish onboarding
   step.value++
   viewer.setView({
     position: new Vector3(
