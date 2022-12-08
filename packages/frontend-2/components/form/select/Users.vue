@@ -183,7 +183,11 @@ const searchValue = ref('')
 const value = computed({
   get: () => {
     const currentValue = props.modelValue
-    return props.multiple ? currentValue || [] : currentValue
+    if (props.multiple) {
+      return isArray(currentValue) ? currentValue : []
+    } else {
+      return isArray(currentValue) ? undefined : currentValue
+    }
   },
   set: (newVal) => {
     if (props.multiple && !isArray(newVal)) {
