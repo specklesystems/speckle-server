@@ -103,6 +103,12 @@
   </Listbox>
 </template>
 <script setup lang="ts">
+// Vue components don't support generic props, so having to rely on any
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import {
   Listbox,
   ListboxButton,
@@ -120,7 +126,7 @@ import { isArray } from 'lodash-es'
 import { PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
-type SingleItem = Record<string, unknown>
+type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
 const emit = defineEmits<{
@@ -204,12 +210,10 @@ const value = computed({
   },
   set: (newVal) => {
     if (props.multiple && !isArray(newVal)) {
-      console.warn(
-        'Attempting to set non-array value in Users selector w/ multiple=true'
-      )
+      console.warn('Attempting to set non-array value in selector w/ multiple=true')
       return
     } else if (!props.multiple && isArray(newVal)) {
-      console.warn('Attempting to set array value in Users selector w/ multiple=false')
+      console.warn('Attempting to set array value in selector w/ multiple=false')
       return
     }
 
