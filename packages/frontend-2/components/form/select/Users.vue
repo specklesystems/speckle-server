@@ -8,9 +8,10 @@
     </ListboxLabel>
     <div class="relative mt-1">
       <ListboxButton
-        class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+        v-slot="{ open }"
+        class="normal w-full cursor-default rounded-lg bg-foundation py-2 px-3 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1 flex items-center"
       >
-        <span class="block truncate">
+        <span class="block truncate grow text-left">
           <template v-if="!value || (isArray(value) && !value.length)">
             <slot name="nothing-selected">
               {{ label }}
@@ -20,10 +21,13 @@
             {{ isArray(value) ? value.map((u) => u.name).join(', ') : value.name }}
           </template>
         </span>
-        <span
-          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
-        >
-          <ChevronDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+        <span class="pointer-events-none shrink-0 ml-1">
+          <ChevronUpIcon
+            v-if="open"
+            class="h-4 w-4 text-foreground"
+            aria-hidden="true"
+          />
+          <ChevronDownIcon v-else class="h-4 w-4 text-foreground" aria-hidden="true" />
         </span>
       </ListboxButton>
       <Transition
@@ -32,7 +36,7 @@
         leave-to-class="opacity-0"
       >
         <ListboxOptions
-          class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+          class="absolute z-10 mt-1 max-h-60 w-full overflow-auto simple-scrollbar rounded bg-foundation-2 py-1 label label--light shadow-md focus:outline-none"
         >
           <ListboxOption
             v-for="user in users"
@@ -42,20 +46,18 @@
           >
             <li
               :class="[
-                active ? 'text-white bg-indigo-600' : 'text-gray-900',
-                'relative cursor-default select-none py-2 pl-3 pr-9'
+                active ? 'text-primary' : 'text-foreground',
+                'relative cursor-default select-none py-1.5 pl-3 pr-9'
               ]"
             >
-              <span
-                :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']"
-              >
+              <span :class="['block truncate']">
                 {{ user.name }}
               </span>
 
               <span
                 v-if="selected"
                 :class="[
-                  active ? 'text-white' : 'text-indigo-600',
+                  active ? 'text-primary' : 'text-foreground',
                   'absolute inset-y-0 right-0 flex items-center pr-4'
                 ]"
               >
@@ -76,7 +78,7 @@ import {
   ListboxOptions,
   ListboxLabel
 } from '@headlessui/vue'
-import { ChevronDownIcon, CheckIcon } from '@heroicons/vue/24/solid'
+import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { isArray } from 'lodash-es'
 import { PropType } from 'vue'
 import { graphql } from '~~/lib/common/generated/gql'

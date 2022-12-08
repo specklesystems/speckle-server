@@ -15,7 +15,7 @@ const fakeUsers: FormUsersSelectItemFragment[] = [
   },
   {
     id: '3',
-    name: 'Some jabroni',
+    name: `Some jabroni with a super very long name, I mean look at it, it's way too long for a select box!`,
     avatar: null
   },
   {
