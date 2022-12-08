@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col items-center">
-    <LogoTextWhite class="mt-6 mb-4" />
-    <CommonStepsBullet
+    <!-- <LogoTextWhite class="mt-6 mb-4" /> -->
+    <!-- <CommonStepsBullet
       :model-value="topStep"
       :steps="topSteps"
       class="my-6 md:my-12 lg:my-16 xl:my-20"
-    />
+    /> -->
     <LayoutPanel class="max-w-3xl w-full">
       <div class="flex flex-col items-center">
         <div class="w-full relative">

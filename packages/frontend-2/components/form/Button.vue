@@ -19,7 +19,7 @@ import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
+type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning' | 'card'
 
 const emit = defineEmits<{
   /**
@@ -160,6 +160,13 @@ const bgAndBorderClasses = computed(() => {
             : 'bg-foundation dark:bg-foreground border-transparent'
         )
         break
+      case 'card':
+        classParts.push(
+          props.outlined
+            ? 'border-foundation-2 shadow'
+            : 'bg-foundation-2 dark:bg-foreground border-foundation dark:border-foreground shadow'
+        )
+        break
       case 'danger':
         classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
         break
@@ -192,6 +199,11 @@ const foregroundClasses = computed(() => {
         case 'invert':
           classParts.push(
             props.outlined ? 'text-foundation dark:text-foreground' : 'text-primary'
+          )
+          break
+        case 'card':
+          classParts.push(
+            props.outlined ? 'text-foreground' : 'text-foreground dark:text-foundation'
           )
           break
         case 'danger':

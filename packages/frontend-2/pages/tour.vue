@@ -7,16 +7,10 @@
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-// import { getOrInitViewer } from '~~/lib/viewer/composables/viewer'
+const { isLoggedIn } = useActiveUser()
 
 definePageMeta({
   title: 'Onboarding Tour',
   layout: 'fullscreen'
 })
-
-onMounted(() => {
-  // TODO
-})
-
-const { isLoggedIn } = useActiveUser()
 </script>
