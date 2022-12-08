@@ -76,6 +76,13 @@ export default class Sandbox {
     filterBy: 'Volume'
   }
 
+  public static shadowCatcherParams = {
+    planeSubdivision: 10,
+    sampleCount: 100,
+    textureSize: 64,
+    blurRadius: 16
+  }
+
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
     this.viewer = viewer
     this.selectionList = selectionList
@@ -414,7 +421,7 @@ export default class Sandbox {
 
     const dynamicAoFolder = pipelineFolder.addFolder({
       title: 'Dynamic AO',
-      expanded: true
+      expanded: false
     })
 
     dynamicAoFolder
@@ -486,7 +493,7 @@ export default class Sandbox {
 
     const staticAoFolder = pipelineFolder.addFolder({
       title: 'Static AO',
-      expanded: true
+      expanded: false
     })
     // staticAoFolder
     //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
@@ -559,7 +566,7 @@ export default class Sandbox {
 
     const lightsFolder = this.tabs.pages[1].addFolder({
       title: 'Lights',
-      expanded: true
+      expanded: false
     })
     const directLightFolder = lightsFolder.addFolder({
       title: 'Direct',
@@ -664,6 +671,64 @@ export default class Sandbox {
       .on('change', (value) => {
         value
         this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+
+    const shadowcatcherFolder = this.tabs.pages[1].addFolder({
+      title: 'Shadowcatcher',
+      expanded: true
+    })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'planeSubdivision', {
+        label: 'Plane Subdivision',
+        min: 4,
+        max: 1000,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+
+        this.viewer.getRenderer().testPlaneBuild()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'sampleCount', {
+        label: 'Sample Count',
+        min: 1,
+        max: 1000,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testTrace()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
+        label: 'Texture Size',
+        min: 1,
+        max: 1024,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testBake()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'blurRadius', {
+        label: 'Blur Radius',
+        min: 1,
+        max: 128,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testBake()
       })
   }
 

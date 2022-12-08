@@ -23,7 +23,6 @@ import {
 } from './StaticAOPass'
 import { SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
-import { ShadowcatcherPass } from './ShadowcatcherPass'
 
 export enum RenderType {
   NORMAL,
@@ -77,7 +76,6 @@ export class Pipeline {
   private applySaoPass: ApplySAOPass = null
   private copyOutputPass: CopyOutputPass = null
   private staticAoPass: StaticAOPass = null
-  public shadowcatcherPass: ShadowcatcherPass = null
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -233,8 +231,6 @@ export class Pipeline {
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
 
-    this.shadowcatcherPass = new ShadowcatcherPass()
-
     this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT])
     this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT])
     this.renderPass.setLayers([
@@ -242,7 +238,6 @@ export class Pipeline {
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.SHADOWCATCHER
     ])
-    this.shadowcatcherPass.setLayers([ObjectLayers.SHADOWCATCHER])
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {
@@ -294,7 +289,6 @@ export class Pipeline {
     pipeline.push(this.staticAoPass)
     pipeline.push(this.renderPass)
     pipeline.push(this.applySaoPass)
-    pipeline.push(this.shadowcatcherPass)
 
     this.needsProgressive = true
     return pipeline
@@ -328,7 +322,6 @@ export class Pipeline {
     this.normalsPass.update(renderer.scene, renderer.camera)
     this.staticAoPass.update(renderer.scene, renderer.camera)
     this.applySaoPass.update(renderer.scene, renderer.camera)
-    this.shadowcatcherPass.update(renderer.scene, renderer.camera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)

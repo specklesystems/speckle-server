@@ -151,5 +151,9 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
   // Purple market square
   // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
+  // Sum building
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/4ea2759162'
+  // Boat
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/ba5df427db'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/c9ebe49824'
 )

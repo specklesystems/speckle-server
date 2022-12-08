@@ -3,22 +3,15 @@ import {
   Box3,
   Box3Helper,
   CameraHelper,
-  CanvasTexture,
   Color,
   DirectionalLight,
   DirectionalLightHelper,
-  DoubleSide,
-  Float32BufferAttribute,
   Group,
   Intersection,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
-  NearestFilter,
   Object3D,
   Plane,
-  PlaneGeometry,
-  Ray,
   RGBADepthPacking,
   Scene,
   Sphere,
@@ -60,7 +53,7 @@ import {
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
-import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
+import { Shadowcatcher } from './Shadowcatcher'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -94,6 +87,7 @@ export default class SpeckleRenderer {
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
+  private _shadowcatcher: Shadowcatcher = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -166,6 +160,10 @@ export default class SpeckleRenderer {
     })
   }
 
+  public get shadowcatcher() {
+    return this._shadowcatcher
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this._scene = new Scene()
     this.rootGroup = new Group()
@@ -184,6 +182,7 @@ export default class SpeckleRenderer {
       new Plane(),
       new Plane()
     )
+    this._shadowcatcher = new Shadowcatcher()
   }
 
   public create(container: HTMLElement) {
@@ -393,6 +392,7 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     this.pipeline.update(this)
+    this._shadowcatcher.update(this._scene)
   }
 
   public resetPipeline(force = false) {
@@ -406,6 +406,7 @@ export default class SpeckleRenderer {
       this._needsRender = this.pipeline.render()
       // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
       // this._needsRender = true
+      this._shadowcatcher.render(this._renderer)
     }
   }
 
@@ -479,51 +480,8 @@ export default class SpeckleRenderer {
       }
     })
 
-    const boxSize = this.sceneBox.getSize(new Vector3())
-    const boxCenter = this.sceneBox.getCenter(new Vector3())
-    const aspect = boxSize.x / boxSize.y
-    const groundPlaneGeometry = new PlaneGeometry(
-      boxSize.x * 2,
-      boxSize.y * 2,
-      50,
-      50 / aspect
-    )
-    const colors = new Float32Array(groundPlaneGeometry.attributes.position.count * 3)
-    groundPlaneGeometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
-    const generateMaterial = new MeshBasicMaterial({ color: 0xffffff })
-    generateMaterial.vertexColors = true
-    generateMaterial.toneMapped = false
-
-    const displayMaterial = new SpeckleBasicMaterial({ color: 0xffffff }, ['USE_RTE'])
-    displayMaterial.vertexColors = false
-    displayMaterial.map = this.pipeline.shadowcatcherPass.outputTexture
-    // displayMaterial.dithering = true
-    displayMaterial.transparent = true
-    // displayMaterial.blending = MultiplyBlending
-    displayMaterial.toneMapped = false
-    // displayMaterial.blendSrc = OneFactor
-    // displayMaterial.blendSrcAlpha = OneFactor
-    // displayMaterial.blendDst = OneMinusSrcAlphaFactor
-    // displayMaterial.blendDstAlpha = OneMinusSrcAlphaFactor
-
-    const groundPlane = new Mesh(groundPlaneGeometry, displayMaterial)
-    const mat = new Matrix4().makeTranslation(
-      boxCenter.x,
-      boxCenter.y,
-      boxCenter.z - boxSize.z * 0.5 - 0.01
-    )
-    groundPlane.geometry.applyMatrix4(mat)
-
-    groundPlane.layers.set(ObjectLayers.SHADOWCATCHER)
-    groundPlane.name = 'Shadowcatcher'
-    groundPlane.frustumCulled = false
-    this._scene.add(groundPlane)
-    this.pipeline.shadowcatcherPass.onBeforeRender = () => {
-      groundPlane.material = generateMaterial as SpeckleBasicMaterial
-    }
-    this.pipeline.shadowcatcherPass.onAfterRender = () => {
-      groundPlane.material = displayMaterial
-    }
+    this._shadowcatcher.updatePlaneMesh(this.sceneBox, ObjectLayers.SHADOWCATCHER)
+    this._scene.add(this._shadowcatcher.shadowcatcherMesh)
 
     this.updateDirectLights()
     this.updateHelpers()
@@ -626,72 +584,20 @@ export default class SpeckleRenderer {
     this.sectionBoxOutlines.enable(value)
   }
 
+  public testPlaneBuild() {
+    this._shadowcatcher.updatePlaneMesh(this.sceneBox, ObjectLayers.SHADOWCATCHER, true)
+    this.testTrace()
+  }
+
   public testTrace() {
-    const start = performance.now()
-    const sampleCount = 100
-    const maxDist = 20
-    const plane: Mesh = this.scene.getObjectByName('Shadowcatcher') as Mesh
-    const vertices = plane.geometry.attributes.position.array
-    const uvs = plane.geometry.attributes.uv.array
-    const colors = plane.geometry.attributes.color.array as number[]
-    const meshes = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
-    const canvas = document.createElement('CANVAS') as HTMLCanvasElement
-    canvas.width = 512
-    canvas.height = 512 / 0.4723990432614013
-    const ctx = canvas.getContext('2d')
-    const imageData = new Uint8ClampedArray(canvas.width * canvas.height * 4)
-    const tex = new CanvasTexture(canvas)
-    tex.minFilter = NearestFilter
-    tex.magFilter = NearestFilter
-    for (let i = 0; i < meshes.length; i++) {
-      const invMat = new Matrix4().copy(meshes[i].renderObject.matrixWorld)
-      invMat.invert()
-      for (let k = 0; k < vertices.length; k += 3) {
-        // let hit = 0
-        for (let d = 0; d < sampleCount; d++) {
-          const sample = new Vector3()
-          sample.x = Math.random() * 2 - 1
-          sample.y = Math.random() * 2 - 1
-          sample.z = Math.random()
+    const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    this._shadowcatcher.bake(batches)
+    this.resetPipeline(true)
+  }
 
-          sample.normalize()
-          const ray = new Ray(
-            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]),
-            sample
-          )
-          ray.applyMatrix4(invMat)
-          const res = meshes[i].boundsTree.raycastFirst(ray, DoubleSide)
-          if (res && res.distance < maxDist) {
-            // hit++
-            const uvX = uvs[(k / 3) * 2]
-            const uvY = 1 - uvs[(k / 3) * 2 + 1]
-            const x = Math.trunc(uvX * canvas.width)
-            const y = Math.trunc(uvY * canvas.height)
-            const coord = x + y * canvas.width
-
-            imageData[coord * 4] += ((1 - res.distance) / sampleCount) * 255
-            imageData[coord * 4 + 1] += ((1 - res.distance) / sampleCount) * 255
-            imageData[coord * 4 + 2] += ((1 - res.distance) / sampleCount) * 255
-            imageData[coord * 4 + 3] = 255
-            colors[k] += (1 - res.distance / maxDist) / sampleCount
-            colors[k + 1] += (1 - res.distance / maxDist) / sampleCount
-            colors[k + 2] += (1 - res.distance / maxDist) / sampleCount
-            // colors[k] += 1 / sampleCount
-            // colors[k + 1] += 1 / sampleCount
-            // colors[k + 2] += 1 / sampleCount
-          }
-        }
-        // if (hit > sampleCount * 0.5) console.log(hit)
-      }
-    }
-    ctx.putImageData(new ImageData(imageData, canvas.width, canvas.height), 0, 0)
-    tex.needsUpdate = true
-    // ;(plane.material as SpeckleBasicMaterial).map = tex
-    // console.warn(canvas.toDataURL())
-    plane.geometry.attributes.color.needsUpdate = true
-    console.warn('Time -> ', performance.now() - start)
-    this.pipeline.shadowcatcherPass.setOutputSize(64, 64 / 0.4723990432614013)
-    this.pipeline.shadowcatcherPass.needsUpdate = true
+  public testBake() {
+    this.shadowcatcher.shadowcatcherPass.needsUpdate = true
+    this.resetPipeline(true)
   }
 
   private addDirectLights() {

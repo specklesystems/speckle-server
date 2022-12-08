@@ -9,7 +9,12 @@
 
 .background-dark {
   background: rgb(53, 69, 88);
-  background: linear-gradient(144deg, rgba(53, 69, 88, 1) 0%, rgba(0, 16, 36, 1) 100%);
+  background: radial-gradient(
+    at right center,
+    rgb(29, 78, 216),
+    rgb(30, 64, 175),
+    rgb(17, 24, 39)
+  );
 }
 
 #renderer {

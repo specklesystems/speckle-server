@@ -1,6 +1,5 @@
 import {
   Box3,
-  Camera,
   CameraHelper,
   Color,
   LinearFilter,
@@ -24,16 +23,6 @@ import {
 import { ObjectLayers } from '../SpeckleRenderer'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
-export enum DepthType {
-  PERSPECTIVE_DEPTH,
-  LINEAR_DEPTH
-}
-
-export enum DepthSize {
-  FULL,
-  HALF
-}
-
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
   private blurIntermediateRenderTarget: WebGLRenderTarget = null
@@ -44,8 +33,10 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private fsQuad: FullScreenQuad = null
   private vBlurMaterial: ShaderMaterial = null
   private hBlurMaterial: ShaderMaterial = null
-  private prevStdDev: number
-  private prevNumSamples: number
+  public blurStdDev = 4
+  public blurRadius = 16
+  private prevBlurStdDev = 0
+  private prevBlurRadius = 0
 
   public onBeforeRender: () => void = null
   public onAfterRender: () => void = null
@@ -102,8 +93,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     this.fsQuad = new FullScreenQuad(this.vBlurMaterial)
   }
 
-  public update(scene: Scene, camera: Camera) {
-    camera
+  public update(scene: Scene) {
     this.scene = scene
     if (this._needsUpdate) {
       const plane: Mesh = this.scene.getObjectByName('Shadowcatcher') as Mesh
@@ -129,41 +119,41 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
 
       /** BLUR UNIFORMS */
       this.vBlurMaterial.uniforms['cameraNear'].value = (
-        camera as PerspectiveCamera | OrthographicCamera
+        this.camera as PerspectiveCamera | OrthographicCamera
       ).near
       this.vBlurMaterial.uniforms['cameraFar'].value = (
-        camera as PerspectiveCamera | OrthographicCamera
+        this.camera as PerspectiveCamera | OrthographicCamera
       ).far
       this.hBlurMaterial.uniforms['cameraNear'].value = (
-        camera as PerspectiveCamera | OrthographicCamera
+        this.camera as PerspectiveCamera | OrthographicCamera
       ).near
       this.hBlurMaterial.uniforms['cameraFar'].value = (
-        camera as PerspectiveCamera | OrthographicCamera
+        this.camera as PerspectiveCamera | OrthographicCamera
       ).far
 
       /** BLUR UNIFORM PARAMS */
       const depthCutoff = 0
-      // this.params.blurDepthCutoff *
-      // ((camera as PerspectiveCamera | OrthographicCamera).far -
-      //   (camera as PerspectiveCamera | OrthographicCamera).near)
       this.vBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
       this.hBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
-
-      const blurRadius = 16
-      const blurStdDev = 4
-
-      BlurShaderUtils.configure(
-        this.vBlurMaterial,
-        blurRadius,
-        blurStdDev,
-        new Vector2(0, 1)
-      )
-      BlurShaderUtils.configure(
-        this.hBlurMaterial,
-        blurRadius,
-        blurStdDev,
-        new Vector2(1, 0)
-      )
+      if (
+        this.prevBlurStdDev !== this.blurStdDev ||
+        this.prevBlurRadius !== this.blurRadius
+      ) {
+        BlurShaderUtils.configure(
+          this.vBlurMaterial,
+          this.blurRadius,
+          this.blurStdDev,
+          new Vector2(0, 1)
+        )
+        BlurShaderUtils.configure(
+          this.hBlurMaterial,
+          this.blurRadius,
+          this.blurStdDev,
+          new Vector2(1, 0)
+        )
+        this.prevBlurStdDev = this.blurStdDev
+        this.prevBlurRadius = this.blurRadius
+      }
 
       this.vBlurMaterial.needsUpdate = true
       this.hBlurMaterial.needsUpdate = true
@@ -195,20 +185,24 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       this.fsQuad.material = this.hBlurMaterial
       this.fsQuad.render(renderer)
 
+      renderer.setRenderTarget(null)
       renderer.autoClear = originalAutoClear
       renderer.setClearColor(colorBuffer)
       renderer.setClearAlpha(originalClearAlpha)
 
       this.onAfterRender()
+      this._needsUpdate = false
     }
   }
 
   public setOutputSize(width: number, height: number) {
-    this.renderTarget.setSize(width, height)
-    this.blurIntermediateRenderTarget.setSize(width, height)
+    if (this.renderTarget.width !== width || this.renderTarget.height !== height) {
+      this.renderTarget.setSize(width, height)
+      this.blurIntermediateRenderTarget.setSize(width, height)
 
-    this.vBlurMaterial.uniforms['size'].value.set(width, height)
-    this.hBlurMaterial.uniforms['size'].value.set(width, height)
+      this.vBlurMaterial.uniforms['size'].value.set(width, height)
+      this.hBlurMaterial.uniforms['size'].value.set(width, height)
+    }
   }
 
   public setSize(width: number, height: number) {
