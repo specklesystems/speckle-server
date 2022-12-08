@@ -101,7 +101,7 @@ to another user
 """
 type LimitedUser {
   id: ID!
-  name: String
+  name: String!
   bio: String
   company: String
   avatar: String
