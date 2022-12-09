@@ -60,6 +60,8 @@ COPY packages/fileimport-service/package.json ./packages/fileimport-service/
 WORKDIR /speckle-server/packages/fileimport-service
 RUN yarn workspaces focus --production
 
+FROM gcr.io/distroless/python3-debian11:nonroot as python-image
+
 FROM gcr.io/distroless/nodejs:18 as distributable-stage
 
 ARG NODE_ENV
@@ -71,6 +73,7 @@ ENV PYTHON_BINARY_PATH=${PYTHON_BINARY_PATH}
 
 WORKDIR /speckle-server
 
+COPY --from=python-image / /
 COPY --from=build-stage /speckle-server/tini /usr/bin/tini
 COPY --from=build-stage /speckle-server/wait /usr/bin/wait
 COPY --from=build-stage /speckle-server/packages/shared ./packages/shared

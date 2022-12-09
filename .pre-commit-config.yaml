@@ -33,7 +33,6 @@ repos:
         exclude: | # TODO we wish to eventually remove all these exclusions
           (?x)^(
               utils/1click_image_scripts/.*|
-              utils/test-deployment/.*|
               \.circleci/.*
           )$
 
