@@ -51,6 +51,7 @@ async function doTask(task) {
     const fullPayload = JSON.parse(info.evt)
     logger = logger.child({
       taskId: task.id,
+      webhookId: info.wh_id,
       streamId: fullPayload.streamId,
       eventName: fullPayload.event.event_name
     })
@@ -67,7 +68,8 @@ async function doTask(task) {
     const result = await makeNetworkRequest({
       url: info.wh_url,
       data: postData,
-      headersData: postHeaders
+      headersData: postHeaders,
+      logger
     })
 
     logger.info({ result }, `Received response from webhook.`)
