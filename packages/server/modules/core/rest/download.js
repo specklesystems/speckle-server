@@ -7,11 +7,16 @@ const { validatePermissionsReadStream } = require('./authUtils')
 const { getObject, getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-const { logger } = require('@/logging/logging')
+let { logger } = require('@/logging/logging')
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', cors())
 
   app.get('/objects/:streamId/:objectId', cors(), async (req, res) => {
+    logger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId,
+      objectId: req.params.objectId
+    })
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -54,19 +59,10 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          logger.error(
-            err,
-            `[User ${req.context.userId || '-'}] Error downloading object ${
-              req.params.objectId
-            } from stream ${req.params.streamId}`
-          )
+          logger.error(err, 'Error downloading object.')
         } else {
           logger.info(
-            `[User ${req.context.userId || '-'}] Downloaded object ${
-              req.params.objectId
-            } from stream ${req.params.streamId} (size: ${
-              gzipStream.bytesWritten / 1000000
-            } MB)`
+            `Downloaded object (size: ${gzipStream.bytesWritten / 1000000} MB)`
           )
         }
       }
@@ -75,6 +71,11 @@ module.exports = (app) => {
 
   app.options('/objects/:streamId/:objectId/single', cors())
   app.get('/objects/:streamId/:objectId/single', cors(), async (req, res) => {
+    logger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId,
+      objectId: req.params.objectId
+    })
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -89,14 +90,11 @@ module.exports = (app) => {
     })
 
     if (!obj) {
+      logger.warn('Failed to find object.')
       return res.status(404).send('Failed to find object.')
     }
 
-    logger.info(
-      `[User ${req.context.userId || '-'}] Downloaded single object ${
-        req.params.objectId
-      } from stream ${req.params.streamId}`
-    )
+    logger.info('Downloaded single object.')
 
     res.send(obj.data)
   })

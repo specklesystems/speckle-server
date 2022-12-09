@@ -5,12 +5,16 @@ const cors = require('cors')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')
-const { logger } = require('@/logging/logging')
+let { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), async (req, res) => {
+    logger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
+    })
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req
@@ -21,11 +25,7 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    logger.info(
-      `[User ${req.context.userId || '-'}] Diffing ${
-        objectList.length
-      } objects for stream ${req.params.streamId}`
-    )
+    logger.info(`Diffing ${objectList.length} objects`)
 
     const response = await hasObjects({
       streamId: req.params.streamId,
