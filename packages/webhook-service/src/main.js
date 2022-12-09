@@ -30,6 +30,7 @@ async function startTask() {
 }
 
 async function doTask(task) {
+  let boundLogger = logger.child({ taskId: task.id })
   try {
     const { rows } = await knex.raw(
       `
@@ -47,11 +48,10 @@ async function doTask(task) {
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
+    boundLogger = boundLogger.child({ webhookId: info.wh_id })
 
     const fullPayload = JSON.parse(info.evt)
-    const boundLogger = logger.child({
-      taskId: task.id,
-      webhookId: info.wh_id,
+    boundLogger = boundLogger.child({
       streamId: fullPayload.streamId,
       eventName: fullPayload.event.event_name
     })
@@ -69,7 +69,7 @@ async function doTask(task) {
       url: info.wh_url,
       data: postData,
       headersData: postHeaders,
-      boundLogger
+      logger: boundLogger
     })
 
     boundLogger.info({ result }, `Received response from webhook.`)
@@ -90,6 +90,7 @@ async function doTask(task) {
       [task.id]
     )
   } catch (err) {
+    boundLogger.error(err, 'Failed to trigger webhook event.')
     await knex.raw(
       `
       UPDATE webhooks_events
