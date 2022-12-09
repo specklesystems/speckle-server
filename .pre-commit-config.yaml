@@ -26,5 +26,16 @@ repos:
     hooks:
       - id: ggshield-not-ci
 
+  - repo: https://github.com/psf/black
+    rev: '22.10.0'
+    hooks:
+      - id: black # python linter
+        exclude: | # TODO we wish to eventually remove all these exclusions
+          (?x)^(
+              utils/1click_image_scripts/.*|
+              utils/test-deployment/.*|
+              \.circleci/.*
+          )$
+
 ci:
   autoupdate_schedule: quarterly
