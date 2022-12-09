@@ -52,7 +52,7 @@ if not SERVER_VERSION:
     SERVER_VERSION = os.getenv("SERVER_VERSION")
 if SERVER_VERSION:
     if not SERVER_VERSION == "latest":
-        assert server_info.version.startsWith(
+        assert server_info.version.startswith(
             SERVER_VERSION
         ), f"The deployed version {server_info.version} should match, or be prefixed by, the expected {SERVER_VERSION}"
         print(f"Server version {SERVER_VERSION} is deployed and available")
