@@ -1,6 +1,10 @@
 from mtl_file_collection import MtlFileCollection
 import os
 
+import structlog
+
+LOG = structlog.get_logger()
+
 
 class ObjFile(object):
     def __init__(self, file_path) -> None:
@@ -39,7 +43,7 @@ class ObjFile(object):
                     self.crt_object = parts[1]
                 else:
                     if parts[0] not in self.logged_unsupported:
-                        print("Unsupported OBJ directive: " + parts[0])
+                        LOG.warn("Unsupported OBJ directive: " + parts[0])
                         self.logged_unsupported.add(parts[0])
         self.post_process()
 

@@ -8,7 +8,35 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api import operations
 from obj_file import ObjFile
 
+import structlog
+from logging import INFO, basicConfig
 
+basicConfig(format="%(message)s", stream=sys.stdout, level=INFO)
+
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.contextvars.merge_contextvars,
+        structlog.processors.add_log_level,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.CallsiteParameterAdder(
+            {
+                structlog.processors.CallsiteParameter.FILENAME,
+                structlog.processors.CallsiteParameter.FUNC_NAME,
+                structlog.processors.CallsiteParameter.LINENO,
+            }
+        ),
+        structlog.processors.JSONRenderer(),
+    ],
+    wrapper_class=structlog.make_filtering_bound_logger(INFO),
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+LOG = structlog.get_logger()
 TMP_RESULTS_PATH = "/tmp/import_result.json"
 DEFAULT_BRANCH = "uploads"
 
@@ -30,17 +58,20 @@ def convert_material(obj_mat):
 
 def import_obj():
     file_path, _, stream_id, branch_name, commit_message = sys.argv[1:]
-    print(f"ImportOBJ argv[1:]: {sys.argv[1:]}")
+    LOG.info("ImportOBJ argv[1:]:%s", sys.argv[1:])
 
     # Parse input
     obj = ObjFile(file_path)
-    print(f"Parsed obj with {len(obj.faces)} faces ({len(obj.vertices) * 3} vertices)")
+    LOG.info(
+        "Parsed obj with %s faces (%s vertices)", len(obj.faces), len(obj.vertices) * 3
+    )
 
     speckle_root = Base()
     speckle_root["@objects"] = []
 
     for objname in obj.objects:
-        print(f"  Converting {objname}...")
+        objLogger = LOG.bind(object_name=objname)
+        objLogger.info("Converting object")
 
         speckle_obj = Base()
         speckle_obj.name = objname
@@ -130,7 +161,7 @@ if __name__ == "__main__":
             raise Exception("Can't create commit")
         results = {"success": True, "commitId": commit_id}
     except Exception as ex:
-        print("ERROR: " + str(ex))
+        LOG.exception(ex)
         results = {"success": False, "error": str(ex)}
 
     Path(TMP_RESULTS_PATH).write_text(json.dumps(results))
