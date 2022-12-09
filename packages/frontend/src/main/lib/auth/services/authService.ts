@@ -1,7 +1,9 @@
-import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { Nullable } from '@/helpers/typeHelpers'
+import {
+  deletePostAuthRedirect,
+  getPostAuthRedirect
+} from '@/main/lib/auth/utils/postAuthRedirectManager'
 import { getCurrentQueryParams } from '@/main/lib/common/web-apis/helpers/urlHelper'
-import { AppLocalStorage } from '@/utils/localStorage'
 import { Route } from 'vue-router'
 
 /**
@@ -14,13 +16,14 @@ export function processSuccessfulAuth(res: Response): void {
   // If we already have a preferred redirect URL, use that instead, but take the access_code
   // from the incoming redirect URL
   let redirectUrl = undefined
-  const clientSideRedirectPath = AppLocalStorage.get(LocalStorageKeys.ShouldRedirectTo)
-  if (clientSideRedirectPath) {
+  const postAuthRedirect = getPostAuthRedirect()
+  if (postAuthRedirect?.pathWithQuery) {
     const accessCode = new URL(res.url).searchParams.get('access_code')
     if (accessCode) {
-      const newUrl = new URL(clientSideRedirectPath, location.origin)
+      const newUrl = new URL(postAuthRedirect.pathWithQuery, location.origin)
       newUrl.searchParams.set('access_code', accessCode)
       redirectUrl = newUrl.toString()
+      deletePostAuthRedirect()
     }
   }
 
