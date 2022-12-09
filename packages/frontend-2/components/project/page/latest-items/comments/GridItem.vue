@@ -4,7 +4,7 @@
     <div class="flex flex-col justify-between py-2 px-6 min-w-0">
       <div class="flex flex-col">
         <div class="flex space-x-1 items-center mb-2">
-          <UserAvatar size="xs" no-border />
+          <UserAvatar size="24" no-border />
           <span
             class="normal font-semibold text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
           >
@@ -30,9 +30,9 @@
         </div>
         <LinkIcon class="w-4 h-4" />
         <div class="flex -space-x-1 relative">
-          <UserAvatar size="xs" style="z-index: 1" />
-          <UserAvatar size="xs" style="z-index: 2" />
-          <UserAvatar size="xs" style="z-index: 3" />
+          <UserAvatar size="24" style="z-index: 1" />
+          <UserAvatar size="24" style="z-index: 2" />
+          <UserAvatar size="24" style="z-index: 3" />
         </div>
       </div>
     </div>

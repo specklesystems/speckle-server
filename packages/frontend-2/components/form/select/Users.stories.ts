@@ -6,12 +6,14 @@ const fakeUsers: FormUsersSelectItemFragment[] = [
   {
     id: '1',
     name: 'Rocky Balboa',
-    avatar: null
+    avatar:
+      'https://www.gannett-cdn.com/-mm-/ea8a07dc617309ca168e259d006a72abae509118/c=0-35-650-402/local/-/media/2016/02/25/SiouxFalls/SiouxFalls/635919633708862216-rocky.jpg?width=1200&disable=upscale&format=pjpg&auto=webp'
   },
   {
     id: '2',
     name: 'Bozo the Clown',
-    avatar: null
+    avatar:
+      'https://cdn.vox-cdn.com/thumbor/Z2b-41HMCuVhqtEAkgor1w5iy-E=/1400x1050/filters:format(jpeg)/cdn.vox-cdn.com/uploads/chorus_asset/file/10483479/bozo_RIP_getty_ringer.jpg'
   },
   {
     id: '3',
@@ -26,22 +28,25 @@ const fakeUsers: FormUsersSelectItemFragment[] = [
   {
     id: '5',
     name: 'Brad Pitt',
-    avatar: null
+    avatar:
+      'https://media1.popsugar-assets.com/files/thumbor/4UYUg9UKWqqhaFfElFDU9bKMRgQ/356x1145:1857x2646/fit-in/500x500/filters:format_auto-!!-:strip_icc-!!-/2019/09/04/970/n/1922398/cc3fa7b15d70381d55bd82.88203803_/i/Brad-Pitt.jpg'
   },
   {
     id: '6',
     name: 'Kevin McCallister',
-    avatar: null
+    avatar:
+      'https://m.media-amazon.com/images/M/MV5BZjg2ODUwZTgtODRkMS00N2U1LTg2Y2EtNDVhMjRmMDNkNDk3XkEyXkFqcGdeQWFybm8@._V1_.jpg'
   },
   {
     id: '7',
     name: 'Rickety Cricket',
-    avatar: null
+    avatar: 'https://cdn3.whatculture.com/images/2022/08/4ce6e7d99a9761f6-1200x675.jpg'
   },
   {
     id: '8',
     name: 'Master Chief',
-    avatar: null
+    avatar:
+      'https://cdn1.dotesports.com/wp-content/uploads/2021/08/09111246/MasterChief.jpg'
   }
 ]
 
@@ -69,7 +74,7 @@ export const Default: Story = {
     },
     template: `
     <div class="flex justify-center h-72">
-      <FormSelectUsers v-bind="args" @update:modelValue="onModelUpdate" class="max-w-xs w-full"/>
+      <FormSelectUsers v-bind="args" @update:modelValue="onModelUpdate" class="max-w-[154px] w-full"/>
     </div>
     `,
     methods: {
