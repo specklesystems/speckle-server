@@ -58,7 +58,7 @@ async function doTask(task) {
 
   const metricDurationEnd = metricDuration.startTimer()
   try {
-    taskLogger.info({ task }, 'Doing task.')
+    taskLogger.info('Doing task.')
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
