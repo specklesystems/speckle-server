@@ -49,7 +49,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
     res,
     (err) => {
       if (err) {
-        boundLogger.error(err, `Error downloading object from stream`)
+        boundLogger.error(err, 'Error downloading object from stream')
       } else {
         boundLogger.info(
           `Downloaded object from stream (size: ${
@@ -75,9 +75,7 @@ router.get('/:streamId/:objectId/single', async (req, res) => {
     return res.status(404).send('Failed to find object.')
   }
 
-  boundLogger.info(
-    `Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}`
-  )
+  boundLogger.info('Downloaded single object.')
 
   res.send(obj.data)
 })

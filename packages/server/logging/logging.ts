@@ -5,7 +5,10 @@ export { Observability } from '@speckle/shared'
 
 const { getLogger, extendLoggerComponent } = Observability
 
-export const logger = getLogger(process.env.LOG_LEVEL || 'info')
+export const logger = getLogger(
+  process.env.LOG_LEVEL || 'info',
+  process.env.LOG_PRETTY || false
+)
 // loggers for phases of operation
 export const startupLogger = logger.child({ phase: 'startup' })
 export const dbStartupLogger = logger.child({ phase: 'db-startup' })

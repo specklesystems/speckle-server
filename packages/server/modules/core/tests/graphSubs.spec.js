@@ -77,7 +77,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     )
 
     const reg = /running at 0.0.0.0:([0-9]*)/
-    serverProcess.stdout.on('data', (data) => {
+    serverProcess.stderr.on('data', (data) => {
       // uncomment this line to understand a bit more what's happening...
       // console.error( `stderr: ${data}` )
       // ok this is going to be a dirt hack, but I have no better idea ATM
