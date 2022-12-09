@@ -25,13 +25,13 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    boundLogger.info(`Diffing ${objectList.length} objects`)
+    boundLogger.info(`Diffing ${objectList.length} objects.`)
 
     const response = await hasObjects({
       streamId: req.params.streamId,
       objectIds: objectList
     })
-    // boundLogger.debug(response)
+    boundLogger.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': 'application/json'
