@@ -32,11 +32,6 @@ repos:
     hooks:
       - id: black # python formatter
         name: black (python formatter)
-        exclude: | # TODO we wish to eventually remove all these exclusions
-          (?x)^(
-              utils/1click_image_scripts/.*|
-              \.circleci/.*
-          )$
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.0.170
@@ -45,11 +40,6 @@ repos:
         name: ruff (python linter)
         args:
           - --ignore=E501 # ignoring error about lines that are too long
-        exclude: | # TODO we wish to eventually remove all these exclusions
-          (?x)^(
-              utils/1click_image_scripts/.*|
-              \.circleci/.*
-          )$
 
 ci:
   autoupdate_schedule: quarterly

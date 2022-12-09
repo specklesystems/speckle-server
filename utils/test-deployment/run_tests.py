@@ -12,6 +12,7 @@ from specklepy.api.models import ServerInfo
 
 # Setting the SPECKLE_SERVER to test on
 SPECKLE_SERVER = ""
+SPECKLE_SERVER = ""
 if len(sys.argv) > 1:
     SPECKLE_SERVER = sys.argv[1]
 if not SPECKLE_SERVER:
