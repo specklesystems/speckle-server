@@ -50,7 +50,8 @@
     "core-js": "3.22.4",
     "graphql": "^15.3.0",
     "typescript": "^4.8.4",
-    "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react"
+    "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
+    "@speckle/vue-apollo-composable": "portal:/home/fabis/Code/random/vue-apollo/packages/vue-apollo-composable"
   },
   "config": {
     "commitizen": {

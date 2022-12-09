@@ -50,7 +50,9 @@ const useResetAuthState = () => {
 }
 
 export const useAuthCookie = () =>
-  useSynchronizedCookie<Optional<string>>(CookieKeys.AuthToken)
+  useSynchronizedCookie<Optional<string>>(CookieKeys.AuthToken, {
+    maxAge: 60 * 60 * 24 * 30 // 30 days
+  })
 
 export const useAuthManager = () => {
   const {

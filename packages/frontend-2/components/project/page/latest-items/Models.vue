@@ -6,9 +6,17 @@
       />
       <template v-else>LIST VIEW NOT IMPLEMENTED</template>
     </template>
-    <template #filters>FILTERS TODO</template>
+    <template #filters>
+      <FormSelectUsers
+        :users="fakeUsers"
+        multiple
+        selector-placeholder="All members"
+        label="Filter by members"
+      />
+    </template>
   </ProjectPageLatestItems>
 </template>
 <script setup lang="ts">
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { fakeUsers } from '~~/components/form/select/Users.stories'
 </script>
