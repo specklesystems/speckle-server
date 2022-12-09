@@ -1,7 +1,10 @@
 import {
   Box3,
+  BufferGeometry,
   DoubleSide,
   Float32BufferAttribute,
+  LineBasicMaterial,
+  LineSegments,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -15,10 +18,12 @@ import {
 import MeshBatch from './batching/MeshBatch'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
+import { ObjectLayers } from './SpeckleRenderer'
 
 export interface ShadowcatcherConfig {
   planeSubdivision: number
   sampleCount: number
+  maxDist: number
   textureSize: number
   blurRadius: number
 }
@@ -26,6 +31,7 @@ export interface ShadowcatcherConfig {
 export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   planeSubdivision: 10,
   sampleCount: 100,
+  maxDist: 2,
   textureSize: 64,
   blurRadius: 16
 }
@@ -39,6 +45,8 @@ export class Shadowcatcher {
   private displayMaterial: SpeckleBasicMaterial = null
   public shadowcatcherPass: ShadowcatcherPass = null
   private _config: ShadowcatcherConfig = DefaultShadowcatcherConfig
+  private _debugRawAO = false
+  public debugLines: LineSegments = null
 
   public get shadowcatcherMesh() {
     return this.planeMesh
@@ -73,7 +81,9 @@ export class Shadowcatcher {
       this.planeMesh.material = this.generateMaterial
     }
     this.shadowcatcherPass.onAfterRender = () => {
-      this.planeMesh.material = this.displayMaterial
+      this.planeMesh.material = this._debugRawAO
+        ? this.generateMaterial
+        : this.displayMaterial
     }
   }
 
@@ -112,24 +122,29 @@ export class Shadowcatcher {
     if (needsRebuild || force)
       this.updatePlaneMeshGeometry(
         new Vector2(boxSize.x * 2, boxSize.y * 2),
-        new Vector3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize.z * 0.5 - 0.01)
+        new Vector3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize.z * 0.5 - 0.001)
       )
 
     this.planeSize.set(boxSize.x, boxSize.y)
     this.shadowcatcherPass.setLayers([layer])
   }
 
-  public updatePlaneMeshGeometry(size: Vector2, origin: Vector3) {
+  private updatePlaneMeshGeometry(size: Vector2, origin: Vector3) {
     if (this.planeMesh.geometry) {
       this.planeMesh.geometry.dispose()
     }
+    let subX = 0
+    let subY = 0
     const aspect = size.x / size.y
-    const groundPlaneGeometry = new PlaneGeometry(
-      size.x,
-      size.y,
-      this._config.planeSubdivision,
-      this._config.planeSubdivision / aspect
-    )
+    if (size.x >= size.y) {
+      subY = this._config.planeSubdivision
+      subX = subY * aspect
+    } else {
+      subX = this._config.planeSubdivision
+      subY = subX / aspect
+    }
+
+    const groundPlaneGeometry = new PlaneGeometry(size.x, size.y, subX, subY)
     const colors = new Float32Array(groundPlaneGeometry.attributes.position.count * 3)
     groundPlaneGeometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
     const mat = new Matrix4().makeTranslation(origin.x, origin.y, origin.z)
@@ -140,10 +155,16 @@ export class Shadowcatcher {
   private trace(batches: MeshBatch[]) {
     const start = performance.now()
     const sampleCount = this._config.sampleCount
-    const maxDist = 2
+    const maxDist = this._config.maxDist
     const vertices = this.planeMesh.geometry.attributes.position.array
     const colors = this.planeMesh.geometry.attributes.color.array as number[]
     colors.fill(0)
+    if (this.debugLines) {
+      this.debugLines.parent.remove(this.debugLines)
+      this.debugLines.geometry.dispose()
+    }
+    const linePoints = []
+    const lineColors = []
     for (let i = 0; i < batches.length; i++) {
       const invMat = new Matrix4().copy(batches[i].renderObject.matrixWorld)
       invMat.invert()
@@ -160,18 +181,47 @@ export class Shadowcatcher {
             sample
           )
           ray.applyMatrix4(invMat)
+
+          linePoints.push(new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]))
+          linePoints.push(
+            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]).add(
+              new Vector3().copy(ray.direction).multiplyScalar(this._config.maxDist)
+            )
+          )
+
           const res = batches[i].boundsTree.raycastFirst(ray, DoubleSide)
           if (res && res.distance < maxDist) {
-            const contribution = (1 - res.distance / maxDist) / sampleCount
+            const contribution = (1 / sampleCount) * 1.5 //(1 - res.distance / maxDist) / sampleCount
             colors[k] += contribution
             colors[k + 1] += contribution
             colors[k + 2] += contribution
+            lineColors.push(0, 1, 0, 0, 1, 0)
+          } else {
+            lineColors.push(1, 0, 0, 1, 0, 0)
           }
         }
       }
     }
+    const material = new LineBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true
+    })
+    const geometry = new BufferGeometry().setFromPoints(linePoints)
+    // geometry.setFromPoints(linePoints)
+    geometry.setAttribute('color', new Float32BufferAttribute(lineColors, 3))
+    this.debugLines = new LineSegments(geometry, material)
+    this.debugLines.layers.set(ObjectLayers.PROPS)
+    this.debugLines.visible = false
     this.planeMesh.geometry.attributes.color.needsUpdate = true
 
     console.warn('Time -> ', performance.now() - start)
+  }
+
+  // eslint-disable-next-line camelcase
+  public _debug_rawAO() {
+    this._debugRawAO = !this._debugRawAO
+    this.planeMesh.material = this._debugRawAO
+      ? this.generateMaterial
+      : this.displayMaterial
   }
 }

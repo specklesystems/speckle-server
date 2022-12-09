@@ -79,6 +79,7 @@ export default class Sandbox {
   public static shadowCatcherParams = {
     planeSubdivision: 10,
     sampleCount: 100,
+    maxDist: 2,
     textureSize: 64,
     blurRadius: 16
   }
@@ -704,6 +705,19 @@ export default class Sandbox {
           Sandbox.shadowCatcherParams
         this.viewer.getRenderer().testTrace()
       })
+
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'maxDist', {
+        label: 'Max Dist',
+        min: 0.001,
+        max: 1000
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testTrace()
+      })
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
         label: 'Texture Size',
@@ -729,6 +743,22 @@ export default class Sandbox {
         this.viewer.getRenderer().shadowcatcher.configuration =
           Sandbox.shadowCatcherParams
         this.viewer.getRenderer().testBake()
+      })
+    shadowcatcherFolder
+      .addInput({ rawValues: false }, 'rawValues', {
+        label: 'Raw AO'
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().shadowcatcher._debug_rawAO()
+        this.viewer.requestRender(true)
+      })
+    shadowcatcherFolder
+      .addInput({ helper: false }, 'helper', {
+        label: 'Show Subd'
+      })
+      .on('change', (ev) => {
+        this.viewer.getRenderer().shadowcatcherHelper = ev.value
+        this.viewer.requestRender(true)
       })
   }
 

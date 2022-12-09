@@ -191,7 +191,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       renderer.setClearAlpha(originalClearAlpha)
 
       this.onAfterRender()
-      this._needsUpdate = false
+      // this._needsUpdate = false
     }
   }
 

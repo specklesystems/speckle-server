@@ -10,6 +10,7 @@ import {
   Intersection,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   Object3D,
   Plane,
   RGBADepthPacking,
@@ -162,6 +163,21 @@ export default class SpeckleRenderer {
 
   public get shadowcatcher() {
     return this._shadowcatcher
+  }
+
+  public set shadowcatcherHelper(value: boolean) {
+    let helper = this._scene.getObjectByName('ShadowCatcherHelper') as Mesh
+    if (helper) {
+      this._scene.remove(helper)
+    }
+    helper = this._shadowcatcher.shadowcatcherMesh.clone()
+    helper.name = 'ShadowCatcherHelper'
+    helper.layers.set(ObjectLayers.PROPS)
+    helper.visible = value
+    helper.material = new MeshBasicMaterial({ color: 0x000000 })
+    ;(helper.material as MeshBasicMaterial).wireframe = true
+    this._scene.add(helper)
+    this.shadowcatcher.debugLines.visible = value
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -482,7 +498,6 @@ export default class SpeckleRenderer {
 
     this._shadowcatcher.updatePlaneMesh(this.sceneBox, ObjectLayers.SHADOWCATCHER)
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
-
     this.updateDirectLights()
     this.updateHelpers()
     if (this.viewer.sectionBox.display.visible) {
@@ -592,6 +607,7 @@ export default class SpeckleRenderer {
   public testTrace() {
     const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
     this._shadowcatcher.bake(batches)
+    this._scene.add(this.shadowcatcher.debugLines)
     this.resetPipeline(true)
   }
 
