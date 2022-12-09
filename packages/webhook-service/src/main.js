@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const knex = require('./knex')
 const fs = require('fs')
 const metrics = require('./observability/prometheusMetrics')
-let { logger } = require('./observability/logging')
+const { logger } = require('./observability/logging')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
@@ -49,7 +49,7 @@ async function doTask(task) {
     }
 
     const fullPayload = JSON.parse(info.evt)
-    logger = logger.child({
+    const boundLogger = logger.child({
       taskId: task.id,
       webhookId: info.wh_id,
       streamId: fullPayload.streamId,
@@ -64,15 +64,15 @@ async function doTask(task) {
       .digest('hex')
     const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 
-    logger.info('Calling webhook.')
+    boundLogger.info('Calling webhook.')
     const result = await makeNetworkRequest({
       url: info.wh_url,
       data: postData,
       headersData: postHeaders,
-      logger
+      boundLogger
     })
 
-    logger.info({ result }, `Received response from webhook.`)
+    boundLogger.info({ result }, `Received response from webhook.`)
 
     if (!result.success) {
       throw new Error(result.error)

@@ -192,21 +192,23 @@ async function doTask(task) {
 
 function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
   return new Promise((resolve, reject) => {
-    logger.info(`Starting process: ${cmd} ${cmdArgs}`)
+    let boundLogger = logger.child({ cmd, args: cmdArgs })
+    boundLogger.info('Starting process.')
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
+    boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      logger.debug('Parser: %s', data.toString())
+      boundLogger.debug('Parser: %s', data.toString())
     })
 
     childProc.stderr.on('data', (data) => {
-      logger.debug('Parser: %s', data.toString())
+      boundLogger.debug('Parser: %s', data.toString())
     })
 
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      logger.warn('Process timeout. Killing process...')
+      boundLogger.warn('Process timeout. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -214,7 +216,7 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      logger.info({ exitCode: code }, `Process exited with code ${code}`)
+      boundLogger.info({ exitCode: code }, `Process exited with code ${code}`)
 
       if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
 

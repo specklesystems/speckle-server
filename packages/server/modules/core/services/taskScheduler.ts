@@ -3,7 +3,7 @@ import { InvalidArgumentError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { acquireTaskLock } from '@/modules/core/repositories/scheduledTasks'
 import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
-import { activitiesLogger, logger } from '@/logging/logging'
+import { activitiesLogger } from '@/logging/logging'
 
 export const scheduledCallbackWrapper = async (
   scheduledTime: Date,
@@ -14,6 +14,7 @@ export const scheduledCallbackWrapper = async (
     scheduledTask: ScheduledTaskRecord
   ) => Promise<ScheduledTaskRecord | null>
 ) => {
+  const boundLogger = activitiesLogger.child({ taskName })
   // try to acquire the task lock with the function name and a new expiration date
   const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
   try {
@@ -21,26 +22,24 @@ export const scheduledCallbackWrapper = async (
 
     // if couldn't acquire it, stop execution
     if (!lock) {
-      activitiesLogger.warn(
+      boundLogger.warn(
         `Could not acquire task lock for ${taskName}, stopping execution.`
       )
       return null
     }
 
     // else continue executing the callback...
-    activitiesLogger.info(
-      `Executing scheduled function ${taskName} at ${scheduledTime}`
-    )
+    boundLogger.info(`Executing scheduled function ${taskName} at ${scheduledTime}`)
     await callback(scheduledTime)
     // update lock as succeeded
     const finishDate = new Date()
-    activitiesLogger.info(
+    boundLogger.info(
       `Finished scheduled function ${taskName} execution in ${
         (finishDate.getTime() - scheduledTime.getTime()) / 1000
       } seconds`
     )
   } catch (error) {
-    logger.error(
+    boundLogger.error(
       error,
       `The triggered task execution ${taskName} failed at ${scheduledTime}, with error ${
         ensureError(error, 'unknown reason').message
