@@ -103,7 +103,7 @@ async function doTask(task) {
       )
     } else if (info.fileType === 'stl') {
       await runProcessWithTimeout(
-        'python3',
+        process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           './stl/import_file.py',
           TMP_FILE_PATH,
@@ -126,7 +126,7 @@ async function doTask(task) {
       })
 
       await runProcessWithTimeout(
-        'python3',
+        process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           '-u',
           './obj/import_file.py',
