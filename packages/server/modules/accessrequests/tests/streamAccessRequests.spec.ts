@@ -140,6 +140,10 @@ describe('Stream access requests', () => {
         async () => true
       )
 
+      const waitForAck = notificationsStateManager.waitForAck(
+        (e) => e.result?.type === NotificationType.NewStreamAccessRequest
+      )
+
       const results = await createReq(otherGuysPrivateStream.id)
 
       // req gets created
@@ -152,9 +156,7 @@ describe('Stream access requests', () => {
       )
       expect(results.data?.streamAccessRequestCreate.streamId).to.be.ok
 
-      await notificationsStateManager.waitForAck(
-        (e) => e.result?.type === NotificationType.NewStreamAccessRequest
-      )
+      await waitForAck
 
       // email gets sent out
       expect(sendEmailCall.args?.[0]?.[0]).to.be.ok
