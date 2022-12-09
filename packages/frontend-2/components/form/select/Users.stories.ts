@@ -2,7 +2,7 @@ import { Meta, Story } from '@storybook/vue3'
 import FormSelectUsers from '~~/components/form/select/Users.vue'
 import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 
-const fakeUsers: FormUsersSelectItemFragment[] = [
+export const fakeUsers: FormUsersSelectItemFragment[] = [
   {
     id: '1',
     name: 'Rocky Balboa',
@@ -62,7 +62,8 @@ export default {
       description:
         'When nothing has been selected, you can use the slot to render the contents'
     }
-  }
+  },
+  excludeStories: ['fakeUsers']
 } as Meta
 
 export const Default: Story = {
@@ -74,7 +75,7 @@ export const Default: Story = {
     },
     template: `
     <div class="flex justify-center h-72">
-      <FormSelectUsers v-bind="args" @update:modelValue="onModelUpdate" class="max-w-[154px] w-full"/>
+      <FormSelectUsers v-bind="args" @update:modelValue="onModelUpdate" class="max-w-[217px] w-full"/>
     </div>
     `,
     methods: {
