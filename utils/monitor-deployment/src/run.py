@@ -147,7 +147,7 @@ def main():
             t1 = time.time()
             tick(cur)
             t2 = time.time()
-            LOG.info("Updated metrics. (connected in %s, queried in %s)", t1 - t0, t2 - t1)
+            LOG.info("Updated metrics.", connection_period=(t1 - t0), query_period=(t2-t1))
         except Exception as ex:
             LOG.exception(ex)
         finally:
