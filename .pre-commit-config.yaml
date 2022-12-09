@@ -10,6 +10,7 @@ repos:
     rev: 'v0.2.0'
     hooks:
       - id: shellcheck-system
+        name: shellcheck
 
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: 'v0.1.17'
@@ -29,7 +30,21 @@ repos:
   - repo: https://github.com/psf/black
     rev: '22.10.0'
     hooks:
-      - id: black # python linter
+      - id: black # python formatter
+        name: black (python formatter)
+        exclude: | # TODO we wish to eventually remove all these exclusions
+          (?x)^(
+              utils/1click_image_scripts/.*|
+              \.circleci/.*
+          )$
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.170
+    hooks:
+      - id: ruff
+        name: ruff (python linter)
+        args:
+          - --ignore=E501 # ignoring error about lines that are too long
         exclude: | # TODO we wish to eventually remove all these exclusions
           (?x)^(
               utils/1click_image_scripts/.*|
