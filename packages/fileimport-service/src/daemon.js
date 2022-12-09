@@ -50,6 +50,7 @@ async function startTask() {
 }
 
 async function doTask(task) {
+  const taskLogger = logger.child({ task })
   let tempUserToken = null
   let serverApi = null
   let fileTypeForMetric = 'unknown'
@@ -57,7 +58,7 @@ async function doTask(task) {
 
   const metricDurationEnd = metricDuration.startTimer()
   try {
-    logger.info('Doing task ', task)
+    taskLogger.info({ task }, 'Doing task.')
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
@@ -164,7 +165,7 @@ async function doTask(task) {
       [commitId, task.id]
     )
   } catch (err) {
-    logger.error(err)
+    taskLogger.error(err)
     await knex.raw(
       `
       UPDATE file_uploads
@@ -195,17 +196,17 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
     childProc.stdout.on('data', (data) => {
-      logger.info('Parser: ', data.toString())
+      logger.debug('Parser: %s', data.toString())
     })
 
     childProc.stderr.on('data', (data) => {
-      logger.error('Parser: ', data.toString())
+      logger.debug('Parser: %s', data.toString())
     })
 
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      logger.error('Process timeout. Killing process...')
+      logger.warn('Process timeout. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -213,7 +214,7 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      logger.info(`Process exited with code ${code}`)
+      logger.info({ exitCode: code }, `Process exited with code ${code}`)
 
       if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
 
