@@ -17,6 +17,10 @@ export function useFormSelectChildInternals<T>(params: {
 }) {
   const { props, emit } = params
 
+  const { containerWrapper, hiddenItemCount } = useWrappingContainerHiddenCount({
+    skipCalculation: computed(() => !props.multiple?.value)
+  })
+
   /**
    * Use this to get or set the v-model value of the select input in a proper way
    */
@@ -42,11 +46,6 @@ export function useFormSelectChildInternals<T>(params: {
     }
   })
 
-  const skipResizeCalculation = computed(() => !props.multiple?.value)
-  const { containerWrapper, hiddenSelectedItemCount } = useWrappingContainerHiddenCount(
-    { skipCalculation: skipResizeCalculation }
-  )
-
   const isArrayValue = (v: GenericSelectValueType<T>): v is T[] => isArray(v)
   const isMultiItemArrayValue = (v: GenericSelectValueType<T>): v is T[] =>
     isArray(v) && v.length > 1
@@ -56,7 +55,7 @@ export function useFormSelectChildInternals<T>(params: {
   return {
     selectedValue,
     dynamicallyVisibleSelectedItemWrapper: containerWrapper,
-    hiddenSelectedItemCount,
+    hiddenSelectedItemCount: hiddenItemCount,
     isArrayValue,
     isMultiItemArrayValue,
     firstItem

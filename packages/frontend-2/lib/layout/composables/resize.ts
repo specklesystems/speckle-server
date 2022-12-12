@@ -3,6 +3,11 @@ import { useResizeObserver } from '@vueuse/core'
 import { isUndefined } from 'lodash-es'
 import { ComputedRef } from 'vue'
 
+/**
+ * Use this to calculate the number of hidden elements (e.g. user avatars) in a wrapping flex row that
+ * is styled to only show the first row. For example, there are 12 users total, there's only space for 5,
+ * and this composable will calculate the number of hidden ones to use for the "+X" label (+7 in the example)
+ */
 export function useWrappingContainerHiddenCount(
   params?: Partial<{
     /**
@@ -25,7 +30,7 @@ export function useWrappingContainerHiddenCount(
   /**
    * Dynamically updated to show the number of items currently not visible in the container
    */
-  const hiddenSelectedItemCount = ref(0)
+  const hiddenItemCount = ref(0)
 
   /**
    * Update hidden item count
@@ -58,11 +63,11 @@ export function useWrappingContainerHiddenCount(
       totalCount += 1
     }
 
-    hiddenSelectedItemCount.value = totalCount - visibleCount
+    hiddenItemCount.value = totalCount - visibleCount
   })
 
   return {
     containerWrapper,
-    hiddenSelectedItemCount
+    hiddenItemCount
   }
 }
