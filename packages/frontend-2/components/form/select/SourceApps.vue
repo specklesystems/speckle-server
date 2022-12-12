@@ -2,37 +2,39 @@
   <FormSelectBase
     v-model="selectedValue"
     :multiple="multiple"
-    :items="users"
+    :items="SourceApps"
     :search="search"
-    :search-filter-predicate="searchFilterPredicate"
     :search-placeholder="searchPlaceholder"
     :label="label"
     :show-label="showLabel"
     :name="name"
-    by="id"
+    :search-filter-predicate="searchFilterPredicate"
+    by="name"
   >
     <template #nothing-selected>
       <template v-if="selectorPlaceholder">
         {{ selectorPlaceholder }}
       </template>
       <template v-else>
-        {{ multiple ? 'Select users' : 'Select a user' }}
+        {{ multiple ? 'Select apps' : 'Select an app' }}
       </template>
     </template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
-        <div class="flex items-center space-x-0.5">
+        <div class="flex items-center space-x-0.5 h-5">
           <div
             ref="dynamicallyVisibleSelectedItemWrapper"
-            class="flex flex-wrap overflow-hidden space-x-0.5 h-6"
+            class="flex flex-wrap overflow-hidden space-x-0.5 h-5"
           >
-            <UserAvatar
-              v-for="user in value"
-              :key="user.id"
-              :avatar-url="user.avatar"
-              no-border
-              size="24"
-            />
+            <CommonBadge
+              v-for="item in value"
+              :key="item.name"
+              color-classes="text-foreground-on-primary"
+              rounded
+              :style="{ backgroundColor: item.bgColor }"
+            >
+              {{ item.short }}
+            </CommonBadge>
           </div>
           <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
             +{{ hiddenSelectedItemCount }}
@@ -41,25 +43,19 @@
       </template>
       <template v-else>
         <div class="flex items-center">
-          <UserAvatar
-            :avatar-url="(isArrayValue(value) ? value[0] : value).avatar || undefined"
-            no-border
-            size="24"
-            class="mr-2"
+          <div
+            class="h-2 w-2 rounded-full mr-2"
+            :style="{ backgroundColor: firstItem(value).bgColor }"
           />
-          <span class="truncate label label--light">
-            {{ (isArrayValue(value) ? value[0] : value).name }}
-          </span>
+          <span class="truncate">{{ firstItem(value).name }}</span>
         </div>
       </template>
     </template>
     <template #option="{ item }">
       <div class="flex items-center">
-        <UserAvatar
-          :avatar-url="item.avatar || undefined"
-          no-border
-          size="20"
-          class="mr-2"
+        <div
+          class="h-2 w-2 rounded-full mr-2"
+          :style="{ backgroundColor: item.bgColor }"
         />
         <span class="truncate">{{ item.name }}</span>
       </div>
@@ -67,21 +63,11 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
+import { Optional, SourceAppDefinition, SourceApps } from '@speckle/shared'
 import { PropType } from 'vue'
-import { Optional } from '@speckle/shared'
-import { graphql } from '~~/lib/common/generated/gql'
-import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 
-type ValueType = FormUsersSelectItemFragment | FormUsersSelectItemFragment[] | undefined
-
-graphql(`
-  fragment FormUsersSelectItem on LimitedUser {
-    id
-    name
-    avatar
-  }
-`)
+type ValueType = SourceAppDefinition | SourceAppDefinition[] | undefined
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
@@ -89,22 +75,18 @@ const emit = defineEmits<{
 
 const props = defineProps({
   /**
-   * Whether to allow selecting multiple users
+   * Whether to allow selecting multiple source apps
    */
   multiple: {
     type: Boolean,
     default: false
-  },
-  users: {
-    type: Array as PropType<FormUsersSelectItemFragment[]>,
-    required: true
   },
   modelValue: {
     type: [Object, Array] as PropType<ValueType>,
     default: undefined
   },
   /**
-   * Whether to allow filtering users through a search box
+   * Whether to allow filtering source apps through a search box
    */
   search: {
     type: Boolean,
@@ -115,11 +97,11 @@ const props = defineProps({
    */
   searchPlaceholder: {
     type: String,
-    default: 'Search people'
+    default: 'Search apps'
   },
   selectorPlaceholder: {
     type: String as PropType<Optional<string>>,
-    default: ''
+    default: undefined
   },
   /**
    * Label is required at the very least for screen-readers
@@ -145,13 +127,13 @@ const {
   selectedValue,
   dynamicallyVisibleSelectedItemWrapper,
   hiddenSelectedItemCount,
-  isArrayValue,
-  isMultiItemArrayValue
-} = useFormSelectChildInternals<FormUsersSelectItemFragment>({
+  isMultiItemArrayValue,
+  firstItem
+} = useFormSelectChildInternals<SourceAppDefinition>({
   props: toRefs(props),
   emit
 })
 
-const searchFilterPredicate = (i: FormUsersSelectItemFragment, search: string) =>
+const searchFilterPredicate = (i: SourceAppDefinition, search: string) =>
   i.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())
 </script>

@@ -119,5 +119,6 @@ export const SourceApps: SourceAppDefinition[] = [
     name: 'MicroStation',
     short: 'MICRO',
     bgColor: '#846256'
-  }
+  },
+  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' }
 ]
