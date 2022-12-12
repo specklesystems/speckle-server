@@ -15,7 +15,7 @@
       officia deserunt mollit anim id est laborum.
     </td>
     <td class="text-foreground-2 normal pr-5 text-center xl:text-left">
-      12 months ago
+      12 seconds ago
     </td>
     <td class="text-foreground normal pr-5">
       <div class="inline-flex items-center space-x-1 align-middle">

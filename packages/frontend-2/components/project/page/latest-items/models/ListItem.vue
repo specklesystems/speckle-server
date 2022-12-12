@@ -4,21 +4,29 @@
       class="bg-contain bg-no-repeat bg-center"
       :style="{ backgroundImage: `url('${previewUrl}')` }"
     />
-    <td class="normal font-semibold">Model title</td>
+    <td><!-- Fake padding (see thead) --></td>
+    <td class="normal font-semibold truncate pr-5">
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
+      exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
+      irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+      pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+      officia deserunt mollit anim id est laborum.
+    </td>
     <td class="text-foreground-2 normal">
       <div class="inline-flex items-center space-x-1 align-middle">
         <ArrowPathRoundedSquareIcon class="h-5 w-5" />
-        <span>4</span>
+        <span>999</span>
       </div>
     </td>
-    <td class="text-foreground normal">
+    <td class="text-foreground normal pr-5">
       <div class="inline-flex items-center space-x-1 align-middle">
         <ChatBubbleLeftEllipsisIcon class="h-5 w-5" />
-        <span>12</span>
+        <span>999</span>
       </div>
     </td>
-    <td>13 months ago</td>
-    <td>12 months ago</td>
+    <td class="pr-5">13 seconds ago</td>
+    <td>12 seconds ago</td>
   </tr>
 </template>
 <script setup lang="ts">
