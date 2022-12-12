@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { isArray, isUndefined } from 'lodash-es'
+import { isArray } from 'lodash-es'
 import { ToRefs } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
-import { useResizeObserver } from '@vueuse/core'
+import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resize'
 
 type GenericSelectValueType<T> = T | T[] | undefined
 
@@ -17,19 +16,6 @@ export function useFormSelectChildInternals<T>(params: {
   }
 }) {
   const { props, emit } = params
-
-  /**
-   * Add this ref to the parent element of elements that dynamically become visible or invisible
-   * depending on the amount of space inside the select input. This will ensure the "+X" label
-   * is properly updated in real-time to show how many items are hidden.
-   */
-  const dynamicallyVisibleSelectedItemWrapper = ref(null as Nullable<HTMLElement>)
-
-  /**
-   * Dynamically updates to show the number of items currently not visible in the select input. Use
-   * this to render the "+X" label.
-   */
-  const hiddenSelectedItemCount = ref(0)
 
   /**
    * Use this to get or set the v-model value of the select input in a proper way
@@ -56,39 +42,10 @@ export function useFormSelectChildInternals<T>(params: {
     }
   })
 
-  /**
-   * Update hidden item count
-   */
-  useResizeObserver(dynamicallyVisibleSelectedItemWrapper, (entries) => {
-    if (!props.multiple) return
-
-    const entry = entries[0]
-    const target = entry.target
-    const avatarElements = target.children
-
-    /**
-     * Comparing offset from parent to between all avatars to see when they break off into another line
-     * and become invisible
-     */
-    const totalCount = isArray(selectedValue.value) ? selectedValue.value.length : 1
-    let visibleCount = 0
-    let firstElOffsetTop = undefined as Optional<number>
-    for (const avatarEl of avatarElements) {
-      const offsetTop = (avatarEl as HTMLElement).offsetTop
-      if (isUndefined(firstElOffsetTop)) {
-        firstElOffsetTop = offsetTop
-        visibleCount += 1
-      } else {
-        if (offsetTop === firstElOffsetTop) {
-          visibleCount += 1
-        } else {
-          break
-        }
-      }
-    }
-
-    hiddenSelectedItemCount.value = totalCount - visibleCount
-  })
+  const skipResizeCalculation = computed(() => !props.multiple?.value)
+  const { containerWrapper, hiddenSelectedItemCount } = useWrappingContainerHiddenCount(
+    { skipCalculation: skipResizeCalculation }
+  )
 
   const isArrayValue = (v: GenericSelectValueType<T>): v is T[] => isArray(v)
   const isMultiItemArrayValue = (v: GenericSelectValueType<T>): v is T[] =>
@@ -98,7 +55,7 @@ export function useFormSelectChildInternals<T>(params: {
 
   return {
     selectedValue,
-    dynamicallyVisibleSelectedItemWrapper,
+    dynamicallyVisibleSelectedItemWrapper: containerWrapper,
     hiddenSelectedItemCount,
     isArrayValue,
     isMultiItemArrayValue,

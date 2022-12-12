@@ -4,7 +4,7 @@
       <ProjectPageLatestItemsCommentsGrid
         v-if="gridOrList === GridListToggleValue.Grid"
       />
-      <template v-else>LIST VIEW NOT IMPLEMENTED</template>
+      <ProjectPageLatestItemsCommentsList v-else />
     </template>
   </ProjectPageLatestItems>
 </template>

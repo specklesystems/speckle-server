@@ -4,7 +4,7 @@
       <ProjectPageLatestItemsModelsGrid
         v-if="gridOrList === GridListToggleValue.Grid"
       />
-      <ProjectPageLatestItemsModelsList />
+      <ProjectPageLatestItemsModelsList v-else />
     </template>
     <template #filters>
       <div class="flex items-center">
