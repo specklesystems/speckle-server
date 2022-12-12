@@ -38,21 +38,6 @@
           Overlay Another Model
         </FormButton>
         <br />
-        <p class="text-sm">
-          Every model is also versioned - every time you send data to Speckle, we store
-          it as a new version. Try loading a previous version of the model we just
-          overlaid!
-        </p>
-        <FormButton
-          size="sm"
-          outlined
-          full-width
-          :disabled="!hasAddedOverlay || hasSwappedVersions"
-          :icon-right="hasSwappedVersions ? CheckIcon : null"
-          @click="changeOverlayVersion()"
-        >
-          Load a Different Version
-        </FormButton>
         <p class="text-xs dark:text-foundation-5">
           PS: Don't worry about space requirements, we keep track of changes only :)
           Speckle can easily do this because it's
@@ -78,12 +63,6 @@
           <b>Project</b>
           !
         </p>
-        <template #actions>
-          <FormButton text outlined size="sm">Skip</FormButton>
-          <div class="w-full text-right">
-            <FormButton :icon-right="ArrowRightIcon" size="sm">Let's go!</FormButton>
-          </div>
-        </template>
       </TourComment>
     </div>
   </div>
@@ -97,7 +76,7 @@
       v-show="commentState < 0"
       class="fixed bottom-0 left-0 w-full h-28 flex align-center p-10 justify-center space-x-2"
     >
-      <FormButton size="xs" color="invert" rounded>Skip</FormButton>
+      <FormButton size="xs" color="invert" rounded to="/">Skip</FormButton>
       <FormButton size="sm" :icon-right="ArrowRightIcon" rounded>
         Explore Sample Project
       </FormButton>
@@ -143,13 +122,11 @@ onMounted(() => {
 const hasAddedOverlay = ref(false)
 const hasSwappedVersions = ref(false)
 
-function addOverlay() {
+async function addOverlay() {
   // TODO
+  await viewer.loadObject(
+    'https://latest.speckle.dev/streams/b5cc4e967c/objects/9a210ff9cf2252efd22f0f722bf07d57'
+  )
   hasAddedOverlay.value = true
-}
-
-function changeOverlayVersion() {
-  // TODO
-  hasSwappedVersions.value = true
 }
 </script>

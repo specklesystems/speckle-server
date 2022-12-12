@@ -22,7 +22,7 @@ export function useProcessOnboarding() {
   const { triggerNotification } = useGlobalToast()
   const goHome = useNavigateToHome()
 
-  const finishOnboarding = async (state: OnboardingState) => {
+  const finishOnboarding = async (state: OnboardingState, goToDashboard = true) => {
     const user = activeUser.value
 
     if (process.server)
@@ -53,7 +53,7 @@ export function useProcessOnboarding() {
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (data?.activeUserMutations.finishOnboarding) {
+    if (data?.activeUserMutations.finishOnboarding && goToDashboard) {
       goHome()
     } else {
       const errMsg = getFirstErrorMessage(errors)

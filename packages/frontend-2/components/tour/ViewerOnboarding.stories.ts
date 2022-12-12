@@ -3,7 +3,7 @@ import DesignSystem from '~~/components/DesignSystem.vue'
 import Viewer from '~~/components/tour/Viewer.vue'
 
 export default {
-  title: 'Onboarding With Viewer',
+  title: 'Auth/ Onboarding',
   component: Viewer,
   parameters: {
     layout: 'fullscreen'

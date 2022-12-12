@@ -18,7 +18,7 @@
           :key="val"
           color="card"
           size="sm"
-          @click="setIndustry()"
+          @click="setIndustry(val)"
           @mouseenter="rotateGently(Math.random() * 2)"
           @focus="rotateGently(Math.random() * 2)"
         >
@@ -42,7 +42,7 @@
           :key="val"
           color="card"
           size="sm"
-          @click="setIndustry()"
+          @click="setRole(val)"
           @mouseenter="rotateGently(Math.random() * 2)"
           @focus="rotateGently(Math.random() * 2)"
         >
@@ -91,12 +91,12 @@
       </div>
     </div>
   </Transition>
-  <div v-show="step !== 4" class="text-center mt-4">
-    <FormButton class="shadow-lg" color="invert" rounded size="xs">
-      Skip To Dashboard
+  <div v-show="step === 2" class="text-center mt-4">
+    <FormButton class="shadow-lg" color="invert" rounded size="xs" to="/">
+      Skip
     </FormButton>
   </div>
-  <div v-if="step === 4" class="bg-pink-200">
+  <div v-if="step === 4">
     <TourSlideshow />
   </div>
 </template>
@@ -108,8 +108,14 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   OnboardingIndustry,
   OnboardingRole,
-  RoleTitleMap
+  RoleTitleMap,
+  OnboardingState
 } from '~~/lib/auth/helpers/onboarding'
+import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
+
+const { finishOnboarding } = useProcessOnboarding()
+
+const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
 const viewer = inject<Viewer>('viewer') as Viewer
 
@@ -131,9 +137,20 @@ const rotateGently = (factor = 1) => {
   flip *= -1
 }
 
-const setIndustry = () => {
-  // TODO: actually set values and finish onboarding
+function setIndustry(val: OnboardingIndustry) {
+  onboardingState.value.industry = val
   step.value++
+  nextView()
+}
+
+async function setRole(val: OnboardingRole) {
+  onboardingState.value.role = val
+  step.value++
+  nextView()
+  if (activeUser.value?.id) await finishOnboarding(onboardingState.value, false)
+}
+
+function nextView() {
   viewer.setView({
     position: new Vector3(
       camPos[step.value][0],

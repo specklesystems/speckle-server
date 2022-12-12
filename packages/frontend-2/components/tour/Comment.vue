@@ -3,7 +3,7 @@
     <button class="pointer-events-auto group" @click="toggleComment()">
       <div class="animate-ping absolute bg-primary rounded-full h-8 w-8"></div>
       <div
-        class="absolute bg-white/80 group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-bold"
+        class="absolute bg-foundation dark:bg-foreground group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-bold"
       >
         <span v-if="!expanded">{{ index + 1 }}</span>
         <span v-else><XMarkIcon class="h-6 w-6" /></span>
@@ -23,7 +23,7 @@
 
         <div class="flex items-center justify-between pointer-events-auto">
           <slot name="actions">
-            <FormButton text outlined size="sm">Skip</FormButton>
+            <FormButton text outlined size="sm" to="/">Skip</FormButton>
             <div class="flex justify-center space-x-2">
               <FormButton
                 v-show="index !== 0"
