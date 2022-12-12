@@ -68,7 +68,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     await beforeEachContext()
 
     const childProcess = require('child_process')
-    console.log('  Starting server... this might take a bit.')
+    console.log('  Starting server... this may take a while.')
 
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',

@@ -7,7 +7,7 @@ const { getLogger, extendLoggerComponent } = Observability
 
 export const logger = getLogger(
   process.env.LOG_LEVEL || 'info',
-  process.env.LOG_PRETTY || false
+  process.env.LOG_PRETTY === 'true'
 )
 // loggers for phases of operation
 export const startupLogger = logger.child({ phase: 'startup' })
