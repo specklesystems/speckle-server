@@ -1,103 +1,111 @@
 <template>
-  <Transition enter-from-class="opacity-0" enter-active-class="transition duration-300">
-    <div
-      v-show="step === 0"
-      class="bg-white/60 dark:bg-white/60 dark:text-foundation backdrop-blur-sm rounded-md p-4 space-y-4"
-      @mouseenter="rotateGently(Math.random() * 2)"
-      @focus="rotateGently(Math.random() * 2)"
+  <div class="max-w-xl w-screen h-screen flex items-center justify-center">
+    <Transition
+      enter-from-class="opacity-0"
+      enter-active-class="transition duration-300"
     >
-      <h2 class="text-center text-2xl font-bold">
-        Welcome, {{ activeUser?.name?.split(' ')[0] }}!
-      </h2>
-      <p class="text-center">
-        Let's get to know each other. What industry do you work in?
-      </p>
-      <div class="grid grid-cols-3 gap-4">
-        <FormButton
-          v-for="(val, title) in OnboardingIndustry"
-          :key="val"
-          color="card"
-          size="sm"
-          @click="setIndustry(val)"
-          @mouseenter="rotateGently(Math.random() * 2)"
-          @focus="rotateGently(Math.random() * 2)"
-        >
-          {{ title }}
-        </FormButton>
-      </div>
-    </div>
-  </Transition>
-  <Transition enter-from-class="opacity-0" enter-active-class="transition duration-300">
-    <div
-      v-show="step === 1"
-      class="bg-white/60 dark:bg-white/60 dark:text-foundation backdrop-blur-sm rounded-md p-4 space-y-4"
-      @mouseenter="rotateGently(Math.random() * 2)"
-      @focus="rotateGently(Math.random() * 2)"
-    >
-      <h2 class="text-center text-2xl font-bold">Thanks!</h2>
-      <p class="text-center">One last thing. What's your job title?</p>
-      <div class="grid grid-cols-2 gap-4">
-        <FormButton
-          v-for="val in OnboardingRole"
-          :key="val"
-          color="card"
-          size="sm"
-          @click="setRole(val)"
-          @mouseenter="rotateGently(Math.random() * 2)"
-          @focus="rotateGently(Math.random() * 2)"
-        >
-          {{ RoleTitleMap[val] }}
-        </FormButton>
-      </div>
-    </div>
-  </Transition>
-  <Transition
-    enter-from-class="opacity-0"
-    leave-to-class="opacity-0"
-    enter-active-class="transition duration-300"
-    leave-active-class="transition duration-300"
-  >
-    <div v-show="step === 2" class="">
-      <div class="grid grid-cols-2 space-x-4 text-center">
-        <div
-          class="bg-white/70 hover:bg-white/95 dark:text-foundation backdrop-blur-sm rounded-md p-4 hover:scale-105 transition flex flex-col space-y-5 place-content-between"
-        >
-          <h4 class="h2 font-bold">Connect</h4>
-          <p class="label">
-            Start sending and receiving data from Revit, Rhino, Grasshopper, Autocad and
-            more.
-          </p>
+      <div
+        v-show="step === 0"
+        class="bg-white/60 dark:bg-white/60 dark:text-foundation backdrop-blur-sm rounded-md p-4 space-y-4 absolute pointer-events-auto"
+        @mouseenter="rotateGently(Math.random() * 2)"
+        @focus="rotateGently(Math.random() * 2)"
+      >
+        <h2 class="text-center text-2xl font-bold">
+          Welcome, {{ activeUser?.name?.split(' ')[0] }}!
+        </h2>
+        <p class="text-center">
+          Let's get to know each other. What industry do you work in?
+        </p>
+        <div class="grid grid-cols-3 gap-4">
           <FormButton
-            full-width
-            :icon-right="CloudArrowDownIcon"
-            to="/download-manager"
+            v-for="(val, title) in OnboardingIndustry"
+            :key="val"
+            color="card"
+            size="sm"
+            @click="setIndustry(val)"
+            @mouseenter="rotateGently(Math.random() * 2)"
+            @focus="rotateGently(Math.random() * 2)"
           >
-            Download Manager
-          </FormButton>
-        </div>
-        <div
-          class="bg-white/70 hover:bg-white/95 dark:text-foundation backdrop-blur-sm rounded-md p-4 hover:scale-105 transition flex flex-col w-full space-y-5 place-content-between"
-          @mouseenter="rotateGently()"
-          @mouseleave="rotateGently()"
-          @focusin="rotateGently()"
-          @focusout="rotateGently()"
-        >
-          <h4 class="h2 font-bold">Explore</h4>
-          <p class="label">See what Speckle has to offer in this sample project!</p>
-          <FormButton full-width :icon-right="PlusCircleIcon" @click="step = 4">
-            Start Tour
+            {{ title }}
           </FormButton>
         </div>
       </div>
+    </Transition>
+    <Transition
+      enter-from-class="opacity-0"
+      enter-active-class="transition duration-300"
+    >
+      <div
+        v-show="step === 1"
+        class="bg-white/60 dark:bg-white/60 dark:text-foundation backdrop-blur-sm rounded-md p-4 space-y-4 absolute pointer-events-auto"
+        @mouseenter="rotateGently(Math.random() * 2)"
+        @focus="rotateGently(Math.random() * 2)"
+      >
+        <h2 class="text-center text-2xl font-bold">Thanks!</h2>
+        <p class="text-center">One last thing. What's your job title?</p>
+        <div class="grid grid-cols-2 gap-4">
+          <FormButton
+            v-for="val in OnboardingRole"
+            :key="val"
+            color="card"
+            size="sm"
+            @click="setRole(val)"
+            @mouseenter="rotateGently(Math.random() * 2)"
+            @focus="rotateGently(Math.random() * 2)"
+          >
+            {{ RoleTitleMap[val] }}
+          </FormButton>
+        </div>
+      </div>
+    </Transition>
+    <Transition
+      enter-from-class="opacity-0"
+      leave-to-class="opacity-0"
+      enter-active-class="transition duration-300"
+      leave-active-class="transition duration-300"
+    >
+      <div v-show="step === 2" class="absolute pointer-events-auto max-w-xl">
+        <div class="grid grid-cols-2 space-x-4 text-center">
+          <div
+            class="bg-white/70 hover:bg-white/95 dark:text-foundation backdrop-blur-sm rounded-md p-4 group hover:scale-105 transition flex flex-col space-y-5 place-content-between"
+          >
+            <h4 class="h2 font-bold group-hover:text-primary">Connect</h4>
+            <p class="label">
+              Start sending and receiving data from Revit, Rhino, Grasshopper, Autocad
+              and more.
+            </p>
+            <FormButton
+              full-width
+              :icon-right="CloudArrowDownIcon"
+              to="/download-manager"
+            >
+              Download Manager
+            </FormButton>
+          </div>
+          <div
+            class="bg-white/70 hover:bg-white/95 dark:text-foundation backdrop-blur-sm rounded-md p-4 group hover:scale-105 transition flex flex-col w-full space-y-5 place-content-between"
+            @mouseenter="rotateGently()"
+            @mouseleave="rotateGently()"
+            @focusin="rotateGently()"
+            @focusout="rotateGently()"
+          >
+            <h4 class="h2 font-bold group-hover:text-primary">Explore</h4>
+            <p class="label">See what Speckle has to offer in this sample project!</p>
+            <FormButton full-width :icon-right="PlusCircleIcon" @click="step = 4">
+              Start Tour
+            </FormButton>
+          </div>
+        </div>
+        <div class="text-center mt-2">
+          <FormButton class="shadow-lg ml-3" color="invert" rounded size="xs" to="/">
+            Skip
+          </FormButton>
+        </div>
+      </div>
+    </Transition>
+    <div v-if="step === 4">
+      <TourSlideshow />
     </div>
-  </Transition>
-  <div v-show="step === 2" class="text-center mt-4">
-    <FormButton class="shadow-lg" color="invert" rounded size="xs" to="/">
-      Skip
-    </FormButton>
-  </div>
-  <div v-if="step === 4">
-    <TourSlideshow />
   </div>
 </template>
 <script setup lang="ts">

@@ -7,9 +7,7 @@
     <div
       class="absolute h-screen w-screen z-10 pointer-events-none flex items-center justify-center"
     >
-      <div class="pointer-events-auto max-w-xl">
-        <TourOnboarding />
-      </div>
+      <TourOnboarding />
     </div>
   </div>
 </template>

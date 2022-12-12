@@ -4,6 +4,10 @@
   >
     <div ref="comments">
       <TourComment :index="0" class="absolute pointer-events-auto">
+        <p class="rounded bg-primary text-foreground-on-primary p-2 text-sm">
+          Note: the next few steps are placeholders. Any ideas welcome, bearing in mind
+          we can't do everything in here yet.
+        </p>
         <p class="text-sm">Let's run through a few fast tips!</p>
         <p class="text-sm">
           This is Speckle's 3D viewer, and what you're looking at is a model.
@@ -26,6 +30,8 @@
       <TourComment :index="2" class="absolute pointer-events-auto">
         <p class="text-sm">
           Speckle allows you to load multiple models in the same viewer. Give it a try!
+          <br />
+          TODO: remove zoom extents on load
         </p>
         <FormButton
           size="sm"
@@ -74,7 +80,7 @@
   >
     <div
       v-show="commentState < 0"
-      class="fixed bottom-0 left-0 w-full h-28 flex align-center p-10 justify-center space-x-2"
+      class="fixed bottom-0 left-0 w-full h-28 flex align-center p-10 justify-center space-x-2 pointer-events-auto"
     >
       <FormButton size="xs" color="invert" rounded to="/">Skip</FormButton>
       <FormButton size="sm" :icon-right="ArrowRightIcon" rounded>
@@ -125,7 +131,9 @@ const hasSwappedVersions = ref(false)
 async function addOverlay() {
   // TODO
   await viewer.loadObject(
-    'https://latest.speckle.dev/streams/b5cc4e967c/objects/9a210ff9cf2252efd22f0f722bf07d57'
+    'https://latest.speckle.dev/streams/b5cc4e967c/objects/6ae2f9fca55c7b3e135401947f9b2259'
+    // 'https://latest.speckle.dev/streams/b5cc4e967c/objects/7ab1ff0f6b3ae24015216c89c5612e4e'
+    // 'https://latest.speckle.dev/streams/b5cc4e967c/objects/9a210ff9cf2252efd22f0f722bf07d57'
   )
   hasAddedOverlay.value = true
 }
