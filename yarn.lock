@@ -8285,9 +8285,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/vue-apollo-composable@portal:/home/fabis/Code/random/vue-apollo/packages/vue-apollo-composable::locator=root%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@speckle/vue-apollo-composable@portal:/home/fabis/Code/random/vue-apollo/packages/vue-apollo-composable::locator=root%40workspace%3A."
+"@speckle/vue-apollo-composable@npm:^4.0.0-beta.2":
+  version: 4.0.0-beta.2
+  resolution: "@speckle/vue-apollo-composable@npm:4.0.0-beta.2"
   dependencies:
     throttle-debounce: ^3.0.1
     ts-essentials: ^9.1.2
@@ -8300,8 +8300,9 @@ __metadata:
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
+  checksum: 738a9e7e940bd8f2a8ff14b817f6f9eba312907f62af0ed1d0f261b0ed8e2135317a5ede8753fa649e8f59803df886b26a15d71e588d6bf0d4dcb4773a2660f8
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@speckle/webhook-service@workspace:packages/webhook-service":
   version: 0.0.0-use.local

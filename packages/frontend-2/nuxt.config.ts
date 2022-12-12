@@ -46,7 +46,7 @@ export default defineNuxtConfig({
     server: {
       fs: {
         // Allowing symlinks
-        allow: ['/home/fabis/Code/random/vue-apollo/']
+        // allow: ['/home/fabis/Code/random/vue-apollo/']
       }
     }
   },
