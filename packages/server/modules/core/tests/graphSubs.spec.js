@@ -18,6 +18,7 @@ const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { getFreeServerPort } = require('@/test/serverHelper')
 
 let addr
 let wsAddr
@@ -68,34 +69,31 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     await beforeEachContext()
 
     const childProcess = require('child_process')
-    console.log('  Starting server... this may take a while.')
+    console.log('      Starting server... this may take a while.')
+
+    childPort = await getFreeServerPort()
+    addr = `http://localhost:${childPort}/graphql`
+    wsAddr = `ws://localhost:${childPort}/graphql`
 
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',
       ['run', 'dev:server:test'],
-      { cwd: packageRoot }
+      { cwd: packageRoot, env: { ...process.env, PORT: childPort } }
     )
 
-    const reg = /running at 0.0.0.0:([0-9]*)/
-    serverProcess.stderr.on('data', (data) => {
-      // uncomment this line to understand a bit more what's happening...
-      // console.error( `stderr: ${data}` )
-      // ok this is going to be a dirt hack, but I have no better idea ATM
-      const match = `${data}`.match(reg)
-
-      if (!childPort && match) {
-        childPort = parseInt(match[1])
-      }
-    })
-
+    console.log(`      Waiting on child server to be started at PORT ${childPort} `)
     // lets wait for the server is starting up
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      if (childPort) {
-        console.log(`Child server started at PORT ${childPort} `)
-        addr = `http://localhost:${childPort}/graphql`
-        wsAddr = `ws://localhost:${childPort}/graphql`
-        break
+      try {
+        const res = await sendRequest('', {
+          query: `query {serverInfo{version}}`
+        })
+        if (res.status === 200) {
+          break
+        }
+      } catch {
+        //continue
       }
       await sleep(1000)
     }
