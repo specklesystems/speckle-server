@@ -40,7 +40,7 @@ FROM node:18.12.1-bullseye-slim as node
 # required for ensuring cross-compatibility
 # https://github.com/puppeteer/puppeteer/issues/7740
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
