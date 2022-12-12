@@ -7880,7 +7880,7 @@ __metadata:
     "@nuxtjs/tailwindcss": ^6.1.3
     "@speckle/shared": "workspace:^"
     "@speckle/viewer": "workspace:^"
-    "@speckle/vue-apollo-composable": ^4.0.0-beta.1
+    "@speckle/vue-apollo-composable": ^4.0.0-beta.2
     "@storybook/addon-a11y": ^7.0.0-alpha.42
     "@storybook/addon-docs": ^7.0.0-alpha.42
     "@storybook/addon-essentials": ^7.0.0-alpha.42
@@ -8279,9 +8279,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/vue-apollo-composable@npm:^4.0.0-beta.1":
-  version: 4.0.0-beta.1
-  resolution: "@speckle/vue-apollo-composable@npm:4.0.0-beta.1"
+"@speckle/vue-apollo-composable@npm:^4.0.0-beta.2":
+  version: 4.0.0-beta.2
+  resolution: "@speckle/vue-apollo-composable@npm:4.0.0-beta.2"
   dependencies:
     throttle-debounce: ^3.0.1
     ts-essentials: ^9.1.2
@@ -8294,7 +8294,7 @@ __metadata:
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
-  checksum: f66e011cb8bf28290f6448718716e0dcb6fd854fd85b9bbe51e84cb61150026c8ea0292c4b8ab2d8b09e15d8b463d31ea4139f019b7bbcaa68c472777b6de4ed
+  checksum: 738a9e7e940bd8f2a8ff14b817f6f9eba312907f62af0ed1d0f261b0ed8e2135317a5ede8753fa649e8f59803df886b26a15d71e588d6bf0d4dcb4773a2660f8
   languageName: node
   linkType: hard
 
