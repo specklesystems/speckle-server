@@ -46,7 +46,7 @@ void main() {
 	#include <output_fragment>
 	// #include <tonemapping_fragment>
 	vec3 color = 1. - gl_FragColor.rgb;
-	float alpha = gl_FragColor.r;//pow(gl_FragColor.r, 2.);
+	float alpha = pow(gl_FragColor.r, 2.);
 	gl_FragColor = vec4( color, alpha );
 	#include <encodings_fragment>
 	#include <fog_fragment>

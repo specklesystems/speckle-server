@@ -20,6 +20,12 @@ import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from './SpeckleRenderer'
 
+interface RayHit {
+  vertexIndex: number
+  distance: number
+  hitNormal: Vector3
+}
+
 export interface ShadowcatcherConfig {
   planeSubdivision: number
   sampleCount: number
@@ -155,53 +161,93 @@ export class Shadowcatcher {
   private trace(batches: MeshBatch[]) {
     const start = performance.now()
     const sampleCount = this._config.sampleCount
-    const maxDist = this._config.maxDist
     const vertices = this.planeMesh.geometry.attributes.position.array
     const colors = this.planeMesh.geometry.attributes.color.array as number[]
     colors.fill(0)
+    const hitData: Array<Array<RayHit>> = new Array(colors.length / 3)
+
     if (this.debugLines) {
       this.debugLines.parent.remove(this.debugLines)
       this.debugLines.geometry.dispose()
     }
     const linePoints = []
     const lineColors = []
-    for (let i = 0; i < batches.length; i++) {
-      const invMat = new Matrix4().copy(batches[i].renderObject.matrixWorld)
-      invMat.invert()
-      for (let k = 0; k < vertices.length; k += 3) {
-        for (let d = 0; d < sampleCount; d++) {
-          const sample = new Vector3()
-          sample.x = Math.random() * 2 - 1
-          sample.y = Math.random() * 2 - 1
-          sample.z = Math.random()
+    let hits = 0
+    let min = Number.POSITIVE_INFINITY
+    let max = Number.NEGATIVE_INFINITY
+    let mean = 0
 
-          sample.normalize()
-          const ray = new Ray(
-            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]),
-            sample
-          )
-          ray.applyMatrix4(invMat)
+    for (let k = 0; k < vertices.length; k += 3) {
+      hitData[k / 3] = []
+      for (let d = 0; d < sampleCount; d++) {
+        const sample = new Vector3()
+        sample.x = Math.random() * 2 - 1
+        sample.y = Math.random() * 2 - 1
+        sample.z = Math.random()
 
-          linePoints.push(new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]))
-          linePoints.push(
-            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]).add(
-              new Vector3().copy(ray.direction).multiplyScalar(this._config.maxDist)
-            )
-          )
+        sample.normalize()
+        const res = this.castRay(
+          batches,
+          new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]),
+          sample
+        )
 
-          const res = batches[i].boundsTree.raycastFirst(ray, DoubleSide)
-          if (res && res.distance < maxDist) {
-            const contribution = (1 / sampleCount) * 1.5 //(1 - res.distance / maxDist) / sampleCount
-            colors[k] += contribution
-            colors[k + 1] += contribution
-            colors[k + 2] += contribution
-            lineColors.push(0, 1, 0, 0, 1, 0)
-          } else {
-            lineColors.push(1, 0, 0, 1, 0, 0)
-          }
+        // linePoints.push(new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]))
+        // linePoints.push(
+        //   new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]).add(
+        //     new Vector3().copy(ray.direction).multiplyScalar(this._config.maxDist)
+        //   )
+        // )
+        if (res) {
+          hitData[k / 3].push({
+            vertexIndex: k,
+            distance: res.distance,
+            hitNormal: res.face.normal
+          })
+          hits++
+          min = Math.min(min, res.distance)
+          max = Math.max(max, res.distance)
+          mean += res.distance
+          // lineColors.push(0, 1, 0, 0, 1, 0)
+        } else {
+          // lineColors.push(1, 0, 0, 1, 0, 0)
         }
       }
     }
+    mean /= hits
+
+    console.warn('Hits -> ', hits)
+    console.warn('Mean -> ', mean)
+    let variance = 0
+
+    for (let k = 0; k < hitData.length; k++) {
+      for (let n = 0; n < hitData[k].length; n++) {
+        variance += Math.pow(hitData[k][n].distance - mean, 2)
+      }
+    }
+    variance /= hits
+    console.warn(min, max, variance)
+
+    let wAverage = 0
+    for (let k = 0; k < hitData.length; k++) {
+      for (let n = 0; n < hitData[k].length; n++) {
+        const sampleVariance = Math.pow(hitData[k][n].distance - mean, 2) / hits
+        wAverage += (hitData[k][n].distance * sampleVariance) / variance
+      }
+    }
+    console.warn('Weighted average -> ', wAverage)
+
+    for (let k = 0; k < hitData.length; k++) {
+      for (let n = 0; n < hitData[k].length; n++) {
+        if (hitData[k][n].distance <= wAverage) {
+          const contribution = (1 - hitData[k][n].distance / wAverage) * 2
+          colors[k * 3] += contribution / sampleCount
+          colors[k * 3 + 1] += contribution / sampleCount
+          colors[k * 3 + 2] += contribution / sampleCount
+        }
+      }
+    }
+
     const material = new LineBasicMaterial({
       color: 0xffffff,
       vertexColors: true
@@ -215,6 +261,17 @@ export class Shadowcatcher {
     this.planeMesh.geometry.attributes.color.needsUpdate = true
 
     console.warn('Time -> ', performance.now() - start)
+  }
+
+  private castRay(batches: MeshBatch[], origin: Vector3, dir: Vector3) {
+    for (let i = 0; i < batches.length; i++) {
+      const invMat = new Matrix4().copy(batches[i].renderObject.matrixWorld)
+      invMat.invert()
+      const ray = new Ray(origin, dir)
+      ray.applyMatrix4(invMat)
+      const res = batches[i].boundsTree.raycastFirst(ray, DoubleSide)
+      if (res) return res
+    }
   }
 
   // eslint-disable-next-line camelcase
