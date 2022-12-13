@@ -920,6 +920,8 @@ export type PendingStreamCollaborator = {
 
 export type Project = {
   __typename?: 'Project';
+  /** The total number of comment threads in this project */
+  commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];

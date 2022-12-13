@@ -8,7 +8,7 @@
         <ProjectPageStatsBlockTeam :project="project" />
         <ProjectPageStatsBlockVersions :project="project" />
         <ProjectPageStatsBlockModels :project="project" />
-        <ProjectPageStatsBlockComments />
+        <ProjectPageStatsBlockComments :project="project" />
       </div>
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->
@@ -34,6 +34,7 @@ graphql(`
     ...ProjectPageStatsBlockTeam
     ...ProjectPageStatsBlockVersions
     ...ProjectPageStatsBlockModels
+    ...ProjectPageStatsBlockComments
   }
 `)
 

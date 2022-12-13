@@ -13,7 +13,6 @@ const {
   getComment,
   getComments,
   getResourceCommentCount,
-  getStreamCommentCount,
   createComment,
   createCommentReply,
   viewComment,
@@ -112,11 +111,20 @@ module.exports = {
       return await ctx.loaders.comments.getResources.load(parent.id)
     }
   },
-  Stream: {
-    async commentCount(parent, args, context) {
+  Project: {
+    async commentThreadCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
-      return await getStreamCommentCount({ streamId: parent.id })
+
+      return await context.loaders.streams.getCommentThreadCount.load(parent.id)
+    }
+  },
+  Stream: {
+    async commentCount(parent, _args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ApolloForbiddenError('You are not authorized.')
+
+      return await context.loaders.streams.getCommentThreadCount.load(parent.id)
     }
   },
   Commit: {

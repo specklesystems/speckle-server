@@ -4,6 +4,7 @@ import { StorybookParameters } from '~~/lib/common/helpers/storybook'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import ProjectPage from '~~/pages/projects/[id].vue'
 import DefaultLayout from '~~/layouts/default.vue'
+import { fakeUsers } from '~~/components/form/select/Users.stories'
 
 const fakeProjectId = 'some-fake-id'
 
@@ -37,7 +38,11 @@ export const Default: Story = {
                 id: fakeProjectId,
                 createdAt: new Date().toISOString(),
                 name: 'Test project',
-                description: 'Test project description'
+                description: 'Test project description',
+                versionCount: 10,
+                modelCount: 15,
+                commentThreadCount: 20,
+                team: fakeUsers.slice(3)
               }
             } as ProjectPageQueryQuery
           }

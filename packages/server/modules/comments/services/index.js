@@ -7,7 +7,10 @@ const {
   validateInputAttachments
 } = require('@/modules/comments/services/commentTextService')
 const { CommentsEmitter, CommentsEvents } = require('@/modules/comments/events/emitter')
-const { getComment } = require('@/modules/comments/repositories/comments')
+const {
+  getComment,
+  getStreamCommentCount
+} = require('@/modules/comments/repositories/comments')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -294,14 +297,6 @@ module.exports = {
   },
 
   async getStreamCommentCount({ streamId }) {
-    const [res] = await Comments()
-      .count('id')
-      .where({ streamId })
-      .andWhere({ archived: false })
-      .whereNull('parentComment')
-    if (res && res.count) {
-      return parseInt(res.count)
-    }
-    return 0
+    return (await getStreamCommentCount(streamId, { threadsOnly: true })) || 0
   }
 }

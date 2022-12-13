@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageLatestItems :count="6" title="Latest Comments">
+  <ProjectPageLatestItems :count="6" title="Latest Threads">
     <template #default="{ gridOrList }">
       <ProjectPageLatestItemsCommentsGrid
         v-if="gridOrList === GridListToggleValue.Grid"

@@ -14,6 +14,13 @@ extend type Query {
   ): CommentCollection
 }
 
+extend type Project {
+  """
+  The total number of comment threads in this project
+  """
+  commentThreadCount: Int!
+}
+
 extend type Stream {
   """
   The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:

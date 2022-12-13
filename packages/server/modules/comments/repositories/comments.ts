@@ -133,3 +133,32 @@ export async function insertCommentLinks(
   if (options?.trx) q.transacting(options.trx)
   return await q
 }
+
+export async function getStreamCommentCounts(
+  streamIds: string[],
+  options?: Partial<{ threadsOnly: boolean }>
+) {
+  if (!streamIds?.length) return []
+  const { threadsOnly } = options || {}
+  const q = Comments.knex()
+    .select(Comments.col.streamId)
+    .whereIn(Comments.col.streamId, streamIds)
+    .andWhere(Comments.col.archived, false)
+    .count()
+    .groupBy(Comments.col.streamId)
+
+  if (threadsOnly) {
+    q.andWhere(Comments.col.parentComment, null)
+  }
+
+  const results = (await q) as { streamId: string; count: string }[]
+  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getStreamCommentCount(
+  streamId: string,
+  options?: Partial<{ threadsOnly: boolean }>
+) {
+  const [res] = await getStreamCommentCounts([streamId], options)
+  return res?.count
+}
