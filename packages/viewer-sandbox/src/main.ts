@@ -156,6 +156,7 @@ await sandbox.loadUrl(
   // Boat
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/ba5df427db'
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/c9ebe49824'
+  // Dim's dome
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/158d4e8bec'
   // Engines 'n Shit
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/80b25e6e6c'

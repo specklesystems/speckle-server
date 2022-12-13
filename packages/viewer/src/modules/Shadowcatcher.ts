@@ -1,6 +1,7 @@
 import {
   Box3,
   BufferGeometry,
+  Color,
   DoubleSide,
   Float32BufferAttribute,
   LineBasicMaterial,
@@ -19,6 +20,7 @@ import MeshBatch from './batching/MeshBatch'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from './SpeckleRenderer'
+import { bin, mean, deviation } from 'd3-array'
 
 interface RayHit {
   vertexIndex: number
@@ -172,10 +174,8 @@ export class Shadowcatcher {
     }
     const linePoints = []
     const lineColors = []
-    let hits = 0
     let min = Number.POSITIVE_INFINITY
     let max = Number.NEGATIVE_INFINITY
-    let mean = 0
 
     for (let k = 0; k < vertices.length; k += 3) {
       hitData[k / 3] = []
@@ -192,59 +192,77 @@ export class Shadowcatcher {
           sample
         )
 
-        // linePoints.push(new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]))
-        // linePoints.push(
-        //   new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]).add(
-        //     new Vector3().copy(ray.direction).multiplyScalar(this._config.maxDist)
-        //   )
-        // )
         if (res) {
           hitData[k / 3].push({
             vertexIndex: k,
             distance: res.distance,
             hitNormal: res.face.normal
           })
-          hits++
           min = Math.min(min, res.distance)
           max = Math.max(max, res.distance)
-          mean += res.distance
-          // lineColors.push(0, 1, 0, 0, 1, 0)
-        } else {
-          // lineColors.push(1, 0, 0, 1, 0, 0)
+          linePoints.push(new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]))
+          linePoints.push(
+            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]).add(
+              new Vector3().copy(sample).multiplyScalar(res.distance)
+            )
+          )
+          lineColors.push(0, 0, 0, 0, 0, 0)
         }
       }
     }
-    mean /= hits
 
-    console.warn('Hits -> ', hits)
-    console.warn('Mean -> ', mean)
-    let variance = 0
+    const distances = hitData.flat(1).map((value) => value.distance)
+    const histGenerator = bin().domain([min, max]).thresholds(5)
+    let bins = []
+    bins = histGenerator(distances)
+    const meanValue = mean(distances)
+    const deviationValue = deviation(distances)
 
+    bins.sort((a: [], b: []) => b.length - a.length)
+    let colorIndex = 0
     for (let k = 0; k < hitData.length; k++) {
       for (let n = 0; n < hitData[k].length; n++) {
-        variance += Math.pow(hitData[k][n].distance - mean, 2)
-      }
-    }
-    variance /= hits
-    console.warn(min, max, variance)
-
-    let wAverage = 0
-    for (let k = 0; k < hitData.length; k++) {
-      for (let n = 0; n < hitData[k].length; n++) {
-        const sampleVariance = Math.pow(hitData[k][n].distance - mean, 2) / hits
-        wAverage += (hitData[k][n].distance * sampleVariance) / variance
-      }
-    }
-    console.warn('Weighted average -> ', wAverage)
-
-    for (let k = 0; k < hitData.length; k++) {
-      for (let n = 0; n < hitData[k].length; n++) {
-        if (hitData[k][n].distance <= wAverage) {
-          const contribution = (1 - hitData[k][n].distance / wAverage) * 2
-          colors[k * 3] += contribution / sampleCount
-          colors[k * 3 + 1] += contribution / sampleCount
-          colors[k * 3 + 2] += contribution / sampleCount
+        let weigth = 0
+        if (hitData[k][n].distance <= bins[0].x1) {
+          weigth = 2
         }
+        if (
+          hitData[k][n].distance > bins[0].x1 &&
+          hitData[k][n].distance <= bins[1].x1
+        ) {
+          weigth = 0.5
+        }
+        if (
+          hitData[k][n].distance > bins[1].x1 &&
+          hitData[k][n].distance <= bins[2].x1
+        ) {
+          weigth = 0.25
+        }
+        if (
+          hitData[k][n].distance > bins[2].x1 &&
+          hitData[k][n].distance <= bins[3].x1
+        ) {
+          weigth = 0.15
+        }
+
+        const normalisedDeviation =
+          (hitData[k][n].distance - meanValue) / deviationValue
+        const contribution = Math.max(weigth * (1 - normalisedDeviation), 0)
+        colors[k * 3] += contribution / sampleCount
+        colors[k * 3 + 1] += contribution / sampleCount
+        colors[k * 3 + 2] += contribution / sampleCount
+        const lerpColor = new Color().lerpColors(
+          new Color(0xff0000),
+          new Color(0x00ff00),
+          contribution
+        )
+        lineColors[colorIndex] = lerpColor.r
+        lineColors[colorIndex + 1] = lerpColor.g
+        lineColors[colorIndex + 2] = lerpColor.b
+        lineColors[colorIndex + 3] = lerpColor.r
+        lineColors[colorIndex + 4] = lerpColor.g
+        lineColors[colorIndex + 5] = lerpColor.b
+        colorIndex += 6
       }
     }
 
@@ -253,7 +271,6 @@ export class Shadowcatcher {
       vertexColors: true
     })
     const geometry = new BufferGeometry().setFromPoints(linePoints)
-    // geometry.setFromPoints(linePoints)
     geometry.setAttribute('color', new Float32BufferAttribute(lineColors, 3))
     this.debugLines = new LineSegments(geometry, material)
     this.debugLines.layers.set(ObjectLayers.PROPS)

@@ -43,6 +43,7 @@
     "@speckle/objectloader": "workspace:^",
     "@types/flat": "^5.0.2",
     "camera-controls": "^1.33.1",
+    "d3-array": "3.2.1",
     "flat": "^5.0.2",
     "hold-event": "^0.1.0",
     "lodash-es": "^4.17.21",

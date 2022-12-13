@@ -5155,6 +5155,7 @@ __metadata:
     "@typescript-eslint/parser": ^5.39.0
     camera-controls: ^1.33.1
     core-js: ^3.21.1
+    d3-array: 3.2.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
     flat: ^5.0.2
@@ -9489,6 +9490,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"d3-array@npm:3.2.1":
+  version: 3.2.1
+  resolution: "d3-array@npm:3.2.1"
+  dependencies:
+    internmap: 1 - 2
+  checksum: 0bed33cc33b70f9d48ccef3e7a5956e134862e09179bf14df0bf9c8fc0ec02b8f847d4f5e1d32729cd5e02032af1d0a32bcc968ff1333795028455a749994623
+  languageName: node
+  linkType: hard
+
 "d3-brush@npm:^1.1.3":
   version: 1.1.6
   resolution: "d3-brush@npm:1.1.6"
@@ -13058,6 +13068,13 @@ __metadata:
     through: ^2.3.6
     wrap-ansi: ^7.0.0
   checksum: dfcb6529d3af443dfea2241cb471508091b51f5121a088fdb8728b23ec9b349ef0a5e13a0ef2c8e19457b0bed22f7cbbcd561f7a4529d084c562a58c605e2655
+  languageName: node
+  linkType: hard
+
+"internmap@npm:1 - 2":
+  version: 2.0.3
+  resolution: "internmap@npm:2.0.3"
+  checksum: 7ca41ec6aba8f0072fc32fa8a023450a9f44503e2d8e403583c55714b25efd6390c38a87161ec456bf42d7bc83aab62eb28f5aef34876b1ac4e60693d5e1d241
   languageName: node
   linkType: hard
 
