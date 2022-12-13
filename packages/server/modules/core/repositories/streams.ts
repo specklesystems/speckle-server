@@ -526,6 +526,7 @@ export async function getStreamCollaborators(streamId: string, type?: StreamRole
     .select<UserWithOptionalRole[]>([...Users.cols, StreamAcl.col.role])
     .where(StreamAcl.col.resourceId, streamId)
     .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
+    .orderBy(StreamAcl.col.role)
 
   if (type) {
     q.andWhere(StreamAcl.col.role, type)

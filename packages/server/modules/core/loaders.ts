@@ -15,11 +15,15 @@ import {
   StreamFavoriteRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
-import { getCommitStreams } from '@/modules/core/repositories/commits'
+import {
+  getCommitStreams,
+  getStreamCommitCounts
+} from '@/modules/core/repositories/commits'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { getCommentsResources } from '@/modules/comments/repositories/comments'
+import { getStreamBranchCounts } from '@/modules/core/repositories/branches'
 
 /**
  * Build request-scoped dataloaders
@@ -82,7 +86,25 @@ export function buildRequestLoaders(ctx: AuthContext) {
 
         const results = await getStreamRoles(userId, streamIds.slice())
         return streamIds.map((id) => results[id] || null)
-      })
+      }),
+      getBranchCount: new DataLoader<string, Optional<number>>(async (streamIds) => {
+        const results = keyBy(
+          await getStreamBranchCounts(streamIds.slice()),
+          'streamId'
+        )
+        return streamIds.map((i) => results[i]?.count)
+      }),
+      getCommitCountWithoutGlobals: new DataLoader<string, Optional<number>>(
+        async (streamIds) => {
+          const results = keyBy(
+            await getStreamCommitCounts(streamIds.slice(), {
+              ignoreGlobalsBranch: true
+            }),
+            'streamId'
+          )
+          return streamIds.map((i) => results[i]?.count)
+        }
+      )
     },
     commits: {
       /**

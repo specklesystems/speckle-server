@@ -38,3 +38,21 @@ export async function insertBranches(
   if (options?.trx) q.transacting(options.trx)
   return await q
 }
+
+export async function getStreamBranchCounts(streamIds: string[]) {
+  if (!streamIds?.length) return []
+
+  const q = Branches.knex()
+    .select(Branches.col.streamId)
+    .whereIn(Branches.col.streamId, streamIds)
+    .count()
+    .groupBy(Branches.col.streamId)
+
+  const results = (await q) as { streamId: string; count: string }[]
+  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getStreamBranchCount(streamId: string) {
+  const [res] = await getStreamBranchCounts([streamId])
+  return res?.count
+}

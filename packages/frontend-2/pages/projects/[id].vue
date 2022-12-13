@@ -5,9 +5,9 @@
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
       <div class="grid grid-cols-12 gap-8 mb-14">
-        <ProjectPageStatsBlockTeam />
-        <ProjectPageStatsBlockVersions />
-        <ProjectPageStatsBlockModels />
+        <ProjectPageStatsBlockTeam :project="project" />
+        <ProjectPageStatsBlockVersions :project="project" />
+        <ProjectPageStatsBlockModels :project="project" />
         <ProjectPageStatsBlockComments />
       </div>
       <div class="flex flex-col space-y-14">
@@ -31,6 +31,9 @@ graphql(`
     id
     createdAt
     ...ProjectPageProjectHeader
+    ...ProjectPageStatsBlockTeam
+    ...ProjectPageStatsBlockVersions
+    ...ProjectPageStatsBlockModels
   }
 `)
 

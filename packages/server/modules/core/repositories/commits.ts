@@ -151,3 +151,39 @@ export async function insertBranchCommits(
   if (options?.trx) q.transacting(options.trx)
   return await q
 }
+
+export async function getStreamCommitCounts(
+  streamIds: string[],
+  options?: Partial<{ ignoreGlobalsBranch: boolean }>
+) {
+  if (!streamIds?.length) return []
+
+  const { ignoreGlobalsBranch } = options || {}
+
+  const q = StreamCommits.knex()
+    .select(StreamCommits.col.streamId)
+    .whereIn(StreamCommits.col.streamId, streamIds)
+    .count()
+    .groupBy(StreamCommits.col.streamId)
+
+  if (ignoreGlobalsBranch) {
+    q.innerJoin(
+      BranchCommits.name,
+      StreamCommits.col.commitId,
+      BranchCommits.col.commitId
+    )
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+      .andWhereNot(Branches.col.name, 'globals')
+  }
+
+  const results = (await q) as { streamId: string; count: string }[]
+  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getStreamCommitCount(
+  streamId: string,
+  options?: Partial<{ ignoreGlobalsBranch: boolean }>
+) {
+  const [res] = await getStreamCommitCounts([streamId], options)
+  return res?.count
+}

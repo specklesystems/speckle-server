@@ -935,6 +935,7 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
+  versionCount: Scalars['Int'];
 };
 
 export type ProjectCollection = {
@@ -2420,6 +2421,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

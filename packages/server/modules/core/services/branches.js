@@ -1,7 +1,10 @@
 'use strict'
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
-const { getStreamBranchByName } = require('@/modules/core/repositories/branches')
+const {
+  getStreamBranchByName,
+  getStreamBranchCount
+} = require('@/modules/core/repositories/branches')
 
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
@@ -50,9 +53,7 @@ module.exports = {
     if (cursor) query.andWhere('createdAt', '>', cursor)
     query.orderBy('createdAt').limit(limit)
 
-    const totalCount = await module.exports.getBranchesByStreamIdTotalCount({
-      streamId
-    })
+    const totalCount = await getStreamBranchCount(streamId)
     const rows = await query
     return {
       items: rows,
@@ -62,8 +63,7 @@ module.exports = {
   },
 
   async getBranchesByStreamIdTotalCount({ streamId }) {
-    const [res] = await Branches().count().where({ streamId })
-    return parseInt(res.count)
+    return await getStreamBranchCount(streamId)
   },
 
   async getBranchByNameAndStreamId({ streamId, name }) {

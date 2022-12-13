@@ -41,7 +41,7 @@ import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter
 
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { Roles } from '@speckle/shared'
+// import { Roles } from '@speckle/shared'
 
 import { IMocks } from '@graphql-tools/mock'
 import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
@@ -139,43 +139,14 @@ async function buildMocksConfig(): Promise<{
   mocks: boolean | IMocks
   mockEntireSchema: boolean
 }> {
-  const roles = Object.values(Roles.Stream)
   const isDebugEnv = isDevEnv()
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 
-  const { faker } = await import('@faker-js/faker')
+  // feel free to define mocks for your dev env below
+  // const roles = Object.values(Roles.Stream)
+  // const { faker } = await import('@faker-js/faker')
 
-  return {
-    mocks: {
-      Query: () => ({
-        testNumber: () => faker.datatype.number(),
-        testList: () => [...new Array(faker.datatype.number({ min: 1, max: 10 }))],
-        projects: () => [...new Array(faker.datatype.number({ min: 5, max: 12 }))]
-      }),
-      DateTime: () => faker.datatype.datetime(),
-      ID: () => faker.unique(faker.random.alphaNumeric, [10]),
-      Project: () => ({
-        team: [...new Array(faker.datatype.number({ min: 1, max: 5 }))],
-        name:
-          faker.commerce.productAdjective() +
-          ' ' +
-          faker.commerce.productMaterial() +
-          ' ' +
-          faker.commerce.product() +
-          ' ' +
-          faker.commerce.product(),
-        modelCount: faker.datatype.number({ min: 0, max: 100 }),
-        role: roles[
-          faker.datatype.number({
-            min: 0,
-            max: roles.length - 1
-          })
-        ]
-      }),
-      JSONObject: () => ({})
-    },
-    mockEntireSchema: false
-  }
+  return { mocks: false, mockEntireSchema: false }
 }
 
 /**

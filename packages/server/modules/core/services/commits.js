@@ -10,6 +10,8 @@ const BranchCommits = () => knex('branch_commits')
 const { getBranchByNameAndStreamId } = require('./branches')
 const { getObject } = require('./objects')
 
+const { getStreamCommitCount } = require('@/modules/core/repositories/commits')
+
 const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
   publicOnly = publicOnly !== false
 
@@ -234,17 +236,7 @@ module.exports = {
   },
 
   async getCommitsTotalCountByStreamId({ streamId, ignoreGlobalsBranch }) {
-    const query = StreamCommits()
-      .count()
-      .join('branch_commits', 'stream_commits.commitId', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .where('stream_commits.streamId', streamId)
-
-    if (ignoreGlobalsBranch) query.andWhere('branches.name', '!=', 'globals')
-
-    // let [ res ] = await StreamCommits( ).count( ).where( 'streamId', streamId )
-    const [res] = await query
-    return parseInt(res.count)
+    return await getStreamCommitCount(streamId, { ignoreGlobalsBranch })
   },
 
   async getCommitsByStreamId({ streamId, limit, cursor, ignoreGlobalsBranch }) {

@@ -2,9 +2,11 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import {
   getUserStreamsCount,
-  getUserStreams
+  getUserStreams,
+  getStreamCollaborators,
+  getStream
 } from '@/modules/core/repositories/streams'
-import { deleteStreamAndNotify, getStream } from '@/modules/core/services/streams'
+import { deleteStreamAndNotify } from '@/modules/core/services/streams'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -64,6 +66,16 @@ export = {
       if (has(parent, 'role')) return parent.role
 
       return await ctx.loaders.streams.getRole.load(parent.id)
+    },
+    async team(parent) {
+      const users = await getStreamCollaborators(parent.id)
+      return users
+    },
+    async modelCount(parent, _args, ctx) {
+      return await ctx.loaders.streams.getBranchCount.load(parent.id)
+    },
+    async versionCount(parent, _args, ctx) {
+      return await ctx.loaders.streams.getCommitCountWithoutGlobals.load(parent.id)
     }
   }
 } as Resolvers

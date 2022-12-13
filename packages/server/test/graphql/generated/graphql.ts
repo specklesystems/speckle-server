@@ -929,6 +929,7 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
+  versionCount: Scalars['Int'];
 };
 
 export type ProjectCollection = {
