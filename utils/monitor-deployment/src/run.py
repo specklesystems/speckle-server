@@ -69,13 +69,13 @@ def tick(cur):
     PROM["db_size"].set(cur.fetchone()[0])
 
     # Counts for users, streams, commits, objects
-    cur.execute("SELECT count(*) FROM objects;")
+    cur.execute("SELECT reltuples AS estimate FROM pg_class WHERE relname = 'objects';")
     PROM["objects"].set(cur.fetchone()[0])
-    cur.execute("SELECT count(*) FROM streams;")
+    cur.execute("SELECT reltuples AS estimate FROM pg_class WHERE relname = 'streams';")
     PROM["streams"].set(cur.fetchone()[0])
-    cur.execute("SELECT count(*) FROM commits;")
+    cur.execute("SELECT reltuples AS estimate FROM pg_class WHERE relname = 'commits';")
     PROM["commits"].set(cur.fetchone()[0])
-    cur.execute("SELECT count(*) FROM users;")
+    cur.execute("SELECT reltuples AS estimate FROM pg_class WHERE relname = 'users';")
     PROM["users"].set(cur.fetchone()[0])
 
     # File Imports
