@@ -12,9 +12,9 @@
       </div>
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->
-        <ProjectPageLatestItemsModels />
+        <ProjectPageLatestItemsModels :project="project" />
         <!-- Latest comments -->
-        <ProjectPageLatestItemsComments />
+        <ProjectPageLatestItemsComments :project="project" />
         <!-- More actions -->
         <ProjectPageMoreActions />
       </div>
@@ -35,6 +35,8 @@ graphql(`
     ...ProjectPageStatsBlockVersions
     ...ProjectPageStatsBlockModels
     ...ProjectPageStatsBlockComments
+    ...ProjectPageLatestItemsModels
+    ...ProjectPageLatestItemsComments
   }
 `)
 
