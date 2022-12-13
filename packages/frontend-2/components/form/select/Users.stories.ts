@@ -47,6 +47,12 @@ export const fakeUsers: FormUsersSelectItemFragment[] = [
     name: 'Master Chief',
     avatar:
       'https://cdn1.dotesports.com/wp-content/uploads/2021/08/09111246/MasterChief.jpg'
+  },
+  {
+    id: '9',
+    name: 'Mario',
+    avatar:
+      'https://play-lh.googleusercontent.com/5LIMaa7WTNy34bzdFhBETa2MRj7mFJZWb8gCn_uyxQkUvFx_uOFCeQjcK16c6WpBA3E'
   }
 ]
 

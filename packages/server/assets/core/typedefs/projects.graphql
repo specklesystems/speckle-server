@@ -57,11 +57,3 @@ type Project {
   updatedAt: DateTime!
   team: [LimitedUser!]!
 }
-
-type Model {
-  id: ID!
-  name: String!
-  versionCount: Int!
-  author: LimitedUser!
-  sourceApp: String!
-}

@@ -24,9 +24,9 @@
       </div>
     </td>
     <td class="pr-5">
-      <div class="flex space-x-[1px] align-middle">
+      <div ref="elementToWatchForChanges" class="flex space-x-[1px] align-middle">
         <div
-          ref="containerWrapper"
+          ref="itemContainer"
           class="flex space-x-[1px] flex-wrap overflow-hidden h-8"
         >
           <UserAvatar no-border />
@@ -48,9 +48,18 @@
 </template>
 <script setup lang="ts">
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/vue/24/solid'
+import { Nullable } from '@speckle/shared'
 import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resize'
 
-const { containerWrapper, hiddenItemCount } = useWrappingContainerHiddenCount()
+const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
+const itemContainer = ref(null as Nullable<HTMLElement>)
+
+const { hiddenItemCount } = useWrappingContainerHiddenCount({
+  elementToWatchForChanges,
+  itemContainer,
+  trackResize: true,
+  trackMutations: false
+})
 
 const previewUrl = ref('https://i.imgur.com/DbCgdcq.jpg')
 </script>

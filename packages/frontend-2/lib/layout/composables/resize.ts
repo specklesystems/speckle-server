@@ -1,45 +1,60 @@
 import { Nullable, Optional } from '@speckle/shared'
-import { useResizeObserver } from '@vueuse/core'
+import { useMutationObserver, useResizeObserver } from '@vueuse/core'
 import { isUndefined } from 'lodash-es'
-import { ComputedRef } from 'vue'
+import { Ref, ComputedRef } from 'vue'
 
 /**
  * Use this to calculate the number of hidden elements (e.g. user avatars) in a wrapping flex row that
  * is styled to only show the first row. For example, there are 12 users total, there's only space for 5,
  * and this composable will calculate the number of hidden ones to use for the "+X" label (+7 in the example)
+ *
+ * Note: The "hidden" items must wrap into another line, because we use their offset from the top of the parent
+ * to check if they're hidden (compared to items in the 1st row)
  */
-export function useWrappingContainerHiddenCount(
-  params?: Partial<{
-    /**
-     * Allows you to pause calculations conditionally
-     */
-    skipCalculation: ComputedRef<boolean>
-  }>
-) {
-  const { skipCalculation } = params || {}
+export function useWrappingContainerHiddenCount(params: {
+  /**
+   * Element to watch for any changes
+   */
+  elementToWatchForChanges: Ref<Nullable<HTMLElement>>
+  /**
+   * The element that actually contains the potentially visible/hidden items as direct children
+   */
+  itemContainer: Ref<Nullable<HTMLElement>>
 
   /**
-   * Add this ref to the parent element of elements that dynamically become visible or invisible
-   * depending on the amount of space inside the wrapper, for example, a limited width & height flexbox
-   * container that wraps into multiple lines and only shows the first line.
-   *
-   * This is used to calculate the amount of hidden items
+   * Allows you to pause calculations conditionally
    */
-  const containerWrapper = ref(null as Nullable<HTMLElement>)
+  skipCalculation?: ComputedRef<boolean>
+
+  /**
+   * If true, will track resizing of 'elementToWatchForChanges'.
+   * Default: false
+   */
+  trackResize?: boolean
+
+  /**
+   * If true, will track descendants being added/removed to 'elementToWatchForChanges'.
+   * Default: true
+   */
+  trackMutations?: boolean
+}) {
+  const {
+    skipCalculation,
+    elementToWatchForChanges,
+    itemContainer,
+    trackResize = false,
+    trackMutations = true
+  } = params || {}
 
   /**
    * Dynamically updated to show the number of items currently not visible in the container
    */
   const hiddenItemCount = ref(0)
 
-  /**
-   * Update hidden item count
-   */
-  useResizeObserver(containerWrapper, (entries) => {
-    if (skipCalculation?.value) return
+  const recalculate = () => {
+    const target = itemContainer.value
+    if (skipCalculation?.value || !target) return
 
-    const entry = entries[0]
-    const target = entry.target
     const avatarElements = target.children
 
     /**
@@ -64,10 +79,20 @@ export function useWrappingContainerHiddenCount(
     }
 
     hiddenItemCount.value = totalCount - visibleCount
-  })
+  }
+
+  if (trackResize) {
+    useResizeObserver(elementToWatchForChanges, recalculate)
+  }
+
+  if (trackMutations) {
+    useMutationObserver(elementToWatchForChanges, recalculate, {
+      childList: true,
+      subtree: true
+    })
+  }
 
   return {
-    containerWrapper,
     hiddenItemCount
   }
 }

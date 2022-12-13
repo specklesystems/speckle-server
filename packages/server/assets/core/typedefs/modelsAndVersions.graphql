@@ -3,7 +3,11 @@ extend type Project {
 }
 
 type Model {
-  id: String!
+  id: ID!
+  name: String!
+  versionCount: Int!
+  author: LimitedUser!
+  sourceApp: String!
 }
 
 type ModelCollection {

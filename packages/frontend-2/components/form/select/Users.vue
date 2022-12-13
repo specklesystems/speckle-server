@@ -21,9 +21,9 @@
     </template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
-        <div class="flex items-center space-x-0.5">
+        <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
           <div
-            ref="dynamicallyVisibleSelectedItemWrapper"
+            ref="itemContainer"
             class="flex flex-wrap overflow-hidden space-x-0.5 h-6"
           >
             <UserAvatar
@@ -68,7 +68,7 @@
 </template>
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { Optional } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
@@ -141,16 +141,15 @@ const props = defineProps({
   }
 })
 
-const {
-  selectedValue,
-  dynamicallyVisibleSelectedItemWrapper,
-  hiddenSelectedItemCount,
-  isArrayValue,
-  isMultiItemArrayValue
-} = useFormSelectChildInternals<FormUsersSelectItemFragment>({
-  props: toRefs(props),
-  emit
-})
+const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
+const itemContainer = ref(null as Nullable<HTMLElement>)
+
+const { selectedValue, hiddenSelectedItemCount, isArrayValue, isMultiItemArrayValue } =
+  useFormSelectChildInternals<FormUsersSelectItemFragment>({
+    props: toRefs(props),
+    emit,
+    dynamicVisibility: { elementToWatchForChanges, itemContainer }
+  })
 
 const searchFilterPredicate = (i: FormUsersSelectItemFragment, search: string) =>
   i.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())

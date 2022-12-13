@@ -21,9 +21,9 @@
     </template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
-        <div class="flex items-center space-x-0.5 h-5">
+        <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5 h-5">
           <div
-            ref="dynamicallyVisibleSelectedItemWrapper"
+            ref="itemContainer"
             class="flex flex-wrap overflow-hidden space-x-0.5 h-5"
           >
             <CommonBadge
@@ -63,7 +63,7 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { Optional, SourceAppDefinition, SourceApps } from '@speckle/shared'
+import { Nullable, Optional, SourceAppDefinition, SourceApps } from '@speckle/shared'
 import { PropType } from 'vue'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 
@@ -123,16 +123,15 @@ const props = defineProps({
   }
 })
 
-const {
-  selectedValue,
-  dynamicallyVisibleSelectedItemWrapper,
-  hiddenSelectedItemCount,
-  isMultiItemArrayValue,
-  firstItem
-} = useFormSelectChildInternals<SourceAppDefinition>({
-  props: toRefs(props),
-  emit
-})
+const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
+const itemContainer = ref(null as Nullable<HTMLElement>)
+
+const { selectedValue, hiddenSelectedItemCount, isMultiItemArrayValue, firstItem } =
+  useFormSelectChildInternals<SourceAppDefinition>({
+    props: toRefs(props),
+    emit,
+    dynamicVisibility: { elementToWatchForChanges, itemContainer }
+  })
 
 const searchFilterPredicate = (i: SourceAppDefinition, search: string) =>
   i.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { isArray } from 'lodash-es'
-import { ToRefs } from 'vue'
+import { Ref, ToRefs } from 'vue'
+import { Nullable } from '@speckle/shared'
 import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resize'
 
 type GenericSelectValueType<T> = T | T[] | undefined
@@ -14,11 +15,24 @@ export function useFormSelectChildInternals<T>(params: {
   emit: {
     (e: 'update:modelValue', val: GenericSelectValueType<T>): void
   }
+  /**
+   * @see {useWrappingContainerHiddenCount()}
+   */
+  dynamicVisibility: {
+    elementToWatchForChanges: Ref<Nullable<HTMLElement>>
+    itemContainer: Ref<Nullable<HTMLElement>>
+  }
 }) {
-  const { props, emit } = params
+  const {
+    props,
+    emit,
+    dynamicVisibility: { elementToWatchForChanges, itemContainer }
+  } = params
 
-  const { containerWrapper, hiddenItemCount } = useWrappingContainerHiddenCount({
-    skipCalculation: computed(() => !props.multiple?.value)
+  const { hiddenItemCount } = useWrappingContainerHiddenCount({
+    skipCalculation: computed(() => !props.multiple?.value),
+    elementToWatchForChanges,
+    itemContainer
   })
 
   /**
@@ -54,7 +68,6 @@ export function useFormSelectChildInternals<T>(params: {
 
   return {
     selectedValue,
-    dynamicallyVisibleSelectedItemWrapper: containerWrapper,
     hiddenSelectedItemCount: hiddenItemCount,
     isArrayValue,
     isMultiItemArrayValue,
