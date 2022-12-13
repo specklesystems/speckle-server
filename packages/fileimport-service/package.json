@@ -15,7 +15,7 @@
     "node": "^18.12.1"
   },
   "scripts": {
-    "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development SPECKLE_SERVER_URL=http://localhost:3000 nodemon --no-experimental-fetch ./src/daemon.js",
+    "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development LOG_PRETTY=true SPECKLE_SERVER_URL=http://localhost:3000 nodemon --no-experimental-fetch ./src/daemon.js",
     "parse:ifc": "node --no-experimental-fetch ./ifc/import_file.js ./ifc/ifcs/steelplates.ifc 33763848d6 2e4bfb467a main File upload: steelplates.ifc",
     "lint": "eslint . --ext .js,.ts"
   },
@@ -29,6 +29,7 @@
     "crypto-random-string": "^3.3.1",
     "knex": "^2.0.0",
     "pg": "^8.7.3",
+    "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
     "undici": "^5.8.2",
     "valid-filename": "^3.1.0",

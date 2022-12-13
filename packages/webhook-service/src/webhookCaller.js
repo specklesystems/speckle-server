@@ -4,7 +4,6 @@ const dns = require('dns')
 const isIpPrivate = require('private-ip')
 
 const fetch = require('node-fetch')
-const { logger } = require('./observability/logging')
 
 async function isLocalNetworkUrl(url) {
   const parsedUrl = new URL(url)
@@ -22,7 +21,7 @@ async function isLocalNetworkUrl(url) {
   return isIpPrivate(ip)
 }
 
-async function makeNetworkRequest({ url, data, headersData }) {
+async function makeNetworkRequest({ url, data, headersData, logger }) {
   if (process.env.ALLOW_LOCAL_NETWORK !== 'true' && (await isLocalNetworkUrl(url))) {
     return {
       success: false,
@@ -38,7 +37,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
   const headers = { 'Content-Type': 'application/json' }
   for (const k in headersData) headers[k] = headersData[k]
 
-  logger.info('POST request to:', url)
+  logger.info('attempting POST request.')
   const t0 = Date.now()
 
   try {
@@ -51,7 +50,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
       size: 500 * 1000 // 500kb max response size, to accommodate various error responses (defaults to no limit)
     }).then(async (res) => ({ status: res.status, body: await res.text() }))
 
-    // logger.debug( 'Server response:', response )
+    logger.debug({ response }, 'Server responded.')
     const error =
       httpSuccessCodes.indexOf(response.status) === -1
         ? `HTTP response code: ${response.status}`
@@ -65,6 +64,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
       responseBody: response.body
     }
   } catch (e) {
+    logger.error(e, 'error when making network request for webhook.')
     return {
       success: false,
       error: e.toString(),

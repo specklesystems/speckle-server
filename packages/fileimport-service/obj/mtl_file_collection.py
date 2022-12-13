@@ -1,5 +1,9 @@
 import os
 
+import structlog
+
+LOG = structlog.get_logger()
+
 
 class MtlFileCollection(object):
     def __init__(self, base_dir):
@@ -13,14 +17,14 @@ class MtlFileCollection(object):
             self.crt_mat is None
             and f"no_mat_{directive}" not in self.logged_unsupported
         ):
-            print(f"Directive found outside material definition: {directive}")
+            LOG.info("Directive found outside material definition:%s", directive)
             self.logged_unsupported.add(f"no_mat_{directive}")
         return self.crt_mat is not None
 
     def mtllib(self, fpath):
         fpath = os.path.join(self.base_dir, os.path.basename(fpath))
         if not os.path.isfile(fpath):
-            print(f"Missing MTL file: {fpath}")
+            LOG.error("Missing MTL file:%s", fpath)
             return
 
         with open(fpath, "r") as f:
@@ -70,7 +74,7 @@ class MtlFileCollection(object):
                         self.crt_mat["emissive"] = [float(x) for x in parts[1:]]
                 else:
                     if parts[0] not in self.logged_unsupported:
-                        print("Unsupported MTL directive: " + parts[0])
+                        LOG.warn("Unsupported MTL directive: %s", parts[0])
                         self.logged_unsupported.add(parts[0])
         self.crt_mat = None
 
