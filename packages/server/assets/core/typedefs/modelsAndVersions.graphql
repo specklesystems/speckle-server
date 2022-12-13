@@ -1,0 +1,13 @@
+extend type Project {
+  models(cursor: String, limit: Int! = 25): ModelCollection
+}
+
+type Model {
+  id: String!
+}
+
+type ModelCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Model!]!
+}
