@@ -11,6 +11,10 @@ module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
+    })
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req
@@ -21,17 +25,13 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    logger.info(
-      `[User ${req.context.userId || '-'}] Diffing ${
-        objectList.length
-      } objects for stream ${req.params.streamId}`
-    )
+    boundLogger.info(`Diffing ${objectList.length} objects.`)
 
     const response = await hasObjects({
       streamId: req.params.streamId,
       objectIds: objectList
     })
-    // logger.debug(response)
+    boundLogger.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': 'application/json'

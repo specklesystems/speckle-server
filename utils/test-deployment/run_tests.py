@@ -12,6 +12,7 @@ from specklepy.api.models import ServerInfo
 
 # Setting the SPECKLE_SERVER to test on
 SPECKLE_SERVER = ""
+
 if len(sys.argv) > 1:
     SPECKLE_SERVER = sys.argv[1]
 if not SPECKLE_SERVER:
@@ -52,9 +53,9 @@ if not SERVER_VERSION:
     SERVER_VERSION = os.getenv("SERVER_VERSION")
 if SERVER_VERSION:
     if not SERVER_VERSION == "latest":
-        assert (
-            server_info.version == SERVER_VERSION
-        ), f"The deployed version {server_info.version} doesn't match the expected {SERVER_VERSION}"
+        assert server_info.version.startswith(
+            SERVER_VERSION
+        ), f"The deployed version {server_info.version} should match, or be prefixed by, the expected {SERVER_VERSION}"
         print(f"Server version {SERVER_VERSION} is deployed and available")
     else:
         print("Not testing server version, as it was set to 'latest'")

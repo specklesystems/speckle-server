@@ -11,12 +11,12 @@ const execution = yargs
   .fail((msg, err, yargs) => {
     if (!err) {
       // If validation error (no err instance) then just show help and show the message
-      logger.error(yargs.help())
-      logger.error('\n', msg)
+      console.log(yargs.help())
+      console.log('\n', msg)
     } else {
       // If actual app error occurred, show the msg, but don't show help info
       logger.error(err)
-      logger.error('\n', 'Specify --help for available options')
+      console.log('\n', 'Specify --help for available options')
     }
 
     process.exit(1)

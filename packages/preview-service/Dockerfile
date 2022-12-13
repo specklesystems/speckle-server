@@ -37,11 +37,6 @@ RUN yarn workspaces foreach run build
 
 FROM node:18.12.1-bullseye-slim as node
 
-# required for ensuring cross-compatibility
-# https://github.com/puppeteer/puppeteer/issues/7740
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
@@ -73,8 +68,6 @@ RUN apt-get update && \
   libxrandr2=2:1.5.1-1 \
   wget=1.21-1+deb11u1 \
   xdg-utils=1.1.3-4.1 \
-  chromium-common=104.0.5112.79-1~deb11u1 \
-  chromium=104.0.5112.79-1~deb11u1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 

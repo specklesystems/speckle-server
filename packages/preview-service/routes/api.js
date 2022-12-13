@@ -11,6 +11,9 @@ const router = express.Router()
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
 router.post('/getobjects/:streamId', async (req, res) => {
+  const boundLogger = logger.child({
+    streamId: req.params.streamId
+  })
   const childrenList = JSON.parse(req.body.objects)
 
   const simpleText = req.headers.accept === 'text/plain'
@@ -35,14 +38,12 @@ router.post('/getobjects/:streamId', async (req, res) => {
     res,
     (err) => {
       if (err) {
-        logger.error(
-          `Error streaming objects from stream ${req.params.streamId}: ${err}`
-        )
+        boundLogger.error(err, `Error streaming objects.`)
       } else {
-        logger.error(
-          `Streamed ${childrenList.length} objects from stream ${
-            req.params.streamId
-          } (size: ${gzipStream.bytesWritten / 1000000} MB)`
+        boundLogger.error(
+          `Streamed ${childrenList.length} objects (size: ${
+            gzipStream.bytesWritten / 1000000
+          } MB)`
         )
       }
     }

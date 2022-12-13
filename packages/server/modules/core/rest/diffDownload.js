@@ -13,6 +13,10 @@ module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
   app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
+    })
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -40,16 +44,10 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          logger.error(
-            `[User ${
-              req.context.userId || '-'
-            }] App error streaming objects from stream ${req.params.streamId}: ${err}`
-          )
+          boundLogger.error(err, `App error streaming objects`)
         } else {
-          logger.info(
-            `[User ${req.context.userId || '-'}] Streamed ${
-              childrenList.length
-            } objects from stream ${req.params.streamId} (size: ${
+          boundLogger.info(
+            `Streamed ${childrenList.length} objects (size: ${
               gzipStream.bytesWritten / 1000000
             } MB)`
           )
@@ -73,11 +71,7 @@ module.exports = (app) => {
         })
       }
     } catch (ex) {
-      logger.error(
-        `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
-          req.params.streamId
-        }: ${ex}`
-      )
+      boundLogger.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
     }
     speckleObjStream.end()
