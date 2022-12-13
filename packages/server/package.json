@@ -25,7 +25,7 @@
     "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "eslint . --ext .js,.ts",
     "lint:tsc": "tsc --noEmit",
-    "cli": "cross-env NODE_ENV=development ts-node ./modules/cli/index.js",
+    "cli": "cross-env LOG_PRETTY=true NODE_ENV=development ts-node ./modules/cli/index.js",
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml"
