@@ -12,6 +12,7 @@ generates:
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
+        Model: '@/modules/core/helpers/graphTypes#ModelGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'

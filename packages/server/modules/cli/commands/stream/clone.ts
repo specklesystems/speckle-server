@@ -1,5 +1,5 @@
 import { cloneStream } from '@/modules/core/services/streams/clone'
-import { cliDebug } from '@/modules/shared/utils/logger'
+import { cliLogger } from '@/logging/logging'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule<
@@ -20,11 +20,11 @@ const command: CommandModule<
   },
   handler: async (argv) => {
     const { sourceStreamId, targetUserId } = argv
-    cliDebug(
+    cliLogger.info(
       `Cloning stream ${sourceStreamId} into the account of user ${targetUserId}...`
     )
     const { id } = await cloneStream(targetUserId, sourceStreamId)
-    cliDebug('Cloning successful! New stream ID: ' + id)
+    cliLogger.info('Cloning successful! New stream ID: ' + id)
   }
 }
 

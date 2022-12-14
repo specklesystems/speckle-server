@@ -1,5 +1,12 @@
 <template>
-  <Listbox v-model="value" :name="name" :multiple="multiple" :by="by" as="div">
+  <Listbox
+    v-model="value"
+    :name="name"
+    :multiple="multiple"
+    :by="by"
+    :disabled="disabled"
+    as="div"
+  >
     <ListboxLabel
       class="block label text-foreground"
       :class="{ 'sr-only': !showLabel }"
@@ -9,7 +16,13 @@
     <div class="relative mt-1">
       <ListboxButton
         v-slot="{ open }"
-        class="normal w-full cursor-default rounded-lg bg-foundation py-2 px-3 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1 flex items-center"
+        :class="[
+          'normal w-full cursor-default rounded-lg py-2 px-3',
+          'focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1 flex items-center',
+          disabled
+            ? 'bg-foundation-disabled text-foreground-disabled'
+            : 'bg-foundation text-foreground'
+        ]"
       >
         <span class="block truncate grow text-left">
           <template v-if="!value || (isArray(value) && !value.length)">
@@ -191,6 +204,10 @@ const props = defineProps({
   by: {
     type: String,
     required: true
+  },
+  disabled: {
+    type: Boolean as PropType<Optional<boolean>>,
+    default: false
   }
 })
 

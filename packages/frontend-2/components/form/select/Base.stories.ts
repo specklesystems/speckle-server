@@ -138,3 +138,11 @@ export const WithCustomSlots: Story = {
     }
   }
 }
+
+export const Disabled: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    disabled: true
+  }
+}

@@ -120,6 +120,14 @@ function createCache(): InMemoryCache {
           }
         }
       },
+      Project: {
+        fields: {
+          models: {
+            keyArgs: ['filter'],
+            merge: buildAbstractCollectionMergeFunction('ModelCollection')
+          }
+        }
+      },
       Stream: {
         fields: {
           activity: {

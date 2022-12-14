@@ -3,6 +3,7 @@
     <template #default="{ gridOrList }">
       <ProjectPageLatestItemsModelsGrid
         v-if="gridOrList === GridListToggleValue.Grid"
+        :models="latestModelsResult"
       />
       <ProjectPageLatestItemsModelsList v-else />
     </template>
@@ -10,7 +11,8 @@
       <div class="flex items-center">
         <FormSelectUsers
           v-model="selectedMembers"
-          :users="fakeUsers"
+          :users="project.team"
+          :disabled="isQueryLoading"
           multiple
           search
           selector-placeholder="All members"
@@ -19,6 +21,8 @@
         />
         <FormSelectSourceApps
           v-model="selectedApps"
+          :items="availableSourceApps"
+          :disabled="isQueryLoading"
           multiple
           selector-placeholder="All sources"
           label="Filter by sources"
@@ -30,24 +34,74 @@
 </template>
 <script setup lang="ts">
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { fakeUsers } from '~~/components/form/select/Users.stories'
 import {
   FormUsersSelectItemFragment,
   ProjectPageLatestItemsModelsFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { SourceAppDefinition } from '@speckle/shared'
+import { SourceAppDefinition, SourceApps } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+
+graphql(`
+  fragment ProjectPageLatestItemsModels on Project {
+    id
+    modelCount
+    sourceApps
+    team {
+      ...FormUsersSelectItem
+    }
+  }
+`)
+
+graphql(`
+  fragment ProjectPageLatestItemsModelItem on Model {
+    id
+    name
+    versionCount
+    previewUrl
+    createdAt
+    updatedAt
+  }
+`)
+
+const latestModelsQuery = graphql(`
+  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
+    project(id: $projectId) {
+      id
+      models(cursor: null, limit: 8, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
+    }
+  }
+`)
+
+const props = defineProps<{
+  project: ProjectPageLatestItemsModelsFragment
+}>()
 
 const selectedMembers = ref([] as FormUsersSelectItemFragment[])
 const selectedApps = ref([] as SourceAppDefinition[])
 
-graphql(`
-  fragment ProjectPageLatestItemsModels on Project {
-    modelCount
+const isQueryLoading = useQueryLoading()
+const { result: latestModelsResult } = useQuery(latestModelsQuery, () => ({
+  projectId: props.project.id,
+  filter: {
+    sourceApps: selectedApps.value?.length
+      ? selectedApps.value.map((a) => a.searchKey)
+      : null,
+    contributors: selectedMembers.value?.length
+      ? selectedMembers.value.map((m) => m.id)
+      : null
   }
-`)
+}))
 
-defineProps<{
-  project: ProjectPageLatestItemsModelsFragment
-}>()
+const availableSourceApps = computed((): SourceAppDefinition[] =>
+  SourceApps.filter((a) =>
+    props.project.sourceApps.find((pa) => pa.includes(a.searchKey))
+  )
+)
 </script>

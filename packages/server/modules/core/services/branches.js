@@ -46,6 +46,13 @@ module.exports = {
     return await Branches().where({ id }).first().select('*')
   },
 
+  /**
+   * @returns {Promise<{
+   *  items: import('@/modules/core/helpers/types').BranchRecord[],
+   *  cursor: string | null,
+   *  totalCount: number
+   * }>}
+   */
   async getBranchesByStreamId({ streamId, limit, cursor }) {
     limit = limit || 25
     const query = Branches().select('*').where({ streamId })

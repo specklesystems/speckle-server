@@ -56,4 +56,8 @@ type Project {
   createdAt: DateTime!
   updatedAt: DateTime!
   team: [LimitedUser!]!
+  """
+  Source apps used in any models of this project
+  """
+  sourceApps: [String!]!
 }

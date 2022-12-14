@@ -1,17 +1,32 @@
 extend type Project {
-  models(cursor: String, limit: Int! = 25): ModelCollection
+  models(cursor: String, limit: Int! = 25, filter: ProjectModelsFilter): ModelCollection
 }
 
 type Model {
   id: ID!
   name: String!
-  versionCount: Int!
   author: LimitedUser!
-  sourceApp: String!
+  description: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  versionCount: Int!
+  previewUrl: String!
+  #commentThreadCount: Int!
 }
 
 type ModelCollection {
   totalCount: Int!
   cursor: String
   items: [Model!]!
+}
+
+input ProjectModelsFilter {
+  """
+  Filter by source apps used in models
+  """
+  sourceApps: [String!]
+  """
+  Filter by IDs of contributors who participated in models
+  """
+  contributors: [String!]
 }

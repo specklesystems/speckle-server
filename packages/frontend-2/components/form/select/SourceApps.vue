@@ -2,7 +2,7 @@
   <FormSelectBase
     v-model="selectedValue"
     :multiple="multiple"
-    :items="SourceApps"
+    :items="items?.length ? items : SourceApps"
     :search="search"
     :search-placeholder="searchPlaceholder"
     :label="label"
@@ -119,6 +119,13 @@ const props = defineProps({
   },
   name: {
     type: String as PropType<Optional<string>>,
+    default: undefined
+  },
+  /**
+   * Control source apps to show. If left undefined, will show all available options.
+   */
+  items: {
+    type: Array as PropType<Optional<SourceAppDefinition[]>>,
     default: undefined
   }
 })

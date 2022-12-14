@@ -14,10 +14,12 @@ const {
   getCommitsByBranchId,
   getCommitsByUserId,
   getCommitsByStreamId,
-  getCommitsTotalCountByStreamId,
   getCommitsTotalCountByUserId,
   getCommitsTotalCountByBranchId
 } = require('../../services/commits')
+const {
+  getPaginatedStreamCommits
+} = require('@/modules/core/services/commit/retrieval')
 
 const { getUser } = require('../../services/users')
 
@@ -94,22 +96,7 @@ module.exports = {
   },
   Stream: {
     async commits(parent, args) {
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { commits: items, cursor } = await getCommitsByStreamId({
-        streamId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor,
-        ignoreGlobalsBranch: true
-      })
-      const totalCount = await getCommitsTotalCountByStreamId({
-        streamId: parent.id,
-        ignoreGlobalsBranch: true
-      })
-
-      return { items, cursor, totalCount }
+      return await getPaginatedStreamCommits(parent.id, args)
     },
 
     async commit(parent, args) {

@@ -59,3 +59,11 @@ export const WithSearch: Story = {
     search: true
   }
 }
+
+export const Disabled: Story = {
+  ...Default,
+  args: {
+    ...Default.args,
+    disabled: true
+  }
+}

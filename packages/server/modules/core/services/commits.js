@@ -239,6 +239,12 @@ module.exports = {
     return await getStreamCommitCount(streamId, { ignoreGlobalsBranch })
   },
 
+  /**
+   * @returns {Promise<{
+   *  commits: import('@/modules/core/helpers/types').CommitRecord[],
+   *  cursor: string | null
+   * }>}
+   */
   async getCommitsByStreamId({ streamId, limit, cursor, ignoreGlobalsBranch }) {
     limit = limit || 25
     const query = StreamCommits()

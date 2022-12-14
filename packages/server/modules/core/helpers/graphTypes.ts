@@ -3,9 +3,11 @@ import {
   Stream,
   StreamRole,
   Project,
-  ServerRole
+  ServerRole,
+  Model
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { BranchRecord } from '@/modules/core/helpers/types'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -39,7 +41,7 @@ export type StreamGraphQLReturn = Omit<
 
 export type ProjectGraphQLReturn = Omit<
   Project,
-  'modelCount' | 'role' | 'team' | 'versionCount' | 'commentCount'
+  'modelCount' | 'role' | 'team' | 'versionCount' | 'commentThreadCount' | 'sourceApps'
 > & {
   /**
    * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
@@ -47,6 +49,9 @@ export type ProjectGraphQLReturn = Omit<
    */
   role?: string | null
 }
+
+export type ModelGraphQLReturn = Omit<Model, 'versionCount' | 'author' | 'previewUrl'> &
+  BranchRecord
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,

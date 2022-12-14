@@ -1,10 +1,12 @@
-import _, { clamp, isNaN, toNumber } from 'lodash'
+import _, { clamp, groupBy, isNaN, mapValues, reduce, toNumber } from 'lodash'
 import {
   Streams,
   StreamAcl,
   StreamFavorites,
   knex,
-  Users
+  Users,
+  StreamCommits,
+  Commits
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
@@ -698,4 +700,31 @@ export async function deleteStream(streamId: string) {
     [streamId]
   )
   return await Streams.knex().where(Streams.col.id, streamId).del()
+}
+
+export async function getStreamsSourceApps(streamIds: string[]) {
+  if (!streamIds?.length) return {}
+
+  const q = Streams.knex()
+    .select<{ id: string; sourceApplication: string }[]>([
+      Streams.col.id,
+      Commits.col.sourceApplication
+    ])
+    .whereIn(Streams.col.id, streamIds)
+    .innerJoin(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
+    .innerJoin(Commits.name, StreamCommits.col.commitId, Commits.col.id)
+
+  const results = await q
+  const mappedToSets = reduce(
+    results,
+    (result, item) => {
+      const set = result[item.id] || new Set<string>()
+      set.add(item.sourceApplication)
+      result[item.id] = set
+
+      return result
+    },
+    {} as Record<string, Set<string>>
+  )
+  return mapValues(mappedToSets, (v) => [...v.values()])
 }

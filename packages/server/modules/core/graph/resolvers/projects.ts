@@ -76,6 +76,9 @@ export = {
     },
     async versionCount(parent, _args, ctx) {
       return await ctx.loaders.streams.getCommitCountWithoutGlobals.load(parent.id)
+    },
+    async sourceApps(parent, _args, ctx) {
+      return ctx.loaders.streams.getSourceApps.load(parent.id)
     }
   }
 } as Resolvers
