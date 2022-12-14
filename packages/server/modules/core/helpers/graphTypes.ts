@@ -50,7 +50,10 @@ export type ProjectGraphQLReturn = Omit<
   role?: string | null
 }
 
-export type ModelGraphQLReturn = Omit<Model, 'versionCount' | 'author' | 'previewUrl'> &
+export type ModelGraphQLReturn = Omit<
+  Model,
+  'versionCount' | 'author' | 'previewUrl' | 'commentThreadCount'
+> &
   BranchRecord
 
 export type LimitedUserGraphQLReturn = Omit<

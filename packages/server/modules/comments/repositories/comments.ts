@@ -1,5 +1,15 @@
-import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentLinks, Comments, knex } from '@/modules/core/dbSchema'
+import {
+  CommentLinkRecord,
+  CommentRecord,
+  CommentLinkResourceType
+} from '@/modules/comments/helpers/types'
+import {
+  BranchCommits,
+  Branches,
+  CommentLinks,
+  Comments,
+  knex
+} from '@/modules/core/dbSchema'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { keyBy } from 'lodash'
@@ -161,4 +171,33 @@ export async function getStreamCommentCount(
 ) {
   const [res] = await getStreamCommentCounts([streamId], options)
   return res?.count || 0
+}
+
+export async function getBranchCommentCounts(
+  branchIds: string[],
+  options?: Partial<{ threadsOnly: boolean }>
+) {
+  if (!branchIds.length) return []
+  const { threadsOnly } = options || {}
+
+  const q = Branches.knex()
+    .select(Branches.col.id)
+    .whereIn(Branches.col.id, branchIds)
+    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+    .innerJoin(CommentLinks.name, function () {
+      this.on(CommentLinks.col.resourceId, BranchCommits.col.commitId).andOnVal(
+        CommentLinks.col.resourceType,
+        'commit' as CommentLinkResourceType
+      )
+    })
+    .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+    .count()
+    .groupBy(Branches.col.id)
+
+  if (threadsOnly) {
+    q.andWhere(Comments.col.parentComment, null)
+  }
+
+  const results = (await q) as { id: string; count: string }[]
+  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
 }

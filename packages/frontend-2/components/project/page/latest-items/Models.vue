@@ -5,7 +5,7 @@
         v-if="gridOrList === GridListToggleValue.Grid"
         :models="latestModelsResult"
       />
-      <ProjectPageLatestItemsModelsList v-else />
+      <ProjectPageLatestItemsModelsList v-else :models="latestModelsResult" />
     </template>
     <template #filters>
       <div class="flex items-center">
@@ -58,6 +58,7 @@ graphql(`
     id
     name
     versionCount
+    commentThreadCount
     previewUrl
     createdAt
     updatedAt

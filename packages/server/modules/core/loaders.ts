@@ -25,6 +25,7 @@ import {
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
+  getBranchCommentCounts,
   getCommentsResources,
   getStreamCommentCounts
 } from '@/modules/comments/repositories/comments'
@@ -139,7 +140,14 @@ export function buildRequestLoaders(ctx: AuthContext) {
           )
           return branchIds.map((i) => results[i] || null)
         }
-      )
+      ),
+      getCommentThreadCount: new DataLoader<string, number>(async (branchIds) => {
+        const results = keyBy(
+          await getBranchCommentCounts(branchIds.slice(), { threadsOnly: true }),
+          'id'
+        )
+        return branchIds.map((i) => results[i]?.count || 0)
+      })
     },
     commits: {
       /**

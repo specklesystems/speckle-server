@@ -19,6 +19,9 @@ export = {
       const latestCommit = await ctx.loaders.branches.getLatestCommit.load(parent.id)
       const path = `/preview/${parent.streamId}/commits/${latestCommit?.id || ''}`
       return new URL(path, getServerOrigin()).toString()
+    },
+    async commentThreadCount(parent, _args, ctx) {
+      return await ctx.loaders.branches.getCommentThreadCount.load(parent.id)
     }
   }
 } as Resolvers

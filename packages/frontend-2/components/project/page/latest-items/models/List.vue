@@ -18,11 +18,20 @@
         <tr class="h-3">
           <!-- You can't use margins on thead, hence this hack -->
         </tr>
-        <template v-for="n in 8" :key="n">
-          <ProjectPageLatestItemsModelsListItem />
-          <tr v-if="n !== 8" class="h-4" />
+        <template v-for="(item, i) in items" :key="item.id">
+          <ProjectPageLatestItemsModelsListItem :model="item" />
+          <tr v-if="i !== items.length - 1" class="h-4" />
         </template>
       </tbody>
     </table>
   </div>
 </template>
+<script setup lang="ts">
+import { ProjectLatestModelsQuery } from '~~/lib/common/generated/gql/graphql'
+
+const props = defineProps<{
+  models?: ProjectLatestModelsQuery
+}>()
+
+const items = computed(() => (props.models?.project?.models?.items || []).slice(0, 8))
+</script>

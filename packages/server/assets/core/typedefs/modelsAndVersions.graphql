@@ -11,7 +11,7 @@ type Model {
   updatedAt: DateTime!
   versionCount: Int!
   previewUrl: String!
-  #commentThreadCount: Int!
+  commentThreadCount: Int!
 }
 
 type ModelCollection {
