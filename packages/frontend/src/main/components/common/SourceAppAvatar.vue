@@ -44,7 +44,8 @@ export default {
       { name: 'openroads', color: 'brown accent-4', short: 'OROAD' },
       { name: 'openrail', color: 'brown accent-4', short: 'ORAIL' },
       { name: 'openbuildings', color: 'brown accent-4', short: 'OBUILD' },
-      { name: 'microstation', color: 'brown accent-4', short: 'MICRO' }
+      { name: 'microstation', color: 'brown accent-4', short: 'MICRO' },
+      { name: 'navisworks', color: 'green darken-3', short: 'NAVIS' }
     ]
   }),
   computed: {

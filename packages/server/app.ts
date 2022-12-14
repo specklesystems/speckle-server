@@ -6,11 +6,12 @@ import express, { Express } from 'express'
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
 import compression from 'compression'
-import logger from 'morgan-debug'
 
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
+import { startupLogger, shutdownLogger } from '@/logging/logging'
+import { LoggingExpressMiddleware } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
@@ -43,7 +44,6 @@ import { corsMiddleware } from '@/modules/core/configs/cors'
 import { Roles } from '@speckle/shared'
 
 import { IMocks } from '@graphql-tools/mock'
-import { startupDebug, shutdownDebug } from '@/modules/shared/utils/logger'
 import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
@@ -235,7 +235,7 @@ export async function buildApolloServer(
  */
 export async function init() {
   if (useNewFrontend()) {
-    startupDebug('🖼️  Serving for frontend-2...')
+    startupLogger.info('🖼️  Serving for frontend-2...')
   }
 
   const app = express()
@@ -248,7 +248,7 @@ export async function init() {
   await knex.migrate.latest()
 
   if (process.env.NODE_ENV !== 'test') {
-    app.use(logger('speckle', 'dev', {}))
+    app.use(LoggingExpressMiddleware)
   }
 
   if (process.env.COMPRESSION) {
@@ -336,8 +336,8 @@ export async function startHttp(
     // app.use('/', frontendProxy)
     app.use(await createFrontendProxy())
 
-    startupDebug('✨ Proxying frontend-1 (dev mode):')
-    startupDebug(`👉 main application: http://localhost:${port}/`)
+    startupLogger.info('✨ Proxying frontend-1 (dev mode):')
+    startupLogger.info(`👉 main application: http://localhost:${port}/`)
   }
 
   // Production mode
@@ -354,13 +354,13 @@ export async function startHttp(
     signals: ['SIGTERM', 'SIGINT'],
     timeout: 5 * 60 * 1000,
     beforeShutdown: async () => {
-      shutdownDebug('Shutting down (signal received)...')
+      shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
       await shutdown()
     },
     onShutdown: () => {
-      shutdownDebug('Shutdown completed')
+      shutdownLogger.info('Shutdown completed')
       process.exit(0)
     }
   })
@@ -370,7 +370,7 @@ export async function startHttp(
     const addressString = isString(address) ? address : address?.address
     const port = isString(address) ? null : address?.port
 
-    startupDebug(
+    startupLogger.info(
       `🚀 My name is Speckle Server, and I'm running at ${addressString}:${port}`
     )
     app.emit('appStarted')

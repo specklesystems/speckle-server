@@ -1,3 +1,4 @@
+import { logger } from '@/logging/logging'
 import { getQueue, NotificationJobResult } from '@/modules/notifications/services/queue'
 import { EventEmitter } from 'events'
 import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
@@ -94,7 +95,11 @@ export function buildNotificationsStateTracker() {
       // We start tracking even before promise is created so that we can't possibly miss it
       let foundAck: Nullable<AckEvent> = null
       const ackTracker = (e: AckEvent) => {
-        if (predicate && predicate(e)) foundAck = e
+        if (predicate) {
+          if (predicate(e)) foundAck = e
+        } else {
+          foundAck = e
+        }
       }
       localEvents.on(NEW_ACK_EVENT, ackTracker)
 
@@ -161,13 +166,13 @@ export async function debugJobs() {
     { items: failed, display: 'Failed' }
   ]
 
-  console.log('------------- START debugJobs() --------------')
+  logger.debug('------------- START debugJobs() --------------')
 
   for (const { items, display } of jobCollections) {
-    console.log(`${display}: ` + waiting.length)
-    console.log(`${display} jobs: `)
+    logger.debug(`${display}: ` + waiting.length)
+    logger.debug(`${display} jobs: `)
     for (const job of items) {
-      console.log(
+      logger.debug(
         ` - ${JSON.stringify(
           pick(job, [
             'timestamp',
@@ -181,6 +186,6 @@ export async function debugJobs() {
       )
     }
   }
-  console.log({ workers })
-  console.log('------------- END debugJobs() --------------')
+  logger.debug({ workers })
+  logger.debug('------------- END debugJobs() --------------')
 }

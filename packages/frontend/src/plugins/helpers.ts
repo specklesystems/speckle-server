@@ -6,6 +6,7 @@ import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { getInviteTokenFromURL } from '@/main/lib/auth/services/authService'
 import { triggerToastNotification } from '@/main/lib/core/composables/notifications'
 import { getResourceType } from '@/main/lib/viewer/core/helpers/resourceHelper'
+import { setPostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
 
 Vue.prototype.$userId = function () {
   return AppLocalStorage.get(LocalStorageKeys.Uuid)
@@ -35,9 +36,11 @@ Vue.prototype.$resourceType = function (resourceId: string) {
  * Redirect to log in and redirect back to current page post-login
  */
 Vue.prototype.$loginAndSetRedirect = function () {
+  if (this.$loggedIn()) return
+
   // Store current path with all of the query params and everything
   const relativePath = window.location.href.replace(window.location.origin, '')
-  AppLocalStorage.set(LocalStorageKeys.ShouldRedirectTo, relativePath)
+  setPostAuthRedirect({ pathWithQuery: relativePath })
 
   // Carry inviteId over
   const token = getInviteTokenFromURL()

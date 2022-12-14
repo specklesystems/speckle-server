@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+const { logger } = require('@/logging/logging')
 const prometheusClient = require('prom-client')
 
 let metricErrorCount = null
@@ -13,7 +14,7 @@ module.exports = {
       })
     }
 
-    console.log(`Error when handling ${req.originalUrl} from ${req.ip}: ${err.message}`)
+    logger.error(err, `Error when handling ${req.originalUrl} from ${req.ip}`)
     let route = 'unknown'
     if (req.route && req.route.path) route = req.route.path
     metricErrorCount.labels(route).inc()

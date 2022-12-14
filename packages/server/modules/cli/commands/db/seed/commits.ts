@@ -1,6 +1,6 @@
+import { cliLogger } from '@/logging/logging'
 import { getStream } from '@/modules/core/repositories/streams'
 import { getUser } from '@/modules/core/repositories/users'
-import { cliDebug } from '@/modules/shared/utils/logger'
 import { BasicTestCommit, createTestCommits } from '@/test/speckle-helpers/commitHelper'
 import dayjs from 'dayjs'
 import { times } from 'lodash'
@@ -48,7 +48,7 @@ const command: CommandModule<
       )
     }
 
-    cliDebug(`Generating ${count} objects & commits for stream ${streamId}...`)
+    cliLogger.info(`Generating ${count} objects & commits for stream ${streamId}...`)
     await createTestCommits(
       times(
         count,
@@ -61,7 +61,7 @@ const command: CommandModule<
         })
       )
     )
-    cliDebug(`...done`)
+    cliLogger.info(`...done`)
   }
 }
 

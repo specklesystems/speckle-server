@@ -70,7 +70,7 @@ spec:
             command:
               - node
               - -e
-              - "require('request')({headers: {'Content-Type': 'application/json'}, uri: 'http://localhost:3000/graphql?query={serverInfo{version}}', method: 'GET' }, (e,r,b) => process.exit(r.statusCode != 200 || b.toLowerCase().includes('error')))"
+              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
 
         readinessProbe:
           initialDelaySeconds: 5
@@ -80,7 +80,7 @@ spec:
             command:
               - node
               - -e
-              - "require('request')({headers: {'Content-Type': 'application/json'}, uri: 'http://localhost:3000/graphql?query={serverInfo{version}}', method: 'GET' }, (e,r,b) => process.exit(r.statusCode != 200 || b.toLowerCase().includes('error')))"
+              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
 
         env:
           - name: CANONICAL_URL
@@ -92,9 +92,9 @@ spec:
 
           - name: PORT
             value: {{ include "server.port" $ | quote }}
-          - name: DEBUG
-            value: "speckle:*"
-          
+          - name: LOG_LEVEL
+            value: {{ .Values.server.logLevel }}
+
           - name: USE_FRONTEND_2
             value: {{ .Values.frontend_2.enabled | quote }}
 
