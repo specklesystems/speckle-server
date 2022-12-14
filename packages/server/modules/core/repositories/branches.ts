@@ -54,5 +54,5 @@ export async function getStreamBranchCounts(streamIds: string[]) {
 
 export async function getStreamBranchCount(streamId: string) {
   const [res] = await getStreamBranchCounts([streamId])
-  return res?.count
+  return res?.count || 0
 }

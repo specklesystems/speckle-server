@@ -160,5 +160,5 @@ export async function getStreamCommentCount(
   options?: Partial<{ threadsOnly: boolean }>
 ) {
   const [res] = await getStreamCommentCounts([streamId], options)
-  return res?.count
+  return res?.count || 0
 }

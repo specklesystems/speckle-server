@@ -185,5 +185,5 @@ export async function getStreamCommitCount(
   options?: Partial<{ ignoreGlobalsBranch: boolean }>
 ) {
   const [res] = await getStreamCommitCounts([streamId], options)
-  return res?.count
+  return res?.count || 0
 }
