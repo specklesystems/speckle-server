@@ -1,14 +1,15 @@
 import { MaybeRef } from '@vueuse/core'
+import { Nullable } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 
 /**
  * Get authenticated preview image URL
- * NOTE: Returns base URL during SSR, so make sure you wrap any components that render the image
+ * NOTE: Returns null during SSR, so make sure you wrap any components that render the image
  * in <ClientOnly> to prevent hydration errors
  */
 export function usePreviewImageBlob(previewUrl: MaybeRef<string>) {
   const authToken = useAuthCookie()
-  const url = ref(unref(previewUrl))
+  const url = ref(null as Nullable<string>)
 
   if (process.client) {
     watch(
@@ -31,6 +32,6 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string>) {
   }
 
   return {
-    url: computed(() => url.value)
+    previewUrl: computed(() => url.value)
   }
 }

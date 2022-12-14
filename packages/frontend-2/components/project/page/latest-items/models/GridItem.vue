@@ -1,12 +1,15 @@
 <template>
   <div class="h-52 rounded-lg bg-foundation-2 shadow flex flex-col">
     <!-- Image -->
-    <ClientOnly>
-      <div
-        class="grow bg-contain bg-no-repeat bg-center"
-        :style="{ backgroundImage: `url('${previewUrl}')` }"
-      />
-    </ClientOnly>
+    <div class="grow flex">
+      <ClientOnly>
+        <div
+          v-if="previewUrl"
+          class="grow bg-contain bg-no-repeat bg-center"
+          :style="{ backgroundImage: `url('${previewUrl}')` }"
+        />
+      </ClientOnly>
+    </div>
     <!-- Footer -->
     <div class="py-3 px-2 flex justify-between items-center">
       <div class="text-foreground normal truncate pr-2">
