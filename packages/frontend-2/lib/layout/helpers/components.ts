@@ -1,4 +1,4 @@
 export enum GridListToggleValue {
-  Grid,
-  List
+  Grid = 'grid',
+  List = 'list'
 }

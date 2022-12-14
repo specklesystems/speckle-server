@@ -27,17 +27,25 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 defineEmits<{
   (e: 'see-all-click', v: MouseEvent): void
 }>()
 
-defineProps<{
+const props = defineProps<{
   title: string
   count: number
   seeAllUrl?: string
 }>()
 
-const gridOrList = ref(GridListToggleValue.Grid)
+const viewTypeCookie = useSynchronizedCookie(`projectPage-${props.title}-viewType`)
+const gridOrList = computed({
+  get: () =>
+    viewTypeCookie.value === GridListToggleValue.List
+      ? GridListToggleValue.List
+      : GridListToggleValue.Grid,
+  set: (newVal) => (viewTypeCookie.value = newVal)
+})
 </script>

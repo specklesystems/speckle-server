@@ -3,6 +3,7 @@
     <td class="p-0">
       <ClientOnly>
         <div
+          v-if="previewUrl"
           class="h-[62px] bg-contain bg-no-repeat bg-center w-full"
           :style="{ backgroundImage: `url('${previewUrl}')` }"
         ></div>
@@ -24,8 +25,8 @@
         <span>{{ model.commentThreadCount }}</span>
       </div>
     </td>
-    <td class="pr-5">13 seconds ago</td>
-    <td>12 seconds ago</td>
+    <td class="pr-5">{{ updatedAt }}</td>
+    <td>{{ createdAt }}</td>
   </tr>
 </template>
 <script setup lang="ts">
@@ -35,6 +36,7 @@ import {
 } from '@heroicons/vue/24/solid'
 import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
+import dayjs from 'dayjs'
 
 const props = defineProps<{
   model: ProjectPageLatestItemsModelItemFragment
@@ -42,4 +44,7 @@ const props = defineProps<{
 
 const basePreviewUrl = computed(() => props.model.previewUrl)
 const { previewUrl } = usePreviewImageBlob(basePreviewUrl)
+
+const createdAt = computed(() => dayjs(props.model.createdAt).from(dayjs()))
+const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))
 </script>
