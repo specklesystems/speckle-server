@@ -19,3 +19,18 @@ export const projectPageQuery = graphql(`
     }
   }
 `)
+
+export const latestModelsQuery = graphql(`
+  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
+    project(id: $projectId) {
+      id
+      models(cursor: null, limit: 8, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
+    }
+  }
+`)

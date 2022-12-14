@@ -41,6 +41,7 @@ import {
 import { SourceAppDefinition, SourceApps } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 
 graphql(`
   fragment ProjectPageLatestItemsModels on Project {
@@ -62,21 +63,6 @@ graphql(`
     previewUrl
     createdAt
     updatedAt
-  }
-`)
-
-const latestModelsQuery = graphql(`
-  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
-    project(id: $projectId) {
-      id
-      models(cursor: null, limit: 8, filter: $filter) {
-        totalCount
-        cursor
-        items {
-          ...ProjectPageLatestItemsModelItem
-        }
-      }
-    }
   }
 `)
 

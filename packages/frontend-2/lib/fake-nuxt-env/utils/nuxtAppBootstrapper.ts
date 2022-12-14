@@ -4,6 +4,8 @@ import { createNuxtApp, callWithNuxt, useNuxtApp, defineNuxtLink, NuxtApp } from
 import { App, defineComponent } from 'vue'
 import { Optional } from '@speckle/shared'
 import { noop } from 'lodash-es'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 const stubGlobalComponents = (app: App<Element>) => {
   const Head = defineComponent({
@@ -74,6 +76,10 @@ const initNuxtApp = (vueApp?: App<Element>) => {
 export const setupVueApp = (app: App<Element>) => {
   // Initializing nuxt singleton
   initNuxtApp(app)
+
+  // TODO: Implement more DRY plugin reuse
+  // Init day.js
+  dayjs.extend(relativeTime)
 
   // Implementing & mocking links
   stubGlobalComponents(app)

@@ -15,17 +15,24 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string>) {
     watch(
       () => unref(previewUrl),
       async (basePreviewUrl) => {
-        const res = await fetch(basePreviewUrl, {
-          headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
-        })
+        try {
+          const res = await fetch(basePreviewUrl, {
+            headers: authToken.value
+              ? { Authorization: `Bearer ${authToken.value}` }
+              : {}
+          })
 
-        if (res.headers.has('X-Preview-Error')) {
-          throw new Error('Failed getting preview')
+          if (res.headers.has('X-Preview-Error')) {
+            throw new Error('Failed getting preview')
+          }
+
+          const blob = await res.blob()
+          const blobUrl = URL.createObjectURL(blob)
+          url.value = blobUrl
+        } catch (e) {
+          console.error(e)
+          url.value = basePreviewUrl
         }
-
-        const blob = await res.blob()
-        const blobUrl = URL.createObjectURL(blob)
-        url.value = blobUrl
       },
       { immediate: true }
     )
