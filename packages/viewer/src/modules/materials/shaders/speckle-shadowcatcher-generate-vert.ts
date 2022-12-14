@@ -6,6 +6,8 @@ export const speckleShadowcatcherGenerateVert = /* glsl */ `
     uniform vec3 uViewer_high;
     uniform vec3 uViewer_low;
 #endif
+attribute vec2 aoData;
+varying vec2 vAoData;
 #include <uv_pars_vertex>
 #include <uv2_pars_vertex>
 #include <envmap_pars_vertex>
@@ -52,7 +54,7 @@ void main() {
 
     #endif
     mvPosition = modelViewMatrix * mvPosition;
-
+    vAoData = aoData;
     gl_Position = projectionMatrix * mvPosition;
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>

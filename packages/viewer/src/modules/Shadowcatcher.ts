@@ -21,6 +21,8 @@ import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from './SpeckleRenderer'
 import { bin, mean, deviation } from 'd3-array'
+import SpeckleShadowcatcherMaterial from './materials/SpeckleShadowcatcherMaterial'
+import SpeckleShadowcatcherGenerateMaterial from './materials/SpeckleShadowcatcherGenerateMaterial'
 
 interface RayHit {
   vertexIndex: number
@@ -71,14 +73,21 @@ export class Shadowcatcher {
 
     /** Material used to render the per-vertex ao values to texture */
     if (!this.generateMaterial) {
-      this.generateMaterial = new MeshBasicMaterial({ color: 0xffffff })
+      this.generateMaterial = new SpeckleShadowcatcherGenerateMaterial(
+        {
+          color: 0xffffff
+        },
+        ['USE_RTE']
+      )
       this.generateMaterial.vertexColors = true
       this.generateMaterial.toneMapped = false
     }
 
     /** Material used to display the plane using the rendered texture */
     if (!this.displayMaterial) {
-      this.displayMaterial = new SpeckleBasicMaterial({ color: 0xffffff }, ['USE_RTE'])
+      this.displayMaterial = new SpeckleShadowcatcherMaterial({ color: 0xffffff }, [
+        'USE_RTE'
+      ])
       this.displayMaterial.vertexColors = false
       this.displayMaterial.map = this.shadowcatcherPass.outputTexture
       this.displayMaterial.transparent = true
@@ -153,8 +162,8 @@ export class Shadowcatcher {
     }
 
     const groundPlaneGeometry = new PlaneGeometry(size.x, size.y, subX, subY)
-    const colors = new Float32Array(groundPlaneGeometry.attributes.position.count * 3)
-    groundPlaneGeometry.setAttribute('color', new Float32BufferAttribute(colors, 3))
+    const colors = new Float32Array(groundPlaneGeometry.attributes.position.count * 2)
+    groundPlaneGeometry.setAttribute('aoData', new Float32BufferAttribute(colors, 2))
     const mat = new Matrix4().makeTranslation(origin.x, origin.y, origin.z)
     groundPlaneGeometry.applyMatrix4(mat)
     this.planeMesh.geometry = groundPlaneGeometry
@@ -164,9 +173,9 @@ export class Shadowcatcher {
     const start = performance.now()
     const sampleCount = this._config.sampleCount
     const vertices = this.planeMesh.geometry.attributes.position.array
-    const colors = this.planeMesh.geometry.attributes.color.array as number[]
-    colors.fill(0)
-    const hitData: Array<Array<RayHit>> = new Array(colors.length / 3)
+    const aoData = this.planeMesh.geometry.attributes.aoData.array as number[]
+    aoData.fill(0)
+    const hitData: Array<Array<RayHit>> = new Array(aoData.length / 2)
 
     if (this.debugLines) {
       this.debugLines.parent.remove(this.debugLines)
@@ -245,12 +254,10 @@ export class Shadowcatcher {
           weigth = 0.15
         }
 
-        const normalisedDeviation =
-          (hitData[k][n].distance - meanValue) / deviationValue
-        const contribution = Math.max(weigth * (1 - normalisedDeviation), 0)
-        colors[k * 3] += contribution / sampleCount
-        colors[k * 3 + 1] += contribution / sampleCount
-        colors[k * 3 + 2] += contribution / sampleCount
+        const zScore = (hitData[k][n].distance - meanValue) / deviationValue
+        const contribution = Math.max(weigth * (1 - zScore), 0)
+        aoData[k * 2] += contribution / sampleCount
+        aoData[k * 2 + 1] += contribution / sampleCount
         const lerpColor = new Color().lerpColors(
           new Color(0xff0000),
           new Color(0x00ff00),
@@ -275,7 +282,7 @@ export class Shadowcatcher {
     this.debugLines = new LineSegments(geometry, material)
     this.debugLines.layers.set(ObjectLayers.PROPS)
     this.debugLines.visible = false
-    this.planeMesh.geometry.attributes.color.needsUpdate = true
+    this.planeMesh.geometry.attributes.aoData.needsUpdate = true
 
     console.warn('Time -> ', performance.now() - start)
   }

@@ -1,9 +1,10 @@
-export const speckleBasicFrag = /* glsl */ `
+export const speckleShadowcatcherGenerateFrag = /* glsl */ `
 uniform vec3 diffuse;
 uniform float opacity;
 #ifndef FLAT_SHADED
 	varying vec3 vNormal;
 #endif
+varying vec2 vAoData;
 #include <common>
 #include <dithering_pars_fragment>
 #include <color_pars_fragment>
@@ -44,10 +45,10 @@ void main() {
 	vec3 outgoingLight = reflectedLight.indirectDiffuse;
 	#include <envmap_fragment>
 	#include <output_fragment>
-	// #include <tonemapping_fragment>
-	vec3 color = vec3(1.) - gl_FragColor.rgb;
-	float alpha = gl_FragColor.r;
-	gl_FragColor = vec4( color, alpha );
+    vec3 aoColor = vec3(vAoData.x);
+    float aoAlpha = vAoData.y;
+    gl_FragColor = vec4(aoColor, aoAlpha);
+	#include <tonemapping_fragment>
 	#include <encodings_fragment>
 	#include <fog_fragment>
 	#include <premultiplied_alpha_fragment>
