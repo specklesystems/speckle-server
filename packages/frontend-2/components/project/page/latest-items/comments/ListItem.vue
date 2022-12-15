@@ -15,7 +15,7 @@
     <td class="text-foreground normal pr-5">
       <div class="inline-flex items-center space-x-1 align-middle">
         <ChatBubbleLeftEllipsisIcon class="h-5 w-5" />
-        <span>120</span>
+        <span>{{ thread.repliesCount }}</span>
       </div>
     </td>
     <td class="pr-5">
