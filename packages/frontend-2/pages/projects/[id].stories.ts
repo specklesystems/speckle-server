@@ -54,7 +54,7 @@ export const Default: Story = {
                 modelCount: 15,
                 commentThreadCount: 20,
                 sourceApps: SourceApps.map((s) => s.searchKey),
-                team: fakeUsers.slice(3)
+                team: fakeUsers
               }
             } as ProjectPageQueryQuery
           }
@@ -83,7 +83,6 @@ export const Default: Story = {
                     name: `Model #${i}`,
                     versionCount: Math.ceil(Math.random() * 10),
                     commentThreadCount: Math.ceil(Math.random() * 10),
-                    // TODO: Fix CORS on latest
                     previewUrl:
                       'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
                     createdAt: new Date().toISOString(),

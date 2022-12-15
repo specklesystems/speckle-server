@@ -1,5 +1,7 @@
 <template>
-  <div class="h-52 rounded-lg bg-foundation-2 shadow flex flex-col">
+  <div
+    class="group h-52 rounded-lg bg-foundation-2 shadow flex flex-col text-foreground hover:bg-primary hover:text-foreground-on-primary"
+  >
     <!-- Image -->
     <div class="grow flex">
       <ClientOnly>
@@ -12,10 +14,12 @@
     </div>
     <!-- Footer -->
     <div class="py-3 px-2 flex justify-between items-center">
-      <div class="text-foreground normal truncate pr-2">
+      <div class="normal truncate pr-2">
         {{ model.name }}
       </div>
-      <div class="text-foreground-2 caption inline-flex items-center space-x-2">
+      <div
+        class="text-foreground-2 group-hover:text-foreground-on-primary caption inline-flex items-center space-x-1.5"
+      >
         <div class="inline-flex items-center space-x-1">
           <ArrowPathRoundedSquareIcon class="h-4 w-4" />
           <span>{{ model.versionCount }}</span>

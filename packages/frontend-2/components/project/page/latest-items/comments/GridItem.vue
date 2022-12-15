@@ -1,5 +1,7 @@
 <template>
-  <div class="h-36 rounded-lg bg-foundation shadow flex items-stretch">
+  <div
+    class="h-36 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2"
+  >
     <!-- Main data -->
     <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
       <div class="flex flex-col">
@@ -28,6 +30,7 @@
           <UserAvatar
             v-for="(author, i) in thread.replyAuthors.items"
             :key="author.id"
+            :avatar-url="author.avatar"
             size="24"
             :style="{ zIndex: i + 1 }"
           />

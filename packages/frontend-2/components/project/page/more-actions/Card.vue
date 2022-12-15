@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center min-h-[120px] py-3 px-4 bg-foundation rounded-lg shadow"
+    class="flex items-center min-h-[120px] py-3 px-4 bg-foundation rounded-lg shadow hover:shadow-md ring-outline-2 hover:ring-2"
   >
     <div class="grow h-full flex flex-col space-y-1">
       <div class="text-foreground h4 font-extrabold"><slot name="title" /></div>
