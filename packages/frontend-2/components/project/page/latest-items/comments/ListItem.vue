@@ -35,7 +35,10 @@
             no-border
           />
         </div>
-        <UserAvatarText v-if="hiddenReplyAuthorCount" class="text-foreground normal">
+        <UserAvatarText
+          v-if="hiddenReplyAuthorCount"
+          class="text-foreground label label--light"
+        >
           +{{ hiddenReplyAuthorCount }}
         </UserAvatarText>
       </div>

@@ -33,7 +33,9 @@
           />
           <UserAvatarText
             v-if="hiddenReplyAuthorCount > 0"
-            class="text-foreground normal"
+            class="text-foreground bg-foundation caption"
+            size="24"
+            :style="{ zIndex: thread.replyAuthors.items.length + 1 }"
           >
             +{{ hiddenReplyAuthorCount }}
           </UserAvatarText>

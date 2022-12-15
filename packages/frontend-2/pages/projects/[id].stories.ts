@@ -1,15 +1,21 @@
 import { Meta, Story } from '@storybook/vue3'
 import {
+  ProjectLatestCommentThreadsQuery,
   ProjectLatestModelsQuery,
   ProjectPageQueryQuery
 } from '~~/lib/common/generated/gql/graphql'
 import { StorybookParameters } from '~~/lib/common/helpers/storybook'
-import { latestModelsQuery, projectPageQuery } from '~~/lib/projects/graphql/queries'
+import {
+  latestCommentThreadsQuery,
+  latestModelsQuery,
+  projectPageQuery
+} from '~~/lib/projects/graphql/queries'
 import ProjectPage from '~~/pages/projects/[id].vue'
 import DefaultLayout from '~~/layouts/default.vue'
 import { fakeUsers } from '~~/components/form/select/Users.stories'
 import { SourceApps } from '@speckle/shared'
-import { times } from 'lodash-es'
+import { random, times } from 'lodash-es'
+import { fakeScreenshot } from '~~/stories/helpers/comments'
 
 const fakeProjectId = 'some-fake-id'
 
@@ -73,7 +79,7 @@ export const Default: Story = {
                   cursor: null,
                   items: times(8).map((i) => ({
                     __typename: 'Model',
-                    id: `${i}`,
+                    id: `Model${i}`,
                     name: `Model #${i}`,
                     versionCount: Math.ceil(Math.random() * 10),
                     commentThreadCount: Math.ceil(Math.random() * 10),
@@ -86,6 +92,43 @@ export const Default: Story = {
                 }
               }
             } as ProjectLatestModelsQuery
+          }
+        },
+        {
+          request: {
+            query: latestCommentThreadsQuery,
+            variables: {
+              projectId: fakeProjectId
+            }
+          },
+          result: {
+            data: {
+              __typename: 'Query',
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                commentThreads: {
+                  __typename: 'CommentCollection',
+                  totalCount: 20,
+                  cursor: null,
+                  items: times(6).map((i) => ({
+                    __typename: 'Comment',
+                    id: `Comment${i}`,
+                    author: fakeUsers[random(fakeUsers.length - 1)],
+                    screenshot: fakeScreenshot,
+                    rawText:
+                      'Hello there, this is an example comment text. Do you like it?',
+                    createdAt: new Date().toISOString(),
+                    repliesCount: 100,
+                    replyAuthors: {
+                      __typename: 'CommentReplyAuthorCollection',
+                      items: fakeUsers.slice(0, 4),
+                      totalCount: 100
+                    }
+                  }))
+                }
+              }
+            } as ProjectLatestCommentThreadsQuery
           }
         }
       ]
