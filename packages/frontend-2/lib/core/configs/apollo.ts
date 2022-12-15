@@ -125,6 +125,14 @@ function createCache(): InMemoryCache {
           models: {
             keyArgs: ['filter'],
             merge: buildAbstractCollectionMergeFunction('ModelCollection')
+          },
+          commentThreads: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommentCollection')
+          },
+          replyAuthors: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
           }
         }
       },

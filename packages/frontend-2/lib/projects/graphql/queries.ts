@@ -34,3 +34,18 @@ export const latestModelsQuery = graphql(`
     }
   }
 `)
+
+export const latestCommentThreadsQuery = graphql(`
+  query ProjectLatestCommentThreads($projectId: String!) {
+    project(id: $projectId) {
+      id
+      commentThreads(cursor: null, limit: 8) {
+        totalCount
+        cursor
+        items {
+          ...ProjectPageLatestItemsCommentItem
+        }
+      }
+    }
+  }
+`)

@@ -41,7 +41,13 @@ export type StreamGraphQLReturn = Omit<
 
 export type ProjectGraphQLReturn = Omit<
   Project,
-  'modelCount' | 'role' | 'team' | 'versionCount' | 'commentThreadCount' | 'sourceApps'
+  | 'modelCount'
+  | 'role'
+  | 'team'
+  | 'versionCount'
+  | 'commentThreadCount'
+  | 'sourceApps'
+  | 'commentThreads'
 > & {
   /**
    * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll

@@ -17,6 +17,7 @@ generates:
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

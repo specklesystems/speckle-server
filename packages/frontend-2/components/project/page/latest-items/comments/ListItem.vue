@@ -2,20 +2,15 @@
   <tr class="h-[62px] bg-foundation">
     <td class="normal text-foreground font-semibold">
       <div class="inline-flex align-middle items-center space-x-1 pl-5 pr-8 w-[250px]">
-        <UserAvatar size="20" no-border />
-        <span class="truncate">Darlene Robertson son son son son</span>
+        <UserAvatar size="20" no-border :avatar-url="thread.author.avatar" />
+        <span class="truncate">{{ thread.author.name }}</span>
       </div>
     </td>
     <td class="normal text-foreground truncate pr-5">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-      exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-      irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-      pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
-      officia deserunt mollit anim id est laborum.
+      {{ thread.rawText }}
     </td>
     <td class="text-foreground-2 normal pr-5 text-center xl:text-left">
-      12 seconds ago
+      {{ createdAt }}
     </td>
     <td class="text-foreground normal pr-5">
       <div class="inline-flex items-center space-x-1 align-middle">
@@ -24,32 +19,45 @@
       </div>
     </td>
     <td class="pr-5">
-      <div ref="elementToWatchForChanges" class="flex space-x-[1px] align-middle">
+      <div
+        v-if="thread.replyAuthors.totalCount"
+        ref="elementToWatchForChanges"
+        class="flex space-x-[1px] align-middle"
+      >
         <div
           ref="itemContainer"
           class="flex space-x-[1px] flex-wrap overflow-hidden h-8"
         >
-          <UserAvatar no-border />
-          <UserAvatar no-border />
-          <UserAvatar no-border />
-          <UserAvatar no-border />
-          <UserAvatar no-border />
+          <UserAvatar
+            v-for="author in thread.replyAuthors.items"
+            :key="author.id"
+            :avatar-url="author.avatar"
+            no-border
+          />
         </div>
-        <UserAvatarText v-if="hiddenItemCount" class="text-foreground normal">
-          +{{ hiddenItemCount }}
+        <UserAvatarText v-if="hiddenReplyAuthorCount" class="text-foreground normal">
+          +{{ hiddenReplyAuthorCount }}
         </UserAvatarText>
       </div>
     </td>
-    <td
-      class="bg-cover bg-no-repeat bg-center"
-      :style="{ backgroundImage: `url('${previewUrl}')` }"
-    />
+    <td class="bg-cover bg-no-repeat bg-center" :style="{ backgroundImage }" />
   </tr>
 </template>
 <script setup lang="ts">
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
 import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resize'
+import dayjs from 'dayjs'
+import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
+
+const props = defineProps<{
+  thread: ProjectPageLatestItemsCommentItemFragment
+}>()
+
+const { backgroundImage } = useCommentScreenshotImage(
+  computed(() => props.thread.screenshot)
+)
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
@@ -61,5 +69,11 @@ const { hiddenItemCount } = useWrappingContainerHiddenCount({
   trackMutations: false
 })
 
-const previewUrl = ref('https://i.imgur.com/DbCgdcq.jpg')
+const createdAt = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
+const hiddenReplyAuthorCount = computed(
+  () =>
+    props.thread.replyAuthors.totalCount -
+    props.thread.replyAuthors.items.length +
+    hiddenItemCount.value
+)
 </script>

@@ -19,6 +19,10 @@ extend type Project {
   The total number of comment threads in this project
   """
   commentThreadCount: Int!
+  """
+  All comment threads in this project
+  """
+  commentThreads(cursor: String, limit: Int! = 25): CommentCollection
 }
 
 extend type Stream {
@@ -65,6 +69,7 @@ extend type Object {
 
 type Comment {
   id: String!
+  author: LimitedUser!
   authorId: String!
   archived: Boolean!
   screenshot: String
@@ -78,11 +83,11 @@ type Comment {
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
   resources: [ResourceIdentifier!]!
-  createdAt: DateTime
+  createdAt: DateTime!
   """
   The time this comment was last updated. Corresponds also to the latest reply to this comment, if any.
   """
-  updatedAt: DateTime
+  updatedAt: DateTime!
   """
   The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit.
   """
@@ -90,8 +95,21 @@ type Comment {
   """
   Gets the replies to this comment.
   """
-  replies(limit: Int = 25, cursor: String): CommentCollection
-  reactions: [String]
+  replies(limit: Int = 25, cursor: String): CommentCollection!
+  """
+  Total number of replies to this comment
+  """
+  repliesCount: Int!
+  """
+  Get authors of replies to this comment
+  """
+  replyAuthors(limit: Int! = 25): CommentReplyAuthorCollection!
+  reactions: [String] @deprecated(reason: "Not actually implemented")
+}
+
+type CommentReplyAuthorCollection {
+  items: [LimitedUser!]!
+  totalCount: Int!
 }
 
 type CommentCollection {

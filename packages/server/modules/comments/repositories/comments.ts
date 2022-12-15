@@ -12,7 +12,7 @@ import {
 } from '@/modules/core/dbSchema'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { keyBy } from 'lodash'
+import { keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import {
   BatchedSelectOptions,
@@ -146,10 +146,10 @@ export async function insertCommentLinks(
 
 export async function getStreamCommentCounts(
   streamIds: string[],
-  options?: Partial<{ threadsOnly: boolean }>
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
 ) {
   if (!streamIds?.length) return []
-  const { threadsOnly } = options || {}
+  const { threadsOnly, includeArchived } = options || {}
   const q = Comments.knex()
     .select(Comments.col.streamId)
     .whereIn(Comments.col.streamId, streamIds)
@@ -161,13 +161,17 @@ export async function getStreamCommentCounts(
     q.andWhere(Comments.col.parentComment, null)
   }
 
+  if (!includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
   const results = (await q) as { streamId: string; count: string }[]
   return results.map((r) => ({ ...r, count: parseInt(r.count) }))
 }
 
 export async function getStreamCommentCount(
   streamId: string,
-  options?: Partial<{ threadsOnly: boolean }>
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
 ) {
   const [res] = await getStreamCommentCounts([streamId], options)
   return res?.count || 0
@@ -175,10 +179,10 @@ export async function getStreamCommentCount(
 
 export async function getBranchCommentCounts(
   branchIds: string[],
-  options?: Partial<{ threadsOnly: boolean }>
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
 ) {
   if (!branchIds.length) return []
-  const { threadsOnly } = options || {}
+  const { threadsOnly, includeArchived } = options || {}
 
   const q = Branches.knex()
     .select(Branches.col.id)
@@ -198,6 +202,60 @@ export async function getBranchCommentCounts(
     q.andWhere(Comments.col.parentComment, null)
   }
 
+  if (!includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
   const results = (await q) as { id: string; count: string }[]
   return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getCommentReplyCounts(
+  threadIds: string[],
+  options?: Partial<{ includeArchived: boolean }>
+) {
+  if (!threadIds.length) return []
+  const { includeArchived } = options || {}
+
+  const q = Comments.knex()
+    .select(Comments.col.parentComment)
+    .whereIn(Comments.col.parentComment, threadIds)
+    .count()
+    .groupBy(Comments.col.parentComment)
+
+  if (!includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  const results = (await q) as { parentComment: string; count: string }[]
+  return results.map((r) => ({ threadId: r.parentComment, count: parseInt(r.count) }))
+}
+
+export async function getCommentReplyAuthorIds(
+  threadIds: string[],
+  options?: Partial<{ includeArchived: boolean }>
+) {
+  if (!threadIds.length) return {}
+  const { includeArchived } = options || {}
+
+  const q = Comments.knex()
+    .select([Comments.col.parentComment, Comments.col.authorId])
+    .whereIn(Comments.col.parentComment, threadIds)
+    .groupBy(Comments.col.parentComment, Comments.col.authorId)
+
+  if (!includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  const results = (await q) as { parentComment: string; authorId: string }[]
+  return reduce(
+    results,
+    (result, item) => {
+      ;(result[item.parentComment] || (result[item.parentComment] = [])).push(
+        item.authorId
+      )
+      return result
+    },
+    {} as Record<string, string[]>
+  )
 }

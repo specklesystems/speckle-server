@@ -26,6 +26,8 @@ import {
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCounts,
+  getCommentReplyAuthorIds,
+  getCommentReplyCounts,
   getCommentsResources,
   getStreamCommentCounts
 } from '@/modules/comments/repositories/comments'
@@ -164,6 +166,17 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getResources: new DataLoader<string, ResourceIdentifier[]>(async (commentIds) => {
         const results = await getCommentsResources(commentIds.slice())
         return commentIds.map((id) => results[id]?.resources || [])
+      }),
+      getReplyCount: new DataLoader<string, number>(async (threadIds) => {
+        const results = keyBy(
+          await getCommentReplyCounts(threadIds.slice()),
+          'threadId'
+        )
+        return threadIds.map((id) => results[id]?.count || 0)
+      }),
+      getReplyAuthorIds: new DataLoader<string, string[]>(async (threadIds) => {
+        const results = await getCommentReplyAuthorIds(threadIds.slice())
+        return threadIds.map((id) => results[id] || [])
       })
     },
     users: {
