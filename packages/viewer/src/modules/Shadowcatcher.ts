@@ -1,7 +1,10 @@
 import {
+  AddEquation,
+  Box2,
   Box3,
   BufferGeometry,
   Color,
+  CustomBlending,
   DoubleSide,
   Float32BufferAttribute,
   LineBasicMaterial,
@@ -9,12 +12,14 @@ import {
   Matrix4,
   Mesh,
   MeshBasicMaterial,
+  OneFactor,
   PlaneGeometry,
   Ray,
   Scene,
   Vector2,
   Vector3,
-  WebGLRenderer
+  WebGLRenderer,
+  ZeroFactor
 } from 'three'
 import MeshBatch from './batching/MeshBatch'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
@@ -79,7 +84,7 @@ export class Shadowcatcher {
         },
         ['USE_RTE']
       )
-      this.generateMaterial.vertexColors = true
+      this.generateMaterial.defines['DEBUG'] = 0
       this.generateMaterial.toneMapped = false
     }
 
@@ -88,10 +93,16 @@ export class Shadowcatcher {
       this.displayMaterial = new SpeckleShadowcatcherMaterial({ color: 0xffffff }, [
         'USE_RTE'
       ])
-      this.displayMaterial.vertexColors = false
       this.displayMaterial.map = this.shadowcatcherPass.outputTexture
       this.displayMaterial.transparent = true
       this.displayMaterial.toneMapped = false
+      this.displayMaterial.blending = CustomBlending
+      this.displayMaterial.blendEquation = AddEquation
+      this.displayMaterial.blendEquationAlpha = AddEquation
+      this.displayMaterial.blendSrc = ZeroFactor
+      this.displayMaterial.blendSrcAlpha = OneFactor
+      this.displayMaterial.blendDst = ZeroFactor
+      this.displayMaterial.blendDstAlpha = OneFactor
     }
 
     this.shadowcatcherPass.onBeforeRender = () => {
@@ -167,6 +178,7 @@ export class Shadowcatcher {
     const mat = new Matrix4().makeTranslation(origin.x, origin.y, origin.z)
     groundPlaneGeometry.applyMatrix4(mat)
     this.planeMesh.geometry = groundPlaneGeometry
+    this.planeMesh.geometry.computeBoundingBox()
   }
 
   private trace(batches: MeshBatch[]) {
@@ -233,7 +245,7 @@ export class Shadowcatcher {
       for (let n = 0; n < hitData[k].length; n++) {
         let weigth = 0
         if (hitData[k][n].distance <= bins[0].x1) {
-          weigth = 2
+          weigth = 1
         }
         if (
           hitData[k][n].distance > bins[0].x1 &&
@@ -298,9 +310,33 @@ export class Shadowcatcher {
     }
   }
 
+  private isEdgeVertex(index: number) {
+    const vertices = this.planeMesh.geometry.attributes.position.array
+    const pos = new Vector3(
+      vertices[index * 3],
+      vertices[index * 3 + 1],
+      vertices[index * 3 + 2]
+    )
+    const planeBox3 = this.planeMesh.geometry.boundingBox
+    const planeBox2 = new Box2(
+      new Vector2(planeBox3.min.x, planeBox3.min.y),
+      new Vector2(planeBox3.max.x, planeBox3.max.y)
+    )
+    const testBox = new Box2().setFromCenterAndSize(
+      new Vector2(pos.x, pos.y),
+      new Vector2(0.01, 0.01)
+    )
+
+    if (!planeBox2.containsBox(testBox)) {
+      return true
+    }
+  }
+
   // eslint-disable-next-line camelcase
   public _debug_rawAO() {
     this._debugRawAO = !this._debugRawAO
+    this.generateMaterial.defines['DEBUG'] = +this._debugRawAO
+    this.generateMaterial.needsUpdate = true
     this.planeMesh.material = this._debugRawAO
       ? this.generateMaterial
       : this.displayMaterial

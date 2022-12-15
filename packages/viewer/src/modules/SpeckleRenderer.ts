@@ -207,7 +207,7 @@ export default class SpeckleRenderer {
       alpha: true,
       preserveDrawingBuffer: true
     })
-    this._renderer.setClearColor(0xcccccc, 0)
+    this._renderer.setClearColor(0xffffff, 0)
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.outputEncoding = sRGBEncoding
     this._renderer.toneMapping = ACESFilmicToneMapping

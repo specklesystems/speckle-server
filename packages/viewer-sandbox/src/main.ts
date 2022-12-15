@@ -146,13 +146,13 @@ await sandbox.loadUrl(
   // MEPs (whatever they are)
   // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
   // Alex cubes
-  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
   // Tekla
   // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
   // Purple market square
   // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
   // Sum building
-  'https://latest.speckle.dev/streams/92b620fb17/commits/4ea2759162'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/4ea2759162'
   // Boat
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/ba5df427db'
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/c9ebe49824'

@@ -45,8 +45,8 @@ void main() {
 	vec3 outgoingLight = reflectedLight.indirectDiffuse;
 	#include <envmap_fragment>
 	#include <output_fragment>
-    vec3 aoColor = vec3(vAoData.x);
-    float aoAlpha = vAoData.y;
+    vec3 aoColor = vec3(vAoData.xy, vAoData.x);
+    float aoAlpha = 1.;
     gl_FragColor = vec4(aoColor, aoAlpha);
 	#include <tonemapping_fragment>
 	#include <encodings_fragment>
