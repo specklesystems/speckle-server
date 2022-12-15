@@ -5,7 +5,7 @@
         <tr class="text-foreground-2 label font-semibold">
           <th class="w-[250px]">Owner</th>
           <th>Last comment</th>
-          <th class="w-[100px] xl:w-[140px]">Commented</th>
+          <th class="w-[110px] xl:w-[155px]">Commented</th>
           <th class="w-[70px]">Replies</th>
           <th class="w-[86px] xl:w-[153px]">Participants</th>
           <th class="w-[100px]">Preview</th>
