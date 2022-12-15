@@ -155,6 +155,7 @@ exports.init = (app) => {
     return { hasPermissions: true, httpErrorCode: 200 }
   }
 
+  app.options('/preview/:streamId/:angle?', cors())
   app.get('/preview/:streamId/:angle?', cors(), async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
@@ -181,6 +182,7 @@ exports.init = (app) => {
     )
   })
 
+  app.options('/preview/:streamId/branches/:branchName/:angle?', cors())
   app.get(
     '/preview/:streamId/branches/:branchName/:angle?',
     cors(),
@@ -217,6 +219,7 @@ exports.init = (app) => {
     }
   )
 
+  app.options('/preview/:streamId/commits/:commitId/:angle?', cors())
   app.get('/preview/:streamId/commits/:commitId/:angle?', cors(), async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
@@ -239,6 +242,7 @@ exports.init = (app) => {
     )
   })
 
+  app.options('/preview/:streamId/objects/:objectId/:angle?', cors())
   app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
     const { hasPermissions } = await checkStreamPermissions(req)
     if (!hasPermissions) {
