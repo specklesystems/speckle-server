@@ -9,7 +9,7 @@
           </th>
           <th>Model title</th>
           <th class="w-[70px]">Versions</th>
-          <th class="w-[85px]">Comments</th>
+          <th class="w-[85px]">Threads</th>
           <th class="w-[155px]">Last modified</th>
           <th class="w-[140px]">Created</th>
         </tr>

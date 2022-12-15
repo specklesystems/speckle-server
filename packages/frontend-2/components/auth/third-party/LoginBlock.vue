@@ -17,7 +17,7 @@ import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { graphql } from '~~/lib/common/generated/gql'
 import { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
-import { useMixpanel } from '~~/lib/core/composables/mixpanel'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 /**
  * TODO:

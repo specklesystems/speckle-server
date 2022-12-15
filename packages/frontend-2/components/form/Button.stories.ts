@@ -148,6 +148,12 @@ export const Link: Story = mergeStories(Default, {
   }
 })
 
+export const Text: Story = mergeStories(Default, {
+  args: {
+    text: true
+  }
+})
+
 export const Small: Story = mergeStories(Default, {
   args: {
     size: 'sm'

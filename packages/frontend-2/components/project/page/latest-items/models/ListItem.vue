@@ -10,7 +10,7 @@
       </ClientOnly>
     </td>
     <td><!-- Fake padding (see thead) --></td>
-    <td class="normal font-semibold truncate pr-5">
+    <td class="normal truncate pr-5">
       {{ model.name }}
     </td>
     <td class="text-foreground-2 normal">

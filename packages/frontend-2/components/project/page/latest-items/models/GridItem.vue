@@ -15,15 +15,21 @@
       <div class="text-foreground normal truncate pr-2">
         {{ model.name }}
       </div>
-      <div class="text-foreground-2 caption inline-flex items-center space-x-1">
-        <ArrowPathRoundedSquareIcon class="h-4 w-4" />
-        <span>{{ model.versionCount }}</span>
+      <div class="text-foreground-2 caption inline-flex items-center space-x-2">
+        <div class="inline-flex items-center space-x-1">
+          <ArrowPathRoundedSquareIcon class="h-4 w-4" />
+          <span>{{ model.versionCount }}</span>
+        </div>
+        <EllipsisVerticalIcon class="h-5 w-5" />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
+import {
+  ArrowPathRoundedSquareIcon,
+  EllipsisVerticalIcon
+} from '@heroicons/vue/24/solid'
 import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 

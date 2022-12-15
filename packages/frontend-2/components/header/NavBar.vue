@@ -3,9 +3,9 @@
     <Disclosure
       v-slot="{ open }"
       as="nav"
-      class="bg-foundation shadow-md hover:shadow-lg transition fixed w-full z-10"
+      class="bg-foundation shadow transition fixed w-full z-10"
     >
-      <div class="layout-container">
+      <div class="px-4 sm:px-8">
         <div class="flex h-14 transition-all justify-between">
           <div class="flex">
             <HeaderLogoBlock :active="false" class="mr-1" />

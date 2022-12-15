@@ -4,11 +4,11 @@
     <div class="flex justify-between mb-4">
       <!-- Left heading (title, See All) -->
       <div class="flex items-center space-x-2">
-        <h2 class="h2 font-bold">
+        <h2 class="h3 font-bold">
           {{ title }}
         </h2>
-        <div class="h3 text-foreground-2">({{ count }})</div>
-        <FormButton link :to="seeAllUrl" @click="$emit('see-all-click', $event)">
+        <div class="h4 text-foreground-2">({{ count }})</div>
+        <FormButton text :to="seeAllUrl" @click="$emit('see-all-click', $event)">
           See all
         </FormButton>
       </div>

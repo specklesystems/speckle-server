@@ -11,6 +11,10 @@
   >
     <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
     <span v-if="!hideText"><slot>Button</slot></span>
+    <div v-else style="margin: 0 !important; width: 0.01px">
+      &nbsp;
+      <!-- The point of this is to ensure text & no-text buttons have the same height -->
+    </div>
     <Component :is="iconRight" v-if="iconRight" :class="iconClasses" />
   </Component>
 </template>
@@ -66,7 +70,7 @@ const props = defineProps({
     default: false
   },
   /**
-   * Will remove background.
+   * Similar to "link", but without an underline and possibly in different colors
    */
   text: {
     type: Boolean,
@@ -280,7 +284,7 @@ const sizeClasses = computed(() => {
   }
 
   // padding
-  if (!props.link) {
+  if (!props.link && !props.text) {
     switch (props.size) {
       case 'xs':
         classParts.push('px-2 py-1')
@@ -324,7 +328,7 @@ const decoratorClasses = computed(() => {
     classParts.push('active:scale-[0.95]')
   }
 
-  if (!props.disabled && (props.link || props.text)) {
+  if (!props.disabled && props.link) {
     classParts.push(
       'underline decoration-transparent decoration-2 underline-offset-4	hover:decoration-inherit'
     )

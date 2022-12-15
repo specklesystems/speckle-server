@@ -11,10 +11,7 @@ import { useApolloClient } from '@vue/apollo-composable'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
-  useMixpanel,
-  useMixpanelUserIdentification
-} from '~~/lib/core/composables/mixpanel'
+import { useMixpanel, useMixpanelUserIdentification } from '~~/lib/core/composables/mp'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 /**
