@@ -3,8 +3,9 @@ import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
 import { MockedApolloProvider } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 import { setup } from '@storybook/vue3'
 import SingletonManagers from '~~/components/singleton/Managers.vue'
-import { useArgs } from '@storybook/client-api'
-import { provide } from 'vue'
+import { useArgs, useGlobals } from '@storybook/client-api'
+import { provide, watch } from 'vue'
+import { AppTheme, useTheme } from '~~/lib/core/composables/theme'
 
 setup((app) => {
   setupVueApp(app)
@@ -109,6 +110,7 @@ export const decorators = [
    * - Global singletons
    */
   (story, ctx) => {
+    const [, updateGlobals] = useGlobals()
     const theme = ctx.globals.theme
     const isDarkMode = theme === 'dark'
 
@@ -122,6 +124,19 @@ export const decorators = [
       components: {
         Story: story(),
         SingletonManagers
+      },
+      setup: () => {
+        const { isDarkTheme, setTheme } = useTheme()
+
+        setTheme(isDarkMode ? AppTheme.Dark : AppTheme.Light)
+
+        watch(isDarkTheme, (isDark, oldIsDark) => {
+          if (isDark === oldIsDark) return
+
+          updateGlobals({
+            theme: isDark ? 'dark' : 'light'
+          })
+        })
       },
       inheritAttrs: false,
       template: `
