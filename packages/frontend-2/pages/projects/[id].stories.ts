@@ -137,3 +137,94 @@ export const Default: Story = {
     }
   } as StorybookParameters
 }
+
+export const EmptyState: Story = {
+  ...Default,
+  parameters: {
+    apolloClient: {
+      mocks: [
+        {
+          request: { query: projectPageQuery, variables: { id: fakeProjectId } },
+          result: {
+            data: {
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                createdAt: new Date().toISOString(),
+                name: 'New Empty Project',
+                description: null,
+                versionCount: 0,
+                modelCount: 1,
+                commentThreadCount: 0,
+                sourceApps: [],
+                team: fakeUsers.slice(0, 1)
+              }
+            } as ProjectPageQueryQuery
+          }
+        },
+        {
+          request: {
+            query: latestModelsQuery,
+            variables: {
+              projectId: fakeProjectId,
+              filter: { sourceApps: null, contributors: null }
+            }
+          },
+          result: {
+            data: {
+              __typename: 'Query',
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                models: {
+                  __typename: 'ModelCollection',
+                  totalCount: 1,
+                  cursor: null,
+                  items: [
+                    {
+                      __typename: 'Model',
+                      id: `Model1`,
+                      name: `main`,
+                      versionCount: 0,
+                      commentThreadCount: 0,
+                      previewUrl:
+                        'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString()
+                    }
+                  ]
+                }
+              }
+            } as ProjectLatestModelsQuery
+          }
+        },
+        {
+          request: {
+            query: latestCommentThreadsQuery,
+            variables: {
+              projectId: fakeProjectId
+            }
+          },
+          result: {
+            data: {
+              __typename: 'Query',
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                commentThreads: {
+                  __typename: 'CommentCollection',
+                  totalCount: 0,
+                  cursor: null,
+                  items: []
+                }
+              }
+            } as ProjectLatestCommentThreadsQuery
+          }
+        }
+      ]
+    },
+    vueRouter: {
+      route: { params: { id: fakeProjectId } }
+    }
+  } as StorybookParameters
+}

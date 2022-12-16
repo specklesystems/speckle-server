@@ -13,7 +13,7 @@
         </FormButton>
       </div>
       <!-- Right heading (filters, grid/list toggle) -->
-      <div class="flex space-x-4 items-center">
+      <div v-if="!hideFilters" class="flex space-x-4 items-center">
         <div>
           <slot name="filters" />
         </div>
@@ -38,6 +38,7 @@ const props = defineProps<{
   title: string
   count: number
   seeAllUrl?: string
+  hideFilters?: boolean
 }>()
 
 const viewTypeCookie = useSynchronizedCookie(`projectPage-${props.title}-viewType`)

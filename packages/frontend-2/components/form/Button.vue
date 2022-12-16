@@ -324,7 +324,7 @@ const generalClasses = computed(() => {
 
 const decoratorClasses = computed(() => {
   const classParts: string[] = []
-  if (!props.disabled && (!props.link || !props.text)) {
+  if (!props.disabled && !props.link && !props.text) {
     classParts.push('active:scale-[0.95]')
   }
 

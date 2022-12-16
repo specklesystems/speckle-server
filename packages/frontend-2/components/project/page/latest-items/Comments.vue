@@ -1,11 +1,20 @@
 <template>
-  <ProjectPageLatestItems :count="project.commentThreadCount" title="Latest Threads">
+  <ProjectPageLatestItems
+    :count="project.commentThreadCount"
+    :hide-filters="showCommentsIntro"
+    title="Latest Threads"
+  >
     <template #default="{ gridOrList }">
-      <ProjectPageLatestItemsCommentsGrid
-        v-if="gridOrList === GridListToggleValue.Grid"
-        :threads="latestCommentsResult"
-      />
-      <ProjectPageLatestItemsCommentsList v-else :threads="latestCommentsResult" />
+      <template v-if="!showCommentsIntro">
+        <ProjectPageLatestItemsCommentsGrid
+          v-if="gridOrList === GridListToggleValue.Grid"
+          :threads="latestCommentsResult"
+        />
+        <ProjectPageLatestItemsCommentsList v-else :threads="latestCommentsResult" />
+      </template>
+      <template v-else>
+        <ProjectPageLatestItemsCommentsIntroCard />
+      </template>
     </template>
   </ProjectPageLatestItems>
 </template>
@@ -49,4 +58,6 @@ const props = defineProps<{
 const { result: latestCommentsResult } = useQuery(latestCommentThreadsQuery, () => ({
   projectId: props.project?.id
 }))
+
+const showCommentsIntro = computed(() => props.project.commentThreadCount < 1)
 </script>
