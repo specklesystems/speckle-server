@@ -16,37 +16,37 @@ export const parameters = {
   viewport: {
     viewports: {
       mobile1: {
-        name: 'Small mobile',
+        name: 'Small mobile (320px)',
         styles: { width: '320px', height: '568px' }, // ratio 0.56
         type: 'mobile'
       },
       mobile2: {
-        name: 'Large mobile',
+        name: 'Large mobile (414px)',
         styles: { width: '414px', height: '896px' }, // ratio 0.46
         type: 'mobile'
       },
       SM: {
-        name: 'SM',
+        name: 'SM (640px)',
         styles: { width: '640px', height: '1024px' },
         type: 'mobile'
       },
       MD: {
-        name: 'MD',
+        name: 'MD (768px)',
         styles: { width: '768px', height: '1024px' },
         type: 'tablet'
       },
       LG: {
-        name: 'LG',
+        name: 'LG (1024px)',
         styles: { width: '1024px', height: '768px' },
         type: 'desktop'
       },
       XL: {
-        name: 'XL',
+        name: 'XL (1280px)',
         styles: { width: '1280px', height: '768px' },
         type: 'desktop'
       },
       '2XL': {
-        name: '2XL',
+        name: '2XL (1536px)',
         styles: { width: '1536px', height: '1024px' },
         type: 'desktop'
       }

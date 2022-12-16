@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div class="relative mb-3 flex items-center mt-10 justify-between">
+    <div
+      class="relative mb-3 mt-10 flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between"
+    >
       <h1 class="h3 font-bold">{{ project.name }}</h1>
       <div class="flex items-center space-x-2">
         <FormButton size="xs" :icon-left="CloudArrowUpIcon" rounded outlined>

@@ -8,7 +8,7 @@
       <ProjectPageLatestItemsModelsList v-else :models="latestModelsResult" />
     </template>
     <template #filters>
-      <div class="flex items-center">
+      <div class="flex flex-row space-x-4">
         <FormSelectUsers
           v-model="selectedMembers"
           :users="project.team"
@@ -17,7 +17,7 @@
           search
           selector-placeholder="All members"
           label="Filter by members"
-          class="w-56 mr-4"
+          class="grow shrink w-[100px] lg:w-56"
         />
         <FormSelectSourceApps
           v-model="selectedApps"
@@ -26,7 +26,7 @@
           multiple
           selector-placeholder="All sources"
           label="Filter by sources"
-          class="w-44"
+          class="grow shrink w-[100px] lg:w-44"
         />
       </div>
     </template>

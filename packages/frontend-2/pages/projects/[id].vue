@@ -4,7 +4,7 @@
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
-      <div class="grid grid-cols-12 gap-8 mb-14">
+      <div class="grid grid-cols-12 mb-14 gap-2 lg:gap-8">
         <ProjectPageStatsBlockTeam :project="project" />
         <ProjectPageStatsBlockVersions :project="project" />
         <ProjectPageStatsBlockModels :project="project" />

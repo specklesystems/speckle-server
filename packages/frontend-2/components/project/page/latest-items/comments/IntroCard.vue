@@ -11,7 +11,7 @@
     <div class="flex flex-col space-y-1 grow items-start">
       <div class="caption text-foreground-2">No comments to show</div>
       <FormButton text>
-        <span class="inline-flex items-center space-x-1">
+        <span class="inline-flex items-center space-x-1 text-left">
           <span>Read this tutorial and be the first person to comment</span>
           <ChevronRightIcon class="w-6 h-6 text-foreground" />
         </span>

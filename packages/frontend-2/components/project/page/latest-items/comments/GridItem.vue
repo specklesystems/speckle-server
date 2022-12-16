@@ -20,12 +20,17 @@
         </div>
         <div class="caption text-foreground-2">{{ createdAt }}</div>
       </div>
-      <div class="flex items-center space-x-2.5">
-        <div class="text-foreground inline-flex items-center">
-          <ChatBubbleLeftEllipsisIcon class="w-4 h-4 mr-1" />
-          <span class="caption">{{ thread.repliesCount }}</span>
+      <div
+        class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-2.5"
+      >
+        <div class="flex items-center space-x-2.5">
+          <div class="text-foreground inline-flex items-center">
+            <ChatBubbleLeftEllipsisIcon class="w-4 h-4 mr-1" />
+            <span class="caption">{{ thread.repliesCount }}</span>
+          </div>
+          <LinkIcon class="w-4 h-4" />
         </div>
-        <LinkIcon class="w-4 h-4" />
+
         <div v-if="thread.replyAuthors.totalCount" class="flex -space-x-1 relative">
           <UserAvatar
             v-for="(author, i) in thread.replyAuthors.items"
@@ -47,7 +52,7 @@
     </div>
     <!-- Image preview -->
     <div
-      class="shrink-0 w-36 border-l border-outline-3 bg-no-repeat bg-center bg-cover"
+      class="shrink-0 w-[25%] sm:w-36 border-l border-outline-3 bg-no-repeat bg-center bg-cover"
       :style="{ backgroundImage }"
     ></div>
   </div>

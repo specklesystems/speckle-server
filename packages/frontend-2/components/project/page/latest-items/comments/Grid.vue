@@ -1,9 +1,9 @@
 <template>
-  <div class="grid grid-cols-12 gap-8">
+  <div class="grid grid-cols-12 space-y-8 sm:space-y-0 sm:gap-8">
     <ProjectPageLatestItemsCommentsGridItem
       v-for="item in items"
       :key="item.id"
-      class="col-span-6"
+      :class="gridItemWidthClasses"
       :thread="item"
     />
   </div>
@@ -18,4 +18,6 @@ const props = defineProps<{
 const items = computed(() =>
   (props.threads?.project?.commentThreads?.items || []).slice(0, 6)
 )
+
+const gridItemWidthClasses = computed(() => 'col-span-12 md:col-span-6')
 </script>
