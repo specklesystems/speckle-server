@@ -125,10 +125,13 @@ const { finishOnboarding } = useProcessOnboarding()
 
 const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
-const viewer = inject<Viewer>('viewer') as Viewer
+const viewer = inject('viewer') as Viewer
 
+// TODO: Skip to comment slideshow if active user has completed onboarding
 const { activeUser } = useActiveUser()
 const step = ref(0)
+
+// TODO: Curate these viewpoints better
 const camPos = [
   [23.86779, 82.9541, 29.05586, -27.41942, 37.72358, 29.05586, 0, 1],
   [23.86779, 82.9541, 29.05586, -27.41942, 37.72358, 29.05586, 0, 1],
@@ -155,6 +158,7 @@ async function setRole(val: OnboardingRole) {
   onboardingState.value.role = val
   step.value++
   nextView()
+  // NOTE: workaround for being able to view this in storybook
   if (activeUser.value?.id) await finishOnboarding(onboardingState.value, false)
 }
 
@@ -162,7 +166,7 @@ function nextView() {
   viewer.setView({
     position: new Vector3(
       camPos[step.value][0],
-      camPos[step.value][2],
+      camPos[step.value][1],
       camPos[step.value][2]
     ),
     target: new Vector3(
