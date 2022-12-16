@@ -41,6 +41,7 @@ export interface ShadowcatcherConfig {
   maxDist: number
   textureSize: number
   blurRadius: number
+  stdDeviation: number
 }
 
 export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
@@ -48,7 +49,8 @@ export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   sampleCount: 100,
   maxDist: 2,
   textureSize: 64,
-  blurRadius: 16
+  blurRadius: 16,
+  stdDeviation: 4
 }
 
 export class Shadowcatcher {
@@ -117,12 +119,33 @@ export class Shadowcatcher {
 
   public update(scene: Scene) {
     this.shadowcatcherPass.blurRadius = this._config.blurRadius
-    const aspect = this.planeSize.x / this.planeSize.y
-    this.shadowcatcherPass.setOutputSize(
-      this._config.textureSize,
-      this._config.textureSize / aspect
-    )
+    this.shadowcatcherPass.blurStdDev = this._config.stdDeviation
+
+    const texSize = this.getOptimalTexSize()
+    this.shadowcatcherPass.setOutputSize(texSize.x, texSize.y)
     this.shadowcatcherPass.update(scene)
+  }
+
+  private getOptimalTexSize(): Vector2 {
+    const size = new Vector2()
+    const aspect = this.planeSize.x / this.planeSize.y
+    if (this.planeSize.x >= this.planeSize.y) {
+      size.x = this._config.textureSize
+      size.y = size.x / aspect
+      if (size.y < this._config.blurRadius * 2) {
+        size.y = this._config.blurRadius * 2
+        size.x = this._config.blurRadius * 2 * aspect
+      }
+    } else {
+      size.y = this._config.textureSize
+      size.x = size.y * aspect
+      if (size.x < this._config.blurRadius * 2) {
+        size.x = this._config.blurRadius * 2
+        size.y = size.x / aspect
+      }
+    }
+
+    return size
   }
 
   public render(renderer: WebGLRenderer) {
@@ -306,7 +329,10 @@ export class Shadowcatcher {
       const ray = new Ray(origin, dir)
       ray.applyMatrix4(invMat)
       const res = batches[i].boundsTree.raycastFirst(ray, DoubleSide)
-      if (res) return res
+      if (res) {
+        const rv = batches[i].getMaterialAtIndex(res.faceIndex)
+        if (rv.transparent === false) return res
+      }
     }
   }
 

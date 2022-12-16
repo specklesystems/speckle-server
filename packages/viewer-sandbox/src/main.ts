@@ -83,7 +83,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -146,7 +146,7 @@ await sandbox.loadUrl(
   // MEPs (whatever they are)
   // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
   // Alex cubes
-  'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
   // Tekla
   // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
   // Purple market square
@@ -160,4 +160,6 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/158d4e8bec'
   // Engines 'n Shit
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/80b25e6e6c'
+  // Dim's tower
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/7fd3ec04c0'
 )

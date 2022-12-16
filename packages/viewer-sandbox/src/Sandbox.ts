@@ -81,7 +81,8 @@ export default class Sandbox {
     sampleCount: 100,
     maxDist: 2,
     textureSize: 64,
-    blurRadius: 16
+    blurRadius: 16,
+    stdDeviation: 4
   }
 
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
@@ -734,6 +735,19 @@ export default class Sandbox {
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'blurRadius', {
         label: 'Blur Radius',
+        min: 1,
+        max: 128,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testBake()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'stdDeviation', {
+        label: 'Blur Std Deviation',
         min: 1,
         max: 128,
         step: 1

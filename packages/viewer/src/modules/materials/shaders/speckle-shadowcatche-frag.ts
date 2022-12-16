@@ -14,7 +14,6 @@ void main() {
 	vec4 diffuseColor = vec4( diffuse, opacity );
 	#include <map_fragment>
 	vec3 color = vec3(diffuseColor.r);
-
 	float alpha = pow(diffuseColor.g, 2.2);
 	gl_FragColor = vec4( color, alpha );
 	#include <encodings_fragment>
