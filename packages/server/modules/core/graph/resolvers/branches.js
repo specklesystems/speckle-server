@@ -1,6 +1,6 @@
 'use strict'
 
-const { ForbiddenError, UserInputError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
 const { authorizeResolver, pubsub } = require('@/modules/shared')
@@ -9,7 +9,6 @@ const {
   createBranch,
   updateBranch,
   getBranchById,
-  getBranchesByStreamId,
   getBranchByNameAndStreamId,
   deleteBranchById
 } = require('../../services/branches')

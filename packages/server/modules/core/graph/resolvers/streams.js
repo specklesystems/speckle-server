@@ -60,7 +60,7 @@ const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
 const _deleteStream = async (_parent, args, context) => {
-  return await deleteStreamAndNotify(args.id, context.user.id)
+  return await deleteStreamAndNotify(args.id, context.userId)
 }
 
 const getUserStreamsCore = async (forOtherUser, parent, args) => {
