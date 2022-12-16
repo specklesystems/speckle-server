@@ -1,11 +1,16 @@
 <template>
   <div
-    class="flex p-4 w-full shadow rounded-lg bg-foundation space-x-6 items-center hover:shadow-md ring-outline-2 hover:ring-2"
+    :class="[
+      'p-4 w-full shadow rounded-lg bg-foundation',
+      'flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-6 sm:items-center',
+      'hover:shadow-md ring-outline-2 hover:ring-2'
+    ]"
   >
     <img
       src="~~/assets/images/comments_intro_320x248.webp"
       alt="Comments functionality preview animation"
-      style="height: 164px"
+      class="w-[75%] sm:w-auto sm:h-[164px]"
+      height="248"
       decoding="async"
     />
     <div class="flex flex-col space-y-1 grow items-start">
