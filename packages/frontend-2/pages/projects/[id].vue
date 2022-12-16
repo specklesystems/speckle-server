@@ -1,0 +1,53 @@
+<template>
+  <div>
+    <div v-if="project">
+      <!-- Heading text w/ actions -->
+      <ProjectPageHeader :project="project" class="mb-8" />
+      <!-- Stats blocks -->
+      <div class="grid grid-cols-12 mb-14 gap-2 lg:gap-8">
+        <ProjectPageStatsBlockTeam :project="project" />
+        <ProjectPageStatsBlockVersions :project="project" />
+        <ProjectPageStatsBlockModels :project="project" />
+        <ProjectPageStatsBlockComments :project="project" />
+      </div>
+      <div class="flex flex-col space-y-14">
+        <!-- Latest models -->
+        <ProjectPageLatestItemsModels :project="project" />
+        <!-- Latest comments -->
+        <ProjectPageLatestItemsComments :project="project" />
+        <!-- More actions -->
+        <ProjectPageMoreActions />
+      </div>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { useQuery } from '@vue/apollo-composable'
+import { graphql } from '~~/lib/common/generated/gql'
+import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+
+graphql(`
+  fragment ProjectPageProject on Project {
+    id
+    createdAt
+    ...ProjectPageProjectHeader
+    ...ProjectPageStatsBlockTeam
+    ...ProjectPageStatsBlockVersions
+    ...ProjectPageStatsBlockModels
+    ...ProjectPageStatsBlockComments
+    ...ProjectPageLatestItemsModels
+    ...ProjectPageLatestItemsComments
+  }
+`)
+
+definePageMeta({
+  middleware: ['require-valid-project']
+})
+
+const route = useRoute()
+const { result: projectPageResult } = useQuery(projectPageQuery, () => ({
+  id: route.params.id as string
+}))
+
+const project = computed(() => projectPageResult.value?.project)
+</script>

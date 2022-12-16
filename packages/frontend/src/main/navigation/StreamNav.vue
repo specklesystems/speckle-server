@@ -51,7 +51,7 @@
           <v-list-item-icon>
             <v-icon small>mdi-source-branch</v-icon>
           </v-list-item-icon>
-          <v-list-item-title>Branches ({{ branchesTotalCount }})</v-list-item-title>
+          <v-list-item-title>Branches ({{ totalBranchCount }})</v-list-item-title>
         </template>
         <!-- <v-divider class="mb-1"></v-divider> -->
         <v-list-item
@@ -218,12 +218,14 @@
   </portal>
 </template>
 <script>
-import { gql } from '@apollo/client/core'
+import { computed } from 'vue'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
+import { useRoute } from '@/main/lib/core/composables/router'
+import { useAllStreamBranches } from '@/main/lib/stream/composables/branches'
 
 export default {
   components: {
@@ -236,14 +238,24 @@ export default {
       default: () => null
     }
   },
+  setup() {
+    const route = useRoute()
+    const streamId = computed(() => route.params.streamId)
+
+    const { localBranches, refetchBranches, totalBranchCount, branchesLoading } =
+      useAllStreamBranches(streamId)
+
+    return {
+      localBranches,
+      refetchBranches,
+      totalBranchCount,
+      loading: branchesLoading
+    }
+  },
   data() {
     return {
       branchMenuOpen: false,
-      newBranchDialog: false,
-      localBranches: [],
-      branchCursor: null,
-      branchesTotalCount: 0,
-      loading: true
+      newBranchDialog: false
     }
   },
   computed: {
@@ -305,71 +317,6 @@ export default {
     this.$eventHub.$on('show-new-branch-dialog', () => {
       this.newBranchDialog = true
     })
-    this.fetchBranches()
-  },
-  methods: {
-    async refetchBranches() {
-      this.localBranches = []
-      this.branchCursor = null
-      this.branchesTotalCount = 0
-      await this.fetchBranches()
-    },
-    async fetchBranches() {
-      this.loading = true
-      const {
-        data: {
-          stream: { branches: branchRes }
-        }
-      } = await this.$apollo.query({
-        query: gql`
-          query Stream($streamId: String!, $cursor: String) {
-            stream(id: $streamId) {
-              id
-              branches(limit: 100, cursor: $cursor) {
-                totalCount
-                cursor
-                items {
-                  id
-                  name
-                  description
-                  author {
-                    id
-                    name
-                  }
-                  commits {
-                    totalCount
-                  }
-                }
-              }
-            }
-          }
-        `,
-        fetchPolicy: 'no-cache',
-        variables: {
-          streamId: this.$route.params.streamId,
-          cursor: this.branchCursor
-        }
-      })
-      // we've reached the end, no more branches
-      if (this.branchCursor === branchRes.cursor) {
-        this.loading = false
-        return
-      }
-      this.branchesTotalCount = branchRes.totalCount
-
-      for (const newBranch of branchRes.items) {
-        if (
-          this.localBranches.findIndex(
-            (oldBranch) => oldBranch.name === newBranch.name
-          ) === -1
-        ) {
-          this.localBranches.push(newBranch)
-        }
-      }
-      this.branchCursor = branchRes.cursor
-
-      await this.fetchBranches() // fetch recursively until we reach the end
-    }
   }
 }
 </script>

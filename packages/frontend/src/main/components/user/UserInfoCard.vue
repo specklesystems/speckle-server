@@ -141,7 +141,7 @@ export default {
       try {
         await this.$apollo.mutate({
           mutation: gql`
-            mutation userUpdate($update: UserUpdateInput!) {
+            mutation userUpdateAvatar($update: UserUpdateInput!) {
               userUpdate(user: $update)
             }
           `,
@@ -170,7 +170,7 @@ export default {
         this.$apollo
           .mutate({
             mutation: gql`
-              mutation userUpdate($myUser: UserUpdateInput!) {
+              mutation userUpdateInfo($myUser: UserUpdateInput!) {
                 userUpdate(user: $myUser)
               }
             `,

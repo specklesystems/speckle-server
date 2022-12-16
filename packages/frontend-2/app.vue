@@ -8,7 +8,7 @@
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { useMixpanelInitialization } from '~~/lib/core/composables/mixpanel'
+import { useMixpanelInitialization } from '~~/lib/core/composables/mp'
 const { isDarkTheme } = useTheme()
 
 useHead({

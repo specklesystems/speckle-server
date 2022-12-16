@@ -81,7 +81,7 @@ module.exports = {
     return parseInt(res.count)
   },
 
-  async dispatchStreamEvent({ streamId, event, eventPayload }) {
+  async dispatchStreamEvent({ streamId, event, eventPayload }, { trx } = {}) {
     // Add server info
     eventPayload.server = await getServerInfo()
     eventPayload.server.canonicalUrl = process.env.CANONICAL_URL
@@ -89,10 +89,13 @@ module.exports = {
 
     // Add stream info
     if (eventPayload.streamId) {
-      eventPayload.stream = await getStream({
-        streamId: eventPayload.streamId,
-        userId: eventPayload.userId
-      })
+      eventPayload.stream = await getStream(
+        {
+          streamId: eventPayload.streamId,
+          userId: eventPayload.userId
+        },
+        { trx }
+      )
     }
 
     // Add user info (except email and pwd)
@@ -124,11 +127,13 @@ module.exports = {
       eventPayload.webhook.triggers = Object.keys(eventPayload.webhook.triggers)
       delete eventPayload.webhook.secret
 
-      await WebhooksEvents().insert({
+      const q = WebhooksEvents().insert({
         id: crs({ length: 20 }),
         webhookId: wh.id,
         payload: JSON.stringify(eventPayload)
       })
+      if (trx) q.transacting(trx)
+      await q
     }
   },
 

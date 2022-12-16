@@ -2,6 +2,105 @@ import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { pubsub, StreamPubsubEvents } from '@/modules/shared'
+import { StreamCreateInput } from '@/test/graphql/generated/graphql'
+import { Knex } from 'knex'
+import { getStreamCollaborators } from '@/modules/core/repositories/streams'
+import { chunk } from 'lodash'
+
+/**
+ * Save "stream deleted" activity
+ */
+export async function addStreamDeletedActivity(params: {
+  streamId: string
+  deleterId: string
+}) {
+  const { streamId, deleterId } = params
+
+  // Notify any listeners on streamId
+  await pubsub.publish(StreamPubsubEvents.StreamDeleted, {
+    streamDeleted: { streamId },
+    streamId
+  })
+
+  // Notify all stream users
+  const users = await getStreamCollaborators(streamId)
+  const userBatches = chunk(users, 15)
+  for (const userBatch of userBatches) {
+    await Promise.all(
+      userBatch.map((u) =>
+        pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
+          userStreamRemoved: { id: streamId },
+          ownerId: u.id
+        })
+      )
+    )
+  }
+
+  await saveActivity({
+    streamId,
+    resourceType: ResourceTypes.Stream,
+    resourceId: streamId,
+    actionType: ActionTypes.Stream.Delete,
+    userId: deleterId,
+    info: {},
+    message: `Stream deleted`
+  })
+}
+
+/**
+ * Save "user cloned stream X" activity item
+ */
+export async function addStreamClonedActivity(
+  params: {
+    sourceStreamId: string
+    newStreamId: string
+    clonerId: string
+  },
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const { trx } = options || {}
+  const { sourceStreamId, newStreamId, clonerId } = params
+
+  await saveActivity(
+    {
+      streamId: newStreamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: newStreamId,
+      actionType: ActionTypes.Stream.Clone,
+      userId: clonerId,
+      info: { sourceStreamId, newStreamId, clonerId },
+      message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+    },
+    { trx }
+  )
+}
+
+/**
+ * Save "user created stream" activity item
+ */
+export async function addStreamCreatedActivity(params: {
+  streamId: string
+  creatorId: string
+  stream: StreamCreateInput
+}) {
+  const { streamId, creatorId, stream } = params
+
+  await Promise.all([
+    saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: streamId,
+      actionType: ActionTypes.Stream.Create,
+      userId: creatorId,
+      info: { stream },
+      message: `Stream ${stream.name} created`
+    }),
+    pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
+      userStreamAdded: { id: streamId, ...stream },
+      ownerId: creatorId
+    })
+  ])
+}
 
 /**
  * Save "stream permissions granted to user" activity item

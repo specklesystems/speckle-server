@@ -13,7 +13,6 @@ const {
   getComment,
   getComments,
   getResourceCommentCount,
-  getStreamCommentCount,
   createComment,
   createCommentReply,
   viewComment,
@@ -110,13 +109,51 @@ module.exports = {
     async resources(parent, _args, ctx) {
       if (has(parent, 'resources')) return parent.resources
       return await ctx.loaders.comments.getResources.load(parent.id)
+    },
+    async author(parent, _args, ctx) {
+      return ctx.loaders.users.getUser.load(parent.authorId)
+    },
+    async repliesCount(parent, _args, ctx) {
+      return ctx.loaders.comments.getReplyCount.load(parent.id)
+    },
+    async replyAuthors(parent, args, ctx) {
+      const authorIds = await ctx.loaders.comments.getReplyAuthorIds.load(parent.id)
+      return {
+        totalCount: authorIds.length,
+        authorIds: authorIds.slice(0, args.limit || 25)
+      }
+    }
+  },
+  CommentReplyAuthorCollection: {
+    async items(parent, _args, ctx) {
+      return await ctx.loaders.users.getUser.loadMany(parent.authorIds)
+    }
+  },
+  Project: {
+    async commentThreadCount(parent, _args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ApolloForbiddenError('You are not authorized.')
+
+      return await context.loaders.streams.getCommentThreadCount.load(parent.id)
+    },
+    async commentThreads(parent, args, context) {
+      await authorizeStreamAccess({
+        streamId: parent.id,
+        userId: context.userId,
+        serverRole: context.role,
+        auth: context.auth
+      })
+      return {
+        ...(await getComments({ ...args, streamId: parent.id, userId: context.userId }))
+      }
     }
   },
   Stream: {
-    async commentCount(parent, args, context) {
+    async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
-      return await getStreamCommentCount({ streamId: parent.id })
+
+      return await context.loaders.streams.getCommentThreadCount.load(parent.id)
     }
   },
   Commit: {

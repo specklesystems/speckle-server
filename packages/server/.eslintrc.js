@@ -41,6 +41,13 @@ const config = {
       rules: {
         '@typescript-eslint/no-non-null-assertion': 'off'
       }
+    },
+    {
+      files: '**/graph/resolvers/**/*.{js,ts}',
+      rules: {
+        // so that we're able to mark userId as non-optional in relevant GQL resolvers
+        '@typescript-eslint/no-non-null-assertion': 'off'
+      }
     }
   ]
 }

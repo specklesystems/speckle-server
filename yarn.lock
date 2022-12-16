@@ -7910,6 +7910,7 @@ __metadata:
     browserify-zlib: ^0.2.0
     chromatic: ^6.11.4
     concurrently: ^7.5.0
+    dayjs: ^1.11.7
     eslint: ^8.24.0
     eslint-config-prettier: ^8.5.0
     eslint-plugin-nuxt: ^4.0.0
@@ -17053,6 +17054,13 @@ __metadata:
   version: 1.11.5
   resolution: "dayjs@npm:1.11.5"
   checksum: e3bbaa7b4883b31be4bf75a181f1447fbb19800c29b332852125aab96baeff3ac232dcba8b88c4ea17d3b636c99dac5fb9d1af4bb6ae26615698bbc4a852dffb
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.7":
+  version: 1.11.7
+  resolution: "dayjs@npm:1.11.7"
+  checksum: 5003a7c1dd9ed51385beb658231c3548700b82d3548c0cfbe549d85f2d08e90e972510282b7506941452c58d32136d6362f009c77ca55381a09c704e9f177ebb
   languageName: node
   linkType: hard
 

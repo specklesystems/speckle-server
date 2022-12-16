@@ -1,7 +1,5 @@
 'use strict'
 const _ = require('lodash')
-const crs = require('crypto-random-string')
-
 const { createBranch } = require('@/modules/core/services/branches')
 const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
@@ -9,7 +7,9 @@ const {
   getFavoritedStreams,
   getFavoritedStreamsCount,
   setStreamFavorited,
-  canUserFavoriteStream
+  canUserFavoriteStream,
+  createStream: createStreamInDb,
+  deleteStream: deleteStreamFromDb
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 const { StreamAccessUpdateError } = require('@/modules/core/errors/stream')
@@ -17,40 +17,23 @@ const {
   inviteUsersToStream
 } = require('@/modules/serverinvites/services/inviteCreationService')
 const { omitBy, isNull, isUndefined, has } = require('lodash')
+const {
+  addStreamCreatedActivity,
+  addStreamDeletedActivity
+} = require('@/modules/activitystream/services/streamActivity')
+const { wait } = require('@speckle/shared')
 const { dbLogger } = require('@/logging/logging')
 
 module.exports = {
   /**
    * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
-   * @returns {Promise<string>}
+   * @returns {Promise<import('@/modules/core/helpers/types').StreamRecord>}
    */
-  async createStream({
-    name,
-    description,
-    isPublic,
-    ownerId,
-    withContributors,
-    isDiscoverable
-  }) {
-    const shouldBePublic = isPublic !== false
-    const shouldBeDiscoverable = isDiscoverable !== false && shouldBePublic
+  async createStreamReturnRecord(params, { createActivity = true } = {}) {
+    const { ownerId, withContributors } = params
 
-    const stream = {
-      id: crs({ length: 10 }),
-      name: name || generateStreamName(),
-      description: description || '',
-      isPublic: shouldBePublic,
-      isDiscoverable: shouldBeDiscoverable,
-      updatedAt: knex.fn.now()
-    }
-
-    // Create the stream & set up permissions
-    const [{ id: streamId }] = await Streams.knex().returning('id').insert(stream)
-    await StreamAcl.knex().insert({
-      userId: ownerId,
-      resourceId: streamId,
-      role: 'stream:owner'
-    })
+    const stream = await createStreamInDb(params, { ownerId })
+    const streamId = stream.id
 
     // Create a default main branch
     await createBranch({
@@ -65,7 +48,27 @@ module.exports = {
       await inviteUsersToStream(ownerId, streamId, withContributors)
     }
 
-    return streamId
+    // Save activity
+    if (createActivity) {
+      await addStreamCreatedActivity({
+        streamId,
+        stream: params,
+        creatorId: ownerId
+      })
+    }
+
+    return stream
+  },
+
+  /**
+   * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
+   * @returns {Promise<string>}
+   */
+  async createStream(params) {
+    const { id } = await module.exports.createStreamReturnRecord(params, {
+      createActivity: false
+    })
+    return id
   },
 
   getStream,
@@ -164,21 +167,26 @@ module.exports = {
     return true
   },
 
+  /**
+   * Delete stream & notify users (emit events & save activity)
+   * @param {string} streamId
+   * @param {string} deleterId
+   */
+  async deleteStreamAndNotify(streamId, deleterId) {
+    await addStreamDeletedActivity({ streamId, deleterId })
+
+    // TODO: this has been around since before my time, we should get rid of it...
+    // delay deletion by a bit so we can do auth checks
+    await wait(250)
+
+    // Delete after event so we can do authz
+    await module.exports.deleteStream({ streamId })
+    return true
+  },
+
   async deleteStream({ streamId }) {
     dbLogger.info('Deleting stream %s', streamId)
-
-    // Delete stream commits (not automatically cascaded)
-    await knex.raw(
-      `
-      DELETE FROM commits WHERE id IN (
-        SELECT sc."commitId" FROM streams s
-        INNER JOIN stream_commits sc ON s.id = sc."streamId"
-        WHERE s.id = ?
-      )
-      `,
-      [streamId]
-    )
-    return await Streams.knex().where({ id: streamId }).del()
+    return await deleteStreamFromDb(streamId)
   },
 
   async getStreams({ offset, limit, orderBy, visibility, searchQuery }) {
@@ -337,44 +345,4 @@ module.exports = {
 
     return (await ctx.loaders.streams.getOwnedFavoritesCount.load(userId)) || 0
   }
-}
-
-const adjectives = [
-  'Tall',
-  'Curved',
-  'Stacked',
-  'Purple',
-  'Pink',
-  'Rectangular',
-  'Circular',
-  'Oval',
-  'Shiny',
-  'Speckled',
-  'Blue',
-  'Stretched',
-  'Round',
-  'Spherical',
-  'Majestic',
-  'Symmetrical'
-]
-
-const nouns = [
-  'Building',
-  'House',
-  'Treehouse',
-  'Tower',
-  'Tunnel',
-  'Bridge',
-  'Pyramid',
-  'Structure',
-  'Edifice',
-  'Palace',
-  'Castle',
-  'Villa'
-]
-
-const generateStreamName = () => {
-  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
-    nouns[Math.floor(Math.random() * nouns.length)]
-  }`
 }

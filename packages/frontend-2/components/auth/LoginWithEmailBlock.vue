@@ -22,14 +22,14 @@
       />
     </div>
     <div class="mt-1">
-      <CommonTextLink :to="ForgottenPasswordRoute" size="sm">
+      <CommonTextLink :to="forgottenPasswordRoute" size="sm">
         Forgot your password?
       </CommonTextLink>
     </div>
     <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
     <div class="text-center">
       <span class="mr-2">Don't have an account?</span>
-      <CommonTextLink :to="RegisterRoute">Register</CommonTextLink>
+      <CommonTextLink :to="registerRoute">Register</CommonTextLink>
     </div>
   </form>
 </template>
@@ -39,7 +39,7 @@ import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { ForgottenPasswordRoute, RegisterRoute } from '~~/lib/common/helpers/route'
+import { forgottenPasswordRoute, registerRoute } from '~~/lib/common/helpers/route'
 
 type FormValues = { email: string; password: string }
 

@@ -15,7 +15,7 @@
           {{ project.role }}
         </div>
         <div class="hidden text-foreground-2 sm:flex caption">
-          {{ project.editedAt }}
+          {{ project.updatedAt }}
         </div>
       </div>
       <div class="flex items-center">
@@ -43,7 +43,7 @@ graphql(`
     name
     modelCount
     role
-    editedAt
+    updatedAt
     team {
       id
       name

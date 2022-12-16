@@ -6,7 +6,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+// import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 // import { getOrInitViewer } from '~~/lib/viewer/composables/viewer'
 
 definePageMeta({
@@ -18,5 +18,5 @@ onMounted(() => {
   // TODO
 })
 
-const { isLoggedIn } = useActiveUser()
+// const { isLoggedIn } = useActiveUser()
 </script>

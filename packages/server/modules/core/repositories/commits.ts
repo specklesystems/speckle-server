@@ -8,6 +8,7 @@ import {
 import {
   BranchCommitRecord,
   CommitRecord,
+  StreamCommitRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
 import { keyBy, uniqBy } from 'lodash'
@@ -18,6 +19,14 @@ const CommitWithStreamBranchMetadataFields = [
   BranchCommits.col.branchId,
   `${Branches.col.name} as branchName`
 ]
+import crs from 'crypto-random-string'
+import {
+  BatchedSelectOptions,
+  executeBatchedSelect
+} from '@/modules/shared/helpers/dbHelper'
+import { Knex } from 'knex'
+
+export const generateCommitId = () => crs({ length: 10 })
 
 export type CommitWithStreamBranchMetadata = CommitRecord & {
   streamId: string
@@ -90,4 +99,91 @@ export async function moveCommitsToBranch(commitIds: string[], branchId: string)
 
 export async function deleteCommits(commitIds: string[]) {
   return await Commits.knex().whereIn(Commits.col.id, commitIds).del()
+}
+
+export function getBatchedStreamCommits(
+  streamId: string,
+  options?: Partial<BatchedSelectOptions>
+) {
+  const baseQuery = Commits.knex<CommitRecord[]>()
+    .select<CommitRecord[]>(Commits.cols)
+    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+    .where(StreamCommits.col.streamId, streamId)
+    .orderBy(Commits.col.id)
+
+  return executeBatchedSelect(baseQuery, options)
+}
+
+export function getBatchedBranchCommits(
+  branchIds: string[],
+  options?: Partial<BatchedSelectOptions>
+) {
+  const baseQuery = BranchCommits.knex<BranchCommitRecord[]>()
+    .whereIn(BranchCommits.col.branchId, branchIds)
+    .orderBy(BranchCommits.col.branchId)
+
+  return executeBatchedSelect(baseQuery, options)
+}
+
+export async function insertCommits(
+  commits: CommitRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = Commits.knex().insert(commits)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
+}
+
+export async function insertStreamCommits(
+  streamCommits: StreamCommitRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = StreamCommits.knex().insert(streamCommits)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
+}
+
+export async function insertBranchCommits(
+  branchCommits: BranchCommitRecord[],
+  options?: Partial<{ trx: Knex.Transaction }>
+) {
+  const q = BranchCommits.knex().insert(branchCommits)
+  if (options?.trx) q.transacting(options.trx)
+  return await q
+}
+
+export async function getStreamCommitCounts(
+  streamIds: string[],
+  options?: Partial<{ ignoreGlobalsBranch: boolean }>
+) {
+  if (!streamIds?.length) return []
+
+  const { ignoreGlobalsBranch } = options || {}
+
+  const q = StreamCommits.knex()
+    .select(StreamCommits.col.streamId)
+    .whereIn(StreamCommits.col.streamId, streamIds)
+    .count()
+    .groupBy(StreamCommits.col.streamId)
+
+  if (ignoreGlobalsBranch) {
+    q.innerJoin(
+      BranchCommits.name,
+      StreamCommits.col.commitId,
+      BranchCommits.col.commitId
+    )
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+      .andWhereNot(Branches.col.name, 'globals')
+  }
+
+  const results = (await q) as { streamId: string; count: string }[]
+  return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getStreamCommitCount(
+  streamId: string,
+  options?: Partial<{ ignoreGlobalsBranch: boolean }>
+) {
+  const [res] = await getStreamCommitCounts([streamId], options)
+  return res?.count || 0
 }

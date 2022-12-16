@@ -1,9 +1,4 @@
-import {
-  Viewer,
-  DefaultViewerParams,
-  SelectionEvent,
-  ViewerEvent
-} from '@speckle/viewer'
+import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 
 type GlobalViewerData = {
   viewer: Viewer
