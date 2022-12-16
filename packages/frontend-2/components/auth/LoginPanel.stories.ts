@@ -3,7 +3,7 @@ import AuthLoginPanel from '~~/components/auth/LoginPanel.vue'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { AuthServerInfoQuery } from '~~/lib/common/generated/gql/graphql'
-import { MockedProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedProvider'
+import { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 
 export default {
   component: AuthLoginPanel,
@@ -56,6 +56,6 @@ export const Default: Story = {
           }
         }
       ]
-    } as MockedProviderOptions
+    } as MockedApolloProviderOptions
   }
 }

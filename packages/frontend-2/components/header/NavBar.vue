@@ -3,7 +3,7 @@
     <Disclosure
       v-slot="{ open }"
       as="nav"
-      class="bg-foundation shadow-md hover:shadow-lg transition fixed w-full z-10"
+      class="bg-foundation shadow transition fixed w-full z-10"
     >
       <div class="xxx-layout-container px-4">
         <div class="flex h-14 transition-all justify-between">
@@ -21,13 +21,7 @@
                   class="flex rounded-full bg-foundation text-sm ring-offset-foundation focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                   <span class="sr-only">Open user menu</span>
-                  <img
-                    v-if="activeUserImageUrl"
-                    class="h-8 w-8 rounded-full"
-                    :src="activeUserImageUrl"
-                    alt=""
-                  />
-                  <UserCircleIcon v-else class="h-8 w-8 rounded-full text-foreground" />
+                  <UserAvatar :avatar-url="activeUserImageUrl" class="shrink-0" />
                 </MenuButton>
               </div>
               <Transition
@@ -77,7 +71,7 @@
       <DisclosurePanel class="sm:hidden" on-pointerleave="">
         <div class="border-t border-foundation-focus pt-4 pb-4">
           <div class="flex items-center px-4">
-            <div class="flex-shrink-0">
+            <div class="shrink-0">
               <img
                 v-if="activeUserImageUrl"
                 class="h-12 w-12 rounded-full"
@@ -126,7 +120,7 @@ import {
 import { Bars3Icon, XMarkIcon, UserCircleIcon } from '@heroicons/vue/24/solid'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { LoginRoute, RegisterRoute } from '~~/lib/common/helpers/route'
+import { loginRoute, registerRoute } from '~~/lib/common/helpers/route'
 
 type UserNavigationLink = {
   name: string
@@ -146,8 +140,8 @@ const userNavigation = computed((): UserNavigationLink[] => [
         }
       ]
     : [
-        { name: 'Login', href: LoginRoute },
-        { name: 'Register', href: RegisterRoute }
+        { name: 'Login', href: loginRoute },
+        { name: 'Register', href: registerRoute }
       ])
 ])
 

@@ -1,10 +1,84 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
+import {
+  getUserStreamsCount,
+  getUserStreams,
+  getStreamCollaborators,
+  getStream
+} from '@/modules/core/repositories/streams'
+import { deleteStreamAndNotify } from '@/modules/core/services/streams'
+import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
+import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
+import { NotFoundError } from '@/modules/shared/errors'
+import { has } from 'lodash'
 
 export = {
+  Query: {
+    async project(_parent, args, context) {
+      const stream = await getStream({
+        streamId: args.id,
+        userId: context.userId
+      })
+      if (!stream) throw new NotFoundError('Project not found')
+
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
+
+      if (!stream.isPublic) {
+        await validateServerRole(context, Roles.Server.User)
+        validateScopes(context.scopes, Scopes.Streams.Read)
+      }
+
+      return stream
+    }
+  },
+  Mutation: {
+    projectMutations: () => ({})
+  },
+  ProjectMutations: {
+    async delete(_parent, { id }, { userId }) {
+      await authorizeResolver(userId, id, Roles.Stream.Owner)
+      return await deleteStreamAndNotify(id, userId!)
+    },
+    async createForOnboarding(_parent, _args, { userId }) {
+      return await createOnboardingStream(userId!)
+    }
+  },
   User: {
-    async projects() {
-      // we only need the empty state for now
-      return []
+    async projects(_parent, args, ctx) {
+      const totalCount = await getUserStreamsCount({
+        userId: ctx.userId!,
+        forOtherUser: false
+      })
+
+      const { cursor, streams } = await getUserStreams({
+        userId: ctx.userId!,
+        limit: args.limit,
+        cursor: args.cursor || undefined,
+        forOtherUser: false
+      })
+
+      return { totalCount, cursor, items: streams }
+    }
+  },
+  Project: {
+    async role(parent, _args, ctx) {
+      // If role already resolved, return that
+      if (has(parent, 'role')) return parent.role
+
+      return await ctx.loaders.streams.getRole.load(parent.id)
+    },
+    async team(parent) {
+      const users = await getStreamCollaborators(parent.id)
+      return users
+    },
+    async modelCount(parent, _args, ctx) {
+      return await ctx.loaders.streams.getBranchCount.load(parent.id)
+    },
+    async versionCount(parent, _args, ctx) {
+      return await ctx.loaders.streams.getCommitCountWithoutGlobals.load(parent.id)
+    },
+    async sourceApps(parent, _args, ctx) {
+      return ctx.loaders.streams.getSourceApps.load(parent.id)
     }
   }
 } as Resolvers

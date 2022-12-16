@@ -39,7 +39,7 @@
     </div>
     <div class="mt-8 text-center">
       <span class="mr-2">Already have an account?</span>
-      <CommonTextLink :to="LoginRoute">Log in</CommonTextLink>
+      <CommonTextLink :to="loginRoute">Log in</CommonTextLink>
     </div>
   </form>
 </template>
@@ -49,7 +49,7 @@ import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { LoginRoute } from '~~/lib/common/helpers/route'
+import { loginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'

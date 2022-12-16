@@ -58,9 +58,9 @@ async function validateServerRole(context, requiredRole) {
 
 /**
  * Validates the scope against a list of scopes of the current session.
- * @param  {[type]} scopes [description]
- * @param  {[type]} scope  [description]
- * @return {[type]}        [description]
+ * @param  {string[]|undefined} scopes
+ * @param  {string} scope
+ * @return {void}
  */
 async function validateScopes(scopes, scope) {
   if (!scopes) throw new ForbiddenError('You do not have the required privileges.')
@@ -70,7 +70,7 @@ async function validateScopes(scopes, scope) {
 
 /**
  * Checks the userId against the resource's acl.
- * @param  {string} userId
+ * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
  */

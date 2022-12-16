@@ -9,7 +9,7 @@ from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-LOGO_STR = '''
+LOGO_STR = """
  _____                 _    _      _____
 /  ___|               | |  | |    /  ___|
 \ `--. _ __   ___  ___| | _| | ___\ `--.  ___ _ ____   _____ _ __
@@ -18,7 +18,8 @@ LOGO_STR = '''
 \____/| .__/ \___|\___|_|\_\_|\___\____/ \___|_|    \_/ \___|_|
       | |
       |_|
-'''
+"""
+
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -33,10 +34,12 @@ def get_local_ip():
 
 def read_domain(ip):
     print("\nYou can set up a domain name for this Speckle server.")
-    print("Important: To use a domain name, you must first configure it to point to this VM address (so we can issue the SSL certificate)")
+    print(
+        "Important: To use a domain name, you must first configure it to point to this VM address (so we can issue the SSL certificate)"
+    )
     print(f"VM address: {ip}")
     while True:
-        domain = input(f'Domain name (leave blank to use the IP address): ').strip()
+        domain = input("Domain name (leave blank to use the IP address): ").strip()
         if not domain:
             return None
         try:
@@ -53,17 +56,23 @@ def read_domain(ip):
 
 
 def read_email_settings(domain):
-    print("\nYou should configure an email provider to allow the Speckle Server to send emails.")
-    print("Supported vendors: Any email provider that can provide SMTP connection details (mailjet, mailgun, etc).")
-    print("Important: If you don't configure email details, some features that require sending emails will not work, nevertheless the server should be functional.")
+    print(
+        "\nYou should configure an email provider to allow the Speckle Server to send emails."
+    )
+    print(
+        "Supported vendors: Any email provider that can provide SMTP connection details (mailjet, mailgun, etc)."
+    )
+    print(
+        "Important: If you don't configure email details, some features that require sending emails will not work, nevertheless the server should be functional."
+    )
     while True:
         enable_email = False
         while True:
             enable_email = input("Enable emails? [Y/n]: ").strip().lower()
-            if enable_email in ['n', 'no']:
+            if enable_email in ["n", "no"]:
                 enable_email = False
                 break
-            elif enable_email in ['', 'y', 'yes']:
+            elif enable_email in ["", "y", "yes"]:
                 enable_email = True
                 break
             else:
@@ -79,29 +88,35 @@ def read_email_settings(domain):
         try:
             int(smtp_port)
         except Exception:
-            print('Error: SMTP port must be a number. Retrying...')
+            print("Error: SMTP port must be a number. Retrying...")
             continue
         smtp_user = input("SMTP Username: ").strip()
         smtp_pass = input("SMTP Password: ").strip()
 
         if domain:
-            default_from_email = 'no-reply@' + domain
+            default_from_email = "no-reply@" + domain
         else:
-            default_from_email = ''
+            default_from_email = ""
         email_from = input(f"Email address to send email as [{default_from_email}]: ")
         if not email_from.strip():
             email_from = default_from_email
 
-        if not smtp_host or not smtp_port or not smtp_user or not smtp_pass or not email_from:
+        if (
+            not smtp_host
+            or not smtp_port
+            or not smtp_user
+            or not smtp_pass
+            or not email_from
+        ):
             print("Error: One or more fields were empty. Retrying...")
             continue
 
         return {
-            'host': smtp_host,
-            'port': smtp_port,
-            'user': smtp_user,
-            'pass': smtp_pass,
-            'from': email_from
+            "host": smtp_host,
+            "port": smtp_port,
+            "user": smtp_user,
+            "pass": smtp_pass,
+            "from": email_from,
         }
 
 
@@ -114,9 +129,9 @@ def main():
     #########
     domain = read_domain(ip)
     if domain:
-        canonical_url = f'https://{domain}'
+        canonical_url = f"https://{domain}"
     else:
-        canonical_url = f'http://{ip}'
+        canonical_url = f"http://{ip}"
 
     email = read_email_settings(domain)
 
@@ -127,67 +142,78 @@ def main():
 
     yaml = ruamel.yaml.YAML()
     yaml.preserve_quotes = True
-    with open(os.path.join(FILE_PATH, 'template-docker-compose.yml'), 'r') as f:
+    with open(os.path.join(FILE_PATH, "template-docker-compose.yml"), "r") as f:
         yml_doc = yaml.load(f)
-    env = yml_doc['services']['speckle-server']['environment']
-    env['CANONICAL_URL'] = DoubleQuotedScalarString(canonical_url)
-    env['SESSION_SECRET'] = DoubleQuotedScalarString(secrets.token_hex(32))
+    env = yml_doc["services"]["speckle-server"]["environment"]
+    env["CANONICAL_URL"] = DoubleQuotedScalarString(canonical_url)
+    env["SESSION_SECRET"] = DoubleQuotedScalarString(secrets.token_hex(32))
     if email:
-        env['EMAIL'] = DoubleQuotedScalarString('true')
-        env['EMAIL_HOST'] = DoubleQuotedScalarString(email['host'])
-        env['EMAIL_PORT'] = DoubleQuotedScalarString(email['port'])
-        env['EMAIL_USERNAME'] = DoubleQuotedScalarString(email['user'])
-        env['EMAIL_PASSWORD'] = DoubleQuotedScalarString(email['pass'])
-        env['EMAIL_FROM'] = DoubleQuotedScalarString(email['from'])
+        env["EMAIL"] = DoubleQuotedScalarString("true")
+        env["EMAIL_HOST"] = DoubleQuotedScalarString(email["host"])
+        env["EMAIL_PORT"] = DoubleQuotedScalarString(email["port"])
+        env["EMAIL_USERNAME"] = DoubleQuotedScalarString(email["user"])
+        env["EMAIL_PASSWORD"] = DoubleQuotedScalarString(email["pass"])
+        env["EMAIL_FROM"] = DoubleQuotedScalarString(email["from"])
     else:
-        env['EMAIL'] = DoubleQuotedScalarString('false')
+        env["EMAIL"] = DoubleQuotedScalarString("false")
 
-    with open(os.path.join(FILE_PATH, 'docker-compose.yml'), 'w') as f:
-        f.write('# This file was generated by SpeckleServer setup.\n')
-        f.write('# If the setup is re-run, this file will be overwritten.\n\n')
+    with open(os.path.join(FILE_PATH, "docker-compose.yml"), "w") as f:
+        f.write("# This file was generated by SpeckleServer setup.\n")
+        f.write("# If the setup is re-run, this file will be overwritten.\n\n")
         yaml.dump(yml_doc, f)
 
     ###
     ### Run the new docker-compose file (will update containers if already running)
     #########
-    subprocess.run(['bash', '-c', f'cd "{FILE_PATH}"; docker-compose up -d'], check=True)
-
+    subprocess.run(
+        ["bash", "-c", f'cd "{FILE_PATH}"; docker-compose up -d'], check=True
+    )
 
     ###
     ### Update nginx config and restart nginx
     #########
     print("\nConfiguring local nginx...")
 
-    nginx_conf_str = '# This file is managed by SpeckleServer setup script.\n'
-    nginx_conf_str += '# Any modifications will be removed when the setup script is re-executed\n\n'
-    with open(os.path.join(FILE_PATH, 'template-nginx-site.conf'), 'r') as f:
+    nginx_conf_str = "# This file is managed by SpeckleServer setup script.\n"
+    nginx_conf_str += (
+        "# Any modifications will be removed when the setup script is re-executed\n\n"
+    )
+    with open(os.path.join(FILE_PATH, "template-nginx-site.conf"), "r") as f:
         nginx_conf_str += f.read()
     if domain:
-        nginx_conf_str = nginx_conf_str.replace('TODO_REPLACE_WITH_SERVER_NAME', domain)
+        nginx_conf_str = nginx_conf_str.replace("TODO_REPLACE_WITH_SERVER_NAME", domain)
     else:
-        nginx_conf_str = nginx_conf_str.replace('TODO_REPLACE_WITH_SERVER_NAME', '_')
-    with open('/etc/nginx/sites-available/speckle-server', 'w') as f:
+        nginx_conf_str = nginx_conf_str.replace("TODO_REPLACE_WITH_SERVER_NAME", "_")
+    with open("/etc/nginx/sites-available/speckle-server", "w") as f:
         f.write(nginx_conf_str)
-    subprocess.run(['nginx', '-s', 'reload'], check=True)
+    subprocess.run(["nginx", "-s", "reload"], check=True)
 
     ###
     ### Run letsencrypt on new config
     #########
     if domain:
         print("\n***")
-        print("*** Will now run LetsEncrypt utility to generate https certificate. Please answer any questions that are presented")
-        print("*** We highly recommend setting a good email address so that you are notified if there is any action needed to renew certificates")
+        print(
+            "*** Will now run LetsEncrypt utility to generate https certificate. Please answer any questions that are presented"
+        )
+        print(
+            "*** We highly recommend setting a good email address so that you are notified if there is any action needed to renew certificates"
+        )
         print("***")
-        subprocess.run(['certbot', '--nginx', '-d', domain])
+        subprocess.run(["certbot", "--nginx", "-d", domain])
 
     print("\nConfiguration complete!")
     print("You can access your speckle server at: " + canonical_url)
     print(LOGO_STR)
     print("\nOne more thing and you are ready to roll:")
-    print(f" - Go to {canonical_url} in your browser and create an account. The first user to register will be granted administrator rights.")
-    print(" - Fill in information about your server under your profile page (in the lower left corner).")
+    print(
+        f" - Go to {canonical_url} in your browser and create an account. The first user to register will be granted administrator rights."
+    )
+    print(
+        " - Fill in information about your server under your profile page (in the lower left corner)."
+    )
     print("\nHappy Speckling!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -2,11 +2,55 @@ const { defaultFieldResolver } = require('graphql')
 const { validateServerRole, authorizeResolver } = require('@/modules/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { mapSchema, getDirective, MapperKind } = require('@graphql-tools/utils')
-const { mapStreamRoleToValue } = require('@/modules/core/helpers/graphTypes')
+const {
+  mapStreamRoleToValue,
+  mapServerRoleToValue
+} = require('@/modules/core/helpers/graphTypes')
 
 module.exports = {
   /**
    * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
+   * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
+   */
+  hasServerRole: () => {
+    const directiveName = 'hasServerRole'
+    return {
+      typeDefs: `
+        enum ServerRole {
+          SERVER_USER
+          SERVER_ADMIN
+          SERVER_ARCHIVED_USER
+        }
+
+        """
+        Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
+        """
+        directive @${directiveName}(role: ServerRole!) on FIELD_DEFINITION
+      `,
+      schemaTransformer: (schema) =>
+        mapSchema(schema, {
+          [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
+            const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
+            if (!directive) return undefined
+
+            const { role: requiredRole } = directive
+            const { resolve = defaultFieldResolver } = fieldConfig
+            fieldConfig.resolve = async function (...args) {
+              const context = args[2]
+              await validateServerRole(context, mapServerRoleToValue(requiredRole))
+
+              return await resolve.apply(this, args)
+            }
+
+            return fieldConfig
+          }
+        })
+    }
+  },
+
+  /**
+   * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
+   * @deprecated Use `hasServerRole` instead, as it relies on proper GQL enums
    * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
    */
   hasRole: () => {

@@ -1,5 +1,5 @@
 <template>
-  <v-card :loading="loading">
+  <v-card :loading="isLoading">
     <template slot="progress">
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
@@ -49,7 +49,7 @@
       </v-card-actions>
     </v-form>
     <v-dialog v-model="showDeleteDialog" width="500">
-      <v-card class="pa-0" :loading="loading">
+      <v-card class="pa-0" :loading="isLoading">
         <template slot="progress">
           <v-progress-linear indeterminate></v-progress-linear>
         </template>
@@ -92,6 +92,10 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { useRoute } from '@/main/lib/core/composables/router'
+import { useAllStreamBranches } from '@/main/lib/stream/composables/branches'
+import { computed } from 'vue'
+
 export default {
   props: {
     stream: {
@@ -99,11 +103,20 @@ export default {
       default: () => null
     }
   },
+  setup() {
+    const route = useRoute()
+    const streamId = computed(() => route.params.streamId)
+
+    const { localBranches, branchesLoading } = useAllStreamBranches(streamId)
+
+    return {
+      localBranches,
+      branchesLoading
+    }
+  },
   data() {
     return {
       showDeleteDialog: false,
-      localBranches: [],
-      branchCursor: null,
       newBranch: this.stream.commit.branchName,
       message: this.stream.commit.message,
       loading: false,
@@ -120,10 +133,10 @@ export default {
   computed: {
     branchNames() {
       return this.localBranches.map((b) => b.name)
+    },
+    isLoading() {
+      return this.loading || this.branchesLoading
     }
-  },
-  async mounted() {
-    await this.fetchBranches()
   },
   methods: {
     async editCommit() {
@@ -182,7 +195,7 @@ export default {
       try {
         await this.$apollo.mutate({
           mutation: gql`
-            mutation commitUpdate($myCommit: CommitDeleteInput!) {
+            mutation commitDelete($myCommit: CommitDeleteInput!) {
               commitDelete(commit: $myCommit)
             }
           `,
@@ -203,61 +216,6 @@ export default {
       )
       this.loading = false
       this.showDeleteDialog = false
-    },
-    async fetchBranches() {
-      this.loading = true
-      const {
-        data: {
-          stream: { branches: branchRes }
-        }
-      } = await this.$apollo.query({
-        query: gql`
-          query Stream($streamId: String!, $cursor: String) {
-            stream(id: $streamId) {
-              id
-              branches(limit: 100, cursor: $cursor) {
-                totalCount
-                cursor
-                items {
-                  id
-                  name
-                  description
-                  author {
-                    id
-                    name
-                  }
-                  commits {
-                    totalCount
-                  }
-                }
-              }
-            }
-          }
-        `,
-        fetchPolicy: 'no-cache',
-        variables: {
-          streamId: this.$route.params.streamId,
-          cursor: this.branchCursor
-        }
-      })
-      // we've reached the end, no more branches
-      if (this.branchCursor === branchRes.cursor) {
-        this.loading = false
-        return
-      }
-
-      for (const newBranch of branchRes.items) {
-        if (
-          this.localBranches.findIndex(
-            (oldBranch) => oldBranch.name === newBranch.name
-          ) === -1
-        ) {
-          this.localBranches.push(newBranch)
-        }
-      }
-      this.branchCursor = branchRes.cursor
-
-      await this.fetchBranches() // fetch recursively until we reach the end
     }
   }
 }

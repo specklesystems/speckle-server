@@ -9,6 +9,7 @@ const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer } = require('@/modules/shared/helpers/envHelper')
+const { moduleLogger } = require('@/logging/logging')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -70,6 +71,7 @@ module.exports = async (app) => {
       return res.redirect(redirectUrl)
     } catch (err) {
       sentry({ err })
+      moduleLogger.error(err)
       if (req.session) req.session.destroy()
       return res.status(401).send({ err: err.message })
     }

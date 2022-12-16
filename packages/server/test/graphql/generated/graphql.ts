@@ -193,21 +193,27 @@ export type BranchUpdateInput = {
 export type Comment = {
   __typename?: 'Comment';
   archived: Scalars['Boolean'];
+  author: LimitedUser;
   authorId: Scalars['String'];
-  createdAt?: Maybe<Scalars['DateTime']>;
+  createdAt: Scalars['DateTime'];
   data?: Maybe<Scalars['JSONObject']>;
   id: Scalars['String'];
   /** Plain-text version of the comment text, ideal for previews */
   rawText: Scalars['String'];
+  /** @deprecated Not actually implemented */
   reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** Gets the replies to this comment. */
-  replies?: Maybe<CommentCollection>;
+  replies: CommentCollection;
+  /** Total number of replies to this comment */
+  repliesCount: Scalars['Int'];
+  /** Get authors of replies to this comment */
+  replyAuthors: CommentReplyAuthorCollection;
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']>;
   text: SmartTextEditorValue;
   /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
-  updatedAt?: Maybe<Scalars['DateTime']>;
+  updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
 };
@@ -216,6 +222,11 @@ export type Comment = {
 export type CommentRepliesArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type CommentReplyAuthorsArgs = {
+  limit?: Scalars['Int'];
 };
 
 export type CommentActivityMessage = {
@@ -255,6 +266,12 @@ export type CommentEditInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentReplyAuthorCollection = {
+  __typename?: 'CommentReplyAuthorCollection';
+  items: Array<LimitedUser>;
+  totalCount: Scalars['Int'];
 };
 
 export type CommentThreadActivityMessage = {
@@ -406,7 +423,7 @@ export type LimitedUser = {
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  name?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
   role?: Maybe<Scalars['String']>;
   /** Returns all discoverable streams that the user is a collaborator on */
   streams: StreamCollection;
@@ -465,10 +482,21 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  commentThreadCount: Scalars['Int'];
+  createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   name: Scalars['String'];
-  sourceApp: Scalars['String'];
+  previewUrl: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+};
+
+export type ModelCollection = {
+  __typename?: 'ModelCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Model>;
+  totalCount: Scalars['Int'];
 };
 
 export type Mutation = {
@@ -516,6 +544,8 @@ export type Mutation = {
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
   objectCreate: Array<Maybe<Scalars['String']>>;
+  /** Various Project related mutations */
+  projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
@@ -918,12 +948,63 @@ export type PendingStreamCollaborator = {
 
 export type Project = {
   __typename?: 'Project';
-  editedAt: Scalars['DateTime'];
+  /** The total number of comment threads in this project */
+  commentThreadCount: Scalars['Int'];
+  /** All comment threads in this project */
+  commentThreads?: Maybe<CommentCollection>;
+  createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   modelCount: Scalars['Int'];
+  models?: Maybe<ModelCollection>;
   name: Scalars['String'];
-  role: Scalars['String'];
+  /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
+  role?: Maybe<Scalars['String']>;
+  /** Source apps used in any models of this project */
+  sourceApps: Array<Scalars['String']>;
   team: Array<LimitedUser>;
+  updatedAt: Scalars['DateTime'];
+  versionCount: Scalars['Int'];
+};
+
+
+export type ProjectCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectModelsFilter>;
+  limit?: Scalars['Int'];
+};
+
+export type ProjectCollection = {
+  __typename?: 'ProjectCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Project>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProjectModelsFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectMutations = {
+  __typename?: 'ProjectMutations';
+  /** Create onboarding/tutorial project */
+  createForOnboarding: Project;
+  /** Delete an existing project */
+  delete: Scalars['Boolean'];
+};
+
+
+export type ProjectMutationsDeleteArgs = {
+  id: Scalars['String'];
 };
 
 export type Query = {
@@ -954,8 +1035,11 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
-  /** @deprecated only used for testing for now */
-  project: Project;
+  /**
+   * Find a specific project. Will throw an authorization error if active user isn't authorized
+   * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+   */
+  project?: Maybe<Project>;
   /** @deprecated only used for testing for now */
   projects: Array<Project>;
   serverInfo: ServerInfo;
@@ -1045,7 +1129,7 @@ export type QueryOtherUserArgs = {
 
 
 export type QueryProjectArgs = {
-  id?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
 };
 
 
@@ -1198,6 +1282,12 @@ export type ServerInviteCreateInput = {
   email: Scalars['String'];
   message?: InputMaybe<Scalars['String']>;
 };
+
+export enum ServerRole {
+  ServerAdmin = 'SERVER_ADMIN',
+  ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerUser = 'SERVER_USER'
+}
 
 export type ServerStats = {
   __typename?: 'ServerStats';
@@ -1583,7 +1673,7 @@ export type User = {
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   /** Get projects that the user participates in */
-  projects: Array<Project>;
+  projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -1626,6 +1716,16 @@ export type UserCommitsArgs = {
  * when a user is reading/writing info about himself
  */
 export type UserFavoriteStreamsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
@@ -1737,35 +1837,35 @@ export type WebhookUpdateInput = {
   url?: InputMaybe<Scalars['String']>;
 };
 
-export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } };
+export type BasicStreamAccessRequestFieldsFragment = { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name: string } };
 
 export type CreateStreamAccessRequestMutationVariables = Exact<{
   streamId: Scalars['String'];
 }>;
 
 
-export type CreateStreamAccessRequestMutation = { __typename?: 'Mutation', streamAccessRequestCreate: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } };
+export type CreateStreamAccessRequestMutation = { __typename?: 'Mutation', streamAccessRequestCreate: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name: string } } };
 
 export type GetStreamAccessRequestQueryVariables = Exact<{
   streamId: Scalars['String'];
 }>;
 
 
-export type GetStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null };
+export type GetStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, requester: { __typename?: 'LimitedUser', id: string, name: string } } | null };
 
 export type GetFullStreamAccessRequestQueryVariables = Exact<{
   streamId: Scalars['String'];
 }>;
 
 
-export type GetFullStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, stream: { __typename?: 'Stream', id: string, name: string }, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null };
+export type GetFullStreamAccessRequestQuery = { __typename?: 'Query', streamAccessRequest?: { __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, stream: { __typename?: 'Stream', id: string, name: string }, requester: { __typename?: 'LimitedUser', id: string, name: string } } | null };
 
 export type GetPendingStreamAccessRequestsQueryVariables = Exact<{
   streamId: Scalars['String'];
 }>;
 
 
-export type GetPendingStreamAccessRequestsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, pendingAccessRequests?: Array<{ __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, stream: { __typename?: 'Stream', id: string, name: string }, requester: { __typename?: 'LimitedUser', id: string, name?: string | null } }> | null } | null };
+export type GetPendingStreamAccessRequestsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, name: string, pendingAccessRequests?: Array<{ __typename?: 'StreamAccessRequest', id: string, requesterId: string, streamId: string, createdAt: string, stream: { __typename?: 'Stream', id: string, name: string }, requester: { __typename?: 'LimitedUser', id: string, name: string } }> | null } | null };
 
 export type UseStreamAccessRequestMutationVariables = Exact<{
   requestId: Scalars['String'];
@@ -1776,7 +1876,7 @@ export type UseStreamAccessRequestMutationVariables = Exact<{
 
 export type UseStreamAccessRequestMutation = { __typename?: 'Mutation', streamAccessRequestUse: boolean };
 
-export type CommentWithRepliesFragment = { __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null };
+export type CommentWithRepliesFragment = { __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } };
 
 export type CreateCommentMutationVariables = Exact<{
   input: CommentCreateInput;
@@ -1798,7 +1898,7 @@ export type GetCommentQueryVariables = Exact<{
 }>;
 
 
-export type GetCommentQuery = { __typename?: 'Query', comment?: { __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null } | null };
+export type GetCommentQuery = { __typename?: 'Query', comment?: { __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } } | null };
 
 export type GetCommentsQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -1806,7 +1906,7 @@ export type GetCommentsQueryVariables = Exact<{
 }>;
 
 
-export type GetCommentsQuery = { __typename?: 'Query', comments?: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies?: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } | null }> } | null };
+export type GetCommentsQuery = { __typename?: 'Query', comments?: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } }> } | null };
 
 export type BaseCommitFieldsFragment = { __typename?: 'Commit', id: string, authorName?: string | null, authorId?: string | null, authorAvatar?: string | null, streamId?: string | null, streamName?: string | null, sourceApplication?: string | null, message?: string | null, referencedObject: string, createdAt?: string | null, commentCount: number };
 
@@ -1893,7 +1993,7 @@ export type DeleteInviteMutationVariables = Exact<{
 
 export type DeleteInviteMutation = { __typename?: 'Mutation', inviteDelete: boolean };
 
-export type StreamInviteDataFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null }, user?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
+export type StreamInviteDataFragment = { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null }, user?: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
 
 export type GetStreamInviteQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -1901,12 +2001,12 @@ export type GetStreamInviteQueryVariables = Exact<{
 }>;
 
 
-export type GetStreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null }, user?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null } | null };
+export type GetStreamInviteQuery = { __typename?: 'Query', streamInvite?: { __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null }, user?: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null } | null };
 
 export type GetStreamInvitesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null }, user?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null }> };
+export type GetStreamInvitesQuery = { __typename?: 'Query', streamInvites: Array<{ __typename?: 'PendingStreamCollaborator', id: string, inviteId: string, streamId: string, title: string, role: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null }, user?: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null }> };
 
 export type UseStreamInviteMutationVariables = Exact<{
   accept: Scalars['Boolean'];
@@ -1930,7 +2030,7 @@ export type GetStreamPendingCollaboratorsQueryVariables = Exact<{
 }>;
 
 
-export type GetStreamPendingCollaboratorsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, pendingCollaborators?: Array<{ __typename?: 'PendingStreamCollaborator', inviteId: string, title: string, token?: string | null, user?: { __typename?: 'LimitedUser', id: string, name?: string | null } | null }> | null } | null };
+export type GetStreamPendingCollaboratorsQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, pendingCollaborators?: Array<{ __typename?: 'PendingStreamCollaborator', inviteId: string, title: string, token?: string | null, user?: { __typename?: 'LimitedUser', id: string, name: string } | null }> | null } | null };
 
 export type BasicStreamFieldsFragment = { __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string };
 
@@ -1991,7 +2091,7 @@ export type GetLimitedUserStreamsQuery = { __typename?: 'Query', otherUser?: { _
 
 export type BaseUserFieldsFragment = { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null };
 
-export type BaseLimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null };
+export type BaseLimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2003,7 +2103,7 @@ export type GetOtherUserQueryVariables = Exact<{
 }>;
 
 
-export type GetOtherUserQuery = { __typename?: 'Query', otherUser?: { __typename?: 'LimitedUser', id: string, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
+export type GetOtherUserQuery = { __typename?: 'Query', otherUser?: { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null } | null };
 
 export type GetAdminUsersQueryVariables = Exact<{
   limit?: Scalars['Int'];
@@ -2012,7 +2112,7 @@ export type GetAdminUsersQueryVariables = Exact<{
 }>;
 
 
-export type GetAdminUsersQuery = { __typename?: 'Query', adminUsers?: { __typename?: 'AdminUsersListCollection', totalCount: number, items: Array<{ __typename?: 'AdminUsersListItem', id: string, registeredUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null } | null, invitedUser?: { __typename?: 'ServerInvite', id: string, email: string, invitedBy: { __typename?: 'LimitedUser', id: string, name?: string | null } } | null }> } | null };
+export type GetAdminUsersQuery = { __typename?: 'Query', adminUsers?: { __typename?: 'AdminUsersListCollection', totalCount: number, items: Array<{ __typename?: 'AdminUsersListItem', id: string, registeredUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null } | null, invitedUser?: { __typename?: 'ServerInvite', id: string, email: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string } } | null }> } | null };
 
 export type GetPendingEmailVerificationStatusQueryVariables = Exact<{
   id?: InputMaybe<Scalars['String']>;

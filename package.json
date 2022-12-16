@@ -6,7 +6,7 @@
   "name": "root",
   "private": true,
   "engines": {
-    "node": ">=14.0.0 <17.0.0"
+    "node": "^18.12.1"
   },
   "scripts": {
     "build": "yarn workspaces foreach -ptv run build",
@@ -22,7 +22,7 @@
     "dev": "yarn workspaces foreach -piv -j unlimited run dev",
     "dev:no-server": "yarn workspaces foreach --exclude @speckle/server -piv -j unlimited run dev",
     "dev:minimal": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend,@speckle/shared}' run dev",
-    "gqlgen": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run gqlgen",
+    "gqlgen": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend,@speckle/frontend-2}' run gqlgen",
     "dev:server": "yarn workspace @speckle/server dev",
     "dev:frontend": "yarn workspace @speckle/frontend dev",
     "dev:frontend-2": "yarn workspace @speckle/frontend-2 dev",
@@ -40,6 +40,7 @@
     "eslint-config-prettier": "^8.5.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
+    "pino-pretty": "^9.1.1",
     "prettier": "^2.5.1",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.0.0"

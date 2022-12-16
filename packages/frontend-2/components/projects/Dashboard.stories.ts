@@ -1,7 +1,7 @@
 import { Meta, Story } from '@storybook/vue3'
 import ProjectsDashboard from '~~/components/projects/Dashboard.vue'
 import { ProjectsDashboardQueryQuery } from '~~/lib/common/generated/gql/graphql'
-import { MockedProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedProvider'
+import { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 
 export default {
@@ -22,12 +22,16 @@ export const EmptyState: Story = {
           result: {
             data: {
               activeUser: {
-                projects: []
+                id: 'fake',
+                projects: {
+                  totalCount: 0,
+                  items: []
+                }
               }
             } as ProjectsDashboardQueryQuery
           }
         }
       ]
-    } as MockedProviderOptions
+    } as MockedApolloProviderOptions
   }
 }

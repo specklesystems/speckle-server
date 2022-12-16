@@ -111,6 +111,28 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('StreamCollection', {
               checkIdentity: true
             })
+          },
+          projects: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('ProjectCollection', {
+              checkIdentity: true
+            })
+          }
+        }
+      },
+      Project: {
+        fields: {
+          models: {
+            keyArgs: ['filter'],
+            merge: buildAbstractCollectionMergeFunction('ModelCollection')
+          },
+          commentThreads: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommentCollection')
+          },
+          replyAuthors: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
           }
         }
       },

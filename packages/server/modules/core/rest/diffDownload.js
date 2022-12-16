@@ -1,6 +1,5 @@
 'use strict'
 const zlib = require('zlib')
-const debug = require('debug')
 const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
@@ -8,11 +7,16 @@ const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
 
 const { pipeline, PassThrough } = require('stream')
+const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
+    })
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -40,16 +44,10 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          debug('speckle:error')(
-            `[User ${
-              req.context.userId || '-'
-            }] App error streaming objects from stream ${req.params.streamId}: ${err}`
-          )
+          boundLogger.error(err, `App error streaming objects`)
         } else {
-          debug('speckle:info')(
-            `[User ${req.context.userId || '-'}] Streamed ${
-              childrenList.length
-            } objects from stream ${req.params.streamId} (size: ${
+          boundLogger.info(
+            `Streamed ${childrenList.length} objects (size: ${
               gzipStream.bytesWritten / 1000000
             } MB)`
           )
@@ -73,11 +71,7 @@ module.exports = (app) => {
         })
       }
     } catch (ex) {
-      debug('speckle:error')(
-        `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
-          req.params.streamId
-        }: ${ex}`
-      )
+      boundLogger.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
     }
     speckleObjStream.end()

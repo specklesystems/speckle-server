@@ -44,6 +44,12 @@ export default {
     },
     submit: {
       type: 'boolean'
+    },
+    iconLeft: {
+      type: 'function'
+    },
+    iconRight: {
+      type: 'function'
     }
   },
   parameters: {
@@ -92,7 +98,8 @@ export const Default: Story = {
     link: false,
     color: 'default',
     disabled: false,
-    submit: false
+    submit: false,
+    hideText: false
   },
   parameters: {
     docs: {
@@ -138,6 +145,12 @@ export const Link: Story = mergeStories(Default, {
         story: 'Basically just a link (CommonTextLink is an alias for this)'
       }
     }
+  }
+})
+
+export const Text: Story = mergeStories(Default, {
+  args: {
+    text: true
   }
 })
 
@@ -241,5 +254,12 @@ export const IconOnBothSides: Story = mergeStories(Default, {
   args: {
     iconRight: XMarkIcon,
     iconLeft: XMarkIcon
+  }
+})
+
+export const IconOnly: Story = mergeStories(Default, {
+  args: {
+    iconLeft: XMarkIcon,
+    hideText: true
   }
 })

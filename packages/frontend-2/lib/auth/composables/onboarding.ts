@@ -1,5 +1,5 @@
 import { useApolloClient } from '@vue/apollo-composable'
-import { useMixpanel } from '~~/lib/core/composables/mixpanel'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { UnsupportedEnvironmentError } from '~~/lib/core/errors/base'
 import { OnboardingState } from '../helpers/onboarding'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

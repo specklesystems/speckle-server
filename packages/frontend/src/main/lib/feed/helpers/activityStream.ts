@@ -7,3 +7,5 @@ export const SKIPPABLE_ACTION_TYPES = <const>[
   'stream_access_request_sent',
   'stream_access_request_declined'
 ]
+
+export const STREAM_CREATED_TYPES = <const>['stream_create', 'stream_clone']

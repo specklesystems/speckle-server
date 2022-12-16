@@ -1,6 +1,6 @@
 'use strict'
 
-const { ForbiddenError, UserInputError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
 const { authorizeResolver, pubsub } = require('@/modules/shared')
@@ -9,10 +9,12 @@ const {
   createBranch,
   updateBranch,
   getBranchById,
-  getBranchesByStreamId,
   getBranchByNameAndStreamId,
   deleteBranchById
 } = require('../../services/branches')
+const {
+  getPaginatedStreamBranches
+} = require('@/modules/core/services/branch/retrieval')
 
 const { getUserById } = require('../../services/users')
 const { saveActivity } = require('@/modules/activitystream/services')
@@ -23,21 +25,12 @@ const BRANCH_CREATED = 'BRANCH_CREATED'
 const BRANCH_UPDATED = 'BRANCH_UPDATED'
 const BRANCH_DELETED = 'BRANCH_DELETED'
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
   Stream: {
     async branches(parent, args) {
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { items, cursor, totalCount } = await getBranchesByStreamId({
-        streamId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor
-      })
-
-      return { totalCount, cursor, items }
+      return await getPaginatedStreamBranches(parent.id, args)
     },
 
     async branch(parent, args) {

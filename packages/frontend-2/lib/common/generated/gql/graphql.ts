@@ -15,10 +15,10 @@ export type Scalars = {
   /** The `BigInt` scalar type represents non-fractional signed whole numeric values. */
   BigInt: any;
   /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
-  DateTime: any;
+  DateTime: string;
   EmailAddress: any;
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSONObject: any;
+  JSONObject: Record<string, unknown>;
 };
 
 export type ActiveUserMutations = {
@@ -195,21 +195,27 @@ export type BranchUpdateInput = {
 export type Comment = {
   __typename?: 'Comment';
   archived: Scalars['Boolean'];
+  author: LimitedUser;
   authorId: Scalars['String'];
-  createdAt?: Maybe<Scalars['DateTime']>;
+  createdAt: Scalars['DateTime'];
   data?: Maybe<Scalars['JSONObject']>;
   id: Scalars['String'];
   /** Plain-text version of the comment text, ideal for previews */
   rawText: Scalars['String'];
+  /** @deprecated Not actually implemented */
   reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** Gets the replies to this comment. */
-  replies?: Maybe<CommentCollection>;
+  replies: CommentCollection;
+  /** Total number of replies to this comment */
+  repliesCount: Scalars['Int'];
+  /** Get authors of replies to this comment */
+  replyAuthors: CommentReplyAuthorCollection;
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']>;
   text: SmartTextEditorValue;
   /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
-  updatedAt?: Maybe<Scalars['DateTime']>;
+  updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
 };
@@ -218,6 +224,11 @@ export type Comment = {
 export type CommentRepliesArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type CommentReplyAuthorsArgs = {
+  limit?: Scalars['Int'];
 };
 
 export type CommentActivityMessage = {
@@ -257,6 +268,12 @@ export type CommentEditInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentReplyAuthorCollection = {
+  __typename?: 'CommentReplyAuthorCollection';
+  items: Array<LimitedUser>;
+  totalCount: Scalars['Int'];
 };
 
 export type CommentThreadActivityMessage = {
@@ -403,7 +420,7 @@ export type LimitedUser = {
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  name?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
   role?: Maybe<Scalars['String']>;
   /** Returns all discoverable streams that the user is a collaborator on */
   streams: StreamCollection;
@@ -462,10 +479,21 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  commentThreadCount: Scalars['Int'];
+  createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   name: Scalars['String'];
-  sourceApp: Scalars['String'];
+  previewUrl: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+};
+
+export type ModelCollection = {
+  __typename?: 'ModelCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Model>;
+  totalCount: Scalars['Int'];
 };
 
 export type Mutation = {
@@ -513,6 +541,8 @@ export type Mutation = {
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
   objectCreate: Array<Maybe<Scalars['String']>>;
+  /** Various Project related mutations */
+  projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
@@ -915,12 +945,63 @@ export type PendingStreamCollaborator = {
 
 export type Project = {
   __typename?: 'Project';
-  editedAt: Scalars['DateTime'];
+  /** The total number of comment threads in this project */
+  commentThreadCount: Scalars['Int'];
+  /** All comment threads in this project */
+  commentThreads?: Maybe<CommentCollection>;
+  createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   modelCount: Scalars['Int'];
+  models?: Maybe<ModelCollection>;
   name: Scalars['String'];
-  role: Scalars['String'];
+  /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
+  role?: Maybe<Scalars['String']>;
+  /** Source apps used in any models of this project */
+  sourceApps: Array<Scalars['String']>;
   team: Array<LimitedUser>;
+  updatedAt: Scalars['DateTime'];
+  versionCount: Scalars['Int'];
+};
+
+
+export type ProjectCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectModelsFilter>;
+  limit?: Scalars['Int'];
+};
+
+export type ProjectCollection = {
+  __typename?: 'ProjectCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Project>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProjectModelsFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectMutations = {
+  __typename?: 'ProjectMutations';
+  /** Create onboarding/tutorial project */
+  createForOnboarding: Project;
+  /** Delete an existing project */
+  delete: Scalars['Boolean'];
+};
+
+
+export type ProjectMutationsDeleteArgs = {
+  id: Scalars['String'];
 };
 
 export type Query = {
@@ -951,8 +1032,11 @@ export type Query = {
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
-  /** @deprecated only used for testing for now */
-  project: Project;
+  /**
+   * Find a specific project. Will throw an authorization error if active user isn't authorized
+   * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+   */
+  project?: Maybe<Project>;
   /** @deprecated only used for testing for now */
   projects: Array<Project>;
   serverInfo: ServerInfo;
@@ -1042,7 +1126,7 @@ export type QueryOtherUserArgs = {
 
 
 export type QueryProjectArgs = {
-  id?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
 };
 
 
@@ -1195,6 +1279,12 @@ export type ServerInviteCreateInput = {
   email: Scalars['String'];
   message?: InputMaybe<Scalars['String']>;
 };
+
+export enum ServerRole {
+  ServerAdmin = 'SERVER_ADMIN',
+  ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerUser = 'SERVER_USER'
+}
 
 export type ServerStats = {
   __typename?: 'ServerStats';
@@ -1580,7 +1670,7 @@ export type User = {
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   /** Get projects that the user participates in */
-  projects: Array<Project>;
+  projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -1623,6 +1713,16 @@ export type UserCommitsArgs = {
  * when a user is reading/writing info about himself
  */
 export type UserFavoriteStreamsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
@@ -1750,17 +1850,51 @@ export type RequestVerificationMutation = { __typename?: 'Mutation', requestVeri
 
 export type AuthStategiesServerInfoFragmentFragment = { __typename?: 'ServerInfo', authStrategies: Array<{ __typename?: 'AuthStrategy', id: string, name: string, url: string }> };
 
+export type FormUsersSelectItemFragment = { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null };
+
 export type ProjectsDashboardListQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProjectsDashboardListQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> }> };
+export type ProjectsDashboardListQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: string, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> }> };
 
-export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null, avatar?: string | null }> };
+export type ProjectListItemFragmentFragment = { __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: string, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> };
+
+export type ProjectPageProjectHeaderFragment = { __typename?: 'Project', name: string, description?: string | null };
+
+export type ProjectPageLatestItemsCommentsFragment = { __typename?: 'Project', id: string, commentThreadCount: number };
+
+export type ProjectPageLatestItemsCommentItemFragment = { __typename?: 'Comment', id: string, screenshot?: string | null, rawText: string, createdAt: string, repliesCount: number, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replyAuthors: { __typename?: 'CommentReplyAuthorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> } };
+
+export type ProjectPageLatestItemsModelsFragment = { __typename?: 'Project', id: string, modelCount: number, sourceApps: Array<string>, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> };
+
+export type ProjectPageLatestItemsModelItemFragment = { __typename?: 'Model', id: string, name: string, versionCount: number, commentThreadCount: number, previewUrl: string, createdAt: string, updatedAt: string };
+
+export type ProjectPageStatsBlockCommentsFragment = { __typename?: 'Project', commentThreadCount: number };
+
+export type ProjectPageStatsBlockModelsFragment = { __typename?: 'Project', modelCount: number };
+
+export type ProjectPageStatsBlockTeamFragment = { __typename?: 'Project', team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> };
+
+export type ProjectPageStatsBlockVersionsFragment = { __typename?: 'Project', versionCount: number };
+
+export type CreateOnboardingProjectMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CreateOnboardingProjectMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', createForOnboarding: { __typename?: 'Project', id: string, createdAt: string, name: string, description?: string | null, versionCount: number, modelCount: number, commentThreadCount: number, sourceApps: Array<string>, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> } } };
+
+export type ProjectsDashboardFilledFragment = { __typename?: 'ProjectCollection', items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string }> };
+
+export type DeleteSingleProjectMutationVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type DeleteSingleProjectMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', delete: boolean } };
 
 export type ActiveUserMainMetadataQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ActiveUserMainMetadataQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, role?: string | null, avatar?: string | null, isOnboardingFinished?: boolean | null, createdAt?: any | null } | null };
+export type ActiveUserMainMetadataQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, role?: string | null, avatar?: string | null, isOnboardingFinished?: boolean | null, createdAt?: string | null } | null };
 
 export type FinishOnboardingMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -1780,7 +1914,29 @@ export type InternalTestDataQuery = { __typename?: 'Query', testNumber?: number 
 export type ProjectsDashboardQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProjectsDashboardQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', projects: Array<{ __typename?: 'Project', id: string, name: string }> } | null };
+export type ProjectsDashboardQueryQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, projects: { __typename?: 'ProjectCollection', totalCount: number, items: Array<{ __typename?: 'Project', id: string, name: string, createdAt: string }> } } | null };
+
+export type ProjectPageQueryQueryVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type ProjectPageQueryQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, createdAt: string, name: string, description?: string | null, versionCount: number, modelCount: number, commentThreadCount: number, sourceApps: Array<string>, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> } | null };
+
+export type ProjectLatestModelsQueryVariables = Exact<{
+  projectId: Scalars['String'];
+  filter?: InputMaybe<ProjectModelsFilter>;
+}>;
+
+
+export type ProjectLatestModelsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, models?: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, versionCount: number, commentThreadCount: number, previewUrl: string, createdAt: string, updatedAt: string }> } | null } | null };
+
+export type ProjectLatestCommentThreadsQueryVariables = Exact<{
+  projectId: Scalars['String'];
+}>;
+
+
+export type ProjectLatestCommentThreadsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, commentThreads?: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, screenshot?: string | null, rawText: string, createdAt: string, repliesCount: number, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replyAuthors: { __typename?: 'CommentReplyAuthorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> } }> } | null } | null };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1792,19 +1948,38 @@ export type ProjectLandingPageQueryVariables = Exact<{
 }>;
 
 
-export type ProjectLandingPageQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, modelCount: number, role: string, editedAt: any, team: Array<{ __typename?: 'LimitedUser', id: string, name?: string | null }> } };
+export type ProjectLandingPageQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, modelCount: number, role?: string | null, updatedAt: string, team: Array<{ __typename?: 'LimitedUser', id: string, name: string }> } | null };
+
+export type ProjectPageProjectFragment = { __typename?: 'Project', id: string, createdAt: string, name: string, description?: string | null, versionCount: number, modelCount: number, commentThreadCount: number, sourceApps: Array<string>, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> };
 
 export const IntegrationStoryDemoServerInfoQueryFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"IntegrationStoryDemoServerInfoQueryFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blobSizeLimitBytes"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"adminContact"}},{"kind":"Field","name":{"kind":"Name","value":"canonicalUrl"}},{"kind":"Field","name":{"kind":"Name","value":"termsOfService"}},{"kind":"Field","name":{"kind":"Name","value":"inviteOnly"}},{"kind":"Field","name":{"kind":"Name","value":"version"}}]}}]} as unknown as DocumentNode<IntegrationStoryDemoServerInfoQueryFragmentFragment, unknown>;
 export const ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ServerTermsOfServicePrivacyPolicyFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"termsOfService"}}]}}]} as unknown as DocumentNode<ServerTermsOfServicePrivacyPolicyFragmentFragment, unknown>;
 export const AuthStategiesServerInfoFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AuthStategiesServerInfoFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ServerInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authStrategies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}}]} as unknown as DocumentNode<AuthStategiesServerInfoFragmentFragment, unknown>;
-export const ProjectListItemFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectListItemFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"editedAt"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]} as unknown as DocumentNode<ProjectListItemFragmentFragment, unknown>;
+export const ProjectListItemFragmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectListItemFragment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]} as unknown as DocumentNode<ProjectListItemFragmentFragment, unknown>;
+export const FormUsersSelectItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormUsersSelectItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedUser"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]} as unknown as DocumentNode<FormUsersSelectItemFragment, unknown>;
+export const ProjectPageLatestItemsCommentItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsCommentItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormUsersSelectItem"}}]}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"repliesCount"}},{"kind":"Field","name":{"kind":"Name","value":"replyAuthors"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"4"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormUsersSelectItem"}}]}}]}}]}},...FormUsersSelectItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectPageLatestItemsCommentItemFragment, unknown>;
+export const ProjectPageLatestItemsModelItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"versionCount"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreadCount"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<ProjectPageLatestItemsModelItemFragment, unknown>;
+export const ProjectsDashboardFilledFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsDashboardFilled"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCollection"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<ProjectsDashboardFilledFragment, unknown>;
+export const ProjectPageProjectHeaderFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageProjectHeader"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<ProjectPageProjectHeaderFragment, unknown>;
+export const ProjectPageStatsBlockTeamFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockTeam"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockTeamFragment, unknown>;
+export const ProjectPageStatsBlockVersionsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockVersions"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versionCount"}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockVersionsFragment, unknown>;
+export const ProjectPageStatsBlockModelsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockModels"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelCount"}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockModelsFragment, unknown>;
+export const ProjectPageStatsBlockCommentsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockComments"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentThreadCount"}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockCommentsFragment, unknown>;
+export const ProjectPageLatestItemsModelsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsModels"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApps"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormUsersSelectItem"}}]}}]}},...FormUsersSelectItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectPageLatestItemsModelsFragment, unknown>;
+export const ProjectPageLatestItemsCommentsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsComments"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreadCount"}}]}}]} as unknown as DocumentNode<ProjectPageLatestItemsCommentsFragment, unknown>;
+export const ProjectPageProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageProject"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageProjectHeader"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockTeam"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockVersions"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockModels"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockComments"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsModels"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsComments"}}]}},...ProjectPageProjectHeaderFragmentDoc.definitions,...ProjectPageStatsBlockTeamFragmentDoc.definitions,...ProjectPageStatsBlockVersionsFragmentDoc.definitions,...ProjectPageStatsBlockModelsFragmentDoc.definitions,...ProjectPageStatsBlockCommentsFragmentDoc.definitions,...ProjectPageLatestItemsModelsFragmentDoc.definitions,...ProjectPageLatestItemsCommentsFragmentDoc.definitions]} as unknown as DocumentNode<ProjectPageProjectFragment, unknown>;
 export const EmailVerificationBannerStateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"EmailVerificationBannerState"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"verified"}},{"kind":"Field","name":{"kind":"Name","value":"hasPendingVerification"}}]}}]}}]} as unknown as DocumentNode<EmailVerificationBannerStateQuery, EmailVerificationBannerStateQueryVariables>;
 export const RequestVerificationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RequestVerification"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"requestVerification"}}]}}]} as unknown as DocumentNode<RequestVerificationMutation, RequestVerificationMutationVariables>;
 export const ProjectsDashboardListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectsDashboardList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projects"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectListItemFragment"}}]}}]}},...ProjectListItemFragmentFragmentDoc.definitions]} as unknown as DocumentNode<ProjectsDashboardListQuery, ProjectsDashboardListQueryVariables>;
+export const CreateOnboardingProjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateOnboardingProject"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createForOnboarding"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageProject"}}]}}]}}]}},...ProjectPageProjectFragmentDoc.definitions]} as unknown as DocumentNode<CreateOnboardingProjectMutation, CreateOnboardingProjectMutationVariables>;
+export const DeleteSingleProjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteSingleProject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"delete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]}}]} as unknown as DocumentNode<DeleteSingleProjectMutation, DeleteSingleProjectMutationVariables>;
 export const ActiveUserMainMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActiveUserMainMetadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"isOnboardingFinished"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<ActiveUserMainMetadataQuery, ActiveUserMainMetadataQueryVariables>;
 export const FinishOnboardingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FinishOnboarding"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"finishOnboarding"}}]}}]}}]} as unknown as DocumentNode<FinishOnboardingMutation, FinishOnboardingMutationVariables>;
 export const AuthServerInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AuthServerInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AuthStategiesServerInfoFragment"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ServerTermsOfServicePrivacyPolicyFragment"}}]}}]}},...AuthStategiesServerInfoFragmentFragmentDoc.definitions,...ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc.definitions]} as unknown as DocumentNode<AuthServerInfoQuery, AuthServerInfoQueryVariables>;
 export const InternalTestDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InternalTestData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testNumber"}},{"kind":"Field","name":{"kind":"Name","value":"testList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"foo"}},{"kind":"Field","name":{"kind":"Name","value":"bar"}}]}}]}}]} as unknown as DocumentNode<InternalTestDataQuery, InternalTestDataQueryVariables>;
-export const ProjectsDashboardQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectsDashboardQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projects"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectsDashboardQueryQuery, ProjectsDashboardQueryQueryVariables>;
+export const ProjectsDashboardQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectsDashboardQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projects"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsDashboardFilled"}}]}}]}}]}},...ProjectsDashboardFilledFragmentDoc.definitions]} as unknown as DocumentNode<ProjectsDashboardQueryQuery, ProjectsDashboardQueryQueryVariables>;
+export const ProjectPageQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectPageQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageProject"}}]}}]}},...ProjectPageProjectFragmentDoc.definitions]} as unknown as DocumentNode<ProjectPageQueryQuery, ProjectPageQueryQueryVariables>;
+export const ProjectLatestModelsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectLatestModels"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectModelsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"NullValue"}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"8"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"}}]}}]}}]}}]}},...ProjectPageLatestItemsModelItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectLatestModelsQuery, ProjectLatestModelsQueryVariables>;
+export const ProjectLatestCommentThreadsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectLatestCommentThreads"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"NullValue"}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"8"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsCommentItem"}}]}}]}}]}}]}},...ProjectPageLatestItemsCommentItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectLatestCommentThreadsQuery, ProjectLatestCommentThreadsQueryVariables>;
 export const GetActiveUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActiveUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}}]} as unknown as DocumentNode<GetActiveUserQuery, GetActiveUserQueryVariables>;
-export const ProjectLandingPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectLandingPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"editedAt"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectLandingPageQuery, ProjectLandingPageQueryVariables>;
+export const ProjectLandingPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectLandingPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"modelCount"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectLandingPageQuery, ProjectLandingPageQueryVariables>;

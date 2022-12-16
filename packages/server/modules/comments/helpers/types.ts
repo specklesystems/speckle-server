@@ -6,8 +6,8 @@ export interface CommentRecord {
   id: string
   streamId: string
   authorId: string
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
   text: Nullable<string>
   screenshot: Nullable<string>
   data: Nullable<string>

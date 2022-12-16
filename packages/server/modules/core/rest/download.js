@@ -1,6 +1,5 @@
 'use strict'
 const zlib = require('zlib')
-const debug = require('debug')
 const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
@@ -8,11 +7,16 @@ const { validatePermissionsReadStream } = require('./authUtils')
 const { getObject, getObjectChildrenStream } = require('../services/objects')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-
+const { logger } = require('@/logging/logging')
 module.exports = (app) => {
   app.options('/objects/:streamId/:objectId', corsMiddleware())
 
   app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId,
+      objectId: req.params.objectId
+    })
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -55,18 +59,10 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          debug('speckle:error')(
-            `[User ${req.context.userId || '-'}] Error downloading object ${
-              req.params.objectId
-            } from stream ${req.params.streamId}: ${err}`
-          )
+          boundLogger.error(err, 'Error downloading object.')
         } else {
-          debug('speckle:info')(
-            `[User ${req.context.userId || '-'}] Downloaded object ${
-              req.params.objectId
-            } from stream ${req.params.streamId} (size: ${
-              gzipStream.bytesWritten / 1000000
-            } MB)`
+          boundLogger.info(
+            `Downloaded object (size: ${gzipStream.bytesWritten / 1000000} MB)`
           )
         }
       }
@@ -75,6 +71,11 @@ module.exports = (app) => {
 
   app.options('/objects/:streamId/:objectId/single', corsMiddleware())
   app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId,
+      objectId: req.params.objectId
+    })
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -89,14 +90,11 @@ module.exports = (app) => {
     })
 
     if (!obj) {
+      boundLogger.warn('Failed to find object.')
       return res.status(404).send('Failed to find object.')
     }
 
-    debug('speckle:info')(
-      `[User ${req.context.userId || '-'}] Downloaded single object ${
-        req.params.objectId
-      } from stream ${req.params.streamId}`
-    )
+    boundLogger.info('Downloaded single object.')
 
     res.send(obj.data)
   })
