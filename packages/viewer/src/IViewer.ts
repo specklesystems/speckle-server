@@ -54,6 +54,7 @@ export enum ViewerEvent {
 
 export type SelectionEvent = {
   multiple: boolean
+  event?: PointerEvent
   hits: Array<{
     guid?: string
     object: Record<string, unknown>

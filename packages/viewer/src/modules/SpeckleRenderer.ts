@@ -227,7 +227,7 @@ export default class SpeckleRenderer {
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
-    this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
+    // this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
@@ -749,13 +749,14 @@ export default class SpeckleRenderer {
     if (!queryResults) {
       this.viewer.emit(
         ViewerEvent.ObjectClicked,
-        !multiSelect ? null : { multiple: true }
+        !multiSelect ? null : { multiple: true, event: e.event }
       )
       return
     }
 
     const selectionInfo = {
       multiple: multiSelect,
+      event: e.event,
       hits: queryResults.map((value) => {
         return {
           guid: value.node.model.id,
