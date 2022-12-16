@@ -17,6 +17,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
+// params.verbose = true
 
 const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)

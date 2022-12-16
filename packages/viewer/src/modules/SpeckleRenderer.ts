@@ -53,6 +53,7 @@ import {
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
+import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -564,7 +565,7 @@ export default class SpeckleRenderer {
       )
     }
     this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
-    console.warn('Outline time: ', performance.now() - start)
+    Logger.warn('Outline time: ', performance.now() - start)
   }
 
   public enableSectionBoxCapper(value: boolean) {

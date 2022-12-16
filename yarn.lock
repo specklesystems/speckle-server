@@ -5165,6 +5165,7 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     flat: ^5.0.2
     hold-event: ^0.1.0
+    js-logger: 1.6.1
     lodash-es: ^4.17.21
     prettier: ^2.5.1
     rainbowvis.js: ^1.0.1
@@ -13882,6 +13883,13 @@ __metadata:
     html-beautify: js/bin/html-beautify.js
     js-beautify: js/bin/js-beautify.js
   checksum: 2e61c1183c73d7464ec7d5354763ee9e17ecb4b5c7a3744e9a9dc2e9c406fc6e0c37399130d1ee48313ff502e03e8a949dce96acdaee309dc44317249565934d
+  languageName: node
+  linkType: hard
+
+"js-logger@npm:1.6.1":
+  version: 1.6.1
+  resolution: "js-logger@npm:1.6.1"
+  checksum: c191a612a198c6a3263cb35a1953b8de9bc9ff8962cfdb393a771c26be726630a18a15765aa471dd8e0a20666011e3ddbc5addb2d2494e964d39fd13f2246aca
   languageName: node
   linkType: hard
 

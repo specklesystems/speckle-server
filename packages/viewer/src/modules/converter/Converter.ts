@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { generateUUID } from 'three/src/math/MathUtils'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
+import Logger from 'js-logger'
 
 export type ConverterResultDelegate = (object) => Promise<void>
 
@@ -38,7 +39,7 @@ export default class Coverter {
 
   constructor(objectLoader: unknown) {
     if (!objectLoader) {
-      console.warn(
+      Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
       )
     }
@@ -123,7 +124,7 @@ export default class Coverter {
         await callback(null /*await this.directConvert(obj.data || obj, scale)*/)
         return
       } catch (e) {
-        console.warn(
+        Logger.warn(
           `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`,
           e
         )
@@ -156,7 +157,7 @@ export default class Coverter {
           WorldTree.getInstance().addNode(nestedNode, childNode)
           await callback({}) // use the parent's metadata!
         } catch (e) {
-          console.warn(
+          Logger.warn(
             `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
           )
         }
@@ -279,7 +280,7 @@ export default class Coverter {
       }
       return null
     } catch (e) {
-      console.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
+      Logger.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
       throw e
     }
   }
@@ -353,7 +354,7 @@ export default class Coverter {
       delete obj.Surfaces
       delete obj.Vertices
     } catch (e) {
-      console.warn(`Failed to convert brep id: ${obj.id}`)
+      Logger.warn(`Failed to convert brep id: ${obj.id}`)
       throw e
     }
   }
