@@ -1,4 +1,5 @@
 import {
+  Box3,
   BufferAttribute,
   BufferGeometry,
   DynamicDrawUsage,
@@ -31,6 +32,7 @@ export default class MeshBatch implements Batch {
   public batchMaterial: Material
   public mesh: SpeckleMesh
   public boundsTree: MeshBVH
+  public bounds: Box3 = new Box3()
   private gradientIndexBuffer: BufferAttribute
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
@@ -436,6 +438,7 @@ export default class MeshBatch implements Batch {
     )
 
     this.boundsTree = Geometry.buildBVH(indices, position)
+    this.boundsTree.getBoundingBox(this.bounds)
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
   }

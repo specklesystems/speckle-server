@@ -6,6 +6,7 @@ import {
   Color,
   CustomBlending,
   DoubleSide,
+  DstAlphaFactor,
   Float32BufferAttribute,
   LineBasicMaterial,
   LineSegments,
@@ -103,8 +104,8 @@ export class Shadowcatcher {
       this.displayMaterial.blendEquationAlpha = AddEquation
       this.displayMaterial.blendSrc = ZeroFactor
       this.displayMaterial.blendSrcAlpha = OneFactor
-      this.displayMaterial.blendDst = ZeroFactor
-      this.displayMaterial.blendDstAlpha = OneFactor
+      this.displayMaterial.blendDst = DstAlphaFactor
+      this.displayMaterial.blendDstAlpha = ZeroFactor
     }
 
     this.shadowcatcherPass.onBeforeRender = () => {
@@ -169,6 +170,7 @@ export class Shadowcatcher {
       this.planeMesh.layers.set(layer)
       this.planeMesh.name = Shadowcatcher.MESH_NAME
       this.planeMesh.frustumCulled = false
+      this.planeMesh.renderOrder = ObjectLayers.SHADOWCATCHER
     }
     if (needsRebuild || force)
       this.updatePlaneMeshGeometry(
@@ -323,16 +325,22 @@ export class Shadowcatcher {
   }
 
   private castRay(batches: MeshBatch[], origin: Vector3, dir: Vector3) {
+    const results = []
     for (let i = 0; i < batches.length; i++) {
       const invMat = new Matrix4().copy(batches[i].renderObject.matrixWorld)
       invMat.invert()
       const ray = new Ray(origin, dir)
       ray.applyMatrix4(invMat)
       const res = batches[i].boundsTree.raycastFirst(ray, DoubleSide)
+
       if (res) {
         const rv = batches[i].getMaterialAtIndex(res.faceIndex)
-        if (rv.transparent === false) return res
+        if (rv.transparent === false) results.push(res)
       }
+    }
+    if (results.length > 0) {
+      results.sort((a, b) => a.distance - b.distance)
+      return results[0]
     }
   }
 
