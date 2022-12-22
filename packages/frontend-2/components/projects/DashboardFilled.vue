@@ -9,7 +9,7 @@
           {{ project.createdAt }}
         </div>
         <div>
-          <FormButton @click="() => deleteProject(project.id)">Delete</FormButton>
+          <FormButton disabled @click="deleteProject(project.id)">Delete</FormButton>
         </div>
       </div>
     </LayoutPanel>

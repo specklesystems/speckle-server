@@ -19,16 +19,19 @@ export function useUserAvatarInternalsparams(params: {
     switch (size) {
       case '20':
         classParts.push('h-5 w-5')
-        if (!noBorder) classParts.push('border border-outline-1')
+        // if (!noBorder) classParts.push('border border-primary-muted')
         break
       case '24':
         classParts.push('h-6 w-6')
-        if (!noBorder) classParts.push('border border-outline-1')
+        // if (!noBorder) classParts.push('border border-primary-muted')
         break
       case '32':
-      default:
         classParts.push('h-8 w-8')
-        if (!noBorder) classParts.push('border-2 border-outline-1')
+        // if (!noBorder) classParts.push('border-2 border-primary-muted')
+        break
+      default:
+        classParts.push('h-10 w-10')
+        // if (!noBorder) classParts.push('border-2 border-primary-muted')
         break
     }
 

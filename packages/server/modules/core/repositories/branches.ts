@@ -138,15 +138,15 @@ export async function getPaginatedProjectModelsItems(
   const { cursor, limit } = params
 
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
-  q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.createdAt)
+  q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
 
-  if (cursor) q.andWhere(Branches.col.createdAt, '>', cursor)
+  if (cursor) q.andWhere(Branches.col.updatedAt, '>', cursor)
 
   const results = await q
   return {
     items: results,
     cursor:
-      results.length > 0 ? results[results.length - 1].createdAt.toISOString() : null
+      results.length > 0 ? results[results.length - 1].updatedAt.toISOString() : null
   }
 }
 

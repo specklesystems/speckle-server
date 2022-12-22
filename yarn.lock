@@ -7923,6 +7923,7 @@ __metadata:
     lodash-es: ^4.17.21
     mixpanel-browser: ^2.45.0
     nuxt: rc
+    portal-vue: ^3.0.0
     postcss-html: ^1.5.0
     postcss-nesting: ^10.2.0
     prettier: ^2.7.1
@@ -30579,6 +30580,18 @@ __metadata:
   peerDependencies:
     vue: ^2.5.18
   checksum: 1615c38469e11e2a2c01501fbb1cd52b07a6fa2252f90a39be67b6332d3cd215f05cabb1f7d9fbdc28c67124adf299abe36f645619dbe6ff57f6f7e1b9aba0c5
+  languageName: node
+  linkType: hard
+
+"portal-vue@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "portal-vue@npm:3.0.0"
+  peerDependencies:
+    vue: ^3.0.4
+  peerDependenciesMeta:
+    vue:
+      optional: true
+  checksum: c1b75685c7c2fb868f81f5bff79f51c513daef45e01e40cb505d0a29d4c1b52aece839de7dafbf04db70fefbd4dd40369a1180fa603904ff1a0f308e77d1090b
   languageName: node
   linkType: hard
 

@@ -138,7 +138,7 @@ export function buildRequestLoaders(ctx: AuthContext) {
         async (branchIds) => {
           const results = keyBy(
             await getBranchLatestCommits(branchIds.slice()),
-            'branchId'
+            'branchid'
           )
           return branchIds.map((i) => results[i] || null)
         }

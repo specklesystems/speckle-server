@@ -1,10 +1,10 @@
 <template>
-  <div class="grid grid-cols-12 space-y-8 sm:space-y-0 sm:gap-8">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <ProjectPageLatestItemsModelsGridItem
       v-for="item in items"
       :key="item.id"
       :model="item"
-      :class="gridItemWidthClasses"
+      class="gridItemWidthClasses"
     />
   </div>
 </template>

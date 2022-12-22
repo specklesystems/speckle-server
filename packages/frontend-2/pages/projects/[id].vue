@@ -4,8 +4,12 @@
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
-      <div class="grid grid-cols-12 mb-14 gap-2 lg:gap-8">
-        <ProjectPageStatsBlockTeam :project="project" />
+      <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mb-14">
+        <ProjectPageStatsBlockTeam
+          :project="project"
+          class="shadow hover:shadow-xl w-full md:w-72 transition"
+        />
+        <div class="grow hidden md:flex"></div>
         <ProjectPageStatsBlockVersions :project="project" />
         <ProjectPageStatsBlockModels :project="project" />
         <ProjectPageStatsBlockComments :project="project" />

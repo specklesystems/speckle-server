@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageLatestItems :count="project.modelCount" title="Latest Models">
+  <ProjectPageLatestItems :count="project.modelCount" title="Models">
     <template #default="{ gridOrList }">
       <ProjectPageLatestItemsModelsGrid
         v-if="gridOrList === GridListToggleValue.Grid"

@@ -51,6 +51,10 @@ export default defineNuxtConfig({
     }
   },
 
+  app: {
+    pageTransition: { name: 'page', mode: 'out-in' }
+  },
+
   routeRules: {
     // Necessary because of the auth redirect to `/?access_code=...` from the backend in auth flows
     '/': { cors: true, headers: { 'access-control-allowed-methods': 'GET' } }

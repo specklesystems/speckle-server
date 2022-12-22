@@ -4,29 +4,27 @@
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-1.5">
           <UsersIcon class="h-5 w-5" />
-          <span class="label font-bold">Team</span>
-          <CommonBadge color-classes="text-foreground-on-primary bg-info-darker">
-            {{ project.team.length }}
-          </CommonBadge>
-        </div>
-        <div class="caption">
-          <NuxtLink to="javascript:void(0);">View all</NuxtLink>
+          <span class="text-xs">Team</span>
         </div>
       </div>
     </template>
     <template #bottom>
-      <div class="flex space-x-[1px]">
-        <div
-          v-if="project.team.length"
-          class="flex space-x-[1px] flex-wrap overflow-hidden h-8"
-        >
+      <div class="flex items-center justify-between mt-2">
+        <div v-if="project.team.length" class="flex -space-x-3">
           <UserAvatar
-            v-for="user in project.team"
+            v-for="user in project.team.slice(0, 3)"
             :key="user.id"
+            :user="user"
             :avatar-url="user.avatar"
+            size="lg"
           />
+          <UserAvatar v-if="project.team.length > 3" size="lg">
+            +{{ project.team.length - 3 }}
+          </UserAvatar>
         </div>
-        <UserAvatarPlus />
+        <div class="">
+          <FormButton class="ml-2">Manage</FormButton>
+        </div>
       </div>
     </template>
   </ProjectPageStatsBlock>
@@ -35,6 +33,7 @@
 import { UsersIcon } from '@heroicons/vue/20/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
+import { PlusIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {
@@ -43,6 +42,7 @@ graphql(`
       name
       avatar
     }
+    role
   }
 `)
 

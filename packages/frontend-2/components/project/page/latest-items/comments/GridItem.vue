@@ -6,7 +6,12 @@
     <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
       <div class="flex flex-col">
         <div class="flex space-x-1 items-center mb-2">
-          <UserAvatar size="24" no-border :avatar-url="thread.author.avatar" />
+          <UserAvatar
+            size="24"
+            no-border
+            :avatar-url="thread.author.avatar"
+            :user="thread.author"
+          />
           <span
             class="normal font-semibold text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
           >
@@ -35,6 +40,7 @@
           <UserAvatar
             v-for="(author, i) in thread.replyAuthors.items"
             :key="author.id"
+            :user="author"
             :avatar-url="author.avatar"
             size="24"
             :style="{ zIndex: i + 1 }"

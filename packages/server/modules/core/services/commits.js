@@ -4,6 +4,7 @@ const knex = require('@/db/knex')
 
 const Streams = () => knex('streams')
 const Commits = () => knex('commits')
+const Branches = () => knex('branches')
 const StreamCommits = () => knex('stream_commits')
 const BranchCommits = () => knex('branch_commits')
 
@@ -85,6 +86,7 @@ module.exports = {
 
     // update stream updated at
     await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
+    await Branches().where({ id: branchId }).update({ updatedAt: knex.fn.now() })
     return id
   },
 

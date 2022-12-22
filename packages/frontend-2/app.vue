@@ -26,3 +26,13 @@ watchAuthQueryString()
 // Awaiting to block the app from continuing until mixpanel tracking is fully initialized
 await useMixpanelInitialization()
 </script>
+<style>
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.1s;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+}
+</style>

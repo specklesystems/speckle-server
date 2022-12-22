@@ -29,6 +29,7 @@
             <UserAvatar
               v-for="user in value"
               :key="user.id"
+              :user="user"
               :avatar-url="user.avatar"
               no-border
               size="24"
@@ -43,6 +44,7 @@
         <div class="flex items-center">
           <UserAvatar
             :avatar-url="(isArrayValue(value) ? value[0] : value).avatar || undefined"
+            :user="isArrayValue(value) ? value[0] : value"
             no-border
             size="24"
             class="mr-2"
@@ -57,6 +59,7 @@
       <div class="flex items-center">
         <UserAvatar
           :avatar-url="item.avatar || undefined"
+          :user="item"
           no-border
           size="20"
           class="mr-2"
