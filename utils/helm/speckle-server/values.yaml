@@ -530,6 +530,9 @@ server:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  fileUploads:
+    ## @param server.fileUpload.enabled If enabled, file uploads on the server will be flagged as enabled
+    enabled: true
 
   monitoring:
     apollo:

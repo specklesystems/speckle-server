@@ -128,6 +128,15 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+          {{- if .Valuse.server.file_uploads.enabled }}
+          - name: DISABLE_FILE_UPLOADS 
+            value: "false"
+          {{ else }}
+          - name: DISABLE_FILE_UPLOADS 
+            value: "true"
+          {{ end }}
+            
+
           # *** S3 Object Storage ***
           {{- if (or .Values.s3.configMap.enabled .Values.s3.endpoint) }}
           {{- $s3values := ((include "server.s3Values" .) | fromJson ) }}
