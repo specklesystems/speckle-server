@@ -128,7 +128,7 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-          {{- if .Valuse.server.file_uploads.enabled }}
+          {{- if .Valuse.server.fileUploads.enabled }}
           - name: DISABLE_FILE_UPLOADS 
             value: "false"
           {{ else }}
