@@ -86,6 +86,10 @@ spec:
               - matchName: 'login.windows.net'
 {{ include "speckle.renderTpl" (dict "value" .Values.server.auth.azure_ad.networkPolicy.domains "context" $ ) | indent 14 }}
 {{- end }}
+{{- if .Values.server.auth.oidc.enabled }}
+              # oidc auth
+{{ include "speckle.renderTpl" (dict "value" .Values.server.auth.oidc.domains "context" $ ) | indent 14 }}
+{{- end }}
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
 {{ include "speckle.networkpolicy.dns.redis.cilium" $ | indent 14 }}
 {{ include  "speckle.networkpolicy.dns.blob_storage.cilium" $ | indent 14 }}
@@ -149,6 +153,14 @@ spec:
 {{ include "speckle.renderTpl" (dict "value" .Values.server.auth.azure_ad.additional_domains "context" $ ) | indent 8 }}
       toPorts:
             - port: {{ default 443 .Values.server.auth.azure_ad.port | quote }}
+              protocol: TCP
+{{- end }}
+{{- if .Values.server.auth.oidc.enabled }}
+    # azure ad auth
+    - toFQDNs:
+{{ include "speckle.renderTpl" (dict "value" .Values.server.auth.oidc.domains "context" $ ) | indent 8 }}
+      toPorts:
+            - port: "443"
               protocol: TCP
 {{- end }}
     # postgres
