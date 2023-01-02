@@ -1,34 +1,27 @@
 import {
-  AddEquation,
   Box2,
   Box3,
   BufferGeometry,
   Color,
-  CustomBlending,
   DoubleSide,
-  DstAlphaFactor,
   Float32BufferAttribute,
   LineBasicMaterial,
   LineSegments,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  OneFactor,
   PlaneGeometry,
   Ray,
+  RepeatWrapping,
   Scene,
   Vector2,
   Vector3,
-  WebGLRenderer,
-  ZeroFactor
+  WebGLRenderer
 } from 'three'
 import MeshBatch from './batching/MeshBatch'
-import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from './SpeckleRenderer'
 import { bin, mean, deviation } from 'd3-array'
-import SpeckleShadowcatcherMaterial from './materials/SpeckleShadowcatcherMaterial'
-import SpeckleShadowcatcherGenerateMaterial from './materials/SpeckleShadowcatcherGenerateMaterial'
 
 interface RayHit {
   vertexIndex: number
@@ -43,15 +36,17 @@ export interface ShadowcatcherConfig {
   textureSize: number
   blurRadius: number
   stdDeviation: number
+  depthCutoff: number
 }
 
 export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   planeSubdivision: 10,
   sampleCount: 100,
-  maxDist: 2,
-  textureSize: 64,
+  maxDist: 1,
+  textureSize: 512,
   blurRadius: 16,
-  stdDeviation: 4
+  stdDeviation: 4,
+  depthCutoff: 0
 }
 
 export class Shadowcatcher {
@@ -60,7 +55,7 @@ export class Shadowcatcher {
   private planeMesh: Mesh = null
   private planeSize: Vector2 = new Vector2()
   private generateMaterial: MeshBasicMaterial = null
-  private displayMaterial: SpeckleBasicMaterial = null
+  private displayMaterial: MeshBasicMaterial = null
   public shadowcatcherPass: ShadowcatcherPass = null
   private _config: ShadowcatcherConfig = DefaultShadowcatcherConfig
   private _debugRawAO = false
@@ -81,49 +76,75 @@ export class Shadowcatcher {
 
     /** Material used to render the per-vertex ao values to texture */
     if (!this.generateMaterial) {
-      this.generateMaterial = new SpeckleShadowcatcherGenerateMaterial(
-        {
-          color: 0xffffff
-        },
-        ['USE_RTE']
-      )
-      this.generateMaterial.defines['DEBUG'] = 0
+      // this.generateMaterial = new SpeckleShadowcatcherGenerateMaterial(
+      //   {
+      //     color: 0xffffff
+      //   },
+      //   ['USE_RTE']
+      // )
+      // this.generateMaterial.defines['DEBUG'] = 0
+      // this.generateMaterial.toneMapped = false
+      this.generateMaterial = new MeshBasicMaterial({ color: 0xffffff })
       this.generateMaterial.toneMapped = false
+      this.generateMaterial.vertexColors = false
+      this.generateMaterial.side = DoubleSide
     }
 
     /** Material used to display the plane using the rendered texture */
     if (!this.displayMaterial) {
-      this.displayMaterial = new SpeckleShadowcatcherMaterial({ color: 0xffffff }, [
-        'USE_RTE'
-      ])
-      this.displayMaterial.map = this.shadowcatcherPass.outputTexture
-      this.displayMaterial.transparent = true
+      // this.displayMaterial = new SpeckleShadowcatcherMaterial({ color: 0xffffff }, [
+      //   'USE_RTE'
+      // ])
+      // this.displayMaterial.map = this.shadowcatcherPass.outputTexture
+      // this.displayMaterial.transparent = false
+      // this.displayMaterial.toneMapped = false
+      // this.displayMaterial.blending = CustomBlending
+      // this.displayMaterial.blendEquation = AddEquation
+      // this.displayMaterial.blendEquationAlpha = AddEquation
+      // this.displayMaterial.blendSrc = ZeroFactor
+      // this.displayMaterial.blendSrcAlpha = OneFactor
+      // this.displayMaterial.blendDst = DstAlphaFactor
+      // this.displayMaterial.blendDstAlpha = ZeroFactor
+      this.displayMaterial = new MeshBasicMaterial({ color: 0xffffff })
       this.displayMaterial.toneMapped = false
-      this.displayMaterial.blending = CustomBlending
-      this.displayMaterial.blendEquation = AddEquation
-      this.displayMaterial.blendEquationAlpha = AddEquation
-      this.displayMaterial.blendSrc = ZeroFactor
-      this.displayMaterial.blendSrcAlpha = OneFactor
-      this.displayMaterial.blendDst = DstAlphaFactor
-      this.displayMaterial.blendDstAlpha = ZeroFactor
+      this.displayMaterial.map = this.shadowcatcherPass.outputTexture
+      this.displayMaterial.map.wrapS = RepeatWrapping
+      this.displayMaterial.map.repeat.x = -1
+      this.displayMaterial.map.needsUpdate = true
+      // this.displayMaterial.transparent = true
+      // this.displayMaterial.toneMapped = false
+      // this.displayMaterial.blending = CustomBlending
+      // this.displayMaterial.blendEquation = AddEquation
+      // this.displayMaterial.blendEquationAlpha = AddEquation
+      // this.displayMaterial.blendSrc = ZeroFactor
+      // this.displayMaterial.blendSrcAlpha = OneFactor
+      // this.displayMaterial.blendDst = DstAlphaFactor
+      // this.displayMaterial.blendDstAlpha = ZeroFactor
     }
 
     this.shadowcatcherPass.onBeforeRender = () => {
-      this.planeMesh.material = this.generateMaterial
+      // this.planeMesh.material = this.generateMaterial
     }
     this.shadowcatcherPass.onAfterRender = () => {
-      this.planeMesh.material = this._debugRawAO
-        ? this.generateMaterial
-        : this.displayMaterial
+      // this.planeMesh.material = this._debugRawAO
+      //   ? this.generateMaterial
+      //   : this.displayMaterial
+      // this.displayMaterial.map.repeat.x = -1
     }
   }
 
   public update(scene: Scene) {
     this.shadowcatcherPass.blurRadius = this._config.blurRadius
     this.shadowcatcherPass.blurStdDev = this._config.stdDeviation
-
-    const texSize = this.getOptimalTexSize()
-    this.shadowcatcherPass.setOutputSize(texSize.x, texSize.y)
+    this.shadowcatcherPass.cameraFar = this._config.maxDist
+    // this.shadowcatcherPass.depthCutoff = this._config.depthCutoff
+    // const texSize = this.getOptimalTexSize()
+    // this.shadowcatcherPass.setOutputSize(texSize.x, texSize.y)
+    const aspect = this.planeSize.x / this.planeSize.y
+    const size = new Vector2()
+    size.x = this._config.textureSize
+    size.y = this._config.textureSize / aspect
+    this.shadowcatcherPass.setOutputSize(size.x, size.y)
     this.shadowcatcherPass.update(scene)
   }
 
@@ -175,11 +196,11 @@ export class Shadowcatcher {
     if (needsRebuild || force)
       this.updatePlaneMeshGeometry(
         new Vector2(boxSize.x * 2, boxSize.y * 2),
-        new Vector3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize.z * 0.5 - 0.001)
+        new Vector3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize.z * 0.5 - -0.01)
       )
 
     this.planeSize.set(boxSize.x, boxSize.y)
-    this.shadowcatcherPass.setLayers([layer])
+    this.shadowcatcherPass.setLayers([ObjectLayers.STREAM_CONTENT])
   }
 
   private updatePlaneMeshGeometry(size: Vector2, origin: Vector3) {
@@ -207,6 +228,7 @@ export class Shadowcatcher {
   }
 
   private trace(batches: MeshBatch[]) {
+    return
     const start = performance.now()
     const sampleCount = this._config.sampleCount
     const vertices = this.planeMesh.geometry.attributes.position.array
@@ -369,10 +391,11 @@ export class Shadowcatcher {
   // eslint-disable-next-line camelcase
   public _debug_rawAO() {
     this._debugRawAO = !this._debugRawAO
-    this.generateMaterial.defines['DEBUG'] = +this._debugRawAO
-    this.generateMaterial.needsUpdate = true
-    this.planeMesh.material = this._debugRawAO
-      ? this.generateMaterial
-      : this.displayMaterial
+    this.displayMaterial.transparent = !this._debugRawAO
+    // this.generateMaterial.defines['DEBUG'] = +this._debugRawAO
+    // this.generateMaterial.needsUpdate = true
+    // this.planeMesh.material = this._debugRawAO
+    //   ? this.generateMaterial
+    //   : this.displayMaterial
   }
 }

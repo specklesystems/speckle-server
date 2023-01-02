@@ -1,12 +1,17 @@
 import {
   Box3,
-  CameraHelper,
   Color,
+  DoubleSide,
   LinearFilter,
   Mesh,
+  MeshBasicMaterial,
+  MeshDepthMaterial,
+  NearestFilter,
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
+  RepeatWrapping,
+  RGBADepthPacking,
   Scene,
   ShaderMaterial,
   Texture,
@@ -16,27 +21,35 @@ import {
   WebGLRenderTarget
 } from 'three'
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
+import { CopyShader } from 'three/examples/jsm/shaders/CopyShader'
 import {
   BlurShaderUtils,
   DepthLimitedBlurShader
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
+  private scaledRenderTarget: WebGLRenderTarget
   private blurIntermediateRenderTarget: WebGLRenderTarget = null
-  private camera: OrthographicCamera = null
+  private depthRenderTarget: WebGLRenderTarget
+  public camera: OrthographicCamera = null
   private scene: Scene = null
   private _needsUpdate = false
 
   private fsQuad: FullScreenQuad = null
+  private overrideMaterial: MeshBasicMaterial = null
+  private depthMaterial: MeshDepthMaterial = null
   private vBlurMaterial: ShaderMaterial = null
   private hBlurMaterial: ShaderMaterial = null
+  private copyMaterial: ShaderMaterial = null
   public blurStdDev = 4
   public blurRadius = 16
   private prevBlurStdDev = 0
   private prevBlurRadius = 0
+  public cameraFar = 10
+  public depthCutoff = 0
+  private cameraHelper = null
 
   public onBeforeRender: () => void = null
   public onAfterRender: () => void = null
@@ -60,7 +73,18 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       minFilter: LinearFilter,
       magFilter: LinearFilter
     })
+    this.scaledRenderTarget = new WebGLRenderTarget(256, 256, {
+      minFilter: LinearFilter,
+      magFilter: LinearFilter
+    })
     this.blurIntermediateRenderTarget = new WebGLRenderTarget(256, 256)
+    this.depthRenderTarget = new WebGLRenderTarget(256, 256, {
+      minFilter: NearestFilter,
+      magFilter: NearestFilter
+    })
+    this.depthRenderTarget.depthBuffer = true
+    this.depthRenderTarget.stencilBuffer = true
+
     this.camera = new OrthographicCamera(256 / -2, 256 / 2, 256 / 2, 256 / -2, 0, 10)
 
     this.vBlurMaterial = new ShaderMaterial({
@@ -72,7 +96,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     this.vBlurMaterial.defines['DEPTH_PACKING'] = 1
 
     this.vBlurMaterial.uniforms['tDiffuse'].value = this.renderTarget.texture
-    this.vBlurMaterial.uniforms['tDepth'].value = null
+    // this.vBlurMaterial.uniforms['tDepth'].value = this.depthRenderTarget.texture
     this.vBlurMaterial.uniforms['size'].value.set(256, 256)
     this.vBlurMaterial.blending = NoBlending
 
@@ -86,9 +110,30 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
 
     this.hBlurMaterial.uniforms['tDiffuse'].value =
       this.blurIntermediateRenderTarget.texture
-    this.hBlurMaterial.uniforms['tDepth'].value = null
+    // this.hBlurMaterial.uniforms['tDepth'].value = this.depthRenderTarget.texture
     this.hBlurMaterial.uniforms['size'].value.set(256, 256)
     this.hBlurMaterial.blending = NoBlending
+
+    this.overrideMaterial = new MeshBasicMaterial({ color: 0xffffff })
+    this.overrideMaterial.toneMapped = false
+    this.overrideMaterial.vertexColors = false
+    this.overrideMaterial.side = DoubleSide
+
+    this.depthMaterial = new MeshDepthMaterial({
+      depthPacking: RGBADepthPacking
+    })
+    this.depthMaterial.blending = NoBlending
+    this.depthMaterial.side = DoubleSide
+
+    this.copyMaterial = new ShaderMaterial({
+      uniforms: UniformsUtils.clone(CopyShader.uniforms),
+      defines: {},
+      vertexShader: CopyShader.vertexShader,
+      fragmentShader: CopyShader.fragmentShader
+    })
+    this.copyMaterial.uniforms['tDiffuse'].value = this.renderTarget.texture
+    this.renderTarget.texture.wrapS = RepeatWrapping
+    this.renderTarget.texture.wrapT = RepeatWrapping
 
     this.fsQuad = new FullScreenQuad(this.vBlurMaterial)
   }
@@ -101,17 +146,20 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       const planeSize = planeBox.getSize(new Vector3())
       const planeCenter = planeBox.getCenter(new Vector3())
       this.camera.position.copy(
-        new Vector3().copy(planeCenter).add(new Vector3(0, 0, 1))
+        new Vector3().copy(planeCenter).add(new Vector3(0, 0, -1))
       )
       this.camera.lookAt(planeCenter)
       this.camera.left = planeSize.x / -2
       this.camera.right = planeSize.x / 2
       this.camera.top = planeSize.y / 2
       this.camera.bottom = planeSize.y / -2
+      this.camera.far = this.cameraFar
       this.camera.updateProjectionMatrix()
-      const cameraHelper = new CameraHelper(this.camera)
-      cameraHelper.layers.set(ObjectLayers.PROPS)
-      // this.scene.add(cameraHelper)
+      // if (this.cameraHelper === null) {
+      //   const cameraHelper = new CameraHelper(this.camera)
+      //   cameraHelper.layers.set(ObjectLayers.PROPS)
+      //   this.scene.add(cameraHelper)
+      // }
 
       /** BLUR DEFINES */
       this.vBlurMaterial.defines['PERSPECTIVE_CAMERA'] = 0
@@ -132,7 +180,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       ).far
 
       /** BLUR UNIFORM PARAMS */
-      const depthCutoff = 0
+      const depthCutoff = this.depthCutoff
       this.vBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
       this.hBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
       if (
@@ -157,6 +205,14 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
 
       this.vBlurMaterial.needsUpdate = true
       this.hBlurMaterial.needsUpdate = true
+
+      // this.depthMaterial.userData.near.value = (
+      //   this.camera as PerspectiveCamera | OrthographicCamera
+      // ).near
+      // this.depthMaterial.userData.far.value = (
+      //   this.camera as PerspectiveCamera | OrthographicCamera
+      // ).far
+      // this.depthMaterial.needsUpdate = true
     }
   }
 
@@ -172,7 +228,22 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       this.onBeforeRender()
       renderer.setRenderTarget(this.renderTarget)
       this.applyLayers(this.camera)
+      this.scene.overrideMaterial = this.overrideMaterial
+      renderer.setClearColor(0x000000)
+      renderer.setClearAlpha(1)
       renderer.render(this.scene, this.camera)
+      this.scene.overrideMaterial = null
+
+      // renderer.setRenderTarget(this.scaledRenderTarget)
+      // renderer.setClearColor(0x000000)
+      // renderer.setClearAlpha(1.0)
+      // this.fsQuad.material = this.copyMaterial
+      // this.fsQuad.render(renderer)
+
+      // renderer.setRenderTarget(this.depthRenderTarget)
+      // this.scene.overrideMaterial = this.depthMaterial
+      // renderer.render(this.scene, this.camera)
+      // this.scene.overrideMaterial = null
 
       renderer.setRenderTarget(this.blurIntermediateRenderTarget)
       renderer.setClearColor(0xffffff)
@@ -197,11 +268,20 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
 
   public setOutputSize(width: number, height: number) {
     if (this.renderTarget.width !== width || this.renderTarget.height !== height) {
-      this.renderTarget.setSize(width, height)
+      this.renderTarget.setSize(Math.trunc(width), Math.trunc(height))
       this.blurIntermediateRenderTarget.setSize(width, height)
+      this.depthRenderTarget.setSize(width, height)
+      const aspect = width / height
+      this.scaledRenderTarget.setSize(Math.trunc(64), Math.trunc(64 / aspect))
 
-      this.vBlurMaterial.uniforms['size'].value.set(width, height)
-      this.hBlurMaterial.uniforms['size'].value.set(width, height)
+      this.vBlurMaterial.uniforms['size'].value.set(
+        Math.trunc(64),
+        Math.trunc(64 / aspect)
+      )
+      this.hBlurMaterial.uniforms['size'].value.set(
+        Math.trunc(64),
+        Math.trunc(64 / aspect)
+      )
     }
   }
 

@@ -80,9 +80,10 @@ export default class Sandbox {
     planeSubdivision: 10,
     sampleCount: 100,
     maxDist: 2,
-    textureSize: 64,
+    textureSize: 512,
     blurRadius: 16,
-    stdDeviation: 4
+    stdDeviation: 4,
+    depthCutoff: 0
   }
 
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
@@ -710,8 +711,9 @@ export default class Sandbox {
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'maxDist', {
         label: 'Max Dist',
-        min: 0.001,
-        max: 1000
+        min: 1,
+        max: 8,
+        step: 0.01
       })
       .on('change', (value) => {
         value
@@ -751,6 +753,19 @@ export default class Sandbox {
         min: 1,
         max: 128,
         step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testBake()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'depthCutoff', {
+        label: 'DeptCutoff',
+        min: -1,
+        max: 1,
+        step: 0.001
       })
       .on('change', (value) => {
         value
