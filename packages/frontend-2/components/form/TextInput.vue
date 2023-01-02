@@ -36,7 +36,7 @@
         :type="type"
         :name="name"
         :class="[
-          'block h-10 w-full rounded-xl focus:outline-none bg-foundation-page text-foreground transition-all',
+          'block h-12 w-full rounded-xl focus:outline-none bg-foundation-page text-foreground transition-all',
           'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
           'placeholder:text-foreground-2',
           computedClasses

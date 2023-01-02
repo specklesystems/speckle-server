@@ -7,7 +7,7 @@
       </div>
       <div class="flex items-center space-x-2">
         <div
-          class="flex items-center justify-center rounded-xl bg-foundation h-10 w-10 shadow mt-1"
+          class="flex items-center justify-center rounded-xl bg-foundation h-12 w-12 shadow mt-1"
         >
           <LayoutGridListToggle v-model="gridOrList" />
         </div>
