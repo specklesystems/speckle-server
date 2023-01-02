@@ -676,7 +676,8 @@ export default class Sandbox {
       options: {
         Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
         Area: 'parameters.HOST_AREA_COMPUTED.value',
-        SpeckleType: 'speckle_type'
+        SpeckleType: 'speckle_type',
+        DisplayName: 'DisplayName'
       }
     })
 

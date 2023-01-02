@@ -24,6 +24,7 @@ export interface MaterialOptions {
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
+  rampWidth?: number
 }
 
 export default class Materials {
@@ -747,12 +748,15 @@ export default class Materials {
     return retMaterial
   }
 
-  public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
+  public getFilterMaterialOptions(filterMaterial: FilterMaterial): MaterialOptions {
     return {
       rampIndex:
         filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
       rampIndexColor: filterMaterial.rampIndexColor,
-      rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
+      rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined,
+      rampWidth: filterMaterial.rampTexture
+        ? filterMaterial.rampTexture.image.width
+        : undefined
     }
   }
 
