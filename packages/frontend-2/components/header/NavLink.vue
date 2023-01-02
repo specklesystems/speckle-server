@@ -7,7 +7,7 @@
       <NuxtLink
         :to="to"
         class="text-sm rounded-full transition text-foreground hover:text-primary-focus"
-        active-class="text-primary"
+        active-class="text-primary font-bold"
       >
         {{ name || to }}
       </NuxtLink>

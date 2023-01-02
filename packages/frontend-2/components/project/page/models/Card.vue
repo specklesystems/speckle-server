@@ -1,7 +1,7 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
-    class="rounded-md bg-foundation shadow transition hover:scale-[1.02] hover:bg-primary-muted hover:shadow-xl"
+    class="rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
     @focusin="hovered = true"
     @focusout="hovered = false"
     @mouseenter="hovered = true"
@@ -31,7 +31,7 @@
         </div>
 
         <div
-          :class="`text-xs text-foreground-2 mr-1 opacity-0 truncate ${
+          :class="`text-xs text-foreground-2 mr-1 opacity-0 truncate transition ${
             hovered ? 'opacity-100' : ''
           }`"
         >
@@ -46,6 +46,7 @@
           :icon-left="ArrowPathRoundedSquareIcon"
           :to="`/projects/${projectId}/models/${model.id}/versions`"
           :class="`opacity-0 ${hovered ? 'opacity-100' : ''}`"
+          :disabled="model.versionCount === 0"
         >
           {{ model?.versionCount }}
         </FormButton>

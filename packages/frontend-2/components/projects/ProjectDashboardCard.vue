@@ -15,7 +15,7 @@
         </div>
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          updated
+          updated&nbsp;
           <b>{{ updatedAt }}</b>
         </div>
       </div>
@@ -36,7 +36,7 @@
           class="h-36 flex items-center col-span-4 py-4"
         >
           <div
-            class="w-full h-full border-dashed border-2 border-blue-500/30 rounded-md p-10 flex items-center justify-center"
+            class="w-full h-full border-dashed border-2 border-outline-2 rounded-md p-10 flex items-center justify-center"
           >
             <span class="text-sm text-foreground-2">
               Use our
