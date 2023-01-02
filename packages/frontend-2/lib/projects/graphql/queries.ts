@@ -6,7 +6,9 @@ export const projectsDashboardQuery = graphql(`
       id
       projects {
         totalCount
-        ...ProjectsDashboardFilled
+        items {
+          ...ProjectDashboardItem
+        }
       }
     }
   }
@@ -29,6 +31,48 @@ export const latestModelsQuery = graphql(`
         cursor
         items {
           ...ProjectPageLatestItemsModelItem
+        }
+      }
+    }
+  }
+`)
+
+// This does feel rather stupid :D
+export const structuredModelsQuery = graphql(`
+  query ProjectStructuredModels($projectId: String!) {
+    project(id: $projectId) {
+      id
+      name
+      structuredModels {
+        structure {
+          ...StructuredModelFragment
+          children {
+            ...StructuredModelFragment
+            children {
+              ...StructuredModelFragment
+              children {
+                ...StructuredModelFragment
+                children {
+                  ...StructuredModelFragment
+                  children {
+                    ...StructuredModelFragment
+                    children {
+                      ...StructuredModelFragment
+                      children {
+                        ...StructuredModelFragment
+                        children {
+                          ...StructuredModelFragment
+                          children {
+                            ...StructuredModelFragment
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

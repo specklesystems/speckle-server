@@ -1,11 +1,21 @@
 <template>
   <div>
-    <h1 class="h2 font-bold leading-10 mb-6 mt-10">Projects</h1>
     <ClientOnly>
       <Portal to="primary-actions">
         <FormButton :icon-left="PlusIcon">New Project</FormButton>
       </Portal>
     </ClientOnly>
+    <div class="flex items-center mb-8 top-16">
+      <h1 class="h4 font-bold flex-grow">Projects</h1>
+      <div class="w-96">
+        <FormTextInput
+          name="modelsearch"
+          :show-label="false"
+          placeholder="Search"
+          class="bg-foundation shadow"
+        ></FormTextInput>
+      </div>
+    </div>
     <ProjectsDashboardFilled
       v-if="projects?.items?.length && !forceEmptyState"
       :projects="projects"

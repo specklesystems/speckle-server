@@ -487,7 +487,7 @@ export type Model = {
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   name: Scalars['String'];
-  previewUrl: Scalars['String'];
+  previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
 };
@@ -955,6 +955,7 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  model?: Maybe<Model>;
   modelCount: Scalars['Int'];
   models?: Maybe<ModelCollection>;
   name: Scalars['String'];
@@ -962,6 +963,8 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
+  /** Returns a tree of all the project's models and submodels. */
+  structuredModels?: Maybe<StructuredModelCollection>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
@@ -971,6 +974,11 @@ export type Project = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelArgs = {
+  id?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1519,6 +1527,19 @@ export type StreamUpdatePermissionInput = {
   userId: Scalars['String'];
 };
 
+export type StructuredModel = {
+  __typename?: 'StructuredModel';
+  children?: Maybe<Array<Maybe<StructuredModel>>>;
+  model?: Maybe<Model>;
+  name: Scalars['String'];
+};
+
+export type StructuredModelCollection = {
+  __typename?: 'StructuredModelCollection';
+  structure?: Maybe<StructuredModel>;
+  totalCount: Scalars['Int'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   /** It's lonely in the void. */
@@ -1772,6 +1793,22 @@ export type UserUpdateInput = {
   bio?: InputMaybe<Scalars['String']>;
   company?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
+};
+
+export type Version = {
+  __typename?: 'Version';
+  author: LimitedUser;
+  id: Scalars['ID'];
+  message?: Maybe<Scalars['String']>;
+  referencedObject: Scalars['String'];
+  sourceApplication?: Maybe<Scalars['String']>;
+};
+
+export type VersionCollection = {
+  __typename?: 'VersionCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Version>;
+  totalCount: Scalars['Int'];
 };
 
 export type Webhook = {

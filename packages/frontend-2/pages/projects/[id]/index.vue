@@ -16,7 +16,7 @@
       </div>
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->
-        <ProjectPageLatestItemsModels :project="project" />
+        <ProjectPageModelsView :project="project" />
         <!-- Latest comments -->
         <ProjectPageLatestItemsComments :project="project" />
         <!-- More actions -->

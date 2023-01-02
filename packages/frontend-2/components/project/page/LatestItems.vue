@@ -36,7 +36,6 @@
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { ArrowRightIcon, PencilIcon } from '@heroicons/vue/24/solid'
 
 defineEmits<{
   (e: 'see-all-click', v: MouseEvent): void

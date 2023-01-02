@@ -1,11 +1,20 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
+import {
+  getPaginatedProjectModels,
+  getStructuredStreamModels
+} from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 export = {
   Project: {
     async models(parent, args) {
       return await getPaginatedProjectModels(parent.id, args)
+    },
+    async structuredModels(parent, args) {
+      return {
+        totalCount: -1, // TODO: remove, not needed
+        structure: await getStructuredStreamModels(parent.id)
+      }
     }
   },
   Model: {
@@ -18,7 +27,7 @@ export = {
     async previewUrl(parent, _args, ctx) {
       const latestCommit = await ctx.loaders.branches.getLatestCommit.load(parent.id)
       const path = `/preview/${parent.streamId}/commits/${latestCommit?.id || ''}`
-      return new URL(path, getServerOrigin()).toString()
+      return latestCommit ? new URL(path, getServerOrigin()).toString() : null
     },
     async commentThreadCount(parent, _args, ctx) {
       return await ctx.loaders.branches.getCommentThreadCount.load(parent.id)

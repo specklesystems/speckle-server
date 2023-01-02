@@ -1,18 +1,8 @@
 <template>
   <div class="flex flex-col space-y-4">
-    <LayoutPanel v-for="project in items" :key="project.id">
-      <div class="flex justify-between items-center">
-        <FormButton link :to="projectRoute(project.id)">
-          {{ project.name }}
-        </FormButton>
-        <div>
-          {{ project.createdAt }}
-        </div>
-        <div>
-          <FormButton disabled @click="deleteProject(project.id)">Delete</FormButton>
-        </div>
-      </div>
-    </LayoutPanel>
+    <div v-for="project in items" :key="project.id">
+      <ProjectsProjectDashboardCard :key="project.id" :project="project" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -34,11 +24,41 @@ const props = defineProps<{
 }>()
 
 graphql(`
-  fragment ProjectsDashboardFilled on ProjectCollection {
-    items {
+  fragment ProjectDashboardItem on Project {
+    id
+    name
+    createdAt
+    updatedAt
+    role
+    team {
       id
       name
-      createdAt
+      avatar
+    }
+    models(limit: 100) {
+      totalCount
+      items {
+        id
+        name
+        author {
+          id
+          name
+          avatar
+        }
+        commentThreadCount
+        versionCount
+        updatedAt
+        createdAt
+        previewUrl
+      }
+    }
+  }
+`)
+
+graphql(`
+  fragment ProjectsDashboardFilled on ProjectCollection {
+    items {
+      ...ProjectDashboardItem
     }
   }
 `)

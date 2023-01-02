@@ -35,7 +35,8 @@ const props = withDefaults(
   }>(),
   {
     size: 'base',
-    hoverEffect: false
+    hoverEffect: false,
+    user: undefined
   }
 )
 

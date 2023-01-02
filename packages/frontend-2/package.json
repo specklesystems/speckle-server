@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
-    "dev:app": "nuxt dev",
+    "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
     "dev": "concurrently \"yarn dev:app\" \"yarn gqlgen:watch\" \"yarn storybook --no-open\" -n nuxt,gqlgen,storybook",
     "preview": "nuxt preview",
     "analyze": "nuxt analyze",

@@ -1,5 +1,11 @@
 extend type Project {
   models(cursor: String, limit: Int! = 25, filter: ProjectModelsFilter): ModelCollection
+  """
+  Returns a tree of all the project's models and submodels.
+  """
+  structuredModels: StructuredModelCollection
+  model(id: String): Model
+  # versions(modelId: String): VersionCollection
 }
 
 type Model {
@@ -10,7 +16,7 @@ type Model {
   createdAt: DateTime!
   updatedAt: DateTime!
   versionCount: Int!
-  previewUrl: String!
+  previewUrl: String
   commentThreadCount: Int!
 }
 
@@ -18,6 +24,31 @@ type ModelCollection {
   totalCount: Int!
   cursor: String
   items: [Model!]!
+}
+
+type StructuredModelCollection {
+  totalCount: Int!
+  structure: StructuredModel
+}
+
+type StructuredModel {
+  name: String!
+  model: Model
+  children: [StructuredModel]
+}
+
+type Version {
+  id: ID!
+  referencedObject: String!
+  message: String
+  sourceApplication: String
+  author: LimitedUser!
+}
+
+type VersionCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Version!]!
 }
 
 input ProjectModelsFilter {

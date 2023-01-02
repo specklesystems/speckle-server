@@ -1,5 +1,8 @@
 import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
-import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectModelsArgs,
+  StructuredModel
+} from '@/modules/core/graph/generated/graphql'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
@@ -129,6 +132,43 @@ function getPaginatedProjectModelsBaseQuery<T>(
   }
 
   return q
+}
+
+export async function getStructuredProjectModels(projectId: string) {
+  const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, {})
+  const results = await q
+
+  type TreeItem = {
+    name: string
+    updatedAt: Date // TODO: set to newest updated at from its children / model
+    model?: BranchRecord
+    children: TreeItem[]
+  }
+
+  const tree: TreeItem = { name: 'root', children: [], updatedAt: new Date(+0) }
+
+  for (const record of results) {
+    let currentLevel = tree
+    const nameParts = record.name.split('/').filter((n) => n !== '')
+    for (const part of nameParts) {
+      const existing = currentLevel.children.find((c) => c.name === part)
+      if (existing) {
+        currentLevel = existing
+      } else {
+        const newTreeItem = {
+          name: part,
+          children: [] as TreeItem[],
+          updatedAt: new Date(+0)
+        }
+        currentLevel.children.push(newTreeItem)
+        currentLevel = newTreeItem
+      }
+    }
+    currentLevel.model = record
+    if (currentLevel.updatedAt < record.updatedAt)
+      currentLevel.updatedAt = record.updatedAt
+  }
+  return tree
 }
 
 export async function getPaginatedProjectModelsItems(

@@ -1,0 +1,26 @@
+<template>
+  <div class="w-full h-full">
+    <ClientOnly>
+      <div
+        class="w-full h-full bg-contain bg-no-repeat bg-center"
+        :style="{
+          backgroundImage: `url('${previewUrl}')`
+        }"
+      />
+    </ClientOnly>
+  </div>
+</template>
+<script setup lang="ts">
+import { Model } from '~~/lib/common/generated/gql/graphql'
+import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
+
+const props = defineProps<{
+  model: Model
+}>()
+
+const basePreviewUrl = computed(() => props.model.previewUrl)
+const panoramaPreviewUrl = computed(() =>
+  new URL(basePreviewUrl.value, '/all').toString()
+)
+const { previewUrl } = usePreviewImageBlob(basePreviewUrl)
+</script>
