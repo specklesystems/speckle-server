@@ -126,12 +126,20 @@ export default class MeshBatch implements Batch {
         if (sortedRanges[k].materialOptions.rampIndex) {
           const start = sortedRanges[k].offset
           const len = sortedRanges[k].offset + sortedRanges[k].count
+          /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+           *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+           *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+           *  sampling can occur.
+           */
+          const shiftedIndex =
+            sortedRanges[k].materialOptions.rampIndex +
+            0.5 / sortedRanges[k].materialOptions.rampWidth
           const minMaxIndices = this.updateGradientIndexBufferData(
             start,
             sortedRanges[k].count === Infinity
               ? this.geometry.attributes['gradientIndex'].array.length
               : len,
-            sortedRanges[k].materialOptions.rampIndex
+            shiftedIndex
           )
           minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
           maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
