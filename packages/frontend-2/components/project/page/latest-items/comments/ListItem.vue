@@ -2,7 +2,7 @@
   <tr class="h-[62px] bg-foundation">
     <td class="normal text-foreground font-semibold">
       <div class="inline-flex align-middle items-center space-x-1 pl-5 pr-8 w-[250px]">
-        <UserAvatar size="20" no-border :avatar-url="thread.author.avatar" />
+        <UserAvatar no-border :user="thread.author.avatar" />
         <span class="truncate">{{ thread.author.name }}</span>
       </div>
     </td>
@@ -31,7 +31,7 @@
           <UserAvatar
             v-for="author in thread.replyAuthors.items"
             :key="author.id"
-            :avatar-url="author.avatar"
+            :user="author"
             no-border
           />
         </div>
