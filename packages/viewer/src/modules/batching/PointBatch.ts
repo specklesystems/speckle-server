@@ -16,6 +16,7 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
+import Logger from 'js-logger'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -99,7 +100,7 @@ export default class PointBatch implements Batch {
     for (let k = 0; k < sortedRanges.length; k++) {
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
       if (collidingGroup) {
-        console.warn(`Draw range collision @ ${this.id} overwritting...`)
+        Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
         collidingGroup.materialIndex = this.mesh.material.indexOf(
           sortedRanges[k].material
         )

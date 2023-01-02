@@ -22,6 +22,7 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
+import Logger from 'js-logger'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -475,7 +476,7 @@ export default class MeshBatch implements Batch {
           return this.mesh.material
         } else {
           if (!group) {
-            console.warn(`Malformed material index!`)
+            Logger.warn(`Malformed material index!`)
             return null
           }
           return this.mesh.material[group.materialIndex]
