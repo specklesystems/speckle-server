@@ -12,21 +12,23 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { logger } = require('@/logging/logging')
+const {
+  getOidcDiscoveryUrl,
+  getBaseUrl,
+  getOidcClientId,
+  getOidcClientSecret,
+  getOidcName
+} = require('@/modules/shared/helpers/envHelper')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
-  await Issuer.discover(process.env.OIDC_DISCOVERY_URL).then(async function (
-    oidcIssuer
-  ) {
-    const redirectUrl = new URL(
-      '/auth/oidc/callback',
-      process.env.CANONICAL_URL
-    ).toString()
+  await Issuer.discover(getOidcDiscoveryUrl()).then(async function (oidcIssuer) {
+    const redirectUrl = new URL('/auth/oidc/callback', getBaseUrl()).toString()
 
     const client = new oidcIssuer.Client({
       // eslint-disable-next-line camelcase
-      client_id: process.env.OIDC_CLIENT_ID,
+      client_id: getOidcClientId(),
       // eslint-disable-next-line camelcase
-      client_secret: process.env.OIDC_CLIENT_SECRET,
+      client_secret: getOidcClientSecret(),
       // eslint-disable-next-line camelcase
       redirect_uris: [redirectUrl],
       // eslint-disable-next-line camelcase
@@ -53,7 +55,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             if (existingUser && !existingUser.verified) {
               throw new Error(
                 'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with ' +
-                  process.env.OIDC_NAME
+                  getOidcName()
               )
             }
 
@@ -133,10 +135,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
   return {
     id: 'oidc',
-    name: process.env.OIDC_NAME,
+    name: getOidcName(),
     icon: 'mdi-badge-account-horizontal-outline',
     color: 'blue darken-3',
     url: '/auth/oidc',
-    callbackUrl: new URL('/auth/oidc/callback', process.env.CANONICAL_URL).toString()
+    callbackUrl: new URL('/auth/oidc/callback', getBaseUrl()).toString()
   }
 }

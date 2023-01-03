@@ -9,6 +9,7 @@ const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const { isSSLServer } = require('@/modules/shared/helpers/envHelper')
 const { moduleLogger } = require('@/logging/logging')
+const { getOidcStrategyEnabled } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -115,7 +116,7 @@ module.exports = async (app) => {
     strategyCount++
   }
 
-  if (process.env.STRATEGY_OIDC === 'true') {
+  if (getOidcStrategyEnabled() === 'true') {
     const oidcStrategy = await require('./strategies/oidc')(
       app,
       session,
