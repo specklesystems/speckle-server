@@ -678,7 +678,8 @@ export default class Sandbox {
         Area: 'parameters.HOST_AREA_COMPUTED.value',
         SpeckleType: 'speckle_type',
         DisplayName: 'DisplayName',
-        EmbodiedCarbon: 'EmbodiedCarbon'
+        EmbodiedCarbon: 'EmbodiedCarbon',
+        Floor: 'Floor'
       }
     })
 
