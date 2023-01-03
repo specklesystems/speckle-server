@@ -144,5 +144,7 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
   // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
   // Jonathon's 3070
-  'https://speckle.xyz/streams/7ce9010d71/commits/d29e56fe75'
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/d29e56fe75'
+  // Filter issue
+  'https://speckle.xyz/streams/f95d8deb90/commits/30f31becb6'
 )
