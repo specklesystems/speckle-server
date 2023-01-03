@@ -81,7 +81,7 @@ type User {
   and the user isn't an admin
   """
   email: String
-  name: String
+  name: String!
   bio: String
   company: String
   avatar: String

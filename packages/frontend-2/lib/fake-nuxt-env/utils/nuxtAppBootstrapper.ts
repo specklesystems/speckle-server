@@ -6,6 +6,7 @@ import { Optional } from '@speckle/shared'
 import { noop } from 'lodash-es'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import PortalVue from 'portal-vue'
 
 const stubGlobalComponents = (app: App<Element>) => {
   const Head = defineComponent({
@@ -80,6 +81,9 @@ export const setupVueApp = (app: App<Element>) => {
   // TODO: Implement more DRY plugin reuse
   // Init day.js
   dayjs.extend(relativeTime)
+
+  // Init portal vue
+  app.use(PortalVue)
 
   // Implementing & mocking links
   stubGlobalComponents(app)

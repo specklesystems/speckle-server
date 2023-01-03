@@ -13,7 +13,7 @@
     </template>
     <template #bottom>
       <div class="flex items-center justify-between mt-2">
-        <UserAvatarGroup :users="project.team" :max-count="3" />
+        <UserAvatarGroup :users="project.team" class="max-w-[104px]" />
         <div>
           <FormButton class="ml-2">
             {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
@@ -27,7 +27,6 @@
 import { UsersIcon } from '@heroicons/vue/20/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
-import { PlusIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {

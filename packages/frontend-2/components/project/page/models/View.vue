@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div class="flex items-center justify-between mb-8 space-x-2">
+    <div
+      class="flex flex-col space-y-2 justify-between mb-4 lg:flex-row lg:space-y-0 lg:space-x-2"
+    >
       <div class="flex items-center space-x-2 flex-grow">
         <h2 class="h4 font-bold">Models</h2>
         <FormButton size="sm" rounded>New</FormButton>
@@ -45,12 +47,11 @@
 <script setup lang="ts">
 import { ProjectPageLatestItemsModelsFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { structuredModelsQuery } from '~~/lib/projects/graphql/queries'
 import { StructuredModel, Model } from '~~/lib/common/generated/gql/graphql'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-// import Fuse from 'fuse.js'
 
 const props = defineProps<{
   project: ProjectPageLatestItemsModelsFragment
@@ -76,8 +77,6 @@ graphql(`
   }
 `)
 
-const isQueryLoading = useQueryLoading()
-
 const { result: structuredModelsResult } = useQuery(structuredModelsQuery, () => ({
   projectId: props.project.id
 }))
@@ -88,7 +87,7 @@ const models = computed(() => {
   )
 })
 
-function test(e) {
+function test(e: unknown) {
   console.log(e)
 }
 
@@ -125,9 +124,6 @@ const flattenedTree = computed(() => {
 
   return all
 })
-
-// const fuse = new Fuse(flattenedTree.value, { keys: ['name'] })
-// console.log(fuse)
 
 const viewTypeCookie = useSynchronizedCookie(`projectPage-models-viewType`)
 const gridOrList = computed({
