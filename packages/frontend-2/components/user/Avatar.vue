@@ -51,7 +51,7 @@ graphql(`
 
 const props = withDefaults(
   defineProps<{
-    user?: AvatarUserType
+    user?: AvatarUserType | null
     size?: UserAvatarSize
     hoverEffect?: boolean
   }>(),

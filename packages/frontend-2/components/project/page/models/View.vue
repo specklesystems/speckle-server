@@ -26,7 +26,6 @@
     </div>
     <div class="mb-14">
       <div v-if="modelsWithMainEscaped.length">
-        <!-- <ClientOnly> -->
         <ProjectPageModelsStructuredView
           v-if="gridOrList === GridListToggleValue.List"
           :project="project"
@@ -37,7 +36,6 @@
           :project="project"
           :models="flattenedTree"
         />
-        <!-- </ClientOnly> -->
       </div>
       <div v-else>TODO: Empty state</div>
     </div>

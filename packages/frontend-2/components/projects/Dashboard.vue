@@ -1,10 +1,8 @@
 <template>
   <div>
-    <ClientOnly>
-      <Portal to="primary-actions">
-        <FormButton :icon-left="PlusIcon">New Project</FormButton>
-      </Portal>
-    </ClientOnly>
+    <Portal to="primary-actions">
+      <FormButton :icon-left="PlusIcon">New Project</FormButton>
+    </Portal>
     <div class="flex items-center mb-8 top-16">
       <h1 class="h4 font-bold flex-grow">Projects</h1>
       <div class="w-96">
