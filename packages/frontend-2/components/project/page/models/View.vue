@@ -25,20 +25,19 @@
       </div>
     </div>
     <div class="mb-14">
-      <div v-if="modelsWithMainEscaped.length !== 0">
-        <!-- Removing client only creates some fucked up errors -->
-        <ClientOnly>
-          <ProjectPageModelsStructuredView
-            v-if="gridOrList === GridListToggleValue.List"
-            :project="project"
-            :model-tree="modelsWithMainEscaped"
-          />
-          <ProjectPageModelsCardView
-            v-if="gridOrList === GridListToggleValue.Grid"
-            :project="project"
-            :models="flattenedTree"
-          />
-        </ClientOnly>
+      <div v-if="modelsWithMainEscaped.length">
+        <!-- <ClientOnly> -->
+        <ProjectPageModelsStructuredView
+          v-if="gridOrList === GridListToggleValue.List"
+          :project="project"
+          :model-tree="modelsWithMainEscaped"
+        />
+        <ProjectPageModelsCardView
+          v-if="gridOrList === GridListToggleValue.Grid"
+          :project="project"
+          :models="flattenedTree"
+        />
+        <!-- </ClientOnly> -->
       </div>
       <div v-else>TODO: Empty state</div>
     </div>

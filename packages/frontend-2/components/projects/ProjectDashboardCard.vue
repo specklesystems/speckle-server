@@ -1,11 +1,11 @@
 <template>
-  <NuxtLink :to="`/projects/${project.id}`">
+  <NuxtLink :to="projectRoute(project.id)">
     <div
       class="group flex flex-col md:flex-row border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition"
     >
       <div class="w-full md:w-1/5 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0">
         <div class="text-2xl font-bold group-hover:text-primary transition">
-          <NuxtLink :to="`/projects/${project.id}`">{{ project.name }}</NuxtLink>
+          <NuxtLink :to="projectRoute(project.id)">{{ project.name }}</NuxtLink>
           <UserAvatarGroup :users="project.team" :max-count="2" />
         </div>
         <div class="flex-grow"></div>
@@ -53,18 +53,19 @@
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { projectRoute } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
 
-const models = computed(() => {
-  let arr = [...(props.project.models?.items || [])]
-  arr.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
-  arr = arr.filter((m) => m.versionCount !== 0)
-  arr = arr.slice(0, 3)
-  return arr
-})
+// const models = computed(() => {
+//   let arr = [...(props.project.models?.items || [])]
+//   arr.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
+//   arr = arr.filter((m) => m.versionCount !== 0)
+//   arr = arr.slice(0, 3)
+//   return arr
+// })
 
 const sortedModels = computed(() => {
   const arr = [...(props.project.models?.items || [])]

@@ -1,5 +1,4 @@
 <template>
-  <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
     class="rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
     @focusin="hovered = true"
@@ -7,7 +6,7 @@
     @mouseenter="hovered = true"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
   >
-    <NuxtLink :to="`/projects/${projectId}/models/${model.id}`">
+    <NuxtLink :to="modelRoute(projectId, model.id)">
       <div :class="`${height} flex items-center justify-center`">
         <ProjectPageModelsModelPreview v-if="model.versionCount !== 0" :model="model" />
         <div v-else class="h-full w-full p-4">
@@ -44,7 +43,7 @@
           rounded
           size="xs"
           :icon-left="ArrowPathRoundedSquareIcon"
-          :to="`/projects/${projectId}/models/${model.id}/versions`"
+          :to="modelVersionsRoute(projectId, model.id)"
           :class="`opacity-0 ${hovered ? 'opacity-100' : ''}`"
           :disabled="model.versionCount === 0"
         >
@@ -80,6 +79,7 @@ import {
   ArrowPathRoundedSquareIcon,
   EllipsisVerticalIcon
 } from '@heroicons/vue/24/solid'
+import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
 const props = withDefaults(
   defineProps<{

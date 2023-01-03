@@ -44,10 +44,11 @@
           </div>
           <div class="text-xs text-foreground-2">
             <FormButton
+              v-if="item.model"
               rounded
               size="xs"
               :icon-left="ArrowPathRoundedSquareIcon"
-              :to="`/projects/${route.params.id}/models/${item.model?.id}/versions`"
+              :to="modelVersionsRoute(route.params.id as string, item.model.id)"
             >
               {{ model?.versionCount }}
             </FormButton>
@@ -155,6 +156,7 @@
 import { PropType } from 'vue'
 import dayjs from 'dayjs'
 import { StructuredModel, Model } from '~~/lib/common/generated/gql/graphql'
+import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 
 import {
   ChevronDownIcon,
@@ -210,22 +212,11 @@ const children = computed(() => props.item.children)
 const updatedAt = computed(() =>
   dayjs(props.item.model ? props.item.model?.updatedAt : dayjs()).from(dayjs())
 )
-const createdAt = computed(() =>
-  dayjs(props.item.model ? props.item.model?.createdAt : dayjs()).from(dayjs())
-)
 
 const modelLink = computed(() => {
-  if (props.item.model?.versionCount === 0) return null
-  return `/projects/${route.params.id as string}/models/${
-    props.item.model?.id as string
-  }`
+  if (!props.item.model || props.item.model?.versionCount === 0) return null
+  return modelRoute(route.params.id as string, props.item.model.id)
 })
-
-const path = computed(() => {
-  const parts = props.parents.map((p) => p.name)
-  return parts.join('/')
-})
-const fullName = computed(() => `${path.value}/${props.item.name}`)
 
 const route = useRoute()
 </script>

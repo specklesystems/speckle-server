@@ -1,5 +1,5 @@
 <template>
-  <!-- 
+  <!--
   NOTE: DEPRECATED.
   Keeping around as it has a view that combines a model card with a group card.
   -->
@@ -143,6 +143,9 @@ import {
   PlusIcon,
   ArrowPathRoundedSquareIcon
 } from '@heroicons/vue/20/solid'
+import { modelRoute } from '~~/lib/common/helpers/route'
+
+type StructureItemType = 'emptyModel' | 'fullModel' | 'group' | 'mixed' | 'unknown'
 
 const props = defineProps({
   item: {
@@ -161,7 +164,7 @@ const props = defineProps({
   }
 })
 
-type StructureItemType = 'emptyModel' | 'fullModel' | 'group' | 'mixed' | 'unknown'
+const route = useRoute()
 
 const itemType = computed<StructureItemType>(() => {
   const item = props.item
@@ -188,17 +191,7 @@ const children = computed(() => props.item.children)
 const updatedAt = computed(() =>
   dayjs(props.item.model ? props.item.model?.updatedAt : dayjs()).from(dayjs())
 )
-const createdAt = computed(() =>
-  dayjs(props.item.model ? props.item.model?.createdAt : dayjs()).from(dayjs())
-)
 
-const path = computed(() => {
-  const parts = props.parents.map((p) => p.name)
-  return parts.join('/')
-})
-const fullName = computed(() => `${path.value}/${props.item.name}`)
-
-const route = useRoute()
 function handleMainCardClick() {
   switch (itemType.value) {
     case 'mixed':
@@ -206,11 +199,9 @@ function handleMainCardClick() {
       expanded.value = !expanded.value
       break
     case 'fullModel':
-      navigateTo(
-        `/projects/${route.params.id as string}/models/${
-          props.item.model?.id as string
-        }`
-      )
+      if (route.params.id && props.item.model?.id) {
+        navigateTo(modelRoute(route.params.id as string, props.item.model?.id))
+      }
       break
     default:
       break

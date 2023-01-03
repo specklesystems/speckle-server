@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :to="`/projects/${project.id}`">
+  <NuxtLink :to="projectRoute(project.id)">
     <div
       class="group border-2 border-primary-muted hover:bg-primary-muted rounded-xl p-4 transition"
     >
@@ -63,6 +63,7 @@
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { projectRoute } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment

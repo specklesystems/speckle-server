@@ -10,7 +10,7 @@ export = {
     async models(parent, args) {
       return await getPaginatedProjectModels(parent.id, args)
     },
-    async structuredModels(parent, args) {
+    async structuredModels(parent) {
       return {
         totalCount: -1, // TODO: remove, not needed
         structure: await getStructuredStreamModels(parent.id)
