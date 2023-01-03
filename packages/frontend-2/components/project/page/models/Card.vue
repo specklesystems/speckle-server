@@ -6,7 +6,11 @@
     @mouseenter="hovered = true"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
   >
-    <NuxtLink :to="modelRoute(projectId, model.id)">
+    <!--
+      Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
+      TODO: Report it to Vue/Nuxt!
+    -->
+    <NuxtLink :href="modelRoute(projectId, model.id)">
       <div :class="`${height} flex items-center justify-center`">
         <ProjectPageModelsModelPreview v-if="model.versionCount !== 0" :model="model" />
         <div v-else class="h-full w-full p-4">
@@ -51,12 +55,7 @@
         </FormButton>
         <div v-if="showActions">
           <!-- TODO with proper disclosure menu or whatever -->
-          <FormButton
-            size="sm"
-            text
-            to="#"
-            @click.stop="showActionsMenu = !showActionsMenu"
-          >
+          <FormButton size="sm" text @click.stop="showActionsMenu = !showActionsMenu">
             <EllipsisVerticalIcon class="w-4 h-4" />
           </FormButton>
         </div>

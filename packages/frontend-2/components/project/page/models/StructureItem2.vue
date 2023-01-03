@@ -1,9 +1,13 @@
 <template>
   <div class="space-y-4">
+    <!--
+      Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
+      TODO: Report it to Vue/Nuxt!
+    -->
     <NuxtLink
       v-if="itemType !== 'group'"
       class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary"
-      :href="modelLink"
+      :to="modelLink || ''"
     >
       <div class="flex items-center flex-grow">
         <!-- Icon -->
