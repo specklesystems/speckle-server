@@ -267,7 +267,7 @@ const ringClasses = computed(() => {
         break
       case 'default':
       default:
-        classParts.push('hover:ring-4')
+        classParts.push('hover:ring-2')
         break
     }
   }
@@ -302,7 +302,7 @@ const paddingClasses = computed(() => {
       return 'px-5'
     default:
     case 'base':
-      return 'px-3'
+      return 'px-2'
   }
 })
 
@@ -338,7 +338,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center items-center space-x-2 outline-none select-none',
+    'transition inline-flex items-center space-x-2 outline-none select-none',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,

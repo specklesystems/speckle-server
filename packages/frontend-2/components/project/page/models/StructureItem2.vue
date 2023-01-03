@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <NuxtLink
       v-if="itemType !== 'group'"
-      class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary"
+      class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-foundation-focus"
       :href="modelLink"
     >
       <div class="flex items-center flex-grow">
@@ -90,7 +90,7 @@
     <!-- Doubling up for mixed items -->
     <div
       v-if="itemType === 'mixed' || itemType === 'group'"
-      class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
+      class="border-l-2 border-primary-muted hover:border-foundation-focus transition rounded-md"
     >
       <button
         class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
@@ -135,6 +135,7 @@
       </button>
       <!-- Children list -->
       <div v-if="hasChildren && expanded" class="pl-8 mt-4 space-y-4">
+        <ProjectPageModelsNewModelStructureItem />
         <div v-for="subitem in children" :key="subitem?.name" class="flex">
           <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
             <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />

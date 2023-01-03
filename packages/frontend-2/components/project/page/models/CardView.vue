@@ -1,11 +1,14 @@
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-    <ProjectPageModelsCard
-      v-for="(model, idx) in sortedModels"
-      :key="idx"
-      :model="model"
-      :project-id="(route.params.id as string)"
-    />
+  <div>
+    <ProjectPageModelsNewModelStructureItem class="mb-2" />
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <ProjectPageModelsCard
+        v-for="(model, idx) in sortedModels"
+        :key="idx"
+        :model="model"
+        :project-id="(route.params.id as string)"
+      />
+    </div>
   </div>
 </template>
 <script setup lang="ts">

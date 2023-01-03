@@ -7,7 +7,7 @@
     >
       <span>{{ title }}</span>
     </label>
-    <div class="relative mt-1 rounded-md">
+    <div class="relative">
       <div
         v-if="hasLeadingIcon"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"
@@ -36,10 +36,11 @@
         :type="type"
         :name="name"
         :class="[
-          'block h-12 w-full rounded-xl focus:outline-none bg-foundation-page text-foreground transition-all',
+          'block w-full rounded focus:outline-none bg-foundation-page text-foreground transition-all',
           'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
           'placeholder:text-foreground-2',
-          computedClasses
+          computedClasses,
+          sizeClasses
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -85,6 +86,7 @@ import { Nullable, Optional } from '@speckle/shared'
 import { ChangeEvent } from 'rollup'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const props = defineProps({
   /**
@@ -188,6 +190,10 @@ const props = defineProps({
   modelValue: {
     type: String,
     default: ''
+  },
+  size: {
+    type: String as PropType<InputSize>,
+    default: 'base'
   }
 })
 
@@ -233,6 +239,20 @@ const computedClasses = computed((): string => {
   }
 
   return classParts.join(' ')
+})
+
+const sizeClasses = computed((): string => {
+  switch (props.size) {
+    case 'sm':
+      return 'h-6'
+    case 'lg':
+      return 'h-10'
+    case 'xl':
+      return 'h-14'
+    case 'base':
+    default:
+      return 'h-8'
+  }
 })
 
 const title = computed(() => props.label || props.name)

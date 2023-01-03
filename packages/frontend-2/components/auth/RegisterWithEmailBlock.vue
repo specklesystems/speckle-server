@@ -6,6 +6,7 @@
         name="name"
         label="Name"
         placeholder="John Doe"
+        size="xl"
         :rules="nameRules"
         :custom-icon="UserIcon"
         show-label
@@ -17,6 +18,7 @@
         name="email"
         label="E-mail"
         placeholder="example@email.com"
+        size="xl"
         :rules="emailRules"
         show-label
         :disabled="loading"
@@ -27,6 +29,7 @@
         name="password"
         label="Password"
         placeholder="Type a strong password"
+        size="xl"
         :rules="passwordRules"
         show-label
         :disabled="loading"
@@ -58,6 +61,7 @@ import { UserIcon } from '@heroicons/vue/20/solid'
 /**
  * TODO:
  * - (BE) Password strength check? Do we want to use it anymore?
+ * - Dim's answer: no, `passwordRules` are legit enough for now.
  */
 
 graphql(`

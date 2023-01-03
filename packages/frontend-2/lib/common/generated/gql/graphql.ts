@@ -496,6 +496,18 @@ export type ModelCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type ModelMutations = {
+  __typename?: 'ModelMutations';
+  create: Scalars['String'];
+};
+
+
+export type ModelMutationsCreateArgs = {
+  modelDescription?: InputMaybe<Scalars['String']>;
+  modelName: Scalars['String'];
+  projectId: Scalars['String'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
@@ -540,6 +552,7 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
+  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
   /** Various Project related mutations */
   projectMutations: ProjectMutations;

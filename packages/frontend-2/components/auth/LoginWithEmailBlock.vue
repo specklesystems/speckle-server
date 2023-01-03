@@ -6,6 +6,7 @@
         name="email"
         label="E-mail"
         placeholder="Enter your email"
+        size="xl"
         :rules="emailRules"
         show-label
         :disabled="loading"
@@ -16,6 +17,7 @@
         name="password"
         label="Password"
         placeholder="Enter your password"
+        size="xl"
         :rules="passwordRules"
         show-label
         :disabled="loading"
