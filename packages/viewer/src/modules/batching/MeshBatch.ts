@@ -124,7 +124,7 @@ export default class MeshBatch implements Batch {
     let maxGradientIndex = 0
     for (let k = 0; k < sortedRanges.length; k++) {
       if (sortedRanges[k].materialOptions) {
-        if (sortedRanges[k].materialOptions.rampIndex) {
+        if (sortedRanges[k].materialOptions.rampIndex !== undefined) {
           const start = sortedRanges[k].offset
           const len = sortedRanges[k].offset + sortedRanges[k].count
           /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
