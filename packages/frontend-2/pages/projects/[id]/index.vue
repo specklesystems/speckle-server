@@ -41,6 +41,7 @@ graphql(`
     ...ProjectPageStatsBlockComments
     ...ProjectPageLatestItemsModels
     ...ProjectPageLatestItemsComments
+    ...ProjectPageModelsView
   }
 `)
 

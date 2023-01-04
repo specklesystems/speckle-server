@@ -4,7 +4,8 @@ import {
   StreamRole,
   Project,
   ServerRole,
-  Model
+  Model,
+  ModelsTreeItem
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { BranchRecord } from '@/modules/core/helpers/types'
@@ -48,6 +49,11 @@ export type ProjectGraphQLReturn = Omit<
   | 'commentThreadCount'
   | 'sourceApps'
   | 'commentThreads'
+  | 'models'
+  | 'structuredModels'
+  | 'modelsTree'
+  | 'model'
+  | 'modelChildrenTree'
 > & {
   /**
    * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
@@ -58,7 +64,7 @@ export type ProjectGraphQLReturn = Omit<
 
 export type ModelGraphQLReturn = Omit<
   Model,
-  'versionCount' | 'author' | 'previewUrl' | 'commentThreadCount'
+  'versionCount' | 'author' | 'previewUrl' | 'commentThreadCount' | 'childrenTree'
 > &
   BranchRecord
 
@@ -66,6 +72,13 @@ export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
 >
+
+export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {
+  /**
+   * Required for field resolvers, not actually returned in response
+   */
+  projectId: string
+}
 
 /**
  * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.

@@ -1,8 +1,6 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import {
-  getPaginatedProjectModels,
-  getStructuredStreamModels
-} from '@/modules/core/services/branch/retrieval'
+import { getModelTreeItems } from '@/modules/core/repositories/branches'
+import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 export = {
@@ -10,11 +8,14 @@ export = {
     async models(parent, args) {
       return await getPaginatedProjectModels(parent.id, args)
     },
-    async structuredModels(parent) {
-      return {
-        totalCount: -1, // TODO: remove, not needed
-        structure: await getStructuredStreamModels(parent.id)
-      }
+    async model(_parent, args, ctx) {
+      return ctx.loaders.branches.getById.load(args.id)
+    },
+    async modelsTree(parent) {
+      return await getModelTreeItems(parent.id)
+    },
+    async modelChildrenTree(parent, { fullName }) {
+      return await getModelTreeItems(parent.id, fullName)
     }
   },
   Model: {
@@ -31,6 +32,19 @@ export = {
     },
     async commentThreadCount(parent, _args, ctx) {
       return await ctx.loaders.branches.getCommentThreadCount.load(parent.id)
+    },
+    async childrenTree(parent) {
+      return await getModelTreeItems(parent.streamId, parent.name)
+    }
+  },
+  ModelsTreeItem: {
+    async model(parent, _args, ctx) {
+      return await ctx.loaders.streams.getStreamBranchByName
+        .forStream(parent.projectId)
+        .load(parent.fullName)
+    },
+    async children(parent) {
+      return await getModelTreeItems(parent.projectId, parent.fullName)
     }
   }
 } as Resolvers

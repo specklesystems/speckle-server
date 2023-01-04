@@ -482,6 +482,8 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  /** Return a model tree of children */
+  childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
@@ -497,6 +499,22 @@ export type ModelCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Model>;
   totalCount: Scalars['Int'];
+};
+
+export type ModelsTreeItem = {
+  __typename?: 'ModelsTreeItem';
+  children: Array<ModelsTreeItem>;
+  fullName: Scalars['String'];
+  /** Whether or not this item has nested children models */
+  hasChildren: Scalars['Boolean'];
+  /**
+   * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
+   * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
+   * even if "foo" doesn't exist as its own model.
+   */
+  model?: Maybe<Model>;
+  name: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
 };
 
 export type Mutation = {
@@ -955,16 +973,23 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  /** Returns a specific model */
   model?: Maybe<Model>;
+  /** Return a model tree of children for the specified model name */
+  modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
+  /** Returns a flat list of all models */
   models?: Maybe<ModelCollection>;
+  /**
+   * Return's a project's models in a tree view with submodels being nested under parent models
+   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   */
+  modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  /** Returns a tree of all the project's models and submodels. */
-  structuredModels?: Maybe<StructuredModelCollection>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
@@ -978,7 +1003,12 @@ export type ProjectCommentThreadsArgs = {
 
 
 export type ProjectModelArgs = {
-  id?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+};
+
+
+export type ProjectModelChildrenTreeArgs = {
+  fullName: Scalars['String'];
 };
 
 
@@ -1525,19 +1555,6 @@ export type StreamUpdatePermissionInput = {
   role: Scalars['String'];
   streamId: Scalars['String'];
   userId: Scalars['String'];
-};
-
-export type StructuredModel = {
-  __typename?: 'StructuredModel';
-  children?: Maybe<Array<Maybe<StructuredModel>>>;
-  model?: Maybe<Model>;
-  name: Scalars['String'];
-};
-
-export type StructuredModelCollection = {
-  __typename?: 'StructuredModelCollection';
-  structure?: Maybe<StructuredModel>;
-  totalCount: Scalars['Int'];
 };
 
 export type Subscription = {

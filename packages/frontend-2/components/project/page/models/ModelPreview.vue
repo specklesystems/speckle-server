@@ -12,11 +12,18 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Model } from '~~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+import { ModelPreviewFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 
+graphql(`
+  fragment ModelPreview on Model {
+    previewUrl
+  }
+`)
+
 const props = defineProps<{
-  model: Model
+  model: ModelPreviewFragment
 }>()
 
 const basePreviewUrl = computed(() => props.model.previewUrl)

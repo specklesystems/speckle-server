@@ -73,7 +73,7 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { Model } from '~~/lib/common/generated/gql/graphql'
+import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   ArrowPathRoundedSquareIcon,
   EllipsisVerticalIcon
@@ -82,7 +82,7 @@ import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
 const props = withDefaults(
   defineProps<{
-    model: Model
+    model: ProjectPageLatestItemsModelItemFragment
     projectId: string
     showVersions?: boolean
     showActions?: boolean

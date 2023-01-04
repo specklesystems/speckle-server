@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, ProjectGraphQLReturn, ModelGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, ProjectGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
@@ -489,6 +489,8 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  /** Return a model tree of children */
+  childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
@@ -504,6 +506,22 @@ export type ModelCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Model>;
   totalCount: Scalars['Int'];
+};
+
+export type ModelsTreeItem = {
+  __typename?: 'ModelsTreeItem';
+  children: Array<ModelsTreeItem>;
+  fullName: Scalars['String'];
+  /** Whether or not this item has nested children models */
+  hasChildren: Scalars['Boolean'];
+  /**
+   * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
+   * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
+   * even if "foo" doesn't exist as its own model.
+   */
+  model?: Maybe<Model>;
+  name: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
 };
 
 export type Mutation = {
@@ -962,16 +980,23 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  /** Returns a specific model */
   model?: Maybe<Model>;
+  /** Return a model tree of children for the specified model name */
+  modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
+  /** Returns a flat list of all models */
   models?: Maybe<ModelCollection>;
+  /**
+   * Return's a project's models in a tree view with submodels being nested under parent models
+   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   */
+  modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  /** Returns a tree of all the project's models and submodels. */
-  structuredModels?: Maybe<StructuredModelCollection>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
@@ -985,7 +1010,12 @@ export type ProjectCommentThreadsArgs = {
 
 
 export type ProjectModelArgs = {
-  id?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+};
+
+
+export type ProjectModelChildrenTreeArgs = {
+  fullName: Scalars['String'];
 };
 
 
@@ -1534,19 +1564,6 @@ export type StreamUpdatePermissionInput = {
   userId: Scalars['String'];
 };
 
-export type StructuredModel = {
-  __typename?: 'StructuredModel';
-  children?: Maybe<Array<Maybe<StructuredModel>>>;
-  model?: Maybe<Model>;
-  name: Scalars['String'];
-};
-
-export type StructuredModelCollection = {
-  __typename?: 'StructuredModelCollection';
-  structure?: Maybe<StructuredModel>;
-  totalCount: Scalars['Int'];
-};
-
 export type Subscription = {
   __typename?: 'Subscription';
   /** It's lonely in the void. */
@@ -1996,6 +2013,7 @@ export type ResolversTypes = {
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
+  ModelsTreeItem: ResolverTypeWrapper<ModelsTreeItemGraphQLReturn>;
   Mutation: ResolverTypeWrapper<{}>;
   Object: ResolverTypeWrapper<Object>;
   ObjectCollection: ResolverTypeWrapper<ObjectCollection>;
@@ -2035,8 +2053,6 @@ export type ResolversTypes = {
   StreamUpdateInput: StreamUpdateInput;
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
-  StructuredModel: ResolverTypeWrapper<Omit<StructuredModel, 'children' | 'model'> & { children?: Maybe<Array<Maybe<ResolversTypes['StructuredModel']>>>, model?: Maybe<ResolversTypes['Model']> }>;
-  StructuredModelCollection: ResolverTypeWrapper<Omit<StructuredModelCollection, 'structure'> & { structure?: Maybe<ResolversTypes['StructuredModel']> }>;
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
@@ -2102,6 +2118,7 @@ export type ResolversParentTypes = {
   LimitedUser: LimitedUserGraphQLReturn;
   Model: ModelGraphQLReturn;
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
+  ModelsTreeItem: ModelsTreeItemGraphQLReturn;
   Mutation: {};
   Object: Object;
   ObjectCollection: ObjectCollection;
@@ -2137,8 +2154,6 @@ export type ResolversParentTypes = {
   StreamUpdateInput: StreamUpdateInput;
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
-  StructuredModel: Omit<StructuredModel, 'children' | 'model'> & { children?: Maybe<Array<Maybe<ResolversParentTypes['StructuredModel']>>>, model?: Maybe<ResolversParentTypes['Model']> };
-  StructuredModelCollection: Omit<StructuredModelCollection, 'structure'> & { structure?: Maybe<ResolversParentTypes['StructuredModel']> };
   Subscription: {};
   TestItem: TestItem;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
@@ -2420,6 +2435,7 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2435,6 +2451,16 @@ export type ModelCollectionResolvers<ContextType = GraphQLContext, ParentType ex
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Model']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelsTreeItem'] = ResolversParentTypes['ModelsTreeItem']> = {
+  children?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2545,13 +2571,14 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, Partial<ProjectModelArgs>>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
+  modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   modelCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   models?: Resolver<Maybe<ResolversTypes['ModelCollection']>, ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
+  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  structuredModels?: Resolver<Maybe<ResolversTypes['StructuredModelCollection']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -2745,19 +2772,6 @@ export type StreamCollectionResolvers<ContextType = GraphQLContext, ParentType e
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type StructuredModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StructuredModel'] = ResolversParentTypes['StructuredModel']> = {
-  children?: Resolver<Maybe<Array<Maybe<ResolversTypes['StructuredModel']>>>, ParentType, ContextType>;
-  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type StructuredModelCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StructuredModelCollection'] = ResolversParentTypes['StructuredModelCollection']> = {
-  structure?: Resolver<Maybe<ResolversTypes['StructuredModel']>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
   _?: SubscriptionResolver<Maybe<ResolversTypes['String']>, "_", ParentType, ContextType>;
   branchCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "branchCreated", ParentType, ContextType, RequireFields<SubscriptionBranchCreatedArgs, 'streamId'>>;
@@ -2892,6 +2906,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   LimitedUser?: LimitedUserResolvers<ContextType>;
   Model?: ModelResolvers<ContextType>;
   ModelCollection?: ModelCollectionResolvers<ContextType>;
+  ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
@@ -2915,8 +2930,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   StreamAccessRequest?: StreamAccessRequestResolvers<ContextType>;
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
-  StructuredModel?: StructuredModelResolvers<ContextType>;
-  StructuredModelCollection?: StructuredModelCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   TestItem?: TestItemResolvers<ContextType>;
   User?: UserResolvers<ContextType>;

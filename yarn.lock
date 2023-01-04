@@ -5195,15 +5195,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/add@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "@graphql-codegen/add@npm:3.2.1"
+"@graphql-codegen/add@npm:^3.2.3":
+  version: 3.2.3
+  resolution: "@graphql-codegen/add@npm:3.2.3"
   dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
+    "@graphql-codegen/plugin-helpers": ^3.1.1
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: 4f9c645a3cf4b6e64c8ea5cbaba95075df2f485e3fea5b2c369bcf898272d0a6665b3eb0b541dc57d3d8400b23610848c8348a469e472db1a1c558d61580dca0
+  checksum: 98b1b17104b7e2fa82e9ed30e21160b02cce530d0ff72ce7794478677168ac6381a8d814cdd25d60b41b91b6446ebd592ba4820bd5ac138016f9097fa6ebc483
   languageName: node
   linkType: hard
 
@@ -5358,25 +5358,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/client-preset@npm:^1.0.6":
-  version: 1.1.0
-  resolution: "@graphql-codegen/client-preset@npm:1.1.0"
+"@graphql-codegen/client-preset@npm:^1.2.5":
+  version: 1.2.5
+  resolution: "@graphql-codegen/client-preset@npm:1.2.5"
   dependencies:
     "@babel/helper-plugin-utils": ^7.14.5
     "@babel/template": ^7.15.4
-    "@graphql-codegen/add": ^3.2.1
-    "@graphql-codegen/gql-tag-operations": 1.5.5
-    "@graphql-codegen/plugin-helpers": ^2.6.2
-    "@graphql-codegen/typed-document-node": ^2.3.5
-    "@graphql-codegen/typescript": ^2.7.5
-    "@graphql-codegen/typescript-operations": ^2.5.5
-    "@graphql-codegen/visitor-plugin-common": ^2.13.0
-    "@graphql-tools/utils": ^8.8.0
+    "@graphql-codegen/add": ^3.2.3
+    "@graphql-codegen/gql-tag-operations": 1.6.0
+    "@graphql-codegen/plugin-helpers": ^3.1.2
+    "@graphql-codegen/typed-document-node": ^2.3.12
+    "@graphql-codegen/typescript": ^2.8.7
+    "@graphql-codegen/typescript-operations": ^2.5.12
+    "@graphql-codegen/visitor-plugin-common": ^2.13.7
+    "@graphql-tools/utils": ^9.0.0
     "@graphql-typed-document-node/core": 3.1.1
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: e6b29c67a8171cb99d46ea323e980d98194b0b0d4f761e4306cc99af4ac89f5a3f1dfe6d5cbfc9e50306427590e97e4b7cd37d2332d67247bd93ecc5058e7415
+  checksum: 2f45cbedc835c665aec28b388411ea82ab812054ea6a1406be40ab3f05614d079a88c6a433c4b0ae3429286fca2e616526620641bfb5601199f54fae8e4c98ff
   languageName: node
   linkType: hard
 
@@ -5422,18 +5422,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/gql-tag-operations@npm:1.5.5":
-  version: 1.5.5
-  resolution: "@graphql-codegen/gql-tag-operations@npm:1.5.5"
+"@graphql-codegen/gql-tag-operations@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@graphql-codegen/gql-tag-operations@npm:1.6.0"
   dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
-    "@graphql-codegen/visitor-plugin-common": 2.13.0
-    "@graphql-tools/utils": ^8.8.0
+    "@graphql-codegen/plugin-helpers": ^3.1.2
+    "@graphql-codegen/visitor-plugin-common": 2.13.7
+    "@graphql-tools/utils": ^9.0.0
     auto-bind: ~4.0.0
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: e68819cc10d49a9244f9aec7ccbf9c8cffd2b3e2ff74e938ecdf4c6fb0096a4ee1f03dd2f8eb4d85111c56a80769e432f54392e5aa3e3c43138be9762bd26c53
+  checksum: cec1d275ffd36b5a7267801112b4b387f3651b7f51c69fecd004ff2437a07684b0a979c0a525a1e58146240fd908750ad5c047acf5c05bcd5574f871d420788d
   languageName: node
   linkType: hard
 
@@ -5513,6 +5513,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@graphql-codegen/plugin-helpers@npm:^3.1.1, @graphql-codegen/plugin-helpers@npm:^3.1.2":
+  version: 3.1.2
+  resolution: "@graphql-codegen/plugin-helpers@npm:3.1.2"
+  dependencies:
+    "@graphql-tools/utils": ^9.0.0
+    change-case-all: 1.0.15
+    common-tags: 1.8.2
+    import-from: 4.0.0
+    lodash: ~4.17.0
+    tslib: ~2.4.0
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+  checksum: 4d0c615738570681b5ffd3c07305a35d6aa3e5fd87c9199c0a670b95529ab865b1df978ce584d5b415107a567ac484e56a48db129a6d1d2eb8a254fbd3260e39
+  languageName: node
+  linkType: hard
+
 "@graphql-codegen/schema-ast@npm:^2.4.1":
   version: 2.4.1
   resolution: "@graphql-codegen/schema-ast@npm:2.4.1"
@@ -5539,16 +5555,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/schema-ast@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "@graphql-codegen/schema-ast@npm:2.5.1"
+"@graphql-codegen/schema-ast@npm:^2.6.1":
+  version: 2.6.1
+  resolution: "@graphql-codegen/schema-ast@npm:2.6.1"
   dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
-    "@graphql-tools/utils": ^8.8.0
+    "@graphql-codegen/plugin-helpers": ^3.1.2
+    "@graphql-tools/utils": ^9.0.0
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: a488c4a35e360f46444fb140ef3b5dffdea1e70549060ce6c2dad6f39c0b3c2cf2bcd797bcec8084f20a3ea4b5ab3e8221b1418e4195d9baf392819425bdd300
+  checksum: f44338ac66e6a1f6238c33cdf65778bb467fe5a93767988135cb4e112d3be4d3c7e8aeeffe323754e8d6b0cbc5a52cb71452bfc42a15bc7031ebaa9b3d5da676
   languageName: node
   linkType: hard
 
@@ -5567,18 +5583,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/typed-document-node@npm:^2.3.5":
-  version: 2.3.5
-  resolution: "@graphql-codegen/typed-document-node@npm:2.3.5"
+"@graphql-codegen/typed-document-node@npm:^2.3.12":
+  version: 2.3.12
+  resolution: "@graphql-codegen/typed-document-node@npm:2.3.12"
   dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
-    "@graphql-codegen/visitor-plugin-common": 2.13.0
+    "@graphql-codegen/plugin-helpers": ^3.1.2
+    "@graphql-codegen/visitor-plugin-common": 2.13.7
     auto-bind: ~4.0.0
-    change-case-all: 1.0.14
+    change-case-all: 1.0.15
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: a0e6b6284b05b657bc5ea5ef83cfa616f025fa7fa274ed50de75a225301c00a59bab8f3f8706d44e6c1c676bab521a86d6a0c15443c6292eb951933f58f1376e
+  checksum: 2a280f436d906d24353ee830d39dc2c5d32683a8d09332e1234bd66f5501e3a6415939e1b1ec191db4f0b6535bcc46fca9dece5ede5d7d183b77ff130db16c06
   languageName: node
   linkType: hard
 
@@ -5611,6 +5627,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@graphql-codegen/typescript-operations@npm:^2.5.12":
+  version: 2.5.12
+  resolution: "@graphql-codegen/typescript-operations@npm:2.5.12"
+  dependencies:
+    "@graphql-codegen/plugin-helpers": ^3.1.2
+    "@graphql-codegen/typescript": ^2.8.7
+    "@graphql-codegen/visitor-plugin-common": 2.13.7
+    auto-bind: ~4.0.0
+    tslib: ~2.4.0
+  peerDependencies:
+    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+  checksum: 9ce2281cb8b4adf8fbe8ac372277f5e9aef373c1e8e45fb064b8a2754417324f601399b12345d9352708eeb4fbeab004616c811bd016894271641d9da0606c62
+  languageName: node
+  linkType: hard
+
 "@graphql-codegen/typescript-operations@npm:^2.5.2":
   version: 2.5.2
   resolution: "@graphql-codegen/typescript-operations@npm:2.5.2"
@@ -5623,21 +5654,6 @@ __metadata:
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
   checksum: 98be34a9d9d92ff5408705fd898713071641d3b4d56651da8f2622ce41f79765656c87502fcefe728737a7b3b1e53f998e0661224f0795f9148881d2efe7552c
-  languageName: node
-  linkType: hard
-
-"@graphql-codegen/typescript-operations@npm:^2.5.5":
-  version: 2.5.5
-  resolution: "@graphql-codegen/typescript-operations@npm:2.5.5"
-  dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
-    "@graphql-codegen/typescript": ^2.7.5
-    "@graphql-codegen/visitor-plugin-common": 2.13.0
-    auto-bind: ~4.0.0
-    tslib: ~2.4.0
-  peerDependencies:
-    graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: 1411b0da8aa30f6bab4af31db3015dca8c0b76fd516827130c513f7abf94725c559b1b3268348e0249fa196863d7aba8a01337bf55835999f047a1561a7477fc
   languageName: node
   linkType: hard
 
@@ -5687,18 +5703,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/typescript@npm:^2.7.5":
-  version: 2.7.5
-  resolution: "@graphql-codegen/typescript@npm:2.7.5"
+"@graphql-codegen/typescript@npm:^2.8.7":
+  version: 2.8.7
+  resolution: "@graphql-codegen/typescript@npm:2.8.7"
   dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
-    "@graphql-codegen/schema-ast": ^2.5.1
-    "@graphql-codegen/visitor-plugin-common": 2.13.0
+    "@graphql-codegen/plugin-helpers": ^3.1.2
+    "@graphql-codegen/schema-ast": ^2.6.1
+    "@graphql-codegen/visitor-plugin-common": 2.13.7
     auto-bind: ~4.0.0
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: 0eb51d2bb826284cfed29fdaee0fc57694932627f0146394711d3f012377bccb19592270f6c04f775ec06ec87e1a05a0c85064ca186ea0e50a306ec058674fad
+  checksum: 67cbafc0dc8695222fd3b2db26c3fcd91148a1dba7bb5dcf71eaf6425dadbaa378c5703f2844e34718954aa283aa95919d8d4650bd1d0b85b22b404ffc3436fa
   languageName: node
   linkType: hard
 
@@ -5742,23 +5758,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@graphql-codegen/visitor-plugin-common@npm:2.13.0, @graphql-codegen/visitor-plugin-common@npm:^2.13.0":
-  version: 2.13.0
-  resolution: "@graphql-codegen/visitor-plugin-common@npm:2.13.0"
+"@graphql-codegen/visitor-plugin-common@npm:2.13.7, @graphql-codegen/visitor-plugin-common@npm:^2.13.7":
+  version: 2.13.7
+  resolution: "@graphql-codegen/visitor-plugin-common@npm:2.13.7"
   dependencies:
-    "@graphql-codegen/plugin-helpers": ^2.6.2
+    "@graphql-codegen/plugin-helpers": ^3.1.2
     "@graphql-tools/optimize": ^1.3.0
     "@graphql-tools/relay-operation-optimizer": ^6.5.0
-    "@graphql-tools/utils": ^8.8.0
+    "@graphql-tools/utils": ^9.0.0
     auto-bind: ~4.0.0
-    change-case-all: 1.0.14
+    change-case-all: 1.0.15
     dependency-graph: ^0.11.0
     graphql-tag: ^2.11.0
     parse-filepath: ^1.0.2
     tslib: ~2.4.0
   peerDependencies:
     graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
-  checksum: 1d7491d626059529faca2eda5466aa8b05bf2cc9a768175043461d0ec4793b4cbda2fb762ef44e6c8d094f951960569f2adf177af74156f4a74f33c6d5ae77bf
+  checksum: 4218af8b1542789d9c8c614ccb4362a2b4944d5c3a4a59909844fe9f1f8672825adb28deeb1b9a4d45410e1ae94cde9bd1f5c5d888ae53469260d6668814732e
   languageName: node
   linkType: hard
 
@@ -6395,6 +6411,17 @@ __metadata:
   peerDependencies:
     graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
   checksum: 8d1d8a11722e211dc8723cd3fd7a97fa5401ab22146e4240a0f9d45547792476c34814ff914524578beec961db7b0ff23a6ddff8fe059764537e594cff35c906
+  languageName: node
+  linkType: hard
+
+"@graphql-tools/utils@npm:^9.0.0":
+  version: 9.1.3
+  resolution: "@graphql-tools/utils@npm:9.1.3"
+  dependencies:
+    tslib: ^2.4.0
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: 3b5acd41ae939e2811f496b1676e6219be61a95f3e502bb3783542a67e7703d7709d4ae87fc9deb7284280aea687fb4b0e596f538d7f1cdf5a8827a2952ee994
   languageName: node
   linkType: hard
 
@@ -8125,7 +8152,7 @@ __metadata:
     "@babel/preset-react": ^7.18.6
     "@babel/preset-typescript": ^7.18.6
     "@graphql-codegen/cli": ^2.13.6
-    "@graphql-codegen/client-preset": ^1.0.6
+    "@graphql-codegen/client-preset": ^1.2.5
     "@headlessui/vue": ^1.7.3
     "@heroicons/vue": ^2.0.12
     "@nuxtjs/tailwindcss": ^6.2.0
@@ -15497,6 +15524,24 @@ __metadata:
     upper-case: ^2.0.2
     upper-case-first: ^2.0.2
   checksum: 6ff893e005e1bf115cc2969cc5ca3610f7c6ece9e90b7927ed12c980c7d3ea9a565150d246c6dba0fee21aaacbd38d69b98a4670d96b892c76f66e46616506d3
+  languageName: node
+  linkType: hard
+
+"change-case-all@npm:1.0.15":
+  version: 1.0.15
+  resolution: "change-case-all@npm:1.0.15"
+  dependencies:
+    change-case: ^4.1.2
+    is-lower-case: ^2.0.2
+    is-upper-case: ^2.0.2
+    lower-case: ^2.0.2
+    lower-case-first: ^2.0.2
+    sponge-case: ^1.0.1
+    swap-case: ^2.0.2
+    title-case: ^3.0.3
+    upper-case: ^2.0.2
+    upper-case-first: ^2.0.2
+  checksum: e1dabdcd8447a3690f3faf15f92979dfbc113109b50916976e1d5e518e6cfdebee4f05f54d0ca24fb79a4bf835185b59ae25e967bb3dc10bd236a775b19ecc52
   languageName: node
   linkType: hard
 
