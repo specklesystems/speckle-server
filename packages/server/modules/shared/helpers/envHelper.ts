@@ -41,14 +41,6 @@ export function getRedisUrl() {
   return process.env.REDIS_URL
 }
 
-export function getOidcStrategyEnabled() {
-  if (!process.env.STRATEGY_OIDC) {
-    throw new MisconfiguredEnvironmentError('STRATEGY_OIDC env var not configured')
-  }
-
-  return process.env.STRATEGY_OIDC
-}
-
 export function getOidcDiscoveryUrl() {
   if (!process.env.OIDC_DISCOVERY_URL) {
     throw new MisconfiguredEnvironmentError('OIDC_DISCOVERY_URL env var not configured')
