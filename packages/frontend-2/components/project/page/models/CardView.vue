@@ -26,20 +26,4 @@ const { result: latestModelsResult } = useQuery(latestModelsQuery, () => ({
 
 const items = computed(() => latestModelsResult.value?.project?.models?.items || [])
 const itemsCount = computed(() => items.value.length)
-
-// const { result: treeTopLevelResult } = useQuery(projectModelsTreeTopLevelQuery, () => ({
-//   projectId: props.project.id
-// }))
-
-// const topLevelItems = computed(
-//   () => treeTopLevelResult.value?.project?.modelsTree || []
-// )
-// const treeItemCount = computed(() => topLevelItems.value.length)
-
-// const route = useRoute()
-// const sortedModels = computed(() => {
-//   return [...props.models].sort(
-//     (a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)
-//   )
-// })
 </script>
