@@ -151,7 +151,7 @@ const unwatch = watch(loadedVersion, async (newVal) => {
   await isInitializedPromise
   const url = getObjectUrl(projectId.value as string, newVal.referencedObject)
   viewer.loadObject(url)
-  unwatch() // important to stop watching
+  unwatch() // important to stop watching as the loaded version is reactive. we want this to fire on "mounted" only (not using on mounted as it's null in there)
 })
 
 const { updateResourceVersion } = inject('resources') as {

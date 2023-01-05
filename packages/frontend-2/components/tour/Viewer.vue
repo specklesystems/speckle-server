@@ -1,51 +1,28 @@
 <template>
-  <div>
-    <div
-      id="rendererparent"
-      ref="rendererparent"
-      class="absolute h-screen w-screen special-gradient"
-    ></div>
-    <div
-      class="absolute h-screen w-screen z-10 pointer-events-none flex items-center justify-center"
-    >
-      <TourOnboarding />
-    </div>
+  <div class="special-gradient absolute w-screen h-screen">
+    <ViewerBase />
+  </div>
+
+  <div
+    class="absolute h-screen w-screen z-10 pointer-events-none flex items-center justify-center"
+  >
+    <TourOnboarding />
   </div>
 </template>
 <script setup lang="ts">
-import { Viewer } from '@speckle/viewer'
-
 import { setupViewer } from '~~/lib/viewer/composables/viewer'
-const rendererparent = ref<HTMLElement>()
+const { viewer } = setupViewer()
 
-let viewer: Viewer, container: HTMLElement, isInitializedPromise: Promise<boolean>
-
-if (process.client) {
-  const { viewer: v, container: c, isInitializedPromise: p } = setupViewer()
-  viewer = v
-  container = c
-  isInitializedPromise = p
-  provide('viewer', viewer)
-}
+provide('viewer', viewer)
 
 onMounted(async () => {
-  if (process.client) {
-    await isInitializedPromise
-    container.style.display = 'block'
-    rendererparent.value?.appendChild(container)
-
-    viewer.resize()
-    viewer.cameraHandler.onWindowResize()
-    await viewer.loadObject(
-      'https://latest.speckle.dev/streams/b5cc4e967c/objects/b2d6668e1b1194e45d8bf4d638e61554'
-    )
-  }
+  await viewer.loadObject(
+    'https://latest.speckle.dev/streams/b5cc4e967c/objects/b2d6668e1b1194e45d8bf4d638e61554'
+  )
 })
 
 onBeforeUnmount(async () => {
   await viewer.unloadAll()
-  container.style.display = 'none'
-  document.body.appendChild(container)
 })
 
 definePageMeta({

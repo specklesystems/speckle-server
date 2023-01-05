@@ -17,7 +17,7 @@ import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 const props = withDefaults(
   defineProps<{
     previewUrl: string
-    panoramaOnHover: boolean
+    panoramaOnHover?: boolean
   }>(),
   {
     panoramaOnHover: false

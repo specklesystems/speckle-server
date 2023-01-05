@@ -144,3 +144,8 @@ definePageMeta({
   layoutTransition: false
 })
 </script>
+<style scoped>
+.test {
+  display: block;
+}
+</style>

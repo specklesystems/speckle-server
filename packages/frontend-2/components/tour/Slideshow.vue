@@ -104,6 +104,7 @@ provide('locations', locations)
 const viewer = inject('viewer') as Viewer
 onMounted(() => {
   viewer.cameraHandler.controls.addEventListener('update', () => {
+    if (!comments.value) return
     const cam = viewer.cameraHandler.camera
     cam.updateProjectionMatrix()
 

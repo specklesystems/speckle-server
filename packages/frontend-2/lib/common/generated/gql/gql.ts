@@ -53,7 +53,6 @@ const documents = {
     "\n  query ProjectLatestCommentThreads($projectId: String!) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: null, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestCommentThreadsDocument,
     "\n  query ModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ModelCardModel\n      }\n    }\n  }\n": types.ModelCardDocument,
     "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n": types.GetActiveUserDocument,
-    "\n    query ProjectLandingPage($id: String!) {\n      project(id: $id) {\n        id\n        name\n        modelCount\n        role\n        updatedAt\n        team {\n          id\n          name\n        }\n      }\n    }\n  ": types.ProjectLandingPageDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageStatsBlockVersions\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n    ...ProjectPageLatestItemsModels\n    ...ProjectPageLatestItemsComments\n    ...ProjectPageModelsView\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n": types.ModelPageProjectFragmentDoc,
 };
@@ -232,10 +231,6 @@ export function graphql(source: "\n  query ModelCard($projectId: String!, $model
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n"): (typeof documents)["\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n    query ProjectLandingPage($id: String!) {\n      project(id: $id) {\n        id\n        name\n        modelCount\n        role\n        updatedAt\n        team {\n          id\n          name\n        }\n      }\n    }\n  "): (typeof documents)["\n    query ProjectLandingPage($id: String!) {\n      project(id: $id) {\n        id\n        name\n        modelCount\n        role\n        updatedAt\n        team {\n          id\n          name\n        }\n      }\n    }\n  "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
