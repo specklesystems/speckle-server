@@ -133,7 +133,11 @@ function getPaginatedProjectModelsBaseQuery<T>(
     .where(Branches.col.streamId, projectId)
     .groupBy(Branches.col.id)
 
-  if (filter?.contributors?.length || filter?.sourceApps?.length) {
+  if (
+    filter?.contributors?.length ||
+    filter?.sourceApps?.length ||
+    filter?.onlyWithVersions
+  ) {
     q.innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     q.innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
 
@@ -148,6 +152,10 @@ function getPaginatedProjectModelsBaseQuery<T>(
           filter.sourceApps.join('|')
         ])
       )
+    }
+
+    if (filter.onlyWithVersions) {
+      q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
     }
   }
 
@@ -214,9 +222,8 @@ export async function getPaginatedProjectModelsTotalCount(
   projectId: string,
   params: ProjectModelsArgs
 ) {
-  const q = getPaginatedProjectModelsBaseQuery<{ count: string }[]>(projectId, params)
-  q.clearSelect()
-  q.count()
+  const baseQ = getPaginatedProjectModelsBaseQuery(projectId, params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
   const [res] = await q
   return parseInt(res?.count || '0')

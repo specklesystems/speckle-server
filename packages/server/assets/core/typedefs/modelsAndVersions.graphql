@@ -85,4 +85,8 @@ input ProjectModelsFilter {
   Filter by IDs of contributors who participated in models
   """
   contributors: [String!]
+  """
+  Filter out models that don't have any versions
+  """
+  onlyWithVersions: Boolean
 }

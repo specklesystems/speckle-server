@@ -1042,6 +1042,8 @@ export type ProjectCollection = {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter out models that don't have any versions */
+  onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
