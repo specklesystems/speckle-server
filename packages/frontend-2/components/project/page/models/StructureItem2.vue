@@ -9,11 +9,11 @@
         <!-- Icon -->
         <CubeIcon
           v-if="model && model.versionCount !== 0"
-          class="w-4 h-4 text-foreground-2 mx-2"
+          class="w-4 h-4 opacity-0 text-foreground-2 mx-2"
         />
         <CubeTransparentIcon
           v-if="model && model.versionCount === 0"
-          class="w-4 h-4 text-foreground-2 mx-2"
+          class="w-4 h-4 opacity-0 text-foreground-2 mx-2"
         />
         <!-- Name -->
         <div class="flex flex-col justify-start">
@@ -125,17 +125,16 @@
           </div>
           <!-- </div> -->
           <div :class="`ml-4 w-24 h-20`">
-            <div
+            <!-- <div
               class="w-full h-full rounded-md bg-primary-muted flex items-center justify-center"
             >
               <FolderIcon class="w-4 h-4 text-blue-500/50" />
-            </div>
+            </div> -->
           </div>
         </div>
       </button>
       <!-- Children list -->
       <div v-if="hasChildren && expanded" class="pl-8 mt-4 space-y-4">
-        <ProjectPageModelsNewModelStructureItem />
         <div v-for="subitem in children" :key="subitem?.name" class="flex">
           <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
             <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
@@ -148,6 +147,7 @@
             class="flex-grow"
           />
         </div>
+        <ProjectPageModelsNewModelStructureItem />
       </div>
     </div>
   </div>

@@ -6,6 +6,8 @@
         <!-- <FormButton size="sm" rounded>New</FormButton> -->
       </div>
       <div class="flex items-center space-x-1">
+        <FormButton :icon-left="PlusIcon">New</FormButton>
+
         <div class="w-60">
           <FormTextInput
             name="modelsearch"
@@ -20,7 +22,6 @@
         >
           <LayoutGridListToggle v-model="gridOrList" />
         </div>
-        <!-- <FormButton :icon-left="PlusIcon">New</FormButton> -->
       </div>
     </div>
     <div class="mb-14">

@@ -12,14 +12,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Model } from '~~/lib/common/generated/gql/graphql'
+// import { Model } from '~~/lib/common/generated/gql/graphql'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 
 const props = defineProps<{
-  model: Model
+  previewUrl: string
 }>()
 
-const basePreviewUrl = computed(() => props.model.previewUrl)
+const basePreviewUrl = computed(() => props.previewUrl)
 const panoramaPreviewUrl = computed(() =>
   new URL(basePreviewUrl.value, '/all').toString()
 )

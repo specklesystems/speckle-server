@@ -490,6 +490,13 @@ export type Model = {
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  versions?: Maybe<VersionCollection>;
+};
+
+
+export type ModelVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 export type ModelCollection = {
@@ -497,6 +504,18 @@ export type ModelCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Model>;
   totalCount: Scalars['Int'];
+};
+
+export type ModelMutations = {
+  __typename?: 'ModelMutations';
+  create: Scalars['String'];
+};
+
+
+export type ModelMutationsCreateArgs = {
+  modelDescription?: InputMaybe<Scalars['String']>;
+  modelName: Scalars['String'];
+  projectId: Scalars['String'];
 };
 
 export type Mutation = {
@@ -543,6 +562,7 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
+  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
   /** Various Project related mutations */
   projectMutations: ProjectMutations;
@@ -1797,7 +1817,10 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  author: LimitedUser;
+  authorAvatar?: Maybe<Scalars['String']>;
+  authorId?: Maybe<Scalars['String']>;
+  authorName?: Maybe<Scalars['String']>;
+  createdAt?: Maybe<Scalars['DateTime']>;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
