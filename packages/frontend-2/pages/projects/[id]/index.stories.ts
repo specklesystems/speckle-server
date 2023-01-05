@@ -2,12 +2,16 @@ import { Meta, Story } from '@storybook/vue3'
 import {
   ProjectLatestCommentThreadsQuery,
   ProjectLatestModelsQuery,
+  ProjectModelChildrenTreeQuery,
+  ProjectModelsTreeTopLevelQuery,
   ProjectPageQueryQuery
 } from '~~/lib/common/generated/gql/graphql'
 import { StorybookParameters } from '~~/lib/common/helpers/storybook'
 import {
   latestCommentThreadsQuery,
   latestModelsQuery,
+  projectModelChildrenTreeQuery,
+  projectModelsTreeTopLevelQuery,
   projectPageQuery
 } from '~~/lib/projects/graphql/queries'
 import ProjectPage from '~~/pages/projects/[id]/index.vue'
@@ -64,8 +68,7 @@ export const Default: Story = {
           request: {
             query: latestModelsQuery,
             variables: {
-              projectId: fakeProjectId,
-              filter: { sourceApps: null, contributors: null }
+              projectId: fakeProjectId
             }
           },
           result: {
@@ -92,6 +95,87 @@ export const Default: Story = {
                 }
               }
             } as ProjectLatestModelsQuery
+          }
+        },
+        {
+          request: {
+            query: projectModelsTreeTopLevelQuery,
+            variables: {
+              projectId: fakeProjectId
+            }
+          },
+          result: {
+            data: {
+              __typename: 'Query',
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                modelsTree: times(3).map((i) => {
+                  const name = `top level item #${i}`
+                  const hasChildren = i === 1
+                  const hasModel = i === 2
+                  return {
+                    __typename: 'ModelsTreeItem',
+                    name,
+                    fullName: name,
+                    hasChildren,
+                    updatedAt: new Date().toISOString(),
+                    model: hasModel
+                      ? {
+                          __typename: 'Model',
+                          id: `Model${i}`,
+                          name: `Model #${i}`,
+                          versionCount: Math.ceil(Math.random() * 10),
+                          commentThreadCount: Math.ceil(Math.random() * 10),
+                          previewUrl:
+                            'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
+                          createdAt: new Date().toISOString(),
+                          updatedAt: new Date().toISOString()
+                        }
+                      : null
+                  }
+                })
+              }
+            } as ProjectModelsTreeTopLevelQuery
+          }
+        },
+        {
+          request: {
+            query: projectModelChildrenTreeQuery,
+            variables: {
+              projectId: fakeProjectId,
+              parentName: 'top level item #1'
+            }
+          },
+          result: {
+            data: {
+              __typename: 'Query',
+              project: {
+                __typename: 'Project',
+                id: fakeProjectId,
+                modelChildrenTree: times(3).map((i) => {
+                  const name = `child item ${i}`
+                  return {
+                    __typename: 'ModelsTreeItem',
+                    name,
+                    fullName: `top level item #1/${name}`,
+                    hasChildren: false,
+                    updatedAt: new Date().toISOString(),
+                    model: {
+                      __typename: 'Model',
+                      id: `Model${i}`,
+                      name: `Model #${i}`,
+                      versionCount: Math.ceil(Math.random() * 10),
+                      commentThreadCount: Math.ceil(Math.random() * 10),
+                      previewUrl:
+                        'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
+                      createdAt: new Date().toISOString(),
+                      updatedAt: new Date().toISOString()
+                    }
+                  }
+                })
+              }
+            } as ProjectModelChildrenTreeQuery
           }
         },
         {

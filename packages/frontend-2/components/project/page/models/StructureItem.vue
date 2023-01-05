@@ -139,7 +139,7 @@
             <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
           </div>
 
-          <ProjectPageModelsStructureItem2
+          <ProjectPageModelsStructureItem
             :item="child"
             :project-id="projectId"
             class="flex-grow"
