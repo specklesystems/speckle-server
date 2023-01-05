@@ -12,6 +12,7 @@ import { keyBy } from 'lodash'
 import { getInvites } from '@/modules/serverinvites/repositories'
 import { AuthContext } from '@/modules/shared/authz'
 import {
+  BranchRecord,
   CommitRecord,
   LimitedUserRecord,
   StreamFavoriteRecord,
@@ -33,8 +34,10 @@ import {
 } from '@/modules/comments/repositories/comments'
 import {
   getBranchCommitCounts,
+  getBranchesByIds,
   getBranchLatestCommits,
-  getStreamBranchCounts
+  getStreamBranchCounts,
+  getStreamBranchesByName
 } from '@/modules/core/repositories/branches'
 
 /**
@@ -127,7 +130,34 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getSourceApps: new DataLoader<string, string[]>(async (streamIds) => {
         const results = await getStreamsSourceApps(streamIds.slice())
         return streamIds.map((i) => results[i] || [])
-      })
+      }),
+      /**
+       * Get a specific branch of a specific stream. Each stream ID technically has its own loader &
+       * thus its own query.
+       */
+      getStreamBranchByName: (() => {
+        type BranchDataLoader = DataLoader<string, Nullable<BranchRecord>>
+        const streamBranchLoaders = new Map<string, BranchDataLoader>()
+        return {
+          forStream(streamId: string): BranchDataLoader {
+            let loader = streamBranchLoaders.get(streamId)
+            if (!loader) {
+              loader = new DataLoader<string, Nullable<BranchRecord>>(
+                async (branchNames) => {
+                  const results = keyBy(
+                    await getStreamBranchesByName(streamId, branchNames.slice()),
+                    'name'
+                  )
+                  return branchNames.map((n) => results[n] || null)
+                }
+              )
+              streamBranchLoaders.set(streamId, loader)
+            }
+
+            return loader
+          }
+        }
+      })()
     },
     branches: {
       getCommitCount: new DataLoader<string, number>(async (branchIds) => {
@@ -149,6 +179,10 @@ export function buildRequestLoaders(ctx: AuthContext) {
           'id'
         )
         return branchIds.map((i) => results[i]?.count || 0)
+      }),
+      getById: new DataLoader<string, Nullable<BranchRecord>>(async (branchIds) => {
+        const results = keyBy(await getBranchesByIds(branchIds.slice()), 'id')
+        return branchIds.map((i) => results[i] || null)
       })
     },
     commits: {

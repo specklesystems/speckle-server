@@ -482,12 +482,14 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  /** Return a model tree of children */
+  childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   name: Scalars['String'];
-  previewUrl: Scalars['String'];
+  previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
 };
@@ -497,6 +499,22 @@ export type ModelCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Model>;
   totalCount: Scalars['Int'];
+};
+
+export type ModelsTreeItem = {
+  __typename?: 'ModelsTreeItem';
+  children: Array<ModelsTreeItem>;
+  fullName: Scalars['String'];
+  /** Whether or not this item has nested children models */
+  hasChildren: Scalars['Boolean'];
+  /**
+   * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
+   * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
+   * even if "foo" doesn't exist as its own model.
+   */
+  model?: Maybe<Model>;
+  name: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
 };
 
 export type Mutation = {
@@ -955,8 +973,18 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  /** Returns a specific model */
+  model?: Maybe<Model>;
+  /** Return a model tree of children for the specified model name */
+  modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
+  /** Returns a flat list of all models */
   models?: Maybe<ModelCollection>;
+  /**
+   * Return's a project's models in a tree view with submodels being nested under parent models
+   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   */
+  modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
@@ -971,6 +999,16 @@ export type Project = {
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectModelChildrenTreeArgs = {
+  fullName: Scalars['String'];
 };
 
 
@@ -1669,7 +1707,7 @@ export type User = {
   id: Scalars['ID'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']>;
-  name?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   /** Get projects that the user participates in */
@@ -1772,6 +1810,22 @@ export type UserUpdateInput = {
   bio?: InputMaybe<Scalars['String']>;
   company?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
+};
+
+export type Version = {
+  __typename?: 'Version';
+  author: LimitedUser;
+  id: Scalars['ID'];
+  message?: Maybe<Scalars['String']>;
+  referencedObject: Scalars['String'];
+  sourceApplication?: Maybe<Scalars['String']>;
+};
+
+export type VersionCollection = {
+  __typename?: 'VersionCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Version>;
+  totalCount: Scalars['Int'];
 };
 
 export type Webhook = {
@@ -2089,14 +2143,14 @@ export type GetLimitedUserStreamsQueryVariables = Exact<{
 
 export type GetLimitedUserStreamsQuery = { __typename?: 'Query', otherUser?: { __typename?: 'LimitedUser', streams: { __typename?: 'StreamCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Stream', id: string, name: string, description?: string | null, isPublic: boolean, isDiscoverable: boolean, allowPublicComments: boolean, role?: string | null, createdAt: string, updatedAt: string }> | null } } | null };
 
-export type BaseUserFieldsFragment = { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null };
+export type BaseUserFieldsFragment = { __typename?: 'User', id: string, email?: string | null, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null };
 
 export type BaseLimitedUserFieldsFragment = { __typename?: 'LimitedUser', id: string, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetActiveUserQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null } | null };
+export type GetActiveUserQuery = { __typename?: 'Query', activeUser?: { __typename?: 'User', id: string, email?: string | null, name: string, bio?: string | null, company?: string | null, avatar?: string | null, verified?: boolean | null, role?: string | null } | null };
 
 export type GetOtherUserQueryVariables = Exact<{
   id: Scalars['String'];
@@ -2112,7 +2166,7 @@ export type GetAdminUsersQueryVariables = Exact<{
 }>;
 
 
-export type GetAdminUsersQuery = { __typename?: 'Query', adminUsers?: { __typename?: 'AdminUsersListCollection', totalCount: number, items: Array<{ __typename?: 'AdminUsersListItem', id: string, registeredUser?: { __typename?: 'User', id: string, email?: string | null, name?: string | null } | null, invitedUser?: { __typename?: 'ServerInvite', id: string, email: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string } } | null }> } | null };
+export type GetAdminUsersQuery = { __typename?: 'Query', adminUsers?: { __typename?: 'AdminUsersListCollection', totalCount: number, items: Array<{ __typename?: 'AdminUsersListItem', id: string, registeredUser?: { __typename?: 'User', id: string, email?: string | null, name: string } | null, invitedUser?: { __typename?: 'ServerInvite', id: string, email: string, invitedBy: { __typename?: 'LimitedUser', id: string, name: string } } | null }> } | null };
 
 export type GetPendingEmailVerificationStatusQueryVariables = Exact<{
   id?: InputMaybe<Scalars['String']>;

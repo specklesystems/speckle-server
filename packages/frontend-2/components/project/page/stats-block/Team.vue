@@ -1,32 +1,24 @@
 <template>
   <ProjectPageStatsBlock>
     <template #top>
-      <div class="flex justify-between items-center">
-        <div class="flex items-center space-x-1.5">
-          <UsersIcon class="h-5 w-5" />
-          <span class="label font-bold">Team</span>
-          <CommonBadge color-classes="text-foreground-on-primary bg-info-darker">
-            {{ project.team.length }}
-          </CommonBadge>
-        </div>
-        <div class="caption">
-          <NuxtLink to="javascript:void(0);">View all</NuxtLink>
+      <div class="flex items-center">
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center flex-grow">
+            <UsersIcon class="h-5 w-5" />
+            <span class="text-xs">Team</span>
+          </div>
+          <div class="text-xs">{{ project.role?.split(':').reverse()[0] }}</div>
         </div>
       </div>
     </template>
     <template #bottom>
-      <div class="flex space-x-[1px]">
-        <div
-          v-if="project.team.length"
-          class="flex space-x-[1px] flex-wrap overflow-hidden h-8"
-        >
-          <UserAvatar
-            v-for="user in project.team"
-            :key="user.id"
-            :avatar-url="user.avatar"
-          />
+      <div class="flex items-center justify-between mt-2">
+        <UserAvatarGroup :users="project.team" class="max-w-[104px]" />
+        <div>
+          <FormButton class="ml-2">
+            {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
+          </FormButton>
         </div>
-        <UserAvatarPlus />
       </div>
     </template>
   </ProjectPageStatsBlock>
@@ -38,11 +30,13 @@ import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/g
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {
+    role
     team {
       id
       name
       avatar
     }
+    role
   }
 `)
 

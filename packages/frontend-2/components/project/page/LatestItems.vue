@@ -6,16 +6,18 @@
       <div
         class="flex flex-col items-start space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between sm:space-x-2"
       >
-        <div class="flex items-center space-x-2">
-          <h2 class="h3 font-bold">
+        <div class="flex items-center space-x-2 group hover:cursor-pointer">
+          <h2 class="h4 font-bold transition group-hover:text-primary">
             {{ title }}
           </h2>
-          <div class="h4 text-foreground-2">({{ count }})</div>
-        </div>
 
-        <FormButton text :to="seeAllUrl" @click="$emit('see-all-click', $event)">
-          See all
-        </FormButton>
+          <div
+            class="text-foreground-2 text-xs flex items-center justify-center w-6 h-6 rounded-full p-2 bg-foundation group-hover:bg-primary group-hover:text-foreground-on-primary transition"
+          >
+            {{ count }}
+          </div>
+          <div class="invisible group-hover:visible transition text-xs">view all</div>
+        </div>
       </div>
       <!-- Right heading (filters, grid/list toggle) -->
       <div v-if="!hideFilters" class="flex space-x-4 items-center w-full lg:w-auto">

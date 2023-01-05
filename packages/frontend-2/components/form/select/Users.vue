@@ -29,9 +29,9 @@
             <UserAvatar
               v-for="user in value"
               :key="user.id"
-              :avatar-url="user.avatar"
+              :user="user"
               no-border
-              size="24"
+              size="sm"
             />
           </div>
           <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
@@ -42,10 +42,10 @@
       <template v-else>
         <div class="flex items-center">
           <UserAvatar
-            :avatar-url="(isArrayValue(value) ? value[0] : value).avatar || undefined"
+            :user="isArrayValue(value) ? value[0] : value"
             no-border
-            size="24"
             class="mr-2"
+            size="sm"
           />
           <span class="truncate label label--light">
             {{ (isArrayValue(value) ? value[0] : value).name }}
@@ -55,12 +55,7 @@
     </template>
     <template #option="{ item }">
       <div class="flex items-center">
-        <UserAvatar
-          :avatar-url="item.avatar || undefined"
-          no-border
-          size="20"
-          class="mr-2"
-        />
+        <UserAvatar :user="item" no-border class="mr-2" size="sm" />
         <span class="truncate">{{ item.name }}</span>
       </div>
     </template>

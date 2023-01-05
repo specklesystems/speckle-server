@@ -55,6 +55,7 @@ const createOnboardingProjectMutation = graphql(`
     projectMutations {
       createForOnboarding {
         ...ProjectPageProject
+        ...ProjectDashboardItem
       }
     }
   }

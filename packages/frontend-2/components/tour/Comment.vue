@@ -1,11 +1,11 @@
 <template>
   <div class="">
-    <button class="pointer-events-auto" @click="commentClicked()">
+    <button class="pointer-events-auto group" @click="toggleComment()">
       <div class="animate-ping absolute bg-primary rounded-full h-8 w-8"></div>
       <div
-        class="absolute bg-foundation rounded-full h-8 w-8 flex items-center justify-center text-white cursor-pointer select-none text-sm font-bold"
+        class="absolute bg-foundation dark:bg-foreground group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-bold"
       >
-        <span v-if="!expanded">{{ index }}</span>
+        <span v-if="!expanded">{{ index + 1 }}</span>
         <span v-else><XMarkIcon class="h-6 w-6" /></span>
       </div>
     </button>
@@ -17,17 +17,32 @@
     >
       <div
         v-show="expanded"
-        class="pointer-events-auto rounded-lg bg-foundation text-white ml-10 px-4 py-4 max-w-sm min-w-fit shadow-xl space-y-4 w-96"
+        class="rounded-lg backdrop-blur-sm bg-white/80 dark:text-foundation ml-10 px-4 py-4 max-w-xs min-w-fit shadow-md space-y-4 w-96"
       >
-        <h3 class="h3 font-bold">Welcome To Speckle!</h3>
-        <p class="">
-          Animations by their very nature tend to be highly project-specific. The
-          animations we include by default are best thought of as helpful examples, and
-          you’re encouraged to customize your animations to better suit your needs.
-        </p>
-        <div class="flex items-center justify-between">
-          <FormButton type="link" foreground-link size="xs">Skip</FormButton>
-          <FormButton>Next</FormButton>
+        <slot>Pasta</slot>
+
+        <div class="flex items-center justify-between pointer-events-auto">
+          <slot name="actions">
+            <FormButton text outlined size="sm" to="/">Skip</FormButton>
+            <div class="flex justify-center space-x-2">
+              <FormButton
+                v-show="index !== 0"
+                :icon-left="ArrowLeftIcon"
+                text
+                size="sm"
+                @click="commentState--"
+              >
+                Previous
+              </FormButton>
+              <FormButton
+                :icon-right="ArrowRightIcon"
+                size="sm"
+                @click="commentState++"
+              >
+                Next
+              </FormButton>
+            </div>
+          </slot>
         </div>
       </div>
     </Transition>
@@ -36,28 +51,41 @@
 <script setup lang="ts">
 import { Viewer } from '@speckle/viewer'
 import { Vector3 } from 'three'
-import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { XMarkIcon, ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
+import type { Ref } from 'vue'
+
+const commentState = inject('commentState') as Ref<number>
+const locations = inject('locations') as { camPos: number[] }[]
 
 const props = defineProps({
   index: {
     type: Number,
     default: 0
-  },
-  camPos: {
-    type: Array,
-    default: () => [1, 1, 1, 1, 1, 1]
   }
 })
 
 const viewer = inject('viewer') as Viewer
 
-const expanded = ref(false)
-const commentClicked = () => {
-  console.log(props.camPos)
+const expanded = computed(() => {
+  return commentState.value === props.index
+})
+
+watchEffect(() => {
+  if (expanded.value) setView()
+})
+
+function toggleComment() {
+  if (expanded.value) commentState.value = -1
+  else {
+    commentState.value = props.index
+  }
+}
+
+function setView() {
+  const camPos = locations[props.index].camPos
   viewer.setView({
-    position: new Vector3(props.camPos[0], props.camPos[1], props.camPos[2]),
-    target: new Vector3(props.camPos[3], props.camPos[4], props.camPos[5])
+    position: new Vector3(camPos[0], camPos[1], camPos[2]),
+    target: new Vector3(camPos[3], camPos[4], camPos[5])
   })
-  expanded.value = !expanded.value
 }
 </script>

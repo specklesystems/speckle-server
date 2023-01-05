@@ -82,7 +82,7 @@
   /* default foreground color */
   --foreground: #f4f4f5;
   /* dimmer foreground color, e.g. caption text */
-  --foreground-2: #d4d4d8;
+  --foreground-2: #71717a;
   /* disabled foreground color */
   --foreground-disabled: #a1a1aa;
   /* primary color when used for text directly on top of foundation-page */

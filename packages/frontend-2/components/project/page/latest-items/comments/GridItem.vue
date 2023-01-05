@@ -1,12 +1,12 @@
 <template>
   <div
-    class="h-36 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2"
+    class="h-40 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2"
   >
     <!-- Main data -->
     <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
       <div class="flex flex-col">
         <div class="flex space-x-1 items-center mb-2">
-          <UserAvatar size="24" no-border :avatar-url="thread.author.avatar" />
+          <UserAvatar no-border :user="thread.author" />
           <span
             class="normal font-semibold text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
           >
@@ -31,23 +31,7 @@
           <LinkIcon class="w-4 h-4" />
         </div>
 
-        <div v-if="thread.replyAuthors.totalCount" class="flex -space-x-1 relative">
-          <UserAvatar
-            v-for="(author, i) in thread.replyAuthors.items"
-            :key="author.id"
-            :avatar-url="author.avatar"
-            size="24"
-            :style="{ zIndex: i + 1 }"
-          />
-          <UserAvatarText
-            v-if="hiddenReplyAuthorCount > 0"
-            class="text-foreground bg-foundation caption"
-            size="24"
-            :style="{ zIndex: thread.replyAuthors.items.length + 1 }"
-          >
-            +{{ hiddenReplyAuthorCount }}
-          </UserAvatarText>
-        </div>
+        <UserAvatarGroup :users="allAvatars" :max-count="4" />
       </div>
     </div>
     <!-- Image preview -->
@@ -62,6 +46,8 @@ import { ChatBubbleLeftEllipsisIcon, LinkIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
+import { times } from 'lodash-es'
+import { AvatarUserType } from '~~/lib/user/composables/avatar'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
@@ -75,4 +61,14 @@ const createdAt = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
 const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length
 )
+
+const allAvatars = computed((): AvatarUserType[] => [
+  ...props.thread.replyAuthors.items,
+  // We're adding fake entries so that the proper "+X" number is rendered, and the actual data is
+  // not really important because it's never going to be rendered
+  ...times(
+    hiddenReplyAuthorCount.value,
+    (): AvatarUserType => ({ id: 'fake', name: 'fake' })
+  )
+])
 </script>

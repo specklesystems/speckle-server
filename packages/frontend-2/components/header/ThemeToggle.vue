@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    class="rounded-full bg-foundation p-1 text-foreground hover:text-primary ring-offset-foundation focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition"
+    class="rounded-full h-8 w-8 bg-foreground text-foundation hover:text-primary flex justify-center items-center ring-offset-foundation focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition"
     @click="onClick"
   >
     <span class="sr-only">Toggle dark mode</span>

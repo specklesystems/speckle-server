@@ -23,7 +23,7 @@ import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
+type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning' | 'card'
 
 const emit = defineEmits<{
   /**
@@ -168,6 +168,13 @@ const bgAndBorderClasses = computed(() => {
             : 'bg-foundation dark:bg-foreground border-transparent'
         )
         break
+      case 'card':
+        classParts.push(
+          props.outlined
+            ? 'border-foundation-2 shadow'
+            : 'bg-foundation-2 dark:bg-foreground border-foundation dark:border-foreground shadow'
+        )
+        break
       case 'danger':
         classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
         break
@@ -200,6 +207,11 @@ const foregroundClasses = computed(() => {
         case 'invert':
           classParts.push(
             props.outlined ? 'text-foundation dark:text-foreground' : 'text-primary'
+          )
+          break
+        case 'card':
+          classParts.push(
+            props.outlined ? 'text-foreground' : 'text-foreground dark:text-foundation'
           )
           break
         case 'danger':
@@ -263,49 +275,35 @@ const ringClasses = computed(() => {
 })
 
 const sizeClasses = computed(() => {
-  const classParts: string[] = []
-
-  // weight
-  if (props.size === 'xl') {
-    classParts.push('font-medium')
-  } else {
-    classParts.push(props.size === 'xs' ? '' : 'font-semibold')
+  switch (props.size) {
+    case 'xs':
+      return 'h-5 text-xs font-medium xxx-tracking-wide'
+    case 'sm':
+      return 'h-6 text-sm font-medium xxx-tracking-wide'
+    case 'lg':
+      return 'h-10 text-lg font-semibold xxx-tracking-wide'
+    case 'xl':
+      return 'h-14 text-xl font-bold xxx-tracking-wide'
+    default:
+    case 'base':
+      return 'h-8 text-base font-medium xxx-tracking-wide'
   }
+})
 
-  // font size
-  if (['base', 'lg'].includes(props.size)) {
-    classParts.push('text-base leading-5')
-  } else if (props.size === 'xl') {
-    classParts.push('text-lg leading-7')
-  } else if (props.size === 'sm') {
-    classParts.push('text-sm leading-5')
-  } else if (props.size === 'xs') {
-    classParts.push('text-xs leading-4')
+const paddingClasses = computed(() => {
+  switch (props.size) {
+    case 'xs':
+      return 'px-1'
+    case 'sm':
+      return 'px-2'
+    case 'lg':
+      return 'px-4'
+    case 'xl':
+      return 'px-5'
+    default:
+    case 'base':
+      return 'px-3'
   }
-
-  // padding
-  if (!props.link && !props.text) {
-    switch (props.size) {
-      case 'xs':
-        classParts.push('px-2 py-1')
-        break
-      case 'sm':
-        classParts.push('p-2')
-        break
-      case 'xl':
-        classParts.push('px-5 py-4')
-        break
-      case 'lg':
-        classParts.push('px-4 py-3')
-        break
-      case 'base':
-      default:
-        classParts.push('px-3 py-2')
-        break
-    }
-  }
-
-  return classParts.join(' ')
 })
 
 const generalClasses = computed(() => {
@@ -325,7 +323,7 @@ const generalClasses = computed(() => {
 const decoratorClasses = computed(() => {
   const classParts: string[] = []
   if (!props.disabled && !props.link && !props.text) {
-    classParts.push('active:scale-[0.95]')
+    classParts.push('active:scale-[0.97]')
   }
 
   if (!props.disabled && props.link) {
@@ -347,6 +345,7 @@ const buttonClasses = computed(() => {
     isLinkOrText ? '' : bgAndBorderClasses.value,
     isLinkOrText ? '' : roundedClasses.value,
     isLinkOrText ? '' : ringClasses.value,
+    props.link ? '' : paddingClasses.value,
     decoratorClasses.value
   ].join(' ')
 })
@@ -387,3 +386,8 @@ const onClick = (e: MouseEvent) => {
   emit('click', e)
 }
 </script>
+<style scoped>
+.icon-slot:empty {
+  display: none;
+}
+</style>

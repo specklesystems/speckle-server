@@ -6,7 +6,9 @@ export const projectsDashboardQuery = graphql(`
       id
       projects {
         totalCount
-        ...ProjectsDashboardFilled
+        items {
+          ...ProjectDashboardItem
+        }
       }
     }
   }
@@ -30,6 +32,28 @@ export const latestModelsQuery = graphql(`
         items {
           ...ProjectPageLatestItemsModelItem
         }
+      }
+    }
+  }
+`)
+
+export const projectModelsTreeTopLevelQuery = graphql(`
+  query ProjectModelsTreeTopLevel($projectId: String!) {
+    project(id: $projectId) {
+      id
+      modelsTree {
+        ...SingleLevelModelTreeItem
+      }
+    }
+  }
+`)
+
+export const projectModelChildrenTreeQuery = graphql(`
+  query ProjectModelChildrenTree($projectId: String!, $parentName: String!) {
+    project(id: $projectId) {
+      id
+      modelChildrenTree(fullName: $parentName) {
+        ...SingleLevelModelTreeItem
       }
     }
   }
