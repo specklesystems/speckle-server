@@ -1,11 +1,9 @@
 <template>
   <div class="absolute top-0 left-0 w-screen h-screen">
     <!-- Viewer host element -->
-    <div
-      id="rendererparentddd"
-      ref="rendererparent"
-      class="absolute w-full h-full"
-    ></div>
+    <div class="special-gradient absolute w-screen h-screen">
+      <ViewerBase />
+    </div>
 
     <!-- Nav -->
     <Portal to="navigation">
@@ -43,6 +41,7 @@
         >
           <ChatBubbleOvalLeftIcon class="w-5 h-5" />
         </div>
+        <!-- TODO: the old viewer controls -->
         <div
           class="bg-foundation rounded-full w-10 py-4 flex items-center justify-center shadow-md"
         >
@@ -71,21 +70,24 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
 import {
-  ChatBubbleLeftIcon,
   ChatBubbleOvalLeftIcon,
   CubeIcon,
   Square3Stack3DIcon
 } from '@heroicons/vue/24/outline'
-import { Viewer } from '@speckle/viewer'
+
 import { ViewerModelResource, parseUrlParameters } from '~~/lib/viewer/helpers'
 
 import { setupViewer } from '~~/lib/viewer/composables/viewer'
+
+if (process.client) {
+  const { viewer } = setupViewer()
+  provide('viewer', viewer)
+}
 
 const route = useRoute()
 const resources = ref(parseUrlParameters(route.params.modelId as string))
 
 const updateResourceVersion = (resourceId: string, resourceVersion: string) => {
-  //TODO
   const resource = resources.value.find(
     (r) => (r as ViewerModelResource).modelId === resourceId
   ) as ViewerModelResource
@@ -94,36 +96,7 @@ const updateResourceVersion = (resourceId: string, resourceVersion: string) => {
 
 provide('resources', { resources, updateResourceVersion })
 
-const rendererparent = ref<HTMLElement>()
-
 const showSidebar = ref(true)
-
-let viewer: Viewer, container: HTMLElement, isInitializedPromise: Promise<boolean>
-
-if (process.client) {
-  const { viewer: v, container: c, isInitializedPromise: p } = setupViewer()
-  viewer = v
-  container = c
-  isInitializedPromise = p
-  provide('viewer', viewer)
-}
-
-onMounted(async () => {
-  if (process.client) {
-    await isInitializedPromise
-    container.style.display = 'block'
-    rendererparent.value?.appendChild(container)
-
-    viewer.resize()
-    viewer.cameraHandler.onWindowResize()
-  }
-})
-
-onBeforeUnmount(async () => {
-  await viewer.unloadAll()
-  container.style.display = 'none'
-  document.body.appendChild(container)
-})
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -140,7 +113,7 @@ const project = computed(() => result.value?.project)
 
 definePageMeta({
   middleware: ['require-valid-project'],
-  pageTransition: false, // NOTE: fucks viewer up
+  pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false
 })
 </script>

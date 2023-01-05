@@ -20,8 +20,12 @@
           class="w-4 h-4 text-foreground-2 mx-2"
         />
         <!-- Name -->
-        <div class="flex flex-col justify-start">
+        <div class="flex justify-start space-x-2 items-center">
           <span class="text-lg font-bold text-foreground">{{ name }}</span>
+          <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
+            <!-- TODO: copy model link -->
+            <LinkIcon class="w-3 h-3" />
+          </span>
         </div>
         <!-- Empty model action -->
         <div
@@ -110,7 +114,7 @@
           {{ name }}
         </div>
         <!-- Preview -->
-        <div class="flex items-center">
+        <div class="flex items-center space-x-4">
           <!-- Commented out so that we need to load less data, can be added back -->
           <!-- <div
             v-for="(child, index) in item.children"
@@ -123,6 +127,19 @@
               {{ child?.name }}
             </div>
           </div> -->
+          <div class="text-xs text-foreground-2">
+            updated
+            <b>{{ updatedAt }}</b>
+          </div>
+          <div class="text-xs text-foreground-2">
+            <!-- TODO: 
+            Open all child models in one viewer page. 
+            Fabs will hate me as we might need to go back to "getting everything", or hacking away a 
+            request for all the kids -->
+            <FormButton rounded size="xs" :icon-right="ArrowTopRightOnSquareIcon">
+              View All
+            </FormButton>
+          </div>
           <div :class="`ml-4 w-24 h-20`">
             <div
               class="w-full h-full rounded-md bg-primary-muted flex items-center justify-center"
@@ -159,7 +176,9 @@ import {
   CubeTransparentIcon,
   PlusIcon,
   ArrowPathRoundedSquareIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  ArrowTopRightOnSquareIcon,
+  LinkIcon
 } from '@heroicons/vue/24/solid'
 import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -229,7 +248,9 @@ const model = computed(() => props.item.model)
 const hasChildren = computed(() => props.item.hasChildren)
 
 const updatedAt = computed(() =>
-  dayjs(props.item.model ? props.item.model?.updatedAt : dayjs()).from(dayjs())
+  dayjs(props.item.model ? props.item.model?.updatedAt : props.item.updatedAt).from(
+    dayjs()
+  )
 )
 
 const modelLink = computed(() => {

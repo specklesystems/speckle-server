@@ -8,8 +8,9 @@ import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 let viewer: Viewer, container: HTMLElement, isInitializedPromise: Promise<boolean>
 const rendererparent = ref<HTMLElement>()
 
+const { viewer: v, container: c, isInitializedPromise: p } = useInjectedViewer()
+
 if (process.client) {
-  const { viewer: v, container: c, isInitializedPromise: p } = useInjectedViewer()
   viewer = v
   container = c
   isInitializedPromise = p
