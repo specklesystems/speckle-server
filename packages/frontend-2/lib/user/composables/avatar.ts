@@ -1,42 +1,54 @@
 import { ToRefs } from 'vue'
+import {
+  ActiveUserAvatarFragment,
+  LimitedUserAvatarFragment
+} from '~~/lib/common/generated/gql/graphql'
 
-export type AvatarSize = '32' | '24' | '20'
+export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+export type AvatarUserType = LimitedUserAvatarFragment | ActiveUserAvatarFragment
 
-export function useUserAvatarInternalsparams(params: {
+export function useAvatarSizeClasses(params: {
   props: ToRefs<{
-    size?: AvatarSize
-    noBorder?: boolean
+    size?: UserAvatarSize
   }>
 }) {
   const { props } = params
 
-  const sizeBorderClasses = computed(() => {
-    const classParts: string[] = []
-
-    const size = props.size?.value || 'sm'
-    const noBorder = props.noBorder?.value
-
+  const heightClasses = computed(() => {
+    const size = props.size?.value
     switch (size) {
-      case '20':
-        classParts.push('h-5 w-5')
-        // if (!noBorder) classParts.push('border border-primary-muted')
-        break
-      case '24':
-        classParts.push('h-6 w-6')
-        // if (!noBorder) classParts.push('border border-primary-muted')
-        break
-      case '32':
-        classParts.push('h-8 w-8')
-        // if (!noBorder) classParts.push('border-2 border-primary-muted')
-        break
+      case 'xs':
+        return 'h-5'
+      case 'sm':
+        return 'h-6'
+      case 'lg':
+        return 'h-10'
+      case 'xl':
+        return 'h-14'
+      case 'base':
       default:
-        classParts.push('h-10 w-10')
-        // if (!noBorder) classParts.push('border-2 border-primary-muted')
-        break
+        return 'h-8'
     }
-
-    return classParts.join(' ')
   })
 
-  return { sizeBorderClasses }
+  const widthClasses = computed(() => {
+    const size = props.size?.value
+    switch (size) {
+      case 'xs':
+        return 'w-5'
+      case 'sm':
+        return 'w-6'
+      case 'lg':
+        return 'w-10'
+      case 'xl':
+        return 'w-14'
+      case 'base':
+      default:
+        return 'w-8'
+    }
+  })
+
+  const sizeClasses = computed(() => `${widthClasses.value} ${heightClasses.value}`)
+
+  return { heightClasses, widthClasses, sizeClasses }
 }

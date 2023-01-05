@@ -26,11 +26,33 @@
 </template>
 <script setup lang="ts">
 import { UserCircleIcon } from '@heroicons/vue/24/solid'
+import { graphql } from '~~/lib/common/generated/gql'
+import {
+  AvatarUserType,
+  UserAvatarSize,
+  useAvatarSizeClasses
+} from '~~/lib/user/composables/avatar'
+
+graphql(`
+  fragment LimitedUserAvatar on LimitedUser {
+    id
+    name
+    avatar
+  }
+`)
+
+graphql(`
+  fragment ActiveUserAvatar on User {
+    id
+    name
+    avatar
+  }
+`)
 
 const props = withDefaults(
   defineProps<{
-    user?: { id: string; name: string; avatar?: string | null | undefined } // wtf mr. avatar
-    size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+    user?: AvatarUserType | null
+    size?: UserAvatarSize
     hoverEffect?: boolean
   }>(),
   {
@@ -40,26 +62,12 @@ const props = withDefaults(
   }
 )
 
-const initials = computed(() => {
-  if (!props.user) return
-  const parts = props.user?.name.split(' ')
-  return parts[0][0] + parts[1][0] || ''
-})
+const { sizeClasses } = useAvatarSizeClasses({ props: toRefs(props) })
 
-const sizeClasses = computed(() => {
-  switch (props.size) {
-    case 'xs':
-      return 'h-5 w-5'
-    case 'sm':
-      return 'h-6 w-6'
-    case 'lg':
-      return 'h-10 w-10'
-    case 'xl':
-      return 'h-14 w-14'
-    case 'base':
-    default:
-      return 'h-8 w-8'
-  }
+const initials = computed(() => {
+  if (!props.user?.name.length) return
+  const parts = props.user.name.split(' ')
+  return parts[0][0] + (parts[1]?.[0] || '')
 })
 
 const hoverClasses = computed(() => {
@@ -67,6 +75,4 @@ const hoverClasses = computed(() => {
     return 'hover:border-primary focus:border-primary active:scale-95'
   return ''
 })
-
-// const { sizeBorderClasses } = useUserAvatarInternalsparams({ props: toRefs(props) })
 </script>

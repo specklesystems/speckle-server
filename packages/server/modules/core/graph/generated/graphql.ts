@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, ProjectGraphQLReturn, ModelGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, ProjectGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
@@ -489,6 +489,8 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  /** Return a model tree of children */
+  childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
@@ -513,16 +515,20 @@ export type ModelCollection = {
   totalCount: Scalars['Int'];
 };
 
-export type ModelMutations = {
-  __typename?: 'ModelMutations';
-  create: Scalars['String'];
-};
-
-
-export type ModelMutationsCreateArgs = {
-  modelDescription?: InputMaybe<Scalars['String']>;
-  modelName: Scalars['String'];
-  projectId: Scalars['String'];
+export type ModelsTreeItem = {
+  __typename?: 'ModelsTreeItem';
+  children: Array<ModelsTreeItem>;
+  fullName: Scalars['String'];
+  /** Whether or not this item has nested children models */
+  hasChildren: Scalars['Boolean'];
+  /**
+   * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
+   * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
+   * even if "foo" doesn't exist as its own model.
+   */
+  model?: Maybe<Model>;
+  name: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
 };
 
 export type Mutation = {
@@ -982,9 +988,18 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  /** Returns a specific model */
   model?: Maybe<Model>;
+  /** Return a model tree of children for the specified model name */
+  modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
+  /** Returns a flat list of all models */
   models?: Maybe<ModelCollection>;
+  /**
+   * Return's a project's models in a tree view with submodels being nested under parent models
+   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   */
+  modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
@@ -1005,7 +1020,12 @@ export type ProjectCommentThreadsArgs = {
 
 
 export type ProjectModelArgs = {
-  id?: InputMaybe<Scalars['String']>;
+  id: Scalars['String'];
+};
+
+
+export type ProjectModelChildrenTreeArgs = {
+  fullName: Scalars['String'];
 };
 
 
@@ -1717,7 +1737,7 @@ export type User = {
   id: Scalars['ID'];
   /** Whether post-sign up onboarding has been finished or skipped entirely */
   isOnboardingFinished?: Maybe<Scalars['Boolean']>;
-  name?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
   /** Get projects that the user participates in */
@@ -1824,10 +1844,7 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  authorAvatar?: Maybe<Scalars['String']>;
-  authorId?: Maybe<Scalars['String']>;
-  authorName?: Maybe<Scalars['String']>;
-  createdAt?: Maybe<Scalars['DateTime']>;
+  author: LimitedUser;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
@@ -2019,7 +2036,7 @@ export type ResolversTypes = {
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
-  ModelMutations: ResolverTypeWrapper<ModelMutations>;
+  ModelsTreeItem: ResolverTypeWrapper<ModelsTreeItemGraphQLReturn>;
   Mutation: ResolverTypeWrapper<{}>;
   Object: ResolverTypeWrapper<Object>;
   ObjectCollection: ResolverTypeWrapper<ObjectCollection>;
@@ -2068,8 +2085,8 @@ export type ResolversTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>> }>;
   UserUpdateInput: UserUpdateInput;
-  Version: ResolverTypeWrapper<Version>;
-  VersionCollection: ResolverTypeWrapper<VersionCollection>;
+  Version: ResolverTypeWrapper<Omit<Version, 'author'> & { author: ResolversTypes['LimitedUser'] }>;
+  VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -2126,7 +2143,7 @@ export type ResolversParentTypes = {
   LimitedUser: LimitedUserGraphQLReturn;
   Model: ModelGraphQLReturn;
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
-  ModelMutations: ModelMutations;
+  ModelsTreeItem: ModelsTreeItemGraphQLReturn;
   Mutation: {};
   Object: Object;
   ObjectCollection: ObjectCollection;
@@ -2171,8 +2188,8 @@ export type ResolversParentTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['LimitedUser']>>> };
   UserUpdateInput: UserUpdateInput;
-  Version: Version;
-  VersionCollection: VersionCollection;
+  Version: Omit<Version, 'author'> & { author: ResolversParentTypes['LimitedUser'] };
+  VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -2445,6 +2462,7 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2464,8 +2482,13 @@ export type ModelCollectionResolvers<ContextType = GraphQLContext, ParentType ex
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type ModelMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelMutations'] = ResolversParentTypes['ModelMutations']> = {
-  create?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<ModelMutationsCreateArgs, 'modelName' | 'projectId'>>;
+export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelsTreeItem'] = ResolversParentTypes['ModelsTreeItem']> = {
+  children?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2577,9 +2600,11 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, Partial<ProjectModelArgs>>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
+  modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   modelCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   models?: Resolver<Maybe<ResolversTypes['ModelCollection']>, ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
+  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2828,7 +2853,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<UserProjectsArgs, 'limit'>>;
@@ -2847,10 +2872,7 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
-  authorAvatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  authorId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2927,7 +2949,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   LimitedUser?: LimitedUserResolvers<ContextType>;
   Model?: ModelResolvers<ContextType>;
   ModelCollection?: ModelCollectionResolvers<ContextType>;
-  ModelMutations?: ModelMutationsResolvers<ContextType>;
+  ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;

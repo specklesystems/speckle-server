@@ -1,5 +1,4 @@
 <template>
-  <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
     class="rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
     @focusin="hovered = true"
@@ -7,9 +6,13 @@
     @mouseenter="hovered = true"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
   >
-    <NuxtLink :to="`/projects/${projectId}/models/${model.id}`">
+    <!--
+      Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
+      TODO: Report it to Vue/Nuxt!
+    -->
+    <NuxtLink :href="modelRoute(projectId, model.id)">
       <div :class="`${height} flex items-center justify-center`">
-        <ProjectPageModelsModelPreview v-if="model.versionCount !== 0" :model="model" />
+        <ProjectPageModelsPreview v-if="model.versionCount !== 0" :model="model" />
         <div v-else class="h-full w-full p-4">
           <div
             class="rounded-xl p-4 flex items-center h-full w-full border-dashed border-2 border-blue-500/10 text-foreground-2 text-xs text-center"
@@ -44,7 +47,7 @@
           rounded
           size="xs"
           :icon-left="ArrowPathRoundedSquareIcon"
-          :to="`/projects/${projectId}/models/${model.id}/versions`"
+          :to="modelVersionsRoute(projectId, model.id)"
           :class="`opacity-0 ${hovered ? 'opacity-100' : ''}`"
           :disabled="model.versionCount === 0"
         >
@@ -52,12 +55,7 @@
         </FormButton>
         <div v-if="showActions">
           <!-- TODO with proper disclosure menu or whatever -->
-          <FormButton
-            size="sm"
-            text
-            to="#"
-            @click.stop="showActionsMenu = !showActionsMenu"
-          >
+          <FormButton size="sm" text @click.stop="showActionsMenu = !showActionsMenu">
             <EllipsisVerticalIcon class="w-4 h-4" />
           </FormButton>
         </div>
@@ -75,15 +73,16 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { Model } from '~~/lib/common/generated/gql/graphql'
+import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   ArrowPathRoundedSquareIcon,
   EllipsisVerticalIcon
 } from '@heroicons/vue/24/solid'
+import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
 const props = withDefaults(
   defineProps<{
-    model: Model
+    model: ProjectPageLatestItemsModelItemFragment
     projectId: string
     showVersions?: boolean
     showActions?: boolean

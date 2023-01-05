@@ -19,22 +19,18 @@
           class="ml-2 w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
-      <ClientOnly>
-        <Portal to="navigation">
-          <HeaderNavLink
-            :to="`/projects/${project.id}`"
-            :name="project.name"
-          ></HeaderNavLink>
-        </Portal>
-      </ClientOnly>
+      <Portal to="navigation">
+        <HeaderNavLink
+          :to="projectRoute(project.id)"
+          :name="project.name"
+        ></HeaderNavLink>
+      </Portal>
       <div class="flex items-center space-x-2">
-        <ClientOnly>
-          <Portal to="primary-actions">
-            <div class="flex space-x-4">
-              <FormButton :icon-left="ShareIcon">Share</FormButton>
-            </div>
-          </Portal>
-        </ClientOnly>
+        <Portal to="primary-actions">
+          <div class="flex space-x-4">
+            <FormButton :icon-left="ShareIcon">Share</FormButton>
+          </div>
+        </Portal>
       </div>
     </div>
     <div class="mt-3 flex items-center space-x-2">
@@ -55,15 +51,10 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  EllipsisVerticalIcon,
-  ShareIcon,
-  CloudArrowUpIcon,
-  PencilIcon
-} from '@heroicons/vue/20/solid'
-
+import { ShareIcon, PencilIcon } from '@heroicons/vue/20/solid'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { ProjectPageProjectHeaderFragment } from '~~/lib/common/generated/gql/graphql'
+import { projectRoute } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageProjectHeader on Project {

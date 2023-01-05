@@ -13,7 +13,7 @@
     </template>
     <template #bottom>
       <div class="flex items-center justify-between mt-2">
-        <UserAvatarGroup :users="project.team" :max-count="3" />
+        <UserAvatarGroup :users="project.team" class="max-w-[104px]" />
         <div>
           <FormButton class="ml-2">
             {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}

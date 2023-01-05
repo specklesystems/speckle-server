@@ -45,43 +45,23 @@ export const latestModelsQuery = graphql(`
   }
 `)
 
-// This does feel rather stupid :D
-export const structuredModelsQuery = graphql(`
-  query ProjectStructuredModels($projectId: String!) {
+export const projectModelsTreeTopLevelQuery = graphql(`
+  query ProjectModelsTreeTopLevel($projectId: String!) {
     project(id: $projectId) {
       id
-      name
-      structuredModels {
-        structure {
-          ...StructuredModelFragment
-          children {
-            ...StructuredModelFragment
-            children {
-              ...StructuredModelFragment
-              children {
-                ...StructuredModelFragment
-                children {
-                  ...StructuredModelFragment
-                  children {
-                    ...StructuredModelFragment
-                    children {
-                      ...StructuredModelFragment
-                      children {
-                        ...StructuredModelFragment
-                        children {
-                          ...StructuredModelFragment
-                          children {
-                            ...StructuredModelFragment
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+      modelsTree {
+        ...SingleLevelModelTreeItem
+      }
+    }
+  }
+`)
+
+export const projectModelChildrenTreeQuery = graphql(`
+  query ProjectModelChildrenTree($projectId: String!, $parentName: String!) {
+    project(id: $projectId) {
+      id
+      modelChildrenTree(fullName: $parentName) {
+        ...SingleLevelModelTreeItem
       }
     }
   }

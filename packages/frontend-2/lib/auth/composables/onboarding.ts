@@ -53,8 +53,8 @@ export function useProcessOnboarding() {
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (data?.activeUserMutations.finishOnboarding && goToDashboard) {
-      goHome()
+    if (data?.activeUserMutations.finishOnboarding) {
+      if (goToDashboard) goHome()
     } else {
       const errMsg = getFirstErrorMessage(errors)
       triggerNotification({

@@ -1,26 +1,36 @@
 <template>
   <NuxtLink :to="projectRoute(project.id)">
     <div
-      class="group flex flex-col md:flex-row border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition"
+      class="group border-2 border-primary-muted hover:bg-primary-muted rounded-xl p-4 transition"
     >
-      <div class="w-full md:w-1/5 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0">
-        <div class="text-2xl font-bold group-hover:text-primary transition">
-          <NuxtLink :to="projectRoute(project.id)">{{ project.name }}</NuxtLink>
-          <UserAvatarGroup :users="project.team" :max-count="2" />
+      <div class="w-full mb-4 flex flex-col md:flex-row py-2 items-center">
+        <div class="w-full md:w-auto mb-4 md:mb-0">
+          <div class="text-2xl font-bold group-hover:text-primary transition mb-2">
+            {{ project.name }}
+          </div>
+
+          <UserAvatarGroup :users="project.team" :max-count="3" />
         </div>
-        <div class="flex-grow"></div>
-        <div class="text-xs text-foreground-2 flex items-center">
-          <UserCircleIcon class="w-4 h-4 mr-1" />
-          {{ project.role?.split(':').reverse()[0] }}
-        </div>
-        <div class="text-xs text-foreground-2 flex items-center">
-          <ClockIcon class="w-4 h-4 mr-1" />
-          updated&nbsp;
-          <b>{{ updatedAt }}</b>
+        <div class="hidden md:block flex-grow"></div>
+        <div class="w-full md:w-auto">
+          <div
+            class="text-right text-xs text-foreground-2 flex items-center justify-start md:justify-end"
+          >
+            updated&nbsp;
+            <b>{{ updatedAt }}</b>
+            <ClockIcon class="w-4 h-4 ml-1" />
+          </div>
+          <div
+            class="text-right text-xs text-foreground-2 flex items-center justify-start md:justify-end"
+          >
+            {{ project.role?.split(':').reverse()[0] }}
+            <UserCircleIcon class="w-4 h-4 ml-1" />
+          </div>
         </div>
       </div>
+
       <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 flex-grow col-span-4 lg:col-span-3"
       >
         <ProjectPageModelsCard
           v-for="model in slicedModels"
@@ -29,14 +39,14 @@
           :project-id="project.id"
           :show-versions="false"
           :show-actions="false"
-          height="h-52"
         />
+
         <div
           v-if="fullModels.length === 0"
-          class="h-36 flex items-center col-span-4 py-4"
+          class="h-24 flex items-center col-span-4 py-4"
         >
           <div
-            class="w-full h-full border-dashed border-2 border-outline-2 rounded-md p-10 flex items-center justify-center"
+            class="w-full h-full border-dashed border-2 border-blue-500/30 rounded-md p-10 flex items-center justify-center"
           >
             <span class="text-sm text-foreground-2">
               Use our
@@ -50,6 +60,10 @@
   </NuxtLink>
 </template>
 <script lang="ts" setup>
+/**
+ * TODO: Delete if unused
+ */
+
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'

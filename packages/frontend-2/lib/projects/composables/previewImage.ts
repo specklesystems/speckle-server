@@ -8,7 +8,7 @@ import { useTheme } from '~~/lib/core/composables/theme'
  * NOTE: Returns null during SSR, so make sure you wrap any components that render the image
  * in <ClientOnly> to prevent hydration errors
  */
-export function usePreviewImageBlob(previewUrl: MaybeRef<string>) {
+export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefined>) {
   const authToken = useAuthCookie()
   const url = ref(null as Nullable<string>)
 
@@ -17,6 +17,11 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string>) {
       () => unref(previewUrl),
       async (basePreviewUrl) => {
         try {
+          if (!basePreviewUrl) {
+            url.value = null
+            return
+          }
+
           const res = await fetch(basePreviewUrl, {
             headers: authToken.value
               ? { Authorization: `Bearer ${authToken.value}` }
@@ -31,8 +36,8 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string>) {
           const blobUrl = URL.createObjectURL(blob)
           url.value = blobUrl
         } catch (e) {
-          console.error(e)
-          url.value = basePreviewUrl
+          console.error('Preview image load error', e)
+          url.value = basePreviewUrl || null
         }
       },
       { immediate: true }

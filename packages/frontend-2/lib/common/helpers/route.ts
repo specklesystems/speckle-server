@@ -7,6 +7,10 @@ export const forgottenPasswordRoute = '/auth/forgotten-password'
 export const onboardingRoute = '/tour'
 export const downloadManagerRoute = '/download-manager'
 export const projectRoute = (id: string) => `/projects/${id}`
+export const modelRoute = (projectId: string, modelId: string) =>
+  `/projects/${projectId}/models/${modelId}`
+export const modelVersionsRoute = (projectId: string, modelId: string) =>
+  `/projects/${projectId}/models/${modelId}/versions`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

@@ -10,13 +10,15 @@ const config: CodegenConfig = {
       config: {
         useTypeImports: true,
         fragmentMasking: false,
+        dedupeFragments: true,
         scalars: {
           JSONObject: 'Record<string, unknown>',
           DateTime: 'string'
         }
       },
       presetConfig: {
-        fragmentMasking: false
+        fragmentMasking: false,
+        dedupeFragments: true
       },
       plugins: []
     }

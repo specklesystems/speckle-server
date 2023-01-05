@@ -10,13 +10,14 @@
 </template>
 <script setup lang="ts">
 import { Viewer } from '@speckle/viewer'
-import { setupCommitObjectViewer } from '~~/lib/viewer/composables/viewer'
+
+import { setupViewer } from '~~/lib/viewer/composables/viewer'
 const rendererparent = ref<HTMLElement>()
 
 let viewer: Viewer, container: HTMLElement, isInitializedPromise: Promise<boolean>
 
 if (process.client) {
-  const { viewer: v, container: c, isInitializedPromise: p } = setupCommitObjectViewer()
+  const { viewer: v, container: c, isInitializedPromise: p } = setupViewer()
   viewer = v
   container = c
   isInitializedPromise = p

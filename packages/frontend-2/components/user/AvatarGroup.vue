@@ -1,47 +1,64 @@
 <template>
-  <div :class="`flex ${overlap ? '-space-x-2' : ''}`">
-    <UserAvatar v-for="user in displayUsers" :key="user.id" :user="user" :size="size" />
-    <UserAvatar v-if="!canShowAll" :size="size">
-      +{{ notDisplayedUsersCount }}
+  <div ref="elementToWatchForChanges" :class="`flex ${overlap ? '-space-x-2' : ''}`">
+    <div
+      ref="itemContainer"
+      :class="`flex flex-wrap overflow-hidden ${
+        overlap ? '-space-x-2 ' : ''
+      } ${heightClasses}`"
+    >
+      <UserAvatar v-for="user in items" :key="user.id" :user="user" :size="size" />
+    </div>
+    <UserAvatar v-if="finalHiddenItemCount" :size="size">
+      +{{ finalHiddenItemCount }}
     </UserAvatar>
   </div>
 </template>
 <script setup lang="ts">
-type SimpleUser = {
-  id: string
-  avatar: string
-  name: string
-}
+import { Nullable } from '@speckle/shared'
+import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resize'
+import {
+  AvatarUserType,
+  UserAvatarSize,
+  useAvatarSizeClasses
+} from '~~/lib/user/composables/avatar'
 
 const props = withDefaults(
   defineProps<{
-    users: SimpleUser[]
+    users: AvatarUserType[]
     overlap?: boolean
+    size?: UserAvatarSize
     maxCount?: number
-    size?: 'xs' | 'sm' | 'base' | 'lg' | 'xl'
   }>(),
   {
-    users: () => new Array<SimpleUser>(),
+    users: () => [],
     overlap: true,
-    maxCount: 3,
-    size: 'base'
+    size: 'base',
+    maxCount: undefined
   }
 )
 
-const canShowAll = computed(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-plus-operands
-  return props.users.length <= props.maxCount + 1
+const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
+const itemContainer = ref(null as Nullable<HTMLElement>)
+
+const { hiddenItemCount } = useWrappingContainerHiddenCount({
+  elementToWatchForChanges,
+  itemContainer,
+  trackResize: true,
+  trackMutations: true
 })
 
-const displayUsers = computed(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  if (canShowAll.value) return props.users
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-  return props.users.slice(0, props.maxCount)
+const { heightClasses } = useAvatarSizeClasses({ props: toRefs(props) })
+
+const maxCountHiddenItemCount = computed(() => {
+  if (!props.maxCount) return 0
+  return Math.max(props.users.length - props.maxCount, 0)
 })
 
-const notDisplayedUsersCount = computed(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  return props.users.length - props.maxCount
-})
+const finalHiddenItemCount = computed(
+  () => hiddenItemCount.value + maxCountHiddenItemCount.value
+)
+
+const items = computed(() =>
+  props.maxCount ? props.users.slice(0, props.maxCount) : props.users
+)
 </script>

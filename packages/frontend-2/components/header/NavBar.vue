@@ -11,24 +11,24 @@
             <HeaderLogoBlock :active="false" class="mr-4" />
             <div class="hidden sm:flex flex-shrink-0 items-center">
               <HeaderNavLink to="/" name="Dashboard" :separator="false"></HeaderNavLink>
-              <div id="navigation"></div>
-              <ClientOnly>
-                <PortalTarget name="navigation"></PortalTarget>
-              </ClientOnly>
+              <PortalTarget name="navigation"></PortalTarget>
             </div>
           </div>
           <div class="hidden sm:flex sm:items-center items-center">
             <div class="flex items-center">
-              <ClientOnly>
-                <PortalTarget name="secondary-actions"></PortalTarget>
-                <PortalTarget name="primary-actions"></PortalTarget>
-              </ClientOnly>
+              <PortalTarget name="secondary-actions"></PortalTarget>
+              <PortalTarget name="primary-actions"></PortalTarget>
 
               <!-- Profile dropdown -->
               <Menu as="div" class="ml-2 flex items-center">
-                <MenuButton v-slot="{ open }">
+                <MenuButton v-slot="{ open: userOpen }">
                   <span class="sr-only">Open user menu</span>
-                  <UserAvatar v-if="!open" size="lg" :user="activeUser" hover-effect />
+                  <UserAvatar
+                    v-if="!userOpen"
+                    size="lg"
+                    :user="activeUser"
+                    hover-effect
+                  />
                   <UserAvatar v-else size="lg" hover-effect>
                     <XMarkIcon class="w-5 h-5" />
                   </UserAvatar>
@@ -52,7 +52,6 @@
                         ]"
                       >
                         My Profile
-                        <!-- <UserCircleIcon class="w-5 h-5 mr-2" /> -->
                         <UserAvatar :user="activeUser" size="base" />
                       </NuxtLink>
                     </MenuItem>
@@ -95,16 +94,6 @@
                     <MenuItem>
                       <AuthVerificationReminderMenuNotice />
                     </MenuItem>
-                    <!-- <MenuItem>
-                    <div class="p-2 rounded-md space-y-2">
-                      <div
-                        class="text-sm bg-warning text-warning-darker px-2 py-2 rounded-md"
-                      >
-                        Email not verified.
-                        <a class="font font-bold">Resend verification email?</a>
-                      </div>
-                    </div>
-                  </MenuItem> -->
                   </MenuItems>
                 </Transition>
               </Menu>
@@ -125,7 +114,7 @@
 
       <DisclosurePanel class="sm:hidden" on-pointerleave="">
         <div class="border-t border-foundation-focus pt-4 pb-4">
-          <div class="flex items-center px-4">TODO</div>
+          <div class="flex items-center px-4">TODO: Missing mobile design</div>
         </div>
       </DisclosurePanel>
     </Disclosure>
@@ -144,7 +133,6 @@ import {
 import {
   Bars3Icon,
   XMarkIcon,
-  UserCircleIcon,
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
   SunIcon,
@@ -152,39 +140,11 @@ import {
 } from '@heroicons/vue/24/solid'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { loginRoute, registerRoute } from '~~/lib/common/helpers/route'
+import { loginRoute } from '~~/lib/common/helpers/route'
 import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
 
-type UserNavigationLink = {
-  name: string
-  href?: string
-  onClick?: () => void
-}
-
 const { logout } = useAuthManager()
-const { isLoggedIn, activeUser } = useActiveUser()
-
-const userNavigation = computed((): UserNavigationLink[] => [
-  ...(isLoggedIn.value
-    ? [
-        {
-          name: 'My Profile',
-          onClick: () => {}
-        },
-        {
-          name: 'Sign out',
-          onClick: logout
-        }
-      ]
-    : [
-        { name: 'Login', href: loginRoute },
-        { name: 'Register', href: registerRoute }
-      ])
-])
-
-const activeUserImageUrl = computed(() =>
-  activeUser.value ? `https://robohash.org/test.png?size=120x120` : null
-)
+const { activeUser } = useActiveUser()
 
 const { isDarkTheme, setTheme } = useTheme()
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
