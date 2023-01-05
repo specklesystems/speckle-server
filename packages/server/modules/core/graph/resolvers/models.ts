@@ -40,6 +40,16 @@ export = {
     },
     async childrenTree(parent) {
       return await getModelTreeItems(parent.streamId, parent.name)
+    },
+    async versions(parent, args, _ctx) {
+      const { commits, cursor } = await getCommitsByBranchId({
+        branchId: parent.id,
+        limit: args.limit,
+        cursor: args.cursor
+      })
+      const totalCount = await getCommitsTotalCountByBranchId({ branchId: parent.id })
+
+      return { items: commits, totalCount, cursor }
     }
   },
   ModelsTreeItem: {

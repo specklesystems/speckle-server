@@ -568,7 +568,6 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
-  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
   /** Various Project related mutations */
   projectMutations: ProjectMutations;
@@ -998,8 +997,6 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  /** Returns a tree of all the project's models and submodels. */
-  structuredModels?: Maybe<StructuredModelCollection>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
@@ -1567,19 +1564,6 @@ export type StreamUpdatePermissionInput = {
   userId: Scalars['String'];
 };
 
-export type StructuredModel = {
-  __typename?: 'StructuredModel';
-  children?: Maybe<Array<Maybe<StructuredModel>>>;
-  model?: Maybe<Model>;
-  name: Scalars['String'];
-};
-
-export type StructuredModelCollection = {
-  __typename?: 'StructuredModelCollection';
-  structure?: Maybe<StructuredModel>;
-  totalCount: Scalars['Int'];
-};
-
 export type Subscription = {
   __typename?: 'Subscription';
   /** It's lonely in the void. */
@@ -1837,7 +1821,10 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  author: LimitedUser;
+  authorAvatar?: Maybe<Scalars['String']>;
+  authorId?: Maybe<Scalars['String']>;
+  authorName?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];

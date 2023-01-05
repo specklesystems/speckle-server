@@ -575,7 +575,6 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
-  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
   /** Various Project related mutations */
   projectMutations: ProjectMutations;
@@ -1005,8 +1004,6 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  /** Returns a tree of all the project's models and submodels. */
-  structuredModels?: Maybe<StructuredModelCollection>;
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
@@ -1574,19 +1571,6 @@ export type StreamUpdatePermissionInput = {
   userId: Scalars['String'];
 };
 
-export type StructuredModel = {
-  __typename?: 'StructuredModel';
-  children?: Maybe<Array<Maybe<StructuredModel>>>;
-  model?: Maybe<Model>;
-  name: Scalars['String'];
-};
-
-export type StructuredModelCollection = {
-  __typename?: 'StructuredModelCollection';
-  structure?: Maybe<StructuredModel>;
-  totalCount: Scalars['Int'];
-};
-
 export type Subscription = {
   __typename?: 'Subscription';
   /** It's lonely in the void. */
@@ -1844,7 +1828,10 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  author: LimitedUser;
+  authorAvatar?: Maybe<Scalars['String']>;
+  authorId?: Maybe<Scalars['String']>;
+  authorName?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
@@ -2076,8 +2063,6 @@ export type ResolversTypes = {
   StreamUpdateInput: StreamUpdateInput;
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
-  StructuredModel: ResolverTypeWrapper<Omit<StructuredModel, 'children' | 'model'> & { children?: Maybe<Array<Maybe<ResolversTypes['StructuredModel']>>>, model?: Maybe<ResolversTypes['Model']> }>;
-  StructuredModelCollection: ResolverTypeWrapper<Omit<StructuredModelCollection, 'structure'> & { structure?: Maybe<ResolversTypes['StructuredModel']> }>;
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
@@ -2085,8 +2070,8 @@ export type ResolversTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>> }>;
   UserUpdateInput: UserUpdateInput;
-  Version: ResolverTypeWrapper<Omit<Version, 'author'> & { author: ResolversTypes['LimitedUser'] }>;
-  VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
+  Version: ResolverTypeWrapper<Version>;
+  VersionCollection: ResolverTypeWrapper<VersionCollection>;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -2179,8 +2164,6 @@ export type ResolversParentTypes = {
   StreamUpdateInput: StreamUpdateInput;
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
-  StructuredModel: Omit<StructuredModel, 'children' | 'model'> & { children?: Maybe<Array<Maybe<ResolversParentTypes['StructuredModel']>>>, model?: Maybe<ResolversParentTypes['Model']> };
-  StructuredModelCollection: Omit<StructuredModelCollection, 'structure'> & { structure?: Maybe<ResolversParentTypes['StructuredModel']> };
   Subscription: {};
   TestItem: TestItem;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
@@ -2188,8 +2171,8 @@ export type ResolversParentTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['LimitedUser']>>> };
   UserUpdateInput: UserUpdateInput;
-  Version: Omit<Version, 'author'> & { author: ResolversParentTypes['LimitedUser'] };
-  VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
+  Version: Version;
+  VersionCollection: VersionCollection;
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -2518,7 +2501,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
-  modelMutations?: Resolver<ResolversTypes['ModelMutations'], ParentType, ContextType>;
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2608,7 +2590,6 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  structuredModels?: Resolver<Maybe<ResolversTypes['StructuredModelCollection']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
@@ -2802,19 +2783,6 @@ export type StreamCollectionResolvers<ContextType = GraphQLContext, ParentType e
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type StructuredModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StructuredModel'] = ResolversParentTypes['StructuredModel']> = {
-  children?: Resolver<Maybe<Array<Maybe<ResolversTypes['StructuredModel']>>>, ParentType, ContextType>;
-  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type StructuredModelCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['StructuredModelCollection'] = ResolversParentTypes['StructuredModelCollection']> = {
-  structure?: Resolver<Maybe<ResolversTypes['StructuredModel']>, ParentType, ContextType>;
-  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
   _?: SubscriptionResolver<Maybe<ResolversTypes['String']>, "_", ParentType, ContextType>;
   branchCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "branchCreated", ParentType, ContextType, RequireFields<SubscriptionBranchCreatedArgs, 'streamId'>>;
@@ -2872,7 +2840,10 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
-  author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  authorAvatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2973,8 +2944,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   StreamAccessRequest?: StreamAccessRequestResolvers<ContextType>;
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
-  StructuredModel?: StructuredModelResolvers<ContextType>;
-  StructuredModelCollection?: StructuredModelCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   TestItem?: TestItemResolvers<ContextType>;
   User?: UserResolvers<ContextType>;

@@ -32,6 +32,7 @@ type Model {
   Return a model tree of children
   """
   childrenTree: [ModelsTreeItem!]!
+  versions(limit: Int! = 25, cursor: String): VersionCollection
 }
 
 type ModelCollection {
@@ -62,7 +63,11 @@ type Version {
   referencedObject: String!
   message: String
   sourceApplication: String
-  author: LimitedUser!
+  # author: LimitedUser!
+  authorId: String
+  authorName: String
+  authorAvatar: String
+  createdAt: DateTime!
 }
 
 type VersionCollection {
