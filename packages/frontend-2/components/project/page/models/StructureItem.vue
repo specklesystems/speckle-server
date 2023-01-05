@@ -74,11 +74,11 @@
           hasVersions ? 'hover:w-44 hover:h-44 transition-all' : ''
         }`"
       >
-        <ProjectPageModelsPreview
-          v-if="hasVersions && item.model"
-          :model="item.model"
-          class="rounded-md shadow bg-foundation-2"
+        <PreviewImage
+          v-if="hasVersions && item.model && item.model.previewUrl"
+          :preview-url="item.model.previewUrl"
         />
+
         <div
           v-if="itemType === StructureItemType.EmptyModel"
           class="w-full h-full rounded-md bg-primary-muted flex flex-col items-center justify-center"
@@ -210,6 +210,7 @@ const itemType = computed<StructureItemType>(() => {
     }
   }
 })
+
 const hasVersions = computed(() =>
   [
     StructureItemType.ModelWithOnlyVersions,

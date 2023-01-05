@@ -1,7 +1,11 @@
 <template>
   <div class="absolute top-0 left-0 w-screen h-screen">
     <!-- Viewer host element -->
-    <div id="rendererparent" ref="rendererparent"></div>
+    <div
+      id="rendererparentddd"
+      ref="rendererparent"
+      class="absolute w-full h-full"
+    ></div>
 
     <!-- Nav -->
     <Portal to="navigation">
@@ -69,14 +73,13 @@ import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
 import {
   ChatBubbleLeftIcon,
   ChatBubbleOvalLeftIcon,
-  QueueListIcon,
   CubeIcon,
   Square3Stack3DIcon
 } from '@heroicons/vue/24/outline'
 import { Viewer } from '@speckle/viewer'
-import { ModelResource, parseUrlParameters, ResourceType } from '~~/lib/viewer/helpers'
+import { ViewerModelResource, parseUrlParameters } from '~~/lib/viewer/helpers'
 
-import { useInjectedViewer, setupViewer } from '~~/lib/viewer/composables/viewer'
+import { setupViewer } from '~~/lib/viewer/composables/viewer'
 
 const route = useRoute()
 const resources = ref(parseUrlParameters(route.params.modelId as string))
@@ -84,18 +87,14 @@ const resources = ref(parseUrlParameters(route.params.modelId as string))
 const updateResourceVersion = (resourceId: string, resourceVersion: string) => {
   //TODO
   const resource = resources.value.find(
-    (r) => (r as ModelResource).modelId === resourceId
-  ) as ModelResource
+    (r) => (r as ViewerModelResource).modelId === resourceId
+  ) as ViewerModelResource
   resource.versionId = resourceVersion
 }
 
 provide('resources', { resources, updateResourceVersion })
 
 const rendererparent = ref<HTMLElement>()
-// const { $viewer, $viewerContainer } = useNuxtApp()
-
-// const viewer = (await $viewer) as Viewer
-// const container = $viewerContainer
 
 const showSidebar = ref(true)
 
@@ -124,7 +123,6 @@ onBeforeUnmount(async () => {
   await viewer.unloadAll()
   container.style.display = 'none'
   document.body.appendChild(container)
-  // rendererparent.value?.removeChild(container)
 })
 
 graphql(`
@@ -146,23 +144,3 @@ definePageMeta({
   layoutTransition: false
 })
 </script>
-<style>
-#rendererparent {
-  position: absolute;
-  display: block;
-  width: 100%;
-  height: 100vh;
-}
-
-#renderer {
-  position: absolute;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-}
-
-canvas {
-  width: 100vw;
-  height: 100vh;
-}
-</style>

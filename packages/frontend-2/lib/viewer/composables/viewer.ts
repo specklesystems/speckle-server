@@ -79,6 +79,8 @@ function getOrInitViewerData(): GlobalViewerData {
   const container = document.createElement('div')
   container.id = 'renderer'
   container.style.display = 'block'
+  container.style.width = '100%'
+  container.style.height = '100%'
 
   const viewer = new Viewer(container, DefaultViewerParams)
   const initPromise = viewer.init()

@@ -5,14 +5,10 @@
     >
       <div class="flex items-center space-x-2 flex-grow">
         <h2 class="h4 font-bold">Models</h2>
-        <FormButton size="sm" rounded>New</FormButton>
+        <!-- <FormButton size="sm" rounded>New</FormButton> -->
       </div>
       <div class="flex items-center space-x-2">
-        <div
-          class="flex items-center justify-center rounded-xl bg-foundation h-12 w-12 shadow mt-1"
-        >
-          <LayoutGridListToggle v-model="gridOrList" />
-        </div>
+        <FormButton :icon-left="PlusIcon">New</FormButton>
         <div class="w-60">
           <FormTextInput
             name="modelsearch"
@@ -21,6 +17,11 @@
             class="bg-foundation shadow"
             @update:model-value="test"
           ></FormTextInput>
+        </div>
+        <div
+          class="flex items-center justify-center rounded bg-foundation h-8 w-8 shadow"
+        >
+          <LayoutGridListToggle v-model="gridOrList" />
         </div>
       </div>
     </div>
@@ -41,7 +42,7 @@ import { ProjectPageModelsViewFragment } from '~~/lib/common/generated/gql/graph
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-
+import { PlusIcon } from '@heroicons/vue/24/solid'
 defineProps<{
   project: ProjectPageModelsViewFragment
 }>()

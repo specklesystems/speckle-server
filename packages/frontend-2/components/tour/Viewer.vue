@@ -1,6 +1,10 @@
 <template>
   <div>
-    <div ref="rendererparent" class="absolute h-screen w-screen special-gradient"></div>
+    <div
+      id="rendererparent"
+      ref="rendererparent"
+      class="absolute h-screen w-screen special-gradient"
+    ></div>
     <div
       class="absolute h-screen w-screen z-10 pointer-events-none flex items-center justify-center"
     >
@@ -25,13 +29,28 @@ if (process.client) {
 }
 
 onMounted(async () => {
-  await isInitializedPromise
-  rendererparent.value?.appendChild(container as HTMLElement)
-  viewer.resize()
-  viewer.cameraHandler.onWindowResize()
-  await viewer.loadObject(
-    'https://latest.speckle.dev/streams/b5cc4e967c/objects/b2d6668e1b1194e45d8bf4d638e61554'
-  )
+  if (process.client) {
+    await isInitializedPromise
+    container.style.display = 'block'
+    rendererparent.value?.appendChild(container)
+
+    viewer.resize()
+    viewer.cameraHandler.onWindowResize()
+    await viewer.loadObject(
+      'https://latest.speckle.dev/streams/b5cc4e967c/objects/b2d6668e1b1194e45d8bf4d638e61554'
+    )
+  }
+})
+
+onBeforeUnmount(async () => {
+  await viewer.unloadAll()
+  container.style.display = 'none'
+  document.body.appendChild(container)
+})
+
+definePageMeta({
+  pageTransition: false,
+  layoutTransition: false
 })
 </script>
 <style scoped>

@@ -20,7 +20,7 @@
       {{ version.message || 'no description' }}
     </div>
     <div class="w-20 h-20 shadow-md rounded-md">
-      <ViewerResourcesPreviewImage :preview-url="previewUrl" />
+      <PreviewImage :preview-url="previewUrl" />
     </div>
   </div>
 </template>

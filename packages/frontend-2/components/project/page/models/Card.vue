@@ -12,7 +12,7 @@
     -->
     <NuxtLink :href="modelRoute(projectId, model.id)">
       <div :class="`${height} flex items-center justify-center`">
-        <ProjectPageModelsPreview v-if="model.versionCount !== 0" :model="model" />
+        <PreviewImage v-if="model.previewUrl" :preview-url="model.previewUrl" />
         <div v-else class="h-full w-full p-4">
           <div
             class="rounded-xl p-4 flex items-center h-full w-full border-dashed border-2 border-blue-500/10 text-foreground-2 text-xs text-center"

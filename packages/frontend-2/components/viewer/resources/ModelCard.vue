@@ -10,10 +10,6 @@
       </div>
       <div class="flex space-x-2">
         <span class="text-xs text-foreground-2">last update {{ updatedAt }}</span>
-        <!-- <div class="flex text-xs text-foreground-2">
-          <ArrowPathRoundedSquareIcon class="w-3 h-4 mr-1" />
-          {{ model?.versions?.totalCount }}
-        </div> -->
         <XMarkIcon class="text-foreground-2 w-3 h-4 mr-1" />
       </div>
     </div>
@@ -59,8 +55,11 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { modelCardQuery } from '~~/lib/projects/graphql/queries'
-import { ModelResource, getObjectUrl, Resource } from '~~/lib/viewer/helpers'
-import { Viewer, ViewerEvent } from '@speckle/viewer'
+import {
+  ViewerModelResource,
+  getObjectUrl,
+  ViewerResource
+} from '~~/lib/viewer/helpers'
 import {
   ChevronDownIcon,
   ArrowPathRoundedSquareIcon,
@@ -74,7 +73,7 @@ import { Ref } from 'vue'
 const { viewer, isInitializedPromise } = useInjectedViewer()
 
 const props = defineProps<{
-  model: ModelResource
+  model: ViewerModelResource
   projectId?: string
 }>()
 
@@ -119,7 +118,7 @@ const { result } = useQuery(modelCardQuery, () => ({
 }))
 
 const model = computed(() => {
-  return result.value?.project?.model
+  return result?.value?.project?.model
 })
 
 const versions = computed(() => {
@@ -147,7 +146,7 @@ const updatedAt = computed(() =>
   model.value ? dayjs(model.value?.updatedAt).from(dayjs()) : null
 )
 
-const unwatch = watch(loadedVersion, async (newVal, oldVal) => {
+const unwatch = watch(loadedVersion, async (newVal) => {
   if (!newVal) return
   await isInitializedPromise
   const url = getObjectUrl(projectId.value as string, newVal.referencedObject)
@@ -156,7 +155,7 @@ const unwatch = watch(loadedVersion, async (newVal, oldVal) => {
 })
 
 const { updateResourceVersion } = inject('resources') as {
-  resources: Ref<Resource[]>
+  resources: Ref<ViewerResource[]>
   updateResourceVersion: (resourceId: string, resourceVersion: string) => void
 }
 

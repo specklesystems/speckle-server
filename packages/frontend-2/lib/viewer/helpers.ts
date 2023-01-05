@@ -7,7 +7,7 @@ export interface ViewerResource {
   type: ViewerResourceType
 }
 
-export class ModelResource implements ViewerResource {
+export class ViewerModelResource implements ViewerResource {
   public type: ViewerResourceType
   public modelId: string
   public versionId?: string
@@ -18,7 +18,7 @@ export class ModelResource implements ViewerResource {
   }
 }
 
-export class ObjectResource implements ViewerResource {
+export class ViewerObjectResource implements ViewerResource {
   public type: ViewerResourceType
   public objectId: string
   constructor(objectId: string) {
@@ -33,11 +33,11 @@ export function parseUrlParameters(params: string) {
   for (const part of parts) {
     if (part.includes('@')) {
       const [modelId, versionId] = part.split('@')
-      resources.push(new ModelResource(modelId, versionId))
+      resources.push(new ViewerModelResource(modelId, versionId))
     } else if (part.length === 32) {
-      resources.push(new ObjectResource(part))
+      resources.push(new ViewerObjectResource(part))
     } else {
-      resources.push(new ModelResource(part))
+      resources.push(new ViewerModelResource(part))
     }
   }
 

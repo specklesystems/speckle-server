@@ -3,7 +3,7 @@
     <ClientOnly>
       <div
         v-if="previewUrl"
-        class="w-full h-full bg-contain bg-no-repeat bg-center"
+        class="w-full h-full bg-contain bg-no-repeat bg-center transition"
         :style="{
           backgroundImage: `url('${previewUrl}')`
         }"
@@ -12,14 +12,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Model } from '~~/lib/common/generated/gql/graphql'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 
-const props = defineProps<{
-  model: Model
-}>()
+const props = withDefaults(
+  defineProps<{
+    previewUrl: string
+    panoramaOnHover: boolean
+  }>(),
+  {
+    panoramaOnHover: false
+  }
+)
 
-const basePreviewUrl = computed(() => props.model.previewUrl)
+const basePreviewUrl = computed(() => props.previewUrl)
 const panoramaPreviewUrl = computed(() =>
   new URL(basePreviewUrl.value, '/all').toString()
 )

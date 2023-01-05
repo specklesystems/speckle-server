@@ -7,7 +7,7 @@
   >
     <div class="flex items-center space-x-2">
       <div class="bg-foundation w-24 h-24 shadow rounded-md">
-        <ViewerResourcesPreviewImage :preview-url="previewUrl" />
+        <PreviewImage :preview-url="previewUrl" />
       </div>
       <div class="flex flex-col space-y-1">
         <div class="space-x-1">
@@ -47,7 +47,10 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { ComputedRef } from 'vue'
-import { ModelCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  LimitedUser,
+  ModelCardVersionFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { getPreviewUrl } from '~~/lib/viewer/helpers'
 
 const props = withDefaults(
@@ -75,10 +78,10 @@ const isLatest = computed(() => latestVersion.value.id === props.version.id)
 
 const author = computed(() => {
   return {
-    id: props.version.authorId as string,
-    avatar: props.version.authorAvatar,
-    name: props.version.authorName as string
-  }
+    name: props.version.authorName,
+    id: props.version.authorId,
+    avatar: props.version.authorAvatar
+  } as LimitedUser
 })
 
 const createdAt = computed(() =>
