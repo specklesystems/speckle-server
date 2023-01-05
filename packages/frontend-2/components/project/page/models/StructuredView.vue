@@ -1,7 +1,7 @@
 <template>
   <div v-if="treeItemCount" class="space-y-4 mb-14 max-w-full">
     <div v-for="item in topLevelItems" :key="item.fullName">
-      <ProjectPageModelsStructureItem2 :item="item" :project-id="projectId" />
+      <ProjectPageModelsStructureItem :item="item" :project-id="projectId" />
     </div>
   </div>
   <div v-else>TODO: List empty state</div>

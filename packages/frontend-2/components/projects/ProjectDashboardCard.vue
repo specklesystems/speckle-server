@@ -59,14 +59,6 @@ const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
 
-// const models = computed(() => {
-//   let arr = [...(props.project.models?.items || [])]
-//   arr.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))
-//   arr = arr.filter((m) => m.versionCount !== 0)
-//   arr = arr.slice(0, 3)
-//   return arr
-// })
-
 const sortedModels = computed(() => {
   const arr = [...(props.project.models?.items || [])]
   arr.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt))

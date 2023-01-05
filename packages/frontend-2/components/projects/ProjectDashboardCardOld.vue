@@ -60,6 +60,10 @@
   </NuxtLink>
 </template>
 <script lang="ts" setup>
+/**
+ * TODO: Delete if unused
+ */
+
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
