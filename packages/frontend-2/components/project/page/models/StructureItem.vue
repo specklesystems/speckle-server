@@ -162,6 +162,7 @@
             class="flex-grow"
           />
         </div>
+        <ProjectPageModelsNewModelStructureItem />
       </div>
     </div>
   </div>

@@ -2,7 +2,7 @@
   <div>
     <button
       v-show="!showNewModelCard"
-      class="group flex w-full rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus"
+      class="group flex w-full rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus dark:hover:bg-primary-muted"
       @click="showNewModelCard = true"
     >
       +
@@ -10,7 +10,7 @@
     </button>
     <div
       v-if="showNewModelCard"
-      class="w-full py-2 xxh-28 px-3 flex items-center rounded-md transition bg-foundation-focus"
+      class="w-full py-2 h-14 px-3 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
     >
       <form
         class="flex items-center justify-between w-full space-x-2"
