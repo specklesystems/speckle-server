@@ -1047,11 +1047,33 @@ export type ProjectMutations = {
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
+  /** Updates an existing project */
+  update: Project;
 };
 
 
 export type ProjectMutationsDeleteArgs = {
   id: Scalars['String'];
+};
+
+
+export type ProjectMutationsUpdateArgs = {
+  stream: ProjectUpdateInput;
+};
+
+/** Any values left null will be ignored, so only set the properties that you want updated */
+export type ProjectUpdateInput = {
+  allowPublicComments?: InputMaybe<Scalars['Boolean']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
+  isPublic?: InputMaybe<Scalars['Boolean']>;
+  name?: InputMaybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -1087,8 +1109,6 @@ export type Query = {
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
   project?: Maybe<Project>;
-  /** @deprecated only used for testing for now */
-  projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**

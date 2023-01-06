@@ -6,7 +6,10 @@ import {
   getStreamCollaborators,
   getStream
 } from '@/modules/core/repositories/streams'
-import { deleteStreamAndNotify } from '@/modules/core/services/streams'
+import {
+  deleteStreamAndNotify,
+  updateStreamAndNotify
+} from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
 import { NotFoundError } from '@/modules/shared/errors'
@@ -41,6 +44,10 @@ export = {
     },
     async createForOnboarding(_parent, _args, { userId }) {
       return await createOnboardingStream(userId!)
+    },
+    async update(_parent, { stream }, { userId }) {
+      await authorizeResolver(userId, stream.id, Roles.Stream.Owner)
+      return await updateStreamAndNotify(stream, userId!)
     }
   },
   User: {

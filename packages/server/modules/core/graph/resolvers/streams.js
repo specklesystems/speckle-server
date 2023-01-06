@@ -6,14 +6,12 @@ const {
   createStream,
   getStream,
   getStreams,
-  updateStream,
   getStreamUsers,
   favoriteStream,
   getFavoriteStreamsCollection,
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
-  getOwnedFavoritesCount,
-  deleteStreamAndNotify
+  getOwnedFavoritesCount
 } = require('@/modules/core/services/streams')
 
 const {
@@ -23,8 +21,6 @@ const {
   validateScopes,
   validateServerRole
 } = require(`@/modules/shared`)
-const { saveActivity } = require(`@/modules/activitystream/services`)
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const {
   RateLimitError,
   RateLimitAction,
@@ -52,6 +48,10 @@ const {
 const {
   addStreamCreatedActivity
 } = require('@/modules/activitystream/services/streamActivity')
+const {
+  deleteStreamAndNotify,
+  updateStreamAndNotify
+} = require('@/modules/core/services/streams/management')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -222,30 +222,7 @@ module.exports = {
 
     async streamUpdate(parent, args, context) {
       await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
-
-      const oldValue = await getStream({ streamId: args.stream.id })
-
-      const { stream } = args
-      await updateStream(stream)
-
-      await saveActivity({
-        streamId: args.stream.id,
-        resourceType: 'stream',
-        resourceId: args.stream.id,
-        actionType: ActionTypes.Stream.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.stream },
-        message: 'Stream metadata changed'
-      })
-      await pubsub.publish(STREAM_UPDATED, {
-        streamUpdated: {
-          id: args.stream.id,
-          name: args.stream.name,
-          description: args.stream.description
-        },
-        id: args.stream.id
-      })
-
+      await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 

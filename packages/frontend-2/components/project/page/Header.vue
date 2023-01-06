@@ -3,7 +3,7 @@
     <div
       class="relative mb-3 mt-10 flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between"
     >
-      <div class="flex items-center group">
+      <div class="flex group">
         <label class="max-w-full">
           <div class="sr-only">Edit title</div>
           <div
@@ -21,7 +21,7 @@
           </div>
         </label>
         <PencilIcon
-          class="shrink-0 ml-2 w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
+          class="shrink-0 ml-2 mt-2 w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
       <Portal to="navigation">
@@ -76,6 +76,12 @@ import { ShareIcon, PencilIcon } from '@heroicons/vue/20/solid'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { ProjectPageProjectHeaderFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute } from '~~/lib/common/helpers/route'
+
+/**
+ * TODO:
+ * - On enter/unfocus: save
+ * - Limit max width
+ */
 
 graphql(`
   fragment ProjectPageProjectHeader on Project {

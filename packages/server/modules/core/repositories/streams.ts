@@ -1,4 +1,14 @@
-import _, { clamp, isNaN, mapValues, reduce, toNumber } from 'lodash'
+import _, {
+  clamp,
+  has,
+  isNaN,
+  isNull,
+  isUndefined,
+  mapValues,
+  omitBy,
+  reduce,
+  toNumber
+} from 'lodash'
 import {
   Streams,
   StreamAcl,
@@ -19,9 +29,11 @@ import {
 import {
   DiscoverableStreamsSortingInput,
   DiscoverableStreamsSortType,
+  ProjectUpdateInput,
   QueryDiscoverableStreamsArgs,
   SortDirection,
-  StreamCreateInput
+  StreamCreateInput,
+  StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
@@ -727,4 +739,25 @@ export async function getStreamsSourceApps(streamIds: string[]) {
     {} as Record<string, Set<string>>
   )
   return mapValues(mappedToSets, (v) => [...v.values()])
+}
+
+export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
+  const { id: streamId } = update
+  const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
+
+  if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+    validUpdate.isDiscoverable = false
+  }
+
+  if (!Object.keys(validUpdate).length) return null
+
+  const [updatedStream] = await Streams.knex()
+    .returning('*')
+    .where({ id: streamId })
+    .update<StreamRecord[]>({
+      ...validUpdate,
+      updatedAt: knex.fn.now()
+    })
+
+  return updatedStream
 }

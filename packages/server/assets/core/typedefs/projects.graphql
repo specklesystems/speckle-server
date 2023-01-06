@@ -1,5 +1,4 @@
 extend type Query {
-  projects: [Project!]! @deprecated(reason: "only used for testing for now")
   """
   Find a specific project. Will throw an authorization error if active user isn't authorized
   to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
@@ -7,11 +6,37 @@ extend type Query {
   project(id: String!): Project
 }
 
+"""
+Any values left null will be ignored, so only set the properties that you want updated
+"""
+input ProjectUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  """
+  Whether the stream can be viewed by non-contributors
+  """
+  isPublic: Boolean
+  """
+  Whether the stream (if public) can be found on public stream exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean
+  allowPublicComments: Boolean
+}
+
 type ProjectMutations {
   """
   Delete an existing project
   """
   delete(id: String!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+
+  """
+  Updates an existing project
+  """
+  update(stream: ProjectUpdateInput!): Project!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 
