@@ -59,7 +59,11 @@ extend type User {
   """
   Get projects that the user participates in
   """
-  projects(limit: Int! = 25, cursor: String): ProjectCollection! @isOwner
+  projects(
+    limit: Int! = 25
+    cursor: String
+    filter: UserProjectsFilter
+  ): ProjectCollection! @isOwner
 }
 
 type ProjectCollection {
@@ -85,4 +89,11 @@ type Project {
   Source apps used in any models of this project
   """
   sourceApps: [String!]!
+}
+
+input UserProjectsFilter {
+  """
+  Filter out projects by name
+  """
+  search: String
 }

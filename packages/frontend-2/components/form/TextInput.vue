@@ -48,7 +48,7 @@
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
-        @change="$emit('change', $event)"
+        @change="$emit('change', { event: $event, value })"
       />
       <div
         v-if="error"
@@ -199,7 +199,7 @@ const props = defineProps({
 
 defineEmits<{
   (e: 'update:modelValue', val: string): void
-  (e: 'change', val: Event): void
+  (e: 'change', val: { event: Event; value: string }): void
 }>()
 
 const { value, errorMessage: error } = useField(props.name, props.rules, {

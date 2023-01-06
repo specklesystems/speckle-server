@@ -113,7 +113,7 @@ function createCache(): InMemoryCache {
             })
           },
           projects: {
-            keyArgs: false,
+            keyArgs: ['filter'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection', {
               checkIdentity: true
             })

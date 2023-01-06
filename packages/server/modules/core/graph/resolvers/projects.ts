@@ -54,13 +54,15 @@ export = {
     async projects(_parent, args, ctx) {
       const totalCount = await getUserStreamsCount({
         userId: ctx.userId!,
-        forOtherUser: false
+        forOtherUser: false,
+        searchQuery: args.filter?.search || undefined
       })
 
       const { cursor, streams } = await getUserStreams({
         userId: ctx.userId!,
         limit: args.limit,
         cursor: args.cursor || undefined,
+        searchQuery: args.filter?.search || undefined,
         forOtherUser: false
       })
 
