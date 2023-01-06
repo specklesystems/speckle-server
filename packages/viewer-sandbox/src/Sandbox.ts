@@ -81,6 +81,7 @@ export default class Sandbox {
     sampleCount: 100,
     maxDist: 2,
     textureSize: 512,
+    weights: { x: 1, y: 1, z: 1, w: 1 },
     blurRadius: 16,
     stdDeviation: 4,
     depthCutoff: 0
@@ -711,8 +712,8 @@ export default class Sandbox {
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'maxDist', {
         label: 'Max Dist',
-        min: 1,
-        max: 8,
+        min: 0,
+        max: 1000,
         step: 0.01
       })
       .on('change', (value) => {
@@ -727,6 +728,20 @@ export default class Sandbox {
         min: 1,
         max: 1024,
         step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().testBake()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'weights', {
+        label: 'weights',
+        x: { min: 0, max: 100 },
+        y: { min: 0, max: 100 },
+        z: { min: 0, max: 100 },
+        w: { min: 0, max: 100 }
       })
       .on('change', (value) => {
         value

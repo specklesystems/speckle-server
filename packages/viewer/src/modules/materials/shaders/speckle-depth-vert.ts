@@ -53,7 +53,6 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
 
     #endif
-    
     mvPosition = rteModelViewMatrix * mvPosition;
 
     #ifdef LINEAR_DEPTH

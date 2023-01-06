@@ -1,22 +1,27 @@
 import {
+  AddEquation,
   Box2,
   Box3,
   BufferGeometry,
   Color,
+  CustomBlending,
   DoubleSide,
+  DstAlphaFactor,
   Float32BufferAttribute,
   LineBasicMaterial,
   LineSegments,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
+  OneFactor,
   PlaneGeometry,
   Ray,
   RepeatWrapping,
   Scene,
   Vector2,
   Vector3,
-  WebGLRenderer
+  WebGLRenderer,
+  ZeroFactor
 } from 'three'
 import MeshBatch from './batching/MeshBatch'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
@@ -34,6 +39,7 @@ export interface ShadowcatcherConfig {
   sampleCount: number
   maxDist: number
   textureSize: number
+  weights: { x: number; y: number; z: number; w: number }
   blurRadius: number
   stdDeviation: number
   depthCutoff: number
@@ -44,6 +50,7 @@ export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   sampleCount: 100,
   maxDist: 1,
   textureSize: 512,
+  weights: { x: 1, y: 1, z: 1, w: 1 },
   blurRadius: 16,
   stdDeviation: 4,
   depthCutoff: 0
@@ -73,7 +80,6 @@ export class Shadowcatcher {
 
   public constructor() {
     this.shadowcatcherPass = new ShadowcatcherPass()
-
     /** Material used to render the per-vertex ao values to texture */
     if (!this.generateMaterial) {
       // this.generateMaterial = new SpeckleShadowcatcherGenerateMaterial(
@@ -111,15 +117,15 @@ export class Shadowcatcher {
       this.displayMaterial.map.wrapS = RepeatWrapping
       this.displayMaterial.map.repeat.x = -1
       this.displayMaterial.map.needsUpdate = true
-      // this.displayMaterial.transparent = true
-      // this.displayMaterial.toneMapped = false
-      // this.displayMaterial.blending = CustomBlending
-      // this.displayMaterial.blendEquation = AddEquation
-      // this.displayMaterial.blendEquationAlpha = AddEquation
-      // this.displayMaterial.blendSrc = ZeroFactor
-      // this.displayMaterial.blendSrcAlpha = OneFactor
-      // this.displayMaterial.blendDst = DstAlphaFactor
-      // this.displayMaterial.blendDstAlpha = ZeroFactor
+      this.displayMaterial.transparent = true
+      this.displayMaterial.toneMapped = false
+      this.displayMaterial.blending = CustomBlending
+      this.displayMaterial.blendEquation = AddEquation
+      this.displayMaterial.blendEquationAlpha = AddEquation
+      this.displayMaterial.blendSrc = ZeroFactor
+      this.displayMaterial.blendSrcAlpha = OneFactor
+      this.displayMaterial.blendDst = DstAlphaFactor
+      this.displayMaterial.blendDstAlpha = ZeroFactor
     }
 
     this.shadowcatcherPass.onBeforeRender = () => {
@@ -142,9 +148,10 @@ export class Shadowcatcher {
     // this.shadowcatcherPass.setOutputSize(texSize.x, texSize.y)
     const aspect = this.planeSize.x / this.planeSize.y
     const size = new Vector2()
-    size.x = this._config.textureSize
-    size.y = this._config.textureSize / aspect
+    size.x = Math.trunc(this._config.textureSize)
+    size.y = Math.trunc(this._config.textureSize / aspect)
     this.shadowcatcherPass.setOutputSize(size.x, size.y)
+    this.shadowcatcherPass.setWeights(this._config.weights)
     this.shadowcatcherPass.update(scene)
   }
 
@@ -196,7 +203,7 @@ export class Shadowcatcher {
     if (needsRebuild || force)
       this.updatePlaneMeshGeometry(
         new Vector2(boxSize.x * 2, boxSize.y * 2),
-        new Vector3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize.z * 0.5 - -0.01)
+        new Vector3(boxCenter.x, boxCenter.y, boxCenter.z - boxSize.z * 0.5 - 0.001)
       )
 
     this.planeSize.set(boxSize.x, boxSize.y)

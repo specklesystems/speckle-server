@@ -4,7 +4,7 @@
 import { speckleShadowcatcherVert } from './shaders/speckle-shadowcatcher-vert'
 import { speckleShadowcatcherFrag } from './shaders/speckle-shadowcatche-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
-import { ShaderLib, UniformsUtils, Vector3 } from 'three'
+import { ShaderLib, UniformsUtils, Vector2, Vector3, Vector4 } from 'three'
 
 class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
   constructor(parameters, defines = []) {
@@ -14,6 +14,27 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
     }
     this.userData.uViewer_low = {
       value: new Vector3()
+    }
+    this.userData.tex0 = {
+      value: null
+    }
+    this.userData.tex1 = {
+      value: null
+    }
+    this.userData.tex2 = {
+      value: null
+    }
+    this.userData.tex3 = {
+      value: null
+    }
+    this.userData.weights = {
+      value: new Vector4()
+    }
+    this.userData.depth = {
+      value: null
+    }
+    this.userData.size = {
+      value: new Vector2()
     }
     ;(this as any).vertProgram = speckleShadowcatcherVert
     ;(this as any).fragProgram = speckleShadowcatcherFrag
@@ -25,6 +46,27 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
         },
         uViewer_low: {
           value: this.userData.uViewer_low.value
+        },
+        tex0: {
+          value: this.userData.tex0.value
+        },
+        tex1: {
+          value: this.userData.tex1.value
+        },
+        tex2: {
+          value: this.userData.tex2.value
+        },
+        tex3: {
+          value: this.userData.tex3.value
+        },
+        weights: {
+          value: this.userData.weights.value
+        },
+        depth: {
+          value: this.userData.depth.value
+        },
+        size: {
+          value: this.userData.size.value
         }
       }
     ])
@@ -32,6 +74,13 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
     this.onBeforeCompile = function (shader) {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
+      shader.uniforms.tex0 = this.userData.tex0
+      shader.uniforms.tex1 = this.userData.tex1
+      shader.uniforms.tex2 = this.userData.tex2
+      shader.uniforms.tex3 = this.userData.tex3
+      shader.uniforms.weights = this.userData.weights
+      shader.uniforms.depth = this.userData.depth
+      shader.uniforms.size = this.userData.size
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
