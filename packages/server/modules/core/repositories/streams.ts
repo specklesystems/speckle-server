@@ -743,6 +743,8 @@ export async function getStreamsSourceApps(streamIds: string[]) {
 
 export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
   const { id: streamId } = update
+
+  if (!update.name) update.name = null // to prevent saving name ''
   const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
 
   if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
