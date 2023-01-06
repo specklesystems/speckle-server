@@ -53,6 +53,7 @@ import { Viewer } from '@speckle/viewer'
 import { Vector3 } from 'three'
 import { XMarkIcon, ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import type { Ref } from 'vue'
+import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 
 const commentState = inject('commentState') as Ref<number>
 const locations = inject('locations') as { camPos: number[] }[]
@@ -64,7 +65,7 @@ const props = defineProps({
   }
 })
 
-const viewer = inject('viewer') as Viewer
+const { viewer } = useInjectedViewer()
 
 const expanded = computed(() => {
   return commentState.value === props.index

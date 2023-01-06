@@ -92,8 +92,8 @@
 <script setup lang="ts">
 import { locations } from '~~/lib/tour/mockedComments'
 import { Vector3 } from 'three'
-import { Viewer } from '@speckle/viewer'
 import { ArrowRightIcon, CheckIcon } from '@heroicons/vue/24/solid'
+import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 
 const comments = ref<HTMLElement | null>(null)
 const commentState = ref(0)
@@ -101,7 +101,7 @@ const commentState = ref(0)
 provide('commentState', commentState)
 provide('locations', locations)
 
-const viewer = inject('viewer') as Viewer
+const { viewer } = useInjectedViewer()
 
 const updateCommentPositions = () => {
   if (!comments.value) return

@@ -1,4 +1,5 @@
 <template>
+  <!-- TODO: Check if wrapping the parent of this shit in client only works -->
   <div ref="rendererparent" class="absolute w-full h-full"></div>
 </template>
 <script setup lang="ts">

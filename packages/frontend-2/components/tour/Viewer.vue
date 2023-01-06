@@ -13,8 +13,6 @@
 import { setupViewer } from '~~/lib/viewer/composables/viewer'
 const { viewer } = setupViewer()
 
-provide('viewer', viewer)
-
 onMounted(async () => {
   await viewer.loadObject(
     'https://latest.speckle.dev/streams/b5cc4e967c/objects/b2d6668e1b1194e45d8bf4d638e61554'

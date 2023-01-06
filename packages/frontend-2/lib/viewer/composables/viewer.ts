@@ -55,6 +55,7 @@ type GlobalViewerData = {
   container: HTMLElement
   initialized: Promise<void>
 }
+// TODO: assign it to a scoped state
 let globalViewerData: GlobalViewerData | null = null
 
 export function setupViewer() {

@@ -136,7 +136,12 @@
             Open all child models in one viewer page. 
             Fabs will hate me as we might need to go back to "getting everything", or hacking away a 
             request for all the kids -->
-            <FormButton rounded size="xs" :icon-right="ArrowTopRightOnSquareIcon">
+            <FormButton
+              rounded
+              size="xs"
+              :icon-right="ArrowTopRightOnSquareIcon"
+              disabled
+            >
               View All
             </FormButton>
           </div>

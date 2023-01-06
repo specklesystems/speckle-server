@@ -7,20 +7,17 @@
   </div>
   <div class="p-2 space-y-2">
     <div v-for="(resource, idx) in resources" :key="idx">
-      <ViewerResourcesModelCard :model="(resource as ModelResource)" />
+      <ViewerResourcesModelCard :model="(resource as ViewerModelResource)" />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { Viewer } from '@speckle/viewer'
-import { Resource, ModelResource } from '~~/lib/viewer/helpers'
+import { ViewerModelResource } from '~~/lib/viewer/helpers'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { Ref } from 'vue'
 
 const { resources } = inject('resources') as {
-  resources: Ref<Resource[]>
+  resources: Ref<ViewerModelResource[]>
   updateResourceVersion: (resourceId: string, resourceVersion: string) => void
 }
-
-// const viewer = inject('viewer') as Viewer
 </script>
