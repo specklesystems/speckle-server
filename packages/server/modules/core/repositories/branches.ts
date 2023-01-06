@@ -131,6 +131,11 @@ function getPaginatedProjectModelsBaseQuery<T>(
   const q = Branches.knex()
     .select<T>(Branches.cols)
     .where(Branches.col.streamId, projectId)
+    .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+    .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+    .havingRaw(
+      knex.raw(`?? != 'main' OR COUNT(??) > 0`, [Branches.col.name, Commits.col.id])
+    )
     .groupBy(Branches.col.id)
 
   if (
@@ -138,9 +143,6 @@ function getPaginatedProjectModelsBaseQuery<T>(
     filter?.sourceApps?.length ||
     filter?.onlyWithVersions
   ) {
-    q.innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    q.innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-
     if (filter.contributors?.length) {
       q.whereIn(Commits.col.author, filter.contributors)
     }
