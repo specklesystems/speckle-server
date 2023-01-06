@@ -40,6 +40,7 @@ graphql(`
         updatedAt
         createdAt
         previewUrl
+        ...ProjectPageLatestItemsModelItem
       }
     }
   }
