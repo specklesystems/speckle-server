@@ -64,7 +64,12 @@ export type ProjectGraphQLReturn = Omit<
 
 export type ModelGraphQLReturn = Omit<
   Model,
-  'versionCount' | 'author' | 'previewUrl' | 'commentThreadCount' | 'childrenTree'
+  | 'versionCount'
+  | 'author'
+  | 'previewUrl'
+  | 'commentThreadCount'
+  | 'childrenTree'
+  | 'displayName'
 > &
   BranchRecord
 

@@ -494,7 +494,10 @@ export type Model = {
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
+  /** The shortened/display name that doesn't include the names of parent models */
+  displayName: Scalars['String'];
   id: Scalars['ID'];
+  /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
@@ -996,7 +999,7 @@ export type Project = {
   models?: Maybe<ModelCollection>;
   /**
    * Return's a project's models in a tree view with submodels being nested under parent models
-   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
@@ -1044,6 +1047,8 @@ export type ProjectModelsFilter = {
   contributors?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out models that don't have any versions */
   onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
+  /** Filter by model names */
+  search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
@@ -2473,6 +2478,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

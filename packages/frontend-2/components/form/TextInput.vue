@@ -48,6 +48,7 @@
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
+        @change="$emit('change', $event)"
       />
       <div
         v-if="error"
@@ -83,7 +84,6 @@ import { RuleExpression, useField } from 'vee-validate'
 import { ExclamationCircleIcon, EnvelopeIcon, KeyIcon } from '@heroicons/vue/20/solid'
 import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
-import { ChangeEvent } from 'rollup'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -197,7 +197,10 @@ const props = defineProps({
   }
 })
 
-defineEmits<{ (e: 'update:modelValue', val: ChangeEvent): void }>()
+defineEmits<{
+  (e: 'update:modelValue', val: string): void
+  (e: 'change', val: Event): void
+}>()
 
 const { value, errorMessage: error } = useField(props.name, props.rules, {
   validateOnMount: props.validateOnMount,

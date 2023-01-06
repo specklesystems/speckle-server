@@ -138,27 +138,22 @@ function getPaginatedProjectModelsBaseQuery<T>(
     )
     .groupBy(Branches.col.id)
 
-  if (
-    filter?.contributors?.length ||
-    filter?.sourceApps?.length ||
-    filter?.onlyWithVersions
-  ) {
-    if (filter.contributors?.length) {
-      q.whereIn(Commits.col.author, filter.contributors)
-    }
+  if (filter?.search) {
+    q.whereILike(Branches.col.name, `%${filter.search}%`)
+  }
 
-    if (filter.sourceApps?.length) {
-      q.whereRaw(
-        knex.raw(`?? ~* ?`, [
-          Commits.col.sourceApplication,
-          filter.sourceApps.join('|')
-        ])
-      )
-    }
+  if (filter?.contributors?.length) {
+    q.whereIn(Commits.col.author, filter.contributors)
+  }
 
-    if (filter.onlyWithVersions) {
-      q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
-    }
+  if (filter?.sourceApps?.length) {
+    q.whereRaw(
+      knex.raw(`?? ~* ?`, [Commits.col.sourceApplication, filter.sourceApps.join('|')])
+    )
+  }
+
+  if (filter?.onlyWithVersions) {
+    q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
   }
 
   return q

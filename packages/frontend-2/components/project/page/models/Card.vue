@@ -28,9 +28,9 @@
       <div class="h-12 flex items-center px-2 py-1 space-x-1">
         <div class="flex-grow">
           <div v-if="path" class="text-xs text-foreground-2 relative -mb-1 truncate">
-            {{ path }}/
+            {{ path }}
           </div>
-          <div class="font-bold truncate">{{ name }}</div>
+          <div class="font-bold truncate">{{ model.displayName }}</div>
         </div>
 
         <div
@@ -97,17 +97,12 @@ const props = withDefaults(
 
 const showActionsMenu = ref(false)
 const hovered = ref(false)
-const name = computed(() => {
-  return props.model.name.split('/').reverse()[0]
-})
 
 const path = computed(() => {
-  const parts = props.model.name.split('/')
-  if (parts.length > 1) {
-    return parts.slice(0, parts.length - 1).join('/')
-  } else {
-    return null
-  }
+  const model = props.model
+  if (model.name === model.displayName) return null
+
+  return model.name.substring(0, model.name.length - model.displayName.length)
 })
 
 const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))

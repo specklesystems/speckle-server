@@ -117,7 +117,7 @@ graphql(`
   }
 `)
 
-const ProjectUpdatableMetadataFragment = graphql(`
+const projectUpdatableMetadataFragment = graphql(`
   fragment ProjectUpdatableMetadata on Project {
     id
     name
@@ -236,7 +236,7 @@ const save = async () => {
           cache,
           {
             fragment: {
-              fragment: ProjectUpdatableMetadataFragment,
+              fragment: projectUpdatableMetadataFragment,
               fragmentName: 'ProjectUpdatableMetadata',
               id: getCacheId('Project', update.id)
             }

@@ -484,7 +484,10 @@ export type Model = {
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
+  /** The shortened/display name that doesn't include the names of parent models */
+  displayName: Scalars['String'];
   id: Scalars['ID'];
+  /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
@@ -986,7 +989,7 @@ export type Project = {
   models?: Maybe<ModelCollection>;
   /**
    * Return's a project's models in a tree view with submodels being nested under parent models
-   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
@@ -1034,6 +1037,8 @@ export type ProjectModelsFilter = {
   contributors?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out models that don't have any versions */
   onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
+  /** Filter by model names */
+  search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
@@ -1955,7 +1960,7 @@ export type ProjectPageLatestItemsCommentItemFragment = { __typename?: 'Comment'
 
 export type ProjectPageLatestItemsModelsFragment = { __typename?: 'Project', id: string, modelCount: number, sourceApps: Array<string>, team: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> };
 
-export type ProjectPageLatestItemsModelItemFragment = { __typename?: 'Model', id: string, name: string, versionCount: number, commentThreadCount: number, previewUrl?: string | null, createdAt: string, updatedAt: string };
+export type ProjectPageLatestItemsModelItemFragment = { __typename?: 'Model', id: string, name: string, displayName: string, versionCount: number, commentThreadCount: number, previewUrl?: string | null, createdAt: string, updatedAt: string };
 
 export type ModelPreviewFragment = { __typename?: 'Model', previewUrl?: string | null };
 
@@ -2035,7 +2040,7 @@ export type ProjectLatestModelsQueryVariables = Exact<{
 }>;
 
 
-export type ProjectLatestModelsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, models?: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, versionCount: number, commentThreadCount: number, previewUrl?: string | null, createdAt: string, updatedAt: string }> } | null } | null };
+export type ProjectLatestModelsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, models?: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, versionCount: number, commentThreadCount: number, previewUrl?: string | null, createdAt: string, updatedAt: string }> } | null } | null };
 
 export type ProjectModelsTreeTopLevelQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2082,7 +2087,7 @@ export const AuthStategiesServerInfoFragmentFragmentDoc = {"kind":"Document","de
 export const ProjectUpdatableMetadataFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectUpdatableMetadata"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<ProjectUpdatableMetadataFragment, unknown>;
 export const FormUsersSelectItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"FormUsersSelectItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedUser"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]} as unknown as DocumentNode<FormUsersSelectItemFragment, unknown>;
 export const ProjectPageLatestItemsCommentItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsCommentItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormUsersSelectItem"}}]}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"repliesCount"}},{"kind":"Field","name":{"kind":"Name","value":"replyAuthors"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"4"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"FormUsersSelectItem"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageLatestItemsCommentItemFragment, unknown>;
-export const ProjectPageLatestItemsModelItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"versionCount"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreadCount"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<ProjectPageLatestItemsModelItemFragment, unknown>;
+export const ProjectPageLatestItemsModelItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"versionCount"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreadCount"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<ProjectPageLatestItemsModelItemFragment, unknown>;
 export const ModelPreviewFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ModelPreview"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}}]}}]} as unknown as DocumentNode<ModelPreviewFragment, unknown>;
 export const ProjectModelsViewModelItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectModelsViewModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"versionCount"}},{"kind":"Field","name":{"kind":"Name","value":"commentThreadCount"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<ProjectModelsViewModelItemFragment, unknown>;
 export const SingleLevelModelTreeItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SingleLevelModelTreeItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ModelsTreeItem"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"fullName"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectModelsViewModelItem"}}]}},{"kind":"Field","name":{"kind":"Name","value":"hasChildren"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<SingleLevelModelTreeItemFragment, unknown>;

@@ -5,7 +5,7 @@ extend type Project {
   models(cursor: String, limit: Int! = 25, filter: ProjectModelsFilter): ModelCollection
   """
   Return's a project's models in a tree view with submodels being nested under parent models
-  real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+  real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
   """
   modelsTree: [ModelsTreeItem!]!
   """
@@ -20,7 +20,14 @@ extend type Project {
 
 type Model {
   id: ID!
+  """
+  Full name including the names of parent models delimited by forward slashes
+  """
   name: String!
+  """
+  The shortened/display name that doesn't include the names of parent models
+  """
+  displayName: String!
   author: LimitedUser!
   description: String
   createdAt: DateTime!
@@ -77,6 +84,10 @@ type VersionCollection {
 }
 
 input ProjectModelsFilter {
+  """
+  Filter by model names
+  """
+  search: String
   """
   Filter by source apps used in models
   """
