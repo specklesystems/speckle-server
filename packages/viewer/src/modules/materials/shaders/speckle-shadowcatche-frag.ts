@@ -57,27 +57,19 @@ void main() {
 	float color1 = texture2D(tex1, vUv).r * weights.y;
 	float color2 = texture2D(tex2, vUv).r * weights.z;
 	float color3 = texture2D(tex3, vUv).r * weights.w;
-	// float val = 0.;
-	// float c0 = color0 * color0 + color1 * (1.-color0);
-	// float c1 = color0 * color0 + color2 * (1.-color0);
-	// float c2 = color0 * color0 + color3 * (1.-color0);
 
-	// float c3 = color1 * color1 + color0 * (1.-color1);
-	// float c4 = color1 * color1 + color2 * (1.-color1);
-	// float c5 = color1 * color1 + color3 * (1.-color1);
-
-	// float c6 = color2 * color2 + color0 * (1.-color2);
-	// float c7 = color2 * color2 + color1 * (1.-color2);
-	// float c8 = color2 * color2 + color3 * (1.-color2);
-
-	// float c9 = color3 * color3 + color0 * (1.-color3);
-	// float c10 = color3 * color3 + color1 * (1.-color3);
-	// float c11 = color3 * color3 + color2 * (1.-color3);
 	float d = averageDepth();//getDepth(vUv);
 
-	float c0 = color0 + color1 + color2;
-	float c1 = mix(color3, 0., c0);
-	float sum = c0 + c1;
+	float c0 = mix(color0, 0., color1);
+	float c1 = mix(color1, 0., color0);
+	float c2 = mix(color3, 0., color0 + color1);
+	float sum = c0 + c1 + c2;
+
+	// float c0 = color0 + color1 + color2;
+	// float c1 = mix(color3, 0., c0);
+	// float sum = c0 + c1;
+
+	
 	gl_FragColor = vec4( vec3(sum), sum );
 }
 `

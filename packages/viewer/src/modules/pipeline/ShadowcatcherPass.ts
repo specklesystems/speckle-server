@@ -1,6 +1,7 @@
 import {
   BasicDepthPacking,
   Box3,
+  CameraHelper,
   Color,
   DoubleSide,
   LinearFilter,
@@ -28,6 +29,7 @@ import {
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
+import { ObjectLayers } from '../SpeckleRenderer'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
@@ -167,12 +169,12 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       this.camera.bottom = planeSize.y / -2
       this.camera.far = this.cameraFar
       this.camera.updateProjectionMatrix()
-      // if (this.cameraHelper === null) {
-      //   this.cameraHelper = new CameraHelper(this.camera)
-      //   this.cameraHelper.layers.set(ObjectLayers.PROPS)
-      //   this.scene.add(this.cameraHelper)
-      // }
-      // this.cameraHelper.update()
+      if (this.cameraHelper === null) {
+        this.cameraHelper = new CameraHelper(this.camera)
+        this.cameraHelper.layers.set(ObjectLayers.PROPS)
+        this.scene.add(this.cameraHelper)
+      }
+      this.cameraHelper.update()
       /** BLUR DEFINES */
       this.vBlurMaterial.defines['PERSPECTIVE_CAMERA'] = 0
       this.hBlurMaterial.defines['PERSPECTIVE_CAMERA'] = 0
@@ -268,7 +270,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       for (let k = 0; k < this.renderTargets.length; k++) {
         this.camera.far = this.cameraFar
         if (k !== 3) {
-          this.camera.near = 0
+          this.camera.near = 0.001
           this.camera.far = this.cameraFar / 100
         }
         // if (k === 3) {
