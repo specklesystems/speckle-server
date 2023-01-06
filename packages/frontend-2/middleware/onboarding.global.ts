@@ -23,7 +23,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (!isOnboardingFinished && !isGoingToOnboarding) {
     return navigateTo(onboardingRoute)
-  } else if (isOnboardingFinished && isGoingToOnboarding) {
-    return navigateTo(homeRoute)
   }
+  //TODO: uncomment for production
+  //else if (isOnboardingFinished && isGoingToOnboarding) {
+  //   return navigateTo(homeRoute)
+  // }
 })

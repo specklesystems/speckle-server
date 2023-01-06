@@ -2,6 +2,11 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getModelTreeItems } from '@/modules/core/repositories/branches'
 import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { getBranchById } from '../../services/branches'
+import {
+  getCommitsByBranchId,
+  getCommitsTotalCountByBranchId
+} from '../../services/commits'
 
 export = {
   Project: {
@@ -35,6 +40,16 @@ export = {
     },
     async childrenTree(parent) {
       return await getModelTreeItems(parent.streamId, parent.name)
+    },
+    async versions(parent, args, _ctx) {
+      const { commits, cursor } = await getCommitsByBranchId({
+        branchId: parent.id,
+        limit: args.limit,
+        cursor: args.cursor
+      })
+      const totalCount = await getCommitsTotalCountByBranchId({ branchId: parent.id })
+
+      return { items: commits, totalCount, cursor }
     }
   },
   ModelsTreeItem: {

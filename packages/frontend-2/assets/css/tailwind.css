@@ -70,7 +70,8 @@
 
     /* lg+ (from this point on, no padding just limited max width) */
     @media (min-width: theme('screens.lg')) {
-      @apply px-0 max-w-[928px];
+      /* @apply px-0 max-w-[928px]; */
+      @apply px-6 max-w-full;
     }
 
     /* xl+ */

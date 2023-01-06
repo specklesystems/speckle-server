@@ -5,9 +5,14 @@ import {
 import { UserInputError } from 'apollo-server-core'
 import { getBranchesByStreamId } from '@/modules/core/services/branches'
 import {
+  getStructuredProjectModels,
   getPaginatedProjectModelsItems,
   getPaginatedProjectModelsTotalCount
 } from '@/modules/core/repositories/branches'
+
+export async function getStructuredStreamModels(streamId: string) {
+  return getStructuredProjectModels(streamId)
+}
 
 export async function getPaginatedStreamBranches(
   streamId: string,

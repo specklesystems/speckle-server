@@ -92,8 +92,8 @@
 <script setup lang="ts">
 import { locations } from '~~/lib/tour/mockedComments'
 import { Vector3 } from 'three'
-import { Viewer } from '@speckle/viewer'
 import { ArrowRightIcon, CheckIcon } from '@heroicons/vue/24/solid'
+import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 
 const comments = ref<HTMLElement | null>(null)
 const commentState = ref(0)
@@ -101,28 +101,36 @@ const commentState = ref(0)
 provide('commentState', commentState)
 provide('locations', locations)
 
-const viewer = inject('viewer') as Viewer
-onMounted(() => {
-  viewer.cameraHandler.controls.addEventListener('update', () => {
-    const cam = viewer.cameraHandler.camera
-    cam.updateProjectionMatrix()
+const { viewer } = useInjectedViewer()
 
-    let index = 0
-    for (const child of (comments.value as HTMLElement).children) {
-      const data = locations[index]
-      const location = new Vector3(data.location.x, data.location.y, data.location.z)
-      location.project(cam)
-      const commentLocation = new Vector3(
-        (location.x * 0.5 + 0.5) * window.innerWidth - 20,
-        (location.y * -0.5 + 0.5) * window.innerHeight - 20,
-        0
-      )
-      const commentEl = child as HTMLElement
-      commentEl.style.left = `${commentLocation.x}px`
-      commentEl.style.top = `${commentLocation.y}px`
-      index++
-    }
-  })
+const updateCommentPositions = () => {
+  if (!comments.value) return
+  const cam = viewer.cameraHandler.camera
+  cam.updateProjectionMatrix()
+
+  let index = 0
+  for (const child of (comments.value as HTMLElement).children) {
+    const data = locations[index]
+    const location = new Vector3(data.location.x, data.location.y, data.location.z)
+    location.project(cam)
+    const commentLocation = new Vector3(
+      (location.x * 0.5 + 0.5) * window.innerWidth - 20,
+      (location.y * -0.5 + 0.5) * window.innerHeight - 20,
+      0
+    )
+    const commentEl = child as HTMLElement
+    commentEl.style.left = `${commentLocation.x}px`
+    commentEl.style.top = `${commentLocation.y}px`
+    index++
+  }
+}
+
+onMounted(() => {
+  viewer.cameraHandler.controls.addEventListener('update', updateCommentPositions)
+})
+
+onBeforeUnmount(() => {
+  viewer.cameraHandler.controls.removeEventListener('update', updateCommentPositions)
 })
 
 const hasAddedOverlay = ref(false)

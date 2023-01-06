@@ -17,7 +17,7 @@
   --foundation-4: #fcfcfc;
   --foundation-5: #fcfcfc;
   /* for hover/focus states */
-  --foundation-focus: #cbd5e1;
+  --foundation-focus: #dbeafe;
   /* for disabled backgrounds */
   --foundation-disabled: #dbeafe;
 
@@ -70,7 +70,7 @@
   --foundation-page: #18181b;
   /* used as the background for any element that sits on the page */
   --foundation: #27272a;
-  --foundation-2: #3f3f46;
+  --foundation-2: #303034;
   --foundation-3: #52525b;
   --foundation-4: #71717a;
   --foundation-5: #a1a1aa;

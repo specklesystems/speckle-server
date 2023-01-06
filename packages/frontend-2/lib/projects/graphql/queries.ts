@@ -22,6 +22,14 @@ export const projectPageQuery = graphql(`
   }
 `)
 
+export const modelPageProjectQuery = graphql(`
+  query ModelPageProjectQuery($id: String!) {
+    project(id: $id) {
+      ...ModelPageProject
+    }
+  }
+`)
+
 export const latestModelsQuery = graphql(`
   query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
     project(id: $projectId) {
@@ -69,6 +77,17 @@ export const latestCommentThreadsQuery = graphql(`
         items {
           ...ProjectPageLatestItemsCommentItem
         }
+      }
+    }
+  }
+`)
+
+export const modelCardQuery = graphql(`
+  query ModelCard($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        ...ModelCardModel
       }
     }
   }

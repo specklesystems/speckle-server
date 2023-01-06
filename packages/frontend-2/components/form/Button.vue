@@ -267,7 +267,7 @@ const ringClasses = computed(() => {
         break
       case 'default':
       default:
-        classParts.push('hover:ring-4')
+        classParts.push('hover:ring-2')
         break
     }
   }

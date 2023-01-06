@@ -1,9 +1,9 @@
 <template>
   <NuxtLink :to="projectRoute(project.id)">
     <div
-      class="group flex flex-col md:flex-row border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition"
+      class="group flex flex-col md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition"
     >
-      <div class="w-full md:w-1/5 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0">
+      <div class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0">
         <div class="text-2xl font-bold group-hover:text-primary transition">
           <NuxtLink :to="projectRoute(project.id)">{{ project.name }}</NuxtLink>
           <UserAvatarGroup :users="project.team" :max-count="2" />
@@ -20,7 +20,7 @@
         </div>
       </div>
       <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3"
       >
         <ProjectPageModelsCard
           v-for="model in slicedModels"

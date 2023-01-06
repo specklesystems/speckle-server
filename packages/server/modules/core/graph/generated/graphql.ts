@@ -499,6 +499,13 @@ export type Model = {
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  versions?: Maybe<VersionCollection>;
+};
+
+
+export type ModelVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 export type ModelCollection = {
@@ -1821,7 +1828,10 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  author: LimitedUser;
+  authorAvatar?: Maybe<Scalars['String']>;
+  authorId?: Maybe<Scalars['String']>;
+  authorName?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
@@ -2060,8 +2070,8 @@ export type ResolversTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>> }>;
   UserUpdateInput: UserUpdateInput;
-  Version: ResolverTypeWrapper<Omit<Version, 'author'> & { author: ResolversTypes['LimitedUser'] }>;
-  VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
+  Version: ResolverTypeWrapper<Version>;
+  VersionCollection: ResolverTypeWrapper<VersionCollection>;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -2161,8 +2171,8 @@ export type ResolversParentTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['LimitedUser']>>> };
   UserUpdateInput: UserUpdateInput;
-  Version: Omit<Version, 'author'> & { author: ResolversParentTypes['LimitedUser'] };
-  VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
+  Version: Version;
+  VersionCollection: VersionCollection;
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -2444,6 +2454,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  versions?: Resolver<Maybe<ResolversTypes['VersionCollection']>, ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2829,7 +2840,10 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
-  author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  authorAvatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

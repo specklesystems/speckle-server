@@ -492,6 +492,13 @@ export type Model = {
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  versions?: Maybe<VersionCollection>;
+};
+
+
+export type ModelVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 export type ModelCollection = {
@@ -1814,7 +1821,10 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  author: LimitedUser;
+  authorAvatar?: Maybe<Scalars['String']>;
+  authorId?: Maybe<Scalars['String']>;
+  authorName?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
