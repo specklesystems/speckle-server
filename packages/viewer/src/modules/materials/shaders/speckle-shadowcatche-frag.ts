@@ -62,13 +62,14 @@ void main() {
 
 	float c0 = mix(color0, 0., color1);
 	float c1 = mix(color1, 0., color0);
-	float c2 = mix(color3, 0., color0 + color1);
+	float c2 = mix(color3, 0., color0 * 0.5 + color1 * 0.5);
 	float sum = c0 + c1 + c2;
 
 	// float c0 = color0 + color1 + color2;
 	// float c1 = mix(color3, 0., c0);
 	// float sum = c0 + c1;
 
+	// float sum = color0+color1+color3;
 	
 	gl_FragColor = vec4( vec3(sum), sum );
 }
