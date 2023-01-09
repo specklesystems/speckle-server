@@ -40,7 +40,7 @@
     class="block w-full transition bg-primary-muted hover:bg-foundation-focus text-xs text-foreground-2 py-1 text-center rounded-b-md"
     @click="$emit('load-latest')"
   >
-    Load Latest Version (TODO)
+    Load Latest Version
   </button>
 </template>
 <script setup lang="ts">
