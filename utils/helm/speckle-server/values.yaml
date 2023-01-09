@@ -436,6 +436,29 @@ server:
       ## @param server.auth.azure_ad.port Port on server to connect to. Used to allow egress in Network Policy. Defaults to 443
       ##
       port: 443
+    oidc:
+      ## @param server.auth.oidc.enabled If enabled, users can authenticate via OpenID Connect identity provider
+      ##
+      enabled: false
+      ## @param server.auth.oidc.name This is the name that you want displayed on the login button
+      ##
+      name: ''
+      ## @param server.auth.oidc.discovery_url This is the OIDC discovery URL for the identity provider you want to use
+      ##
+      discovery_url: ''
+      ## @param server.auth.oidc.client_id This is the ID for Speckle that you have registered with the OIDC identity provider
+      ##
+      client_id: ''
+      clientSecret:
+        ## @param server.auth.oidc.clientSecret.secretName The name of the Kubernetes Secret containing the OIDC client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+        ##
+        secretName: ''
+        ## @param server.auth.oidc.clientSecret.secretKey The key within the Kubernetes Secret holding the OIDC client secret as its value.
+        ##
+        secretKey: ''
+      ## @param server.auth.oidc.domains List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy.
+      ##
+      domains: []
   ## @extra server.email Speckle can communicate with users via email, providing account verification and notification.
   ##
   email:
