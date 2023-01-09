@@ -48,11 +48,16 @@ export function useCreateNewModel() {
         update: (cache, { data }) => {
           if (!data?.modelMutations?.create?.id) return
 
+          const projectGqlId = getCacheId('Project', projectId)
+
           // Manual cache updates are too overwhelming, there's multiple places in the graph
-          // where you can find a model so we're just evicting Project altogether
-          cache.evict({
-            id: getCacheId('Project', projectId)
-          })
+          // where you can find a model, some of which order models in a tree structure
+          // so we're just refetching all model data instead
+          cache.evict({ id: projectGqlId, fieldName: 'models' })
+          cache.evict({ id: projectGqlId, fieldName: 'modelsTree' })
+          cache.evict({ id: projectGqlId, fieldName: 'model' })
+          cache.evict({ id: projectGqlId, fieldName: 'modelChildrenTree' })
+          cache.gc()
         }
       })
       .catch(convertThrowIntoFetchResult)
