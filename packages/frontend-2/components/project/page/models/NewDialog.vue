@@ -10,13 +10,14 @@
           placeholder="model/name/here"
           :custom-icon="CubeIcon"
           :rules="rules"
+          :disabled="anyMutationsLoading"
         />
         <p class="text-foreground-2 label label--light">
           Use forward slashes in the model name to nest it below other models.
         </p>
         <div class="grow flex justify-end">
           <FormButton text @click="openState = false">Cancel</FormButton>
-          <FormButton submit>Create</FormButton>
+          <FormButton submit :disabled="anyMutationsLoading">Create</FormButton>
         </div>
       </div>
     </form>
@@ -24,6 +25,7 @@
 </template>
 <script setup lang="ts">
 import { CubeIcon } from '@heroicons/vue/24/solid'
+import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import {
   useCreateNewModel,
@@ -40,6 +42,7 @@ const props = defineProps<{
 }>()
 
 const { handleSubmit } = useForm<{ name: string }>()
+const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
 

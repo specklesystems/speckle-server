@@ -3,7 +3,7 @@
     <div v-for="item in topLevelItems" :key="item.fullName">
       <ProjectPageModelsStructureItem :item="item" :project-id="projectId" />
     </div>
-    <ProjectPageModelsNewModelStructureItem />
+    <ProjectPageModelsNewModelStructureItem :project-id="projectId" />
   </div>
   <div v-else>TODO: List empty state</div>
 </template>

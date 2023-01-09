@@ -132,9 +132,9 @@
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2">
-            <!-- TODO: 
-            Open all child models in one viewer page. 
-            Fabs will hate me as we might need to go back to "getting everything", or hacking away a 
+            <!-- TODO:
+            Open all child models in one viewer page.
+            Fabs will hate me as we might need to go back to "getting everything", or hacking away a
             request for all the kids -->
             <FormButton
               rounded
@@ -167,7 +167,10 @@
             class="flex-grow"
           />
         </div>
-        <ProjectPageModelsNewModelStructureItem />
+        <ProjectPageModelsNewModelStructureItem
+          :project-id="projectId"
+          :model-name-prefix="item.fullName"
+        />
       </div>
     </div>
   </div>
@@ -214,6 +217,7 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
   projectId: string
 }>()
+
 const route = useRoute()
 
 const expanded = ref(false)

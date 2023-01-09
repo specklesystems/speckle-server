@@ -22,7 +22,11 @@ const isValidModelName: GenericValidateFunction<string> = (name) => {
 }
 
 export function useModelNameValidationRules() {
-  return computed(() => [isRequired, isValidModelName])
+  return computed(() => [
+    isRequired,
+    // isStringOfLength({ minLength: 3 }),
+    isValidModelName
+  ])
 }
 
 export function useCreateNewModel() {
