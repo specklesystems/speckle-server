@@ -8,7 +8,7 @@
         <!-- <FormButton size="sm" rounded>New</FormButton> -->
       </div>
       <div class="flex items-center space-x-2">
-        <FormButton :icon-left="PlusIcon">New</FormButton>
+        <FormButton :icon-left="PlusIcon" @click="showNewDialog = true">New</FormButton>
         <div class="w-60">
           <FormTextInput
             v-model="search"
@@ -41,6 +41,7 @@
         @update:loading="searchLoading = $event"
       />
     </div>
+    <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
   </div>
 </template>
 <script setup lang="ts">
@@ -79,6 +80,7 @@ graphql(`
 const searchLoading = ref(false)
 const search = ref('')
 const debouncedSearch = ref('')
+const showNewDialog = ref(false)
 
 const viewTypeCookie = useSynchronizedCookie(`projectPage-models-viewType`)
 const gridOrList = computed({

@@ -1,4 +1,11 @@
-import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
+import {
+  BranchCommits,
+  Branches,
+  Commits,
+  knex,
+  Streams
+} from '@/modules/core/dbSchema'
+import { BranchNameError } from '@/modules/core/errors/branch'
 import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
@@ -301,4 +308,54 @@ export async function getModelTreeItems(
   })
 
   return items
+}
+
+export const validateBranchName = (name: string) => {
+  if (!(name || '').trim()) {
+    throw new BranchNameError('Branch name is required')
+  }
+
+  if (
+    name.startsWith('/') ||
+    name.startsWith('#') ||
+    name.indexOf('//') !== -1 ||
+    name.indexOf(',') !== -1
+  )
+    throw new BranchNameError(
+      'Bad name for branch. Branch names cannot start with "#" or "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      {
+        info: {
+          name
+        }
+      }
+    )
+}
+
+export async function createBranch(params: {
+  name: string
+  description: string | null
+  streamId: string
+  authorId: string
+}) {
+  const { streamId, authorId, name, description } = params
+
+  const branch: Omit<BranchRecord, 'createdAt' | 'updatedAt'> = {
+    id: generateBranchId(),
+    streamId,
+    authorId,
+    name: name.toLowerCase(),
+    description
+  }
+
+  validateBranchName(branch.name)
+
+  const results = await Branches.knex().insert(branch, '*')
+  const newBranch = results[0] as BranchRecord
+
+  // Update stream updated at
+  await Streams.knex()
+    .where(Streams.col.id, streamId)
+    .update(Streams.withoutTablePrefix.col.updatedAt, knex.fn.now())
+
+  return newBranch
 }

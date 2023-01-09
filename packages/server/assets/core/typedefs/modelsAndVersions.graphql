@@ -48,6 +48,21 @@ type ModelCollection {
   items: [Model!]!
 }
 
+input CreateModelInput {
+  projectId: ID!
+  name: String!
+}
+
+type ModelMutations {
+  create(input: CreateModelInput!): Model!
+}
+
+extend type Mutation {
+  modelMutations: ModelMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+}
+
 type ModelsTreeItem {
   name: String!
   fullName: String!

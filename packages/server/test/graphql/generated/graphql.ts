@@ -378,6 +378,11 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateModelInput = {
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -511,6 +516,16 @@ export type ModelCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type ModelMutations = {
+  __typename?: 'ModelMutations';
+  create: Model;
+};
+
+
+export type ModelMutationsCreateArgs = {
+  input: CreateModelInput;
+};
+
 export type ModelsTreeItem = {
   __typename?: 'ModelsTreeItem';
   children: Array<ModelsTreeItem>;
@@ -571,8 +586,8 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
+  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
-  /** Various Project related mutations */
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];

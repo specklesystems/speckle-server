@@ -58,8 +58,7 @@
             v-model="descriptionState"
             :class="[
               ...descriptionInputClasses,
-              'min-w-[280px]',
-              descriptionState ? 'focus:min-w-0' : ''
+              descriptionState ? 'focus:min-w-0' : 'min-w-[280px]'
             ]"
             :placeholder="
               descriptionState ? undefined : 'Click here to add a project description.'

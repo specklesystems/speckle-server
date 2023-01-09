@@ -1,9 +1,11 @@
+import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getModelTreeItems } from '@/modules/core/repositories/branches'
+import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
+import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash'
-import { getBranchById } from '../../services/branches'
 import {
   getCommitsByBranchId,
   getCommitsTotalCountByBranchId
@@ -45,7 +47,7 @@ export = {
     async displayName(parent) {
       return last(parent.name.split('/'))
     },
-    async versions(parent, args, _ctx) {
+    async versions(parent, args) {
       const { commits, cursor } = await getCommitsByBranchId({
         branchId: parent.id,
         limit: args.limit,
@@ -64,6 +66,19 @@ export = {
     },
     async children(parent) {
       return await getModelTreeItems(parent.projectId, parent.fullName)
+    }
+  },
+  Mutation: {
+    modelMutations: () => ({})
+  },
+  ModelMutations: {
+    async create(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Contributor
+      )
+      return await createBranchAndNotify(args.input, ctx.userId!)
     }
   }
 } as Resolvers

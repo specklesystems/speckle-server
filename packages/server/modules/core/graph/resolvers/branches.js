@@ -3,15 +3,15 @@
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
-const { authorizeResolver, pubsub } = require('@/modules/shared')
+const { authorizeResolver, pubsub, BranchPubsubEvents } = require('@/modules/shared')
 
 const {
-  createBranch,
   updateBranch,
   getBranchById,
   getBranchByNameAndStreamId,
   deleteBranchById
 } = require('../../services/branches')
+const { createBranchAndNotify } = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
 } = require('@/modules/core/services/branch/retrieval')
@@ -21,9 +21,9 @@ const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 // subscription events
-const BRANCH_CREATED = 'BRANCH_CREATED'
-const BRANCH_UPDATED = 'BRANCH_UPDATED'
-const BRANCH_DELETED = 'BRANCH_DELETED'
+const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
+const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
+const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -52,23 +52,7 @@ module.exports = {
         'stream:contributor'
       )
 
-      const id = await createBranch({ ...args.branch, authorId: context.userId })
-
-      if (id) {
-        await saveActivity({
-          streamId: args.branch.streamId,
-          resourceType: 'branch',
-          resourceId: id,
-          actionType: ActionTypes.Branch.Create,
-          userId: context.userId,
-          info: { branch: { ...args.branch, id } },
-          message: `Branch created: '${args.branch.name}' (${id})`
-        })
-        await pubsub.publish(BRANCH_CREATED, {
-          branchCreated: { ...args.branch, id, authorId: context.userId },
-          streamId: args.branch.streamId
-        })
-      }
+      const { id } = await createBranchAndNotify(args.branch, context.userId)
 
       return id
     },

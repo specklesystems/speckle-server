@@ -30,29 +30,22 @@ type ProjectMutations {
   Delete an existing project
   """
   delete(id: String!): Boolean!
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "streams:write")
 
   """
   Updates an existing project
   """
   update(stream: ProjectUpdateInput!): Project!
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "streams:write")
 
   """
   Create onboarding/tutorial project
   """
   createForOnboarding: Project!
-    @hasServerRole(role: SERVER_USER)
-    @hasScope(scope: "streams:write")
 }
 
 extend type Mutation {
-  """
-  Various Project related mutations
-  """
   projectMutations: ProjectMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
 }
 
 extend type User {
