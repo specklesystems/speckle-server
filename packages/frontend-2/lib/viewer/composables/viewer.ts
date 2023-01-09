@@ -1,5 +1,14 @@
 import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 import { inject, InjectionKey, Ref, ref, provide } from 'vue'
+import { useScopedState } from '~~/lib/common/composables/scopedState'
+import {
+  createGetParamFromResources,
+  isModelResource,
+  parseUrlParameters,
+  ViewerModelResource
+} from '~~/lib/viewer/services/route'
+
+const GlobalViewerDataKey = Symbol('GlobalViewerData')
 
 // Keys you can use in the Viewer family of components to inject the viewer, its container and its init state
 export const ViewerKey: InjectionKey<Viewer> = Symbol('VIEWER_INSTANCE')
@@ -26,11 +35,10 @@ export function useInjectedViewer() {
 }
 
 /**
- * TODO: Ask Fabs, i just copy pasted this one
  * Pass in a newly created Viewer instance and its container for injection down into child components
  * (through useInjectedViewer() or the injection keys manually).
  */
-export function setupNewViewerInjection(params: {
+function setupNewViewerInjection(params: {
   viewer: Viewer
   container: HTMLElement
   initPromise: Promise<void>
@@ -38,7 +46,7 @@ export function setupNewViewerInjection(params: {
   const viewer = params.viewer
   const container = params.container
   const isInitialized = ref(false)
-  const isInitializedPromise = params.initPromise.then(
+  const isInitializedPromise = params.initPromise?.then(
     () => (isInitialized.value = true)
   )
 
@@ -55,28 +63,16 @@ type GlobalViewerData = {
   container: HTMLElement
   initialized: Promise<void>
 }
-// TODO: assign it to a scoped state
-let globalViewerData: GlobalViewerData | null = null
 
-export function setupViewer() {
-  // Set up and inject viewer
-  const viewerData = getOrInitViewerData()
-  const { viewer, container, isInitialized, isInitializedPromise } =
-    setupNewViewerInjection({
-      viewer: viewerData.viewer,
-      container: viewerData.container,
-      initPromise: viewerData.initialized
-    })
-
-  return { viewer, container, isInitialized, isInitializedPromise }
-}
-
-function getOrInitViewerData(): GlobalViewerData {
-  if (globalViewerData) {
-    console.log('same viewer data')
-    return globalViewerData
-  }
-  console.log('new viewer data')
+function createViewerData(): GlobalViewerData {
+  if (process.server)
+    // we don't want to use nullable checks everywhere, so the nicer route here ends
+    // up being telling TS to ignore the undefineds - you shouldn't use any of this in SSR anyway
+    return {
+      viewer: undefined,
+      container: undefined,
+      initialized: undefined
+    } as unknown as GlobalViewerData
 
   const container = document.createElement('div')
   container.id = 'renderer'
@@ -87,11 +83,58 @@ function getOrInitViewerData(): GlobalViewerData {
   const viewer = new Viewer(container, DefaultViewerParams)
   const initPromise = viewer.init()
 
-  globalViewerData = {
+  return {
     viewer,
     container,
     initialized: initPromise
   }
+}
 
-  return globalViewerData
+/**
+ * (Re-)initialize viewer
+ * Note: All returned values will be undefined in SSR!
+ */
+export function setupViewer() {
+  // re-use pre-initialized viewer data, if there's any
+  const viewerData = useScopedState(GlobalViewerDataKey, createViewerData)
+
+  const { viewer, container, isInitialized, isInitializedPromise } =
+    setupNewViewerInjection({
+      viewer: viewerData.viewer,
+      container: viewerData.container,
+      initPromise: viewerData.initialized
+    })
+
+  return { viewer, container, isInitialized, isInitializedPromise }
+}
+
+// TODO: Rename to useViewerResourcesState, maybe use local link state?
+export function useViewerRouteResources() {
+  const route = useRoute()
+  const router = useRouter()
+  const getParam = computed(() => route.params.modelId as string)
+
+  const resources = computed({
+    get: () => parseUrlParameters(getParam.value),
+    set: (newResources) => {
+      const modelId = createGetParamFromResources(newResources)
+      router.push({ params: { modelId } })
+    }
+  })
+
+  const switchModelToVersion = (modelId: string, versionId?: string) => {
+    const resourceArr = resources.value.slice()
+
+    const resourceIdx = resourceArr.findIndex(
+      (r) => isModelResource(r) && r.modelId === modelId
+    )
+    if (resourceIdx === -1) return
+
+    const newResource = resourceArr[resourceIdx] as ViewerModelResource
+    newResource.versionId = versionId
+
+    resources.value = resources.value.splice(resourceIdx, 1, newResource)
+  }
+
+  return { resources, switchModelToVersion }
 }

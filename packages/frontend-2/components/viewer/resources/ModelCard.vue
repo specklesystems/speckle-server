@@ -55,20 +55,19 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { modelCardQuery } from '~~/lib/projects/graphql/queries'
-import {
-  ViewerModelResource,
-  getObjectUrl,
-  ViewerResource
-} from '~~/lib/viewer/helpers'
+import { useGetObjectUrl } from '~~/lib/viewer/helpers'
+import { ViewerModelResource } from '~~/lib/viewer/services/route'
 import {
   ChevronDownIcon,
   ArrowPathRoundedSquareIcon,
   XMarkIcon
 } from '@heroicons/vue/24/solid'
 import { ModelCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
+import {
+  useInjectedViewer,
+  useViewerRouteResources
+} from '~~/lib/viewer/composables/viewer'
 import { ComputedRef } from 'vue'
-import { Ref } from 'vue'
 
 const { viewer, isInitializedPromise } = useInjectedViewer()
 
@@ -78,6 +77,8 @@ const props = defineProps<{
 }>()
 
 const route = useRoute()
+const getObjectUrl = useGetObjectUrl()
+const { switchModelToVersion } = useViewerRouteResources()
 
 const projectId = computed(() => {
   return props.projectId || (route.params.id as string)
@@ -154,11 +155,6 @@ const unwatch = watch(loadedVersion, async (newVal) => {
   unwatch() // important to stop watching as the loaded version is reactive. we want this to fire on "mounted" only (not using on mounted as it's null in there)
 })
 
-const { updateResourceVersion } = inject('resources') as {
-  resources: Ref<ViewerResource[]>
-  updateResourceVersion: (resourceId: string, resourceVersion: string) => void
-}
-
 async function handleVersionChange(versionId: string) {
   await swapVersion(versionId)
 }
@@ -176,10 +172,11 @@ async function swapVersion(newVersionId: string) {
     newVersion?.referencedObject as string
   )
 
+  // TODO: Do from 'setupViewer'
   await Promise.all([
     viewer.unloadObject(oldObjectUrl),
     viewer.loadObject(newObjectUrl)
   ])
-  updateResourceVersion(props.model.modelId, newVersionId)
+  switchModelToVersion(props.model.modelId, newVersionId)
 }
 </script>

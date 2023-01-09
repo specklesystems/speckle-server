@@ -1,10 +1,5 @@
 <template>
   <div class="absolute top-0 left-0 w-screen h-screen">
-    <!-- Viewer host -->
-    <div class="special-gradient absolute w-screen h-screen">
-      <ViewerBase />
-    </div>
-
     <!-- Nav -->
     <Portal to="navigation">
       <HeaderNavLink
@@ -18,37 +13,39 @@
       ></HeaderNavLink>
     </Portal>
 
-    <!-- Global loading bar -->
-    <ViewerLoadingBar />
+    <ClientOnly>
+      <!-- Viewer host -->
+      <div class="special-gradient absolute w-screen h-screen">
+        <ViewerBase />
+      </div>
 
-    <!-- Sidebar sketches -->
-    <ViewerControls />
+      <!-- Global loading bar -->
+      <ViewerLoadingBar />
+
+      <!-- Sidebar sketches -->
+      <ViewerControls />
+    </ClientOnly>
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
-
-import { ViewerModelResource, parseUrlParameters } from '~~/lib/viewer/helpers'
-
+// import { ViewerModelResource, parseUrlParameters } from '~~/lib/viewer/services/route'
 import { setupViewer } from '~~/lib/viewer/composables/viewer'
 
-if (process.client) {
-  setupViewer()
-}
-
+setupViewer()
 const route = useRoute()
-const resources = ref(parseUrlParameters(route.params.modelId as string))
+// const resources = ref(parseUrlParameters(route.params.modelId as string))
 
-const updateResourceVersion = (resourceId: string, resourceVersion: string) => {
-  const resource = resources.value.find(
-    (r) => (r as ViewerModelResource).modelId === resourceId
-  ) as ViewerModelResource
-  resource.versionId = resourceVersion
-}
+// const updateResourceVersion = (resourceId: string, resourceVersion: string) => {
+//   const resource = resources.value.find(
+//     (r) => (r as ViewerModelResource).modelId === resourceId
+//   ) as ViewerModelResource
+//   resource.versionId = resourceVersion
+// }
 
-provide('resources', { resources, updateResourceVersion })
+// provide('resources', { resources, updateResourceVersion })
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -69,8 +66,3 @@ definePageMeta({
   layoutTransition: false
 })
 </script>
-<style scoped>
-.test {
-  display: block;
-}
-</style>

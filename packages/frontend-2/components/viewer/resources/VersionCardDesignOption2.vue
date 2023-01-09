@@ -51,7 +51,7 @@ import {
   LimitedUser,
   ModelCardVersionFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { getPreviewUrl } from '~~/lib/viewer/helpers'
+import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
 
 const props = withDefaults(
   defineProps<{
@@ -69,6 +69,7 @@ const emit = defineEmits<{
   (e: 'changeVersion', version: string): void
 }>()
 
+const getPreviewUrl = useGetPreviewUrl()
 const loadedVersion = inject('loadedVersion') as ComputedRef<ModelCardVersionFragment>
 const latestVersion = inject('latestVersion') as ComputedRef<ModelCardVersionFragment>
 const projectId = inject('projectId') as string

@@ -12,12 +12,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ViewerModelResource } from '~~/lib/viewer/helpers'
+import { ViewerModelResource } from '~~/lib/viewer/services/route'
 import { PlusIcon } from '@heroicons/vue/24/solid'
-import { Ref } from 'vue'
+import { useViewerRouteResources } from '~~/lib/viewer/composables/viewer'
 
-const { resources } = inject('resources') as {
-  resources: Ref<ViewerModelResource[]>
-  updateResourceVersion: (resourceId: string, resourceVersion: string) => void
-}
+const { resources } = useViewerRouteResources()
 </script>
