@@ -1,14 +1,17 @@
 <template>
-  <div class="p-2 flex justify-between">
-    <div class="text-sm font-bold text-foreground-2">Models</div>
-    <div>
-      <FormButton size="sm" text :icon-left="PlusIcon">Add Model</FormButton>
+  <div class="">
+    <div class="flex flex-col space-y-2 mb-2">
+      <div v-for="(resource, idx) in resources" :key="idx">
+        <!-- TODO: Object resource card -->
+        <ViewerResourcesModelCard :model="(resource as ViewerModelResource)" />
+      </div>
     </div>
-  </div>
-  <div class="p-2 space-y-2">
-    <div v-for="(resource, idx) in resources" :key="idx">
-      <ViewerResourcesModelCard :model="(resource as ViewerModelResource)" />
-    </div>
+    <button
+      class="group flex w-full rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus dark:hover:bg-primary-muted"
+    >
+      +
+      <span class="font-bold ml-1">Add Model</span>
+    </button>
   </div>
 </template>
 <script setup lang="ts">

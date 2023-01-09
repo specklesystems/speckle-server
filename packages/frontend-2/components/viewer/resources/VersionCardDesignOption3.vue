@@ -1,44 +1,46 @@
 <template>
   <button
-    :class="`group block w-full transition text-left rounded-md ${
+    :class="`relative group block space-y-2 w-full transition text-left pb-2 rounded-md ${
       clickable ? 'hover:bg-primary-muted' : 'cursor-default'
     }`"
     @click="handleClick"
   >
-    <div class="flex items-center space-x-2">
-      <div class="bg-foundation w-24 h-24 shadow rounded-md">
+    <!-- Timeline left border -->
+    <div
+      class="absolute w-1 h-[99%] top-3 border-l-2 border-outline-3 left-[7px] z-10"
+    ></div>
+    <div class="pl-1 flex items-center space-x-2">
+      <!-- Timeline circle -->
+      <div class="w-2 h-2 rounded-full bg-outline-3"></div>
+      <div
+        class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
+      >
+        <span>
+          {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
+        </span>
+        <!-- <span class="group-hover:opacity-100">{{ createdAt }}</span> -->
+      </div>
+      <div
+        v-if="isLoaded"
+        class="inline-block rounded-full px-2 text-xs bg-primary text-foreground-on-primary font-bold"
+      >
+        Currently Viewing
+      </div>
+    </div>
+    <!-- Main stuff -->
+    <div class="pl-5 flex space-x-1 items-center">
+      <div class="bg-foundation w-20 h-20 shadow rounded-md flex-shrink-0">
         <PreviewImage :preview-url="previewUrl" />
       </div>
-      <div class="flex flex-col space-y-1">
-        <div class="space-x-1">
-          <div
-            v-if="showMetadata"
-            class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
-          >
-            {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
-          </div>
-          <div
-            v-if="isLoaded && showMetadata"
-            class="inline-block rounded-full px-2 text-xs bg-primary text-foreground-on-primary font-bold"
-          >
-            Loaded
-          </div>
-          <div class="inline-block rounded-full px-1 text-xs text-primary font-bold">
-            {{ version.sourceApplication }}
-          </div>
-        </div>
-        <div class="flex items-center space-x-2 overflow-hidden">
+      <div class="flex flex-col space-y-1 overflow-hidden">
+        <div class="flex items-center space-x-1 min-w-0">
           <UserAvatar :user="author" size="sm" />
-          <span class="text-sm font-bold tracking-tight text-foreground">
-            {{ author.name }}
-          </span>
+          <div class="text-xs truncate">
+            {{ version.message || 'no message' }}
+          </div>
         </div>
-        <div class="text-xs text-foreground-2">{{ createdAt }}</div>
-        <div class="text-xs text-foreground-2 hidden">
-          {{ timeAgoCreatedAt }}
-        </div>
-        <div class="text-xs text-foreground-2 truncate break-all">
-          {{ version.message || 'no description' }}
+        <div class="inline-block pl-1 rounded-full text-xs text-primary font-bold">
+          {{ version.sourceApplication }}
         </div>
       </div>
     </div>

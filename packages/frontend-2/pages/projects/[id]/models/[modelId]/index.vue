@@ -22,7 +22,8 @@
     <ViewerLoadingBar />
 
     <!-- Sidebar sketches -->
-    <ViewerControls />
+    <ViewerControlsOption3 />
+    <!-- <ViewerControlsOption2 /> -->
   </div>
 </template>
 <script setup lang="ts">

@@ -1,51 +1,38 @@
 <template>
-  <div
-    v-if="model"
-    class="px-1 pt-2 flex flex-col items-center bg-foundation shadow-md rounded-md"
-  >
-    <div class="w-full flex items-center justify-between mb-2">
-      <div class="px-1 flex">
-        <span class="font-bold text-lg">{{ model?.name }}</span>
-        &nbsp;
+  <div v-if="model">
+    <ViewerResourcesLoadedVersionCard
+      v-if="!showVersions"
+      :version="loadedVersion"
+      :model="model"
+      @show-versions="showVersions = true"
+      @load-latest="loadLatestVersion"
+    />
+    <div v-if="showVersions" class="pb-2 bg-foundation rounded-md shadow">
+      <div class="px-2 py-4 flex items-center truncate space-x-2">
+        <FormButton
+          :icon-left="ChevronLeftIcon"
+          text
+          size="xs"
+          @click="showVersions = false"
+        >
+          Back
+        </FormButton>
+        <span>
+          <b>{{ model.name }}</b>
+          versions
+        </span>
       </div>
-      <div class="flex space-x-2">
-        <span class="text-xs text-foreground-2">last update {{ updatedAt }}</span>
-        <XMarkIcon class="text-foreground-2 w-3 h-4 mr-1" />
-      </div>
-    </div>
-    <div class="w-full">
-      <ViewerResourcesVersionCardDesignOption2
-        :version="(loadedVersion as ModelCardVersionFragment)"
-        :show-metadata="false"
-        :clickable="false"
-      />
-    </div>
-    <div class="flex flex-col bg-teal-300/0 w-full">
-      <button
-        v-if="versions.length !== 1"
-        class="w-full flex justify-between hover:bg-foundation-focus py-2 px-1 rounded-md transition"
-        @click="showVersions = !showVersions"
-      >
-        <div class="flex space-x-1 text-xs font-bold text-foreground-2">
-          <span>Versions</span>
-          <ArrowPathRoundedSquareIcon class="w-3 h-4 mr-1" />
-          <span>{{ model?.versions?.totalCount }}</span>
-        </div>
-        <div><ChevronDownIcon class="w-3 h-3" /></div>
-      </button>
-      <div v-else class="py-2 px-1 text-xs font-bold text-foreground-2">
-        No other versions
-      </div>
-      <div v-if="showVersions" class="flex flex-col space-y-1">
-        <ViewerResourcesVersionCardDesignOption2
+      <div class="space-y-0">
+        <ViewerResourcesVersionCardDesignOption3
           v-for="version in versions"
           :key="version.id"
           :version="version"
+          class="bg-foundation"
           @change-version="handleVersionChange"
         />
-        <span class="text-xs text-center py-2 text-foreground-2">
-          TODO: Version Pagination
-        </span>
+      </div>
+      <div class="mt-4 text-xs text-center py-2 text-foreground-2">
+        TODO: Version Pagination
       </div>
     </div>
   </div>
@@ -60,11 +47,7 @@ import {
   getObjectUrl,
   ViewerResource
 } from '~~/lib/viewer/helpers'
-import {
-  ChevronDownIcon,
-  ArrowPathRoundedSquareIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/solid'
+import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { ModelCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 import { ComputedRef } from 'vue'
@@ -161,6 +144,11 @@ const { updateResourceVersion } = inject('resources') as {
 
 async function handleVersionChange(versionId: string) {
   await swapVersion(versionId)
+  // showVersions.value = false
+}
+
+async function loadLatestVersion() {
+  await swapVersion(latestVersion.value.id)
 }
 
 async function swapVersion(newVersionId: string) {
