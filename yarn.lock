@@ -5212,7 +5212,7 @@ __metadata:
     nyc: ^15.0.1
     openid-client: ^5.1.7
     passport: ^0.6.0
-    passport-azure-ad: ^4.3.0
+    passport-azure-ad: ^4.3.4
     passport-github2: ^0.1.12
     passport-google-oauth2: ^0.2.0
     passport-google-oauth20: ^2.0.0
@@ -15892,9 +15892,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"passport-azure-ad@npm:^4.3.0":
-  version: 4.3.2
-  resolution: "passport-azure-ad@npm:4.3.2"
+"passport-azure-ad@npm:^4.3.4":
+  version: 4.3.4
+  resolution: "passport-azure-ad@npm:4.3.4"
   dependencies:
     async: ^3.2.3
     base64url: ^3.0.0
@@ -15905,10 +15905,9 @@ __metadata:
     lodash: ^4.11.2
     node-jose: ^2.0.0
     oauth: 0.9.15
-    passport: ^0.4.1
-    request: ^2.72.0
+    passport: ^0.6.0
     valid-url: ^1.0.6
-  checksum: 31d030b4205e142019970708f969294a616f8bd3677798a1eed738f0f4ce66c34dc4749f41627441269a27dbd50186b4e66496fd6d5a9d537c43525df96f6961
+  checksum: 51afb8a221bef0d86bb14e4e1f0c496ada84a36444aa81aa854dfb694f0dcb67113fdb15e460c70674be739d0db28733c483cdc94023b7a07906e53aa20086f8
   languageName: node
   linkType: hard
 
@@ -15956,16 +15955,6 @@ __metadata:
   version: 1.0.0
   resolution: "passport-strategy@npm:1.0.0"
   checksum: 5086693f2508e538dffa55a338c89fe8192fb5f4478c71f80cd5890b8573419a098f4fec88b505374f60bbe9049f6f24b9f3992678612528a3370b4dc73354a2
-  languageName: node
-  linkType: hard
-
-"passport@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "passport@npm:0.4.1"
-  dependencies:
-    passport-strategy: 1.x.x
-    pause: 0.0.1
-  checksum: 6e0d855e281df8568f4b361d8377995295e59b08391a1b57d18d1404dbaa67af1523c987e9a071d6b0d1550f022637d62f9854bbd31ebc30372f0bfb1acb2567
   languageName: node
   linkType: hard
 
@@ -17238,7 +17227,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"request@npm:^2.72.0, request@npm:^2.88.2":
+"request@npm:^2.88.2":
   version: 2.88.2
   resolution: "request@npm:2.88.2"
   dependencies:
