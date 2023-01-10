@@ -1,6 +1,5 @@
 const { performance } = require('perf_hooks')
 const WebIFC = require('web-ifc/web-ifc-api-node')
-// import { getHash, IfcElements, PropNames, GeometryTypes, IfcTypesMap } from './utils'
 const {
   getHash,
   IfcElements,
@@ -10,18 +9,19 @@ const {
 } = require('./utils')
 
 module.exports = class IFCParser {
-  constructor({ serverApi }) {
+  constructor({ serverApi, fileId }) {
     this.ifcapi = new WebIFC.IfcAPI()
     this.ifcapi.SetWasmPath('./', false)
     this.serverApi = serverApi
+    this.fileId = fileId
   }
 
   async parse(data) {
     await this.ifcapi.Init()
     this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), { USE_FAST_BOOLS: true })
+    this.startTime = performance.now()
 
     // prepoulate types
-    const p1 = performance.now()
     this.types = await this.getAllTypesOfModel()
 
     // prime caches for property sets and their relating objects, as well as,
@@ -32,22 +32,17 @@ module.exports = class IFCParser {
     this.properties = properties
 
     this.propCache = {}
-    // create and save the geometries; we're storing only references locally.
-    const p2 = performance.now()
-    console.log(`prop warmup ${(p2 - p1).toFixed(2)}ms`)
-    this.geometryReferences = await this.createAndSaveMeshes()
 
-    const p3 = performance.now()
-    console.log(`geometry warmup ${(p3 - p2).toFixed(2)}ms`)
+    // This is used to pre-batch ifc objects that need to be persisted.
+    this.objectBucket = []
+
+    // create and save the geometries; we're storing only references locally.
+    this.geometryReferences = await this.createAndSaveMeshes()
 
     // create and save the spatial tree, populating both properties and geometry references
     // where appropriate
     this.spatialNodeCount = 0
     const structure = await this.createSpatialStructure()
-    const p4 = performance.now()
-    console.log(`structure ${(p4 - p3).toFixed(2)}ms`)
-    console.log(`total time spent: ${(p4 - p1).toFixed(2)}ms`)
-    console.log(structure.id)
     return { id: structure.id, tCount: structure.closureLen }
   }
 
@@ -63,15 +58,25 @@ module.exports = class IFCParser {
       children: []
     }
 
-    await this.populateSpatialNode(project, chunks, [])
+    await this.populateSpatialNode(project, chunks, [], 0)
+
+    this.endTime = performance.now()
+    project.parseTime = (this.endTime - this.startTime).toFixed(2) + 'ms'
+    project.fileId = this.fileId
+
+    // Last save to db call, empty the last bucket
+    if (this.objectBucket.length !== 0) {
+      await this.flushObjectBucket()
+    }
     return project
   }
 
-  async populateSpatialNode(node, chunks, closures) {
+  async populateSpatialNode(node, chunks, closures, depth) {
+    depth++
     process.stdout.write(`${this.spatialNodeCount++} nodes generated \r`)
     closures.push([])
-    await this.getChildren(node, chunks, PropNames.aggregates, closures)
-    await this.getChildren(node, chunks, PropNames.spatial, closures)
+    await this.getChildren(node, chunks, PropNames.aggregates, closures, depth)
+    await this.getChildren(node, chunks, PropNames.spatial, closures, depth)
 
     node.closure = [...new Set(closures.pop())]
 
@@ -86,12 +91,27 @@ module.exports = class IFCParser {
         ...this.geometryReferences[node.expressID].map((ref) => ref.referencedId)
       )
     }
-    node.closureLen = node.closure.length
+    // node.closureLen = node.closure.length
     node.__closure = this.formatClosure(node.closure)
     node.id = getHash(node)
-    // delete node.closure
-    await this.serverApi.saveObject(node)
+
+    // Save to db
+    this.objectBucket.push(node)
+    if (this.objectBucket.length > 3000) {
+      await this.flushObjectBucket()
+    }
+
+    // remove project level node closure
+    if (depth === 1) {
+      delete node.closure
+    }
     return node.id
+  }
+
+  async flushObjectBucket() {
+    if (this.objectBucket.length === 0) return
+    await this.serverApi.saveObjectBatch(this.objectBucket)
+    this.objectBucket = []
   }
 
   formatClosure(idsArray) {
@@ -107,15 +127,23 @@ module.exports = class IFCParser {
     const nodes = []
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
-      const node = this.createNode(child)
-      node.properties = await this.getItemProperties(node.expressID)
-      node.id = await this.populateSpatialNode(node, chunks, closures)
-      for (const closure of closures) closure.push(node.id, ...node.closure)
-      delete node.closure
-      nodes.push(node)
+      let cnode = this.createNode(child)
+      cnode = { ...cnode, ...(await this.getItemProperties(cnode.expressID)) }
+      cnode.id = await this.populateSpatialNode(cnode, chunks, closures)
+
+      for (const closure of closures) {
+        closure.push(cnode.id)
+        if (cnode['closure'].length > 30_000)
+          for (const id of cnode['closure']) closure.push(id)
+        else closure.push(...cnode['closure']) // can stack overflow for large arguments
+      }
+
+      delete cnode.closure
+      nodes.push(cnode)
     }
 
     node[prop] = nodes.map((node) => ({
+      // eslint-disable-next-line camelcase
       speckle_type: 'reference',
       referencedId: node.id
     }))
@@ -178,7 +206,7 @@ module.exports = class IFCParser {
   saveChunk(chunks, propName, rel) {
     const relating = rel[propName.relating].value
     const related = rel[propName.related].map((r) => r.value)
-    if (chunks[relating] == undefined) {
+    if (chunks[relating] === undefined) {
       chunks[relating] = related
     } else {
       chunks[relating] = chunks[relating].concat(related)
@@ -253,6 +281,7 @@ module.exports = class IFCParser {
   createNode(id) {
     const typeName = this.getNodeType(id)
     return {
+      // eslint-disable-next-line camelcase
       speckle_type: typeName,
       expressID: id,
       type: typeName,
@@ -286,14 +315,10 @@ module.exports = class IFCParser {
     let count = 0
     const speckleMeshes = []
 
-    this.ifcapi.StreamAllMeshes(this.modelId, (mesh) => {
+    this.ifcapi.StreamAllMeshes(this.modelId, async (mesh) => {
       const placedGeometries = mesh.geometries
       geometryReferences[mesh.expressID] = []
-
       for (let i = 0; i < placedGeometries.size(); i++) {
-        process.stdout.write(
-          `${(count++).toFixed(3)} geoms generated out of ${this.geometryIdsCount} \r`
-        )
         const placedGeometry = placedGeometries.get(i)
         const geometry = this.ifcapi.GetGeometry(
           this.modelId,
@@ -321,11 +346,12 @@ module.exports = class IFCParser {
         const faces = this.extractFaces(indices)
 
         const speckleMesh = {
+          // eslint-disable-next-line camelcase
           speckle_type: 'Objects.Geometry.Mesh',
           units: 'm',
           volume: 0,
           area: 0,
-          random: Math.random(),
+          // random: Math.random(), // TODO: remove, this is here just for performance benchmarking/explicit cache poisoning
           vertices,
           faces,
           renderMaterial: placedGeometry.color
@@ -335,23 +361,20 @@ module.exports = class IFCParser {
 
         speckleMesh.id = getHash(speckleMesh)
         // Note: the web-ifc api disposes of the data post callback, and doesn't know that it's async;
-        // we cannot and should not await things in here.
+        // we cannot and should not await things in here. I'm not entirely sure what's going on :)
         // await this.serverApi.saveObject(speckleMesh)
 
         speckleMeshes.push(speckleMesh)
         geometryReferences[mesh.expressID].push({
+          // eslint-disable-next-line camelcase
           speckle_type: 'reference',
           referencedId: speckleMesh.id
         })
+        process.stdout.write(`${(count++).toFixed(3)} geoms generated\r`)
       }
     })
 
-    // for (const p of speckleMeshes) {
-    //   await this.serverApi.saveObject(p)
-    // }
-
     await this.serverApi.saveObjectBatch(speckleMeshes)
-
     return geometryReferences
   }
 
@@ -396,6 +419,7 @@ module.exports = class IFCParser {
       opacity: color.w,
       metalness: 0,
       roughness: 1,
+      // eslint-disable-next-line camelcase
       speckle_type: 'Objects.Other.RenderMaterial'
     }
   }

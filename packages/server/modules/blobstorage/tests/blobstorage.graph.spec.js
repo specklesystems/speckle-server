@@ -1,5 +1,5 @@
 const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared')
+const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { truncateTables } = require('@/test/hooks')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createStream } = require('@/modules/core/services/streams')

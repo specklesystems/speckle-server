@@ -21,7 +21,12 @@ const {
 
 const { getUser } = require('../../services/users')
 
-const { respectsLimits } = require('../../services/ratelimits')
+const {
+  isRateLimitBreached,
+  getRateLimitResult,
+  RateLimitError,
+  RateLimitAction
+} = require('@/modules/core/services/ratelimiter')
 const {
   batchMoveCommits,
   batchDeleteCommits
@@ -156,10 +161,12 @@ module.exports = {
         'stream:contributor'
       )
 
-      if (
-        !(await respectsLimits({ action: 'COMMIT_CREATE', source: context.userId }))
-      ) {
-        throw new Error('Blocked due to rate-limiting. Try again later')
+      const rateLimitResult = await getRateLimitResult(
+        RateLimitAction.COMMIT_CREATE,
+        context.userId
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
       }
 
       const id = await createCommitByBranchName({

@@ -72,7 +72,10 @@ export function useNavigationDrawerAutoResize(params: {
     document.body.style.cursor = ''
     navWidth.value = el.style.width
     document.removeEventListener('mousemove', onMouseMove, false)
-    setTimeout(() => eventHub.$emit('resize-viewer'), 300)
+    setTimeout(() => {
+      // @Dim: Why are we resizing the viewer here? We generally want to avoid needless resizes
+      eventHub.$emit('resize-viewer')
+    }, 300)
   }
 
   // Setup resize events

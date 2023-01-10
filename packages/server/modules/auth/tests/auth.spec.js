@@ -6,10 +6,17 @@ const { createStream } = require('@/modules/core/services/streams')
 
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
-const { LIMITS } = require('@/modules/core/services/ratelimits')
+const { TIME } = require('@speckle/shared')
+const {
+  RATE_LIMITERS,
+  createConsumer,
+  RateLimitAction
+} = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { getInvite } = require('@/modules/serverinvites/repositories')
+const { RateLimiterMemory } = require('rate-limiter-flexible')
+
 const expect = chai.expect
 
 let app
@@ -455,26 +462,37 @@ describe('Auth @auth', () => {
           .expect(expectCode)
       }
 
-      const oldLimit = LIMITS.USER_CREATE
-      LIMITS.USER_CREATE = 5
-      // 5 users should be fine
-      for (let i = 0; i < 5; i++) {
-        await newUser(`test${i}`, '1.2.3.4', 302)
-      }
-      // should fail the 6th user
-      await newUser(`test${5}`, '1.2.3.4', 400)
+      const oldRateLimiter = RATE_LIMITERS.USER_CREATE
+
+      RATE_LIMITERS.USER_CREATE = createConsumer(
+        RateLimitAction.USER_CREATE,
+        new RateLimiterMemory({
+          keyPrefix: RateLimitAction.USER_CREATE,
+          points: 1,
+          duration: 1 * TIME.week
+        })
+      )
+
+      const oldNodeEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'temporarily-disabled-test'
+
+      // 1 users should be fine
+      await newUser(`test0`, '1.2.3.4', 302)
+
+      // should fail the next user
+      await newUser(`test1`, '1.2.3.4', 429)
 
       // should be able to create from different ip
-      for (let i = 0; i < 5; i++) {
-        await newUser(`othertest${i}`, '1.2.3.5', 302)
-      }
+      await newUser(`othertest0`, '1.2.3.5', 302)
 
-      // should not be limited from unknown ip addresses
-      for (let i = 0; i < 10; i++) {
-        await newUser(`generic${i}`, '', 302)
-      }
+      // should be limited from unknown ip addresses
+      await newUser(`unknown0`, '', 302)
 
-      LIMITS.USER_CREATE = oldLimit
+      // should fail the additional user from unknown ip address
+      await newUser(`unknown1`, '', 429)
+
+      RATE_LIMITERS.USER_CREATE = oldRateLimiter
+      process.env.NODE_ENV = oldNodeEnv
     })
   })
 })

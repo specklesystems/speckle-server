@@ -34,6 +34,7 @@ packages/server/reports*
 
 # Profiler output
 events.json
+*.cpuprofile
 
 # Optional eslint cache
 .eslintcache

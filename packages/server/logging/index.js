@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')
 const Tracing = require('@sentry/tracing')
-const { machineIdSync } = require('node-machine-id')
+const { getMachineId } = require('./machineId')
 const prometheusClient = require('prom-client')
 
 const { createRequestDurationMiddleware } = require('./expressMonitoring')
@@ -10,7 +10,7 @@ const { initKnexPrometheusMetrics } = require('./knexMonitoring')
 let prometheusInitialized = false
 
 module.exports = function (app) {
-  const id = machineIdSync()
+  const id = getMachineId()
 
   if (!prometheusInitialized) {
     prometheusInitialized = true

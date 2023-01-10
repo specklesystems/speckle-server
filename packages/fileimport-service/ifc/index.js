@@ -1,18 +1,24 @@
+const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
-const Parser = require('./parser')
+const Parser = require('./parser_v2')
 const ServerAPI = require('./api.js')
+const { logger } = require('../observability/logging')
 
 async function parseAndCreateCommit({
   data,
   streamId,
   branchName = 'uploads',
   userId,
-  message = 'Manual IFC file upload'
+  message = 'Manual IFC file upload',
+  fileId
 }) {
   const serverApi = new ServerAPI({ streamId })
-  const myParser = new Parser({ serverApi })
+  const myParser = new Parser({ serverApi, fileId })
 
+  const start = performance.now()
   const { id, tCount } = await myParser.parse(data)
+  const end = performance.now()
+  console.log(`Total processing time V2: ${(end - start).toFixed(2)}ms`)
 
   const commit = {
     streamId,
@@ -56,8 +62,7 @@ async function parseAndCreateCommit({
   })
 
   const json = await response.json()
-  // eslint-disable-next-line no-console
-  console.log(json)
+  logger.info(json)
 
   return json.data.commitCreate
 }

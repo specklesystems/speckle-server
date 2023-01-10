@@ -16,6 +16,7 @@ import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
 import { Material, Mesh, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
+import Logger from 'js-logger'
 
 export default class Batcher {
   public materials: Materials
@@ -42,7 +43,7 @@ export default class Batcher {
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
 
-    console.warn(materialHashes)
+    Logger.warn(materialHashes)
     // console.warn(rendeViews)
 
     for (let i = 0; i < materialHashes.length; i++) {

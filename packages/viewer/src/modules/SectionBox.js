@@ -4,9 +4,16 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { Box3 } from 'three'
 import { ViewerEvent } from '../IViewer'
 import { ObjectLayers } from './SpeckleRenderer'
+import EventEmitter from './EventEmitter'
 
-export default class SectionBox {
+export const SectionBoxEvent = {
+  DRAG_START: 'section-box-drag-start',
+  DRAG_END: 'section-box-drag-end'
+}
+
+export default class SectionBox extends EventEmitter {
   constructor(viewer) {
+    super()
     this.viewer = viewer
 
     this.viewer.speckleRenderer.renderer.localClippingEnabled = true
@@ -144,12 +151,14 @@ export default class SectionBox {
       if (!this.display.visible) return
       const val = !!event.value
       if (val) {
+        this.emit(SectionBoxEvent.DRAG_START)
         this.dragging = val
         //@Dim: Not sure what this needs to do in the new viewer
         //@Alex: this prevents(?) involuntary selection happening on mobile
         // this.viewer.interactions.preventSelection = val
         this.viewer.cameraHandler.enabled = !val
       } else {
+        this.emit(SectionBoxEvent.DRAG_END)
         setTimeout(() => {
           this.dragging = val
           //@Dim: Not sure what this needs to do in the new viewer
@@ -450,14 +459,14 @@ export default class SectionBox {
     this.viewer.needsRender = true
   }
 
-  off() {
+  disable() {
     this.display.visible = false
     this.viewer.speckleRenderer.renderer.localClippingEnabled = false
     this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
-  on() {
+  enable() {
     this.display.visible = true
     this.viewer.speckleRenderer.renderer.localClippingEnabled = true
     this.viewer.emit('section-box-changed', this.getCurrentBox())

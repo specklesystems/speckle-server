@@ -5,10 +5,10 @@ const { beforeEachContext } = require('@/test/hooks')
 
 const {
   validateServerRole,
-  buildContext,
   validateScopes,
   authorizeResolver
-} = require('../../shared')
+} = require('@/modules/shared')
+const { buildContext } = require('@/modules/shared/middleware')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -34,17 +34,19 @@ describe('Generic AuthN & AuthZ controller tests', () => {
 
     await validateScopes(['a', 'b'], 'b') // should pass
   })
-
-  it('Should create proper context', async () => {
-    const res = await buildContext({ req: { headers: { authorization: 'Bearer BS' } } })
-    expect(res.auth).to.equal(false)
-
-    const res2 = await buildContext({ req: { headers: { authorization: null } } })
-    expect(res2.auth).to.equal(false)
-
-    const res3 = await buildContext({ req: { headers: { authorization: undefined } } })
-    expect(res3.auth).to.equal(false)
-  })
+  ;[
+    ['BS header', { req: { headers: { authorization: 'Bearer BS' } } }],
+    ['Null header', { req: { headers: { authorization: null } } }],
+    ['Undefined header', { req: { headers: { authorization: undefined } } }],
+    ['BS token', { token: 'Bearer BS' }],
+    ['Null token', { token: null }],
+    ['Undefined token', { token: undefined }]
+  ].map(([caseName, contextInput]) =>
+    it(`Should create proper context ${caseName}`, async () => {
+      const res = await buildContext(contextInput)
+      expect(res.auth).to.equal(false)
+    })
+  )
 
   it('Should validate server role', async () => {
     await validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
