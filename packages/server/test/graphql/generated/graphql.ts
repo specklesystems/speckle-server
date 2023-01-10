@@ -998,7 +998,7 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  /** Returns a specific model */
+  /** Returns a specific model by its ID */
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
@@ -1018,6 +1018,8 @@ export type Project = {
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  /** Return metadata about resources being requested in the viewer */
+  viewerResources: Array<ViewerResourceGroup>;
 };
 
 
@@ -1041,6 +1043,11 @@ export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectViewerResourcesArgs = {
+  resourceIdString: Scalars['String'];
 };
 
 export type ProjectCollection = {
@@ -1884,6 +1891,23 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type ViewerResourceGroup = {
+  __typename?: 'ViewerResourceGroup';
+  /** Resource identifier used to refer to a collection of resource items */
+  identifier: Scalars['String'];
+  /** Viewer resources that the identifier refers to */
+  items: Array<ViewerResourceItem>;
+};
+
+export type ViewerResourceItem = {
+  __typename?: 'ViewerResourceItem';
+  /** Null if resource represents an object */
+  modelId?: Maybe<Scalars['String']>;
+  objectId: Scalars['String'];
+  /** Null if resource represents an object */
+  versionId?: Maybe<Scalars['String']>;
 };
 
 export type Webhook = {

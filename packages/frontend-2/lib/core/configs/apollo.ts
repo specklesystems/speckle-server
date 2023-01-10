@@ -133,6 +133,9 @@ function createCache(): InMemoryCache {
           replyAuthors: {
             keyArgs: false,
             merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
+          },
+          viewerResources: {
+            merge: (_existing, incoming) => [...incoming]
           }
         }
       },

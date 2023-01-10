@@ -1,4 +1,4 @@
-import { uniq, uniqBy } from 'lodash-es'
+import { uniq, uniqBy } from 'lodash'
 
 export enum ViewerResourceType {
   Model = 'Model',
@@ -23,7 +23,9 @@ export class ViewerModelResource implements ViewerResource {
   }
 
   toString(): string {
-    return this.versionId ? `${this.modelId}@${this.versionId}` : this.modelId
+    return (
+      this.versionId ? `${this.modelId}@${this.versionId}` : this.modelId
+    ).toLowerCase()
   }
 }
 
@@ -37,7 +39,7 @@ export class ViewerObjectResource implements ViewerResource {
   }
 
   toString(): string {
-    return this.objectId
+    return this.objectId.toLowerCase()
   }
 }
 
@@ -51,12 +53,12 @@ export class ViewerModelFolderResource implements ViewerResource {
   }
 
   toString(): string {
-    return '$' + this.folderName
+    return ('$' + this.folderName).toLowerCase()
   }
 }
 
 export function parseUrlParameters(resourceGetParam: string) {
-  const parts = resourceGetParam.toLowerCase().split(',')
+  const parts = resourceGetParam.toLowerCase().split(',').sort()
   const resources: ViewerResource[] = []
   for (const part of parts) {
     if (part.includes('@')) {
@@ -76,7 +78,7 @@ export function parseUrlParameters(resourceGetParam: string) {
 }
 
 export function createGetParamFromResources(resources: ViewerResource[]) {
-  const resourceParts = uniq(resources.map((r) => r.toString().toLowerCase()))
+  const resourceParts = uniq(resources.map((r) => r.toString().toLowerCase())).sort()
   return resourceParts.join(',')
 }
 

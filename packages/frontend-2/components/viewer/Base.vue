@@ -3,20 +3,11 @@
   <div ref="rendererparent" class="absolute w-full h-full"></div>
 </template>
 <script setup lang="ts">
-import { Viewer } from '@speckle/viewer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 
-let viewer: Viewer, container: HTMLElement, isInitializedPromise: Promise<boolean>
 const rendererparent = ref<HTMLElement>()
 
-const { viewer: v, container: c, isInitializedPromise: p } = useInjectedViewer()
-
-if (process.client) {
-  viewer = v
-  container = c
-  isInitializedPromise = p
-  provide('viewer', viewer)
-}
+const { viewer, container, isInitializedPromise } = useInjectedViewer()
 
 onMounted(async () => {
   if (!process.client) return

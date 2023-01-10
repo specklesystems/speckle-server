@@ -18,7 +18,7 @@
             Loaded
           </div>
           <div
-            v-if="isLatest && showMetadata"
+            v-if="isLatestVersion && showMetadata"
             class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
           >
             Latest
@@ -46,18 +46,23 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ComputedRef } from 'vue'
 import {
   LimitedUser,
-  ModelCardVersionFragment
+  ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
+import {
+  useInjectedViewer,
+  useResolvedViewerResources
+} from '~~/lib/viewer/composables/viewer'
 import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
 
 const props = withDefaults(
   defineProps<{
-    version: ModelCardVersionFragment
+    version: ViewerModelVersionCardItemFragment
     showMetadata: boolean
     clickable: boolean
+    modelId: string
+    isLatestVersion?: boolean
   }>(),
   {
     showMetadata: true,
@@ -66,16 +71,18 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'changeVersion', version: string): void
+  (e: 'change-version', version: string): void
 }>()
 
+const { projectId } = useInjectedViewer()
 const getPreviewUrl = useGetPreviewUrl()
-const loadedVersion = inject('loadedVersion') as ComputedRef<ModelCardVersionFragment>
-const latestVersion = inject('latestVersion') as ComputedRef<ModelCardVersionFragment>
-const projectId = inject('projectId') as string
+const { resourceItems } = useResolvedViewerResources()
 
-const isLoaded = computed(() => loadedVersion.value.id === props.version.id)
-const isLatest = computed(() => latestVersion.value.id === props.version.id)
+const isLoaded = computed(() =>
+  resourceItems.value.some(
+    (i) => i.modelId === props.modelId && i.versionId === props.version.id
+  )
+)
 
 const author = computed(() => {
   return {
@@ -94,10 +101,10 @@ const timeAgoCreatedAt = computed(() =>
 )
 
 const previewUrl = computed(() =>
-  getPreviewUrl(projectId, props.version.referencedObject)
+  getPreviewUrl(projectId.value, props.version.referencedObject)
 )
 
 function handleClick() {
-  if (props.clickable) emit('changeVersion', props.version.id)
+  if (props.clickable) emit('change-version', props.version.id)
 }
 </script>

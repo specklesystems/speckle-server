@@ -54,6 +54,7 @@ export type ProjectGraphQLReturn = Omit<
   | 'modelsTree'
   | 'model'
   | 'modelChildrenTree'
+  | 'viewerResources'
 > & {
   /**
    * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll

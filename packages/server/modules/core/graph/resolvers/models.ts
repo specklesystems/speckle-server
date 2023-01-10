@@ -10,6 +10,7 @@ import {
   getCommitsByBranchId,
   getCommitsTotalCountByBranchId
 } from '../../services/commits'
+import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
 
 export = {
   Project: {
@@ -24,6 +25,9 @@ export = {
     },
     async modelChildrenTree(parent, { fullName }) {
       return await getModelTreeItems(parent.id, fullName)
+    },
+    async viewerResources(parent, { resourceIdString }) {
+      return await getViewerResourceGroups(parent.id, resourceIdString)
     }
   },
   Model: {

@@ -19,25 +19,40 @@ import { clamp, trim } from 'lodash'
 
 export const generateBranchId = () => crs({ length: 10 })
 
-export async function getBranchesByIds(branchIds: string[]) {
+export async function getBranchesByIds(
+  branchIds: string[],
+  options?: Partial<{ streamId: string }>
+) {
   if (!branchIds?.length) return []
+  const { streamId } = options || {}
 
   const q = Branches.knex<BranchRecord[]>().whereIn(Branches.col.id, branchIds)
+  if (streamId) {
+    q.andWhere(Branches.col.streamId, streamId)
+  }
+
   return await q
 }
 
 export async function getStreamBranchesByName(
   streamId: string,
-  names: string[]
+  names: string[],
+  options?: Partial<{
+    /**
+     * Set to true if you want to find branches that start with specified names as prefixes
+     */
+    startsWithName: boolean
+  }>
 ): Promise<BranchRecord[]> {
   if (!streamId || !names?.length) return []
+  const { startsWithName } = options || {}
 
   const q = Branches.knex<BranchRecord[]>()
     .where(Branches.col.streamId, streamId)
     .andWhere(
-      knex.raw('LOWER(??) = ANY(?)', [
+      knex.raw('LOWER(??) ilike ANY(?)', [
         Branches.col.name,
-        names.map((n) => n.toLowerCase())
+        names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
       ])
     )
 
@@ -181,7 +196,7 @@ export async function getStructuredProjectModels(projectId: string) {
 
   for (const record of results) {
     let currentLevel = tree
-    const nameParts = record.name.split('/').filter((n) => n !== '')
+    const nameParts = record.name.split('/').filter((n: string) => n !== '')
     for (const part of nameParts) {
       const existing = currentLevel.children.find((c) => c.name === part)
       if (existing) {

@@ -9,13 +9,40 @@ extend type Project {
   """
   modelsTree: [ModelsTreeItem!]!
   """
-  Returns a specific model
+  Returns a specific model by its ID
   """
   model(id: String!): Model
   """
   Return a model tree of children for the specified model name
   """
   modelChildrenTree(fullName: String!): [ModelsTreeItem!]!
+  """
+  Return metadata about resources being requested in the viewer
+  """
+  viewerResources(resourceIdString: String!): [ViewerResourceGroup!]!
+}
+
+type ViewerResourceGroup {
+  """
+  Resource identifier used to refer to a collection of resource items
+  """
+  identifier: String!
+  """
+  Viewer resources that the identifier refers to
+  """
+  items: [ViewerResourceItem!]!
+}
+
+type ViewerResourceItem {
+  """
+  Null if resource represents an object
+  """
+  modelId: String
+  """
+  Null if resource represents an object
+  """
+  versionId: String
+  objectId: String!
 }
 
 type Model {

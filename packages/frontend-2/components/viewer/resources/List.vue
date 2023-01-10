@@ -6,15 +6,20 @@
     </div>
   </div>
   <div class="p-2 space-y-2">
-    <div v-for="(resource, idx) in resources" :key="idx">
-      <ViewerResourcesModelCard :model="(resource as ViewerModelResource)" />
+    <div v-for="{ modelId, versionId } in nonObjectResources" :key="modelId">
+      <ViewerResourcesModelCard :model-id="modelId" :version-id="versionId" />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ViewerModelResource } from '~~/lib/viewer/services/route'
 import { PlusIcon } from '@heroicons/vue/24/solid'
-import { useViewerRouteResources } from '~~/lib/viewer/composables/viewer'
+import { useResolvedViewerResources } from '~~/lib/viewer/composables/viewer'
+import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 
-const { resources } = useViewerRouteResources()
+const { resourceItems } = useResolvedViewerResources()
+const nonObjectResources = computed(() =>
+  resourceItems.value.filter(
+    (r): r is ViewerResourceItem & { modelId: string; versionId: string } => !!r.modelId
+  )
+)
 </script>

@@ -39,7 +39,7 @@ const documents = {
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
-    "\n  fragment ModelCardModel on Model {\n    id\n    name\n    updatedAt\n    versions {\n      totalCount\n      items {\n        ...ModelCardVersion\n      }\n    }\n  }\n\n  fragment ModelCardVersion on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    authorId\n    authorName\n    authorAvatar\n    createdAt\n  }\n": types.ModelCardModelFragmentDoc,
+    "\n  fragment ViewerModelCardItem on Model {\n    id\n    name\n    updatedAt\n    versions {\n      totalCount\n      items {\n        ...ViewerModelVersionCardItem\n      }\n    }\n  }\n\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    authorId\n    authorName\n    authorAvatar\n    createdAt\n  }\n": types.ViewerModelCardItemFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
     "\n  query AuthServerInfo {\n    serverInfo {\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n  }\n": types.AuthServerInfoDocument,
@@ -52,7 +52,8 @@ const documents = {
     "\n  query ProjectModelsTreeTopLevel($projectId: String!) {\n    project(id: $projectId) {\n      id\n      modelsTree {\n        ...SingleLevelModelTreeItem\n      }\n    }\n  }\n": types.ProjectModelsTreeTopLevelDocument,
     "\n  query ProjectModelChildrenTree($projectId: String!, $parentName: String!) {\n    project(id: $projectId) {\n      id\n      modelChildrenTree(fullName: $parentName) {\n        ...SingleLevelModelTreeItem\n      }\n    }\n  }\n": types.ProjectModelChildrenTreeDocument,
     "\n  query ProjectLatestCommentThreads($projectId: String!) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: null, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestCommentThreadsDocument,
-    "\n  query ModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ModelCardModel\n      }\n    }\n  }\n": types.ModelCardDocument,
+    "\n  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {\n    project(id: $projectId) {\n      id\n      viewerResources(resourceIdString: $resourceUrlString) {\n        identifier\n        items {\n          modelId\n          versionId\n          objectId\n        }\n      }\n    }\n  }\n": types.ProjectViewerResourcesDocument,
+    "\n  query ViewerModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ViewerModelCardItem\n      }\n    }\n  }\n": types.ViewerModelCardDocument,
     "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n": types.GetActiveUserDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageStatsBlockVersions\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n    ...ProjectPageLatestItemsModels\n    ...ProjectPageLatestItemsComments\n    ...ProjectPageModelsView\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n": types.ModelPageProjectFragmentDoc,
@@ -179,7 +180,7 @@ export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ModelCardModel on Model {\n    id\n    name\n    updatedAt\n    versions {\n      totalCount\n      items {\n        ...ModelCardVersion\n      }\n    }\n  }\n\n  fragment ModelCardVersion on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    authorId\n    authorName\n    authorAvatar\n    createdAt\n  }\n"): (typeof documents)["\n  fragment ModelCardModel on Model {\n    id\n    name\n    updatedAt\n    versions {\n      totalCount\n      items {\n        ...ModelCardVersion\n      }\n    }\n  }\n\n  fragment ModelCardVersion on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    authorId\n    authorName\n    authorAvatar\n    createdAt\n  }\n"];
+export function graphql(source: "\n  fragment ViewerModelCardItem on Model {\n    id\n    name\n    updatedAt\n    versions {\n      totalCount\n      items {\n        ...ViewerModelVersionCardItem\n      }\n    }\n  }\n\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    authorId\n    authorName\n    authorAvatar\n    createdAt\n  }\n"): (typeof documents)["\n  fragment ViewerModelCardItem on Model {\n    id\n    name\n    updatedAt\n    versions {\n      totalCount\n      items {\n        ...ViewerModelVersionCardItem\n      }\n    }\n  }\n\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    authorId\n    authorName\n    authorAvatar\n    createdAt\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -231,7 +232,11 @@ export function graphql(source: "\n  query ProjectLatestCommentThreads($projectI
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ModelCardModel\n      }\n    }\n  }\n"): (typeof documents)["\n  query ModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ModelCardModel\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {\n    project(id: $projectId) {\n      id\n      viewerResources(resourceIdString: $resourceUrlString) {\n        identifier\n        items {\n          modelId\n          versionId\n          objectId\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {\n    project(id: $projectId) {\n      id\n      viewerResources(resourceIdString: $resourceUrlString) {\n        identifier\n        items {\n          modelId\n          versionId\n          objectId\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ViewerModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ViewerModelCardItem\n      }\n    }\n  }\n"): (typeof documents)["\n  query ViewerModelCard($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        ...ViewerModelCardItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

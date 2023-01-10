@@ -81,14 +81,3 @@ export const latestCommentThreadsQuery = graphql(`
     }
   }
 `)
-
-export const modelCardQuery = graphql(`
-  query ModelCard($projectId: String!, $modelId: String!) {
-    project(id: $projectId) {
-      id
-      model(id: $modelId) {
-        ...ModelCardModel
-      }
-    }
-  }
-`)

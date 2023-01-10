@@ -11,7 +11,7 @@ import {
   StreamCommitRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
-import { keyBy, uniqBy } from 'lodash'
+import { keyBy, uniq, uniqBy } from 'lodash'
 
 const CommitWithStreamBranchMetadataFields = [
   ...Commits.cols,
@@ -186,4 +186,36 @@ export async function getStreamCommitCount(
 ) {
   const [res] = await getStreamCommitCounts([streamId], options)
   return res?.count || 0
+}
+
+export async function getSpecificBranchCommits(
+  pairs: { branchId: string; commitId: string }[]
+) {
+  if (!pairs?.length) return []
+
+  const commitIds = uniq(pairs.map((p) => p.commitId))
+  const branchIds = uniq(pairs.map((p) => p.branchId))
+
+  const q = Commits.knex()
+    .select<Array<CommitRecord & { branchId: string }>>([
+      ...Commits.cols,
+      BranchCommits.col.branchId
+    ])
+    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+    .whereIn(Commits.col.id, commitIds)
+    .whereIn(BranchCommits.col.branchId, branchIds)
+
+  const queryResults = await q
+  const results: Array<CommitRecord & { branchId: string }> = []
+
+  for (const pair of pairs) {
+    const commit = queryResults.find(
+      (r) => r.id === pair.commitId && r.branchId === pair.branchId
+    )
+    if (commit) {
+      results.push(commit)
+    }
+  }
+
+  return results
 }

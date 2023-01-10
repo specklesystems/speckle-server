@@ -1005,7 +1005,7 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  /** Returns a specific model */
+  /** Returns a specific model by its ID */
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
@@ -1025,6 +1025,8 @@ export type Project = {
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  /** Return metadata about resources being requested in the viewer */
+  viewerResources: Array<ViewerResourceGroup>;
 };
 
 
@@ -1048,6 +1050,11 @@ export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectViewerResourcesArgs = {
+  resourceIdString: Scalars['String'];
 };
 
 export type ProjectCollection = {
@@ -1893,6 +1900,23 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type ViewerResourceGroup = {
+  __typename?: 'ViewerResourceGroup';
+  /** Resource identifier used to refer to a collection of resource items */
+  identifier: Scalars['String'];
+  /** Viewer resources that the identifier refers to */
+  items: Array<ViewerResourceItem>;
+};
+
+export type ViewerResourceItem = {
+  __typename?: 'ViewerResourceItem';
+  /** Null if resource represents an object */
+  modelId?: Maybe<Scalars['String']>;
+  objectId: Scalars['String'];
+  /** Null if resource represents an object */
+  versionId?: Maybe<Scalars['String']>;
+};
+
 export type Webhook = {
   __typename?: 'Webhook';
   description?: Maybe<Scalars['String']>;
@@ -2124,6 +2148,8 @@ export type ResolversTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: ResolverTypeWrapper<Version>;
   VersionCollection: ResolverTypeWrapper<VersionCollection>;
+  ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
+  ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -2229,6 +2255,8 @@ export type ResolversParentTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: Version;
   VersionCollection: VersionCollection;
+  ViewerResourceGroup: ViewerResourceGroup;
+  ViewerResourceItem: ViewerResourceItem;
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -2656,6 +2684,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'resourceIdString'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2921,6 +2950,19 @@ export type VersionCollectionResolvers<ContextType = GraphQLContext, ParentType 
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ViewerResourceGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceGroup'] = ResolversParentTypes['ViewerResourceGroup']> = {
+  identifier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerResourceItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceItem'] = ResolversParentTypes['ViewerResourceItem']> = {
+  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  objectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type WebhookResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Webhook'] = ResolversParentTypes['Webhook']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
@@ -3014,6 +3056,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
   Version?: VersionResolvers<ContextType>;
   VersionCollection?: VersionCollectionResolvers<ContextType>;
+  ViewerResourceGroup?: ViewerResourceGroupResolvers<ContextType>;
+  ViewerResourceItem?: ViewerResourceItemResolvers<ContextType>;
   Webhook?: WebhookResolvers<ContextType>;
   WebhookCollection?: WebhookCollectionResolvers<ContextType>;
   WebhookEvent?: WebhookEventResolvers<ContextType>;

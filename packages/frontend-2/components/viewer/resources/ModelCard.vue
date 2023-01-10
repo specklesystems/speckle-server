@@ -15,7 +15,10 @@
     </div>
     <div class="w-full">
       <ViewerResourcesVersionCardDesignOption2
-        :version="(loadedVersion as ModelCardVersionFragment)"
+        v-if="loadedVersion"
+        :model-id="modelId"
+        :is-latest-version="loadedVersion.id === latestVersionId"
+        :version="loadedVersion"
         :show-metadata="false"
         :clickable="false"
       />
@@ -40,7 +43,9 @@
         <ViewerResourcesVersionCardDesignOption2
           v-for="version in versions"
           :key="version.id"
+          :model-id="modelId"
           :version="version"
+          :is-latest-version="version.id === latestVersionId"
           @change-version="handleVersionChange"
         />
         <span class="text-xs text-center py-2 text-foreground-2">
@@ -54,54 +59,45 @@
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
-import { modelCardQuery } from '~~/lib/projects/graphql/queries'
-import { useGetObjectUrl } from '~~/lib/viewer/helpers'
-import { ViewerModelResource } from '~~/lib/viewer/services/route'
 import {
   ChevronDownIcon,
   ArrowPathRoundedSquareIcon,
   XMarkIcon
 } from '@heroicons/vue/24/solid'
-import { ModelCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
-  useViewerRouteResources
+  useViewerResourcesState
 } from '~~/lib/viewer/composables/viewer'
-import { ComputedRef } from 'vue'
+import { viewerModelCardQuery } from '~~/lib/viewer/graphql/queries'
 
-const { viewer, isInitializedPromise } = useInjectedViewer()
+/**
+ * TODO: Retrieve models using single query?
+ */
 
 const props = defineProps<{
-  model: ViewerModelResource
-  projectId?: string
+  modelId: string
+  versionId: string
 }>()
 
-const route = useRoute()
-const getObjectUrl = useGetObjectUrl()
-const { switchModelToVersion } = useViewerRouteResources()
-
-const projectId = computed(() => {
-  return props.projectId || (route.params.id as string)
-})
-
-provide('projectId', projectId.value)
+const { projectId } = useInjectedViewer()
+const { switchModelToVersion } = useViewerResourcesState()
 
 const showVersions = ref(false)
 
 graphql(`
-  fragment ModelCardModel on Model {
+  fragment ViewerModelCardItem on Model {
     id
     name
     updatedAt
     versions {
       totalCount
       items {
-        ...ModelCardVersion
+        ...ViewerModelVersionCardItem
       }
     }
   }
 
-  fragment ModelCardVersion on Version {
+  fragment ViewerModelVersionCardItem on Version {
     id
     message
     referencedObject
@@ -113,9 +109,9 @@ graphql(`
   }
 `)
 
-const { result } = useQuery(modelCardQuery, () => ({
+const { result } = useQuery(viewerModelCardQuery, () => ({
   projectId: projectId.value,
-  modelId: props.model.modelId
+  modelId: props.modelId
 }))
 
 const model = computed(() => {
@@ -127,56 +123,16 @@ const versions = computed(() => {
 })
 
 const loadedVersion = computed(() => {
-  if (props.model.versionId) {
-    return versions.value.find(
-      (v) => v.id === props.model.versionId
-    ) as ModelCardVersionFragment
-  } else {
-    return versions.value[0] as ModelCardVersionFragment
-  }
+  return versions.value.find((v) => v.id === props.versionId)
 })
 
-const latestVersion = computed(() => {
-  return versions.value[0]
-})
-
-provide('loadedVersion', loadedVersion as ComputedRef<ModelCardVersionFragment>)
-provide('latestVersion', latestVersion as ComputedRef<ModelCardVersionFragment>)
+const latestVersionId = computed(() => versions.value?.[0]?.id)
 
 const updatedAt = computed(() =>
   model.value ? dayjs(model.value?.updatedAt).from(dayjs()) : null
 )
 
-const unwatch = watch(loadedVersion, async (newVal) => {
-  if (!newVal) return
-  await isInitializedPromise
-  const url = getObjectUrl(projectId.value as string, newVal.referencedObject)
-  viewer.loadObject(url)
-  unwatch() // important to stop watching as the loaded version is reactive. we want this to fire on "mounted" only (not using on mounted as it's null in there)
-})
-
-async function handleVersionChange(versionId: string) {
-  await swapVersion(versionId)
-}
-
-async function swapVersion(newVersionId: string) {
-  if (newVersionId === loadedVersion.value?.id) return
-
-  const oldObjectUrl = getObjectUrl(
-    projectId.value as string,
-    loadedVersion.value.referencedObject
-  )
-  const newVersion = versions.value.find((v) => v.id === newVersionId)
-  const newObjectUrl = getObjectUrl(
-    projectId.value as string,
-    newVersion?.referencedObject as string
-  )
-
-  // TODO: Do from 'setupViewer'
-  await Promise.all([
-    viewer.unloadObject(oldObjectUrl),
-    viewer.loadObject(newObjectUrl)
-  ])
-  switchModelToVersion(props.model.modelId, newVersionId)
+function handleVersionChange(versionId: string) {
+  switchModelToVersion(props.modelId, versionId)
 }
 </script>
