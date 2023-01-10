@@ -27,7 +27,7 @@ export interface ShadowcatcherConfig {
 
 export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   textureSize: 512,
-  weights: { x: 1, y: 1, z: 1, w: 1 },
+  weights: { x: 1, y: 1, z: 0, w: 1 },
   blurRadius: 16,
   stdDeviation: 4
 }

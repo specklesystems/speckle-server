@@ -587,6 +587,7 @@ export default class SpeckleRenderer {
 
   public updateShadowCatcher() {
     this._shadowcatcher.bake(this.sceneBox)
+    this.resetPipeline()
   }
 
   private addDirectLights() {

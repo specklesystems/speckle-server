@@ -77,9 +77,8 @@ export default class Sandbox {
   }
 
   public static shadowCatcherParams = {
-    maxDist: 2,
     textureSize: 512,
-    weights: { x: 1, y: 1, z: 1, w: 1 },
+    weights: { x: 1, y: 1, z: 0, w: 1 },
     blurRadius: 16,
     stdDeviation: 4
   }
@@ -678,19 +677,7 @@ export default class Sandbox {
       title: 'Shadowcatcher',
       expanded: true
     })
-    shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'maxDist', {
-        label: 'Max Dist',
-        min: 0,
-        max: 1000,
-        step: 0.01
-      })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
-      })
+
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
         label: 'Texture Size',

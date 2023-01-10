@@ -102,7 +102,7 @@ await sandbox.loadUrl(
   //Car
   // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
   // Jonathon's
-  // 'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
+  'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
   // Alex's cube
   // 'https://latest.speckle.dev/streams/46e3e0e1ec/commits/a6392c19d6?c=%5B6.85874,2.9754,0.79022,0,0,0,0,1%5D'
   // Groups of groups
@@ -148,7 +148,7 @@ await sandbox.loadUrl(
   // Alex cubes
   // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
   // Tekla
-  'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
   // Purple market square
   // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
   // Sum building
