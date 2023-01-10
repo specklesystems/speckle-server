@@ -5221,7 +5221,7 @@ __metadata:
     request: ^2.88.2
     response-time: ^2.3.2
     sanitize-html: ^2.7.0
-    sharp: ^0.29.3
+    sharp: ^0.30.5
     string-pixel-width: ^1.10.0
     subscriptions-transport-ws: ^0.11.0
     supertest: ^4.0.2
@@ -8973,7 +8973,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"color@npm:^4.0.1, color@npm:^4.2.3":
+"color@npm:^4.2.3":
   version: 4.2.3
   resolution: "color@npm:4.2.3"
   dependencies:
@@ -9991,15 +9991,6 @@ __metadata:
   version: 6.1.0
   resolution: "detect-indent@npm:6.1.0"
   checksum: ab953a73c72dbd4e8fc68e4ed4bfd92c97eb6c43734af3900add963fd3a9316f3bc0578b018b24198d4c31a358571eff5f0656e81a1f3b9ad5c547d58b2d093d
-  languageName: node
-  linkType: hard
-
-"detect-libc@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "detect-libc@npm:1.0.3"
-  bin:
-    detect-libc: ./bin/detect-libc.js
-  checksum: daaaed925ffa7889bd91d56e9624e6c8033911bb60f3a50a74a87500680652969dbaab9526d1e200a4c94acf80fc862a22131841145a0a8482d60a99c24f4a3e
   languageName: node
   linkType: hard
 
@@ -18247,23 +18238,6 @@ __metadata:
   dependencies:
     kind-of: ^6.0.2
   checksum: 39b3dd9630a774aba288a680e7d2901f5c0eae7b8387fc5c8ea559918b29b3da144b7bdb990d7ccd9e11be05508ac9e459ce51d01fd65e583282f6ffafcba2e7
-  languageName: node
-  linkType: hard
-
-"sharp@npm:^0.29.3":
-  version: 0.29.3
-  resolution: "sharp@npm:0.29.3"
-  dependencies:
-    color: ^4.0.1
-    detect-libc: ^1.0.3
-    node-addon-api: ^4.2.0
-    node-gyp: latest
-    prebuild-install: ^7.0.0
-    semver: ^7.3.5
-    simple-get: ^4.0.0
-    tar-fs: ^2.1.1
-    tunnel-agent: ^0.6.0
-  checksum: d496cdd546c9abe743aebcee013731295f735687819a18c2bdcbba6f31a6b259f3da95af5c11260a8fedc9d4ab95697f5f8c4f3cd65232792b5cfb876bea7c9a
   languageName: node
   linkType: hard
 
