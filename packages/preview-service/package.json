@@ -24,7 +24,7 @@
     "@speckle/viewer": "workspace:^",
     "cookie-parser": "~1.4.4",
     "crypto": "^1.0.1",
-    "express": "~4.16.1",
+    "express": "~4.17.3",
     "file-type": "^16.5.4",
     "http-errors": "~1.6.3",
     "join-images": "^1.1.3",
