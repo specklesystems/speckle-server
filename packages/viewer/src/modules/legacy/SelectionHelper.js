@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import EventEmitter from '../EventEmitter'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 /**
  * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
@@ -19,6 +20,7 @@ export default class _SelectionHelper extends EventEmitter {
     this.raycaster.params.Line.threshold = 0.1
     this.raycaster.params.Line2 = {}
     this.raycaster.params.Line2.threshold = 1
+    this.raycaster.layers.set(ObjectLayers.PROPS)
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;

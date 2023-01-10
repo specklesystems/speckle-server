@@ -1,5 +1,5 @@
 <template>
-  <v-btn class="primary" icon small @click="onShareClicked">
+  <v-btn class="primary white--text" icon small @click="onShareClicked">
     <v-icon small>mdi-share-variant</v-icon>
   </v-btn>
 </template>

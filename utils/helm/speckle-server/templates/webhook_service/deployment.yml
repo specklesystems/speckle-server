@@ -33,7 +33,7 @@ spec:
           periodSeconds: 60
           exec:
             command:
-              - node
+              - /nodejs/bin/node
               - -e
               - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 30 * 1000)
 
@@ -70,8 +70,8 @@ spec:
                 name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
                 key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
-          - name: DEBUG
-            value: "webhook-service:*"
+          - name: LOG_LEVEL
+            value: {{ .Values.webhook_service.logLevel }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS

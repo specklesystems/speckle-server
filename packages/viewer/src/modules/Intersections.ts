@@ -11,6 +11,7 @@ import {
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
+import Logger from 'js-logger'
 
 export class Intersections {
   private raycaster: SpeckleRaycaster
@@ -85,7 +86,9 @@ export class Intersections {
 
     let results = []
     if (target) {
+      const start = performance.now()
       results = this.raycaster.intersectObjects(target.children)
+      Logger.warn('Interesct time -> ', performance.now() - start)
     }
 
     if (results.length === 0) return null
@@ -94,12 +97,10 @@ export class Intersections {
         return a.distance - b.distance
       })
     if (bounds) {
-      if (!bounds.containsPoint(results[0].point)) {
-        console.warn('Object clipped. Rejecting!')
-        return null
-      }
+      results = results.filter((result) => {
+        return bounds.containsPoint(result.point)
+      })
     }
-
     if (!this.allowPointPick) {
       results = results.filter((val) => {
         return !(val.object instanceof Points)

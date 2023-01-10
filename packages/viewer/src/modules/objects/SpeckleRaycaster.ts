@@ -1,10 +1,12 @@
 import { Object3D, Raycaster } from 'three'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 export class SpeckleRaycaster extends Raycaster {
   public onObjectIntersectionTest: (object: Object3D) => void = null
 
   constructor(origin?, direction?, near = 0, far = Infinity) {
     super(origin, direction, near, far)
+    this.layers.set(ObjectLayers.STREAM_CONTENT)
   }
 
   public intersectObjects(objects, recursive = true, intersects = []) {

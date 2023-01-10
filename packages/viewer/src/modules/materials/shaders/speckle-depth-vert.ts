@@ -7,6 +7,9 @@ export const speckleDepthVert = /* glsl */ `
     uniform vec3 uViewer_low;
     uniform mat4 rteModelViewMatrix;
 #endif
+#ifdef LINEAR_DEPTH
+    varying vec4 vViewPosition;
+#endif
 #include <uv_pars_vertex>
 #include <displacementmap_pars_vertex>
 #include <morphtarget_pars_vertex>
@@ -50,8 +53,13 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
 
     #endif
+    
     mvPosition = rteModelViewMatrix * mvPosition;
 
+    #ifdef LINEAR_DEPTH
+        vViewPosition = mvPosition;
+    #endif 
+    
     gl_Position = projectionMatrix * mvPosition;
 	#include <logdepthbuf_vertex>
 	// #include <clipping_planes_vertex>

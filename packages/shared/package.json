@@ -20,8 +20,9 @@
     "lint:tsc": "tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:tsc"
   },
+  "sideEffects": false,
   "engines": {
-    "node": ">=14.0.0"
+    "node": "^18.12.1"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",
@@ -31,7 +32,8 @@
     "3d"
   ],
   "dependencies": {
-    "lodash": "^4.17.0"
+    "lodash": "^4.17.0",
+    "pino": "^8.7.0"
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176"

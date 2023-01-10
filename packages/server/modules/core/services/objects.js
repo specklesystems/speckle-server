@@ -3,9 +3,8 @@ const { performance } = require('perf_hooks')
 const crypto = require('crypto')
 const { set, get, chunk } = require('lodash')
 
-const debug = require('debug')('speckle:services')
-
 const knex = require(`@/db/knex`)
+const { servicesLogger } = require('@/logging/logging')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
@@ -103,7 +102,7 @@ module.exports = {
           const q = Objects().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
         })
-        debug(`Inserted ${batch.length} objects`)
+        servicesLogger.info(`Inserted ${batch.length} objects`)
       }
     }
 
@@ -117,7 +116,7 @@ module.exports = {
           const q = Closures().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
         })
-        debug(`Inserted ${batch.length} closures`)
+        servicesLogger.info(`Inserted ${batch.length} closures`)
       }
     }
     return true
@@ -190,12 +189,12 @@ module.exports = {
       }
 
       const t1 = performance.now()
-      debug(
+      servicesLogger.info(
         `Batch ${index + 1}/${batches.length}: Stored ${
           closures.length + objsToInsert.length
         } objects in ${t1 - t0}ms.`
       )
-      // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      // logger.debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
     }
 
     const promises = batches.map((batch, index) => insertBatch(batch, index))
@@ -433,7 +432,7 @@ module.exports = {
 
     // Set cursor clause, if present. If it's not present, it's an entry query; this method will return a cursor based on its given query.
     // We have implemented keyset pagination for more efficient searches on larger sets. This approach depends on an order by value provided by the user and a (hidden) primary key.
-    // console.log( cursor )
+    // logger.debug( cursor )
     if (cursor) {
       let castType = 'text'
       if (typeof cursor.value === 'string') castType = 'text'
@@ -489,7 +488,7 @@ module.exports = {
     }
 
     mainQuery.limit(limit)
-    // console.log( mainQuery.toString() )
+    // logger.debug( mainQuery.toString() )
     // Finally, execute the query
     const rows = await mainQuery
     const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0

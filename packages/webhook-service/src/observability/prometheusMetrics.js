@@ -3,7 +3,7 @@
 
 const http = require('http')
 const prometheusClient = require('prom-client')
-const knex = require('./knex')
+const knex = require('../knex')
 
 let metricFree = null
 let metricUsed = null

@@ -25,6 +25,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     this.userData.rteModelViewMatrix = {
       value: new Matrix4()
     }
+    this.userData.near = { value: 0 }
+    this.userData.far = { value: 0 }
     ;(this as any).vertProgram = speckleDepthVert
     ;(this as any).fragProgram = speckleDepthFrag
     ;(this as any).uniforms = UniformsUtils.merge([
@@ -38,6 +40,12 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
         },
         rteModelViewMatrix: {
           value: this.userData.rteModelViewMatrix.value
+        },
+        near: {
+          value: this.userData.near.value
+        },
+        far: {
+          value: this.userData.far.value
         }
       }
     ])
@@ -46,6 +54,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
       shader.uniforms.rteModelViewMatrix = this.userData.rteModelViewMatrix
+      shader.uniforms.near = this.userData.near
+      shader.uniforms.far = this.userData.far
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -69,6 +79,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     ret.userData.uViewer_high = this.userData.uViewer_high
     ret.userData.uViewer_low = this.userData.uViewer_low
     ret.userData.rteModelViewMatrix = this.userData.rteModelViewMatrix
+    ret.userData.near = this.userData.near
+    ret.userData.far = this.userData.far
     return ret
   }
 
@@ -83,6 +95,12 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     }
     this.userData.rteModelViewMatrix = {
       value: new Matrix4()
+    }
+    this.userData.near = {
+      value: 0
+    }
+    this.userData.far = {
+      value: 0
     }
     this.defines['USE_RTE'] = ' '
 

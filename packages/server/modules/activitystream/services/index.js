@@ -40,7 +40,7 @@ module.exports = {
           data: info
         }
       }
-      dispatchStreamEvent({
+      await dispatchStreamEvent({
         streamId,
         event: actionType,
         eventPayload: webhooksPayload
