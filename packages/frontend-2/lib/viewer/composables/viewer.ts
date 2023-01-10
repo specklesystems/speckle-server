@@ -95,3 +95,15 @@ function getOrInitViewerData(): GlobalViewerData {
 
   return globalViewerData
 }
+
+export function useViewerCameraTracker(callback: () => void): void {
+  const { viewer } = useInjectedViewer()
+
+  onMounted(() => {
+    viewer.cameraHandler.controls.addEventListener('update', callback)
+  })
+
+  onBeforeUnmount(() => {
+    viewer.cameraHandler.controls.removeEventListener('update', callback)
+  })
+}

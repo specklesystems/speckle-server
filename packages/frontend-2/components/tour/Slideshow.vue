@@ -93,7 +93,10 @@
 import { locations } from '~~/lib/tour/mockedComments'
 import { Vector3 } from 'three'
 import { ArrowRightIcon, CheckIcon } from '@heroicons/vue/24/solid'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
+import {
+  useInjectedViewer,
+  useViewerCameraTracker
+} from '~~/lib/viewer/composables/viewer'
 
 const comments = ref<HTMLElement | null>(null)
 const commentState = ref(0)
@@ -125,13 +128,7 @@ const updateCommentPositions = () => {
   }
 }
 
-onMounted(() => {
-  viewer.cameraHandler.controls.addEventListener('update', updateCommentPositions)
-})
-
-onBeforeUnmount(() => {
-  viewer.cameraHandler.controls.removeEventListener('update', updateCommentPositions)
-})
+useViewerCameraTracker(updateCommentPositions)
 
 const hasAddedOverlay = ref(false)
 const hasSwappedVersions = ref(false)
