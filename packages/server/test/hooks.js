@@ -51,8 +51,8 @@ const initializeTestServer = async (server, app) => {
 
   app.on('appStarted', () => {
     const port = server.address().port
-    serverAddress = `http://localhost:${port}`
-    wsAddress = `ws://localhost:${port}`
+    serverAddress = `http://127.0.0.1:${port}`
+    wsAddress = `ws://127.0.0.1:${port}`
   })
   while (!serverAddress) {
     await new Promise((resolve) => setTimeout(resolve, 100))
