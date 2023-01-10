@@ -208,6 +208,24 @@ spec:
           {{- end }}
 
 
+          # OpenID Connect Auth
+          {{- if .Values.server.auth.oidc.enabled }}
+          - name: STRATEGY_OIDC
+            value: "true"
+          - name: OIDC_NAME
+            value: {{ .Values.server.auth.oidc.name }}
+          - name: OIDC_DISCOVERY_URL
+            value: {{ .Values.server.auth.oidc.discovery_url }}
+          - name: OIDC_CLIENT_ID
+            value: {{ .Values.server.auth.oidc.client_id }}
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.server.auth.oidc.clientSecret.secretName }}
+                key: {{ default "oidc_client_secret" .Values.server.auth.oidc.clientSecret.secretKey }}
+          {{- end }}
+
+
           # *** Email ***
 
           {{- if .Values.server.email.enabled }}

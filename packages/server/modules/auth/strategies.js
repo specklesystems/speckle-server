@@ -115,6 +115,17 @@ module.exports = async (app) => {
     strategyCount++
   }
 
+  if (process.env.STRATEGY_OIDC === 'true') {
+    const oidcStrategy = await require('./strategies/oidc')(
+      app,
+      session,
+      sessionStorage,
+      finalizeAuth
+    )
+    authStrategies.push(oidcStrategy)
+    strategyCount++
+  }
+
   // Note: always leave the local strategy init for last so as to be able to
   // force enable it in case no others are present.
   if (process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0) {
