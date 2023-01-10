@@ -100,7 +100,7 @@ await sandbox.loadUrl(
   //Blizzard world
   // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
   //Car
-  'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
+  // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
   // Jonathon's
   // 'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
   // Alex's cube
@@ -148,7 +148,7 @@ await sandbox.loadUrl(
   // Alex cubes
   // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
   // Tekla
-  // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
   // Purple market square
   // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
   // Sum building

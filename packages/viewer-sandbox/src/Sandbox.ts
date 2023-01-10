@@ -77,14 +77,11 @@ export default class Sandbox {
   }
 
   public static shadowCatcherParams = {
-    planeSubdivision: 10,
-    sampleCount: 100,
     maxDist: 2,
     textureSize: 512,
     weights: { x: 1, y: 1, z: 1, w: 1 },
     blurRadius: 16,
-    stdDeviation: 4,
-    depthCutoff: 0
+    stdDeviation: 4
   }
 
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
@@ -268,7 +265,7 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      this.viewer.getRenderer().testTrace()
+      this.viewer.getRenderer().updateShadowCatcher()
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -682,34 +679,6 @@ export default class Sandbox {
       expanded: true
     })
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'planeSubdivision', {
-        label: 'Plane Subdivision',
-        min: 4,
-        max: 1000,
-        step: 1
-      })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
-
-        this.viewer.getRenderer().testPlaneBuild()
-      })
-    shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'sampleCount', {
-        label: 'Sample Count',
-        min: 1,
-        max: 1000,
-        step: 1
-      })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testTrace()
-      })
-
-    shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'maxDist', {
         label: 'Max Dist',
         min: 0,
@@ -720,7 +689,7 @@ export default class Sandbox {
         value
         this.viewer.getRenderer().shadowcatcher.configuration =
           Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testTrace()
+        this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
@@ -733,7 +702,7 @@ export default class Sandbox {
         value
         this.viewer.getRenderer().shadowcatcher.configuration =
           Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testBake()
+        this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'weights', {
@@ -747,7 +716,7 @@ export default class Sandbox {
         value
         this.viewer.getRenderer().shadowcatcher.configuration =
           Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testBake()
+        this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'blurRadius', {
@@ -760,7 +729,7 @@ export default class Sandbox {
         value
         this.viewer.getRenderer().shadowcatcher.configuration =
           Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testBake()
+        this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'stdDeviation', {
@@ -773,36 +742,7 @@ export default class Sandbox {
         value
         this.viewer.getRenderer().shadowcatcher.configuration =
           Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testBake()
-      })
-    shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'depthCutoff', {
-        label: 'DeptCutoff',
-        min: -1,
-        max: 1,
-        step: 0.001
-      })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
-        this.viewer.getRenderer().testBake()
-      })
-    shadowcatcherFolder
-      .addInput({ rawValues: false }, 'rawValues', {
-        label: 'Raw AO'
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().shadowcatcher._debug_rawAO()
-        this.viewer.requestRender(true)
-      })
-    shadowcatcherFolder
-      .addInput({ helper: false }, 'helper', {
-        label: 'Show Subd'
-      })
-      .on('change', (ev) => {
-        this.viewer.getRenderer().shadowcatcherHelper = ev.value
-        this.viewer.requestRender(true)
+        this.viewer.getRenderer().updateShadowCatcher()
       })
   }
 

@@ -1,21 +1,13 @@
 import {
   AddEquation,
-  Box2,
   Box3,
-  BufferGeometry,
-  Color,
   CustomBlending,
-  DoubleSide,
   DstAlphaFactor,
-  Float32BufferAttribute,
-  LineBasicMaterial,
-  LineSegments,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
   OneFactor,
   PlaneGeometry,
-  Ray,
   RepeatWrapping,
   Scene,
   Vector2,
@@ -23,183 +15,97 @@ import {
   WebGLRenderer,
   ZeroFactor
 } from 'three'
-import MeshBatch from './batching/MeshBatch'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from './SpeckleRenderer'
-import { bin, mean, deviation } from 'd3-array'
-
-interface RayHit {
-  vertexIndex: number
-  distance: number
-  hitNormal: Vector3
-}
 
 export interface ShadowcatcherConfig {
-  planeSubdivision: number
-  sampleCount: number
-  maxDist: number
   textureSize: number
   weights: { x: number; y: number; z: number; w: number }
   blurRadius: number
   stdDeviation: number
-  depthCutoff: number
 }
 
 export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
-  planeSubdivision: 10,
-  sampleCount: 100,
-  maxDist: 1,
   textureSize: 512,
   weights: { x: 1, y: 1, z: 1, w: 1 },
   blurRadius: 16,
-  stdDeviation: 4,
-  depthCutoff: 0
+  stdDeviation: 4
 }
 
 export class Shadowcatcher {
   public static readonly MESH_NAME = 'Shadowcatcher'
-
+  public static readonly PLANE_SUBD = 2
   private planeMesh: Mesh = null
   private planeSize: Vector2 = new Vector2()
-  private generateMaterial: MeshBasicMaterial = null
   private displayMaterial: MeshBasicMaterial = null
   public shadowcatcherPass: ShadowcatcherPass = null
   private _config: ShadowcatcherConfig = DefaultShadowcatcherConfig
-  private _debugRawAO = false
-  public debugLines: LineSegments = null
 
   public get shadowcatcherMesh() {
     return this.planeMesh
   }
 
   public set configuration(config: ShadowcatcherConfig) {
-    if (this._config.planeSubdivision !== config.planeSubdivision)
-      console.warn('Subdivision changed, shadowcatcher mesh needs rebuild!')
     this._config = JSON.parse(JSON.stringify(config))
   }
 
-  public constructor() {
+  public constructor(layer: ObjectLayers, renderlayers: Array<ObjectLayers>) {
     this.shadowcatcherPass = new ShadowcatcherPass()
-    /** Material used to render the per-vertex ao values to texture */
-    if (!this.generateMaterial) {
-      // this.generateMaterial = new SpeckleShadowcatcherGenerateMaterial(
-      //   {
-      //     color: 0xffffff
-      //   },
-      //   ['USE_RTE']
-      // )
-      // this.generateMaterial.defines['DEBUG'] = 0
-      // this.generateMaterial.toneMapped = false
-      this.generateMaterial = new MeshBasicMaterial({ color: 0xffffff })
-      this.generateMaterial.toneMapped = false
-      this.generateMaterial.vertexColors = false
-      this.generateMaterial.side = DoubleSide
-    }
+    this.shadowcatcherPass.setLayers(renderlayers)
 
-    /** Material used to display the plane using the rendered texture */
-    if (!this.displayMaterial) {
-      // this.displayMaterial = new SpeckleShadowcatcherMaterial({ color: 0xffffff }, [
-      //   'USE_RTE'
-      // ])
-      // this.displayMaterial.map = this.shadowcatcherPass.outputTexture
-      // this.displayMaterial.transparent = false
-      // this.displayMaterial.toneMapped = false
-      // this.displayMaterial.blending = CustomBlending
-      // this.displayMaterial.blendEquation = AddEquation
-      // this.displayMaterial.blendEquationAlpha = AddEquation
-      // this.displayMaterial.blendSrc = ZeroFactor
-      // this.displayMaterial.blendSrcAlpha = OneFactor
-      // this.displayMaterial.blendDst = DstAlphaFactor
-      // this.displayMaterial.blendDstAlpha = ZeroFactor
-      this.displayMaterial = new MeshBasicMaterial({ color: 0xffffff })
-      this.displayMaterial.toneMapped = false
-      this.displayMaterial.map = this.shadowcatcherPass.outputTexture
-      this.displayMaterial.map.wrapS = RepeatWrapping
-      this.displayMaterial.map.repeat.x = -1
-      this.displayMaterial.map.needsUpdate = true
-      this.displayMaterial.transparent = true
-      this.displayMaterial.toneMapped = false
-      this.displayMaterial.blending = CustomBlending
-      this.displayMaterial.blendEquation = AddEquation
-      this.displayMaterial.blendEquationAlpha = AddEquation
-      this.displayMaterial.blendSrc = ZeroFactor
-      this.displayMaterial.blendSrcAlpha = OneFactor
-      this.displayMaterial.blendDst = DstAlphaFactor
-      this.displayMaterial.blendDstAlpha = ZeroFactor
-    }
+    this.displayMaterial = new MeshBasicMaterial({ color: 0xffffff })
+    this.displayMaterial.toneMapped = false
+    this.displayMaterial.map = this.shadowcatcherPass.outputTexture
+    this.displayMaterial.map.wrapS = RepeatWrapping
+    this.displayMaterial.map.repeat.x = -1
+    this.displayMaterial.map.needsUpdate = true
+    this.displayMaterial.transparent = true
+    this.displayMaterial.toneMapped = false
+    this.displayMaterial.blending = CustomBlending
+    this.displayMaterial.blendEquation = AddEquation
+    this.displayMaterial.blendEquationAlpha = AddEquation
+    this.displayMaterial.blendSrc = ZeroFactor
+    this.displayMaterial.blendSrcAlpha = OneFactor
+    this.displayMaterial.blendDst = DstAlphaFactor
+    this.displayMaterial.blendDstAlpha = ZeroFactor
 
-    this.shadowcatcherPass.onBeforeRender = () => {
-      // this.planeMesh.material = this.generateMaterial
-    }
-    this.shadowcatcherPass.onAfterRender = () => {
-      // this.planeMesh.material = this._debugRawAO
-      //   ? this.generateMaterial
-      //   : this.displayMaterial
-      // this.displayMaterial.map.repeat.x = -1
-    }
+    this.planeMesh = new Mesh()
+    this.planeMesh.material = this.displayMaterial
+    this.planeMesh.layers.set(layer)
+    this.planeMesh.name = Shadowcatcher.MESH_NAME
+    this.planeMesh.frustumCulled = false
+    this.planeMesh.renderOrder = layer
   }
 
   public update(scene: Scene) {
-    this.shadowcatcherPass.blurRadius = this._config.blurRadius
-    this.shadowcatcherPass.blurStdDev = this._config.stdDeviation
-    this.shadowcatcherPass.cameraFar = this._config.maxDist
-    // this.shadowcatcherPass.depthCutoff = this._config.depthCutoff
-    // const texSize = this.getOptimalTexSize()
-    // this.shadowcatcherPass.setOutputSize(texSize.x, texSize.y)
-    const aspect = this.planeSize.x / this.planeSize.y
-    const size = new Vector2()
-    size.x = Math.trunc(this._config.textureSize)
-    size.y = Math.trunc(this._config.textureSize / aspect)
-    this.shadowcatcherPass.setOutputSize(size.x, size.y)
-    this.shadowcatcherPass.setWeights(this._config.weights)
+    this.shadowcatcherPass.updateConfig(this._config)
     this.shadowcatcherPass.update(scene)
-  }
-
-  private getOptimalTexSize(): Vector2 {
-    const size = new Vector2()
-    const aspect = this.planeSize.x / this.planeSize.y
-    if (this.planeSize.x >= this.planeSize.y) {
-      size.x = this._config.textureSize
-      size.y = size.x / aspect
-      if (size.y < this._config.blurRadius * 2) {
-        size.y = this._config.blurRadius * 2
-        size.x = this._config.blurRadius * 2 * aspect
-      }
-    } else {
-      size.y = this._config.textureSize
-      size.x = size.y * aspect
-      if (size.x < this._config.blurRadius * 2) {
-        size.x = this._config.blurRadius * 2
-        size.y = size.x / aspect
-      }
-    }
-
-    return size
   }
 
   public render(renderer: WebGLRenderer) {
     this.shadowcatcherPass.render(renderer, null, null)
   }
 
-  public bake(batches: MeshBatch[]) {
-    this.trace(batches)
+  public bake(worldBox: Box3, force?: boolean) {
+    this.updatePlaneMesh(worldBox, force)
+    const aspect = this.planeSize.x / this.planeSize.y
+    const size = new Vector2()
+    size.x = Math.trunc(this._config.textureSize)
+    size.y = Math.trunc(this._config.textureSize / aspect)
+    const planeBox = new Box3().setFromObject(this.planeMesh)
+    const worldHeight = worldBox.getSize(new Vector3()).z
+    this.shadowcatcherPass.updateCamera(planeBox, 0.001, worldHeight)
+    this.shadowcatcherPass.setOutputSize(size.x, size.y)
+    this.shadowcatcherPass.setWeights(this._config.weights)
     this.shadowcatcherPass.needsUpdate = true
   }
 
-  public updatePlaneMesh(box: Box3, layer: number, force?: boolean) {
+  private updatePlaneMesh(box: Box3, force?: boolean) {
     const boxSize = box.getSize(new Vector3())
     const boxCenter = box.getCenter(new Vector3())
     const needsRebuild =
       new Vector2(boxSize.x, boxSize.y).distanceTo(this.planeSize) > 0.001
 
-    if (!this.planeMesh) {
-      this.planeMesh = new Mesh()
-      this.planeMesh.material = this.displayMaterial
-      this.planeMesh.layers.set(layer)
-      this.planeMesh.name = Shadowcatcher.MESH_NAME
-      this.planeMesh.frustumCulled = false
-      this.planeMesh.renderOrder = ObjectLayers.SHADOWCATCHER
-    }
     if (needsRebuild || force)
       this.updatePlaneMeshGeometry(
         new Vector2(boxSize.x * 2, boxSize.y * 2),
@@ -207,202 +113,22 @@ export class Shadowcatcher {
       )
 
     this.planeSize.set(boxSize.x, boxSize.y)
-    this.shadowcatcherPass.setLayers([ObjectLayers.STREAM_CONTENT])
   }
 
   private updatePlaneMeshGeometry(size: Vector2, origin: Vector3) {
     if (this.planeMesh.geometry) {
       this.planeMesh.geometry.dispose()
     }
-    let subX = 0
-    let subY = 0
-    const aspect = size.x / size.y
-    if (size.x >= size.y) {
-      subY = this._config.planeSubdivision
-      subX = subY * aspect
-    } else {
-      subX = this._config.planeSubdivision
-      subY = subX / aspect
-    }
 
-    const groundPlaneGeometry = new PlaneGeometry(size.x, size.y, subX, subY)
-    const colors = new Float32Array(groundPlaneGeometry.attributes.position.count * 2)
-    groundPlaneGeometry.setAttribute('aoData', new Float32BufferAttribute(colors, 2))
+    const groundPlaneGeometry = new PlaneGeometry(
+      size.x,
+      size.y,
+      Shadowcatcher.PLANE_SUBD,
+      Shadowcatcher.PLANE_SUBD
+    )
     const mat = new Matrix4().makeTranslation(origin.x, origin.y, origin.z)
     groundPlaneGeometry.applyMatrix4(mat)
     this.planeMesh.geometry = groundPlaneGeometry
     this.planeMesh.geometry.computeBoundingBox()
-  }
-
-  private trace(batches: MeshBatch[]) {
-    return
-    const start = performance.now()
-    const sampleCount = this._config.sampleCount
-    const vertices = this.planeMesh.geometry.attributes.position.array
-    const aoData = this.planeMesh.geometry.attributes.aoData.array as number[]
-    aoData.fill(0)
-    const hitData: Array<Array<RayHit>> = new Array(aoData.length / 2)
-
-    if (this.debugLines) {
-      this.debugLines.parent.remove(this.debugLines)
-      this.debugLines.geometry.dispose()
-    }
-    const linePoints = []
-    const lineColors = []
-    let min = Number.POSITIVE_INFINITY
-    let max = Number.NEGATIVE_INFINITY
-
-    for (let k = 0; k < vertices.length; k += 3) {
-      hitData[k / 3] = []
-      for (let d = 0; d < sampleCount; d++) {
-        const sample = new Vector3()
-        sample.x = Math.random() * 2 - 1
-        sample.y = Math.random() * 2 - 1
-        sample.z = Math.random()
-
-        sample.normalize()
-        const res = this.castRay(
-          batches,
-          new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]),
-          sample
-        )
-
-        if (res) {
-          hitData[k / 3].push({
-            vertexIndex: k,
-            distance: res.distance,
-            hitNormal: res.face.normal
-          })
-          min = Math.min(min, res.distance)
-          max = Math.max(max, res.distance)
-          linePoints.push(new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]))
-          linePoints.push(
-            new Vector3(vertices[k], vertices[k + 1], vertices[k + 2]).add(
-              new Vector3().copy(sample).multiplyScalar(res.distance)
-            )
-          )
-          lineColors.push(0, 0, 0, 0, 0, 0)
-        }
-      }
-    }
-
-    const distances = hitData.flat(1).map((value) => value.distance)
-    const histGenerator = bin().domain([min, max]).thresholds(5)
-    let bins = []
-    bins = histGenerator(distances)
-    const meanValue = mean(distances)
-    const deviationValue = deviation(distances)
-
-    bins.sort((a: [], b: []) => b.length - a.length)
-    let colorIndex = 0
-    for (let k = 0; k < hitData.length; k++) {
-      for (let n = 0; n < hitData[k].length; n++) {
-        let weigth = 0
-        if (hitData[k][n].distance <= bins[0].x1) {
-          weigth = 1
-        }
-        if (
-          hitData[k][n].distance > bins[0].x1 &&
-          hitData[k][n].distance <= bins[1].x1
-        ) {
-          weigth = 0.5
-        }
-        if (
-          hitData[k][n].distance > bins[1].x1 &&
-          hitData[k][n].distance <= bins[2].x1
-        ) {
-          weigth = 0.25
-        }
-        if (
-          hitData[k][n].distance > bins[2].x1 &&
-          hitData[k][n].distance <= bins[3].x1
-        ) {
-          weigth = 0.15
-        }
-
-        const zScore = (hitData[k][n].distance - meanValue) / deviationValue
-        const contribution = Math.max(weigth * (1 - zScore), 0)
-        aoData[k * 2] += contribution / sampleCount
-        aoData[k * 2 + 1] += contribution / sampleCount
-        const lerpColor = new Color().lerpColors(
-          new Color(0xff0000),
-          new Color(0x00ff00),
-          contribution
-        )
-        lineColors[colorIndex] = lerpColor.r
-        lineColors[colorIndex + 1] = lerpColor.g
-        lineColors[colorIndex + 2] = lerpColor.b
-        lineColors[colorIndex + 3] = lerpColor.r
-        lineColors[colorIndex + 4] = lerpColor.g
-        lineColors[colorIndex + 5] = lerpColor.b
-        colorIndex += 6
-      }
-    }
-
-    const material = new LineBasicMaterial({
-      color: 0xffffff,
-      vertexColors: true
-    })
-    const geometry = new BufferGeometry().setFromPoints(linePoints)
-    geometry.setAttribute('color', new Float32BufferAttribute(lineColors, 3))
-    this.debugLines = new LineSegments(geometry, material)
-    this.debugLines.layers.set(ObjectLayers.PROPS)
-    this.debugLines.visible = false
-    this.planeMesh.geometry.attributes.aoData.needsUpdate = true
-
-    console.warn('Time -> ', performance.now() - start)
-  }
-
-  private castRay(batches: MeshBatch[], origin: Vector3, dir: Vector3) {
-    const results = []
-    for (let i = 0; i < batches.length; i++) {
-      const invMat = new Matrix4().copy(batches[i].renderObject.matrixWorld)
-      invMat.invert()
-      const ray = new Ray(origin, dir)
-      ray.applyMatrix4(invMat)
-      const res = batches[i].boundsTree.raycastFirst(ray, DoubleSide)
-
-      if (res) {
-        const rv = batches[i].getMaterialAtIndex(res.faceIndex)
-        if (rv.transparent === false) results.push(res)
-      }
-    }
-    if (results.length > 0) {
-      results.sort((a, b) => a.distance - b.distance)
-      return results[0]
-    }
-  }
-
-  private isEdgeVertex(index: number) {
-    const vertices = this.planeMesh.geometry.attributes.position.array
-    const pos = new Vector3(
-      vertices[index * 3],
-      vertices[index * 3 + 1],
-      vertices[index * 3 + 2]
-    )
-    const planeBox3 = this.planeMesh.geometry.boundingBox
-    const planeBox2 = new Box2(
-      new Vector2(planeBox3.min.x, planeBox3.min.y),
-      new Vector2(planeBox3.max.x, planeBox3.max.y)
-    )
-    const testBox = new Box2().setFromCenterAndSize(
-      new Vector2(pos.x, pos.y),
-      new Vector2(0.01, 0.01)
-    )
-
-    if (!planeBox2.containsBox(testBox)) {
-      return true
-    }
-  }
-
-  // eslint-disable-next-line camelcase
-  public _debug_rawAO() {
-    this._debugRawAO = !this._debugRawAO
-    this.displayMaterial.transparent = !this._debugRawAO
-    // this.generateMaterial.defines['DEBUG'] = +this._debugRawAO
-    // this.generateMaterial.needsUpdate = true
-    // this.planeMesh.material = this._debugRawAO
-    //   ? this.generateMaterial
-    //   : this.displayMaterial
   }
 }

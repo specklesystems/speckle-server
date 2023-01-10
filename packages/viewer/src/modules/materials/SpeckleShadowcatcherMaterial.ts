@@ -30,9 +30,6 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
     this.userData.weights = {
       value: new Vector4()
     }
-    this.userData.depth = {
-      value: null
-    }
     this.userData.size = {
       value: new Vector2()
     }
@@ -62,9 +59,6 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
         weights: {
           value: this.userData.weights.value
         },
-        depth: {
-          value: this.userData.depth.value
-        },
         size: {
           value: this.userData.size.value
         }
@@ -79,7 +73,6 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
       shader.uniforms.tex2 = this.userData.tex2
       shader.uniforms.tex3 = this.userData.tex3
       shader.uniforms.weights = this.userData.weights
-      shader.uniforms.depth = this.userData.depth
       shader.uniforms.size = this.userData.size
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
