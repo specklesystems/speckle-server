@@ -48,7 +48,7 @@ const ensureConditions = async () => {
   }
 
   if (!process.env.S3_BUCKET) {
-    logger.error(
+    logger.warn(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -148,7 +148,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        logger.error(`File upload error: ${err}`)
+        logger.error(err, 'File upload error')
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>

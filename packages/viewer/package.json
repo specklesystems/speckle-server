@@ -45,6 +45,7 @@
     "camera-controls": "^1.33.1",
     "flat": "^5.0.2",
     "hold-event": "^0.1.0",
+    "js-logger": "1.6.1",
     "lodash-es": "^4.17.21",
     "rainbowvis.js": "^1.0.1",
     "string-to-color": "^2.2.2",

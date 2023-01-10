@@ -2,6 +2,7 @@ import TreeModel from 'tree-model'
 import { DataTree, DataTreeBuilder } from './DataTree'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
+import Logger from 'js-logger'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
@@ -75,13 +76,13 @@ export class WorldTree {
   }
 
   public addSubtree(node: TreeNode) {
-    console.warn(`Adding subtree with id: ${node.model.id}`)
+    Logger.warn(`Adding subtree with id: ${node.model.id}`)
     this._root.addChild(node)
   }
 
   public addNode(node: TreeNode, parent: TreeNode) {
     if (parent === null) {
-      console.error(`Invalid parent node!`)
+      Logger.error(`Invalid parent node!`)
       return
     }
     parent.addChild(node)
@@ -93,14 +94,14 @@ export class WorldTree {
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
     if (!node && !this.supressWarnings) {
-      console.warn(`Root will be used for searching. You might not want that`)
+      Logger.warn(`Root will be used for searching. You might not want that`)
     }
     return (node ? node : this.root).all(predicate)
   }
 
   public findId(id: string, node?: TreeNode) {
     if (!node && !this.supressWarnings) {
-      console.warn(`Root will be used for searching. You might not want that`)
+      Logger.warn(`Root will be used for searching. You might not want that`)
     }
     return (node ? node : this.root).first((_node: TreeNode) => {
       return _node.model.id === id
@@ -113,7 +114,7 @@ export class WorldTree {
 
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
     if (!node && !this.supressWarnings) {
-      console.warn(`Root will be used for searching. You might not want that`)
+      Logger.warn(`Root will be used for searching. You might not want that`)
       this._root.walk(predicate)
     }
     this._root.walk(predicate, node)

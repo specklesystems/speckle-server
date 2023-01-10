@@ -50,6 +50,7 @@ async function startTask() {
 }
 
 async function doTask(task) {
+  const taskLogger = logger.child({ task })
   let tempUserToken = null
   let serverApi = null
   let fileTypeForMetric = 'unknown'
@@ -57,7 +58,7 @@ async function doTask(task) {
 
   const metricDurationEnd = metricDuration.startTimer()
   try {
-    logger.info('Doing task ', task)
+    taskLogger.info('Doing task.')
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
@@ -103,7 +104,7 @@ async function doTask(task) {
       )
     } else if (info.fileType === 'stl') {
       await runProcessWithTimeout(
-        'python3',
+        process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           './stl/import_file.py',
           TMP_FILE_PATH,
@@ -126,7 +127,7 @@ async function doTask(task) {
       })
 
       await runProcessWithTimeout(
-        'python3',
+        process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           '-u',
           './obj/import_file.py',
@@ -164,7 +165,7 @@ async function doTask(task) {
       [commitId, task.id]
     )
   } catch (err) {
-    logger.error(err)
+    taskLogger.error(err)
     await knex.raw(
       `
       UPDATE file_uploads
@@ -191,21 +192,23 @@ async function doTask(task) {
 
 function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
   return new Promise((resolve, reject) => {
-    logger.info(`Starting process: ${cmd} ${cmdArgs}`)
+    let boundLogger = logger.child({ cmd, args: cmdArgs })
+    boundLogger.info('Starting process.')
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
+    boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      logger.info('Parser: ', data.toString())
+      boundLogger.debug('Parser: %s', data.toString())
     })
 
     childProc.stderr.on('data', (data) => {
-      logger.error('Parser: ', data.toString())
+      boundLogger.debug('Parser: %s', data.toString())
     })
 
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      logger.error('Process timeout. Killing process...')
+      boundLogger.warn('Process timeout. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -213,7 +216,7 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      logger.info(`Process exited with code ${code}`)
+      boundLogger.info({ exitCode: code }, `Process exited with code ${code}`)
 
       if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
 
@@ -249,7 +252,7 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metricOperationErrors.labels('main_loop').inc()
-    logger.error('Error executing task: ', err)
+    logger.error(err, 'Error executing task')
     setTimeout(tick, 5000)
   }
 }

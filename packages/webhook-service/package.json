@@ -17,7 +17,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cross-env ALLOW_LOCAL_NETWORK=true node src/main.js",
+    "dev": "cross-env LOG_PRETTY=true ALLOW_LOCAL_NETWORK=true node src/main.js",
     "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
@@ -25,6 +25,7 @@
     "knex": "^2.0.0",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
+    "pino-pretty": "^9.1.1",
     "private-ip": "^2.3.3",
     "prom-client": "^14.0.1"
   },

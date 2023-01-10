@@ -26,7 +26,7 @@ const getReferencedMtlFiles = async ({ objFilePath }) => {
 
     await events.once(rl, 'close')
   } catch (err) {
-    logger.error(`Error getting dependencies for file ${objFilePath}: ${err}`)
+    logger.error(err, `Error getting dependencies for file ${objFilePath}`)
   }
   return mtlFiles
 }

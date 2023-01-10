@@ -54,7 +54,7 @@ COPY packages/objectloader/package.json ./packages/objectloader/
 WORKDIR /speckle-server/packages/server
 RUN yarn workspaces focus --production
 
-FROM gcr.io/distroless/nodejs:18 as production-stage
+FROM node:18.12.1-bullseye-slim as production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 ARG FILE_SIZE_LIMIT_MB=100
@@ -75,4 +75,4 @@ COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
-ENTRYPOINT ["/tini", "--", "/nodejs/bin/node", "./bin/www"]
+CMD ["node", "bin/www"]

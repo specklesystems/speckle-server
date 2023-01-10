@@ -35,10 +35,9 @@ export default class Input extends EventEmitter {
       if (delta > 250) return
 
       const loc = this._getNormalisedClickPosition(e)
-
+      ;(loc as unknown as Record<string, unknown>).event = e
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
-      if (e.ctrlKey) this.emit('object-clicked-debug', loc)
-      else this.emit(ViewerEvent.ObjectClicked, loc)
+      this.emit(ViewerEvent.ObjectClicked, loc)
     })
 
     // Doubleclicks on touch devices

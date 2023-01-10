@@ -29,7 +29,7 @@ export function initializeModuleEventEmitter<P extends Record<string, unknown>>(
   const logger = Observability.extendLoggerComponent(moduleLogger, identifier, 'events')
 
   const errHandler = (e: unknown) => {
-    logger.error(`Unhandled ${identifier} event emitter error`, e)
+    logger.error(e, `Unhandled ${identifier} event emitter error`)
   }
 
   const emitter = new EventEmitter()

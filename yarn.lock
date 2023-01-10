@@ -4831,6 +4831,7 @@ __metadata:
     knex: ^2.0.0
     nodemon: ^2.0.13
     pg: ^8.7.3
+    pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
     undici: ^5.8.2
@@ -4975,6 +4976,7 @@ __metadata:
     pg: ^8.7.3
     pg-query-stream: ^4.2.3
     pino-http: ^8.2.1
+    pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
     puppeteer: ^13.3.2
@@ -5074,6 +5076,7 @@ __metadata:
     nodemailer: ^6.5.0
     nodemon: ^2.0.6
     nyc: ^15.0.1
+    openid-client: ^5.1.7
     passport: ^0.4.1
     passport-azure-ad: ^4.3.0
     passport-github2: ^0.1.12
@@ -5083,6 +5086,7 @@ __metadata:
     pg-query-stream: ^4.2.3
     pino: ^8.7.0
     pino-http: ^8.2.1
+    pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
     rate-limiter-flexible: ^2.4.1
@@ -5162,6 +5166,7 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     flat: ^5.0.2
     hold-event: ^0.1.0
+    js-logger: 1.6.1
     lodash-es: ^4.17.21
     prettier: ^2.5.1
     rainbowvis.js: ^1.0.1
@@ -5191,6 +5196,7 @@ __metadata:
     knex: ^2.0.0
     node-fetch: ^2.6.1
     pg: ^8.7.3
+    pino-pretty: ^9.1.1
     prettier: ^2.5.1
     private-ip: ^2.3.3
     prom-client: ^14.0.1
@@ -13757,6 +13763,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^4.10.0":
+  version: 4.11.1
+  resolution: "jose@npm:4.11.1"
+  checksum: cd15cba258d0fd20f6168631ce2e94fda8442df80e43c1033c523915cecdf390a1cc8efe0eab0c2d65935ca973d791c668aea80724d2aa9c2879d4e70f3081d7
+  languageName: node
+  linkType: hard
+
 "joycon@npm:^3.1.1":
   version: 3.1.1
   resolution: "joycon@npm:3.1.1"
@@ -13784,6 +13797,13 @@ __metadata:
     html-beautify: js/bin/html-beautify.js
     js-beautify: js/bin/js-beautify.js
   checksum: 2e61c1183c73d7464ec7d5354763ee9e17ecb4b5c7a3744e9a9dc2e9c406fc6e0c37399130d1ee48313ff502e03e8a949dce96acdaee309dc44317249565934d
+  languageName: node
+  linkType: hard
+
+"js-logger@npm:1.6.1":
+  version: 1.6.1
+  resolution: "js-logger@npm:1.6.1"
+  checksum: c191a612a198c6a3263cb35a1953b8de9bc9ff8962cfdb393a771c26be726630a18a15765aa471dd8e0a20666011e3ddbc5addb2d2494e964d39fd13f2246aca
   languageName: node
   linkType: hard
 
@@ -16045,6 +16065,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"object-hash@npm:^2.0.1":
+  version: 2.2.0
+  resolution: "object-hash@npm:2.2.0"
+  checksum: 55ba841e3adce9c4f1b9b46b41983eda40f854e0d01af2802d3ae18a7085a17168d6b81731d43fdf1d6bcbb3c9f9c56d22c8fea992203ad90a38d7d919bc28f1
+  languageName: node
+  linkType: hard
+
 "object-inspect@npm:^1.12.0, object-inspect@npm:^1.9.0":
   version: 1.12.0
   resolution: "object-inspect@npm:1.12.0"
@@ -16075,6 +16102,13 @@ __metadata:
   version: 1.1.2
   resolution: "obuf@npm:1.1.2"
   checksum: 41a2ba310e7b6f6c3b905af82c275bf8854896e2e4c5752966d64cbcd2f599cfffd5932006bcf3b8b419dfdacebb3a3912d5d94e10f1d0acab59876c8757f27f
+  languageName: node
+  linkType: hard
+
+"oidc-token-hash@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "oidc-token-hash@npm:5.0.1"
+  checksum: d62aa8c665f1a0133a3694785e4cd75f471364e6a2f4fbf7997e193a49ccf8f8de15596f475c7fdf8510d021c3b72f7ff6ab8bc5b07bff4cf21d490177f164a5
   languageName: node
   linkType: hard
 
@@ -16154,6 +16188,18 @@ __metadata:
   bin:
     opener: bin/opener-bin.js
   checksum: 33b620c0d53d5b883f2abc6687dd1c5fd394d270dbe33a6356f2d71e0a2ec85b100d5bac94694198ccf5c30d592da863b2292c5539009c715a9c80c697b4f6cc
+  languageName: node
+  linkType: hard
+
+"openid-client@npm:^5.1.7":
+  version: 5.3.1
+  resolution: "openid-client@npm:5.3.1"
+  dependencies:
+    jose: ^4.10.0
+    lru-cache: ^6.0.0
+    object-hash: ^2.0.1
+    oidc-token-hash: ^5.0.1
+  checksum: e8993cfe6ac55942fb7a5fc4db8ab88ab36bbcf2a6519993a9a2e288bfc248fcfb07804b6785eb7852a9eea0eec27f80ae57a29193c0b835f31f611b11b9bda1
   languageName: node
   linkType: hard
 

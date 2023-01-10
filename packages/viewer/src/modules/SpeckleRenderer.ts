@@ -53,6 +53,7 @@ import {
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
+import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
@@ -226,7 +227,7 @@ export default class SpeckleRenderer {
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
-    this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
+    // this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
@@ -564,7 +565,7 @@ export default class SpeckleRenderer {
       )
     }
     this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
-    console.warn('Outline time: ', performance.now() - start)
+    Logger.warn('Outline time: ', performance.now() - start)
   }
 
   public enableSectionBoxCapper(value: boolean) {
@@ -748,13 +749,14 @@ export default class SpeckleRenderer {
     if (!queryResults) {
       this.viewer.emit(
         ViewerEvent.ObjectClicked,
-        !multiSelect ? null : { multiple: true }
+        !multiSelect ? null : { multiple: true, event: e.event }
       )
       return
     }
 
     const selectionInfo = {
       multiple: multiSelect,
+      event: e.event,
       hits: queryResults.map((value) => {
         return {
           guid: value.node.model.id,
