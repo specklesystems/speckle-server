@@ -82,11 +82,11 @@
       </v-card-text>
     </section-card>
     <user-edit-dialog ref="userDialog" :user="user"></user-edit-dialog>
-    <v-dialog v-model="avatarDialog" max-width="400">
+    <v-dialog v-model="avatarDialog" max-width="500">
       <v-card>
         <v-card-title>Choose a new profile picture</v-card-title>
         <v-card-text class="pl-10 pr-0 mt-5">
-          <v-image-input
+          <vuetify-image-input
             v-model="imageData"
             :image-quality="0.85"
             :image-height="256"
@@ -113,7 +113,7 @@ import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   components: {
-    VImageInput: () => import('vuetify-image-input/a-la-carte'),
+    VuetifyImageInput: () => import('vuetify-image-input/a-la-carte'),
     UserAvatarIcon: () => import('@/main/components/common/UserAvatarIcon'),
     SectionCard: () => import('@/main/components/common/SectionCard'),
     UserEditDialog: () => import('@/main/dialogs/UserEditDialog')
@@ -160,7 +160,6 @@ export default {
 
       this.avatarDialog = false
     },
-    //using vue dialogs just like .net modals
     async editUser() {
       this.$refs.userDialog.open(this.user).then((dialog) => {
         if (!dialog.result) return

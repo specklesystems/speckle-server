@@ -1,18 +1,28 @@
 import * as THREE from 'three'
-import SelectionHelper from './SelectionHelper'
+import SelectionHelper from './legacy/SelectionHelper'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { Box3 } from 'three'
+import { ViewerEvent } from '../IViewer'
+import { ObjectLayers } from './SpeckleRenderer'
+import EventEmitter from './EventEmitter'
 
-export default class SectionBox {
+export const SectionBoxEvent = {
+  DRAG_START: 'section-box-drag-start',
+  DRAG_END: 'section-box-drag-end'
+}
+
+export default class SectionBox extends EventEmitter {
   constructor(viewer) {
+    super()
     this.viewer = viewer
 
-    this.viewer.renderer.localClippingEnabled = true
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = true
 
     this.dragging = false
     this.display = new THREE.Group()
     this.display.name = 'SectionBox'
-    this.viewer.scene.add(this.display)
+    this.display.layers.set(ObjectLayers.PROPS)
+    this.viewer.speckleRenderer.scene.add(this.display)
 
     // box
     this.boxGeometry = this._generateSimpleCube(5, 5, 5)
@@ -24,11 +34,13 @@ export default class SectionBox {
     })
     this.cube = new THREE.Mesh(this.boxGeometry, this.material)
     this.cube.visible = false
+    this.cube.layers.set(ObjectLayers.PROPS)
 
     this.display.add(this.cube)
 
     this.boxHelper = new THREE.BoxHelper(this.cube, 0x0a66ff)
     this.boxHelper.material.opacity = 0.4
+    this.boxHelper.layers.set(ObjectLayers.PROPS)
     this.display.add(this.boxHelper)
 
     // we're attaching the gizmo mover to this sphere in the box centre
@@ -37,6 +49,7 @@ export default class SectionBox {
       sphere,
       new THREE.MeshStandardMaterial({ color: 0x00ffff })
     )
+    this.sphere.layers.set(ObjectLayers.PROPS)
     this.sphere.visible = false
     this.display.add(this.sphere)
 
@@ -55,6 +68,7 @@ export default class SectionBox {
       })
     )
     this.hoverPlane.visible = false
+    this.hoverPlane.layers.set(ObjectLayers.PROPS)
     this.display.add(this.hoverPlane)
 
     this.dragging = false
@@ -86,7 +100,7 @@ export default class SectionBox {
       hover: false,
       checkForSectionBoxInclusion: false
     })
-    this.selectionHelper.on('object-clicked', this._clickHandler.bind(this))
+    this.selectionHelper.on(ViewerEvent.ObjectClicked, this._clickHandler.bind(this))
     this.selectionHelper.on('hovered', () => {
       // TODO: cannot get this to work reliably
       // if( !this.attachedToBox ) return
@@ -122,8 +136,14 @@ export default class SectionBox {
     this.controls?.detach()
     this.controls = new TransformControls(
       this.viewer.cameraHandler.activeCam.camera,
-      this.viewer.renderer.domElement
+      this.viewer.speckleRenderer.renderer.domElement
     )
+    for (let k = 0; k < this.controls.children.length; k++) {
+      this.controls.children[k].traverse((obj) => {
+        obj.layers.set(ObjectLayers.PROPS)
+      })
+    }
+    this.controls.getRaycaster().layers.set(ObjectLayers.PROPS)
     this.controls.setSize(0.75)
     this.display.add(this.controls)
     this.controls.addEventListener('change', this._draggingChangeHandler.bind(this))
@@ -131,13 +151,19 @@ export default class SectionBox {
       if (!this.display.visible) return
       const val = !!event.value
       if (val) {
+        this.emit(SectionBoxEvent.DRAG_START)
         this.dragging = val
-        this.viewer.interactions.preventSelection = val
+        //@Dim: Not sure what this needs to do in the new viewer
+        //@Alex: this prevents(?) involuntary selection happening on mobile
+        // this.viewer.interactions.preventSelection = val
         this.viewer.cameraHandler.enabled = !val
       } else {
+        this.emit(SectionBoxEvent.DRAG_END)
         setTimeout(() => {
           this.dragging = val
-          this.viewer.interactions.preventSelection = val
+          //@Dim: Not sure what this needs to do in the new viewer
+          //@Alex: this prevents(?) involuntary selection happening on mobile
+          // this.viewer.interactions.preventSelection = val
           this.viewer.cameraHandler.enabled = !val
         }, 100)
       }
@@ -148,10 +174,11 @@ export default class SectionBox {
   _draggingChangeHandler() {
     if (!this.display.visible) return
     this.boxHelper.update()
-    this._generateOrUpdatePlanes()
+    // this._generateOrUpdatePlanes()
 
     // Dragging a side / plane
     if (this.dragging && this.currentRange) {
+      this._generateOrUpdatePlanes()
       if (this.prevPosition === null)
         this.prevPosition = this.hoverPlane.position.clone()
       this.prevPosition.sub(this.hoverPlane.position)
@@ -173,6 +200,7 @@ export default class SectionBox {
 
     // Dragging the whole section box
     if (this.dragging && !this.currentRange) {
+      this._generateOrUpdatePlanes()
       if (this.prevPosition === null) this.prevPosition = this.sphere.position.clone()
       this.prevPosition.sub(this.sphere.position)
       this.prevPosition.negate()
@@ -190,6 +218,8 @@ export default class SectionBox {
       this.prevPosition = this.sphere.position.clone()
     }
     this.viewer.needsRender = true
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
+    this.viewer.requestRender()
   }
 
   _clickHandler(args) {
@@ -321,6 +351,7 @@ export default class SectionBox {
       plane.setFromCoplanarPoints(a, b, c)
       index++
     }
+    this.viewer.emit('section-box-updated', this.getCurrentBox())
   }
 
   _attachControlsToBox() {
@@ -345,22 +376,26 @@ export default class SectionBox {
     this.controls.showZ = true
   }
 
+  // setBoxFromObjects(objectIds: string[], offset = 0.05) {
+  // WorldTree.getInstance().walk() => Solved
+  // this.setBox(...)
+  // }
+
   setBox(targetBox, offset = 0.05) {
     let box
 
-    if (targetBox) box = targetBox
+    if (targetBox) box = targetBox // targetbox = { min: {x, y, z}, max: {x, y, z} }
     else {
-      if (this.viewer.interactions.selectedObjects.children.length !== 0) {
-        box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
-      } else if (
-        this.viewer.sceneManager.sceneObjects.allObjects.children.length !== 0
-      ) {
-        box = new THREE.Box3().setFromObject(
-          this.viewer.sceneManager.sceneObjects.allObjects
-        )
-      } else {
-        box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
-      }
+      // // @Alex: part of the old behaviour: if a selected object is present, we set the box to it
+      // // if no selection is present, we set the box to whole scene. TBD re API, etc.
+      // /* //@Dim: Not sure what this needs to do in the new viewer
+      // if (this.viewer.interactions.selectedObjects.children.length !== 0) {
+      //   box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
+      // } else*/ if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
+      //   box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
+      // } else {
+      // box = this.viewer.world.worldBox.clone()
+      box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
     }
 
     if (box.min.x === Infinity) {
@@ -413,25 +448,28 @@ export default class SectionBox {
     this._generateOrUpdatePlanes()
     this._attachControlsToBox()
     this.boxHelper.update()
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
   toggle() {
-    this.setBox()
     this.display.visible = !this.display.visible
-    this.viewer.renderer.localClippingEnabled = this.display.visible
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = this.display.visible
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
-  off() {
+  disable() {
     this.display.visible = false
-    this.viewer.renderer.localClippingEnabled = false
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = false
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 
-  on() {
+  enable() {
     this.display.visible = true
-    this.viewer.renderer.localClippingEnabled = true
+    this.viewer.speckleRenderer.renderer.localClippingEnabled = true
+    this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }
 

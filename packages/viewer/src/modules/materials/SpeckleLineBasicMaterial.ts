@@ -47,10 +47,8 @@ class SpeckleLineBasicMaterial extends LineBasicMaterial {
       this.defines[defines[k]] = ''
     }
 
-    if (Geometry.USE_RTE) {
-      this.defines = {}
-      this.defines['USE_RTE'] = ' '
-    }
+    this.defines = {}
+    this.defines['USE_RTE'] = ' '
   }
 
   copy(source) {
@@ -67,30 +65,28 @@ class SpeckleLineBasicMaterial extends LineBasicMaterial {
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (Geometry.USE_RTE) {
-      SpeckleLineBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleLineBasicMaterial.matBuff.elements[12] = 0
-      SpeckleLineBasicMaterial.matBuff.elements[13] = 0
-      SpeckleLineBasicMaterial.matBuff.elements[14] = 0
-      SpeckleLineBasicMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleLineBasicMaterial.matBuff)
+    SpeckleLineBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleLineBasicMaterial.matBuff.elements[12] = 0
+    SpeckleLineBasicMaterial.matBuff.elements[13] = 0
+    SpeckleLineBasicMaterial.matBuff.elements[14] = 0
+    SpeckleLineBasicMaterial.matBuff.multiply(object.matrixWorld)
+    object.modelViewMatrix.copy(SpeckleLineBasicMaterial.matBuff)
 
-      SpeckleLineBasicMaterial.vecBuff0.set(
-        camera.matrixWorld.elements[12],
-        camera.matrixWorld.elements[13],
-        camera.matrixWorld.elements[14]
-      )
+    SpeckleLineBasicMaterial.vecBuff0.set(
+      camera.matrixWorld.elements[12],
+      camera.matrixWorld.elements[13],
+      camera.matrixWorld.elements[14]
+    )
 
-      Geometry.DoubleToHighLowVector(
-        SpeckleLineBasicMaterial.vecBuff0,
-        SpeckleLineBasicMaterial.vecBuff1,
-        SpeckleLineBasicMaterial.vecBuff2
-      )
-      this.userData.uViewer_low.value.copy(SpeckleLineBasicMaterial.vecBuff1)
-      this.userData.uViewer_high.value.copy(SpeckleLineBasicMaterial.vecBuff2)
+    Geometry.DoubleToHighLowVector(
+      SpeckleLineBasicMaterial.vecBuff0,
+      SpeckleLineBasicMaterial.vecBuff1,
+      SpeckleLineBasicMaterial.vecBuff2
+    )
+    this.userData.uViewer_low.value.copy(SpeckleLineBasicMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleLineBasicMaterial.vecBuff2)
 
-      this.needsUpdate = true
-    }
+    this.needsUpdate = true
   }
 }
 

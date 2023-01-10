@@ -24,7 +24,7 @@ const {
 } = require('@/modules/core/services/streams/streamAccessService')
 const {
   addStreamInviteDeclinedActivity
-} = require('@/modules/activitystream/services/streamActivityService')
+} = require('@/modules/activitystream/services/streamActivity')
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite

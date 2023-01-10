@@ -83,7 +83,7 @@ export default {
     authorizedApps: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             authorizedApps {
               id
@@ -96,7 +96,7 @@ export default {
         }
       `,
       update: (data) =>
-        data.user.authorizedApps.filter((app) => app.id !== 'spklwebapp')
+        data.activeUser.authorizedApps.filter((app) => app.id !== 'spklwebapp')
     }
   },
   computed: {

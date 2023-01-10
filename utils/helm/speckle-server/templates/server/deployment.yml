@@ -70,7 +70,7 @@ spec:
             command:
               - node
               - -e
-              - require('request')('http://localhost:3000/graphql?query={serverInfo{version}}', (e,r,b) => process.exit(b.toLowerCase().includes('error')))
+              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
 
         readinessProbe:
           initialDelaySeconds: 5
@@ -80,7 +80,7 @@ spec:
             command:
               - node
               - -e
-              - require('request')('http://localhost:3000/graphql?query={serverInfo{version}}', (e,r,b) => process.exit(b.toLowerCase().includes('error')))
+              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
 
         env:
           - name: CANONICAL_URL
@@ -92,14 +92,14 @@ spec:
 
           - name: PORT
             value: {{ include "server.port" $ | quote }}
-          - name: DEBUG
-            value: "speckle:*"
+          - name: LOG_LEVEL
+            value: {{ .Values.server.logLevel }}
 
           - name: SESSION_SECRET
             valueFrom:
               secretKeyRef:
-                name: "{{ .Values.secretName }}"
-                key: session_secret
+                name: "{{ default .Values.secretName .Values.server.sessionSecret.secretName }}"
+                key: {{ default "session_secret" .Values.server.sessionSecret.secretKey }}
 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
@@ -108,15 +108,15 @@ spec:
           - name: REDIS_URL
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: redis_url
+                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
 
           # *** PostgreSQL Database ***
           - name: POSTGRES_URL
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: postgres_url
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
           - name: POSTGRES_MAX_CONNECTIONS_SERVER
             value: {{ .Values.db.maxConnectionsServer | quote }}
 
@@ -128,19 +128,27 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+          {{- if .Values.server.fileUploads.enabled }}
+          {{ else }}
+          - name: DISABLE_FILE_UPLOADS 
+            value: "true"
+          {{ end }}
+            
+
           # *** S3 Object Storage ***
-          {{- if .Values.s3.endpoint }}
+          {{- if (or .Values.s3.configMap.enabled .Values.s3.endpoint) }}
+          {{- $s3values := ((include "server.s3Values" .) | fromJson ) }}
           - name: S3_ENDPOINT
-            value: {{ .Values.s3.endpoint }}
+            value: {{ $s3values.endpoint }}
           - name: S3_ACCESS_KEY
-            value: {{ .Values.s3.access_key }}
+            value: {{ $s3values.access_key }}
           - name: S3_BUCKET
-            value: {{ .Values.s3.bucket }}
+            value: {{ $s3values.bucket }}
           - name: S3_SECRET_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: s3_secret_key
+                name: {{ default .Values.secretName .Values.s3.secret_key.secretName }}
+                key: {{ default "s3_secret_key" .Values.s3.secret_key.secretKey }}
           - name: S3_CREATE_BUCKET
             value: "{{ .Values.s3.create_bucket }}"
           - name: S3_REGION
@@ -151,13 +159,8 @@ spec:
           # *** Authentication ***
 
           # Local Auth
-          {{- if .Values.server.auth.local.enabled }}
           - name: STRATEGY_LOCAL
-            value: "true"
-          {{- else }}
-          - name: STRATEGY_LOCAL
-            value: "false"
-          {{- end }}
+            value: "{{ .Values.server.auth.local.enabled }}"
 
           # Google Auth
           {{- if .Values.server.auth.google.enabled }}
@@ -168,8 +171,8 @@ spec:
           - name: GOOGLE_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: google_client_secret
+                name: {{ default .Values.secretName .Values.server.auth.google.clientSecret.secretName }}
+                key: {{ default "google_client_secret" .Values.server.auth.google.clientSecret.secretKey }}
           {{- end }}
 
           # Github Auth
@@ -181,8 +184,8 @@ spec:
           - name: GITHUB_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: github_client_secret
+                name: {{ default .Values.secretName .Values.server.auth.github.clientSecret.secretName }}
+                key: {{ default "github_client_secret" .Values.server.auth.github.clientSecret.secretKey }}
           {{- end }}
 
           # AzureAD Auth
@@ -200,8 +203,26 @@ spec:
           - name: AZURE_AD_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: azure_ad_client_secret
+                name: {{ default .Values.secretName .Values.server.auth.azure_ad.clientSecret.secretName }}
+                key: {{ default "azure_ad_client_secret" .Values.server.auth.azure_ad.clientSecret.secretKey }}
+          {{- end }}
+
+
+          # OpenID Connect Auth
+          {{- if .Values.server.auth.oidc.enabled }}
+          - name: STRATEGY_OIDC
+            value: "true"
+          - name: OIDC_NAME
+            value: {{ .Values.server.auth.oidc.name }}
+          - name: OIDC_DISCOVERY_URL
+            value: {{ .Values.server.auth.oidc.discovery_url }}
+          - name: OIDC_CLIENT_ID
+            value: {{ .Values.server.auth.oidc.client_id }}
+          - name: OIDC_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.server.auth.oidc.clientSecret.secretName }}
+                key: {{ default "oidc_client_secret" .Values.server.auth.oidc.clientSecret.secretKey }}
           {{- end }}
 
 
@@ -219,8 +240,8 @@ spec:
           - name: EMAIL_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: email_password
+                name: {{ default .Values.secretName .Values.server.email.password.secretName }}
+                key: {{ default "email_password" .Values.server.email.password.secretKey }}
           {{- end }}
 
           # *** Tracking / Tracing ***
@@ -254,8 +275,8 @@ spec:
           - name: APOLLO_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: apollo_key
+                name: {{ default .Values.secretName .Values.server.monitoring.apollo.key.secretName }}
+                key: {{ default "apollo_key" .Values.server.monitoring.apollo.key.secretKey }}
           {{- end }}
       {{- if .Values.server.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.server.affinity "context" $) | nindent 8 }}

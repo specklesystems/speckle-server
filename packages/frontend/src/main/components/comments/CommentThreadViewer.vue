@@ -208,10 +208,10 @@
       </v-card>
     </v-dialog>
   </div>
-  <!-- 
+  <!--
     Note: portaling out the mobile view of comment threads because of
     stacking chaos caused by transforms, etc. in positioning from the default
-    view. 
+    view.
   -->
   <div v-else-if="comment.expanded">
     <portal to="mobile-comment-thread">
@@ -253,9 +253,9 @@
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
-          <!-- 
+          <!--
             I know, this is bad copy paste. Sigh. Currently, one can only wish for a better world
-            with less technical debt. 
+            with less technical debt.
           -->
           <div
             style="width: 100%"
@@ -441,6 +441,8 @@
 <script>
 import { gql } from '@apollo/client/core'
 import debounce from 'lodash/debounce'
+import { onKeyStroke } from '@vueuse/core'
+
 import CommentThreadReply from '@/main/components/comments/CommentThreadReply.vue'
 import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import { isDocEmpty } from '@/main/lib/common/text-editor/documentHelper'
@@ -463,12 +465,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             name
             id
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
         return !this.$loggedIn()
       }
@@ -694,6 +697,11 @@ export default {
     window.addEventListener('beforeunload', async () => {
       await this.sendTypingUpdate(false)
     })
+
+    onKeyStroke('Escape', () => {
+      this.$emit('close', this.comment)
+    })
+
     setInterval(() => {
       const now = Date.now()
       for (let i = this.whoIsTyping.length - 1; i >= 0; i--) {

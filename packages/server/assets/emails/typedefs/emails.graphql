@@ -1,0 +1,13 @@
+extend type User {
+  """
+  Whether the user has a pending/active email verification token
+  """
+  hasPendingVerification: Boolean @isOwner
+}
+
+extend type Mutation {
+  """
+  (Re-)send the account verification e-mail
+  """
+  requestVerification: Boolean! @hasRole(role: "server:user")
+}

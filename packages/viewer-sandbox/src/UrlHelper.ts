@@ -54,7 +54,9 @@ export default class UrlHelper {
       'Content-Type': 'application/json',
       Authorization: ''
     }
-    const authToken = localStorage.getItem('AuthToken')
+    const authToken = localStorage.getItem(
+      ref.origin.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    )
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`
     }

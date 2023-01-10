@@ -17,11 +17,9 @@ spec:
   ingress:
     - from:
         - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: {{ default .Values.namespace .Values.prometheusMonitoring.namespace }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | toYaml | indent 12 }}
           podSelector:
-            matchLabels:
-              {{ include  "speckle.prometheus.selectorLabels.release" $ | indent 14 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | toYaml | indent 12 }}
       ports:
         - port: metrics
 {{- else }}

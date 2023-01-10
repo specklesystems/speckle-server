@@ -8,7 +8,7 @@
     @click="showAllActivityDialog = true"
   >
     <div
-      style="cursor: pointer; min-height: 33px; line-height: 33px"
+      style="cursor: pointer"
       :class="`${$vuetify.theme.dark ? 'black' : 'grey lighten-3'} ${
         shadow ? 'elevation-3' : ''
       } rounded-xl px-2`"

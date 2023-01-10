@@ -7,6 +7,11 @@
   margin-top: 60px;
 }
 
+.background-dark {
+  background: rgb(53, 69, 88);
+  background: linear-gradient(144deg, rgba(53, 69, 88, 1) 0%, rgba(0, 16, 36, 1) 100%);
+}
+
 #renderer {
   position: absolute;
   height: 100%;

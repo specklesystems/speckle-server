@@ -6,9 +6,10 @@ const { StreamFavorites, Streams, Users } = require('@/modules/core/dbSchema')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
-const { addLoadersToCtx } = require('@/modules/shared')
+const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { truncateTables } = require('@/test/hooks')
 const { gql } = require('apollo-server-express')
+const { sleep } = require('@/test/helpers')
 
 /**
  * Cleaning up relevant tables
@@ -29,7 +30,7 @@ const favoriteMutationGql = gql`
 
 const favoriteStreamsQueryGql = gql`
   query ($cursor: String, $limit: Int! = 10) {
-    user {
+    activeUser {
       id
       favoriteStreams(cursor: $cursor, limit: $limit) {
         totalCount
@@ -42,6 +43,10 @@ const favoriteStreamsQueryGql = gql`
   }
 `
 
+/**
+ * @deprecated Leaving this behind while we still have the old user() query. This should
+ * be deleted afterwards
+ */
 const anotherUserFavoriteStreamsQueryGql = gql`
   query ($cursor: String, $limit: Int! = 10, $uid: String!) {
     user(id: $uid) {
@@ -57,9 +62,22 @@ const anotherUserFavoriteStreamsQueryGql = gql`
   }
 `
 
-const totalOwnedStreamsFavorites = gql`
+/**
+ * @deprecated Leaving this behind while we still have the old user() query. This should
+ * be deleted afterwards
+ */
+const totalOwnedStreamsFavoritesOld = gql`
   query ($uid: String!) {
     user(id: $uid) {
+      id
+      totalOwnedStreamsFavorites
+    }
+  }
+`
+
+const totalOwnedStreamsFavoritesNew = gql`
+  query ($uid: String!) {
+    otherUser(id: $uid) {
       id
       totalOwnedStreamsFavorites
     }
@@ -132,7 +150,7 @@ describe('Favorite streams', () => {
       })
 
     before(async () => {
-      apollo = buildApolloServer({
+      apollo = await buildApolloServer({
         context: () =>
           addLoadersToCtx({
             auth: true,
@@ -157,7 +175,9 @@ describe('Favorite streams', () => {
       it(`can be favorited if ${msgSuffix}`, async () => {
         const streamId = id()
         const beforeTime = Date.now()
+        await sleep(1)
         const result = await favoriteStream(streamId, true)
+        await sleep(1)
         const afterTime = Date.now()
 
         expect(result.errors).to.not.be.ok
@@ -253,7 +273,7 @@ describe('Favorite streams', () => {
         })
 
         expect(data).to.be.ok
-        expect(data.user?.favoriteStreams).to.not.be.ok
+        expect(data.otherUser?.favoriteStreams).to.not.be.ok
         expect((errors || []).map((e) => e.message).join()).to.match(
           /cannot view another user's favorite streams/i
         )
@@ -264,9 +284,11 @@ describe('Favorite streams', () => {
         const ids = favoritedStreamIds()
 
         expect(results.errors).to.not.be.ok
-        expect(results.data?.user?.favoriteStreams?.items).to.have.lengthOf(ids.length)
-        expect(results.data.user.favoriteStreams.totalCount).to.equal(ids.length)
-        expect(results.data.user.favoriteStreams.cursor).to.be.a('string')
+        expect(results.data?.activeUser?.favoriteStreams?.items).to.have.lengthOf(
+          ids.length
+        )
+        expect(results.data.activeUser.favoriteStreams.totalCount).to.equal(ids.length)
+        expect(results.data.activeUser.favoriteStreams.cursor).to.be.a('string')
       })
 
       it('are paginated correctly', async () => {
@@ -276,11 +298,11 @@ describe('Favorite streams', () => {
         const getPaginatedAndAssert = async (nextCursor) => {
           const results = await getFavorites(nextCursor, 1)
           expect(results.errors).to.not.be.ok
-          expect(results.data?.user?.favoriteStreams).to.be.ok
+          expect(results.data?.activeUser?.favoriteStreams).to.be.ok
 
           return {
-            cursor: results.data.user.favoriteStreams.cursor,
-            sids: results.data.user.favoriteStreams.items.map((i) => i.id)
+            cursor: results.data.activeUser.favoriteStreams.cursor,
+            sids: results.data.activeUser.favoriteStreams.items.map((i) => i.id)
           }
         }
 
@@ -296,60 +318,40 @@ describe('Favorite streams', () => {
 
         expect(returnedStreamIds).to.deep.equalInAnyOrder(favoritedStreamIds())
       })
-    })
 
-    it('return total favorites count for user', async () => {
-      // "Log in" with other user
-      const apollo = buildApolloServer({
-        context: () =>
-          addLoadersToCtx({
-            auth: true,
-            userId: otherGuy.id,
-            role: Roles.Server.User,
-            token: 'asd',
-            scopes: AllScopes
-          })
-      })
-
-      const favoriteStream = async (sid, favorited) =>
-        await apollo.executeOperation({
-          query: favoriteMutationGql,
-          variables: { sid, favorited }
-        })
-
-      // Create favoritable streams
-      const favoriteStreams = [
-        {
-          name: 'OtherStream1',
-          isPublic: true,
-          ownerId: otherGuy.id
-        },
-        {
-          name: 'OtherStream2',
-          isPublic: true,
-          ownerId: otherGuy.id
-        }
+      const oldNewQueryDataset = [
+        { display: 'old', isNew: false },
+        { display: 'new', isNew: true }
       ]
 
-      await Promise.all(
-        favoriteStreams.map((s) =>
-          createStream(s).then((res) => {
-            s.id = res
+      oldNewQueryDataset.forEach(({ display, isNew }) => {
+        it(`return total favorites count for user (${display} query)`, async () => {
+          // "Log in" with other user
+          const apollo = await buildApolloServer({
+            context: () =>
+              addLoadersToCtx({
+                auth: true,
+                userId: otherGuy.id,
+                role: Roles.Server.User,
+                token: 'asd',
+                scopes: AllScopes
+              })
           })
-        )
-      )
 
-      // Favorite all of them
-      await Promise.all(favoriteStreams.map((s) => favoriteStream(s.id, true)))
+          const { data, errors } = await apollo.executeOperation({
+            query: isNew
+              ? totalOwnedStreamsFavoritesNew
+              : totalOwnedStreamsFavoritesOld,
+            variables: { uid: me.id }
+          })
 
-      const { data, errors } = await apollo.executeOperation({
-        query: totalOwnedStreamsFavorites,
-        variables: { uid: otherGuy.id }
+          expect(errors).to.not.be.ok
+
+          const user = isNew ? data?.otherUser : data?.user
+          expect(user?.id).to.equal(me.id)
+          expect(user?.totalOwnedStreamsFavorites).to.equal(favoritableStreams.length)
+        })
       })
-
-      expect(errors).to.not.be.ok
-      expect(data?.user?.id).to.equal(otherGuy.id)
-      expect(data?.user?.totalOwnedStreamsFavorites).to.equal(3)
     })
   })
 
@@ -357,8 +359,8 @@ describe('Favorite streams', () => {
     /** @type {import('apollo-server-express').ApolloServer} */
     let apollo
 
-    before(() => {
-      apollo = buildApolloServer({
+    before(async () => {
+      apollo = await buildApolloServer({
         context: () => ({})
       })
     })
@@ -379,7 +381,7 @@ describe('Favorite streams', () => {
         query: favoriteStreamsQueryGql
       })
 
-      expect(result.data.user).to.be.null
+      expect(result.data.activeUser).to.be.null
       expect(result.errors).to.not.be.ok
     })
   })

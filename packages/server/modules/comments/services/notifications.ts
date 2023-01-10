@@ -1,12 +1,12 @@
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentsEvents, onCommentEvent } from '@/modules/comments/events/emitter'
+import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'
 import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { difference, flatten } from 'lodash'
 import { NotificationType } from '@/modules/notifications/helpers/types'
-import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivityService'
+import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivity'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()
@@ -85,12 +85,15 @@ async function processCommentMentions(
  */
 export async function notifyUsersOnCommentEvents() {
   const exitCbs = [
-    onCommentEvent(CommentsEvents.Created, async ({ comment }) => {
+    CommentsEmitter.listen(CommentsEvents.Created, async ({ comment }) => {
       await processCommentMentions(comment)
     }),
-    onCommentEvent(CommentsEvents.Updated, async ({ newComment, previousComment }) => {
-      await processCommentMentions(newComment, previousComment)
-    })
+    CommentsEmitter.listen(
+      CommentsEvents.Updated,
+      async ({ newComment, previousComment }) => {
+        await processCommentMentions(newComment, previousComment)
+      }
+    )
   ]
 
   return () => exitCbs.forEach((cb) => cb())

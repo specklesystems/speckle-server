@@ -4,6 +4,7 @@
 const express = require('express')
 const router = express.Router()
 const puppeteer = require('puppeteer')
+const { logger } = require('../observability/logging')
 
 async function pageFunction(objectUrl) {
   waitForAnimation = async (ms = 70) =>
@@ -21,34 +22,27 @@ async function pageFunction(objectUrl) {
   await window.v.init()
 
   try {
-    await v.loadObject(objectUrl, '')
+    await window.v.loadObject(objectUrl, '')
   } catch (error) {
     // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
     await waitForAnimation(1000)
   }
-
-  v.interactions.zoomExtents(0.95, false)
+  window.v.zoom(undefined, 0.95, false)
   await waitForAnimation(100)
 
-  // full 360
   for (let i = 0; i < 24; i++) {
-    v.interactions.rotateCamera(undefined, undefined, false)
+    window.v.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
+    window.v.getRenderer().resetPipeline(true)
+    /** Not sure what the frame time when running pupeteer is, but it's not 16ms.
+     *  That's why we're allowing more time between frames than probably needed
+     *  In a future update, we'll have the viewer signal when convergence is complete
+     *  regradless of how many frames/time that takes
+     */
+    /** 22.11.2022 Alex: Commenting this out for now */
+    // await waitForAnimation(2500)
     await waitForAnimation()
-    ret.scr[i + ''] = v.interactions.screenshot()
+    ret.scr[i + ''] = await window.v.screenshot()
   }
-
-  /*
-  v.interactions.rotateCamera( 2 * stepAngle, transition=false )
-  await waitForAnimation( 500 )
-
-  let dirArray = [ 'top', 'bottom', 'front', 'back', 'left', 'right' ]
-  for ( let i in dirArray ) {
-    let d = dirArray[i]
-    v.interactions.rotateTo( d )
-    await waitForAnimation()
-    ret.scr[d] = v.interactions.screenshot()
-  }
-  */
 
   ret.duration = (Date.now() - t0) / 1000
   ret.mem = {
@@ -59,7 +53,7 @@ async function pageFunction(objectUrl) {
   return ret
 }
 
-async function getScreenshot(objectUrl) {
+async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -73,7 +67,7 @@ async function getScreenshot(objectUrl) {
   const wrapperPromise = (async () => {
     await page.goto('http://127.0.0.1:3001/render/')
 
-    console.log('Page loaded')
+    boundLogger.info('Page loaded')
 
     // Handle page crash (oom?)
     page.on('error', (err) => {
@@ -86,7 +80,7 @@ async function getScreenshot(objectUrl) {
   try {
     ret = await wrapperPromise
   } catch (err) {
-    console.log(`Error generating preview for ${objectUrl}: ${err}`)
+    boundLogger.error(err, 'Error generating preview.')
     ret = {
       error: err
     }
@@ -99,10 +93,12 @@ async function getScreenshot(objectUrl) {
     return null
   }
 
-  console.log(
-    `Generated preview for ${objectUrl} in ${ret.duration} sec with ${
-      ret.mem.total / 1000000
-    } MB of memory`
+  boundLogger.info(
+    {
+      durationSeconds: ret.duration,
+      totalMemoryMB: ret.mem.total / 1000000
+    },
+    `Generated preview.`
   )
   return ret.scr
 
@@ -135,6 +131,13 @@ async function getScreenshot(objectUrl) {
 }
 
 router.get('/:streamId/:objectId', async function (req, res) {
+  const safeParamRgx = /^[\w]+$/i
+  const { streamId, objectId } = req.params || {}
+  const boundLogger = logger.child({ streamId, objectId })
+  if (!safeParamRgx.test(streamId) || !safeParamRgx.test(objectId)) {
+    return res.status(400).json({ error: 'Invalid streamId or objectId!' })
+  }
+
   const objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
   /*
   let authToken = ''
@@ -148,9 +151,9 @@ router.get('/:streamId/:objectId', async function (req, res) {
   }
   */
 
-  console.log(objectUrl)
+  boundLogger.info('Requesting screenshot.')
 
-  const scr = await getScreenshot(objectUrl)
+  const scr = await getScreenshot(objectUrl, boundLogger)
 
   if (!scr) {
     return res.status(500).end()

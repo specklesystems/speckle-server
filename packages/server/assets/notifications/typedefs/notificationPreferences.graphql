@@ -1,0 +1,7 @@
+extend type User {
+  notificationPreferences: JSONObject!
+}
+
+extend type Mutation {
+  userNotificationPreferencesUpdate(preferences: JSONObject!): Boolean
+}

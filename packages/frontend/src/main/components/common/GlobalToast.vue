@@ -12,47 +12,16 @@
   </v-snackbar>
 </template>
 <script lang="ts">
-import { Nullable } from '@/helpers/typeHelpers'
-import Vue from 'vue'
-import {
-  GlobalEvents,
-  NotificationEventPayload,
-  ToastNotificationType
-} from '@/main/lib/core/helpers/eventHubHelper'
+import { defineComponent } from 'vue'
+import { setupGlobalToast } from '@/main/lib/core/composables/notifications'
 
-export default Vue.extend({
+export default defineComponent({
   name: 'GlobalToast',
-  data() {
+  setup() {
+    const globalToastData = setupGlobalToast()
     return {
-      snack: false,
-      text: null as Nullable<string>,
-      actionName: null as Nullable<string>,
-      to: null as Nullable<string>,
-      type: 'primary' as ToastNotificationType
+      ...globalToastData
     }
-  },
-  computed: {
-    color(): ToastNotificationType {
-      return this.type || 'primary'
-    }
-  },
-  watch: {
-    snack(newVal) {
-      if (!newVal) {
-        this.text = null
-        this.actionName = null
-        this.to = null
-      }
-    }
-  },
-  mounted() {
-    this.$eventHub.$on(GlobalEvents.Notification, (args: NotificationEventPayload) => {
-      this.snack = true
-      this.text = args.text
-      this.actionName = args.action ? args.action.name : null
-      this.to = args.action ? args.action.to : null
-      this.type = args.type || 'primary'
-    })
   }
 })
 </script>

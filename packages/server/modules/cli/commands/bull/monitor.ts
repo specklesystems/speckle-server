@@ -3,20 +3,37 @@ import express from 'express'
 import { ExpressAdapter } from '@bull-board/express'
 import { createBullBoard } from '@bull-board/api'
 import { BullAdapter } from '@bull-board/api/bullAdapter'
-import { buildAllPossibleQueues } from '@/modules/notifications/services/queue'
-import { cliDebug } from '@/modules/shared/utils/logger'
+import {
+  NOTIFICATIONS_QUEUE,
+  buildNotificationsQueue
+} from '@/modules/notifications/services/queue'
 import { noop } from 'lodash'
+import { cliLogger } from '@/logging/logging'
 
 const PORT = 3032
 
-const command: CommandModule = {
-  command: 'monitor',
+const command: CommandModule<unknown, { testQueueId: string }> = {
+  command: 'monitor [testQueueId]',
   describe: 'Run bull-board monitoring web UI',
-  handler: async () => {
-    cliDebug('Initializing bull queues...')
-    const queues = buildAllPossibleQueues()
+  builder: {
+    testQueueId: {
+      describe:
+        'Optionally specify the ID of a test queue (from a test run) to load it as well',
+      type: 'string'
+    }
+  },
+  handler: async (argv) => {
+    const testQueueId = argv.testQueueId
 
-    cliDebug('Initializing monitor...')
+    cliLogger.info('Initializing bull queues...')
+    const queues = [buildNotificationsQueue(NOTIFICATIONS_QUEUE)]
+
+    if (testQueueId) {
+      cliLogger.info('Also initializing queue %s...', testQueueId)
+      queues.push(buildNotificationsQueue(testQueueId))
+    }
+
+    cliLogger.info('Initializing monitor...')
     const app = express()
     const serverAdapter = new ExpressAdapter()
 
@@ -28,8 +45,8 @@ const command: CommandModule = {
     app.use(serverAdapter.getRouter())
 
     app.listen(PORT, () => {
-      cliDebug(`Running on ${PORT}...`)
-      cliDebug(
+      cliLogger.info(`Running on ${PORT}...`)
+      cliLogger.info(
         `For the UI, open http://localhost:${PORT}/, and make sure Redis is running`
       )
     })

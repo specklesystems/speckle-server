@@ -7,7 +7,9 @@ module.exports = {
       // Filter out files that start with a period, since they're ignored by default
       `**/.*.{${extList}}`,
       // Filter out generated folder files
-      `**/generated/**/*`
+      `**/generated/**/*`,
+      // Filter out types in object loader
+      '**/packages/objectloader/types/**/*'
     ])
 
     return 'eslint --cache --max-warnings=0 ' + finalFiles.join(' ')

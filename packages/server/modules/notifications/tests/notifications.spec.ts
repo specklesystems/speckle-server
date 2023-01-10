@@ -2,7 +2,6 @@ import { mockRequireModule } from '@/test/mockHelper'
 import {
   MentionedInCommentData,
   MentionedInCommentMessage,
-  NotificationHandler,
   NotificationType
 } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
@@ -20,9 +19,9 @@ import {
 } from '@/modules/notifications/errors'
 import { NotificationJobResultsStatus } from '@/modules/notifications/services/queue'
 
-const mentionsHandlerMock = mockRequireModule([
-  '@/modules/notifications/services/handlers/mentionedInComment'
-])
+const mentionsHandlerMock = mockRequireModule<
+  typeof import('@/modules/notifications/services/handlers/mentionedInComment')
+>(['@/modules/notifications/services/handlers/mentionedInComment'])
 
 describe('Notifications', () => {
   let notificationsState: NotificationsStateManager
@@ -53,9 +52,9 @@ describe('Notifications', () => {
     let enqueuedMessage: Optional<MentionedInCommentMessage>
 
     mentionsHandlerMock.enable()
-    mentionsHandlerMock.mockFunction('default', (async (msg) => {
+    mentionsHandlerMock.mockFunction('default', async (msg) => {
       enqueuedMessage = msg
-    }) as NotificationHandler<MentionedInCommentMessage>)
+    })
 
     // Enqueue notification
     const msgId = await publishNotification(NotificationType.MentionedInComment, {
@@ -120,9 +119,9 @@ describe('Notifications', () => {
       }
 
       mentionsHandlerMock.enable()
-      mentionsHandlerMock.mockFunction('default', (async () => {
+      mentionsHandlerMock.mockFunction('default', async () => {
         throw error
-      }) as NotificationHandler<MentionedInCommentMessage>)
+      })
 
       const msgId = await publishNotification(NotificationType.MentionedInComment, {
         targetUserId: '123',

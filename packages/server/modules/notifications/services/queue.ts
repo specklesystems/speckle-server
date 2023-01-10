@@ -12,10 +12,11 @@ import {
   NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
-import { notificationsDebug } from '@/modules/shared/utils/logger'
 import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import Bull from 'bull'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
+import cryptoRandomString from 'crypto-random-string'
+import { logger, notificationsLogger, Observability } from '@/logging/logging'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus
@@ -29,15 +30,22 @@ export enum NotificationJobResultsStatus {
 
 const handlers = new Map<NotificationType, NotificationHandler>()
 
-export const NOTIFICATIONS_QUEUE_MAIN = `default:user-notifications`
-export const NOTIFICATIONS_QUEUE_TEST = `test:user-notifications`
+const NOTIFICATIONS_QUEUE_MAIN_BASE = `default:user-notifications`
+const NOTIFICATIONS_QUEUE_TEST_BASE = `test:user-notifications`
+const PROCESS_ID = cryptoRandomString({ length: 5 })
 
 export const NOTIFICATIONS_QUEUE = isTestEnv()
-  ? NOTIFICATIONS_QUEUE_TEST
-  : NOTIFICATIONS_QUEUE_MAIN
+  ? `${NOTIFICATIONS_QUEUE_TEST_BASE}:${PROCESS_ID}`
+  : NOTIFICATIONS_QUEUE_MAIN_BASE
+
+if (isTestEnv()) {
+  logger.info('Notifications test queue ID: ' + NOTIFICATIONS_QUEUE)
+  logger.info(`Monitor using: 'yarn cli bull monitor ${NOTIFICATIONS_QUEUE}'`)
+}
 
 let queue: Optional<Bull.Queue>
-const buildNotificationsQueue = (queueName: string) =>
+
+export const buildNotificationsQueue = (queueName: string) =>
   new Bull(queueName, {
     ...buildBaseQueueOptions(),
     ...(!isTestEnv()
@@ -55,16 +63,6 @@ const buildNotificationsQueue = (queueName: string) =>
       removeOnFail: isProdEnv()
     }
   })
-
-/**
- * Build all possible versions of the queue (default / test), for monitoring
- */
-export function buildAllPossibleQueues() {
-  return {
-    [NOTIFICATIONS_QUEUE_MAIN]: buildNotificationsQueue(NOTIFICATIONS_QUEUE_MAIN),
-    [NOTIFICATIONS_QUEUE_TEST]: buildNotificationsQueue(NOTIFICATIONS_QUEUE_TEST)
-  }
-}
 
 /**
  * Get queue, if it's been initialized
@@ -119,7 +117,7 @@ export async function consumeIncomingNotifications() {
   queue.process(async (job): Promise<NotificationJobResult> => {
     let notificationType: Optional<NotificationType>
     try {
-      notificationsDebug('New notification received...')
+      notificationsLogger.info('New notification received...')
 
       // Parse
       const payload = job.data
@@ -141,17 +139,20 @@ export async function consumeIncomingNotifications() {
         throw new UnhandledNotificationError(null, { info: { payload, type } })
       }
 
-      const notificationDebug = notificationsDebug.extend(type)
-      notificationDebug('Starting processing notification...')
-      await Promise.resolve(handler(typedPayload, { job, debug: notificationDebug }))
-      notificationDebug('...successfully processed notification')
+      const notificationLogger = Observability.extendLoggerComponent(
+        notificationsLogger,
+        type
+      )
+      notificationLogger.info('Starting processing notification...')
+      await Promise.resolve(handler(typedPayload, { job, logger: notificationLogger }))
+      notificationLogger.info('...successfully processed notification')
 
       return {
         status: NotificationJobResultsStatus.Success,
         type
       }
     } catch (e: unknown) {
-      notificationsDebug(e)
+      notificationsLogger.error(e)
       const err =
         e instanceof Error ? e : new Error('Unexpected notification consumption error')
 

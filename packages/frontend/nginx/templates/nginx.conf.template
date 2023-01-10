@@ -71,29 +71,29 @@ server {
 
   location / {
     root   /usr/share/nginx/html;
-    index app.html;
-    try_files $uri $uri/ /app.html;
-    add_header Cache-Control "no-store, no-cache, must-revalidate";    
+    index index.html;
+    try_files $uri $uri/ /index.html;
+    add_header Cache-Control "no-store, no-cache, must-revalidate";
   }
 
-  location ~* ^/(favicon.ico|logo.svg) {
+  location ~* ^/(favicon.ico|logo.svg|loadingImage.png|og_image.png) {
     root   /usr/share/nginx/html;
-    index app.html;
-    try_files $uri $uri/ /app.html;
+    index index.html;
+    try_files $uri $uri/ /index.html;
     expires 1d;
   }
 
-  location ~* ^/(js/.*|fonts/.*|(css/.*)|(img/.*)) {
+  location ~* ^/(js/.*|fonts/.*|(css/.*)|(img/.*)|(assets/.*)) {
     root   /usr/share/nginx/html;
-    index app.html;
-    try_files $uri $uri/ /app.html;
+    index index.html;
+    try_files $uri $uri/ /index.html;
     expires 1y;
   }
 
   location ~ ^/streams/.* {
     default_type text/html;
     content_by_lua_block {
-      local f = assert(io.open('/usr/share/nginx/html/app.html', "rb"))
+      local f = assert(io.open('/usr/share/nginx/html/index.html', "rb"))
       local content = f:read("*all")
       f:close()
       local http_host = ngx.var.http_host
@@ -109,7 +109,7 @@ server {
     }
   }
 
-  location ~* ^/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)) {
+  location ~* ^/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*)) {
     resolver 127.0.0.11 valid=30s;
     set $upstream_speckle_server speckle-server;
     client_max_body_size ${FILE_SIZE_LIMIT_MB}m;

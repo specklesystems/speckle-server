@@ -6,79 +6,17 @@
 
 We're working to stabilize the 2.0 API, and until then there will be breaking changes.
 
-## Documentation
+## Development
 
-Comprehensive developer and user documentation can be found in our:
+You can debug and test the viewer is through the `viewer-sandbox` package. Some simple steps to get going:
 
-📚 [Speckle Docs website](https://speckle.guide/dev/)
-
-## Getting started
-
-Working with viewer (for more, check `./src/example.js`):
-
-```js
-import { Viewer } from '@speckle/viewer'
-
-const v = new Viewer({
-  container: document.getElementById('renderer'),
-  showStats: true
-})
-```
-
-### Development
-
-For testing purposes you can see viewer in action by running `yarn example`, which will run an example server at 'http://127.0.0.1:3002'.
-
-To build the library run `yarn build`, to build a dev (unminified w/ sourcemaps) build run `yarn build:dev` and to run a dev build in watch mode run `yarn dev`.
+- run `yarn` in the repo root to install and link all required dependencies.
+- run `yarn dev` in the viewer package (here) to start a dev build with automatic code refresing of the viewer code.
+- run `yarn dev` in the viewer-sandbox package to start the viewer sandbox.
 
 ## API
 
-Syntax and examples for supported API methods. The examples assume a `Viewer` instance named `v`.
-
-### Load/Unload an object
-
-`v.loadObject( objectUrl )` / `v.unloadObject( objectUrl )`
-
-Example: `v.loadObject( 'https://speckle.xyz/streams/3073b96e86/objects/e05c5834368931c9d9a4e2087b4da670' )`
-
-### Get properties of loaded objects
-
-`v.getObjectsProperties()`
-
-This returns a dictionary with `{ propertyName: propertyInfo }` elements. The property information provided is:
-
-- `type` ( == `'string'` / `'number'` / `'boolean'`): the property type
-- `objectCount` (int): How many objects in the scene have this property
-- `allValues` (array of `objectCount` elements): The values for this property of all objects that have this property
-- `minValue` - the smallest value (using `<` operator, works also on strings)
-- `maxValue` - the largest value
-- `uniqueValues` - a dictionary of `{ uniqueValue: occurenceCount }` elements, secifying how many objects have the property set to that specific value
-
-### Filtering and coloring
-
-Those calls filter and color the objects loaded in the scene, and drops the previous applied filters (filtering is not additive).
-
-Syntax: `await v.applyFilter( { filterBy, colorBy, ghostOthers } )`
-
-The 3 optional parameters are:
-
-- `filterBy`: A dictionary that specify the filter. Elements are in the form `{ propertyName: propertyValueFilter }`. The propertyValueFilter can be one of:
-
-  - A specific value: (only objects with that property value pass the filter)
-  - An array of values: An object passes the filter if its value is in the array
-  - A range of values, specified by `{ 'gte': value1, 'lte': value2 }` (greater than or equal, lower than or equal)
-  - An exclusion list, specified by `{ 'not': excludedValuesArray }`
-
-- `colorBy`: A dictionary that makes all objects colored based on a property value. Two types of coloring are supported:
-
-  - Gradient (from a numeric property): `{ 'type': 'gradient', 'property': propertyName, 'minValue': propertyMinValue, 'maxValue': propertyMaxValue, 'gradientColors': [color1, color2], default: colorForObjectsWithMissingProperty }`
-  - Category (for coloring each unique value differently): `{ 'type': 'category', 'property': propertyName, 'values': { value1: color1, value2: color2, ... }, 'default': colorForAnyOtherValue }`. The `values` and the `default` parameters are optional: Random colors are generated if they are omitted.
-
-- `ghostOthers`: A boolean (default `false`). If set to `true`, then the objects that are filtered out are actually shown with very low opacity, so that the remaining objects have a better context.
-
-For `colorBy`, setting a color to `null` will use the original material instead of coloring it.
-
-To remove all filters: `await v.applyFilter( null )`
+The Viewer's API is [documented here](https://speckle.notion.site/Viewer-API-Documentation-11f7bcbf3d2547c2985b0c988fb9889e).
 
 ## Community
 

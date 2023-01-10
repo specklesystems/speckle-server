@@ -15,7 +15,7 @@ export const IsLoggedInMixin = Vue.extend({
   apollo: {
     isLoggedIn: {
       query: IsLoggedInDocument,
-      update: (data: IsLoggedInQuery) => !!data.user?.id
+      update: (data: IsLoggedInQuery) => !!data.activeUser?.id
     }
   }
 })
