@@ -5,7 +5,6 @@ import {
   DstAlphaFactor,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
   OneFactor,
   PlaneGeometry,
   RepeatWrapping,
@@ -15,6 +14,8 @@ import {
   WebGLRenderer,
   ZeroFactor
 } from 'three'
+import { Geometry } from './converter/Geometry'
+import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from './SpeckleRenderer'
 
@@ -37,7 +38,7 @@ export class Shadowcatcher {
   public static readonly PLANE_SUBD = 2
   private planeMesh: Mesh = null
   private planeSize: Vector2 = new Vector2()
-  private displayMaterial: MeshBasicMaterial = null
+  private displayMaterial: SpeckleBasicMaterial = null
   public shadowcatcherPass: ShadowcatcherPass = null
   private _config: ShadowcatcherConfig = DefaultShadowcatcherConfig
 
@@ -53,7 +54,7 @@ export class Shadowcatcher {
     this.shadowcatcherPass = new ShadowcatcherPass()
     this.shadowcatcherPass.setLayers(renderlayers)
 
-    this.displayMaterial = new MeshBasicMaterial({ color: 0xffffff })
+    this.displayMaterial = new SpeckleBasicMaterial({ color: 0xffffff }, ['USE_RTE'])
     this.displayMaterial.toneMapped = false
     this.displayMaterial.map = this.shadowcatcherPass.outputTexture
     this.displayMaterial.map.wrapS = RepeatWrapping
@@ -128,6 +129,10 @@ export class Shadowcatcher {
     )
     const mat = new Matrix4().makeTranslation(origin.x, origin.y, origin.z)
     groundPlaneGeometry.applyMatrix4(mat)
+    const doublePositions = new Float64Array(
+      groundPlaneGeometry.attributes.position.array
+    )
+    Geometry.updateRTEGeometry(groundPlaneGeometry, doublePositions)
     this.planeMesh.geometry = groundPlaneGeometry
     this.planeMesh.geometry.computeBoundingBox()
   }

@@ -55,7 +55,7 @@ export class Geometry {
     geometry: BufferGeometry,
     doublePositions: Float64Array
   ) {
-    if (geometry.type === 'BufferGeometry') {
+    if (geometry.type === 'BufferGeometry' || geometry.type === 'PlaneGeometry') {
       const position_low = new Float32Array(doublePositions.length)
       /** We'll store the high component of the encoding inside three's default `position` attribute */
       const position_high = geometry.attributes.position.array as Float32Array
