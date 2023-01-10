@@ -4962,7 +4962,7 @@ __metadata:
     crypto-random-string: ^3.3.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^2.0.0
+    knex: ^2.4.0
     nodemon: ^2.0.20
     pg: ^8.7.3
     pino-pretty: ^9.1.1
@@ -5104,7 +5104,7 @@ __metadata:
     html-webpack-plugin: ^5.3.1
     http-errors: ~1.6.3
     join-images: ^1.1.3
-    knex: ^2.0.0
+    knex: ^2.4.0
     node-fetch: ^2.6.1
     nodemon: ^2.0.20
     pg: ^8.7.3
@@ -5197,7 +5197,7 @@ __metadata:
     graphql-subscriptions: ^2.0.0
     http-proxy-middleware: ^1.0.6
     ioredis: ^5.2.2
-    knex: ^2.0.0
+    knex: ^2.4.0
     lodash: ^4.17.21
     mjml: ^4.13.0
     mocha: ^10.1.0
@@ -5327,7 +5327,7 @@ __metadata:
     cross-env: ^7.0.3
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^2.0.0
+    knex: ^2.4.0
     node-fetch: ^2.6.1
     pg: ^8.7.3
     pino-pretty: ^9.1.1
@@ -8990,10 +8990,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorette@npm:2.0.16, colorette@npm:^2.0.10, colorette@npm:^2.0.14, colorette@npm:^2.0.16":
-  version: 2.0.16
-  resolution: "colorette@npm:2.0.16"
-  checksum: cd55596a3a2d1071c1a28eee7fd8a5387593ff1bd10a3e8d0a6221499311fe34a9f2b9272d77c391e0e003dcdc8934fb2f8d106e7ef1f7516f8060c901d41a27
+"colorette@npm:2.0.19, colorette@npm:^2.0.7":
+  version: 2.0.19
+  resolution: "colorette@npm:2.0.19"
+  checksum: 888cf5493f781e5fcf54ce4d49e9d7d698f96ea2b2ef67906834bb319a392c667f9ec69f4a10e268d2946d13a9503d2d19b3abaaaf174e3451bfe91fb9d82427
   languageName: node
   linkType: hard
 
@@ -9004,10 +9004,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorette@npm:^2.0.7":
-  version: 2.0.19
-  resolution: "colorette@npm:2.0.19"
-  checksum: 888cf5493f781e5fcf54ce4d49e9d7d698f96ea2b2ef67906834bb319a392c667f9ec69f4a10e268d2946d13a9503d2d19b3abaaaf174e3451bfe91fb9d82427
+"colorette@npm:^2.0.10, colorette@npm:^2.0.14, colorette@npm:^2.0.16":
+  version: 2.0.16
+  resolution: "colorette@npm:2.0.16"
+  checksum: cd55596a3a2d1071c1a28eee7fd8a5387593ff1bd10a3e8d0a6221499311fe34a9f2b9272d77c391e0e003dcdc8934fb2f8d106e7ef1f7516f8060c901d41a27
   languageName: node
   linkType: hard
 
@@ -13621,11 +13621,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knex@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "knex@npm:2.0.0"
+"knex@npm:^2.4.0":
+  version: 2.4.0
+  resolution: "knex@npm:2.4.0"
   dependencies:
-    colorette: 2.0.16
+    colorette: 2.0.19
     commander: ^9.1.0
     debug: 4.3.4
     escalade: ^3.1.1
@@ -13656,7 +13656,7 @@ __metadata:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: c2b5bf0b511a2736310ffe59bfdccfa5721d95b8692c36ad085871f494cdfbe1817cc9c2521c0b1dda46b934b048bfd10675eaf93460fcc66476cca1b0af875f
+  checksum: 66b4ae8412c61125b78512a66d924af95116628e16026efce4d03b80b2ced6b63208b37bb49fb52a499761da5e8981e136b48fcefcd48c3fe9fc72d9d17c5661
   languageName: node
   linkType: hard
 
