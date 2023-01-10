@@ -56,7 +56,9 @@ export default {
   },
   methods: {
     setView(view) {
-      this.viewer.setView(view.id)
+      // Alex (11.24.2022): The API requires CanonicalView | SpeckleView | InlineView | PolarView, not an id
+      // this.viewer.setView(view.id)
+      this.viewer.setView(view)
     }
   }
 }

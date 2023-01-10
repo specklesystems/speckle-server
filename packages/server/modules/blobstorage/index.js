@@ -1,8 +1,5 @@
-const debug = require('debug')
-const { contextMiddleware } = require('@/modules/shared')
 const Busboy = require('busboy')
 const {
-  authMiddlewareCreator,
   streamReadPermissions,
   streamWritePermissions,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -17,6 +14,7 @@ const {
   getObjectAttributes
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
+const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 
 const {
   uploadFileStream,
@@ -38,18 +36,19 @@ const {
   ResourceMismatch,
   BadRequestError
 } = require('@/modules/shared/errors')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
-    debug('speckle:modules')('📦 Blob storage is DISABLED')
+    moduleLogger.info('📦 Blob storage is DISABLED')
     return
   } else {
-    debug('speckle:modules')('📦 Init BlobStorage module')
+    moduleLogger.info('📦 Init BlobStorage module')
     await ensureStorageAccess()
   }
 
   if (!process.env.S3_BUCKET) {
-    debug('speckle:error')(
+    logger.warn(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -75,7 +74,6 @@ exports.init = async (app) => {
   // eslint-disable-next-line no-unused-vars
   app.post(
     '/api/stream/:streamId/blob',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamWritePermissions,
       // todo should we add public comments upload escape hatch?
@@ -106,7 +104,7 @@ exports.init = async (app) => {
         if (formKey.includes('hash:')) {
           clientHash = formKey.split(':')[1]
           if (clientHash && clientHash !== '') {
-            // console.log(`I have a client hash (${clientHash})`)
+            // logger.debug(`I have a client hash (${clientHash})`)
             blobId = clientHash
           }
         }
@@ -150,7 +148,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        debug('speckle:error')(`File upload error: ${err}`)
+        logger.error(err, 'File upload error')
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>
@@ -170,7 +168,6 @@ exports.init = async (app) => {
 
   app.post(
     '/api/stream/:streamId/blob/diff',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamReadPermissions,
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -194,7 +191,6 @@ exports.init = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blob/:blobId',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamReadPermissions,
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -223,7 +219,6 @@ exports.init = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
@@ -239,7 +234,6 @@ exports.init = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blobs',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       const fileName = req.query.fileName
@@ -257,7 +251,6 @@ exports.init = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blobs',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions)
     // async (req, res) => {}
   )

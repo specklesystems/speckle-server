@@ -26,7 +26,11 @@ export function getApolloServerVersion() {
 }
 
 export function getFileSizeLimitMB() {
-  return parseInt(process.env.FILE_SIZE_LIMIT_MB || '100')
+  return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
+}
+
+export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
+  return parseInt(process.env[envVarKey] || aDefault)
 }
 
 export function getRedisUrl() {
@@ -35,6 +39,38 @@ export function getRedisUrl() {
   }
 
   return process.env.REDIS_URL
+}
+
+export function getOidcDiscoveryUrl() {
+  if (!process.env.OIDC_DISCOVERY_URL) {
+    throw new MisconfiguredEnvironmentError('OIDC_DISCOVERY_URL env var not configured')
+  }
+
+  return process.env.OIDC_DISCOVERY_URL
+}
+
+export function getOidcClientId() {
+  if (!process.env.OIDC_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_ID env var not configured')
+  }
+
+  return process.env.OIDC_CLIENT_ID
+}
+
+export function getOidcClientSecret() {
+  if (!process.env.OIDC_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_SECRET env var not configured')
+  }
+
+  return process.env.OIDC_CLIENT_SECRET
+}
+
+export function getOidcName() {
+  if (!process.env.OIDC_NAME) {
+    throw new MisconfiguredEnvironmentError('OIDC_NAME env var not configured')
+  }
+
+  return process.env.OIDC_NAME
 }
 
 /**

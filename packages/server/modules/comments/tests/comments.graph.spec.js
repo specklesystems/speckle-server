@@ -2,7 +2,7 @@ const expect = require('chai').expect
 
 const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared')
+const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const {

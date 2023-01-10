@@ -5,7 +5,7 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import CameraHandler from './context/CameraHanlder'
 
-import SectionBox from './SectionBox'
+import SectionBox, { SectionBoxEvent } from './SectionBox'
 import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
@@ -27,6 +27,7 @@ import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
+import Logger from 'js-logger'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -60,6 +61,8 @@ export class Viewer extends EventEmitter implements IViewer {
     params: ViewerParams = DefaultViewerParams
   ) {
     super()
+    Logger.useDefaults()
+    Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
 
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
@@ -84,10 +87,18 @@ export class Viewer extends EventEmitter implements IViewer {
     ;(window as any)._V = this // For debugging!
 
     this.sectionBox = new SectionBox(this)
-    this.sectionBox.off()
+    this.sectionBox.disable()
     this.on(ViewerEvent.SectionBoxUpdated, () => {
       this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
     })
+    this.sectionBox.on(
+      SectionBoxEvent.DRAG_START,
+      this.speckleRenderer.onSectionBoxDragStart.bind(this.speckleRenderer)
+    )
+    this.sectionBox.on(
+      SectionBoxEvent.DRAG_END,
+      this.speckleRenderer.onSectionBoxDragEnd.bind(this.speckleRenderer)
+    )
 
     this.frame()
     this.resize()
@@ -96,6 +107,7 @@ export class Viewer extends EventEmitter implements IViewer {
       WorldTree.getRenderTree(url).buildRenderTree()
       this.speckleRenderer.addRenderTree(url)
       this.zoom()
+      this.speckleRenderer.resetPipeline(true)
     })
   }
   public setSectionBox(
@@ -113,6 +125,7 @@ export class Viewer extends EventEmitter implements IViewer {
       box = this.speckleRenderer.sceneBox
     }
     this.sectionBox.setBox(box, offset)
+    this.speckleRenderer.updateSectionBoxCapper()
   }
   public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
     this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
@@ -156,8 +169,8 @@ export class Viewer extends EventEmitter implements IViewer {
           this.speckleRenderer.indirectIBL = value
         })
         .catch((reason) => {
-          console.warn(reason)
-          console.warn('Fallback to null environment!')
+          Logger.error(reason)
+          Logger.error('Fallback to null environment!')
         })
     }
   }
@@ -298,14 +311,17 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleSectionBox() {
     this.sectionBox.toggle()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public sectionBoxOff() {
-    this.sectionBox.off()
+    this.sectionBox.disable()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public sectionBoxOn() {
-    this.sectionBox.on()
+    this.sectionBox.enable()
+    this.speckleRenderer.updateSectionBoxCapper()
   }
 
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
@@ -318,7 +334,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
-    this.speckleRenderer.resetPipeline()
+    this.speckleRenderer.resetPipeline(true)
   }
 
   public setLightConfiguration(config: SunLightConfiguration): void {
@@ -396,7 +412,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
-        console.warn(`Removed subtree ${url}`)
+        Logger.warn(`Removed subtree ${url}`)
         ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, url)
       }
     }
@@ -419,7 +435,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
-        console.warn(`Removed all subtrees`)
+        Logger.warn(`Removed all subtrees`)
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }

@@ -1,28 +1,22 @@
 'use strict'
 const zlib = require('zlib')
-const debug = require('debug')
 const cors = require('cors')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
-const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
 
 const { pipeline, PassThrough } = require('stream')
+const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
-  app.post('/api/getobjects/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
-      action: 'POST /api/getobjects/:streamId',
-      req,
-      res
+  app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
     })
-    if (rejected) return rejected
     const hasStreamAccess = await validatePermissionsReadStream(
       req.params.streamId,
       req
@@ -50,16 +44,10 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          debug('speckle:error')(
-            `[User ${
-              req.context.userId || '-'
-            }] App error streaming objects from stream ${req.params.streamId}: ${err}`
-          )
+          boundLogger.error(err, `App error streaming objects`)
         } else {
-          debug('speckle:info')(
-            `[User ${req.context.userId || '-'}] Streamed ${
-              childrenList.length
-            } objects from stream ${req.params.streamId} (size: ${
+          boundLogger.info(
+            `Streamed ${childrenList.length} objects (size: ${
               gzipStream.bytesWritten / 1000000
             } MB)`
           )
@@ -83,11 +71,7 @@ module.exports = (app) => {
         })
       }
     } catch (ex) {
-      debug('speckle:error')(
-        `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
-          req.params.streamId
-        }: ${ex}`
-      )
+      boundLogger.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
     }
     speckleObjStream.end()

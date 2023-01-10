@@ -565,7 +565,7 @@ export default {
     },
     updateCommentBubbles() {
       if (!this.comments) return
-      const cam = this.viewer.cameraHandler.camera
+      const cam = this.viewer.cameraHandler.activeCam.camera
       cam.updateProjectionMatrix()
       for (const comment of this.localComments) {
         // get html elements

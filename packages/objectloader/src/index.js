@@ -53,7 +53,7 @@ export default class ObjectLoader {
       throw new ObjectLoaderConfigurationError('Invalid objectId specified!')
     }
 
-    this.logger('Object loader constructor called!')
+    this.logger.log('Object loader constructor called!')
     try {
       this.token = token || SafeLocalStorage.get('AuthToken')
     } catch (error) {
@@ -113,7 +113,7 @@ export default class ObjectLoader {
       await this.existingAsyncPause
       this.existingAsyncPause = null
       if (Date.now() - this.lastAsyncPause > 500)
-        this.logger('Loader Event loop lag: ', Date.now() - this.lastAsyncPause)
+        this.logger.log('Loader Event loop lag: ', Date.now() - this.lastAsyncPause)
     }
   }
 
@@ -173,6 +173,7 @@ export default class ObjectLoader {
     if (Array.isArray(obj) && obj.length !== 0) {
       const arr = []
       for (const element of obj) {
+        if (!element) continue
         if (typeof element !== 'object' && !this.options.fullyTraverseArrays) return obj
 
         // Dereference element if needed
@@ -285,7 +286,7 @@ export default class ObjectLoader {
       count += 1
       yield obj
     }
-    this.logger(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
+    this.logger.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
   processLine(chunk) {
@@ -345,7 +346,7 @@ export default class ObjectLoader {
         splitBeforeCacheCheck[3].push(childrenIds[crtChildIndex])
       }
 
-      this.logger('Cache check for: ', splitBeforeCacheCheck)
+      this.logger.log('Cache check for: ', splitBeforeCacheCheck)
 
       const newChildren = []
       let nextCachePromise = this.cacheGetObjects(splitBeforeCacheCheck[0])

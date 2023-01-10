@@ -4,7 +4,7 @@ schema:
   - 'src/graphql/local-only/schema.gql'
 documents:
   - 'src/graphql/**/*.gql'
-  - 'src/**/*.{ts,tsx,js,jsx,vue}'
+  - 'src/**/*.{ts,tsx,js,jsx}'
   - '!src/graphql/generated/**/*'
 generates:
   src/graphql/generated/graphql.ts:

@@ -1,19 +1,24 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
-
-
-# build stage
-FROM node:16.18.0-bullseye-slim as build-stage
-
 ARG NODE_ENV=production
+
+FROM node:18.12.1-bullseye-slim as build-stage
+
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
-
 WORKDIR /speckle-server
+
+# install wait
+ARG WAIT_VERSION=2.8.0
+ENV WAIT_VERSION=${WAIT_VERSION}
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/${WAIT_VERSION}/wait ./wait
+RUN chmod +x ./wait
+
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-# Onyl copy in the relevant package.json files for the dependencies
+# Only copy in the relevant package.json files for the dependencies
 COPY packages/preview-service/package.json ./packages/preview-service/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
@@ -30,9 +35,7 @@ COPY packages/preview-service ./packages/preview-service/
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach run build
 
-
-
-FROM node:16.18.0-bullseye-slim as node
+FROM node:18.12.1-bullseye-slim as node
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -47,9 +50,9 @@ RUN apt-get update && \
   libatspi2.0-0=2.38.0-4 \
   libcairo2=1.16.0-5 \
   libcups2=2.3.3op2-3+deb11u2 \
-  libdbus-1-3=1.12.20-2 \
+  libdbus-1-3=1.12.24-0+deb11u1 \
   libdrm2=2.4.104-1 \
-  libexpat1=2.2.10-2+deb11u3 \
+  libexpat1=2.2.10-2+deb11u5 \
   libgbm1=20.3.5-1 \
   libglib2.0-0=2.66.8-1 \
   libnspr4=2:4.29-1 \
@@ -68,10 +71,9 @@ RUN apt-get update && \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
-RUN chmod +x /wait
+COPY --from=build-stage /speckle-server/wait /wait
 
-ARG NODE_ENV=production
+ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /speckle-server
@@ -92,5 +94,4 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 WORKDIR /speckle-server/packages/preview-service
 RUN yarn workspaces focus --production
 
-ENTRYPOINT [ "tini", "--" ]
-CMD ["yarn", "node", "bin/www"]
+ENTRYPOINT [ "tini", "--", "node", "bin/www" ]

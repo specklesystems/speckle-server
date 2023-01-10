@@ -7,7 +7,6 @@ import {
   HttpLink,
   ApolloQueryResult
 } from '@apollo/client/core'
-import { cliDebug } from '@/modules/shared/utils/logger'
 import { CommandModule } from 'yargs'
 import { getBaseUrl, getServerVersion } from '@/modules/shared/helpers/envHelper'
 import { Commit } from '@/test/graphql/generated/graphql'
@@ -20,6 +19,7 @@ import { createObject } from '@/modules/core/services/objects'
 import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
+import { cliLogger } from '@/logging/logging'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
@@ -188,7 +188,7 @@ const createNewObject = async (
   targetStreamId: string
 ) => {
   if (!newObject) {
-    cliDebug('Encountered falsy object!')
+    cliLogger.error('Encountered falsy object!')
     return
   }
 
@@ -230,7 +230,9 @@ const loadAllObjectsFromParent = async (params: {
   let processedObjectCount = 1
   for await (const obj of objectLoader.getObjectIterator()) {
     const typedObj = obj as ObjectLoaderObject
-    cliDebug(`Processing ${obj.id} - ${processedObjectCount++}/${totalObjectCount}`)
+    cliLogger.info(
+      `Processing ${obj.id} - ${processedObjectCount++}/${totalObjectCount}`
+    )
     await createNewObject(typedObj, targetStreamId)
   }
 }
@@ -259,24 +261,24 @@ const command: CommandModule<
   },
   handler: async (argv) => {
     const { commitUrl, targetStreamId, branchName } = argv
-    cliDebug(`Process started at: ${new Date().toISOString()}`)
+    cliLogger.info(`Process started at: ${new Date().toISOString()}`)
 
     const localResources = await getLocalResources(targetStreamId, branchName)
-    cliDebug(
+    cliLogger.info(
       `Using local branch ${branchName} of stream ${targetStreamId} to dump the incoming commit`
     )
 
     const parsedCommitUrl = parseCommitUrl(commitUrl)
-    cliDebug('Loading the following commit: ', parsedCommitUrl)
+    cliLogger.info('Loading the following commit: %s', parsedCommitUrl)
 
     const client = await createApolloClient(parsedCommitUrl.origin)
     const commit = await getCommitMetadata(client, parsedCommitUrl)
-    cliDebug('Loaded commit metadata', commit)
+    cliLogger.info('Loaded commit metadata: %s', commit)
 
     const newCommitId = await saveNewCommit(commit, localResources)
-    cliDebug(`Created new local commit: ${newCommitId}`)
+    cliLogger.info(`Created new local commit: ${newCommitId}`)
 
-    cliDebug(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
+    cliLogger.info(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
     await loadAllObjectsFromParent({
       targetStreamId,
       sourceCommit: commit,
@@ -284,7 +286,7 @@ const command: CommandModule<
     })
 
     const linkToNewCommit = `${getBaseUrl()}/streams/${targetStreamId}/commits/${newCommitId}`
-    cliDebug(`All done! Find your commit here: ${linkToNewCommit}`)
+    cliLogger.info(`All done! Find your commit here: ${linkToNewCommit}`)
   }
 }
 

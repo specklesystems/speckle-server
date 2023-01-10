@@ -1,4 +1,5 @@
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { ServerRoles } from '@speckle/shared'
 
 export type UserRecord = {
   id: string
@@ -120,3 +121,16 @@ export type ObjectRecord = {
   data: Nullable<Record<string, unknown>>
   streamId: string
 }
+
+export type InvalidTokenResult = {
+  valid: false
+}
+
+export type ValidTokenResult = {
+  valid: true
+  scopes: string[]
+  userId: string
+  role: ServerRoles
+}
+
+export type TokenValidationResult = InvalidTokenResult | ValidTokenResult

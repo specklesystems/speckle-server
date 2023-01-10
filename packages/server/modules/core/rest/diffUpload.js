@@ -1,26 +1,20 @@
 'use strict'
 const zlib = require('zlib')
 const cors = require('cors')
-const debug = require('debug')
 
-const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
-const {
-  rejectsRequestWithRatelimitStatusIfNeeded
-} = require('@/modules/core/services/ratelimits')
 
 const { hasObjects } = require('../services/objects')
+const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
-  app.post('/api/diff/:streamId', cors(), contextMiddleware, async (req, res) => {
-    const rejected = await rejectsRequestWithRatelimitStatusIfNeeded({
-      action: 'POST /api/diff/:streamId',
-      req,
-      res
+  app.post('/api/diff/:streamId', cors(), async (req, res) => {
+    const boundLogger = logger.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
     })
-    if (rejected) return rejected
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
       req
@@ -31,17 +25,13 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    debug('speckle:info')(
-      `[User ${req.context.userId || '-'}] Diffing ${
-        objectList.length
-      } objects for stream ${req.params.streamId}`
-    )
+    boundLogger.info(`Diffing ${objectList.length} objects.`)
 
     const response = await hasObjects({
       streamId: req.params.streamId,
       objectIds: objectList
     })
-    // console.log(response)
+    boundLogger.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': 'application/json'

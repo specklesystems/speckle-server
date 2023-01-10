@@ -4,6 +4,7 @@ import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 import { Geometry } from '../converter/Geometry'
+import Logger from 'js-logger'
 
 export class RenderTree {
   private root: TreeNode
@@ -140,7 +141,7 @@ export class RenderTree {
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
     const node = WorldTree.getInstance().findId(id)
     if (!node) {
-      console.warn(`Id ${id} does not exist`)
+      Logger.warn(`Id ${id} does not exist`)
       return null
     }
     return this.getRenderViewsForNode(node)
@@ -149,7 +150,7 @@ export class RenderTree {
   public getRenderViewForNodeId(id: string): NodeRenderView {
     const node = WorldTree.getInstance().findId(id)
     if (!node) {
-      console.warn(`Id ${id} does not exist`)
+      Logger.warn(`Id ${id} does not exist`)
       return null
     }
     return node.model.renderView

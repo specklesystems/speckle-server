@@ -1,9 +1,9 @@
 'use strict'
-const debug = require('debug')
 const { registerOrUpdateScope } = require('@/modules/shared')
+const { moduleLogger } = require('@/logging/logging')
 
 exports.init = async () => {
-  debug('speckle:modules')('💌 Init invites module')
+  moduleLogger.info('💌 Init invites module')
 
   const scopes = require('./scopes.js')
   for (const scope of scopes) {

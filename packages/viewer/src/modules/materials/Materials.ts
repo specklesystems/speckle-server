@@ -24,6 +24,7 @@ export interface MaterialOptions {
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
+  rampWidth?: number
 }
 
 export default class Materials {
@@ -747,12 +748,35 @@ export default class Materials {
     return retMaterial
   }
 
-  public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
-    return {
-      rampIndex:
-        filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
-      rampIndexColor: filterMaterial.rampIndexColor,
-      rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
+  public getFilterMaterialOptions(filterMaterial: FilterMaterial): MaterialOptions {
+    switch (filterMaterial.filterType) {
+      case FilterMaterialType.COLORED:
+        return {
+          rampIndex:
+            filterMaterial.rampIndex !== undefined
+              ? filterMaterial.rampIndex
+              : undefined,
+          rampIndexColor: filterMaterial.rampIndexColor,
+          rampTexture: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture
+            : undefined,
+          rampWidth: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture.image.width
+            : undefined
+        }
+      case FilterMaterialType.GRADIENT:
+        return {
+          rampIndex:
+            filterMaterial.rampIndex !== undefined
+              ? filterMaterial.rampIndex
+              : undefined,
+          rampTexture: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture
+            : this.meshGradientMaterial.userData.gradientRamp.value,
+          rampWidth: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture.image.width
+            : this.meshGradientMaterial.userData.gradientRamp.value.image.width
+        }
     }
   }
 

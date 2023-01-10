@@ -55,7 +55,7 @@ services:
       SESSION_SECRET: 'TODO: change'
 
       STRATEGY_LOCAL: 'true'
-      DEBUG: 'speckle:*'
+      LOG_LEVEL: 'info'
 
       POSTGRES_URL: 'postgres'
       POSTGRES_USER: 'speckle'
@@ -91,7 +91,7 @@ services:
     command: ['bash', '-c', '/wait && node bin/www']
 
     environment:
-      DEBUG: 'preview-service:*'
+      LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       WAIT_HOSTS: 'postgres:5432'
 
@@ -100,7 +100,7 @@ services:
     restart: always
     command: ['bash', '-c', '/wait && node main.js']
     environment:
-      DEBUG: 'webhook-service:*'
+      LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       WAIT_HOSTS: 'postgres:5432'
 
@@ -109,7 +109,7 @@ services:
     restart: always
     command: ['bash', '-c', '/wait && node src/daemon.js']
     environment:
-      DEBUG: 'fileimport-service:*'
+      LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       WAIT_HOSTS: 'postgres:5432'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'

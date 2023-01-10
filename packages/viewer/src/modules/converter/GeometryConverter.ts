@@ -3,6 +3,7 @@ import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
 import { NodeData } from '../tree/WorldTree'
+import Logger from 'js-logger'
 
 export enum SpeckleType {
   View3D = 'View3D',
@@ -131,7 +132,7 @@ export class GeometryConverter {
 
     if (colorsRaw && colorsRaw.length !== 0) {
       if (colorsRaw.length !== vertices.length / 3) {
-        console.warn(
+        Logger.warn(
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
@@ -208,7 +209,7 @@ export class GeometryConverter {
 
     if (colorsRaw && colorsRaw.length !== 0) {
       if (colorsRaw.length !== vertices.length / 3) {
-        console.warn(
+        Logger.warn(
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
@@ -405,6 +406,17 @@ export class GeometryConverter {
     v1.normalize()
     const v2 = new Vector3().crossVectors(v0, v1)
     v2.normalize()
+    /** When the arc has an angle of PI, the directions from start and end to origin
+     *  face away from each other, making the cross product return 0, and we end up
+     *  with an incorrect orthonormal basis.
+     */
+    if (v2.length() === 0) {
+      /** We compute the plane normal using the mid point instead of the start point*/
+      const vm = new Vector3().subVectors(midPoint, origin)
+      vm.normalize()
+      v2.copy(new Vector3().crossVectors(v0, vm))
+      v2.normalize()
+    }
     const v3 = new Vector3().crossVectors(v2, v0)
     v3.normalize()
     /**

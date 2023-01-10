@@ -291,13 +291,26 @@ export default class CameraHandler {
       this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
     this.camera.updateProjectionMatrix()
 
-    const aspect =
-      this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
-    const fustrumSize = 50
-    this.orthoCamera.left = (-fustrumSize * aspect) / 2
-    this.orthoCamera.right = (fustrumSize * aspect) / 2
-    this.orthoCamera.top = fustrumSize / 2
-    this.orthoCamera.bottom = -fustrumSize / 2
+    const lineOfSight = new THREE.Vector3()
+    this.camera.getWorldDirection(lineOfSight)
+    const target = new THREE.Vector3()
+    this.controls.getTarget(target)
+    const distance = target.clone().sub(this.camera.position)
+    const depth = distance.dot(lineOfSight)
+    const dims = {
+      x: this.viewer.container.offsetWidth,
+      y: this.viewer.container.offsetHeight
+    }
+    const aspect = dims.x / dims.y
+    const fov = this.camera.fov
+    const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
+    const width = height * aspect
+
+    this.orthoCamera.zoom = 1
+    this.orthoCamera.left = width / -2
+    this.orthoCamera.right = width / 2
+    this.orthoCamera.top = height / 2
+    this.orthoCamera.bottom = height / -2
     this.orthoCamera.updateProjectionMatrix()
   }
 

@@ -18,6 +18,8 @@ spec:
       containers:
         - name: test-deployment
           image: speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+
           env:
             - name: SPECKLE_SERVER
               value: https://{{ .Values.domain }}
