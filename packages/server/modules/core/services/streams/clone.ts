@@ -40,11 +40,6 @@ import { addStreamClonedActivity } from '@/modules/activitystream/services/strea
 import knex from '@/db/knex'
 import { Knex } from 'knex'
 
-/**
- * TODO:
- * - Create empty stream if target not found
- */
-
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>
   targetStream: StreamWithOptionalRole
@@ -52,10 +47,11 @@ type CloneStreamInitialState = {
 }
 
 /**
- * Our batch inserts are very quick, but this causes many items to have the same created date. This causes issues in our pagination, so
- * this utility is used to make each date instance used comes after the previous one.
+ * Our batch inserts are very quick, but this causes many items to have the same created date.This causes issues
+ * in our pagination, so this utility is used to make each date instance used comes after the previous one.
  *
- * It may be somewhat inaccurate that we manipulate the date instead of waiting between each insertion, but it's definitely faster and the accuracies are very small
+ * It may be somewhat inaccurate that we manipulate the date instead of waiting between each insertion,
+ * but it's definitely faster and the inaccuracies are very small
  */
 const incrementingDateGenerator = () => {
   let date = dayjs()

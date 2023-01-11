@@ -8,14 +8,16 @@
         <!-- <FormButton size="sm" rounded>New</FormButton> -->
       </div>
       <div class="flex items-center space-x-2">
-        <FormButton :icon-left="PlusIcon">New</FormButton>
+        <FormButton :icon-left="PlusIcon" @click="showNewDialog = true">New</FormButton>
         <div class="w-60">
           <FormTextInput
+            v-model="search"
             name="modelsearch"
             :show-label="false"
             placeholder="Search"
             class="bg-foundation shadow"
-            @update:model-value="test"
+            @change="debouncedSearch = search.trim()"
+            @update:model-value="updateDebouncedSearch"
           ></FormTextInput>
         </div>
         <div
@@ -26,15 +28,20 @@
       </div>
     </div>
     <div class="mb-14">
-      <ProjectPageModelsStructuredView
+      <ProjectPageModelsListView
         v-if="gridOrList === GridListToggleValue.List"
+        :search="debouncedSearch"
         :project="project"
+        @update:loading="searchLoading = $event"
       />
       <ProjectPageModelsCardView
         v-if="gridOrList === GridListToggleValue.Grid"
+        :search="debouncedSearch"
         :project="project"
+        @update:loading="searchLoading = $event"
       />
     </div>
+    <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
   </div>
 </template>
 <script setup lang="ts">
@@ -42,6 +49,7 @@ import { ProjectPageModelsViewFragment } from '~~/lib/common/generated/gql/graph
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { debounce } from 'lodash-es'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 defineProps<{
   project: ProjectPageModelsViewFragment
@@ -69,6 +77,11 @@ graphql(`
   }
 `)
 
+const searchLoading = ref(false)
+const search = ref('')
+const debouncedSearch = ref('')
+const showNewDialog = ref(false)
+
 const viewTypeCookie = useSynchronizedCookie(`projectPage-models-viewType`)
 const gridOrList = computed({
   get: () =>
@@ -78,7 +91,7 @@ const gridOrList = computed({
   set: (newVal) => (viewTypeCookie.value = newVal)
 })
 
-function test(e: unknown) {
-  console.log(e)
-}
+const updateDebouncedSearch = debounce(() => {
+  debouncedSearch.value = search.value.trim()
+}, 2000)
 </script>

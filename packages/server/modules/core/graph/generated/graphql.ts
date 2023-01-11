@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, ProjectGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
@@ -385,6 +385,11 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateModelInput = {
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -494,17 +499,21 @@ export type Model = {
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
+  /** The shortened/display name that doesn't include the names of parent models */
+  displayName: Scalars['String'];
   id: Scalars['ID'];
+  /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
-  versions?: Maybe<VersionCollection>;
+  versions: VersionCollection;
 };
 
 
 export type ModelVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ModelVersionsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -513,6 +522,21 @@ export type ModelCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Model>;
   totalCount: Scalars['Int'];
+};
+
+export type ModelMutations = {
+  __typename?: 'ModelMutations';
+  create: Model;
+};
+
+
+export type ModelMutationsCreateArgs = {
+  input: CreateModelInput;
+};
+
+export type ModelVersionsFilter = {
+  /** Make sure these specified versions are always loaded first */
+  priorityIds?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type ModelsTreeItem = {
@@ -575,8 +599,8 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
+  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
-  /** Various Project related mutations */
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
@@ -987,16 +1011,16 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  /** Returns a specific model */
+  /** Returns a specific model by its ID */
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
   /** Returns a flat list of all models */
-  models?: Maybe<ModelCollection>;
+  models: ModelCollection;
   /**
    * Return's a project's models in a tree view with submodels being nested under parent models
-   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
@@ -1007,6 +1031,8 @@ export type Project = {
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  /** Return metadata about resources being requested in the viewer */
+  viewerResources: Array<ViewerResourceGroup>;
 };
 
 
@@ -1032,6 +1058,11 @@ export type ProjectModelsArgs = {
   limit?: Scalars['Int'];
 };
 
+
+export type ProjectViewerResourcesArgs = {
+  resourceIdString: Scalars['String'];
+};
+
 export type ProjectCollection = {
   __typename?: 'ProjectCollection';
   cursor?: Maybe<Scalars['String']>;
@@ -1042,6 +1073,12 @@ export type ProjectCollection = {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Only select models w/ the specified IDs */
+  ids?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter out models that don't have any versions */
+  onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
+  /** Filter by model names */
+  search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
@@ -1052,11 +1089,33 @@ export type ProjectMutations = {
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
+  /** Updates an existing project */
+  update: Project;
 };
 
 
 export type ProjectMutationsDeleteArgs = {
   id: Scalars['String'];
+};
+
+
+export type ProjectMutationsUpdateArgs = {
+  stream: ProjectUpdateInput;
+};
+
+/** Any values left null will be ignored, so only set the properties that you want updated */
+export type ProjectUpdateInput = {
+  allowPublicComments?: InputMaybe<Scalars['Boolean']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
+  isPublic?: InputMaybe<Scalars['Boolean']>;
+  name?: InputMaybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -1092,8 +1151,6 @@ export type Query = {
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
   project?: Maybe<Project>;
-  /** @deprecated only used for testing for now */
-  projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -1779,6 +1836,7 @@ export type UserFavoriteStreamsArgs = {
  */
 export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<UserProjectsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -1808,6 +1866,11 @@ export type UserDeleteInput = {
   email?: InputMaybe<Scalars['String']>;
 };
 
+export type UserProjectsFilter = {
+  /** Filter out projects by name */
+  search?: InputMaybe<Scalars['String']>;
+};
+
 export type UserRoleInput = {
   id: Scalars['String'];
   role: Scalars['String'];
@@ -1828,9 +1891,7 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  authorAvatar?: Maybe<Scalars['String']>;
-  authorId?: Maybe<Scalars['String']>;
-  authorName?: Maybe<Scalars['String']>;
+  authorUser?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
@@ -1843,6 +1904,23 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type ViewerResourceGroup = {
+  __typename?: 'ViewerResourceGroup';
+  /** Resource identifier used to refer to a collection of resource items */
+  identifier: Scalars['String'];
+  /** Viewer resources that the identifier refers to */
+  items: Array<ViewerResourceItem>;
+};
+
+export type ViewerResourceItem = {
+  __typename?: 'ViewerResourceItem';
+  /** Null if resource represents an object */
+  modelId?: Maybe<Scalars['String']>;
+  objectId: Scalars['String'];
+  /** Null if resource represents an object */
+  versionId?: Maybe<Scalars['String']>;
 };
 
 export type Webhook = {
@@ -2004,7 +2082,7 @@ export type ResolversTypes = {
   CommentEditInput: CommentEditInput;
   CommentReplyAuthorCollection: ResolverTypeWrapper<CommentReplyAuthorCollectionGraphQLReturn>;
   CommentThreadActivityMessage: ResolverTypeWrapper<Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversTypes['Comment']> }>;
-  Commit: ResolverTypeWrapper<Omit<Commit, 'stream'> & { stream: ResolversTypes['Stream'] }>;
+  Commit: ResolverTypeWrapper<CommitGraphQLReturn>;
   CommitCollection: ResolverTypeWrapper<Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Commit']>> }>;
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
@@ -2012,6 +2090,7 @@ export type ResolversTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CreateModelInput: CreateModelInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
@@ -2023,6 +2102,8 @@ export type ResolversTypes = {
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
+  ModelMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ModelVersionsFilter: ModelVersionsFilter;
   ModelsTreeItem: ResolverTypeWrapper<ModelsTreeItemGraphQLReturn>;
   Mutation: ResolverTypeWrapper<{}>;
   Object: ResolverTypeWrapper<Object>;
@@ -2035,6 +2116,7 @@ export type ResolversTypes = {
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectUpdateInput: ProjectUpdateInput;
   Query: ResolverTypeWrapper<{}>;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
@@ -2067,11 +2149,14 @@ export type ResolversTypes = {
   TestItem: ResolverTypeWrapper<TestItem>;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
   UserDeleteInput: UserDeleteInput;
+  UserProjectsFilter: UserProjectsFilter;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>> }>;
   UserUpdateInput: UserUpdateInput;
-  Version: ResolverTypeWrapper<Version>;
-  VersionCollection: ResolverTypeWrapper<VersionCollection>;
+  Version: ResolverTypeWrapper<VersionGraphQLReturn>;
+  VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
+  ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
+  ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -2110,7 +2195,7 @@ export type ResolversParentTypes = {
   CommentEditInput: CommentEditInput;
   CommentReplyAuthorCollection: CommentReplyAuthorCollectionGraphQLReturn;
   CommentThreadActivityMessage: Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversParentTypes['Comment']> };
-  Commit: Omit<Commit, 'stream'> & { stream: ResolversParentTypes['Stream'] };
+  Commit: CommitGraphQLReturn;
   CommitCollection: Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Commit']>> };
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
@@ -2118,6 +2203,7 @@ export type ResolversParentTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CreateModelInput: CreateModelInput;
   DateTime: Scalars['DateTime'];
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EmailAddress: Scalars['EmailAddress'];
@@ -2128,6 +2214,8 @@ export type ResolversParentTypes = {
   LimitedUser: LimitedUserGraphQLReturn;
   Model: ModelGraphQLReturn;
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
+  ModelMutations: MutationsObjectGraphQLReturn;
+  ModelVersionsFilter: ModelVersionsFilter;
   ModelsTreeItem: ModelsTreeItemGraphQLReturn;
   Mutation: {};
   Object: Object;
@@ -2140,6 +2228,7 @@ export type ResolversParentTypes = {
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectMutations: MutationsObjectGraphQLReturn;
+  ProjectUpdateInput: ProjectUpdateInput;
   Query: {};
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResourceIdentifier;
@@ -2168,11 +2257,14 @@ export type ResolversParentTypes = {
   TestItem: TestItem;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
   UserDeleteInput: UserDeleteInput;
+  UserProjectsFilter: UserProjectsFilter;
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['LimitedUser']>>> };
   UserUpdateInput: UserUpdateInput;
-  Version: Version;
-  VersionCollection: VersionCollection;
+  Version: VersionGraphQLReturn;
+  VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
+  ViewerResourceGroup: ViewerResourceGroup;
+  ViewerResourceItem: ViewerResourceItem;
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -2449,12 +2541,13 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  versions?: Resolver<Maybe<ResolversTypes['VersionCollection']>, ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
+  versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2462,6 +2555,11 @@ export type ModelCollectionResolvers<ContextType = GraphQLContext, ParentType ex
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Model']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelMutations'] = ResolversParentTypes['ModelMutations']> = {
+  create?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsCreateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2501,6 +2599,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
+  modelMutations?: Resolver<ResolversTypes['ModelMutations'], ParentType, ContextType>;
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2585,7 +2684,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   modelCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  models?: Resolver<Maybe<ResolversTypes['ModelCollection']>, ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
+  models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
   modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2593,6 +2692,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'resourceIdString'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2606,6 +2706,7 @@ export type ProjectCollectionResolvers<ContextType = GraphQLContext, ParentType 
 export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectMutations'] = ResolversParentTypes['ProjectMutations']> = {
   createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
+  update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'stream'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2621,7 +2722,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
-  projects?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
@@ -2840,9 +2940,7 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
-  authorAvatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  authorId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  authorName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2855,6 +2953,19 @@ export type VersionCollectionResolvers<ContextType = GraphQLContext, ParentType 
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Version']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerResourceGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceGroup'] = ResolversParentTypes['ViewerResourceGroup']> = {
+  identifier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerResourceItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceItem'] = ResolversParentTypes['ViewerResourceItem']> = {
+  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  objectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2920,6 +3031,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   LimitedUser?: LimitedUserResolvers<ContextType>;
   Model?: ModelResolvers<ContextType>;
   ModelCollection?: ModelCollectionResolvers<ContextType>;
+  ModelMutations?: ModelMutationsResolvers<ContextType>;
   ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
@@ -2950,6 +3062,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
   Version?: VersionResolvers<ContextType>;
   VersionCollection?: VersionCollectionResolvers<ContextType>;
+  ViewerResourceGroup?: ViewerResourceGroupResolvers<ContextType>;
+  ViewerResourceItem?: ViewerResourceItemResolvers<ContextType>;
   Webhook?: WebhookResolvers<ContextType>;
   WebhookCollection?: WebhookCollectionResolvers<ContextType>;
   WebhookEvent?: WebhookEventResolvers<ContextType>;

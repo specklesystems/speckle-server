@@ -11,14 +11,13 @@ const {
   updateCommit,
   deleteCommit,
   getCommitById,
-  getCommitsByBranchId,
   getCommitsByUserId,
   getCommitsByStreamId,
-  getCommitsTotalCountByUserId,
-  getCommitsTotalCountByBranchId
+  getCommitsTotalCountByUserId
 } = require('../../services/commits')
 const {
-  getPaginatedStreamCommits
+  getPaginatedStreamCommits,
+  getPaginatedBranchCommits
 } = require('@/modules/core/services/commit/retrieval')
 
 const { getUser } = require('../../services/users')
@@ -92,6 +91,24 @@ module.exports = {
       const { id: commitId } = parent
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.name || null
+    },
+    async authorName(parent, _args, ctx) {
+      const { authorId, authorName, author } = parent
+      if (authorName) return authorName
+
+      const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
+      return authorEntity?.name || null
+    },
+    async authorAvatar(parent, _args, ctx) {
+      const { authorId, authorAvatar, author } = parent
+      if (authorAvatar) return authorAvatar
+
+      const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
+      return authorEntity?.avatar || null
+    },
+    async branchName(parent, _args, ctx) {
+      const { id } = parent
+      return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
     }
   },
   Stream: {
@@ -126,18 +143,11 @@ module.exports = {
   },
   Branch: {
     async commits(parent, args) {
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { commits, cursor } = await getCommitsByBranchId({
+      return await getPaginatedBranchCommits({
         branchId: parent.id,
         limit: args.limit,
         cursor: args.cursor
       })
-      const totalCount = await getCommitsTotalCountByBranchId({ branchId: parent.id })
-
-      return { items: commits, totalCount, cursor }
     }
   },
   Mutation: {

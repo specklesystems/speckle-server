@@ -378,6 +378,11 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateModelInput = {
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -487,17 +492,21 @@ export type Model = {
   commentThreadCount: Scalars['Int'];
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
+  /** The shortened/display name that doesn't include the names of parent models */
+  displayName: Scalars['String'];
   id: Scalars['ID'];
+  /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
-  versions?: Maybe<VersionCollection>;
+  versions: VersionCollection;
 };
 
 
 export type ModelVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ModelVersionsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -506,6 +515,21 @@ export type ModelCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Model>;
   totalCount: Scalars['Int'];
+};
+
+export type ModelMutations = {
+  __typename?: 'ModelMutations';
+  create: Model;
+};
+
+
+export type ModelMutationsCreateArgs = {
+  input: CreateModelInput;
+};
+
+export type ModelVersionsFilter = {
+  /** Make sure these specified versions are always loaded first */
+  priorityIds?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type ModelsTreeItem = {
@@ -568,8 +592,8 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
+  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
-  /** Various Project related mutations */
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
@@ -980,16 +1004,16 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  /** Returns a specific model */
+  /** Returns a specific model by its ID */
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
   /** Returns a flat list of all models */
-  models?: Maybe<ModelCollection>;
+  models: ModelCollection;
   /**
    * Return's a project's models in a tree view with submodels being nested under parent models
-   * real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
@@ -1000,6 +1024,8 @@ export type Project = {
   team: Array<LimitedUser>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
+  /** Return metadata about resources being requested in the viewer */
+  viewerResources: Array<ViewerResourceGroup>;
 };
 
 
@@ -1025,6 +1051,11 @@ export type ProjectModelsArgs = {
   limit?: Scalars['Int'];
 };
 
+
+export type ProjectViewerResourcesArgs = {
+  resourceIdString: Scalars['String'];
+};
+
 export type ProjectCollection = {
   __typename?: 'ProjectCollection';
   cursor?: Maybe<Scalars['String']>;
@@ -1035,6 +1066,12 @@ export type ProjectCollection = {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Only select models w/ the specified IDs */
+  ids?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter out models that don't have any versions */
+  onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
+  /** Filter by model names */
+  search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
@@ -1045,11 +1082,33 @@ export type ProjectMutations = {
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
+  /** Updates an existing project */
+  update: Project;
 };
 
 
 export type ProjectMutationsDeleteArgs = {
   id: Scalars['String'];
+};
+
+
+export type ProjectMutationsUpdateArgs = {
+  stream: ProjectUpdateInput;
+};
+
+/** Any values left null will be ignored, so only set the properties that you want updated */
+export type ProjectUpdateInput = {
+  allowPublicComments?: InputMaybe<Scalars['Boolean']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /**
+   * Whether the stream (if public) can be found on public stream exploration pages
+   * and searches
+   */
+  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
+  /** Whether the stream can be viewed by non-contributors */
+  isPublic?: InputMaybe<Scalars['Boolean']>;
+  name?: InputMaybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -1085,8 +1144,6 @@ export type Query = {
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
   project?: Maybe<Project>;
-  /** @deprecated only used for testing for now */
-  projects: Array<Project>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -1772,6 +1829,7 @@ export type UserFavoriteStreamsArgs = {
  */
 export type UserProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<UserProjectsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -1801,6 +1859,11 @@ export type UserDeleteInput = {
   email?: InputMaybe<Scalars['String']>;
 };
 
+export type UserProjectsFilter = {
+  /** Filter out projects by name */
+  search?: InputMaybe<Scalars['String']>;
+};
+
 export type UserRoleInput = {
   id: Scalars['String'];
   role: Scalars['String'];
@@ -1821,9 +1884,7 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  authorAvatar?: Maybe<Scalars['String']>;
-  authorId?: Maybe<Scalars['String']>;
-  authorName?: Maybe<Scalars['String']>;
+  authorUser?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
@@ -1836,6 +1897,23 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type ViewerResourceGroup = {
+  __typename?: 'ViewerResourceGroup';
+  /** Resource identifier used to refer to a collection of resource items */
+  identifier: Scalars['String'];
+  /** Viewer resources that the identifier refers to */
+  items: Array<ViewerResourceItem>;
+};
+
+export type ViewerResourceItem = {
+  __typename?: 'ViewerResourceItem';
+  /** Null if resource represents an object */
+  modelId?: Maybe<Scalars['String']>;
+  objectId: Scalars['String'];
+  /** Null if resource represents an object */
+  versionId?: Maybe<Scalars['String']>;
 };
 
 export type Webhook = {

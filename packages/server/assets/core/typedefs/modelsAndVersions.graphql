@@ -2,25 +2,63 @@ extend type Project {
   """
   Returns a flat list of all models
   """
-  models(cursor: String, limit: Int! = 25, filter: ProjectModelsFilter): ModelCollection
+  models(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectModelsFilter
+  ): ModelCollection!
   """
   Return's a project's models in a tree view with submodels being nested under parent models
-  real or fake (with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+  real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
   """
   modelsTree: [ModelsTreeItem!]!
   """
-  Returns a specific model
+  Returns a specific model by its ID
   """
   model(id: String!): Model
   """
   Return a model tree of children for the specified model name
   """
   modelChildrenTree(fullName: String!): [ModelsTreeItem!]!
+  """
+  Return metadata about resources being requested in the viewer
+  """
+  viewerResources(resourceIdString: String!): [ViewerResourceGroup!]!
+}
+
+type ViewerResourceGroup {
+  """
+  Resource identifier used to refer to a collection of resource items
+  """
+  identifier: String!
+  """
+  Viewer resources that the identifier refers to
+  """
+  items: [ViewerResourceItem!]!
+}
+
+type ViewerResourceItem {
+  """
+  Null if resource represents an object
+  """
+  modelId: String
+  """
+  Null if resource represents an object
+  """
+  versionId: String
+  objectId: String!
 }
 
 type Model {
   id: ID!
+  """
+  Full name including the names of parent models delimited by forward slashes
+  """
   name: String!
+  """
+  The shortened/display name that doesn't include the names of parent models
+  """
+  displayName: String!
   author: LimitedUser!
   description: String
   createdAt: DateTime!
@@ -32,13 +70,32 @@ type Model {
   Return a model tree of children
   """
   childrenTree: [ModelsTreeItem!]!
-  versions(limit: Int! = 25, cursor: String): VersionCollection
+  versions(
+    limit: Int! = 25
+    cursor: String
+    filter: ModelVersionsFilter
+  ): VersionCollection!
 }
 
 type ModelCollection {
   totalCount: Int!
   cursor: String
   items: [Model!]!
+}
+
+input CreateModelInput {
+  projectId: ID!
+  name: String!
+}
+
+type ModelMutations {
+  create(input: CreateModelInput!): Model!
+}
+
+extend type Mutation {
+  modelMutations: ModelMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
 }
 
 type ModelsTreeItem {
@@ -63,10 +120,7 @@ type Version {
   referencedObject: String!
   message: String
   sourceApplication: String
-  # author: LimitedUser!
-  authorId: String
-  authorName: String
-  authorAvatar: String
+  authorUser: LimitedUser
   createdAt: DateTime!
 }
 
@@ -78,6 +132,10 @@ type VersionCollection {
 
 input ProjectModelsFilter {
   """
+  Filter by model names
+  """
+  search: String
+  """
   Filter by source apps used in models
   """
   sourceApps: [String!]
@@ -85,4 +143,19 @@ input ProjectModelsFilter {
   Filter by IDs of contributors who participated in models
   """
   contributors: [String!]
+  """
+  Filter out models that don't have any versions
+  """
+  onlyWithVersions: Boolean
+  """
+  Only select models w/ the specified IDs
+  """
+  ids: [String!]
+}
+
+input ModelVersionsFilter {
+  """
+  Make sure these specified versions are always loaded first
+  """
+  priorityIds: [String!]
 }

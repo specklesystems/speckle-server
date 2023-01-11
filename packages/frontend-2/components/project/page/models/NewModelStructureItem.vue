@@ -18,17 +18,17 @@
       >
         <div class="flex-grow">
           <FormTextInput
-            name="model name"
+            v-model="name"
+            name="name"
+            label="Model name"
             placeholder="name"
             auto-focus
-            :rules="nameRules"
+            :rules="rules"
+            :disabled="anyMutationsLoading"
           />
-          <!-- <div class="text-xs text-foreground-2 ml-2 mt-1">
-            Use '/' to create nested models.
-          </div> -->
         </div>
         <div class="space-x-2">
-          <FormButton submit>Save</FormButton>
+          <FormButton submit :disabled="anyMutationsLoading">Save</FormButton>
           <FormButton outlined color="danger" @click="showNewModelCard = false">
             Cancel
           </FormButton>
@@ -39,33 +39,43 @@
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
-import { isStringOfLength } from '~~/lib/common/helpers/validation'
-import { ensureError } from '@speckle/shared'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { useMutationLoading } from '@vue/apollo-composable'
+import {
+  useCreateNewModel,
+  useModelNameValidationRules
+} from '~~/lib/projects/composables/modelManagement'
+import { trim } from 'lodash-es'
 
-type FormValues = { name: string }
-const { handleSubmit } = useForm<FormValues>()
-const { triggerNotification } = useGlobalToast()
+const props = defineProps<{
+  projectId: string
+  /**
+   * If creating a nested model, specify the prefix of the parent model here as it will be prefixed
+   * to whatever the user enters.
+   * E.g. if creating a model under "a/b", then put "a/b" here
+   */
+  parentModelName?: string
+}>()
 
-const loading = ref(false)
-const nameRules = [isStringOfLength({ minLength: 3, maxLength: 1000 })]
+const { handleSubmit } = useForm<{ name: string }>()
+const anyMutationsLoading = useMutationLoading()
+const rules = useModelNameValidationRules()
+const createModel = useCreateNewModel()
 
 const onSubmit = handleSubmit(async (formValues) => {
-  try {
-    loading.value = true
-    console.log(formValues)
-    await true // TODO
-  } catch (e) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Registration failed',
-      description: `${ensureError(e).message}`
-    })
-  } finally {
-    loading.value = false
-  }
+  await createModel({
+    name: createFinalName(formValues.name),
+    projectId: props.projectId
+  })
+  showNewModelCard.value = false
+  name.value = ''
 })
 
 const showNewModelCard = ref(false)
+const name = ref('')
+
+const createFinalName = (name: string) => {
+  const userEnteredName = trim(name, '/')
+  const prefix = trim(props.parentModelName || '', '/')
+  return (prefix ? `${prefix}/` : '') + userEnteredName
+}
 </script>

@@ -1,6 +1,5 @@
 'use strict'
 const _ = require('lodash')
-const { createBranch } = require('@/modules/core/services/branches')
 const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
 const {
   getStream,
@@ -8,64 +7,31 @@ const {
   getFavoritedStreamsCount,
   setStreamFavorited,
   canUserFavoriteStream,
-  createStream: createStreamInDb,
-  deleteStream: deleteStreamFromDb
+  deleteStream: deleteStreamFromDb,
+  updateStream: updateStreamInDb
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
 const { StreamAccessUpdateError } = require('@/modules/core/errors/stream')
-const {
-  inviteUsersToStream
-} = require('@/modules/serverinvites/services/inviteCreationService')
-const { omitBy, isNull, isUndefined, has } = require('lodash')
-const {
-  addStreamCreatedActivity,
-  addStreamDeletedActivity
-} = require('@/modules/activitystream/services/streamActivity')
-const { wait } = require('@speckle/shared')
 const { dbLogger } = require('@/logging/logging')
+const {
+  createStreamReturnRecord
+} = require('@/modules/core/services/streams/management')
+
+/**
+ * NOTE: Stop adding stuff to this service, create specialized service modules instead for various domains
+ * relating to streams. Otherwise we're not only breaking the single responsibility principle, but also
+ * increasing the chances of circular dependencies (which often cause actual errors) since everything relies
+ * on this service.
+ */
 
 module.exports = {
   /**
-   * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
-   * @returns {Promise<import('@/modules/core/helpers/types').StreamRecord>}
-   */
-  async createStreamReturnRecord(params, { createActivity = true } = {}) {
-    const { ownerId, withContributors } = params
-
-    const stream = await createStreamInDb(params, { ownerId })
-    const streamId = stream.id
-
-    // Create a default main branch
-    await createBranch({
-      name: 'main',
-      description: 'default branch',
-      streamId,
-      authorId: ownerId
-    })
-
-    // Invite contributors?
-    if (withContributors && withContributors.length) {
-      await inviteUsersToStream(ownerId, streamId, withContributors)
-    }
-
-    // Save activity
-    if (createActivity) {
-      await addStreamCreatedActivity({
-        streamId,
-        stream: params,
-        creatorId: ownerId
-      })
-    }
-
-    return stream
-  },
-
-  /**
+   * @deprecated Use createStreamReturnRecord()
    * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
    * @returns {Promise<string>}
    */
   async createStream(params) {
-    const { id } = await module.exports.createStreamReturnRecord(params, {
+    const { id } = await createStreamReturnRecord(params, {
       createActivity: false
     })
     return id
@@ -74,26 +40,12 @@ module.exports = {
   getStream,
 
   /**
+   * @deprecated Use updateStreamAndNotify or use the repository function directly
    * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
    */
   async updateStream(update) {
-    const { id: streamId } = update
-    const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
-
-    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-      validUpdate.isDiscoverable = false
-    }
-
-    if (!Object.keys(validUpdate).length) return null
-
-    const [{ id }] = await Streams.knex()
-      .returning('id')
-      .where({ id: streamId })
-      .update({
-        ...validUpdate,
-        updatedAt: knex.fn.now()
-      })
-    return id
+    const updatedStream = await updateStreamInDb(update)
+    return updatedStream?.id || null
   },
 
   setStreamFavorited,
@@ -168,22 +120,8 @@ module.exports = {
   },
 
   /**
-   * Delete stream & notify users (emit events & save activity)
-   * @param {string} streamId
-   * @param {string} deleterId
+   * @deprecated Use deleteStreamAndNotify or use the repository function directly
    */
-  async deleteStreamAndNotify(streamId, deleterId) {
-    await addStreamDeletedActivity({ streamId, deleterId })
-
-    // TODO: this has been around since before my time, we should get rid of it...
-    // delay deletion by a bit so we can do auth checks
-    await wait(250)
-
-    // Delete after event so we can do authz
-    await module.exports.deleteStream({ streamId })
-    return true
-  },
-
   async deleteStream({ streamId }) {
     dbLogger.info('Deleting stream %s', streamId)
     return await deleteStreamFromDb(streamId)

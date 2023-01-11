@@ -6,6 +6,41 @@ import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
 import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { chunk } from 'lodash'
+import { StreamRecord } from '@/modules/core/helpers/types'
+import {
+  ProjectUpdateInput,
+  StreamUpdateInput
+} from '@/modules/core/graph/generated/graphql'
+
+/**
+ * Save "stream updated" activity
+ */
+export async function addStreamUpdatedActivity(params: {
+  streamId: string
+  updaterId: string
+  oldStream: StreamRecord
+  update: ProjectUpdateInput | StreamUpdateInput
+}) {
+  const { streamId, updaterId, oldStream, update } = params
+
+  await Promise.all([
+    saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: streamId,
+      actionType: ActionTypes.Stream.Update,
+      userId: updaterId,
+      info: { old: oldStream, new: update },
+      message: 'Stream metadata changed'
+    }),
+    pubsub.publish(StreamPubsubEvents.StreamUpdated, {
+      streamUpdated: {
+        ...update
+      },
+      id: streamId
+    })
+  ])
+}
 
 /**
  * Save "stream deleted" activity

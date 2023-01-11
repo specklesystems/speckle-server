@@ -28,11 +28,13 @@
 import dayjs from 'dayjs'
 import { ComputedRef } from 'vue'
 import { ModelCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
-import { getPreviewUrl } from '~~/lib/viewer/helpers'
+import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
 
 const props = defineProps<{
   version: ModelCardVersionFragment
 }>()
+
+const getPreviewUrl = useGetPreviewUrl()
 
 const currentVersion = inject('currentVersion') as ComputedRef<ModelCardVersionFragment>
 const projectId = inject('projectId') as string

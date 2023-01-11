@@ -1,10 +1,10 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const projectsDashboardQuery = graphql(`
-  query ProjectsDashboardQuery {
+  query ProjectsDashboardQuery($filter: UserProjectsFilter) {
     activeUser {
       id
-      projects {
+      projects(filter: $filter) {
         totalCount
         items {
           ...ProjectDashboardItem
@@ -77,17 +77,6 @@ export const latestCommentThreadsQuery = graphql(`
         items {
           ...ProjectPageLatestItemsCommentItem
         }
-      }
-    }
-  }
-`)
-
-export const modelCardQuery = graphql(`
-  query ModelCard($projectId: String!, $modelId: String!) {
-    project(id: $projectId) {
-      id
-      model(id: $modelId) {
-        ...ModelCardModel
       }
     }
   }

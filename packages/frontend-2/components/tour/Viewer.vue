@@ -10,8 +10,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { setupViewer } from '~~/lib/viewer/composables/viewer'
-const { viewer } = setupViewer()
+import { useSetupViewer } from '~~/lib/viewer/composables/viewer'
+const { viewer } = useSetupViewer({
+  projectId: ''
+})
 
 onMounted(async () => {
   await viewer.loadObject(

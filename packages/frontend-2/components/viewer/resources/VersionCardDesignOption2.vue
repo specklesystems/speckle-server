@@ -15,11 +15,11 @@
             v-if="showMetadata"
             class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
           >
-            {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
+            <!-- {{ isLatest ? 'Latest' : timeAgoCreatedAt }} -->
           </div>
           <div
-            v-if="isLoaded && showMetadata"
-            class="inline-block rounded-full px-2 text-xs bg-primary text-foreground-on-primary font-bold"
+            v-if="isLatestVersion && showMetadata"
+            class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
           >
             Loaded
           </div>
@@ -27,7 +27,7 @@
             {{ version.sourceApplication }}
           </div>
         </div>
-        <div class="flex items-center space-x-2 overflow-hidden">
+        <div v-if="author" class="flex items-center space-x-2 overflow-hidden">
           <UserAvatar :user="author" size="sm" />
           <span class="text-sm font-bold tracking-tight text-foreground">
             {{ author.name }}
@@ -46,18 +46,20 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ComputedRef } from 'vue'
+import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {
-  LimitedUser,
-  ModelCardVersionFragment
-} from '~~/lib/common/generated/gql/graphql'
-import { getPreviewUrl } from '~~/lib/viewer/helpers'
+  useInjectedViewer,
+  useResolvedViewerResources
+} from '~~/lib/viewer/composables/viewer'
+import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
 
 const props = withDefaults(
   defineProps<{
-    version: ModelCardVersionFragment
-    showMetadata: boolean
-    clickable: boolean
+    version: ViewerModelVersionCardItemFragment
+    showMetadata?: boolean
+    clickable?: boolean
+    modelId: string
+    isLatestVersion?: boolean
   }>(),
   {
     showMetadata: true,
@@ -66,23 +68,14 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'changeVersion', version: string): void
+  (e: 'change-version', version: string): void
 }>()
 
-const loadedVersion = inject('loadedVersion') as ComputedRef<ModelCardVersionFragment>
-const latestVersion = inject('latestVersion') as ComputedRef<ModelCardVersionFragment>
-const projectId = inject('projectId') as string
+const { projectId } = useInjectedViewer()
+const getPreviewUrl = useGetPreviewUrl()
+const { resourceItems } = useResolvedViewerResources()
 
-const isLoaded = computed(() => loadedVersion.value.id === props.version.id)
-const isLatest = computed(() => latestVersion.value.id === props.version.id)
-
-const author = computed(() => {
-  return {
-    name: props.version.authorName,
-    id: props.version.authorId,
-    avatar: props.version.authorAvatar
-  } as LimitedUser
-})
+const author = computed(() => props.version.authorUser)
 
 const createdAt = computed(() =>
   dayjs(props.version.createdAt as string).format('DD MMM YY, h:mm A')
@@ -93,10 +86,10 @@ const timeAgoCreatedAt = computed(() =>
 )
 
 const previewUrl = computed(() =>
-  getPreviewUrl(projectId, props.version.referencedObject)
+  getPreviewUrl(projectId.value, props.version.referencedObject)
 )
 
 function handleClick() {
-  if (props.clickable) emit('changeVersion', props.version.id)
+  if (props.clickable) emit('change-version', props.version.id)
 }
 </script>

@@ -25,21 +25,10 @@ graphql(`
       name
       avatar
     }
-    models(limit: 100) {
+    models(limit: 4, filter: { onlyWithVersions: true }) {
       totalCount
       items {
-        id
-        name
-        author {
-          id
-          name
-          avatar
-        }
-        commentThreadCount
-        versionCount
-        updatedAt
-        createdAt
-        previewUrl
+        ...ProjectPageLatestItemsModelItem
       }
     }
   }

@@ -11,13 +11,16 @@ generates:
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
+        Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
         Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
+        Version: '@/modules/core/helpers/graphTypes#VersionGraphQLReturn'
         Model: '@/modules/core/helpers/graphTypes#ModelGraphQLReturn'
         ModelsTreeItem: '@/modules/core/helpers/graphTypes#ModelsTreeItemGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:

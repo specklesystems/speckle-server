@@ -34,9 +34,13 @@ More info: https://the-guild.dev/blog/unleash-the-power-of-fragments-with-graphq
 
 ### Troubleshooting
 
-#### Adding an Apollo based Nuxt middleware makes the page never load
+#### ESLint results doesn't update after GQL type regeneration
 
-Yea, Vue Apollo seems to be a bit busted in some scenarios: https://github.com/vuejs/apollo/issues/1429
+Restart the ESLint plugin through VSCode's command palette, this is a bug with the ESLint plugin
+
+#### GraphQL codegen throws an error like "Unknown fragment XXX" or something else that doesn't make sense
+
+Sometimes the codegen throws misleading errors and the issue is actually something completely different so I suggest removing the new graphql fragments/operations you've added one by one until the generation works again, to isolate the problematic graphql code. And then thoroughly investigate the fragments/operations you've added, because you might have a syntax error somewhere.
 
 ## Production
 

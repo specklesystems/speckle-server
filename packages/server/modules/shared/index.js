@@ -17,6 +17,12 @@ const CommitPubsubEvents = Object.freeze({
   CommitDeleted: 'COMMIT_DELETED'
 })
 
+const BranchPubsubEvents = Object.freeze({
+  BranchCreated: 'BRANCH_CREATED',
+  BranchUpdated: 'BRANCH_UPDATED',
+  BranchDeleted: 'BRANCH_DELETED'
+})
+
 /**
  * GraphQL Subscription PubSub instance
  */
@@ -142,5 +148,6 @@ module.exports = {
   pubsub,
   getRoles,
   StreamPubsubEvents,
-  CommitPubsubEvents
+  CommitPubsubEvents,
+  BranchPubsubEvents
 }

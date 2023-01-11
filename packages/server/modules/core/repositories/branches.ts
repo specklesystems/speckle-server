@@ -1,4 +1,11 @@
-import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
+import {
+  BranchCommits,
+  Branches,
+  Commits,
+  knex,
+  Streams
+} from '@/modules/core/dbSchema'
+import { BranchNameError } from '@/modules/core/errors/branch'
 import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
@@ -12,25 +19,40 @@ import { clamp, trim } from 'lodash'
 
 export const generateBranchId = () => crs({ length: 10 })
 
-export async function getBranchesByIds(branchIds: string[]) {
+export async function getBranchesByIds(
+  branchIds: string[],
+  options?: Partial<{ streamId: string }>
+) {
   if (!branchIds?.length) return []
+  const { streamId } = options || {}
 
   const q = Branches.knex<BranchRecord[]>().whereIn(Branches.col.id, branchIds)
+  if (streamId) {
+    q.andWhere(Branches.col.streamId, streamId)
+  }
+
   return await q
 }
 
 export async function getStreamBranchesByName(
   streamId: string,
-  names: string[]
+  names: string[],
+  options?: Partial<{
+    /**
+     * Set to true if you want to find branches that start with specified names as prefixes
+     */
+    startsWithName: boolean
+  }>
 ): Promise<BranchRecord[]> {
   if (!streamId || !names?.length) return []
+  const { startsWithName } = options || {}
 
   const q = Branches.knex<BranchRecord[]>()
     .where(Branches.col.streamId, streamId)
     .andWhere(
-      knex.raw('LOWER(??) = ANY(?)', [
+      knex.raw('LOWER(??) ilike ANY(?)', [
         Branches.col.name,
-        names.map((n) => n.toLowerCase())
+        names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
       ])
     )
 
@@ -131,24 +153,33 @@ function getPaginatedProjectModelsBaseQuery<T>(
   const q = Branches.knex()
     .select<T>(Branches.cols)
     .where(Branches.col.streamId, projectId)
+    .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+    .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+    .havingRaw(
+      knex.raw(`?? != 'main' OR COUNT(??) > 0`, [Branches.col.name, Commits.col.id])
+    )
     .groupBy(Branches.col.id)
 
-  if (filter?.contributors?.length || filter?.sourceApps?.length) {
-    q.innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
-    q.innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+  if (filter?.search) {
+    q.whereILike(Branches.col.name, `%${filter.search}%`)
+  }
 
-    if (filter.contributors?.length) {
-      q.whereIn(Commits.col.author, filter.contributors)
-    }
+  if (filter?.contributors?.length) {
+    q.whereIn(Commits.col.author, filter.contributors)
+  }
 
-    if (filter.sourceApps?.length) {
-      q.whereRaw(
-        knex.raw(`?? ~* ?`, [
-          Commits.col.sourceApplication,
-          filter.sourceApps.join('|')
-        ])
-      )
-    }
+  if (filter?.sourceApps?.length) {
+    q.whereRaw(
+      knex.raw(`?? ~* ?`, [Commits.col.sourceApplication, filter.sourceApps.join('|')])
+    )
+  }
+
+  if (filter?.onlyWithVersions) {
+    q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
+  }
+
+  if (filter?.ids?.length) {
+    q.whereIn(Branches.col.id, filter.ids)
   }
 
   return q
@@ -169,7 +200,7 @@ export async function getStructuredProjectModels(projectId: string) {
 
   for (const record of results) {
     let currentLevel = tree
-    const nameParts = record.name.split('/').filter((n) => n !== '')
+    const nameParts = record.name.split('/').filter((n: string) => n !== '')
     for (const part of nameParts) {
       const existing = currentLevel.children.find((c) => c.name === part)
       if (existing) {
@@ -214,9 +245,8 @@ export async function getPaginatedProjectModelsTotalCount(
   projectId: string,
   params: ProjectModelsArgs
 ) {
-  const q = getPaginatedProjectModelsBaseQuery<{ count: string }[]>(projectId, params)
-  q.clearSelect()
-  q.count()
+  const baseQ = getPaginatedProjectModelsBaseQuery(projectId, params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
   const [res] = await q
   return parseInt(res?.count || '0')
@@ -297,4 +327,54 @@ export async function getModelTreeItems(
   })
 
   return items
+}
+
+export const validateBranchName = (name: string) => {
+  if (!(name || '').trim()) {
+    throw new BranchNameError('Branch name is required')
+  }
+
+  if (
+    name.startsWith('/') ||
+    name.startsWith('#') ||
+    name.indexOf('//') !== -1 ||
+    name.indexOf(',') !== -1
+  )
+    throw new BranchNameError(
+      'Bad name for branch. Branch names cannot start with "#" or "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      {
+        info: {
+          name
+        }
+      }
+    )
+}
+
+export async function createBranch(params: {
+  name: string
+  description: string | null
+  streamId: string
+  authorId: string
+}) {
+  const { streamId, authorId, name, description } = params
+
+  const branch: Omit<BranchRecord, 'createdAt' | 'updatedAt'> = {
+    id: generateBranchId(),
+    streamId,
+    authorId,
+    name: name.toLowerCase(),
+    description
+  }
+
+  validateBranchName(branch.name)
+
+  const results = await Branches.knex().insert(branch, '*')
+  const newBranch = results[0] as BranchRecord
+
+  // Update stream updated at
+  await Streams.knex()
+    .where(Streams.col.id, streamId)
+    .update(Streams.withoutTablePrefix.col.updatedAt, knex.fn.now())
+
+  return newBranch
 }

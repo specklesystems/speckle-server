@@ -2,16 +2,18 @@ import {
   BranchCommits,
   Branches,
   Commits,
+  knex,
   StreamCommits,
   Streams
 } from '@/modules/core/dbSchema'
 import {
   BranchCommitRecord,
+  BranchRecord,
   CommitRecord,
   StreamCommitRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
-import { keyBy, uniqBy } from 'lodash'
+import { clamp, keyBy, uniq, uniqBy } from 'lodash'
 
 const CommitWithStreamBranchMetadataFields = [
   ...Commits.cols,
@@ -25,6 +27,7 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
+import { Nullable } from '@speckle/shared'
 
 export const generateCommitId = () => crs({ length: 10 })
 
@@ -186,4 +189,114 @@ export async function getStreamCommitCount(
 ) {
   const [res] = await getStreamCommitCounts([streamId], options)
   return res?.count || 0
+}
+
+export async function getSpecificBranchCommits(
+  pairs: { branchId: string; commitId: string }[]
+) {
+  if (!pairs?.length) return []
+
+  const commitIds = uniq(pairs.map((p) => p.commitId))
+  const branchIds = uniq(pairs.map((p) => p.branchId))
+
+  const q = Commits.knex()
+    .select<Array<CommitRecord & { branchId: string }>>([
+      ...Commits.cols,
+      BranchCommits.col.branchId
+    ])
+    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+    .whereIn(Commits.col.id, commitIds)
+    .whereIn(BranchCommits.col.branchId, branchIds)
+
+  const queryResults = await q
+  const results: Array<CommitRecord & { branchId: string }> = []
+
+  for (const pair of pairs) {
+    const commit = queryResults.find(
+      (r) => r.id === pair.commitId && r.branchId === pair.branchId
+    )
+    if (commit) {
+      results.push(commit)
+    }
+  }
+
+  return results
+}
+
+export type PaginatedBranchCommitsBaseParams = {
+  branchId: string
+  filter?: Nullable<{
+    /**
+     * Exclude specific commits
+     */
+    excludeIds?: string[]
+  }>
+}
+
+export type PaginatedBranchCommitsParams = PaginatedBranchCommitsBaseParams & {
+  limit: number
+  cursor?: Nullable<string>
+}
+
+function getPaginatedBranchCommitsBaseQuery<T = CommitRecord[]>(
+  params: PaginatedBranchCommitsBaseParams
+) {
+  const { branchId, filter } = params
+
+  const q = Commits.knex<T>()
+    .select(Commits.cols)
+    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+    .where(Branches.col.id, branchId)
+    .groupBy(Commits.col.id)
+
+  if (filter?.excludeIds?.length) {
+    q.whereNotIn(Commits.col.id, filter.excludeIds)
+  }
+
+  return q
+}
+
+export async function getPaginatedBranchCommits(params: PaginatedBranchCommitsParams) {
+  const { cursor } = params
+
+  const limit = clamp(params.limit || 25, 1, 100)
+  const q = getPaginatedBranchCommitsBaseQuery(params)
+    .orderBy(Commits.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (cursor) {
+    q.andWhere(Commits.col.createdAt, '<', cursor)
+  }
+
+  const rows = await q
+
+  return {
+    commits: rows,
+    cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
+  }
+}
+
+export async function getBranchCommitsTotalCount(
+  params: PaginatedBranchCommitsBaseParams
+) {
+  const baseQ = getPaginatedBranchCommitsBaseQuery(params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+
+  const [res] = await q
+  return parseInt(res?.count || '0')
+}
+
+export async function getCommitBranches(commitIds: string[]) {
+  if (!commitIds?.length) return []
+
+  const q = BranchCommits.knex()
+    .select<Array<BranchRecord & { commitId: string }>>([
+      ...Branches.cols,
+      knex.raw(`?? as "commitId"`, [BranchCommits.col.commitId])
+    ])
+    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+    .whereIn(BranchCommits.col.commitId, commitIds)
+
+  return await q
 }
