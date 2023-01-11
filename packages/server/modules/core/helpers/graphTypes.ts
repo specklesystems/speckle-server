@@ -82,10 +82,12 @@ export type ModelGraphQLReturn = Omit<
   | 'childrenTree'
   | 'displayName'
   | 'versions'
+  | 'commentThreads'
 > &
   BranchRecord
 
-export type VersionGraphQLReturn = Omit<Version, 'authorUser'> & CommitRecord
+export type VersionGraphQLReturn = Omit<Version, 'authorUser' | 'commentThreads'> &
+  CommitRecord
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,

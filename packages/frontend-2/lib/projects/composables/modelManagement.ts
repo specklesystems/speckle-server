@@ -13,10 +13,11 @@ const isValidModelName: GenericValidateFunction<string> = (name) => {
   if (
     name.startsWith('/') ||
     name.startsWith('#') ||
+    name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
     name.indexOf(',') !== -1
   )
-    return 'Value should not start with "#", "/", have multiple slashes next to each other or contain commas'
+    return 'Value should not start with "#", "/", "$", have multiple slashes next to each other or contain commas'
 
   return true
 }

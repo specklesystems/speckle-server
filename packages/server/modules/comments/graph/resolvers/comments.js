@@ -28,6 +28,10 @@ const { has } = require('lodash')
 const {
   documentToBasicString
 } = require('@/modules/core/services/richTextEditorService')
+const {
+  getPaginatedCommitComments,
+  getPaginatedBranchComments
+} = require('@/modules/comments/services/retrieval')
 
 const authorizeStreamAccess = async ({
   streamId,
@@ -146,6 +150,16 @@ module.exports = {
       return {
         ...(await getComments({ ...args, streamId: parent.id, userId: context.userId }))
       }
+    }
+  },
+  Version: {
+    async commentThreads(parent, args) {
+      return await getPaginatedCommitComments({ ...args, commitId: parent.id })
+    }
+  },
+  Model: {
+    async commentThreads(parent, args) {
+      return await getPaginatedBranchComments({ ...args, branchId: parent.id })
     }
   },
   Stream: {

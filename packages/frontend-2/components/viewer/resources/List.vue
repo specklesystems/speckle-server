@@ -46,11 +46,17 @@ const objectResources = computed(() =>
   resourceItems.value.filter((i) => !i.modelId && !i.versionId)
 )
 
-const { result: modelsResult } = useQuery(viewerModelCardsQuery, () => ({
-  projectId: projectId.value,
-  modelIds: nonObjectResources.value.map((r) => r.modelId),
-  versionIds: nonObjectResources.value.map((r) => r.versionId)
-}))
+const { result: modelsResult } = useQuery(
+  viewerModelCardsQuery,
+  () => ({
+    projectId: projectId.value,
+    modelIds: nonObjectResources.value.map((r) => r.modelId),
+    versionIds: nonObjectResources.value.map((r) => r.versionId)
+  }),
+  () => ({
+    enabled: nonObjectResources.value.length > 0
+  })
+)
 
 const models = computed(() => modelsResult.value?.project?.models?.items || [])
 
