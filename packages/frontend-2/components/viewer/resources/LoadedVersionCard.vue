@@ -29,6 +29,7 @@
         rounded
         size="xs"
         :icon-left="ArrowPathRoundedSquareIcon"
+        :disabled="model.versions.totalCount <= 1"
         @click="$emit('show-versions')"
       >
         {{ model.versions?.totalCount }}
