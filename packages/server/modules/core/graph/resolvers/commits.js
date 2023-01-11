@@ -105,6 +105,10 @@ module.exports = {
 
       const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
       return authorEntity?.avatar || null
+    },
+    async branchName(parent, _args, ctx) {
+      const { id } = parent
+      return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
     }
   },
   Stream: {

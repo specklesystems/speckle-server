@@ -263,9 +263,6 @@ describe('Commits @core-commits', () => {
       expect(commit).to.have.property('totalChildrenCount')
       expect(commit.totalChildrenCount).to.be.a('number')
 
-      expect(commit).to.have.property('branchName')
-      expect(commit.branchName).to.be.a('string')
-
       expect(commit).to.have.property('parents')
     }
 

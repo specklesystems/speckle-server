@@ -8,6 +8,7 @@ import {
 } from '@/modules/core/dbSchema'
 import {
   BranchCommitRecord,
+  BranchRecord,
   CommitRecord,
   StreamCommitRecord,
   StreamRecord
@@ -284,4 +285,18 @@ export async function getBranchCommitsTotalCount(
 
   const [res] = await q
   return parseInt(res?.count || '0')
+}
+
+export async function getCommitBranches(commitIds: string[]) {
+  if (!commitIds?.length) return []
+
+  const q = BranchCommits.knex()
+    .select<Array<BranchRecord & { commitId: string }>>([
+      ...Branches.cols,
+      knex.raw(`?? as "commitId"`, [BranchCommits.col.commitId])
+    ])
+    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+    .whereIn(BranchCommits.col.commitId, commitIds)
+
+  return await q
 }
