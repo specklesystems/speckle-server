@@ -35,11 +35,13 @@ import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
 import { useSetupViewer } from '~~/lib/viewer/composables/viewer'
 
 definePageMeta({
+  layout: 'viewer',
   middleware: ['require-valid-project'],
   pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false,
-  key: false
+  key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
 })
+
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 
@@ -59,4 +61,20 @@ const { result } = useQuery(modelPageProjectQuery, () => ({
   id: projectId.value
 }))
 const project = computed(() => result.value?.project)
+
+onMounted(() => {
+  console.log('page mounted!')
+})
+
+onUnmounted(() => {
+  console.log('page unmounted')
+})
+
+onActivated(() => {
+  console.log('page activated!')
+})
+
+onDeactivated(() => {
+  console.log('page deactivated!')
+})
 </script>
