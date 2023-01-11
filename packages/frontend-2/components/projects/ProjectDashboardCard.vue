@@ -3,7 +3,9 @@
     <div
       class="group flex flex-col md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition"
     >
-      <div class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0">
+      <div
+        class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
+      >
         <div class="text-2xl font-bold group-hover:text-primary transition">
           <NuxtLink :to="projectRoute(project.id)">{{ project.name }}</NuxtLink>
           <UserAvatarGroup :users="project.team" :max-count="2" />
@@ -12,6 +14,10 @@
         <div class="text-xs text-foreground-2 flex items-center">
           <UserCircleIcon class="w-4 h-4 mr-1" />
           {{ project.role?.split(':').reverse()[0] }}
+        </div>
+        <div class="text-xs text-foreground-2 flex items-center">
+          <CubeIcon class="w-4 h-4 mr-1" />
+          {{ models.length }} models
         </div>
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
@@ -49,7 +55,7 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
+import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
@@ -57,5 +63,8 @@ const props = defineProps<{
 }>()
 
 const models = computed(() => props.project.models?.items || [])
+const nonEmptyModels = computed(() =>
+  models.value.filter((model) => model.versionCount !== 0)
+)
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 </script>

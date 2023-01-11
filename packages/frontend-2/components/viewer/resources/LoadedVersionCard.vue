@@ -45,35 +45,29 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ComputedRef } from 'vue'
 import {
-  LimitedUser,
-  ModelCardModelFragment,
-  ModelCardVersionFragment
+  ViewerModelVersionCardItemFragment,
+  ViewerModelCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
-import { getPreviewUrl } from '~~/lib/viewer/helpers'
+import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
+import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
+
+const getPreviewUrl = useGetPreviewUrl()
 
 const props = defineProps<{
-  version: ModelCardVersionFragment
-  model: ModelCardModelFragment
+  version: ViewerModelVersionCardItemFragment
+  model: ViewerModelCardItemFragment
+  isLatestVersion: boolean
 }>()
 
 defineEmits(['show-versions', 'load-latest'])
 
-const loadedVersion = inject('loadedVersion') as ComputedRef<ModelCardVersionFragment>
-const latestVersion = inject('latestVersion') as ComputedRef<ModelCardVersionFragment>
-const projectId = inject('projectId') as string
+const { projectId } = useInjectedViewer()
 
-const isLatest = computed(() => latestVersion.value.id === props.version.id)
+const isLatest = computed(() => props.isLatestVersion)
 
-const author = computed(() => {
-  return {
-    name: props.version.authorName,
-    id: props.version.authorId,
-    avatar: props.version.authorAvatar
-  } as LimitedUser
-})
+const author = computed(() => props.version.authorUser)
 
 const createdAt = computed(() =>
   dayjs(props.version.createdAt as string).format('DD MMM YY, h:mm A')
@@ -84,6 +78,6 @@ const timeAgoCreatedAt = computed(() =>
 )
 
 const previewUrl = computed(() =>
-  getPreviewUrl(projectId, props.version.referencedObject)
+  getPreviewUrl(projectId.value, props.version.referencedObject)
 )
 </script>
