@@ -62,7 +62,7 @@
               descriptionState ? 'focus:min-w-0' : 'min-w-[280px]'
             ]"
             :placeholder="
-              descriptionState ? undefined : 'Click here to add a project description.'
+              descriptionState ? undefined : 'Click here to add a description.'
             "
             :disabled="anyMutationsLoading"
             rows="1"

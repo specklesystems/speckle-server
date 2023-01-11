@@ -1,68 +1,51 @@
 <template>
-  <div
-    v-if="model"
-    class="px-1 pt-2 flex flex-col items-center bg-foundation shadow-md rounded-md"
-  >
-    <div class="w-full flex items-center justify-between mb-2">
-      <div class="px-1 flex">
-        <span class="font-bold text-lg">{{ model?.name }}</span>
-        &nbsp;
-      </div>
-      <div class="flex space-x-2">
-        <span class="text-xs text-foreground-2">last update {{ updatedAt }}</span>
-        <XMarkIcon class="text-foreground-2 w-3 h-4 mr-1" />
-      </div>
-    </div>
-    <div class="w-full">
-      <ViewerResourcesVersionCardDesignOption2
-        v-if="loadedVersion"
-        :model-id="modelId"
-        :is-latest-version="loadedVersion.id === latestVersionId"
+  <div v-if="model">
+    <div>
+      <ViewerResourcesLoadedVersionCard
+        v-if="!showVersions && loadedVersion"
         :version="loadedVersion"
-        :show-metadata="false"
-        :clickable="false"
+        :model="model"
+        :is-latest-version="loadedVersion?.id === latestVersionId"
+        @show-versions="showVersions = true"
+        @load-latest="loadLatestVersion"
       />
     </div>
-    <div class="flex flex-col bg-teal-300/0 w-full">
-      <button
-        v-if="versionsExceptLoaded.length > 0"
-        class="w-full flex justify-between hover:bg-foundation-focus py-2 px-1 rounded-md transition"
-        @click="showVersions = !showVersions"
+  </div>
+  <div v-if="showVersions" class="bg-foundation flex flex-col rounded-md px-1">
+    <div class="px-2 py-4 flex items-center truncate space-x-2">
+      <FormButton
+        :icon-left="ChevronLeftIcon"
+        text
+        size="xs"
+        @click="showVersions = false"
       >
-        <div class="flex space-x-1 text-xs font-bold text-foreground-2">
-          <span>Versions</span>
-          <ArrowPathRoundedSquareIcon class="w-3 h-4 mr-1" />
-          <span>{{ model?.versions?.totalCount }}</span>
-        </div>
-        <div><ChevronDownIcon class="w-3 h-3" /></div>
-      </button>
-      <div v-else class="py-2 px-1 text-xs font-bold text-foreground-2">
-        {{ loadedVersion ? 'No other versions' : 'No versions' }}
-      </div>
-      <div v-if="showVersions" class="flex flex-col space-y-1">
-        <ViewerResourcesVersionCardDesignOption2
-          v-for="version in versions"
-          :key="version.id"
-          :model-id="modelId"
-          :version="version"
-          :is-latest-version="version.id === latestVersionId"
-          @change-version="handleVersionChange"
-        />
-        <span class="text-xs text-center py-2 text-foreground-2">
-          TODO: Version Pagination
-        </span>
-      </div>
+        Back
+      </FormButton>
+      <span>
+        <b>{{ model.name }}</b>
+        versions
+      </span>
+    </div>
+    <div class="space-y-0">
+      <ViewerResourcesVersionCard
+        v-for="version in versions"
+        :key="version.id"
+        :model-id="modelId"
+        :version="version"
+        :is-latest-version="version.id === latestVersionId"
+        :is-loaded-version="version.id === loadedVersion?.id"
+        @change-version="handleVersionChange"
+      />
+    </div>
+    <div class="mt-4 text-xs text-center py-2 text-foreground-2">
+      TODO: Version Pagination
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  ChevronDownIcon,
-  ArrowPathRoundedSquareIcon,
-  XMarkIcon
-} from '@heroicons/vue/24/solid'
+import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { useViewerResourcesState } from '~~/lib/viewer/composables/viewer'
 import { ViewerModelCardsQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
@@ -124,6 +107,10 @@ const latestVersionId = computed(
 const updatedAt = computed(() =>
   props.model ? dayjs(props.model.updatedAt).from(dayjs()) : null
 )
+
+function loadLatestVersion() {
+  switchModelToVersion(props.model.id, latestVersionId.value)
+}
 
 function handleVersionChange(versionId: string) {
   switchModelToVersion(props.model.id, versionId)

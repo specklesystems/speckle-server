@@ -1,10 +1,4 @@
 <template>
-  <div class="p-2 flex justify-between">
-    <div class="text-sm font-bold text-foreground-2">Models</div>
-    <div>
-      <FormButton size="sm" text :icon-left="PlusIcon">Add Model</FormButton>
-    </div>
-  </div>
   <div class="p-2 space-y-2">
     <template v-if="resourceItems.length">
       <div v-for="{ model, versionId } in modelsAndVersionIds" :key="model.id">
@@ -24,7 +18,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/solid'
 import {
   useInjectedViewer,
   useResolvedViewerResources

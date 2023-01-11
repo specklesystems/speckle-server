@@ -53,6 +53,11 @@
     @apply text-xs;
   }
 
+  .text-tiny {
+    font-size: 0.5rem;
+    line-height: 1rem;
+  }
+
   /**
    * Grid/Layout container that limits max width to expected sizes that we use in our designs
    * (see Figma - Design System - Foundations - Grid & Layout)
