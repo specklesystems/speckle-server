@@ -125,7 +125,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     return writeData(newData)
   } catch (e: unknown) {
     if (ignoreCacheErrors) {
-      console.warn('Failed Apollo cache update', e)
+      console.warn('Failed Apollo cache update:', e)
       return false
     }
     throw e

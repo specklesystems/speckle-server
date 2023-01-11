@@ -18,9 +18,16 @@
         <tr class="h-3">
           <!-- You can't use margins on thead, hence this hack -->
         </tr>
-        <template v-for="(item, i) in items" :key="item.id">
-          <ProjectPageLatestItemsModelsListItem :model="item" />
-          <tr v-if="i !== items.length - 1" class="h-4" />
+        <template v-if="items.length">
+          <template v-for="(item, i) in items" :key="item.id">
+            <ProjectPageLatestItemsModelsListItem :model="item" />
+            <tr v-if="i !== items.length - 1" class="h-4" />
+          </template>
+        </template>
+        <template v-else>
+          <tr>
+            <td colspan="7">TODO: List view empty state</td>
+          </tr>
         </template>
       </tbody>
     </table>
@@ -33,5 +40,5 @@ const props = defineProps<{
   models?: ProjectLatestModelsQuery
 }>()
 
-const items = computed(() => (props.models?.project?.models?.items || []).slice(0, 8))
+const items = computed(() => props.models?.project?.models?.items || [])
 </script>

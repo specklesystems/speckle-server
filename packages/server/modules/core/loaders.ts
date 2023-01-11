@@ -21,6 +21,7 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import {
+  getCommitBranches,
   getCommitStreams,
   getStreamCommitCounts
 } from '@/modules/core/repositories/commits'
@@ -192,6 +193,13 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getCommitStream: new DataLoader<string, Nullable<StreamRecord>>(
         async (commitIds) => {
           const results = await getCommitStreams(commitIds.slice())
+          return commitIds.map((id) => results[id] || null)
+        }
+      ),
+
+      getCommitBranch: new DataLoader<string, Nullable<BranchRecord>>(
+        async (commitIds) => {
+          const results = keyBy(await getCommitBranches(commitIds.slice()), 'commitId')
           return commitIds.map((id) => results[id] || null)
         }
       )

@@ -11,7 +11,11 @@ const BranchCommits = () => knex('branch_commits')
 const { getBranchByNameAndStreamId } = require('./branches')
 const { getObject } = require('./objects')
 
-const { getStreamCommitCount } = require('@/modules/core/repositories/commits')
+const {
+  getStreamCommitCount,
+  getPaginatedBranchCommits,
+  getBranchCommitsTotalCount
+} = require('@/modules/core/repositories/commits')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
   publicOnly = publicOnly !== false
@@ -173,10 +177,11 @@ module.exports = {
     return await Commits().where({ id }).del()
   },
 
+  /**
+   * @deprecated Use `getBranchCommitsTotalCount()` instead
+   */
   async getCommitsTotalCountByBranchId({ branchId }) {
-    const [res] = await BranchCommits().count().where('branchId', branchId)
-
-    return parseInt(res.count)
+    return await getBranchCommitsTotalCount({ branchId })
   },
 
   async getCommitsTotalCountByBranchName({ streamId, branchName }) {
@@ -191,38 +196,11 @@ module.exports = {
     return module.exports.getCommitsTotalCountByBranchId({ branchId: myBranch.id })
   },
 
+  /**
+   * @deprecated Use `getPaginatedBranchCommits()` instead and `getBranchCommitsTotalCount()` for the total count
+   */
   async getCommitsByBranchId({ branchId, limit, cursor }) {
-    limit = limit || 25
-    const query = BranchCommits()
-      .columns([
-        { id: 'commitId' },
-        'message',
-        'referencedObject',
-        'sourceApplication',
-        'totalChildrenCount',
-        'parents',
-        'commits.createdAt',
-        { branchName: 'branches.name' },
-        { authorName: 'users.name' },
-        { authorId: 'users.id' },
-        { authorAvatar: 'users.avatar' }
-      ])
-      .select()
-      .join('commits', 'commits.id', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .leftJoin('users', 'commits.author', 'users.id')
-      .where('branchId', branchId)
-
-    if (cursor) query.andWhere('commits.createdAt', '<', cursor)
-
-    query.orderBy('commits.createdAt', 'desc').limit(limit)
-
-    const rows = await query
-
-    return {
-      commits: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
-    }
+    return await getPaginatedBranchCommits({ branchId, limit, cursor })
   },
 
   async getCommitsByBranchName({ streamId, branchName, limit, cursor }) {

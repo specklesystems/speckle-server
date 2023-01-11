@@ -3,8 +3,8 @@ import { getOnboardingStreamId } from '@/modules/shared/helpers/envHelper'
 import { StreamCloneError } from '@/modules/core/errors/stream'
 import { cloneStream } from '@/modules/core/services/streams/clone'
 import { StreamRecord } from '@/modules/core/helpers/types'
-import { createStreamReturnRecord } from '@/modules/core/services/streams'
 import { logger } from '@/logging/logging'
+import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 
 async function cloneOnboardingStream(userId: string, sourceStreamId: Nullable<string>) {
   if (!sourceStreamId) {

@@ -53,7 +53,7 @@
               rounded
               size="xs"
               :icon-left="ArrowPathRoundedSquareIcon"
-              :to="modelVersionsRoute(route.params.id as string, item.model.id)"
+              :to="modelVersionsRoute(projectId, item.model.id)"
             >
               {{ model?.versionCount }}
             </FormButton>
@@ -132,15 +132,12 @@
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2">
-            <!-- TODO: 
-            Open all child models in one viewer page. 
-            Fabs will hate me as we might need to go back to "getting everything", or hacking away a 
-            request for all the kids -->
             <FormButton
               rounded
               size="xs"
               :icon-right="ArrowTopRightOnSquareIcon"
-              disabled
+              :to="viewAllUrl"
+              :disabled="!viewAllUrl"
             >
               View All
             </FormButton>
@@ -167,7 +164,10 @@
             class="flex-grow"
           />
         </div>
-        <ProjectPageModelsNewModelStructureItem />
+        <ProjectPageModelsNewModelStructureItem
+          :project-id="projectId"
+          :parent-model-name="item.fullName"
+        />
       </div>
     </div>
   </div>
@@ -214,7 +214,6 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
   projectId: string
 }>()
-const route = useRoute()
 
 const expanded = ref(false)
 
@@ -261,7 +260,11 @@ const updatedAt = computed(() =>
 
 const modelLink = computed(() => {
   if (!props.item.model || props.item.model?.versionCount === 0) return null
-  return modelRoute(route.params.id as string, props.item.model.id)
+  return modelRoute(props.projectId, props.item.model.id)
+})
+
+const viewAllUrl = computed(() => {
+  return modelRoute(props.projectId, `$${props.item.fullName}`)
 })
 
 const { result: childrenResult } = useQuery(

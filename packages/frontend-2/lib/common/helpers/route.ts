@@ -7,8 +7,8 @@ export const forgottenPasswordRoute = '/auth/forgotten-password'
 export const onboardingRoute = '/tour'
 export const downloadManagerRoute = '/download-manager'
 export const projectRoute = (id: string) => `/projects/${id}`
-export const modelRoute = (projectId: string, modelId: string) =>
-  `/projects/${projectId}/models/${modelId}`
+export const modelRoute = (projectId: string, resourceIdString: string) =>
+  `/projects/${projectId}/models/${encodeURIComponent(resourceIdString)}`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
 

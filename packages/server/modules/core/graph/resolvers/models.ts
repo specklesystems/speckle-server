@@ -1,12 +1,14 @@
+import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getModelTreeItems } from '@/modules/core/repositories/branches'
+import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
+import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
-import { getBranchById } from '../../services/branches'
-import {
-  getCommitsByBranchId,
-  getCommitsTotalCountByBranchId
-} from '../../services/commits'
+import { last } from 'lodash'
+
+import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
+import { getPaginatedBranchCommits } from '@/modules/core/services/commit/retrieval'
 
 export = {
   Project: {
@@ -21,6 +23,9 @@ export = {
     },
     async modelChildrenTree(parent, { fullName }) {
       return await getModelTreeItems(parent.id, fullName)
+    },
+    async viewerResources(parent, { resourceIdString }) {
+      return await getViewerResourceGroups(parent.id, resourceIdString)
     }
   },
   Model: {
@@ -41,15 +46,22 @@ export = {
     async childrenTree(parent) {
       return await getModelTreeItems(parent.streamId, parent.name)
     },
-    async versions(parent, args, _ctx) {
-      const { commits, cursor } = await getCommitsByBranchId({
+    async displayName(parent) {
+      return last(parent.name.split('/'))
+    },
+    async versions(parent, args) {
+      return await getPaginatedBranchCommits({
         branchId: parent.id,
+        cursor: args.cursor,
         limit: args.limit,
-        cursor: args.cursor
+        filter: args.filter
       })
-      const totalCount = await getCommitsTotalCountByBranchId({ branchId: parent.id })
-
-      return { items: commits, totalCount, cursor }
+    }
+  },
+  Version: {
+    async authorUser(parent, _args, ctx) {
+      const { author } = parent
+      return (await ctx.loaders.users.getUser.load(author)) || null
     }
   },
   ModelsTreeItem: {
@@ -60,6 +72,19 @@ export = {
     },
     async children(parent) {
       return await getModelTreeItems(parent.projectId, parent.fullName)
+    }
+  },
+  Mutation: {
+    modelMutations: () => ({})
+  },
+  ModelMutations: {
+    async create(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Contributor
+      )
+      return await createBranchAndNotify(args.input, ctx.userId!)
     }
   }
 } as Resolvers

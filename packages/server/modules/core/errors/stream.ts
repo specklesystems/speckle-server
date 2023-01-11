@@ -14,3 +14,8 @@ export class StreamCloneError extends BaseError {
   static defaultMessage = 'An issue occurred while attempting to clone a stream'
   static code = 'STREAM_CLONE_ERROR'
 }
+
+export class StreamUpdateError extends BaseError {
+  static defaultMessage = 'An issue occurred while attempting to update a stream'
+  static code = 'STREAM_UPDATE_ERROR'
+}
