@@ -65,6 +65,9 @@ void main() {
 	float c2 = mix(color3, 0., color0 * 0.5 + color1 * 0.5);
 	float sum = c0 + c1 + c2;
 
+	vec2 sUv = vUv * 2. - 1.;
+	sum *= 1. - pow(sUv.x, 6.);
+	sum *= 1. - pow(sUv.y, 6.);
 	// float c0 = color0 + color1 + color2;
 	// float c1 = mix(color3, 0., c0);
 	// float sum = c0 + c1;
