@@ -28,7 +28,7 @@
     </ViewerControlsButton>
   </div>
   <div
-    :class="` absolute max-h-[calc(100vh-5rem)] mt-[4.5rem] px-[2px] mx-14 mb-4 transition-[width,opacity] ease-in-out duration-75 bg-lime-300/0 overflow-y-auto simple-scrollbar ${
+    :class="` absolute max-h-[calc(100vh-5.5rem)] mt-[4.5rem] px-[2px] mx-14 mb-4 transition-[width,opacity] ease-in-out duration-75 bg-lime-300/0 overflow-y-auto simple-scrollbar ${
       activeControl !== 'none' ? 'w-80 opacity-100' : 'w-0 opacity-0'
     }`"
   >

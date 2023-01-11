@@ -6,9 +6,9 @@
     <!-- Header -->
     <div class="bg-foundation py-2 rounded-md px-1">
       <div class="flex items-center space-x-1">
-        <div v-if="isSingleCollection || isMultipleCollection">
+        <div v-if="isSingleCollection || isMultipleCollection" class="">
           <button
-            class="px-1 hover:bg-primary-muted rounded h-6 w-6 flex items-center justify-center"
+            class="px-1 hover:bg-primary-muted hover:text-primary rounded h-6 w-6 flex items-center justify-center"
             @click="unfold = !unfold"
           >
             <ChevronDownIcon
@@ -16,21 +16,28 @@
             />
           </button>
         </div>
-        <!-- Spacer padding -->
+        <!-- Spacer padding (could be replaced with an icon) -->
         <div v-else class="w-5 h-5"></div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-        <div class="flex items-center space-x-2 min-w-0" @click="setSelection">
-          <div :class="`text-sm truncate ${unfold ? 'font-semibold' : ''}`">
-            {{
-              rawSpeckleData.name ||
-              rawSpeckleData.Name ||
-              rawSpeckleData.speckle_type ||
-              itemId
-            }}
-            {{ rawSpeckleData.speckle_type }}
+        <div
+          class="flex items-center space-x-2 min-w-0 flex-grow h-full hover:bg-foundation-focus cursor-pointer rounded-md px-1"
+          @click="setSelection"
+        >
+          <div :class="`${unfold ? 'font-semibold' : ''}`">
+            <div class="text-sm truncate">
+              {{ objectName || objectSpeckleType }}
+            </div>
+            <div
+              v-if="(objectName || objectSpeckleType) !== objectSpeckleType"
+              class="text-xs text-foreground-2"
+            >
+              {{ objectSpeckleType }}
+            </div>
           </div>
           <div v-if="isSingleCollection || isMultipleCollection">
-            <span>{{ treeItem.children.length }}</span>
+            <span class="text-foreground-2 text-xs">
+              ({{ treeItem.children.length }})
+            </span>
           </div>
         </div>
       </div>
@@ -55,6 +62,7 @@
           />
         </div>
       </div>
+      <!-- If we have a single model collection -->
       <div v-if="isSingleCollection">
         <!-- single col items -->
         <div v-for="item in singleCollectionItems" :key="item.data?.id">
@@ -77,10 +85,6 @@ import {
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
-
-const { viewer } = useInjectedViewer()
-const dataTree = inject('dataTree')
 
 const props = withDefaults(
   defineProps<{
@@ -99,6 +103,14 @@ const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.data as SpeckleObject
 const rawSpeckleData = props.treeItem?.data as Record<string, unknown>
 
+const objectSpeckleType = computed(() => {
+  return (rawSpeckleData.speckle_type as string)?.split('.').reverse()[0]
+})
+
+const objectName = computed(() => {
+  return (rawSpeckleData.name as string) || (rawSpeckleData.Name as string)
+})
+
 const isSingleCollection = computed(() => {
   return (
     isNonEmptyObjectArray(speckleData.children) ||
@@ -108,9 +120,10 @@ const isSingleCollection = computed(() => {
 
 const singleCollectionItems = computed(() => {
   const treeItems = props.treeItem.children.filter((child) => !!child.data?.id) // filter out random tree children (no id means they're not actual objects)
-  // Handle the case of a wall being an atomic object as well as having nested children
+  // Handle the case of a wall, roof or other atomic objects that have nested children
   if (isNonEmptyObjectArray(speckleData.elements) && isAtomic.value) {
     // We need to filter out children that are not direct descendants of `elements`
+    // Note: this is a current assumption convention.
     const ids = (speckleData.elements as SpeckleReference[]).map(
       (obj) => obj.referencedId
     )

@@ -1,3 +1,6 @@
+// Note: minor typing hacks for less squiggly lines in the explorer.
+// TODO: ask alex re viewer data tree types
+
 export type ExplorerNode = {
   guid?: string
   data?: SpeckleObject

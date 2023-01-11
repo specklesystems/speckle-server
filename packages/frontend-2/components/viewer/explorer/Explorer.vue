@@ -13,12 +13,12 @@
         xxxdebug
         force-unfold
       />
-      <div
+      <!-- <div
         class="bg-foundation rounded-md shadow-lg mt-4 sticky bottom-0 h-44 simple-scrollbar overflow-y-auto overflow-x-clip"
       >
         <b>Selected object</b>
         <pre class="text-xs"> {{ cleanSelectedObject }}</pre>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>
@@ -31,15 +31,15 @@
 // TODOs:
 // - handle grasshopper models
 // - test sketchup, blender, etc. models
+// - ask alex re viewer data tree types exporting
 
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 const { viewer } = useInjectedViewer()
 
 const tree = viewer.getDataTree() // note expensive call, we should keep it alive
-provide('dataTree', tree)
 
-const rootNodes = computed(() => tree.root.children) // TODO: match model names
+const rootNodes = computed(() => tree.root.children as ExplorerNode[]) // TODO: match model names
 
 const selectedObject = ref({})
 provide('selectedObject', selectedObject)
