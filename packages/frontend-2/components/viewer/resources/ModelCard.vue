@@ -27,7 +27,7 @@
       </span>
     </div>
     <div class="space-y-0">
-      <ViewerResourcesVersionCardDesignOption3
+      <ViewerResourcesVersionCard
         v-for="version in versions"
         :key="version.id"
         :model-id="modelId"

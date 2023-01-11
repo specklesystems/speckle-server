@@ -1,59 +1,97 @@
 <template>
-  <div class="space-y-2 hover:bg-primary-muted transition p-1">
-    <div class="space-x-2">
+  <button
+    :class="`relative group block space-y-2 w-full transition text-left pb-2 rounded-md ${
+      clickable ? 'hover:bg-primary-muted' : 'cursor-default'
+    }`"
+    @click="handleClick"
+  >
+    <!-- Timeline left border -->
+    <div
+      v-if="!isLoadedVersion"
+      class="absolute w-1 h-[99%] top-3 border-l-2 border-outline-3 left-[7px] z-10"
+    ></div>
+    <div class="pl-1 flex items-center space-x-2">
+      <!-- Timeline circle -->
+      <div class="w-2 h-2 rounded-full bg-outline-3"></div>
       <div
-        v-if="isCurrent"
-        class="inline-block rounded-full px-2 text-xs bg-foundation-focus text-primary font-bold"
+        class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
       >
-        Current version
+        <span>
+          {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
+        </span>
       </div>
-      <div class="inline-block rounded-full px-2 text-xs bg- text-primary font-bold">
-        {{ version.sourceApplication }}
+      <div
+        v-if="isLoaded"
+        class="inline-block rounded-full px-2 text-xs bg-primary text-foreground-on-primary font-bold"
+      >
+        Currently Viewing
       </div>
     </div>
-    <div class="text-xs text-foreground-2">{{ createdAt }} // {{ isCurrent }}</div>
-    <div class="flex items-center space-x-2">
-      <UserAvatar :user="author" size="sm" />
-      <span class="font-sm font-semibold">{{ author.name }}</span>
+    <!-- Main stuff -->
+    <div class="pl-5 flex space-x-1 items-center">
+      <div class="bg-foundation w-20 h-20 shadow rounded-md flex-shrink-0">
+        <PreviewImage :preview-url="previewUrl" />
+      </div>
+      <div class="flex flex-col space-y-1 overflow-hidden">
+        <div class="flex items-center space-x-1 min-w-0">
+          <UserAvatar :user="author" size="sm" />
+          <div class="text-xs truncate">
+            {{ version.message || 'no message' }}
+          </div>
+        </div>
+        <div class="inline-block pl-1 rounded-full text-xs text-primary font-bold">
+          {{ version.sourceApplication }}
+        </div>
+      </div>
     </div>
-    <div class="font-sm text-foreground-2">
-      {{ version.message || 'no description' }}
-    </div>
-    <div class="w-20 h-20 shadow-md rounded-md">
-      <PreviewImage :preview-url="previewUrl" />
-    </div>
-  </div>
+  </button>
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ComputedRef } from 'vue'
-import { ModelCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
-
-const props = defineProps<{
-  version: ModelCardVersionFragment
-}>()
-
+import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 const getPreviewUrl = useGetPreviewUrl()
 
-const currentVersion = inject('currentVersion') as ComputedRef<ModelCardVersionFragment>
-const projectId = inject('projectId') as string
-
-const isCurrent = computed(() => currentVersion.value.id === props.version.id)
-
-const author = computed(() => {
-  return {
-    id: props.version.authorId as string,
-    avatar: props.version.authorAvatar,
-    name: props.version.authorName as string
+const props = withDefaults(
+  defineProps<{
+    version: ViewerModelVersionCardItemFragment
+    showMetadata: boolean
+    clickable: boolean
+    isLatestVersion: boolean
+    isLoadedVersion: boolean
+  }>(),
+  {
+    showMetadata: true,
+    clickable: true,
+    default: false
   }
-})
+)
+
+const emit = defineEmits<{
+  (e: 'changeVersion', version: string): void
+}>()
+
+const { projectId } = useInjectedViewer()
+
+const isLoaded = computed(() => props.isLoadedVersion)
+const isLatest = computed(() => props.isLatestVersion)
+
+const author = computed(() => props.version.authorUser)
 
 const createdAt = computed(() =>
   dayjs(props.version.createdAt as string).format('DD MMM YY, h:mm A')
 )
 
-const previewUrl = computed(() =>
-  getPreviewUrl(projectId, props.version.referencedObject)
+const timeAgoCreatedAt = computed(() =>
+  dayjs(props.version.createdAt as string).from(dayjs())
 )
+
+const previewUrl = computed(() =>
+  getPreviewUrl(projectId.value, props.version.referencedObject)
+)
+
+function handleClick() {
+  if (props.clickable) emit('changeVersion', props.version.id)
+}
 </script>
