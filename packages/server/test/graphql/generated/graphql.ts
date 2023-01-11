@@ -490,6 +490,8 @@ export type Model = {
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
+  /** All comment threads in this model */
+  commentThreads?: Maybe<CommentCollection>;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   /** The shortened/display name that doesn't include the names of parent models */
@@ -501,6 +503,12 @@ export type Model = {
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
   versions: VersionCollection;
+};
+
+
+export type ModelCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 
@@ -1885,11 +1893,19 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  /** All comment threads in this version */
+  commentThreads?: Maybe<CommentCollection>;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+};
+
+
+export type VersionCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 export type VersionCollection = {

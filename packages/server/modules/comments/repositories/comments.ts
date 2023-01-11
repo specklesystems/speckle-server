@@ -8,17 +8,19 @@ import {
   Branches,
   CommentLinks,
   Comments,
+  Commits,
   knex
 } from '@/modules/core/dbSchema'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { keyBy, reduce } from 'lodash'
+import { MaybeNullOrUndefined, Optional } from '@/modules/shared/helpers/typeHelper'
+import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -258,4 +260,146 @@ export async function getCommentReplyAuthorIds(
     },
     {} as Record<string, string[]>
   )
+}
+
+export type PaginatedCommitCommentsParams = {
+  commitId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+function getPaginatedCommitCommentsBaseQuery<T = CommentRecord[]>(
+  params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>
+) {
+  const { commitId, filter } = params
+
+  const q = Commits.knex()
+    .select<T>(Comments.cols)
+    .innerJoin(CommentLinks.name, function () {
+      this.on(CommentLinks.col.resourceId, Commits.col.id).andOnVal(
+        CommentLinks.col.resourceType,
+        'commit' as CommentLinkResourceType
+      )
+    })
+    .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+    .where(Commits.col.id, commitId)
+
+  if (!filter?.includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  if (filter?.threadsOnly) {
+    q.whereNull(Comments.col.parentComment)
+  }
+
+  return q
+}
+
+export async function getPaginatedCommitComments(
+  params: PaginatedCommitCommentsParams
+) {
+  const { cursor } = params
+
+  const limit = clamp(params.limit, 1, 100)
+  const q = getPaginatedCommitCommentsBaseQuery(params)
+    .orderBy(Comments.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (cursor) {
+    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+  }
+
+  const items = await q
+  return {
+    items,
+    cursor: items.length
+      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+      : null
+  }
+}
+
+export async function getPaginatedCommitCommentsTotalCount(
+  params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>
+) {
+  const baseQ = getPaginatedCommitCommentsBaseQuery(params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+  const [row] = await q
+
+  return parseInt(row.count || '0')
+}
+
+export type PaginatedBranchCommentsParams = {
+  branchId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+function getPaginatedBranchCommentsBaseQuery(
+  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
+) {
+  const { branchId, filter } = params
+
+  const q = Branches.knex()
+    .distinct()
+    .select(Comments.cols)
+    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+    .innerJoin(CommentLinks.name, function () {
+      this.on(CommentLinks.col.resourceId, BranchCommits.col.commitId).andOnVal(
+        CommentLinks.col.resourceType,
+        'commit' as CommentLinkResourceType
+      )
+    })
+    .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+    .where(Branches.col.id, branchId)
+
+  if (!filter?.includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  if (filter?.threadsOnly) {
+    q.whereNull(Comments.col.parentComment)
+  }
+
+  return q
+}
+
+export async function getPaginatedBranchComments(
+  params: PaginatedBranchCommentsParams
+) {
+  const { cursor } = params
+
+  const limit = clamp(params.limit, 1, 100)
+  const q = getPaginatedBranchCommentsBaseQuery(params)
+    .orderBy(Comments.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (cursor) {
+    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+  }
+
+  const items = await q
+  return {
+    items,
+    cursor: items.length
+      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+      : null
+  }
+}
+
+export async function getPaginatedBranchCommentsTotalCount(
+  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
+) {
+  const baseQ = getPaginatedBranchCommentsBaseQuery(params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+  const [row] = await q
+
+  return parseInt(row.count || '0')
 }
