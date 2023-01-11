@@ -30,14 +30,14 @@
               rawSpeckleData.speckle_type ||
               itemId
             }}
+            {{ rawSpeckleData.speckle_type }}
           </div>
         </div>
       </div>
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-      <div v-if="true" class="text-xs text-foreground-2" @click="setSelection">
+      <div v-if="debug" class="text-xs text-foreground-2" @click="setSelection">
         single: {{ isSingleCollection }}; multiple: {{ isMultipleCollection }}; a:
         {{ isAtomic }}
-        <!-- {{ treeItem.guid }} -->
       </div>
     </div>
 
@@ -48,19 +48,21 @@
         <!-- mul col items -->
         <div v-for="collection in arrayCollections" :key="collection.data.name">
           <TreeItemOption2
-            :id="(collection.data.id as string)"
+            :item-id="(collection.data.id as string)"
             :tree-item="collection"
             :depth="depth + 1"
+            :debug="debug"
           />
         </div>
       </div>
       <div v-if="isSingleCollection">
         <!-- single col items -->
-        <div v-for="item in singleCollectionItems" :key="item.data.id">
+        <div v-for="item in singleCollectionItems" :key="item.data?.id">
           <TreeItemOption2
             :item-id="(item.data?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
+            :debug="debug"
           />
         </div>
       </div>
@@ -85,8 +87,9 @@ const props = withDefaults(
     itemId: string
     treeItem: ExplorerNode
     depth: number
+    debug?: boolean
   }>(),
-  { depth: 1 }
+  { depth: 1, debug: false }
 )
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
@@ -113,10 +116,20 @@ const singleCollectionItems = computed(() => {
   return treeItems
 })
 
-// creates a list of all model collections that are not defined as collections. specifically, handles cases such as
+type ExplorerModelCollection = {
+  data: {
+    name: string
+    id: string
+    children: SpeckleObject[]
+  }
+  children: ExplorerNode[]
+}
+
+// Creates a list of all model collections that are not defined as collections. specifically, handles cases such as
 // object { @boat: [obj, obj, obj], @harbour: [obj, obj, obj], etc. }
+// @boat and @harbour would ideally be model collections, but, alas, connectors don't have that yet.
 const arrayCollections = computed(() => {
-  const arr = [] as Record<string, unknown>[]
+  const arr = [] as ExplorerModelCollection[]
   for (const k of Object.keys(rawSpeckleData)) {
     if (k === 'children' || k === 'elements' || k.includes('displayValue')) continue
 
@@ -134,7 +147,7 @@ const arrayCollections = computed(() => {
       data: {
         name: k,
         id: k,
-        children: actualRawRefs.map((ref) => ref.data)
+        children: actualRawRefs.map((ref) => ref.data) as SpeckleObject[]
       },
       children: actualRawRefs
     }

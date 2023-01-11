@@ -10,6 +10,7 @@
         :key="idx"
         :item-id="rootNode.model.data.id"
         :tree-item="rootNode.model"
+        debug
       />
       <div
         class="bg-foundation rounded-md shadow-lg mt-4 sticky bottom-0 h-44 simple-scrollbar overflow-y-auto overflow-x-clip"
