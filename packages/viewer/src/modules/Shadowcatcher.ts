@@ -6,6 +6,7 @@ import {
   Matrix4,
   Mesh,
   OneFactor,
+  Plane,
   PlaneGeometry,
   RepeatWrapping,
   Scene,
@@ -99,6 +100,12 @@ export class Shadowcatcher {
     this.shadowcatcherPass.setOutputSize(size.x, size.y)
     this.shadowcatcherPass.setWeights(this._config.weights)
     this.shadowcatcherPass.needsUpdate = true
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    this.displayMaterial.clippingPlanes = planes
+    this.displayMaterial.needsUpdate = true
+    this.shadowcatcherPass.updateClippingPlanes(planes)
   }
 
   private updatePlaneMesh(box: Box3, force?: boolean) {

@@ -291,6 +291,16 @@ export default class SpeckleRenderer {
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
       ObjectLayers.STREAM_CONTENT
     ])
+    let restoreVisibility
+    this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
+      restoreVisibility = this.batcher.saveVisiblity()
+      const opaque = this.batcher.getOpaque()
+      this.batcher.applyVisibility(opaque)
+    }
+    this._shadowcatcher.shadowcatcherPass.onAfterRender = () => {
+      this.batcher.applyVisibility(restoreVisibility)
+    }
+
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
   }
 
@@ -523,6 +533,7 @@ export default class SpeckleRenderer {
       this.updateSectionBoxCapper()
     }
     this.renderer.shadowMap.needsUpdate = true
+    this.updateShadowCatcher()
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -541,6 +552,7 @@ export default class SpeckleRenderer {
     })
     this.pipeline.updateClippingPlanes(planes)
     this.sectionBoxOutlines.updateClippingPlanes(planes)
+    this._shadowcatcher.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
@@ -563,6 +575,7 @@ export default class SpeckleRenderer {
     const generate = () => {
       this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
       this.updateSectionBoxCapper(this.sectionPlanesChanged)
+      this.updateShadowCatcher()
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
     }
     this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)

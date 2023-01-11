@@ -83,7 +83,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -102,7 +102,7 @@ await sandbox.loadUrl(
   //Car
   // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
   // Jonathon's
-  'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
+  // 'https://latest.speckle.dev/streams/501258ee5f/commits/f885570011'
   // Alex's cube
   // 'https://latest.speckle.dev/streams/46e3e0e1ec/commits/a6392c19d6?c=%5B6.85874,2.9754,0.79022,0,0,0,0,1%5D'
   // Groups of groups

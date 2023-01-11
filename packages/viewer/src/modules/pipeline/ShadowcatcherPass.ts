@@ -8,6 +8,7 @@ import {
   NoBlending,
   OrthographicCamera,
   PerspectiveCamera,
+  Plane,
   RepeatWrapping,
   Scene,
   ShaderMaterial,
@@ -247,6 +248,11 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       if (this.onAfterRender) this.onAfterRender()
       this._needsUpdate = false
     }
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    this.depthMaterial.clippingPlanes = planes
+    this.depthMaterial.needsUpdate = true
   }
 
   public setOutputSize(width: number, height: number) {
