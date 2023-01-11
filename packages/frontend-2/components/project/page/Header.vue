@@ -14,6 +14,7 @@
             <textarea
               ref="titleInput"
               v-model="titleState"
+              maxlength="512"
               :class="titleInputClasses"
               placeholder="Please enter a valid title"
               rows="1"
@@ -66,6 +67,7 @@
             :disabled="anyMutationsLoading"
             rows="1"
             spellcheck="false"
+            maxlength="1000"
             :cols="descriptionState.length < 20 ? descriptionState.length : undefined"
             @keydown="onUpdatableInputKeydown"
             @blur="save()"
@@ -101,12 +103,6 @@ import {
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-
-/**
- * TODO:
- * - On enter/unfocus: save
- * - Limit max width
- */
 
 graphql(`
   fragment ProjectPageProjectHeader on Project {

@@ -9,6 +9,15 @@
     <div v-for="{ modelId, versionId } in nonObjectResources" :key="modelId">
       <ViewerResourcesModelCard :model-id="modelId" :version-id="versionId" />
     </div>
+    <!-- Basic object cards for now -->
+    <div
+      v-for="{ objectId } in objectResources"
+      :key="objectId"
+      class="px-1 py-2 flex flex-col items-center bg-foundation shadow-md rounded-md"
+    >
+      <div>Object w/ ID:</div>
+      <span>{{ objectId }}</span>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -21,5 +30,9 @@ const nonObjectResources = computed(() =>
   resourceItems.value.filter(
     (r): r is ViewerResourceItem & { modelId: string; versionId: string } => !!r.modelId
   )
+)
+
+const objectResources = computed(() =>
+  resourceItems.value.filter((i) => !i.modelId && !i.versionId)
 )
 </script>

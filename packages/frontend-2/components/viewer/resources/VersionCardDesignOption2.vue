@@ -59,8 +59,8 @@ import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
 const props = withDefaults(
   defineProps<{
     version: ViewerModelVersionCardItemFragment
-    showMetadata: boolean
-    clickable: boolean
+    showMetadata?: boolean
+    clickable?: boolean
     modelId: string
     isLatestVersion?: boolean
   }>(),

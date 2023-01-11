@@ -132,17 +132,10 @@ export async function getViewerResourceGroups(
 ): Promise<ViewerResourceGroup[]> {
   const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
-  const objectResources = resources.filter(
-    (r): r is SpeckleViewer.ViewerRoute.ViewerObjectResource =>
-      SpeckleViewer.ViewerRoute.isObjectResource(r)
-  )
-  const modelResources = resources.filter(
-    (r): r is SpeckleViewer.ViewerRoute.ViewerModelResource =>
-      SpeckleViewer.ViewerRoute.isModelResource(r)
-  )
+  const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
+  const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
   const folderResources = resources.filter(
-    (r): r is SpeckleViewer.ViewerRoute.ViewerModelFolderResource =>
-      SpeckleViewer.ViewerRoute.isModelFolderResource(r)
+    SpeckleViewer.ViewerRoute.isModelFolderResource
   )
 
   const results: ViewerResourceGroup[] = flatten(

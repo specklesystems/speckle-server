@@ -53,7 +53,7 @@ const props = defineProps<{
    * to whatever the user enters.
    * E.g. if creating a model under "a/b", then put "a/b" here
    */
-  modelNamePrefix?: string
+  parentModelName?: string
 }>()
 
 const { handleSubmit } = useForm<{ name: string }>()
@@ -75,7 +75,7 @@ const name = ref('')
 
 const createFinalName = (name: string) => {
   const userEnteredName = trim(name, '/')
-  const prefix = trim(props.modelNamePrefix || '', '/')
+  const prefix = trim(props.parentModelName || '', '/')
   return (prefix ? `${prefix}/` : '') + userEnteredName
 }
 </script>
