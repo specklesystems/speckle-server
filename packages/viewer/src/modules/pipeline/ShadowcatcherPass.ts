@@ -73,8 +73,6 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
         minFilter: LinearFilter,
         magFilter: LinearFilter
       })
-      rt.texture.wrapS = RepeatWrapping
-      rt.texture.wrapT = RepeatWrapping
       this.renderTargets.push(rt)
       this.tempTargets.push(rt.clone())
     }

@@ -8,7 +8,6 @@ import {
   OneFactor,
   Plane,
   PlaneGeometry,
-  RepeatWrapping,
   Scene,
   Vector2,
   Vector3,
@@ -58,8 +57,8 @@ export class Shadowcatcher {
     this.displayMaterial = new SpeckleBasicMaterial({ color: 0xffffff }, ['USE_RTE'])
     this.displayMaterial.toneMapped = false
     this.displayMaterial.map = this.shadowcatcherPass.outputTexture
-    this.displayMaterial.map.wrapS = RepeatWrapping
-    this.displayMaterial.map.repeat.x = -1
+    // this.displayMaterial.map.wrapS = RepeatWrapping
+    // this.displayMaterial.map.repeat.x = -1
     this.displayMaterial.map.needsUpdate = true
     this.displayMaterial.transparent = true
     this.displayMaterial.toneMapped = false

@@ -141,10 +141,8 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      this.viewer
-        .getRenderer()
-        .subtree(url)
-        .position.set(position.value.x, position.value.y, position.value.z)
+      const subtree = this.viewer.getRenderer().subtree(url)
+      subtree.position.set(position.value.x, position.value.y, position.value.z)
       this.viewer.getRenderer().updateDirectLights()
       this.viewer.getRenderer().updateHelpers()
       this.viewer.requestRender()
