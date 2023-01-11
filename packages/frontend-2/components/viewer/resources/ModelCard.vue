@@ -25,7 +25,7 @@
     </div>
     <div class="flex flex-col bg-teal-300/0 w-full">
       <button
-        v-if="versions.length !== 1"
+        v-if="versionsExceptLoaded.length > 0"
         class="w-full flex justify-between hover:bg-foundation-focus py-2 px-1 rounded-md transition"
         @click="showVersions = !showVersions"
       >
@@ -37,7 +37,7 @@
         <div><ChevronDownIcon class="w-3 h-3" /></div>
       </button>
       <div v-else class="py-2 px-1 text-xs font-bold text-foreground-2">
-        No other versions
+        {{ loadedVersion ? 'No other versions' : 'No versions' }}
       </div>
       <div v-if="showVersions" class="flex flex-col space-y-1">
         <ViewerResourcesVersionCardDesignOption2
@@ -108,6 +108,10 @@ const versions = computed(() => props.model.versions?.items || [])
 
 const loadedVersion = computed(() =>
   versions.value.find((v) => v.id === props.versionId)
+)
+
+const versionsExceptLoaded = computed(() =>
+  versions.value.filter((v) => v.id !== loadedVersion.value?.id)
 )
 
 const latestVersionId = computed(
