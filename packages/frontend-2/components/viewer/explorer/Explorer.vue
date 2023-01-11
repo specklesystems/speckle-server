@@ -3,14 +3,15 @@
   <!-- WIP -->
   <!--     -->
   <div class="flex justify-between flex-col bg-foundation rounded-md shadow">
-    <div class="text-sm font-bold text-foreground-2">Explorer TODO</div>
-    <div class="flex flex-col space-y-1">
+    <!-- <div class="text-sm font-bold text-foreground-2">Explorer TODO</div> -->
+    <div class="flex flex-col space-y-1 px-1">
       <ViewerExplorerTreeItemOption2
         v-for="(rootNode, idx) in rootNodes"
         :key="idx"
         :item-id="rootNode.model.data.id"
         :tree-item="rootNode.model"
-        debug
+        xxxdebug
+        force-unfold
       />
       <div
         class="bg-foundation rounded-md shadow-lg mt-4 sticky bottom-0 h-44 simple-scrollbar overflow-y-auto overflow-x-clip"

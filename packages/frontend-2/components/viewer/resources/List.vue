@@ -1,5 +1,5 @@
 <template>
-  <div class="p-2 space-y-2">
+  <div class="space-y-2">
     <template v-if="resourceItems.length">
       <div v-for="{ model, versionId } in modelsAndVersionIds" :key="model.id">
         <ViewerResourcesModelCard :model="model" :version-id="versionId" />

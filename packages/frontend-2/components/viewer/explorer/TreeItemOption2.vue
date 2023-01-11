@@ -4,26 +4,23 @@
   <!--     -->
   <div class="w-full">
     <!-- Header -->
-    <div class="bg-foundation py-2 hover:bg-primary-muted rounded-md px-1">
-      <div class="flex items-center space-x-2">
+    <div class="bg-foundation py-2 rounded-md px-1">
+      <div class="flex items-center space-x-1">
         <div v-if="isSingleCollection || isMultipleCollection">
           <button
-            class="bg-foundation-focus shadow xxx-text-foreground-on-primary flex items-center space-x-1 rounded-md pl-1 pr-1"
+            class="px-1 hover:bg-primary-muted rounded h-6 w-6 flex items-center justify-center"
             @click="unfold = !unfold"
           >
             <ChevronDownIcon
-              :class="`w-3 h-3 transition ${!unfold ? 'rotate-0' : 'rotate-180'}`"
+              :class="`w-5 h-5 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
             />
-            <div
-              class="w-4 h-4 text-tiny flex-shrink-0 flex items-center justify-center"
-            >
-              <span>{{ treeItem.children.length }}</span>
-            </div>
           </button>
         </div>
+        <!-- Spacer padding -->
+        <div v-else class="w-5 h-5"></div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div class="flex items-center space-x-2 min-w-0" @click="setSelection">
-          <div class="text-sm truncate">
+          <div :class="`text-sm truncate ${unfold ? 'font-semibold' : ''}`">
             {{
               rawSpeckleData.name ||
               rawSpeckleData.Name ||
@@ -31,6 +28,9 @@
               itemId
             }}
             {{ rawSpeckleData.speckle_type }}
+          </div>
+          <div v-if="isSingleCollection || isMultipleCollection">
+            <span>{{ treeItem.children.length }}</span>
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Children Contents -->
-    <div v-if="unfold" class="relative pl-4 text-xs z-0">
+    <div v-if="unfold" class="relative pl-3 text-xs">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -88,9 +88,12 @@ const props = withDefaults(
     treeItem: ExplorerNode
     depth: number
     debug?: boolean
+    forceUnfold?: boolean
   }>(),
-  { depth: 1, debug: false }
+  { depth: 1, debug: false, forceUnfold: false }
 )
+
+const unfold = ref(props.forceUnfold)
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.data as SpeckleObject
@@ -158,8 +161,6 @@ const arrayCollections = computed(() => {
 })
 
 const isMultipleCollection = computed(() => arrayCollections.value.length > 0)
-
-const unfold = ref(false)
 
 const isNonEmptyArray = (x: unknown) => !!x && Array.isArray(x) && x.length > 0
 
