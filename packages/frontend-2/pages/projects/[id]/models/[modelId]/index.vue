@@ -37,7 +37,8 @@ import { useSetupViewer } from '~~/lib/viewer/composables/viewer'
 definePageMeta({
   middleware: ['require-valid-project'],
   pageTransition: false, // NOTE: transitions fuck viewer up
-  layoutTransition: false
+  layoutTransition: false,
+  key: false
 })
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
