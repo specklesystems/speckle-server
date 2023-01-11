@@ -93,6 +93,10 @@ const loadedVersion = computed(() =>
   versions.value.find((v) => v.id === props.versionId)
 )
 
+const versionsExceptLoaded = computed(() =>
+  versions.value.filter((v) => v.id !== loadedVersion.value?.id)
+)
+
 const latestVersionId = computed(
   () =>
     versions.value
