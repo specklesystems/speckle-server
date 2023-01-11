@@ -500,12 +500,13 @@ export type Model = {
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
-  versions?: Maybe<VersionCollection>;
+  versions: VersionCollection;
 };
 
 
 export type ModelVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ModelVersionsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -524,6 +525,11 @@ export type ModelMutations = {
 
 export type ModelMutationsCreateArgs = {
   input: CreateModelInput;
+};
+
+export type ModelVersionsFilter = {
+  /** Make sure these specified versions are always loaded first */
+  priorityIds?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type ModelsTreeItem = {
@@ -1004,7 +1010,7 @@ export type Project = {
   modelChildrenTree: Array<ModelsTreeItem>;
   modelCount: Scalars['Int'];
   /** Returns a flat list of all models */
-  models?: Maybe<ModelCollection>;
+  models: ModelCollection;
   /**
    * Return's a project's models in a tree view with submodels being nested under parent models
    * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
@@ -1060,6 +1066,8 @@ export type ProjectCollection = {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Only select models w/ the specified IDs */
+  ids?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out models that don't have any versions */
   onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
   /** Filter by model names */
@@ -1876,9 +1884,7 @@ export type UserUpdateInput = {
 
 export type Version = {
   __typename?: 'Version';
-  authorAvatar?: Maybe<Scalars['String']>;
-  authorId?: Maybe<Scalars['String']>;
-  authorName?: Maybe<Scalars['String']>;
+  authorUser?: Maybe<LimitedUser>;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;

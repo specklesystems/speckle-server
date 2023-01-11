@@ -6,11 +6,9 @@ import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrie
 import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash'
-import {
-  getCommitsByBranchId,
-  getCommitsTotalCountByBranchId
-} from '../../services/commits'
+
 import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
+import { getPaginatedBranchCommits } from '@/modules/core/services/commit/retrieval'
 
 export = {
   Project: {
@@ -52,14 +50,18 @@ export = {
       return last(parent.name.split('/'))
     },
     async versions(parent, args) {
-      const { commits, cursor } = await getCommitsByBranchId({
+      return await getPaginatedBranchCommits({
         branchId: parent.id,
+        cursor: args.cursor,
         limit: args.limit,
-        cursor: args.cursor
+        filter: args.filter
       })
-      const totalCount = await getCommitsTotalCountByBranchId({ branchId: parent.id })
-
-      return { items: commits, totalCount, cursor }
+    }
+  },
+  Version: {
+    async authorUser(parent, _args, ctx) {
+      const { author } = parent
+      return (await ctx.loaders.users.getUser.load(author)) || null
     }
   },
   ModelsTreeItem: {

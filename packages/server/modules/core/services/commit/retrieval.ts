@@ -1,4 +1,14 @@
-import { StreamCommitsArgs } from '@/modules/core/graph/generated/graphql'
+import { Nullable, Optional } from '@speckle/shared'
+import {
+  ModelVersionsFilter,
+  StreamCommitsArgs
+} from '@/modules/core/graph/generated/graphql'
+import {
+  getBranchCommitsTotalCount,
+  getPaginatedBranchCommits as getPaginatedBranchCommitsDb,
+  getSpecificBranchCommits,
+  PaginatedBranchCommitsParams
+} from '@/modules/core/repositories/commits'
 import {
   getCommitsByStreamId,
   getCommitsTotalCountByStreamId
@@ -25,4 +35,48 @@ export async function getPaginatedStreamCommits(
   })
 
   return { items, cursor, totalCount }
+}
+
+export async function getPaginatedBranchCommits(
+  params: PaginatedBranchCommitsParams & { filter?: Nullable<ModelVersionsFilter> }
+) {
+  if (params.limit && params.limit > 100)
+    throw new UserInputError(
+      'Cannot return more than 100 items, please use pagination.'
+    )
+
+  // Load priority commits first
+  let priorityCommitPromise: Optional<ReturnType<typeof getSpecificBranchCommits>> =
+    undefined
+  if (params.filter?.priorityIds && !params.cursor) {
+    priorityCommitPromise = getSpecificBranchCommits(
+      params.filter.priorityIds.map((i) => ({
+        branchId: params.branchId,
+        commitId: i
+      }))
+    )
+  }
+
+  const [results, totalCount, priorityCommits] = await Promise.all([
+    getPaginatedBranchCommitsDb({
+      ...params,
+      filter: {
+        ...(params.filter || {}),
+        // If we loaded priority commits first, exclude them from base results
+        excludeIds: params.filter?.priorityIds || undefined
+      }
+    }),
+    getBranchCommitsTotalCount(params),
+    priorityCommitPromise || Promise.resolve([])
+  ])
+
+  const newItems = [...priorityCommits, ...results.commits]
+  const newCursor =
+    newItems.length > 0 ? newItems[newItems.length - 1].createdAt.toISOString() : null
+
+  return {
+    totalCount,
+    cursor: newCursor,
+    items: newItems
+  }
 }

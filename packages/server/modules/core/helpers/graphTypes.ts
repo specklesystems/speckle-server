@@ -5,10 +5,12 @@ import {
   Project,
   ServerRole,
   Model,
-  ModelsTreeItem
+  ModelsTreeItem,
+  Commit,
+  Version
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { BranchRecord } from '@/modules/core/helpers/types'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -39,6 +41,14 @@ export type StreamGraphQLReturn = Omit<
   | 'fileUpload'
   | 'webhooks'
 >
+
+export type CommitGraphQLReturn = Commit & {
+  /**
+   * Commit DB schema actually has this as the author ID column, so we return it
+   * for field resolvers to be able to resolve extra things about the author (like name/avatar)
+   */
+  author: string
+}
 
 export type ProjectGraphQLReturn = Omit<
   Project,
@@ -71,8 +81,11 @@ export type ModelGraphQLReturn = Omit<
   | 'commentThreadCount'
   | 'childrenTree'
   | 'displayName'
+  | 'versions'
 > &
   BranchRecord
+
+export type VersionGraphQLReturn = Omit<Version, 'authorUser'> & CommitRecord
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,

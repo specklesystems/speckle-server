@@ -178,6 +178,10 @@ function getPaginatedProjectModelsBaseQuery<T>(
     q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
   }
 
+  if (filter?.ids?.length) {
+    q.whereIn(Branches.col.id, filter.ids)
+  }
+
   return q
 }
 

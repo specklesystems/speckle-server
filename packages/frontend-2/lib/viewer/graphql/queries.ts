@@ -16,12 +16,27 @@ export const projectViewerResourcesQuery = graphql(`
   }
 `)
 
-export const viewerModelCardQuery = graphql(`
-  query ViewerModelCard($projectId: String!, $modelId: String!) {
+export const viewerModelCardsQuery = graphql(`
+  query ViewerModelCards(
+    $projectId: String!
+    $modelIds: [String!]!
+    $versionIds: [String!]
+  ) {
     project(id: $projectId) {
       id
-      model(id: $modelId) {
-        ...ViewerModelCardItem
+      models(filter: { ids: $modelIds }) {
+        totalCount
+        items {
+          id
+          name
+          updatedAt
+          versions(filter: { priorityIds: $versionIds }) {
+            totalCount
+            items {
+              ...ViewerModelVersionCardItem
+            }
+          }
+        }
       }
     }
   }

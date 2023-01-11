@@ -58,28 +58,22 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery } from '@vue/apollo-composable'
 import {
   ChevronDownIcon,
   ArrowPathRoundedSquareIcon,
   XMarkIcon
 } from '@heroicons/vue/24/solid'
-import {
-  useInjectedViewer,
-  useViewerResourcesState
-} from '~~/lib/viewer/composables/viewer'
-import { viewerModelCardQuery } from '~~/lib/viewer/graphql/queries'
+import { useViewerResourcesState } from '~~/lib/viewer/composables/viewer'
+import { ViewerModelCardsQuery } from '~~/lib/common/generated/gql/graphql'
+import { Get } from 'type-fest'
 
-/**
- * TODO: Retrieve models using single query?
- */
+type ModelItem = NonNullable<Get<ViewerModelCardsQuery, 'project.models.items[0]'>>
 
 const props = defineProps<{
-  modelId: string
+  model: ModelItem
   versionId: string
 }>()
 
-const { projectId } = useInjectedViewer()
 const { switchModelToVersion } = useViewerResourcesState()
 
 const showVersions = ref(false)
@@ -102,37 +96,32 @@ graphql(`
     message
     referencedObject
     sourceApplication
-    authorId
-    authorName
-    authorAvatar
     createdAt
+    authorUser {
+      ...LimitedUserAvatar
+    }
   }
 `)
 
-const { result } = useQuery(viewerModelCardQuery, () => ({
-  projectId: projectId.value,
-  modelId: props.modelId
-}))
+const modelId = computed(() => props.model.id)
+const versions = computed(() => props.model.versions?.items || [])
 
-const model = computed(() => {
-  return result?.value?.project?.model
-})
+const loadedVersion = computed(() =>
+  versions.value.find((v) => v.id === props.versionId)
+)
 
-const versions = computed(() => {
-  return result.value?.project?.model?.versions?.items || []
-})
-
-const loadedVersion = computed(() => {
-  return versions.value.find((v) => v.id === props.versionId)
-})
-
-const latestVersionId = computed(() => versions.value?.[0]?.id)
+const latestVersionId = computed(
+  () =>
+    versions.value
+      .slice()
+      .sort((a, b) => (dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1))[0].id
+)
 
 const updatedAt = computed(() =>
-  model.value ? dayjs(model.value?.updatedAt).from(dayjs()) : null
+  props.model ? dayjs(props.model.updatedAt).from(dayjs()) : null
 )
 
 function handleVersionChange(versionId: string) {
-  switchModelToVersion(props.modelId, versionId)
+  switchModelToVersion(props.model.id, versionId)
 }
 </script>

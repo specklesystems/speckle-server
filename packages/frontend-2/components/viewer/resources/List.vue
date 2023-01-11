@@ -6,8 +6,8 @@
     </div>
   </div>
   <div class="p-2 space-y-2">
-    <div v-for="{ modelId, versionId } in nonObjectResources" :key="modelId">
-      <ViewerResourcesModelCard :model-id="modelId" :version-id="versionId" />
+    <div v-for="{ model, versionId } in modelsAndVersionIds" :key="model.id">
+      <ViewerResourcesModelCard :model="model" :version-id="versionId" />
     </div>
     <!-- Basic object cards for now -->
     <div
@@ -22,9 +22,15 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/solid'
-import { useResolvedViewerResources } from '~~/lib/viewer/composables/viewer'
+import {
+  useInjectedViewer,
+  useResolvedViewerResources
+} from '~~/lib/viewer/composables/viewer'
 import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
+import { useQuery } from '@vue/apollo-composable'
+import { viewerModelCardsQuery } from '~~/lib/viewer/graphql/queries'
 
+const { projectId } = useInjectedViewer()
 const { resourceItems } = useResolvedViewerResources()
 const nonObjectResources = computed(() =>
   resourceItems.value.filter(
@@ -34,5 +40,20 @@ const nonObjectResources = computed(() =>
 
 const objectResources = computed(() =>
   resourceItems.value.filter((i) => !i.modelId && !i.versionId)
+)
+
+const { result: modelsResult } = useQuery(viewerModelCardsQuery, () => ({
+  projectId: projectId.value,
+  modelIds: nonObjectResources.value.map((r) => r.modelId),
+  versionIds: nonObjectResources.value.map((r) => r.versionId)
+}))
+
+const models = computed(() => modelsResult.value?.project?.models?.items || [])
+
+const modelsAndVersionIds = computed(() =>
+  models.value.map((m) => ({
+    model: m,
+    versionId: nonObjectResources.value.find((r) => r.modelId === m.id)?.versionId || ''
+  }))
 )
 </script>

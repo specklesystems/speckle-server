@@ -2,7 +2,11 @@ extend type Project {
   """
   Returns a flat list of all models
   """
-  models(cursor: String, limit: Int! = 25, filter: ProjectModelsFilter): ModelCollection
+  models(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectModelsFilter
+  ): ModelCollection!
   """
   Return's a project's models in a tree view with submodels being nested under parent models
   real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
@@ -66,7 +70,11 @@ type Model {
   Return a model tree of children
   """
   childrenTree: [ModelsTreeItem!]!
-  versions(limit: Int! = 25, cursor: String): VersionCollection
+  versions(
+    limit: Int! = 25
+    cursor: String
+    filter: ModelVersionsFilter
+  ): VersionCollection!
 }
 
 type ModelCollection {
@@ -112,10 +120,7 @@ type Version {
   referencedObject: String!
   message: String
   sourceApplication: String
-  # author: LimitedUser!
-  authorId: String
-  authorName: String
-  authorAvatar: String
+  authorUser: LimitedUser
   createdAt: DateTime!
 }
 
@@ -142,4 +147,15 @@ input ProjectModelsFilter {
   Filter out models that don't have any versions
   """
   onlyWithVersions: Boolean
+  """
+  Only select models w/ the specified IDs
+  """
+  ids: [String!]
+}
+
+input ModelVersionsFilter {
+  """
+  Make sure these specified versions are always loaded first
+  """
+  priorityIds: [String!]
 }

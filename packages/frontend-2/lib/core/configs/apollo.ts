@@ -79,6 +79,15 @@ function createCache(): InMemoryCache {
               checkIdentity: true
             })
           },
+          project: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'Project', id: args.id })
+              }
+
+              return original
+            }
+          },
           projects: {
             merge: buildArrayMergeFunction()
           }
@@ -136,6 +145,22 @@ function createCache(): InMemoryCache {
           },
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
+          },
+          model: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'Model', id: args.id })
+              }
+
+              return original
+            }
+          }
+        }
+      },
+      Model: {
+        fields: {
+          versions: {
+            keyArgs: ['filter']
           }
         }
       },

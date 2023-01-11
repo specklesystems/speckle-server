@@ -27,7 +27,7 @@
             {{ version.sourceApplication }}
           </div>
         </div>
-        <div class="flex items-center space-x-2 overflow-hidden">
+        <div v-if="author" class="flex items-center space-x-2 overflow-hidden">
           <UserAvatar :user="author" size="sm" />
           <span class="text-sm font-bold tracking-tight text-foreground">
             {{ author.name }}
@@ -46,10 +46,7 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import {
-  LimitedUser,
-  ViewerModelVersionCardItemFragment
-} from '~~/lib/common/generated/gql/graphql'
+import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
   useResolvedViewerResources
@@ -84,13 +81,7 @@ const isLoaded = computed(() =>
   )
 )
 
-const author = computed(() => {
-  return {
-    name: props.version.authorName,
-    id: props.version.authorId,
-    avatar: props.version.authorAvatar
-  } as LimitedUser
-})
+const author = computed(() => props.version.authorUser)
 
 const createdAt = computed(() =>
   dayjs(props.version.createdAt as string).format('DD MMM YY, h:mm A')
