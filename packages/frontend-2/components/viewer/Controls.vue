@@ -58,11 +58,10 @@
   >
     <ViewerResourcesList v-show="activeControl === 'models'" />
     <ViewerResourcesExplorer v-if="activeControl === 'explorer'" />
+    <ViewerCommentsList v-if="activeControl === 'comments'" />
   </div>
 </template>
 <script setup lang="ts">
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
-
 import {
   CubeIcon,
   FunnelIcon,
@@ -71,8 +70,6 @@ import {
 } from '@heroicons/vue/24/outline'
 
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'comments'
-
-const showModelSidebar = ref(true)
 
 const activeControl = ref<ActiveControl>('models')
 const toggleActiveControl = (control: ActiveControl) =>

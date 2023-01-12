@@ -4,14 +4,22 @@ import { inject, InjectionKey, Ref, ref, provide, ComputedRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { SpeckleViewer } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
-import { projectViewerResourcesQuery } from '~~/lib/viewer/graphql/queries'
+import {
+  projectViewerResourcesQuery,
+  viewerModelsQuery
+} from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, uniq } from 'lodash-es'
 import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
+import { SetNonNullable } from 'type-fest'
 
-/**
- * TODO: Remove exports from internal composables & only export 1 API for writing new resources
- */
+type MainSetupOptions = Partial<{
+  /**
+   * In some cases the data can't be injected (e.g. at the same level where it was provided), so it can
+   * be fed in through props instead
+   */
+  viewerInjectionData: ViewerInjectionData
+}>
 
 const GlobalViewerDataKey = Symbol('GlobalViewerData')
 
@@ -27,6 +35,10 @@ export const ViewerContainerKey: InjectionKey<HTMLElement> = Symbol('VIEWER_CONT
 
 const ViewerProjectIdKey: InjectionKey<ComputedRef<string>> =
   Symbol('VIEWER_PROJECT_ID')
+
+const ViewerLoadedResourcesKey: InjectionKey<
+  ReturnType<typeof useLoadedViewerResources>
+> = Symbol('VIEWER_LOADED_RESOURCES')
 
 /**
  * Inject viewer instance (it should be provided in an ancestor component using setupViewerInjection())
@@ -153,15 +165,7 @@ export function useViewerResourcesState() {
 /**
  * Validated & resolved resources that are loaded in the viewer
  */
-export function useResolvedViewerResources(
-  options?: Partial<{
-    /**
-     * In some cases the data can't be injected (e.g. at the same level where it was provided), so it can
-     * be fed in through props instead
-     */
-    viewerInjectionData: ViewerInjectionData
-  }>
-) {
+export function useResolvedViewerResources(options?: MainSetupOptions) {
   const { resources } = useViewerResourcesState()
   const { projectId } = options?.viewerInjectionData || useInjectedViewer()
 
@@ -240,18 +244,81 @@ export function useResolvedViewerResources(
   return { resourceItems }
 }
 
+export function useLoadedViewerResources(options?: MainSetupOptions) {
+  const { projectId } = options?.viewerInjectionData || useInjectedViewer()
+  const { resourceItems } = useResolvedViewerResources(options)
+
+  /**
+   * Resolved resource items that represent models & versions, not plain objects
+   */
+  const nonObjectResourceItems = computed(() =>
+    resourceItems.value.filter(
+      (r): r is ViewerResourceItem & { modelId: string; versionId: string } =>
+        !!r.modelId
+    )
+  )
+
+  /**
+   * Resolved resource items that represent only plain objects, not models & versions
+   */
+  const objectResourceItems = computed(() =>
+    resourceItems.value.filter((i) => !i.modelId && !i.versionId)
+  )
+
+  const { result: modelsResult } = useQuery(
+    viewerModelsQuery,
+    () => ({
+      projectId: projectId.value,
+      modelIds: nonObjectResourceItems.value.map((r) => r.modelId),
+      versionIds: nonObjectResourceItems.value.map((r) => r.versionId)
+    }),
+    () => ({
+      enabled: nonObjectResourceItems.value.length > 0
+    })
+  )
+  const models = computed(() => modelsResult.value?.project?.models?.items || [])
+
+  /**
+   * Pairs of (GQL) Models and their currently loaded in version IDs
+   */
+  const modelsAndVersionIds = computed(() =>
+    nonObjectResourceItems.value
+      .map((r) => ({
+        versionId: r.versionId,
+        model: models.value.find((m) => m.id === r.modelId)
+      }))
+      .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
+  )
+
+  return {
+    resourceItems,
+    nonObjectResourceItems,
+    objectResourceItems,
+    models,
+    modelsAndVersionIds
+  }
+}
+
+/**
+ * Provide loaded resource metadata & GQL results into child components for easy access
+ */
+function useProvideLoadedViewerResources(options?: MainSetupOptions) {
+  const resources = useLoadedViewerResources(options)
+  provide(ViewerLoadedResourcesKey, resources)
+}
+
+/**
+ * Inject loaded resource metadata & GQL results into child components for easy access
+ */
+export function useInjectLoadedViewerResources() {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return inject(ViewerLoadedResourcesKey)!
+}
+
 /**
  * Automatically loads & unloads objects into the viewer depending on the global URL resource identifier state
  */
-function useViewerObjectAutoLoading(
-  options?: Partial<{
-    /**
-     * In some cases the data can't be injected (e.g. at the same level where it was provided), so it can
-     * be fed in through props instead
-     */
-    viewerInjectionData: ViewerInjectionData
-  }>
-) {
+function useViewerObjectAutoLoading(options?: MainSetupOptions) {
   const getObjectUrl = useGetObjectUrl()
   const viewerInjectionData = options?.viewerInjectionData || useInjectedViewer()
   const { resourceItems } = useResolvedViewerResources({ viewerInjectionData })
@@ -319,7 +386,11 @@ export function useSetupViewer(params: {
     projectId: computed(() => unref(params.projectId))
   })
 
+  // Set up automatic loading/unloading of Viewer objects
   useViewerObjectAutoLoading({ viewerInjectionData })
+
+  // Provide loaded resource state into child components
+  useProvideLoadedViewerResources({ viewerInjectionData })
 
   return viewerInjectionData
 }
