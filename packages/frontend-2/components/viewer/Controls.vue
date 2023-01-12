@@ -2,13 +2,13 @@
   <div class="absolute h-screen max-h-screen pt-[4.5rem] px-2 flex flex-col space-y-2">
     <button
       class="bg-foundation shadow-md rounded-full w-12 h-12 flex items-center justify-center"
-      @click="showModelSidebar = !showModelSidebar"
+      @click="setType(SidebarType.Resources)"
     >
       <CubeIcon class="w-5 h-5" />
     </button>
     <button
       class="bg-foundation shadow-md rounded-full w-12 h-12 flex items-center justify-center"
-      @click="showModelSidebar = !showModelSidebar"
+      @click="setType(SidebarType.Explorer)"
     >
       <svg
         width="18"
@@ -26,32 +26,48 @@
     </button>
     <button
       class="bg-foundation shadow-md rounded-full w-12 h-12 flex items-center justify-center"
-      @click="showModelSidebar = !showModelSidebar"
+      @click="setType(SidebarType.Filters)"
     >
       <FunnelIcon class="w-5 h-5" />
     </button>
     <button
       class="bg-foundation shadow-md rounded-full w-12 h-12 flex items-center justify-center"
-      @click="showModelSidebar = !showModelSidebar"
+      @click="setType(SidebarType.Comments)"
     >
       <ChatBubbleLeftRightIcon class="w-5 h-5" />
     </button>
   </div>
   <div
     :class="`bg-foundation xxxbg-pink-500/10 absolute mt-[4.5rem] mx-16 mb-4 rounded-md xx-shadow-md transition-[width,opacity] ease-in-out duration-75 overflow-hidden ${
-      showModelSidebar ? 'w-96 opacity-100' : 'w-0 opacity-0'
+      currentType ? 'w-96 opacity-100' : 'w-0 opacity-0'
     }`"
   >
-    <ViewerResourcesList />
+    <ViewerResourcesList v-if="currentType === SidebarType.Resources" />
+    <ViewerCommentsList v-if="currentType === SidebarType.Comments" />
   </div>
 </template>
 <script setup lang="ts">
-import { Viewer } from '@speckle/viewer'
 import {
   CubeIcon,
   FunnelIcon,
   ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
+import { Nullable } from '@speckle/shared'
 
-const showModelSidebar = ref(true)
+enum SidebarType {
+  Resources = 'resources',
+  Explorer = 'explorer',
+  Filters = 'filters',
+  Comments = 'comments'
+}
+
+const currentType = ref(SidebarType.Resources as Nullable<SidebarType>)
+
+const setType = (type: SidebarType) => {
+  if (currentType.value === type) {
+    currentType.value = null
+  } else {
+    currentType.value = type
+  }
+}
 </script>
