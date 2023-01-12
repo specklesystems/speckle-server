@@ -4,37 +4,46 @@
   <!--     -->
   <div class="w-full">
     <!-- Header -->
-    <div class="bg-foundation py-2 rounded-md px-1 w-full">
+    <div class="bg-foundation py-1 rounded-md px-1 w-full">
       <div class="flex items-center space-x-1 w-full">
-        <div v-if="isSingleCollection || isMultipleCollection" class="">
+        <!-- Unfold button -->
+        <div class="h-6 w-6 overflow-hidden flex-shrink-0">
           <button
-            class="px-1 hover:bg-primary-muted hover:text-primary rounded h-6 w-6 flex items-center justify-center"
+            v-if="isSingleCollection || isMultipleCollection"
+            class="mt-1 px-1 hover:bg-primary-muted hover:text-primary rounded flex items-center justify-center"
             @click="unfold = !unfold"
           >
             <ChevronDownIcon
-              :class="`w-5 h-5 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+              :class="`w-4 h-4 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
             />
           </button>
         </div>
         <!-- Spacer padding (could be replaced with an icon) -->
-        <div v-else class="w-5 h-5"></div>
+        <!-- <div v-else class="w-5 h-5 px-1">&nbsp;</div> -->
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          class="bg-red-200/0 flex items-center space-x-2 min-w-0 max-w-full overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1"
+          class="flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1"
           @click="setSelection"
         >
-          <div :class="`${unfold ? 'font-semibold' : ''} max-w-full`">
+          <div :class="`truncate ${unfold ? 'font-semibold' : ''}`">
             <div class="text-sm truncate">
-              {{ headerAndSubheader.header }}
+              <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
+              {{ header || headerAndSubheader.header }}
             </div>
-            <div class="text-xs text-foreground-2">
-              {{ headerAndSubheader.subheader }}
+            <div class="text-tiny text-foreground-2 truncate">
+              {{ subHeader || headerAndSubheader.subheader }}
             </div>
           </div>
-          <div v-if="isSingleCollection || isMultipleCollection">
-            <span class="text-foreground-2 text-xs">
-              ({{ treeItem.children.length }})
-            </span>
+          <div class="flex-grow"></div>
+          <div class="flex items-center space-x-1 flex-shrink-0">
+            <div v-if="isSingleCollection || isMultipleCollection">
+              <span class="text-foreground-2 text-xs">
+                ({{ treeItem.children.length }})
+              </span>
+            </div>
+            <div v-if="!(isSingleCollection || isMultipleCollection)">
+              <EyeIcon class="w-3 h-3" />
+            </div>
           </div>
         </div>
       </div>
@@ -75,7 +84,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { ChevronDownIcon, EyeIcon } from '@heroicons/vue/24/solid'
 import { Ref } from 'vue'
 import {
   ExplorerNode,
@@ -90,8 +99,10 @@ const props = withDefaults(
     depth: number
     debug?: boolean
     forceUnfold?: boolean
+    header?: string | null
+    subHeader?: string | null
   }>(),
-  { depth: 1, debug: false, forceUnfold: false }
+  { depth: 1, debug: false, forceUnfold: false, header: null, subHeader: null }
 )
 
 const unfold = ref(props.forceUnfold)
@@ -108,9 +119,6 @@ const objectName = computed(() => {
   return (rawSpeckleData.name as string) || (rawSpeckleData.Name as string)
 })
 
-const header = 'todo'
-const subheader = 'todo'
-
 type HeaderSubheader = {
   header: string
   subheader: string
@@ -118,20 +126,59 @@ type HeaderSubheader = {
 
 const headerAndSubheader = computed(() => {
   const speckleType = speckleData.speckle_type as string
-  if (!speckleType) return { header: 'todo', subheader: '' } as HeaderSubheader
+  if (!speckleType)
+    return {
+      header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
+      subheader: ''
+    } as HeaderSubheader
 
+  // Handle revit objects
   if (speckleType.toLowerCase().includes('revit')) {
-    return { header: 'todo', subheader: '' } as HeaderSubheader
+    if (speckleType.toLowerCase().includes('familyinstance')) {
+      // TODO
+      const famHeader = `${rawSpeckleData.family as string} (${
+        rawSpeckleData.category as string
+      })`
+      const famSubheader = rawSpeckleData.type
+      return { header: famHeader, subheader: famSubheader }
+    }
+
+    if (speckleType.toLowerCase().includes('revitelementtype')) {
+      return {
+        header: rawSpeckleData.family,
+        subheader: rawSpeckleData.type + ' / ' + rawSpeckleData.category
+      }
+    }
+    const anyHeader = speckleType.split('.').reverse()[0]
+    const anySubheaderParts = [rawSpeckleData.category, rawSpeckleData.type].filter(
+      (part) => !!part
+    )
+    return {
+      header: anyHeader,
+      subheader: anySubheaderParts.join(' / ')
+    } as HeaderSubheader
   }
+
+  // Handle ifc objects
   if (speckleType.toLowerCase().includes('ifc')) {
-    return { header: 'todo', subheader: '' } as HeaderSubheader
+    const name = rawSpeckleData.Name || rawSpeckleData.name
+    return {
+      header: name || rawSpeckleData.speckleType,
+      subheader: name ? rawSpeckleData.speckle_type : rawSpeckleData.id
+    } as HeaderSubheader
   }
 
   if (speckleType.toLowerCase().includes('objects.geometry')) {
-    return { header: 'geometry object', subheader: 'test' } as HeaderSubheader
+    return {
+      header: speckleType.split('.').reverse()[0],
+      subheader: rawSpeckleData.id
+    } as HeaderSubheader
   }
 
-  return { header: 'todo', subheader: '' } as HeaderSubheader
+  return {
+    header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
+    subheader: speckleType.split('.').reverse()[0]
+  } as HeaderSubheader
 })
 
 const isSingleCollection = computed(() => {
@@ -186,6 +233,7 @@ const arrayCollections = computed(() => {
       data: {
         name: k,
         id: k,
+        speckle_type: 'Array Collection',
         children: actualRawRefs.map((ref) => ref.data) as SpeckleObject[]
       },
       children: actualRawRefs
@@ -208,7 +256,7 @@ const isObject = (x: unknown) =>
 // YOLO hack
 const selectedObject = inject('selectedObject') as Ref<Record<string, unknown>>
 const setSelection = () => {
-  console.log(props.treeItem)
+  console.log(props.treeItem.data)
   if (selectedObject.value?.id === speckleData.id) selectedObject.value = null
   else selectedObject.value = speckleData
 }
