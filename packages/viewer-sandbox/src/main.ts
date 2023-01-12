@@ -17,6 +17,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
+// params.verbose = true
 
 const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)
@@ -167,4 +168,8 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/4658eb53b9/commits/0feb23d263'
   // Jonathon's not loading
   // 'https://speckle.xyz/streams/ca99defd4b/commits/589b265c99'
+  // Jonathon's 3070
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/d29e56fe75'
+  // Filter issue
+  // 'https://speckle.xyz/streams/f95d8deb90/commits/30f31becb6'
 )

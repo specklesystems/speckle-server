@@ -583,6 +583,54 @@
                   "default": 443
                 }
               }
+            },
+            "oidc": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "If enabled, users can authenticate via OpenID Connect.",
+                  "default": false
+                },
+                "name": {
+                  "type": "string",
+                  "description": "This is the name that you want displayed on the login button",
+                  "default": ""
+                },
+                "discovery_url": {
+                  "type": "string",
+                  "description": "This is the OIDC discovery URL for the identity provider you want to use",
+                  "default": ""
+                },
+                "client_id": {
+                  "type": "string",
+                  "description": "This is the ID for Speckle that you have registered with the OIDC identity provider",
+                  "default": ""
+                },
+                "clientSecret": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": {
+                      "type": "string",
+                      "description": "The name of the Kubernetes Secret containing the OIDC client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets",
+                      "default": ""
+                    },
+                    "secretKey": {
+                      "type": "string",
+                      "description": "The key within the Kubernetes Secret holding the OIDC client secret as its value.",
+                      "default": ""
+                    }
+                  }
+                },
+                "domains": {
+                  "type": "array",
+                  "description": "List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy.",
+                  "default": [],
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
             }
           }
         },

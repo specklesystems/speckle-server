@@ -27,6 +27,7 @@ import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
+import Logger from 'js-logger'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -60,6 +61,8 @@ export class Viewer extends EventEmitter implements IViewer {
     params: ViewerParams = DefaultViewerParams
   ) {
     super()
+    Logger.useDefaults()
+    Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
 
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
@@ -166,8 +169,8 @@ export class Viewer extends EventEmitter implements IViewer {
           this.speckleRenderer.indirectIBL = value
         })
         .catch((reason) => {
-          console.warn(reason)
-          console.warn('Fallback to null environment!')
+          Logger.error(reason)
+          Logger.error('Fallback to null environment!')
         })
     }
   }
@@ -409,7 +412,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
-        console.warn(`Removed subtree ${url}`)
+        Logger.warn(`Removed subtree ${url}`)
         ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, url)
       }
     }
@@ -432,7 +435,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
-        console.warn(`Removed all subtrees`)
+        Logger.warn(`Removed all subtrees`)
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }

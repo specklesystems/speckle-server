@@ -16,6 +16,7 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
+import Logger from 'js-logger'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -99,7 +100,7 @@ export default class PointBatch implements Batch {
     for (let k = 0; k < sortedRanges.length; k++) {
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
       if (collidingGroup) {
-        console.warn(`Draw range collision @ ${this.id} overwritting...`)
+        Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
         collidingGroup.materialIndex = this.mesh.material.indexOf(
           sortedRanges[k].material
         )
@@ -143,7 +144,16 @@ export default class PointBatch implements Batch {
       if (k === 0) {
         if (sortedRanges[k].start > 0) {
           this.geometry.addGroup(0, sortedRanges[k].start, 0)
-          continue
+        }
+        if (
+          sortedRanges.length === 1 &&
+          sortedRanges[k].start + sortedRanges[k].count < this.getCount()
+        ) {
+          this.geometry.addGroup(
+            sortedRanges[k].start + sortedRanges[k].count,
+            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
+            0
+          )
         }
       } else if (k === sortedRanges.length - 1) {
         if (sortedRanges[k].start + sortedRanges[k].count < this.getCount()) {
@@ -191,6 +201,56 @@ export default class PointBatch implements Batch {
       console.error(`DrawRange autocomplete failed! ${count}vs${this.getCount()}`)
     }
 
+    /** We're flattening sequential groups to avoid redundant draw calls.
+     *  ! Not thoroughly tested !
+     */
+    const materialOrder = []
+    this.geometry.groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        this.geometry.groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
+      )
+    }
+    this.geometry.groups = []
+    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
+      const matGroup = grouped[matIndex]
+      for (let k = 0; k < matGroup.length; ) {
+        let offset = matGroup[k].start
+        let count = matGroup[k].count
+        let runningCount = matGroup[k].count
+        let n = k + 1
+        for (; n < matGroup.length; n++) {
+          if (offset + count === matGroup[n].start) {
+            offset = matGroup[n].start
+            count = matGroup[n].count
+            runningCount += matGroup[n].count
+          } else {
+            this.geometry.addGroup(
+              matGroup[k].start,
+              runningCount,
+              matGroup[k].materialIndex
+            )
+            break
+          }
+        }
+        if (n === matGroup.length) {
+          this.geometry.addGroup(
+            matGroup[k].start,
+            runningCount,
+            matGroup[k].materialIndex
+          )
+        }
+        k = n
+      }
+    }
     // console.warn(
     //   `Batch ID ${this.id} Group count ${this.geometry.groups.length} AUTOCOMPLETE`
     // )

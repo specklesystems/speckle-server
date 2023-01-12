@@ -1,6 +1,7 @@
 const knex = require('@/db/knex')
 const { appRoot } = require('@/bootstrap')
 const fs = require('fs/promises')
+const { logger } = require('@/logging/logging')
 
 /** @type {import('yargs').CommandModule} */
 const command = {
@@ -30,12 +31,12 @@ const command = {
       )
     }
 
-    console.log('Creating migration...')
+    logger.info('Creating migration...')
     await knex.migrate.make(name, {
       directory: migrationDir,
       extension: 'ts'
     })
-    console.log('...done')
+    logger.info('migration is complete')
   }
 }
 

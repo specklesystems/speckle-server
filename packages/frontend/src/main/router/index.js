@@ -4,6 +4,12 @@ import { GlobalEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { getMixpanel } from '@/mixpanelManager'
+import {
+  deletePostAuthRedirect,
+  getPostAuthRedirect,
+  setPostAuthRedirect
+} from '@/main/lib/auth/utils/postAuthRedirectManager'
+import { reduce } from 'lodash'
 
 Vue.use(VueRouter)
 
@@ -361,16 +367,20 @@ function shouldForceToLogin(isLoggedIn, to) {
 
 router.beforeEach((to, _from, next) => {
   const uuid = AppLocalStorage.get(LocalStorageKeys.Uuid)
-  const redirect = AppLocalStorage.get(LocalStorageKeys.ShouldRedirectTo)
+  const redirect = getPostAuthRedirect()
 
   router.app.$eventHub.$emit(GlobalEvents.PageLoading, true)
 
   // Redirect to log in page if not authed and on private pages
   if (shouldForceToLogin(!!uuid, to)) {
     // Redirect back here afterwards, unless if there's an already pending redirect
-    if (!redirect) {
-      AppLocalStorage.set(LocalStorageKeys.ShouldRedirectTo, to.path)
+    if (!redirect?.pathWithQuery) {
+      // Ignore home page - its already the default redirect
+      if (to.name !== 'home') {
+        setPostAuthRedirect({ pathWithQuery: to.fullPath })
+      }
     }
+
     return next({ name: 'Login' })
   }
 
@@ -380,9 +390,20 @@ router.beforeEach((to, _from, next) => {
   }
 
   // If we're logged in, we should redirect to the stored redirect path
-  if (uuid && redirect && redirect !== to.path) {
-    AppLocalStorage.remove(LocalStorageKeys.ShouldRedirectTo)
-    return next({ path: redirect })
+  if (uuid && redirect && redirect?.pathWithQuery) {
+    deletePostAuthRedirect()
+    const redirectUrl = new URL(redirect.pathWithQuery, window.location.origin)
+    return next({
+      path: redirectUrl.pathname,
+      query: reduce(
+        [...redirectUrl.searchParams.entries()],
+        (result, entry) => {
+          result[entry[0]] = entry[1]
+          return result
+        },
+        {}
+      )
+    })
   }
 
   return next()
@@ -391,10 +412,6 @@ router.beforeEach((to, _from, next) => {
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
 router.afterEach((to) => {
   router.app.$eventHub.$emit(GlobalEvents.PageLoading, false)
-
-  if (AppLocalStorage.get(LocalStorageKeys.ShouldRedirectTo) === to.path) {
-    AppLocalStorage.remove(LocalStorageKeys.ShouldRedirectTo)
-  }
 
   Vue.nextTick(() => {
     document.title = (to.meta && to.meta.title) || 'Speckle'
