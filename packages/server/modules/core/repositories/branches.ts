@@ -155,9 +155,7 @@ function getPaginatedProjectModelsBaseQuery<T>(
     .where(Branches.col.streamId, projectId)
     .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .havingRaw(
-      knex.raw(`?? != 'main' OR COUNT(??) > 0`, [Branches.col.name, Commits.col.id])
-    )
+
     .groupBy(Branches.col.id)
 
   if (filter?.search) {
@@ -176,6 +174,10 @@ function getPaginatedProjectModelsBaseQuery<T>(
 
   if (filter?.onlyWithVersions) {
     q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
+  } else {
+    q.havingRaw(
+      knex.raw(`(?? != 'main' OR COUNT(??) > 0)`, [Branches.col.name, Commits.col.id])
+    )
   }
 
   if (filter?.ids?.length) {
