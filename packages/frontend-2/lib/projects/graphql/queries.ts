@@ -30,11 +30,12 @@ export const modelPageProjectQuery = graphql(`
   }
 `)
 
+// TODO: Pagination
 export const latestModelsQuery = graphql(`
   query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
     project(id: $projectId) {
       id
-      models(cursor: null, limit: 8, filter: $filter) {
+      models(cursor: null, limit: 100, filter: $filter) {
         totalCount
         cursor
         items {
