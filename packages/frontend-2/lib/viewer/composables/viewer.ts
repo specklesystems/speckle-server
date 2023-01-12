@@ -296,6 +296,10 @@ function useViewerObjectAutoLoading(
     },
     { deep: true, immediate: true }
   )
+
+  onBeforeUnmount(async () => {
+    await viewer.unloadAll()
+  })
 }
 
 /**

@@ -60,20 +60,4 @@ const { result } = useQuery(modelPageProjectQuery, () => ({
   id: projectId.value
 }))
 const project = computed(() => result.value?.project)
-
-onMounted(() => {
-  console.log('page mounted!')
-})
-
-onUnmounted(() => {
-  console.log('page unmounted')
-})
-
-onActivated(() => {
-  console.log('page activated!')
-})
-
-onDeactivated(() => {
-  console.log('page deactivated!')
-})
 </script>
