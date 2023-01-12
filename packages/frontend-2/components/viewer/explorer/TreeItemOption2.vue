@@ -4,8 +4,8 @@
   <!--     -->
   <div class="w-full">
     <!-- Header -->
-    <div class="bg-foundation py-2 rounded-md px-1">
-      <div class="flex items-center space-x-1">
+    <div class="bg-foundation py-2 rounded-md px-1 w-full">
+      <div class="flex items-center space-x-1 w-full">
         <div v-if="isSingleCollection || isMultipleCollection" class="">
           <button
             class="px-1 hover:bg-primary-muted hover:text-primary rounded h-6 w-6 flex items-center justify-center"
@@ -20,18 +20,15 @@
         <div v-else class="w-5 h-5"></div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          class="flex items-center space-x-2 min-w-0 flex-grow h-full hover:bg-foundation-focus cursor-pointer rounded-md px-1"
+          class="bg-red-200/0 flex items-center space-x-2 min-w-0 max-w-full overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1"
           @click="setSelection"
         >
-          <div :class="`${unfold ? 'font-semibold' : ''}`">
+          <div :class="`${unfold ? 'font-semibold' : ''} max-w-full`">
             <div class="text-sm truncate">
-              {{ objectName || objectSpeckleType }}
+              {{ headerAndSubheader.header }}
             </div>
-            <div
-              v-if="(objectName || objectSpeckleType) !== objectSpeckleType"
-              class="text-xs text-foreground-2"
-            >
-              {{ objectSpeckleType }}
+            <div class="text-xs text-foreground-2">
+              {{ headerAndSubheader.subheader }}
             </div>
           </div>
           <div v-if="isSingleCollection || isMultipleCollection">
@@ -49,7 +46,7 @@
     </div>
 
     <!-- Children Contents -->
-    <div v-if="unfold" class="relative pl-3 text-xs">
+    <div v-if="unfold" class="relative pl-2 text-xs">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -109,6 +106,32 @@ const objectSpeckleType = computed(() => {
 
 const objectName = computed(() => {
   return (rawSpeckleData.name as string) || (rawSpeckleData.Name as string)
+})
+
+const header = 'todo'
+const subheader = 'todo'
+
+type HeaderSubheader = {
+  header: string
+  subheader: string
+}
+
+const headerAndSubheader = computed(() => {
+  const speckleType = speckleData.speckle_type as string
+  if (!speckleType) return { header: 'todo', subheader: '' } as HeaderSubheader
+
+  if (speckleType.toLowerCase().includes('revit')) {
+    return { header: 'todo', subheader: '' } as HeaderSubheader
+  }
+  if (speckleType.toLowerCase().includes('ifc')) {
+    return { header: 'todo', subheader: '' } as HeaderSubheader
+  }
+
+  if (speckleType.toLowerCase().includes('objects.geometry')) {
+    return { header: 'geometry object', subheader: 'test' } as HeaderSubheader
+  }
+
+  return { header: 'todo', subheader: '' } as HeaderSubheader
 })
 
 const isSingleCollection = computed(() => {
