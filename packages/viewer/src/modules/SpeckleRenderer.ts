@@ -407,7 +407,9 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     this.pipeline.update(this)
-    this._shadowcatcher.update(this._scene)
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.update(this._scene)
+    }
   }
 
   public resetPipeline(force = false) {
@@ -421,7 +423,9 @@ export default class SpeckleRenderer {
       this._needsRender = this.pipeline.render()
       // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
       // this._needsRender = true
-      this._shadowcatcher.render(this._renderer)
+      if (this.sunConfiguration.shadowcatcher) {
+        this._shadowcatcher.render(this._renderer)
+      }
     }
   }
 
@@ -600,8 +604,11 @@ export default class SpeckleRenderer {
   }
 
   public updateShadowCatcher() {
-    this._shadowcatcher.bake(this.sceneBox)
-    this.resetPipeline()
+    this._shadowcatcher.shadowcatcherMesh.visible = this.sunConfiguration.shadowcatcher
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.bake(this.sceneBox)
+      this.resetPipeline()
+    }
   }
 
   private addDirectLights() {
@@ -703,6 +710,7 @@ export default class SpeckleRenderer {
       this.indirectIBLIntensity = config.indirectLightIntensity
     }
     this.updateDirectLights()
+    this.updateShadowCatcher()
   }
 
   public updateHelpers() {

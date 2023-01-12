@@ -64,7 +64,8 @@ export default class Sandbox {
     azimuth: 0.75,
     elevation: 1.33,
     radius: 0,
-    indirectLightIntensity: 1.2
+    indirectLightIntensity: 1.2,
+    shadowcatcher: true
   }
 
   public static batchesParams = {
@@ -675,6 +676,13 @@ export default class Sandbox {
       title: 'Shadowcatcher',
       expanded: true
     })
+
+    shadowcatcherFolder
+      .addInput(Sandbox.lightParams, 'shadowcatcher', { label: 'Enabled' })
+      .on('change', (value) => {
+        value
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
 
     shadowcatcherFolder
       .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
