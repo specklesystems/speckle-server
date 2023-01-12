@@ -84,7 +84,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -143,8 +143,33 @@ await sandbox.loadUrl(
   // Jedd's views
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
   // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // MEPs (whatever they are)
+  // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
+  // Alex cubes
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // Tekla
+  // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  // Purple market square
+  // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
+  // Sum building
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/4ea2759162'
+  // Boat
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/ba5df427db'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/c9ebe49824'
+  // Dim's dome
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/158d4e8bec'
+  // Engines 'n Shit
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/80b25e6e6c'
+  // Dim's tower
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/7fd3ec04c0'
+  //COD
+  // 'https://latest.speckle.dev/streams/d3c83b47bf/commits/5f76b7ef3d?overlay=34577a1a92,571d460754,4c39b56c32,a62dd3a5da&c=%5B2046.38919,1074.97765,125.18054,2088.91862,1025.71927,94.66317,0,1%5D'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/0feb23d263'
+  // Jonathon's not loading
+  // 'https://speckle.xyz/streams/ca99defd4b/commits/589b265c99'
   // Jonathon's 3070
   // 'https://speckle.xyz/streams/7ce9010d71/commits/d29e56fe75'
   // Filter issue
-  'https://speckle.xyz/streams/f95d8deb90/commits/30f31becb6'
+  // 'https://speckle.xyz/streams/f95d8deb90/commits/30f31becb6'
 )
