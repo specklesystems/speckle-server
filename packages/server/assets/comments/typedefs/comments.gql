@@ -25,6 +25,20 @@ extend type Project {
   commentThreads(cursor: String, limit: Int! = 25): CommentCollection
 }
 
+extend type Version {
+  """
+  All comment threads in this version
+  """
+  commentThreads(cursor: String, limit: Int! = 25): CommentCollection
+}
+
+extend type Model {
+  """
+  All comment threads in this model
+  """
+  commentThreads(cursor: String, limit: Int! = 25): CommentCollection
+}
+
 extend type Stream {
   """
   The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:

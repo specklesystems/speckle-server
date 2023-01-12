@@ -6,7 +6,6 @@
 import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 
 const rendererparent = ref<HTMLElement>()
-
 const { viewer, container, isInitializedPromise } = useInjectedViewer()
 
 onMounted(async () => {
@@ -20,10 +19,10 @@ onMounted(async () => {
   viewer.cameraHandler.onWindowResize()
 })
 
-onBeforeUnmount(async () => {
+onBeforeUnmount(() => {
   if (!process.client) return
-  await viewer.unloadAll()
   container.style.display = 'none'
+
   document.body.appendChild(container)
 })
 </script>
