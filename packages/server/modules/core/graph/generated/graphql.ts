@@ -1046,6 +1046,7 @@ export type Project = {
 
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -1076,6 +1077,14 @@ export type ProjectCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Project>;
   totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentsFilter = {
+  /**
+   * Only request comments belonging to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectModelsFilter = {
@@ -2130,6 +2139,7 @@ export type ResolversTypes = {
   PendingStreamCollaborator: ResolverTypeWrapper<Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
+  ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -2242,6 +2252,7 @@ export type ResolversParentTypes = {
   PendingStreamCollaborator: Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
   Project: ProjectGraphQLReturn;
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
+  ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;

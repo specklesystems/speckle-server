@@ -229,6 +229,10 @@ export async function getPaginatedProjectModelsItems(
   params: ProjectModelsArgs
 ) {
   const { cursor, limit } = params
+  if (params.filter?.ids && !params.filter.ids.length) {
+    // empty ids: return empty array!
+    return { items: [], cursor: null }
+  }
 
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
   q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
@@ -247,6 +251,11 @@ export async function getPaginatedProjectModelsTotalCount(
   projectId: string,
   params: ProjectModelsArgs
 ) {
+  if (params.filter?.ids && !params.filter.ids.length) {
+    // empty ids: return count 0
+    return 0
+  }
+
   const baseQ = getPaginatedProjectModelsBaseQuery(projectId, params)
   const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
 

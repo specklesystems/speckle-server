@@ -31,6 +31,7 @@ import {
   getCommentReplyAuthorIds,
   getCommentReplyCounts,
   getCommentsResources,
+  getCommentsViewedAt,
   getStreamCommentCounts
 } from '@/modules/comments/repositories/comments'
 import {
@@ -205,6 +206,15 @@ export function buildRequestLoaders(ctx: AuthContext) {
       )
     },
     comments: {
+      getViewedAt: new DataLoader<string, Date>(async (commentIds) => {
+        if (!userId) return []
+
+        const results = keyBy(
+          await getCommentsViewedAt(commentIds.slice(), userId),
+          'commentId'
+        )
+        return commentIds.map((id) => results[id]?.viewedAt || null)
+      }),
       getResources: new DataLoader<string, ResourceIdentifier[]>(async (commentIds) => {
         const results = await getCommentsResources(commentIds.slice())
         return commentIds.map((id) => results[id]?.resources || [])

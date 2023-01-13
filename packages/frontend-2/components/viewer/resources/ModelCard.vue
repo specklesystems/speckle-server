@@ -47,10 +47,10 @@ import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { useViewerResourcesState } from '~~/lib/viewer/composables/viewer'
-import { ViewerModelsQuery } from '~~/lib/common/generated/gql/graphql'
+import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 
-type ModelItem = NonNullable<Get<ViewerModelsQuery, 'project.models.items[0]'>>
+type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 const props = defineProps<{
   model: ModelItem

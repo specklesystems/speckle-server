@@ -6,7 +6,7 @@ import { SpeckleViewer } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
-  viewerModelsQuery
+  viewerLoadedResourcesQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, uniq } from 'lodash-es'
@@ -241,12 +241,12 @@ export function useResolvedViewerResources(options?: MainSetupOptions) {
     return finalItems
   })
 
-  return { resourceItems }
+  return { resourceItems, resourceString }
 }
 
 export function useLoadedViewerResources(options?: MainSetupOptions) {
   const { projectId } = options?.viewerInjectionData || useInjectedViewer()
-  const { resourceItems } = useResolvedViewerResources(options)
+  const { resourceItems, resourceString } = useResolvedViewerResources(options)
 
   /**
    * Resolved resource items that represent models & versions, not plain objects
@@ -265,18 +265,22 @@ export function useLoadedViewerResources(options?: MainSetupOptions) {
     resourceItems.value.filter((i) => !i.modelId && !i.versionId)
   )
 
-  const { result: modelsResult } = useQuery(
-    viewerModelsQuery,
+  const { result: viewerLoadedResourcesResult } = useQuery(
+    viewerLoadedResourcesQuery,
     () => ({
       projectId: projectId.value,
       modelIds: nonObjectResourceItems.value.map((r) => r.modelId),
-      versionIds: nonObjectResourceItems.value.map((r) => r.versionId)
-    }),
-    () => ({
-      enabled: nonObjectResourceItems.value.length > 0
+      versionIds: nonObjectResourceItems.value.map((r) => r.versionId),
+      resourceIdString: resourceString.value
     })
   )
-  const models = computed(() => modelsResult.value?.project?.models?.items || [])
+
+  const models = computed(
+    () => viewerLoadedResourcesResult.value?.project?.models?.items || []
+  )
+  const comments = computed(
+    () => viewerLoadedResourcesResult.value?.project?.commentThreads?.items || []
+  )
 
   /**
    * Pairs of (GQL) Models and their currently loaded in version IDs
@@ -295,7 +299,9 @@ export function useLoadedViewerResources(options?: MainSetupOptions) {
     nonObjectResourceItems,
     objectResourceItems,
     models,
-    modelsAndVersionIds
+    modelsAndVersionIds,
+    comments,
+    viewerLoadedResourcesResult
   }
 }
 
