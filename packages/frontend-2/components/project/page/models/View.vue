@@ -9,17 +9,16 @@
       </div>
       <div class="flex items-center space-x-2">
         <FormButton :icon-left="PlusIcon" @click="showNewDialog = true">New</FormButton>
-        <div class="w-60">
-          <FormTextInput
-            v-model="search"
-            name="modelsearch"
-            :show-label="false"
-            placeholder="Search"
-            class="bg-foundation shadow"
-            @change="debouncedSearch = search.trim()"
-            @update:model-value="updateDebouncedSearch"
-          ></FormTextInput>
-        </div>
+        <FormTextInput
+          v-model="search"
+          name="modelsearch"
+          :show-label="false"
+          placeholder="Search"
+          class="bg-foundation shadow w-60"
+          show-clear
+          @change="updateSearchImmediately"
+          @update:model-value="updateDebouncedSearch"
+        ></FormTextInput>
         <div
           class="flex items-center justify-center rounded bg-foundation h-8 w-8 shadow"
         >
@@ -28,18 +27,23 @@
       </div>
     </div>
     <div class="mb-14">
-      <ProjectPageModelsListView
-        v-if="gridOrList === GridListToggleValue.List"
-        :search="debouncedSearch"
-        :project="project"
-        @update:loading="searchLoading = $event"
-      />
-      <ProjectPageModelsCardView
-        v-if="gridOrList === GridListToggleValue.Grid"
-        :search="debouncedSearch"
-        :project="project"
-        @update:loading="searchLoading = $event"
-      />
+      <div :class="searchLoading ? 'hidden' : 'block'">
+        <ProjectPageModelsListView
+          v-if="gridOrList === GridListToggleValue.List"
+          :search="debouncedSearch"
+          :project="project"
+          @update:loading="searchLoading = $event"
+        />
+        <ProjectPageModelsCardView
+          v-if="gridOrList === GridListToggleValue.Grid"
+          :search="debouncedSearch"
+          :project="project"
+          @update:loading="searchLoading = $event"
+        />
+      </div>
+      <div :class="searchLoading ? 'block' : 'hidden'">
+        TODO: Stuff is loading, please wait!
+      </div>
     </div>
     <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
   </div>
@@ -94,4 +98,9 @@ const gridOrList = computed({
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()
 }, 2000)
+
+const updateSearchImmediately = () => {
+  updateDebouncedSearch.cancel()
+  debouncedSearch.value = search.value.trim()
+}
 </script>

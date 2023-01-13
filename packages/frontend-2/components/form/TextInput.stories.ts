@@ -50,7 +50,9 @@ export const Default: Story = {
     setup() {
       return { args }
     },
-    template: `<form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>`
+    template: `<div class="bg-foundation p-5">
+    <form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>
+    </div>`
   }),
   play: buildTextWriterPlayFunction('Hello world!'),
   args: {
@@ -123,5 +125,14 @@ export const Disabled = mergeStories(Default, {
     name: generateRandomName('disabled'),
     label: 'Disabled input',
     disabled: true
+  }
+})
+
+export const WithClear = mergeStories(Default, {
+  play: buildTextWriterPlayFunction('12345'),
+  args: {
+    name: generateRandomName('withclear'),
+    label: 'Click on cross to clear',
+    showClear: true
   }
 })
