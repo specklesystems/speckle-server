@@ -46,9 +46,7 @@ export const viewerLoadedResourcesQuery = graphql(`
       commentThreads(filter: { resourceIdString: $resourceIdString }) {
         totalCount
         items {
-          id
-          authorId
-          rawText
+          ...ViewerCommentsListItem
         }
       }
     }

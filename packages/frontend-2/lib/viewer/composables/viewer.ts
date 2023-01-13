@@ -278,7 +278,7 @@ export function useLoadedViewerResources(options?: MainSetupOptions) {
   const models = computed(
     () => viewerLoadedResourcesResult.value?.project?.models?.items || []
   )
-  const comments = computed(
+  const threads = computed(
     () => viewerLoadedResourcesResult.value?.project?.commentThreads?.items || []
   )
 
@@ -300,7 +300,7 @@ export function useLoadedViewerResources(options?: MainSetupOptions) {
     objectResourceItems,
     models,
     modelsAndVersionIds,
-    comments,
+    threads,
     viewerLoadedResourcesResult
   }
 }
