@@ -84,9 +84,9 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
-  // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
+  'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
   // IFC story, a subtree of the above
@@ -172,4 +172,6 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/7ce9010d71/commits/d29e56fe75'
   // Filter issue
   // 'https://speckle.xyz/streams/f95d8deb90/commits/30f31becb6'
+  // Transparent
+  // 'https://latest.speckle.dev/streams/b5cc4e967c/objects/20343e0e8d469613a9d407499a6c38b1'
 )
