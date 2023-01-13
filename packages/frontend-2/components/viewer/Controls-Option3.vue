@@ -32,15 +32,16 @@
       activeControl !== 'none' ? 'w-80 opacity-100' : 'w-0 opacity-0'
     }`"
   >
-    <KeepAlive>
-      <ViewerResourcesList
-        v-show="activeControl === 'models'"
-        class="pointer-events-auto"
-      />
-    </KeepAlive>
-    <KeepAlive>
-      <ViewerExplorer v-if="activeControl === 'explorer'" class="pointer-events-auto" />
-    </KeepAlive>
+    <div v-show="activeControl === 'models'">
+      <KeepAlive>
+        <ViewerResourcesList class="pointer-events-auto" />
+      </KeepAlive>
+    </div>
+    <div v-show="activeControl === 'explorer'">
+      <KeepAlive>
+        <ViewerExplorer class="pointer-events-auto" />
+      </KeepAlive>
+    </div>
     <ViewerComments v-if="activeControl === 'comments'" class="pointer-events-auto" />
     <ViewerFilters v-if="activeControl === 'filters'" class="pointer-events-auto" />
   </div>

@@ -4,6 +4,7 @@
 export type ExplorerNode = {
   guid?: string
   data?: SpeckleObject
+  raw?: SpeckleObject
   atomic?: boolean
   children: ExplorerNode[]
 }
@@ -15,5 +16,5 @@ export type SpeckleReference = {
 export interface SpeckleObject {
   id?: string
   elements?: SpeckleReference[]
-  children?: SpeckleObject[]
+  children?: SpeckleObject[] | SpeckleReference[]
 }

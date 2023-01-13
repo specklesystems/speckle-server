@@ -3,16 +3,13 @@
   <!-- WIP -->
   <!--     -->
   <div class="flex justify-between flex-col bg-foundation rounded-md shadow py-2">
-    <!-- <div class="font-bold text-lg pl-3">Scene Tree</div> -->
     <div class="flex flex-col space-y-1">
-      <ViewerExplorerTreeItemOption2
+      <ViewerExplorerTreeItemOption3
         v-for="(rootNode, idx) in rootNodes"
         :key="idx"
         :item-id="(rootNode.data?.id as string)"
         :tree-item="markRaw(rootNode)"
-        :header="nodeNames[idx].header"
-        :sub-header="nodeNames[idx].subHeader"
-        xxxdebug
+        :debug="true"
         force-unfold
       />
     </div>
@@ -27,8 +24,6 @@
 </template>
 <script setup lang="ts">
 // Some questions:
-// - will need to be "refreshed" when versions are changed
-// - keep this dude alive?
 // - no idea how to ts-ify this (note: the tree lib is ts)
 
 // TODOs:
@@ -39,59 +34,48 @@
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 import { useInjectLoadedViewerResources } from '~~/lib/viewer/composables/viewer'
+import { DataTree, ViewerEvent } from '@speckle/viewer'
 
 const { viewer } = useInjectedViewer()
-
 const { resourceItems, modelsAndVersionIds } = useInjectLoadedViewerResources()
 
-const tree = shallowRef(viewer.getDataTree()) // note expensive call
-// const needsRefresh = ref(false)
+let realTree = viewer.getWorldTree()
 
-watch(resourceItems, (newVal, oldVal) => {
-  console.log('need to refresh the tree')
-  tree.value = viewer.getDataTree()
+const refHack = ref(1)
+onMounted(() => {
+  viewer.on(ViewerEvent.Busy, (isBusy) => {
+    if (isBusy) return
+    console.log('should get new tree')
+    realTree = viewer.getWorldTree()
+    refHack.value++
+  })
 })
 
 const rootNodes = computed(() => {
-  return (
-    (tree.value as unknown as Record<string, unknown>).root as ExplorerNode
-  ).children.map(
-    (child) => markRaw(child as unknown as Record<string, unknown>).model
-  ) as ExplorerNode[]
-})
-
-const nodeNames = computed(() => {
-  const nodeNames = []
-  for (const rootNode of rootNodes.value) {
-    const objectId = rootNode.guid?.split('/').reverse()[0]
+  refHack.value
+  console.log('should update rootNodes')
+  const nodes = []
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const rootNodes = realTree._root.children as ExplorerNode[]
+  for (const node of rootNodes) {
+    const objectId = node.model.id.split('/').reverse()[0]
     const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
     if (resourceItem?.modelId) {
       // Model resource
       const model = modelsAndVersionIds.value.find(
         (item) => item.model.id === resourceItem.modelId
       )?.model
-      nodeNames.push({
-        header: `Model: ${model?.name as string}`,
-        subHeader: model?.id
-      })
+      node.model.raw.name = model?.name
+      node.model.raw.type = model?.id
     } else {
-      // Object resource
-      nodeNames.push({ header: 'Object', subHeader: objectId })
+      node.model.raw.name = 'Object'
+      node.model.raw.type = 'Single Object'
     }
+    nodes.push(node.model)
   }
-  return nodeNames
+  return nodes
 })
 
 const selectedObject = ref({})
 provide('selectedObject', selectedObject)
-
-const cleanSelectedObject = computed(() => {
-  if (!selectedObject.value) return null
-  const copy = JSON.parse(JSON.stringify(selectedObject.value)) as Record<
-    string,
-    unknown
-  >
-  delete copy.__closure
-  return copy
-})
 </script>
