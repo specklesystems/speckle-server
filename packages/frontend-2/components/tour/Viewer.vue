@@ -10,8 +10,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useSetupViewer } from '~~/lib/viewer/composables/viewer'
-const { viewer } = useSetupViewer({
+import { useSetupViewer } from '~~/lib/viewer/composables/setup'
+const {
+  viewer: { instance: viewer }
+} = useSetupViewer({
   projectId: ''
 })
 

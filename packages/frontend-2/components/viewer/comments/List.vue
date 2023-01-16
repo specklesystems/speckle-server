@@ -3,7 +3,7 @@
     <h2 class="text-sm font-bold text-foreground-2">Threads</h2>
     <div class="flex flex-col">
       <div
-        v-for="thread in threads"
+        v-for="thread in commentThreads"
         :key="thread.id"
         :class="[
           'py-4 flex flex-col',
@@ -28,8 +28,8 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { useInjectLoadedViewerResources } from '~~/lib/viewer/composables/viewer'
 import dayjs from 'dayjs'
+import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 
 graphql(`
   fragment ViewerCommentsListItem on Comment {
@@ -42,9 +42,11 @@ graphql(`
   }
 `)
 
-const { threads } = useInjectLoadedViewerResources()
+const { commentThreads } = useInjectedViewerLoadedResources()
 const lastThread = computed(() =>
-  threads.value.length ? threads.value[threads.value.length - 1] : null
+  commentThreads.value.length
+    ? commentThreads.value[commentThreads.value.length - 1]
+    : null
 )
 
 const formatDate = (date: string) => dayjs(date).from(dayjs())
