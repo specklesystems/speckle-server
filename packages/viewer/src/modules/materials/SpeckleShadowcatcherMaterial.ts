@@ -4,7 +4,7 @@
 import { speckleShadowcatcherVert } from './shaders/speckle-shadowcatcher-vert'
 import { speckleShadowcatcherFrag } from './shaders/speckle-shadowcatche-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
-import { ShaderLib, UniformsUtils, Vector2, Vector3, Vector4 } from 'three'
+import { ShaderLib, UniformsUtils, Vector3, Vector4 } from 'three'
 
 class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
   constructor(parameters, defines = []) {
@@ -30,8 +30,11 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
     this.userData.weights = {
       value: new Vector4()
     }
-    this.userData.size = {
-      value: new Vector2()
+    this.userData.sigmoidRange = {
+      value: 0
+    }
+    this.userData.sigmoidStrength = {
+      value: 0
     }
     ;(this as any).vertProgram = speckleShadowcatcherVert
     ;(this as any).fragProgram = speckleShadowcatcherFrag
@@ -59,8 +62,11 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
         weights: {
           value: this.userData.weights.value
         },
-        size: {
-          value: this.userData.size.value
+        sigmoidRange: {
+          value: this.userData.sigmoidRange.value
+        },
+        sigmoidStrength: {
+          value: this.userData.sigmoidStrength.value
         }
       }
     ])
@@ -73,7 +79,8 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
       shader.uniforms.tex2 = this.userData.tex2
       shader.uniforms.tex3 = this.userData.tex3
       shader.uniforms.weights = this.userData.weights
-      shader.uniforms.size = this.userData.size
+      shader.uniforms.sigmoidRange = this.userData.sigmoidRange
+      shader.uniforms.sigmoidStrength = this.userData.sigmoidStrength
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }

@@ -81,7 +81,9 @@ export default class Sandbox {
     textureSize: 512,
     weights: { x: 1, y: 1, z: 0, w: 1 },
     blurRadius: 16,
-    stdDeviation: 4
+    stdDeviation: 4,
+    sigmoidRange: 2,
+    sigmoidStrength: 2.43
   }
 
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
@@ -702,8 +704,8 @@ export default class Sandbox {
         label: 'weights',
         x: { min: 0, max: 100 },
         y: { min: 0, max: 100 },
-        z: { min: 0, max: 100 },
-        w: { min: 0, max: 100 }
+        z: { min: -100, max: 100 },
+        w: { min: -100, max: 100 }
       })
       .on('change', (value) => {
         value
@@ -730,6 +732,32 @@ export default class Sandbox {
         min: 1,
         max: 128,
         step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'sigmoidRange', {
+        label: 'Sigmoid Range',
+        min: -10,
+        max: 10,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'sigmoidStrength', {
+        label: 'Sigmoid Strength',
+        min: -10,
+        max: 10,
+        step: 0.1
       })
       .on('change', (value) => {
         value
