@@ -49,6 +49,7 @@ export const viewerLoadedResourcesQuery = graphql(`
           ...ViewerCommentsListItem
         }
       }
+      ...ModelPageProject
     }
   }
 `)

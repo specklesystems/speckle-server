@@ -29,9 +29,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
-import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
 
 definePageMeta({
@@ -45,7 +43,11 @@ definePageMeta({
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 
-useSetupViewer({
+const {
+  resources: {
+    response: { project }
+  }
+} = useSetupViewer({
   projectId
 })
 
@@ -56,9 +58,4 @@ graphql(`
     name
   }
 `)
-
-const { result } = useQuery(modelPageProjectQuery, () => ({
-  id: projectId.value
-}))
-const project = computed(() => result.value?.project)
 </script>

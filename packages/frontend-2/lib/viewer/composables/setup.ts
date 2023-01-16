@@ -1,4 +1,9 @@
-import { Viewer, DefaultViewerParams } from '@speckle/viewer'
+import {
+  Viewer,
+  DefaultViewerParams,
+  FilteringState,
+  PropertyInfo
+} from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
   inject,
@@ -9,7 +14,7 @@ import {
   WritableComputedRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { SpeckleViewer } from '@speckle/shared'
+import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -22,6 +27,7 @@ import {
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get } from 'type-fest'
+import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -30,6 +36,12 @@ type LoadedModel = NonNullable<
 type LoadedCommentThread = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.commentThreads.items[0]'>
 >
+
+type FilterAction = (
+  objectIds: string[],
+  stateKey: string,
+  includeDescendants?: boolean
+) => Promise<void>
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -58,7 +70,7 @@ export type InjectableViewerState = Readonly<{
     }
   }
   /**
-   * Loaded/loadable resource state
+   * Loaded/loadable resources
    */
   resources: {
     /**
@@ -96,7 +108,29 @@ export type InjectableViewerState = Readonly<{
        * Comment threads for all loaded resources
        */
       commentThreads: ComputedRef<Array<LoadedCommentThread>>
+      /**
+       * Project main metadata
+       */
+      project: ComputedRef<Get<ViewerLoadedResourcesQuery, 'project'>>
     }
+  }
+  /**
+   * Interface state
+   */
+  ui: {
+    /**
+     * Read/write active viewer filters
+     */
+    filters: {
+      current: ComputedRef<Nullable<FilteringState>>
+      localFilterPropKey: ComputedRef<Nullable<string>>
+      isolateObjects: FilterAction
+      unIsolateObjects: FilterAction
+      hideObjects: FilterAction
+      showObjects: FilterAction
+      setColorFilter: (property: PropertyInfo) => void
+    }
+    viewerBusy: WritableComputedRef<boolean>
   }
 }>
 
@@ -355,12 +389,9 @@ function setupResponseResourceData(
     })
   )
 
-  const models = computed(
-    () => viewerLoadedResourcesResult.value?.project?.models?.items || []
-  )
-  const commentThreads = computed(
-    () => viewerLoadedResourcesResult.value?.project?.commentThreads?.items || []
-  )
+  const project = computed(() => viewerLoadedResourcesResult.value?.project)
+  const models = computed(() => project.value?.models?.items || [])
+  const commentThreads = computed(() => project.value?.commentThreads?.items || [])
 
   const modelsAndVersionIds = computed(() =>
     nonObjectResourceItems.value
@@ -374,7 +405,8 @@ function setupResponseResourceData(
   return {
     objects,
     commentThreads,
-    modelsAndVersionIds
+    modelsAndVersionIds,
+    project
   }
 }
 
@@ -396,6 +428,80 @@ function setupResourceResponse(
       response: {
         resourceItems,
         ...loadedResourceData
+      }
+    }
+  }
+}
+
+function setupInterfaceState(
+  state: InitialStateWithRequestAndResponse
+): InjectableViewerState {
+  const { viewer } = state
+
+  // Is viewer busy - Using writable computed so that we can always intercept these calls
+  const isViewerBusy = ref(false)
+  const viewerBusy = computed({
+    get: () => isViewerBusy.value,
+    set: (newVal) => (isViewerBusy.value = !!newVal)
+  })
+
+  // Filters
+  const filteringState = ref(null as Nullable<FilteringState>)
+  const localFilterPropKey = ref(null as Nullable<string>)
+  const isolateObjects: FilterAction = async (...params) => {
+    if (process.server) return
+    viewerBusy.value = true
+
+    const result = await viewer.instance.isolateObjects(...params)
+    filteringState.value = result
+    viewerBusy.value = false
+  }
+  const unIsolateObjects: FilterAction = async (...params) => {
+    if (process.server) return
+    viewerBusy.value = true
+
+    const result = await viewer.instance.unIsolateObjects(...params)
+    filteringState.value = result
+    viewerBusy.value = false
+  }
+  const hideObjects: FilterAction = async (...params) => {
+    if (process.server) return
+    viewerBusy.value = true
+
+    const result = await viewer.instance.hideObjects(...params)
+    filteringState.value = result
+    viewerBusy.value = false
+  }
+  const showObjects: FilterAction = async (...params) => {
+    if (process.server) return
+    viewerBusy.value = true
+
+    const result = await viewer.instance.showObjects(...params)
+    filteringState.value = result
+    viewerBusy.value = false
+  }
+  const setColorFilter = async (property: PropertyInfo) => {
+    if (process.server) return
+    viewerBusy.value = true
+
+    const result = await viewer.instance.setColorFilter(property)
+    filteringState.value = result
+    localFilterPropKey.value = property.key
+    viewerBusy.value = false
+  }
+
+  return {
+    ...state,
+    ui: {
+      viewerBusy,
+      filters: {
+        current: computed(() => filteringState.value),
+        localFilterPropKey: computed(() => localFilterPropKey.value),
+        isolateObjects,
+        unIsolateObjects,
+        hideObjects,
+        showObjects,
+        setColorFilter
       }
     }
   }
@@ -463,6 +569,20 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
   })
 }
 
+function useViewerSelectionEventHandler(state: InjectableViewerState) {
+  useSelectionEvents(
+    {
+      singleClickCallback: () => {
+        // Default stuff that has to happen when single click occurs
+      },
+      doubleClickCallback: () => {
+        // Default stuff that has to happen when double click occurs
+      }
+    },
+    { state }
+  )
+}
+
 type UseSetupViewerParams = { projectId: MaybeRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
@@ -471,14 +591,16 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const initState = setupInitialState(params)
   const initialStateWithRequest = setupResourceRequest(initState)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
+  const state = setupInterfaceState(stateWithResources)
 
   // Inject it into descendant components
-  provide(InjectableViewerStateKey, stateWithResources)
+  provide(InjectableViewerStateKey, state)
 
   // Extra post-state-creation setup
-  useViewerObjectAutoLoading(stateWithResources)
+  useViewerObjectAutoLoading(state)
+  useViewerSelectionEventHandler(state)
 
-  return stateWithResources
+  return state
 }
 
 /**
@@ -505,4 +627,9 @@ export function useInjectedViewerLoadedResources(): InjectableViewerState['resou
 export function useInjectedViewerRequestedResources(): InjectableViewerState['resources']['request'] {
   const { resources } = useInjectedViewerState()
   return resources.request
+}
+
+export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
+  const { ui } = useInjectedViewerState()
+  return ui
 }
