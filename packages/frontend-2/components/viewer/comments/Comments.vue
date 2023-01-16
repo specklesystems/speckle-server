@@ -1,8 +1,6 @@
 <template>
-  <div class="p-2 flex justify-between">
-    <div class="text-sm font-bold text-foreground-2">Comments TODO</div>
-  </div>
+  <ViewerCommentsList class="bg-foundation" />
 </template>
 <script setup lang="ts">
-// TODO
+// TODO: Remove this and just use ViewerCommentsList directly (or delete that one and put its contents here)
 </script>

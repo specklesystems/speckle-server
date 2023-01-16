@@ -57,8 +57,8 @@
     }`"
   >
     <ViewerResourcesList v-show="activeControl === 'models'" />
-    <ViewerResourcesExplorer v-if="activeControl === 'explorer'" />
-    <ViewerCommentsList v-if="activeControl === 'comments'" />
+    <ViewerResourcesExplorer v-show="activeControl === 'explorer'" />
+    <ViewerCommentsList v-show="activeControl === 'comments'" />
   </div>
 </template>
 <script setup lang="ts">
