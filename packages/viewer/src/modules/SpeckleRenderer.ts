@@ -510,6 +510,7 @@ export default class SpeckleRenderer {
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
+    this.updateShadowCatcher()
 
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()

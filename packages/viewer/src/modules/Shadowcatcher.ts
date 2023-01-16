@@ -4,6 +4,7 @@ import {
   CustomBlending,
   DstAlphaFactor,
   Matrix4,
+  MaxEquation,
   Mesh,
   OneFactor,
   Plane,
@@ -24,13 +25,17 @@ export interface ShadowcatcherConfig {
   weights: { x: number; y: number; z: number; w: number }
   blurRadius: number
   stdDeviation: number
+  sigmoidRange: number
+  sigmoidStrength: number
 }
 
 export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   textureSize: 512,
   weights: { x: 1, y: 1, z: 0, w: 1 },
   blurRadius: 16,
-  stdDeviation: 4
+  stdDeviation: 4,
+  sigmoidRange: 2,
+  sigmoidStrength: 2.43
 }
 
 export class Shadowcatcher {
@@ -60,22 +65,23 @@ export class Shadowcatcher {
     // this.displayMaterial.map.wrapS = RepeatWrapping
     // this.displayMaterial.map.repeat.x = -1
     this.displayMaterial.map.needsUpdate = true
-    this.displayMaterial.transparent = true
     this.displayMaterial.toneMapped = false
+    this.displayMaterial.transparent = true
     this.displayMaterial.blending = CustomBlending
     this.displayMaterial.blendEquation = AddEquation
-    this.displayMaterial.blendEquationAlpha = AddEquation
+    this.displayMaterial.blendEquationAlpha = MaxEquation
     this.displayMaterial.blendSrc = ZeroFactor
     this.displayMaterial.blendSrcAlpha = OneFactor
     this.displayMaterial.blendDst = DstAlphaFactor
-    this.displayMaterial.blendDstAlpha = ZeroFactor
+    this.displayMaterial.blendDstAlpha = OneFactor
+    this.displayMaterial.alphaTest = 0.001
 
     this.planeMesh = new Mesh()
     this.planeMesh.material = this.displayMaterial
     this.planeMesh.layers.set(layer)
     this.planeMesh.name = Shadowcatcher.MESH_NAME
     this.planeMesh.frustumCulled = false
-    this.planeMesh.renderOrder = layer
+    // this.planeMesh.renderOrder = layer
   }
 
   public update(scene: Scene) {

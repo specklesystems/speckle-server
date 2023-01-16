@@ -191,9 +191,11 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       const maxCameraFar = this.camera.far
       for (let k = 0; k < this.renderTargets.length; k++) {
         this.camera.far = maxCameraFar
-        if (k !== 3) {
+        if (k < 2) {
           this.camera.far = maxCameraFar / 100
-          this.camera.updateProjectionMatrix()
+        }
+        if (k === 2) {
+          this.camera.far = maxCameraFar / 4
         }
 
         this.camera.updateProjectionMatrix()
@@ -258,9 +260,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       this.renderTargets[0].width !== width ||
       this.renderTargets[0].height !== height
     ) {
-      const depthSize = new Vector2(Math.ceil(width * 1), Math.ceil(height * 1))
       this.outputTarget.setSize(width, height)
-      this.blendMaterial.userData.size.value = depthSize
       this.blendMaterial.needsUpdate = true
       let div = 1
       for (let k = 0; k < this.renderTargets.length; k++) {
@@ -302,6 +302,9 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   public updateConfig(config: ShadowcatcherConfig) {
     this.blurRadius = config.blurRadius
     this.blurStdDev = config.stdDeviation
+    this.blendMaterial.userData.sigmoidRange.value = config.sigmoidRange
+    this.blendMaterial.userData.sigmoidStrength.value = config.sigmoidStrength
+    this.blendMaterial.needsUpdate = true
   }
 
   public setSize(width: number, height: number) {
