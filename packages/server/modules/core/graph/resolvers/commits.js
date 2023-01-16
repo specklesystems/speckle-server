@@ -92,6 +92,13 @@ module.exports = {
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.name || null
     },
+    /**
+     * The DB schema actually has the value under 'author', but some queries (not all)
+     * remap it to 'authorId'
+     */
+    async authorId(parent) {
+      return parent.authorId || parent.author
+    },
     async authorName(parent, _args, ctx) {
       const { authorId, authorName, author } = parent
       if (authorName) return authorName

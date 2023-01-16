@@ -20,3 +20,9 @@ export interface CommentLinkRecord {
   resourceId: string
   resourceType: CommentLinkResourceType
 }
+
+export interface CommentViewRecord {
+  commentId: string
+  userId: string
+  viewedAt: Date
+}

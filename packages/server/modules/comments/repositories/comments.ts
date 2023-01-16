@@ -1,24 +1,32 @@
 import {
   CommentLinkRecord,
   CommentRecord,
-  CommentLinkResourceType
+  CommentLinkResourceType,
+  CommentViewRecord
 } from '@/modules/comments/helpers/types'
 import {
   BranchCommits,
   Branches,
   CommentLinks,
   Comments,
+  CommentViews,
+  Commits,
   knex
 } from '@/modules/core/dbSchema'
-import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
-import { keyBy, reduce } from 'lodash'
+import {
+  ResourceIdentifier,
+  ResourceType
+} from '@/modules/core/graph/generated/graphql'
+import { MaybeNullOrUndefined, Optional } from '@/modules/shared/helpers/typeHelper'
+import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import { SpeckleViewer } from '@speckle/shared'
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -76,6 +84,16 @@ export async function getCommentsResources(commentIds: string[]) {
 
   const results = await q
   return keyBy(results, 'commentId')
+}
+
+export async function getCommentsViewedAt(commentIds: string[], userId: string) {
+  if (!commentIds?.length || !userId) return []
+
+  const q = CommentViews.knex<CommentViewRecord[]>()
+    .where(CommentViews.col.userId, userId)
+    .whereIn(CommentViews.col.commentId, commentIds)
+
+  return await q
 }
 
 type GetBatchedStreamCommentsOptions = BatchedSelectOptions & {
@@ -258,4 +276,273 @@ export async function getCommentReplyAuthorIds(
     },
     {} as Record<string, string[]>
   )
+}
+
+export type PaginatedCommitCommentsParams = {
+  commitId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+function getPaginatedCommitCommentsBaseQuery<T = CommentRecord[]>(
+  params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>
+) {
+  const { commitId, filter } = params
+
+  const q = Commits.knex()
+    .select<T>(Comments.cols)
+    .innerJoin(CommentLinks.name, function () {
+      this.on(CommentLinks.col.resourceId, Commits.col.id).andOnVal(
+        CommentLinks.col.resourceType,
+        'commit' as CommentLinkResourceType
+      )
+    })
+    .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+    .where(Commits.col.id, commitId)
+
+  if (!filter?.includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  if (filter?.threadsOnly) {
+    q.whereNull(Comments.col.parentComment)
+  }
+
+  return q
+}
+
+export async function getPaginatedCommitComments(
+  params: PaginatedCommitCommentsParams
+) {
+  const { cursor } = params
+
+  const limit = clamp(params.limit, 1, 100)
+  const q = getPaginatedCommitCommentsBaseQuery(params)
+    .orderBy(Comments.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (cursor) {
+    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+  }
+
+  const items = await q
+  return {
+    items,
+    cursor: items.length
+      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+      : null
+  }
+}
+
+export async function getPaginatedCommitCommentsTotalCount(
+  params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>
+) {
+  const baseQ = getPaginatedCommitCommentsBaseQuery(params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+  const [row] = await q
+
+  return parseInt(row.count || '0')
+}
+
+export type PaginatedBranchCommentsParams = {
+  branchId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+function getPaginatedBranchCommentsBaseQuery(
+  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
+) {
+  const { branchId, filter } = params
+
+  const q = Branches.knex()
+    .distinct()
+    .select(Comments.cols)
+    .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+    .innerJoin(CommentLinks.name, function () {
+      this.on(CommentLinks.col.resourceId, BranchCommits.col.commitId).andOnVal(
+        CommentLinks.col.resourceType,
+        'commit' as CommentLinkResourceType
+      )
+    })
+    .innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+    .where(Branches.col.id, branchId)
+
+  if (!filter?.includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  if (filter?.threadsOnly) {
+    q.whereNull(Comments.col.parentComment)
+  }
+
+  return q
+}
+
+export async function getPaginatedBranchComments(
+  params: PaginatedBranchCommentsParams
+) {
+  const { cursor } = params
+
+  const limit = clamp(params.limit, 1, 100)
+  const q = getPaginatedBranchCommentsBaseQuery(params)
+    .orderBy(Comments.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (cursor) {
+    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+  }
+
+  const items = await q
+  return {
+    items,
+    cursor: items.length
+      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+      : null
+  }
+}
+
+export async function getPaginatedBranchCommentsTotalCount(
+  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
+) {
+  const baseQ = getPaginatedBranchCommentsBaseQuery(params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+  const [row] = await q
+
+  return parseInt(row.count || '0')
+}
+
+export type PaginatedProjectCommentsParams = {
+  projectId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+    resourceIdString: string
+  }>
+}
+
+function getPaginatedProjectCommentsBaseQuery(
+  params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>
+) {
+  const { projectId, filter } = params
+
+  const q = Comments.knex<CommentRecord[]>().distinct().select(Comments.cols)
+
+  const resources = filter?.resourceIdString
+    ? SpeckleViewer.ViewerRoute.parseUrlParameters(filter.resourceIdString)
+    : []
+
+  q.where(Comments.col.streamId, projectId)
+
+  if (resources.length) {
+    // Find comments for specific resources
+    const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
+    const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
+    const folderResources = resources.filter(
+      SpeckleViewer.ViewerRoute.isModelFolderResource
+    )
+
+    // First join any necessary tables
+    q.innerJoin(CommentLinks.name, CommentLinks.col.commentId, Comments.col.id)
+    if (modelResources.length || folderResources.length) {
+      q.leftJoin(BranchCommits.name, (j) => {
+        j.on(BranchCommits.col.commitId, CommentLinks.col.resourceId).andOnVal(
+          CommentLinks.col.resourceType,
+          ResourceType.Commit
+        )
+      })
+      q.leftJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+    }
+
+    // Filter by resources
+    q.andWhere((w1) => {
+      if (objectResources.length) {
+        w1.orWhere((w2) => {
+          w2.where(CommentLinks.col.resourceType, ResourceType.Object).whereIn(
+            CommentLinks.col.resourceId,
+            objectResources.map((o) => o.objectId)
+          )
+        })
+      }
+
+      if (modelResources.length) {
+        w1.orWhere((w2) => {
+          w2.where(CommentLinks.col.resourceType, ResourceType.Commit).where((w3) => {
+            for (const modelResource of modelResources) {
+              w3.orWhere((w4) => {
+                w4.where(Branches.col.id, modelResource.modelId)
+                if (modelResource.versionId) {
+                  w4.andWhere(CommentLinks.col.resourceId, modelResource.versionId)
+                }
+              })
+            }
+          })
+        })
+      }
+
+      if (folderResources.length) {
+        w1.orWhere((w2) => {
+          w2.where(CommentLinks.col.resourceType, ResourceType.Commit).andWhere(
+            knex.raw('LOWER(??) ilike ANY(?)', [
+              Branches.col.name,
+              folderResources.map((r) => r.folderName.toLowerCase() + '%')
+            ])
+          )
+        })
+      }
+    })
+  }
+
+  if (!filter?.includeArchived) {
+    q.andWhere(Comments.col.archived, false)
+  }
+
+  if (filter?.threadsOnly) {
+    q.whereNull(Comments.col.parentComment)
+  }
+
+  return q
+}
+
+export async function getPaginatedProjectComments(
+  params: PaginatedProjectCommentsParams
+) {
+  const { cursor } = params
+  const limit = clamp(params.limit, 1, 100)
+
+  const q = getPaginatedProjectCommentsBaseQuery(params)
+    .orderBy(Comments.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (cursor) {
+    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+  }
+
+  const items = await q
+  return {
+    items,
+    cursor: items.length
+      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+      : null
+  }
+}
+
+export async function getPaginatedProjectCommentsTotalCount(
+  params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>
+) {
+  const baseQ = getPaginatedProjectCommentsBaseQuery(params)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+  const [row] = await q
+
+  return parseInt(row.count || '0')
 }

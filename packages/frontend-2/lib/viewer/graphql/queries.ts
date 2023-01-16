@@ -16,11 +16,16 @@ export const projectViewerResourcesQuery = graphql(`
   }
 `)
 
-export const viewerModelCardsQuery = graphql(`
-  query ViewerModelCards(
+/**
+ * Query to load all metadata needed for loaded models (& their versions) in the viewer, for
+ * all sidebar panels and everything
+ */
+export const viewerLoadedResourcesQuery = graphql(`
+  query ViewerLoadedResources(
     $projectId: String!
     $modelIds: [String!]!
     $versionIds: [String!]
+    $resourceIdString: String!
   ) {
     project(id: $projectId) {
       id
@@ -36,6 +41,12 @@ export const viewerModelCardsQuery = graphql(`
               ...ViewerModelVersionCardItem
             }
           }
+        }
+      }
+      commentThreads(filter: { resourceIdString: $resourceIdString }) {
+        totalCount
+        items {
+          ...ViewerCommentsListItem
         }
       }
     }

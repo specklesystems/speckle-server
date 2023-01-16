@@ -22,6 +22,24 @@ extend type Project {
   """
   All comment threads in this project
   """
+  commentThreads(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectCommentsFilter
+  ): CommentCollection
+}
+
+extend type Version {
+  """
+  All comment threads in this version
+  """
+  commentThreads(cursor: String, limit: Int! = 25): CommentCollection
+}
+
+extend type Model {
+  """
+  All comment threads in this model
+  """
   commentThreads(cursor: String, limit: Int! = 25): CommentCollection
 }
 
@@ -114,8 +132,16 @@ type CommentReplyAuthorCollection {
 
 type CommentCollection {
   totalCount: Int!
-  cursor: DateTime
+  cursor: String
   items: [Comment!]!
+}
+
+input ProjectCommentsFilter {
+  """
+  Only request comments belonging to the resources identified by this
+  comma-delimited resouce string (same format that's used in the viewer URL)
+  """
+  resourceIdString: String
 }
 
 type ResourceIdentifier {

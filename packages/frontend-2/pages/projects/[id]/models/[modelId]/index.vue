@@ -35,11 +35,13 @@ import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
 import { useSetupViewer } from '~~/lib/viewer/composables/viewer'
 
 definePageMeta({
+  layout: 'viewer',
   middleware: ['require-valid-project'],
   pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false,
-  key: false
+  key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
 })
+
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 

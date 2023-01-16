@@ -162,6 +162,12 @@ export const CommentLinks = buildTableHelper('comment_links', [
   'resourceType'
 ])
 
+export const CommentViews = buildTableHelper('comment_views', [
+  'commentId',
+  'userId',
+  'viewedAt'
+])
+
 export const ServerInvites = buildTableHelper('server_invites', [
   'id',
   'target',

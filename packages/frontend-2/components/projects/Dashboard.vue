@@ -12,21 +12,27 @@
           :show-label="false"
           placeholder="Search"
           class="bg-foundation shadow"
-          @change="debouncedSearch = search.trim()"
+          show-clear
+          @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
       </div>
     </div>
-    <ProjectsDashboardFilled
-      v-if="projects?.items?.length && !forceEmptyState"
-      :projects="projects"
-    />
-    <ProjectsDashboardEmptyState v-else-if="!search" />
-    <div v-else>TODO: Project search empty state</div>
+    <template v-if="areQueriesLoading">TODO: Stuff is loading, please wait</template>
+    <template v-else>
+      <ProjectsDashboardEmptyState
+        v-if="!searchKey && (forceEmptyState || (projects && !projects.totalCount))"
+      />
+      <ProjectsDashboardFilled
+        v-else-if="projects?.items?.length"
+        :projects="projects"
+      />
+      <div v-else>TODO: Project search empty state</div>
+    </template>
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
@@ -35,18 +41,28 @@ const search = ref('')
 const debouncedSearch = ref('')
 
 const route = useRoute()
-const { result: projectsPanelResult } = useQuery(projectsDashboardQuery, () => {
-  return {
-    filter: {
-      search: (debouncedSearch.value || '').trim() || null
+const areQueriesLoading = useQueryLoading()
+const { result: projectsPanelResult, variables: searchVariables } = useQuery(
+  projectsDashboardQuery,
+  () => {
+    return {
+      filter: {
+        search: (debouncedSearch.value || '').trim() || null
+      }
     }
   }
-})
+)
 
+const searchKey = computed(() => searchVariables.value?.filter?.search)
 const forceEmptyState = computed(() => !!route.query.forceEmpty)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()
 }, 2000)
+
+const updateSearchImmediately = () => {
+  updateDebouncedSearch.cancel()
+  debouncedSearch.value = search.value.trim()
+}
 </script>

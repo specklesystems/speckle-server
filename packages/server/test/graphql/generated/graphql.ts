@@ -237,7 +237,7 @@ export type CommentActivityMessage = {
 
 export type CommentCollection = {
   __typename?: 'CommentCollection';
-  cursor?: Maybe<Scalars['DateTime']>;
+  cursor?: Maybe<Scalars['String']>;
   items: Array<Comment>;
   totalCount: Scalars['Int'];
 };
@@ -490,6 +490,8 @@ export type Model = {
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
+  /** All comment threads in this model */
+  commentThreads?: Maybe<CommentCollection>;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   /** The shortened/display name that doesn't include the names of parent models */
@@ -501,6 +503,12 @@ export type Model = {
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
   versions: VersionCollection;
+};
+
+
+export type ModelCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 
@@ -1031,6 +1039,7 @@ export type Project = {
 
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -1061,6 +1070,14 @@ export type ProjectCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Project>;
   totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentsFilter = {
+  /**
+   * Only request comments belonging to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectModelsFilter = {
@@ -1885,11 +1902,19 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  /** All comment threads in this version */
+  commentThreads?: Maybe<CommentCollection>;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+};
+
+
+export type VersionCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 export type VersionCollection = {

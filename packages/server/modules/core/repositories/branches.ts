@@ -155,9 +155,7 @@ function getPaginatedProjectModelsBaseQuery<T>(
     .where(Branches.col.streamId, projectId)
     .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .havingRaw(
-      knex.raw(`?? != 'main' OR COUNT(??) > 0`, [Branches.col.name, Commits.col.id])
-    )
+
     .groupBy(Branches.col.id)
 
   if (filter?.search) {
@@ -176,6 +174,10 @@ function getPaginatedProjectModelsBaseQuery<T>(
 
   if (filter?.onlyWithVersions) {
     q.havingRaw(knex.raw(`COUNT(??) > 0`, [Commits.col.id]))
+  } else {
+    q.havingRaw(
+      knex.raw(`(?? != 'main' OR COUNT(??) > 0)`, [Branches.col.name, Commits.col.id])
+    )
   }
 
   if (filter?.ids?.length) {
@@ -227,6 +229,10 @@ export async function getPaginatedProjectModelsItems(
   params: ProjectModelsArgs
 ) {
   const { cursor, limit } = params
+  if (params.filter?.ids && !params.filter.ids.length) {
+    // empty ids: return empty array!
+    return { items: [], cursor: null }
+  }
 
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
   q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
@@ -245,6 +251,11 @@ export async function getPaginatedProjectModelsTotalCount(
   projectId: string,
   params: ProjectModelsArgs
 ) {
+  if (params.filter?.ids && !params.filter.ids.length) {
+    // empty ids: return count 0
+    return 0
+  }
+
   const baseQ = getPaginatedProjectModelsBaseQuery(projectId, params)
   const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
 
@@ -337,11 +348,12 @@ export const validateBranchName = (name: string) => {
   if (
     name.startsWith('/') ||
     name.startsWith('#') ||
+    name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
     name.indexOf(',') !== -1
   )
     throw new BranchNameError(
-      'Bad name for branch. Branch names cannot start with "#" or "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      'Bad name for branch. Branch names cannot start with "#", "/", "$", have multiple slashes next to each other (e.g., "//") or contain commas.',
       {
         info: {
           name

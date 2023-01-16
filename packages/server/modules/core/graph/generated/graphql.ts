@@ -244,7 +244,7 @@ export type CommentActivityMessage = {
 
 export type CommentCollection = {
   __typename?: 'CommentCollection';
-  cursor?: Maybe<Scalars['DateTime']>;
+  cursor?: Maybe<Scalars['String']>;
   items: Array<Comment>;
   totalCount: Scalars['Int'];
 };
@@ -497,6 +497,8 @@ export type Model = {
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
+  /** All comment threads in this model */
+  commentThreads?: Maybe<CommentCollection>;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   /** The shortened/display name that doesn't include the names of parent models */
@@ -508,6 +510,12 @@ export type Model = {
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
   versions: VersionCollection;
+};
+
+
+export type ModelCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 
@@ -1038,6 +1046,7 @@ export type Project = {
 
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -1068,6 +1077,14 @@ export type ProjectCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Project>;
   totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentsFilter = {
+  /**
+   * Only request comments belonging to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectModelsFilter = {
@@ -1892,11 +1909,19 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  /** All comment threads in this version */
+  commentThreads?: Maybe<CommentCollection>;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+};
+
+
+export type VersionCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
 };
 
 export type VersionCollection = {
@@ -2114,6 +2139,7 @@ export type ResolversTypes = {
   PendingStreamCollaborator: ResolverTypeWrapper<Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
+  ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -2226,6 +2252,7 @@ export type ResolversParentTypes = {
   PendingStreamCollaborator: Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
   Project: ProjectGraphQLReturn;
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
+  ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -2444,7 +2471,7 @@ export type CommentActivityMessageResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type CommentCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentCollection'] = ResolversParentTypes['CommentCollection']> = {
-  cursor?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Comment']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -2539,6 +2566,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  commentThreads?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<ModelCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2941,6 +2969,7 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
   authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  commentThreads?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

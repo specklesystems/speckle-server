@@ -214,6 +214,9 @@ module.exports = {
     return true
   },
 
+  /**
+   * @deprecated Use `getPaginatedProjectComments()` instead
+   */
   async getComments({
     resources,
     limit,
@@ -278,7 +281,7 @@ module.exports = {
 
     return {
       items: rows,
-      cursor: nextCursor,
+      cursor: nextCursor ? nextCursor.toISOString() : null,
       totalCount
     }
   },

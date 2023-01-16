@@ -15,9 +15,5 @@ const props = defineProps<{
   models?: ProjectLatestModelsQuery
 }>()
 
-const items = computed(() => (props.models?.project?.models?.items || []).slice(0, 8))
-
-const gridItemWidthClasses = computed(
-  () => 'col-span-12 sm:col-span-6 md:col-span-4 lg:col-span-3'
-)
+const items = computed(() => props.models?.project?.models?.items || [])
 </script>
