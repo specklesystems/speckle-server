@@ -113,6 +113,9 @@ export const decorators = [
     const [, updateGlobals] = useGlobals()
     const theme = ctx.globals.theme
     const isDarkMode = theme === 'dark'
+    const {
+      parameters: { manualLayout }
+    } = ctx
 
     if (isDarkMode) {
       document.querySelector('html').classList.add('dark')
@@ -142,7 +145,7 @@ export const decorators = [
       template: `
         <div class="text-foreground">
           <Story v-bind="$attrs" />
-          <SingletonManagers />
+          ${manualLayout ? '' : '<SingletonManagers />'}
         </div>
       `
     }

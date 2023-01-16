@@ -31,7 +31,8 @@ export default {
       inlineStories: false,
       iframeHeight: 1000
     },
-    layout: 'fullscreen'
+    layout: 'fullscreen',
+    manualLayout: true
   }
 } as Meta
 
@@ -44,6 +45,7 @@ export const Default: Story = {
   parameters: {
     apolloClient: {
       mocks: [
+        // Main project page query
         {
           request: { query: projectPageQuery, variables: { id: fakeProjectId } },
           result: {
@@ -64,11 +66,15 @@ export const Default: Story = {
             } as ProjectPageQueryQuery
           }
         },
+        // Grid view - no search
         {
           request: {
             query: latestModelsQuery,
             variables: {
-              projectId: fakeProjectId
+              projectId: fakeProjectId,
+              filter: {
+                search: null
+              }
             }
           },
           result: {
@@ -85,6 +91,7 @@ export const Default: Story = {
                     __typename: 'Model',
                     id: `Model${i}`,
                     name: `Model #${i}`,
+                    displayName: `Model #${i}`,
                     versionCount: Math.ceil(Math.random() * 10),
                     commentThreadCount: Math.ceil(Math.random() * 10),
                     previewUrl:
@@ -97,6 +104,7 @@ export const Default: Story = {
             } as ProjectLatestModelsQuery
           }
         },
+        // Structured view - top level
         {
           request: {
             query: projectModelsTreeTopLevelQuery,
@@ -139,6 +147,7 @@ export const Default: Story = {
             } as ProjectModelsTreeTopLevelQuery
           }
         },
+        // Structured view - children
         {
           request: {
             query: projectModelChildrenTreeQuery,
@@ -178,6 +187,7 @@ export const Default: Story = {
             } as ProjectModelChildrenTreeQuery
           }
         },
+        // Latest comments
         {
           request: {
             query: latestCommentThreadsQuery,
