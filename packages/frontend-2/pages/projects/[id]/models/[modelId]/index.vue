@@ -24,7 +24,9 @@
 
       <!-- Sidebar sketches -->
       <ViewerControlsOption3 />
-      <!-- <ViewerControlsOption2 /> -->
+
+      <!-- Viewer Object Selection Info Display -->
+      <ViewerSelectionSidebar />
     </ClientOnly>
   </div>
 </template>

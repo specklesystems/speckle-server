@@ -9,7 +9,7 @@
         :key="idx"
         :item-id="(rootNode.data?.id as string)"
         :tree-item="markRaw(rootNode)"
-        :debug="true"
+        :debug="false"
         force-unfold
       />
     </div>
