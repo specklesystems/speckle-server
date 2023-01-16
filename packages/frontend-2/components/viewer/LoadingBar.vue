@@ -10,8 +10,8 @@
 </template>
 <script setup lang="ts">
 import { ViewerEvent } from '@speckle/viewer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
-const { viewer } = useInjectedViewer()
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+const { instance: viewer } = useInjectedViewer()
 
 const busyStack = ref(0)
 

@@ -48,31 +48,30 @@
 import dayjs from 'dayjs'
 import {
   ViewerModelVersionCardItemFragment,
-  ViewerModelCardItemFragment
+  ViewerLoadedResourcesQuery
 } from '~~/lib/common/generated/gql/graphql'
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { Get } from 'type-fest'
+
+type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 const getPreviewUrl = useGetPreviewUrl()
 
 const props = defineProps<{
   version: ViewerModelVersionCardItemFragment
-  model: ViewerModelCardItemFragment
+  model: ModelItem
   isLatestVersion: boolean
 }>()
 
 defineEmits(['show-versions', 'load-latest'])
 
-const { projectId } = useInjectedViewer()
+const { projectId } = useInjectedViewerState()
 
 const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
-
-const createdAt = computed(() =>
-  dayjs(props.version.createdAt as string).format('DD MMM YY, h:mm A')
-)
 
 const timeAgoCreatedAt = computed(() =>
   dayjs(props.version.createdAt as string).from(dayjs())

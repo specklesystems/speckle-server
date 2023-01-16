@@ -46,9 +46,9 @@
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
-import { useViewerResourcesState } from '~~/lib/viewer/composables/viewer'
 import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
+import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -57,7 +57,7 @@ const props = defineProps<{
   versionId: string
 }>()
 
-const { switchModelToVersion } = useViewerResourcesState()
+const { switchModelToVersion } = useInjectedViewerRequestedResources()
 
 const showVersions = ref(false)
 

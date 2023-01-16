@@ -110,7 +110,6 @@
 </template>
 <script setup lang="ts">
 import { CloudArrowDownIcon, PlusCircleIcon } from '@heroicons/vue/24/solid'
-import { Viewer } from '@speckle/viewer'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
@@ -120,13 +119,13 @@ import {
   OnboardingState
 } from '~~/lib/auth/helpers/onboarding'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 
 const { finishOnboarding } = useProcessOnboarding()
 
 const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
-const { viewer } = useInjectedViewer()
+const { instance: viewer } = useInjectedViewer()
 
 // TODO: Skip to comment slideshow if active user has completed onboarding
 const { activeUser } = useActiveUser()

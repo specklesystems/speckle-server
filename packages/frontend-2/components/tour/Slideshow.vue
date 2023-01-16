@@ -93,10 +93,8 @@
 import { locations } from '~~/lib/tour/mockedComments'
 import { Vector3 } from 'three'
 import { ArrowRightIcon, CheckIcon } from '@heroicons/vue/24/solid'
-import {
-  useInjectedViewer,
-  useViewerCameraTracker
-} from '~~/lib/viewer/composables/viewer'
+import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 
 const comments = ref<HTMLElement | null>(null)
 const commentState = ref(0)
@@ -104,7 +102,7 @@ const commentState = ref(0)
 provide('commentState', commentState)
 provide('locations', locations)
 
-const { viewer } = useInjectedViewer()
+const { instance: viewer } = useInjectedViewer()
 
 const updateCommentPositions = () => {
   if (!comments.value) return

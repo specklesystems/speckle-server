@@ -32,8 +32,10 @@
 // - test sketchup, blender, etc. models
 
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
-const { viewer } = useInjectedViewer()
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+const { instance: viewer } = useInjectedViewer()
+
+// TODO: dataTree & selectedObject to state?
 
 const tree = viewer.getDataTree() // note expensive call, we should keep it alive
 provide('dataTree', tree)

@@ -32,7 +32,7 @@
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import { modelPageProjectQuery } from '~~/lib/projects/graphql/queries'
-import { useSetupViewer } from '~~/lib/viewer/composables/viewer'
+import { useSetupViewer } from '~~/lib/viewer/composables/setup'
 
 definePageMeta({
   layout: 'viewer',
