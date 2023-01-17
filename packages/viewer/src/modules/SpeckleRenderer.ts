@@ -65,9 +65,6 @@ export enum ObjectLayers {
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   public SHOW_BVH = false
-  private readonly ANGLE_EPSILON = 0.0001
-  private readonly POSITION_REST_EPSILON = 0.001
-  private readonly POSITION_RESUME_EPSILON = 0.001
   private _renderer: WebGLRenderer
   public _scene: Scene
   private _needsRender: boolean
@@ -81,10 +78,6 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
   private pipeline: Pipeline
-  private lastAzimuth: number
-  private lastPolar: number
-  private lastCameraPosition: Vector3 = new Vector3()
-  private lastCameraMotionDelta: number
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null

@@ -28,6 +28,8 @@ import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
 import Logger from 'js-logger'
+import { Query, QueryResult } from './queries/Query'
+import { Queries } from './queries/Queries'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -42,6 +44,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public static Assets: Assets
   protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
+  private queries: Queries
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
@@ -83,8 +86,9 @@ export class Viewer extends EventEmitter implements IViewer {
     new Assets(this.speckleRenderer.renderer)
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
+    this.queries = new Queries()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any)._V = this // For debugging!
+    ;(window as any)._V = this // For debugging! ಠ_ಠ
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.disable()
@@ -307,6 +311,22 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public getDataTree(): DataTree {
     return WorldTree.getDataTree()
+  }
+
+  public query(query: Query): QueryResult {
+    if (Queries.isPointQuery(query)) {
+      Queries.DefaultPointQuerySolver.setContext(
+        this.speckleRenderer.scene,
+        this.cameraHandler.activeCam.camera
+      )
+      return Queries.DefaultPointQuerySolver.solve(query)
+    }
+  }
+
+  public queryAsync(query: Query): Promise<QueryResult> {
+    //TO DO
+    query
+    return null
   }
 
   public toggleSectionBox() {
