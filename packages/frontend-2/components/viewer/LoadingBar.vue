@@ -10,7 +10,6 @@
 </template>
 <script setup lang="ts">
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-
 const { viewerBusy } = useInjectedViewerInterfaceState()
 </script>
 <style scoped>

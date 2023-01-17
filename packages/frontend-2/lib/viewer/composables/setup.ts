@@ -2,7 +2,8 @@ import {
   Viewer,
   DefaultViewerParams,
   FilteringState,
-  PropertyInfo
+  PropertyInfo,
+  ViewerEvent
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -583,6 +584,19 @@ function useViewerSelectionEventHandler(state: InjectableViewerState) {
   )
 }
 
+function useViewerIsBusyEventHandler(state: InjectableViewerState) {
+  const callback = (isBusy: boolean) => {
+    state.ui.viewerBusy.value = isBusy
+  }
+  onMounted(() => {
+    state.viewer.instance.on(ViewerEvent.Busy, callback)
+  })
+
+  onBeforeUnmount(() => {
+    state.viewer.instance.removeListener(ViewerEvent.Busy, callback)
+  })
+}
+
 type UseSetupViewerParams = { projectId: MaybeRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
@@ -599,6 +613,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   // Extra post-state-creation setup
   useViewerObjectAutoLoading(state)
   useViewerSelectionEventHandler(state)
+  useViewerIsBusyEventHandler(state)
 
   return state
 }
