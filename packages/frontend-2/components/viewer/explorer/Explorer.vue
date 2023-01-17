@@ -59,7 +59,7 @@ const rootNodes = computed(() => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const rootNodes = realTree._root.children as ExplorerNode[]
   for (const node of rootNodes) {
-    const objectId = node.model.id.split('/').reverse()[0]
+    const objectId = node.model.id.split('/').reverse()[0] as string
     const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
     if (resourceItem?.modelId) {
       // Model resource

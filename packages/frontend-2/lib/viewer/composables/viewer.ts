@@ -2,7 +2,7 @@ import {
   InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { ViewerEvent } from '@speckle/viewer'
+import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 
 export function useViewerCameraTracker(callback: () => void): void {
   const {
@@ -20,13 +20,14 @@ export function useViewerCameraTracker(callback: () => void): void {
 
 export function useSelectionEvents(
   params: {
-    singleClickCallback?: () => void
-    doubleClickCallback?: () => void
+    singleClickCallback?: (args: SelectionEvent) => void
+    doubleClickCallback?: (args: SelectionEvent) => void
   },
   options?: Partial<{
     state: InjectableViewerState
   }>
 ) {
+  if (process.server) return
   const { singleClickCallback, doubleClickCallback } = params
   const {
     viewer: { instance }
