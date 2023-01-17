@@ -4961,7 +4961,7 @@ __metadata:
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
-    undici: ^5.8.2
+    undici: ^5.14.0
     valid-filename: ^3.1.0
     web-ifc: ^0.0.36
   languageName: unknown
@@ -5205,7 +5205,7 @@ __metadata:
     nyc: ^15.0.1
     openid-client: ^5.1.7
     passport: ^0.6.0
-    passport-azure-ad: ^4.3.0
+    passport-azure-ad: ^4.3.4
     passport-github2: ^0.1.12
     passport-google-oauth2: ^0.2.0
     passport-google-oauth20: ^2.0.0
@@ -5221,7 +5221,7 @@ __metadata:
     request: ^2.88.2
     response-time: ^2.3.2
     sanitize-html: ^2.7.0
-    sharp: ^0.29.3
+    sharp: ^0.30.5
     string-pixel-width: ^1.10.0
     subscriptions-transport-ws: ^0.11.0
     supertest: ^4.0.2
@@ -5229,7 +5229,7 @@ __metadata:
     tsconfig-paths: ^4.0.0
     type-fest: ^2.19.0
     typescript: ^4.6.4
-    undici: ^5.8.2
+    undici: ^5.14.0
     verror: ^1.10.1
     ws: ^7.5.7
     xml-escape: ^1.1.0
@@ -5271,7 +5271,7 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     tweakpane: ^3.0.8
     typescript: ^4.5.4
-    vite: ^2.9.5
+    vite: ^2.9.13
   languageName: unknown
   linkType: soft
 
@@ -8973,7 +8973,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"color@npm:^4.0.1, color@npm:^4.2.3":
+"color@npm:^4.2.3":
   version: 4.2.3
   resolution: "color@npm:4.2.3"
   dependencies:
@@ -9991,15 +9991,6 @@ __metadata:
   version: 6.1.0
   resolution: "detect-indent@npm:6.1.0"
   checksum: ab953a73c72dbd4e8fc68e4ed4bfd92c97eb6c43734af3900add963fd3a9316f3bc0578b018b24198d4c31a358571eff5f0656e81a1f3b9ad5c547d58b2d093d
-  languageName: node
-  linkType: hard
-
-"detect-libc@npm:^1.0.3":
-  version: 1.0.3
-  resolution: "detect-libc@npm:1.0.3"
-  bin:
-    detect-libc: ./bin/detect-libc.js
-  checksum: daaaed925ffa7889bd91d56e9624e6c8033911bb60f3a50a74a87500680652969dbaab9526d1e200a4c94acf80fc862a22131841145a0a8482d60a99c24f4a3e
   languageName: node
   linkType: hard
 
@@ -16102,9 +16093,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"passport-azure-ad@npm:^4.3.0":
-  version: 4.3.2
-  resolution: "passport-azure-ad@npm:4.3.2"
+"passport-azure-ad@npm:^4.3.4":
+  version: 4.3.4
+  resolution: "passport-azure-ad@npm:4.3.4"
   dependencies:
     async: ^3.2.3
     base64url: ^3.0.0
@@ -16115,10 +16106,9 @@ __metadata:
     lodash: ^4.11.2
     node-jose: ^2.0.0
     oauth: 0.9.15
-    passport: ^0.4.1
-    request: ^2.72.0
+    passport: ^0.6.0
     valid-url: ^1.0.6
-  checksum: 31d030b4205e142019970708f969294a616f8bd3677798a1eed738f0f4ce66c34dc4749f41627441269a27dbd50186b4e66496fd6d5a9d537c43525df96f6961
+  checksum: 51afb8a221bef0d86bb14e4e1f0c496ada84a36444aa81aa854dfb694f0dcb67113fdb15e460c70674be739d0db28733c483cdc94023b7a07906e53aa20086f8
   languageName: node
   linkType: hard
 
@@ -16166,16 +16156,6 @@ __metadata:
   version: 1.0.0
   resolution: "passport-strategy@npm:1.0.0"
   checksum: 5086693f2508e538dffa55a338c89fe8192fb5f4478c71f80cd5890b8573419a098f4fec88b505374f60bbe9049f6f24b9f3992678612528a3370b4dc73354a2
-  languageName: node
-  linkType: hard
-
-"passport@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "passport@npm:0.4.1"
-  dependencies:
-    passport-strategy: 1.x.x
-    pause: 0.0.1
-  checksum: 6e0d855e281df8568f4b361d8377995295e59b08391a1b57d18d1404dbaa67af1523c987e9a071d6b0d1550f022637d62f9854bbd31ebc30372f0bfb1acb2567
   languageName: node
   linkType: hard
 
@@ -17437,7 +17417,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"request@npm:^2.72.0, request@npm:^2.88.2":
+"request@npm:^2.88.2":
   version: 2.88.2
   resolution: "request@npm:2.88.2"
   dependencies:
@@ -17795,7 +17775,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:^2.59.0, rollup@npm:^2.70.1":
+"rollup@npm:>=2.59.0 <2.78.0":
+  version: 2.77.3
+  resolution: "rollup@npm:2.77.3"
+  dependencies:
+    fsevents: ~2.3.2
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    rollup: dist/bin/rollup
+  checksum: b179c68249584565ddb5664a241e8e48c293b2207718d885b08ee25797d98857a383f06b544bb89819407da5a71557f4713309a278f61c4778bb32b1d3321a1c
+  languageName: node
+  linkType: hard
+
+"rollup@npm:^2.70.1":
   version: 2.72.0
   resolution: "rollup@npm:2.72.0"
   dependencies:
@@ -18247,23 +18241,6 @@ __metadata:
   dependencies:
     kind-of: ^6.0.2
   checksum: 39b3dd9630a774aba288a680e7d2901f5c0eae7b8387fc5c8ea559918b29b3da144b7bdb990d7ccd9e11be05508ac9e459ce51d01fd65e583282f6ffafcba2e7
-  languageName: node
-  linkType: hard
-
-"sharp@npm:^0.29.3":
-  version: 0.29.3
-  resolution: "sharp@npm:0.29.3"
-  dependencies:
-    color: ^4.0.1
-    detect-libc: ^1.0.3
-    node-addon-api: ^4.2.0
-    node-gyp: latest
-    prebuild-install: ^7.0.0
-    semver: ^7.3.5
-    simple-get: ^4.0.0
-    tar-fs: ^2.1.1
-    tunnel-agent: ^0.6.0
-  checksum: d496cdd546c9abe743aebcee013731295f735687819a18c2bdcbba6f31a6b259f3da95af5c11260a8fedc9d4ab95697f5f8c4f3cd65232792b5cfb876bea7c9a
   languageName: node
   linkType: hard
 
@@ -19648,7 +19625,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.12.0":
+"undici@npm:^5.12.0, undici@npm:^5.14.0":
   version: 5.14.0
   resolution: "undici@npm:5.14.0"
   dependencies:
@@ -19661,15 +19638,6 @@ __metadata:
   version: 5.8.0
   resolution: "undici@npm:5.8.0"
   checksum: 7b486ad064da00628d3906e140b86223023cd3494c811da8d7aa1375c2392fe6a6ac421af236c056fd3d3136bba3a91b99e0505dde071dd946070946eb0718b8
-  languageName: node
-  linkType: hard
-
-"undici@npm:^5.8.2":
-  version: 5.11.0
-  resolution: "undici@npm:5.11.0"
-  dependencies:
-    busboy: ^1.6.0
-  checksum: 20669ef4023d24a75e81ed8142829f525f16af14d61f833b5f19cfc6bed7c706adde343a190d764dcceb227eba3211222d2b194010462a2ca221a7da0487f563
   languageName: node
   linkType: hard
 
@@ -20037,15 +20005,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^2.9.5":
-  version: 2.9.8
-  resolution: "vite@npm:2.9.8"
+"vite@npm:^2.9.13":
+  version: 2.9.15
+  resolution: "vite@npm:2.9.15"
   dependencies:
     esbuild: ^0.14.27
     fsevents: ~2.3.2
     postcss: ^8.4.13
     resolve: ^1.22.0
-    rollup: ^2.59.0
+    rollup: ">=2.59.0 <2.78.0"
   peerDependencies:
     less: "*"
     sass: "*"
@@ -20062,7 +20030,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 7de3450bec4caa06f4540d1d252563ef0b7e1bdd167d04abf03db72cfd8c9a93879e18861283bc7d075e1d094b78b71770ca36f9b965bdf28c66665eafdc29dc
+  checksum: 5edf8afc132a598f82a1339aa503514a0e86f6264babe94531b9000d801f157c9a32ae022542404678acca43ee260ade04c4763c4b7b8d381a6b50511b4a1447
   languageName: node
   linkType: hard
 
