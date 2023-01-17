@@ -56,11 +56,11 @@ async function doTask(task) {
       eventName: fullPayload.event.event_name
     })
 
-    const postData = { payload: info.evt }
+    const postData = { payload: fullPayload }
 
     const signature = crypto
       .createHmac('sha256', info.wh_secret || '')
-      .update(postData.payload)
+      .update(JSON.stringify(postData))
       .digest('hex')
     const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 

@@ -53,11 +53,13 @@ import {
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
+import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
-  PROPS = 2
+  PROPS = 2,
+  SHADOWCATCHER = 3
 }
 
 export default class SpeckleRenderer {
@@ -86,6 +88,7 @@ export default class SpeckleRenderer {
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
+  private _shadowcatcher: Shadowcatcher = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -158,6 +161,10 @@ export default class SpeckleRenderer {
     })
   }
 
+  public get shadowcatcher() {
+    return this._shadowcatcher
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this._scene = new Scene()
     this.rootGroup = new Group()
@@ -184,7 +191,7 @@ export default class SpeckleRenderer {
       alpha: true,
       preserveDrawingBuffer: true
     })
-    this._renderer.setClearColor(0xcccccc, 0)
+    this._renderer.setClearColor(0xffffff, 0)
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.outputEncoding = sRGBEncoding
     this._renderer.toneMapping = ACESFilmicToneMapping
@@ -281,6 +288,21 @@ export default class SpeckleRenderer {
         this.pipeline.onStationaryEnd()
       }
     })
+
+    this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
+      ObjectLayers.STREAM_CONTENT
+    ])
+    let restoreVisibility
+    this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
+      restoreVisibility = this.batcher.saveVisiblity()
+      const opaque = this.batcher.getOpaque()
+      this.batcher.applyVisibility(opaque)
+    }
+    this._shadowcatcher.shadowcatcherPass.onAfterRender = () => {
+      this.batcher.applyVisibility(restoreVisibility)
+    }
+
+    this._scene.add(this._shadowcatcher.shadowcatcherMesh)
   }
 
   public update(deltaTime: number) {
@@ -380,11 +402,14 @@ export default class SpeckleRenderer {
     v.set(box.max.x, box.max.y, box.max.z) // 111
     d = Math.max(camPos.distanceTo(v), d)
     this.viewer.cameraHandler.camera.far = d
-    this.viewer.cameraHandler.activeCam.camera.far = d
+    this.viewer.cameraHandler.activeCam.camera.far = d * 2
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     this.pipeline.update(this)
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.update(this._scene)
+    }
   }
 
   public resetPipeline(force = false) {
@@ -398,6 +423,9 @@ export default class SpeckleRenderer {
       this._needsRender = this.pipeline.render()
       // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
       // this._needsRender = true
+      if (this.sunConfiguration.shadowcatcher) {
+        this._shadowcatcher.render(this._renderer)
+      }
     }
   }
 
@@ -476,12 +504,13 @@ export default class SpeckleRenderer {
     if (this.viewer.sectionBox.display.visible) {
       this.viewer.setSectionBox()
     }
-    // this.resetPipeline(true)
+    this.updateShadowCatcher()
     this._needsRender = true
   }
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
+    this.updateShadowCatcher()
 
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
@@ -510,6 +539,7 @@ export default class SpeckleRenderer {
       this.updateSectionBoxCapper()
     }
     this.renderer.shadowMap.needsUpdate = true
+    this.updateShadowCatcher()
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -528,6 +558,7 @@ export default class SpeckleRenderer {
     })
     this.pipeline.updateClippingPlanes(planes)
     this.sectionBoxOutlines.updateClippingPlanes(planes)
+    this._shadowcatcher.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
@@ -550,6 +581,7 @@ export default class SpeckleRenderer {
     const generate = () => {
       this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
       this.updateSectionBoxCapper(this.sectionPlanesChanged)
+      this.updateShadowCatcher()
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
     }
     this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
@@ -570,6 +602,14 @@ export default class SpeckleRenderer {
 
   public enableSectionBoxCapper(value: boolean) {
     this.sectionBoxOutlines.enable(value)
+  }
+
+  public updateShadowCatcher() {
+    this._shadowcatcher.shadowcatcherMesh.visible = this.sunConfiguration.shadowcatcher
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.bake(this.sceneBox)
+      this.resetPipeline()
+    }
   }
 
   private addDirectLights() {
@@ -671,6 +711,7 @@ export default class SpeckleRenderer {
       this.indirectIBLIntensity = config.indirectLightIntensity
     }
     this.updateDirectLights()
+    this.updateShadowCatcher()
   }
 
   public updateHelpers() {

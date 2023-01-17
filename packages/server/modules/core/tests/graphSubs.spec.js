@@ -72,8 +72,8 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     console.log('      Starting server... this may take a while.')
 
     childPort = await getFreeServerPort()
-    addr = `http://localhost:${childPort}/graphql`
-    wsAddr = `ws://localhost:${childPort}/graphql`
+    addr = `http://127.0.0.1:${childPort}/graphql`
+    wsAddr = `ws://127.0.0.1:${childPort}/graphql`
 
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',
