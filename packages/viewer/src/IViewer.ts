@@ -68,6 +68,7 @@ export interface LightConfiguration {
   intensity?: number
   color?: number
   indirectLightIntensity?: number
+  shadowcatcher?: boolean
 }
 
 export interface SunLightConfiguration extends LightConfiguration {
@@ -84,7 +85,8 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   elevation: 1.33,
   azimuth: 0.75,
   radius: 0,
-  indirectLightIntensity: 1.2
+  indirectLightIntensity: 1.2,
+  shadowcatcher: true
 }
 
 export type CanonicalView =
