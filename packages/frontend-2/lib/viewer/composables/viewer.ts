@@ -27,6 +27,7 @@ export function useSelectionEvents(
     state: InjectableViewerState
   }>
 ) {
+  if (process.server) return
   const { singleClickCallback, doubleClickCallback } = params
   const {
     viewer: { instance }

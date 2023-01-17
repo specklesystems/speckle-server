@@ -165,16 +165,6 @@ module.exports = {
       return await getPaginatedBranchComments({ ...args, branchId: parent.id })
     }
   },
-  Version: {
-    async commentThreads(parent, args) {
-      return await getPaginatedCommitComments({ ...args, commitId: parent.id })
-    }
-  },
-  Model: {
-    async commentThreads(parent, args) {
-      return await getPaginatedBranchComments({ ...args, branchId: parent.id })
-    }
-  },
   Stream: {
     async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
