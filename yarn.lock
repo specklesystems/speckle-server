@@ -5220,7 +5220,7 @@ __metadata:
     redis: ^3.1.1
     request: ^2.88.2
     response-time: ^2.3.2
-    sanitize-html: ^2.7.0
+    sanitize-html: ^2.7.1
     sharp: ^0.30.5
     string-pixel-width: ^1.10.0
     subscriptions-transport-ws: ^0.11.0
@@ -12591,7 +12591,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"htmlparser2@npm:^8.0.1":
+"htmlparser2@npm:^8.0.0, htmlparser2@npm:^8.0.1":
   version: 8.0.1
   resolution: "htmlparser2@npm:8.0.1"
   dependencies:
@@ -17926,17 +17926,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sanitize-html@npm:^2.7.0":
-  version: 2.7.0
-  resolution: "sanitize-html@npm:2.7.0"
+"sanitize-html@npm:^2.7.1":
+  version: 2.8.1
+  resolution: "sanitize-html@npm:2.8.1"
   dependencies:
     deepmerge: ^4.2.2
     escape-string-regexp: ^4.0.0
-    htmlparser2: ^6.0.0
+    htmlparser2: ^8.0.0
     is-plain-object: ^5.0.0
     parse-srcset: ^1.0.2
     postcss: ^8.3.11
-  checksum: 73a4d66f69578bace3506519ca0734279b7117e15c33c7e4d075cdb483b1586261a18acd35934f6c6109f3b2a4a82f82c242171a94d5dc23fba5b09b01ea5b22
+  checksum: 0d35503b261800b736a02648e8b9b2a5206cbc621248cf8dd86d5b9bdd470d0146d74704222d287bd7359a599e8a186cc5b015401237b0244352f18f37465daa
   languageName: node
   linkType: hard
 
