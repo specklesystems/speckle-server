@@ -579,12 +579,10 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
 }
 
 function useViewerSelectionEventHandler(state: InjectableViewerState) {
-  if (process.server) return
-
   useSelectionEvents(
     {
       singleClickCallback: (args: SelectionEvent) => {
-        console.log('single click event')
+        console.log('TODO: single click event')
         // console.log(args)
         // Default stuff that has to happen when single click occurs
       },
