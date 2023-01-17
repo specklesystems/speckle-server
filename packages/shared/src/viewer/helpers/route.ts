@@ -58,7 +58,7 @@ export class ViewerModelFolderResource implements ViewerResource {
 }
 
 export function parseUrlParameters(resourceGetParam: string) {
-  if (!resourceGetParam) return []
+  // if (!resourceGetParam) return []
   const parts = resourceGetParam.toLowerCase().split(',').sort()
   const resources: ViewerResource[] = []
   for (const part of parts) {

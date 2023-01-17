@@ -3,7 +3,8 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
-  ViewerEvent
+  ViewerEvent,
+  SelectionEvent
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -12,6 +13,7 @@ import {
   ref,
   provide,
   ComputedRef,
+  Ref,
   WritableComputedRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
@@ -132,6 +134,12 @@ export type InjectableViewerState = Readonly<{
       setColorFilter: (property: PropertyInfo) => void
     }
     viewerBusy: WritableComputedRef<boolean>
+    selection: {
+      objects: Ref<Record<string, unknown>[]>
+      addToSelection: () => void
+      removeFromSelection: () => void
+      clearSelection: () => void
+    }
   }
 }>
 
@@ -573,10 +581,13 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
 function useViewerSelectionEventHandler(state: InjectableViewerState) {
   useSelectionEvents(
     {
-      singleClickCallback: () => {
+      singleClickCallback: (args: SelectionEvent) => {
+        console.log('single click event')
+        // console.log(args)
         // Default stuff that has to happen when single click occurs
       },
       doubleClickCallback: () => {
+        console.log('double click event')
         // Default stuff that has to happen when double click occurs
       }
     },
@@ -612,7 +623,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
 
   // Extra post-state-creation setup
   useViewerObjectAutoLoading(state)
-  useViewerSelectionEventHandler(state)
+  useViewerSelectionEventHandler(state) // TODO: needs implementation
   useViewerIsBusyEventHandler(state)
 
   return state
