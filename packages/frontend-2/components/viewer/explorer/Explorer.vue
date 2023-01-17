@@ -2,54 +2,81 @@
   <!--     -->
   <!-- WIP -->
   <!--     -->
-  <div class="flex justify-between flex-col bg-foundation rounded-md shadow">
-    <div class="text-sm font-bold text-foreground-2">Explorer TODO</div>
+  <div class="flex justify-between flex-col bg-foundation rounded-md shadow py-2">
     <div class="flex flex-col space-y-1">
-      <ViewerExplorerTreeItemOption2
+      <ViewerExplorerTreeItemOption3
         v-for="(rootNode, idx) in rootNodes"
         :key="idx"
-        :item-id="rootNode.model.data.id"
-        :tree-item="rootNode.model"
-        debug
+        :item-id="(rootNode.data?.id as string)"
+        :tree-item="markRaw(rootNode)"
+        :debug="false"
+        force-unfold
       />
-      <div
-        class="bg-foundation rounded-md shadow-lg mt-4 sticky bottom-0 h-44 simple-scrollbar overflow-y-auto overflow-x-clip"
-      >
-        <b>Selected object</b>
-        <pre class="text-xs"> {{ cleanSelectedObject }}</pre>
-      </div>
     </div>
+  </div>
+  <div
+    :class="`fixed max-h-[calc(100vh-5.5rem)] top-[4.5rem] px-[2px] right-4 rounded-md mb-4 transition-[width,opacity] ease-in-out duration-75 bg-foundation p-2 text-tiny overflow-y-auto simple-scrollbar ${
+      true ? 'w-80 opacity-100' : 'w-0 opacity-0'
+    }`"
+  >
+    <pre>{{ selectedObject }}</pre>
   </div>
 </template>
 <script setup lang="ts">
 // Some questions:
-// - will need to be "refreshed" when versions are changed
-// - keep this dude alive?
 // - no idea how to ts-ify this (note: the tree lib is ts)
 
 // TODOs:
 // - handle grasshopper models
 // - test sketchup, blender, etc. models
-
+// - ask alex re viewer data tree types exporting
+import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewer,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
+const test = useInjectedViewerState()
+const resourceItems = test.resources.request.items
 const { instance: viewer } = useInjectedViewer()
 
-const tree = viewer.getDataTree() // note expensive call, we should keep it alive
-provide('dataTree', tree)
+let realTree = viewer.getWorldTree()
 
-const rootNodes = computed(() => tree.root.children) // TODO: match model names
+const refHack = ref(1)
+onMounted(() => {
+  viewer.on(ViewerEvent.Busy, (isBusy) => {
+    if (isBusy) return
+    console.log('should get new tree')
+    realTree = viewer.getWorldTree()
+    refHack.value++
+  })
+})
+
+const rootNodes = computed(() => {
+  refHack.value
+  console.log('should update rootNodes')
+  const nodes = []
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const rootNodes = realTree._root.children as ExplorerNode[]
+  for (const node of rootNodes) {
+    const objectId = node.model.id.split('/').reverse()[0]
+    const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
+    if (resourceItem?.modelId) {
+      // Model resource
+      const model = modelsAndVersionIds.value.find(
+        (item) => item.model.id === resourceItem.modelId
+      )?.model
+      node.model.raw.name = model?.name
+      node.model.raw.type = model?.id
+    } else {
+      node.model.raw.name = 'Object'
+      node.model.raw.type = 'Single Object'
+    }
+    nodes.push(node.model)
+  }
+  return nodes
+})
 
 const selectedObject = ref({})
 provide('selectedObject', selectedObject)
-
-const cleanSelectedObject = computed(() => {
-  if (!selectedObject.value) return null
-  const copy = JSON.parse(JSON.stringify(selectedObject.value)) as Record<
-    string,
-    unknown
-  >
-  delete copy.__closure
-  return copy
-})
 </script>

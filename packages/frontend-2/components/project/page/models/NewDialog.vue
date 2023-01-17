@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="openState" max-width="md" hide-closer>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4">
-        <h1 class="h4 font-bold">Create new model</h1>
+        <h1 class="h4 font-bold text-foreground">Create new model</h1>
         <FormTextInput
           v-model="newModelName"
           name="name"

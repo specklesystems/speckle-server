@@ -57,9 +57,9 @@
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
-        <div v-for="collection in arrayCollections" :key="collection.data.name">
-          <TreeItemOption2
-            :item-id="(collection.data.id as string)"
+        <div v-for="collection in arrayCollections" :key="collection.raw.name">
+          <TreeItemOption3
+            :item-id="(collection.raw.id as string)"
             :tree-item="collection"
             :depth="depth + 1"
             :debug="debug"
@@ -69,9 +69,9 @@
       <!-- If we have a single model collection -->
       <div v-if="isSingleCollection">
         <!-- single col items -->
-        <div v-for="item in singleCollectionItems" :key="item.data?.id">
-          <TreeItemOption2
-            :item-id="(item.data?.id as string)"
+        <div v-for="item in singleCollectionItems" :key="item.raw?.id">
+          <TreeItemOption3
+            :item-id="(item.raw?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
             :debug="debug"
@@ -89,10 +89,6 @@ import {
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-
-const { instance: viewer } = useInjectedViewer()
-const dataTree = inject('dataTree')
 
 const props = withDefaults(
   defineProps<{
@@ -110,16 +106,8 @@ const props = withDefaults(
 const unfold = ref(props.forceUnfold)
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
-const speckleData = props.treeItem?.data as SpeckleObject
-const rawSpeckleData = props.treeItem?.data as Record<string, unknown>
-
-const objectSpeckleType = computed(() => {
-  return (rawSpeckleData.speckle_type as string)?.split('.').reverse()[0]
-})
-
-const objectName = computed(() => {
-  return (rawSpeckleData.name as string) || (rawSpeckleData.Name as string)
-})
+const speckleData = props.treeItem?.raw as SpeckleObject
+const rawSpeckleData = props.treeItem?.raw as Record<string, unknown>
 
 type HeaderSubheader = {
   header: string
@@ -191,7 +179,7 @@ const isSingleCollection = computed(() => {
 })
 
 const singleCollectionItems = computed(() => {
-  const treeItems = props.treeItem.children.filter((child) => !!child.data?.id) // filter out random tree children (no id means they're not actual objects)
+  const treeItems = props.treeItem.children.filter((child) => !!child.raw?.id) // filter out random tree children (no id means they're not actual objects)
   // Handle the case of a wall, roof or other atomic objects that have nested children
   if (isNonEmptyObjectArray(speckleData.elements) && isAtomic.value) {
     // We need to filter out children that are not direct descendants of `elements`
@@ -199,16 +187,16 @@ const singleCollectionItems = computed(() => {
     const ids = (speckleData.elements as SpeckleReference[]).map(
       (obj) => obj.referencedId
     )
-    return treeItems.filter((item) => ids.includes(item.data?.id as string))
+    return treeItems.filter((item) => ids.includes(item.raw?.id as string))
   }
   return treeItems
 })
 
 type ExplorerModelCollection = {
-  data: {
+  raw: {
     name: string
     id: string
-    children: SpeckleObject[]
+    children: SpeckleReference[]
   }
   children: ExplorerNode[]
 }
@@ -217,7 +205,7 @@ type ExplorerModelCollection = {
 // object { @boat: [obj, obj, obj], @harbour: [obj, obj, obj], etc. }
 // @boat and @harbour would ideally be model collections, but, alas, connectors don't have that yet.
 const arrayCollections = computed(() => {
-  const arr = [] as ExplorerModelCollection[]
+  const arr = [] as ExplorerNode[]
   for (const k of Object.keys(rawSpeckleData)) {
     if (k === 'children' || k === 'elements' || k.includes('displayValue')) continue
 
@@ -227,17 +215,17 @@ const arrayCollections = computed(() => {
     const ids = val.map((ref) => ref.referencedId) // NOTE: we're assuming all collections have refs inside; might revisit/to think re edge cases
 
     const actualRawRefs = props.treeItem.children.filter((node) =>
-      ids.includes(node.data?.id as string)
+      ids.includes(node.raw?.id as string)
     )
 
     if (actualRawRefs.length === 0) continue // bypasses chunks: if the actual object is not part of the tree item's children, it means it's a sublimated type (ie, a chunk). the assumption we're making is that any list of actual atomic objects is not chunked.
     const modelCollectionItem = {
-      data: {
+      raw: {
         name: k,
         id: k,
         // eslint-disable-next-line camelcase
         speckle_type: 'Array Collection',
-        children: actualRawRefs.map((ref) => ref.data) as SpeckleObject[]
+        children: val //actualRawRefs.map((ref) => ref.raw) as SpeckleObject[]
       },
       children: actualRawRefs
     }
@@ -260,7 +248,6 @@ const isObject = (x: unknown) =>
 const selectedObject = inject('selectedObject') as Ref<Record<string, unknown>>
 const setSelection = () => {
   console.log(props.treeItem)
-  console.log(isReactive(props.treeItem))
   if (selectedObject.value?.id === speckleData.id) selectedObject.value = null
   else selectedObject.value = markRaw(speckleData)
 }

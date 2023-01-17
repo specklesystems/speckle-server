@@ -12,6 +12,3 @@
     />
   </svg>
 </template>
-<script setup>
-console.log('hai')
-</script>

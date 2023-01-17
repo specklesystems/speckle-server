@@ -3,6 +3,7 @@ import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { DataTree } from './modules/tree/DataTree'
+import { WorldTree } from './modules/tree/WorldTree'
 
 export interface ViewerParams {
   showStats: boolean
@@ -195,6 +196,7 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  getWorldTree(): WorldTree
 
   dispose(): void
 }
