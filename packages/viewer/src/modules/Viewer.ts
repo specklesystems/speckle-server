@@ -306,6 +306,10 @@ export class Viewer extends EventEmitter implements IViewer {
     return WorldTree.getDataTree()
   }
 
+  public getWorldTree(): WorldTree {
+    return WorldTree.getInstance()
+  }
+
   public toggleSectionBox() {
     this.sectionBox.toggle()
     this.speckleRenderer.updateSectionBoxCapper()
