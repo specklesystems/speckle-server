@@ -30,7 +30,8 @@ const {
 } = require('@/modules/core/services/richTextEditorService')
 const {
   getPaginatedCommitComments,
-  getPaginatedBranchComments
+  getPaginatedBranchComments,
+  getPaginatedProjectComments
 } = require('@/modules/comments/services/retrieval')
 
 const authorizeStreamAccess = async ({
@@ -114,6 +115,10 @@ module.exports = {
       if (has(parent, 'resources')) return parent.resources
       return await ctx.loaders.comments.getResources.load(parent.id)
     },
+    async viewedAt(parent, _args, ctx) {
+      if (has(parent, 'viewedAt')) return parent.viewedAt
+      return await ctx.loaders.comments.getViewedAt.load(parent.id)
+    },
     async author(parent, _args, ctx) {
       return ctx.loaders.users.getUser.load(parent.authorId)
     },
@@ -147,9 +152,17 @@ module.exports = {
         serverRole: context.role,
         auth: context.auth
       })
-      return {
-        ...(await getComments({ ...args, streamId: parent.id, userId: context.userId }))
-      }
+      return await getPaginatedProjectComments({ ...args, projectId: parent.id })
+    }
+  },
+  Version: {
+    async commentThreads(parent, args) {
+      return await getPaginatedCommitComments({ ...args, commitId: parent.id })
+    }
+  },
+  Model: {
+    async commentThreads(parent, args) {
+      return await getPaginatedBranchComments({ ...args, branchId: parent.id })
     }
   },
   Version: {

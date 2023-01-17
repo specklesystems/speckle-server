@@ -49,8 +49,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
 const getPreviewUrl = useGetPreviewUrl()
 
 const props = withDefaults(
@@ -72,7 +72,7 @@ const emit = defineEmits<{
   (e: 'changeVersion', version: string): void
 }>()
 
-const { projectId } = useInjectedViewer()
+const { projectId } = useInjectedViewerState()
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)

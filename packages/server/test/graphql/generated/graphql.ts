@@ -237,7 +237,7 @@ export type CommentActivityMessage = {
 
 export type CommentCollection = {
   __typename?: 'CommentCollection';
-  cursor?: Maybe<Scalars['DateTime']>;
+  cursor?: Maybe<Scalars['String']>;
   items: Array<Comment>;
   totalCount: Scalars['Int'];
 };
@@ -1039,6 +1039,7 @@ export type Project = {
 
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectCommentsFilter>;
   limit?: Scalars['Int'];
 };
 
@@ -1069,6 +1070,14 @@ export type ProjectCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Project>;
   totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentsFilter = {
+  /**
+   * Only request comments belonging to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectModelsFilter = {

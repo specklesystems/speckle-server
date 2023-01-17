@@ -136,7 +136,7 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('ModelCollection')
           },
           commentThreads: {
-            keyArgs: false,
+            keyArgs: ['filter'],
             merge: buildAbstractCollectionMergeFunction('CommentCollection')
           },
           replyAuthors: {

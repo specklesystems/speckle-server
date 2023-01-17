@@ -3,10 +3,14 @@
   <div ref="rendererparent" class="absolute w-full h-full"></div>
 </template>
 <script setup lang="ts">
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 
 const rendererparent = ref<HTMLElement>()
-const { viewer, container, isInitializedPromise } = useInjectedViewer()
+const {
+  instance: viewer,
+  container,
+  init: { promise: isInitializedPromise }
+} = useInjectedViewer()
 
 onMounted(async () => {
   if (!process.client) return

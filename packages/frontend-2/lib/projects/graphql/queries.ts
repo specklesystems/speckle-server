@@ -22,14 +22,6 @@ export const projectPageQuery = graphql(`
   }
 `)
 
-export const modelPageProjectQuery = graphql(`
-  query ModelPageProjectQuery($id: String!) {
-    project(id: $id) {
-      ...ModelPageProject
-    }
-  }
-`)
-
 // TODO: Pagination
 export const latestModelsQuery = graphql(`
   query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {

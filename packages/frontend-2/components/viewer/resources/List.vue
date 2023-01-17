@@ -6,7 +6,7 @@
       </div>
       <!-- Basic object cards for now -->
       <div
-        v-for="{ objectId } in objectResourceItems"
+        v-for="{ objectId } in objects"
         :key="objectId"
         class="px-1 py-2 flex flex-col items-center bg-foundation shadow-md rounded-md"
       >
@@ -18,9 +18,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/solid'
-import { useInjectLoadedViewerResources } from '~~/lib/viewer/composables/viewer'
+import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 
-const { resourceItems, objectResourceItems, modelsAndVersionIds } =
-  useInjectLoadedViewerResources()
+const { resourceItems, objects, modelsAndVersionIds } =
+  useInjectedViewerLoadedResources()
 </script>

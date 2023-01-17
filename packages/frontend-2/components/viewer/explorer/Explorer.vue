@@ -30,14 +30,15 @@
 // - handle grasshopper models
 // - test sketchup, blender, etc. models
 // - ask alex re viewer data tree types exporting
-
+import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/viewer'
-import { useInjectLoadedViewerResources } from '~~/lib/viewer/composables/viewer'
-import { DataTree, ViewerEvent } from '@speckle/viewer'
-
-const { viewer } = useInjectedViewer()
-const { resourceItems, modelsAndVersionIds } = useInjectLoadedViewerResources()
+import {
+  useInjectedViewer,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
+const test = useInjectedViewerState()
+const resourceItems = test.resources.request.items
+const { instance: viewer } = useInjectedViewer()
 
 let realTree = viewer.getWorldTree()
 

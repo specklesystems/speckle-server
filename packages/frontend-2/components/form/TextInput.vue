@@ -50,9 +50,22 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
       />
+      <a
+        v-if="showClear"
+        title="Clear input"
+        class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer"
+        @click="clear"
+        @keydown="clear"
+      >
+        <span class="text-xs sr-only">Clear input</span>
+        <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
+      </a>
       <div
         v-if="error"
-        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
+        :class="[
+          'pointer-events-none absolute inset-y-0 right-0 flex items-center',
+          showClear ? 'pr-8' : 'pr-2'
+        ]"
       >
         <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
       </div>
@@ -81,7 +94,12 @@ export default defineComponent({
 </script>
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
-import { ExclamationCircleIcon, EnvelopeIcon, KeyIcon } from '@heroicons/vue/20/solid'
+import {
+  ExclamationCircleIcon,
+  EnvelopeIcon,
+  KeyIcon,
+  XMarkIcon
+} from '@heroicons/vue/20/solid'
 import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
@@ -194,12 +212,16 @@ const props = defineProps({
   size: {
     type: String as PropType<InputSize>,
     default: 'base'
+  },
+  showClear: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
-  (e: 'change', val: { event: Event; value: string }): void
+  (e: 'change', val: { event?: Event; value: string }): void
 }>()
 
 const { value, errorMessage: error } = useField(props.name, props.rules, {
@@ -233,10 +255,18 @@ const computedClasses = computed((): string => {
     classParts.push('pl-10')
   }
 
-  if (error.value) {
-    classParts.push(
-      'pr-8 border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
-    )
+  if (error.value || props.showClear) {
+    if (error.value && props.showClear) {
+      classParts.push('pr-12')
+    } else {
+      classParts.push('pr-8')
+    }
+
+    if (error.value) {
+      classParts.push(
+        'border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
+      )
+    }
   } else {
     classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
   }
@@ -274,6 +304,11 @@ const helpTipClasses = computed((): string =>
 
 const focus = () => {
   inputElement.value?.focus()
+}
+
+const clear = () => {
+  value.value = ''
+  emit('change', { value: '' })
 }
 
 onMounted(() => {

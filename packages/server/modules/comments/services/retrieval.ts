@@ -4,7 +4,10 @@ import {
   getPaginatedCommitCommentsTotalCount,
   PaginatedBranchCommentsParams,
   getPaginatedBranchComments as getPaginatedBranchCommentsDb,
-  getPaginatedBranchCommentsTotalCount
+  getPaginatedBranchCommentsTotalCount,
+  getPaginatedProjectComments as getPaginatedProjectCommentsDb,
+  getPaginatedProjectCommentsTotalCount,
+  PaginatedProjectCommentsParams
 } from '@/modules/comments/repositories/comments'
 
 export async function getPaginatedCommitComments(
@@ -27,6 +30,20 @@ export async function getPaginatedBranchComments(
   const [result, totalCount] = await Promise.all([
     getPaginatedBranchCommentsDb(params),
     getPaginatedBranchCommentsTotalCount(params)
+  ])
+
+  return {
+    ...result,
+    totalCount
+  }
+}
+
+export async function getPaginatedProjectComments(
+  params: PaginatedProjectCommentsParams
+) {
+  const [result, totalCount] = await Promise.all([
+    getPaginatedProjectCommentsDb(params),
+    getPaginatedProjectCommentsTotalCount(params)
   ])
 
   return {

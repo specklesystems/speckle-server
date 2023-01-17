@@ -89,6 +89,10 @@ import {
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
+import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+
+const { instance: viewer } = useInjectedViewer()
+const dataTree = inject('dataTree')
 
 const props = withDefaults(
   defineProps<{
