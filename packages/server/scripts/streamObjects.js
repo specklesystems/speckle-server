@@ -57,7 +57,7 @@ const main = async () => {
   logger.info(uploadRes.status)
   const objectIds = objBatch.map((obj) => obj.id)
 
-  const res = await fetch(`http://localhost:3000/api/getobjects/${testStream.id}`, {
+  const res = await fetch(`http://127.0.0.1:3000/api/getobjects/${testStream.id}`, {
     method: 'POST',
     headers: {
       Authorization: userA.token,
