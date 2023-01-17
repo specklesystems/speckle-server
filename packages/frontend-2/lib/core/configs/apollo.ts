@@ -296,7 +296,9 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const link = createLink({ httpEndpoint, wsClient, authToken })
 
   return {
-    cache: createCache(),
+    // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
+    // result from parts of its internals being made reactive, even tho they shouldn't be
+    cache: markRaw(createCache()),
     link,
     name: appName,
     version: appVersion

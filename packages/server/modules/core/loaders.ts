@@ -43,6 +43,10 @@ import {
 } from '@/modules/core/repositories/branches'
 
 /**
+ * TODO: Lazy load DataLoaders to reduce memory usage
+ */
+
+/**
  * Build request-scoped dataloaders
  * @param ctx GraphQL context w/o loaders
  */
