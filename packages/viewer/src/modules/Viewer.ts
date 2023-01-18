@@ -30,6 +30,7 @@ import { DataTree } from './tree/DataTree'
 import Logger from 'js-logger'
 import { Query, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
+import { Utils } from './Utils'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -44,7 +45,6 @@ export class Viewer extends EventEmitter implements IViewer {
   public static Assets: Assets
   protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
-  private queries: Queries
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
@@ -54,9 +54,21 @@ export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
 
+  /** various utils/helpers */
+  private utils: Utils
   /** Gets the World object. Currently it's used for info mostly */
   public static get World(): World {
     return this.world
+  }
+
+  public get Utils(): Utils {
+    if (!this.utils) {
+      this.utils = {
+        screenToNDC: this.speckleRenderer.screenToNDC.bind(this.speckleRenderer),
+        NDCToScreen: this.speckleRenderer.NDCToScreen.bind(this.speckleRenderer)
+      }
+    }
+    return this.utils
   }
 
   public constructor(
@@ -86,7 +98,6 @@ export class Viewer extends EventEmitter implements IViewer {
     new Assets(this.speckleRenderer.renderer)
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
-    this.queries = new Queries()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging! ಠ_ಠ
 
@@ -315,10 +326,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public query(query: Query): QueryResult {
     if (Queries.isPointQuery(query)) {
-      Queries.DefaultPointQuerySolver.setContext(
-        this.speckleRenderer.scene,
-        this.cameraHandler.activeCam.camera
-      )
+      Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultPointQuerySolver.solve(query)
     }
   }

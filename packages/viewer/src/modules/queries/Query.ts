@@ -4,10 +4,9 @@ export interface Query {
 
 export type QueryResult = { [prop: string]: unknown }
 
-export type PointQueryOperation = 'Occlusion' | 'Project' | 'Unproject'
+export type PointQueryOperation = 'Occlusion' | 'Project' | 'Unproject' | 'Pick'
 
 export interface PointQuery extends Query {
   point: { x: number; y: number; z?: number; w?: number }
-  distance?: number
   operation: PointQueryOperation
 }
