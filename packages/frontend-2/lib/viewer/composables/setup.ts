@@ -506,21 +506,31 @@ function setupInterfaceState(
   }
 
   const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
+  const setViewerSelectionFilter = () => {
+    const v = state.viewer.instance
+
+    if (selectedObjects.value.length === 0) return v.resetSelection()
+    const ids = selectedObjects.value.map((o) => o.id as string).filter((id) => !!id)
+    v.selectObjects(ids)
+  }
 
   const addToSelection = (object: Record<string, unknown>) => {
     const index = selectedObjects.value.findIndex((o) => o.id === object.id)
     if (index >= 0) return
     selectedObjects.value.push(markRaw(object))
+    setViewerSelectionFilter()
   }
 
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
     const index = selectedObjects.value.findIndex((o) => o.id === objectId)
     if (index > 0) selectedObjects.value.splice(index, 1)
+    setViewerSelectionFilter()
   }
 
   const clearSelection = () => {
     selectedObjects.value = []
+    setViewerSelectionFilter()
   }
 
   return {
