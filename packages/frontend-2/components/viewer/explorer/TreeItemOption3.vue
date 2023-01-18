@@ -20,7 +20,9 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          class="flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1"
+          :class="`flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
+            ${isSelected ? 'ring-1' : 'ring-0'}
+          `"
           @click="setSelection"
         >
           <div :class="`truncate ${unfold ? 'font-semibold' : ''}`">
@@ -30,6 +32,7 @@
             </div>
             <div class="text-tiny text-foreground-2 truncate">
               {{ subHeader || headerAndSubheader.subheader }}
+              <span v-if="debug">/ selected: {{ isSelected }}</span>
             </div>
           </div>
           <div class="flex-grow"></div>
@@ -245,15 +248,20 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
-// YOLO hack
-const selectedObject = inject('selectedObject') as Ref<Record<string, unknown>>
 const {
-  selection: { addToSelection }
+  selection: { addToSelection, clearSelection, objects }
 } = useInjectedViewerInterfaceState()
+
+const isSelected = computed(() => {
+  return !!objects.value.find((o) => o.id === speckleData.id)
+})
+
 const setSelection = () => {
-  console.log(props.treeItem)
-  // if (selectedObject.value?.id === speckleData.id) selectedObject.value = null
-  // else selectedObject.value = markRaw(speckleData)
-  addToSelection(speckleData)
+  if (isSelected.value) {
+    clearSelection()
+    return
+  }
+  clearSelection()
+  addToSelection(speckleData as Record<string, unknown>)
 }
 </script>

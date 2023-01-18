@@ -613,6 +613,8 @@ function useViewerSelectionEventHandler(state: InjectableViewerState) {
       },
       doubleClickCallback: (args) => {
         console.log('double click event', args)
+        if (!args) return state.viewer.instance.zoom()
+        if (!args.hits) return state.viewer.instance.zoom()
         if (args.hits.length === 0) return state.viewer.instance.zoom()
         // TODO: check for first visible object
         const objectId = args.hits[0].object.id
