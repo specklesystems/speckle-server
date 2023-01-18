@@ -3,9 +3,7 @@ import {
   SelectionEvent,
   ViewerEvent,
   DebugViewer,
-  Viewer,
-  QueryResult,
-  PointQuery
+  Viewer
 } from '@speckle/viewer'
 
 import './style.css'
@@ -32,37 +30,37 @@ window.addEventListener('load', () => {
 })
 
 /** QUERY TEST */
-container.addEventListener('mousemove', async (ev) => {
-  const point = viewer.Utils.screenToNDC(ev.clientX, ev.clientY)
-  const res: QueryResult = viewer.query<PointQuery>({
-    id: 'test',
-    point,
-    operation: 'Pick'
-  })
-  if (!res) return
-  const hitPoint = {
-    x: res.hits[0].point.x,
-    y: res.hits[0].point.y,
-    z: res.hits[0].point.z
-  }
-  await viewer.selectObjects([res.hits[0].object.id])
-  const resProj: QueryResult = viewer.query<PointQuery>({
-    id: 'test',
-    point: hitPoint,
-    operation: 'Project'
-  })
-  // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
-  const resUnProj: QueryResult = viewer.query<PointQuery>({
-    id: 'test',
-    point: { x: resProj.x as number, y: resProj.y as number, z: resProj.z as number },
-    operation: 'Unproject'
-  })
-  console.log(
-    hitPoint.x - (resUnProj.x as number),
-    hitPoint.y - (resUnProj.y as number),
-    hitPoint.z - (resUnProj.z as number)
-  )
-})
+// container.addEventListener('mousemove', async (ev) => {
+//   const point = viewer.Utils.screenToNDC(ev.clientX, ev.clientY)
+//   const res: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point,
+//     operation: 'Pick'
+//   })
+//   if (!res) return
+//   const hitPoint = {
+//     x: res.hits[0].point.x,
+//     y: res.hits[0].point.y,
+//     z: res.hits[0].point.z
+//   }
+//   await viewer.selectObjects([res.hits[0].object.id])
+//   const resProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: hitPoint,
+//     operation: 'Project'
+//   })
+//   // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
+//   const resUnProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: { x: resProj.x as number, y: resProj.y as number, z: resProj.z as number },
+//     operation: 'Unproject'
+//   })
+//   console.log(
+//     hitPoint.x - (resUnProj.x as number),
+//     hitPoint.y - (resUnProj.y as number),
+//     hitPoint.z - (resUnProj.z as number)
+//   )
+// })
 
 viewer.on(
   ViewerEvent.LoadProgress,
@@ -72,6 +70,18 @@ viewer.on(
     }
   }
 )
+
+// const updt = () => {
+//   const resOcc = viewer.query<PointQuery>({
+//     id: 'testX',
+//     point: { x: 6.887440887402381, y: -2.6758210595825984, z: 6.94968877513338 },
+//     operation: 'Occlusion'
+//   })
+//   console.log(resOcc)
+//   requestAnimationFrame(updt)
+// }
+
+requestAnimationFrame(updt)
 
 viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)

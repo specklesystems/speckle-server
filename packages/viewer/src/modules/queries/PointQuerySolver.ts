@@ -1,6 +1,5 @@
 import Logger from 'js-logger'
-import { FrontSide, Intersection, Matrix4, Ray, Vector2, Vector3 } from 'three'
-import SpeckleMesh from '../objects/SpeckleMesh'
+import { Intersection, Ray, Vector2, Vector3 } from 'three'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { PointQuery, QueryResult } from './Query'
 
@@ -29,23 +28,19 @@ export class PointQuerySolver {
 
   private solveOcclusion(query: PointQuery): QueryResult {
     const target = new Vector3(query.point.x, query.point.y, query.point.z)
-    const dir = new Vector3().copy(this.renderer.camera.position).sub(target)
+    const dir = new Vector3().copy(target).sub(this.renderer.camera.position)
     dir.normalize()
     const ray = new Ray(this.renderer.camera.position, dir)
-    const invMat = new Matrix4()
-    let visible = true
-    this.renderer.scene.getObjectByName('ContentGroup').traverse((object) => {
-      if (!(object instanceof SpeckleMesh)) return
-      if (!visible) return
-
-      invMat.copy(object.matrixWorld).invert()
-      const objRay = new Ray().copy(ray)
-      objRay.applyMatrix4(invMat)
-
-      visible &&= object.BVH.raycastFirst(objRay, FrontSide) ? false : true
-    })
-
-    return { visible }
+    const results: Array<Intersection> = this.renderer.intersections.intersectRay(
+      this.renderer.scene,
+      this.renderer.camera,
+      ray,
+      true,
+      this.renderer.currentSectionBox
+    )
+    if (!results || results.length === 0) return { visible: true }
+    const queryPointDistance = this.renderer.camera.position.distanceTo(target)
+    return { visible: results[0].distance > queryPointDistance }
   }
 
   private solveProjection(query: PointQuery): QueryResult {
