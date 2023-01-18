@@ -403,3 +403,15 @@ export async function updateBranch(branchId: string, branch: Partial<BranchRecor
 export async function deleteBranchById(branchId: string) {
   return await Branches.knex().where(Branches.col.id, branchId).del()
 }
+
+export async function markCommitBranchUpdated(commitId: string) {
+  const q = Branches.knex()
+    .whereIn(Branches.col.id, (w) => {
+      w.select(BranchCommits.col.branchId)
+        .from(BranchCommits.name)
+        .where(BranchCommits.col.commitId, commitId)
+    })
+    .update(Branches.withoutTablePrefix.col.updatedAt, new Date())
+  const updates = await q
+  return updates > 0
+}

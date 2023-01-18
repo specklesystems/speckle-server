@@ -9,7 +9,10 @@ import {
   CommitUpdateError
 } from '@/modules/core/errors/commit'
 import { CommitUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import {
+  getStreamBranchByName,
+  markCommitBranchUpdated
+} from '@/modules/core/repositories/branches'
 import {
   createCommit,
   deleteCommit,
@@ -21,7 +24,7 @@ import {
   updateCommit
 } from '@/modules/core/repositories/commits'
 import { getObject } from '@/modules/core/repositories/objects'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStream, markCommitStreamUpdated } from '@/modules/core/repositories/streams'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 
 /**
@@ -75,9 +78,8 @@ export async function createCommitByBranchId(params: {
     insertStreamCommits([{ streamId, commitId: id }])
   ])
 
-  // TODO: update stream & branch updatedAt
-  // await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
-  // await Branches().where({ id: branchId }).update({ updatedAt: knex.fn.now() })
+  await Promise.all([markCommitStreamUpdated(id), markCommitBranchUpdated(id)])
+
   return commit
 }
 
@@ -133,8 +135,6 @@ export async function createCommitByBranchName(
       commit: { ...commit, branchName, objectId, streamId }
     })
   }
-
-  // TODO: update stream & branch updatedAt
 
   return commit
 }
@@ -205,9 +205,12 @@ export async function updateCommitAndNotify(params: CommitUpdateInput, userId: s
       originalCommit: commit,
       update: params
     })
-  }
 
-  // TODO: update branch/stream updatedAt
+    await Promise.all([
+      markCommitStreamUpdated(commit.id),
+      markCommitBranchUpdated(commit.id)
+    ])
+  }
 }
 
 export async function deleteCommitAndNotify(
@@ -228,6 +231,11 @@ export async function deleteCommitAndNotify(
     })
   }
 
+  await Promise.all([
+    markCommitStreamUpdated(commit.id),
+    markCommitBranchUpdated(commit.id)
+  ])
+
   const isDeleted = await deleteCommit(commitId)
   if (isDeleted) {
     await addCommitDeletedActivity({
@@ -237,8 +245,6 @@ export async function deleteCommitAndNotify(
       commit
     })
   }
-
-  // TODO: update branch/stream updatedAt
 
   return isDeleted
 }

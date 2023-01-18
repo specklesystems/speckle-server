@@ -776,3 +776,15 @@ export async function markBranchStreamUpdated(branchId: string) {
   const updates = await q
   return updates > 0
 }
+
+export async function markCommitStreamUpdated(commitId: string) {
+  const q = Streams.knex()
+    .whereIn(Streams.col.id, (w) => {
+      w.select(StreamCommits.col.streamId)
+        .from(StreamCommits.name)
+        .where(StreamCommits.col.commitId, commitId)
+    })
+    .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
+  const updates = await q
+  return updates > 0
+}
