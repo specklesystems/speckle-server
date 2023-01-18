@@ -2,7 +2,8 @@ export interface Query {
   id: string
 }
 
-export type QueryResult = { [prop: string]: unknown }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type QueryResult = { [prop: string]: any }
 
 export type PointQueryOperation = 'Occlusion' | 'Project' | 'Unproject' | 'Pick'
 

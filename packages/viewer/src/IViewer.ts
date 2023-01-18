@@ -201,7 +201,7 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
-  query(query: Query): QueryResult
+  query<T extends Query>(query: T): QueryResult
   queryAsync(query: Query): Promise<QueryResult>
 
   dispose(): void

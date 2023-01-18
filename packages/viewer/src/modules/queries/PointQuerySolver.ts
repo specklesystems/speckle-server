@@ -64,7 +64,7 @@ export class PointQuerySolver {
   private solveUnprojection(query: PointQuery): QueryResult {
     // NDC
     const unprojected = new Vector3(query.point.x, query.point.y, query.point.z)
-    unprojected.project(this.renderer.camera)
+    unprojected.unproject(this.renderer.camera)
 
     return {
       // WORLD

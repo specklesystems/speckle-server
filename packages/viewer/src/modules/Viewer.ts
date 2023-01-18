@@ -324,7 +324,7 @@ export class Viewer extends EventEmitter implements IViewer {
     return WorldTree.getDataTree()
   }
 
-  public query(query: Query): QueryResult {
+  public query<T extends Query>(query: T): QueryResult {
     if (Queries.isPointQuery(query)) {
       Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultPointQuerySolver.solve(query)
