@@ -14,7 +14,8 @@ import {
   provide,
   ComputedRef,
   Ref,
-  WritableComputedRef
+  WritableComputedRef,
+  Raw
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
@@ -135,9 +136,8 @@ export type InjectableViewerState = Readonly<{
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
-      objects: Ref<Record<string, unknown>[]>
-      addToSelection: () => void
-      removeFromSelection: () => void
+      objects: Ref<Raw<Record<string, unknown>>[]>
+      addToSelection: (object: Record<string, unknown>) => void
       clearSelection: () => void
     }
   }
@@ -457,6 +457,7 @@ function setupInterfaceState(
   // Filters
   const filteringState = ref(null as Nullable<FilteringState>)
   const localFilterPropKey = ref(null as Nullable<string>)
+
   const isolateObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -465,6 +466,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const unIsolateObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -473,6 +475,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const hideObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -481,6 +484,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const showObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -489,6 +493,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const setColorFilter = async (property: PropertyInfo) => {
     if (process.server) return
     viewerBusy.value = true
@@ -497,6 +502,16 @@ function setupInterfaceState(
     filteringState.value = result
     localFilterPropKey.value = property.key
     viewerBusy.value = false
+  }
+
+  const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
+
+  const addToSelection = (object: Record<string, unknown>) => {
+    selectedObjects.value.push(markRaw(object))
+  }
+
+  const clearSelection = () => {
+    selectedObjects.value = []
   }
 
   return {
@@ -511,6 +526,11 @@ function setupInterfaceState(
         hideObjects,
         showObjects,
         setColorFilter
+      },
+      selection: {
+        objects: selectedObjects,
+        addToSelection,
+        clearSelection
       }
     }
   }
@@ -583,12 +603,20 @@ function useViewerSelectionEventHandler(state: InjectableViewerState) {
     {
       singleClickCallback: (args: SelectionEvent) => {
         console.log('TODO: single click event')
-        // console.log(args)
-        // Default stuff that has to happen when single click occurs
+        if (!args) return state.ui.selection.clearSelection()
+        if (args.hits.length === 0) return state.ui.selection.clearSelection()
+        if (!args.multiple) state.ui.selection.clearSelection()
+        // TODO: check for first visible object
+        state.ui.selection.addToSelection(
+          args.hits[0].object as Record<string, unknown>
+        )
       },
-      doubleClickCallback: () => {
-        console.log('double click event')
-        // Default stuff that has to happen when double click occurs
+      doubleClickCallback: (args) => {
+        console.log('double click event', args)
+        if (args.hits.length === 0) return state.viewer.instance.zoom()
+        // TODO: check for first visible object
+        const objectId = args.hits[0].object.id
+        state.viewer.instance.zoom([objectId as string])
       }
     },
     { state }

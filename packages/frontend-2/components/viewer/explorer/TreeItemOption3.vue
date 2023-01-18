@@ -89,6 +89,7 @@ import {
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const props = withDefaults(
   defineProps<{
@@ -246,9 +247,13 @@ const isObject = (x: unknown) =>
 
 // YOLO hack
 const selectedObject = inject('selectedObject') as Ref<Record<string, unknown>>
+const {
+  selection: { addToSelection }
+} = useInjectedViewerInterfaceState()
 const setSelection = () => {
   console.log(props.treeItem)
-  if (selectedObject.value?.id === speckleData.id) selectedObject.value = null
-  else selectedObject.value = markRaw(speckleData)
+  // if (selectedObject.value?.id === speckleData.id) selectedObject.value = null
+  // else selectedObject.value = markRaw(speckleData)
+  addToSelection(speckleData)
 }
 </script>
