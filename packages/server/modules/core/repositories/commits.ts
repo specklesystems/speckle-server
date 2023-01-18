@@ -27,7 +27,7 @@ import {
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 
 export const generateCommitId = () => crs({ length: 10 })
 
@@ -74,6 +74,11 @@ export async function getCommits(commitIds: string[]) {
   return uniqueRows
 }
 
+export async function getCommit(commitId: string) {
+  const [commit] = await getCommits([commitId])
+  return commit as Optional<typeof commit>
+}
+
 /**
  * Move all commits to the specified branch
  * Note: Make sure to validate beforehand that the branch ID belongs to the
@@ -102,6 +107,11 @@ export async function moveCommitsToBranch(commitIds: string[], branchId: string)
 
 export async function deleteCommits(commitIds: string[]) {
   return await Commits.knex().whereIn(Commits.col.id, commitIds).del()
+}
+
+export async function deleteCommit(commitId: string) {
+  const delCount = await deleteCommits([commitId])
+  return !!delCount
 }
 
 export function getBatchedStreamCommits(
@@ -299,4 +309,47 @@ export async function getCommitBranches(commitIds: string[]) {
     .whereIn(BranchCommits.col.commitId, commitIds)
 
   return await q
+}
+
+export async function getCommitBranch(commitId: string) {
+  const [commit] = await getCommitBranches([commitId])
+  return commit as Optional<typeof commit>
+}
+
+export async function switchCommitBranch(
+  commitId: string,
+  newBranchId: string,
+  oldBranchId?: string
+) {
+  const q = BranchCommits.knex()
+    .where(BranchCommits.col.commitId, commitId)
+    .update(BranchCommits.withoutTablePrefix.col.branchId, newBranchId)
+
+  if (oldBranchId) {
+    q.andWhere(BranchCommits.col.branchId, oldBranchId)
+  }
+
+  return await q
+}
+
+export async function updateCommit(commitId: string, commit: Partial<CommitRecord>) {
+  const [newCommit] = (await Commits.knex()
+    .where(Commits.col.id, commitId)
+    .update(commit, '*')) as CommitRecord[]
+  return newCommit
+}
+
+export async function createCommit(
+  params: Omit<CommitRecord, 'id' | 'createdAt'> & {
+    message?: Nullable<string>
+  }
+) {
+  const [item] = (await Commits.knex<CommitRecord[]>().insert(
+    {
+      ...params,
+      id: generateCommitId()
+    },
+    '*'
+  )) as CommitRecord[]
+  return item
 }

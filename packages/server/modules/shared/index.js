@@ -1,35 +1,12 @@
 'use strict'
-const Redis = require('ioredis')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
-const { RedisPubSub } = require('graphql-redis-subscriptions')
-
-const StreamPubsubEvents = Object.freeze({
-  UserStreamAdded: 'USER_STREAM_ADDED',
-  UserStreamRemoved: 'USER_STREAM_REMOVED',
-  StreamUpdated: 'STREAM_UPDATED',
-  StreamDeleted: 'STREAM_DELETED'
-})
-
-const CommitPubsubEvents = Object.freeze({
-  CommitCreated: 'COMMIT_CREATED',
-  CommitUpdated: 'COMMIT_UPDATED',
-  CommitDeleted: 'COMMIT_DELETED'
-})
-
-const BranchPubsubEvents = Object.freeze({
-  BranchCreated: 'BRANCH_CREATED',
-  BranchUpdated: 'BRANCH_UPDATED',
-  BranchDeleted: 'BRANCH_DELETED'
-})
-
-/**
- * GraphQL Subscription PubSub instance
- */
-const pubsub = new RedisPubSub({
-  publisher: new Redis(process.env.REDIS_URL),
-  subscriber: new Redis(process.env.REDIS_URL)
-})
+const {
+  pubsub,
+  StreamSubscriptions,
+  CommitSubscriptions,
+  BranchSubscriptions
+} = require('@/modules/shared/utils/subscriptions')
 
 let roles
 
@@ -147,7 +124,7 @@ module.exports = {
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents,
-  CommitPubsubEvents,
-  BranchPubsubEvents
+  StreamPubsubEvents: StreamSubscriptions,
+  CommitPubsubEvents: CommitSubscriptions,
+  BranchPubsubEvents: BranchSubscriptions
 }
