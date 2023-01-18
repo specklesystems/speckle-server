@@ -138,6 +138,7 @@ export type InjectableViewerState = Readonly<{
     selection: {
       objects: Ref<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
+      removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
   }
@@ -507,7 +508,15 @@ function setupInterfaceState(
   const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
 
   const addToSelection = (object: Record<string, unknown>) => {
+    const index = selectedObjects.value.findIndex((o) => o.id === object.id)
+    if (index >= 0) return
     selectedObjects.value.push(markRaw(object))
+  }
+
+  const removeFromSelection = (object: Record<string, unknown> | string) => {
+    const objectId = typeof object === 'string' ? object : (object.id as string)
+    const index = selectedObjects.value.findIndex((o) => o.id === objectId)
+    if (index > 0) selectedObjects.value.splice(index, 1)
   }
 
   const clearSelection = () => {
@@ -530,7 +539,8 @@ function setupInterfaceState(
       selection: {
         objects: selectedObjects,
         addToSelection,
-        clearSelection
+        clearSelection,
+        removeFromSelection
       }
     }
   }

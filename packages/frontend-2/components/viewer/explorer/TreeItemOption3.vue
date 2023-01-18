@@ -249,7 +249,7 @@ const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
 const {
-  selection: { addToSelection, clearSelection, objects }
+  selection: { addToSelection, clearSelection, removeFromSelection, objects }
 } = useInjectedViewerInterfaceState()
 
 const isSelected = computed(() => {
@@ -257,9 +257,13 @@ const isSelected = computed(() => {
 })
 
 const setSelection = (e: MouseEvent) => {
-  if (isSelected.value) {
+  if (isSelected.value && !e.shiftKey) {
     // TODO: remove from selection
     clearSelection()
+    return
+  }
+  if (isSelected.value && e.shiftKey) {
+    removeFromSelection(speckleData as Record<string, unknown>)
     return
   }
   if (!e.shiftKey) clearSelection()

@@ -25,9 +25,14 @@
 </template>
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const {
   selection: { objects, clearSelection }
 } = useInjectedViewerInterfaceState()
+
+onKeyStroke('Escape', () => {
+  clearSelection()
+})
 </script>
