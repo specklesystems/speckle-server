@@ -2,7 +2,7 @@
   <!--     -->
   <!-- WIP -->
   <!--     -->
-  <div class="w-full">
+  <div class="w-full select-none">
     <!-- Header -->
     <div class="bg-foundation py-1 rounded-md px-1 w-full">
       <div class="flex items-stretch space-x-1 w-full">
@@ -23,7 +23,7 @@
           :class="`flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
             ${isSelected ? 'ring-1' : 'ring-0'}
           `"
-          @click="setSelection"
+          @click="(e) => setSelection(e)"
         >
           <div :class="`truncate ${unfold ? 'font-semibold' : ''}`">
             <div class="text-sm truncate">
@@ -56,7 +56,7 @@
     </div>
 
     <!-- Children Contents -->
-    <div v-if="unfold" class="relative pl-2 text-xs">
+    <div v-if="unfold" class="relative pl-1 text-xs">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -256,12 +256,13 @@ const isSelected = computed(() => {
   return !!objects.value.find((o) => o.id === speckleData.id)
 })
 
-const setSelection = () => {
+const setSelection = (e: MouseEvent) => {
   if (isSelected.value) {
+    // TODO: remove from selection
     clearSelection()
     return
   }
-  clearSelection()
+  if (!e.shiftKey) clearSelection()
   addToSelection(speckleData as Record<string, unknown>)
 }
 </script>
