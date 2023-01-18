@@ -3,7 +3,6 @@ const { ApolloError, ForbiddenError, UserInputError } = require('apollo-server-e
 const { withFilter } = require('graphql-subscriptions')
 
 const {
-  createStream,
   getStream,
   getStreams,
   getStreamUsers,
@@ -46,11 +45,9 @@ const {
   getUserStreams
 } = require('@/modules/core/repositories/streams')
 const {
-  addStreamCreatedActivity
-} = require('@/modules/activitystream/services/streamActivity')
-const {
   deleteStreamAndNotify,
-  updateStreamAndNotify
+  updateStreamAndNotify,
+  createStreamReturnRecord
 } = require('@/modules/core/services/streams/management')
 
 // subscription events
@@ -209,13 +206,10 @@ module.exports = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const id = await createStream({ ...args.stream, ownerId: context.userId })
-
-      await addStreamCreatedActivity({
-        streamId: id,
-        stream: args.stream,
-        creatorId: context.userId
-      })
+      const { id } = await createStreamReturnRecord(
+        { ...args.stream, ownerId: context.userId },
+        { createActivity: true }
+      )
 
       return id
     },

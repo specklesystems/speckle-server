@@ -16,7 +16,8 @@ import {
   knex,
   Users,
   StreamCommits,
-  Commits
+  Commits,
+  Branches
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
@@ -762,4 +763,16 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
     })
 
   return updatedStream
+}
+
+export async function markBranchStreamUpdated(branchId: string) {
+  const q = Streams.knex()
+    .whereIn(Streams.col.id, (w) => {
+      w.select(Branches.col.streamId)
+        .from(Branches.name)
+        .where(Branches.col.id, branchId)
+    })
+    .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
+  const updates = await q
+  return updates > 0
 }

@@ -1,10 +1,5 @@
-import {
-  BranchCommits,
-  Branches,
-  Commits,
-  knex,
-  Streams
-} from '@/modules/core/dbSchema'
+import { Optional } from '@speckle/shared'
+import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
 import { BranchNameError } from '@/modules/core/errors/branch'
 import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
@@ -32,6 +27,14 @@ export async function getBranchesByIds(
   }
 
   return await q
+}
+
+export async function getBranchById(
+  branchId: string,
+  options?: Partial<{ streamId: string }>
+) {
+  const [branch] = await getBranchesByIds([branchId], options)
+  return branch as Optional<BranchRecord>
 }
 
 export async function getStreamBranchesByName(
@@ -383,10 +386,20 @@ export async function createBranch(params: {
   const results = await Branches.knex().insert(branch, '*')
   const newBranch = results[0] as BranchRecord
 
-  // Update stream updated at
-  await Streams.knex()
-    .where(Streams.col.id, streamId)
-    .update(Streams.withoutTablePrefix.col.updatedAt, knex.fn.now())
-
   return newBranch
+}
+
+export async function updateBranch(branchId: string, branch: Partial<BranchRecord>) {
+  if (branch.name) {
+    validateBranchName(branch.name)
+  }
+
+  const [newBranch] = (await Branches.knex()
+    .where(Branches.col.id, branchId)
+    .update(branch, '*')) as BranchRecord[]
+  return newBranch
+}
+
+export async function deleteBranchById(branchId: string) {
+  return await Branches.knex().where(Branches.col.id, branchId).del()
 }
