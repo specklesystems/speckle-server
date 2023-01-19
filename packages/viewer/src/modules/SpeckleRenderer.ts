@@ -1099,26 +1099,44 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
   }
 
-  public screenToNDC(clientX: number, clientY: number) {
+  public screenToNDC(
+    clientX: number,
+    clientY: number,
+    width?: number,
+    height?: number
+  ) {
     // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
     const canvas: HTMLCanvasElement = this._renderer.domElement
     const rect = this.container.getBoundingClientRect()
 
     const pos = {
-      x: ((clientX - rect.left) * canvas.width) / rect.width,
-      y: ((clientY - rect.top) * canvas.height) / rect.height
+      x:
+        width === undefined
+          ? ((clientX - rect.left) * canvas.width) / rect.width
+          : clientX,
+      y:
+        height === undefined
+          ? ((clientY - rect.top) * canvas.height) / rect.height
+          : clientY
     }
     return {
-      x: (pos.x / canvas.width) * 2 - 1,
-      y: (pos.y / canvas.height) * -2 + 1
+      x: (pos.x / width === undefined ? canvas.width : width) * 2 - 1,
+      y: (pos.y / height === undefined ? canvas.height : height) * -2 + 1
     }
   }
 
-  public NDCToScreen(clientX: number, clientY: number) {
+  public NDCToScreen(
+    clientX: number,
+    clientY: number,
+    width?: number,
+    height?: number
+  ) {
     const canvas: HTMLCanvasElement = this._renderer.domElement
+    width = width !== undefined ? width : canvas.width
+    height = height !== undefined ? height : canvas.height
     return {
-      x: (clientX * 0.5 + 0.5) * canvas.width,
-      y: (clientY * -0.5 + 0.5) * canvas.height
+      x: (clientX * 0.5 + 0.5) * width,
+      y: (clientY * -0.5 + 0.5) * height
     }
   }
 
