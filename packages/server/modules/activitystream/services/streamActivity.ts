@@ -5,12 +5,19 @@ import { pubsub, StreamPubsubEvents } from '@/modules/shared'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
 import { getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { chunk } from 'lodash'
+import { chunk, flatten } from 'lodash'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
+  ProjectUpdatedMessageType,
   ProjectUpdateInput,
-  StreamUpdateInput
+  StreamUpdateInput,
+  UserProjectsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectSubscriptions,
+  publish,
+  UserProjectsSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 
 /**
  * Save "stream updated" activity
@@ -19,9 +26,10 @@ export async function addStreamUpdatedActivity(params: {
   streamId: string
   updaterId: string
   oldStream: StreamRecord
+  newStream: StreamRecord
   update: ProjectUpdateInput | StreamUpdateInput
 }) {
-  const { streamId, updaterId, oldStream, update } = params
+  const { streamId, updaterId, oldStream, update, newStream } = params
 
   await Promise.all([
     saveActivity({
@@ -38,6 +46,13 @@ export async function addStreamUpdatedActivity(params: {
         ...update
       },
       id: streamId
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Updated,
+        project: newStream
+      }
     })
   ])
 }
@@ -52,21 +67,40 @@ export async function addStreamDeletedActivity(params: {
   const { streamId, deleterId } = params
 
   // Notify any listeners on streamId
-  await pubsub.publish(StreamPubsubEvents.StreamDeleted, {
-    streamDeleted: { streamId },
-    streamId
-  })
+  await Promise.all([
+    pubsub.publish(StreamPubsubEvents.StreamDeleted, {
+      streamDeleted: { streamId },
+      streamId
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Deleted,
+        project: null
+      }
+    })
+  ])
 
   // Notify all stream users
   const users = await getStreamCollaborators(streamId)
   const userBatches = chunk(users, 15)
   for (const userBatch of userBatches) {
     await Promise.all(
-      userBatch.map((u) =>
-        pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
-          userStreamRemoved: { id: streamId },
-          ownerId: u.id
-        })
+      flatten(
+        userBatch.map((u) => [
+          pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
+            userStreamRemoved: { id: streamId },
+            ownerId: u.id
+          }),
+          publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+            userProjectsUpdated: {
+              id: streamId,
+              type: UserProjectsUpdatedMessageType.Removed,
+              project: null
+            },
+            ownerId: u.id
+          })
+        ])
       )
     )
   }
@@ -116,9 +150,10 @@ export async function addStreamClonedActivity(
 export async function addStreamCreatedActivity(params: {
   streamId: string
   creatorId: string
-  stream: StreamCreateInput
+  input: StreamCreateInput
+  stream: StreamRecord
 }) {
-  const { streamId, creatorId, stream } = params
+  const { streamId, creatorId, input, stream } = params
 
   await Promise.all([
     saveActivity({
@@ -127,11 +162,19 @@ export async function addStreamCreatedActivity(params: {
       resourceId: streamId,
       actionType: ActionTypes.Stream.Create,
       userId: creatorId,
-      info: { stream },
-      message: `Stream ${stream.name} created`
+      info: { input },
+      message: `Stream ${input.name} created`
     }),
     pubsub.publish(StreamPubsubEvents.UserStreamAdded, {
-      userStreamAdded: { id: streamId, ...stream },
+      userStreamAdded: { id: streamId, ...input },
+      ownerId: creatorId
+    }),
+    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+      userProjectsUpdated: {
+        id: streamId,
+        type: UserProjectsUpdatedMessageType.Added,
+        project: stream
+      },
       ownerId: creatorId
     })
   ])
@@ -145,8 +188,9 @@ export async function addStreamPermissionsAddedActivity(params: {
   activityUserId: string
   targetUserId: string
   role: StreamRoles
+  stream: StreamRecord
 }) {
-  const { streamId, activityUserId, targetUserId, role } = params
+  const { streamId, activityUserId, targetUserId, role, stream } = params
   await Promise.all([
     saveActivity({
       streamId,
@@ -163,6 +207,14 @@ export async function addStreamPermissionsAddedActivity(params: {
         sharedBy: activityUserId
       },
       ownerId: targetUserId
+    }),
+    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+      userProjectsUpdated: {
+        id: streamId,
+        type: UserProjectsUpdatedMessageType.Added,
+        project: stream
+      },
+      ownerId: targetUserId
     })
   ])
 }
@@ -175,8 +227,9 @@ export async function addStreamInviteAcceptedActivity(params: {
   inviteTargetId: string
   inviterId: string
   role: StreamRoles
+  stream: StreamRecord
 }) {
-  const { streamId, inviteTargetId, inviterId, role } = params
+  const { streamId, inviteTargetId, inviterId, role, stream } = params
   await Promise.all([
     saveActivity({
       streamId,
@@ -191,6 +244,14 @@ export async function addStreamInviteAcceptedActivity(params: {
       userStreamAdded: {
         id: streamId,
         sharedBy: inviterId
+      },
+      ownerId: inviteTargetId
+    }),
+    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+      userProjectsUpdated: {
+        id: streamId,
+        type: UserProjectsUpdatedMessageType.Added,
+        project: stream
       },
       ownerId: inviteTargetId
     })
@@ -220,11 +281,18 @@ export async function addStreamPermissionsRevokedActivity(params: {
         ? `User ${removedUserId} left the stream`
         : `Permission revoked for user ${removedUserId}`
     }),
-
     pubsub.publish(StreamPubsubEvents.UserStreamRemoved, {
       userStreamRemoved: {
         id: streamId,
         revokedBy: activityUserId
+      },
+      ownerId: removedUserId
+    }),
+    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+      userProjectsUpdated: {
+        id: streamId,
+        type: UserProjectsUpdatedMessageType.Removed,
+        project: null
       },
       ownerId: removedUserId
     })

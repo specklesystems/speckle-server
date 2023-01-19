@@ -26,9 +26,28 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { graphql } from '~~/lib/common/generated/gql'
+import {
+  ProjectPageQueryQueryVariables,
+  ProjectUpdatedMessageType
+} from '~~/lib/common/generated/gql/graphql'
+import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+
+const onProjectUpdatedSubscription = graphql(`
+  subscription OnProjectUpdated($id: String!) {
+    projectUpdated(id: $id) {
+      id
+      type
+      project {
+        ...ProjectPageProject
+      }
+    }
+  }
+`)
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -49,10 +68,61 @@ definePageMeta({
   middleware: ['require-valid-project']
 })
 
+const { triggerNotification } = useGlobalToast()
 const route = useRoute()
+const goHome = useNavigateToHome()
+const apollo = useApolloClient().client
+const projectId = computed(() => route.params.id as string)
 const { result: projectPageResult } = useQuery(projectPageQuery, () => ({
-  id: route.params.id as string
+  id: projectId.value
 }))
 
+const { onResult: onProjectUpdated } = useSubscription(
+  onProjectUpdatedSubscription,
+  () => ({
+    id: projectId.value
+  })
+)
+
 const project = computed(() => projectPageResult.value?.project)
+
+onProjectUpdated((res) => {
+  if (!res.data?.projectUpdated) return
+
+  const event = res.data.projectUpdated
+  const isDeleted = event.type === ProjectUpdatedMessageType.Deleted
+  const updatedProject = event.project
+  const cache = apollo.cache
+
+  if (isDeleted) {
+    goHome()
+    cache.evict({
+      id: getCacheId('Project', event.id)
+    })
+  } else if (updatedProject) {
+    updateCacheByFilter(
+      cache,
+      {
+        query: {
+          query: projectPageQuery,
+          variables: <ProjectPageQueryQueryVariables>{ id: updatedProject.id }
+        }
+      },
+      (data) => {
+        if (!data.project) return
+
+        return {
+          ...data,
+          project: updatedProject
+        }
+      }
+    )
+  }
+
+  triggerNotification({
+    type: ToastNotificationType.Info,
+    title: isDeleted ? 'Project deleted' : 'Project updated',
+    description: isDeleted ? 'Redirecting to home' : undefined
+  })
+})
 </script>
