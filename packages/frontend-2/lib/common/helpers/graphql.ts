@@ -4,9 +4,11 @@ import {
   FetchResult,
   DataProxy,
   ApolloCache,
-  defaultDataIdFromObject
+  defaultDataIdFromObject,
+  TypedDocumentNode
 } from '@apollo/client/core'
-import { GraphQLError } from 'graphql'
+import { DocumentNode, GraphQLError } from 'graphql'
+import { flatten } from 'lodash-es'
 
 /**
  * Get a cached object's identifier
@@ -130,4 +132,30 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
     throw e
   }
+}
+
+/**
+ * A graphql-codegen generated fragment doesn't include the definition of other fragments in it,
+ * so if you ever need a document that contains a fragment as well as other fragments that it uses
+ * you can use this helper
+ *
+ * TODO: Figure out if we can turn off dedupeFragments to get fragments to contain all dependency
+ * fragments as well. Previously this caused an error when duplicate fragments were sent to the API
+ * through a query/mutation.
+ */
+export function addFragmentDependencies<R = unknown, V = unknown>(
+  fragment: TypedDocumentNode<R, V>,
+  ...fragmentDependencies: DocumentNode[]
+) {
+  return {
+    kind: 'Document',
+    definitions: [
+      ...fragment.definitions.filter((d) => d.kind === 'FragmentDefinition'),
+      ...flatten(
+        fragmentDependencies.map((f) =>
+          f.definitions.filter((d) => d.kind === 'FragmentDefinition')
+        )
+      )
+    ]
+  } as TypedDocumentNode<R, V>
 }

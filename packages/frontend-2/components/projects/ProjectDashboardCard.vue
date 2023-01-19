@@ -62,8 +62,21 @@ import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
-import { projectDashboardItemFragment } from '~~/lib/projects/graphql/fragments'
+import {
+  addFragmentDependencies,
+  getCacheId,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
+import {
+  projectDashboardItemFragment,
+  projectPageLatestItemsModelItemFragment
+} from '~~/lib/projects/graphql/fragments'
+import { sortBy } from 'lodash-es'
+
+const fullProjectDashboardItemFragment = addFragmentDependencies(
+  projectDashboardItemFragment,
+  projectPageLatestItemsModelItemFragment
+)
 
 const onProjectModelUpdateSubscription = graphql(`
   subscription OnProjectModelUpdate($id: String!) {
@@ -93,6 +106,8 @@ const { onResult: onProjectModelUpdate } = useSubscription(
 const models = computed(() => props.project.models?.items || [])
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 
+onMounted(() => console.log(projectDashboardItemFragment))
+
 onProjectModelUpdate((res) => {
   if (!res.data?.projectModelsUpdated) return
 
@@ -100,31 +115,51 @@ onProjectModelUpdate((res) => {
   const event = res.data.projectModelsUpdated
   const model = event.model
 
-  // Prepend new model card
-  if (event.type === ProjectModelsUpdatedMessageType.Created && model?.versionCount) {
+  if (
+    [
+      ProjectModelsUpdatedMessageType.Created,
+      ProjectModelsUpdatedMessageType.Updated
+    ].includes(event.type) &&
+    model?.versionCount
+  ) {
+    // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
+    // So - add it to the list, if its not already there
     updateCacheByFilter(
       cache,
       {
         fragment: {
-          fragment: projectDashboardItemFragment,
+          fragment: fullProjectDashboardItemFragment,
+          fragmentName: 'ProjectDashboardItem',
           id: getCacheId('Project', props.project.id)
         }
       },
       (data) => {
-        const newItems = [model, ...data.models.items]
-        const newTotalCount = data.models.totalCount + 1
+        const newItems = data.models.items.slice()
+        let newTotalCount = data.models.totalCount
+        if (!newItems.find((i) => i.id === model.id)) {
+          newItems.unshift(model)
+        }
+
+        if (event.type === ProjectModelsUpdatedMessageType.Created) {
+          newTotalCount += 1
+        }
+
+        const itemsSortedByDate = sortBy(newItems, (i) =>
+          dayjs(i.updatedAt).toDate().getTime()
+        ).reverse()
 
         return {
           ...data,
           models: {
             ...data.models,
             totalCount: newTotalCount,
-            items: newItems
+            items: itemsSortedByDate.slice(0, 4)
           }
         }
       }
     )
   } else if (event.type === ProjectModelsUpdatedMessageType.Deleted) {
+    // Delete
     cache.evict({
       id: getCacheId('Model', event.id)
     })

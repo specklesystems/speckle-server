@@ -20,3 +20,16 @@ export const projectDashboardItemFragment = graphql(`
     }
   }
 `)
+
+export const projectPageLatestItemsModelItemFragment = graphql(`
+  fragment ProjectPageLatestItemsModelItem on Model {
+    id
+    name
+    displayName
+    versionCount
+    commentThreadCount
+    previewUrl
+    createdAt
+    updatedAt
+  }
+`)

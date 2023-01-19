@@ -54,19 +54,6 @@ graphql(`
   }
 `)
 
-graphql(`
-  fragment ProjectPageLatestItemsModelItem on Model {
-    id
-    name
-    displayName
-    versionCount
-    commentThreadCount
-    previewUrl
-    createdAt
-    updatedAt
-  }
-`)
-
 const props = defineProps<{
   project: ProjectPageLatestItemsModelsFragment
 }>()
