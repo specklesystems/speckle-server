@@ -23,7 +23,7 @@ import {
 } from 'apollo-server-express'
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core'
 
-import { SubscriptionServer } from 'subscriptions-transport-ws'
+import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex from '@/db/knex'
@@ -36,7 +36,7 @@ import {
   useNewFrontend
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
@@ -122,6 +122,23 @@ function buildApolloSubscriptionServer(
       },
       onDisconnect: () => {
         metricConnectedClients.dec()
+      },
+      onOperation: (...params: [() => void, ExecutionParams]) => {
+        // kinda hacky, but we're using this as an "subscription event emitted"
+        // callback to clear subscription connection dataloaders to avoid stale cache
+        const baseParams = params[1]
+        const ctx = baseParams.context as GraphQLContext
+
+        baseParams.formatResponse = (val: unknown) => {
+          ctx.loaders.clearAll()
+          return val
+        }
+        baseParams.formatError = (e: Error) => {
+          ctx.loaders.clearAll()
+          return e
+        }
+
+        return baseParams
       }
     },
     {
