@@ -55,6 +55,8 @@ module.exports = class IFCParser {
     const project = {
       expressID: allProjectLines.get(0),
       type: 'IFCPROJECT',
+      // eslint-disable-next-line camelcase
+      speckle_type: 'Base',
       children: []
     }
 
