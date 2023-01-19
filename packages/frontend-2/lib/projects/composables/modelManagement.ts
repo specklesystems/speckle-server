@@ -3,6 +3,7 @@ import { GenericValidateFunction } from 'vee-validate'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
+  evictObjectFields,
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
@@ -53,12 +54,12 @@ export function useCreateNewModel() {
 
           // Manual cache updates are too overwhelming, there's multiple places in the graph
           // where you can find a model, some of which order models in a tree structure
-          // so we're just refetching all model data instead
-          cache.evict({ id: projectGqlId, fieldName: 'models' })
-          cache.evict({ id: projectGqlId, fieldName: 'modelsTree' })
-          cache.evict({ id: projectGqlId, fieldName: 'model' })
-          cache.evict({ id: projectGqlId, fieldName: 'modelChildrenTree' })
-          cache.gc()
+          // so we're just evicting all Project model related fields
+          evictObjectFields(cache, projectGqlId, (field) => {
+            return ['models', 'modelsTree', 'model', 'modelChildrenTree'].includes(
+              field
+            )
+          })
         }
       })
       .catch(convertThrowIntoFetchResult)

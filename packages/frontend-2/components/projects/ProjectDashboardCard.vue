@@ -106,8 +106,6 @@ const { onResult: onProjectModelUpdate } = useSubscription(
 const models = computed(() => props.project.models?.items || [])
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 
-onMounted(() => console.log(projectDashboardItemFragment))
-
 onProjectModelUpdate((res) => {
   if (!res.data?.projectModelsUpdated) return
 

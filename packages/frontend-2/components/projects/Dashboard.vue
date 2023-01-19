@@ -42,13 +42,18 @@ import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import { updateCacheByFilter, getCacheId } from '~~/lib/common/helpers/graphql'
+import {
+  updateCacheByFilter,
+  getCacheId,
+  evictObjectFields
+} from '~~/lib/common/helpers/graphql'
 import {
   ProjectsDashboardQueryQueryVariables,
   UserProjectsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -65,6 +70,7 @@ const onUserProjectsUpdateSubscription = graphql(`
 const search = ref('')
 const debouncedSearch = ref('')
 
+const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const areQueriesLoading = useQueryLoading()
@@ -100,6 +106,7 @@ const updateSearchImmediately = () => {
 onUserProjectsUpdate((res) => {
   if (!res.data?.userProjectsUpdated) return
 
+  const activeUserId = activeUser.value?.id
   const event = res.data.userProjectsUpdated
   const isNewProject = event.type === UserProjectsUpdatedMessageType.Added
   const incomingProject = event.project
@@ -150,11 +157,22 @@ onUserProjectsUpdate((res) => {
     }
   )
 
+  // Update searches
   if (!isNewProject) {
-    // Evict old project from cache entirely
+    // Evict old project from cache entirely to remove it from all searches
     cache.evict({
       id: getCacheId('Project', event.id)
     })
+  } else if (activeUserId) {
+    // Evict all User.projects searches, leave default query w/o any search string
+    evictObjectFields<ProjectsDashboardQueryQueryVariables>(
+      cache,
+      getCacheId('User', activeUserId),
+      (field, variables) => {
+        if (field !== 'projects') return false
+        return !!variables.filter?.search
+      }
+    )
   }
 
   // Emit toast notification
