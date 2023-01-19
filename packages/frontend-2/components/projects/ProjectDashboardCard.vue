@@ -54,17 +54,80 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectDashboardItemFragment,
+  ProjectModelsUpdatedMessageType
+} from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useApolloClient, useSubscription } from '@vue/apollo-composable'
+import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import { projectDashboardItemFragment } from '~~/lib/projects/graphql/fragments'
+
+const onProjectModelUpdateSubscription = graphql(`
+  subscription OnProjectModelUpdate($id: String!) {
+    projectModelsUpdated(id: $id) {
+      id
+      type
+      model {
+        id
+        ...ProjectPageLatestItemsModelItem
+      }
+    }
+  }
+`)
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
 
-const models = computed(() => props.project.models?.items || [])
-const nonEmptyModels = computed(() =>
-  models.value.filter((model) => model.versionCount !== 0)
+const apollo = useApolloClient().client
+const { onResult: onProjectModelUpdate } = useSubscription(
+  onProjectModelUpdateSubscription,
+  () => ({
+    id: props.project.id
+  })
 )
+
+const models = computed(() => props.project.models?.items || [])
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
+
+onProjectModelUpdate((res) => {
+  if (!res.data?.projectModelsUpdated) return
+
+  const cache = apollo.cache
+  const event = res.data.projectModelsUpdated
+  const model = event.model
+
+  // Prepend new model card
+  if (event.type === ProjectModelsUpdatedMessageType.Created && model?.versionCount) {
+    updateCacheByFilter(
+      cache,
+      {
+        fragment: {
+          fragment: projectDashboardItemFragment,
+          id: getCacheId('Project', props.project.id)
+        }
+      },
+      (data) => {
+        const newItems = [model, ...data.models.items]
+        const newTotalCount = data.models.totalCount + 1
+
+        return {
+          ...data,
+          models: {
+            ...data.models,
+            totalCount: newTotalCount,
+            items: newItems
+          }
+        }
+      }
+    )
+  } else if (event.type === ProjectModelsUpdatedMessageType.Deleted) {
+    cache.evict({
+      id: getCacheId('Model', event.id)
+    })
+  }
+})
 </script>

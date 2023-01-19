@@ -55,7 +55,7 @@ import {
 export function buildRequestLoaders(ctx: AuthContext) {
   const userId = ctx.userId
 
-  return {
+  const loaders = {
     streams: {
       /**
        * Get favorite metadata for a specific stream and user
@@ -257,6 +257,22 @@ export function buildRequestLoaders(ctx: AuthContext) {
         }
       )
     }
+  }
+
+  /**
+   * Clear all loaders
+   */
+  const clearAll = () => {
+    for (const groupedLoaders of Object.values(loaders)) {
+      for (const loaderItem of Object.values(groupedLoaders)) {
+        ;(loaderItem as DataLoader<unknown, unknown>).clearAll()
+      }
+    }
+  }
+
+  return {
+    ...loaders,
+    clearAll
   }
 }
 
