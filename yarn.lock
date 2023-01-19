@@ -4955,7 +4955,7 @@ __metadata:
     crypto-random-string: ^3.3.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^2.0.0
+    knex: ^2.4.1
     nodemon: ^2.0.20
     pg: ^8.7.3
     pino-pretty: ^9.1.1
@@ -5097,7 +5097,7 @@ __metadata:
     html-webpack-plugin: ^5.3.1
     http-errors: ~1.6.3
     join-images: ^1.1.3
-    knex: ^2.0.0
+    knex: ^2.4.1
     node-fetch: ^2.6.1
     nodemon: ^2.0.20
     pg: ^8.7.3
@@ -5107,7 +5107,7 @@ __metadata:
     prettier: ^2.5.1
     prom-client: ^14.0.1
     puppeteer: ^13.3.2
-    sharp: ^0.30.5
+    sharp: ^0.30.7
     webpack: ^5.69.1
     webpack-cli: ^4.6.0
     webpack-dev-server: ^4.6.0
@@ -5190,7 +5190,7 @@ __metadata:
     graphql-subscriptions: ^2.0.0
     http-proxy-middleware: ^1.0.6
     ioredis: ^5.2.2
-    knex: ^2.0.0
+    knex: ^2.4.1
     lodash: ^4.17.21
     mjml: ^4.13.0
     mocha: ^10.1.0
@@ -5220,7 +5220,7 @@ __metadata:
     redis: ^3.1.1
     request: ^2.88.2
     response-time: ^2.3.2
-    sanitize-html: ^2.7.0
+    sanitize-html: ^2.7.1
     sharp: ^0.30.5
     string-pixel-width: ^1.10.0
     subscriptions-transport-ws: ^0.11.0
@@ -5320,7 +5320,7 @@ __metadata:
     cross-env: ^7.0.3
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^2.0.0
+    knex: ^2.4.1
     node-fetch: ^2.6.1
     pg: ^8.7.3
     pino-pretty: ^9.1.1
@@ -8983,10 +8983,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorette@npm:2.0.16, colorette@npm:^2.0.10, colorette@npm:^2.0.14, colorette@npm:^2.0.16":
-  version: 2.0.16
-  resolution: "colorette@npm:2.0.16"
-  checksum: cd55596a3a2d1071c1a28eee7fd8a5387593ff1bd10a3e8d0a6221499311fe34a9f2b9272d77c391e0e003dcdc8934fb2f8d106e7ef1f7516f8060c901d41a27
+"colorette@npm:2.0.19, colorette@npm:^2.0.7":
+  version: 2.0.19
+  resolution: "colorette@npm:2.0.19"
+  checksum: 888cf5493f781e5fcf54ce4d49e9d7d698f96ea2b2ef67906834bb319a392c667f9ec69f4a10e268d2946d13a9503d2d19b3abaaaf174e3451bfe91fb9d82427
   languageName: node
   linkType: hard
 
@@ -8997,10 +8997,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorette@npm:^2.0.7":
-  version: 2.0.19
-  resolution: "colorette@npm:2.0.19"
-  checksum: 888cf5493f781e5fcf54ce4d49e9d7d698f96ea2b2ef67906834bb319a392c667f9ec69f4a10e268d2946d13a9503d2d19b3abaaaf174e3451bfe91fb9d82427
+"colorette@npm:^2.0.10, colorette@npm:^2.0.14, colorette@npm:^2.0.16":
+  version: 2.0.16
+  resolution: "colorette@npm:2.0.16"
+  checksum: cd55596a3a2d1071c1a28eee7fd8a5387593ff1bd10a3e8d0a6221499311fe34a9f2b9272d77c391e0e003dcdc8934fb2f8d106e7ef1f7516f8060c901d41a27
   languageName: node
   linkType: hard
 
@@ -12591,7 +12591,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"htmlparser2@npm:^8.0.1":
+"htmlparser2@npm:^8.0.0, htmlparser2@npm:^8.0.1":
   version: 8.0.1
   resolution: "htmlparser2@npm:8.0.1"
   dependencies:
@@ -13822,11 +13822,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knex@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "knex@npm:2.0.0"
+"knex@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "knex@npm:2.4.1"
   dependencies:
-    colorette: 2.0.16
+    colorette: 2.0.19
     commander: ^9.1.0
     debug: 4.3.4
     escalade: ^3.1.1
@@ -13857,7 +13857,7 @@ __metadata:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: c2b5bf0b511a2736310ffe59bfdccfa5721d95b8692c36ad085871f494cdfbe1817cc9c2521c0b1dda46b934b048bfd10675eaf93460fcc66476cca1b0af875f
+  checksum: 03caf06c2305379f25bfe9427512862b0bf6564f087a40456fd1bd4df081f9b0b4cfd050bb747861ef0ec95d26aacbef415fe1f2e1e6e1c963e722e6eb50573d
   languageName: node
   linkType: hard
 
@@ -16687,7 +16687,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prebuild-install@npm:^7.0.0, prebuild-install@npm:^7.1.0":
+"prebuild-install@npm:^7.0.0":
   version: 7.1.0
   resolution: "prebuild-install@npm:7.1.0"
   dependencies:
@@ -16707,6 +16707,28 @@ __metadata:
   bin:
     prebuild-install: bin.js
   checksum: 204f2d89c6d6179fa1039036514aa72f7d0b537e421ef72c40840286e318f41489f00f22c6acc725cce6e10d43825b69dcabeaadfc917db781c58cd56fc25f90
+  languageName: node
+  linkType: hard
+
+"prebuild-install@npm:^7.1.1":
+  version: 7.1.1
+  resolution: "prebuild-install@npm:7.1.1"
+  dependencies:
+    detect-libc: ^2.0.0
+    expand-template: ^2.0.3
+    github-from-package: 0.0.0
+    minimist: ^1.2.3
+    mkdirp-classic: ^0.5.3
+    napi-build-utils: ^1.0.1
+    node-abi: ^3.3.0
+    pump: ^3.0.0
+    rc: ^1.2.7
+    simple-get: ^4.0.0
+    tar-fs: ^2.0.0
+    tunnel-agent: ^0.6.0
+  bin:
+    prebuild-install: bin.js
+  checksum: dbf96d0146b6b5827fc8f67f72074d2e19c69628b9a7a0a17d0fad1bf37e9f06922896972e074197fc00a52eae912993e6ef5a0d471652f561df5cb516f3f467
   languageName: node
   linkType: hard
 
@@ -17926,17 +17948,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sanitize-html@npm:^2.7.0":
-  version: 2.7.0
-  resolution: "sanitize-html@npm:2.7.0"
+"sanitize-html@npm:^2.7.1":
+  version: 2.8.1
+  resolution: "sanitize-html@npm:2.8.1"
   dependencies:
     deepmerge: ^4.2.2
     escape-string-regexp: ^4.0.0
-    htmlparser2: ^6.0.0
+    htmlparser2: ^8.0.0
     is-plain-object: ^5.0.0
     parse-srcset: ^1.0.2
     postcss: ^8.3.11
-  checksum: 73a4d66f69578bace3506519ca0734279b7117e15c33c7e4d075cdb483b1586261a18acd35934f6c6109f3b2a4a82f82c242171a94d5dc23fba5b09b01ea5b22
+  checksum: 0d35503b261800b736a02648e8b9b2a5206cbc621248cf8dd86d5b9bdd470d0146d74704222d287bd7359a599e8a186cc5b015401237b0244352f18f37465daa
   languageName: node
   linkType: hard
 
@@ -18244,20 +18266,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sharp@npm:^0.30.5":
-  version: 0.30.5
-  resolution: "sharp@npm:0.30.5"
+"sharp@npm:^0.30.5, sharp@npm:^0.30.7":
+  version: 0.30.7
+  resolution: "sharp@npm:0.30.7"
   dependencies:
     color: ^4.2.3
     detect-libc: ^2.0.1
     node-addon-api: ^5.0.0
     node-gyp: latest
-    prebuild-install: ^7.1.0
+    prebuild-install: ^7.1.1
     semver: ^7.3.7
     simple-get: ^4.0.1
     tar-fs: ^2.1.1
     tunnel-agent: ^0.6.0
-  checksum: e2b6238770ae1498815c14b2711de9398176a8e1ea1131ef583edc4a1c421f55fd9fe52ffc996ea4a259bdfed2f5d68a076a6ddc85499c229025efbe8ccf0b56
+  checksum: bbc63ca3c7ea8a5bff32cd77022cfea30e25a03f5bd031e935924bf6cf0e11e3388e8b0e22b3137bf8816aa73407f1e4fbeb190f3a35605c27ffca9f32b91601
   languageName: node
   linkType: hard
 
@@ -19618,26 +19640,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.1.0":
-  version: 5.5.1
-  resolution: "undici@npm:5.5.1"
-  checksum: c041c9093df7ec683479a9555581206a7c7bebfc1ed6e8669920e55618461fc4ce08938e2fbf8ef7d692c2813c44392b5ed25c58396ee4a72ffd1f1f953712c9
-  languageName: node
-  linkType: hard
-
-"undici@npm:^5.12.0, undici@npm:^5.14.0":
-  version: 5.14.0
-  resolution: "undici@npm:5.14.0"
+"undici@npm:^5.1.0, undici@npm:^5.12.0, undici@npm:^5.14.0, undici@npm:^5.8.0":
+  version: 5.15.0
+  resolution: "undici@npm:5.15.0"
   dependencies:
     busboy: ^1.6.0
-  checksum: 7a076e44d84b25844b4eb657034437b8b9bb91f17d347de474fdea1d4263ce7ae9406db79cd30de5642519277b4893f43073258bcc8fed420b295da3fdd11b26
-  languageName: node
-  linkType: hard
-
-"undici@npm:^5.8.0":
-  version: 5.8.0
-  resolution: "undici@npm:5.8.0"
-  checksum: 7b486ad064da00628d3906e140b86223023cd3494c811da8d7aa1375c2392fe6a6ac421af236c056fd3d3136bba3a91b99e0505dde071dd946070946eb0718b8
+  checksum: cdc03ceff8d2b76a5ae08dc48d0b9d44dcb970f6e89e8a3cfe7031b9351dd3c90b223c143565c153a5f1165cd573aae1b128e6b9f557b4af4eb36da337a2a345
   languageName: node
   linkType: hard
 
