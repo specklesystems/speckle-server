@@ -79,10 +79,6 @@ const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
 
-const createdAt = computed(() =>
-  dayjs(props.version.createdAt as string).format('DD MMM YY, h:mm A')
-)
-
 const timeAgoCreatedAt = computed(() =>
   dayjs(props.version.createdAt as string).from(dayjs())
 )

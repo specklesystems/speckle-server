@@ -5,6 +5,7 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
 export = {
   Version: {
@@ -14,6 +15,11 @@ export = {
     },
     async model(parent, _args, ctx) {
       return await ctx.loaders.commits.getCommitBranch.load(parent.id)
+    },
+    async previewUrl(parent, _args, ctx) {
+      const stream = await ctx.loaders.commits.getCommitStream.load(parent.id)
+      const path = `/preview/${stream!.id}/commits/${parent.id}`
+      return new URL(path, getServerOrigin()).toString()
     }
   },
   Subscription: {

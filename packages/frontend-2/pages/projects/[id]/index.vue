@@ -30,12 +30,18 @@ import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composab
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
+  ProjectModelsUpdatedMessageType,
   ProjectPageQueryQueryVariables,
   ProjectUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import {
+  useEvictProjectModelFields,
+  useProjectModelUpdateTracking
+} from '~~/lib/projects/composables/modelManagement'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 const onProjectUpdatedSubscription = graphql(`
   subscription OnProjectUpdated($id: String!) {
@@ -68,11 +74,13 @@ definePageMeta({
   middleware: ['require-valid-project']
 })
 
+const evictProjectModels = useEvictProjectModelFields()
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const goHome = useNavigateToHome()
 const apollo = useApolloClient().client
 const projectId = computed(() => route.params.id as string)
+
 const { result: projectPageResult } = useQuery(projectPageQuery, () => ({
   id: projectId.value
 }))
@@ -83,6 +91,13 @@ const { onResult: onProjectUpdated } = useSubscription(
     id: projectId.value
   })
 )
+
+useProjectModelUpdateTracking(projectId, (event) => {
+  // If creation, refresh all project's model fields
+  if (event.type === ProjectModelsUpdatedMessageType.Created) {
+    evictProjectModels(projectId.value)
+  }
+})
 
 const project = computed(() => projectPageResult.value?.project)
 

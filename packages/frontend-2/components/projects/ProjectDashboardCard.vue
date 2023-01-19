@@ -60,8 +60,6 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
-import { graphql } from '~~/lib/common/generated/gql'
-import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import {
   addFragmentDependencies,
   getCacheId,
@@ -72,95 +70,68 @@ import {
   projectPageLatestItemsModelItemFragment
 } from '~~/lib/projects/graphql/fragments'
 import { sortBy } from 'lodash-es'
+import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 
 const fullProjectDashboardItemFragment = addFragmentDependencies(
   projectDashboardItemFragment,
   projectPageLatestItemsModelItemFragment
 )
 
-const onProjectModelUpdateSubscription = graphql(`
-  subscription OnProjectModelUpdate($id: String!) {
-    projectModelsUpdated(id: $id) {
-      id
-      type
-      model {
-        id
-        ...ProjectPageLatestItemsModelItem
-      }
-    }
-  }
-`)
-
 const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
 
-const apollo = useApolloClient().client
-const { onResult: onProjectModelUpdate } = useSubscription(
-  onProjectModelUpdateSubscription,
-  () => ({
-    id: props.project.id
-  })
+useProjectModelUpdateTracking(
+  computed(() => props.project.id),
+  (event, cache) => {
+    const model = event.model
+    if (
+      [
+        ProjectModelsUpdatedMessageType.Created,
+        ProjectModelsUpdatedMessageType.Updated
+      ].includes(event.type) &&
+      model?.versionCount
+    ) {
+      // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
+      // So - add it to the list, if its not already there
+      updateCacheByFilter(
+        cache,
+        {
+          fragment: {
+            fragment: fullProjectDashboardItemFragment,
+            fragmentName: 'ProjectDashboardItem',
+            id: getCacheId('Project', props.project.id)
+          }
+        },
+        (data) => {
+          const newItems = data.models.items.slice()
+          let newTotalCount = data.models.totalCount
+          if (!newItems.find((i) => i.id === model.id)) {
+            newItems.unshift(model)
+          }
+
+          if (event.type === ProjectModelsUpdatedMessageType.Created) {
+            newTotalCount += 1
+          }
+
+          const itemsSortedByDate = sortBy(newItems, (i) =>
+            dayjs(i.updatedAt).toDate().getTime()
+          ).reverse()
+
+          return {
+            ...data,
+            models: {
+              ...data.models,
+              totalCount: newTotalCount,
+              items: itemsSortedByDate.slice(0, 4)
+            }
+          }
+        }
+      )
+    }
+  }
 )
 
 const models = computed(() => props.project.models?.items || [])
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
-
-onProjectModelUpdate((res) => {
-  if (!res.data?.projectModelsUpdated) return
-
-  const cache = apollo.cache
-  const event = res.data.projectModelsUpdated
-  const model = event.model
-
-  if (
-    [
-      ProjectModelsUpdatedMessageType.Created,
-      ProjectModelsUpdatedMessageType.Updated
-    ].includes(event.type) &&
-    model?.versionCount
-  ) {
-    // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
-    // So - add it to the list, if its not already there
-    updateCacheByFilter(
-      cache,
-      {
-        fragment: {
-          fragment: fullProjectDashboardItemFragment,
-          fragmentName: 'ProjectDashboardItem',
-          id: getCacheId('Project', props.project.id)
-        }
-      },
-      (data) => {
-        const newItems = data.models.items.slice()
-        let newTotalCount = data.models.totalCount
-        if (!newItems.find((i) => i.id === model.id)) {
-          newItems.unshift(model)
-        }
-
-        if (event.type === ProjectModelsUpdatedMessageType.Created) {
-          newTotalCount += 1
-        }
-
-        const itemsSortedByDate = sortBy(newItems, (i) =>
-          dayjs(i.updatedAt).toDate().getTime()
-        ).reverse()
-
-        return {
-          ...data,
-          models: {
-            ...data.models,
-            totalCount: newTotalCount,
-            items: itemsSortedByDate.slice(0, 4)
-          }
-        }
-      }
-    )
-  } else if (event.type === ProjectModelsUpdatedMessageType.Deleted) {
-    // Delete
-    cache.evict({
-      id: getCacheId('Model', event.id)
-    })
-  }
-})
 </script>

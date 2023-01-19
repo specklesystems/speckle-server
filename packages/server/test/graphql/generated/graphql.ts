@@ -1992,6 +1992,7 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
 };

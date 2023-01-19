@@ -1,6 +1,13 @@
-import { useApolloClient } from '@vue/apollo-composable'
+import { ApolloCache } from '@apollo/client/cache'
+import { useApolloClient, useSubscription } from '@vue/apollo-composable'
+import { MaybeRef } from '@vueuse/core'
+import { Get } from 'type-fest'
 import { GenericValidateFunction } from 'vee-validate'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import {
+  OnProjectModelsUpdateSubscription,
+  ProjectModelsUpdatedMessageType
+} from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
   evictObjectFields,
@@ -9,6 +16,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { createModelMutation } from '~~/lib/projects/graphql/mutations'
+import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   if (
@@ -31,9 +39,23 @@ export function useModelNameValidationRules() {
   ])
 }
 
+export function useEvictProjectModelFields() {
+  const apollo = useApolloClient().client
+  const cache = apollo.cache
+  return (projectId: string) => {
+    // Manual cache updates when new models are created are too overwhelming, there's multiple places in the graph
+    // where you can find a model, some of which order models in a tree structure
+    // so we're just evicting all Project model related fields
+    evictObjectFields(cache, getCacheId('Project', projectId), (field) => {
+      return ['models', 'modelsTree', 'model', 'modelChildrenTree'].includes(field)
+    })
+  }
+}
+
 export function useCreateNewModel() {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+  const evictProjectModels = useEvictProjectModelFields()
 
   return async (values: { name: string; projectId: string }) => {
     const { name, projectId } = values
@@ -47,19 +69,9 @@ export function useCreateNewModel() {
             projectId
           }
         },
-        update: (cache, { data }) => {
+        update: (_cache, { data }) => {
           if (!data?.modelMutations?.create?.id) return
-
-          const projectGqlId = getCacheId('Project', projectId)
-
-          // Manual cache updates are too overwhelming, there's multiple places in the graph
-          // where you can find a model, some of which order models in a tree structure
-          // so we're just evicting all Project model related fields
-          evictObjectFields(cache, projectGqlId, (field) => {
-            return ['models', 'modelsTree', 'model', 'modelChildrenTree'].includes(
-              field
-            )
-          })
+          evictProjectModels(projectId)
         }
       })
       .catch(convertThrowIntoFetchResult)
@@ -80,4 +92,41 @@ export function useCreateNewModel() {
 
     return data?.modelMutations?.create
   }
+}
+
+/**
+ * Track project model updates/deletes and make cache updates accordingly. Optionally
+ * provide an extra handler that you can use to react to all model update events (create/update/delete)
+ */
+export function useProjectModelUpdateTracking(
+  projectId: MaybeRef<string>,
+  handler?: (
+    data: NonNullable<Get<OnProjectModelsUpdateSubscription, 'projectModelsUpdated'>>,
+    cache: ApolloCache<unknown>
+  ) => void
+) {
+  const { onResult: onProjectModelUpdate } = useSubscription(
+    onProjectModelsUpdateSubscription,
+    () => ({
+      id: unref(projectId)
+    })
+  )
+  const apollo = useApolloClient().client
+
+  onProjectModelUpdate((res) => {
+    if (!res.data?.projectModelsUpdated) return
+
+    // If model was updated, apollo already updated it
+    const event = res.data.projectModelsUpdated
+    const isDelete = event.type === ProjectModelsUpdatedMessageType.Deleted
+
+    if (isDelete) {
+      // Evict from cache
+      apollo.cache.evict({
+        id: getCacheId('Model', event.id)
+      })
+    }
+
+    handler?.(event, apollo.cache)
+  })
 }

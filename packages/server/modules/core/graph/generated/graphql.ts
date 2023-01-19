@@ -1999,6 +1999,7 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
 };
@@ -3103,6 +3104,7 @@ export type VersionResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  previewUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sourceApplication?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

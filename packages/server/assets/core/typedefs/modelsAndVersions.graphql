@@ -123,6 +123,7 @@ type Version {
   authorUser: LimitedUser
   createdAt: DateTime!
   model: Model!
+  previewUrl: String!
 }
 
 type VersionCollection {
