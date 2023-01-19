@@ -74,14 +74,15 @@ viewer.on(
 // const updt = () => {
 //   const resOcc = viewer.query<PointQuery>({
 //     id: 'testX',
-//     point: { x: 6.887440887402381, y: -2.6758210595825984, z: 6.94968877513338 },
+//     point: { x: -2.2779617121296436, y: -1.9397099063369891, z: 7.411126386421243 },
+//     tolerance: 0.001,
 //     operation: 'Occlusion'
 //   })
-//   console.log(resOcc)
+//   if (resOcc) console.log(resOcc.occluder === null)
 //   requestAnimationFrame(updt)
 // }
 
-requestAnimationFrame(updt)
+// requestAnimationFrame(updt)
 
 viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)

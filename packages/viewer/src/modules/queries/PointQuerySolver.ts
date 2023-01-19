@@ -38,9 +38,16 @@ export class PointQuerySolver {
       true,
       this.renderer.currentSectionBox
     )
-    if (!results || results.length === 0) return { visible: true }
-    const queryPointDistance = this.renderer.camera.position.distanceTo(target)
-    return { visible: results[0].distance > queryPointDistance }
+    if (!results || results.length === 0) return { occluder: null }
+    const hits = this.renderer.queryHits(results)
+    if (!hits) return { occluder: null }
+    let targetDistance = this.renderer.camera.position.distanceTo(target)
+    targetDistance -= query.tolerance
+    if (targetDistance < results[0].distance) {
+      return { occluder: null }
+    } else {
+      return { occluder: hits[0].node.model }
+    }
   }
 
   private solveProjection(query: PointQuery): QueryResult {
