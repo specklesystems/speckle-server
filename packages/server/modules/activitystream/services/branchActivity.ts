@@ -4,8 +4,10 @@ import { BranchRecord } from '@/modules/core/helpers/types'
 import { pubsub, BranchPubsubEvents } from '@/modules/shared'
 import {
   BranchDeleteInput,
-  BranchUpdateInput
+  BranchUpdateInput,
+  ProjectModelsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
+import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 
 /**
  * Save "branch created" activity
@@ -26,6 +28,14 @@ export async function addBranchCreatedActivity(params: { branch: BranchRecord })
     pubsub.publish(BranchPubsubEvents.BranchCreated, {
       branchCreated: { ...branch },
       streamId: branch.streamId
+    }),
+    publish(ProjectSubscriptions.ProjectModelsUpdated, {
+      projectId: branch.streamId,
+      projectModelsUpdated: {
+        id: branch.id,
+        type: ProjectModelsUpdatedMessageType.Created,
+        model: branch
+      }
     })
   ])
 }
@@ -34,8 +44,9 @@ export async function addBranchUpdatedActivity(params: {
   update: BranchUpdateInput
   userId: string
   oldBranch: BranchRecord
+  newBranch: BranchRecord
 }) {
-  const { update, userId, oldBranch } = params
+  const { update, userId, oldBranch, newBranch } = params
 
   await Promise.all([
     saveActivity({
@@ -51,6 +62,14 @@ export async function addBranchUpdatedActivity(params: {
       branchUpdated: { ...update },
       streamId: update.streamId,
       branchId: update.id
+    }),
+    publish(ProjectSubscriptions.ProjectModelsUpdated, {
+      projectId: update.streamId,
+      projectModelsUpdated: {
+        model: newBranch,
+        id: newBranch.id,
+        type: ProjectModelsUpdatedMessageType.Updated
+      }
     })
   ])
 }
@@ -75,6 +94,14 @@ export async function addBranchDeletedActivity(params: {
     pubsub.publish(BranchPubsubEvents.BranchDeleted, {
       branchDeleted: input,
       streamId: input.streamId
+    }),
+    publish(ProjectSubscriptions.ProjectModelsUpdated, {
+      projectId: input.streamId,
+      projectModelsUpdated: {
+        id: input.id,
+        type: ProjectModelsUpdatedMessageType.Deleted,
+        model: null
+      }
     })
   ])
 }

@@ -44,6 +44,8 @@ import {
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
+ * - Instead of keeping them request scoped, cache them in redis identified by request (user ID) with a TTL,
+ * so that users with the same ID can re-use them across requests/subscriptions
  */
 
 /**

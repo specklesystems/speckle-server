@@ -9,6 +9,7 @@ import {
   CommitUpdateError
 } from '@/modules/core/errors/commit'
 import { CommitUpdateInput } from '@/modules/core/graph/generated/graphql'
+import { CommitRecord } from '@/modules/core/helpers/types'
 import {
   getStreamBranchByName,
   markCommitBranchUpdated
@@ -132,7 +133,8 @@ export async function createCommitByBranchName(
       streamId,
       userId: authorId,
       branchName,
-      commit: { ...commit, branchName, objectId, streamId }
+      input: { ...commit, branchName, objectId, streamId },
+      commit
     })
   }
 
@@ -193,8 +195,9 @@ export async function updateCommitAndNotify(params: CommitUpdateInput, userId: s
     }
   }
 
+  let newCommit: CommitRecord = commit
   if (message) {
-    await updateCommit(commitId, { message })
+    newCommit = await updateCommit(commitId, { message })
   }
 
   if (commit) {
@@ -203,7 +206,8 @@ export async function updateCommitAndNotify(params: CommitUpdateInput, userId: s
       streamId,
       userId,
       originalCommit: commit,
-      update: params
+      update: params,
+      newCommit
     })
 
     await Promise.all([

@@ -153,7 +153,7 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
   const sourceApplication = commit.sourceApplication || null
   const totalChildrenCount = commit.totalChildrenCount
 
-  const { id } = await createCommitByBranchId({
+  const newCommit = await createCommitByBranchId({
     streamId,
     branchId: targetBranch.id,
     objectId,
@@ -163,12 +163,13 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
     totalChildrenCount,
     parents: parents.length ? parents : null
   })
+  const id = newCommit.id
 
   await addCommitCreatedActivity({
     commitId: id,
     streamId,
     userId: owner.id,
-    commit: {
+    input: {
       branchName: targetBranch.name,
       message,
       objectId,
@@ -177,7 +178,8 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
       streamId,
       totalChildrenCount
     },
-    branchName: targetBranch.name
+    branchName: targetBranch.name,
+    commit: newCommit
   })
 
   return id

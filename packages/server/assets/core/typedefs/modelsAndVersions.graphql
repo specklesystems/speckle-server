@@ -122,6 +122,7 @@ type Version {
   sourceApplication: String
   authorUser: LimitedUser
   createdAt: DateTime!
+  model: Model!
 }
 
 type VersionCollection {
@@ -158,4 +159,51 @@ input ModelVersionsFilter {
   Make sure these specified versions are always loaded first
   """
   priorityIds: [String!]
+}
+
+enum ProjectModelsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type ProjectModelsUpdatedMessage {
+  type: ProjectModelsUpdatedMessageType!
+  """
+  Model ID
+  """
+  id: String!
+  """
+  Null if model was deleted
+  """
+  model: Model
+}
+
+enum ProjectVersionsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type ProjectVersionsUpdatedMessage {
+  type: ProjectVersionsUpdatedMessageType!
+  """
+  Version ID
+  """
+  id: String!
+  """
+  Null if version was deleted
+  """
+  version: Version
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's models. Optionally specify modelIds to track.
+  """
+  projectModelsUpdated(id: String!, modelIds: [String!]): ProjectModelsUpdatedMessage!
+  """
+  Subscribe to changes to a project's versions.
+  """
+  projectVersionsUpdated(id: String!): ProjectVersionsUpdatedMessage!
 }

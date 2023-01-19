@@ -5,13 +5,21 @@ import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
+  ProjectModelsUpdatedMessage,
   ProjectUpdatedMessage,
+  ProjectVersionsUpdatedMessage,
+  SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
+  SubscriptionProjectVersionsUpdatedArgs,
   SubscriptionSubscribeFn,
   UserProjectsUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
-import { StreamRecord } from '@/modules/core/helpers/types'
 import { Merge } from 'type-fest'
+import {
+  ModelGraphQLReturn,
+  ProjectGraphQLReturn,
+  VersionGraphQLReturn
+} from '@/modules/core/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -44,7 +52,7 @@ export enum BranchSubscriptions {
   BranchDeleted = 'BRANCH_DELETED'
 }
 
-export enum UserProjectsSubscriptions {
+export enum UserSubscriptions {
   UserProjectsUpdated = 'USER_PROJECTS_UPDATED'
 }
 
@@ -56,12 +64,13 @@ export enum ProjectSubscriptions {
 
 type NoVariables = Record<string, never>
 
+// Add mappings between expected event constant, its payload and variables
 type SubscriptionTypeMap = {
-  [UserProjectsSubscriptions.UserProjectsUpdated]: {
+  [UserSubscriptions.UserProjectsUpdated]: {
     payload: {
       userProjectsUpdated: Merge<
         UserProjectsUpdatedMessage,
-        { project: Nullable<StreamRecord> }
+        { project: Nullable<ProjectGraphQLReturn> }
       >
       ownerId: string
     }
@@ -69,13 +78,36 @@ type SubscriptionTypeMap = {
   }
   [ProjectSubscriptions.ProjectUpdated]: {
     payload: {
-      projectUpdated: Merge<ProjectUpdatedMessage, { project: Nullable<StreamRecord> }>
+      projectUpdated: Merge<
+        ProjectUpdatedMessage,
+        { project: Nullable<ProjectGraphQLReturn> }
+      >
     }
     variables: SubscriptionProjectUpdatedArgs
   }
+  [ProjectSubscriptions.ProjectModelsUpdated]: {
+    payload: {
+      projectModelsUpdated: Merge<
+        ProjectModelsUpdatedMessage,
+        { model: Nullable<ModelGraphQLReturn> }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectModelsUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectVersionsUpdated]: {
+    payload: {
+      projectVersionsUpdated: Merge<
+        ProjectVersionsUpdatedMessage,
+        { version: Nullable<VersionGraphQLReturn> }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectVersionsUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
-type SubscriptionEvent = UserProjectsSubscriptions | ProjectSubscriptions
+type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions
 
 /**
  * Publish a GQL subscription event
@@ -97,7 +129,7 @@ export const filteredSubscribe = <T extends SubscriptionEvent>(
     context: GraphQLContext
   ) => MaybeAsync<boolean>
 ) => {
-  // we need to convert iterable to iterator due to graphql-codegen types not being fully compatible
+  // we need to cast to graphql codegen types cause they're not fully compatible
   // with our version of graphql-subscriptions
   // https://github.com/dotansimha/graphql-code-generator/issues/7197#issuecomment-1098014584
   return withFilter(

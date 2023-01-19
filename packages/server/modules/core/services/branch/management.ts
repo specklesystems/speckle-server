@@ -79,7 +79,8 @@ export async function updateBranchAndNotify(input: BranchUpdateInput, userId: st
     await addBranchUpdatedActivity({
       update: input,
       userId,
-      oldBranch: existingBranch
+      oldBranch: existingBranch,
+      newBranch
     })
   }
 

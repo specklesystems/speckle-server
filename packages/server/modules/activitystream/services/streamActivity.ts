@@ -16,7 +16,7 @@ import {
 import {
   ProjectSubscriptions,
   publish,
-  UserProjectsSubscriptions
+  UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 
 /**
@@ -92,7 +92,7 @@ export async function addStreamDeletedActivity(params: {
             userStreamRemoved: { id: streamId },
             ownerId: u.id
           }),
-          publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+          publish(UserSubscriptions.UserProjectsUpdated, {
             userProjectsUpdated: {
               id: streamId,
               type: UserProjectsUpdatedMessageType.Removed,
@@ -169,7 +169,7 @@ export async function addStreamCreatedActivity(params: {
       userStreamAdded: { id: streamId, ...input },
       ownerId: creatorId
     }),
-    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+    publish(UserSubscriptions.UserProjectsUpdated, {
       userProjectsUpdated: {
         id: streamId,
         type: UserProjectsUpdatedMessageType.Added,
@@ -208,7 +208,7 @@ export async function addStreamPermissionsAddedActivity(params: {
       },
       ownerId: targetUserId
     }),
-    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+    publish(UserSubscriptions.UserProjectsUpdated, {
       userProjectsUpdated: {
         id: streamId,
         type: UserProjectsUpdatedMessageType.Added,
@@ -247,7 +247,7 @@ export async function addStreamInviteAcceptedActivity(params: {
       },
       ownerId: inviteTargetId
     }),
-    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+    publish(UserSubscriptions.UserProjectsUpdated, {
       userProjectsUpdated: {
         id: streamId,
         type: UserProjectsUpdatedMessageType.Added,
@@ -288,7 +288,7 @@ export async function addStreamPermissionsRevokedActivity(params: {
       },
       ownerId: removedUserId
     }),
-    publish(UserProjectsSubscriptions.UserProjectsUpdated, {
+    publish(UserSubscriptions.UserProjectsUpdated, {
       userProjectsUpdated: {
         id: streamId,
         type: UserProjectsUpdatedMessageType.Removed,

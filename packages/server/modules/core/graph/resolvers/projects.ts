@@ -16,7 +16,7 @@ import { NotFoundError } from '@/modules/shared/errors'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
-  UserProjectsSubscriptions
+  UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
@@ -98,7 +98,7 @@ export = {
   Subscription: {
     userProjectsUpdated: {
       subscribe: filteredSubscribe(
-        UserProjectsSubscriptions.UserProjectsUpdated,
+        UserSubscriptions.UserProjectsUpdated,
         (payload, _args, ctx) => {
           return payload.ownerId === ctx.userId
         }

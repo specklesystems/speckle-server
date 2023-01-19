@@ -4,9 +4,11 @@ import { CommitPubsubEvents, pubsub } from '@/modules/shared'
 import {
   CommitCreateInput,
   CommitReceivedInput,
-  CommitUpdateInput
+  CommitUpdateInput,
+  ProjectVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
+import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 
 /**
  * Save "new commit created" activity item
@@ -15,10 +17,11 @@ export async function addCommitCreatedActivity(params: {
   commitId: string
   streamId: string
   userId: string
-  commit: CommitCreateInput
+  input: CommitCreateInput
   branchName: string
+  commit: CommitRecord
 }) {
-  const { commitId, commit, streamId, userId, branchName } = params
+  const { commitId, input, streamId, userId, branchName, commit } = params
   await Promise.all([
     saveActivity({
       streamId,
@@ -26,12 +29,20 @@ export async function addCommitCreatedActivity(params: {
       resourceId: commitId,
       actionType: ActionTypes.Commit.Create,
       userId,
-      info: { id: commitId, commit },
-      message: `Commit created on branch ${branchName}: ${commitId} (${commit.message})`
+      info: { id: commitId, commit: input },
+      message: `Commit created on branch ${branchName}: ${commitId} (${input.message})`
     }),
     pubsub.publish(CommitPubsubEvents.CommitCreated, {
-      commitCreated: { ...commit, id: commitId, authorId: userId },
+      commitCreated: { ...input, id: commitId, authorId: userId },
       streamId
+    }),
+    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+      projectId: streamId,
+      projectVersionsUpdated: {
+        id: commit.id,
+        version: commit,
+        type: ProjectVersionsUpdatedMessageType.Created
+      }
     })
   ])
 }
@@ -42,8 +53,9 @@ export async function addCommitUpdatedActivity(params: {
   userId: string
   originalCommit: CommitRecord
   update: CommitUpdateInput
+  newCommit: CommitRecord
 }) {
-  const { commitId, streamId, userId, originalCommit, update } = params
+  const { commitId, streamId, userId, originalCommit, update, newCommit } = params
 
   await Promise.all([
     saveActivity({
@@ -59,6 +71,14 @@ export async function addCommitUpdatedActivity(params: {
       commitUpdated: { ...update },
       streamId,
       commitId
+    }),
+    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+      projectId: streamId,
+      projectVersionsUpdated: {
+        id: commitId,
+        version: newCommit,
+        type: ProjectVersionsUpdatedMessageType.Updated
+      }
     })
   ])
 }

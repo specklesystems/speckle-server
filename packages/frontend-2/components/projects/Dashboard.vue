@@ -150,7 +150,6 @@ onUserProjectsUpdate((res) => {
     }
   )
 
-  // TODO: Test
   if (!isNewProject) {
     // Evict old project from cache entirely
     cache.evict({
