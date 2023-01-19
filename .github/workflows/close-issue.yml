@@ -10,3 +10,4 @@ jobs:
     secrets: inherit
     with:
       issue-id: ${{ github.event.issue.node_id }}
+      project-number: 12
