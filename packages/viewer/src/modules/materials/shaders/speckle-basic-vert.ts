@@ -94,6 +94,13 @@ void main() {
     mvPosition = modelViewMatrix * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;
+    
+    // Transform normal vector from object space to clip space.
+    vec3 normalHCS = mat3(projectionMatrix) * normalMatrix * normal;
+
+    // Move vertex along normal vector in clip space.
+    float width = 5.;
+    gl_Position.xy += normalize(normalHCS.xy) / vec2(2034., 1896.) * gl_Position.w * width * 2.;
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
 	#include <worldpos_vertex>

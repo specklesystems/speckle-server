@@ -201,6 +201,7 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
+    this.renderer.autoClearStencil = false
 
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)

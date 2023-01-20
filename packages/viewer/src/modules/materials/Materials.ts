@@ -19,6 +19,7 @@ import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
+import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -97,18 +98,32 @@ export default class Materials {
   }
 
   private async createDefaultMeshMaterials() {
-    this.meshHighlightMaterial = new SpeckleStandardMaterial(
+    // this.meshHighlightMaterial = new SpeckleStandardMaterial(
+    //   {
+    //     color: 0x047efb,
+    //     emissive: 0x0,
+    //     roughness: 1,
+    //     metalness: 0,
+    //     side: DoubleSide
+    //   },
+    //   ['USE_RTE']
+    // )
+    // this.meshHighlightMaterial.clipShadows = true
+    this.meshHighlightMaterial = new SpeckleBasicMaterial(
       {
         color: 0x047efb,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
         side: DoubleSide
       },
       ['USE_RTE']
     )
     this.meshHighlightMaterial.clipShadows = true
-
+    // this.meshHighlightMaterial.depthWrite = false
+    // this.meshHighlightMaterial.depthTest = false
+    // this.meshHighlightMaterial.transparent = true
+    // this.meshHighlightMaterial.blendSrc = OneFactor
+    // this.meshHighlightMaterial.blendDst = ZeroFactor
+    // this.meshHighlightMaterial.blendSrcAlpha = OneFactor
+    // this.meshHighlightMaterial.blendDstAlpha = ZeroFactor
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
         color: 0x047efb,
