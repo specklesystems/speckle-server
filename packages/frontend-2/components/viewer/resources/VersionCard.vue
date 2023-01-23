@@ -12,7 +12,11 @@
     ></div>
     <div class="pl-1 flex items-center space-x-2">
       <!-- Timeline circle -->
-      <div class="w-2 h-2 rounded-full bg-outline-3"></div>
+      <div
+        :class="`w-2 h-2 rounded-full z-10 ${
+          isLoaded || isLatest ? 'bg-primary' : 'bg-outline-3'
+        }`"
+      ></div>
       <div
         class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
       >

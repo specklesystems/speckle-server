@@ -2,7 +2,7 @@
   <div>
     <div
       v-show="viewerBusy"
-      class="absolute w-full max-h-screen h-1 bg-blue-500/20 mt-14 text-xs text-foreground-on-primary z-50"
+      class="absolute w-full max-w-screen h-1 bg-blue-500/20 mt-14 text-xs text-foreground-on-primary z-50"
     >
       <div class="swoosher absolute top-0 bg-blue-500/50 rounded-md"></div>
     </div>

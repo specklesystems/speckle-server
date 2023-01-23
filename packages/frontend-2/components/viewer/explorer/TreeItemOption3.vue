@@ -93,6 +93,7 @@ import {
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 
 const props = withDefaults(
   defineProps<{
@@ -113,66 +114,8 @@ const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
 const rawSpeckleData = props.treeItem?.raw as Record<string, unknown>
 
-type HeaderSubheader = {
-  header: string
-  subheader: string
-}
-
 const headerAndSubheader = computed(() => {
-  const speckleType = speckleData.speckle_type as string
-  if (!speckleType)
-    return {
-      header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
-      subheader: ''
-    } as HeaderSubheader
-
-  // Handle revit objects
-  if (speckleType.toLowerCase().includes('revit')) {
-    if (speckleType.toLowerCase().includes('familyinstance')) {
-      // TODO
-      const famHeader = `${rawSpeckleData.family as string} (${
-        rawSpeckleData.category as string
-      })`
-      const famSubheader = rawSpeckleData.type
-      return { header: famHeader, subheader: famSubheader }
-    }
-
-    if (speckleType.toLowerCase().includes('revitelementtype')) {
-      return {
-        header: rawSpeckleData.family,
-        subheader: rawSpeckleData.type + ' / ' + rawSpeckleData.category
-      }
-    }
-    const anyHeader = speckleType.split('.').reverse()[0]
-    const anySubheaderParts = [rawSpeckleData.category, rawSpeckleData.type].filter(
-      (part) => !!part
-    )
-    return {
-      header: anyHeader,
-      subheader: anySubheaderParts.join(' / ')
-    } as HeaderSubheader
-  }
-
-  // Handle ifc objects
-  if (speckleType.toLowerCase().includes('ifc')) {
-    const name = rawSpeckleData.Name || rawSpeckleData.name
-    return {
-      header: name || rawSpeckleData.speckleType,
-      subheader: name ? rawSpeckleData.speckle_type : rawSpeckleData.id
-    } as HeaderSubheader
-  }
-
-  if (speckleType.toLowerCase().includes('objects.geometry')) {
-    return {
-      header: speckleType.split('.').reverse()[0],
-      subheader: rawSpeckleData.id
-    } as HeaderSubheader
-  }
-
-  return {
-    header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
-    subheader: speckleType.split('.').reverse()[0]
-  } as HeaderSubheader
+  return getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)
 })
 
 const isSingleCollection = computed(() => {
