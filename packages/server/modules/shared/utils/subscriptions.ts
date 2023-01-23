@@ -7,12 +7,13 @@ import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
   ProjectModelsUpdatedMessage,
   ProjectUpdatedMessage,
+  ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
+  SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
   SubscriptionSubscribeFn,
-  SubscriptionVersionPreviewGeneratedArgs,
   UserProjectsUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
@@ -60,11 +61,8 @@ export enum UserSubscriptions {
 export enum ProjectSubscriptions {
   ProjectUpdated = 'PROJECT_UPDATED',
   ProjectModelsUpdated = 'PROJECT_MODELS_UPDATED',
-  ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED'
-}
-
-export enum VersionSubscriptions {
-  PreviewGenerated = 'VERSION_PREVIEW_GENERATED'
+  ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
+  ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED'
 }
 
 type NoVariables = Record<string, never>
@@ -110,17 +108,15 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectVersionsUpdatedArgs
   }
-  [VersionSubscriptions.PreviewGenerated]: {
+  [ProjectSubscriptions.ProjectVersionsPreviewGenerated]: {
     payload: {
-      versionPreviewGenerated: boolean
-      versionId: string
-      projectId: string
+      projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage
     }
-    variables: SubscriptionVersionPreviewGeneratedArgs
+    variables: SubscriptionProjectVersionsPreviewGeneratedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
-type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions | VersionSubscriptions
+type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions
 
 /**
  * Publish a GQL subscription event

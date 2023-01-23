@@ -3,8 +3,8 @@ import { logger, moduleLogger } from '@/logging/logging'
 import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
 import * as pg from 'pg'
-import { getObjectsCommits } from '@/modules/core/repositories/commits'
-import { publish, VersionSubscriptions } from '@/modules/shared/utils/subscriptions'
+import { getObjectCommitsWithStreamIds } from '@/modules/core/repositories/commits'
+import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 
 type MessageType = { channel: string; payload: string }
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
@@ -24,15 +24,17 @@ async function messageProcessor(msg: MessageType) {
   if (status !== 'finished' || !objectId || !streamId) return
 
   // Get all commits with that objectId
-  const commits = await getObjectsCommits([objectId])
+  const commits = await getObjectCommitsWithStreamIds([objectId])
   if (!commits.length) return
 
   await Promise.all(
     commits.map((c) =>
-      publish(VersionSubscriptions.PreviewGenerated, {
-        versionId: c.id,
-        projectId: streamId,
-        versionPreviewGenerated: true
+      publish(ProjectSubscriptions.ProjectVersionsPreviewGenerated, {
+        projectVersionsPreviewGenerated: {
+          versionId: c.id,
+          projectId: c.streamId,
+          objectId
+        }
       })
     )
   )

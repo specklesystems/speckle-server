@@ -31,8 +31,12 @@ export const onProjectVersionsUpdateSubscription = graphql(`
   }
 `)
 
-export const onVersionPreviewGeneratedSubscription = graphql(`
-  subscription OnVersionPreviewGenerated($versionId: String!) {
-    versionPreviewGenerated(id: $versionId)
+export const onProjectVersionsPreviewGeneratedSubscription = graphql(`
+  subscription OnProjectVersionsPreviewGenerated($id: String!) {
+    projectVersionsPreviewGenerated(id: $id) {
+      projectId
+      objectId
+      versionId
+    }
   }
 `)

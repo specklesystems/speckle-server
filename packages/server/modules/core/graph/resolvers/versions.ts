@@ -3,8 +3,7 @@ import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { authorizeResolver } from '@/modules/shared'
 import {
   filteredSubscribe,
-  ProjectSubscriptions,
-  VersionSubscriptions
+  ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 
@@ -35,12 +34,17 @@ export = {
         }
       )
     },
-    versionPreviewGenerated: {
+    projectVersionsPreviewGenerated: {
       subscribe: filteredSubscribe(
-        VersionSubscriptions.PreviewGenerated,
+        ProjectSubscriptions.ProjectVersionsPreviewGenerated,
         async (payload, args, ctx) => {
-          if (payload.versionId !== args.id) return false
-          await authorizeResolver(ctx.userId, payload.projectId, Roles.Stream.Reviewer)
+          if (payload.projectVersionsPreviewGenerated.projectId !== args.id)
+            return false
+          await authorizeResolver(
+            ctx.userId,
+            payload.projectVersionsPreviewGenerated.projectId,
+            Roles.Stream.Reviewer
+          )
           return true
         }
       )

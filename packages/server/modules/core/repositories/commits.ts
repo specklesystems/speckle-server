@@ -354,10 +354,13 @@ export async function createCommit(
   return item
 }
 
-export async function getObjectsCommits(objectIds: string[]) {
+export async function getObjectCommitsWithStreamIds(objectIds: string[]) {
   if (!objectIds?.length) return []
-  return await Commits.knex<CommitRecord[]>().whereIn(
-    Commits.col.referencedObject,
-    objectIds
-  )
+  return await Commits.knex()
+    .select<Array<CommitRecord & { streamId: string }>>([
+      ...Commits.cols,
+      StreamCommits.col.streamId
+    ])
+    .whereIn(Commits.col.referencedObject, objectIds)
+    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
 }

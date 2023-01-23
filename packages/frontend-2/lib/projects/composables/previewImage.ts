@@ -2,10 +2,12 @@ import { MaybeRef } from '@vueuse/core'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { onVersionPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
 
-const previewVersionUrlRegexp = /\/commits\/([\w\d]+)$/i
+const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
+const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
+const previewUrlObjectIdRegexp = /\/commits\/([\w\d]+)/i
 
 // TODO: Optimize, use single project version image generated subscription to reduce the amount
 // of subscriptions per page
@@ -25,29 +27,57 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
 
   if (process.server) return ret
 
-  const previewVersionId = computed(() => {
+  const previewUrlPath = computed(() => {
     const basePreviewUrl = unref(previewUrl)
     if (!basePreviewUrl) return null
 
     const urlObj = new URL(basePreviewUrl)
-    const previewPath = urlObj.pathname
-    const [, versionId] = previewVersionUrlRegexp.exec(previewPath) || [null, null]
-    return versionId
+    return urlObj.pathname
   })
 
-  const { onResult: onVersionPreviewGenerated } = useSubscription(
-    onVersionPreviewGeneratedSubscription,
+  const projectId = computed(() => {
+    const path = previewUrlPath.value
+    if (!path) return null
+    const [, val] = previewUrlProjectIdRegexp.exec(path) || [null, null]
+    return val
+  })
+
+  const versionId = computed(() => {
+    const path = previewUrlPath.value
+    if (!path) return null
+    const [, val] = previewUrlCommitIdRegexp.exec(path) || [null, null]
+    return val
+  })
+
+  const objectId = computed(() => {
+    const path = previewUrlPath.value
+    if (!path) return null
+    const [, val] = previewUrlObjectIdRegexp.exec(path) || [null, null]
+    return val
+  })
+
+  const { onResult: onProjectPreviewGenerated } = useSubscription(
+    onProjectVersionsPreviewGeneratedSubscription,
     () => ({
-      versionId: previewVersionId.value || ''
+      id: projectId.value || ''
     }),
-    () => ({ enabled: !!previewVersionId.value })
+    () => ({ enabled: !!projectId.value })
   )
 
-  onVersionPreviewGenerated((res) => {
-    if (!res.data?.versionPreviewGenerated) return
+  onProjectPreviewGenerated((res) => {
+    const message = res.data?.projectVersionsPreviewGenerated
+    if (!message) return
 
-    // Regenerate
-    processBasePreviewUrl(unref(previewUrl))
+    let regenerate = false
+    if (objectId.value && objectId.value === message.objectId) {
+      regenerate = true
+    } else if (versionId.value && versionId.value === message.versionId) {
+      regenerate = true
+    }
+
+    if (regenerate) {
+      processBasePreviewUrl(unref(previewUrl))
+    }
   })
 
   async function processBasePreviewUrl(basePreviewUrl: MaybeNullOrUndefined<string>) {

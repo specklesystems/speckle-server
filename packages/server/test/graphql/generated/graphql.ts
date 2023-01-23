@@ -1158,6 +1158,13 @@ export enum ProjectUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+export type ProjectVersionsPreviewGeneratedMessage = {
+  __typename?: 'ProjectVersionsPreviewGeneratedMessage';
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
 export type ProjectVersionsUpdatedMessage = {
   __typename?: 'ProjectVersionsUpdatedMessage';
   /** Version ID */
@@ -1717,6 +1724,8 @@ export type Subscription = {
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
+  /** Subscribe to when a commit's preview image finishes generating */
+  projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
   projectVersionsUpdated: ProjectVersionsUpdatedMessage;
   /** Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream. */
@@ -1737,8 +1746,6 @@ export type Subscription = {
   userStreamRemoved?: Maybe<Scalars['JSONObject']>;
   /** Broadcasts "real-time" location data for viewer users. */
   userViewerActivity?: Maybe<Scalars['JSONObject']>;
-  /** Subscribe to when a commit's preview image finishes generating */
-  versionPreviewGenerated: Scalars['Boolean'];
 };
 
 
@@ -1797,6 +1804,11 @@ export type SubscriptionProjectUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectVersionsPreviewGeneratedArgs = {
+  id: Scalars['String'];
+};
+
+
 export type SubscriptionProjectVersionsUpdatedArgs = {
   id: Scalars['String'];
 };
@@ -1815,11 +1827,6 @@ export type SubscriptionStreamUpdatedArgs = {
 export type SubscriptionUserViewerActivityArgs = {
   resourceId: Scalars['String'];
   streamId: Scalars['String'];
-};
-
-
-export type SubscriptionVersionPreviewGeneratedArgs = {
-  id: Scalars['String'];
 };
 
 export type TestItem = {
