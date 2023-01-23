@@ -2,7 +2,10 @@ import { MaybeRef } from '@vueuse/core'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
-import { EventBusKeys, useEventBus } from '~~/lib/core/composables/eventBus'
+import { onVersionPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { useSubscription } from '@vue/apollo-composable'
+
+const previewVersionUrlRegexp = /\/commits\/([\w\d]+)$/i
 
 /**
  * Get authenticated preview image URL
@@ -10,9 +13,38 @@ import { EventBusKeys, useEventBus } from '~~/lib/core/composables/eventBus'
  * in <ClientOnly> to prevent hydration errors
  */
 export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefined>) {
-  const eventBus = useEventBus()
   const authToken = useAuthCookie()
   const url = ref(null as Nullable<string>)
+  const ret = {
+    previewUrl: computed(() => url.value)
+  }
+
+  if (process.server) return ret
+
+  const previewVersionId = computed(() => {
+    const basePreviewUrl = unref(previewUrl)
+    if (!basePreviewUrl) return null
+
+    const urlObj = new URL(basePreviewUrl)
+    const previewPath = urlObj.pathname
+    const [, versionId] = previewVersionUrlRegexp.exec(previewPath) || [null, null]
+    return versionId
+  })
+
+  const { onResult: onVersionPreviewGenerated } = useSubscription(
+    onVersionPreviewGeneratedSubscription,
+    () => ({
+      versionId: previewVersionId.value || ''
+    }),
+    () => ({ enabled: !!previewVersionId.value })
+  )
+
+  onVersionPreviewGenerated((res) => {
+    if (!res.data?.versionPreviewGenerated) return
+
+    // Regenerate
+    processBasePreviewUrl(unref(previewUrl))
+  })
 
   async function processBasePreviewUrl(basePreviewUrl: MaybeNullOrUndefined<string>) {
     try {
@@ -38,20 +70,9 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     }
   }
 
-  if (process.client) {
-    watch(() => unref(previewUrl), processBasePreviewUrl, { immediate: true })
-    eventBus.on(EventBusKeys.OnVersionPreviewGenerated, ({ versionId }) => {
-      // Reload URL if active preview image is for this URL
-      const basePreviewUrl = unref(previewUrl)
-      if (basePreviewUrl?.endsWith(`/${versionId}`)) {
-        processBasePreviewUrl(basePreviewUrl)
-      }
-    })
-  }
+  watch(() => unref(previewUrl), processBasePreviewUrl, { immediate: true })
 
-  return {
-    previewUrl: computed(() => url.value)
-  }
+  return ret
 }
 
 export function useCommentScreenshotImage(
