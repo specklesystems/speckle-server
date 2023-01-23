@@ -211,4 +211,8 @@ extend type Subscription {
   Subscribe to changes to a project's versions.
   """
   projectVersionsUpdated(id: String!): ProjectVersionsUpdatedMessage!
+  """
+  Subscribe to when a commit's preview image finishes generating
+  """
+  versionPreviewGenerated(id: String!): Boolean!
 }

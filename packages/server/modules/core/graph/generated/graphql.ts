@@ -1744,6 +1744,8 @@ export type Subscription = {
   userStreamRemoved?: Maybe<Scalars['JSONObject']>;
   /** Broadcasts "real-time" location data for viewer users. */
   userViewerActivity?: Maybe<Scalars['JSONObject']>;
+  /** Subscribe to when a commit's preview image finishes generating */
+  versionPreviewGenerated: Scalars['Boolean'];
 };
 
 
@@ -1820,6 +1822,11 @@ export type SubscriptionStreamUpdatedArgs = {
 export type SubscriptionUserViewerActivityArgs = {
   resourceId: Scalars['String'];
   streamId: Scalars['String'];
+};
+
+
+export type SubscriptionVersionPreviewGeneratedArgs = {
+  id: Scalars['String'];
 };
 
 export type TestItem = {
@@ -3052,6 +3059,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   userStreamAdded?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamAdded", ParentType, ContextType>;
   userStreamRemoved?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamRemoved", ParentType, ContextType>;
   userViewerActivity?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userViewerActivity", ParentType, ContextType, RequireFields<SubscriptionUserViewerActivityArgs, 'resourceId' | 'streamId'>>;
+  versionPreviewGenerated?: SubscriptionResolver<ResolversTypes['Boolean'], "versionPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionVersionPreviewGeneratedArgs, 'id'>>;
 };
 
 export type TestItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestItem'] = ResolversParentTypes['TestItem']> = {

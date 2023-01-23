@@ -353,3 +353,11 @@ export async function createCommit(
   )) as CommitRecord[]
   return item
 }
+
+export async function getObjectsCommits(objectIds: string[]) {
+  if (!objectIds?.length) return []
+  return await Commits.knex<CommitRecord[]>().whereIn(
+    Commits.col.referencedObject,
+    objectIds
+  )
+}

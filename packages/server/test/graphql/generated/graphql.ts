@@ -1737,6 +1737,8 @@ export type Subscription = {
   userStreamRemoved?: Maybe<Scalars['JSONObject']>;
   /** Broadcasts "real-time" location data for viewer users. */
   userViewerActivity?: Maybe<Scalars['JSONObject']>;
+  /** Subscribe to when a commit's preview image finishes generating */
+  versionPreviewGenerated: Scalars['Boolean'];
 };
 
 
@@ -1813,6 +1815,11 @@ export type SubscriptionStreamUpdatedArgs = {
 export type SubscriptionUserViewerActivityArgs = {
   resourceId: Scalars['String'];
   streamId: Scalars['String'];
+};
+
+
+export type SubscriptionVersionPreviewGeneratedArgs = {
+  id: Scalars['String'];
 };
 
 export type TestItem = {

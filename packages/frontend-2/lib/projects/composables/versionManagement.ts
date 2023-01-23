@@ -9,8 +9,13 @@ import {
   ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
-import { onProjectVersionsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
+import {
+  onProjectVersionsUpdateSubscription,
+  onVersionPreviewGeneratedSubscription
+} from '~~/lib/projects/graphql/subscriptions'
 import { evictObjectFields, getCacheId } from '~~/lib/common/helpers/graphql'
+import { EventBusKeys, useEventBus } from '~~/lib/core/composables/eventBus'
+import { Subscription } from 'zen-observable-ts'
 
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
@@ -19,7 +24,11 @@ export function useProjectVersionUpdateTracking(
       Get<OnProjectVersionsUpdateSubscription, 'projectVersionsUpdated'>
     >,
     cache: ApolloCache<unknown>
-  ) => void
+  ) => void,
+  options?: Partial<{
+    silenceToast: boolean
+    trackPreviewGeneration: boolean
+  }>
 ) {
   /**
    * TODO: Delete/update version
@@ -34,6 +43,8 @@ export function useProjectVersionUpdateTracking(
    * - Viewer: Re-calculate models versions
    */
 
+  const eventBus = useEventBus()
+  const { silenceToast = false, trackPreviewGeneration = true } = options || {}
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
   const { onResult: onProjectVersionsUpdate } = useSubscription(
@@ -43,6 +54,7 @@ export function useProjectVersionUpdateTracking(
     })
   )
 
+  const generationSubscriptions = new Set<Subscription>()
   onProjectVersionsUpdate((res) => {
     if (!res.data?.projectVersionsUpdated) return
 
@@ -57,46 +69,66 @@ export function useProjectVersionUpdateTracking(
     ) {
       if (event.type === ProjectVersionsUpdatedMessageType.Created) {
         // Emit toast
-        triggerNotification({
-          type: ToastNotificationType.Info,
-          title: 'A new version was created!',
-          cta: {
-            title: 'View Version',
-            url: modelRoute(
-              unref(projectId),
-              SpeckleViewer.ViewerRoute.resourceBuilder()
-                .addModel(version.model.id, version.id)
-                .toString()
-            )
-          }
-        })
-
-        // Update model.previewUrl
-        apollo.cache.modify({
-          id: getCacheId('Model', version.model.id),
-          fields: {
-            previewUrl: () => version.previewUrl
-          }
-        })
-      }
-
-      // Update model.updatedAt
-      apollo.cache.modify({
-        id: getCacheId('Model', version.model.id),
-        fields: {
-          updatedAt: () => new Date().toISOString()
+        if (!silenceToast) {
+          triggerNotification({
+            type: ToastNotificationType.Info,
+            title: 'A new version was created!',
+            cta: {
+              title: 'View Version',
+              url: modelRoute(
+                unref(projectId),
+                SpeckleViewer.ViewerRoute.resourceBuilder()
+                  .addModel(version.model.id, version.id)
+                  .toString()
+              )
+            }
+          })
         }
-      })
+
+        // Track generation events
+        if (trackPreviewGeneration) {
+          const observable = apollo.subscribe({
+            query: onVersionPreviewGeneratedSubscription,
+            variables: {
+              versionId: version.id
+            }
+          })
+          const observableSubscription = observable.subscribe((res) => {
+            if (res.data?.versionPreviewGenerated) {
+              eventBus.emit(EventBusKeys.OnVersionPreviewGenerated, {
+                versionId: version.id
+              })
+            }
+
+            // Unsub
+            observableSubscription.unsubscribe()
+            generationSubscriptions.delete(observableSubscription)
+          })
+          generationSubscriptions.add(observableSubscription)
+        }
+      }
     } else if (event.type === ProjectVersionsUpdatedMessageType.Deleted) {
       // Delete from cache
       apollo.cache.evict({
         id: getCacheId('Version', event.id)
       })
 
-      // Evict stale model fields
-      // evictObjectFields(apollo.cache, getCacheId('Model', ))
+      if (event.modelId) {
+        // Evict stale model fields
+        evictObjectFields(
+          apollo.cache,
+          getCacheId('Model', event.modelId),
+          (fieldName) =>
+            ['updatedAt', 'previewUrl', 'versionCount', 'versions'].includes(fieldName)
+        )
+      }
     }
 
     handler?.(event, apollo.cache)
+  })
+
+  onBeforeUnmount(() => {
+    // clean up subscriptions
+    generationSubscriptions.forEach((s) => s.unsubscribe())
   })
 }

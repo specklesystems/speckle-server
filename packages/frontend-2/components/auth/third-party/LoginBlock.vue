@@ -24,7 +24,11 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
  * - Invite token
  */
 
-type StrategyType = Get<AuthStategiesServerInfoFragmentFragment, 'authStrategies.0'>
+console.log('WTF1')
+
+type StrategyType = NonNullable<
+  Get<AuthStategiesServerInfoFragmentFragment, 'authStrategies.0'>
+>
 
 graphql(`
   fragment AuthStategiesServerInfoFragment on ServerInfo {

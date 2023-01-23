@@ -21,11 +21,17 @@ export const onProjectVersionsUpdateSubscription = graphql(`
       type
       version {
         id
-        previewUrl
         model {
           id
+          ...ProjectPageLatestItemsModelItem
         }
       }
     }
+  }
+`)
+
+export const onVersionPreviewGeneratedSubscription = graphql(`
+  subscription OnVersionPreviewGenerated($versionId: String!) {
+    versionPreviewGenerated(id: $versionId)
   }
 `)

@@ -12,6 +12,7 @@ import {
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
   SubscriptionSubscribeFn,
+  SubscriptionVersionPreviewGeneratedArgs,
   UserProjectsUpdatedMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
@@ -62,6 +63,10 @@ export enum ProjectSubscriptions {
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED'
 }
 
+export enum VersionSubscriptions {
+  PreviewGenerated = 'VERSION_PREVIEW_GENERATED'
+}
+
 type NoVariables = Record<string, never>
 
 // Add mappings between expected event constant, its payload and variables
@@ -105,9 +110,17 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectVersionsUpdatedArgs
   }
+  [VersionSubscriptions.PreviewGenerated]: {
+    payload: {
+      versionPreviewGenerated: boolean
+      versionId: string
+      projectId: string
+    }
+    variables: SubscriptionVersionPreviewGeneratedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
-type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions
+type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions | VersionSubscriptions
 
 /**
  * Publish a GQL subscription event

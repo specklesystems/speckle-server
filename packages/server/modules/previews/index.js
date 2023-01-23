@@ -18,6 +18,10 @@ const {
 
 const { makeOgImage } = require('./ogImage')
 const { moduleLogger, logger } = require('@/logging/logging')
+const {
+  setupResultListener,
+  shutdownResultListener
+} = require('@/modules/previews/services/resultListener')
 
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -248,6 +252,12 @@ exports.init = (app) => {
       req.params.angle || DEFAULT_ANGLE
     )
   })
+
+  setupResultListener()
 }
 
 exports.finalize = () => {}
+
+exports.shutdown = () => {
+  shutdownResultListener()
+}
