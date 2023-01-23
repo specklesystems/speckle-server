@@ -196,6 +196,10 @@ type ProjectVersionsUpdatedMessage {
   Null if version was deleted
   """
   version: Version
+  """
+  Only set if version was deleted, in other scenarios can be queried from 'version'
+  """
+  modelId: String
 }
 
 extend type Subscription {

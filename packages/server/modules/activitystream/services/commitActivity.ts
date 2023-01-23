@@ -41,7 +41,8 @@ export async function addCommitCreatedActivity(params: {
       projectVersionsUpdated: {
         id: commit.id,
         version: commit,
-        type: ProjectVersionsUpdatedMessageType.Created
+        type: ProjectVersionsUpdatedMessageType.Created,
+        modelId: null
       }
     })
   ])
@@ -77,7 +78,8 @@ export async function addCommitUpdatedActivity(params: {
       projectVersionsUpdated: {
         id: commitId,
         version: newCommit,
-        type: ProjectVersionsUpdatedMessageType.Updated
+        type: ProjectVersionsUpdatedMessageType.Updated,
+        modelId: null
       }
     })
   ])
@@ -88,8 +90,9 @@ export async function addCommitDeletedActivity(params: {
   streamId: string
   userId: string
   commit: CommitRecord
+  branchId: string
 }) {
-  const { commitId, streamId, userId, commit } = params
+  const { commitId, streamId, userId, commit, branchId } = params
   await Promise.all([
     saveActivity({
       streamId,
@@ -103,6 +106,15 @@ export async function addCommitDeletedActivity(params: {
     pubsub.publish(CommitPubsubEvents.CommitDeleted, {
       commitDeleted: { commitId, streamId },
       streamId
+    }),
+    publish(ProjectSubscriptions.ProjectVersionsUpdated, {
+      projectId: streamId,
+      projectVersionsUpdated: {
+        id: commitId,
+        type: ProjectVersionsUpdatedMessageType.Deleted,
+        version: null,
+        modelId: branchId
+      }
     })
   ])
 }

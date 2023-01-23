@@ -88,7 +88,7 @@ export type ModelGraphQLReturn = Omit<
 
 export type VersionGraphQLReturn = Omit<
   Version,
-  'authorUser' | 'commentThreads' | 'model'
+  'authorUser' | 'commentThreads' | 'model' | 'previewUrl'
 > &
   CommitRecord
 

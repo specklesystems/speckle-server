@@ -12,3 +12,20 @@ export const onProjectModelsUpdateSubscription = graphql(`
     }
   }
 `)
+
+export const onProjectVersionsUpdateSubscription = graphql(`
+  subscription OnProjectVersionsUpdate($id: String!) {
+    projectVersionsUpdated(id: $id) {
+      id
+      modelId
+      type
+      version {
+        id
+        previewUrl
+        model {
+          id
+        }
+      }
+    }
+  }
+`)

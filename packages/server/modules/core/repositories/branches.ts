@@ -411,7 +411,7 @@ export async function markCommitBranchUpdated(commitId: string) {
         .from(BranchCommits.name)
         .where(BranchCommits.col.commitId, commitId)
     })
-    .update(Branches.withoutTablePrefix.col.updatedAt, new Date())
-  const updates = await q
-  return updates > 0
+    .update(Branches.withoutTablePrefix.col.updatedAt, new Date(), '*')
+  const [branch] = (await q) as BranchRecord[]
+  return branch
 }

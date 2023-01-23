@@ -235,7 +235,7 @@ export async function deleteCommitAndNotify(
     })
   }
 
-  await Promise.all([
+  const [, updatedBranch] = await Promise.all([
     markCommitStreamUpdated(commit.id),
     markCommitBranchUpdated(commit.id)
   ])
@@ -246,7 +246,8 @@ export async function deleteCommitAndNotify(
       commitId,
       streamId,
       userId,
-      commit
+      commit,
+      branchId: updatedBranch.id
     })
   }
 
