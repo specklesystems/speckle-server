@@ -30,7 +30,7 @@
     <!-- Main stuff -->
     <div class="pl-5 flex space-x-1 items-center">
       <div class="bg-foundation w-20 h-20 shadow rounded-md flex-shrink-0">
-        <PreviewImage :preview-url="previewUrl" />
+        <PreviewImage :preview-url="version.previewUrl" />
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
         <div class="flex items-center space-x-1 min-w-0">
@@ -49,9 +49,6 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
-const getPreviewUrl = useGetPreviewUrl()
 
 const props = withDefaults(
   defineProps<{
@@ -72,8 +69,6 @@ const emit = defineEmits<{
   (e: 'changeVersion', version: string): void
 }>()
 
-const { projectId } = useInjectedViewerState()
-
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
 
@@ -81,10 +76,6 @@ const author = computed(() => props.version.authorUser)
 
 const timeAgoCreatedAt = computed(() =>
   dayjs(props.version.createdAt as string).from(dayjs())
-)
-
-const previewUrl = computed(() =>
-  getPreviewUrl(projectId.value, props.version.referencedObject)
 )
 
 function handleClick() {

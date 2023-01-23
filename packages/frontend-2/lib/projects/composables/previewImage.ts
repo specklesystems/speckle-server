@@ -7,8 +7,12 @@ import { useSubscription } from '@vue/apollo-composable'
 
 const previewVersionUrlRegexp = /\/commits\/([\w\d]+)$/i
 
+// TODO: Optimize, use single project version image generated subscription to reduce the amount
+// of subscriptions per page
+
 /**
- * Get authenticated preview image URL
+ * Get authenticated preview image URL and subscribes to preview image generation events so that the preview image URL
+ * is updated whenever generation finishes
  * NOTE: Returns null during SSR, so make sure you wrap any components that render the image
  * in <ClientOnly> to prevent hydration errors
  */

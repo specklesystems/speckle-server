@@ -17,8 +17,8 @@ import {
   WritableComputedRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
-import { useQuery } from '@vue/apollo-composable'
+import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery
@@ -26,11 +26,16 @@ import {
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, uniq } from 'lodash-es'
 import {
+  ProjectVersionsUpdatedMessageType,
   ViewerLoadedResourcesQuery,
+  ViewerLoadedResourcesQueryVariables,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get } from 'type-fest'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
+import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -115,6 +120,10 @@ export type InjectableViewerState = Readonly<{
        * Project main metadata
        */
       project: ComputedRef<Get<ViewerLoadedResourcesQuery, 'project'>>
+      /**
+       * Variables used to load the query. Relevant when making cache updates.
+       */
+      resourceQueryVariables: ComputedRef<Optional<ViewerLoadedResourcesQueryVariables>>
     }
   }
   /**
@@ -386,17 +395,15 @@ function setupResponseResourceData(
     )
   )
 
-  const { result: viewerLoadedResourcesResult } = useQuery(
-    viewerLoadedResourcesQuery,
-    () => ({
-      projectId: projectId.value,
-      modelIds: nonObjectResourceItems.value.map((r) => r.modelId),
-      versionIds: nonObjectResourceItems.value.map((r) => r.versionId),
-      resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(
-        items.value
-      )
-    })
-  )
+  const {
+    result: viewerLoadedResourcesResult,
+    variables: viewerLoadedResourcesVariables
+  } = useQuery(viewerLoadedResourcesQuery, () => ({
+    projectId: projectId.value,
+    modelIds: nonObjectResourceItems.value.map((r) => r.modelId),
+    versionIds: nonObjectResourceItems.value.map((r) => r.versionId),
+    resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(items.value)
+  }))
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -415,7 +422,8 @@ function setupResponseResourceData(
     objects,
     commentThreads,
     modelsAndVersionIds,
-    project
+    project,
+    resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value)
   }
 }
 
@@ -608,6 +616,72 @@ function useViewerIsBusyEventHandler(state: InjectableViewerState) {
   })
 }
 
+function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
+  if (process.server) return
+  const apollo = useApolloClient().client
+  const {
+    projectId,
+    resources: {
+      response: { resourceQueryVariables }
+    }
+  } = state
+
+  // Track model name/updatedAt changes
+  useProjectModelUpdateTracking(projectId)
+
+  // Track version updates
+  useProjectVersionUpdateTracking(
+    projectId,
+    (event) => {
+      if (event.type !== ProjectVersionsUpdatedMessageType.Created) return
+      const version = event.version
+      const modelId = version?.model.id
+      const variables = resourceQueryVariables.value
+      if (!variables || !modelId || !version) return
+
+      // Add new version
+      updateCacheByFilter(
+        apollo.cache,
+        {
+          query: { query: viewerLoadedResourcesQuery, variables }
+        },
+        (data) => {
+          if (!data.project?.models.items) return
+
+          const newModels = data.project.models.items.slice()
+          const modelIdx = newModels.findIndex((m) => m.id === modelId)
+          if (modelIdx === -1) return
+
+          const model = newModels[modelIdx]
+          const newVersions = model.versions.items.slice()
+          newVersions.unshift(version)
+
+          newModels.splice(modelIdx, 1, {
+            ...model,
+            versions: {
+              ...model.versions,
+              items: newVersions,
+              totalCount: model.versions.totalCount + 1
+            }
+          })
+
+          return {
+            ...data,
+            project: {
+              ...data.project,
+              models: {
+                ...data.project.models,
+                items: newModels
+              }
+            }
+          }
+        }
+      )
+    },
+    { silenceToast: true }
+  )
+}
+
 type UseSetupViewerParams = { projectId: MaybeRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
@@ -625,6 +699,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   useViewerObjectAutoLoading(state)
   useViewerSelectionEventHandler(state) // TODO: needs implementation
   useViewerIsBusyEventHandler(state)
+  useViewerModelsVersionsUpdateTracker(state)
 
   return state
 }

@@ -68,6 +68,7 @@ graphql(`
     referencedObject
     sourceApplication
     createdAt
+    previewUrl
     authorUser {
       ...LimitedUserAvatar
     }

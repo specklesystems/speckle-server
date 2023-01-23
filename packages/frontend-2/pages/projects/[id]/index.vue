@@ -40,8 +40,8 @@ import {
   useEvictProjectModelFields,
   useProjectModelUpdateTracking
 } from '~~/lib/projects/composables/modelManagement'
+import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
-import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 const onProjectUpdatedSubscription = graphql(`
   subscription OnProjectUpdated($id: String!) {
@@ -91,6 +91,9 @@ const { onResult: onProjectUpdated } = useSubscription(
     id: projectId.value
   })
 )
+
+// update preview URLs
+useProjectVersionUpdateTracking(projectId)
 
 useProjectModelUpdateTracking(projectId, (event) => {
   // If creation, refresh all project's model fields

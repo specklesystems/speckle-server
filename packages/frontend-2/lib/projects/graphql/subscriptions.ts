@@ -21,6 +21,7 @@ export const onProjectVersionsUpdateSubscription = graphql(`
       type
       version {
         id
+        ...ViewerModelVersionCardItem
         model {
           id
           ...ProjectPageLatestItemsModelItem
