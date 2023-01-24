@@ -4,6 +4,7 @@ import {
   Intersection,
   Object3D,
   Points,
+  Ray,
   Scene,
   Vector2,
   Vector4
@@ -79,9 +80,29 @@ export class Intersections {
     camera: Camera,
     point: Vector2,
     nearest = true,
-    bounds: Box3 = null
+    bounds: Box3 = null,
+    firstOnly = false
   ): Array<Intersection> {
     this.raycaster.setFromCamera(point, camera)
+    this.raycaster.firstHitOnly = firstOnly
+    return this.intersectInternal(scene, nearest, bounds)
+  }
+
+  public intersectRay(
+    scene: Scene,
+    camera: Camera,
+    ray: Ray,
+    nearest = true,
+    bounds: Box3 = null,
+    firstOnly = false
+  ): Array<Intersection> {
+    this.raycaster.camera = camera
+    this.raycaster.set(ray.origin, ray.direction)
+    this.raycaster.firstHitOnly = firstOnly
+    return this.intersectInternal(scene, nearest, bounds)
+  }
+
+  private intersectInternal(scene: Scene, nearest: boolean, bounds: Box3) {
     const target = scene.getObjectByName('ContentGroup')
 
     let results = []

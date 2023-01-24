@@ -441,7 +441,7 @@ export default {
     },
     updateBubbles(transition = true) {
       if (!this.$refs.parent) return
-
+      /** This needs to be refactored using queries. TO DO in FE2 */
       const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       const selectedObjects = []
