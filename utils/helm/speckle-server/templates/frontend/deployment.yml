@@ -25,7 +25,7 @@ spec:
 
         ports:
           - name: www
-            containerPort: 80
+            containerPort: 8080
             protocol: TCP
 
         resources:
@@ -48,6 +48,16 @@ spec:
             port: www
           initialDelaySeconds: 5
           periodSeconds: 5
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
 
         env: 
           - name: FILE_SIZE_LIMIT_MB

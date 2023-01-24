@@ -31,7 +31,9 @@ COPY packages/shared ./packages/shared/
 RUN yarn workspaces foreach run build
 
 # production stage
-FROM openresty/openresty:1.21.4.1-4-jammy-amd64 as production-stage
+#FIXME nginx alone won't work because of the directive in packages/frontend/nginx/templates/nginx.conf.template
+#content_by_lua_block does not exist in standard nginx, and we require openresty
+FROM nginxinc/nginx-unprivileged:1.23-alpine-slim as production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -41,10 +43,6 @@ ENV FILE_SIZE_LIMIT_MB=100
 COPY --from=build-stage /speckle-server/packages/frontend/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 
-COPY packages/frontend/nginx/ /etc/nginx/
+COPY packages/frontend/nginx/templates /etc/nginx/templates
 
-# prepare the environment
-ENTRYPOINT ["/etc/nginx/docker-entrypoint.sh"]
-
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
