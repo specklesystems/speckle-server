@@ -53,6 +53,16 @@ spec:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
         volumeMounts:
           - name: openresty-temp
             mountPath: /var/run/openresty
