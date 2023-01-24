@@ -53,6 +53,10 @@ spec:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
+        volumeMounts:
+          - name: openresty-temp
+            mountPath: /var/run/openresty
+
       priorityClassName: high-priority
       {{- if .Values.frontend.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.affinity "context" $) | nindent 8 }}
@@ -69,3 +73,7 @@ spec:
       {{- if .Values.frontend.serviceAccount.create }}
       serviceAccountName: {{ include "frontend.name" $ }}
       {{- end }}
+
+      volumes:
+        - name: openresty-temp
+          emptyDir: {}

@@ -38,13 +38,12 @@ ARG SPECKLE_SERVER_VERSION
 ENV NODE_ENV=${NODE_ENV}
 ENV FILE_SIZE_LIMIT_MB=100
 
-COPY --from=build-stage /speckle-server/packages/frontend/dist /usr/share/nginx/html
-RUN rm /etc/nginx/conf.d/default.conf
+COPY --from=build-stage /speckle-server/packages/frontend/dist /app
 
-COPY packages/frontend/nginx/ /etc/nginx/
+COPY packages/frontend/nginx/ /opt/bitnami/openresty/nginx/
 
 # prepare the environment
-ENTRYPOINT ["/etc/nginx/docker-entrypoint.sh"]
+ENTRYPOINT ["/opt/bitnami/openresty/nginx/docker-entrypoint.sh"]
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
