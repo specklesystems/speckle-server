@@ -9,9 +9,6 @@ const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
 const previewUrlObjectIdRegexp = /\/commits\/([\w\d]+)/i
 
-// TODO: Optimize, use single project version image generated subscription to reduce the amount
-// of subscriptions per page
-
 /**
  * Get authenticated preview image URL and subscribes to preview image generation events so that the preview image URL
  * is updated whenever generation finishes

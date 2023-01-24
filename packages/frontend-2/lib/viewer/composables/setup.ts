@@ -24,14 +24,16 @@ import {
   viewerLoadedResourcesQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
-import { difference, uniq } from 'lodash-es'
+import { difference, merge, uniq } from 'lodash-es'
 import {
   ProjectVersionsUpdatedMessageType,
+  ProjectViewerResourcesQuery,
+  ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get } from 'type-fest'
+import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
@@ -105,6 +107,12 @@ export type InjectableViewerState = Readonly<{
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
       /**
+       * Variables used to load resource items identified by URL identifiers. Relevant when making cache updates
+       */
+      resourceItemsQueryVariables: ComputedRef<
+        Optional<ProjectViewerResourcesQueryVariables>
+      >
+      /**
        * Model GQL objects paired with their loaded version IDs
        */
       modelsAndVersionIds: ComputedRef<Array<{ model: LoadedModel; versionId: string }>>
@@ -121,7 +129,7 @@ export type InjectableViewerState = Readonly<{
        */
       project: ComputedRef<Get<ViewerLoadedResourcesQuery, 'project'>>
       /**
-       * Variables used to load the query. Relevant when making cache updates.
+       * Variables used to load the resource query. Relevant when making cache updates.
        */
       resourceQueryVariables: ComputedRef<Optional<ViewerLoadedResourcesQueryVariables>>
     }
@@ -290,7 +298,10 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
  */
 function setupResponseResourceItems(
   state: InitialStateWithRequest
-): InjectableViewerState['resources']['response']['resourceItems'] {
+): Pick<
+  InjectableViewerState['resources']['response'],
+  'resourceItems' | 'resourceItemsQueryVariables'
+> {
   const {
     projectId,
     resources: {
@@ -302,13 +313,11 @@ function setupResponseResourceItems(
     SpeckleViewer.ViewerRoute.createGetParamFromResources(requestItems.value)
   )
 
-  const { result: resolvedResourcesResult } = useQuery(
-    projectViewerResourcesQuery,
-    () => ({
+  const { result: resolvedResourcesResult, variables: resourceItemsQueryVariables } =
+    useQuery(projectViewerResourcesQuery, () => ({
       projectId: projectId.value,
       resourceUrlString: resourceString.value
-    })
-  )
+    }))
 
   const resolvedResourceGroups = computed(
     () => resolvedResourcesResult.value?.project?.viewerResources || []
@@ -370,19 +379,26 @@ function setupResponseResourceItems(
     return finalItems
   })
 
-  return resourceItems
+  return {
+    resourceItems,
+    resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value)
+  }
 }
 
 function setupResponseResourceData(
   state: InitialStateWithRequest,
-  resourceItems: ReturnType<typeof setupResponseResourceItems>
-): Omit<InjectableViewerState['resources']['response'], 'resourceItems'> {
+  resourceItemsData: ReturnType<typeof setupResponseResourceItems>
+): Omit<
+  InjectableViewerState['resources']['response'],
+  'resourceItems' | 'resourceItemsQueryVariables'
+> {
   const {
     projectId,
     resources: {
       request: { items }
     }
   } = state
+  const { resourceItems } = resourceItemsData
 
   const objects = computed(() =>
     resourceItems.value.filter((i) => !i.modelId && !i.versionId)
@@ -433,8 +449,8 @@ function setupResponseResourceData(
 function setupResourceResponse(
   state: InitialStateWithRequest
 ): InitialStateWithRequestAndResponse {
-  const resourceItems = setupResponseResourceItems(state)
-  const loadedResourceData = setupResponseResourceData(state, resourceItems)
+  const resourceItemsData = setupResponseResourceItems(state)
+  const loadedResourceData = setupResponseResourceData(state, resourceItemsData)
 
   return {
     ...state,
@@ -443,7 +459,7 @@ function setupResourceResponse(
         ...state.resources.request
       },
       response: {
-        resourceItems,
+        ...resourceItemsData,
         ...loadedResourceData
       }
     }
@@ -622,7 +638,7 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
   const {
     projectId,
     resources: {
-      response: { resourceQueryVariables }
+      response: { resourceQueryVariables, resourceItemsQueryVariables }
     }
   } = state
 
@@ -635,15 +651,21 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
     (event) => {
       if (event.type !== ProjectVersionsUpdatedMessageType.Created) return
       const version = event.version
-      const modelId = version?.model.id
-      const variables = resourceQueryVariables.value
-      if (!variables || !modelId || !version) return
+      if (!version) return
 
-      // Add new version
+      const modelId = version.model.id
+      const objectId = version.referencedObject
+
+      if (!resourceQueryVariables.value || !resourceItemsQueryVariables.value) return
+
+      // Add new version to Model.versions
       updateCacheByFilter(
         apollo.cache,
         {
-          query: { query: viewerLoadedResourcesQuery, variables }
+          query: {
+            query: viewerLoadedResourcesQuery,
+            variables: resourceQueryVariables.value
+          }
         },
         (data) => {
           if (!data.project?.models.items) return
@@ -665,16 +687,67 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
             }
           })
 
-          return {
-            ...data,
-            project: {
-              ...data.project,
-              models: {
-                ...data.project.models,
-                items: newModels
-              }
-            }
+          return merge<
+            PartialDeep<ViewerLoadedResourcesQuery>,
+            ViewerLoadedResourcesQuery,
+            PartialDeep<ViewerLoadedResourcesQuery>
+          >({}, data, {
+            project: { models: { items: newModels } }
+          })
+        }
+      )
+
+      // Update resourceItems w/ new data, potentially changing de-duplication results
+      updateCacheByFilter(
+        apollo.cache,
+        {
+          query: {
+            query: projectViewerResourcesQuery,
+            variables: resourceItemsQueryVariables.value
           }
+        },
+        (data) => {
+          if (!data.project?.viewerResources) return
+
+          // group is updatable only if references a model w/o a specific version id
+          // in which case we're gonna replace it with the latest one
+          const groupIdx = data.project.viewerResources.findIndex((g) => {
+            const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
+            if (
+              SpeckleViewer.ViewerRoute.isModelResource(res) &&
+              !res.versionId &&
+              g.items.find((i) => i.modelId === modelId)
+            )
+              return true
+            if (
+              SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
+              g.items.find((i) => i.modelId === modelId)
+            )
+              return true
+            return false
+          })
+          if (groupIdx === -1) return
+
+          const group = data.project.viewerResources[groupIdx]
+          const groupItemIdx = group.items.findIndex((i) => i.modelId === modelId)
+          if (groupItemIdx === -1) return
+
+          const newGroupItem = { ...group.items[groupItemIdx] }
+          newGroupItem.objectId = objectId
+          newGroupItem.versionId = version.id
+
+          const newGroupItems = group.items.slice()
+          newGroupItems.splice(groupItemIdx, 1, newGroupItem)
+
+          const newGroup = { ...group, items: newGroupItems }
+          const newGroups = data.project.viewerResources.slice()
+          newGroups.splice(groupIdx, 1, newGroup)
+
+          return merge<
+            PartialDeep<ProjectViewerResourcesQuery>,
+            ProjectViewerResourcesQuery,
+            PartialDeep<ProjectViewerResourcesQuery>
+          >({}, data, { project: { viewerResources: newGroups } })
         }
       )
     },
