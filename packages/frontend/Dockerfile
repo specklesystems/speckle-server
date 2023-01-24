@@ -54,5 +54,5 @@ COPY packages/frontend/nginx/ /opt/bitnami/openresty/nginx/
 # prepare the environment
 ENTRYPOINT ["/opt/bitnami/openresty/nginx/docker-entrypoint.sh"]
 
-EXPOSE 80
+EXPOSE 8080
 CMD ["/opt/bitnami/scripts/openresty/entrypoint.sh", "/opt/bitnami/scripts/openresty/run.sh"]
