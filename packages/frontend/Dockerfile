@@ -31,7 +31,7 @@ COPY packages/shared ./packages/shared/
 RUN yarn workspaces foreach run build
 
 # production stage
-FROM openresty/openresty:1.21.4.1-4-jammy-amd64 as production-stage
+FROM bitnami/openresty:1.21.4-1-debian-11-r80 as production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
