@@ -251,8 +251,10 @@ exports.init = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blobs',
-    authMiddlewareCreator(streamWritePermissions)
-    // async (req, res) => {}
+    authMiddlewareCreator(streamWritePermissions),
+    async (req, res) => {
+      res.status(501).send('This method is not implemented yet.')
+    }
   )
 }
 
