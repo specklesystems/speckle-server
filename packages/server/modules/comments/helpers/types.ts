@@ -10,7 +10,7 @@ export interface CommentRecord {
   updatedAt: Date
   text: Nullable<string>
   screenshot: Nullable<string>
-  data: Nullable<string>
+  data: Nullable<Record<string, unknown>>
   archived: boolean
   parentComment: Nullable<string>
 }

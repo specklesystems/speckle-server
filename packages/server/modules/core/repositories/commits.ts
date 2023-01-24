@@ -201,6 +201,18 @@ export async function getStreamCommitCount(
   return res?.count || 0
 }
 
+export async function getCommitsAndTheirBranchIds(commitIds: string[]) {
+  if (!commitIds.length) return []
+
+  return await Commits.knex()
+    .select<Array<CommitRecord & { branchId: string }>>([
+      ...Commits.cols,
+      BranchCommits.col.branchId
+    ])
+    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+    .whereIn(Commits.col.id, commitIds)
+}
+
 export async function getSpecificBranchCommits(
   pairs: { branchId: string; commitId: string }[]
 ) {

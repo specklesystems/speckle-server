@@ -1,4 +1,8 @@
+import { getCommentsResources } from '@/modules/comments/repositories/comments'
 import {
+  ResourceIdentifier,
+  ResourceIdentifierInput,
+  ResourceType,
   ViewerResourceGroup,
   ViewerResourceItem
 } from '@/modules/core/graph/generated/graphql'
@@ -7,10 +11,29 @@ import {
   getBranchLatestCommits,
   getStreamBranchesByName
 } from '@/modules/core/repositories/branches'
-import { getSpecificBranchCommits } from '@/modules/core/repositories/commits'
+import {
+  getCommitsAndTheirBranchIds,
+  getSpecificBranchCommits
+} from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
 import { Optional, SpeckleViewer } from '@speckle/shared'
-import { flatten, keyBy, uniq } from 'lodash'
+import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash'
+
+function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {
+  if (a.modelId !== b.modelId) return false
+  if (a.objectId !== b.objectId) return false
+  if (a.versionId !== b.versionId) return false
+  return true
+}
+
+function isResourceIdentifierEqual(
+  a: ResourceIdentifier | ResourceIdentifierInput,
+  b: ResourceIdentifier | ResourceIdentifierInput
+) {
+  if (a.resourceId !== b.resourceId) return false
+  if (a.resourceType !== b.resourceType) return false
+  return true
+}
 
 async function getObjectResourceGroups(
   projectId: string,
@@ -130,6 +153,7 @@ export async function getViewerResourceGroups(
   projectId: string,
   resourceIdString: string
 ): Promise<ViewerResourceGroup[]> {
+  if (!resourceIdString?.trim().length) return []
   const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
   const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
@@ -146,4 +170,100 @@ export async function getViewerResourceGroups(
   )
 
   return results
+}
+
+export async function getViewerResourceItemsUngrouped(
+  projectId: string,
+  resourceIdString: string
+): Promise<ViewerResourceItem[]> {
+  if (!resourceIdString?.trim().length) return []
+
+  let results: ViewerResourceItem[] = []
+  const groups = await getViewerResourceGroups(projectId, resourceIdString)
+  for (const group of groups) {
+    results = results.concat(group.items)
+  }
+
+  return uniqWith(results, isResourceItemEqual)
+}
+
+export async function getViewerResourcesFromLegacyIdentifiers(
+  projectId: string,
+  resources: Array<ResourceIdentifier | ResourceIdentifierInput>
+): Promise<ViewerResourceItem[]> {
+  const objectIds = resources
+    .filter((r) => r.resourceType === ResourceType.Object)
+    .map((r) => r.resourceId)
+  const commitIds = resources
+    .filter((r) => r.resourceType === ResourceType.Commit)
+    .map((r) => r.resourceId)
+  const commentIds = resources
+    .filter((r) => r.resourceType === ResourceType.Comment)
+    .map((r) => r.resourceId)
+
+  const objectResourcesBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
+  for (const objectId of objectIds) {
+    objectResourcesBuilder.addObject(objectId)
+  }
+  const objectResources = objectResourcesBuilder
+    .toResources()
+    .filter(SpeckleViewer.ViewerRoute.isObjectResource)
+
+  const [objectResourceGroups, commitsWithBranchIds, commentResources] =
+    await Promise.all([
+      getObjectResourceGroups(projectId, objectResources),
+      getCommitsAndTheirBranchIds(commitIds),
+      getViewerResourcesForComments(projectId, commentIds) // recursively getting parent comment resources
+    ])
+
+  let results: ViewerResourceItem[] = []
+  for (const group of objectResourceGroups) {
+    results = results.concat(group.items)
+  }
+  for (const commit of commitsWithBranchIds) {
+    results.push({
+      objectId: commit.referencedObject,
+      versionId: commit.id,
+      modelId: commit.branchId
+    })
+  }
+  results = results.concat(commentResources)
+
+  return uniqWith(results, isResourceItemEqual)
+}
+
+export async function getViewerResourcesForComments(
+  projectId: string,
+  commentIds: string[]
+): Promise<ViewerResourceItem[]> {
+  const commentsResources = reduce(
+    await getCommentsResources(commentIds),
+    (result, item) => {
+      const resources = item.resources
+      return result.concat(resources)
+    },
+    [] as ResourceIdentifier[]
+  )
+  const uniqueResources = uniqWith(commentsResources, isResourceIdentifierEqual)
+
+  return await getViewerResourcesFromLegacyIdentifiers(projectId, uniqueResources)
+}
+
+export async function getViewerResourcesForComment(
+  projectId: string,
+  commentId: string
+): Promise<ViewerResourceItem[]> {
+  return await getViewerResourcesForComments(projectId, [commentId])
+}
+
+/**
+ * Whether any of the resource items match
+ */
+export function doViewerResourcesFit(
+  requestedResources: ViewerResourceItem[],
+  incomingResources: ViewerResourceItem[]
+) {
+  return incomingResources.some((ir) =>
+    requestedResources.some((rr) => isResourceItemEqual(ir, rr))
+  )
 }

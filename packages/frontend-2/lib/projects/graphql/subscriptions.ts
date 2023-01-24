@@ -8,6 +8,7 @@ export const onProjectModelsUpdateSubscription = graphql(`
       model {
         id
         ...ProjectPageLatestItemsModelItem
+        ...NewModelVersionMetadata
       }
     }
   }

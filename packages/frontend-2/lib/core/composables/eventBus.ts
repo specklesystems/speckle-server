@@ -1,9 +1,10 @@
 export enum EventBusKeys {
-  OnVersionPreviewGenerated = 'on_version_preview_generated'
+  TestKey = 'test_event_bus'
 }
 
+// Add mappings between event keys and expected payloads here
 export type EventBusKeyPayloadMap = {
-  [EventBusKeys.OnVersionPreviewGenerated]: { versionId: string }
+  [EventBusKeys.TestKey]: { foo: string; bar: string }
 } & { [k in EventBusKeys]: unknown } & Record<string, unknown>
 
 export function useEventBus() {

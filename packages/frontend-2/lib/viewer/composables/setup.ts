@@ -26,6 +26,7 @@ import {
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
 import {
+  ProjectModelsUpdatedMessageType,
   ProjectVersionsUpdatedMessageType,
   ProjectViewerResourcesQuery,
   ProjectViewerResourcesQueryVariables,
@@ -38,6 +39,7 @@ import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -52,6 +54,18 @@ type FilterAction = (
   stateKey: string,
   includeDescendants?: boolean
 ) => Promise<void>
+
+graphql(`
+  fragment NewModelVersionMetadata on Model {
+    id
+    versions(limit: 1) {
+      items {
+        id
+        referencedObject
+      }
+    }
+  }
+`)
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -411,13 +425,14 @@ function setupResponseResourceData(
     )
   )
 
+  // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables
   } = useQuery(viewerLoadedResourcesQuery, () => ({
     projectId: projectId.value,
-    modelIds: nonObjectResourceItems.value.map((r) => r.modelId),
-    versionIds: nonObjectResourceItems.value.map((r) => r.versionId),
+    modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
+    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort(),
     resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(items.value)
   }))
 
@@ -632,6 +647,10 @@ function useViewerIsBusyEventHandler(state: InjectableViewerState) {
   })
 }
 
+/**
+ * Listening to model/version updates through subscriptions and making various
+ * cache updates so that we don't need to always refetch queries
+ */
 function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
   if (process.server) return
   const apollo = useApolloClient().client
@@ -642,8 +661,103 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
     }
   } = state
 
-  // Track model name/updatedAt changes
-  useProjectModelUpdateTracking(projectId)
+  useProjectModelUpdateTracking(projectId, (event) => {
+    // If model deleted, delete resource item
+    if (event.type === ProjectModelsUpdatedMessageType.Deleted) {
+      updateCacheByFilter(
+        apollo.cache,
+        {
+          query: {
+            query: projectViewerResourcesQuery,
+            variables: resourceItemsQueryVariables.value
+          }
+        },
+        (data) => {
+          if (!data.project?.viewerResources) return
+          const groupIdx = data.project.viewerResources.findIndex((g) =>
+            g.items.find((i) => i.modelId === event.id)
+          )
+          if (groupIdx === -1) return
+
+          const newGroups = data.project.viewerResources
+            .map((g) => {
+              const newItems = g.items.filter((i) => i.modelId !== event.id)
+              return {
+                ...g,
+                items: newItems
+              }
+            })
+            .filter((g) => g.items.length > 0)
+
+          return {
+            ...data,
+            project: {
+              ...data.project,
+              viewerResources: newGroups
+            }
+          }
+        }
+      )
+      return
+    }
+
+    const model = event.model
+    const version = model?.versions.items[0]
+    if (!model || !version) return
+
+    // Check if resourceItems need to be updated with this new model
+    updateCacheByFilter(
+      apollo.cache,
+      {
+        query: {
+          query: projectViewerResourcesQuery,
+          variables: resourceItemsQueryVariables.value
+        }
+      },
+      (data) => {
+        if (!data.project?.viewerResources) return
+
+        // group is updatable only if it's a folder group, cause then this new
+        // model possibly has to go under it. also make sure that the model
+        // doesn't already exist there
+        const groupIdx = data.project.viewerResources.findIndex((g) => {
+          const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
+          if (
+            SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
+            model.name.startsWith(res.folderName) &&
+            !g.items.some((i) => i.modelId === model.id)
+          )
+            return true
+          return false
+        })
+        if (groupIdx === -1) return
+
+        const group = data.project.viewerResources[groupIdx]
+        const newItems = [
+          ...group.items,
+          {
+            modelId: model.id,
+            versionId: version.id,
+            objectId: version.referencedObject
+          }
+        ]
+
+        const newGroups = data.project.viewerResources.slice()
+        newGroups.splice(groupIdx, 1, {
+          ...group,
+          items: newItems
+        })
+
+        return {
+          ...data,
+          project: {
+            ...data.project,
+            viewerResources: newGroups
+          }
+        }
+      }
+    )
+  })
 
   // Track version updates
   useProjectVersionUpdateTracking(
@@ -654,6 +768,7 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
       if (!version) return
 
       const modelId = version.model.id
+      const modelName = version.model.name
       const objectId = version.referencedObject
 
       if (!resourceQueryVariables.value || !resourceItemsQueryVariables.value) return
@@ -711,6 +826,7 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
 
           // group is updatable only if references a model w/o a specific version id
           // in which case we're gonna replace it with the latest one
+          // or maybe its a folder group
           const groupIdx = data.project.viewerResources.findIndex((g) => {
             const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
             if (
@@ -721,7 +837,8 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
               return true
             if (
               SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
-              g.items.find((i) => i.modelId === modelId)
+              (g.items.find((i) => i.modelId === modelId) ||
+                modelName.startsWith(res.folderName))
             )
               return true
             return false
@@ -730,14 +847,22 @@ function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
 
           const group = data.project.viewerResources[groupIdx]
           const groupItemIdx = group.items.findIndex((i) => i.modelId === modelId)
-          if (groupItemIdx === -1) return
 
-          const newGroupItem = { ...group.items[groupItemIdx] }
-          newGroupItem.objectId = objectId
-          newGroupItem.versionId = version.id
+          const newGroupItem =
+            groupItemIdx !== -1
+              ? { ...group.items[groupItemIdx], objectId, versionId: version.id }
+              : {
+                  versionId: version.id,
+                  objectId,
+                  modelId
+                }
 
           const newGroupItems = group.items.slice()
-          newGroupItems.splice(groupItemIdx, 1, newGroupItem)
+          if (groupItemIdx !== -1) {
+            newGroupItems.splice(groupItemIdx, 1, newGroupItem)
+          } else {
+            newGroupItems.push(newGroupItem)
+          }
 
           const newGroup = { ...group, items: newGroupItems }
           const newGroups = data.project.viewerResources.slice()

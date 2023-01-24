@@ -6,8 +6,6 @@ const {
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
   getComment,
@@ -33,6 +31,22 @@ const {
   getPaginatedBranchComments,
   getPaginatedProjectComments
 } = require('@/modules/comments/services/retrieval')
+const {
+  publish,
+  ViewerSubscriptions,
+  CommentSubscriptions,
+  filteredSubscribe,
+  ProjectSubscriptions
+} = require('@/modules/shared/utils/subscriptions')
+const {
+  addCommentCreatedActivity,
+  addCommentArchivedActivity,
+  addReplyAddedActivity
+} = require('@/modules/activitystream/services/commentActivity')
+const {
+  getViewerResourceItemsUngrouped,
+  doViewerResourcesFit
+} = require('@/modules/core/services/commit/viewerResources')
 
 const authorizeStreamAccess = async ({
   streamId,
@@ -107,7 +121,12 @@ module.exports = {
       const { doc } = ensureCommentSchema(parent.text || '')
       return documentToBasicString(doc)
     },
-
+    async hasParent(parent) {
+      return !!parent.parentComment
+    },
+    async parent(parent, _args, ctx) {
+      return ctx.loaders.comments.getReplyParent.load(parent.id)
+    },
     /**
      * Resolve resources, if they weren't already preloaded
      */
@@ -188,7 +207,26 @@ module.exports = {
     }
   },
   Mutation: {
-    // Used for broadcasting real time chat head bubbles and status. Does not persist anything!
+    async broadcastViewerUserActivity(_parent, args, context) {
+      await authorizeStreamAccess({
+        streamId: args.projectId,
+        userId: context.userId,
+        serverRole: context.role,
+        auth: context.auth
+      })
+
+      await publish(ViewerSubscriptions.UserActivityBroadcasted, {
+        projectId: args.projectId,
+        resourceItems: await getViewerResourceItemsUngrouped(
+          args.projectId,
+          args.resourceIdString
+        ),
+        viewerUserActivityBroadcasted: args.message,
+        userId: context.userId
+      })
+      return true
+    },
+
     async userViewerActivityBroadcast(parent, args, context) {
       await authorizeStreamAccess({
         streamId: args.streamId,
@@ -207,7 +245,7 @@ module.exports = {
       // if (!stream.isPublic && !context.auth) {
       //   return false
       // }
-      await pubsub.publish('VIEWER_ACTIVITY', {
+      await pubsub.publish(CommentSubscriptions.ViewerActivity, {
         userViewerActivity: args.data,
         streamId: args.streamId,
         resourceId: args.resourceId,
@@ -215,7 +253,6 @@ module.exports = {
       })
       return true
     },
-
     async userCommentThreadActivityBroadcast(parent, args, context) {
       if (!context.userId) return false
 
@@ -227,7 +264,7 @@ module.exports = {
       if (!stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
+      await pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
         commentThreadActivity: { type: 'reply-typing-status', data: args.data },
         streamId: args.streamId,
         commentId: args.commentId
@@ -252,23 +289,11 @@ module.exports = {
         input: args.input
       })
 
-      await pubsub.publish('COMMENT_ACTIVITY', {
-        commentActivity: {
-          type: 'comment-added',
-          comment
-        },
+      await addCommentCreatedActivity({
         streamId: args.input.streamId,
-        resourceIds: args.input.resources.map((res) => res.resourceId).join(',') // TODO: hack for now
-      })
-
-      await saveActivity({
-        streamId: args.input.streamId,
-        resourceType: 'comment',
-        resourceId: comment.id,
-        actionType: ActionTypes.Comment.Create,
         userId: context.userId,
-        info: { input: args.input },
-        message: `Comment added: ${comment.id} (${args.input})`
+        input: args.input,
+        comment
       })
 
       return comment.id
@@ -316,30 +341,22 @@ module.exports = {
         requireRole: true
       })
 
+      let updatedComment
       try {
-        await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+        updatedComment = await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
       }
 
-      await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
-        commentThreadActivity: {
-          type: args.archived ? 'comment-archived' : 'comment-added'
-        },
+      await addCommentArchivedActivity({
         streamId: args.streamId,
-        commentId: args.commentId
+        commentId: args.commentId,
+        userId: context.userId,
+        input: args,
+        comment: updatedComment
       })
 
-      await saveActivity({
-        streamId: args.streamId,
-        resourceType: 'comment',
-        resourceId: args.commentId,
-        actionType: ActionTypes.Comment.Archive,
-        userId: context.userId,
-        info: { input: args },
-        message: `Comment archived`
-      })
       return true
     },
 
@@ -364,31 +381,20 @@ module.exports = {
         blobIds: args.input.blobIds
       })
 
-      await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
-        commentThreadActivity: {
-          type: 'reply-added',
-          reply
-        },
+      await addReplyAddedActivity({
         streamId: args.input.streamId,
-        commentId: args.input.parentComment
+        input: args.input,
+        reply,
+        userId: context.userId
       })
 
-      await saveActivity({
-        streamId: args.input.streamId,
-        resourceType: 'comment',
-        resourceId: args.input.parentComment,
-        actionType: ActionTypes.Comment.Reply,
-        userId: context.userId,
-        info: { input: args.input },
-        message: `Comment reply created.`
-      })
       return reply.id
     }
   },
   Subscription: {
     userViewerActivity: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator(['VIEWER_ACTIVITY']),
+        () => pubsub.asyncIterator([CommentSubscriptions.ViewerActivity]),
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
@@ -412,7 +418,7 @@ module.exports = {
     },
     commentActivity: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator(['COMMENT_ACTIVITY']),
+        () => pubsub.asyncIterator([CommentSubscriptions.CommentActivity]),
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
@@ -455,7 +461,7 @@ module.exports = {
     },
     commentThreadActivity: {
       subscribe: withFilter(
-        () => pubsub.asyncIterator(['COMMENT_THREAD_ACTIVITY']),
+        () => pubsub.asyncIterator([CommentSubscriptions.CommentThreadActivity]),
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
@@ -469,6 +475,75 @@ module.exports = {
             payload.streamId === variables.streamId &&
             payload.commentId === variables.commentId
           )
+        }
+      )
+    },
+    // new subscriptions:
+    viewerUserActivityBroadcasted: {
+      subscribe: filteredSubscribe(
+        ViewerSubscriptions.UserActivityBroadcasted,
+        async (payload, variables, context) => {
+          if (!variables.resourceIdString.trim().length) return false
+          if (payload.projectId !== variables.projectId) return false
+
+          const [stream, requestedResourceItems] = await Promise.all([
+            getStream({
+              streamId: payload.projectId,
+              userId: context.userId
+            }),
+            getViewerResourceItemsUngrouped(
+              variables.projectId,
+              variables.resourceIdString
+            )
+          ])
+
+          if (!stream.allowPublicComments && !stream.role)
+            throw new ApolloForbiddenError('You are not authorized.')
+
+          // dont report users activity to himself
+          if (context.userId && context.userId === payload.userId) {
+            return false
+          }
+
+          // Check if resources fit
+          if (doViewerResourcesFit(requestedResourceItems, payload.resourceItems)) {
+            return true
+          }
+
+          return false
+        }
+      )
+    },
+    projectCommentsUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectCommentsUpdated,
+        async (payload, variables, context) => {
+          if (payload.projectId !== variables.projectId) return false
+
+          const [stream, requestedResourceItems] = await Promise.all([
+            getStream({
+              streamId: payload.projectId,
+              userId: context.userId
+            }),
+            getViewerResourceItemsUngrouped(
+              variables.projectId,
+              variables.resourceIdString || ''
+            )
+          ])
+
+          if (!stream.allowPublicComments && !stream.role)
+            throw new ApolloForbiddenError('You are not authorized.')
+
+          if (!variables.resourceIdString) {
+            return true
+          }
+
+          // Check if resources fit
+          if (doViewerResourcesFit(requestedResourceItems, payload.resourceItems)) {
+            return true
+          }
+
+          return false
         }
       )
     }

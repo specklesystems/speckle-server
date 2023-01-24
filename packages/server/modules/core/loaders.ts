@@ -28,6 +28,7 @@ import {
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCounts,
+  getCommentParents,
   getCommentReplyAuthorIds,
   getCommentReplyCounts,
   getCommentsResources,
@@ -41,6 +42,7 @@ import {
   getStreamBranchCounts,
   getStreamBranchesByName
 } from '@/modules/core/repositories/branches'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -236,7 +238,13 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getReplyAuthorIds: new DataLoader<string, string[]>(async (threadIds) => {
         const results = await getCommentReplyAuthorIds(threadIds.slice())
         return threadIds.map((id) => results[id] || [])
-      })
+      }),
+      getReplyParent: new DataLoader<string, Nullable<CommentRecord>>(
+        async (replyIds) => {
+          const results = keyBy(await getCommentParents(replyIds.slice()), 'replyId')
+          return replyIds.map((id) => results[id] || null)
+        }
+      )
     },
     users: {
       /**

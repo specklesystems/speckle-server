@@ -8199,6 +8199,7 @@ __metadata:
     lodash-es: ^4.17.21
     mitt: ^3.0.0
     mixpanel-browser: ^2.45.0
+    nanoid: ^4.0.0
     nuxt: ^3.0.0
     portal-vue: ^3.0.0
     postcss: ^8.4.18

@@ -5,16 +5,21 @@ import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
+  ProjectCommentsUpdatedMessage,
   ProjectModelsUpdatedMessage,
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
+  SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
   SubscriptionSubscribeFn,
-  UserProjectsUpdatedMessage
+  SubscriptionViewerUserActivityBroadcastedArgs,
+  UserProjectsUpdatedMessage,
+  ViewerResourceItem,
+  ViewerUserActivityMessage
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -22,6 +27,7 @@ import {
   ProjectGraphQLReturn,
   VersionGraphQLReturn
 } from '@/modules/core/helpers/graphTypes'
+import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -35,6 +41,7 @@ export const pubsub = new RedisPubSub({
  * Subscription event keys
  */
 
+// OLD:
 export enum StreamSubscriptions {
   UserStreamAdded = 'USER_STREAM_ADDED',
   UserStreamRemoved = 'USER_STREAM_REMOVED',
@@ -54,6 +61,13 @@ export enum BranchSubscriptions {
   BranchDeleted = 'BRANCH_DELETED'
 }
 
+export enum CommentSubscriptions {
+  ViewerActivity = 'VIEWER_ACTIVITY',
+  CommentActivity = 'COMMENT_ACTIVITY',
+  CommentThreadActivity = 'COMMENT_THREAD_ACTIVITY'
+}
+
+// NEW:
 export enum UserSubscriptions {
   UserProjectsUpdated = 'USER_PROJECTS_UPDATED'
 }
@@ -62,7 +76,12 @@ export enum ProjectSubscriptions {
   ProjectUpdated = 'PROJECT_UPDATED',
   ProjectModelsUpdated = 'PROJECT_MODELS_UPDATED',
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
-  ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED'
+  ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
+  ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED'
+}
+
+export enum ViewerSubscriptions {
+  UserActivityBroadcasted = 'VIEWER_USER_ACTIVITY_BROADCASTED'
 }
 
 type NoVariables = Record<string, never>
@@ -114,9 +133,29 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectVersionsPreviewGeneratedArgs
   }
+  [ViewerSubscriptions.UserActivityBroadcasted]: {
+    payload: {
+      viewerUserActivityBroadcasted: ViewerUserActivityMessage
+      projectId: string
+      resourceItems: ViewerResourceItem[]
+      userId: Nullable<string>
+    }
+    variables: SubscriptionViewerUserActivityBroadcastedArgs
+  }
+  [ProjectSubscriptions.ProjectCommentsUpdated]: {
+    payload: {
+      projectCommentsUpdated: Merge<
+        ProjectCommentsUpdatedMessage,
+        { comment: Nullable<CommentGraphQLReturn> }
+      >
+      projectId: string
+      resourceItems: ViewerResourceItem[]
+    }
+    variables: SubscriptionProjectCommentsUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
-type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions
+type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions | ViewerSubscriptions
 
 /**
  * Publish a GQL subscription event
