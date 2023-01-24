@@ -59,7 +59,7 @@ spec:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: true
+          readOnlyRootFilesystem: false #TODO this should ideally be true, but doing so requires a change to how we deploy the nginx.conf file via docker-entrypoint.sh
           runAsNonRoot: true
           runAsUser: 20000
 
