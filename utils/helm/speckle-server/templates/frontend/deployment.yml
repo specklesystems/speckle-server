@@ -59,13 +59,15 @@ spec:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: false #TODO this should ideally be true, but doing so requires a change to how we deploy the nginx.conf file via docker-entrypoint.sh
+          readOnlyRootFilesystem: true
           runAsNonRoot: true
           runAsUser: 20000
 
         volumeMounts:
           - name: openresty-temp
             mountPath: /var/run/openresty
+          - name: openresty-conf
+            mountPath: /opt/bitnami/openresty/nginx/conf/
 
       priorityClassName: high-priority
       {{- if .Values.frontend.affinity }}
@@ -86,4 +88,6 @@ spec:
 
       volumes:
         - name: openresty-temp
+          emptyDir: {}
+        - name: openresty-conf
           emptyDir: {}
