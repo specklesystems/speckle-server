@@ -68,6 +68,8 @@ spec:
             mountPath: /var/run/openresty
           - name: openresty-conf
             mountPath: /opt/bitnami/openresty/nginx/conf/
+          - name: openresty-logs
+            mountPath: /opt/bitnami/openresty/nginx/logs/
 
       priorityClassName: high-priority
       {{- if .Values.frontend.affinity }}
@@ -90,4 +92,6 @@ spec:
         - name: openresty-temp
           emptyDir: {}
         - name: openresty-conf
+          emptyDir: {}
+        - name: openresty-logs
           emptyDir: {}
