@@ -65,7 +65,7 @@ spec:
 
         volumeMounts:
           - name: openresty-temp
-            mountPath: /var/run/openresty
+            mountPath: /bitnami/openresty
           - name: openresty-conf
             mountPath: /opt/bitnami/openresty/nginx/conf/
           - name: openresty-logs
