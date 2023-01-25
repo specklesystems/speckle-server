@@ -1,4 +1,5 @@
 pcre_jit on;
+error_log stderr info;
 
 events {
   worker_connections  1024;
@@ -19,6 +20,7 @@ http {
 
   sendfile        on;
   keepalive_timeout  65;
+  access_log /dev/stdout json_combined;
 
   # Speckle configuration
   server_tokens off;
