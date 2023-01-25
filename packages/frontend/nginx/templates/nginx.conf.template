@@ -11,11 +11,11 @@ http {
   # move default write paths to a custom directory
   # kubernetes can mount this directory and prevent writes to the root directory
   # https://github.com/openresty/docker-openresty/issues/119
-  client_body_temp_path /var/run/openresty/nginx-client-body;
-  proxy_temp_path       /var/run/openresty/nginx-proxy;
-  fastcgi_temp_path     /var/run/openresty/nginx-fastcgi;
-  uwsgi_temp_path       /var/run/openresty/nginx-uwsgi;
-  scgi_temp_path        /var/run/openresty/nginx-scgi;
+  client_body_temp_path /bitnami/openresty/nginx-client-body;
+  proxy_temp_path       /bitnami/openresty/nginx-proxy;
+  fastcgi_temp_path     /bitnami/openresty/nginx-fastcgi;
+  uwsgi_temp_path       /bitnami/openresty/nginx-uwsgi;
+  scgi_temp_path        /bitnami/openresty/nginx-scgi;
 
   sendfile        on;
   keepalive_timeout  65;
