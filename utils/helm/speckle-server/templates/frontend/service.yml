@@ -12,5 +12,5 @@ spec:
   ports:
     - protocol: TCP
       name: www
-      port: 80
+      port: 8080
       targetPort: www
