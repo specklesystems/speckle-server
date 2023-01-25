@@ -20,7 +20,7 @@ http {
 
   sendfile        on;
   keepalive_timeout  65;
-  access_log /dev/stdout json_combined;
+  access_log /dev/stdout;
 
   # Speckle configuration
   server_tokens off;
