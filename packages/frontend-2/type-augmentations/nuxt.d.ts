@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-declare module 'nuxt/dist/app/nuxt' {
+declare module '#app' {
   interface NuxtApp {
     /**
      * Apollo clients provider
@@ -12,12 +12,6 @@ declare module 'nuxt/dist/app/nuxt' {
      * Used by useScopedState
      */
     __scopedStates?: Record<string | symbol, any>
-
-    /**
-     * Viewer Nuxt Plugin (client only)
-     */
-    $viewer: Promise<Viewer>
-    $viewerContainer: HTMLElement
   }
 }
 

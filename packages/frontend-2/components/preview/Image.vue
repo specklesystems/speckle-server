@@ -25,8 +25,8 @@ const props = withDefaults(
 )
 
 const basePreviewUrl = computed(() => props.previewUrl)
-const panoramaPreviewUrl = computed(() =>
-  new URL(basePreviewUrl.value, '/all').toString()
-)
+// const panoramaPreviewUrl = computed(() =>
+//   new URL(basePreviewUrl.value, '/all').toString()
+// )
 const { previewUrl } = usePreviewImageBlob(basePreviewUrl)
 </script>

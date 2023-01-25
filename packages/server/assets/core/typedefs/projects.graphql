@@ -90,3 +90,54 @@ input UserProjectsFilter {
   """
   search: String
 }
+
+enum UserProjectsUpdatedMessageType {
+  ADDED
+  REMOVED
+}
+
+type UserProjectsUpdatedMessage {
+  """
+  Message type
+  """
+  type: UserProjectsUpdatedMessageType!
+  """
+  Project ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+enum ProjectUpdatedMessageType {
+  UPDATED
+  DELETED
+}
+
+type ProjectUpdatedMessage {
+  """
+  Message type
+  """
+  type: ProjectUpdatedMessageType!
+  """
+  Project ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+extend type Subscription {
+  """
+  Track newly added or deleted projects owned by the active user
+  """
+  userProjectsUpdated: UserProjectsUpdatedMessage!
+  """
+  Track updates to a specific project
+  """
+  projectUpdated(id: String!): ProjectUpdatedMessage!
+}

@@ -60,8 +60,10 @@ module.exports = {
     await knex.raw(query)
 
     // update stream updated at
-    await Streams.knex().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
-    return true
+    const [stream] = await Streams.knex()
+      .where({ id: streamId })
+      .update({ updatedAt: knex.fn.now() }, '*')
+    return stream
   },
 
   async revokePermissionsStream({ streamId, userId }) {

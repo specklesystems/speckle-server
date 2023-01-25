@@ -1,12 +1,14 @@
-import { isUndefinedOrVoid } from '@speckle/shared'
+import { isUndefinedOrVoid, Optional } from '@speckle/shared'
 import {
   ApolloError,
   FetchResult,
   DataProxy,
   ApolloCache,
-  defaultDataIdFromObject
+  defaultDataIdFromObject,
+  TypedDocumentNode
 } from '@apollo/client/core'
-import { GraphQLError } from 'graphql'
+import { DocumentNode, GraphQLError } from 'graphql'
+import { flatten } from 'lodash-es'
 
 /**
  * Get a cached object's identifier
@@ -130,4 +132,70 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
     throw e
   }
+}
+
+/**
+ * A graphql-codegen generated fragment doesn't include the definition of other fragments in it,
+ * so if you ever need a document that contains a fragment as well as other fragments that it uses
+ * you can use this helper
+ *
+ * TODO: Figure out if we can turn off dedupeFragments to get fragments to contain all dependency
+ * fragments as well. Previously this caused an error when duplicate fragments were sent to the API
+ * through a query/mutation.
+ */
+export function addFragmentDependencies<R = unknown, V = unknown>(
+  fragment: TypedDocumentNode<R, V>,
+  ...fragmentDependencies: DocumentNode[]
+) {
+  return {
+    kind: 'Document',
+    definitions: [
+      ...fragment.definitions.filter((d) => d.kind === 'FragmentDefinition'),
+      ...flatten(
+        fragmentDependencies.map((f) =>
+          f.definitions.filter((d) => d.kind === 'FragmentDefinition')
+        )
+      )
+    ]
+  } as TypedDocumentNode<R, V>
+}
+
+/**
+ * Resolve the string key of a field in the apollo cache. Is useful in cache.modify() calls.
+ */
+export function getStoreFieldName(
+  fieldName: string,
+  variables?: Record<string, unknown>
+) {
+  return (
+    fieldName +
+    (Object.values(variables || {}).length ? `:${JSON.stringify(variables)}` : '')
+  )
+}
+
+/**
+ * Iterate over a cached object's fields and evict/delete the ones that the predicate returns true for
+ */
+export function evictObjectFields<
+  V extends Optional<Record<string, unknown>> = undefined,
+  D = unknown
+>(
+  cache: ApolloCache<unknown>,
+  id: string,
+  predicate: (fieldName: string, variables: V, value: D) => boolean
+) {
+  cache.modify({
+    id,
+    fields(fieldValue, { storeFieldName, fieldName, DELETE }) {
+      const variables =
+        fieldName !== storeFieldName
+          ? (JSON.parse(storeFieldName.substring(fieldName.length + 1)) as V)
+          : undefined
+      if (predicate(fieldName, variables as V, fieldValue as D)) {
+        return DELETE as unknown
+      } else {
+        return fieldValue as unknown
+      }
+    }
+  })
 }

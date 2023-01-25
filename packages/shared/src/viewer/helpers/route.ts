@@ -92,3 +92,31 @@ export const isObjectResource = (r: ViewerResource): r is ViewerObjectResource =
 export const isModelFolderResource = (
   r: ViewerResource
 ): r is ViewerModelFolderResource => r.type === ViewerResourceType.ModelFolder
+
+/**
+ * Fluent API for easier resource building
+ */
+export function resourceBuilder() {
+  let resources: ViewerResource[] = []
+  const api = Object.freeze({
+    addModel: (modelId: string, versionId?: string) => {
+      resources.push(new ViewerModelResource(modelId, versionId))
+      return api
+    },
+    addModelFolder: (folderName: string) => {
+      resources.push(new ViewerModelFolderResource(folderName))
+      return api
+    },
+    addObject: (objectId: string) => {
+      resources.push(new ViewerObjectResource(objectId))
+      return api
+    },
+    toString: () => createGetParamFromResources(resources),
+    toResources: () => resources.slice(),
+    clear: () => {
+      resources = []
+      return api
+    }
+  })
+  return api
+}

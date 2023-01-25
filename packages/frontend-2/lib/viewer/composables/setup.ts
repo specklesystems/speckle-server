@@ -17,20 +17,29 @@ import {
   WritableComputedRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
-import { useQuery } from '@vue/apollo-composable'
+import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
-import { difference, uniq } from 'lodash-es'
+import { difference, merge, uniq } from 'lodash-es'
 import {
+  ProjectModelsUpdatedMessageType,
+  ProjectVersionsUpdatedMessageType,
+  ProjectViewerResourcesQuery,
+  ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
+  ViewerLoadedResourcesQueryVariables,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get } from 'type-fest'
+import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
+import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -45,6 +54,18 @@ type FilterAction = (
   stateKey: string,
   includeDescendants?: boolean
 ) => Promise<void>
+
+graphql(`
+  fragment NewModelVersionMetadata on Model {
+    id
+    versions(limit: 1) {
+      items {
+        id
+        referencedObject
+      }
+    }
+  }
+`)
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -100,6 +121,12 @@ export type InjectableViewerState = Readonly<{
        */
       resourceItems: ComputedRef<ViewerResourceItem[]>
       /**
+       * Variables used to load resource items identified by URL identifiers. Relevant when making cache updates
+       */
+      resourceItemsQueryVariables: ComputedRef<
+        Optional<ProjectViewerResourcesQueryVariables>
+      >
+      /**
        * Model GQL objects paired with their loaded version IDs
        */
       modelsAndVersionIds: ComputedRef<Array<{ model: LoadedModel; versionId: string }>>
@@ -115,6 +142,10 @@ export type InjectableViewerState = Readonly<{
        * Project main metadata
        */
       project: ComputedRef<Get<ViewerLoadedResourcesQuery, 'project'>>
+      /**
+       * Variables used to load the resource query. Relevant when making cache updates.
+       */
+      resourceQueryVariables: ComputedRef<Optional<ViewerLoadedResourcesQueryVariables>>
     }
   }
   /**
@@ -281,7 +312,10 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
  */
 function setupResponseResourceItems(
   state: InitialStateWithRequest
-): InjectableViewerState['resources']['response']['resourceItems'] {
+): Pick<
+  InjectableViewerState['resources']['response'],
+  'resourceItems' | 'resourceItemsQueryVariables'
+> {
   const {
     projectId,
     resources: {
@@ -293,13 +327,11 @@ function setupResponseResourceItems(
     SpeckleViewer.ViewerRoute.createGetParamFromResources(requestItems.value)
   )
 
-  const { result: resolvedResourcesResult } = useQuery(
-    projectViewerResourcesQuery,
-    () => ({
+  const { result: resolvedResourcesResult, variables: resourceItemsQueryVariables } =
+    useQuery(projectViewerResourcesQuery, () => ({
       projectId: projectId.value,
       resourceUrlString: resourceString.value
-    })
-  )
+    }))
 
   const resolvedResourceGroups = computed(
     () => resolvedResourcesResult.value?.project?.viewerResources || []
@@ -361,19 +393,26 @@ function setupResponseResourceItems(
     return finalItems
   })
 
-  return resourceItems
+  return {
+    resourceItems,
+    resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value)
+  }
 }
 
 function setupResponseResourceData(
   state: InitialStateWithRequest,
-  resourceItems: ReturnType<typeof setupResponseResourceItems>
-): Omit<InjectableViewerState['resources']['response'], 'resourceItems'> {
+  resourceItemsData: ReturnType<typeof setupResponseResourceItems>
+): Omit<
+  InjectableViewerState['resources']['response'],
+  'resourceItems' | 'resourceItemsQueryVariables'
+> {
   const {
     projectId,
     resources: {
       request: { items }
     }
   } = state
+  const { resourceItems } = resourceItemsData
 
   const objects = computed(() =>
     resourceItems.value.filter((i) => !i.modelId && !i.versionId)
@@ -386,17 +425,16 @@ function setupResponseResourceData(
     )
   )
 
-  const { result: viewerLoadedResourcesResult } = useQuery(
-    viewerLoadedResourcesQuery,
-    () => ({
-      projectId: projectId.value,
-      modelIds: nonObjectResourceItems.value.map((r) => r.modelId),
-      versionIds: nonObjectResourceItems.value.map((r) => r.versionId),
-      resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(
-        items.value
-      )
-    })
-  )
+  // sorting variables so that we don't refetech just because the order changed
+  const {
+    result: viewerLoadedResourcesResult,
+    variables: viewerLoadedResourcesVariables
+  } = useQuery(viewerLoadedResourcesQuery, () => ({
+    projectId: projectId.value,
+    modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
+    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort(),
+    resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(items.value)
+  }))
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -415,7 +453,8 @@ function setupResponseResourceData(
     objects,
     commentThreads,
     modelsAndVersionIds,
-    project
+    project,
+    resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value)
   }
 }
 
@@ -425,8 +464,8 @@ function setupResponseResourceData(
 function setupResourceResponse(
   state: InitialStateWithRequest
 ): InitialStateWithRequestAndResponse {
-  const resourceItems = setupResponseResourceItems(state)
-  const loadedResourceData = setupResponseResourceData(state, resourceItems)
+  const resourceItemsData = setupResponseResourceItems(state)
+  const loadedResourceData = setupResponseResourceData(state, resourceItemsData)
 
   return {
     ...state,
@@ -435,7 +474,7 @@ function setupResourceResponse(
         ...state.resources.request
       },
       response: {
-        resourceItems,
+        ...resourceItemsData,
         ...loadedResourceData
       }
     }
@@ -608,6 +647,239 @@ function useViewerIsBusyEventHandler(state: InjectableViewerState) {
   })
 }
 
+/**
+ * Listening to model/version updates through subscriptions and making various
+ * cache updates so that we don't need to always refetch queries
+ */
+function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
+  if (process.server) return
+  const apollo = useApolloClient().client
+  const {
+    projectId,
+    resources: {
+      response: { resourceQueryVariables, resourceItemsQueryVariables }
+    }
+  } = state
+
+  useProjectModelUpdateTracking(projectId, (event) => {
+    // If model deleted, delete resource item
+    if (event.type === ProjectModelsUpdatedMessageType.Deleted) {
+      updateCacheByFilter(
+        apollo.cache,
+        {
+          query: {
+            query: projectViewerResourcesQuery,
+            variables: resourceItemsQueryVariables.value
+          }
+        },
+        (data) => {
+          if (!data.project?.viewerResources) return
+          const groupIdx = data.project.viewerResources.findIndex((g) =>
+            g.items.find((i) => i.modelId === event.id)
+          )
+          if (groupIdx === -1) return
+
+          const newGroups = data.project.viewerResources
+            .map((g) => {
+              const newItems = g.items.filter((i) => i.modelId !== event.id)
+              return {
+                ...g,
+                items: newItems
+              }
+            })
+            .filter((g) => g.items.length > 0)
+
+          return {
+            ...data,
+            project: {
+              ...data.project,
+              viewerResources: newGroups
+            }
+          }
+        }
+      )
+      return
+    }
+
+    const model = event.model
+    const version = model?.versions.items[0]
+    if (!model || !version) return
+
+    // Check if resourceItems need to be updated with this new model
+    updateCacheByFilter(
+      apollo.cache,
+      {
+        query: {
+          query: projectViewerResourcesQuery,
+          variables: resourceItemsQueryVariables.value
+        }
+      },
+      (data) => {
+        if (!data.project?.viewerResources) return
+
+        // group is updatable only if it's a folder group, cause then this new
+        // model possibly has to go under it. also make sure that the model
+        // doesn't already exist there
+        const groupIdx = data.project.viewerResources.findIndex((g) => {
+          const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
+          if (
+            SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
+            model.name.startsWith(res.folderName) &&
+            !g.items.some((i) => i.modelId === model.id)
+          )
+            return true
+          return false
+        })
+        if (groupIdx === -1) return
+
+        const group = data.project.viewerResources[groupIdx]
+        const newItems = [
+          ...group.items,
+          {
+            modelId: model.id,
+            versionId: version.id,
+            objectId: version.referencedObject
+          }
+        ]
+
+        const newGroups = data.project.viewerResources.slice()
+        newGroups.splice(groupIdx, 1, {
+          ...group,
+          items: newItems
+        })
+
+        return {
+          ...data,
+          project: {
+            ...data.project,
+            viewerResources: newGroups
+          }
+        }
+      }
+    )
+  })
+
+  // Track version updates
+  useProjectVersionUpdateTracking(
+    projectId,
+    (event) => {
+      if (event.type !== ProjectVersionsUpdatedMessageType.Created) return
+      const version = event.version
+      if (!version) return
+
+      const modelId = version.model.id
+      const modelName = version.model.name
+      const objectId = version.referencedObject
+
+      if (!resourceQueryVariables.value || !resourceItemsQueryVariables.value) return
+
+      // Add new version to Model.versions
+      updateCacheByFilter(
+        apollo.cache,
+        {
+          query: {
+            query: viewerLoadedResourcesQuery,
+            variables: resourceQueryVariables.value
+          }
+        },
+        (data) => {
+          if (!data.project?.models.items) return
+
+          const newModels = data.project.models.items.slice()
+          const modelIdx = newModels.findIndex((m) => m.id === modelId)
+          if (modelIdx === -1) return
+
+          const model = newModels[modelIdx]
+          const newVersions = model.versions.items.slice()
+          newVersions.unshift(version)
+
+          newModels.splice(modelIdx, 1, {
+            ...model,
+            versions: {
+              ...model.versions,
+              items: newVersions,
+              totalCount: model.versions.totalCount + 1
+            }
+          })
+
+          return merge<
+            PartialDeep<ViewerLoadedResourcesQuery>,
+            ViewerLoadedResourcesQuery,
+            PartialDeep<ViewerLoadedResourcesQuery>
+          >({}, data, {
+            project: { models: { items: newModels } }
+          })
+        }
+      )
+
+      // Update resourceItems w/ new data, potentially changing de-duplication results
+      updateCacheByFilter(
+        apollo.cache,
+        {
+          query: {
+            query: projectViewerResourcesQuery,
+            variables: resourceItemsQueryVariables.value
+          }
+        },
+        (data) => {
+          if (!data.project?.viewerResources) return
+
+          // group is updatable only if references a model w/o a specific version id
+          // in which case we're gonna replace it with the latest one
+          // or maybe its a folder group
+          const groupIdx = data.project.viewerResources.findIndex((g) => {
+            const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
+            if (
+              SpeckleViewer.ViewerRoute.isModelResource(res) &&
+              !res.versionId &&
+              g.items.find((i) => i.modelId === modelId)
+            )
+              return true
+            if (
+              SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
+              (g.items.find((i) => i.modelId === modelId) ||
+                modelName.startsWith(res.folderName))
+            )
+              return true
+            return false
+          })
+          if (groupIdx === -1) return
+
+          const group = data.project.viewerResources[groupIdx]
+          const groupItemIdx = group.items.findIndex((i) => i.modelId === modelId)
+
+          const newGroupItem =
+            groupItemIdx !== -1
+              ? { ...group.items[groupItemIdx], objectId, versionId: version.id }
+              : {
+                  versionId: version.id,
+                  objectId,
+                  modelId
+                }
+
+          const newGroupItems = group.items.slice()
+          if (groupItemIdx !== -1) {
+            newGroupItems.splice(groupItemIdx, 1, newGroupItem)
+          } else {
+            newGroupItems.push(newGroupItem)
+          }
+
+          const newGroup = { ...group, items: newGroupItems }
+          const newGroups = data.project.viewerResources.slice()
+          newGroups.splice(groupIdx, 1, newGroup)
+
+          return merge<
+            PartialDeep<ProjectViewerResourcesQuery>,
+            ProjectViewerResourcesQuery,
+            PartialDeep<ProjectViewerResourcesQuery>
+          >({}, data, { project: { viewerResources: newGroups } })
+        }
+      )
+    },
+    { silenceToast: true }
+  )
+}
+
 type UseSetupViewerParams = { projectId: MaybeRef<string> }
 
 export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerState {
@@ -625,6 +897,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   useViewerObjectAutoLoading(state)
   useViewerSelectionEventHandler(state) // TODO: needs implementation
   useViewerIsBusyEventHandler(state)
+  useViewerModelsVersionsUpdateTracker(state)
 
   return state
 }

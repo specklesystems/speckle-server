@@ -1,24 +1,20 @@
 'use strict'
 
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
 const { authorizeResolver, pubsub, BranchPubsubEvents } = require('@/modules/shared')
 
+const { getBranchByNameAndStreamId } = require('../../services/branches')
 const {
-  updateBranch,
-  getBranchById,
-  getBranchByNameAndStreamId,
-  deleteBranchById
-} = require('../../services/branches')
-const { createBranchAndNotify } = require('@/modules/core/services/branch/management')
+  createBranchAndNotify,
+  updateBranchAndNotify,
+  deleteBranchAndNotify
+} = require('@/modules/core/services/branch/management')
 const {
   getPaginatedStreamBranches
 } = require('@/modules/core/services/branch/retrieval')
 
 const { getUserById } = require('../../services/users')
-const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -64,80 +60,18 @@ module.exports = {
         'stream:contributor'
       )
 
-      const oldValue = await getBranchById({ id: args.branch.id })
-      if (!oldValue) {
-        throw new ApolloError('Branch not found.')
-      }
-
-      if (oldValue.streamId !== args.branch.streamId)
-        throw new ForbiddenError(
-          'The branch id and stream id do not match. Please check your inputs.'
-        )
-
-      const updated = await updateBranch({ ...args.branch })
-
-      if (updated) {
-        await saveActivity({
-          streamId: args.branch.streamId,
-          resourceType: 'branch',
-          resourceId: args.branch.id,
-          actionType: ActionTypes.Branch.Update,
-          userId: context.userId,
-          info: { old: oldValue, new: args.branch },
-          message: `Branch metadata changed: '${args.branch.name}' (${args.branch.id})`
-        })
-        await pubsub.publish(BRANCH_UPDATED, {
-          branchUpdated: { ...args.branch },
-          streamId: args.branch.streamId,
-          branchId: args.branch.id
-        })
-      }
-
-      return updated
+      const newBranch = await updateBranchAndNotify(args.branch, context.userId)
+      return !!newBranch
     },
 
     async branchDelete(parent, args, context) {
-      const role = await authorizeResolver(
+      await authorizeResolver(
         context.userId,
         args.branch.streamId,
         'stream:contributor'
       )
 
-      const branch = await getBranchById({ id: args.branch.id })
-      if (!branch) {
-        throw new ApolloError('Branch not found.')
-      }
-
-      if (branch.streamId !== args.branch.streamId)
-        throw new ForbiddenError(
-          'The branch id and stream id do not match. Please check your inputs.'
-        )
-
-      if (branch.authorId !== context.userId && role !== 'stream:owner')
-        throw new ForbiddenError(
-          'Only the branch creator or stream owners are allowed to delete branches.'
-        )
-
-      const deleted = await deleteBranchById({
-        id: args.branch.id,
-        streamId: args.branch.streamId
-      })
-      if (deleted) {
-        await saveActivity({
-          streamId: args.branch.streamId,
-          resourceType: 'branch',
-          resourceId: args.branch.id,
-          actionType: ActionTypes.Branch.Delete,
-          userId: context.userId,
-          info: { branch: { ...args.branch, name: branch.name } },
-          message: `Branch deleted: '${branch.name}' (${args.branch.id})`
-        })
-        await pubsub.publish(BRANCH_DELETED, {
-          branchDeleted: { ...args.branch },
-          streamId: args.branch.streamId
-        })
-      }
-
+      const deleted = await deleteBranchAndNotify(args.branch, context.userId)
       return deleted
     }
   },

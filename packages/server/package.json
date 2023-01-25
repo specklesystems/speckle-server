@@ -117,6 +117,7 @@
     "@types/module-alias": "^2.0.1",
     "@types/node-cron": "^3.0.2",
     "@types/nodemailer": "^6.4.5",
+    "@types/pg": "^8.6.6",
     "@types/sanitize-html": "^2.6.2",
     "@types/supertest": "^2.0.12",
     "@types/verror": "^1.10.6",
