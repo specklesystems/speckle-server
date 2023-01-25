@@ -136,7 +136,12 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should update a commit', async () => {
-    const res = await updateCommit({ id: commitId1, message: 'FIRST COMMIT YOOOOOO' })
+    const res = await updateCommit({
+      id: commitId1,
+      message: 'FIRST COMMIT YOOOOOO',
+      userId: user.id,
+      streamId: stream.id
+    })
     expect(res).to.equal(true)
   })
 
@@ -151,8 +156,12 @@ describe('Commits @core-commits', () => {
       authorId: user.id
     })
 
-    const res = await deleteCommit({ id: tempCommit })
-    expect(res).to.equal(1)
+    const res = await deleteCommit({
+      commitId: tempCommit,
+      streamId: stream.id,
+      userId: user.id
+    })
+    expect(res).to.be.ok
   })
 
   it('Should get a commit by id', async () => {

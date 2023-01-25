@@ -20,8 +20,14 @@ export async function getStreamObjects(
   return await q
 }
 
-export async function getObject(objectId: string): Promise<Optional<ObjectRecord>> {
-  return await Objects.knex<ObjectRecord[]>().where(Objects.col.id, objectId).first()
+export async function getObject(
+  objectId: string,
+  streamId: string
+): Promise<Optional<ObjectRecord>> {
+  return await Objects.knex<ObjectRecord[]>()
+    .where(Objects.col.id, objectId)
+    .andWhere(Objects.col.streamId, streamId)
+    .first()
 }
 
 export function getBatchedStreamObjects(

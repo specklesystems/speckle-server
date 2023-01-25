@@ -13,6 +13,11 @@ import {
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
 import { NotFoundError } from '@/modules/shared/errors'
+import {
+  filteredSubscribe,
+  ProjectSubscriptions,
+  UserSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
 export = {
@@ -88,6 +93,30 @@ export = {
     },
     async sourceApps(parent, _args, ctx) {
       return ctx.loaders.streams.getSourceApps.load(parent.id)
+    }
+  },
+  Subscription: {
+    userProjectsUpdated: {
+      subscribe: filteredSubscribe(
+        UserSubscriptions.UserProjectsUpdated,
+        (payload, _args, ctx) => {
+          return payload.ownerId === ctx.userId
+        }
+      )
+    },
+    projectUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectUpdated,
+        async (payload, args, ctx) => {
+          if (args.id !== payload.projectUpdated.id) return false
+          await authorizeResolver(
+            ctx.userId,
+            payload.projectUpdated.id,
+            Roles.Stream.Reviewer
+          )
+          return true
+        }
+      )
     }
   }
 } as Resolvers

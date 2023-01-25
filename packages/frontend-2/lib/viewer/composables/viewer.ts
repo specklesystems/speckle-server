@@ -3,6 +3,7 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
+import { debounce } from 'lodash-es'
 
 export function useViewerCameraTracker(callback: () => void): void {
   const {
@@ -20,11 +21,12 @@ export function useViewerCameraTracker(callback: () => void): void {
 
 export function useSelectionEvents(
   params: {
-    singleClickCallback?: (args: SelectionEvent) => void
-    doubleClickCallback?: (args: SelectionEvent) => void
+    singleClickCallback?: (event: SelectionEvent) => void
+    doubleClickCallback?: (event: SelectionEvent) => void
   },
   options?: Partial<{
     state: InjectableViewerState
+    debounceWait: number
   }>
 ) {
   if (process.server) return
@@ -32,22 +34,33 @@ export function useSelectionEvents(
   const {
     viewer: { instance }
   } = options?.state || useInjectedViewerState()
+  const { debounceWait = 50 } = options || {}
+
+  const debouncedSingleClickCallback = singleClickCallback
+    ? debounce(singleClickCallback, debounceWait)
+    : undefined
+  const debouncedDoubleClickCallback = doubleClickCallback
+    ? debounce(doubleClickCallback, debounceWait)
+    : undefined
 
   onMounted(() => {
-    if (doubleClickCallback) {
-      instance.on(ViewerEvent.ObjectDoubleClicked, doubleClickCallback)
+    if (debouncedDoubleClickCallback) {
+      instance.on(ViewerEvent.ObjectDoubleClicked, debouncedDoubleClickCallback)
     }
-    if (singleClickCallback) {
-      instance.on(ViewerEvent.ObjectClicked, singleClickCallback)
+    if (debouncedSingleClickCallback) {
+      instance.on(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
     }
   })
 
   onBeforeUnmount(() => {
-    if (doubleClickCallback) {
-      instance.removeListener(ViewerEvent.ObjectDoubleClicked, doubleClickCallback)
+    if (debouncedDoubleClickCallback) {
+      instance.removeListener(
+        ViewerEvent.ObjectDoubleClicked,
+        debouncedDoubleClickCallback
+      )
     }
-    if (singleClickCallback) {
-      instance.removeListener(ViewerEvent.ObjectClicked, singleClickCallback)
+    if (debouncedSingleClickCallback) {
+      instance.removeListener(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
     }
   })
 }

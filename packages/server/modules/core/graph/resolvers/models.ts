@@ -9,6 +9,10 @@ import { last } from 'lodash'
 
 import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
 import { getPaginatedBranchCommits } from '@/modules/core/services/commit/retrieval'
+import {
+  filteredSubscribe,
+  ProjectSubscriptions
+} from '@/modules/shared/utils/subscriptions'
 
 export = {
   Project: {
@@ -58,12 +62,6 @@ export = {
       })
     }
   },
-  Version: {
-    async authorUser(parent, _args, ctx) {
-      const { author } = parent
-      return (await ctx.loaders.users.getUser.load(author)) || null
-    }
-  },
   ModelsTreeItem: {
     async model(parent, _args, ctx) {
       return await ctx.loaders.streams.getStreamBranchByName
@@ -85,6 +83,21 @@ export = {
         Roles.Stream.Contributor
       )
       return await createBranchAndNotify(args.input, ctx.userId!)
+    }
+  },
+  Subscription: {
+    projectModelsUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectModelsUpdated,
+        async (payload, args, ctx) => {
+          const { id: projectId, modelIds } = args
+          if (payload.projectId !== projectId) return false
+
+          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          if (!modelIds?.length) return true
+          return modelIds.includes(payload.projectModelsUpdated.id)
+        }
+      )
     }
   }
 } as Resolvers

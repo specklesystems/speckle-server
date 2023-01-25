@@ -210,8 +210,10 @@ module.exports = {
         throw new ForbiddenError("You don't have permission to archive the comment")
     }
 
-    await Comments().where({ id: commentId }).update({ archived })
-    return true
+    const [updatedComment] = await Comments()
+      .where({ id: commentId })
+      .update({ archived }, '*')
+    return updatedComment
   },
 
   /**

@@ -54,17 +54,132 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectDashboardItemFragment,
+  ProjectModelsUpdatedMessageType,
+  ProjectVersionsUpdatedMessageType
+} from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
+import {
+  addFragmentDependencies,
+  getCacheId,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
+import {
+  projectDashboardItemFragment,
+  projectPageLatestItemsModelItemFragment
+} from '~~/lib/projects/graphql/fragments'
+import { sortBy } from 'lodash-es'
+import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
+import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+
+const fullProjectDashboardItemFragment = addFragmentDependencies(
+  projectDashboardItemFragment,
+  projectPageLatestItemsModelItemFragment
+)
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
 
-const models = computed(() => props.project.models?.items || [])
-const nonEmptyModels = computed(() =>
-  models.value.filter((model) => model.versionCount !== 0)
+const projectId = computed(() => props.project.id)
+
+useProjectVersionUpdateTracking(
+  projectId,
+  (event, cache) => {
+    // Re-calculate latest 4 models
+    const version = event.version
+    if (
+      [
+        ProjectVersionsUpdatedMessageType.Created,
+        ProjectVersionsUpdatedMessageType.Updated
+      ].includes(event.type) &&
+      version
+    ) {
+      // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
+      // So - add it to the list, if its not already there
+      updateCacheByFilter(
+        cache,
+        {
+          fragment: {
+            fragment: fullProjectDashboardItemFragment,
+            fragmentName: 'ProjectDashboardItem',
+            id: getCacheId('Project', props.project.id)
+          }
+        },
+        (data) => {
+          const newItems = data.models.items.slice()
+          if (!newItems.find((i) => i.id === version.model.id)) {
+            newItems.unshift(version.model)
+          }
+
+          const itemsSortedByDate = sortBy(newItems, (i) =>
+            dayjs(i.updatedAt).toDate().getTime()
+          ).reverse()
+
+          return {
+            ...data,
+            models: {
+              ...data.models,
+              items: itemsSortedByDate.slice(0, 4)
+            }
+          }
+        }
+      )
+    }
+  },
+  { silenceToast: true }
 )
+
+useProjectModelUpdateTracking(projectId, (event, cache) => {
+  const model = event.model
+  if (
+    [
+      ProjectModelsUpdatedMessageType.Created,
+      ProjectModelsUpdatedMessageType.Updated
+    ].includes(event.type) &&
+    model?.versionCount
+  ) {
+    // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
+    // So - add it to the list, if its not already there
+    updateCacheByFilter(
+      cache,
+      {
+        fragment: {
+          fragment: fullProjectDashboardItemFragment,
+          fragmentName: 'ProjectDashboardItem',
+          id: getCacheId('Project', props.project.id)
+        }
+      },
+      (data) => {
+        const newItems = data.models.items.slice()
+        let newTotalCount = data.models.totalCount
+        if (!newItems.find((i) => i.id === model.id)) {
+          newItems.unshift(model)
+        }
+
+        if (event.type === ProjectModelsUpdatedMessageType.Created) {
+          newTotalCount += 1
+        }
+
+        const itemsSortedByDate = sortBy(newItems, (i) =>
+          dayjs(i.updatedAt).toDate().getTime()
+        ).reverse()
+
+        return {
+          ...data,
+          models: {
+            ...data.models,
+            totalCount: newTotalCount,
+            items: itemsSortedByDate.slice(0, 4)
+          }
+        }
+      }
+    )
+  }
+})
+
+const models = computed(() => props.project.models?.items || [])
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 </script>

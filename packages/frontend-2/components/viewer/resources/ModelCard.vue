@@ -68,6 +68,7 @@ graphql(`
     referencedObject
     sourceApplication
     createdAt
+    previewUrl
     authorUser {
       ...LimitedUserAvatar
     }
@@ -81,19 +82,11 @@ const loadedVersion = computed(() =>
   versions.value.find((v) => v.id === props.versionId)
 )
 
-const versionsExceptLoaded = computed(() =>
-  versions.value.filter((v) => v.id !== loadedVersion.value?.id)
-)
-
 const latestVersionId = computed(
   () =>
     versions.value
       .slice()
       .sort((a, b) => (dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1))[0].id
-)
-
-const updatedAt = computed(() =>
-  props.model ? dayjs(props.model.updatedAt).from(dayjs()) : null
 )
 
 function loadLatestVersion() {

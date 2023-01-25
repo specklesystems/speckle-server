@@ -123,6 +123,14 @@ type Comment {
   """
   replyAuthors(limit: Int! = 25): CommentReplyAuthorCollection!
   reactions: [String] @deprecated(reason: "Not actually implemented")
+  """
+  Whether or not comment is a reply to another comment
+  """
+  hasParent: Boolean!
+  """
+  Parent thread, if there's any
+  """
+  parent: Comment
 }
 
 type CommentReplyAuthorCollection {
@@ -209,7 +217,91 @@ input CommentEditInput {
   blobIds: [String!]!
 }
 
+"""
+TODO: Clean this up: write proper descriptions, delete unnecessary keys and add proper GQL return types
+where possible
+"""
+input ViewerUserSelectionInfoInput {
+  """
+  'FilteringState' of @speckle/viewer. Represents the filters activated in the viewer by the user.
+  """
+  filteringState: JSONObject!
+  """
+  THREE.Vector3 - the user's selection's focus point
+  """
+  selectionLocation: JSONObject
+  """
+  Viewer.getCurrentSectionBox(): THREE.Box3
+  """
+  sectionBox: JSONObject
+  """
+  An array representing a user's camera position:
+  [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+  """
+  camera: [Float!]!
+}
+
+input ViewerUserTypingMessageInput {
+  isTyping: Boolean!
+  threadId: String!
+}
+
+enum ViewerUserActivityStatus {
+  TYPING
+  VIEWING
+  DISCONNECTED
+}
+
+input ViewerUserActivityMessageInput {
+  userName: String!
+  userId: String
+  """
+  The same user will have different session IDs across tabs where the viewer is open
+  """
+  viewerSessionId: String!
+  status: ViewerUserActivityStatus!
+  """
+  Must be set if status !== 'disconnected'
+  """
+  selection: ViewerUserSelectionInfoInput
+  """
+  Must be set if status === 'typing'
+  """
+  typing: ViewerUserTypingMessageInput
+}
+
+type ViewerUserSelectionInfo {
+  filteringState: JSONObject!
+  selectionLocation: JSONObject
+  selectionCenter: JSONObject
+  sectionBox: JSONObject
+  camera: JSONObject!
+}
+
+type ViewerUserTypingMessage {
+  isTyping: Boolean!
+  threadId: String!
+}
+
+type ViewerUserActivityMessage {
+  userName: String!
+  userId: String
+  viewerSessionId: String!
+  status: ViewerUserActivityStatus!
+  selection: ViewerUserSelectionInfo
+  typing: ViewerUserTypingMessage
+}
+
 extend type Mutation {
+  """
+  Broadcast user activity in the viewer
+  """
+  broadcastViewerUserActivity(
+    projectId: String!
+    resourceIdString: String!
+    message: ViewerUserActivityMessageInput!
+  ): Boolean! @hasServerRole(role: SERVER_USER)
+
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
   """
@@ -217,7 +309,9 @@ extend type Mutation {
     streamId: String!
     resourceId: String!
     data: JSONObject
-  ): Boolean! @hasRole(role: "server:user")
+  ): Boolean!
+    @hasRole(role: "server:user")
+    @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
   Used for broadcasting real time typing status in comment threads. Does not persist any info.
@@ -226,7 +320,9 @@ extend type Mutation {
     streamId: String!
     commentId: String!
     data: JSONObject
-  ): Boolean! @hasRole(role: "server:user")
+  ): Boolean!
+    @hasRole(role: "server:user")
+    @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
   Creates a comment
@@ -277,11 +373,44 @@ type CommentThreadActivityMessage {
   reply: Comment
 }
 
+enum ProjectCommentsUpdatedMessageType {
+  CREATED
+  UPDATED
+  ARCHIVED
+}
+
+type ProjectCommentsUpdatedMessage {
+  type: ProjectCommentsUpdatedMessageType!
+  id: String!
+  """
+  Null if deleted
+  """
+  comment: Comment
+}
+
 extend type Subscription {
+  """
+  Track user activities in the viewer relating to the specified resources
+  """
+  viewerUserActivityBroadcasted(
+    projectId: String!
+    resourceIdString: String!
+  ): ViewerUserActivityMessage!
+
+  """
+  Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
+  updates regarding comments for those resources.
+  """
+  projectCommentsUpdated(
+    projectId: String!
+    resourceIdString: String
+  ): ProjectCommentsUpdatedMessage!
+
   """
   Broadcasts "real-time" location data for viewer users.
   """
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
+    @deprecated(reason: "Use viewerUserActivityBroadcasted")
 
   """
   Subscribe to new comment events. There's two ways to use this subscription:
@@ -291,6 +420,7 @@ extend type Subscription {
   commentActivity(streamId: String!, resourceIds: [String]): CommentActivityMessage!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use projectCommentsUpdated")
 
   """
   Subscribes to events on a specific comment. Use to find out when:
@@ -303,4 +433,7 @@ extend type Subscription {
   ): CommentThreadActivityMessage!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Use projectCommentsUpdated or viewerUserActivityBroadcasted for reply status"
+    )
 }

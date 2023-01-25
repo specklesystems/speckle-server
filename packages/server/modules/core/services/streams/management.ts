@@ -47,7 +47,8 @@ export async function createStreamReturnRecord(
   if (createActivity) {
     await addStreamCreatedActivity({
       streamId,
-      stream: params,
+      input: params,
+      stream,
       creatorId: ownerId
     })
   }
@@ -95,6 +96,7 @@ export async function updateStreamAndNotify(
     streamId: update.id,
     updaterId,
     oldStream,
+    newStream,
     update
   })
 

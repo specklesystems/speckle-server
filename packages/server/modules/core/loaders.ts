@@ -28,6 +28,7 @@ import {
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCounts,
+  getCommentParents,
   getCommentReplyAuthorIds,
   getCommentReplyCounts,
   getCommentsResources,
@@ -41,9 +42,12 @@ import {
   getStreamBranchCounts,
   getStreamBranchesByName
 } from '@/modules/core/repositories/branches'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
+ * - Instead of keeping them request scoped, cache them identified by request (user ID) with a TTL,
+ * so that users with the same ID can re-use them across requests/subscriptions
  */
 
 /**
@@ -53,7 +57,7 @@ import {
 export function buildRequestLoaders(ctx: AuthContext) {
   const userId = ctx.userId
 
-  return {
+  const loaders = {
     streams: {
       /**
        * Get favorite metadata for a specific stream and user
@@ -145,6 +149,7 @@ export function buildRequestLoaders(ctx: AuthContext) {
         type BranchDataLoader = DataLoader<string, Nullable<BranchRecord>>
         const streamBranchLoaders = new Map<string, BranchDataLoader>()
         return {
+          clearAll: () => streamBranchLoaders.clear(),
           forStream(streamId: string): BranchDataLoader {
             let loader = streamBranchLoaders.get(streamId)
             if (!loader) {
@@ -233,7 +238,13 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getReplyAuthorIds: new DataLoader<string, string[]>(async (threadIds) => {
         const results = await getCommentReplyAuthorIds(threadIds.slice())
         return threadIds.map((id) => results[id] || [])
-      })
+      }),
+      getReplyParent: new DataLoader<string, Nullable<CommentRecord>>(
+        async (replyIds) => {
+          const results = keyBy(await getCommentParents(replyIds.slice()), 'replyId')
+          return replyIds.map((id) => results[id] || null)
+        }
+      )
     },
     users: {
       /**
@@ -255,6 +266,22 @@ export function buildRequestLoaders(ctx: AuthContext) {
         }
       )
     }
+  }
+
+  /**
+   * Clear all loaders
+   */
+  const clearAll = () => {
+    for (const groupedLoaders of Object.values(loaders)) {
+      for (const loaderItem of Object.values(groupedLoaders)) {
+        ;(loaderItem as DataLoader<unknown, unknown>).clearAll()
+      }
+    }
+  }
+
+  return {
+    ...loaders,
+    clearAll
   }
 }
 

@@ -4,7 +4,7 @@
   >
     <div>
       <div class="w-20 h-20 shadow rounded-md bg-foundation">
-        <PreviewImage :preview-url="previewUrl" />
+        <PreviewImage :preview-url="version.previewUrl" />
       </div>
     </div>
     <div class="flex flex-col flex-grow space-y-1 min-w-0">
@@ -51,13 +51,9 @@ import {
   ViewerLoadedResourcesQuery
 } from '~~/lib/common/generated/gql/graphql'
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
-import { useGetPreviewUrl } from '~~/lib/viewer/helpers'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { Get } from 'type-fest'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
-
-const getPreviewUrl = useGetPreviewUrl()
 
 const props = defineProps<{
   version: ViewerModelVersionCardItemFragment
@@ -67,17 +63,11 @@ const props = defineProps<{
 
 defineEmits(['show-versions', 'load-latest'])
 
-const { projectId } = useInjectedViewerState()
-
 const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
 
 const timeAgoCreatedAt = computed(() =>
   dayjs(props.version.createdAt as string).from(dayjs())
-)
-
-const previewUrl = computed(() =>
-  getPreviewUrl(projectId.value, props.version.referencedObject)
 )
 </script>

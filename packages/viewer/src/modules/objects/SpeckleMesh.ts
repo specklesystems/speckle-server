@@ -44,6 +44,10 @@ export default class SpeckleMesh extends Mesh {
   public boundsTreeSizeInBytes = 0
   private batchMaterial: Material = null
 
+  public get BVH() {
+    return this.boundsTree
+  }
+
   constructor(geometry: BufferGeometry, material: Material, bvh: MeshBVH) {
     super(geometry, material)
     this.batchMaterial = material

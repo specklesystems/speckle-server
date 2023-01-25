@@ -3,11 +3,13 @@ const knex = require('@/db/knex')
 const {
   getStreamBranchByName,
   getStreamBranchCount,
-  validateBranchName,
   createBranch: createBranchInDb
 } = require('@/modules/core/repositories/branches')
+const {
+  updateBranchAndNotify,
+  deleteBranchAndNotify
+} = require('@/modules/core/services/branch/management')
 
-const Streams = () => knex('streams')
 const Branches = () => knex('branches')
 
 module.exports = {
@@ -19,11 +21,15 @@ module.exports = {
     return branch.id
   },
 
-  async updateBranch({ id, name, description }) {
-    if (name) validateBranchName(name)
-    return await Branches()
-      .where({ id })
-      .update({ name: name ? name.toLowerCase() : name, description })
+  /**
+   * @deprecated Use 'updateBranchAndNotify'
+   */
+  async updateBranch({ id, name, description, streamId, userId }) {
+    const newBranch = await updateBranchAndNotify(
+      { id, name, description, streamId },
+      userId
+    )
+    return newBranch ? 1 : 0
   },
 
   async getBranchById({ id }) {
@@ -61,12 +67,10 @@ module.exports = {
     return await getStreamBranchByName(streamId, name)
   },
 
-  async deleteBranchById({ id, streamId }) {
-    const branch = await module.exports.getBranchById({ id })
-    if (branch.name === 'main') throw new Error('Cannot delete the main branch.')
-
-    await Branches().where({ id }).del()
-    await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
-    return true
+  /**
+   * @deprecated Use 'deleteBranchAndNotify'
+   */
+  async deleteBranchById({ id, streamId, userId }) {
+    return await deleteBranchAndNotify({ id, streamId }, userId)
   }
 }

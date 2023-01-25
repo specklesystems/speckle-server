@@ -49,6 +49,38 @@ export function getRedisUrl() {
   return process.env.REDIS_URL
 }
 
+export function getOidcDiscoveryUrl() {
+  if (!process.env.OIDC_DISCOVERY_URL) {
+    throw new MisconfiguredEnvironmentError('OIDC_DISCOVERY_URL env var not configured')
+  }
+
+  return process.env.OIDC_DISCOVERY_URL
+}
+
+export function getOidcClientId() {
+  if (!process.env.OIDC_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_ID env var not configured')
+  }
+
+  return process.env.OIDC_CLIENT_ID
+}
+
+export function getOidcClientSecret() {
+  if (!process.env.OIDC_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_SECRET env var not configured')
+  }
+
+  return process.env.OIDC_CLIENT_SECRET
+}
+
+export function getOidcName() {
+  if (!process.env.OIDC_NAME) {
+    throw new MisconfiguredEnvironmentError('OIDC_NAME env var not configured')
+  }
+
+  return process.env.OIDC_NAME
+}
+
 /**
  * Get app base url / canonical url / origin
  * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead

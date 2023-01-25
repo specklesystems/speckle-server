@@ -241,10 +241,8 @@ export default {
   setup() {
     const route = useRoute()
     const streamId = computed(() => route.params.streamId)
-
     const { localBranches, refetchBranches, totalBranchCount, branchesLoading } =
       useAllStreamBranches(streamId)
-
     return {
       localBranches,
       refetchBranches,

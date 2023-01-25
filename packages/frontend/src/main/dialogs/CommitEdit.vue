@@ -106,9 +106,7 @@ export default {
   setup() {
     const route = useRoute()
     const streamId = computed(() => route.params.streamId)
-
     const { localBranches, branchesLoading } = useAllStreamBranches(streamId)
-
     return {
       localBranches,
       branchesLoading

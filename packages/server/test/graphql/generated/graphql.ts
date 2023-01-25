@@ -197,7 +197,11 @@ export type Comment = {
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   data?: Maybe<Scalars['JSONObject']>;
+  /** Whether or not comment is a reply to another comment */
+  hasParent: Scalars['Boolean'];
   id: Scalars['String'];
+  /** Parent thread, if there's any */
+  parent?: Maybe<Comment>;
   /** Plain-text version of the comment text, ideal for previews */
   rawText: Scalars['String'];
   /** @deprecated Not actually implemented */
@@ -578,6 +582,8 @@ export type Mutation = {
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
   branchUpdate: Scalars['Boolean'];
+  /** Broadcast user activity in the viewer */
+  broadcastViewerUserActivity: Scalars['Boolean'];
   /** Archives a comment. */
   commentArchive: Scalars['Boolean'];
   /** Creates a comment */
@@ -634,7 +640,10 @@ export type Mutation = {
   /** Update permissions of a user on a given stream. */
   streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
-  /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
+  /**
+   * Used for broadcasting real time typing status in comment threads. Does not persist any info.
+   * @deprecated Use broadcastViewerUserActivity
+   */
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
   userDelete: Scalars['Boolean'];
@@ -642,7 +651,10 @@ export type Mutation = {
   userRoleChange: Scalars['Boolean'];
   /** Edits a user's profile. */
   userUpdate: Scalars['Boolean'];
-  /** Used for broadcasting real time chat head bubbles and status. Does not persist any info. */
+  /**
+   * Used for broadcasting real time chat head bubbles and status. Does not persist any info.
+   * @deprecated Use broadcastViewerUserActivity
+   */
   userViewerActivityBroadcast: Scalars['Boolean'];
   /** Creates a new webhook on a stream */
   webhookCreate: Scalars['String'];
@@ -700,6 +712,13 @@ export type MutationBranchDeleteArgs = {
 
 export type MutationBranchUpdateArgs = {
   branch: BranchUpdateInput;
+};
+
+
+export type MutationBroadcastViewerUserActivityArgs = {
+  message: ViewerUserActivityMessageInput;
+  projectId: Scalars['String'];
+  resourceIdString: Scalars['String'];
 };
 
 
@@ -1080,6 +1099,20 @@ export type ProjectCommentsFilter = {
   resourceIdString?: InputMaybe<Scalars['String']>;
 };
 
+export type ProjectCommentsUpdatedMessage = {
+  __typename?: 'ProjectCommentsUpdatedMessage';
+  /** Null if deleted */
+  comment?: Maybe<Comment>;
+  id: Scalars['String'];
+  type: ProjectCommentsUpdatedMessageType;
+};
+
+export enum ProjectCommentsUpdatedMessageType {
+  Archived = 'ARCHIVED',
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
@@ -1092,6 +1125,21 @@ export type ProjectModelsFilter = {
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
+
+export type ProjectModelsUpdatedMessage = {
+  __typename?: 'ProjectModelsUpdatedMessage';
+  /** Model ID */
+  id: Scalars['String'];
+  /** Null if model was deleted */
+  model?: Maybe<Model>;
+  type: ProjectModelsUpdatedMessageType;
+};
+
+export enum ProjectModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
@@ -1127,6 +1175,45 @@ export type ProjectUpdateInput = {
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
 };
+
+export type ProjectUpdatedMessage = {
+  __typename?: 'ProjectUpdatedMessage';
+  /** Project ID */
+  id: Scalars['String'];
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Message type */
+  type: ProjectUpdatedMessageType;
+};
+
+export enum ProjectUpdatedMessageType {
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectVersionsPreviewGeneratedMessage = {
+  __typename?: 'ProjectVersionsPreviewGeneratedMessage';
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type ProjectVersionsUpdatedMessage = {
+  __typename?: 'ProjectVersionsUpdatedMessage';
+  /** Version ID */
+  id: Scalars['String'];
+  /** Only set if version was deleted, in other scenarios can be queried from 'version' */
+  modelId?: Maybe<Scalars['String']>;
+  type: ProjectVersionsUpdatedMessageType;
+  /** Null if version was deleted */
+  version?: Maybe<Version>;
+};
+
+export enum ProjectVersionsUpdatedMessageType {
+  Created = 'CREATED',
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
 
 export type Query = {
   __typename?: 'Query';
@@ -1652,12 +1739,14 @@ export type Subscription = {
    * Subscribe to new comment events. There's two ways to use this subscription:
    * - for a whole stream: do not pass in any resourceIds; this sub will get called whenever a comment (not reply) is added to any of the stream's resources.
    * - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
+   * @deprecated Use projectCommentsUpdated
    */
   commentActivity: CommentActivityMessage;
   /**
    * Subscribes to events on a specific comment. Use to find out when:
    * - a top level comment is deleted (trigger a deletion event outside)
    * - a top level comment receives a reply.
+   * @deprecated Use projectCommentsUpdated or viewerUserActivityBroadcasted for reply status
    */
   commentThreadActivity: CommentThreadActivityMessage;
   /** Subscribe to commit created event */
@@ -1666,10 +1755,25 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
+  /**
+   * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
+   * updates regarding comments for those resources.
+   */
+  projectCommentsUpdated: ProjectCommentsUpdatedMessage;
+  /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
+  projectModelsUpdated: ProjectModelsUpdatedMessage;
+  /** Track updates to a specific project */
+  projectUpdated: ProjectUpdatedMessage;
+  /** Subscribe to when a project's versions get their preview image fully generated. */
+  projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
+  /** Subscribe to changes to a project's versions. */
+  projectVersionsUpdated: ProjectVersionsUpdatedMessage;
   /** Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream. */
   streamDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribes to stream updated event. Use this in clients/components that pertain only to this stream. */
   streamUpdated?: Maybe<Scalars['JSONObject']>;
+  /** Track newly added or deleted projects owned by the active user */
+  userProjectsUpdated: UserProjectsUpdatedMessage;
   /**
    * Subscribes to new stream added event for your profile. Use this to display an up-to-date list of streams.
    * **NOTE**: If someone shares a stream with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
@@ -1680,8 +1784,13 @@ export type Subscription = {
    * **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
    */
   userStreamRemoved?: Maybe<Scalars['JSONObject']>;
-  /** Broadcasts "real-time" location data for viewer users. */
+  /**
+   * Broadcasts "real-time" location data for viewer users.
+   * @deprecated Use viewerUserActivityBroadcasted
+   */
   userViewerActivity?: Maybe<Scalars['JSONObject']>;
+  /** Track user activities in the viewer relating to the specified resources */
+  viewerUserActivityBroadcasted: ViewerUserActivityMessage;
 };
 
 
@@ -1729,6 +1838,33 @@ export type SubscriptionCommitUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectCommentsUpdatedArgs = {
+  projectId: Scalars['String'];
+  resourceIdString?: InputMaybe<Scalars['String']>;
+};
+
+
+export type SubscriptionProjectModelsUpdatedArgs = {
+  id: Scalars['String'];
+  modelIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+
+export type SubscriptionProjectUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionsPreviewGeneratedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
 export type SubscriptionStreamDeletedArgs = {
   streamId?: InputMaybe<Scalars['String']>;
 };
@@ -1742,6 +1878,12 @@ export type SubscriptionStreamUpdatedArgs = {
 export type SubscriptionUserViewerActivityArgs = {
   resourceId: Scalars['String'];
   streamId: Scalars['String'];
+};
+
+
+export type SubscriptionViewerUserActivityBroadcastedArgs = {
+  projectId: Scalars['String'];
+  resourceIdString: Scalars['String'];
 };
 
 export type TestItem = {
@@ -1881,6 +2023,21 @@ export type UserProjectsFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
 
+export type UserProjectsUpdatedMessage = {
+  __typename?: 'UserProjectsUpdatedMessage';
+  /** Project ID */
+  id: Scalars['String'];
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Message type */
+  type: UserProjectsUpdatedMessageType;
+};
+
+export enum UserProjectsUpdatedMessageType {
+  Added = 'ADDED',
+  Removed = 'REMOVED'
+}
+
 export type UserRoleInput = {
   id: Scalars['String'];
   role: Scalars['String'];
@@ -1907,6 +2064,8 @@ export type Version = {
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
+  model: Model;
+  previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
 };
@@ -1939,6 +2098,72 @@ export type ViewerResourceItem = {
   objectId: Scalars['String'];
   /** Null if resource represents an object */
   versionId?: Maybe<Scalars['String']>;
+};
+
+export type ViewerUserActivityMessage = {
+  __typename?: 'ViewerUserActivityMessage';
+  selection?: Maybe<ViewerUserSelectionInfo>;
+  status: ViewerUserActivityStatus;
+  typing?: Maybe<ViewerUserTypingMessage>;
+  userId?: Maybe<Scalars['String']>;
+  userName: Scalars['String'];
+  viewerSessionId: Scalars['String'];
+};
+
+export type ViewerUserActivityMessageInput = {
+  /** Must be set if status !== 'disconnected' */
+  selection?: InputMaybe<ViewerUserSelectionInfoInput>;
+  status: ViewerUserActivityStatus;
+  /** Must be set if status === 'typing' */
+  typing?: InputMaybe<ViewerUserTypingMessageInput>;
+  userId?: InputMaybe<Scalars['String']>;
+  userName: Scalars['String'];
+  /** The same user will have different session IDs across tabs where the viewer is open */
+  viewerSessionId: Scalars['String'];
+};
+
+export enum ViewerUserActivityStatus {
+  Disconnected = 'DISCONNECTED',
+  Typing = 'TYPING',
+  Viewing = 'VIEWING'
+}
+
+export type ViewerUserSelectionInfo = {
+  __typename?: 'ViewerUserSelectionInfo';
+  camera: Scalars['JSONObject'];
+  filteringState: Scalars['JSONObject'];
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  selectionCenter?: Maybe<Scalars['JSONObject']>;
+  selectionLocation?: Maybe<Scalars['JSONObject']>;
+};
+
+/**
+ * TODO: Clean this up: write proper descriptions, delete unnecessary keys and add proper GQL return types
+ * where possible
+ */
+export type ViewerUserSelectionInfoInput = {
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camera: Array<Scalars['Float']>;
+  /** 'FilteringState' of @speckle/viewer. Represents the filters activated in the viewer by the user. */
+  filteringState: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
+  /** THREE.Vector3 - the user's selection's focus point */
+  selectionLocation?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type ViewerUserTypingMessage = {
+  __typename?: 'ViewerUserTypingMessage';
+  isTyping: Scalars['Boolean'];
+  threadId: Scalars['String'];
+};
+
+export type ViewerUserTypingMessageInput = {
+  isTyping: Scalars['Boolean'];
+  threadId: Scalars['String'];
 };
 
 export type Webhook = {

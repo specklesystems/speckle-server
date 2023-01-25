@@ -1,3 +1,6 @@
+import { Comment } from '@/modules/core/graph/generated/graphql'
+import { CommentRecord } from '@/modules/comments/helpers/types'
+
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
  * Often some fields will be missing, because they are defined as separate resolvers and thus don't need
@@ -10,3 +13,19 @@ export type CommentReplyAuthorCollectionGraphQLReturn = {
   totalCount: number
   authorIds: string[]
 }
+
+export type CommentGraphQLReturn = Omit<
+  Comment,
+  | 'author'
+  | 'rawText'
+  | 'resources'
+  | 'viewedAt'
+  | 'replies'
+  | 'repliesCount'
+  | 'replyAuthors'
+  | 'reactions'
+  | 'text'
+  | 'hasParent'
+  | 'parent'
+> &
+  CommentRecord
