@@ -1,10 +1,9 @@
 import {
-  AlwaysStencilFunc,
   Camera,
   Color,
   DoubleSide,
+  EqualStencilFunc,
   Material,
-  ReplaceStencilOp,
   Scene,
   Texture,
   Vector2
@@ -12,7 +11,7 @@ import {
 import SpeckleDisplaceMaterial from '../materials/SpeckleDisplaceMaterial'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
-export class StencilPass extends BaseSpecklePass implements SpecklePass {
+export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
   private camera: Camera
   private scene: Scene
   private overrideMaterial: Material = null
@@ -27,19 +26,15 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
 
   public constructor() {
     super()
-    this.overrideMaterial = new SpeckleDisplaceMaterial({ color: 0xff0000 }, [
+    this.overrideMaterial = new SpeckleDisplaceMaterial({ color: 0x04a5fb }, [
       'USE_RTE'
     ])
     this.overrideMaterial.userData.displacement.value = 2
-    this.overrideMaterial.colorWrite = false
+    this.overrideMaterial.colorWrite = true
     this.overrideMaterial.depthWrite = false
     this.overrideMaterial.stencilWrite = true
-    this.overrideMaterial.stencilFunc = AlwaysStencilFunc
-    this.overrideMaterial.stencilWriteMask = 0xff
+    this.overrideMaterial.stencilFunc = EqualStencilFunc
     this.overrideMaterial.stencilRef = 0xff
-    this.overrideMaterial.stencilZFail = ReplaceStencilOp
-    this.overrideMaterial.stencilZPass = ReplaceStencilOp
-    this.overrideMaterial.stencilFail = ReplaceStencilOp
     this.overrideMaterial.side = DoubleSide
   }
   public get displayName(): string {
@@ -91,7 +86,6 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
       )
     renderer.getDrawingBufferSize(this.drawBufferSize)
     this.overrideMaterial.userData.size.value.copy(this.drawBufferSize)
-    renderer.clear(false, false, true)
     renderer.render(this.scene, this.camera)
 
     if (this.clearColor) {

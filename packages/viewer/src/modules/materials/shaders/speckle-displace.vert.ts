@@ -1,4 +1,4 @@
-export const speckleBasicVert = /* glsl */ `
+export const speckleDisplaceVert = /* glsl */ `
 #include <common>
 #ifdef USE_RTE
     // The high component is stored as the default 'position' attribute buffer
@@ -6,6 +6,8 @@ export const speckleBasicVert = /* glsl */ `
     uniform vec3 uViewer_high;
     uniform vec3 uViewer_low;
 #endif
+uniform vec2 size;
+uniform float displacement;
 #include <uv_pars_vertex>
 #include <uv2_pars_vertex>
 #include <envmap_pars_vertex>
@@ -94,6 +96,12 @@ void main() {
     mvPosition = modelViewMatrix * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;
+    
+    // Transform normal vector from object space to clip space.
+    vec3 normalHCS = mat3(projectionMatrix) * normalMatrix * normal;
+
+    // Move vertex along normal vector in clip space.
+    gl_Position.xy += normalize(normalHCS.xy) / size * gl_Position.w * displacement * 2.;
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
 	#include <worldpos_vertex>

@@ -1,9 +1,11 @@
 import {
+  AlwaysStencilFunc,
   Color,
   DoubleSide,
   FrontSide,
   Material,
   MathUtils,
+  ReplaceStencilOp,
   Texture,
   Vector2
 } from 'three'
@@ -19,7 +21,6 @@ import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
-import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -98,32 +99,25 @@ export default class Materials {
   }
 
   private async createDefaultMeshMaterials() {
-    // this.meshHighlightMaterial = new SpeckleStandardMaterial(
-    //   {
-    //     color: 0x047efb,
-    //     emissive: 0x0,
-    //     roughness: 1,
-    //     metalness: 0,
-    //     side: DoubleSide
-    //   },
-    //   ['USE_RTE']
-    // )
-    // this.meshHighlightMaterial.clipShadows = true
-    this.meshHighlightMaterial = new SpeckleBasicMaterial(
+    this.meshHighlightMaterial = new SpeckleStandardMaterial(
       {
         color: 0x047efb,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
         side: DoubleSide
       },
       ['USE_RTE']
     )
     this.meshHighlightMaterial.clipShadows = true
-    // this.meshHighlightMaterial.depthWrite = false
-    // this.meshHighlightMaterial.depthTest = false
-    // this.meshHighlightMaterial.transparent = true
-    // this.meshHighlightMaterial.blendSrc = OneFactor
-    // this.meshHighlightMaterial.blendDst = ZeroFactor
-    // this.meshHighlightMaterial.blendSrcAlpha = OneFactor
-    // this.meshHighlightMaterial.blendDstAlpha = ZeroFactor
+    this.meshHighlightMaterial.stencilWrite = true
+    this.meshHighlightMaterial.stencilWriteMask = 0xff
+    this.meshHighlightMaterial.stencilRef = 0x00
+    this.meshHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilFail = ReplaceStencilOp
+
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
         color: 0x047efb,
