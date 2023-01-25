@@ -108,12 +108,13 @@ export = {
       subscribe: filteredSubscribe(
         ProjectSubscriptions.ProjectUpdated,
         async (payload, args, ctx) => {
+          if (args.id !== payload.projectUpdated.id) return false
           await authorizeResolver(
             ctx.userId,
             payload.projectUpdated.id,
             Roles.Stream.Reviewer
           )
-          return args.id === payload.projectUpdated.id
+          return true
         }
       )
     }

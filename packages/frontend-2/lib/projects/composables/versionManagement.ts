@@ -24,19 +24,6 @@ export function useProjectVersionUpdateTracking(
     silenceToast: boolean
   }>
 ) {
-  /**
-  //  * TODO: Delete/update version
-  //  * On creation:
-  //  * - Update model.previewUrl
-  //  * On create/update:
-  //  * - Update model.updatedAt
-   *
-   * Handler:
-  //  * - Projects dashboard: Re-calculate top 4 models (maybe need full model fragment then?)
-  //  * - Project page: Reload models queries
-   * - Viewer: Re-calculate models versions
-   */
-
   const { silenceToast = false } = options || {}
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()

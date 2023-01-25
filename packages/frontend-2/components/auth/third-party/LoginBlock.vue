@@ -24,8 +24,6 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
  * - Invite token
  */
 
-console.log('WTF1')
-
 type StrategyType = NonNullable<
   Get<AuthStategiesServerInfoFragmentFragment, 'authStrategies.0'>
 >
