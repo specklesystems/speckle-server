@@ -73,6 +73,7 @@ import {
 import { sortBy } from 'lodash-es'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
 
 const fullProjectDashboardItemFragment = addFragmentDependencies(
   projectDashboardItemFragment,
@@ -84,6 +85,8 @@ const props = defineProps<{
 }>()
 
 const projectId = computed(() => props.project.id)
+
+useProjectUpdateTracking(projectId)
 
 useProjectVersionUpdateTracking(
   projectId,

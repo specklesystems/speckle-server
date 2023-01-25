@@ -12,6 +12,10 @@ import { modelRoute } from '~~/lib/common/helpers/route'
 import { onProjectVersionsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { evictObjectFields, getCacheId } from '~~/lib/common/helpers/graphql'
 
+/**
+ * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
+ * that we don't want to duplicate (or extract that part out into a separate composable)
+ */
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
