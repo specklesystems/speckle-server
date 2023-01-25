@@ -21,6 +21,7 @@ http {
   keepalive_timeout  65;
 
   # Speckle configuration
+  server_tokens off;
   gzip on;
   gzip_disable "msie6";
 
