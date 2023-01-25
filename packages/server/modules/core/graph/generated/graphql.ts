@@ -2137,10 +2137,9 @@ export enum ViewerUserActivityStatus {
 
 export type ViewerUserSelectionInfo = {
   __typename?: 'ViewerUserSelectionInfo';
-  camera: Scalars['JSONObject'];
+  camera: Array<Scalars['Float']>;
   filteringState: Scalars['JSONObject'];
   sectionBox?: Maybe<Scalars['JSONObject']>;
-  selectionCenter?: Maybe<Scalars['JSONObject']>;
   selectionLocation?: Maybe<Scalars['JSONObject']>;
 };
 
@@ -3321,10 +3320,9 @@ export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, Par
 };
 
 export type ViewerUserSelectionInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserSelectionInfo'] = ResolversParentTypes['ViewerUserSelectionInfo']> = {
-  camera?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  camera?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
   filteringState?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  selectionCenter?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   selectionLocation?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

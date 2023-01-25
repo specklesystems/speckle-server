@@ -2130,10 +2130,9 @@ export enum ViewerUserActivityStatus {
 
 export type ViewerUserSelectionInfo = {
   __typename?: 'ViewerUserSelectionInfo';
-  camera: Scalars['JSONObject'];
+  camera: Array<Scalars['Float']>;
   filteringState: Scalars['JSONObject'];
   sectionBox?: Maybe<Scalars['JSONObject']>;
-  selectionCenter?: Maybe<Scalars['JSONObject']>;
   selectionLocation?: Maybe<Scalars['JSONObject']>;
 };
 

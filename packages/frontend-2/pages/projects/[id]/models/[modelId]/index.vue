@@ -17,6 +17,7 @@
       <!-- Viewer host -->
       <div class="special-gradient absolute w-screen h-screen">
         <ViewerBase />
+        <ViewerAnchoredPoints />
       </div>
 
       <!-- Global loading bar -->

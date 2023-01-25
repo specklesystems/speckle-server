@@ -273,9 +273,8 @@ input ViewerUserActivityMessageInput {
 type ViewerUserSelectionInfo {
   filteringState: JSONObject!
   selectionLocation: JSONObject
-  selectionCenter: JSONObject
   sectionBox: JSONObject
-  camera: JSONObject!
+  camera: [Float!]!
 }
 
 type ViewerUserTypingMessage {

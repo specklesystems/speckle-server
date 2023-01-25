@@ -3,8 +3,7 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
-  ViewerEvent,
-  SelectionEvent
+  ViewerEvent
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -36,12 +35,12 @@ import {
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
-import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useViewerSelectionEventHandler } from './setup/selection'
+import { nanoid } from 'nanoid'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -74,6 +73,11 @@ export type InjectableViewerState = Readonly<{
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
   projectId: ComputedRef<string>
+  /**
+   * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
+   * This is used to ignore user activity messages from the same tab.
+   */
+  sessionId: ComputedRef<string>
   /**
    * The actual Viewer instance and related objects.
    * Note: This is going to be undefined in SSR!
@@ -108,6 +112,11 @@ export type InjectableViewerState = Readonly<{
        * can write to this to change which resources should be loaded.
        */
       items: WritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
+      /**
+       * All currently requested identifiers in a comma-delimited string, the way it's
+       * represented in the URL
+       */
+      resourceIdString: ComputedRef<string>
       /**
        * Helper for switching model to a specific version (or just latest)
        */
@@ -183,7 +192,10 @@ type CachedViewerState = Pick<
   initPromise: Promise<void>
 }
 
-type InitialSetupState = Pick<InjectableViewerState, 'projectId' | 'viewer'>
+type InitialSetupState = Pick<
+  InjectableViewerState,
+  'projectId' | 'viewer' | 'sessionId'
+>
 
 type InitialStateWithRequest = InitialSetupState & {
   resources: { request: InjectableViewerState['resources']['request'] }
@@ -232,6 +244,7 @@ function createViewerData(): CachedViewerState {
 function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   const projectId = computed(() => unref(params.projectId))
 
+  const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
@@ -241,6 +254,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   return {
     projectId,
+    sessionId,
     viewer: process.server
       ? (undefined as unknown as InitialSetupState['viewer'])
       : {
@@ -270,6 +284,11 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       router.push({ params: { modelId } })
     }
   })
+
+  // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
+  const resourceIdString = computed(() =>
+    SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value)
+  )
 
   const switchModelToVersion = (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
@@ -302,6 +321,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     resources: {
       request: {
         items: resources,
+        resourceIdString,
         switchModelToVersion
       }
     }
@@ -321,18 +341,14 @@ function setupResponseResourceItems(
   const {
     projectId,
     resources: {
-      request: { items: requestItems }
+      request: { resourceIdString }
     }
   } = state
-
-  const resourceString = computed(() =>
-    SpeckleViewer.ViewerRoute.createGetParamFromResources(requestItems.value)
-  )
 
   const { result: resolvedResourcesResult, variables: resourceItemsQueryVariables } =
     useQuery(projectViewerResourcesQuery, () => ({
       projectId: projectId.value,
-      resourceUrlString: resourceString.value
+      resourceUrlString: resourceIdString.value
     }))
 
   const resolvedResourceGroups = computed(
