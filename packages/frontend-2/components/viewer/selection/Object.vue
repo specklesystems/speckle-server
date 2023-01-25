@@ -1,19 +1,17 @@
 <template>
   <div>
     <div class="flex items-center mb-1">
-      <div class="overflow-hidden flex-shrink-0">
-        <button
-          class="h-full hover:bg-primary-muted hover:text-primary rounded flex items-center space-x-1"
-          @click="unfold = !unfold"
-        >
-          <ChevronDownIcon
-            :class="`w-3 h-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
-          />
-          <div class="text-xs font-bold">
-            {{ title || headerAndSubheader.header }}
-          </div>
-        </button>
-      </div>
+      <button
+        class="h-full hover:bg-primary-muted hover:text-primary rounded flex items-center space-x-1 min-w-0"
+        @click="unfold = !unfold"
+      >
+        <ChevronDownIcon
+          :class="`w-3 h-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+        />
+        <div class="text-xs font-bold truncate">
+          {{ title || headerAndSubheader.header }}
+        </div>
+      </button>
 
       <!-- <div class="text-xs font-bold">{{ title }}</div> -->
     </div>
