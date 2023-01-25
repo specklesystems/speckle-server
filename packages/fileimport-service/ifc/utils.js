@@ -987,13 +987,13 @@ const PropNames = {
     name: WebIFC.IFCRELAGGREGATES,
     relating: 'RelatingObject',
     related: 'RelatedObjects',
-    key: 'children'
+    key: 'elements'
   },
   spatial: {
     name: WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE,
     relating: 'RelatingStructure',
     related: 'RelatedElements',
-    key: 'children'
+    key: 'elements'
   },
   psets: {
     name: WebIFC.IFCRELDEFINESBYPROPERTIES,

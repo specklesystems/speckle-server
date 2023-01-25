@@ -233,7 +233,11 @@ export class Pipeline {
 
     this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT])
     this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT])
-    this.renderPass.setLayers([ObjectLayers.PROPS, ObjectLayers.STREAM_CONTENT])
+    this.renderPass.setLayers([
+      ObjectLayers.PROPS,
+      ObjectLayers.STREAM_CONTENT,
+      ObjectLayers.SHADOWCATCHER
+    ])
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {

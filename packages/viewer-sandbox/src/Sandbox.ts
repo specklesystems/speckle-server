@@ -64,7 +64,8 @@ export default class Sandbox {
     azimuth: 0.75,
     elevation: 1.33,
     radius: 0,
-    indirectLightIntensity: 1.2
+    indirectLightIntensity: 1.2,
+    shadowcatcher: true
   }
 
   public static batchesParams = {
@@ -74,6 +75,15 @@ export default class Sandbox {
 
   public static filterParams = {
     filterBy: 'Volume'
+  }
+
+  public static shadowCatcherParams = {
+    textureSize: 512,
+    weights: { x: 1, y: 1, z: 0, w: 1 },
+    blurRadius: 16,
+    stdDeviation: 4,
+    sigmoidRange: 2,
+    sigmoidStrength: 2.43
   }
 
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
@@ -134,10 +144,8 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      this.viewer
-        .getRenderer()
-        .subtree(url)
-        .position.set(position.value.x, position.value.y, position.value.z)
+      const subtree = this.viewer.getRenderer().subtree(url)
+      subtree.position.set(position.value.x, position.value.y, position.value.z)
       this.viewer.getRenderer().updateDirectLights()
       this.viewer.getRenderer().updateHelpers()
       this.viewer.requestRender()
@@ -256,7 +264,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      this.viewer.getRenderer().updateShadowCatcher()
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -413,7 +422,7 @@ export default class Sandbox {
 
     const dynamicAoFolder = pipelineFolder.addFolder({
       title: 'Dynamic AO',
-      expanded: true
+      expanded: false
     })
 
     dynamicAoFolder
@@ -485,7 +494,7 @@ export default class Sandbox {
 
     const staticAoFolder = pipelineFolder.addFolder({
       title: 'Static AO',
-      expanded: true
+      expanded: false
     })
     // staticAoFolder
     //   .addInput(Sandbox.pipelineParams, 'staticAoEnabled', {})
@@ -558,7 +567,7 @@ export default class Sandbox {
 
     const lightsFolder = this.tabs.pages[1].addFolder({
       title: 'Lights',
-      expanded: true
+      expanded: false
     })
     const directLightFolder = lightsFolder.addFolder({
       title: 'Direct',
@@ -664,6 +673,98 @@ export default class Sandbox {
         value
         this.viewer.setLightConfiguration(Sandbox.lightParams)
       })
+
+    const shadowcatcherFolder = this.tabs.pages[1].addFolder({
+      title: 'Shadowcatcher',
+      expanded: true
+    })
+
+    shadowcatcherFolder
+      .addInput(Sandbox.lightParams, 'shadowcatcher', { label: 'Enabled' })
+      .on('change', (value) => {
+        value
+        this.viewer.setLightConfiguration(Sandbox.lightParams)
+      })
+
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
+        label: 'Texture Size',
+        min: 1,
+        max: 1024,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'weights', {
+        label: 'weights',
+        x: { min: 0, max: 100 },
+        y: { min: 0, max: 100 },
+        z: { min: -100, max: 100 },
+        w: { min: -100, max: 100 }
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'blurRadius', {
+        label: 'Blur Radius',
+        min: 1,
+        max: 128,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'stdDeviation', {
+        label: 'Blur Std Deviation',
+        min: 1,
+        max: 128,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'sigmoidRange', {
+        label: 'Sigmoid Range',
+        min: -10,
+        max: 10,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
+    shadowcatcherFolder
+      .addInput(Sandbox.shadowCatcherParams, 'sigmoidStrength', {
+        label: 'Sigmoid Strength',
+        min: -10,
+        max: 10,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.getRenderer().shadowcatcher.configuration =
+          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      })
   }
 
   makeFilteringUI() {
@@ -676,7 +777,10 @@ export default class Sandbox {
       options: {
         Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
         Area: 'parameters.HOST_AREA_COMPUTED.value',
-        SpeckleType: 'speckle_type'
+        SpeckleType: 'speckle_type',
+        DisplayName: 'DisplayName',
+        EmbodiedCarbon: 'EmbodiedCarbon',
+        Floor: 'Floor'
       }
     })
 

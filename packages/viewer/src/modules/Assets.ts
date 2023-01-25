@@ -9,6 +9,7 @@ import {
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { Asset, AssetType } from '../IViewer'
+import Logger from 'js-logger'
 
 export class Assets {
   private static _cache: { [name: string]: Texture } = {}
@@ -22,7 +23,7 @@ export class Assets {
   private static getLoader(src: string, assetType: AssetType): TextureLoader {
     if (assetType === undefined) assetType = src.split('.').pop() as AssetType
     if (!Object.values(AssetType).includes(assetType)) {
-      console.warn(`Asset ${src} could not be loaded. Unknown type`)
+      Logger.warn(`Asset ${src} could not be loaded. Unknown type`)
       return null
     }
     switch (assetType) {

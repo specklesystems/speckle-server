@@ -53,24 +53,25 @@ import {
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
+import { Shadowcatcher } from './Shadowcatcher'
+import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT = 1,
-  PROPS = 2
+  PROPS = 2,
+  SHADOWCATCHER = 3
 }
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   public SHOW_BVH = false
-  private readonly ANGLE_EPSILON = 0.0001
-  private readonly POSITION_REST_EPSILON = 0.001
-  private readonly POSITION_RESUME_EPSILON = 0.001
+  private container: HTMLElement
   private _renderer: WebGLRenderer
   public _scene: Scene
   private _needsRender: boolean
   private rootGroup: Group
   private batcher: Batcher
-  private intersections: Intersections
+  private _intersections: Intersections
   private input: Input
   private sun: DirectionalLight
   private sunTarget: Object3D
@@ -78,13 +79,10 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
   private pipeline: Pipeline
-  private lastAzimuth: number
-  private lastPolar: number
-  private lastCameraPosition: Vector3 = new Vector3()
-  private lastCameraMotionDelta: number
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
+  private _shadowcatcher: Shadowcatcher = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -157,6 +155,18 @@ export default class SpeckleRenderer {
     })
   }
 
+  public get shadowcatcher() {
+    return this._shadowcatcher
+  }
+
+  public get intersections() {
+    return this._intersections
+  }
+
+  public get currentSectionBox() {
+    return this.viewer.sectionBox.getCurrentBox()
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this._scene = new Scene()
     this.rootGroup = new Group()
@@ -165,7 +175,7 @@ export default class SpeckleRenderer {
     this._scene.add(this.rootGroup)
 
     this.batcher = new Batcher()
-    this.intersections = new Intersections()
+    this._intersections = new Intersections()
     this.viewer = viewer
     this.lastSectionPlanes.push(
       new Plane(),
@@ -183,7 +193,7 @@ export default class SpeckleRenderer {
       alpha: true,
       preserveDrawingBuffer: true
     })
-    this._renderer.setClearColor(0xcccccc, 0)
+    this._renderer.setClearColor(0xffffff, 0)
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.outputEncoding = sRGBEncoding
     this._renderer.toneMapping = ACESFilmicToneMapping
@@ -194,6 +204,7 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
 
+    this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
@@ -226,7 +237,7 @@ export default class SpeckleRenderer {
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
-    this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
+    // this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
     this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
 
     this.addDirectLights()
@@ -280,6 +291,21 @@ export default class SpeckleRenderer {
         this.pipeline.onStationaryEnd()
       }
     })
+
+    this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
+      ObjectLayers.STREAM_CONTENT
+    ])
+    let restoreVisibility
+    this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
+      restoreVisibility = this.batcher.saveVisiblity()
+      const opaque = this.batcher.getOpaque()
+      this.batcher.applyVisibility(opaque)
+    }
+    this._shadowcatcher.shadowcatcherPass.onAfterRender = () => {
+      this.batcher.applyVisibility(restoreVisibility)
+    }
+
+    this._scene.add(this._shadowcatcher.shadowcatcherMesh)
   }
 
   public update(deltaTime: number) {
@@ -379,11 +405,14 @@ export default class SpeckleRenderer {
     v.set(box.max.x, box.max.y, box.max.z) // 111
     d = Math.max(camPos.distanceTo(v), d)
     this.viewer.cameraHandler.camera.far = d
-    this.viewer.cameraHandler.activeCam.camera.far = d
+    this.viewer.cameraHandler.activeCam.camera.far = d * 2
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
 
     this.pipeline.update(this)
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.update(this._scene)
+    }
   }
 
   public resetPipeline(force = false) {
@@ -397,6 +426,9 @@ export default class SpeckleRenderer {
       this._needsRender = this.pipeline.render()
       // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
       // this._needsRender = true
+      if (this.sunConfiguration.shadowcatcher) {
+        this._shadowcatcher.render(this._renderer)
+      }
     }
   }
 
@@ -475,12 +507,13 @@ export default class SpeckleRenderer {
     if (this.viewer.sectionBox.display.visible) {
       this.viewer.setSectionBox()
     }
-    // this.resetPipeline(true)
+    this.updateShadowCatcher()
     this._needsRender = true
   }
 
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
+    this.updateShadowCatcher()
 
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
@@ -509,6 +542,7 @@ export default class SpeckleRenderer {
       this.updateSectionBoxCapper()
     }
     this.renderer.shadowMap.needsUpdate = true
+    this.updateShadowCatcher()
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -527,6 +561,7 @@ export default class SpeckleRenderer {
     })
     this.pipeline.updateClippingPlanes(planes)
     this.sectionBoxOutlines.updateClippingPlanes(planes)
+    this._shadowcatcher.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
@@ -549,6 +584,7 @@ export default class SpeckleRenderer {
     const generate = () => {
       this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
       this.updateSectionBoxCapper(this.sectionPlanesChanged)
+      this.updateShadowCatcher()
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
     }
     this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
@@ -564,11 +600,19 @@ export default class SpeckleRenderer {
       )
     }
     this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
-    console.warn('Outline time: ', performance.now() - start)
+    Logger.warn('Outline time: ', performance.now() - start)
   }
 
   public enableSectionBoxCapper(value: boolean) {
     this.sectionBoxOutlines.enable(value)
+  }
+
+  public updateShadowCatcher() {
+    this._shadowcatcher.shadowcatcherMesh.visible = this.sunConfiguration.shadowcatcher
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.bake(this.sceneBox)
+      this.resetPipeline()
+    }
   }
 
   private addDirectLights() {
@@ -670,6 +714,7 @@ export default class SpeckleRenderer {
       this.indirectIBLIntensity = config.indirectLightIntensity
     }
     this.updateDirectLights()
+    this.updateShadowCatcher()
   }
 
   public updateHelpers() {
@@ -685,7 +730,7 @@ export default class SpeckleRenderer {
     }
   }
 
-  private queryHits(
+  public queryHits(
     results: Array<Intersection>
   ): Array<{ node: TreeNode; point: Vector3 }> {
     const rvs = []
@@ -721,7 +766,7 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
-    const results: Array<Intersection> = this.intersections.intersect(
+    const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
@@ -748,13 +793,14 @@ export default class SpeckleRenderer {
     if (!queryResults) {
       this.viewer.emit(
         ViewerEvent.ObjectClicked,
-        !multiSelect ? null : { multiple: true }
+        !multiSelect ? null : { multiple: true, event: e.event }
       )
       return
     }
 
     const selectionInfo = {
       multiple: multiSelect,
+      event: e.event,
       hits: queryResults.map((value) => {
         return {
           guid: value.node.model.id,
@@ -767,7 +813,7 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
-    const results: Array<Intersection> = this.intersections.intersect(
+    const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
@@ -1053,9 +1099,50 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
   }
 
+  public screenToNDC(
+    clientX: number,
+    clientY: number,
+    width?: number,
+    height?: number
+  ) {
+    // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
+    const canvas: HTMLCanvasElement = this._renderer.domElement
+    const rect = this.container.getBoundingClientRect()
+
+    const pos = {
+      x:
+        width === undefined
+          ? ((clientX - rect.left) * canvas.width) / rect.width
+          : clientX,
+      y:
+        height === undefined
+          ? ((clientY - rect.top) * canvas.height) / rect.height
+          : clientY
+    }
+    return {
+      x: (pos.x / width === undefined ? canvas.width : width) * 2 - 1,
+      y: (pos.y / height === undefined ? canvas.height : height) * -2 + 1
+    }
+  }
+
+  public NDCToScreen(
+    clientX: number,
+    clientY: number,
+    width?: number,
+    height?: number
+  ) {
+    const canvas: HTMLCanvasElement = this._renderer.domElement
+    width = width !== undefined ? width : canvas.width
+    height = height !== undefined ? height : canvas.height
+    return {
+      x: (clientX * 0.5 + 0.5) * width,
+      y: (clientY * -0.5 + 0.5) * height
+    }
+  }
+
   /** DEBUG */
   public onObjectClickDebug(e) {
-    const results: Array<Intersection> = this.intersections.intersect(
+    const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,

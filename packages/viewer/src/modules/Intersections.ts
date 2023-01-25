@@ -4,6 +4,7 @@ import {
   Intersection,
   Object3D,
   Points,
+  Ray,
   Scene,
   Vector2,
   Vector4
@@ -11,6 +12,7 @@ import {
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
+import Logger from 'js-logger'
 
 export class Intersections {
   private raycaster: SpeckleRaycaster
@@ -78,16 +80,36 @@ export class Intersections {
     camera: Camera,
     point: Vector2,
     nearest = true,
-    bounds: Box3 = null
+    bounds: Box3 = null,
+    firstOnly = false
   ): Array<Intersection> {
     this.raycaster.setFromCamera(point, camera)
+    this.raycaster.firstHitOnly = firstOnly
+    return this.intersectInternal(scene, nearest, bounds)
+  }
+
+  public intersectRay(
+    scene: Scene,
+    camera: Camera,
+    ray: Ray,
+    nearest = true,
+    bounds: Box3 = null,
+    firstOnly = false
+  ): Array<Intersection> {
+    this.raycaster.camera = camera
+    this.raycaster.set(ray.origin, ray.direction)
+    this.raycaster.firstHitOnly = firstOnly
+    return this.intersectInternal(scene, nearest, bounds)
+  }
+
+  private intersectInternal(scene: Scene, nearest: boolean, bounds: Box3) {
     const target = scene.getObjectByName('ContentGroup')
 
     let results = []
     if (target) {
       const start = performance.now()
       results = this.raycaster.intersectObjects(target.children)
-      console.warn('Interesct time -> ', performance.now() - start)
+      Logger.warn('Interesct time -> ', performance.now() - start)
     }
 
     if (results.length === 0) return null

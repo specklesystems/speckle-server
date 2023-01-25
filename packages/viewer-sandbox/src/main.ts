@@ -17,6 +17,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
+// params.verbose = true
 
 const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)
@@ -28,6 +29,39 @@ window.addEventListener('load', () => {
   viewer.resize()
 })
 
+/** QUERY TEST */
+// container.addEventListener('mousemove', async (ev) => {
+//   const point = viewer.Utils.screenToNDC(ev.clientX, ev.clientY)
+//   const res: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point,
+//     operation: 'Pick'
+//   })
+//   if (!res) return
+//   const hitPoint = {
+//     x: res.hits[0].point.x,
+//     y: res.hits[0].point.y,
+//     z: res.hits[0].point.z
+//   }
+//   await viewer.selectObjects([res.hits[0].object.id])
+//   const resProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: hitPoint,
+//     operation: 'Project'
+//   })
+//   // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
+//   const resUnProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: { x: resProj.x as number, y: resProj.y as number, z: resProj.z as number },
+//     operation: 'Unproject'
+//   })
+//   console.log(
+//     hitPoint.x - (resUnProj.x as number),
+//     hitPoint.y - (resUnProj.y as number),
+//     hitPoint.z - (resUnProj.z as number)
+//   )
+// })
+
 viewer.on(
   ViewerEvent.LoadProgress,
   (a: { progress: number; id: string; url: string }) => {
@@ -36,6 +70,19 @@ viewer.on(
     }
   }
 )
+
+// const updt = () => {
+//   const resOcc = viewer.query<PointQuery>({
+//     id: 'testX',
+//     point: { x: -2.2779617121296436, y: -1.9397099063369891, z: 7.411126386421243 },
+//     tolerance: 0.001,
+//     operation: 'Occlusion'
+//   })
+//   if (resOcc) console.log(resOcc.occluder === null)
+//   requestAnimationFrame(updt)
+// }
+
+// requestAnimationFrame(updt)
 
 viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
@@ -142,4 +189,40 @@ await sandbox.loadUrl(
   // Jedd's views
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
   // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // MEPs (whatever they are)
+  // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
+  // Alex cubes
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+  // Tekla
+  // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  // Purple market square
+  // 'https://latest.speckle.dev/streams/4ed51ed832/commits/5a313ac116'
+  // Sum building
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/4ea2759162'
+  // Boat
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/ba5df427db'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/c9ebe49824'
+  // Dim's dome
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/158d4e8bec'
+  // Engines 'n Shit
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/80b25e6e6c'
+  // Dim's tower
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/7fd3ec04c0'
+  //COD
+  // 'https://latest.speckle.dev/streams/d3c83b47bf/commits/5f76b7ef3d?overlay=34577a1a92,571d460754,4c39b56c32,a62dd3a5da&c=%5B2046.38919,1074.97765,125.18054,2088.91862,1025.71927,94.66317,0,1%5D'
+  // 'https://latest.speckle.dev/streams/4658eb53b9/commits/0feb23d263'
+  // Jonathon's not loading
+  // 'https://speckle.xyz/streams/ca99defd4b/commits/589b265c99'
+  // Jonathon's 3070
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/d29e56fe75'
+  // Filter issue
+  // 'https://speckle.xyz/streams/f95d8deb90/commits/30f31becb6'
+  // Transparent
+  // 'https://latest.speckle.dev/streams/b5cc4e967c/objects/20343e0e8d469613a9d407499a6c38b1'
+  // dark
+  // 'https://latest.speckle.dev/streams/b5cc4e967c/commits/efdf3e2728?c=%5B-59.16128,-41.76491,-4.77376,-4.08052,-12.63558,-4.77376,0,1%5D'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?filter=%7B%7D&c=%5B-31.02357,37.60008,96.58899,11.01564,7.40652,66.0411,0,1%5D)'
+  // double
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?overlay=c009dbe144&filter=%7B%7D&c=%5B-104.70053,-98.80617,67.44669,6.53096,1.8739,38.584,0,1%5D'
 )

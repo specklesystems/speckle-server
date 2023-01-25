@@ -26,6 +26,8 @@ const {
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
 
+const cors = require('cors')
+
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 
@@ -157,7 +159,8 @@ exports.init = (app) => {
     return { hasPermissions: true, httpErrorCode: 200 }
   }
 
-  app.get('/preview/:streamId/:angle?', async (req, res) => {
+  app.options('/preview/:streamId/:angle?', cors())
+  app.get('/preview/:streamId/:angle?', cors(), async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
@@ -183,39 +186,45 @@ exports.init = (app) => {
     )
   })
 
-  app.get('/preview/:streamId/branches/:branchName/:angle?', async (req, res) => {
-    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-    if (!hasPermissions) {
-      // return res.status( httpErrorCode ).end()
-      return res.sendFile(httpErrorImage(httpErrorCode))
-    }
+  app.options('/preview/:streamId/branches/:branchName/:angle?', cors())
+  app.get(
+    '/preview/:streamId/branches/:branchName/:angle?',
+    cors(),
+    async (req, res) => {
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      if (!hasPermissions) {
+        // return res.status( httpErrorCode ).end()
+        return res.sendFile(httpErrorImage(httpErrorCode))
+      }
 
-    let commitsObj
-    try {
-      commitsObj = await getCommitsByBranchName({
-        streamId: req.params.streamId,
-        branchName: req.params.branchName,
-        limit: 1
-      })
-    } catch {
-      commitsObj = {}
-    }
-    const { commits } = commitsObj
-    if (!commits || commits.length === 0) {
-      return res.sendFile(noPreviewImage)
-    }
-    const lastCommit = commits[0]
+      let commitsObj
+      try {
+        commitsObj = await getCommitsByBranchName({
+          streamId: req.params.streamId,
+          branchName: req.params.branchName,
+          limit: 1
+        })
+      } catch {
+        commitsObj = {}
+      }
+      const { commits } = commitsObj
+      if (!commits || commits.length === 0) {
+        return res.sendFile(noPreviewImage)
+      }
+      const lastCommit = commits[0]
 
-    return sendObjectPreview(
-      req,
-      res,
-      req.params.streamId,
-      lastCommit.referencedObject,
-      req.params.angle || DEFAULT_ANGLE
-    )
-  })
+      return sendObjectPreview(
+        req,
+        res,
+        req.params.streamId,
+        lastCommit.referencedObject,
+        req.params.angle || DEFAULT_ANGLE
+      )
+    }
+  )
 
-  app.get('/preview/:streamId/commits/:commitId/:angle?', async (req, res) => {
+  app.options('/preview/:streamId/commits/:commitId/:angle?', cors())
+  app.get('/preview/:streamId/commits/:commitId/:angle?', cors(), async (req, res) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
@@ -237,7 +246,8 @@ exports.init = (app) => {
     )
   })
 
-  app.get('/preview/:streamId/objects/:objectId/:angle?', async (req, res) => {
+  app.options('/preview/:streamId/objects/:objectId/:angle?', cors())
+  app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
     const { hasPermissions } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()

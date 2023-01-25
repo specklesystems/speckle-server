@@ -21,6 +21,8 @@ import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTre
 import { World } from './modules/World'
 import { DebugViewer } from './modules/DebugViewer'
 import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
+import { PointQuery, QueryResult } from './modules/queries/Query'
+import { Utils } from './modules/Utils'
 
 export {
   Viewer,
@@ -47,5 +49,8 @@ export type {
   CanonicalView,
   InlineView,
   TreeNode,
-  NodeData
+  NodeData,
+  PointQuery,
+  QueryResult,
+  Utils
 }

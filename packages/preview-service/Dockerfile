@@ -50,9 +50,9 @@ RUN apt-get update && \
   libatspi2.0-0=2.38.0-4 \
   libcairo2=1.16.0-5 \
   libcups2=2.3.3op2-3+deb11u2 \
-  libdbus-1-3=1.12.20-2 \
+  libdbus-1-3=1.12.24-0+deb11u1 \
   libdrm2=2.4.104-1 \
-  libexpat1=2.2.10-2+deb11u3 \
+  libexpat1=2.2.10-2+deb11u5 \
   libgbm1=20.3.5-1 \
   libglib2.0-0=2.66.8-1 \
   libnspr4=2:4.29-1 \
