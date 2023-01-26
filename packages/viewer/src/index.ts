@@ -20,7 +20,13 @@ import { SunLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 import { World } from './modules/World'
 import { DebugViewer } from './modules/DebugViewer'
-import { PointQuery, QueryResult } from './modules/queries/Query'
+import {
+  PointQuery,
+  QueryResult,
+  IntersectionQuery,
+  PointQueryResult,
+  IntersectionQueryResult
+} from './modules/queries/Query'
 import { Utils } from './modules/Utils'
 
 export {
@@ -47,6 +53,9 @@ export type {
   CanonicalView,
   InlineView,
   PointQuery,
+  IntersectionQuery,
   QueryResult,
+  PointQueryResult,
+  IntersectionQueryResult,
   Utils
 }

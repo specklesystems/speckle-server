@@ -676,7 +676,7 @@ export default {
           tolerance: 0.001,
           operation: 'Occlusion'
         })
-        const opacity = occlusionRes.occluder === null ? '1.0' : '0.25'
+        const opacity = occlusionRes.objects === null ? '1.0' : '0.25'
         commentEl.style.opacity = opacity
       }
     },
