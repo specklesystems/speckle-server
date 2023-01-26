@@ -41,6 +41,7 @@ import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/model
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useViewerSelectionEventHandler } from './setup/selection'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -167,7 +168,7 @@ export type InjectableViewerState = Readonly<{
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
-      objects: Ref<Raw<Record<string, unknown>>[]>
+      objects: Ref<Raw<Record<string, unknown>>[]> // Computed
       addToSelection: (object: Record<string, unknown>) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
@@ -545,6 +546,7 @@ function setupInterfaceState(
   }
 
   const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
+
   const setViewerSelectionFilter = () => {
     const v = state.viewer.instance
 
@@ -556,7 +558,7 @@ function setupInterfaceState(
   const addToSelection = (object: Record<string, unknown>) => {
     const index = selectedObjects.value.findIndex((o) => o.id === object.id)
     if (index >= 0) return
-    selectedObjects.value.push(markRaw(object))
+    selectedObjects.value.unshift(markRaw(object))
     setViewerSelectionFilter()
   }
 
@@ -655,33 +657,6 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
   onBeforeUnmount(async () => {
     await viewer.unloadAll()
   })
-}
-
-function useViewerSelectionEventHandler(state: InjectableViewerState) {
-  useSelectionEvents(
-    {
-      singleClickCallback: (args: SelectionEvent) => {
-        console.log('TODO: single click event')
-        if (!args) return state.ui.selection.clearSelection()
-        if (args.hits.length === 0) return state.ui.selection.clearSelection()
-        if (!args.multiple) state.ui.selection.clearSelection()
-        // TODO: check for first visible object
-        state.ui.selection.addToSelection(
-          args.hits[0].object as Record<string, unknown>
-        )
-      },
-      doubleClickCallback: (args) => {
-        console.log('double click event', args)
-        if (!args) return state.viewer.instance.zoom()
-        if (!args.hits) return state.viewer.instance.zoom()
-        if (args.hits.length === 0) return state.viewer.instance.zoom()
-        // TODO: check for first visible object
-        const objectId = args.hits[0].object.id
-        state.viewer.instance.zoom([objectId as string])
-      }
-    },
-    { state }
-  )
 }
 
 function useViewerIsBusyEventHandler(state: InjectableViewerState) {
