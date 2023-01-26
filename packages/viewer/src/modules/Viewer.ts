@@ -333,6 +333,10 @@ export class Viewer extends EventEmitter implements IViewer {
       Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultPointQuerySolver.solve(query)
     }
+    if (Queries.isIntersectionQuery(query)) {
+      Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
+      return Queries.DefaultIntersectionQuerySolver.solve(query)
+    }
   }
 
   public queryAsync(query: Query): Promise<QueryResult> {

@@ -32,18 +32,18 @@ window.addEventListener('load', () => {
 /** QUERY TEST */
 // container.addEventListener('mousemove', async (ev) => {
 //   const point = viewer.Utils.screenToNDC(ev.clientX, ev.clientY)
-//   const res: QueryResult = viewer.query<PointQuery>({
+//   const res: QueryResult = viewer.query<IntersectionQuery>({
 //     id: 'test',
 //     point,
 //     operation: 'Pick'
 //   })
 //   if (!res) return
 //   const hitPoint = {
-//     x: res.hits[0].point.x,
-//     y: res.hits[0].point.y,
-//     z: res.hits[0].point.z
+//     x: res.objects[0].point.x,
+//     y: res.objects[0].point.y,
+//     z: res.objects[0].point.z
 //   }
-//   await viewer.selectObjects([res.hits[0].object.id])
+//   await viewer.selectObjects([res.objects[0].object.id])
 //   const resProj: QueryResult = viewer.query<PointQuery>({
 //     id: 'test',
 //     point: hitPoint,
@@ -52,13 +52,13 @@ window.addEventListener('load', () => {
 //   // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
 //   const resUnProj: QueryResult = viewer.query<PointQuery>({
 //     id: 'test',
-//     point: { x: resProj.x as number, y: resProj.y as number, z: resProj.z as number },
+//     point: { x: resProj.x, y: resProj.y, z: resProj.z },
 //     operation: 'Unproject'
 //   })
 //   console.log(
-//     hitPoint.x - (resUnProj.x as number),
-//     hitPoint.y - (resUnProj.y as number),
-//     hitPoint.z - (resUnProj.z as number)
+//     hitPoint.x - resUnProj.x,
+//     hitPoint.y - resUnProj.y,
+//     hitPoint.z - resUnProj.z
 //   )
 // })
 
@@ -72,13 +72,13 @@ viewer.on(
 )
 
 // const updt = () => {
-//   const resOcc = viewer.query<PointQuery>({
+//   const resOcc = viewer.query<IntersectionQuery>({
 //     id: 'testX',
 //     point: { x: -2.2779617121296436, y: -1.9397099063369891, z: 7.411126386421243 },
 //     tolerance: 0.001,
 //     operation: 'Occlusion'
 //   })
-//   if (resOcc) console.log(resOcc.occluder === null)
+//   if (resOcc) console.log(resOcc.objects === null)
 //   requestAnimationFrame(updt)
 // }
 

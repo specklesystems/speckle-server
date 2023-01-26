@@ -559,7 +559,7 @@ export default {
         tolerance: 0.001,
         operation: 'Occlusion'
       })
-      const opacity = occlusionRes.occluder === null ? '1.0' : '0.25'
+      const opacity = occlusionRes.objects === null ? '1.0' : '0.25'
       this.$refs.commentButton.style.transform = ''
       this.$refs.commentButton.style.transition = ''
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`

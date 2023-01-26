@@ -1,14 +1,31 @@
 export interface Query {
-  id: string
+  id?: string // id will be used later on if we develop the queries further
+  operation: QueryOperation
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type QueryResult = { [prop: string]: any }
+export type QueryResult = PointQueryResult | IntersectionQueryResult
 
-export type PointQueryOperation = 'Occlusion' | 'Project' | 'Unproject' | 'Pick'
+export type QueryOperation = 'Project' | 'Unproject' | 'Occlusion' | 'Pick'
 
 export interface PointQuery extends Query {
   point: { x: number; y: number; z?: number; w?: number }
+}
+
+export interface IntersectionQuery extends PointQuery {
   tolerance?: number
-  operation: PointQueryOperation
+}
+
+export interface PointQueryResult {
+  x: number
+  y: number
+  z?: number
+  w?: number
+}
+
+export interface IntersectionQueryResult {
+  objects: Array<{
+    guid: string
+    object: Record<string, unknown>
+    point: { x: number; y: number; z: number }
+  }> | null
 }

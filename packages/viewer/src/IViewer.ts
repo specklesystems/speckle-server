@@ -5,6 +5,7 @@ import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
 import { WorldTree } from './modules/tree/WorldTree'
+import { Utils } from './modules/Utils'
 
 export interface ViewerParams {
   showStats: boolean
@@ -205,6 +206,7 @@ export interface IViewer {
   query<T extends Query>(query: T): QueryResult
   queryAsync(query: Query): Promise<QueryResult>
   getWorldTree(): WorldTree
+  get Utils(): Utils
 
   dispose(): void
 }
