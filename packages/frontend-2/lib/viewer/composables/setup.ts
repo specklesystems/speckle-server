@@ -39,8 +39,8 @@ import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/model
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useViewerSelectionEventHandler } from './setup/selection'
 import { nanoid } from 'nanoid'
+import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -936,7 +936,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
 
   // Extra post-state-creation setup
   useViewerObjectAutoLoading(state)
-  useViewerSelectionEventHandler(state) // TODO: needs implementation
+  useViewerSelectionEventHandler(state)
   useViewerIsBusyEventHandler(state)
   useViewerModelsVersionsUpdateTracker(state)
 

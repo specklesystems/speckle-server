@@ -35,7 +35,7 @@ export function useViewerSelectionEventHandler(state: InjectableViewerState) {
   useSelectionEvents(
     {
       // test
-      singleClickCallback: (args: SelectionEvent) => {
+      singleClickCallback: (args) => {
         console.log('TODO: single click event')
         if (!args) return state.ui.selection.clearSelection()
         if (args.hits.length === 0) return state.ui.selection.clearSelection()

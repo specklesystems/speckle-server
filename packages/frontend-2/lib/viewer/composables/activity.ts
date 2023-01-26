@@ -48,9 +48,10 @@ function useCollectSelection() {
 
   const selectionLocation = ref(null as Nullable<Vector3>)
 
-  const selectionCallback = (event: SelectionEvent) => {
+  const selectionCallback = (event: Nullable<SelectionEvent>) => {
     if (!event) return
 
+    console.log(event)
     const firstHit = event.hits[0]
     selectionLocation.value = firstHit.point
   }

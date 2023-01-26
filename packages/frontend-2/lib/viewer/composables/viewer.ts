@@ -4,6 +4,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, throttle } from 'lodash-es'
+import { Nullable } from '@speckle/shared'
 
 export function useViewerCameraTracker(
   callback: () => void,
@@ -27,8 +28,8 @@ export function useViewerCameraTracker(
 
 export function useSelectionEvents(
   params: {
-    singleClickCallback?: (event: SelectionEvent) => void
-    doubleClickCallback?: (event: SelectionEvent) => void
+    singleClickCallback?: (event: Nullable<SelectionEvent>) => void
+    doubleClickCallback?: (event: Nullable<SelectionEvent>) => void
   },
   options?: Partial<{
     state: InjectableViewerState
