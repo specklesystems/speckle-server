@@ -27,7 +27,9 @@
         >
           <div
             :class="`truncate ${unfold ? 'font-semibold' : ''} ${
-              isHidden || !isIsolated ? 'text-foreground-2' : ''
+              isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
+                ? 'text-foreground-2'
+                : ''
             }`"
           >
             <div class="text-sm truncate">
@@ -247,6 +249,11 @@ const isHidden = computed(() => {
   if (!hiddenObjects.value) return false
   const ids = getTargetObjectIds(rawSpeckleData)
   return containsAll(ids, hiddenObjects.value)
+})
+
+const stateHasIsolatedObjectsInGeneral = computed(() => {
+  if (!isolatedObjects.value) return false
+  return isolatedObjects.value.length > 0
 })
 
 const isIsolated = computed(() => {
