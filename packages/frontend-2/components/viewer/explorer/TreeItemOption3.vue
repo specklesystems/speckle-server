@@ -20,7 +20,7 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
+          :class="`group flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
             ${isSelected ? 'ring-1' : 'ring-0'}
           `"
           @click="(e) => setSelection(e)"
@@ -37,13 +37,13 @@
           </div>
           <div class="flex-grow"></div>
           <div class="flex items-center space-x-1 flex-shrink-0">
-            <div v-if="isSingleCollection || isMultipleCollection">
-              <span class="text-foreground-2 text-xs">
-                ({{ treeItem.children.length }})
-              </span>
-            </div>
-            <div v-if="!(isSingleCollection || isMultipleCollection)">
+            <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
+            <div class="flex space-x-1 transition opacity-0 group-hover:opacity-100">
               <EyeIcon class="w-3 h-3" />
+              <FunnelIcon class="w-3 h-3" />
+            </div>
+            <div v-if="isSingleCollection || isMultipleCollection">
+              <span class="text-foreground-2 text-xs">({{ childrenLength }})</span>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon, EyeIcon } from '@heroicons/vue/24/solid'
+import { ChevronDownIcon, EyeIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { Ref } from 'vue'
 import {
   ExplorerNode,
@@ -118,6 +118,13 @@ const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)
 })
 
+const childrenLength = computed(() => {
+  if (rawSpeckleData.elements && Array.isArray(rawSpeckleData.elements))
+    return rawSpeckleData.elements.length
+  if (rawSpeckleData.children && Array.isArray(rawSpeckleData.children))
+    return rawSpeckleData.children.length
+})
+
 const isSingleCollection = computed(() => {
   return (
     isNonEmptyObjectArray(speckleData.children) ||
@@ -139,14 +146,9 @@ const singleCollectionItems = computed(() => {
   return treeItems
 })
 
-type ExplorerModelCollection = {
-  raw: {
-    name: string
-    id: string
-    children: SpeckleReference[]
-  }
-  children: ExplorerNode[]
-}
+const isSingleCollectionItemsIds = computed(() => {
+  singleCollectionItems.value.map((obj) => obj.raw?.id as string).filter((id) => !!id)
+})
 
 // Creates a list of all model collections that are not defined as collections. specifically, handles cases such as
 // object { @boat: [obj, obj, obj], @harbour: [obj, obj, obj], etc. }

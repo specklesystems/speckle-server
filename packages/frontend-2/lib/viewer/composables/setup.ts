@@ -42,6 +42,7 @@ import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/ver
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useViewerSelectionEventHandler } from './setup/selection'
+import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -549,9 +550,13 @@ function setupInterfaceState(
 
   const setViewerSelectionFilter = () => {
     const v = state.viewer.instance
-
     if (selectedObjects.value.length === 0) return v.resetSelection()
-    const ids = selectedObjects.value.map((o) => o.id as string).filter((id) => !!id)
+    let ids = [] as string[]
+    for (const obj of selectedObjects.value) {
+      const objIds = getTargetObjectIds(obj)
+      ids.push(...objIds)
+    }
+    ids = [...new Set(ids.filter((id) => !!id))]
     v.selectObjects(ids)
   }
 

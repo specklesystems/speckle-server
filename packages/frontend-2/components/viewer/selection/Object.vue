@@ -52,7 +52,7 @@
         :key="index"
         class="text-xs"
       >
-        {{ kvp.key }}:{{ kvp.innerType }} (array todo)
+        {{ kvp.key }}:{{ kvp.innerType }} ({{ kvp.arrayLength }})
       </div>
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
@@ -103,7 +103,7 @@ const headerAndSubheader = computed(() => {
 
 const ignoredProps = [
   '__closure',
-  // 'displayMesh',
+  'displayMesh',
   'displayValue',
   'totalChildrenCount',
   '__importedUrl',
@@ -112,6 +112,24 @@ const ignoredProps = [
 
 const keyValuePairs = computed(() => {
   const kvps = [] as Record<string, unknown>[]
+
+  // handle revit paramters
+  if (props.title === 'parameters') {
+    const paramKeys = Object.keys(props.object)
+    for (const prop of paramKeys) {
+      const param = props.object[prop] as Record<string, unknown>
+      if (!param) continue
+      kvps.push({
+        key: param.name as string,
+        type: typeof param.value,
+        innerType: null,
+        arrayLength: null,
+        arrayPreview: null,
+        value: param.value
+      })
+    }
+    return kvps
+  }
 
   const objectKeys = Object.keys(props.object)
   for (const key of objectKeys) {
