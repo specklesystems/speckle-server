@@ -2,7 +2,7 @@
   <!--     -->
   <!-- WIP -->
   <!--     -->
-  <div class="w-full">
+  <div class="w-full select-none">
     <!-- Header -->
     <div class="bg-foundation py-1 rounded-md px-1 w-full">
       <div class="flex items-stretch space-x-1 w-full">
@@ -20,8 +20,10 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          class="flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1"
-          @click="setSelection"
+          :class="`flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
+            ${isSelected ? 'ring-1' : 'ring-0'}
+          `"
+          @click="(e) => setSelection(e)"
         >
           <div :class="`truncate ${unfold ? 'font-semibold' : ''}`">
             <div class="text-sm truncate">
@@ -30,6 +32,7 @@
             </div>
             <div class="text-tiny text-foreground-2 truncate">
               {{ subHeader || headerAndSubheader.subheader }}
+              <span v-if="debug">/ selected: {{ isSelected }}</span>
             </div>
           </div>
           <div class="flex-grow"></div>
@@ -53,7 +56,7 @@
     </div>
 
     <!-- Children Contents -->
-    <div v-if="unfold" class="relative pl-2 text-xs">
+    <div v-if="unfold" class="relative pl-1 text-xs">
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
@@ -89,6 +92,8 @@ import {
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 
 const props = withDefaults(
   defineProps<{
@@ -109,66 +114,8 @@ const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
 const rawSpeckleData = props.treeItem?.raw as Record<string, unknown>
 
-type HeaderSubheader = {
-  header: string
-  subheader: string
-}
-
 const headerAndSubheader = computed(() => {
-  const speckleType = speckleData.speckle_type as string
-  if (!speckleType)
-    return {
-      header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
-      subheader: ''
-    } as HeaderSubheader
-
-  // Handle revit objects
-  if (speckleType.toLowerCase().includes('revit')) {
-    if (speckleType.toLowerCase().includes('familyinstance')) {
-      // TODO
-      const famHeader = `${rawSpeckleData.family as string} (${
-        rawSpeckleData.category as string
-      })`
-      const famSubheader = rawSpeckleData.type
-      return { header: famHeader, subheader: famSubheader }
-    }
-
-    if (speckleType.toLowerCase().includes('revitelementtype')) {
-      return {
-        header: rawSpeckleData.family,
-        subheader: rawSpeckleData.type + ' / ' + rawSpeckleData.category
-      }
-    }
-    const anyHeader = speckleType.split('.').reverse()[0]
-    const anySubheaderParts = [rawSpeckleData.category, rawSpeckleData.type].filter(
-      (part) => !!part
-    )
-    return {
-      header: anyHeader,
-      subheader: anySubheaderParts.join(' / ')
-    } as HeaderSubheader
-  }
-
-  // Handle ifc objects
-  if (speckleType.toLowerCase().includes('ifc')) {
-    const name = rawSpeckleData.Name || rawSpeckleData.name
-    return {
-      header: name || rawSpeckleData.speckleType,
-      subheader: name ? rawSpeckleData.speckle_type : rawSpeckleData.id
-    } as HeaderSubheader
-  }
-
-  if (speckleType.toLowerCase().includes('objects.geometry')) {
-    return {
-      header: speckleType.split('.').reverse()[0],
-      subheader: rawSpeckleData.id
-    } as HeaderSubheader
-  }
-
-  return {
-    header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
-    subheader: speckleType.split('.').reverse()[0]
-  } as HeaderSubheader
+  return getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)
 })
 
 const isSingleCollection = computed(() => {
@@ -244,11 +191,25 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
-// YOLO hack
-const selectedObject = inject('selectedObject') as Ref<Record<string, unknown>>
-const setSelection = () => {
-  console.log(props.treeItem)
-  if (selectedObject.value?.id === speckleData.id) selectedObject.value = null
-  else selectedObject.value = markRaw(speckleData)
+const {
+  selection: { addToSelection, clearSelection, removeFromSelection, objects }
+} = useInjectedViewerInterfaceState()
+
+const isSelected = computed(() => {
+  return !!objects.value.find((o) => o.id === speckleData.id)
+})
+
+const setSelection = (e: MouseEvent) => {
+  if (isSelected.value && !e.shiftKey) {
+    // TODO: remove from selection
+    clearSelection()
+    return
+  }
+  if (isSelected.value && e.shiftKey) {
+    removeFromSelection(speckleData as Record<string, unknown>)
+    return
+  }
+  if (!e.shiftKey) clearSelection()
+  addToSelection(speckleData as Record<string, unknown>)
 }
 </script>

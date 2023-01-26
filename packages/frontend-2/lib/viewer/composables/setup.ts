@@ -14,7 +14,8 @@ import {
   provide,
   ComputedRef,
   Ref,
-  WritableComputedRef
+  WritableComputedRef,
+  Raw
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
@@ -40,6 +41,7 @@ import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/model
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useViewerSelectionEventHandler } from './setup/selection'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -166,9 +168,9 @@ export type InjectableViewerState = Readonly<{
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
-      objects: Ref<Record<string, unknown>[]>
-      addToSelection: () => void
-      removeFromSelection: () => void
+      objects: Ref<Raw<Record<string, unknown>>[]> // Computed
+      addToSelection: (object: Record<string, unknown>) => void
+      removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
   }
@@ -496,6 +498,7 @@ function setupInterfaceState(
   // Filters
   const filteringState = ref(null as Nullable<FilteringState>)
   const localFilterPropKey = ref(null as Nullable<string>)
+
   const isolateObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -504,6 +507,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const unIsolateObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -512,6 +516,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const hideObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -520,6 +525,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const showObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -528,6 +534,7 @@ function setupInterfaceState(
     filteringState.value = result
     viewerBusy.value = false
   }
+
   const setColorFilter = async (property: PropertyInfo) => {
     if (process.server) return
     viewerBusy.value = true
@@ -536,6 +543,35 @@ function setupInterfaceState(
     filteringState.value = result
     localFilterPropKey.value = property.key
     viewerBusy.value = false
+  }
+
+  const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
+
+  const setViewerSelectionFilter = () => {
+    const v = state.viewer.instance
+
+    if (selectedObjects.value.length === 0) return v.resetSelection()
+    const ids = selectedObjects.value.map((o) => o.id as string).filter((id) => !!id)
+    v.selectObjects(ids)
+  }
+
+  const addToSelection = (object: Record<string, unknown>) => {
+    const index = selectedObjects.value.findIndex((o) => o.id === object.id)
+    if (index >= 0) return
+    selectedObjects.value.unshift(markRaw(object))
+    setViewerSelectionFilter()
+  }
+
+  const removeFromSelection = (object: Record<string, unknown> | string) => {
+    const objectId = typeof object === 'string' ? object : (object.id as string)
+    const index = selectedObjects.value.findIndex((o) => o.id === objectId)
+    if (index > 0) selectedObjects.value.splice(index, 1)
+    setViewerSelectionFilter()
+  }
+
+  const clearSelection = () => {
+    selectedObjects.value = []
+    setViewerSelectionFilter()
   }
 
   return {
@@ -550,6 +586,12 @@ function setupInterfaceState(
         hideObjects,
         showObjects,
         setColorFilter
+      },
+      selection: {
+        objects: selectedObjects,
+        addToSelection,
+        clearSelection,
+        removeFromSelection
       }
     }
   }
@@ -615,23 +657,6 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
   onBeforeUnmount(async () => {
     await viewer.unloadAll()
   })
-}
-
-function useViewerSelectionEventHandler(state: InjectableViewerState) {
-  useSelectionEvents(
-    {
-      singleClickCallback: (args: SelectionEvent) => {
-        console.log('TODO: single click event')
-        // console.log(args)
-        // Default stuff that has to happen when single click occurs
-      },
-      doubleClickCallback: () => {
-        console.log('double click event')
-        // Default stuff that has to happen when double click occurs
-      }
-    },
-    { state }
-  )
 }
 
 function useViewerIsBusyEventHandler(state: InjectableViewerState) {
