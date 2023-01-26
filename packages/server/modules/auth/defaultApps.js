@@ -195,7 +195,6 @@ const SpecklePowerBi = {
   redirectUrl: 'https://oauth.powerbi.com/views/oauthredirect.html',
   scopes: [
     ScopesConst.Streams.Read,
-    ScopesConst.Streams.Write,
     ScopesConst.Profile.Read,
     ScopesConst.Profile.Email,
     ScopesConst.Users.Read,
