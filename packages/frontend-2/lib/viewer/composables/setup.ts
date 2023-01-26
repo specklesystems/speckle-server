@@ -973,3 +973,5 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
   const { ui } = useInjectedViewerState()
   return ui
 }
+
+export const test = 1

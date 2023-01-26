@@ -21,7 +21,7 @@ import { onViewerUserActivityBroadcastedSubscription } from '../graphql/subscrip
 import dayjs, { Dayjs } from 'dayjs'
 import { get } from 'lodash-es'
 import { useIntervalFn } from '@vueuse/core'
-import { Ref } from 'vue'
+import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 
 /**
@@ -151,11 +151,12 @@ function useViewerUserActivityBroadcasting() {
 
 type UserActivityModel = SetFullyRequired<ViewerUserActivityMessage, 'selection'> & {
   isStale: boolean
+  isOccluded: boolean
   lastUpdate: Dayjs
   isClipped: boolean
   projectedPosition: [number, number]
   style: {
-    target: Partial<CSSStyleDeclaration>
+    target: Partial<CSSProperties>
   }
 }
 
@@ -178,6 +179,7 @@ export function useViewerUserActivityTracking(params: {
   const { isLoggedIn } = useActiveUser()
   const sendUpdate = useViewerUserActivityBroadcasting()
 
+  // TODO: For some reason subscription is set up twice? Vue Apollo bug?
   const { onResult: onUserActivity } = useSubscription(
     onViewerUserActivityBroadcastedSubscription,
     () => ({
@@ -207,7 +209,12 @@ export function useViewerUserActivityTracking(params: {
     const userData: UserActivityModel = {
       ...(users.value[incomingSessionId]
         ? users.value[incomingSessionId]
-        : { isClipped: false, projectedPosition: [0, 0], style: { target: {} } }),
+        : {
+            isClipped: false,
+            projectedPosition: [0, 0],
+            style: { target: {} },
+            isOccluded: false
+          }),
       ...event,
       selection: event.selection,
       isStale: false,
@@ -237,13 +244,27 @@ export function useViewerUserActivityTracking(params: {
         point: target,
         operation: 'Project',
         id: 'dunno what this is for'
+      }) as { x: number; y: number }
+
+      const targetOcclusionRes = viewer.query<PointQuery>({
+        point: target,
+        tolerance: 0.001,
+        operation: 'Occlusion',
+        id: 'another unknown id'
       })
+      user.isOccluded = targetOcclusionRes.occluder !== null
+
       const targetLoc = viewer.Utils.NDCToScreen(
         targetProjectionResult.x,
         targetProjectionResult.y,
         parentEl.value.clientWidth,
         parentEl.value.clientHeight
-      )
+      ) as { x: number; y: number }
+
+      const targetStyle = user.style.target
+      targetStyle.transition = smoothTranslation ? 'all 0.1s ease' : ''
+      targetStyle.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
+      targetStyle.opacity = user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
     }
   }
 
@@ -275,6 +296,15 @@ export function useViewerUserActivityTracking(params: {
   useViewerCameraTracker(() => updatePositions())
   useIntervalFn(sendUpdateAndHideStaleUsers, OWN_ACTIVITY_UPDATE_INTERVAL)
   useIntervalFn(hideStaleUsers, USER_STALE_CHECK_INTERVAL)
+
+  const selectionCallback = () => {
+    // to ensure that useCollectSelection() works first
+    nextTick(() => sendUpdateAndHideStaleUsers())
+  }
+  useSelectionEvents({
+    singleClickCallback: selectionCallback,
+    doubleClickCallback: selectionCallback
+  })
 
   onBeforeUnmount(() => {
     sendUpdate.emitDisconnected()
