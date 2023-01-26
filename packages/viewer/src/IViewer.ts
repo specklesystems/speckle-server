@@ -4,6 +4,7 @@ import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
+import { Utils } from './modules/Utils'
 
 export interface ViewerParams {
   showStats: boolean
@@ -203,6 +204,7 @@ export interface IViewer {
   getDataTree(): DataTree
   query<T extends Query>(query: T): QueryResult
   queryAsync(query: Query): Promise<QueryResult>
+  get Utils(): Utils
 
   dispose(): void
 }
