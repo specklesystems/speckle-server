@@ -20,6 +20,7 @@ module.exports = async () => {
   await registerOrUpdateApp({ ...SpeckleDesktopApp })
   await registerOrUpdateApp({ ...SpeckleConnectorApp })
   await registerOrUpdateApp({ ...SpeckleExcel })
+  await registerOrUpdateApp({ ...SpecklePowerBi })
 }
 
 async function registerOrUpdateApp(app) {
@@ -173,6 +174,25 @@ const SpeckleExcel = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'https://speckle-excel.netlify.app',
+  scopes: [
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read,
+    ScopesConst.Users.Invite
+  ]
+}
+
+const SpecklePowerBi = {
+  id: 'spklpowerbi',
+  secret: 'spklpowerbi',
+  name: 'Speckle Connector For PowerBI',
+  description:
+    'The Speckle Connector For Excel. For more info check the docs here: https://speckle.guide/user/powerbi.html.',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'https://oauth.powerbi.com/views/oauthredirect.html',
   scopes: [
     ScopesConst.Streams.Read,
     ScopesConst.Streams.Write,
