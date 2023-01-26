@@ -12,8 +12,6 @@
           {{ title || headerAndSubheader.header }}
         </div>
       </button>
-
-      <!-- <div class="text-xs font-bold">{{ title }}</div> -->
     </div>
     <div v-if="unfold" class="ml-1 space-y-1">
       <div
@@ -88,7 +86,7 @@ const viewerTree = viewer.getWorldTree()
 const props = withDefaults(
   defineProps<{
     object: Record<string, unknown>
-    title?: string
+    title: string
     unfold: boolean
     debug?: boolean
   }>(),

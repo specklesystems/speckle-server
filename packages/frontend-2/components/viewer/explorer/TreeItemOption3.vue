@@ -25,22 +25,38 @@
           `"
           @click="(e) => setSelection(e)"
         >
-          <div :class="`truncate ${unfold ? 'font-semibold' : ''}`">
+          <div
+            :class="`truncate ${unfold ? 'font-semibold' : ''} ${
+              isHidden || !isIsolated ? 'text-foreground-2' : ''
+            }`"
+          >
             <div class="text-sm truncate">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>
             <div class="text-tiny text-foreground-2 truncate">
-              {{ subHeader || headerAndSubheader.subheader }}
+              {{ isHidden }}: {{ subHeader || headerAndSubheader.subheader }}
               <span v-if="debug">/ selected: {{ isSelected }}</span>
             </div>
           </div>
           <div class="flex-grow"></div>
           <div class="flex items-center space-x-1 flex-shrink-0">
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
-            <div class="flex space-x-1 transition opacity-0 group-hover:opacity-100">
-              <EyeIcon class="w-3 h-3" />
-              <FunnelIcon class="w-3 h-3" />
+            <div class="flex space-x-2 transition opacity-0 group-hover:opacity-100">
+              <button
+                class="hover:text-primary transition"
+                @click.stop="hideOrShowObject"
+              >
+                <EyeIcon v-if="!isHidden" class="w-3 h-3" />
+                <EyeSlashIcon v-else class="w-3 h-3" />
+              </button>
+              <button
+                class="hover:text-primary transition"
+                @click.stop="isolateOrUnisolateObject"
+              >
+                <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
+                <FunnelIcon v-else class="w-3 h-3" />
+              </button>
             </div>
             <div v-if="isSingleCollection || isMultipleCollection">
               <span class="text-foreground-2 text-xs">({{ childrenLength }})</span>
@@ -60,7 +76,7 @@
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
-        <div v-for="collection in arrayCollections" :key="collection.raw.name">
+        <div v-for="collection in arrayCollections" :key="collection?.raw?.name">
           <TreeItemOption3
             :item-id="(collection.raw.id as string)"
             :tree-item="collection"
@@ -85,15 +101,23 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon, EyeIcon, FunnelIcon } from '@heroicons/vue/24/solid'
-import { Ref } from 'vue'
+import {
+  ChevronDownIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  FunnelIcon
+} from '@heroicons/vue/24/solid'
+import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import {
   ExplorerNode,
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
+import {
+  getHeaderAndSubheaderForSpeckleObject,
+  getTargetObjectIds
+} from '~~/lib/object-sidebar/helpers'
 
 const props = withDefaults(
   defineProps<{
@@ -146,10 +170,6 @@ const singleCollectionItems = computed(() => {
   return treeItems
 })
 
-const isSingleCollectionItemsIds = computed(() => {
-  singleCollectionItems.value.map((obj) => obj.raw?.id as string).filter((id) => !!id)
-})
-
 // Creates a list of all model collections that are not defined as collections. specifically, handles cases such as
 // object { @boat: [obj, obj, obj], @harbour: [obj, obj, obj], etc. }
 // @boat and @harbour would ideally be model collections, but, alas, connectors don't have that yet.
@@ -194,7 +214,8 @@ const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
 const {
-  selection: { addToSelection, clearSelection, removeFromSelection, objects }
+  selection: { addToSelection, clearSelection, removeFromSelection, objects },
+  filters
 } = useInjectedViewerInterfaceState()
 
 const isSelected = computed(() => {
@@ -202,16 +223,60 @@ const isSelected = computed(() => {
 })
 
 const setSelection = (e: MouseEvent) => {
+  if (isHidden.value) return
   if (isSelected.value && !e.shiftKey) {
     // TODO: remove from selection
     clearSelection()
     return
   }
   if (isSelected.value && e.shiftKey) {
-    removeFromSelection(speckleData as Record<string, unknown>)
+    removeFromSelection(rawSpeckleData)
     return
   }
   if (!e.shiftKey) clearSelection()
-  addToSelection(speckleData as Record<string, unknown>)
+  addToSelection(rawSpeckleData)
+}
+
+const containsAll = (target: unknown[], array: unknown[]) =>
+  target.every((v) => array.includes(v))
+
+const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
+const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
+
+const isHidden = computed(() => {
+  if (!hiddenObjects.value) return false
+  const ids = getTargetObjectIds(rawSpeckleData)
+  return containsAll(ids, hiddenObjects.value)
+})
+
+const isIsolated = computed(() => {
+  if (!isolatedObjects.value) return false
+  const ids = getTargetObjectIds(rawSpeckleData)
+  return containsAll(ids, isolatedObjects.value)
+})
+
+const stateKey = 'tree-explorer'
+const hideOrShowObject = () => {
+  const ids = getTargetObjectIds(rawSpeckleData)
+  if (!isHidden.value) {
+    console.log('hiding')
+    removeFromSelection(rawSpeckleData)
+    filters.hideObjects(ids, stateKey, true)
+    return
+  }
+  console.log('showing')
+  return filters.showObjects(ids, stateKey, true)
+}
+
+const isolateOrUnisolateObject = () => {
+  const ids = getTargetObjectIds(rawSpeckleData)
+  if (!isIsolated.value) {
+    console.log('isolating')
+    // removeFromSelection(rawSpeckleData)
+    filters.isolateObjects(ids, stateKey, true)
+    return
+  }
+  console.log('unisolating')
+  return filters.unIsolateObjects(ids, stateKey, true)
 }
 </script>

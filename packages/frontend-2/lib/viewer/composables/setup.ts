@@ -505,7 +505,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.isolateObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -514,7 +514,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.unIsolateObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -523,7 +523,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.hideObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -532,7 +532,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.showObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -541,7 +541,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.setColorFilter(property)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     localFilterPropKey.value = property.key
     viewerBusy.value = false
   }
@@ -557,6 +557,7 @@ function setupInterfaceState(
       ids.push(...objIds)
     }
     ids = [...new Set(ids.filter((id) => !!id))]
+    console.log(ids)
     v.selectObjects(ids)
   }
 
@@ -570,7 +571,7 @@ function setupInterfaceState(
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
     const index = selectedObjects.value.findIndex((o) => o.id === objectId)
-    if (index > 0) selectedObjects.value.splice(index, 1)
+    if (index >= 0) selectedObjects.value.splice(index, 1)
     setViewerSelectionFilter()
   }
 
