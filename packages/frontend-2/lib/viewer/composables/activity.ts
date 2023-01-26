@@ -23,6 +23,7 @@ import { get } from 'lodash-es'
 import { useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import { IntersectionQuery } from '~~/../viewer/dist/modules/queries/Query'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -242,24 +243,22 @@ export function useViewerUserActivityTracking(params: {
           )
       const targetProjectionResult = viewer.query<PointQuery>({
         point: target,
-        operation: 'Project',
-        id: 'dunno what this is for'
-      }) as { x: number; y: number }
+        operation: 'Project'
+      })
 
-      const targetOcclusionRes = viewer.query<PointQuery>({
+      const targetOcclusionRes = viewer.query<IntersectionQuery>({
         point: target,
         tolerance: 0.001,
-        operation: 'Occlusion',
-        id: 'another unknown id'
+        operation: 'Occlusion'
       })
-      user.isOccluded = targetOcclusionRes.occluder !== null
+      user.isOccluded = !!targetOcclusionRes.objects?.length
 
       const targetLoc = viewer.Utils.NDCToScreen(
         targetProjectionResult.x,
         targetProjectionResult.y,
         parentEl.value.clientWidth,
         parentEl.value.clientHeight
-      ) as { x: number; y: number }
+      )
 
       const targetStyle = user.style.target
       targetStyle.transition = smoothTranslation ? 'all 0.1s ease' : ''

@@ -1,16 +1,22 @@
 <template>
-  <div ref="parentEl" class="absolute w-full h-full pointer-events-none">
+  <div
+    ref="parentEl"
+    class="absolute w-full h-full pointer-events-none overflow-hidden"
+  >
     <!-- Active user -->
     <div
       v-for="user in Object.values(users)"
       :key="user.viewerSessionId"
-      :class="'absolute p-2 bg-foundation pointer-events-auto'"
+      :class="[
+        'absolute p-2 pointer-events-auto flex flex-col',
+        user.isStale ? 'bg-foundation-disabled' : 'bg-foundation'
+      ]"
       :style="{
         ...user.style.target,
         transformOrigin: 'center'
       }"
     >
-      {{ user.viewerSessionId }}
+      <span>{{ user.userName }}</span>
     </div>
   </div>
 </template>
