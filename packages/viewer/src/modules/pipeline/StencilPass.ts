@@ -4,6 +4,7 @@ import {
   Color,
   DoubleSide,
   Material,
+  Plane,
   ReplaceStencilOp,
   Scene,
   Texture,
@@ -54,6 +55,10 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     this.scene = scene
   }
 
+  public setClippingPlanes(planes: Plane[]) {
+    this.overrideMaterial.clippingPlanes = planes
+  }
+
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
     if (this.onBeforeRender) this.onBeforeRender()
     const oldAutoClear = renderer.autoClear
@@ -92,7 +97,10 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     renderer.getDrawingBufferSize(this.drawBufferSize)
     this.overrideMaterial.userData.size.value.copy(this.drawBufferSize)
     renderer.clear(false, false, true)
+    const shadowMapEnabled = renderer.shadowMap.enabled
+    renderer.shadowMap.enabled = false
     renderer.render(this.scene, this.camera)
+    renderer.shadowMap.enabled = shadowMapEnabled
 
     if (this.clearColor) {
       renderer.setClearColor(this._oldClearColor, oldClearAlpha)

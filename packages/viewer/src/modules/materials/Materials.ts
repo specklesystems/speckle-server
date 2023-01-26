@@ -131,6 +131,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshTransparentHighlightMaterial.clipShadows = true
+    this.meshTransparentHighlightMaterial.stencilWrite = true
+    this.meshTransparentHighlightMaterial.stencilWriteMask = 0xff
+    this.meshTransparentHighlightMaterial.stencilRef = 0x00
+    this.meshTransparentHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshTransparentHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {

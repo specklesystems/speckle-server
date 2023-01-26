@@ -336,6 +336,8 @@ export class Pipeline {
 
   public updateClippingPlanes(planes: Plane[]) {
     this.depthPass.setClippingPlanes(planes)
+    this.stencilPass.setClippingPlanes(planes)
+    this.stencilMaskPass.setClippingPlanes(planes)
   }
 
   public reset() {
