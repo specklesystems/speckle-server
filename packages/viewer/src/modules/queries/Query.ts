@@ -1,6 +1,6 @@
 export interface Query {
   id?: string // id will be used later on if we develop the queries further
-  operation: QueryOperation
+  operation: string
 }
 
 export type QueryResult = PointQueryResult | IntersectionQueryResult
@@ -9,10 +9,13 @@ export type QueryOperation = 'Project' | 'Unproject' | 'Occlusion' | 'Pick'
 
 export interface PointQuery extends Query {
   point: { x: number; y: number; z?: number; w?: number }
+  operation: 'Project' | 'Unproject'
 }
 
-export interface IntersectionQuery extends PointQuery {
+export interface IntersectionQuery extends Query {
+  point: { x: number; y: number; z?: number; w?: number }
   tolerance?: number
+  operation: 'Occlusion' | 'Pick'
 }
 
 export interface PointQueryResult {
@@ -29,3 +32,10 @@ export interface IntersectionQueryResult {
     point: { x: number; y: number; z: number }
   }> | null
 }
+
+export type QueryArgsResultMap = {
+  Project: PointQueryResult
+  Unproject: PointQueryResult
+  Occlusion: IntersectionQueryResult
+  Pick: IntersectionQueryResult
+} & { [key: string]: unknown }

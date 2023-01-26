@@ -2,7 +2,7 @@ import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
-import { Query, QueryResult } from './modules/queries/Query'
+import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
 import { Utils } from './modules/Utils'
 
@@ -202,7 +202,7 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
-  query<T extends Query>(query: T): QueryResult
+  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
   get Utils(): Utils
 
