@@ -604,7 +604,7 @@ function setupInterfaceState(
         setColorFilter
       },
       selection: {
-        objects: selectedObjects,
+        objects: computed(() => selectedObjects.value.slice()),
         addToSelection,
         clearSelection,
         removeFromSelection
