@@ -52,7 +52,7 @@ window.addEventListener('load', () => {
 //   // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
 //   const resUnProj: QueryResult = viewer.query<PointQuery>({
 //     id: 'test',
-//     point: { x: resProj.x as number, y: resProj.y as number, z: resProj.z as number },
+//     point: { x: resProj.x, y: resProj.y, z: resProj.z },
 //     operation: 'Unproject'
 //   })
 //   console.log(
