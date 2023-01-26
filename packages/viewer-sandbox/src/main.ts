@@ -29,6 +29,39 @@ window.addEventListener('load', () => {
   viewer.resize()
 })
 
+/** QUERY TEST */
+// container.addEventListener('mousemove', async (ev) => {
+//   const point = viewer.Utils.screenToNDC(ev.clientX, ev.clientY)
+//   const res: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point,
+//     operation: 'Pick'
+//   })
+//   if (!res) return
+//   const hitPoint = {
+//     x: res.hits[0].point.x,
+//     y: res.hits[0].point.y,
+//     z: res.hits[0].point.z
+//   }
+//   await viewer.selectObjects([res.hits[0].object.id])
+//   const resProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: hitPoint,
+//     operation: 'Project'
+//   })
+//   // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
+//   const resUnProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: { x: resProj.x as number, y: resProj.y as number, z: resProj.z as number },
+//     operation: 'Unproject'
+//   })
+//   console.log(
+//     hitPoint.x - (resUnProj.x as number),
+//     hitPoint.y - (resUnProj.y as number),
+//     hitPoint.z - (resUnProj.z as number)
+//   )
+// })
+
 viewer.on(
   ViewerEvent.LoadProgress,
   (a: { progress: number; id: string; url: string }) => {
@@ -37,6 +70,19 @@ viewer.on(
     }
   }
 )
+
+// const updt = () => {
+//   const resOcc = viewer.query<PointQuery>({
+//     id: 'testX',
+//     point: { x: -2.2779617121296436, y: -1.9397099063369891, z: 7.411126386421243 },
+//     tolerance: 0.001,
+//     operation: 'Occlusion'
+//   })
+//   if (resOcc) console.log(resOcc.occluder === null)
+//   requestAnimationFrame(updt)
+// }
+
+// requestAnimationFrame(updt)
 
 viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)

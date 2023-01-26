@@ -65,15 +65,13 @@ export enum ObjectLayers {
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   public SHOW_BVH = false
-  private readonly ANGLE_EPSILON = 0.0001
-  private readonly POSITION_REST_EPSILON = 0.001
-  private readonly POSITION_RESUME_EPSILON = 0.001
+  private container: HTMLElement
   private _renderer: WebGLRenderer
   public _scene: Scene
   private _needsRender: boolean
   private rootGroup: Group
   private batcher: Batcher
-  private intersections: Intersections
+  private _intersections: Intersections
   private input: Input
   private sun: DirectionalLight
   private sunTarget: Object3D
@@ -81,10 +79,6 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[]
   private pipeline: Pipeline
-  private lastAzimuth: number
-  private lastPolar: number
-  private lastCameraPosition: Vector3 = new Vector3()
-  private lastCameraMotionDelta: number
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
@@ -165,6 +159,14 @@ export default class SpeckleRenderer {
     return this._shadowcatcher
   }
 
+  public get intersections() {
+    return this._intersections
+  }
+
+  public get currentSectionBox() {
+    return this.viewer.sectionBox.getCurrentBox()
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this._scene = new Scene()
     this.rootGroup = new Group()
@@ -173,7 +175,7 @@ export default class SpeckleRenderer {
     this._scene.add(this.rootGroup)
 
     this.batcher = new Batcher()
-    this.intersections = new Intersections()
+    this._intersections = new Intersections()
     this.viewer = viewer
     this.lastSectionPlanes.push(
       new Plane(),
@@ -204,6 +206,7 @@ export default class SpeckleRenderer {
     this.renderer.physicallyCorrectLights = true
     this.renderer.autoClearStencil = false
 
+    this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
@@ -729,7 +732,7 @@ export default class SpeckleRenderer {
     }
   }
 
-  private queryHits(
+  public queryHits(
     results: Array<Intersection>
   ): Array<{ node: TreeNode; point: Vector3 }> {
     const rvs = []
@@ -765,7 +768,7 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
-    const results: Array<Intersection> = this.intersections.intersect(
+    const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
@@ -812,7 +815,7 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
-    const results: Array<Intersection> = this.intersections.intersect(
+    const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,
@@ -1098,9 +1101,50 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
   }
 
+  public screenToNDC(
+    clientX: number,
+    clientY: number,
+    width?: number,
+    height?: number
+  ) {
+    // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
+    const canvas: HTMLCanvasElement = this._renderer.domElement
+    const rect = this.container.getBoundingClientRect()
+
+    const pos = {
+      x:
+        width === undefined
+          ? ((clientX - rect.left) * canvas.width) / rect.width
+          : clientX,
+      y:
+        height === undefined
+          ? ((clientY - rect.top) * canvas.height) / rect.height
+          : clientY
+    }
+    return {
+      x: (pos.x / width === undefined ? canvas.width : width) * 2 - 1,
+      y: (pos.y / height === undefined ? canvas.height : height) * -2 + 1
+    }
+  }
+
+  public NDCToScreen(
+    clientX: number,
+    clientY: number,
+    width?: number,
+    height?: number
+  ) {
+    const canvas: HTMLCanvasElement = this._renderer.domElement
+    width = width !== undefined ? width : canvas.width
+    height = height !== undefined ? height : canvas.height
+    return {
+      x: (clientX * 0.5 + 0.5) * width,
+      y: (clientY * -0.5 + 0.5) * height
+    }
+  }
+
   /** DEBUG */
   public onObjectClickDebug(e) {
-    const results: Array<Intersection> = this.intersections.intersect(
+    const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
       e,

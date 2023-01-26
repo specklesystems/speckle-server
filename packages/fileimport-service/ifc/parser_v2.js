@@ -57,7 +57,7 @@ module.exports = class IFCParser {
       type: 'IFCPROJECT',
       // eslint-disable-next-line camelcase
       speckle_type: 'Base',
-      children: []
+      elements: []
     }
 
     await this.populateSpatialNode(project, chunks, [], 0)
@@ -287,7 +287,7 @@ module.exports = class IFCParser {
       speckle_type: typeName,
       expressID: id,
       type: typeName,
-      children: [],
+      elements: [],
       properties: null
     }
   }
