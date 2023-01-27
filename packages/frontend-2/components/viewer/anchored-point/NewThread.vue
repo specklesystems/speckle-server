@@ -3,11 +3,17 @@
     v-if="modelValue.isVisible"
     class="absolute pointer-events-auto"
     :style="{
-      ...modelValue.style
+      ...modelValue.style,
+      opacity: 1
     }"
   >
     <div class="relative">
-      <FormButton :icon-left="PlusIcon" hide-text @click="onThreadClick" />
+      <FormButton
+        :icon-left="PlusIcon"
+        hide-text
+        :style="{ opacity: modelValue.style.opacity }"
+        @click="onThreadClick"
+      />
       <div
         v-if="modelValue.isExpanded"
         class="absolute"

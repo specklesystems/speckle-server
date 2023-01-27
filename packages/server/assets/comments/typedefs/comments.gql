@@ -11,7 +11,7 @@ extend type Query {
     limit: Int = 25
     cursor: String
     archived: Boolean! = false
-  ): CommentCollection
+  ): CommentCollection @deprecated(reason: "Use 'commentThreads' fields instead")
 }
 
 extend type Project {

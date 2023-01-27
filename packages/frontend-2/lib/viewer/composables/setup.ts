@@ -40,6 +40,7 @@ import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { nanoid } from 'nanoid'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
+import { useAuthCookie } from '~~/lib/auth/composables/auth'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -514,6 +515,7 @@ function setupInterfaceState(
   const filteringState = ref(null as Nullable<FilteringState>)
   const localFilterPropKey = ref(null as Nullable<string>)
 
+  // TODO: Do we maybe move isBusy toggles to the viewer side?
   const isolateObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -618,6 +620,7 @@ function setupInterfaceState(
 function useViewerObjectAutoLoading(state: InjectableViewerState) {
   if (process.server) return
 
+  const authToken = useAuthCookie()
   const getObjectUrl = useGetObjectUrl()
   const {
     projectId,
@@ -635,7 +638,7 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObject(objectUrl)
+      viewer.loadObject(objectUrl, authToken.value || undefined)
     }
   }
 

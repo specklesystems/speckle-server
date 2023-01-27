@@ -39,6 +39,18 @@ graphql(`
       ...LimitedUserAvatar
     }
     createdAt
+    replies {
+      totalCount
+      cursor
+      items {
+        id
+        rawText
+        author {
+          ...LimitedUserAvatar
+        }
+        createdAt
+      }
+    }
   }
 `)
 

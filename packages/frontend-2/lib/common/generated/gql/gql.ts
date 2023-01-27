@@ -38,7 +38,8 @@ const documents = {
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
-    "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n  }\n": types.ViewerCommentsListItemFragmentDoc,
+    "\n  fragment ViewerAnchoredPointThreadComment on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n  }\n": types.ViewerAnchoredPointThreadCommentFragmentDoc,
+    "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    replies {\n      totalCount\n      cursor\n      items {\n        id\n        rawText\n        author {\n          ...LimitedUserAvatar\n        }\n        createdAt\n      }\n    }\n  }\n": types.ViewerCommentsListItemFragmentDoc,
     "\n  fragment ViewerModelVersionCardItem on Version {\n    id\n    message\n    referencedObject\n    sourceApplication\n    createdAt\n    previewUrl\n    authorUser {\n      ...LimitedUserAvatar\n    }\n  }\n": types.ViewerModelVersionCardItemFragmentDoc,
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
@@ -186,7 +187,11 @@ export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n  }\n"): (typeof documents)["\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n  }\n"];
+export function graphql(source: "\n  fragment ViewerAnchoredPointThreadComment on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n  }\n"): (typeof documents)["\n  fragment ViewerAnchoredPointThreadComment on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    replies {\n      totalCount\n      cursor\n      items {\n        id\n        rawText\n        author {\n          ...LimitedUserAvatar\n        }\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ViewerCommentsListItem on Comment {\n    id\n    rawText\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    replies {\n      totalCount\n      cursor\n      items {\n        id\n        rawText\n        author {\n          ...LimitedUserAvatar\n        }\n        createdAt\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

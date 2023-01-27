@@ -40,8 +40,9 @@ export type ViewerNewThreadBubbleModel = {
 
 export function useViewerNewThreadBubble(params: {
   parentEl: Ref<Nullable<HTMLElement>>
+  block: Ref<boolean>
 }) {
-  const { parentEl } = params
+  const { parentEl, block } = params
 
   const buttonState = ref({
     isExpanded: false,
@@ -66,12 +67,19 @@ export function useViewerNewThreadBubble(params: {
     }
   })
 
+  const closeNewThread = () => {
+    buttonState.value.isExpanded = false
+    buttonState.value.isVisible = false
+    buttonState.value.clickLocation = null
+  }
+
   useSelectionEvents({
     singleClickCallback: (event) => {
+      if (block.value) return
+
       buttonState.value.isExpanded = false
       if (!event || !event.hits.length) {
-        buttonState.value.isVisible = false
-        buttonState.value.clickLocation = null
+        closeNewThread()
         return
       }
 
@@ -81,13 +89,16 @@ export function useViewerNewThreadBubble(params: {
     }
   })
 
+  watch(block, (isBlocked) => {
+    if (!isBlocked) return
+    closeNewThread()
+  })
+
   return { buttonState }
 }
 
 export type CommentBubbleModel = LoadedCommentThread & {
   isExpanded: boolean
-  isHovered: boolean
-  isBouncing: boolean
   isOccluded: boolean
   style: Partial<CSSProperties>
 }
@@ -103,6 +114,11 @@ export function useViewerCommentBubbles(params: {
   } = useInjectedViewerState()
 
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
+  const openThread = computed(() =>
+    Object.values(commentThreads.value).find((t) => t.isExpanded)
+  )
+
+  // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
   watch(
     commentThreadsBase,
     (newCommentThreads) => {
@@ -115,8 +131,6 @@ export function useViewerCommentBubbles(params: {
               ? commentThreads.value[id]
               : {
                   isExpanded: false,
-                  isHovered: false,
-                  isBouncing: false,
                   isOccluded: false,
                   style: {}
                 }),
@@ -129,6 +143,31 @@ export function useViewerCommentBubbles(params: {
       commentThreads.value = newModels
     },
     { immediate: true }
+  )
+
+  // Making sure there's only ever 1 expanded thread
+  watch(
+    () =>
+      Object.values(commentThreads.value)
+        .filter((t) => t.isExpanded)
+        .map((t) => t.id),
+    (newExpandedThreadIds, oldExpandedThreadIds) => {
+      // If expanding new thread, close old one
+      const oldOpenThreadId = oldExpandedThreadIds[0]
+      if (!oldOpenThreadId) return
+
+      if (newExpandedThreadIds.length < 2) return
+
+      const finalOpenThread = newExpandedThreadIds.filter(
+        (tid) => tid !== oldOpenThreadId
+      )[0]
+      for (const currentOpenThreadId of newExpandedThreadIds) {
+        if (currentOpenThreadId !== finalOpenThread) {
+          commentThreads.value[currentOpenThreadId].isExpanded = false
+        }
+      }
+    },
+    { deep: true }
   )
 
   useViewerAnchoredPoints({
@@ -147,6 +186,7 @@ export function useViewerCommentBubbles(params: {
   })
 
   return {
-    commentThreads
+    commentThreads,
+    openThread
   }
 }
