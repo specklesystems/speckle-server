@@ -244,7 +244,7 @@ export function useViewerUserActivityTracking(params: {
         target: {
           ...user.style.target,
           ...result.style,
-          transition: options?.smoothTranslation ? 'all 0.1s ease' : '',
+          transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease',
           opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
         }
       }
