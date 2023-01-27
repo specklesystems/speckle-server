@@ -10,9 +10,6 @@ import { Vector3 } from 'three'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 
-// TODO: Abstract 3D anchor point calculation algorithm (same for user activity & comment bubbles)
-// TODO: ...but do "New thread" bubble first, cause that might be a bit different
-
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
     id
@@ -33,7 +30,7 @@ graphql(`
   }
 `)
 
-type ViewerNewThreadButtonState = {
+export type ViewerNewThreadBubbleModel = {
   isExpanded: boolean
   isVisible: boolean
   isOccluded: boolean
@@ -52,7 +49,7 @@ export function useViewerNewThreadBubble(params: {
     isOccluded: false,
     clickLocation: null,
     style: {}
-  } as ViewerNewThreadButtonState)
+  } as ViewerNewThreadBubbleModel)
 
   const { updatePositions } = useViewerAnchoredPoints({
     parentEl,
@@ -87,7 +84,7 @@ export function useViewerNewThreadBubble(params: {
   return { buttonState }
 }
 
-type CommentBubbleModel = LoadedCommentThread & {
+export type CommentBubbleModel = LoadedCommentThread & {
   isExpanded: boolean
   isHovered: boolean
   isBouncing: boolean

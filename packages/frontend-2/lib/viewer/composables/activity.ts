@@ -148,7 +148,10 @@ function useViewerUserActivityBroadcasting() {
   }
 }
 
-type UserActivityModel = SetFullyRequired<ViewerUserActivityMessage, 'selection'> & {
+export type UserActivityModel = SetFullyRequired<
+  ViewerUserActivityMessage,
+  'selection'
+> & {
   isStale: boolean
   isOccluded: boolean
   lastUpdate: Dayjs
