@@ -1,5 +1,5 @@
 import { CSSProperties, Ref } from 'vue'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 import {
   LoadedCommentThread,
   useInjectedViewerState
@@ -7,8 +7,8 @@ import {
 import { graphql } from '~~/lib/common/generated/gql'
 import { reduce } from 'lodash-es'
 import { Vector3 } from 'three'
-import { IntersectionQuery, PointQuery } from '@speckle/viewer'
-import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
+import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 
 // TODO: Abstract 3D anchor point calculation algorithm (same for user activity & comment bubbles)
 // TODO: ...but do "New thread" bubble first, cause that might be a bit different
@@ -33,6 +33,60 @@ graphql(`
   }
 `)
 
+type ViewerNewThreadButtonState = {
+  isExpanded: boolean
+  isVisible: boolean
+  isOccluded: boolean
+  style: Partial<CSSProperties>
+  clickLocation: Nullable<Vector3>
+}
+
+export function useViewerNewThreadBubble(params: {
+  parentEl: Ref<Nullable<HTMLElement>>
+}) {
+  const { parentEl } = params
+
+  const buttonState = ref({
+    isExpanded: false,
+    isVisible: false,
+    isOccluded: false,
+    clickLocation: null,
+    style: {}
+  } as ViewerNewThreadButtonState)
+
+  const { updatePositions } = useViewerAnchoredPoints({
+    parentEl,
+    points: computed(() => buttonState.value),
+    pointLocationGetter: (b) => b.clickLocation,
+    updatePositionCallback: (state, result) => {
+      state.isOccluded = result.isOccluded
+      state.style = {
+        ...state.style,
+        ...result.style,
+        opacity: state.isOccluded ? '0.8' : '1.0',
+        transition: 'all 0.1s ease'
+      }
+    }
+  })
+
+  useSelectionEvents({
+    singleClickCallback: (event) => {
+      buttonState.value.isExpanded = false
+      if (!event || !event.hits.length) {
+        buttonState.value.isVisible = false
+        buttonState.value.clickLocation = null
+        return
+      }
+
+      buttonState.value.clickLocation = event.hits[0].point.clone()
+      buttonState.value.isVisible = true
+      updatePositions()
+    }
+  })
+
+  return { buttonState }
+}
+
 type CommentBubbleModel = LoadedCommentThread & {
   isExpanded: boolean
   isHovered: boolean
@@ -48,8 +102,7 @@ export function useViewerCommentBubbles(params: {
   const {
     resources: {
       response: { commentThreads: commentThreadsBase }
-    },
-    viewer: { instance: viewer }
+    }
   } = useInjectedViewerState()
 
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
@@ -81,51 +134,20 @@ export function useViewerCommentBubbles(params: {
     { immediate: true }
   )
 
-  const updatePositions = () => {
-    if (!parentEl.value) return
-
-    for (const comment of Object.values(commentThreads.value)) {
-      if (!comment.data) return
-      const commentLocationData = comment.data.location as {
-        x: number
-        y: number
-        z: number
+  useViewerAnchoredPoints({
+    parentEl,
+    points: computed(() => Object.values(commentThreads.value)),
+    pointLocationGetter: (t) => t.data?.location as Optional<Vector3>,
+    updatePositionCallback: (thread, result) => {
+      thread.isOccluded = result.isOccluded
+      thread.style = {
+        ...thread.style,
+        ...result.style,
+        opacity: thread.isOccluded ? '0.5' : '1.0',
+        transition: 'all 0.1s ease'
       }
-      const location = new Vector3(
-        commentLocationData.x,
-        commentLocationData.y,
-        commentLocationData.z
-      )
-
-      // Calculate position in 3D space
-      const locationProjection = viewer.query<PointQuery>({
-        point: location,
-        operation: 'Project'
-      })
-      const commentLocation = viewer.Utils.NDCToScreen(
-        locationProjection.x,
-        locationProjection.y,
-        parentEl.value.clientWidth,
-        parentEl.value.clientHeight
-      )
-
-      // Calculate occlusion
-      const commentOcclusion = viewer.query<IntersectionQuery>({
-        point: location,
-        tolerance: 0.001,
-        operation: 'Occlusion'
-      })
-      comment.isOccluded = !!commentOcclusion.objects?.length
-
-      // Calculate CSS style
-      const commentStyle = comment.style
-      commentStyle.transition = 'all 0.1s ease'
-      commentStyle.transform = `translate(-50%, -50%) translate(${commentLocation.x}px,${commentLocation.y}px)`
-      commentStyle.opacity = comment.isOccluded ? '0.5' : '1.0'
     }
-  }
-
-  useViewerCameraTracker(() => updatePositions())
+  })
 
   return {
     commentThreads

@@ -12,7 +12,6 @@ import {
   ref,
   provide,
   ComputedRef,
-  Ref,
   WritableComputedRef,
   Raw
 } from 'vue'
@@ -177,7 +176,7 @@ export type InjectableViewerState = Readonly<{
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
-      objects: Ref<Raw<Record<string, unknown>>[]> // Computed
+      objects: ComputedRef<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void

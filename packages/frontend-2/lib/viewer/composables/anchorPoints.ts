@@ -1,0 +1,140 @@
+import { CSSProperties, Ref } from 'vue'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import { Vector3 } from 'three'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { IntersectionQuery, PointQuery } from '@speckle/viewer'
+import { isArray } from 'lodash-es'
+import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
+import { useWindowResizeHandler } from '~~/lib/common/composables/window'
+
+export function useViewerAnchoredPointCalculator(params: {
+  /**
+   * Viewer anchor point parent element that has to have the same exact dimensions as the full
+   * viewer viewport
+   */
+  parentEl: Ref<Nullable<HTMLElement>>
+}) {
+  const { parentEl } = params
+  const {
+    viewer: { instance: viewer }
+  } = useInjectedViewerState()
+
+  /**
+   * Calculate current screen coordinates of a location in the 3D space of the viewer,
+   * whether or not that point is occluded by something and CSS styles for the DOM element
+   * to position it correctly within the parent element.
+   *
+   * Note: Screen coordinate location will be null if `parentEl` is null.
+   */
+  const calculate = (target: Vector3) => {
+    let targetLoc: Nullable<{ x: number; y: number }> = null
+    if (parentEl.value) {
+      const targetProjectionResult = viewer.query<PointQuery>({
+        point: target,
+        operation: 'Project'
+      })
+      targetLoc = viewer.Utils.NDCToScreen(
+        targetProjectionResult.x,
+        targetProjectionResult.y,
+        parentEl.value.clientWidth,
+        parentEl.value.clientHeight
+      )
+    }
+
+    const targetOcclusionRes = viewer.query<IntersectionQuery>({
+      point: target,
+      tolerance: 0.001,
+      operation: 'Occlusion'
+    })
+
+    return {
+      screenLocation: targetLoc,
+      isOccluded: !!targetOcclusionRes.objects?.length,
+      style: <Partial<CSSProperties>>{
+        ...(targetLoc?.x && targetLoc?.y
+          ? {
+              transform: `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
+            }
+          : {
+              display: 'none'
+            })
+      }
+    }
+  }
+
+  return {
+    calculate
+  }
+}
+
+type AnchoredPointCalculateResult = ReturnType<
+  ReturnType<typeof useViewerAnchoredPointCalculator>['calculate']
+>
+
+/**
+ * Automatically recalculates screen positions & occlusion of the provided array of points, and
+ * additionally exposes functions for manual (re-)calculation
+ */
+export function useViewerAnchoredPoints<
+  O extends Record<string, unknown>,
+  A extends Optional<Record<string, unknown>>
+>(params: {
+  /**
+   * Viewer anchor point parent element that has to have the same exact dimensions as the full
+   * viewer viewport
+   */
+  parentEl: Ref<Nullable<HTMLElement>>
+  /**
+   * Objects that contain points in viewer's 3D space that need to be anchored accordingly on the screen.
+   * Can be an array or a single point.
+   */
+  points: Ref<O[] | O>
+  /**
+   * Use this to pull out the actual initial location Vector3 out from a specific point object. It
+   * can also return null or undefined in which case calculation will be skipped.
+   */
+  pointLocationGetter: (obj: O) => MaybeNullOrUndefined<Vector3>
+  /**
+   * Callback for each position update operation for optionally doing extra stuff with the point object
+   */
+  updatePositionCallback: (
+    obj: O,
+    result: AnchoredPointCalculateResult,
+    options?: A
+  ) => void
+}) {
+  const { parentEl, points, pointLocationGetter, updatePositionCallback } = params
+  const { calculate } = useViewerAnchoredPointCalculator({ parentEl })
+
+  /**
+   * Re-calculate positions for all points. Optionally pass in arbitrary options
+   * that you will also receive in `updatePositionCallback` for making changes accordingly,
+   * e.g. `smoothTranslations` to enable smoothed translation between positions.
+   */
+  const updatePositions = (options?: A) => {
+    const pointsArray = isArray(points.value) ? points.value : [points.value]
+    for (const point of pointsArray) {
+      const location = pointLocationGetter(point)
+      if (!location) continue
+
+      const result = calculate(location)
+      updatePositionCallback(point, result, options)
+    }
+  }
+
+  useViewerCameraTracker(() => updatePositions())
+  useWindowResizeHandler(() => updatePositions())
+
+  watch(
+    points,
+    () => {
+      updatePositions()
+    },
+    { immediate: true }
+  )
+
+  return {
+    updatePositions,
+    calculate
+  }
+}

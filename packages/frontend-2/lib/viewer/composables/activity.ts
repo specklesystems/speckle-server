@@ -1,5 +1,5 @@
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { PointQuery, SelectionEvent } from '@speckle/viewer'
+import { SelectionEvent } from '@speckle/viewer'
 import {
   ViewerUserActivityMessage,
   ViewerUserActivityMessageInput,
@@ -8,10 +8,7 @@ import {
   ViewerUserTypingMessageInput
 } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import {
-  useSelectionEvents,
-  useViewerCameraTracker
-} from '~~/lib/viewer/composables/viewer'
+import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -23,7 +20,7 @@ import { get } from 'lodash-es'
 import { useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
-import { IntersectionQuery } from '~~/../viewer/dist/modules/queries/Query'
+import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -175,8 +172,7 @@ export function useViewerUserActivityTracking(params: {
     sessionId,
     resources: {
       request: { resourceIdString }
-    },
-    viewer: { instance: viewer }
+    }
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const sendUpdate = useViewerUserActivityBroadcasting()
@@ -204,7 +200,6 @@ export function useViewerUserActivityTracking(params: {
     if (sessionId.value === incomingSessionId) return
     if (status === ViewerUserActivityStatus.Disconnected || !event.selection) {
       delete users.value[incomingSessionId]
-      updatePositions()
       return
     }
 
@@ -223,13 +218,14 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
     users.value[incomingSessionId] = userData
-    updatePositions()
   })
 
-  const updatePositions = (smoothTranslation = true) => {
-    if (!parentEl.value) return
-    for (const user of Object.values(users.value)) {
-      const selectionLocation = user.selection.selectionLocation as Optional<{
+  useViewerAnchoredPoints<UserActivityModel, Partial<{ smoothTranslation: boolean }>>({
+    parentEl,
+    points: computed(() => Object.values(users.value)),
+    pointLocationGetter: (user) => {
+      const selection = user.selection
+      const selectionLocation = selection.selectionLocation as Optional<{
         x: number
         y: number
         z: number
@@ -237,36 +233,23 @@ export function useViewerUserActivityTracking(params: {
 
       const target = selectionLocation
         ? new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
-        : new Vector3(
-            user.selection.camera[3],
-            user.selection.camera[4],
-            user.selection.camera[5]
-          )
-      const targetProjectionResult = viewer.query<PointQuery>({
-        point: target,
-        operation: 'Project'
-      })
+        : new Vector3(selection.camera[3], selection.camera[4], selection.camera[5])
 
-      const targetOcclusionRes = viewer.query<IntersectionQuery>({
-        point: target,
-        tolerance: 0.001,
-        operation: 'Occlusion'
-      })
-      user.isOccluded = !!targetOcclusionRes.objects?.length
-
-      const targetLoc = viewer.Utils.NDCToScreen(
-        targetProjectionResult.x,
-        targetProjectionResult.y,
-        parentEl.value.clientWidth,
-        parentEl.value.clientHeight
-      )
-
-      const targetStyle = user.style.target
-      targetStyle.transition = smoothTranslation ? 'all 0.1s ease' : ''
-      targetStyle.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
-      targetStyle.opacity = user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
+      return target
+    },
+    updatePositionCallback: (user, result, options) => {
+      user.isOccluded = result.isOccluded
+      user.style = {
+        ...user.style,
+        target: {
+          ...user.style.target,
+          ...result.style,
+          transition: options?.smoothTranslation ? 'all 0.1s ease' : '',
+          opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
+        }
+      }
     }
-  }
+  })
 
   const hideStaleUsers = () => {
     if (!Object.values(users.value).length) return
@@ -293,7 +276,6 @@ export function useViewerUserActivityTracking(params: {
     sendUpdate.emitViewing()
   }
 
-  useViewerCameraTracker(() => updatePositions())
   useIntervalFn(sendUpdateAndHideStaleUsers, OWN_ACTIVITY_UPDATE_INTERVAL)
   useIntervalFn(hideStaleUsers, USER_STALE_CHECK_INTERVAL)
 
