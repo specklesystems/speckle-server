@@ -8,7 +8,7 @@
   >
     <div class="relative">
       <FormButton
-        :icon-left="ChatBubbleOvalLeftEllipsisIcon"
+        :icon-left="isExpanded ? XMarkIcon : ChatBubbleOvalLeftEllipsisIcon"
         hide-text
         :style="{
           opacity: modelValue.style.opacity
@@ -17,13 +17,9 @@
       />
       <div
         v-if="modelValue.isExpanded"
+        ref="threadContainer"
         class="absolute"
-        :style="{
-          top: '50%',
-          left: 'calc(100% + 12px)',
-          transformOrigin: 'center center',
-          transform: 'translateY(-50%)'
-        }"
+        :style="style"
       >
         <div class="relative w-80 flex flex-col">
           <div
@@ -42,8 +38,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatBubbleOvalLeftEllipsisIcon } from '@heroicons/vue/24/solid'
-import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import { ChatBubbleOvalLeftEllipsisIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { Nullable } from '@speckle/shared'
+import { onKeyDown } from '@vueuse/core'
+import {
+  CommentBubbleModel,
+  useExpandedThreadResponsiveLocation
+} from '~~/lib/viewer/composables/commentBubbles'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -53,12 +54,30 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const threadContainer = ref(null as Nullable<HTMLElement>)
 const comments = computed(() => [props.modelValue, ...props.modelValue.replies.items])
 
-const onThreadClick = () => {
+const { style } = useExpandedThreadResponsiveLocation({
+  threadContainer,
+  width: 320
+})
+
+const isExpanded = computed(() => props.modelValue.isExpanded)
+
+const changeExpanded = (newVal: boolean) => {
   emit('update:modelValue', {
     ...props.modelValue,
-    isExpanded: !props.modelValue.isExpanded
+    isExpanded: newVal
   })
 }
+
+const onThreadClick = () => {
+  changeExpanded(!props.modelValue.isExpanded)
+}
+
+onKeyDown('Escape', () => {
+  if (isExpanded.value) {
+    changeExpanded(false)
+  }
+})
 </script>

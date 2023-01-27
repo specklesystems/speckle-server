@@ -16,13 +16,9 @@
       />
       <div
         v-if="modelValue.isExpanded"
+        ref="threadContainer"
         class="absolute"
-        :style="{
-          top: '50%',
-          left: 'calc(100% + 12px)',
-          transformOrigin: 'center center',
-          transform: 'translateY(-50%)'
-        }"
+        :style="style"
       >
         <div class="relative">
           <div class="bg-foundation rounded-full w-80 p-4 flex flex-col">
@@ -73,7 +69,11 @@ import {
   PaperAirplaneIcon,
   PaperClipIcon
 } from '@heroicons/vue/24/solid'
-import { ViewerNewThreadBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import { Nullable } from '@speckle/shared'
+import {
+  useExpandedThreadResponsiveLocation,
+  ViewerNewThreadBubbleModel
+} from '~~/lib/viewer/composables/commentBubbles'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -83,10 +83,17 @@ const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
+const threadContainer = ref(null as Nullable<HTMLElement>)
+
 const onThreadClick = () => {
   emit('update:modelValue', {
     ...props.modelValue,
     isExpanded: !props.modelValue.isExpanded
   })
 }
+
+const { style } = useExpandedThreadResponsiveLocation({
+  threadContainer,
+  width: 320
+})
 </script>

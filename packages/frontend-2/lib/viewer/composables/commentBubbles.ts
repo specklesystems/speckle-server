@@ -7,8 +7,12 @@ import {
 import { graphql } from '~~/lib/common/generated/gql'
 import { reduce } from 'lodash-es'
 import { Vector3 } from 'three'
-import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import {
+  useSelectionEvents,
+  useViewerCameraTracker
+} from '~~/lib/viewer/composables/viewer'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
+import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -188,5 +192,56 @@ export function useViewerCommentBubbles(params: {
   return {
     commentThreads,
     openThread
+  }
+}
+
+export function useExpandedThreadResponsiveLocation(params: {
+  threadContainer: Ref<Nullable<HTMLElement>>
+  width: number
+}) {
+  const { threadContainer, width } = params
+
+  const margin = 12
+  const leftForShowingOnRightSide = `calc(100% + ${margin}px)`
+  const leftForShowingOnLeftSide = `calc(-${width + margin}px)`
+
+  const style = ref({
+    top: '50%',
+    left: leftForShowingOnRightSide,
+    transformOrigin: 'center center',
+    transform: 'translateY(-50%)',
+    transition: 'all 0.1s ease',
+    width: `${width}px`
+  })
+
+  const calculateStyle = () => {
+    if (!threadContainer.value || process.server) return
+
+    const elRect = threadContainer.value.getBoundingClientRect()
+    const showOnLeftSide = elRect.x + elRect.width > window.innerWidth
+    const showOnRightSide = elRect.x < 0
+
+    // Screen too small - do nothing
+    if (showOnLeftSide && showOnRightSide) return
+
+    if (showOnLeftSide) {
+      style.value.left = leftForShowingOnLeftSide
+    } else if (showOnRightSide) {
+      style.value.left = leftForShowingOnRightSide
+    }
+  }
+
+  useViewerCameraTracker(() => calculateStyle())
+  useWindowResizeHandler(() => calculateStyle())
+
+  watch(threadContainer, (container) => {
+    if (container) {
+      calculateStyle()
+    }
+  })
+
+  return {
+    style,
+    recalculateStyle: calculateStyle
   }
 }
