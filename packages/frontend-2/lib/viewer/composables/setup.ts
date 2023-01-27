@@ -42,11 +42,11 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { nanoid } from 'nanoid'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 
-type LoadedModel = NonNullable<
+export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
 
-type LoadedCommentThread = NonNullable<
+export type LoadedCommentThread = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.commentThreads.items[0]'>
 >
 

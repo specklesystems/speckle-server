@@ -203,7 +203,7 @@ export type Comment = {
   author: LimitedUser;
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  data?: Maybe<Scalars['JSONObject']>;
+  data?: Maybe<CommentData>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -256,7 +256,7 @@ export type CommentCollection = {
 export type CommentCreateInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
-  data: Scalars['JSONObject'];
+  data: CommentDataInput;
   /**
    * Specifies the resources this comment is linked to. There are several use cases:
    * - a comment targets only one resource (commit or object)
@@ -268,6 +268,59 @@ export type CommentCreateInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentData = {
+  __typename?: 'CommentData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
+};
+
+export type CommentDataFilters = {
+  __typename?: 'CommentDataFilters';
+  hiddenIds?: Maybe<Array<Scalars['String']>>;
+  isolatedIds?: Maybe<Array<Scalars['String']>>;
+  passMax?: Maybe<Scalars['Float']>;
+  passMin?: Maybe<Scalars['Float']>;
+  propertyInfoKey?: Maybe<Scalars['String']>;
+  sectionBox?: Maybe<Array<Scalars['Float']>>;
+};
+
+/** Equivalent to frontend-1's LocalFilterState */
+export type CommentDataFiltersInput = {
+  hiddenIds?: InputMaybe<Array<Scalars['String']>>;
+  isolatedIds?: InputMaybe<Array<Scalars['String']>>;
+  passMax?: InputMaybe<Scalars['Float']>;
+  passMin?: InputMaybe<Scalars['Float']>;
+  propertyInfoKey?: InputMaybe<Scalars['String']>;
+  sectionBox?: InputMaybe<Array<Scalars['Float']>>;
+};
+
+export type CommentDataInput = {
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFiltersInput;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CommentEditInput = {
@@ -1389,7 +1442,6 @@ export type QueryUserSearchArgs = {
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
   blobIds: Array<Scalars['String']>;
-  data?: InputMaybe<Scalars['JSONObject']>;
   parentComment: Scalars['String'];
   streamId: Scalars['String'];
   /** ProseMirror document object */
@@ -2328,6 +2380,10 @@ export type ResolversTypes = {
   CommentActivityMessage: ResolverTypeWrapper<Omit<CommentActivityMessage, 'comment'> & { comment: ResolversTypes['Comment'] }>;
   CommentCollection: ResolverTypeWrapper<Omit<CommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
   CommentCreateInput: CommentCreateInput;
+  CommentData: ResolverTypeWrapper<CommentData>;
+  CommentDataFilters: ResolverTypeWrapper<CommentDataFilters>;
+  CommentDataFiltersInput: CommentDataFiltersInput;
+  CommentDataInput: CommentDataInput;
   CommentEditInput: CommentEditInput;
   CommentReplyAuthorCollection: ResolverTypeWrapper<CommentReplyAuthorCollectionGraphQLReturn>;
   CommentThreadActivityMessage: ResolverTypeWrapper<Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversTypes['Comment']> }>;
@@ -2461,6 +2517,10 @@ export type ResolversParentTypes = {
   CommentActivityMessage: Omit<CommentActivityMessage, 'comment'> & { comment: ResolversParentTypes['Comment'] };
   CommentCollection: Omit<CommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
   CommentCreateInput: CommentCreateInput;
+  CommentData: CommentData;
+  CommentDataFilters: CommentDataFilters;
+  CommentDataFiltersInput: CommentDataFiltersInput;
+  CommentDataInput: CommentDataInput;
   CommentEditInput: CommentEditInput;
   CommentReplyAuthorCollection: CommentReplyAuthorCollectionGraphQLReturn;
   CommentThreadActivityMessage: Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversParentTypes['Comment']> };
@@ -2705,7 +2765,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   authorId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['CommentData']>, ParentType, ContextType>;
   hasParent?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   parent?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
@@ -2732,6 +2792,25 @@ export type CommentCollectionResolvers<ContextType = GraphQLContext, ParentType 
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Comment']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentData'] = ResolversParentTypes['CommentData']> = {
+  camPos?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  filters?: Resolver<ResolversTypes['CommentDataFilters'], ParentType, ContextType>;
+  location?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  selection?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentDataFilters'] = ResolversParentTypes['CommentDataFilters']> = {
+  hiddenIds?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  isolatedIds?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  passMax?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  passMin?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  propertyInfoKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sectionBox?: Resolver<Maybe<Array<ResolversTypes['Float']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3384,6 +3463,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Comment?: CommentResolvers<ContextType>;
   CommentActivityMessage?: CommentActivityMessageResolvers<ContextType>;
   CommentCollection?: CommentCollectionResolvers<ContextType>;
+  CommentData?: CommentDataResolvers<ContextType>;
+  CommentDataFilters?: CommentDataFiltersResolvers<ContextType>;
   CommentReplyAuthorCollection?: CommentReplyAuthorCollectionResolvers<ContextType>;
   CommentThreadActivityMessage?: CommentThreadActivityMessageResolvers<ContextType>;
   Commit?: CommitResolvers<ContextType>;

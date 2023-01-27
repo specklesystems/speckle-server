@@ -85,6 +85,39 @@ extend type Object {
   commentCount: Int!
 }
 
+type CommentDataFilters {
+  hiddenIds: [String!]
+  isolatedIds: [String!]
+  propertyInfoKey: String
+  passMax: Float
+  passMin: Float
+  sectionBox: [Float!]
+}
+
+type CommentData {
+  """
+  THREE.Vector3 {x, y, z}
+  """
+  location: JSONObject!
+  """
+  An array representing a user's camera position:
+  [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+  """
+  camPos: [Float!]!
+  """
+  Viewer.getCurrentSectionBox(): THREE.Box3
+  """
+  sectionBox: JSONObject
+  """
+  Currently unused. Ideally comments should keep track of selected objects.
+  """
+  selection: JSONObject
+  """
+  Old FE LocalFilterState type
+  """
+  filters: CommentDataFilters!
+}
+
 type Comment {
   id: String!
   author: LimitedUser!
@@ -96,7 +129,7 @@ type Comment {
   Plain-text version of the comment text, ideal for previews
   """
   rawText: String!
-  data: JSONObject
+  data: CommentData
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
@@ -169,6 +202,42 @@ enum ResourceType {
   stream
 }
 
+"""
+Equivalent to frontend-1's LocalFilterState
+"""
+input CommentDataFiltersInput {
+  hiddenIds: [String!]
+  isolatedIds: [String!]
+  propertyInfoKey: String
+  passMax: Float
+  passMin: Float
+  sectionBox: [Float!]
+}
+
+input CommentDataInput {
+  """
+  THREE.Vector3 {x, y, z}
+  """
+  location: JSONObject!
+  """
+  An array representing a user's camera position:
+  [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+  """
+  camPos: [Float!]!
+  """
+  Viewer.getCurrentSectionBox(): THREE.Box3
+  """
+  sectionBox: JSONObject
+  """
+  Currently unused. Ideally comments should keep track of selected objects.
+  """
+  selection: JSONObject
+  """
+  Old FE LocalFilterState type
+  """
+  filters: CommentDataFiltersInput!
+}
+
 input CommentCreateInput {
   streamId: String!
   """
@@ -182,7 +251,7 @@ input CommentCreateInput {
   ProseMirror document object
   """
   text: JSONObject
-  data: JSONObject!
+  data: CommentDataInput!
   """
   IDs of uploaded blobs that should be attached to this comment
   """
@@ -201,7 +270,6 @@ input ReplyCreateInput {
   IDs of uploaded blobs that should be attached to this reply
   """
   blobIds: [String!]!
-  data: JSONObject
 }
 
 input CommentEditInput {
