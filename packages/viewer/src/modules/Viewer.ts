@@ -28,7 +28,7 @@ import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
 import Logger from 'js-logger'
-import { Query, QueryResult } from './queries/Query'
+import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 
@@ -324,10 +324,14 @@ export class Viewer extends EventEmitter implements IViewer {
     return WorldTree.getDataTree()
   }
 
-  public query<T extends Query>(query: T): QueryResult {
+  public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] {
     if (Queries.isPointQuery(query)) {
       Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultPointQuerySolver.solve(query)
+    }
+    if (Queries.isIntersectionQuery(query)) {
+      Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
+      return Queries.DefaultIntersectionQuerySolver.solve(query)
     }
   }
 
