@@ -1,9 +1,11 @@
 import {
+  AlwaysStencilFunc,
   Color,
   DoubleSide,
   FrontSide,
   Material,
   MathUtils,
+  ReplaceStencilOp,
   Texture,
   Vector2
 } from 'three'
@@ -108,6 +110,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshHighlightMaterial.clipShadows = true
+    this.meshHighlightMaterial.stencilWrite = true
+    this.meshHighlightMaterial.stencilWriteMask = 0xff
+    this.meshHighlightMaterial.stencilRef = 0x00
+    this.meshHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
@@ -122,6 +131,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshTransparentHighlightMaterial.clipShadows = true
+    this.meshTransparentHighlightMaterial.stencilWrite = true
+    this.meshTransparentHighlightMaterial.stencilWriteMask = 0xff
+    this.meshTransparentHighlightMaterial.stencilRef = 0x00
+    this.meshTransparentHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshTransparentHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
