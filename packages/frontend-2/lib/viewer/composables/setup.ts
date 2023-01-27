@@ -567,7 +567,7 @@ function setupInterfaceState(
       ids.push(...objIds)
     }
     ids = [...new Set(ids.filter((id) => !!id))]
-    console.log(ids)
+
     v.selectObjects(ids)
   }
 

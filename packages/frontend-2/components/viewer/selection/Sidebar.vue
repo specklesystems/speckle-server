@@ -114,8 +114,9 @@ const stateKey = ViewerSceneExplorerStateKey
 
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
-    viewerInstance.selectObjects([]) // bypassing the FE state, and resetting the viewer selection state only
+    // viewerInstance.selectObjects([]) // bypassing the FE state, and resetting the viewer selection state only
     filters.hideObjects(allTargetIds.value, stateKey, true)
+    clearSelection() // when hiding, the objects disappear. they can't really stay "selected"
     return
   }
   return filters.showObjects(allTargetIds.value, stateKey, true)
