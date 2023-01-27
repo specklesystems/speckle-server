@@ -208,8 +208,10 @@ export function useViewerCommentBubbles(params: {
 export function useExpandedThreadResponsiveLocation(params: {
   threadContainer: Ref<Nullable<HTMLElement>>
   width: number
+  stopUpdatesBelowWidth?: number
 }) {
   const { threadContainer, width } = params
+  const stopUpdatesBelowWidth = params.stopUpdatesBelowWidth || width * 2
 
   const margin = 12
   const leftForShowingOnRightSide = `calc(100% + ${margin}px)`
@@ -232,7 +234,11 @@ export function useExpandedThreadResponsiveLocation(params: {
     const showOnRightSide = elRect.x < 0
 
     // Screen too small - do nothing
-    if (showOnLeftSide && showOnRightSide) return
+    if (
+      (showOnLeftSide && showOnRightSide) ||
+      window.innerWidth < stopUpdatesBelowWidth
+    )
+      return
 
     if (showOnLeftSide) {
       style.value.left = leftForShowingOnLeftSide
