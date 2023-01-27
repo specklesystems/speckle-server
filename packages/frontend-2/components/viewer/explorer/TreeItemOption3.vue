@@ -37,8 +37,11 @@
               {{ header || headerAndSubheader.header }}
             </div>
             <div class="text-tiny text-foreground-2 truncate">
-              {{ isHidden }}: {{ subHeader || headerAndSubheader.subheader }}
-              <span v-if="debug">/ selected: {{ isSelected }}</span>
+              {{ subHeader || headerAndSubheader.subheader }}
+              <span v-if="debug">
+                / selected: {{ isSelected }} / hidden: {{ isHidden }} / isolated:
+                {{ isIsolated }}
+              </span>
             </div>
           </div>
           <div class="flex-grow"></div>
@@ -46,14 +49,14 @@
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
             <div class="flex space-x-2 transition opacity-0 group-hover:opacity-100">
               <button
-                class="hover:text-primary transition"
+                class="px-1 py-2 hover:text-primary transition"
                 @click.stop="hideOrShowObject"
               >
                 <EyeIcon v-if="!isHidden" class="w-3 h-3" />
                 <EyeSlashIcon v-else class="w-3 h-3" />
               </button>
               <button
-                class="hover:text-primary transition"
+                class="px-1 py-2 hover:text-primary transition"
                 @click.stop="isolateOrUnisolateObject"
               >
                 <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
@@ -266,24 +269,20 @@ const stateKey = 'tree-explorer'
 const hideOrShowObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isHidden.value) {
-    console.log('hiding')
     removeFromSelection(rawSpeckleData)
     filters.hideObjects(ids, stateKey, true)
     return
   }
-  console.log('showing')
   return filters.showObjects(ids, stateKey, true)
 }
 
 const isolateOrUnisolateObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isIsolated.value) {
-    console.log('isolating')
     // removeFromSelection(rawSpeckleData)
     filters.isolateObjects(ids, stateKey, true)
     return
   }
-  console.log('unisolating')
   return filters.unIsolateObjects(ids, stateKey, true)
 }
 </script>

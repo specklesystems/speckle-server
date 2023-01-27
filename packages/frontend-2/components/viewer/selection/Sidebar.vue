@@ -7,6 +7,11 @@
     }`"
   >
     <div class="mb-2">
+      <div class="text-tiny text-foreground-2">
+        {{ allTargetIds }}
+        <hr />
+        isolated: {{ isIsolated }} / hidden: {{ isHidden }}
+      </div>
       <div class="flex items-center">
         <div class="font-bold text-xs flex items-center space-x-1">
           <CubeIcon class="w-3 h-3" />
@@ -55,14 +60,42 @@ import {
 } from '@heroicons/vue/24/solid'
 import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 
 const {
-  selection: { objects, clearSelection }
+  selection: { objects, clearSelection },
+  filters
 } = useInjectedViewerInterfaceState()
 
 const unfold = computed(() => objects.value.length === 1)
 
+const containsAll = (target: unknown[], array: unknown[]) =>
+  target.every((v) => array.includes(v))
+
+const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
+const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
+
+const allTargetIds = computed(() => {
+  const ids = []
+  for (const obj of objects.value) {
+    ids.push(...getTargetObjectIds(obj))
+  }
+
+  return ids
+})
+
+const isHidden = computed(() => {
+  if (!hiddenObjects.value) return false
+  return containsAll(allTargetIds.value, hiddenObjects.value)
+})
+
+const isIsolated = computed(() => {
+  if (!isolatedObjects.value) return false
+  return containsAll(allTargetIds.value, isolatedObjects.value)
+})
+
 onKeyStroke('Escape', () => {
+  // TODO: clear any vis/iso state
   clearSelection()
 })
 </script>
