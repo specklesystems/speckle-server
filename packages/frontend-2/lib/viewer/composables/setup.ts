@@ -165,6 +165,7 @@ export type InjectableViewerState = Readonly<{
       unIsolateObjects: FilterAction
       hideObjects: FilterAction
       showObjects: FilterAction
+      resetFilters: () => Promise<void>
       setColorFilter: (property: PropertyInfo) => void
     }
     viewerBusy: WritableComputedRef<boolean>
@@ -546,6 +547,14 @@ function setupInterfaceState(
     viewerBusy.value = false
   }
 
+  const resetFilters = async () => {
+    viewerBusy.value = true
+    await viewer.instance.resetFilters()
+    viewer.instance.applyFilter(null)
+    filteringState.value = null
+    viewerBusy.value = false
+  }
+
   const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
 
   const setViewerSelectionFilter = () => {
@@ -611,7 +620,8 @@ function setupInterfaceState(
         unIsolateObjects,
         hideObjects,
         showObjects,
-        setColorFilter
+        setColorFilter,
+        resetFilters
       },
       selection: {
         objects: selectedObjects,
