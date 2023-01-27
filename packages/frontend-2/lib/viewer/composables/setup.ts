@@ -551,6 +551,7 @@ function setupInterfaceState(
     viewerBusy.value = true
     await viewer.instance.resetFilters()
     viewer.instance.applyFilter(null)
+    viewer.instance.resize() // Note: should not be needed in theory
     filteringState.value = null
     viewerBusy.value = false
   }
@@ -586,6 +587,7 @@ function setupInterfaceState(
 
   const clearSelection = () => {
     // Clear any vis/iso state
+
     if (selectedObjects.value.length > 0) {
       let ids = [] as string[]
       for (const obj of selectedObjects.value) {
@@ -593,19 +595,22 @@ function setupInterfaceState(
         ids.push(...objIds)
       }
       ids = [...new Set(ids.filter((id) => !!id))]
+      // check if we actually have any isolated objects first from the selected object state
       if (
         filteringState.value?.isolatedObjects &&
         containsAll(ids, filteringState.value?.isolatedObjects as string[])
       )
         unIsolateObjects(ids, 'object-selection', true)
+
+      // check if we actually have any isolated objects first from the hidden object state
       if (
         filteringState.value?.hiddenObjects &&
         containsAll(ids, filteringState.value?.hiddenObjects as string[])
       )
         showObjects(ids, 'object-selection', true)
     }
-    selectedObjects.value = []
 
+    selectedObjects.value = []
     setViewerSelectionFilter()
   }
 
