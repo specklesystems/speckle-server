@@ -232,7 +232,6 @@ const isSelected = computed(() => {
 const setSelection = (e: MouseEvent) => {
   if (isHidden.value) return
   if (isSelected.value && !e.shiftKey) {
-    // TODO: remove from selection
     clearSelection()
     return
   }
@@ -278,7 +277,6 @@ const hideOrShowObject = () => {
 const isolateOrUnisolateObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isIsolated.value) {
-    // removeFromSelection(rawSpeckleData)
     filters.isolateObjects(ids, stateKey, true)
     return
   }

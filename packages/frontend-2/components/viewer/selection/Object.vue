@@ -50,7 +50,18 @@
         :key="index"
         class="text-xs"
       >
-        {{ kvp.key }}:{{ kvp.innerType }} ({{ kvp.arrayLength }})
+        <div class="grid grid-cols-3 text-foreground-2">
+          <div
+            class="truncate text-xs col-span-1 font-bold"
+            :title="(kvp.key as string)"
+          >
+            {{ kvp.key }}
+          </div>
+          <div class="truncate text-xs col-span-2 flex min-w-0 w-full">
+            <div class="truncate flex-grow">{{ kvp.innerType }} array</div>
+            <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
+          </div>
+        </div>
       </div>
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">

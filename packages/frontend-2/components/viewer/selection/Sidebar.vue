@@ -29,7 +29,7 @@
         </button>
         <button
           class="px-1 py-2 hover:text-primary transition"
-          @click.stop="hideOrShowSelection"
+          @click.stop="isolateOrUnisolateSelection"
         >
           <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
           <FunnelIcon v-else class="w-3 h-3" />
@@ -134,6 +134,14 @@ const hideOrShowSelection = () => {
     return
   }
   return filters.showObjects(allTargetIds.value, stateKey, true)
+}
+
+const isolateOrUnisolateSelection = () => {
+  if (!isIsolated.value) {
+    filters.isolateObjects(allTargetIds.value, stateKey, true)
+    return
+  }
+  return filters.unIsolateObjects(allTargetIds.value, stateKey, true)
 }
 
 onKeyStroke('Escape', () => {
