@@ -35,7 +35,6 @@ export function useViewerSelectionEventHandler(state: InjectableViewerState) {
   useSelectionEvents(
     {
       singleClickCallback: (args: SelectionEvent) => {
-        console.log('TODO: single click event')
         if (!args) return state.ui.selection.clearSelection()
         if (args.hits.length === 0) return state.ui.selection.clearSelection()
         if (!args.multiple) state.ui.selection.clearSelection()
@@ -45,7 +44,6 @@ export function useViewerSelectionEventHandler(state: InjectableViewerState) {
         state.ui.selection.addToSelection(firstVisHit.object)
       },
       doubleClickCallback: (args) => {
-        console.log('double click event', args)
         if (!args) return state.viewer.instance.zoom()
         if (!args.hits) return state.viewer.instance.zoom()
         if (args.hits.length === 0) return state.viewer.instance.zoom()

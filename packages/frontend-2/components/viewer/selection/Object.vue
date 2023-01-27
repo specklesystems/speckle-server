@@ -74,14 +74,11 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
-import {
-  useInjectedViewer,
-  useInjectedViewerInterfaceState
-} from '~~/lib/viewer/composables/setup'
+// import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 
-const { instance: viewer } = useInjectedViewer()
-const viewerTree = viewer.getWorldTree()
+// const { instance: viewer } = useInjectedViewer()
+// const viewerTree = viewer.getWorldTree()
 
 const props = withDefaults(
   defineProps<{
@@ -105,7 +102,8 @@ const ignoredProps = [
   'displayValue',
   'totalChildrenCount',
   '__importedUrl',
-  '__parents'
+  '__parents',
+  'bbox'
 ]
 
 const keyValuePairs = computed(() => {

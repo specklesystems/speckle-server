@@ -3,8 +3,7 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
-  ViewerEvent,
-  SelectionEvent
+  ViewerEvent
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -36,13 +35,14 @@ import {
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
-import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useViewerSelectionEventHandler } from './setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { containsAll } from '~~/lib/common/helpers/utils'
 
 type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -576,8 +576,26 @@ function setupInterfaceState(
   }
 
   const clearSelection = () => {
+    // Clear any vis/iso state
+    if (selectedObjects.value.length > 0) {
+      let ids = [] as string[]
+      for (const obj of selectedObjects.value) {
+        const objIds = getTargetObjectIds(obj)
+        ids.push(...objIds)
+      }
+      ids = [...new Set(ids.filter((id) => !!id))]
+      if (
+        filteringState.value?.isolatedObjects &&
+        containsAll(ids, filteringState.value?.isolatedObjects as string[])
+      )
+        unIsolateObjects(ids, 'object-selection', true)
+      if (
+        filteringState.value?.hiddenObjects &&
+        containsAll(ids, filteringState.value?.hiddenObjects as string[])
+      )
+        showObjects(ids, 'object-selection', true)
+    }
     selectedObjects.value = []
-    // TODO: clear any vis/iso state
 
     setViewerSelectionFilter()
   }

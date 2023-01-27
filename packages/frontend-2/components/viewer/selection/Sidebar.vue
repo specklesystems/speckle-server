@@ -7,23 +7,45 @@
     }`"
   >
     <div class="mb-2">
-      <div class="text-tiny text-foreground-2">
+      <!-- <div class="text-tiny text-foreground-2">
         {{ allTargetIds }}
         <hr />
         isolated: {{ isIsolated }} / hidden: {{ isHidden }}
-      </div>
-      <div class="flex items-center">
+      </div> -->
+      <div class="flex items-center space-x-2">
         <div class="font-bold text-xs flex items-center space-x-1">
           <CubeIcon class="w-3 h-3" />
           <span>{{ objects.length }}</span>
         </div>
-        <FormButton size="xs" :icon-right="EyeIcon" text @click="hideOrShowSelection()">
+        <!-- <FormButton size="xs" :icon-right="EyeIcon" text @click="hideOrShowSelection()">
           &nbsp;
-        </FormButton>
-        <FormButton size="xs" :icon-right="FunnelIcon" text @click="clearSelection()">
+        </FormButton> -->
+        <button
+          class="px-1 py-2 hover:text-primary transition"
+          @click.stop="hideOrShowSelection"
+        >
+          <EyeIcon v-if="!isHidden" class="w-3 h-3" />
+          <EyeSlashIcon v-else class="w-3 h-3" />
+        </button>
+        <button
+          class="px-1 py-2 hover:text-primary transition"
+          @click.stop="hideOrShowSelection"
+        >
+          <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
+          <FunnelIcon v-else class="w-3 h-3" />
+        </button>
+        <!-- <FormButton size="xs" :icon-right="FunnelIcon" text @click="clearSelection()">
           &nbsp;
-        </FormButton>
-        <FormButton
+        </FormButton> -->
+        <button
+          class="px-1 py-2 hover:text-primary transition"
+          title="Open selection in a new tab"
+          @click.stop="clearSelection()"
+        >
+          <ArrowTopRightOnSquareIcon class="w-3 h-3" />
+        </button>
+
+        <!-- <FormButton
           size="xs"
           :icon-right="ArrowTopRightOnSquareIcon"
           text
@@ -31,10 +53,14 @@
           @click="clearSelection()"
         >
           &nbsp;
-        </FormButton>
-        <FormButton size="xs" :icon-right="XMarkIcon" text @click="clearSelection()">
-          &nbsp;
-        </FormButton>
+        </FormButton> -->
+        <button
+          class="px-1 py-2 hover:text-primary transition"
+          title="Clear selection"
+          @click.stop="clearSelection()"
+        >
+          <XMarkIcon class="w-3 h-3" />
+        </button>
       </div>
     </div>
     <div class="w-full my-2 border-b border-outline-3"></div>
@@ -55,15 +81,17 @@ import {
   XMarkIcon,
   ArrowTopRightOnSquareIcon,
   EyeIcon,
+  EyeSlashIcon,
   FunnelIcon,
   CubeIcon
 } from '@heroicons/vue/24/solid'
+import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
+
 import { onKeyStroke } from '@vueuse/core'
-import {
-  useInjectedViewerInterfaceState,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { containsAll } from '~~/lib/common/helpers/utils'
+import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 
 const {
   ui: {
@@ -74,9 +102,6 @@ const {
 } = useInjectedViewerState()
 
 const unfold = computed(() => objects.value.length === 1)
-
-const containsAll = (target: unknown[], array: unknown[]) =>
-  target.every((v) => array.includes(v))
 
 const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
 const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
@@ -100,7 +125,7 @@ const isIsolated = computed(() => {
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
 
-const stateKey = 'object-selection'
+const stateKey = ViewerSceneExplorerStateKey
 
 const hideOrShowSelection = () => {
   if (!isHidden.value) {

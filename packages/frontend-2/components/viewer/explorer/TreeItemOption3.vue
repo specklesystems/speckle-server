@@ -123,6 +123,8 @@ import {
   getHeaderAndSubheaderForSpeckleObject,
   getTargetObjectIds
 } from '~~/lib/object-sidebar/helpers'
+import { containsAll } from '~~/lib/common/helpers/utils'
+import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 
 const props = withDefaults(
   defineProps<{
@@ -242,9 +244,6 @@ const setSelection = (e: MouseEvent) => {
   addToSelection(rawSpeckleData)
 }
 
-const containsAll = (target: unknown[], array: unknown[]) =>
-  target.every((v) => array.includes(v))
-
 const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
 const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
 
@@ -265,7 +264,7 @@ const isIsolated = computed(() => {
   return containsAll(ids, isolatedObjects.value)
 })
 
-const stateKey = 'tree-explorer'
+const stateKey = ViewerSceneExplorerStateKey
 const hideOrShowObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isHidden.value) {
