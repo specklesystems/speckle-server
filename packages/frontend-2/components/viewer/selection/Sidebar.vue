@@ -17,9 +17,7 @@
           <CubeIcon class="w-3 h-3" />
           <span>{{ objects.length }}</span>
         </div>
-        <!-- <FormButton size="xs" :icon-right="EyeIcon" text @click="hideOrShowSelection()">
-          &nbsp;
-        </FormButton> -->
+
         <button
           class="px-1 py-2 hover:text-primary transition"
           @click.stop="hideOrShowSelection"
@@ -34,9 +32,6 @@
           <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
           <FunnelIcon v-else class="w-3 h-3" />
         </button>
-        <!-- <FormButton size="xs" :icon-right="FunnelIcon" text @click="clearSelection()">
-          &nbsp;
-        </FormButton> -->
         <button
           class="px-1 py-2 hover:text-primary transition"
           title="Open selection in a new tab"
@@ -44,16 +39,6 @@
         >
           <ArrowTopRightOnSquareIcon class="w-3 h-3" />
         </button>
-
-        <!-- <FormButton
-          size="xs"
-          :icon-right="ArrowTopRightOnSquareIcon"
-          text
-          title="open selection in new tab"
-          @click="clearSelection()"
-        >
-          &nbsp;
-        </FormButton> -->
         <button
           class="px-1 py-2 hover:text-primary transition"
           title="Clear selection"
