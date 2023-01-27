@@ -138,6 +138,7 @@ const hideOrShowSelection = () => {
 
 const isolateOrUnisolateSelection = () => {
   if (!isIsolated.value) {
+    viewerInstance.selectObjects([]) // bypassing the FE state, and resetting the viewer selection state only
     filters.isolateObjects(allTargetIds.value, stateKey, true)
     return
   }
