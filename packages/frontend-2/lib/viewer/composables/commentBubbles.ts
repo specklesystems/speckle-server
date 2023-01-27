@@ -14,6 +14,12 @@ import {
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
+/**
+ * TODO: Typing subscription
+ * New/updated/deleted comment subscription
+ * Actual text editor & attachments part
+ */
+
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
     id
@@ -195,6 +201,10 @@ export function useViewerCommentBubbles(params: {
   }
 }
 
+/**
+ * Responsively switches a comment thread/new-thread container from left side to right side of the button
+ * (or vice versa) depending on how much space there is on each side
+ */
 export function useExpandedThreadResponsiveLocation(params: {
   threadContainer: Ref<Nullable<HTMLElement>>
   width: number
