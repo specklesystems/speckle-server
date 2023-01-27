@@ -15,19 +15,19 @@
 
     <ClientOnly>
       <!-- Viewer host -->
-      <div class="special-gradient absolute w-screen h-screen">
+      <div class="special-gradient absolute w-screen h-screen z-10">
         <ViewerBase />
         <ViewerAnchoredPoints />
       </div>
 
       <!-- Global loading bar -->
-      <ViewerLoadingBar />
+      <ViewerLoadingBar class="z-20" />
 
       <!-- Sidebar sketches -->
-      <ViewerControlsOption3 />
+      <ViewerControlsOption3 class="z-20" />
 
       <!-- Viewer Object Selection Info Display -->
-      <ViewerSelectionSidebar />
+      <ViewerSelectionSidebar class="z-20" />
     </ClientOnly>
   </div>
 </template>

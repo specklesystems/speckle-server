@@ -4,13 +4,14 @@
     class="absolute w-full h-full pointer-events-none overflow-hidden"
   >
     <!-- Add new thread bubble -->
-    <ViewerAnchoredPointNewThread :model="buttonState" />
+    <ViewerAnchoredPointNewThread v-model="buttonState" class="z-[12]" />
 
     <!-- Comment bubbles -->
     <ViewerAnchoredPointThread
       v-for="thread in Object.values(commentThreads)"
       :key="thread.id"
       :thread="thread"
+      class="z-[11]"
     />
 
     <!-- Active user -->
@@ -18,6 +19,7 @@
       v-for="user in Object.values(users)"
       :key="user.viewerSessionId"
       :user="user"
+      class="z-[10]"
     />
   </div>
 </template>
