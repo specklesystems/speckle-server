@@ -17,7 +17,7 @@
           <CubeIcon class="w-3 h-3" />
           <span>{{ objects.length }}</span>
         </div>
-        <FormButton size="xs" :icon-right="EyeIcon" text @click="clearSelection()">
+        <FormButton size="xs" :icon-right="EyeIcon" text @click="hideOrShowSelection()">
           &nbsp;
         </FormButton>
         <FormButton size="xs" :icon-right="FunnelIcon" text @click="clearSelection()">
@@ -59,13 +59,19 @@ import {
   CubeIcon
 } from '@heroicons/vue/24/solid'
 import { onKeyStroke } from '@vueuse/core'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 
 const {
-  selection: { objects, clearSelection },
-  filters
-} = useInjectedViewerInterfaceState()
+  ui: {
+    selection: { objects, clearSelection },
+    filters
+  },
+  viewer: { instance: viewerInstance }
+} = useInjectedViewerState()
 
 const unfold = computed(() => objects.value.length === 1)
 
@@ -94,8 +100,19 @@ const isIsolated = computed(() => {
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
 
+const stateKey = 'object-selection'
+
+const hideOrShowSelection = () => {
+  if (!isHidden.value) {
+    viewerInstance.selectObjects([]) // bypassing the FE state, and resetting the viewer selection state only
+    filters.hideObjects(allTargetIds.value, stateKey, true)
+    return
+  }
+  return filters.showObjects(allTargetIds.value, stateKey, true)
+}
+
 onKeyStroke('Escape', () => {
-  // TODO: clear any vis/iso state
+  // Cleareance of any vis/iso state coming from here should happen in clearSelection()
   clearSelection()
 })
 </script>

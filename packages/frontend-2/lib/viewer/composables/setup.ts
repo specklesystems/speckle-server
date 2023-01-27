@@ -577,6 +577,8 @@ function setupInterfaceState(
 
   const clearSelection = () => {
     selectedObjects.value = []
+    // TODO: clear any vis/iso state
+
     setViewerSelectionFilter()
   }
 
