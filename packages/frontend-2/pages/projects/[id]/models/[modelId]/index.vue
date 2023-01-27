@@ -27,6 +27,9 @@
 
       <!-- Viewer Object Selection Info Display -->
       <ViewerSelectionSidebar />
+
+      <!-- Shows up when filters are applied for an easy return to normality -->
+      <ViewerGlobalFilterReset />
     </ClientOnly>
   </div>
 </template>
