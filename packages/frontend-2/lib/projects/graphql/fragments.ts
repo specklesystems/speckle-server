@@ -1,7 +1,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
-export const projectDashboardItemFragment = graphql(`
-  fragment ProjectDashboardItem on Project {
+export const projectDashboardItemNoModelsFragment = graphql(`
+  fragment ProjectDashboardItemNoModels on Project {
     id
     name
     createdAt
@@ -12,6 +12,13 @@ export const projectDashboardItemFragment = graphql(`
       name
       avatar
     }
+  }
+`)
+
+export const projectDashboardItemFragment = graphql(`
+  fragment ProjectDashboardItem on Project {
+    id
+    ...ProjectDashboardItemNoModels
     models(limit: 4, filter: { onlyWithVersions: true }) {
       totalCount
       items {

@@ -1120,8 +1120,8 @@ export default class SpeckleRenderer {
           : clientY
     }
     return {
-      x: (pos.x / width === undefined ? canvas.width : width) * 2 - 1,
-      y: (pos.y / height === undefined ? canvas.height : height) * -2 + 1
+      x: (pos.x / (width === undefined ? canvas.width : width)) * 2 - 1,
+      y: (pos.y / (height === undefined ? canvas.height : height)) * -2 + 1
     }
   }
 

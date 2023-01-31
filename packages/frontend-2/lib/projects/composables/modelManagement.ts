@@ -97,6 +97,10 @@ export function useCreateNewModel() {
 /**
  * Track project model updates/deletes and make cache updates accordingly. Optionally
  * provide an extra handler that you can use to react to all model update events (create/update/delete)
+ *
+ *
+ * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
+ * that we don't want to duplicate (or extract that part out into a separate composable)
  */
 export function useProjectModelUpdateTracking(
   projectId: MaybeRef<string>,

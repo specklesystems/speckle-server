@@ -47,6 +47,7 @@ export const viewerLoadedResourcesQuery = graphql(`
         totalCount
         items {
           ...ViewerCommentsListItem
+          ...ViewerCommentBubblesData
         }
       }
       ...ModelPageProject

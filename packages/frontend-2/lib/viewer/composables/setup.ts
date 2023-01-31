@@ -12,7 +12,6 @@ import {
   ref,
   provide,
   ComputedRef,
-  Ref,
   WritableComputedRef,
   Raw
 } from 'vue'
@@ -35,20 +34,21 @@ import {
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
-
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
+import { nanoid } from 'nanoid'
+import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useViewerSelectionEventHandler } from './setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
 
-type LoadedModel = NonNullable<
+export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
 
-type LoadedCommentThread = NonNullable<
+export type LoadedCommentThread = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.commentThreads.items[0]'>
 >
 
@@ -75,6 +75,11 @@ export type InjectableViewerState = Readonly<{
    * The project which we're opening in the viewer (all loaded models should belong to it)
    */
   projectId: ComputedRef<string>
+  /**
+   * User viewer session ID. The same user will have different IDs in different tabs if multiple are open.
+   * This is used to ignore user activity messages from the same tab.
+   */
+  sessionId: ComputedRef<string>
   /**
    * The actual Viewer instance and related objects.
    * Note: This is going to be undefined in SSR!
@@ -109,6 +114,11 @@ export type InjectableViewerState = Readonly<{
        * can write to this to change which resources should be loaded.
        */
       items: WritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
+      /**
+       * All currently requested identifiers in a comma-delimited string, the way it's
+       * represented in the URL
+       */
+      resourceIdString: ComputedRef<string>
       /**
        * Helper for switching model to a specific version (or just latest)
        */
@@ -170,7 +180,7 @@ export type InjectableViewerState = Readonly<{
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
-      objects: Ref<Raw<Record<string, unknown>>[]> // Computed
+      objects: ComputedRef<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
@@ -185,7 +195,10 @@ type CachedViewerState = Pick<
   initPromise: Promise<void>
 }
 
-type InitialSetupState = Pick<InjectableViewerState, 'projectId' | 'viewer'>
+type InitialSetupState = Pick<
+  InjectableViewerState,
+  'projectId' | 'viewer' | 'sessionId'
+>
 
 type InitialStateWithRequest = InitialSetupState & {
   resources: { request: InjectableViewerState['resources']['request'] }
@@ -234,6 +247,7 @@ function createViewerData(): CachedViewerState {
 function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   const projectId = computed(() => unref(params.projectId))
 
+  const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
@@ -243,6 +257,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   return {
     projectId,
+    sessionId,
     viewer: process.server
       ? (undefined as unknown as InitialSetupState['viewer'])
       : {
@@ -272,6 +287,11 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       router.push({ params: { modelId } })
     }
   })
+
+  // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
+  const resourceIdString = computed(() =>
+    SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value)
+  )
 
   const switchModelToVersion = (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
@@ -304,6 +324,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     resources: {
       request: {
         items: resources,
+        resourceIdString,
         switchModelToVersion
       }
     }
@@ -323,18 +344,14 @@ function setupResponseResourceItems(
   const {
     projectId,
     resources: {
-      request: { items: requestItems }
+      request: { resourceIdString }
     }
   } = state
-
-  const resourceString = computed(() =>
-    SpeckleViewer.ViewerRoute.createGetParamFromResources(requestItems.value)
-  )
 
   const { result: resolvedResourcesResult, variables: resourceItemsQueryVariables } =
     useQuery(projectViewerResourcesQuery, () => ({
       projectId: projectId.value,
-      resourceUrlString: resourceString.value
+      resourceUrlString: resourceIdString.value
     }))
 
   const resolvedResourceGroups = computed(
@@ -501,6 +518,7 @@ function setupInterfaceState(
   const filteringState = ref(null as Nullable<FilteringState>)
   const localFilterPropKey = ref(null as Nullable<string>)
 
+  // TODO: Do we maybe move isBusy toggles to the viewer side?
   const isolateObjects: FilterAction = async (...params) => {
     if (process.server) return
     viewerBusy.value = true
@@ -629,7 +647,7 @@ function setupInterfaceState(
         resetFilters
       },
       selection: {
-        objects: selectedObjects,
+        objects: computed(() => selectedObjects.value.slice()),
         addToSelection,
         clearSelection,
         removeFromSelection
@@ -644,6 +662,7 @@ function setupInterfaceState(
 function useViewerObjectAutoLoading(state: InjectableViewerState) {
   if (process.server) return
 
+  const authToken = useAuthCookie()
   const getObjectUrl = useGetObjectUrl()
   const {
     projectId,
@@ -661,7 +680,7 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObject(objectUrl)
+      viewer.loadObject(objectUrl, authToken.value || undefined)
     }
   }
 
@@ -961,7 +980,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
 
   // Extra post-state-creation setup
   useViewerObjectAutoLoading(state)
-  useViewerSelectionEventHandler(state) // TODO: needs implementation
+  useViewerSelectionEventHandler(state)
   useViewerIsBusyEventHandler(state)
   useViewerModelsVersionsUpdateTracker(state)
 
@@ -998,3 +1017,5 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
   const { ui } = useInjectedViewerState()
   return ui
 }
+
+export const test = 1

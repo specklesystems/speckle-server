@@ -26,34 +26,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   ProjectModelsUpdatedMessageType,
-  ProjectPageQueryQueryVariables,
   ProjectUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
-import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   useEvictProjectModelFields,
   useProjectModelUpdateTracking
 } from '~~/lib/projects/composables/modelManagement'
+import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
-
-const onProjectUpdatedSubscription = graphql(`
-  subscription OnProjectUpdated($id: String!) {
-    projectUpdated(id: $id) {
-      id
-      type
-      project {
-        ...ProjectPageProject
-      }
-    }
-  }
-`)
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -78,19 +65,7 @@ const evictProjectModels = useEvictProjectModelFields()
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const goHome = useNavigateToHome()
-const apollo = useApolloClient().client
 const projectId = computed(() => route.params.id as string)
-
-const { result: projectPageResult } = useQuery(projectPageQuery, () => ({
-  id: projectId.value
-}))
-
-const { onResult: onProjectUpdated } = useSubscription(
-  onProjectUpdatedSubscription,
-  () => ({
-    id: projectId.value
-  })
-)
 
 // update preview URLs
 useProjectVersionUpdateTracking(projectId)
@@ -102,39 +77,11 @@ useProjectModelUpdateTracking(projectId, (event) => {
   }
 })
 
-const project = computed(() => projectPageResult.value?.project)
-
-onProjectUpdated((res) => {
-  if (!res.data?.projectUpdated) return
-
-  const event = res.data.projectUpdated
+useProjectUpdateTracking(projectId, (event) => {
   const isDeleted = event.type === ProjectUpdatedMessageType.Deleted
-  const updatedProject = event.project
-  const cache = apollo.cache
 
   if (isDeleted) {
     goHome()
-    cache.evict({
-      id: getCacheId('Project', event.id)
-    })
-  } else if (updatedProject) {
-    updateCacheByFilter(
-      cache,
-      {
-        query: {
-          query: projectPageQuery,
-          variables: <ProjectPageQueryQueryVariables>{ id: updatedProject.id }
-        }
-      },
-      (data) => {
-        if (!data.project) return
-
-        return {
-          ...data,
-          project: updatedProject
-        }
-      }
-    )
   }
 
   triggerNotification({
@@ -143,4 +90,10 @@ onProjectUpdated((res) => {
     description: isDeleted ? 'Redirecting to home' : undefined
   })
 })
+
+const { result: projectPageResult } = useQuery(projectPageQuery, () => ({
+  id: projectId.value
+}))
+
+const project = computed(() => projectPageResult.value?.project)
 </script>

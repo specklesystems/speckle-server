@@ -1,5 +1,18 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const onProjectUpdatedSubscription = graphql(`
+  subscription OnProjectUpdated($id: String!) {
+    projectUpdated(id: $id) {
+      id
+      type
+      project {
+        ...ProjectPageProject
+        ...ProjectDashboardItemNoModels
+      }
+    }
+  }
+`)
+
 export const onProjectModelsUpdateSubscription = graphql(`
   subscription OnProjectModelsUpdate($id: String!) {
     projectModelsUpdated(id: $id) {

@@ -15,7 +15,20 @@ export const COMMENT_FULL_INFO_FRAGMENT = gql`
         fileSize
       }
     }
-    data
+    data {
+      location
+      camPos
+      sectionBox
+      selection
+      filters {
+        hiddenIds
+        isolatedIds
+        propertyInfoKey
+        passMax
+        passMin
+        sectionBox
+      }
+    }
     screenshot
     replies {
       totalCount

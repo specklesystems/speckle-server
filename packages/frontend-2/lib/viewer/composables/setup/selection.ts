@@ -52,7 +52,7 @@ export function useViewerSelectionEventHandler(state: InjectableViewerState) {
         if (!firstVisHit) return state.ui.selection.clearSelection()
 
         const objectId = args.hits[0].object.id
-        state.viewer.instance.zoom([objectId as string])
+        state.viewer.instance.zoom([objectId])
       }
     },
     { state }

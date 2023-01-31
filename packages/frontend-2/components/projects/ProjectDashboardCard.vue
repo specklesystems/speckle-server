@@ -63,6 +63,7 @@ import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import {
   addFragmentDependencies,
+  evictObjectFields,
   getCacheId,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
@@ -70,9 +71,11 @@ import {
   projectDashboardItemFragment,
   projectPageLatestItemsModelItemFragment
 } from '~~/lib/projects/graphql/fragments'
-import { sortBy } from 'lodash-es'
+import { has, sortBy } from 'lodash-es'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
+import { Nullable } from '@speckle/shared'
 
 const fullProjectDashboardItemFragment = addFragmentDependencies(
   projectDashboardItemFragment,
@@ -84,6 +87,8 @@ const props = defineProps<{
 }>()
 
 const projectId = computed(() => props.project.id)
+
+useProjectUpdateTracking(projectId)
 
 useProjectVersionUpdateTracking(
   projectId,
@@ -178,6 +183,17 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
       }
     )
   }
+
+  // Evict project page models queries so that we don't have a stale cache there
+  evictObjectFields<{ filter?: { search?: Nullable<string> } }>(
+    cache,
+    getCacheId('Project', props.project.id),
+    (fieldName, variables) => {
+      if (fieldName !== 'models') return false
+      if (!has(variables?.filter, 'search')) return false
+      return true
+    }
+  )
 })
 
 const models = computed(() => props.project.models?.items || [])
