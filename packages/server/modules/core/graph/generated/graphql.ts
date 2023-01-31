@@ -1297,6 +1297,7 @@ export type Query = {
    * This query can be used in the following ways:
    * - get all the comments for a stream: **do not pass in any resource identifiers**.
    * - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
+   * @deprecated Use 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
   /** All of the discoverable streams of the server */
