@@ -265,7 +265,11 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      this.viewer.getRenderer().updateShadowCatcher()
+      // this.viewer.getRenderer().updateShadowCatcher()
+      this.viewer.diff(
+        'https://latest.speckle.dev/streams/85e05b8c72/objects/5ba89b421f318792ef6cd4a8eefa3b24',
+        'https://latest.speckle.dev/streams/85e05b8c72/objects/b81d1d9295a995d9479186324b6f145a'
+      )
     })
 
     const rotate = this.tabs.pages[0].addButton({

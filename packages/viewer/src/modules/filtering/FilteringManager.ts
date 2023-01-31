@@ -301,7 +301,7 @@ export class FilteringManager {
     return this.populateGenericState(objectIds, this.HighlightState)
   }
 
-  public setUserObjectColors(groups: [{ objectIds: string[]; color: string }]) {
+  public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
     this.UserspaceColorState = new UserspaceColorState()
     // Resetting any other filtering color ops as they're not compatible
     this.ColorNumericFilterState = null

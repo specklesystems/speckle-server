@@ -12,6 +12,7 @@ import { Optional } from '../helpers/typeHelper'
 import {
   CanonicalView,
   DefaultViewerParams,
+  DiffResult,
   InlineView,
   IViewer,
   PolarView,
@@ -298,7 +299,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public setUserObjectColors(
-    groups: [{ objectIds: string[]; color: string }]
+    groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(this.filteringManager.setUserObjectColors(groups))
@@ -471,6 +472,57 @@ export class Viewer extends EventEmitter implements IViewer {
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }
+  }
+
+  public diff(urlA: string, urlB: string): Promise<DiffResult> {
+    const diffResult: DiffResult = {
+      unchanged: [],
+      added: [],
+      removed: [],
+      modified: []
+    }
+    const renderTreeA = WorldTree.getRenderTree(urlA)
+    const renderTreeB = WorldTree.getRenderTree(urlB)
+    const rootA = WorldTree.getInstance().findId(urlA)
+    const rootB = WorldTree.getInstance().findId(urlB)
+    const rvsA = renderTreeA.getAtomicNodes(SpeckleType.Mesh)
+    const rvsB = renderTreeB.getAtomicNodes(SpeckleType.Mesh)
+    // console.log(rvsA.map((value: TreeNode) => value.model.raw.id))
+    // console.log(rvsB.map((value: TreeNode) => value.model.raw.id))
+
+    for (let k = 0; k < rvsB.length; k++) {
+      // console.log('Node -> ', rvsB[k].model.raw.id)
+      const res = rootA.first((node: TreeNode) => {
+        return rvsB[k].model.raw.id === node.model.raw.id
+      })
+      if (res) {
+        diffResult.unchanged.push(res)
+      } else {
+        diffResult.added.push(rvsB[k])
+      }
+    }
+
+    for (let k = 0; k < rvsA.length; k++) {
+      // console.log('Node -> ', rvsB[k].model.raw.id)
+      const res = rootB.first((node: TreeNode) => {
+        return rvsA[k].model.raw.id === node.model.raw.id
+      })
+      if (!res) {
+        diffResult.removed.push(rvsA[k])
+      }
+    }
+    this.setUserObjectColors([
+      {
+        objectIds: diffResult.added.map((value) => value.model.raw.id),
+        color: '#00ff00'
+      },
+      {
+        objectIds: diffResult.removed.map((value) => value.model.raw.id),
+        color: '#ff0000'
+      }
+    ])
+    console.warn(diffResult)
+    return null
   }
 
   public dispose() {

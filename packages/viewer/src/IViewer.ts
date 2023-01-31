@@ -121,6 +121,17 @@ export type PolarView = {
   origin?: Vector3
 }
 
+export interface DiffResult {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  unchanged: Array<Record<string, any>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  added: Array<Record<string, any>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  removed: Array<Record<string, any>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modified: Array<Record<string, any>>
+}
+
 export interface IViewer {
   init(): Promise<void>
   resize(): void
@@ -157,6 +168,7 @@ export interface IViewer {
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
+  diff(urlA: string, urlB: string): Promise<DiffResult>
 
   screenshot(): Promise<string>
 
