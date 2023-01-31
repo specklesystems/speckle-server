@@ -3,26 +3,33 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce } from 'lodash-es'
+import { debounce, throttle } from 'lodash-es'
+import { Nullable } from '@speckle/shared'
 
-export function useViewerCameraTracker(callback: () => void): void {
+export function useViewerCameraTracker(
+  callback: () => void,
+  options?: Partial<{ throttleWait: number }>
+): void {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
+  const { throttleWait = 50 } = options || {}
+
+  const finalCallback = throttleWait ? throttle(callback, throttleWait) : callback
 
   onMounted(() => {
-    instance.cameraHandler.controls.addEventListener('update', callback)
+    instance.cameraHandler.controls.addEventListener('update', finalCallback)
   })
 
   onBeforeUnmount(() => {
-    instance.cameraHandler.controls.removeEventListener('update', callback)
+    instance.cameraHandler.controls.removeEventListener('update', finalCallback)
   })
 }
 
 export function useSelectionEvents(
   params: {
-    singleClickCallback?: (event: SelectionEvent) => void
-    doubleClickCallback?: (event: SelectionEvent) => void
+    singleClickCallback?: (event: Nullable<SelectionEvent>) => void
+    doubleClickCallback?: (event: Nullable<SelectionEvent>) => void
   },
   options?: Partial<{
     state: InjectableViewerState

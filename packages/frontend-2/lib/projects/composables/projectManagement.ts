@@ -1,5 +1,3 @@
-// TODO: Project page moedls still empty after created new model on root page
-
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { MaybeRef } from '@vueuse/core'

@@ -60,7 +60,7 @@ export type SelectionEvent = {
   event?: PointerEvent
   hits: Array<{
     guid?: string
-    object: Record<string, unknown>
+    object: Record<string, unknown> & { id: string }
     point: Vector3
   }>
 }

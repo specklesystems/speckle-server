@@ -171,17 +171,38 @@ module.exports = {
         serverRole: context.role,
         auth: context.auth
       })
-      return await getPaginatedProjectComments({ ...args, projectId: parent.id })
+      return await getPaginatedProjectComments({
+        ...args,
+        projectId: parent.id,
+        filter: {
+          ...(args.filter || {}),
+          threadsOnly: true
+        }
+      })
     }
   },
   Version: {
     async commentThreads(parent, args) {
-      return await getPaginatedCommitComments({ ...args, commitId: parent.id })
+      return await getPaginatedCommitComments({
+        ...args,
+        commitId: parent.id,
+        filter: {
+          ...(args.filter || {}),
+          threadsOnly: true
+        }
+      })
     }
   },
   Model: {
     async commentThreads(parent, args) {
-      return await getPaginatedBranchComments({ ...args, branchId: parent.id })
+      return await getPaginatedBranchComments({
+        ...args,
+        branchId: parent.id,
+        filter: {
+          ...(args.filter || {}),
+          threadsOnly: true
+        }
+      })
     }
   },
   Stream: {

@@ -191,6 +191,8 @@ export async function getViewerResourcesFromLegacyIdentifiers(
   projectId: string,
   resources: Array<ResourceIdentifier | ResourceIdentifierInput>
 ): Promise<ViewerResourceItem[]> {
+  if (!resources.length || !projectId) return []
+
   const objectIds = resources
     .filter((r) => r.resourceType === ResourceType.Object)
     .map((r) => r.resourceId)
