@@ -31,7 +31,13 @@
               :comment="comment"
             />
           </div>
-          <ViewerAnchoredPointThreadNewReply class="mt-2" />
+          <div
+            v-if="isTypingMessage"
+            class="bg-foundation rounded-full w-full p-2 caption mt-2"
+          >
+            {{ isTypingMessage }}
+          </div>
+          <ViewerAnchoredPointThreadNewReply :model-value="modelValue" class="mt-2" />
         </div>
       </div>
     </div>
@@ -41,6 +47,7 @@
 import { ChatBubbleOvalLeftEllipsisIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
+import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
   useExpandedThreadResponsiveLocation
@@ -54,11 +61,14 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const threadId = computed(() => props.modelValue.id)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
+
+const { usersTyping } = useViewerThreadTypingTracking(threadId)
 
 const { style } = useExpandedThreadResponsiveLocation({
   threadContainer,
@@ -66,6 +76,12 @@ const { style } = useExpandedThreadResponsiveLocation({
 })
 
 const isExpanded = computed(() => props.modelValue.isExpanded)
+const isTypingMessage = computed(() => {
+  if (!usersTyping.value.length) return null
+  return usersTyping.value.length > 1
+    ? `${usersTyping.value.map((u) => u.userName).join(', ')} are typing...`
+    : `${usersTyping.value[0].userName} is typing...`
+})
 
 const changeExpanded = (newVal: boolean) => {
   emit('update:modelValue', {

@@ -5,6 +5,7 @@ import {
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
   ViewerUserSelectionInfoInput,
+  ViewerUserTypingMessage,
   ViewerUserTypingMessageInput
 } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -17,7 +18,7 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { onViewerUserActivityBroadcastedSubscription } from '../graphql/subscriptions'
 import dayjs, { Dayjs } from 'dayjs'
 import { get } from 'lodash-es'
-import { useIntervalFn } from '@vueuse/core'
+import { MaybeRef, useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
@@ -95,7 +96,7 @@ function useCollectMainMetadata() {
   })
 }
 
-function useViewerUserActivityBroadcasting() {
+export function useViewerUserActivityBroadcasting() {
   const {
     projectId,
     resources: {
@@ -297,5 +298,65 @@ export function useViewerUserActivityTracking(params: {
 
   return {
     users
+  }
+}
+
+type UserTypingInfo = {
+  userId: string
+  userName: string
+  typing: ViewerUserTypingMessage
+  lastSeen: Dayjs
+}
+
+export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
+  const usersTyping = ref([] as UserTypingInfo[])
+
+  const {
+    projectId,
+    resources: {
+      request: { resourceIdString }
+    }
+  } = useInjectedViewerState()
+  const { isLoggedIn } = useActiveUser()
+  const { onResult: onUserActivity } = useSubscription(
+    onViewerUserActivityBroadcastedSubscription,
+    () => ({
+      projectId: projectId.value,
+      resourceIdString: resourceIdString.value
+    }),
+    () => ({
+      enabled: isLoggedIn.value
+    })
+  )
+
+  onUserActivity((res) => {
+    if (!res.data?.viewerUserActivityBroadcasted) return
+
+    const event = res.data.viewerUserActivityBroadcasted
+    if (event.status !== ViewerUserActivityStatus.Typing || !event.typing) return
+
+    const typingPayload = event.typing
+    if (typingPayload.threadId !== unref(threadId)) return
+
+    const typingInfo: UserTypingInfo = {
+      userId: event.userId || event.viewerSessionId,
+      userName: event.userName,
+      typing: typingPayload,
+      lastSeen: dayjs()
+    }
+
+    const existingItemIdx = usersTyping.value.findIndex(
+      (i) => i.userId === typingInfo.userId
+    )
+
+    if (existingItemIdx !== -1) {
+      usersTyping.value.splice(existingItemIdx, 1)
+    }
+
+    if (typingInfo.typing.isTyping) usersTyping.value.push(typingInfo)
+  })
+
+  return {
+    usersTyping: computed(() => usersTyping.value)
   }
 }

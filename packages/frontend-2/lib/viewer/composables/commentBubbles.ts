@@ -15,9 +15,9 @@ import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
 /**
- * TODO: Typing subscription
- * New/updated/deleted comment subscription
- * Actual text editor & attachments part
+ * TODO:
+ * - z-index issues with thread buttons overlapping threads themselves
+ * - Mark comment viewed
  */
 
 graphql(`
