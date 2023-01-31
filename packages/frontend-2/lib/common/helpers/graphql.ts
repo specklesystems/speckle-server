@@ -187,9 +187,9 @@ export function evictObjectFields<
   cache.modify({
     id,
     fields(fieldValue, { storeFieldName, fieldName, DELETE }) {
-      const variablesStringbase = storeFieldName.substring(fieldName.length)
       let variables: Optional<V> = undefined
       if (storeFieldName !== fieldName) {
+        const variablesStringbase = storeFieldName.substring(fieldName.length)
         if (variablesStringbase.startsWith(':')) {
           variables = JSON.parse(variablesStringbase.substring(1)) as V
         } else if (variablesStringbase.startsWith('(')) {
