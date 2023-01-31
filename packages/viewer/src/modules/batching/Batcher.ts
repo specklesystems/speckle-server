@@ -159,6 +159,33 @@ export default class Batcher {
     return visibilityRanges
   }
 
+  public getStencil(): Record<string, BatchUpdateRange> {
+    const visibilityRanges = {}
+    for (const k in this.batches) {
+      const batch: Batch = this.batches[k]
+      if (batch.geometryType !== GeometryType.MESH) {
+        visibilityRanges[k] = HideAllBatchUpdateRange
+        continue
+      }
+      const batchMesh: Mesh = batch.renderObject as Mesh
+      if (batchMesh.geometry.groups.length === 0) {
+        if ((batchMesh.material as Material).stencilWrite === true)
+          visibilityRanges[k] = AllBatchUpdateRange
+      } else {
+        const stencilGroup = batchMesh.geometry.groups.find((value) => {
+          return batchMesh.material[value.materialIndex].stencilWrite === true
+        })
+        if (stencilGroup) {
+          visibilityRanges[k] = {
+            offset: stencilGroup.start,
+            count: stencilGroup.count
+          }
+        }
+      }
+    }
+    return visibilityRanges
+  }
+
   public getOpaque() {
     const visibilityRanges = {}
     for (const k in this.batches) {
@@ -188,27 +215,6 @@ export default class Batcher {
       }
     }
     return visibilityRanges
-  }
-
-  public enableTransparent(value: boolean) {
-    for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) continue
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        batchMesh.visible = (batchMesh.material as Material).transparent
-          ? value
-          : batchMesh.visible
-      } else {
-        const transparentGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].transparent === true
-        })
-        batch.setVisibleRange({
-          offset: 0,
-          count: transparentGroup.start
-        })
-      }
-    }
   }
 
   public purgeBatches(subtreeId: string) {
