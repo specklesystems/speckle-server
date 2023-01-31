@@ -187,7 +187,6 @@ export function evictObjectFields<
   cache.modify({
     id,
     fields(fieldValue, { storeFieldName, fieldName, DELETE }) {
-      // TODO: Model didnt appear on projects root page during demo
       const variablesStringbase = storeFieldName.substring(fieldName.length)
       let variables: Optional<V> = undefined
       if (storeFieldName !== fieldName) {
@@ -199,8 +198,6 @@ export function evictObjectFields<
           ) as V
         }
       }
-
-      console.log(fieldName, storeFieldName, variables)
 
       if (predicate(fieldName, variables as V, fieldValue as D)) {
         return DELETE as unknown

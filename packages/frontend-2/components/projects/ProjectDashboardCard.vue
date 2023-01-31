@@ -69,6 +69,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import {
   projectDashboardItemFragment,
+  projectDashboardItemNoModelsFragment,
   projectPageLatestItemsModelItemFragment
 } from '~~/lib/projects/graphql/fragments'
 import { has, sortBy } from 'lodash-es'
@@ -79,7 +80,8 @@ import { Nullable } from '@speckle/shared'
 
 const fullProjectDashboardItemFragment = addFragmentDependencies(
   projectDashboardItemFragment,
-  projectPageLatestItemsModelItemFragment
+  projectPageLatestItemsModelItemFragment,
+  projectDashboardItemNoModelsFragment
 )
 
 const props = defineProps<{
