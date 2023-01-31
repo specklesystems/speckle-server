@@ -13,14 +13,10 @@
         :style="{
           opacity: modelValue.style.opacity
         }"
+        :color="isViewed ? 'invert' : 'default'"
         @click="onThreadClick"
       />
-      <div
-        v-if="modelValue.isExpanded"
-        ref="threadContainer"
-        class="absolute"
-        :style="style"
-      >
+      <div v-if="isExpanded" ref="threadContainer" class="absolute" :style="style">
         <div class="relative w-80 flex flex-col">
           <div
             class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
@@ -52,6 +48,8 @@ import {
   CommentBubbleModel,
   useExpandedThreadResponsiveLocation
 } from '~~/lib/viewer/composables/commentBubbles'
+import { useMarkThreadViewed } from '~~/lib/viewer/composables/commentManagement'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -68,6 +66,8 @@ const comments = computed(() => [
   ...props.modelValue.replies.items.slice().reverse()
 ])
 
+const { projectId } = useInjectedViewerState()
+const { markThreadViewed } = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 
 const { style } = useExpandedThreadResponsiveLocation({
@@ -82,6 +82,7 @@ const isTypingMessage = computed(() => {
     ? `${usersTyping.value.map((u) => u.userName).join(', ')} are typing...`
     : `${usersTyping.value[0].userName} is typing...`
 })
+const isViewed = computed(() => !!props.modelValue.viewedAt)
 
 const changeExpanded = (newVal: boolean) => {
   emit('update:modelValue', {
@@ -91,7 +92,7 @@ const changeExpanded = (newVal: boolean) => {
 }
 
 const onThreadClick = () => {
-  changeExpanded(!props.modelValue.isExpanded)
+  changeExpanded(!isExpanded.value)
 }
 
 onKeyDown('Escape', () => {
@@ -99,4 +100,16 @@ onKeyDown('Escape', () => {
     changeExpanded(false)
   }
 })
+
+watch(
+  () => <const>[isExpanded.value, isViewed.value],
+  (newVals, oldVals) => {
+    const [newIsExpanded, newIsViewed] = newVals
+    const [oldIsExpanded] = oldVals
+
+    if (newIsExpanded && newIsExpanded !== oldIsExpanded && !newIsViewed) {
+      markThreadViewed(projectId.value, props.modelValue.id)
+    }
+  }
+)
 </script>

@@ -17,12 +17,12 @@ import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 /**
  * TODO:
  * - z-index issues with thread buttons overlapping threads themselves
- * - Mark comment viewed
  */
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
     id
+    viewedAt
     data {
       location
       camPos

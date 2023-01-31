@@ -13,3 +13,9 @@ export const broadcastViewerUserActivityMutation = graphql(`
     )
   }
 `)
+
+export const markCommentViewed = graphql(`
+  mutation MarkCommentViewed($projectId: String!, $threadId: String!) {
+    commentView(streamId: $projectId, commentId: $threadId)
+  }
+`)
