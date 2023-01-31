@@ -12,8 +12,6 @@
           {{ title || headerAndSubheader.header }}
         </div>
       </button>
-
-      <!-- <div class="text-xs font-bold">{{ title }}</div> -->
     </div>
     <div v-if="unfold" class="ml-1 space-y-1">
       <div
@@ -52,7 +50,18 @@
         :key="index"
         class="text-xs"
       >
-        {{ kvp.key }}:{{ kvp.innerType }} (array todo)
+        <div class="grid grid-cols-3 text-foreground-2">
+          <div
+            class="truncate text-xs col-span-1 font-bold"
+            :title="(kvp.key as string)"
+          >
+            {{ kvp.key }}
+          </div>
+          <div class="truncate text-xs col-span-2 flex min-w-0 w-full">
+            <div class="truncate flex-grow">{{ kvp.innerType }} array</div>
+            <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
+          </div>
+        </div>
       </div>
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
@@ -76,19 +85,16 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
-import {
-  useInjectedViewer,
-  useInjectedViewerInterfaceState
-} from '~~/lib/viewer/composables/setup'
+// import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 
-const { instance: viewer } = useInjectedViewer()
-const viewerTree = viewer.getWorldTree()
+// const { instance: viewer } = useInjectedViewer()
+// const viewerTree = viewer.getWorldTree()
 
 const props = withDefaults(
   defineProps<{
     object: Record<string, unknown>
-    title?: string
+    title: string
     unfold: boolean
     debug?: boolean
   }>(),
@@ -103,15 +109,34 @@ const headerAndSubheader = computed(() => {
 
 const ignoredProps = [
   '__closure',
-  // 'displayMesh',
+  'displayMesh',
   'displayValue',
   'totalChildrenCount',
   '__importedUrl',
-  '__parents'
+  '__parents',
+  'bbox'
 ]
 
 const keyValuePairs = computed(() => {
   const kvps = [] as Record<string, unknown>[]
+
+  // handle revit paramters
+  if (props.title === 'parameters') {
+    const paramKeys = Object.keys(props.object)
+    for (const prop of paramKeys) {
+      const param = props.object[prop] as Record<string, unknown>
+      if (!param) continue
+      kvps.push({
+        key: param.name as string,
+        type: typeof param.value,
+        innerType: null,
+        arrayLength: null,
+        arrayPreview: null,
+        value: param.value
+      })
+    }
+    return kvps
+  }
 
   const objectKeys = Object.keys(props.object)
   for (const key of objectKeys) {

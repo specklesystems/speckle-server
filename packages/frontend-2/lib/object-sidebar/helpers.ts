@@ -11,7 +11,11 @@ export function getHeaderAndSubheaderForSpeckleObject(
   const speckleType = speckleData.speckle_type as string
   if (!speckleType)
     return {
-      header: rawSpeckleData.name || rawSpeckleData.Name || rawSpeckleData.speckle_type,
+      header: cleanName(
+        (rawSpeckleData.name as string) ||
+          (rawSpeckleData.Name as string) ||
+          (rawSpeckleData.speckle_type as string)
+      ),
       subheader: ''
     } as HeaderSubheader
 
@@ -23,12 +27,12 @@ export function getHeaderAndSubheaderForSpeckleObject(
         rawSpeckleData.category as string
       })`
       const famSubheader = rawSpeckleData.type as string
-      return { header: famHeader, subheader: famSubheader }
+      return { header: cleanName(famHeader), subheader: famSubheader }
     }
 
     if (speckleType.toLowerCase().includes('revitelementtype')) {
       return {
-        header: rawSpeckleData.family as string,
+        header: cleanName(rawSpeckleData.family as string),
         subheader: `${rawSpeckleData.type as string} / ${
           rawSpeckleData.category as string
         }` //rawSpeckleData.type + ' / ' + rawSpeckleData.category
@@ -39,7 +43,7 @@ export function getHeaderAndSubheaderForSpeckleObject(
       (part) => !!part
     )
     return {
-      header: anyHeader,
+      header: cleanName(anyHeader),
       subheader: anySubheaderParts.join(' / ')
     } as HeaderSubheader
   }
@@ -48,24 +52,50 @@ export function getHeaderAndSubheaderForSpeckleObject(
   if (speckleType.toLowerCase().includes('ifc')) {
     const name = rawSpeckleData.Name || rawSpeckleData.name
     return {
-      header: name || rawSpeckleData.speckleType,
+      header: cleanName((name as string) || (rawSpeckleData.speckleType as string)),
       subheader: name ? rawSpeckleData.speckle_type : rawSpeckleData.id
     } as HeaderSubheader
   }
 
+  // Handle geometry objects
   if (speckleType.toLowerCase().includes('objects.geometry')) {
     return {
-      header: speckleType.split('.').reverse()[0],
+      header: cleanName(speckleType.split('.').reverse()[0]),
       subheader: rawSpeckleData.id
     } as HeaderSubheader
   }
 
   // LAST DITCH EFFORT
   return {
-    header:
+    header: cleanName(
       (rawSpeckleData.name as string) ||
-      (rawSpeckleData.Name as string) ||
-      (rawSpeckleData.speckle_type as string).split('.').reverse()[0],
+        (rawSpeckleData.Name as string) ||
+        (rawSpeckleData.speckle_type as string).split('.').reverse()[0]
+    ),
     subheader: speckleType.split('.').reverse()[0]
   } as HeaderSubheader
+}
+
+function cleanName(name: string) {
+  let cleanName = name.trim()
+
+  if (cleanName.startsWith('@')) cleanName = cleanName.substring(1) // remove "@" signs
+  // TODO check if this is all we need
+  return cleanName
+}
+
+/**
+ * Encodes a bunch of conventions around getting target object ids from random speckle objects or created
+ * @param object
+ */
+export function getTargetObjectIds(object: Record<string, unknown>) {
+  // Handle array collections (generated on the fly in the tree explorer)
+  if (object.speckle_type === 'Array Collection' && Array.isArray(object.children)) {
+    return object.children
+      .map((k) => (k as { referencedId: string }).referencedId)
+      .filter((id) => !!id)
+  }
+  // Handles both actual collection objecs( ala IFC) and individual objects
+  if (object.id) return [object.id as string]
+  return []
 }

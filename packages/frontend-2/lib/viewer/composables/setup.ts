@@ -39,8 +39,10 @@ import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/ver
 import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { nanoid } from 'nanoid'
-import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { useViewerSelectionEventHandler } from './setup/selection'
+import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { containsAll } from '~~/lib/common/helpers/utils'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -173,6 +175,7 @@ export type InjectableViewerState = Readonly<{
       unIsolateObjects: FilterAction
       hideObjects: FilterAction
       showObjects: FilterAction
+      resetFilters: () => Promise<void>
       setColorFilter: (property: PropertyInfo) => void
     }
     viewerBusy: WritableComputedRef<boolean>
@@ -521,7 +524,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.isolateObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -530,7 +533,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.unIsolateObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -539,7 +542,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.hideObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -548,7 +551,7 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.showObjects(...params)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
 
@@ -557,8 +560,17 @@ function setupInterfaceState(
     viewerBusy.value = true
 
     const result = await viewer.instance.setColorFilter(property)
-    filteringState.value = result
+    filteringState.value = markRaw(result)
     localFilterPropKey.value = property.key
+    viewerBusy.value = false
+  }
+
+  const resetFilters = async () => {
+    viewerBusy.value = true
+    await viewer.instance.resetFilters()
+    viewer.instance.applyFilter(null)
+    viewer.instance.resize() // Note: should not be needed in theory, but for some reason stuff doesn't re-render
+    filteringState.value = null
     viewerBusy.value = false
   }
 
@@ -566,9 +578,14 @@ function setupInterfaceState(
 
   const setViewerSelectionFilter = () => {
     const v = state.viewer.instance
-
     if (selectedObjects.value.length === 0) return v.resetSelection()
-    const ids = selectedObjects.value.map((o) => o.id as string).filter((id) => !!id)
+    let ids = [] as string[]
+    for (const obj of selectedObjects.value) {
+      const objIds = getTargetObjectIds(obj)
+      ids.push(...objIds)
+    }
+    ids = [...new Set(ids.filter((id) => !!id))]
+
     v.selectObjects(ids)
   }
 
@@ -582,11 +599,35 @@ function setupInterfaceState(
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
     const index = selectedObjects.value.findIndex((o) => o.id === objectId)
-    if (index > 0) selectedObjects.value.splice(index, 1)
+    if (index >= 0) selectedObjects.value.splice(index, 1)
     setViewerSelectionFilter()
   }
 
   const clearSelection = () => {
+    // Clear any vis/iso state
+    // NOTE: turned off, as not sure it's the behaviour we want
+    // if (selectedObjects.value.length > 0) {
+    //   let ids = [] as string[]
+    //   for (const obj of selectedObjects.value) {
+    //     const objIds = getTargetObjectIds(obj)
+    //     ids.push(...objIds)
+    //   }
+    //   ids = [...new Set(ids.filter((id) => !!id))]
+    //   // check if we actually have any isolated objects first from the selected object state
+    //   if (
+    //     filteringState.value?.isolatedObjects &&
+    //     containsAll(ids, filteringState.value?.isolatedObjects as string[])
+    //   )
+    //     unIsolateObjects(ids, 'object-selection', true)
+
+    //   // check if we actually have any isolated objects first from the hidden object state
+    //   if (
+    //     filteringState.value?.hiddenObjects &&
+    //     containsAll(ids, filteringState.value?.hiddenObjects as string[])
+    //   )
+    //     showObjects(ids, 'object-selection', true)
+    // }
+
     selectedObjects.value = []
     setViewerSelectionFilter()
   }
@@ -602,7 +643,8 @@ function setupInterfaceState(
         unIsolateObjects,
         hideObjects,
         showObjects,
-        setColorFilter
+        setColorFilter,
+        resetFilters
       },
       selection: {
         objects: computed(() => selectedObjects.value.slice()),
