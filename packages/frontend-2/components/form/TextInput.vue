@@ -49,6 +49,7 @@
         role="textbox"
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
+        @input="$emit('input', { event: $event, value })"
       />
       <a
         v-if="showClear"
@@ -222,6 +223,7 @@ const props = defineProps({
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
   (e: 'change', val: { event?: Event; value: string }): void
+  (e: 'input', val: { event?: Event; value: string }): void
 }>()
 
 const { value, errorMessage: error } = useField(props.name, props.rules, {

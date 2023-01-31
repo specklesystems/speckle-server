@@ -26,3 +26,23 @@ export const onViewerUserActivityBroadcastedSubscription = graphql(`
     }
   }
 `)
+
+export const onViewerCommentsUpdatedSubscription = graphql(`
+  subscription OnViewerCommentsUpdated(
+    $projectId: String!
+    $resourceIdString: String!
+  ) {
+    projectCommentsUpdated(projectId: $projectId, resourceIdString: $resourceIdString) {
+      id
+      type
+      comment {
+        id
+        parent {
+          id
+        }
+        ...ViewerCommentsListItem
+        ...ViewerCommentBubblesData
+      }
+    }
+  }
+`)

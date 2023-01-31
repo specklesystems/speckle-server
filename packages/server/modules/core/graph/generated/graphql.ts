@@ -555,7 +555,7 @@ export type Model = {
   childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this model */
-  commentThreads?: Maybe<CommentCollection>;
+  commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   /** The shortened/display name that doesn't include the names of parent models */
@@ -1087,7 +1087,7 @@ export type Project = {
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
-  commentThreads?: Maybe<CommentCollection>;
+  commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -2120,7 +2120,7 @@ export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
   /** All comment threads in this version */
-  commentThreads?: Maybe<CommentCollection>;
+  commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
@@ -2904,7 +2904,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  commentThreads?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<ModelCommentThreadsArgs, 'limit'>>;
+  commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<ModelCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3044,7 +3044,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  commentThreads?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<ProjectCommentThreadsArgs, 'limit'>>;
+  commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<ProjectCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -3358,7 +3358,7 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
   authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
-  commentThreads?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
+  commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

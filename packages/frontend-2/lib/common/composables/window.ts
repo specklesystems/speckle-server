@@ -24,3 +24,13 @@ export function useWindowResizeHandler(
   onMounted(() => window.addEventListener('resize', finalHandler))
   onBeforeUnmount(() => window.removeEventListener('resize', finalHandler))
 }
+
+export function useOnBeforeWindowUnload(handler: (e: BeforeUnloadEvent) => void) {
+  onMounted(() => {
+    window.addEventListener('beforeunload', handler)
+  })
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('beforeunload', handler)
+  })
+}

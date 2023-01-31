@@ -39,6 +39,7 @@ graphql(`
       ...LimitedUserAvatar
     }
     createdAt
+    viewedAt
     replies {
       totalCount
       cursor
