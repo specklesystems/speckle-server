@@ -191,7 +191,8 @@ export default class SpeckleRenderer {
     this._renderer = new WebGLRenderer({
       antialias: true,
       alpha: true,
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: true,
+      stencil: true
     })
     this._renderer.setClearColor(0xffffff, 0)
     this._renderer.setPixelRatio(window.devicePixelRatio)
@@ -203,6 +204,7 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.autoUpdate = false
     this.renderer.shadowMap.needsUpdate = true
     this.renderer.physicallyCorrectLights = true
+    this.renderer.autoClearStencil = false
 
     this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)

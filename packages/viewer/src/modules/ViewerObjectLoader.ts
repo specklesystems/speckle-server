@@ -61,7 +61,7 @@ export default class ViewerObjectLoader {
       objectId: this.objectId,
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: { enableCaching, customLogger: (...params) => Logger.info(...params) }
+      options: { enableCaching, customLogger: (Logger as any).log }
     })
 
     this.converter = new Converter(this.loader)

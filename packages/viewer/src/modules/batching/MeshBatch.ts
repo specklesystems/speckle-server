@@ -96,6 +96,7 @@ export default class MeshBatch implements Batch {
       minOffset,
       maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
     )
+    this.mesh.visible = true
   }
 
   public getVisibleRange(): BatchUpdateRange {
