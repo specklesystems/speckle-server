@@ -185,8 +185,8 @@ const SpeckleExcel = {
 }
 
 const SpecklePowerBi = {
-  id: 'spklpowerbi',
-  secret: 'spklpowerbi',
+  id: 'spklpwrbi',
+  secret: 'spklpwrbi',
   name: 'Speckle Connector For PowerBI',
   description:
     'The Speckle Connector For Excel. For more info check the docs here: https://speckle.guide/user/powerbi.html.',
