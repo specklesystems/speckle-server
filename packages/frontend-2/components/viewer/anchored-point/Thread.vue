@@ -55,7 +55,10 @@ const props = defineProps<{
 }>()
 
 const threadContainer = ref(null as Nullable<HTMLElement>)
-const comments = computed(() => [props.modelValue, ...props.modelValue.replies.items])
+const comments = computed(() => [
+  props.modelValue,
+  ...props.modelValue.replies.items.slice().reverse()
+])
 
 const { style } = useExpandedThreadResponsiveLocation({
   threadContainer,

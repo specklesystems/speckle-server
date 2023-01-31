@@ -548,7 +548,7 @@ export type Model = {
   childrenTree: Array<ModelsTreeItem>;
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this model */
-  commentThreads?: Maybe<CommentCollection>;
+  commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   /** The shortened/display name that doesn't include the names of parent models */
@@ -1080,7 +1080,7 @@ export type Project = {
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
-  commentThreads?: Maybe<CommentCollection>;
+  commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -2113,7 +2113,7 @@ export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
   /** All comment threads in this version */
-  commentThreads?: Maybe<CommentCollection>;
+  commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;

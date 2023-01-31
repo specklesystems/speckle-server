@@ -25,24 +25,27 @@ import {
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
 import {
+  ProjectCommentsUpdatedMessageType,
   ProjectModelsUpdatedMessageType,
   ProjectVersionsUpdatedMessageType,
   ProjectViewerResourcesQuery,
   ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
-  ViewerResourceItem
+  ViewerResourceItem,
+  CommentCollection
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
-import { updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { nanoid } from 'nanoid'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import { useViewerSelectionEventHandler } from './setup/selection'
+import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
+import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -736,15 +739,72 @@ function useViewerIsBusyEventHandler(state: InjectableViewerState) {
  * Listening to model/version updates through subscriptions and making various
  * cache updates so that we don't need to always refetch queries
  */
-function useViewerModelsVersionsUpdateTracker(state: InjectableViewerState) {
+function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
   if (process.server) return
   const apollo = useApolloClient().client
   const {
     projectId,
     resources: {
+      request: { resourceIdString },
       response: { resourceQueryVariables, resourceItemsQueryVariables }
     }
   } = state
+
+  useViewerCommentUpdateTracking(projectId, resourceIdString, (event, cache) => {
+    const isDeleted = event.type === ProjectCommentsUpdatedMessageType.Archived
+    const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
+    const model = event.comment
+
+    if (isDeleted) {
+      cache.evict({
+        id: getCacheId('Comment', event.id)
+      })
+    } else if (isNew && model) {
+      const parentId = model.parent?.id
+
+      // Add reply to parent
+      if (parentId) {
+        cache.modify({
+          id: getCacheId('Comment', parentId),
+          fields: {
+            replies: (oldValue: Optional<CommentCollection>) => {
+              const newValue: CommentCollection = {
+                totalCount: (oldValue?.totalCount || 0) + 1,
+                items: [model, ...(oldValue?.items || [])]
+              }
+              return newValue
+            }
+          }
+        })
+      } else {
+        // Add comment thread
+        updateCacheByFilter(
+          cache,
+          {
+            query: {
+              query: viewerLoadedResourcesQuery,
+              variables: resourceQueryVariables.value
+            }
+          },
+          (data) => {
+            if (!data.project) return
+
+            return {
+              ...data,
+              project: {
+                ...data.project,
+                commentThreads: {
+                  ...data.project.commentThreads,
+                  totalCount: data.project.commentThreads.totalCount + 1,
+                  items: [model, ...data.project.commentThreads.items]
+                }
+              }
+            }
+          }
+        )
+      }
+    }
+  })
 
   useProjectModelUpdateTracking(projectId, (event) => {
     // If model deleted, delete resource item
@@ -982,7 +1042,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   useViewerObjectAutoLoading(state)
   useViewerSelectionEventHandler(state)
   useViewerIsBusyEventHandler(state)
-  useViewerModelsVersionsUpdateTracker(state)
+  useViewerSubscriptionEventTracker(state)
 
   return state
 }

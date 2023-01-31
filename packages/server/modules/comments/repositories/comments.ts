@@ -548,12 +548,13 @@ export async function getPaginatedProjectCommentsTotalCount(
 }
 
 export async function getCommentParents(replyIds: string[]) {
-  return await Comments.knex()
+  const q = Comments.knex()
     .select<Array<CommentRecord & { replyId: string }>>([
-      knex.raw('?? as replyId', [Comments.col.id]),
+      knex.raw('?? as "replyId"', [Comments.col.id]),
       knex.raw('"c2".*')
     ])
     .innerJoin(`${Comments.name} as c2`, `c2.id`, Comments.col.parentComment)
     .whereIn(Comments.col.id, replyIds)
     .whereNotNull(Comments.col.parentComment)
+  return await q
 }
