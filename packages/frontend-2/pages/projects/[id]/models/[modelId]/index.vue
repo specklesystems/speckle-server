@@ -27,11 +27,10 @@
       <ViewerControlsOption3 class="z-20" />
 
       <!-- Viewer Object Selection Info Display -->
-      <ViewerSelectionSidebar />
+      <ViewerSelectionSidebar class="z-20" />
 
       <!-- Shows up when filters are applied for an easy return to normality -->
-      <ViewerGlobalFilterReset />
-
+      <ViewerGlobalFilterReset class="z-20" />
     </ClientOnly>
   </div>
 </template>
