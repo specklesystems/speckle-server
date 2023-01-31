@@ -7,7 +7,7 @@ const AppScopes = () => knex('server_apps_scopes')
 const { getApp } = require('@/modules/auth/services/apps')
 const { Scopes: ScopesConst } = require('@/modules/core/helpers/mainConstants')
 const { difference } = require('lodash')
-const { moduleLogger, logger } = require('@/logging/logging')
+const { moduleLogger } = require('@/logging/logging')
 
 let allScopes = []
 
@@ -39,14 +39,10 @@ async function registerOrUpdateApp(app) {
 }
 
 async function registerDefaultApp(app) {
-  try {
-    const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
-    delete app.scopes
-    await Apps().insert(app)
-    await AppScopes().insert(scopes)
-  } catch (e) {
-    logger.error(e)
-  }
+  const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
+  delete app.scopes
+  await Apps().insert(app)
+  await AppScopes().insert(scopes)
 }
 
 async function updateDefaultApp(app, existingApp) {
