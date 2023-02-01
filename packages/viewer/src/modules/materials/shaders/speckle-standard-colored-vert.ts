@@ -29,7 +29,10 @@ varying vec3 vViewPosition;
 #include <clipping_planes_pars_vertex>
 
 attribute float gradientIndex;
+attribute float diffOpacity;
 varying float vGradientIndex;
+varying float vDiffOpacity;
+
 
 vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
     /* 
@@ -108,6 +111,9 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
 
     #endif
+    
+    vDiffOpacity = diffOpacity;
+
     mvPosition = modelViewMatrix * mvPosition;
     vGradientIndex = gradientIndex;
     gl_Position = projectionMatrix * mvPosition;

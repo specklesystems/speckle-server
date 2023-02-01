@@ -51,6 +51,7 @@ varying vec3 vViewPosition;
 
 varying float vGradientIndex;
 uniform sampler2D gradientRamp;
+varying float vDiffOpacity;
 
 #include <common>
 #include <packing>
@@ -145,5 +146,8 @@ void main() {
     #include <fog_fragment>
     #include <premultiplied_alpha_fragment>
     #include <dithering_fragment>
+    #ifdef DIFF_OPACITY
+        gl_FragColor.a = vDiffOpacity;
+    #endif
 }
 `

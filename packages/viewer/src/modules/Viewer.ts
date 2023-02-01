@@ -32,6 +32,8 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
+import MeshBatch from './batching/MeshBatch'
+import { NodeRenderView } from './tree/NodeRenderView'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -479,7 +481,8 @@ export class Viewer extends EventEmitter implements IViewer {
       unchanged: [],
       added: [],
       removed: [],
-      modified: []
+      modifiedNew: [],
+      modifiedOld: []
     }
     const renderTreeA = WorldTree.getRenderTree(urlA)
     const renderTreeB = WorldTree.getRenderTree(urlB)
@@ -498,7 +501,17 @@ export class Viewer extends EventEmitter implements IViewer {
       if (res) {
         diffResult.unchanged.push(res)
       } else {
-        diffResult.added.push(rvsB[k])
+        const applicationId = rvsB[k].model.atomic
+          ? rvsB[k].model.raw.applicationId
+          : renderTreeB.getAtomicParent(rvsB[k]).model.raw.applicationId
+        const res2 = rootA.first((node: TreeNode) => {
+          return applicationId === node.model.raw.applicationId
+        })
+        if (res2) {
+          diffResult.modifiedNew.push(rvsB[k])
+        } else {
+          diffResult.added.push(rvsB[k])
+        }
       }
     }
 
@@ -508,7 +521,14 @@ export class Viewer extends EventEmitter implements IViewer {
         return rvsA[k].model.raw.id === node.model.raw.id
       })
       if (!res) {
-        diffResult.removed.push(rvsA[k])
+        const applicationId = rvsA[k].model.atomic
+          ? rvsA[k].model.raw.applicationId
+          : renderTreeA.getAtomicParent(rvsA[k]).model.raw.applicationId
+        const res2 = rootB.first((node: TreeNode) => {
+          return applicationId === node.model.raw.applicationId
+        })
+        if (!res2) diffResult.removed.push(rvsA[k])
+        else diffResult.modifiedOld.push(rvsA[k])
       }
     }
     this.setUserObjectColors([
@@ -519,10 +539,48 @@ export class Viewer extends EventEmitter implements IViewer {
       {
         objectIds: diffResult.removed.map((value) => value.model.raw.id),
         color: '#ff0000'
+      },
+      {
+        objectIds: diffResult.modifiedNew.map((value) => value.model.raw.id),
+        color: '#ffff00'
+      },
+      {
+        objectIds: diffResult.modifiedOld.map((value) => value.model.raw.id),
+        color: '#ffff00'
       }
     ])
+    for (let k = 0; k < diffResult.modifiedOld.length; k++) {
+      const rv: NodeRenderView = diffResult.modifiedOld[k].model.renderView
+      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+      batch.updateDiffOpacity(rv.vertStart, rv.vertEnd, 0.2)
+      batch.renderObject.renderOrder = 1
+    }
+
     console.warn(diffResult)
-    return null
+    return Promise.resolve(diffResult)
+  }
+
+  public setDiffTime(diffResult: DiffResult, time: number) {
+    for (let k = 0; k < diffResult.modifiedOld.length; k++) {
+      const rv: NodeRenderView = diffResult.modifiedOld[k].model.renderView
+      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+      batch.updateDiffOpacity(
+        rv.vertStart,
+        rv.vertEnd,
+        Math.min(Math.max(time, 0.2), 1)
+      )
+      batch.renderObject.renderOrder = time > 0.5 ? 0 : 1
+    }
+    for (let k = 0; k < diffResult.modifiedNew.length; k++) {
+      const rv: NodeRenderView = diffResult.modifiedNew[k].model.renderView
+      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+      batch.updateDiffOpacity(
+        rv.vertStart,
+        rv.vertEnd,
+        Math.min(Math.max(1 - time, 0.2), 1)
+      )
+      batch.renderObject.renderOrder = time < 0.5 ? 0 : 1
+    }
   }
 
   public dispose() {

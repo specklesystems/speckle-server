@@ -4,6 +4,7 @@ import {
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
+  Viewer,
   ViewerEvent
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
@@ -98,7 +99,8 @@ export default class Sandbox {
         { title: 'General' },
         { title: 'Scene' },
         { title: 'Filtering' },
-        { title: 'Batches' }
+        { title: 'Batches' },
+        { title: 'Diff' }
       ]
     })
     this.properties = []
@@ -264,12 +266,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
+      console.warn(await this.viewer.screenshot())
       // this.viewer.getRenderer().updateShadowCatcher()
-      this.viewer.diff(
-        'https://latest.speckle.dev/streams/85e05b8c72/objects/5ba89b421f318792ef6cd4a8eefa3b24',
-        'https://latest.speckle.dev/streams/85e05b8c72/objects/b81d1d9295a995d9479186324b6f145a'
-      )
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -831,6 +829,31 @@ export default class Sandbox {
       label: 'BVH Size(MB)',
       disabled: true
     })
+  }
+
+  public makeDiffUI() {
+    const container = this.tabs.pages[4]
+    let diffResult = null
+    const diffButton = container.addButton({
+      title: 'Diff'
+    })
+    diffButton.on('click', async () => {
+      diffResult = await this.viewer.diff(
+        'https://latest.speckle.dev/streams/85e05b8c72/objects/5ba89b421f318792ef6cd4a8eefa3b24',
+        'https://latest.speckle.dev/streams/85e05b8c72/objects/b81d1d9295a995d9479186324b6f145a'
+      )
+    })
+    container
+      .addInput({ time: 0 }, 'time', {
+        label: 'Diff Time',
+        min: 0,
+        max: 1,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        ;(this.viewer as Viewer).setDiffTime(diffResult, value.value)
+        this.viewer.requestRender()
+      })
   }
 
   private getBVHSize() {

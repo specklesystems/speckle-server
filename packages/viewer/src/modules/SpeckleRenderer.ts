@@ -70,7 +70,7 @@ export default class SpeckleRenderer {
   public _scene: Scene
   private _needsRender: boolean
   private rootGroup: Group
-  private batcher: Batcher
+  public batcher: Batcher
   private _intersections: Intersections
   private input: Input
   private sun: DirectionalLight

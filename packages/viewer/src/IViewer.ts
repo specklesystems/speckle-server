@@ -129,7 +129,9 @@ export interface DiffResult {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   removed: Array<Record<string, any>>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  modified: Array<Record<string, any>>
+  modifiedNew: Array<Record<string, any>>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  modifiedOld: Array<Record<string, any>>
 }
 
 export interface IViewer {

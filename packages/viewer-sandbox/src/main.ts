@@ -125,6 +125,7 @@ sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 sandbox.makeFilteringUI()
 sandbox.makeBatchesUI()
+sandbox.makeDiffUI()
 // Load demo object
 
 await sandbox.loadUrl(

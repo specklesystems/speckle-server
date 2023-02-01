@@ -179,18 +179,18 @@ export default class Materials {
 
     this.meshColoredMaterial = new SpeckleStandardColoredMaterial(
       {
-        side: DoubleSide,
-        transparent: false,
-        opacity: 1,
+        side: FrontSide,
+        transparent: true,
+        opacity: 0.9,
         wireframe: false
       },
-      ['USE_RTE']
+      ['USE_RTE', 'DIFF_OPACITY']
     )
     this.meshColoredMaterial.clipShadows = true
 
     this.meshTransparentColoredMaterial = new SpeckleStandardColoredMaterial(
       {
-        side: DoubleSide,
+        side: FrontSide,
         transparent: true,
         opacity: 0.5
       },
