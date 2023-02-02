@@ -19,7 +19,9 @@
 </template>
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
+// import { JSONContent } from '@tiptap/core'
 import { debounce } from 'lodash-es'
+// import { Optional } from '@speckle/shared'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
@@ -31,6 +33,7 @@ const props = defineProps<{
 const { emitTyping } = useViewerUserActivityBroadcasting()
 
 const isTyping = ref(false)
+// const commentValue = ref({ doc: undefined as Optional<JSONContent> })
 const threadId = computed(() => props.modelValue.id)
 
 const updateIsTyping = async (isTyping: boolean) =>

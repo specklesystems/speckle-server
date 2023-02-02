@@ -3,7 +3,7 @@
     <EditorContent
       class="simple-scrollbar"
       :editor="editor"
-      :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
+      :style="maxHeight ? `max-height: ${maxHeight}px; overflow-y: auto;` : ''"
       @click="onEditorContentClick"
     />
     <div v-if="$slots.actions && !readonly">
@@ -23,7 +23,7 @@ import { Nullable } from '@speckle/shared'
 import { userProfileRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
-  (e: 'input', val: JSONContent): void
+  (e: 'update:modelValue', val: JSONContent): void
   (e: 'submit', val: { data: JSONContent }): void
 }>()
 
@@ -53,7 +53,7 @@ const editor = computed(() =>
       onUpdate: () => {
         const data = getData()
         if (!data || Object.keys(data).length < 1) return
-        emit('input', data)
+        emit('update:modelValue', data)
       }
     })
   )
