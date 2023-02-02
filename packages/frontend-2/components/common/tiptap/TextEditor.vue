@@ -1,16 +1,26 @@
 <template>
   <div class="text-editor flex flex-col">
-    <EditorContent class="simple-scrollbar" />
+    <EditorContent
+      class="simple-scrollbar"
+      :editor="editor"
+      :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
+      @click="onEditorContentClick"
+    />
+    <div v-if="$slots.actions && !readonly">
+      <slot name="actions" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
-import { EditorContent } from '@tiptap/vue-3'
-import { Editor, JSONContent } from '@tiptap/core'
+import { EditorContent, Editor } from '@tiptap/vue-3'
+import { JSONContent } from '@tiptap/core'
 import {
   EnterKeypressTrackerExtensionStorage,
   getEditorExtensions,
   TiptapEditorSchemaOptions
 } from '~~/lib/common/helpers/tiptap'
+import { Nullable } from '@speckle/shared'
+import { userProfileRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   (e: 'input', val: JSONContent): void
@@ -21,7 +31,6 @@ const props = defineProps<{
   modelValue?: JSONContent
   schemaOptions?: TiptapEditorSchemaOptions
   maxHeight?: number
-  minWidth?: boolean
   autofocus?: boolean
   disabled?: boolean
   placeholder?: string
@@ -32,7 +41,6 @@ const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
 const isEditable = computed(() => !props.disabled && !props.readonly)
 const hasEnterTracking = computed(() => !props.readonly && !isMultiLine.value)
 
-const baseWidth = '250px'
 const editor = computed(() =>
   markRaw(
     new Editor({
@@ -61,6 +69,27 @@ const onEnter = () => {
   if (isMultiLine.value || props.readonly) return
   emit('submit', { data: getData() })
 }
+const onEditorContentClick = (e: MouseEvent) => {
+  const closestSelectorTarget = (e.target as HTMLElement).closest(
+    '.editor-mention'
+  ) as Nullable<HTMLElement>
+  if (!closestSelectorTarget) return
+
+  onMentionClick(closestSelectorTarget.dataset.id as string, e)
+  e.stopPropagation()
+}
+
+const onMentionClick = (userId: string, e: MouseEvent) => {
+  if (!props.readonly) return
+
+  const path = userProfileRoute(userId)
+  const isMetaKey = e.metaKey || e.ctrlKey
+  if (isMetaKey) {
+    window.open(path, '_blank')
+  } else {
+    window.location.href = path
+  }
+}
 
 watch(
   () => hasEnterTracking.value,
@@ -72,6 +101,23 @@ watch(
     }
   },
   { immediate: true }
+)
+
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    const isSame = JSON.stringify(newVal) === JSON.stringify(getData())
+    if (isSame) return
+
+    editor.value.commands.setContent(newVal || '')
+  }
+)
+
+watch(
+  () => isEditable.value,
+  (isEditable) => {
+    editor.value.setEditable(isEditable)
+  }
 )
 
 onBeforeUnmount(() => {
