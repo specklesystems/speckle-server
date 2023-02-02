@@ -114,7 +114,7 @@ export class RenderTree {
 
     return (parent ? parent : node.parent)
       .all((_node: TreeNode): boolean => {
-        return _node.model.renderView !== null && _node.model.renderView.hasGeometry
+        return _node.model.renderView && _node.model.renderView.hasGeometry
       })
       .map((val: TreeNode) => val.model.renderView)
   }
@@ -125,7 +125,7 @@ export class RenderTree {
     }
 
     return (parent ? parent : node.parent).all((_node: TreeNode): boolean => {
-      return _node.model.renderView !== null && _node.model.renderView.hasGeometry
+      return _node.model.renderView && _node.model.renderView.hasGeometry
     })
   }
 
