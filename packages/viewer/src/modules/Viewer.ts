@@ -501,9 +501,9 @@ export class Viewer extends EventEmitter implements IViewer {
       if (res) {
         diffResult.unchanged.push(res)
       } else {
-        const applicationId = rvsB[k].model.atomic
+        const applicationId = rvsB[k].model.applicationId
           ? rvsB[k].model.raw.applicationId
-          : renderTreeB.getAtomicParent(rvsB[k]).model.raw.applicationId
+          : rvsB[k].parent.model.raw.applicationId
         const res2 = rootA.first((node: TreeNode) => {
           return applicationId === node.model.raw.applicationId
         })
@@ -521,9 +521,9 @@ export class Viewer extends EventEmitter implements IViewer {
         return rvsA[k].model.raw.id === node.model.raw.id
       })
       if (!res) {
-        const applicationId = rvsA[k].model.atomic
+        const applicationId = rvsA[k].model.applicationId
           ? rvsA[k].model.raw.applicationId
-          : renderTreeA.getAtomicParent(rvsA[k]).model.raw.applicationId
+          : rvsA[k].parent.model.raw.applicationId
         const res2 = rootB.first((node: TreeNode) => {
           return applicationId === node.model.raw.applicationId
         })

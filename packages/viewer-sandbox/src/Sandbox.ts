@@ -839,8 +839,15 @@ export default class Sandbox {
     })
     diffButton.on('click', async () => {
       diffResult = await this.viewer.diff(
-        'https://latest.speckle.dev/streams/85e05b8c72/objects/5ba89b421f318792ef6cd4a8eefa3b24',
-        'https://latest.speckle.dev/streams/85e05b8c72/objects/b81d1d9295a995d9479186324b6f145a'
+        //building
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867'
+        // cubes
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/d2510c59c203b73473f8bbfe637e0552',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7'
+        // sketchup
+        'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
+        'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef'
       )
     })
     container
