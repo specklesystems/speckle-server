@@ -21,10 +21,10 @@ graph LR;
  databasemonitor[Database Monitoring <br> Service];
  end
 
- subgraph cluster[Cluster]
+ subgraph cluster[Kubernetes Cluster]
  nginx["Nginx Ingress Controller (Optional)"];
  certmanager["Certificate Manager (Optional)"];
- monitoring["Grafana-compatible <br> monitoring ingestor (Optional)"];
+ monitoring["Grafana-compatible <br> metrics ingestor (Optional)"];
  logging["Log ingestor (Optional)"];
  secrets["Secrets"]
  helm;
@@ -39,13 +39,8 @@ graph LR;
  backend-->blobstore;
  backend-->emailserver;
  backend-->authprovider;
- secrets-.->backend;
- secrets-.->preview;
- secrets-.->fileimport;
- secrets-.->webhook;
- secrets-.->databasemonitor;
 
- subgraph externalDependencies[External Dependencies]
+ subgraph externalDependencies["Dependencies <br> (May be external or internal to cluster.)"]
  postgres[Postgres];
  redis[Redis];
  blobstore[s3-compatible <br> blob storage];
