@@ -48,6 +48,14 @@ export default defineNuxtConfig({
         // Allowing symlinks
         // allow: ['/home/fabis/Code/random/vue-apollo/']
       }
+    },
+    optimizeDeps: {
+      include: [
+        'prosemirror-state',
+        'prosemirror-transform',
+        'prosemirror-model',
+        'prosemirror-view'
+      ]
     }
   },
 
@@ -68,7 +76,8 @@ export default defineNuxtConfig({
       '@speckle/vue-apollo-composable',
       '@headlessui/vue',
       '@heroicons/vue',
-      '@vueuse/core'
+      '@vueuse/core',
+      'prosemirror-state'
     ]
   }
 })

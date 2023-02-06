@@ -22,12 +22,13 @@
       >
         <div class="relative">
           <div class="bg-foundation rounded-full w-80 p-4 flex flex-col">
-            <FormTextInput
+            <ViewerCommentsEditor v-model="commentValue" max-height="60vh" />
+            <!-- <FormTextInput
               full-width
               name="newComment"
               class="bg-transparent focus:ring-0 focus:outline-0"
               placeholder="Press enter to send"
-            />
+            /> -->
           </div>
           <div class="absolute w-full flex justify-between pt-2 space-x-2">
             <div class="flex space-x-2">
@@ -69,7 +70,8 @@ import {
   PaperAirplaneIcon,
   PaperClipIcon
 } from '@heroicons/vue/24/solid'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
+import { JSONContent } from '@tiptap/core'
 import {
   useExpandedThreadResponsiveLocation,
   ViewerNewThreadBubbleModel
@@ -83,6 +85,7 @@ const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
+const commentValue = ref({ doc: undefined as Optional<JSONContent> })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 
 const onThreadClick = () => {

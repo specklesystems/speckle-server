@@ -49,7 +49,6 @@ function useCollectSelection() {
   const selectionCallback = (event: Nullable<SelectionEvent>) => {
     if (!event) return
 
-    console.log(event)
     const firstHit = event.hits[0]
     selectionLocation.value = firstHit.point
   }

@@ -3,7 +3,7 @@
     <EditorContent
       class="simple-scrollbar"
       :editor="editor"
-      :style="maxHeight ? `max-height: ${maxHeight}px; overflow-y: auto;` : ''"
+      :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
       @click="onEditorContentClick"
     />
     <div v-if="$slots.actions && !readonly">
@@ -30,7 +30,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   modelValue?: JSONContent
   schemaOptions?: TiptapEditorSchemaOptions
-  maxHeight?: number
+  maxHeight?: string
   autofocus?: boolean
   disabled?: boolean
   placeholder?: string
@@ -41,30 +41,23 @@ const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
 const isEditable = computed(() => !props.disabled && !props.readonly)
 const hasEnterTracking = computed(() => !props.readonly && !isMultiLine.value)
 
-const editor = computed(() =>
-  markRaw(
-    new Editor({
-      content: props.modelValue,
-      autofocus: props.autofocus,
-      editable: isEditable.value,
-      extensions: getEditorExtensions(props.schemaOptions, {
-        placeholder: props.placeholder
-      }),
-      onUpdate: () => {
-        const data = getData()
-        if (!data || Object.keys(data).length < 1) return
-        emit('update:modelValue', data)
-      }
-    })
-  )
-)
-const enterKeypressTracker = computed(() =>
-  markRaw(
-    editor.value.storage.enterKeypressTracker as EnterKeypressTrackerExtensionStorage
-  )
-)
+const editor = new Editor({
+  content: props.modelValue,
+  autofocus: props.autofocus,
+  editable: isEditable.value,
+  extensions: getEditorExtensions(props.schemaOptions, {
+    placeholder: props.placeholder
+  }),
+  onUpdate: () => {
+    const data = getData()
+    if (!data || Object.keys(data).length < 1) return
+    emit('update:modelValue', data)
+  }
+})
 
-const getData = (): JSONContent => editor.value.getJSON()
+const enterKeypressTracker = editor.storage
+  .enterKeypressTracker as EnterKeypressTrackerExtensionStorage
+const getData = (): JSONContent => editor.getJSON()
 const onEnter = () => {
   if (isMultiLine.value || props.readonly) return
   emit('submit', { data: getData() })
@@ -95,9 +88,9 @@ watch(
   () => hasEnterTracking.value,
   (hasEnterTracking) => {
     if (hasEnterTracking) {
-      enterKeypressTracker.value.subscribe(editor.value, onEnter)
+      enterKeypressTracker.subscribe(editor, onEnter)
     } else {
-      enterKeypressTracker.value.unsubscribe(editor.value, onEnter)
+      enterKeypressTracker.unsubscribe(editor, onEnter)
     }
   },
   { immediate: true }
@@ -109,19 +102,19 @@ watch(
     const isSame = JSON.stringify(newVal) === JSON.stringify(getData())
     if (isSame) return
 
-    editor.value.commands.setContent(newVal || '')
+    editor.commands.setContent(newVal || '')
   }
 )
 
 watch(
   () => isEditable.value,
   (isEditable) => {
-    editor.value.setEditable(isEditable)
+    editor.setEditable(isEditable)
   }
 )
 
 onBeforeUnmount(() => {
-  editor.value.destroy()
-  enterKeypressTracker.value.unsubscribe(editor.value, onEnter)
+  editor.destroy()
+  enterKeypressTracker.unsubscribe(editor, onEnter)
 })
 </script>
