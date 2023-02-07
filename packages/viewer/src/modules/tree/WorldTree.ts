@@ -6,6 +6,7 @@ import Logger from 'js-logger'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
+export type AsyncSearchPredicate = (node: TreeNode) => Promise<boolean>
 
 export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,9 +116,34 @@ export class WorldTree {
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
-      this._root.walk(predicate)
     }
     this._root.walk(predicate, node)
+  }
+
+  public walkAsync(predicate: SearchPredicate, node?: TreeNode): Promise<unknown[]> {
+    if (!node && !this.supressWarnings) {
+      Logger.warn(`Root will be used for searching. You might not want that`)
+    }
+    const nodePromises = []
+    let lastAsyncPause = 0
+    const pause = async () => {
+      if (Date.now() - lastAsyncPause >= 100) {
+        lastAsyncPause = Date.now()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      }
+    }
+    this._root.walk((_node: TreeNode): boolean => {
+      nodePromises.push(
+        // eslint-disable-next-line no-async-promise-executor
+        new Promise<void>(async (resolve) => {
+          await pause()
+          predicate(_node)
+          resolve()
+        })
+      )
+      return true
+    }, node)
+    return Promise.all(nodePromises)
   }
 
   public purge(subtreeId?: string) {

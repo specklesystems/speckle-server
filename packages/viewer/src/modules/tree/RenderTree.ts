@@ -30,6 +30,23 @@ export class RenderTree {
     })
   }
 
+  public buildRenderTreeAsync(): Promise<unknown[]> {
+    return WorldTree.getInstance().walkAsync((node: TreeNode): boolean => {
+      const rendeNode = this.buildRenderNode(node)
+      node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
+      if (node.model.renderView && node.model.renderView.hasGeometry) {
+        const transform = this.computeTransform(node)
+        if (rendeNode.geometry.bakeTransform) {
+          transform.multiply(rendeNode.geometry.bakeTransform)
+        }
+        Geometry.transformGeometryData(rendeNode.geometry, transform)
+        node.model.renderView.computeAABB()
+      }
+
+      return true
+    }, this.root)
+  }
+
   private buildRenderNode(node: TreeNode): NodeRenderData {
     let ret: NodeRenderData = null
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)

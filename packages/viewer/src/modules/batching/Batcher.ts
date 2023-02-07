@@ -29,7 +29,7 @@ export default class Batcher {
 
   public makeBatches(
     subtreeId: string,
-    batchType: GeometryType,
+    batchType?: GeometryType,
     ...speckleType: SpeckleType[]
   ) {
     const rendeViews = WorldTree.getRenderTree(subtreeId)
@@ -50,27 +50,27 @@ export default class Batcher {
       const batch = rendeViews.filter(
         (value) => value.renderMaterialHash === materialHashes[i]
       )
-
+      const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
       let matRef = null
 
-      if (batchType === GeometryType.MESH) {
+      if (geometryType === GeometryType.MESH) {
         matRef = batch[0].renderData.renderMaterial
-      } else if (batchType === GeometryType.LINE) {
+      } else if (geometryType === GeometryType.LINE) {
         matRef = batch[0].renderData.displayStyle
-      } else if (batchType === GeometryType.POINT) {
+      } else if (geometryType === GeometryType.POINT) {
         matRef = batch[0].renderData.renderMaterial
-      } else if (batchType === GeometryType.POINT_CLOUD) {
+      } else if (geometryType === GeometryType.POINT_CLOUD) {
         matRef = batch[0].renderData.renderMaterial
       }
 
       const material = this.materials.updateMaterialMap(
         materialHashes[i],
         matRef,
-        batchType
+        geometryType
       )
 
       const batchID = generateUUID()
-      switch (batchType) {
+      switch (geometryType) {
         case GeometryType.MESH:
           this.batches[batchID] = new MeshBatch(batchID, subtreeId, batch)
           break
@@ -87,7 +87,77 @@ export default class Batcher {
 
       this.batches[batchID].setBatchMaterial(material)
       this.batches[batchID].buildBatch()
-      // console.warn(batch)
+    }
+  }
+
+  public async *makeBatchesAsync(
+    subtreeId: string,
+    batchType?: GeometryType,
+    ...speckleType: SpeckleType[]
+  ) {
+    let lastAsyncPause = 0
+    const pause = async () => {
+      if (Date.now() - lastAsyncPause >= 110) {
+        lastAsyncPause = Date.now()
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+    }
+    const rendeViews = WorldTree.getRenderTree(subtreeId)
+      .getAtomicRenderViews(...speckleType)
+      .sort((a, b) => {
+        if (a.renderMaterialHash === 0) return -1
+        if (b.renderMaterialHash === 0) return 1
+        return a.renderMaterialHash - b.renderMaterialHash
+      })
+    const materialHashes = [
+      ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
+    ]
+
+    Logger.warn(materialHashes)
+    // console.warn(rendeViews)
+    for (let i = 0; i < materialHashes.length; i++) {
+      const batch = rendeViews.filter(
+        (value) => value.renderMaterialHash === materialHashes[i]
+      )
+      const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
+      let matRef = null
+
+      if (geometryType === GeometryType.MESH) {
+        matRef = batch[0].renderData.renderMaterial
+      } else if (geometryType === GeometryType.LINE) {
+        matRef = batch[0].renderData.displayStyle
+      } else if (geometryType === GeometryType.POINT) {
+        matRef = batch[0].renderData.renderMaterial
+      } else if (geometryType === GeometryType.POINT_CLOUD) {
+        matRef = batch[0].renderData.renderMaterial
+      }
+
+      const material = this.materials.updateMaterialMap(
+        materialHashes[i],
+        matRef,
+        geometryType
+      )
+
+      const batchID = generateUUID()
+      switch (geometryType) {
+        case GeometryType.MESH:
+          this.batches[batchID] = new MeshBatch(batchID, subtreeId, batch)
+          break
+        case GeometryType.LINE:
+          this.batches[batchID] = new LineBatch(batchID, subtreeId, batch)
+          break
+        case GeometryType.POINT:
+          this.batches[batchID] = new PointBatch(batchID, subtreeId, batch)
+          break
+        case GeometryType.POINT_CLOUD:
+          this.batches[batchID] = new PointBatch(batchID, subtreeId, batch)
+          break
+      }
+
+      this.batches[batchID].setBatchMaterial(material)
+      this.batches[batchID].buildBatch()
+      yield this.batches[batchID]
+      await pause()
     }
   }
 

@@ -118,12 +118,27 @@ export class Viewer extends EventEmitter implements IViewer {
     this.frame()
     this.resize()
 
-    this.on(ViewerEvent.LoadComplete, (url) => {
-      WorldTree.getRenderTree(url).buildRenderTree()
-      this.speckleRenderer.addRenderTree(url)
-      this.zoom()
+    // ASYNC STREAM LOAD
+    this.on(ViewerEvent.LoadComplete, async (url) => {
+      const startBuild = performance.now()
+      await WorldTree.getRenderTree(url).buildRenderTreeAsync()
+      Logger.log('ASYNC Tree build time -> ', performance.now() - startBuild)
+      const startBatches = performance.now()
+      await this.speckleRenderer.addRenderTreeAsync(url)
+      Logger.log('ASYNC batch build time -> ', performance.now() - startBatches)
       this.speckleRenderer.resetPipeline(true)
     })
+
+    // // SYNC STREAM LOAD
+    // this.on(ViewerEvent.LoadComplete, (url) => {
+    //   const startBuild = performance.now()
+    //   WorldTree.getRenderTree(url).buildRenderTree()
+    //   Logger.log('SYNC Tree build time -> ', performance.now() - startBuild)
+    //   const startBatches = performance.now()
+    //   this.speckleRenderer.addRenderTree(url)
+    //   Logger.log('SYNC batch build time -> ', performance.now() - startBatches)
+    //   this.speckleRenderer.resetPipeline(true)
+    // })
   }
   public setSectionBox(
     box?: {
