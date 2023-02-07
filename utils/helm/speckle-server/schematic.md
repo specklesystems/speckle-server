@@ -21,13 +21,17 @@ graph LR;
  databasemonitor[Database Monitoring <br> Service];
  end
 
+ subgraph namespace[Speckle Namespace]
+ helm;
+ secrets;
+ end
+
  subgraph cluster[Kubernetes Cluster]
  nginx["Nginx Ingress Controller (Optional)"];
  certmanager["Certificate Manager (Optional)"];
  monitoring["Grafana-compatible <br> metrics ingestor (Optional)"];
  logging["Log ingestor (Optional)"];
- secrets["Secrets"]
- helm;
+ namespace;
  end
 
  preview-->postgres;
@@ -53,6 +57,6 @@ graph LR;
  classDef helm fill:#fff,stroke:#bbb,stroke-width:2px,color:#326ce5;
  class ingress,test,svcfrontend,backend,preview,fileimport,webhook,databasemonitor,nginx,certmanager,monitoring,logging,secrets k8s;
  class client plain;
- class cluster,externalDependencies cluster;
+ class cluster,namespace,externalDependencies cluster;
  class helm helm;
 ```
