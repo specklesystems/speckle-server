@@ -555,6 +555,12 @@ export class Viewer extends EventEmitter implements IViewer {
       batch.updateDiffOpacity(rv.vertStart, rv.vertEnd, 0.2)
       batch.renderObject.renderOrder = 1
     }
+    for (let k = 0; k < diffResult.removed.length; k++) {
+      const rv: NodeRenderView = diffResult.removed[k].model.renderView
+      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+      batch.updateDiffOpacity(rv.vertStart, rv.vertEnd, 0.2)
+      batch.renderObject.renderOrder = 1
+    }
 
     console.warn(diffResult)
     return Promise.resolve(diffResult)
@@ -573,6 +579,26 @@ export class Viewer extends EventEmitter implements IViewer {
     }
     for (let k = 0; k < diffResult.modifiedNew.length; k++) {
       const rv: NodeRenderView = diffResult.modifiedNew[k].model.renderView
+      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+      batch.updateDiffOpacity(
+        rv.vertStart,
+        rv.vertEnd,
+        Math.min(Math.max(1 - time, 0.2), 1)
+      )
+      batch.renderObject.renderOrder = time < 0.5 ? 0 : 1
+    }
+    for (let k = 0; k < diffResult.removed.length; k++) {
+      const rv: NodeRenderView = diffResult.removed[k].model.renderView
+      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+      batch.updateDiffOpacity(
+        rv.vertStart,
+        rv.vertEnd,
+        Math.min(Math.max(time, 0.2), 1)
+      )
+      batch.renderObject.renderOrder = time > 0.5 ? 0 : 1
+    }
+    for (let k = 0; k < diffResult.added.length; k++) {
+      const rv: NodeRenderView = diffResult.added[k].model.renderView
       const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
       batch.updateDiffOpacity(
         rv.vertStart,
