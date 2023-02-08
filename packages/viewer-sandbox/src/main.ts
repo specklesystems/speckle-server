@@ -227,11 +227,13 @@ await sandbox.loadUrl(
   // double
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?overlay=c009dbe144&filter=%7B%7D&c=%5B-104.70053,-98.80617,67.44669,6.53096,1.8739,38.584,0,1%5D'
   // Diff building
-  'https://latest.speckle.dev/streams/aea12cab71/commits/97e4317175?overlay=6b39d7cac5'
+  // 'https://latest.speckle.dev/streams/aea12cab71/commits/97e4317175?overlay=6b39d7cac5'
   // diff cubes
   // 'https://latest.speckle.dev/streams/aea12cab71/commits/4bcf67d96d?overlay=787ade768e'
   // diff sketchup
   // 'https://latest.speckle.dev/streams/aea12cab71/commits/bd783965a6?overlay=11a7bdc21e&c=%5B-38.9002,-14.91891,25.87277,7.61589,12.34646,2.355,0,1%5D'
   // 'https://latest.speckle.dev/streams/aea12cab71/commits/bd783965a6?overlay=11a7bdc21e&c=%5B30.97006,62.90525,21.29233,7.61589,12.34646,2.355,0,1%5D'
   // 'https://latest.speckle.dev/streams/8d8c1b8e8f/commits/8f6d5b7cb0'
+  // diff latest
+  'https://latest.speckle.dev/streams/cdbe82b016/commits/78218b1019?overlay=8e79cdb0ae'
 )
