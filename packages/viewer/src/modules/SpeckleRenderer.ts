@@ -612,7 +612,10 @@ export default class SpeckleRenderer {
   public updateShadowCatcher() {
     this._shadowcatcher.shadowcatcherMesh.visible = this.sunConfiguration.shadowcatcher
     if (this.sunConfiguration.shadowcatcher) {
-      this._shadowcatcher.bake(this.sceneBox)
+      this._shadowcatcher.bake(
+        this.sceneBox,
+        this._renderer.capabilities.maxTextureSize
+      )
       this.resetPipeline()
     }
   }
