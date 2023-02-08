@@ -11,7 +11,7 @@ export type AsyncSearchPredicate = (node: TreeNode) => Promise<boolean>
 export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
-  children: Node[]
+  children: TreeNode[]
   atomic: boolean
   /**
    * Keeps track wether this the root commit object or not.
@@ -120,11 +120,10 @@ export class WorldTree {
     this._root.walk(predicate, node)
   }
 
-  public walkAsync(predicate: SearchPredicate, node?: TreeNode): Promise<unknown[]> {
+  public async walkAsync(predicate: SearchPredicate, node?: TreeNode) {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
     }
-    const nodePromises = []
     let lastAsyncPause = 0
     const pause = async () => {
       if (Date.now() - lastAsyncPause >= 100) {
@@ -132,19 +131,72 @@ export class WorldTree {
         await new Promise((resolve) => setTimeout(resolve, 0))
       }
     }
-    this._root.walk((_node: TreeNode): boolean => {
-      nodePromises.push(
-        // eslint-disable-next-line no-async-promise-executor
-        new Promise<void>(async (resolve) => {
-          await pause()
-          predicate(_node)
-          resolve()
-        })
-      )
-      return true
-    }, node)
-    return Promise.all(nodePromises)
+    async function* depthFirstPreOrderAsync(callback, context) {
+      let i, childCount, keepGoing
+      keepGoing = callback.call(context, this)
+      for (i = 0, childCount = this.children.length; i < childCount; i++) {
+        if (keepGoing === false) {
+          yield false
+        }
+        keepGoing = yield* depthFirstPreOrderAsync.call(
+          this.children[i],
+          callback,
+          context
+        )
+      }
+      yield keepGoing
+    }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
+    // return depthFirstPreOrderAsync
+    //   .call(node ? node : this._root, predicate, node ? node : this._root)
+    //   .next()
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise<void>(async (resolve) => {
+      for await (const mata of depthFirstPreOrderAsync.call(
+        node ? node : this._root,
+        predicate,
+        node ? node : this._root
+      )) {
+        mata
+        await pause()
+      }
+      resolve()
+    })
   }
+  // public async walkAsync(
+  //   predicate: SearchPredicate,
+  //   node?: TreeNode
+  // ): Promise<unknown> {
+  //   if (!node && !this.supressWarnings) {
+  //     Logger.warn(`Root will be used for searching. You might not want that`)
+  //   }
+  //   const nodePromises = []
+  //   let lastAsyncPause = 0
+  //   const pause = async () => {
+  //     if (Date.now() - lastAsyncPause >= 10) {
+  //       lastAsyncPause = Date.now()
+  //       await new Promise((resolve) => setTimeout(resolve, 5))
+  //     }
+  //   }
+  //   let predicateRet = true
+  //   this._root.walk((_node: TreeNode): boolean => {
+  //     nodePromises.push(
+  //       // eslint-disable-next-line no-async-promise-executor
+  //       new Promise<void>(async (resolve) => {
+  //         await pause()
+  //         predicateRet = predicate(_node)
+  //         if (!predicateRet) {
+  //           console.log('stop')
+  //         }
+  //         resolve()
+  //       })
+  //     )
+  //     return predicateRet
+  //   }, node)
+  //   console.log('Promises -> ', nodePromises.length)
+  //   return Promise.all(nodePromises)
+  // }
 
   public purge(subtreeId?: string) {
     if (subtreeId) {

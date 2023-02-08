@@ -83,7 +83,7 @@ export default class ViewerObjectLoader {
           id: this.objectId,
           url: this.objectUrl
         }) // to hide progress bar, easier on the frontend
-        this.emiter.emit('load-cancelled', { id: this.objectId, url: this.objectUrl })
+        this.emiter.emit('load-cancelled', this.objectUrl)
         return
       }
       await this.converter.asyncPause()

@@ -48,6 +48,7 @@ export enum ViewerEvent {
   LoadComplete = 'load-complete',
   LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
+  LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
