@@ -17,7 +17,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
-// params.verbose = true
+params.verbose = true
 
 const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)
@@ -130,7 +130,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -225,4 +225,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?filter=%7B%7D&c=%5B-31.02357,37.60008,96.58899,11.01564,7.40652,66.0411,0,1%5D)'
   // double
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?overlay=c009dbe144&filter=%7B%7D&c=%5B-104.70053,-98.80617,67.44669,6.53096,1.8739,38.584,0,1%5D'
+  'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
 )
