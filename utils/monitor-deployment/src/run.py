@@ -27,6 +27,7 @@ structlog.configure(
                 structlog.processors.CallsiteParameter.LINENO,
             }
         ),
+        structlog.processors.EventRenamer("msg"),
         structlog.processors.JSONRenderer(),
     ],
     wrapper_class=structlog.make_filtering_bound_logger(INFO),
