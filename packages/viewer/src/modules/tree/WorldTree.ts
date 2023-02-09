@@ -136,7 +136,7 @@ export class WorldTree {
       keepGoing = callback.call(context, this)
       for (i = 0, childCount = this.children.length; i < childCount; i++) {
         if (keepGoing === false) {
-          yield false
+          return false
         }
         keepGoing = yield* depthFirstPreOrderAsync.call(
           this.children[i],
@@ -146,23 +146,18 @@ export class WorldTree {
       }
       yield keepGoing
     }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
-    // return depthFirstPreOrderAsync
-    //   .call(node ? node : this._root, predicate, node ? node : this._root)
-    //   .next()
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<void>(async (resolve) => {
-      for await (const mata of depthFirstPreOrderAsync.call(
-        node ? node : this._root,
-        predicate,
-        node ? node : this._root
-      )) {
-        mata
-        await pause()
-      }
-      resolve()
-    })
+    // return new Promise<void>(async (resolve) => {
+    for await (const step of depthFirstPreOrderAsync.call(
+      node ? node : this._root,
+      predicate,
+      node ? node : this._root
+    )) {
+      step
+      await pause()
+    }
+    // resolve()
+    // })
+    return Promise.resolve()
   }
   // public async walkAsync(
   //   predicate: SearchPredicate,

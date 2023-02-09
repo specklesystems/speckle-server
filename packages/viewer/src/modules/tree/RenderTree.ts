@@ -34,8 +34,9 @@ export class RenderTree {
   }
 
   public buildRenderTreeAsync(): Promise<unknown> {
-    let count = 0
+    // const count = 0
     const p = WorldTree.getInstance().walkAsync((node: TreeNode): boolean => {
+      // console.log('Callback -> ', ++count)
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       if (node.model.renderView && node.model.renderView.hasGeometry) {
@@ -45,7 +46,6 @@ export class RenderTree {
         }
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
-        console.warn(++count)
       }
 
       return !this.cancel

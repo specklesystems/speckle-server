@@ -121,9 +121,9 @@ export class Viewer extends EventEmitter implements IViewer {
     // ASYNC STREAM LOAD
     this.on(ViewerEvent.LoadComplete, async (url) => {
       const startBuild = performance.now()
-      setTimeout(() => {
-        this.cancelLoad(url)
-      }, 200)
+      // setTimeout(() => {
+      //   this.cancelLoad(url)
+      // }, 4500)
       await WorldTree.getRenderTree(url).buildRenderTreeAsync()
       Logger.log('ASYNC Tree build time -> ', performance.now() - startBuild)
       const startBatches = performance.now()

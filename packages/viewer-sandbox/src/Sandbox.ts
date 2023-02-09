@@ -265,7 +265,17 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      this.viewer.getRenderer().updateShadowCatcher()
+      // this.viewer.getRenderer().updateShadowCatcher()
+      await this.viewer.getWorldTree().walkAsync((node: unknown) => {
+        node
+        let plm = 0
+        for (let i = 0; i < 100000; i++) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          plm++
+        }
+        return true
+      })
+      console.log('DOne')
     })
 
     const rotate = this.tabs.pages[0].addButton({
