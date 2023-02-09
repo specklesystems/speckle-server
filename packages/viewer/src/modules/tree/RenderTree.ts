@@ -8,7 +8,6 @@ import Logger from 'js-logger'
 
 export class RenderTree {
   private root: TreeNode
-  private complete = false
   private cancel = false
 
   public constructor(root: TreeNode) {
@@ -30,13 +29,12 @@ export class RenderTree {
 
       return true
     })
-    this.complete = true
   }
 
-  public buildRenderTreeAsync(): Promise<unknown> {
-    // const count = 0
+  public buildRenderTreeAsync(): Promise<boolean> {
+    let time = 0
     const p = WorldTree.getInstance().walkAsync((node: TreeNode): boolean => {
-      // console.log('Callback -> ', ++count)
+      const start = performance.now()
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       if (node.model.renderView && node.model.renderView.hasGeometry) {
@@ -47,11 +45,13 @@ export class RenderTree {
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
       }
-
+      time += performance.now() - start
+      // console.log(`Built node ${node.model.raw.id} in ${performance.now() - start}`)
       return !this.cancel
     }, this.root)
-    return p.then<unknown>(() => {
-      this.complete = true
+    return p.then<boolean>((value: boolean) => {
+      value
+      Logger.log('Total time -> ', time)
       return p
     })
   }

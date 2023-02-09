@@ -276,6 +276,12 @@ export default class Sandbox {
         return true
       })
       console.log('DOne')
+      // const objUrl = (
+      //   await UrlHelper.getResourceUrls(
+      //     'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
+      //   )
+      // )[0]
+      // this.viewer.cancelLoad(objUrl)
     })
 
     const rotate = this.tabs.pages[0].addButton({

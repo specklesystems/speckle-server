@@ -83,6 +83,7 @@ export default class SpeckleRenderer {
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private cancel: { [subtreeId: string]: boolean } = {}
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -462,6 +463,7 @@ export default class SpeckleRenderer {
   }
 
   public async addRenderTreeAsync(subtreeId: string) {
+    this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
@@ -479,11 +481,15 @@ export default class SpeckleRenderer {
         this.updateShadowCatcher()
       }
       this._needsRender = true
+      if (this.cancel[subtreeId]) {
+        return
+      }
     }
     this.updateHelpers()
     if (this.viewer.sectionBox.display.visible) {
       this.viewer.setSectionBox()
     }
+    delete this.cancel[subtreeId]
   }
 
   private addBatch(batch: Batch, parent: Object3D) {
@@ -526,6 +532,13 @@ export default class SpeckleRenderer {
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
     this.updateHelpers()
+  }
+
+  public cancelRenderTree(subtreeId: string) {
+    if (this.cancel[subtreeId]) {
+      this.removeRenderTree(subtreeId)
+      delete this.cancel[subtreeId]
+    }
   }
 
   public clearFilter() {
