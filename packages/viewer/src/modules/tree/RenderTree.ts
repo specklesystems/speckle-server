@@ -31,29 +31,25 @@ export class RenderTree {
     })
   }
 
-  public buildRenderTreeAsync(): Promise<boolean> {
-    let time = 0
-    const p = WorldTree.getInstance().walkAsync((node: TreeNode): boolean => {
-      const start = performance.now()
-      const rendeNode = this.buildRenderNode(node)
-      node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-      if (node.model.renderView && node.model.renderView.hasGeometry) {
-        const transform = this.computeTransform(node)
-        if (rendeNode.geometry.bakeTransform) {
-          transform.multiply(rendeNode.geometry.bakeTransform)
+  public buildRenderTreeAsync(priority: number): Promise<boolean> {
+    const p = WorldTree.getInstance().walkAsync(
+      (node: TreeNode): boolean => {
+        const rendeNode = this.buildRenderNode(node)
+        node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
+        if (node.model.renderView && node.model.renderView.hasGeometry) {
+          const transform = this.computeTransform(node)
+          if (rendeNode.geometry.bakeTransform) {
+            transform.multiply(rendeNode.geometry.bakeTransform)
+          }
+          Geometry.transformGeometryData(rendeNode.geometry, transform)
+          node.model.renderView.computeAABB()
         }
-        Geometry.transformGeometryData(rendeNode.geometry, transform)
-        node.model.renderView.computeAABB()
-      }
-      time += performance.now() - start
-      // console.log(`Built node ${node.model.raw.id} in ${performance.now() - start}`)
-      return !this.cancel
-    }, this.root)
-    return p.then<boolean>((value: boolean) => {
-      value
-      Logger.log('Total time -> ', time)
-      return p
-    })
+        return !this.cancel
+      },
+      this.root,
+      priority
+    )
+    return p
   }
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
@@ -186,7 +182,9 @@ export class RenderTree {
     this.root = null
   }
 
-  public cancelBuild() {
+  public cancelBuild(id: string) {
     this.cancel = true
+    WorldTree.getInstance().purge(id)
+    this.purge()
   }
 }

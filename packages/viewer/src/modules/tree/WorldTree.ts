@@ -3,6 +3,7 @@ import { DataTree, DataTreeBuilder } from './DataTree'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
 import Logger from 'js-logger'
+import { World } from '../World'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
@@ -122,18 +123,13 @@ export class WorldTree {
 
   public async walkAsync(
     predicate: SearchPredicate,
-    node?: TreeNode
+    node?: TreeNode,
+    priority?: number
   ): Promise<boolean> {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
     }
-    let lastAsyncPause = 0
-    const pause = async () => {
-      if (Date.now() - lastAsyncPause >= 64) {
-        lastAsyncPause = Date.now()
-        await new Promise((resolve) => setTimeout(resolve, 16))
-      }
-    }
+    const pause = World.getPause(priority)
 
     async function* depthFirstPreOrderAsync(callback, context) {
       let i, childCount
@@ -143,12 +139,12 @@ export class WorldTree {
       }
     }
 
-    const plm = depthFirstPreOrderAsync(predicate, node ? node : this._root)
+    const generator = depthFirstPreOrderAsync(predicate, node ? node : this._root)
     let ret = true
-    for await (const step of plm) {
+    for await (const step of generator) {
       ret = step
       if (step === false) {
-        plm.return()
+        generator.return()
       }
       await pause()
     }

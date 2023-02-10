@@ -112,7 +112,7 @@ export default class ViewerObjectLoader {
     Logger.warn(
       `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
     )
-    this.emiter.emit(ViewerEvent.LoadComplete, this.objectUrl)
+    this.emiter.emit(ViewerEvent.DownloadComplete, this.objectUrl)
 
     if (viewerLoads === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.objectId}`)

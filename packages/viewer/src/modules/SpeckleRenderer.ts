@@ -442,7 +442,7 @@ export default class SpeckleRenderer {
   }
 
   public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(subtreeId, undefined, ...SpeckleTypeAllRenderables)
+    this.batcher.makeBatches(subtreeId, SpeckleTypeAllRenderables)
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
@@ -462,18 +462,20 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public async addRenderTreeAsync(subtreeId: string) {
+  public async addRenderTreeAsync(subtreeId: string, priority = 1) {
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this.rootGroup.add(subtreeGroup)
 
-    for await (const batch of this.batcher.makeBatchesAsync(
+    const generator = this.batcher.makeBatchesAsync(
       subtreeId,
+      SpeckleTypeAllRenderables,
       undefined,
-      ...SpeckleTypeAllRenderables
-    )) {
+      priority
+    )
+    for await (const batch of generator) {
       this.addBatch(batch, subtreeGroup)
       this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
@@ -482,7 +484,10 @@ export default class SpeckleRenderer {
       }
       this._needsRender = true
       if (this.cancel[subtreeId]) {
-        return
+        generator.return()
+        this.removeRenderTree(subtreeId)
+        delete this.cancel[subtreeId]
+        break
       }
     }
     this.updateHelpers()
@@ -535,9 +540,8 @@ export default class SpeckleRenderer {
   }
 
   public cancelRenderTree(subtreeId: string) {
-    if (this.cancel[subtreeId]) {
-      this.removeRenderTree(subtreeId)
-      delete this.cancel[subtreeId]
+    if (this.cancel[subtreeId] !== undefined) {
+      this.cancel[subtreeId] = true
     }
   }
 

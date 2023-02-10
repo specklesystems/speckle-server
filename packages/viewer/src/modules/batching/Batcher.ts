@@ -17,6 +17,7 @@ import PointBatch from './PointBatch'
 import { Material, Mesh, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
+import { World } from '../World'
 
 export default class Batcher {
   public materials: Materials
@@ -29,8 +30,8 @@ export default class Batcher {
 
   public makeBatches(
     subtreeId: string,
-    batchType?: GeometryType,
-    ...speckleType: SpeckleType[]
+    speckleType: SpeckleType[],
+    batchType?: GeometryType
   ) {
     const rendeViews = WorldTree.getRenderTree(subtreeId)
       .getAtomicRenderViews(...speckleType)
@@ -92,16 +93,12 @@ export default class Batcher {
 
   public async *makeBatchesAsync(
     subtreeId: string,
+    speckleType: SpeckleType[],
     batchType?: GeometryType,
-    ...speckleType: SpeckleType[]
+    priority?: number
   ) {
-    let lastAsyncPause = 0
-    const pause = async () => {
-      if (Date.now() - lastAsyncPause >= 110) {
-        lastAsyncPause = Date.now()
-        await new Promise((resolve) => setTimeout(resolve, 100))
-      }
-    }
+    const pause = World.getPause(priority)
+
     const rendeViews = WorldTree.getRenderTree(subtreeId)
       .getAtomicRenderViews(...speckleType)
       .sort((a, b) => {
