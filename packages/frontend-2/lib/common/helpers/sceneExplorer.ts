@@ -6,6 +6,7 @@ export type ExplorerNode = {
   data?: SpeckleObject
   raw?: SpeckleObject
   atomic?: boolean
+  model?: Record<string, unknown>
   children: ExplorerNode[]
 }
 
@@ -17,4 +18,5 @@ export interface SpeckleObject {
   id?: string
   elements?: SpeckleReference[]
   children?: SpeckleObject[] | SpeckleReference[]
+  name?: string
 }

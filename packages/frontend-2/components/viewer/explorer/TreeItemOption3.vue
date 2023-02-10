@@ -63,7 +63,12 @@
                 <FunnelIcon v-else class="w-3 h-3" />
               </button>
             </div>
-            <div v-if="isSingleCollection || isMultipleCollection">
+            <div
+              v-if="
+                (isSingleCollection || isMultipleCollection) &&
+                typeof childrenLength === 'number'
+              "
+            >
               <span class="text-foreground-2 text-xs">({{ childrenLength }})</span>
             </div>
           </div>
@@ -83,7 +88,7 @@
         <!-- mul col items -->
         <div v-for="collection in arrayCollections" :key="collection?.raw?.name">
           <TreeItemOption3
-            :item-id="(collection.raw.id as string)"
+            :item-id="(collection.raw?.id as string)"
             :tree-item="collection"
             :depth="depth + 1"
             :debug="debug"
