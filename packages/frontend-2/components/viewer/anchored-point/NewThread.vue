@@ -21,14 +21,8 @@
         :style="style"
       >
         <div class="relative">
-          <div class="bg-foundation rounded-full w-80 p-4 flex flex-col">
-            <ViewerCommentsEditor v-model="commentValue" max-height="60vh" />
-            <!-- <FormTextInput
-              full-width
-              name="newComment"
-              class="bg-transparent focus:ring-0 focus:outline-0"
-              placeholder="Press enter to send"
-            /> -->
+          <div class="bg-foundation rounded-4xl w-80 p-4 flex flex-col">
+            <ViewerCommentsEditor v-model="commentValue" max-height="300px" />
           </div>
           <div class="absolute w-full flex justify-between pt-2 space-x-2">
             <div class="flex space-x-2">

@@ -1,12 +1,10 @@
 <template>
   <div class="relative">
-    <div class="bg-foundation rounded-full w-80 p-4 flex flex-col">
-      <FormTextInput
-        full-width
-        name="newComment"
-        class="bg-transparent focus:ring-0 focus:outline-0"
-        placeholder="Press enter to send"
-        @input="onInput"
+    <div class="bg-foundation rounded-4xl w-80 p-4 flex flex-col">
+      <ViewerCommentsEditor
+        v-model="commentValue"
+        max-height="150px"
+        @update:model-value="onInput"
       />
     </div>
     <div class="absolute w-full flex justify-end pt-2 space-x-2">
@@ -19,9 +17,9 @@
 </template>
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
-// import { JSONContent } from '@tiptap/core'
+import { JSONContent } from '@tiptap/core'
 import { debounce } from 'lodash-es'
-// import { Optional } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
@@ -33,7 +31,7 @@ const props = defineProps<{
 const { emitTyping } = useViewerUserActivityBroadcasting()
 
 const isTyping = ref(false)
-// const commentValue = ref({ doc: undefined as Optional<JSONContent> })
+const commentValue = ref({ doc: undefined as Optional<JSONContent> })
 const threadId = computed(() => props.modelValue.id)
 
 const updateIsTyping = async (isTyping: boolean) =>

@@ -118,3 +118,45 @@ onBeforeUnmount(() => {
   enterKeypressTracker.unsubscribe(editor, onEnter)
 })
 </script>
+<style lang="postcss">
+/* stylelint-disable selector-class-pattern */
+.ProseMirror-focused {
+  outline: none;
+}
+
+.ProseMirror {
+  & p:last-of-type {
+    margin-bottom: 0;
+  }
+
+  & p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    pointer-events: none;
+    height: 0;
+    @apply text-foreground-disabled;
+  }
+
+  & .editor-mention {
+    box-decoration-break: clone;
+    @apply border-foreground border;
+    @apply label label--light rounded inline-block px-1 py-[0.5px];
+  }
+}
+
+.smart-text-editor {
+  &--read-only {
+    word-break: break-word;
+    background-color: unset !important;
+    box-shadow: unset !important;
+
+    .smart-text-editor__inner {
+      padding: 0;
+    }
+
+    .editor-mention {
+      cursor: pointer;
+    }
+  }
+}
+</style>

@@ -231,10 +231,11 @@ const UtilitiesExtension = Extension.create<unknown, SpeckleUtilitiesExtensionSt
   }
 })
 
-//
-type SuggestionOptionsItem = NonNullable<
+export type SuggestionOptionsItem = NonNullable<
   Get<MentionsUserSearchQuery, 'userSearch.items[0]'>
 >
+
+export type MentionData = { label: string; id: string }
 
 const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'> = {
   items: async ({ query }) => {
