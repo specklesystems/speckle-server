@@ -10,7 +10,6 @@ const { modelsAndVersionIds: loadedModels, objects: loadedObjects } =
 
 const lastBreadcrumbName = computed(() => {
   if (!loadedModels.value?.length && !loadedObjects.value?.length) return 'loading'
-  // return 'test'
   const totalLen = loadedModels.value.length + loadedObjects.value.length
   const hasObjects = loadedObjects.value.length !== 0
   const hasModels = loadedModels.value.length !== 0

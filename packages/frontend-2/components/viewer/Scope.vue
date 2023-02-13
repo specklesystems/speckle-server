@@ -1,7 +1,5 @@
 <template>
-  <!-- <div class="inlinle-block"> -->
   <slot />
-  <!-- </div> -->
 </template>
 <script setup lang="ts">
 import {
