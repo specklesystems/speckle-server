@@ -2,15 +2,17 @@
   <div class="absolute top-0 left-0 w-screen h-screen">
     <!-- Nav -->
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="`/projects/${project?.id}`"
-        :name="project?.name"
-      ></HeaderNavLink>
-      <!-- TODO: get name dynamically -->
-      <HeaderNavLink
-        :to="route.fullPath"
-        name="Model Name/Multiple Models"
-      ></HeaderNavLink>
+      <ViewerScope :state="state">
+        <HeaderNavLink
+          :to="`/projects/${project?.id}`"
+          :name="project?.name"
+        ></HeaderNavLink>
+        <!-- TODO: get name dynamically -->
+
+        <!-- <HeaderNavLink :to="route.fullPath" :name="lastBreadcrumbName"></HeaderNavLink> -->
+        <!-- {{ loadedObjects?.length }} ; {{ loadedModels?.length }} -->
+        <ViewerExplorerNavbarLink />
+      </ViewerScope>
     </Portal>
 
     <ClientOnly>
@@ -36,7 +38,10 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { useSetupViewer } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerLoadedResources,
+  useSetupViewer
+} from '~~/lib/viewer/composables/setup'
 
 definePageMeta({
   layout: 'viewer',
@@ -49,13 +54,15 @@ definePageMeta({
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 
+const state = useSetupViewer({
+  projectId
+})
+
 const {
   resources: {
     response: { project }
   }
-} = useSetupViewer({
-  projectId
-})
+} = state
 
 graphql(`
   fragment ModelPageProject on Project {
@@ -64,4 +71,28 @@ graphql(`
     name
   }
 `)
+
+// const { modelsAndVersionIds: loadedModels, objects: loadedObjects } =
+//   useInjectedViewerLoadedResources()
+
+// const state = useInjectedViewerState()
+// const loadedModels = computed(() => {
+//   return state?.resources?.response.modelsAndVersionIds.value
+// })
+// const loadedObjects = computed(() => {
+//   return state?.resources?.response.objects.value
+// })
+
+// const lastBreadcrumbName = computed(() => {
+//   if (!loadedModels.value && !loadedObjects.value) return 'loading'
+//   return 'test'
+//   const totalLen = loadedModels.value.length + loadedObjects.value.length
+//   const hasObjects = loadedObjects.value.length !== 0
+//   const hasModels = loadedModels.value.length !== 0
+//   const isMixed = hasObjects && hasModels
+//   if (totalLen > 0) return `Multiple ${isMixed ? 'Resources' : 'Models'}`
+
+//   if (hasObjects) return `Object ${loadedObjects.value[0].objectId.substring(0, 3)}...`
+//   return loadedModels.value[0].model.name
+// })
 </script>

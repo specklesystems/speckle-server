@@ -1018,4 +1018,15 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
   return ui
 }
 
+/**
+ * Use this when you want to use the viewer state outside the viewer, ie in a component that's inside a portal!
+ * @param state
+ */
+export function useSetupViewerScope(
+  state: InjectableViewerState
+): InjectableViewerState {
+  provide(InjectableViewerStateKey, state)
+  return state
+}
+
 export const test = 1
