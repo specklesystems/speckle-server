@@ -36,7 +36,10 @@ export default defineNuxtConfig({
 
   vite: {
     resolve: {
-      alias: [{ find: /^lodash$/, replacement: 'lodash-es' }]
+      alias: [{ find: /^lodash$/, replacement: 'lodash-es' }],
+      // i've no idea why, but the same version of prosemirror-state gets bundled twice in the build,
+      // breaking comment editors
+      dedupe: ['prosemirror-state']
     },
     ...(process.env.IS_STORYBOOK_BUILD
       ? {}
@@ -48,14 +51,6 @@ export default defineNuxtConfig({
         // Allowing symlinks
         // allow: ['/home/fabis/Code/random/vue-apollo/']
       }
-    },
-    optimizeDeps: {
-      include: [
-        'prosemirror-state',
-        'prosemirror-transform',
-        'prosemirror-model',
-        'prosemirror-view'
-      ]
     }
   },
 
@@ -77,7 +72,7 @@ export default defineNuxtConfig({
       '@headlessui/vue',
       '@heroicons/vue',
       '@vueuse/core',
-      'prosemirror-state'
+      /prosemirror.*/
     ]
   }
 })
