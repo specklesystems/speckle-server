@@ -3,30 +3,49 @@
     <div
       class="absolute h-screen pt-[4.5rem] px-2 flex flex-col space-y-2 bg-green-300/0 z-20"
     >
-      <ViewerControlsButton
+      <ViewerControlsButtonToggle
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
         <CubeIcon class="w-5 h-5" />
-      </ViewerControlsButton>
-      <ViewerControlsButton
+      </ViewerControlsButtonToggle>
+      <ViewerControlsButtonToggle
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
         <IconFileExplorer class="w-5 h-5" />
-      </ViewerControlsButton>
-      <ViewerControlsButton
+      </ViewerControlsButtonToggle>
+      <ViewerControlsButtonToggle
         :active="activeControl === 'filters'"
         @click="toggleActiveControl('filters')"
       >
         <FunnelIcon class="w-5 h-5" />
-      </ViewerControlsButton>
-      <ViewerControlsButton
+      </ViewerControlsButtonToggle>
+      <ViewerControlsButtonToggle
         :active="activeControl === 'comments'"
         @click="toggleActiveControl('comments')"
       >
         <ChatBubbleLeftRightIcon class="w-5 h-5" />
-      </ViewerControlsButton>
+      </ViewerControlsButtonToggle>
+      <!-- Standard viewer controls -->
+      <ViewerControlsButtonGroup>
+        <ViewerControlsButtonToggle flat @click="instance.zoom()">
+          <ArrowsPointingOutIcon class="w-5 h-5" />
+        </ViewerControlsButtonToggle>
+        <ViewerControlsButtonToggle flat @click="toggleProjection()">
+          <IconPerspective v-if="!isPerspectiveProjection" class="w-4 h-4" />
+          <IconPerspectiveMore v-else class="w-4 h-4" />
+        </ViewerControlsButtonToggle>
+        <ViewerControlsButtonToggle flat @click="">
+          <SunIcon class="w-5 h-5" />
+        </ViewerControlsButtonToggle>
+        <ViewerControlsButtonToggle flat @click="">
+          <ScissorsIcon class="w-5 h-5" />
+        </ViewerControlsButtonToggle>
+        <ViewerControlsButtonToggle flat @click="">
+          <VideoCameraIcon class="w-5 h-5" />
+        </ViewerControlsButtonToggle>
+      </ViewerControlsButtonGroup>
     </div>
     <div
       :class="`z-20 absolute max-h-[calc(100vh-5.5rem)] w-80 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
@@ -54,8 +73,20 @@
 import {
   CubeIcon,
   FunnelIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  ArrowsPointingOutIcon,
+  SunIcon,
+  ScissorsIcon,
+  VideoCameraIcon
 } from '@heroicons/vue/24/outline'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+
+const {
+  viewer: { instance },
+  ui: {
+    camera: { toggleProjection, isPerspectiveProjection }
+  }
+} = useInjectedViewerState()
 
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'comments'
 

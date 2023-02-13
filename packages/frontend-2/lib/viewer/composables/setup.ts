@@ -13,7 +13,8 @@ import {
   provide,
   ComputedRef,
   WritableComputedRef,
-  Raw
+  Raw,
+  Ref
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
@@ -177,6 +178,10 @@ export type InjectableViewerState = Readonly<{
       showObjects: FilterAction
       resetFilters: () => Promise<void>
       setColorFilter: (property: PropertyInfo) => void
+    }
+    camera: {
+      isPerspectiveProjection: Ref<boolean>
+      toggleProjection: () => void
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
@@ -605,7 +610,8 @@ function setupInterfaceState(
 
   const clearSelection = () => {
     // Clear any vis/iso state
-    // NOTE: turned off, as not sure it's the behaviour we want
+    // NOTE: turned off, as not sure it's the behaviour we want.
+    // Worth keeping the code for future reference.
     // if (selectedObjects.value.length > 0) {
     //   let ids = [] as string[]
     //   for (const obj of selectedObjects.value) {
@@ -632,10 +638,19 @@ function setupInterfaceState(
     setViewerSelectionFilter()
   }
 
+  const isPerspectiveProjection = ref(false)
+  const toggleProjection = () => {
+    state.viewer.instance.toggleCameraProjection()
+    isPerspectiveProjection.value = !isPerspectiveProjection.value
+  }
   return {
     ...state,
     ui: {
       viewerBusy,
+      camera: {
+        isPerspectiveProjection,
+        toggleProjection
+      },
       filters: {
         current: computed(() => filteringState.value),
         localFilterPropKey: computed(() => localFilterPropKey.value),
