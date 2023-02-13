@@ -14,7 +14,7 @@ import {
 } from './Batch'
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
-import { Material, Mesh, WebGLRenderer } from 'three'
+import { Material, Mesh, Vector3, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 
@@ -47,9 +47,11 @@ export default class Batcher {
     // console.warn(rendeViews)
 
     for (let i = 0; i < materialHashes.length; i++) {
-      const batch = rendeViews.filter(
+      let batch = rendeViews.filter(
         (value) => value.renderMaterialHash === materialHashes[i]
       )
+      /** Prune any meshes with no geometry data */
+      batch = batch.filter((value) => value.aabb.getSize(new Vector3()).lengthSq() > 0)
 
       let matRef = null
 
