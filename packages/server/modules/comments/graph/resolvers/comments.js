@@ -1,8 +1,5 @@
 const { pubsub } = require('@/modules/shared')
-const {
-  ForbiddenError: ApolloForbiddenError,
-  ApolloError
-} = require('apollo-server-express')
+const { ForbiddenError: ApolloForbiddenError } = require('apollo-server-express')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
@@ -47,42 +44,25 @@ const {
   getViewerResourceItemsUngrouped,
   doViewerResourcesFit
 } = require('@/modules/core/services/commit/viewerResources')
-
-const authorizeStreamAccess = async ({
-  streamId,
-  userId,
-  serverRole,
-  auth,
-  requireRole = false
-}) => {
-  if (serverRole === Roles.Server.ArchivedUser)
-    throw new ApolloForbiddenError('You are not authorized.')
-  const stream = await getStream({ streamId, userId })
-  if (!stream) throw new ApolloError('Stream not found')
-
-  let authZed = true
-
-  if (!stream.isPublic && auth === false) authZed = false
-
-  if (!stream.isPublic && !stream.role) authZed = false
-
-  if (stream.isPublic && requireRole && !stream.allowPublicComments && !stream.role)
-    authZed = false
-
-  if (!authZed) throw new ApolloForbiddenError('You are not authorized.')
-  return stream
-}
+const {
+  authorizeProjectCommentsAccess,
+  authorizeCommentAccess,
+  markViewed,
+  createCommentThreadAndNotify,
+  createCommentReplyAndNotify,
+  editCommentAndNotify,
+  archiveCommentAndNotify
+} = require('@/modules/comments/services/management')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {
     async comment(parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: args.streamId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context
       })
+
       const comment = await getComment({ id: args.id, userId: context.userId })
       if (comment.streamId !== args.streamId)
         throw new ApolloForbiddenError('You do not have access to this comment.')
@@ -90,11 +70,9 @@ module.exports = {
     },
 
     async comments(parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: args.streamId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context
       })
       return { ...(await getComments({ ...args, userId: context.userId })) }
     }
@@ -165,11 +143,9 @@ module.exports = {
       return await context.loaders.streams.getCommentThreadCount.load(parent.id)
     },
     async commentThreads(parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: parent.id,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context
       })
       return await getPaginatedProjectComments({
         ...args,
@@ -227,13 +203,53 @@ module.exports = {
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
+  CommentMutations: {
+    async markViewed(_parent, args, ctx) {
+      await authorizeCommentAccess({
+        authCtx: ctx,
+        commentId: args.commentId
+      })
+      await markViewed(args.commentId, ctx.userId)
+      return true
+    },
+    async create(_parent, args, ctx) {
+      await authorizeProjectCommentsAccess({
+        projectId: args.input.projectId,
+        authCtx: ctx
+      })
+      return await createCommentThreadAndNotify(args, ctx.userId)
+    },
+    async reply(_parent, args, ctx) {
+      await authorizeProjectCommentsAccess({
+        projectId: args.input.projectId,
+        authCtx: ctx
+      })
+      return await createCommentReplyAndNotify(args, ctx.userId)
+    },
+    async edit(_parent, args, ctx) {
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: ctx,
+        requireProjectRole: true
+      })
+      return await editCommentAndNotify(args, ctx.userId)
+    },
+    async archive(_parent, args, ctx) {
+      await authorizeCommentAccess({
+        authCtx: ctx,
+        commentId: args.commentId,
+        requireProjectRole: true
+      })
+      await archiveCommentAndNotify(args.commentId, ctx.userId)
+      return true
+    }
+  },
   Mutation: {
+    commentMutations: () => ({}),
     async broadcastViewerUserActivity(_parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: args.projectId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context
       })
 
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
@@ -249,11 +265,9 @@ module.exports = {
     },
 
     async userViewerActivityBroadcast(parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: args.streamId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context
       })
       // const stream = await getStream({
       //   streamId: args.streamId,
@@ -322,13 +336,10 @@ module.exports = {
 
     async commentEdit(parent, args, context) {
       // NOTE: This is NOT in use anywhere
-      const stream = await authorizeStreamAccess({
-        streamId: args.input.streamId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth,
-        //public, but not public comments needs a stream role to do this
-        requireRole: true
+      const stream = await authorizeProjectCommentsAccess({
+        projectId: args.input.streamId,
+        authCtx: context,
+        requireProjectRole: true
       })
       const matchUser = !stream.role
       try {
@@ -342,24 +353,19 @@ module.exports = {
 
     // used for flagging a comment as viewed
     async commentView(parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: args.streamId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context
       })
       await viewComment({ userId: context.userId, commentId: args.commentId })
       return true
     },
 
     async commentArchive(parent, args, context) {
-      await authorizeStreamAccess({
-        streamId: args.streamId,
-        userId: context.userId,
-        serverRole: context.role,
-        auth: context.auth,
-        //public, but not public comments needs a stream role to do this
-        requireRole: true
+      await authorizeProjectCommentsAccess({
+        projectId: args.streamId,
+        authCtx: context,
+        requireProjectRole: true
       })
 
       let updatedComment

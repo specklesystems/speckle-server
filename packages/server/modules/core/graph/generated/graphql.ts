@@ -203,7 +203,7 @@ export type Comment = {
   author: LimitedUser;
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  data?: Maybe<CommentData>;
+  data?: Maybe<CommentViewerData>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -253,10 +253,16 @@ export type CommentCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type CommentContentInput = {
+  blobIds?: InputMaybe<Array<Scalars['String']>>;
+  doc: Scalars['JSONObject'];
+};
+
+/** Deprecated: Used by old stream-based mutations */
 export type CommentCreateInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
-  data: CommentDataInput;
+  data: Scalars['JSONObject'];
   /**
    * Specifies the resources this comment is linked to. There are several use cases:
    * - a comment targets only one resource (commit or object)
@@ -268,23 +274,6 @@ export type CommentCreateInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
-};
-
-export type CommentData = {
-  __typename?: 'CommentData';
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFilters;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 export type CommentDataFilters = {
@@ -323,6 +312,7 @@ export type CommentDataInput = {
   selection?: InputMaybe<Scalars['JSONObject']>;
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type CommentEditInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
@@ -330,6 +320,40 @@ export type CommentEditInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentMutations = {
+  __typename?: 'CommentMutations';
+  archive: Scalars['Boolean'];
+  create: Comment;
+  edit: Comment;
+  markViewed: Scalars['Boolean'];
+  reply: Comment;
+};
+
+
+export type CommentMutationsArchiveArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsCreateArgs = {
+  input: CreateCommentInput;
+};
+
+
+export type CommentMutationsEditArgs = {
+  input: EditCommentInput;
+};
+
+
+export type CommentMutationsMarkViewedArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsReplyArgs = {
+  input: CreateCommentReplyInput;
 };
 
 export type CommentReplyAuthorCollection = {
@@ -343,6 +367,23 @@ export type CommentThreadActivityMessage = {
   data?: Maybe<Scalars['JSONObject']>;
   reply?: Maybe<Comment>;
   type: Scalars['String'];
+};
+
+export type CommentViewerData = {
+  __typename?: 'CommentViewerData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 export type Commit = {
@@ -442,6 +483,21 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateCommentInput = {
+  content: CommentContentInput;
+  projectId: Scalars['String'];
+  /** Resources that this comment should be attached to */
+  resourceIdString: Scalars['String'];
+  screenshot?: InputMaybe<Scalars['String']>;
+  viewerData: CommentDataInput;
+};
+
+export type CreateCommentReplyInput = {
+  content: CommentContentInput;
+  projectId: Scalars['String'];
+  threadId: Scalars['String'];
+};
+
 export type CreateModelInput = {
   name: Scalars['String'];
   projectId: Scalars['ID'];
@@ -455,6 +511,11 @@ export enum DiscoverableStreamsSortType {
 export type DiscoverableStreamsSortingInput = {
   direction: SortDirection;
   type: DiscoverableStreamsSortType;
+};
+
+export type EditCommentInput = {
+  commentId: Scalars['String'];
+  content: CommentContentInput;
 };
 
 export type FileUpload = {
@@ -650,6 +711,7 @@ export type Mutation = {
   commentCreate: Scalars['String'];
   /** Edits a comment. */
   commentEdit: Scalars['Boolean'];
+  commentMutations: CommentMutations;
   /** Adds a reply to a comment. */
   commentReply: Scalars['String'];
   /** Flags a comment as viewed by you (the logged in user). */
@@ -1440,9 +1502,11 @@ export type QueryUserSearchArgs = {
   query: Scalars['String'];
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
   blobIds: Array<Scalars['String']>;
+  data?: InputMaybe<Scalars['JSONObject']>;
   parentComment: Scalars['String'];
   streamId: Scalars['String'];
   /** ProseMirror document object */
@@ -2196,10 +2260,6 @@ export type ViewerUserSelectionInfo = {
   selectionLocation?: Maybe<Scalars['JSONObject']>;
 };
 
-/**
- * TODO: Clean this up: write proper descriptions, delete unnecessary keys and add proper GQL return types
- * where possible
- */
 export type ViewerUserSelectionInfoInput = {
   /**
    * An array representing a user's camera position:
@@ -2380,14 +2440,16 @@ export type ResolversTypes = {
   Comment: ResolverTypeWrapper<CommentGraphQLReturn>;
   CommentActivityMessage: ResolverTypeWrapper<Omit<CommentActivityMessage, 'comment'> & { comment: ResolversTypes['Comment'] }>;
   CommentCollection: ResolverTypeWrapper<Omit<CommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
+  CommentContentInput: CommentContentInput;
   CommentCreateInput: CommentCreateInput;
-  CommentData: ResolverTypeWrapper<CommentData>;
   CommentDataFilters: ResolverTypeWrapper<CommentDataFilters>;
   CommentDataFiltersInput: CommentDataFiltersInput;
   CommentDataInput: CommentDataInput;
   CommentEditInput: CommentEditInput;
+  CommentMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   CommentReplyAuthorCollection: ResolverTypeWrapper<CommentReplyAuthorCollectionGraphQLReturn>;
   CommentThreadActivityMessage: ResolverTypeWrapper<Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversTypes['Comment']> }>;
+  CommentViewerData: ResolverTypeWrapper<CommentViewerData>;
   Commit: ResolverTypeWrapper<CommitGraphQLReturn>;
   CommitCollection: ResolverTypeWrapper<Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Commit']>> }>;
   CommitCreateInput: CommitCreateInput;
@@ -2396,10 +2458,13 @@ export type ResolversTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CreateCommentInput: CreateCommentInput;
+  CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
+  EditCommentInput: EditCommentInput;
   EmailAddress: ResolverTypeWrapper<Scalars['EmailAddress']>;
   FileUpload: ResolverTypeWrapper<FileUpload>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
@@ -2517,14 +2582,16 @@ export type ResolversParentTypes = {
   Comment: CommentGraphQLReturn;
   CommentActivityMessage: Omit<CommentActivityMessage, 'comment'> & { comment: ResolversParentTypes['Comment'] };
   CommentCollection: Omit<CommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
+  CommentContentInput: CommentContentInput;
   CommentCreateInput: CommentCreateInput;
-  CommentData: CommentData;
   CommentDataFilters: CommentDataFilters;
   CommentDataFiltersInput: CommentDataFiltersInput;
   CommentDataInput: CommentDataInput;
   CommentEditInput: CommentEditInput;
+  CommentMutations: MutationsObjectGraphQLReturn;
   CommentReplyAuthorCollection: CommentReplyAuthorCollectionGraphQLReturn;
   CommentThreadActivityMessage: Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversParentTypes['Comment']> };
+  CommentViewerData: CommentViewerData;
   Commit: CommitGraphQLReturn;
   CommitCollection: Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Commit']>> };
   CommitCreateInput: CommitCreateInput;
@@ -2533,9 +2600,12 @@ export type ResolversParentTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CreateCommentInput: CreateCommentInput;
+  CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
   DateTime: Scalars['DateTime'];
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
+  EditCommentInput: EditCommentInput;
   EmailAddress: Scalars['EmailAddress'];
   FileUpload: FileUpload;
   Float: Scalars['Float'];
@@ -2766,7 +2836,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   authorId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  data?: Resolver<Maybe<ResolversTypes['CommentData']>, ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['CommentViewerData']>, ParentType, ContextType>;
   hasParent?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   parent?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
@@ -2796,15 +2866,6 @@ export type CommentCollectionResolvers<ContextType = GraphQLContext, ParentType 
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type CommentDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentData'] = ResolversParentTypes['CommentData']> = {
-  camPos?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
-  filters?: Resolver<ResolversTypes['CommentDataFilters'], ParentType, ContextType>;
-  location?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
-  sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  selection?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentDataFilters'] = ResolversParentTypes['CommentDataFilters']> = {
   hiddenIds?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
   isolatedIds?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
@@ -2812,6 +2873,15 @@ export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType
   passMin?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   propertyInfoKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sectionBox?: Resolver<Maybe<Array<ResolversTypes['Float']>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentMutations'] = ResolversParentTypes['CommentMutations']> = {
+  archive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsArchiveArgs, 'commentId'>>;
+  create?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsCreateArgs, 'input'>>;
+  edit?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsEditArgs, 'input'>>;
+  markViewed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsMarkViewedArgs, 'commentId'>>;
+  reply?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsReplyArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2825,6 +2895,15 @@ export type CommentThreadActivityMessageResolvers<ContextType = GraphQLContext, 
   data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   reply?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentViewerDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentViewerData'] = ResolversParentTypes['CommentViewerData']> = {
+  camPos?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  filters?: Resolver<ResolversTypes['CommentDataFilters'], ParentType, ContextType>;
+  location?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  selection?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2956,6 +3035,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commentArchive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentArchiveArgs, 'archived' | 'commentId' | 'streamId'>>;
   commentCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommentCreateArgs, 'input'>>;
   commentEdit?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentEditArgs, 'input'>>;
+  commentMutations?: Resolver<ResolversTypes['CommentMutations'], ParentType, ContextType>;
   commentReply?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommentReplyArgs, 'input'>>;
   commentView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentViewArgs, 'commentId' | 'streamId'>>;
   commitCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommitCreateArgs, 'commit'>>;
@@ -3464,10 +3544,11 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Comment?: CommentResolvers<ContextType>;
   CommentActivityMessage?: CommentActivityMessageResolvers<ContextType>;
   CommentCollection?: CommentCollectionResolvers<ContextType>;
-  CommentData?: CommentDataResolvers<ContextType>;
   CommentDataFilters?: CommentDataFiltersResolvers<ContextType>;
+  CommentMutations?: CommentMutationsResolvers<ContextType>;
   CommentReplyAuthorCollection?: CommentReplyAuthorCollectionResolvers<ContextType>;
   CommentThreadActivityMessage?: CommentThreadActivityMessageResolvers<ContextType>;
+  CommentViewerData?: CommentViewerDataResolvers<ContextType>;
   Commit?: CommitResolvers<ContextType>;
   CommitCollection?: CommitCollectionResolvers<ContextType>;
   DateTime?: GraphQLScalarType;

@@ -1,12 +1,14 @@
 import { ApolloCache } from '@apollo/client/cache'
+import { JSONContent } from '@tiptap/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { MaybeRef } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { Get } from 'type-fest'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { OnViewerCommentsUpdatedSubscription } from '~~/lib/common/generated/gql/graphql'
 import { convertThrowIntoFetchResult, getCacheId } from '~~/lib/common/helpers/graphql'
-import { markCommentViewed } from '~~/lib/viewer/graphql/mutations'
+import { markCommentViewedMutation } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 
 export function useViewerCommentUpdateTracking(
@@ -47,7 +49,7 @@ export function useMarkThreadViewed() {
       if (!isLoggedIn.value) return false
       const { data } = await apollo
         .mutate({
-          mutation: markCommentViewed,
+          mutation: markCommentViewedMutation,
           variables: {
             projectId,
             threadId
@@ -68,4 +70,17 @@ export function useMarkThreadViewed() {
       return !!data?.commentView
     }
   }
+}
+
+export type CommentSubmissionData = {
+  doc: MaybeNullOrUndefined<JSONContent>
+  /**
+   * TODO:
+   */
+  attachments?: never[]
+}
+
+// TODO:
+export function useSubmitComment() {
+  return {}
 }

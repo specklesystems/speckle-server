@@ -94,7 +94,7 @@ type CommentDataFilters {
   sectionBox: [Float!]
 }
 
-type CommentData {
+type CommentViewerData {
   """
   THREE.Vector3 {x, y, z}
   """
@@ -129,7 +129,7 @@ type Comment {
   Plain-text version of the comment text, ideal for previews
   """
   rawText: String!
-  data: CommentData
+  data: CommentViewerData
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
@@ -238,6 +238,9 @@ input CommentDataInput {
   filters: CommentDataFiltersInput!
 }
 
+"""
+Deprecated: Used by old stream-based mutations
+"""
 input CommentCreateInput {
   streamId: String!
   """
@@ -251,7 +254,7 @@ input CommentCreateInput {
   ProseMirror document object
   """
   text: JSONObject
-  data: CommentDataInput!
+  data: JSONObject!
   """
   IDs of uploaded blobs that should be attached to this comment
   """
@@ -259,6 +262,25 @@ input CommentCreateInput {
   screenshot: String
 }
 
+input CommentContentInput {
+  doc: JSONObject!
+  blobIds: [String!]
+}
+
+input CreateCommentInput {
+  projectId: String!
+  content: CommentContentInput!
+  viewerData: CommentDataInput!
+  """
+  Resources that this comment should be attached to
+  """
+  resourceIdString: String!
+  screenshot: String
+}
+
+"""
+Deprecated: Used by old stream-based mutations
+"""
 input ReplyCreateInput {
   streamId: String!
   parentComment: String!
@@ -270,8 +292,18 @@ input ReplyCreateInput {
   IDs of uploaded blobs that should be attached to this reply
   """
   blobIds: [String!]!
+  data: JSONObject
 }
 
+input CreateCommentReplyInput {
+  projectId: String!
+  content: CommentContentInput!
+  threadId: String!
+}
+
+"""
+Deprecated: Used by old stream-based mutations
+"""
 input CommentEditInput {
   streamId: String!
   id: String!
@@ -285,10 +317,11 @@ input CommentEditInput {
   blobIds: [String!]!
 }
 
-"""
-TODO: Clean this up: write proper descriptions, delete unnecessary keys and add proper GQL return types
-where possible
-"""
+input EditCommentInput {
+  commentId: String!
+  content: CommentContentInput!
+}
+
 input ViewerUserSelectionInfoInput {
   """
   'FilteringState' of @speckle/viewer. Represents the filters activated in the viewer by the user.
@@ -359,7 +392,17 @@ type ViewerUserActivityMessage {
   typing: ViewerUserTypingMessage
 }
 
+type CommentMutations {
+  markViewed(commentId: String!): Boolean!
+  create(input: CreateCommentInput!): Comment!
+  reply(input: CreateCommentReplyInput!): Comment!
+  edit(input: EditCommentInput!): Comment!
+  archive(commentId: String!): Boolean!
+}
+
 extend type Mutation {
+  commentMutations: CommentMutations! @hasServerRole(role: SERVER_USER)
+
   """
   Broadcast user activity in the viewer
   """

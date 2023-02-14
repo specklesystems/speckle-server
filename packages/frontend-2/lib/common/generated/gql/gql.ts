@@ -64,6 +64,7 @@ const documents = {
     "\n  fragment NewModelVersionMetadata on Model {\n    id\n    versions(limit: 1) {\n      items {\n        id\n        referencedObject\n      }\n    }\n  }\n": types.NewModelVersionMetadataFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": types.BroadcastViewerUserActivityDocument,
     "\n  mutation MarkCommentViewed($projectId: String!, $threadId: String!) {\n    commentView(streamId: $projectId, commentId: $threadId)\n  }\n": types.MarkCommentViewedDocument,
+    "\n  mutation CreateCommentThread($input: CommentCreateInput!) {\n    commentCreate(input: $input)\n  }\n": types.CreateCommentThreadDocument,
     "\n  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {\n    project(id: $projectId) {\n      id\n      viewerResources(resourceIdString: $resourceUrlString) {\n        identifier\n        items {\n          modelId\n          versionId\n          objectId\n        }\n      }\n    }\n  }\n": types.ProjectViewerResourcesDocument,
     "\n  query ViewerLoadedResources(\n    $projectId: String!\n    $modelIds: [String!]!\n    $versionIds: [String!]\n    $resourceIdString: String!\n  ) {\n    project(id: $projectId) {\n      id\n      models(filter: { ids: $modelIds }) {\n        totalCount\n        items {\n          id\n          name\n          updatedAt\n          versions(filter: { priorityIds: $versionIds }) {\n            totalCount\n            items {\n              ...ViewerModelVersionCardItem\n            }\n          }\n        }\n      }\n      commentThreads(filter: { resourceIdString: $resourceIdString }) {\n        totalCount\n        items {\n          ...ViewerCommentsListItem\n          ...ViewerCommentBubblesData\n        }\n      }\n      ...ModelPageProject\n    }\n  }\n": types.ViewerLoadedResourcesDocument,
     "\n  subscription OnViewerUserActivityBroadcasted(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    viewerUserActivityBroadcasted(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n    ) {\n      userName\n      userId\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n": types.OnViewerUserActivityBroadcastedDocument,
@@ -291,6 +292,10 @@ export function graphql(source: "\n  mutation BroadcastViewerUserActivity(\n    
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation MarkCommentViewed($projectId: String!, $threadId: String!) {\n    commentView(streamId: $projectId, commentId: $threadId)\n  }\n"): (typeof documents)["\n  mutation MarkCommentViewed($projectId: String!, $threadId: String!) {\n    commentView(streamId: $projectId, commentId: $threadId)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateCommentThread($input: CommentCreateInput!) {\n    commentCreate(input: $input)\n  }\n"): (typeof documents)["\n  mutation CreateCommentThread($input: CommentCreateInput!) {\n    commentCreate(input: $input)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
