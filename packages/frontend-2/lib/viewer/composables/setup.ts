@@ -183,6 +183,10 @@ export type InjectableViewerState = Readonly<{
       isPerspectiveProjection: Ref<boolean>
       toggleProjection: () => void
     }
+    sectionBox: {
+      isSectionBoxEnabled: Ref<boolean>
+      toggleSectionBox: () => void
+    }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
       objects: ComputedRef<Raw<Record<string, unknown>>[]>
@@ -643,6 +647,25 @@ function setupInterfaceState(
     state.viewer.instance.toggleCameraProjection()
     isPerspectiveProjection.value = !isPerspectiveProjection.value
   }
+
+  const isSectionBoxEnabled = ref(false)
+  const toggleSectionBox = () => {
+    if (isSectionBoxEnabled.value) {
+      isSectionBoxEnabled.value = false
+      state.viewer.instance.toggleSectionBox()
+      state.viewer.instance.requestRender()
+      return
+    }
+
+    isSectionBoxEnabled.value = true
+    const ids = selectedObjects.value.map((o) => o.id as string)
+    if (ids.length > 0) state.viewer.instance.setSectionBoxFromObjects(ids)
+    else state.viewer.instance.setSectionBox()
+
+    state.viewer.instance.toggleSectionBox()
+    state.viewer.instance.requestRender()
+  }
+
   return {
     ...state,
     ui: {
@@ -650,6 +673,10 @@ function setupInterfaceState(
       camera: {
         isPerspectiveProjection,
         toggleProjection
+      },
+      sectionBox: {
+        isSectionBoxEnabled,
+        toggleSectionBox
       },
       filters: {
         current: computed(() => filteringState.value),

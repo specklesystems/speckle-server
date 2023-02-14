@@ -1,17 +1,27 @@
 <template>
   <button
-    :class="`${
-      active ? 'bg-primary text-foreground-on-primary' : 'bg-foundation text-foreground'
-    } ${
-      flat ? '' : 'shadow-md'
-    } transition rounded-full w-10 h-10 flex items-center justify-center`"
+    :class="`transition rounded-full w-10 h-10 flex items-center justify-center ${shadowClasses} ${colorClasses} active:scale-[0.95] outline-none`"
   >
     <slot></slot>
   </button>
 </template>
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   active?: boolean
   flat?: boolean
+  secondary?: boolean
 }>()
+
+const shadowClasses = computed(() => (props.flat ? '' : 'shadow-md'))
+
+const colorClasses = computed(() => {
+  const parts = []
+  if (props.active) {
+    if (props.secondary) parts.push('bg-foundation text-primary')
+    else parts.push('bg-primary text-foreground-on-primary')
+  } else {
+    parts.push('bg-foundation text-foreground')
+  }
+  return parts.join(' ')
+})
 </script>

@@ -27,21 +27,37 @@
       >
         <ChatBubbleLeftRightIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
+
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
+        <!-- Zoom extents -->
         <ViewerControlsButtonToggle flat @click="instance.zoom()">
           <ArrowsPointingOutIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
-        <ViewerControlsButtonToggle flat @click="toggleProjection()">
+        <!-- Projection type -->
+        <ViewerControlsButtonToggle
+          flat
+          secondary
+          :active="isPerspectiveProjection"
+          @click="toggleProjection()"
+        >
           <IconPerspective v-if="!isPerspectiveProjection" class="w-4 h-4" />
           <IconPerspectiveMore v-else class="w-4 h-4" />
         </ViewerControlsButtonToggle>
+        <!-- Sun and lights -->
         <ViewerControlsButtonToggle flat @click="">
           <SunIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
-        <ViewerControlsButtonToggle flat @click="">
+        <!-- Section Box -->
+        <ViewerControlsButtonToggle
+          flat
+          secondary
+          :active="isSectionBoxEnabled"
+          @click="toggleSectionBox()"
+        >
           <ScissorsIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
+        <!-- Views -->
         <ViewerControlsButtonToggle flat @click="">
           <VideoCameraIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
@@ -84,7 +100,8 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 const {
   viewer: { instance },
   ui: {
-    camera: { toggleProjection, isPerspectiveProjection }
+    camera: { toggleProjection, isPerspectiveProjection },
+    sectionBox: { toggleSectionBox, isSectionBoxEnabled }
   }
 } = useInjectedViewerState()
 
