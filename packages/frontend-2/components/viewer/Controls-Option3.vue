@@ -35,6 +35,7 @@
           <ArrowsPointingOutIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
         <!-- Projection type -->
+        <!-- TODO: How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
         <ViewerControlsButtonToggle
           flat
           secondary
@@ -45,6 +46,7 @@
           <IconPerspectiveMore v-else class="w-4 h-4" />
         </ViewerControlsButtonToggle>
         <!-- Sun and lights -->
+
         <ViewerControlsButtonToggle flat @click="">
           <SunIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
@@ -58,13 +60,14 @@
           <ScissorsIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
         <!-- Views -->
-        <ViewerControlsButtonToggle flat @click="">
+        <!-- <ViewerControlsButtonToggle flat @click="">
           <VideoCameraIcon class="w-5 h-5" />
-        </ViewerControlsButtonToggle>
+        </ViewerControlsButtonToggle> -->
+        <ViewerViewsMenu />
       </ViewerControlsButtonGroup>
     </div>
     <div
-      :class="`z-20 absolute max-h-[calc(100vh-5.5rem)] w-80 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
+      :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-80 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
