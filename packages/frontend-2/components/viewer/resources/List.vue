@@ -15,6 +15,7 @@
       </div>
     </template>
     <template v-else>No resources loaded</template>
+    <FormButton>Add Model</FormButton>
   </div>
 </template>
 <script setup lang="ts">
