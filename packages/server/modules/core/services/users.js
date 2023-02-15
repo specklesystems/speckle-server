@@ -15,7 +15,12 @@ const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { dbLogger } = require('@/logging/logging')
-const { UserInputError } = require('@/modules/core/errors/userinput')
+const {
+  UserInputError,
+  PasswordTooShortError
+} = require('@/modules/core/errors/userinput')
+
+const MINIMUM_PASSWORD_LENGTH = 8
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -63,10 +68,8 @@ module.exports = {
     user.email = user.email.toLowerCase()
 
     if (user.password) {
-      if (user.password.length < 8)
-        throw new UserInputError(
-          'Password to short; needs to be 8 characters or longer.'
-        )
+      if (user.password.length < MINIMUM_PASSWORD_LENGTH)
+        throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
       user.passwordDigest = await bcrypt.hash(user.password, 10)
     }
     delete user.password
@@ -139,8 +142,8 @@ module.exports = {
   },
 
   async updateUserPassword({ id, newPassword }) {
-    if (newPassword.length < 8)
-      throw new UserInputError('Password to short; needs to be 8 characters or longer.')
+    if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
+      throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
     const passwordDigest = await bcrypt.hash(newPassword, 10)
     await Users().where({ id }).update({ passwordDigest })
   },

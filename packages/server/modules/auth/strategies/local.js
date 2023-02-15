@@ -19,7 +19,10 @@ const {
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 const { logger } = require('@/logging/logging')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
-const { UserInputError } = require('@/modules/core/errors/userinput')
+const {
+  UserInputError,
+  PasswordTooShortError
+} = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -106,6 +109,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         return next()
       } catch (err) {
         switch (err.constructor) {
+          case PasswordTooShortError:
           case UserInputError:
           case NoInviteFoundError:
             logger.info(err)
