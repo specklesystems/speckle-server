@@ -15,13 +15,19 @@ export const broadcastViewerUserActivityMutation = graphql(`
 `)
 
 export const markCommentViewedMutation = graphql(`
-  mutation MarkCommentViewed($projectId: String!, $threadId: String!) {
-    commentView(streamId: $projectId, commentId: $threadId)
+  mutation MarkCommentViewed($threadId: String!) {
+    commentMutations {
+      markViewed(commentId: $threadId)
+    }
   }
 `)
 
 export const createCommentThreadMutation = graphql(`
-  mutation CreateCommentThread($input: CommentCreateInput!) {
-    commentCreate(input: $input)
+  mutation CreateCommentThread($input: CreateCommentInput!) {
+    commentMutations {
+      create(input: $input) {
+        ...ViewerCommentThread
+      }
+    }
   }
 `)

@@ -12,7 +12,7 @@ const config: CodegenConfig = {
         fragmentMasking: false,
         dedupeFragments: true,
         scalars: {
-          JSONObject: 'any',
+          JSONObject: '{}',
           DateTime: 'string'
         }
       },

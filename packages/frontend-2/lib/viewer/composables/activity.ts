@@ -1,6 +1,7 @@
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { SelectionEvent } from '@speckle/viewer'
+import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
+  CommentDataInput,
   ViewerUserActivityMessage,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
@@ -73,10 +74,34 @@ function useCollectSelection() {
     ]
 
     return {
-      filteringState: { ...viewerState.ui.filters.current.value },
+      filteringState: { ...(viewerState.ui.filters.current.value || {}) },
       selectionLocation: selectionLocation.value,
       sectionBox: viewer.getCurrentSectionBox(),
       camera
+    }
+  }
+}
+
+export function useCollectCommentData() {
+  const collectSelection = useCollectSelection()
+  return (): CommentDataInput => {
+    const { selectionLocation, camera, sectionBox, filteringState } = collectSelection()
+    const filters = filteringState as Nullable<FilteringState>
+
+    return {
+      location: selectionLocation || new Vector3(camera[3], camera[4], camera[5]),
+      camPos: camera,
+      sectionBox,
+      // In the future comments might keep track of selected objects
+      selection: null,
+      filters: {
+        hiddenIds: filters?.hiddenObjects || null,
+        isolatedIds: filters?.isolatedObjects || null,
+        propertyInfoKey: filters?.activePropFilterKey || null,
+        passMax: filters?.passMax || null,
+        passMin: filters?.passMin || null,
+        sectionBox
+      }
     }
   }
 }

@@ -1,3 +1,4 @@
+import { ApolloClient } from '@apollo/client/core'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
@@ -11,7 +12,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
 
   const { $apollo } = useNuxtApp()
-  const client = $apollo.default
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const client = $apollo.default as ApolloClient<unknown>
 
   const { data, errors } = await client
     .query({

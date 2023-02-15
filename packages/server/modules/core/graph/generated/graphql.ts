@@ -283,7 +283,7 @@ export type CommentDataFilters = {
   passMax?: Maybe<Scalars['Float']>;
   passMin?: Maybe<Scalars['Float']>;
   propertyInfoKey?: Maybe<Scalars['String']>;
-  sectionBox?: Maybe<Array<Scalars['Float']>>;
+  sectionBox?: Maybe<Scalars['JSONObject']>;
 };
 
 /** Equivalent to frontend-1's LocalFilterState */
@@ -293,7 +293,7 @@ export type CommentDataFiltersInput = {
   passMax?: InputMaybe<Scalars['Float']>;
   passMin?: InputMaybe<Scalars['Float']>;
   propertyInfoKey?: InputMaybe<Scalars['String']>;
-  sectionBox?: InputMaybe<Array<Scalars['Float']>>;
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CommentDataInput = {
@@ -2872,7 +2872,7 @@ export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType
   passMax?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   passMin?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   propertyInfoKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  sectionBox?: Resolver<Maybe<Array<ResolversTypes['Float']>>, ParentType, ContextType>;
+  sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

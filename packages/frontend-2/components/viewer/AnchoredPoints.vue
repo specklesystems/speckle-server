@@ -4,7 +4,11 @@
     class="absolute w-full h-full pointer-events-none overflow-hidden"
   >
     <!-- Add new thread bubble -->
-    <ViewerAnchoredPointNewThread v-model="buttonState" class="z-[12]" />
+    <ViewerAnchoredPointNewThread
+      v-model="buttonState"
+      class="z-[12]"
+      @close="closeNewThread"
+    />
 
     <!-- Comment bubbles -->
     <ViewerAnchoredPointThread
@@ -13,6 +17,7 @@
       :model-value="thread"
       class="z-[11]"
       @update:model-value="onThreadUpdate"
+      @update:expanded="onThreadExpandedChange"
     />
 
     <!-- Active user -->
@@ -35,10 +40,9 @@ import {
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
-const { commentThreads, openThread } = useViewerCommentBubbles({ parentEl })
-const { buttonState } = useViewerNewThreadBubble({
-  parentEl,
-  block: computed(() => !!openThread.value)
+const { commentThreads } = useViewerCommentBubbles({ parentEl })
+const { buttonState, closeNewThread } = useViewerNewThreadBubble({
+  parentEl
 })
 
 const onThreadUpdate = (thread: CommentBubbleModel) => {
@@ -46,6 +50,12 @@ const onThreadUpdate = (thread: CommentBubbleModel) => {
   commentThreads.value = {
     ...commentThreads.value,
     [thread.id]: thread
+  }
+}
+
+const onThreadExpandedChange = (isExpanded: boolean) => {
+  if (isExpanded) {
+    closeNewThread()
   }
 }
 </script>

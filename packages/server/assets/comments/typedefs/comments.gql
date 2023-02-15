@@ -91,7 +91,7 @@ type CommentDataFilters {
   propertyInfoKey: String
   passMax: Float
   passMin: Float
-  sectionBox: [Float!]
+  sectionBox: JSONObject
 }
 
 type CommentViewerData {
@@ -211,7 +211,7 @@ input CommentDataFiltersInput {
   propertyInfoKey: String
   passMax: Float
   passMin: Float
-  sectionBox: [Float!]
+  sectionBox: JSONObject
 }
 
 input CommentDataInput {

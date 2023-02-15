@@ -8,14 +8,24 @@
   >
     <div class="relative">
       <FormButton
-        :icon-left="isExpanded ? XMarkIcon : ChatBubbleOvalLeftEllipsisIcon"
-        hide-text
+        :icon-left="
+          threadEmoji
+            ? undefined
+            : isExpanded
+            ? XMarkIcon
+            : ChatBubbleOvalLeftEllipsisIcon
+        "
+        :hide-text="!threadEmoji"
         :style="{
           opacity: modelValue.style.opacity
         }"
         :color="isViewed ? 'invert' : 'default'"
         @click="onThreadClick"
-      />
+      >
+        <template v-if="threadEmoji">
+          <span>{{ threadEmoji }}</span>
+        </template>
+      </FormButton>
       <div v-if="isExpanded" ref="threadContainer" class="absolute" :style="style">
         <div class="relative w-80 flex flex-col">
           <div
@@ -50,9 +60,11 @@ import {
 } from '~~/lib/viewer/composables/commentBubbles'
 import { useMarkThreadViewed } from '~~/lib/viewer/composables/commentManagement'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { emojis } from '~~/lib/viewer/helpers/emojis'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
+  (e: 'update:expanded', v: boolean): void
 }>()
 
 const props = defineProps<{
@@ -83,12 +95,17 @@ const isTypingMessage = computed(() => {
     : `${usersTyping.value[0].userName} is typing...`
 })
 const isViewed = computed(() => !!props.modelValue.viewedAt)
+const threadEmoji = computed(() => {
+  const cleanVal = props.modelValue.rawText.trim()
+  return emojis.includes(cleanVal) ? cleanVal : undefined
+})
 
 const changeExpanded = (newVal: boolean) => {
   emit('update:modelValue', {
     ...props.modelValue,
     isExpanded: newVal
   })
+  emit('update:expanded', newVal)
 }
 
 const onThreadClick = () => {

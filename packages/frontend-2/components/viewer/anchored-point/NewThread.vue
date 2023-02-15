@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vuejs-accessibility/no-autofocus -->
   <div
     v-if="modelValue.isVisible"
     class="absolute pointer-events-auto"
@@ -22,7 +23,12 @@
       >
         <div class="relative">
           <div class="bg-foundation rounded-4xl w-80 p-4 flex flex-col">
-            <ViewerCommentsEditor v-model="commentValue" max-height="300px" />
+            <ViewerCommentsEditor
+              v-model="commentValue"
+              max-height="300px"
+              autofocus
+              @submit="() => onSubmit()"
+            />
           </div>
           <div class="absolute w-full flex justify-between pt-2 space-x-2">
             <div class="flex space-x-2">
@@ -31,23 +37,30 @@
                 hide-text
                 color="invert"
                 class="text-red-600"
+                @click="() => submitEmoji('❤️')"
               />
               <FormButton
                 :icon-left="ExclamationTriangleIcon"
                 hide-text
                 color="invert"
                 class="text-orange-500"
+                @click="() => submitEmoji('⚠️')"
               />
               <FormButton
                 :icon-left="FireIcon"
                 hide-text
                 color="invert"
                 class="text-red-600"
+                @click="() => submitEmoji('🔥')"
               />
             </div>
             <div class="space-x-2">
               <FormButton :icon-left="PaperClipIcon" hide-text color="invert" />
-              <FormButton :icon-left="PaperAirplaneIcon" hide-text />
+              <FormButton
+                :icon-left="PaperAirplaneIcon"
+                hide-text
+                @click="() => onSubmit()"
+              />
             </div>
           </div>
         </div>
@@ -64,23 +77,34 @@ import {
   PaperAirplaneIcon,
   PaperClipIcon
 } from '@heroicons/vue/24/solid'
-import { Nullable, Optional } from '@speckle/shared'
-import { JSONContent } from '@tiptap/core'
+import { Nullable } from '@speckle/shared'
+import { RichTextEditor } from '@speckle/shared'
 import {
   useExpandedThreadResponsiveLocation,
   ViewerNewThreadBubbleModel
 } from '~~/lib/viewer/composables/commentBubbles'
+import {
+  CommentEditorValue,
+  useSubmitComment
+} from '~~/lib/viewer/composables/commentManagement'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
+  (e: 'close'): void
 }>()
 
 const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
-const commentValue = ref({ doc: undefined as Optional<JSONContent> })
+const commentValue = ref(<CommentEditorValue>{ doc: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
+
+const { style } = useExpandedThreadResponsiveLocation({
+  threadContainer,
+  width: 320
+})
+const { createThread } = useSubmitComment()
 
 const onThreadClick = () => {
   emit('update:modelValue', {
@@ -89,8 +113,33 @@ const onThreadClick = () => {
   })
 }
 
-const { style } = useExpandedThreadResponsiveLocation({
-  threadContainer,
-  width: 320
-})
+const submitEmoji = (emoji: string) =>
+  onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
+
+const onSubmit = async (comment?: CommentEditorValue) => {
+  comment ||= comment || commentValue.value
+  if (!comment?.doc) return
+
+  // TODO: cache update?
+  // TODO: attachments
+  await createThread(
+    {
+      doc: comment.doc,
+      blobIds: []
+    },
+    props.modelValue.clickLocation
+  )
+
+  emit('close')
+}
+
+watch(
+  () => props.modelValue.isExpanded,
+  () => {
+    commentValue.value = {
+      doc: undefined,
+      attachments: undefined
+    }
+  }
+)
 </script>

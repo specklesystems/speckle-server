@@ -154,6 +154,8 @@ export async function createCommentThreadAndNotify(
       comment
     })
   ])
+
+  return comment
 }
 
 export async function createCommentReplyAndNotify(

@@ -276,7 +276,7 @@ export type CommentDataFilters = {
   passMax?: Maybe<Scalars['Float']>;
   passMin?: Maybe<Scalars['Float']>;
   propertyInfoKey?: Maybe<Scalars['String']>;
-  sectionBox?: Maybe<Array<Scalars['Float']>>;
+  sectionBox?: Maybe<Scalars['JSONObject']>;
 };
 
 /** Equivalent to frontend-1's LocalFilterState */
@@ -286,7 +286,7 @@ export type CommentDataFiltersInput = {
   passMax?: InputMaybe<Scalars['Float']>;
   passMin?: InputMaybe<Scalars['Float']>;
   propertyInfoKey?: InputMaybe<Scalars['String']>;
-  sectionBox?: InputMaybe<Array<Scalars['Float']>>;
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CommentDataInput = {

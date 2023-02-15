@@ -12,14 +12,11 @@
 <script setup lang="ts">
 import { JSONContent } from '@tiptap/core'
 import { Optional } from '@speckle/shared'
-
-type CommentEditorValue = {
-  doc: Optional<JSONContent>
-}
+import { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: Optional<CommentEditorValue>): void
-  (e: 'submit', val: { data: JSONContent }): void
+  (e: 'submit', val: { data: CommentEditorValue }): void
 }>()
 
 const props = defineProps<{
@@ -42,5 +39,6 @@ const doc = computed({
     })
 })
 
-const onSubmit = (val: { data: JSONContent }) => emit('submit', val)
+const onSubmit = (val: { data: JSONContent }) =>
+  emit('submit', { data: { doc: val.data } })
 </script>

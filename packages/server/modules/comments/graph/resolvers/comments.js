@@ -128,6 +128,20 @@ module.exports = {
         totalCount: authorIds.length,
         authorIds: authorIds.slice(0, args.limit || 25)
       }
+    },
+    /**
+     * Until recently 'data' was just a JSONObject so theoretically it was possible to return all kinds of object
+     * structures. So we need to guard against this and ensure we always return the correct thing.
+     */
+    async data(parent) {
+      const parentData = parent.data
+      return {
+        location: parentData.location || {},
+        camPos: parentData.camPos || [],
+        sectionBox: parentData.sectionBox || null,
+        selection: parentData.selection || null,
+        filters: parentData.filters || {}
+      }
     }
   },
   CommentReplyAuthorCollection: {
@@ -144,7 +158,7 @@ module.exports = {
     },
     async commentThreads(parent, args, context) {
       await authorizeProjectCommentsAccess({
-        projectId: args.streamId,
+        projectId: parent.id,
         authCtx: context
       })
       return await getPaginatedProjectComments({
@@ -158,7 +172,12 @@ module.exports = {
     }
   },
   Version: {
-    async commentThreads(parent, args) {
+    async commentThreads(parent, args, context) {
+      const stream = await context.loaders.commits.getCommitStream.load(parent.id)
+      await authorizeProjectCommentsAccess({
+        projectId: stream.id,
+        authCtx: context
+      })
       return await getPaginatedCommitComments({
         ...args,
         commitId: parent.id,
@@ -170,7 +189,11 @@ module.exports = {
     }
   },
   Model: {
-    async commentThreads(parent, args) {
+    async commentThreads(parent, args, context) {
+      await authorizeProjectCommentsAccess({
+        projectId: parent.streamId,
+        authCtx: context
+      })
       return await getPaginatedBranchComments({
         ...args,
         branchId: parent.id,
@@ -217,22 +240,22 @@ module.exports = {
         projectId: args.input.projectId,
         authCtx: ctx
       })
-      return await createCommentThreadAndNotify(args, ctx.userId)
+      return await createCommentThreadAndNotify(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
       await authorizeProjectCommentsAccess({
         projectId: args.input.projectId,
         authCtx: ctx
       })
-      return await createCommentReplyAndNotify(args, ctx.userId)
+      return await createCommentReplyAndNotify(args.input, ctx.userId)
     },
     async edit(_parent, args, ctx) {
-      await authorizeProjectCommentsAccess({
-        projectId: args.streamId,
+      await authorizeCommentAccess({
         authCtx: ctx,
+        commentId: args.input.commentId,
         requireProjectRole: true
       })
-      return await editCommentAndNotify(args, ctx.userId)
+      return await editCommentAndNotify(args.input, ctx.userId)
     },
     async archive(_parent, args, ctx) {
       await authorizeCommentAccess({
@@ -248,7 +271,7 @@ module.exports = {
     commentMutations: () => ({}),
     async broadcastViewerUserActivity(_parent, args, context) {
       await authorizeProjectCommentsAccess({
-        projectId: args.streamId,
+        projectId: args.projectId,
         authCtx: context
       })
 
