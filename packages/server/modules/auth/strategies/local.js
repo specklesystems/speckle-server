@@ -44,10 +44,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           password: req.body.password
         })
 
-        if (!valid) throw new Error('Invalid credentials')
+        if (!valid) throw new UserInputError('Invalid credentials')
 
         const user = await getUserByEmail({ email: req.body.email })
-        if (!user) throw new Error('Invalid credentials')
+        if (!user) throw new UserInputError('Invalid credentials')
         req.user = { id: user.id }
 
         return next()
@@ -65,7 +65,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     async (req, res, next) => {
       const serverInfo = await getServerInfo()
       try {
-        if (!req.body.password) throw new Error('Password missing')
+        if (!req.body.password) throw new UserInputError('Password missing')
 
         const user = req.body
         const ip = getIpFromRequest(req)
