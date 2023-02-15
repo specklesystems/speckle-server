@@ -1,5 +1,5 @@
+<!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <!-- eslint-disable vuejs-accessibility/no-autofocus -->
   <div
     v-if="modelValue.isVisible"
     class="absolute pointer-events-auto"
@@ -104,7 +104,7 @@ const { style } = useExpandedThreadResponsiveLocation({
   threadContainer,
   width: 320
 })
-const { createThread } = useSubmitComment()
+const createThread = useSubmitComment()
 
 const onThreadClick = () => {
   emit('update:modelValue', {
@@ -116,13 +116,13 @@ const onThreadClick = () => {
 const submitEmoji = (emoji: string) =>
   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
 
-const onSubmit = async (comment?: CommentEditorValue) => {
+const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
   if (!comment?.doc) return
 
-  // TODO: cache update?
   // TODO: attachments
-  await createThread(
+  // Intentionally not awaiting so that we emit close immediately
+  createThread(
     {
       doc: comment.doc,
       blobIds: []

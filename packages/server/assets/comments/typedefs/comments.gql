@@ -296,7 +296,6 @@ input ReplyCreateInput {
 }
 
 input CreateCommentReplyInput {
-  projectId: String!
   content: CommentContentInput!
   threadId: String!
 }

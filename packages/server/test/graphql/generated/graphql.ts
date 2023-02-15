@@ -487,7 +487,6 @@ export type CreateCommentInput = {
 
 export type CreateCommentReplyInput = {
   content: CommentContentInput;
-  projectId: Scalars['String'];
   threadId: Scalars['String'];
 };
 

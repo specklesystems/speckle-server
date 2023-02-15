@@ -6,7 +6,7 @@
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
       v-model="buttonState"
-      class="z-[12]"
+      class="z-[13]"
       @close="closeNewThread"
     />
 
@@ -15,7 +15,7 @@
       v-for="thread in Object.values(commentThreads)"
       :key="thread.id"
       :model-value="thread"
-      class="z-[11]"
+      :class="openThread?.id === thread.id ? 'z-[12]' : 'z-[11]'"
       @update:model-value="onThreadUpdate"
       @update:expanded="onThreadExpandedChange"
     />
@@ -40,7 +40,7 @@ import {
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
-const { commentThreads } = useViewerCommentBubbles({ parentEl })
+const { commentThreads, openThread } = useViewerCommentBubbles({ parentEl })
 const { buttonState, closeNewThread } = useViewerNewThreadBubble({
   parentEl
 })

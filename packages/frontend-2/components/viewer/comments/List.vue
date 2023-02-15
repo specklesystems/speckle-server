@@ -32,20 +32,6 @@ import dayjs from 'dayjs'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 
 graphql(`
-  fragment ViewerCommentsReplyItem on Comment {
-    id
-    rawText
-    text {
-      doc
-    }
-    author {
-      ...LimitedUserAvatar
-    }
-    createdAt
-  }
-`)
-
-graphql(`
   fragment ViewerCommentsListItem on Comment {
     id
     rawText

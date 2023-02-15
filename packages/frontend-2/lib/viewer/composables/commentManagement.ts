@@ -7,6 +7,7 @@ import { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   CommentContentInput,
+  CreateCommentReplyInput,
   OnViewerCommentsUpdatedSubscription
 } from '~~/lib/common/generated/gql/graphql'
 import {
@@ -15,6 +16,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import {
+  createCommentReplyMutation,
   createCommentThreadMutation,
   markCommentViewedMutation
 } from '~~/lib/viewer/graphql/mutations'
@@ -22,7 +24,7 @@ import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subsc
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCollectCommentData } from '~~/lib/viewer/composables/activity'
 import type { Vector3 } from 'three'
-import { Nullable } from '@speckle/shared'
+import { Nullable, RichTextEditor } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 export function useViewerCommentUpdateTracking(
@@ -103,48 +105,86 @@ export function useSubmitComment() {
     },
     viewer: { instance: viewerInstance }
   } = useInjectedViewerState()
+  const { isLoggedIn } = useActiveUser()
   const client = useApolloClient().client
   const collectViewerData = useCollectCommentData()
   const { triggerNotification } = useGlobalToast()
 
-  return {
-    createThread: async (
-      content: CommentContentInput,
-      selectionLocation?: Nullable<Vector3>
-    ) => {
-      const viewerData = collectViewerData()
-      if (selectionLocation) {
-        viewerData.location = selectionLocation
-      }
-      const screenshot = await viewerInstance.screenshot()
+  return async (
+    content: CommentContentInput,
+    selectionLocation?: Nullable<Vector3>
+  ) => {
+    if (!isLoggedIn.value) return null
 
-      const { data, errors } = await client
-        .mutate({
-          mutation: createCommentThreadMutation,
-          variables: {
-            input: {
-              projectId: projectId.value,
-              resourceIdString: resourceIdString.value,
-              content,
-              viewerData,
-              screenshot
-            }
-          }
-        })
-        .catch(convertThrowIntoFetchResult)
+    const isEmpty = RichTextEditor.isDocEmpty(content.doc)
+    if (isEmpty) return null
 
-      if (data?.commentMutations.create) {
-        return data.commentMutations.create
-      }
-
-      const errMsg = getFirstErrorMessage(errors)
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Comment creation failed',
-        description: errMsg
-      })
-
-      return null
+    const viewerData = collectViewerData()
+    if (selectionLocation) {
+      viewerData.location = selectionLocation
     }
+    const screenshot = await viewerInstance.screenshot()
+
+    const { data, errors } = await client
+      .mutate({
+        mutation: createCommentThreadMutation,
+        variables: {
+          input: {
+            projectId: projectId.value,
+            resourceIdString: resourceIdString.value,
+            content,
+            viewerData,
+            screenshot
+          }
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.commentMutations.create) {
+      return data.commentMutations.create
+    }
+
+    const errMsg = getFirstErrorMessage(errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Comment creation failed',
+      description: errMsg
+    })
+
+    return null
+  }
+}
+
+export function useSubmitReply() {
+  const { isLoggedIn } = useActiveUser()
+  const client = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  return async (input: CreateCommentReplyInput) => {
+    if (!isLoggedIn.value) return null
+
+    const isEmpty = RichTextEditor.isDocEmpty(input.content.doc)
+    if (isEmpty) return null
+
+    const { data, errors } = await client
+      .mutate({
+        mutation: createCommentReplyMutation,
+        variables: {
+          input
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.commentMutations.reply) {
+      return data.commentMutations.reply
+    }
+
+    const errMsg = getFirstErrorMessage(errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Reply creation failed',
+      description: errMsg
+    })
+
+    return null
   }
 }

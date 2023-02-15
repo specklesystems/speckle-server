@@ -31,3 +31,13 @@ export const createCommentThreadMutation = graphql(`
     }
   }
 `)
+
+export const createCommentReplyMutation = graphql(`
+  mutation CreateCommentReply($input: CreateCommentReplyInput!) {
+    commentMutations {
+      reply(input: $input) {
+        ...ViewerCommentsReplyItem
+      }
+    }
+  }
+`)

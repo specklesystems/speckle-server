@@ -135,6 +135,8 @@ module.exports = {
      */
     async data(parent) {
       const parentData = parent.data
+      if (!parentData) return null
+
       return {
         location: parentData.location || {},
         camPos: parentData.camPos || [],
@@ -243,8 +245,8 @@ module.exports = {
       return await createCommentThreadAndNotify(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
-      await authorizeProjectCommentsAccess({
-        projectId: args.input.projectId,
+      await authorizeCommentAccess({
+        commentId: args.input.threadId,
         authCtx: ctx
       })
       return await createCommentReplyAndNotify(args.input, ctx.userId)

@@ -162,16 +162,14 @@ export async function createCommentReplyAndNotify(
   input: CreateCommentReplyInput,
   userId: string
 ) {
-  const [thread] = await Promise.all([
-    getComment({ id: input.threadId, userId }),
-    validateInputAttachments(input.projectId, input.content.blobIds || [])
-  ])
+  const thread = await getComment({ id: input.threadId, userId })
   if (!thread) {
     throw new CommentCreateError('Reply creation failed due to nonexistant thread')
   }
+  await validateInputAttachments(thread.streamId, input.content.blobIds || [])
 
   const commentPayload: InsertCommentPayload = {
-    streamId: input.projectId,
+    streamId: thread.streamId,
     authorId: userId,
     text: buildCommentTextFromInput({
       doc: input.content.doc,
@@ -202,7 +200,7 @@ export async function createCommentReplyAndNotify(
       comment: reply
     }),
     addReplyAddedActivity({
-      streamId: input.projectId,
+      streamId: thread.streamId,
       input,
       reply,
       userId

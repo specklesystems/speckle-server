@@ -6,3 +6,17 @@ export const viewerCommentThreadFragment = graphql(`
     ...ViewerCommentBubblesData
   }
 `)
+
+export const viewerReplyFragment = graphql(`
+  fragment ViewerCommentsReplyItem on Comment {
+    id
+    rawText
+    text {
+      doc
+    }
+    author {
+      ...LimitedUserAvatar
+    }
+    createdAt
+  }
+`)

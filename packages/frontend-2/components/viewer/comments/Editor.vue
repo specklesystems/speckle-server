@@ -1,5 +1,5 @@
+<!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <!-- eslint-disable vuejs-accessibility/no-autofocus -->
   <CommonTiptapTextEditor
     v-model="doc"
     :autofocus="autofocus"
