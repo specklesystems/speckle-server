@@ -15,6 +15,7 @@ const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { dbLogger } = require('@/logging/logging')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -63,13 +64,15 @@ module.exports = {
 
     if (user.password) {
       if (user.password.length < 8)
-        throw new Error('Password to short; needs to be 8 characters or longer.')
+        throw new UserInputError(
+          'Password to short; needs to be 8 characters or longer.'
+        )
       user.passwordDigest = await bcrypt.hash(user.password, 10)
     }
     delete user.password
 
     const usr = await userByEmailQuery(user.email).select('id').first()
-    if (usr) throw new Error('Email taken. Try logging in?')
+    if (usr) throw new UserInputError('Email taken. Try logging in?')
 
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
@@ -137,7 +140,7 @@ module.exports = {
 
   async updateUserPassword({ id, newPassword }) {
     if (newPassword.length < 8)
-      throw new Error('Password to short; needs to be 8 characters or longer.')
+      throw new UserInputError('Password to short; needs to be 8 characters or longer.')
     const passwordDigest = await bcrypt.hash(newPassword, 10)
     await Users().where({ id }).update({ passwordDigest })
   },
