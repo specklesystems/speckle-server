@@ -215,8 +215,8 @@ export function buildRequestLoaders(ctx: AuthContext) {
       )
     },
     comments: {
-      getViewedAt: new DataLoader<string, Date>(async (commentIds) => {
-        if (!userId) return []
+      getViewedAt: new DataLoader<string, Nullable<Date>>(async (commentIds) => {
+        if (!userId) return commentIds.slice().map(() => null)
 
         const results = keyBy(
           await getCommentsViewedAt(commentIds.slice(), userId),

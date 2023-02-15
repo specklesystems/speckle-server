@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import {
   Viewer,
   DefaultViewerParams,
@@ -364,7 +365,7 @@ function setupResponseResourceItems(
   onError((err) => {
     globalError.value = createError({
       statusCode: 500,
-      statusMessage: 'Viewer resource resolution failed: ' + err.message
+      message: `Viewer resource resolution failed: ${err}`
     })
   })
 
@@ -490,7 +491,7 @@ function setupResponseResourceData(
   onError((err) => {
     globalError.value = createError({
       statusCode: 500,
-      statusMessage: 'Viewer loaded resource resolution failed: ' + err.message
+      message: `Viewer loaded resource resolution failed: ${err}`
     })
   })
 
