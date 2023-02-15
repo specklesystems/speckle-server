@@ -18,8 +18,8 @@ const {
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 const { logger } = require('@/logging/logging')
-const { UserInputError } = require('apollo-server-express')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
