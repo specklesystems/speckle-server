@@ -14,7 +14,7 @@ import {
 } from './Batch'
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
-import { Material, Mesh, Vector3, WebGLRenderer } from 'three'
+import { Material, Mesh, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 
@@ -51,7 +51,7 @@ export default class Batcher {
         (value) => value.renderMaterialHash === materialHashes[i]
       )
       /** Prune any meshes with no geometry data */
-      batch = batch.filter((value) => value.aabb.getSize(new Vector3()).lengthSq() > 0)
+      batch = batch.filter((value) => value.validGeometry)
 
       let matRef = null
 

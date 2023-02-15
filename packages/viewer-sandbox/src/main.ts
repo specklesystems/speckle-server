@@ -227,5 +227,6 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?overlay=c009dbe144&filter=%7B%7D&c=%5B-104.70053,-98.80617,67.44669,6.53096,1.8739,38.584,0,1%5D'
   // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
   // tekla 2
-  'https://speckle.xyz/streams/be4813ccd2/commits/da85000921?c=%5B-1.12295,-2.60901,6.12402,4.77979,0.555,3.63346,0,1%5D'
+  // 'https://speckle.xyz/streams/be4813ccd2/commits/da85000921?c=%5B-1.12295,-2.60901,6.12402,4.77979,0.555,3.63346,0,1%5D'
+  'https://latest.speckle.dev/streams/85bc4f61c6/commits/bb7b718a1a'
 )
