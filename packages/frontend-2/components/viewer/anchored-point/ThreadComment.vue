@@ -12,29 +12,25 @@
         </span>
       </div>
       <div class="truncate text-sm text-foreground-2">
-        {{ comment.rawText }}
+        <ViewerCommentsEditor
+          :model-value="comment.text"
+          disabled
+          @created="emit('mounted')"
+        />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { graphql } from '~~/lib/common/generated/gql'
-import { ViewerAnchoredPointThreadCommentFragment } from '~~/lib/common/generated/gql/graphql'
-
-graphql(`
-  fragment ViewerAnchoredPointThreadComment on Comment {
-    id
-    rawText
-    author {
-      ...LimitedUserAvatar
-    }
-    createdAt
-  }
-`)
+import { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  comment: ViewerAnchoredPointThreadCommentFragment
+  comment: ViewerCommentsReplyItemFragment
+}>()
+
+const emit = defineEmits<{
+  (e: 'mounted'): void
 }>()
 
 const absoluteDate = computed(() =>

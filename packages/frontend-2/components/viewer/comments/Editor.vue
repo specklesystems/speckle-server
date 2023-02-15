@@ -7,6 +7,7 @@
     :schema-options="{ multiLine: false }"
     :disabled="disabled"
     @submit="onSubmit"
+    @created="$emit('created')"
   />
 </template>
 <script setup lang="ts">
@@ -17,6 +18,7 @@ import { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 const emit = defineEmits<{
   (e: 'update:modelValue', val: Optional<CommentEditorValue>): void
   (e: 'submit', val: { data: CommentEditorValue }): void
+  (e: 'created'): void
 }>()
 
 const props = defineProps<{

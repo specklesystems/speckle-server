@@ -25,10 +25,11 @@ import { userProfileRoute } from '~~/lib/common/helpers/route'
 const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
   (e: 'submit', val: { data: JSONContent }): void
+  (e: 'created'): void
 }>()
 
 const props = defineProps<{
-  modelValue?: JSONContent
+  modelValue?: JSONContent | null
   schemaOptions?: TiptapEditorSchemaOptions
   maxHeight?: string
   autofocus?: boolean
@@ -52,6 +53,9 @@ const editor = new Editor({
     const data = getData()
     if (!data || Object.keys(data).length < 1) return
     emit('update:modelValue', data)
+  },
+  onCreate: () => {
+    emit('created')
   }
 })
 

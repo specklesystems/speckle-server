@@ -16,6 +16,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import {
+  archiveCommentMutation,
   createCommentReplyMutation,
   createCommentThreadMutation,
   markCommentViewedMutation
@@ -60,40 +61,38 @@ export function useMarkThreadViewed() {
   const apollo = useApolloClient().client
   const { isLoggedIn } = useActiveUser()
 
-  return {
-    markThreadViewed: async (projectId: string, threadId: string) => {
-      if (!isLoggedIn.value) return false
-      const { data, errors } = await apollo
-        .mutate({
-          mutation: markCommentViewedMutation,
-          variables: {
-            projectId,
-            threadId
-          },
-          update: (cache, { data }) => {
-            if (!data?.commentMutations.markViewed) return
+  return async (projectId: string, threadId: string) => {
+    if (!isLoggedIn.value) return false
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: markCommentViewedMutation,
+        variables: {
+          projectId,
+          threadId
+        },
+        update: (cache, { data }) => {
+          if (!data?.commentMutations.markViewed) return
 
-            cache.modify({
-              id: getCacheId('Comment', threadId),
-              fields: {
-                viewedAt: () => dayjs().toISOString()
-              }
-            })
-          }
-        })
-        .catch(convertThrowIntoFetchResult)
+          cache.modify({
+            id: getCacheId('Comment', threadId),
+            fields: {
+              viewedAt: () => dayjs().toISOString()
+            }
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
 
-      if (errors) {
-        console.error('Marking thread as viewed failed', errors)
-      }
-
-      return !!data?.commentMutations.markViewed
+    if (errors) {
+      console.error('Marking thread as viewed failed', errors)
     }
+
+    return !!data?.commentMutations.markViewed
   }
 }
 
 export type CommentEditorValue = {
-  doc?: JSONContent
+  doc?: JSONContent | null
   attachments?: never[]
 }
 
@@ -159,6 +158,7 @@ export function useSubmitReply() {
   const { isLoggedIn } = useActiveUser()
   const client = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+
   return async (input: CreateCommentReplyInput) => {
     if (!isLoggedIn.value) return null
 
@@ -186,5 +186,35 @@ export function useSubmitReply() {
     })
 
     return null
+  }
+}
+
+export function useArchiveComment() {
+  const { isLoggedIn } = useActiveUser()
+  const client = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+
+  return async (commentId: string) => {
+    if (!isLoggedIn.value || !commentId) return false
+
+    const { data, errors } = await client
+      .mutate({
+        mutation: archiveCommentMutation,
+        variables: {
+          commentId
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.commentMutations.archive) return true
+
+    const errMsg = getFirstErrorMessage(errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Comment archival failed',
+      description: errMsg
+    })
+
+    return false
   }
 }

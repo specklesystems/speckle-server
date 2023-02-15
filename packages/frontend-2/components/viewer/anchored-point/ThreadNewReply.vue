@@ -43,6 +43,10 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const emit = defineEmits<{
+  (e: 'submit'): void
+}>()
+
 const { emitTyping } = useViewerUserActivityBroadcasting()
 const createReply = useSubmitReply()
 
@@ -81,6 +85,7 @@ const onSubmit = async () => {
     attachments: undefined
   }
   loading.value = false
+  emit('submit')
 }
 
 const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
