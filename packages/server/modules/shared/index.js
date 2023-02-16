@@ -90,10 +90,10 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
 
   if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
 
-  if (adminOverrideEnabled()) {
-    const serverRoles = await ServerAcl().select('role').where({ userId })
-    if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin)) return requiredRole
-  }
+  // if (adminOverrideEnabled()) {
+  //   const serverRoles = await ServerAcl().select('role').where({ userId })
+  //   if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin)) return requiredRole
+  // }
 
   try {
     const { isPublic } = await knex(role.resourceTarget)
@@ -112,11 +112,11 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     : null
 
   if (!userAclEntry) {
-    // if (adminOverrideEnabled()) {
-    //   const serverRoles = await ServerAcl().select('role').where({ userId })
-    //   if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin))
-    //     return requiredRole
-    // }
+    if (adminOverrideEnabled()) {
+      const serverRoles = await ServerAcl().select('role').where({ userId })
+      if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin))
+        return requiredRole
+    }
     throw new ForbiddenError('You do not have access to this resource.')
   }
 

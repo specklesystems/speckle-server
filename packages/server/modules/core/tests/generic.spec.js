@@ -130,6 +130,10 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         )
       ])
     })
+
+    afterEach(() => {
+      process.env.ADMIN_OVERRIDE_ENABLED = 'false'
+    })
     it('should allow stream:owners to be stream:owners', async () => {
       const role = await authorizeResolver(
         serverOwner.id,
@@ -146,7 +150,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         myStream.id,
         'stream:contributor'
       )
-      expect(role).to.equal('stream:contributor')
+      expect(role).to.equal('stream:owner')
     })
 
     it('should not allow server:admins to be anything if adminOverride is disabled', async () => {
