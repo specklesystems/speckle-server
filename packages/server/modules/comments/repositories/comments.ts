@@ -17,7 +17,11 @@ import {
   ResourceIdentifier,
   ResourceType
 } from '@/modules/core/graph/generated/graphql'
-import { MaybeNullOrUndefined, Optional } from '@/modules/shared/helpers/typeHelper'
+import {
+  MarkNullableOptional,
+  MaybeNullOrUndefined,
+  Optional
+} from '@/modules/shared/helpers/typeHelper'
 import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import {
@@ -27,6 +31,8 @@ import {
 import { Knex } from 'knex'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { SpeckleViewer } from '@speckle/shared'
+import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import { Merge } from 'type-fest'
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -548,12 +554,56 @@ export async function getPaginatedProjectCommentsTotalCount(
 }
 
 export async function getCommentParents(replyIds: string[]) {
-  return await Comments.knex()
+  const q = Comments.knex()
     .select<Array<CommentRecord & { replyId: string }>>([
-      knex.raw('?? as replyId', [Comments.col.id]),
+      knex.raw('?? as "replyId"', [Comments.col.id]),
       knex.raw('"c2".*')
     ])
     .innerJoin(`${Comments.name} as c2`, `c2.id`, Comments.col.parentComment)
     .whereIn(Comments.col.id, replyIds)
     .whereNotNull(Comments.col.parentComment)
+  return await q
+}
+
+export async function markCommentViewed(commentId: string, userId: string) {
+  const query = CommentViews.knex()
+    .insert({ commentId, userId, viewedAt: knex.fn.now() })
+    .onConflict(knex.raw('("commentId","userId")'))
+    .merge()
+  return await query
+}
+
+export type InsertCommentPayload = MarkNullableOptional<
+  Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt' | 'text' | 'archived'> & {
+    text: SmartTextEditorValueSchema
+    archived?: boolean
+  }
+>
+
+export async function insertComment(
+  input: InsertCommentPayload,
+  options?: Partial<{ trx: Knex.Transaction }>
+): Promise<CommentRecord> {
+  const finalInput = { ...input, id: generateCommentId() }
+  const q = Comments.knex().insert(finalInput, '*')
+  if (options?.trx) q.transacting(options.trx)
+
+  const [res] = await q
+  return res as CommentRecord
+}
+
+export async function markCommentUpdated(commentId: string) {
+  return await Comments.knex()
+    .where(Comments.col.id, commentId)
+    .update({
+      [Comments.withoutTablePrefix.col.updatedAt]: new Date()
+    })
+}
+
+export async function updateComment(
+  id: string,
+  input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
+) {
+  const [res] = await Comments.knex().where(Comments.col.id, id).update(input, '*')
+  return res as CommentRecord
 }

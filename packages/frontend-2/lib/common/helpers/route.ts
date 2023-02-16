@@ -12,6 +12,11 @@ export const modelRoute = (projectId: string, resourceIdString: string) =>
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
 
+/**
+ * TODO: Page doesn't exist
+ */
+export const userProfileRoute = (userId: string) => `/profile/${userId}`
+
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
   return (params?: { query?: LocationQueryRaw }) => {

@@ -58,7 +58,7 @@ const steps: NumberStepType[] = [
   { name: 'Send and receive 3D data' }
 ]
 </script>
-<style scoped>
+<style scoped lang="postcss">
 .steps :deep(*) {
   @apply text-foreground-2 border-foreground-2 !important;
 }

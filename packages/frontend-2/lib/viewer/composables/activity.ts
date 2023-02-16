@@ -1,10 +1,12 @@
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { SelectionEvent } from '@speckle/viewer'
+import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
+  CommentDataInput,
   ViewerUserActivityMessage,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
   ViewerUserSelectionInfoInput,
+  ViewerUserTypingMessage,
   ViewerUserTypingMessageInput
 } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -17,7 +19,7 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { onViewerUserActivityBroadcastedSubscription } from '../graphql/subscriptions'
 import dayjs, { Dayjs } from 'dayjs'
 import { get } from 'lodash-es'
-import { useIntervalFn } from '@vueuse/core'
+import { MaybeRef, useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
@@ -48,7 +50,6 @@ function useCollectSelection() {
   const selectionCallback = (event: Nullable<SelectionEvent>) => {
     if (!event) return
 
-    console.log(event)
     const firstHit = event.hits[0]
     selectionLocation.value = firstHit.point
   }
@@ -73,10 +74,34 @@ function useCollectSelection() {
     ]
 
     return {
-      filteringState: { ...viewerState.ui.filters.current.value },
+      filteringState: { ...(viewerState.ui.filters.current.value || {}) },
       selectionLocation: selectionLocation.value,
       sectionBox: viewer.getCurrentSectionBox(),
       camera
+    }
+  }
+}
+
+export function useCollectCommentData() {
+  const collectSelection = useCollectSelection()
+  return (): CommentDataInput => {
+    const { selectionLocation, camera, sectionBox, filteringState } = collectSelection()
+    const filters = filteringState as Nullable<FilteringState>
+
+    return {
+      location: selectionLocation || new Vector3(camera[3], camera[4], camera[5]),
+      camPos: camera,
+      sectionBox,
+      // In the future comments might keep track of selected objects
+      selection: null,
+      filters: {
+        hiddenIds: filters?.hiddenObjects || null,
+        isolatedIds: filters?.isolatedObjects || null,
+        propertyInfoKey: filters?.activePropFilterKey || null,
+        passMax: filters?.passMax || null,
+        passMin: filters?.passMin || null,
+        sectionBox
+      }
     }
   }
 }
@@ -95,7 +120,7 @@ function useCollectMainMetadata() {
   })
 }
 
-function useViewerUserActivityBroadcasting() {
+export function useViewerUserActivityBroadcasting() {
   const {
     projectId,
     resources: {
@@ -297,5 +322,65 @@ export function useViewerUserActivityTracking(params: {
 
   return {
     users
+  }
+}
+
+type UserTypingInfo = {
+  userId: string
+  userName: string
+  typing: ViewerUserTypingMessage
+  lastSeen: Dayjs
+}
+
+export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
+  const usersTyping = ref([] as UserTypingInfo[])
+
+  const {
+    projectId,
+    resources: {
+      request: { resourceIdString }
+    }
+  } = useInjectedViewerState()
+  const { isLoggedIn } = useActiveUser()
+  const { onResult: onUserActivity } = useSubscription(
+    onViewerUserActivityBroadcastedSubscription,
+    () => ({
+      projectId: projectId.value,
+      resourceIdString: resourceIdString.value
+    }),
+    () => ({
+      enabled: isLoggedIn.value
+    })
+  )
+
+  onUserActivity((res) => {
+    if (!res.data?.viewerUserActivityBroadcasted) return
+
+    const event = res.data.viewerUserActivityBroadcasted
+    if (event.status !== ViewerUserActivityStatus.Typing || !event.typing) return
+
+    const typingPayload = event.typing
+    if (typingPayload.threadId !== unref(threadId)) return
+
+    const typingInfo: UserTypingInfo = {
+      userId: event.userId || event.viewerSessionId,
+      userName: event.userName,
+      typing: typingPayload,
+      lastSeen: dayjs()
+    }
+
+    const existingItemIdx = usersTyping.value.findIndex(
+      (i) => i.userId === typingInfo.userId
+    )
+
+    if (existingItemIdx !== -1) {
+      usersTyping.value.splice(existingItemIdx, 1)
+    }
+
+    if (typingInfo.typing.isTyping) usersTyping.value.push(typingInfo)
+  })
+
+  return {
+    usersTyping: computed(() => usersTyping.value)
   }
 }

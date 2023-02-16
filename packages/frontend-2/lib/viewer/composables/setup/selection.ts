@@ -34,7 +34,7 @@ function getFirstVisibleSelectionHit(
 export function useViewerSelectionEventHandler(state: InjectableViewerState) {
   useSelectionEvents(
     {
-      singleClickCallback: (args: SelectionEvent) => {
+      singleClickCallback: (args) => {
         if (!args) return state.ui.selection.clearSelection()
         if (args.hits.length === 0) return state.ui.selection.clearSelection()
         if (!args.multiple) state.ui.selection.clearSelection()

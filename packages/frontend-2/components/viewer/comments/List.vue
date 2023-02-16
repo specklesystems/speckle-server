@@ -39,16 +39,12 @@ graphql(`
       ...LimitedUserAvatar
     }
     createdAt
+    viewedAt
     replies {
       totalCount
       cursor
       items {
-        id
-        rawText
-        author {
-          ...LimitedUserAvatar
-        }
-        createdAt
+        ...ViewerCommentsReplyItem
       }
     }
   }

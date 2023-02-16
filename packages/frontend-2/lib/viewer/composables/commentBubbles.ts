@@ -14,15 +14,10 @@ import {
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
-/**
- * TODO: Typing subscription
- * New/updated/deleted comment subscription
- * Actual text editor & attachments part
- */
-
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
     id
+    viewedAt
     data {
       location
       camPos
@@ -50,7 +45,7 @@ export type ViewerNewThreadBubbleModel = {
 
 export function useViewerNewThreadBubble(params: {
   parentEl: Ref<Nullable<HTMLElement>>
-  block: Ref<boolean>
+  block?: Ref<boolean>
 }) {
   const { parentEl, block } = params
 
@@ -85,7 +80,7 @@ export function useViewerNewThreadBubble(params: {
 
   useSelectionEvents({
     singleClickCallback: (event) => {
-      if (block.value) return
+      if (block?.value) return
 
       buttonState.value.isExpanded = false
       if (!event || !event.hits.length) {
@@ -99,12 +94,14 @@ export function useViewerNewThreadBubble(params: {
     }
   })
 
-  watch(block, (isBlocked) => {
-    if (!isBlocked) return
-    closeNewThread()
-  })
+  if (block) {
+    watch(block, (isBlocked) => {
+      if (!isBlocked) return
+      closeNewThread()
+    })
+  }
 
-  return { buttonState }
+  return { buttonState, closeNewThread }
 }
 
 export type CommentBubbleModel = LoadedCommentThread & {
@@ -127,6 +124,13 @@ export function useViewerCommentBubbles(params: {
   const openThread = computed(() =>
     Object.values(commentThreads.value).find((t) => t.isExpanded)
   )
+
+  useSelectionEvents({
+    singleClickCallback: () => {
+      // Close open thread
+      Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+    }
+  })
 
   // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
   watch(

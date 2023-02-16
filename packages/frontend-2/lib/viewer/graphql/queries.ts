@@ -29,6 +29,7 @@ export const viewerLoadedResourcesQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
+      role
       models(filter: { ids: $modelIds }) {
         totalCount
         items {
@@ -46,8 +47,7 @@ export const viewerLoadedResourcesQuery = graphql(`
       commentThreads(filter: { resourceIdString: $resourceIdString }) {
         totalCount
         items {
-          ...ViewerCommentsListItem
-          ...ViewerCommentBubblesData
+          ...ViewerCommentThread
         }
       }
       ...ModelPageProject
