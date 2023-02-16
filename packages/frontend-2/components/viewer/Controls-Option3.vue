@@ -34,8 +34,9 @@
         <ViewerControlsButtonToggle flat @click="instance.zoom()">
           <ArrowsPointingOutIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
+
         <!-- Projection type -->
-        <!-- TODO: How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
+        <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
         <ViewerControlsButtonToggle
           flat
           secondary
@@ -45,11 +46,12 @@
           <IconPerspective v-if="!isPerspectiveProjection" class="w-4 h-4" />
           <IconPerspectiveMore v-else class="w-4 h-4" />
         </ViewerControlsButtonToggle>
-        <!-- Sun and lights -->
 
+        <!-- Sun and lights -->
         <ViewerControlsButtonToggle flat @click="">
           <SunIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
+
         <!-- Section Box -->
         <ViewerControlsButtonToggle
           flat
@@ -59,10 +61,8 @@
         >
           <ScissorsIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
+
         <!-- Views -->
-        <!-- <ViewerControlsButtonToggle flat @click="">
-          <VideoCameraIcon class="w-5 h-5" />
-        </ViewerControlsButtonToggle> -->
         <ViewerViewsMenu />
       </ViewerControlsButtonGroup>
     </div>
