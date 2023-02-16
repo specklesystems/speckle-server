@@ -4,7 +4,7 @@
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
     </div>
-    <div class="bg-foundation rounded-full px-4 py-2 w-full">
+    <div class="bg-foundation rounded-full px-4 py-2 w-full relative">
       <div class="flex items-center">
         <UserAvatar :user="comment.author" size="sm" class="mr-2" />
         <span class="grow truncate text-sm font-medium">
@@ -14,16 +14,28 @@
       <div class="truncate text-sm text-foreground-2">
         <ViewerCommentsEditor
           :model-value="comment.text"
-          disabled
+          readonly
           @created="emit('mounted')"
         />
       </div>
+      <CommonTextLink
+        v-if="canArchive"
+        class="absolute text-foreground-2 top-1 right-3"
+        @click="() => archiveComment(comment.id)"
+      >
+        <TrashIcon class="h-4 w-4" />
+      </CommonTextLink>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { TrashIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
+import { Roles } from '@speckle/shared'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 
 const props = defineProps<{
   comment: ViewerCommentsReplyItemFragment
@@ -33,6 +45,20 @@ const emit = defineEmits<{
   (e: 'mounted'): void
 }>()
 
+const archiveComment = useArchiveComment()
+const { activeUser } = useActiveUser()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const canArchive = computed(
+  () =>
+    activeUser.value &&
+    (props.comment.author.id === activeUser.value.id ||
+      project.value?.role === Roles.Stream.Owner)
+)
 const absoluteDate = computed(() =>
   dayjs(props.comment.createdAt).toDate().toLocaleString()
 )

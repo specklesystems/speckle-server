@@ -1,5 +1,7 @@
 <template>
-  <div class="text-editor flex flex-col">
+  <div
+    :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
+  >
     <EditorContent
       class="simple-scrollbar"
       :editor="editor"
@@ -148,15 +150,11 @@ onBeforeUnmount(() => {
   }
 }
 
-.smart-text-editor {
+.text-editor {
   &--read-only {
     word-break: break-word;
     background-color: unset !important;
     box-shadow: unset !important;
-
-    .smart-text-editor__inner {
-      padding: 0;
-    }
 
     .editor-mention {
       cursor: pointer;
