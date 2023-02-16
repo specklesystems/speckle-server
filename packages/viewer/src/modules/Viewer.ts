@@ -99,7 +99,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any)._V = this // For debugging! ಠ_ಠ
+    // ;(window as any)._V = this // For debugging! ಠ_ಠ
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.disable()
@@ -123,6 +123,8 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.addRenderTree(url)
       this.zoom()
       this.speckleRenderer.resetPipeline(true)
+      this.loaders[url].dispose()
+      delete this.loaders[url]
     })
   }
   public setSectionBox(

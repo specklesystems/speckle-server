@@ -125,4 +125,8 @@ export default class ViewerObjectLoader {
   cancelLoad() {
     this.cancel = true
   }
+
+  dispose() {
+    this.loader.dispose()
+  }
 }
