@@ -8,7 +8,6 @@
     <MenuItems
       class="absolute translate-x-0 w-28 left-12 top-2 bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden flex flex-col"
     >
-      <!-- Use the `active` state to conditionally style the active item. -->
       <MenuItem
         v-for="link in links"
         :key="link.href"
