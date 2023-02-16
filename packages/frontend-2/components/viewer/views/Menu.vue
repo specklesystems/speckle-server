@@ -5,48 +5,58 @@
         <VideoCameraIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
     </MenuButton>
-    <MenuItems
-      class="absolute translate-x-0 w-32 left-12 top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden flex flex-col"
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
     >
-      <!-- Canonical views first -->
-      <MenuItem
-        v-for="view in canonicalViews"
-        :key="view.name"
-        v-slot="{ active }"
-        as="template"
+      <MenuItems
+        class="absolute translate-x-0 w-32 left-12 top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
       >
-        <button
-          :class="{
-            'bg-primary text-foreground-on-primary': active,
-            'text-foreground': !active,
-            'text-sm py-2': true
-          }"
-          @click="instance.setView(view.name.toLowerCase() as CanonicalView)"
+        <!-- Canonical views first -->
+        <MenuItem
+          v-for="view in canonicalViews"
+          :key="view.name"
+          v-slot="{ active }"
+          as="template"
         >
-          {{ view.name }}
-        </button>
-      </MenuItem>
-      <!-- <div class="w-full border-b"></div> -->
+          <button
+            :class="{
+              'bg-primary text-foreground-on-primary': active,
+              'text-foreground': !active,
+              'text-sm py-2 transition': true
+            }"
+            @click="instance.setView(view.name.toLowerCase() as CanonicalView)"
+          >
+            {{ view.name }}
+          </button>
+        </MenuItem>
+        <div v-if="views.length !== 0" class="w-full border-b"></div>
 
-      <!-- Any model other views -->
-      <MenuItem
-        v-for="view in views"
-        :key="view.name"
-        v-slot="{ active }"
-        as="template"
-      >
-        <button
-          :class="{
-            'bg-primary text-foreground-on-primary ': active,
-            'text-foreground': !active,
-            'text-sm py-2 h-36 truncate overflow-hidden': true
-          }"
-          @click="instance.setView(view)"
+        <!-- Any model other views -->
+        <MenuItem
+          v-for="view in views"
+          :key="view.name"
+          v-slot="{ active }"
+          as="template"
         >
-          {{ view.name }}
-        </button>
-      </MenuItem>
-    </MenuItems>
+          <button
+            :class="{
+              'bg-primary text-foreground-on-primary': active,
+              'text-foreground': !active,
+              'text-sm py-2 transition xxx-truncate': true
+            }"
+            @click="instance.setView(view)"
+          >
+            <!-- TODO: For some reason using the `truncate` class creates weird behaviour in the layout -->
+            {{ view.name.length > 12 ? view.name.substring(0, 12) + '...' : view.name }}
+          </button>
+        </MenuItem>
+      </MenuItems>
+    </Transition>
   </Menu>
 </template>
 <script setup lang="ts">
