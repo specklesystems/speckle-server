@@ -872,7 +872,7 @@ export default class Sandbox {
       const authToken = localStorage.getItem(
         url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
       ) as string
-      await this.viewer.loadObjectAsync(url, authToken)
+      await this.viewer.loadObjectAsync(url, authToken, undefined, 1)
     }
     localStorage.setItem('last-load-url', url)
   }

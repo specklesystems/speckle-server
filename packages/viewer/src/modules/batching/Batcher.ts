@@ -48,9 +48,12 @@ export default class Batcher {
     // console.warn(rendeViews)
 
     for (let i = 0; i < materialHashes.length; i++) {
-      const batch = rendeViews.filter(
+      let batch = rendeViews.filter(
         (value) => value.renderMaterialHash === materialHashes[i]
       )
+      /** Prune any meshes with no geometry data */
+      batch = batch.filter((value) => value.validGeometry)
+
       const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
       let matRef = null
 
@@ -113,9 +116,12 @@ export default class Batcher {
     Logger.warn(materialHashes)
     // console.warn(rendeViews)
     for (let i = 0; i < materialHashes.length; i++) {
-      const batch = rendeViews.filter(
+      let batch = rendeViews.filter(
         (value) => value.renderMaterialHash === materialHashes[i]
       )
+      /** Prune any meshes with no geometry data */
+      batch = batch.filter((value) => value.validGeometry)
+
       const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
       let matRef = null
 
