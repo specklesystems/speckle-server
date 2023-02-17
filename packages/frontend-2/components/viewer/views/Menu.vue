@@ -35,6 +35,7 @@
           </button>
         </MenuItem>
         <div v-if="views.length !== 0" class="w-full border-b"></div>
+        <!-- <div v-else class="text-tiny text-foreground-2 p-2">No other model views</div> -->
 
         <!-- Any model other views -->
         <MenuItem

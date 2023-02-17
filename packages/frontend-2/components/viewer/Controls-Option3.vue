@@ -48,9 +48,10 @@
         </ViewerControlsButtonToggle>
 
         <!-- Sun and lights -->
-        <ViewerControlsButtonToggle flat @click="">
+        <ViewerSunMenu />
+        <!-- <ViewerControlsButtonToggle flat @click="">
           <SunIcon class="w-5 h-5" />
-        </ViewerControlsButtonToggle>
+        </ViewerControlsButtonToggle> -->
 
         <!-- Section Box -->
         <ViewerControlsButtonToggle
