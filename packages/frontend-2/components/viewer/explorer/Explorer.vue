@@ -1,7 +1,4 @@
 <template>
-  <!--     -->
-  <!-- WIP -->
-  <!--     -->
   <div class="flex justify-between flex-col bg-foundation rounded-md shadow py-2">
     <div class="flex flex-col space-y-1">
       <ViewerExplorerTreeItemOption3
@@ -17,13 +14,6 @@
   </div>
 </template>
 <script setup lang="ts">
-// Some questions:
-// - no idea how to ts-ify this (note: the tree lib is ts)
-
-// TODOs:
-// - handle grasshopper models
-// - test sketchup, blender, etc. models
-// - ask alex re viewer data tree types exporting
 import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {

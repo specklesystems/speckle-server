@@ -1,9 +1,25 @@
 <template>
-  <ProjectPageLatestItemsModelsList v-if="search" :models="searchResult" />
+  <div
+    v-if="search && searchResult?.project?.models.items.length !== 0"
+    class="space-y-4"
+  >
+    <ProjectPageModelsStructureItem
+      v-for="item in searchResult?.project?.models.items"
+      :key="item.id"
+      :item="{ name: item.name, model: item } as unknown as SingleLevelModelTreeItemFragment"
+      :project-id="project.id"
+    />
+  </div>
+  <div v-if="search && searchResult?.project?.models.items.length === 0">
+    TODO: Empty search result
+  </div>
   <ProjectPageModelsStructuredView v-else :project="project" />
 </template>
 <script setup lang="ts">
-import { ProjectPageModelsViewFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectPageModelsViewFragment,
+  SingleLevelModelTreeItemFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 
