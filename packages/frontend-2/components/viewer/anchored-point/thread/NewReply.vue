@@ -1,15 +1,14 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div class="relative">
-    <div class="bg-foundation rounded-4xl w-80 p-4 flex flex-col">
-      <ViewerCommentsEditor
-        v-model="commentValue"
-        autofocus
-        max-height="150px"
-        @update:model-value="onInput"
-        @submit="onSubmit"
-      />
-    </div>
+    <ViewerCommentsEditor
+      ref="editor"
+      v-model="commentValue"
+      autofocus
+      max-height="150px"
+      @update:model-value="onInput"
+      @submit="onSubmit"
+    />
     <div class="absolute w-full flex justify-end pt-2 space-x-2">
       <div class="flex space-x-2">
         <FormButton
@@ -17,6 +16,7 @@
           hide-text
           color="invert"
           :disabled="loading"
+          @click="editor?.openFilePicker"
         />
         <FormButton
           :icon-left="PaperAirplaneIcon"
@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
+import { Nullable } from '@speckle/shared'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
@@ -52,7 +53,8 @@ const createReply = useSubmitReply()
 
 const loading = ref(false)
 const isTyping = ref(false)
-const commentValue = ref(<CommentEditorValue>{ doc: undefined })
+const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
+const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadId = computed(() => props.modelValue.id)
 
 const updateIsTyping = async (isTyping: boolean) =>
@@ -71,15 +73,20 @@ const onInput = () => {
 const onSubmit = async () => {
   if (!commentValue.value.doc || loading.value) return
 
-  // TODO: attachments
   loading.value = true
   await createReply({
     content: {
       doc: commentValue.value.doc,
-      blobIds: []
+      blobIds: commentValue.value.attachments?.map((a) => a.result.blobId) || []
     },
     threadId: threadId.value
   })
+
+  // Mark all attachments as in use to prevent cleanup
+  commentValue.value.attachments?.forEach((a) => {
+    a.inUse = true
+  })
+
   commentValue.value = {
     doc: undefined,
     attachments: undefined

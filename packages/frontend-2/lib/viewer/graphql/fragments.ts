@@ -19,5 +19,6 @@ export const viewerReplyFragment = graphql(`
       ...LimitedUserAvatar
     }
     createdAt
+    ...ThreadCommentAttachment
   }
 `)

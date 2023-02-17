@@ -4,23 +4,25 @@
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
     </div>
-    <div class="bg-foundation rounded-full px-4 py-2 w-full relative">
+    <div class="bg-foundation rounded-full p-4 w-full relative">
       <div class="flex items-center">
         <UserAvatar :user="comment.author" size="sm" class="mr-2" />
         <span class="grow truncate text-sm font-medium">
           {{ comment.author.name }}
         </span>
       </div>
-      <div class="truncate text-sm text-foreground-2">
-        <ViewerCommentsEditor
-          :model-value="comment.text"
+      <div class="truncate text-sm text-foreground-2 flex flex-col">
+        <CommonTiptapTextEditor
+          :model-value="comment.text.doc"
+          :schema-options="{ multiLine: false }"
           readonly
           @created="emit('mounted')"
         />
+        <ViewerAnchoredPointThreadCommentAttachments :attachments="comment" />
       </div>
       <CommonTextLink
         v-if="canArchive"
-        class="absolute text-foreground-2 top-1 right-3"
+        class="absolute text-foreground-2 top-3 right-3"
         @click="() => archiveComment(comment.id)"
       >
         <TrashIcon class="h-4 w-4" />

@@ -11,3 +11,11 @@ export const mentionsUserSearchQuery = graphql(`
     }
   }
 `)
+
+export const serverInfoBlobSizeLimitQuery = graphql(`
+  query ServerInfoBlobSizeLimit {
+    serverInfo {
+      blobSizeLimitBytes
+    }
+  }
+`)
