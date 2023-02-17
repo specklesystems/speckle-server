@@ -47,9 +47,11 @@ export const DefaultViewerParams: ViewerParams = {
 export enum ViewerEvent {
   ObjectClicked = 'object-clicked',
   ObjectDoubleClicked = 'object-doubleclicked',
+  DownloadComplete = 'download-complete',
   LoadComplete = 'load-complete',
   LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
+  LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
@@ -156,6 +158,12 @@ export interface IViewer {
   )
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
+  loadObjectAsync(
+    url: string,
+    token?: string,
+    enableCaching?: boolean,
+    priority?: number
+  ): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>

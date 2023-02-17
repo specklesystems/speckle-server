@@ -4961,7 +4961,7 @@ __metadata:
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
-    undici: ^5.14.0
+    undici: ^5.19.1
     valid-filename: ^3.1.0
     web-ifc: ^0.0.36
   languageName: unknown
@@ -5229,7 +5229,7 @@ __metadata:
     tsconfig-paths: ^4.0.0
     type-fest: ^2.19.0
     typescript: ^4.6.4
-    undici: ^5.14.0
+    undici: ^5.19.1
     verror: ^1.10.1
     ws: ^7.5.7
     xml-escape: ^1.1.0
@@ -15399,8 +15399,8 @@ __metadata:
   linkType: hard
 
 "node-jose@npm:^2.0.0":
-  version: 2.1.1
-  resolution: "node-jose@npm:2.1.1"
+  version: 2.2.0
+  resolution: "node-jose@npm:2.2.0"
   dependencies:
     base64url: ^3.0.1
     buffer: ^6.0.3
@@ -15410,8 +15410,8 @@ __metadata:
     node-forge: ^1.2.1
     pako: ^2.0.4
     process: ^0.11.10
-    uuid: ^8.3.2
-  checksum: ae82fa789f3b7df39a2b3070b6ffdcf30b5fd3c03e6c2f056c4a4ed2d11cde7f69a22a7e49fb550c94a90ccac76a8b9a9341864be5c8e14782f3badd052e3d3a
+    uuid: ^9.0.0
+  checksum: ec021aaf12e256a88e0f8504b529d94685b9af774d3009048d4b005294add7735a99ef771f135a0cf6648c2c2c9c82ea4883f1c79b99fe6003b700e67819e24f
   languageName: node
   linkType: hard
 
@@ -19633,12 +19633,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.1.0, undici@npm:^5.12.0, undici@npm:^5.14.0, undici@npm:^5.8.0":
+"undici@npm:^5.1.0, undici@npm:^5.12.0, undici@npm:^5.8.0":
   version: 5.15.0
   resolution: "undici@npm:5.15.0"
   dependencies:
     busboy: ^1.6.0
   checksum: cdc03ceff8d2b76a5ae08dc48d0b9d44dcb970f6e89e8a3cfe7031b9351dd3c90b223c143565c153a5f1165cd573aae1b128e6b9f557b4af4eb36da337a2a345
+  languageName: node
+  linkType: hard
+
+"undici@npm:^5.19.1":
+  version: 5.19.1
+  resolution: "undici@npm:5.19.1"
+  dependencies:
+    busboy: ^1.6.0
+  checksum: 57ee94ee74d944faa41dbcb2faf4e0c90069708d3aaae860185884e51376b5d457728352a8396d69a3c9cb752b62ff99a19a664c5aacb7ee61cc488af499a01c
   languageName: node
   linkType: hard
 

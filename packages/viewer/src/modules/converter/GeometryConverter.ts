@@ -23,6 +23,21 @@ export enum SpeckleType {
   Unknown = 'Unknown'
 }
 
+export const SpeckleTypeAllRenderables: SpeckleType[] = [
+  SpeckleType.Pointcloud,
+  SpeckleType.Brep,
+  SpeckleType.Mesh,
+  SpeckleType.Point,
+  SpeckleType.Line,
+  SpeckleType.Polyline,
+  SpeckleType.Box,
+  SpeckleType.Polycurve,
+  SpeckleType.Curve,
+  SpeckleType.Circle,
+  SpeckleType.Arc,
+  SpeckleType.Ellipse
+]
+
 export class GeometryConverter {
   public static getSpeckleType(node: NodeData): SpeckleType {
     let type = 'Base'
