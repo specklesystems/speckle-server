@@ -53,7 +53,7 @@ export class Geometry {
 
   public static updateRTEGeometry(
     geometry: BufferGeometry,
-    doublePositions: Float64Array
+    doublePositions: Float64Array | Float32Array
   ) {
     if (geometry.type === 'BufferGeometry' || geometry.type === 'PlaneGeometry') {
       const position_low = new Float32Array(doublePositions.length)

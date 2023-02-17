@@ -25,12 +25,11 @@ export enum PlaneId {
 }
 
 export interface PlaneOutline {
-  buffer: Float64Array
   renderable: LineSegments2
 }
 
 export class SectionBoxOutlines {
-  private static readonly INITIAL_BUFFER_SIZE = 60000
+  private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
   private static readonly Z_OFFSET = -0.001
 
   private tmpVec: Vector3 = new Vector3()
@@ -84,9 +83,7 @@ export class SectionBoxOutlines {
     let posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
-    const posAttrLow = (
-      clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
-    ).data
+
     /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
     const scratchBuffer = new Array<number>()
 
@@ -207,6 +204,9 @@ export class SectionBoxOutlines {
     posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
+    const posAttrLow = (
+      clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
+    ).data
     Geometry.DoubleToHighLowBuffer(
       scratchBuffer,
       posAttrLow.array as Float32Array,
@@ -257,7 +257,6 @@ export class SectionBoxOutlines {
     clipOutline.layers.set(ObjectLayers.PROPS)
 
     return {
-      buffer,
       renderable: clipOutline
     }
   }
@@ -265,7 +264,7 @@ export class SectionBoxOutlines {
   private resizeGeometryBuffer(outline: PlaneOutline, size: number) {
     outline.renderable.geometry.dispose()
 
-    const buffer = new Float64Array(size)
+    const buffer = new Float32Array(size)
     outline.renderable.geometry = new LineSegmentsGeometry()
     outline.renderable.geometry.setPositions(new Float32Array(buffer))
     ;(
@@ -274,7 +273,6 @@ export class SectionBoxOutlines {
       ] as InterleavedBufferAttribute
     ).data.setUsage(DynamicDrawUsage)
     Geometry.updateRTEGeometry(outline.renderable.geometry, buffer)
-    outline.buffer = buffer
   }
 
   private getPlaneId(plane: Plane) {
