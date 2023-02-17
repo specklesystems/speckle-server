@@ -118,13 +118,11 @@ export class Viewer extends EventEmitter implements IViewer {
     this.frame()
     this.resize()
 
-    this.on(ViewerEvent.LoadComplete, (url) => {
-      WorldTree.getRenderTree(url).buildRenderTree()
-      this.speckleRenderer.addRenderTree(url)
-      this.zoom()
-      this.speckleRenderer.resetPipeline(true)
+    this.on(ViewerEvent.LoadCancelled, (url: string) => {
+      Logger.warn(`Cancelled load for ${url}`)
     })
   }
+
   public setSectionBox(
     box?: {
       min: {
@@ -411,7 +409,12 @@ export class Viewer extends EventEmitter implements IViewer {
   /**
    * OBJECT LOADING/UNLOADING
    */
-  public async loadObject(url: string, token: string = null, enableCaching = true) {
+
+  private async downloadObject(
+    url: string,
+    token: string = null,
+    enableCaching = true
+  ) {
     try {
       if (++this.inProgressOperations === 1)
         (this as EventEmitter).emit(ViewerEvent.Busy, true)
@@ -425,8 +428,47 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
+  public async loadObject(url: string, token: string = null, enableCaching = true) {
+    await this.downloadObject(url, token, enableCaching)
+
+    let t0 = performance.now()
+    WorldTree.getRenderTree(url).buildRenderTree()
+    Logger.log('SYNC Tree build time -> ', performance.now() - t0)
+
+    t0 = performance.now()
+    this.speckleRenderer.addRenderTree(url)
+    Logger.log('SYNC batch build time -> ', performance.now() - t0)
+
+    this.zoom()
+    this.speckleRenderer.resetPipeline(true)
+    this.emit(ViewerEvent.LoadComplete, url)
+  }
+
+  public async loadObjectAsync(
+    url: string,
+    token: string = null,
+    enableCaching = true,
+    priority = 1
+  ) {
+    await this.downloadObject(url, token, enableCaching)
+
+    let t0 = performance.now()
+    const treeBuilt = await WorldTree.getRenderTree(url).buildRenderTreeAsync(priority)
+    Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+
+    if (treeBuilt) {
+      t0 = performance.now()
+      await this.speckleRenderer.addRenderTreeAsync(url, priority)
+      Logger.log('ASYNC batch build time -> ', performance.now() - t0)
+      this.speckleRenderer.resetPipeline(true)
+      this.emit(ViewerEvent.LoadComplete, url)
+    }
+  }
+
   public async cancelLoad(url: string, unload = false) {
     this.loaders[url].cancelLoad()
+    WorldTree.getRenderTree(url).cancelBuild(url)
+    this.speckleRenderer.cancelRenderTree(url)
     if (unload) {
       await this.unloadObject(url)
     }
