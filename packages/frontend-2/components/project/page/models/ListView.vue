@@ -10,8 +10,8 @@
       :project-id="project.id"
     />
   </div>
-  <div v-if="search && searchResult?.project?.models.items.length === 0">
-    TODO: Empty search result
+  <div v-else-if="search && searchResult?.project?.models.items.length === 0">
+    TODO: Empty search result state
   </div>
   <ProjectPageModelsStructuredView v-else :project="project" />
 </template>

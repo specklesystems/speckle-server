@@ -12,7 +12,7 @@
           :show-label="false"
           placeholder="Search"
           class="bg-foundation shadow"
-          show-clear
+          :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
