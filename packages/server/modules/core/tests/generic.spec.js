@@ -150,7 +150,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         myStream.id,
         'stream:contributor'
       )
-      expect(role).to.equal('stream:owner')
+      expect(role).to.equal('stream:contributor')
     })
 
     it('should not allow server:admins to be anything if adminOverride is disabled', async () => {
