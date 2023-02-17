@@ -133,6 +133,11 @@ spec:
           - name: DISABLE_FILE_UPLOADS 
             value: "true"
           {{ end }}
+
+          {{- if .Values.server.adminOverrideEnabled }}
+          - name: ADMIN_OVERRIDE_ENABLED
+            value: "true"
+          {{- end }}
             
 
           # *** S3 Object Storage ***

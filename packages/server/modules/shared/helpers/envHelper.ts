@@ -99,3 +99,7 @@ export function shouldDisableNotificationsConsumption() {
 export function isSSLServer() {
   return /^https:\/\//.test(getBaseUrl())
 }
+
+export function adminOverrideEnabled() {
+  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
+}
