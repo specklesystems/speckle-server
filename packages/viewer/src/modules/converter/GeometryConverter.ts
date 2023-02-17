@@ -104,26 +104,32 @@ export class GeometryConverter {
         node.raw.faces = []
         node.raw.colors = []
         break
-      // case SpeckleType.Point:
-      //   return GeometryConverter.PointToGeometryData(node)
-      // case SpeckleType.Line:
-      //   return GeometryConverter.LineToGeometryData(node)
-      // case SpeckleType.Polyline:
-      //   return GeometryConverter.PolylineToGeometryData(node)
-      // case SpeckleType.Box:
-      //   return GeometryConverter.BoxToGeometryData(node)
-      // case SpeckleType.Polycurve:
-      //   return GeometryConverter.PolycurveToGeometryData(node)
-      // case SpeckleType.Curve:
-      //   return GeometryConverter.CurveToGeometryData(node)
-      // case SpeckleType.Circle:
-      //   return GeometryConverter.CircleToGeometryData(node)
-      // case SpeckleType.Arc:
-      //   return GeometryConverter.ArcToGeometryData(node)
-      // case SpeckleType.Ellipse:
-      //   return GeometryConverter.EllipseToGeometryData(node)
-      // case SpeckleType.View3D:
-      //   return GeometryConverter.View3DToGeometryData(node)
+      case SpeckleType.Point:
+        if (node.raw.value) node.raw.value = []
+        else {
+          delete node.raw.x
+          delete node.raw.y
+          delete node.raw.z
+        }
+        break
+      case SpeckleType.Line:
+        if (node.raw.start.value) node.raw.start.value = []
+        else {
+          delete node.raw.start.x
+          delete node.raw.start.y
+          delete node.raw.start.z
+        }
+        if (node.raw.end.value) node.raw.end.value = []
+        else {
+          delete node.raw.end.x
+          delete node.raw.end.y
+          delete node.raw.end.z
+        }
+        break
+      case SpeckleType.Polyline:
+        node.raw.value = []
+        break
+
       default:
         break
     }
