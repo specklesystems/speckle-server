@@ -76,6 +76,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
+    Logger.warn('Downloading object ', this.objectUrl)
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.emiter.emit(ViewerEvent.LoadProgress, {
@@ -110,7 +111,9 @@ export default class ViewerObjectLoader {
 
     // await this.viewer.sceneManager.postLoadFunction()
     Logger.warn(
-      `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
+      `Finished downloading object ${this.objectId} in ${
+        (performance.now() - start) / 1000
+      } seconds`
     )
     this.emiter.emit(ViewerEvent.DownloadComplete, this.objectUrl)
 

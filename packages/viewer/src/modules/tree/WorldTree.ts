@@ -78,7 +78,7 @@ export class WorldTree {
   }
 
   public addSubtree(node: TreeNode) {
-    Logger.warn(`Adding subtree with id: ${node.model.id}`)
+    // Logger.warn(`Adding subtree with id: ${node.model.id}`)
     this._root.addChild(node)
   }
 
