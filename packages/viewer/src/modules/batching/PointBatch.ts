@@ -281,6 +281,10 @@ export default class PointBatch implements Batch {
       )
 
       offset += geometry.attributes.POSITION.length
+
+      // if (!GeometryConverter.keepGeometryData) {
+      //   this.renderViews[k].disposeGeometry()
+      // }
     }
     this.makePointGeometry(position, color)
     this.mesh = new Points(this.geometry, this.batchMaterial)

@@ -119,7 +119,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.resize()
 
     this.on(ViewerEvent.LoadComplete, (url) => {
-      WorldTree.getRenderTree(url).buildRenderTree()
+      WorldTree.getRenderTree(url).buildRenderTree(this.startupParams.keepGeometryData)
       this.speckleRenderer.addRenderTree(url)
       this.zoom()
       this.speckleRenderer.resetPipeline(true)

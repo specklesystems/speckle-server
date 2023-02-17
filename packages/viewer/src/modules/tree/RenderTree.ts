@@ -13,7 +13,7 @@ export class RenderTree {
     this.root = root
   }
 
-  public buildRenderTree() {
+  public buildRenderTree(keepGeometryData: boolean) {
     this.root.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
@@ -24,6 +24,10 @@ export class RenderTree {
         }
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
+
+        if (!keepGeometryData) {
+          GeometryConverter.disposeNodeGeometryData(node.model)
+        }
       }
 
       return true

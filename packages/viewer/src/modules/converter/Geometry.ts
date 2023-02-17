@@ -18,7 +18,7 @@ export enum GeometryAttributes {
   COLOR = 'COLOR',
   NORMAL = 'NORMAL',
   UV = 'UV',
-  TANGENTS = 'TANGENTS',
+  TANGENT = 'TANGENT',
   INDEX = 'INDEX'
 }
 
