@@ -25,7 +25,7 @@ import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import { SpeckleType } from './converter/GeometryConverter'
+import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
 import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
@@ -78,6 +78,7 @@ export class Viewer extends EventEmitter implements IViewer {
     super()
     Logger.useDefaults()
     Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
+    GeometryConverter.keepGeometryData = params.keepGeometryData
 
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
@@ -432,7 +433,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
-    WorldTree.getRenderTree(url).buildRenderTree(this.startupParams.keepGeometryData)
+    WorldTree.getRenderTree(url).buildRenderTree()
     Logger.log('SYNC Tree build time -> ', performance.now() - t0)
 
     t0 = performance.now()
@@ -442,6 +443,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.zoom()
     this.speckleRenderer.resetPipeline(true)
     this.emit(ViewerEvent.LoadComplete, url)
+    this.loaders[url].dispose()
+    delete this.loaders[url]
   }
 
   public async loadObjectAsync(
@@ -453,10 +456,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
-    const treeBuilt = await WorldTree.getRenderTree(url).buildRenderTreeAsync(
-      priority,
-      this.startupParams.keepGeometryData
-    )
+    const treeBuilt = await WorldTree.getRenderTree(url).buildRenderTreeAsync(priority)
     Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
 
     if (treeBuilt) {
@@ -466,6 +466,8 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)
     }
+    this.loaders[url].dispose()
+    delete this.loaders[url]
   }
 
   public async cancelLoad(url: string, unload = false) {

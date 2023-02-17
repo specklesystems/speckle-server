@@ -24,6 +24,7 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import Logger from 'js-logger'
+import { GeometryConverter } from '../converter/GeometryConverter'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -441,9 +442,9 @@ export default class MeshBatch implements Batch {
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
 
-      // if (!GeometryConverter.keepGeometryData) {
-      //   this.renderViews[k].disposeGeometry()
-      // }
+      if (!GeometryConverter.keepGeometryData) {
+        this.renderViews[k].disposeGeometry()
+      }
     }
 
     this.makeMeshGeometry(

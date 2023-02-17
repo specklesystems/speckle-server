@@ -14,7 +14,7 @@ export class RenderTree {
     this.root = root
   }
 
-  public buildRenderTree(keepGeometryData: boolean) {
+  public buildRenderTree() {
     this.root.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
@@ -26,7 +26,7 @@ export class RenderTree {
         Geometry.transformGeometryData(rendeNode.geometry, transform)
         node.model.renderView.computeAABB()
 
-        if (!keepGeometryData) {
+        if (!GeometryConverter.keepGeometryData) {
           GeometryConverter.disposeNodeGeometryData(node.model)
         }
       }
@@ -35,10 +35,7 @@ export class RenderTree {
     })
   }
 
-  public buildRenderTreeAsync(
-    priority: number,
-    keepGeometryData: boolean
-  ): Promise<boolean> {
+  public buildRenderTreeAsync(priority: number): Promise<boolean> {
     const p = WorldTree.getInstance().walkAsync(
       (node: TreeNode): boolean => {
         const rendeNode = this.buildRenderNode(node)
@@ -51,7 +48,7 @@ export class RenderTree {
           Geometry.transformGeometryData(rendeNode.geometry, transform)
           node.model.renderView.computeAABB()
 
-          if (!keepGeometryData) {
+          if (!GeometryConverter.keepGeometryData) {
             GeometryConverter.disposeNodeGeometryData(node.model)
           }
         }

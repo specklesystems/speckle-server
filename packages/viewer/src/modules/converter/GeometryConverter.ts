@@ -39,6 +39,8 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
 ]
 
 export class GeometryConverter {
+  public static keepGeometryData = false
+
   public static getSpeckleType(node: NodeData): SpeckleType {
     let type = 'Base'
     if (node.raw.data)
