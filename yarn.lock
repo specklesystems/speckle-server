@@ -15399,8 +15399,8 @@ __metadata:
   linkType: hard
 
 "node-jose@npm:^2.0.0":
-  version: 2.1.1
-  resolution: "node-jose@npm:2.1.1"
+  version: 2.2.0
+  resolution: "node-jose@npm:2.2.0"
   dependencies:
     base64url: ^3.0.1
     buffer: ^6.0.3
@@ -15410,8 +15410,8 @@ __metadata:
     node-forge: ^1.2.1
     pako: ^2.0.4
     process: ^0.11.10
-    uuid: ^8.3.2
-  checksum: ae82fa789f3b7df39a2b3070b6ffdcf30b5fd3c03e6c2f056c4a4ed2d11cde7f69a22a7e49fb550c94a90ccac76a8b9a9341864be5c8e14782f3badd052e3d3a
+    uuid: ^9.0.0
+  checksum: ec021aaf12e256a88e0f8504b529d94685b9af774d3009048d4b005294add7735a99ef771f135a0cf6648c2c2c9c82ea4883f1c79b99fe6003b700e67819e24f
   languageName: node
   linkType: hard
 
