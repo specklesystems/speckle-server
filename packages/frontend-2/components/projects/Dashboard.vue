@@ -18,17 +18,13 @@
         ></FormTextInput>
       </div>
     </div>
-    <template v-if="areQueriesLoading">TODO: Stuff is loading, please wait</template>
-    <template v-else>
-      <ProjectsDashboardEmptyState
-        v-if="!searchKey && (forceEmptyState || (projects && !projects.totalCount))"
-      />
-      <ProjectsDashboardFilled
-        v-else-if="projects?.items?.length"
-        :projects="projects"
-      />
-      <div v-else>TODO: Project search empty state</div>
-    </template>
+    <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
+
+    <ProjectsDashboardEmptyState
+      v-if="!searchKey && (forceEmptyState || (projects && !projects.totalCount))"
+    />
+    <ProjectsDashboardFilled v-else-if="projects?.items?.length" :projects="projects" />
+    <div v-else>TODO: Project search empty state</div>
   </div>
 </template>
 <script setup lang="ts">
@@ -96,7 +92,7 @@ const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()
-}, 2000)
+}, 1000)
 
 const updateSearchImmediately = () => {
   updateDebouncedSearch.cancel()
@@ -188,4 +184,12 @@ onUserProjectsUpdate((res) => {
         : undefined
   })
 })
+
+const showLoadingBar = ref(false)
+watch(search, (newVal) => {
+  if (newVal) showLoadingBar.value = true
+  else showLoadingBar.value = false
+})
+
+watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 </script>
