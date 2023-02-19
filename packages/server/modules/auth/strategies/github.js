@@ -46,7 +46,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
-          throw new Error(
+          throw new UserInputError(
             'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with Github'
           )
         }
