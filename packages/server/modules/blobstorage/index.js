@@ -182,7 +182,7 @@ exports.init = async (app) => {
       }
 
       const bq = await getAllStreamBlobIds({ streamId: req.params.streamId })
-      const unknownBlobIds = { ...req.body }.filter(
+      const unknownBlobIds = [...req.body].filter(
         (id) => bq.findIndex((bInfo) => bInfo.id === id) === -1
       )
       res.send(unknownBlobIds)
