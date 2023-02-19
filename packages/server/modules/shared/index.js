@@ -8,6 +8,8 @@ const ServerAcl = () => ServerAclSchema.knex()
 
 const { Roles } = require('@speckle/shared')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const sentry = require('@/logging/sentryHelper')
+const { moduleLogger } = require('@/logging/logging')
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -26,8 +28,30 @@ const CommitPubsubEvents = Object.freeze({
  * GraphQL Subscription PubSub instance
  */
 const pubsub = new RedisPubSub({
-  publisher: new Redis(process.env.REDIS_URL),
-  subscriber: new Redis(process.env.REDIS_URL)
+  publisher: (() => {
+    let redisClient
+    try {
+      redisClient = new Redis(process.env.REDIS_URL)
+    } catch (err) {
+      moduleLogger.error(err, 'Could not connect to Redis for pubsub Publisher')
+      sentry({ err })
+      throw err //FIXME backoff and retry?
+    }
+
+    return redisClient
+  })(),
+  subscriber: (() => {
+    let redisClient
+    try {
+      redisClient = new Redis(process.env.REDIS_URL)
+    } catch (err) {
+      moduleLogger.error(err, 'Could not connect to Redis for pubsub Subscriber.')
+      sentry({ err })
+      throw err //FIXME backoff and retry?
+    }
+
+    return redisClient
+  })()
 })
 
 let roles

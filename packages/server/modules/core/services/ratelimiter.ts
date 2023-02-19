@@ -15,6 +15,8 @@ import {
 import { TIME } from '@speckle/shared'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import sentry from '@/logging/sentryHelper'
+import { rateLimiterLogger } from '@/logging/logging'
 
 // typescript definitions
 export enum RateLimitAction {
@@ -250,13 +252,21 @@ export const createConsumer =
     }
   }
 
-export const initializeRedisRateLimiters = (
+const initializeRedisRateLimiters = (
   options: RateLimiterOptions = LIMITS
 ): RateLimiterMapping => {
-  const redisClient = new Redis(getRedisUrl(), {
-    enableReadyCheck: false,
-    maxRetriesPerRequest: null
-  })
+  let redisClient: Redis
+  try {
+    redisClient = new Redis(getRedisUrl(), {
+      enableReadyCheck: false,
+      maxRetriesPerRequest: null
+    })
+  } catch (err) {
+    rateLimiterLogger.error(err, 'Could not connect to Redis')
+    sentry({ err, kind: null, extras: null })
+    throw err //FIXME backoff and retry?
+  }
+
   const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {

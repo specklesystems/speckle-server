@@ -8,7 +8,7 @@ const passport = require('passport')
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const { isSSLServer } = require('@/modules/shared/helpers/envHelper')
-const { moduleLogger } = require('@/logging/logging')
+const { authLogger } = require('@/logging/logging')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -21,8 +21,19 @@ module.exports = async (app) => {
   passport.deserializeUser((user, done) => done(null, user))
   app.use(passport.initialize())
 
+  let redisClient
+  try {
+    redisClient = redis.createClient(process.env.REDIS_URL)
+  } catch (err) {
+    if (err instanceof Error) {
+      authLogger.error(err, 'Could not connect to Redis')
+      sentry({ err })
+    }
+    throw err //FIXME backoff and retry?
+  }
+
   const session = ExpressSession({
-    store: new RedisStore({ client: redis.createClient(process.env.REDIS_URL) }),
+    store: new RedisStore({ client: redisClient }),
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,
@@ -70,7 +81,7 @@ module.exports = async (app) => {
       return res.redirect(redirectUrl)
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
+      authLogger.error(err, 'Could not finalize auth')
       if (req.session) req.session.destroy()
       return res.status(401).send({ err: err.message })
     }
