@@ -9,12 +9,12 @@ const {
 const { CommentsEmitter, CommentsEvents } = require('@/modules/comments/events/emitter')
 const {
   getComment,
-  getStreamCommentCount
+  getStreamCommentCount,
+  markCommentViewed
 } = require('@/modules/comments/repositories/comments')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
-const CommentViews = () => knex('comment_views')
 
 const resourceCheck = async (res, streamId) => {
   // The switch of doom: if something throws, we're out
@@ -64,6 +64,9 @@ module.exports = {
     await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
   },
 
+  /**
+   * @deprecated Use 'createCommentThreadAndNotify()' instead
+   */
   async createComment({ userId, input }) {
     if (input.resources.length < 1)
       throw Error('Must specify at least one resource as the comment target')
@@ -122,6 +125,9 @@ module.exports = {
     return newComment
   },
 
+  /**
+   * @deprecated Use 'createCommentReplyAndNotify()' instead
+   */
   async createCommentReply({
     authorId,
     parentCommentId,
@@ -161,6 +167,9 @@ module.exports = {
     return newComment
   },
 
+  /**
+   * @deprecated Use 'editCommentAndNotify()'
+   */
   async editComment({ userId, input, matchUser = false }) {
     const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error("The comment doesn't exist")
@@ -185,14 +194,19 @@ module.exports = {
     return updatedComment
   },
 
+  /**
+   * @deprecated Use 'markCommentViewed()'
+   */
   async viewComment({ userId, commentId }) {
-    const query = CommentViews()
-      .insert({ commentId, userId, viewedAt: knex.fn.now() })
-      .onConflict(knex.raw('("commentId","userId")'))
-      .merge()
-    await query
+    await markCommentViewed(commentId, userId)
   },
+  /**
+   * @deprecated Use repository method
+   */
   getComment,
+  /**
+   * @deprecated Use 'archiveCommentAndNotify()'
+   */
   async archiveComment({ commentId, userId, streamId, archived = true }) {
     const comment = await Comments().where({ id: commentId }).first()
     if (!comment)

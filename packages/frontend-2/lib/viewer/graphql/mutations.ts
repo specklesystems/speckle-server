@@ -14,8 +14,38 @@ export const broadcastViewerUserActivityMutation = graphql(`
   }
 `)
 
-export const markCommentViewed = graphql(`
-  mutation MarkCommentViewed($projectId: String!, $threadId: String!) {
-    commentView(streamId: $projectId, commentId: $threadId)
+export const markCommentViewedMutation = graphql(`
+  mutation MarkCommentViewed($threadId: String!) {
+    commentMutations {
+      markViewed(commentId: $threadId)
+    }
+  }
+`)
+
+export const createCommentThreadMutation = graphql(`
+  mutation CreateCommentThread($input: CreateCommentInput!) {
+    commentMutations {
+      create(input: $input) {
+        ...ViewerCommentThread
+      }
+    }
+  }
+`)
+
+export const createCommentReplyMutation = graphql(`
+  mutation CreateCommentReply($input: CreateCommentReplyInput!) {
+    commentMutations {
+      reply(input: $input) {
+        ...ViewerCommentsReplyItem
+      }
+    }
+  }
+`)
+
+export const archiveCommentMutation = graphql(`
+  mutation ArchiveComment($commentId: String!) {
+    commentMutations {
+      archive(commentId: $commentId)
+    }
   }
 `)

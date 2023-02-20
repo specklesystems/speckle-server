@@ -8589,6 +8589,21 @@ __metadata:
     "@tailwindcss/forms": ^0.5.3
     "@tailwindcss/line-clamp": ^0.4.2
     "@testing-library/vue": ^6.6.1
+    "@tiptap/core": 2.0.0-beta.209
+    "@tiptap/extension-bold": 2.0.0-beta.209
+    "@tiptap/extension-document": 2.0.0-beta.209
+    "@tiptap/extension-hard-break": 2.0.0-beta.209
+    "@tiptap/extension-history": 2.0.0-beta.209
+    "@tiptap/extension-italic": 2.0.0-beta.209
+    "@tiptap/extension-link": 2.0.0-beta.209
+    "@tiptap/extension-mention": 2.0.0-beta.209
+    "@tiptap/extension-paragraph": 2.0.0-beta.209
+    "@tiptap/extension-placeholder": 2.0.0-beta.209
+    "@tiptap/extension-strike": 2.0.0-beta.209
+    "@tiptap/extension-text": 2.0.0-beta.209
+    "@tiptap/extension-underline": 2.0.0-beta.209
+    "@tiptap/suggestion": 2.0.0-beta.209
+    "@tiptap/vue-3": 2.0.0-beta.209
     "@types/apollo-upload-client": ^17.0.1
     "@types/eslint": ^8.4.5
     "@types/js-cookie": ^3.0.2
@@ -8635,6 +8650,7 @@ __metadata:
     type-fest: ^3.5.1
     typescript: ^4.8.3
     vee-validate: ^4.7.0
+    vue-tippy: ^6.0.0
     vue-tsc: ^1.0.8
     wait-on: ^6.0.1
     ws: ^8.9.0
@@ -10842,6 +10858,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/core@npm:2.0.0-beta.209, @tiptap/core@npm:^2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/core@npm:2.0.0-beta.209"
+  peerDependencies:
+    prosemirror-commands: ^1.3.1
+    prosemirror-keymap: ^1.2.0
+    prosemirror-model: ^1.18.1
+    prosemirror-schema-list: ^1.2.2
+    prosemirror-state: ^1.4.1
+    prosemirror-transform: ^1.7.0
+    prosemirror-view: ^1.28.2
+  checksum: 8517e530b12c16de5b9805428eb2062a305b6705de07203ab8623000a12bd4009a3e88c569fee8ace4f702eb5cd3adb13d00d1de7b462384e20d6a0f1a129dae
+  languageName: node
+  linkType: hard
+
 "@tiptap/core@npm:^2.0.0-beta.176":
   version: 2.0.0-beta.176
   resolution: "@tiptap/core@npm:2.0.0-beta.176"
@@ -10864,12 +10895,38 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-bold@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-bold@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: cf2ac07384f150c4898c68598d849f8d059fff0794de0335ae5425829994d0cf4bf6965578190c1dae703ce2dcaf49e9c68c819e12ba4f4fa3c1fd459bcf0e92
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-bold@npm:^2.0.0-beta.26":
   version: 2.0.0-beta.26
   resolution: "@tiptap/extension-bold@npm:2.0.0-beta.26"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 08a412179caaffacf8d2368750b61a523fbe19784863ada135d7b7a2ade99ac6bde450a983953e26c4164d3a917569bbd6cd80746dc0b171322d1039ed2916cb
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-bubble-menu@npm:^2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-bubble-menu@npm:2.0.0-beta.209"
+  dependencies:
+    "@tiptap/core": ^2.0.0-beta.209
+    lodash: ^4.17.21
+    prosemirror-state: ^1.4.1
+    prosemirror-view: ^1.28.2
+    tippy.js: ^6.3.7
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-state: ^1.4.1
+    prosemirror-view: ^1.28.2
+  checksum: 2a056efa90b346cb42cac0000631ce2c74faba669bb7949f987fe23275d82cd8aaa0b0c9a5747f969804efc740b9ea8bcad1570ee445ac98829d199351258570
   languageName: node
   linkType: hard
 
@@ -10886,12 +10943,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-document@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-document@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: a8def36c85fa143c723b6539c359d83d472302bec81c790597b81ee121ff8393b9110cefc4da74c8cfef0f4e1003de7913df2904f6be680a6c55f571e0bdc07b
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-document@npm:^2.0.0-beta.15":
   version: 2.0.0-beta.15
   resolution: "@tiptap/extension-document@npm:2.0.0-beta.15"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: b42c54e16db2073b971da900db65327cc7acbe530c7908119bff9d3081099444da7beee2b637482a88c76c02d02a283bc58328da91d5e6d52383e4e12d390a4b
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-floating-menu@npm:^2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-floating-menu@npm:2.0.0-beta.209"
+  dependencies:
+    tippy.js: ^6.3.7
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-state: ^1.4.1
+    prosemirror-view: ^1.28.2
+  checksum: 2461bd94aff7e1b4ac2f0a0e2a9114d88fa61dcabc141a0e5a709b392a00fdd3042f1dccf201180c61d0a8db2ec793fd535c36025fd8f0de8895e25e94d82583
   languageName: node
   linkType: hard
 
@@ -10908,12 +10987,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-hard-break@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-hard-break@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: 70266a8e9acd2470dd68fc65a4d3628d2334363dfc07ed2b757c608056320e5b4dacd4027c81fbfe0046e0b497df10723c28ee92100a4be85f1cbcb409ee86b3
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-hard-break@npm:^2.0.0-beta.30":
   version: 2.0.0-beta.30
   resolution: "@tiptap/extension-hard-break@npm:2.0.0-beta.30"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: d0f23d0bbcc40c3097ed2c2d8ce2b2b7a3986336bd37d2e39e3a3bef7dd02780ec2c3b79692ac18407cf68e18254c6a494e8ebf092143505611fb23d6b8be393
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-history@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-history@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-history: ^1.3.0
+  checksum: af3a25032fb88785eeda1aa4985f85a28f62bbc99a449c0dcfb91ff19e3439034249f6a47c567312db3ecbadc0e579cb7ed6a885a0fd3cae8050bcdc24a46f68
   languageName: node
   linkType: hard
 
@@ -10929,12 +11027,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-italic@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-italic@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: 566ac039b4b155cdf1cc571709f64447d15ec0c25b97572614758488b385daced7daf56bfe761dcc0a63d2b8bd05d7e2eeb1a328eb31a51ecd0d98bcc38648d2
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-italic@npm:^2.0.0-beta.26":
   version: 2.0.0-beta.26
   resolution: "@tiptap/extension-italic@npm:2.0.0-beta.26"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 374d99f9b2bcaa398da11c8d514bc6c69c25bb95007b29de0da6d630424e95f7701032994bc762571e30f0b46f11839a5699d5ba64549b50e1ab516a20f91a6e
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-link@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-link@npm:2.0.0-beta.209"
+  dependencies:
+    linkifyjs: ^3.0.5
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-model: ^1.18.1
+    prosemirror-state: ^1.4.1
+  checksum: ea22c804d66448b7d86a9b7cc74e187f60d1fef89edb2a848c648c7b1eda864dc6bead40c678809233ff79ed56776d73d742020b4c2f4c3bcedcc7ef032431de
   languageName: node
   linkType: hard
 
@@ -10951,6 +11071,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-mention@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-mention@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    "@tiptap/suggestion": ^2.0.0-beta.193
+    prosemirror-model: ^1.18.1
+    prosemirror-state: ^1.4.1
+  checksum: 474e7d256035f1446441e37acb85d534a1a19ef7dd85c3a0444446c7fdbfc47c20fb1d582bf77e2d55c2c2ce2c03aa437709148ed42fa7a40e8be9b0d8e6438a
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-mention@npm:^2.0.0-beta.97":
   version: 2.0.0-beta.97
   resolution: "@tiptap/extension-mention@npm:2.0.0-beta.97"
@@ -10964,12 +11096,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-paragraph@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-paragraph@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: 34ac33db817939098861e3fddbfc0da3d20254313e9ef2089abe1467fac885c0fddf21c5a4faf638e82c527a3924c16feea2b47c53f8df1e7db99bb07d4b8d31
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-paragraph@npm:^2.0.0-beta.23":
   version: 2.0.0-beta.23
   resolution: "@tiptap/extension-paragraph@npm:2.0.0-beta.23"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 1b917a66d41324bbc8d488fc80b044fa286bd5469f418ad6676535fe33fd102a17b7d1235584ca55f0e42851d5cc5f45743a2ab9d123b98065f20b4eed63dfc9
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-placeholder@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-placeholder@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-model: ^1.18.1
+    prosemirror-state: ^1.4.1
+    prosemirror-view: ^1.28.2
+  checksum: 9812eb6c367b67dc3d7461e09bc1ccc10ce46e65bd2cc39a7d5560059e26a3763fddae03f69d15d336f2d5ca012b4107076414e8e7c708044d69d797c1637722
   languageName: node
   linkType: hard
 
@@ -10986,12 +11139,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-strike@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-strike@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: 8957142817017a897b6a7ff77083843a14081e9dbc049d53648b6c9ac45de3372852ec06ef5a7eab1b457c49813395c4f8be9f557e1627746b755ed1002af9fe
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-strike@npm:^2.0.0-beta.27":
   version: 2.0.0-beta.27
   resolution: "@tiptap/extension-strike@npm:2.0.0-beta.27"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 407d39dc6adbe9ff097e2805b899e011c06916ff3cf094f0d28fcd41bc00b89583a5bc942c507bffdfd06d65da6e6808d54d55e8fd781b05e3e612138062b47c
+  languageName: node
+  linkType: hard
+
+"@tiptap/extension-text@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-text@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: ea63f3a834059bc6a7cdf136a546852c64a99d6617946839962fc15db523b54dc9ef03c05a315407d54b627f1192ce70196aa7c747c4b2010dead8eaa66a19a0
   languageName: node
   linkType: hard
 
@@ -11004,12 +11175,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tiptap/extension-underline@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/extension-underline@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+  checksum: c22bbf3f910c7785c164543c0ca976c48419c4e437021e0ff1f689f6b247fd0035b474d754f67549f8f4643b968c86ce70223bc8d83c90239dbd71a70d080339
+  languageName: node
+  linkType: hard
+
 "@tiptap/extension-underline@npm:^2.0.0-beta.23":
   version: 2.0.0-beta.23
   resolution: "@tiptap/extension-underline@npm:2.0.0-beta.23"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.1
   checksum: 96a5b2d9a5fe31dcfc4272d54aefe62ca50e1ce41cca5d9314997188ab6d82f6bb5913b2bf38736071f28c8c1a54ed82d2cad76e524db381e48cd835b2cac301
+  languageName: node
+  linkType: hard
+
+"@tiptap/suggestion@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/suggestion@npm:2.0.0-beta.209"
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-model: ^1.18.1
+    prosemirror-state: ^1.4.1
+    prosemirror-view: ^1.28.2
+  checksum: 51386c1b93adb9405b1260bebab7dfb4edd32932f5b2af6aaff95c8501e719c104920f17298fdb91cc63a49ca30ccb8b3af1bdaf0d2f7d1fc9665c4cfb1158f2
   languageName: node
   linkType: hard
 
@@ -11037,6 +11229,21 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.1
     vue: ^2.6.0
   checksum: 554473232ccceec6bf2009fc2e2bcb710e0aa9c06f58284f41b0d184c5346a854aa1b540464715eefd5bb84ecb11edc5c3a1088ee5638d5d1742b6f72e69ad4d
+  languageName: node
+  linkType: hard
+
+"@tiptap/vue-3@npm:2.0.0-beta.209":
+  version: 2.0.0-beta.209
+  resolution: "@tiptap/vue-3@npm:2.0.0-beta.209"
+  dependencies:
+    "@tiptap/extension-bubble-menu": ^2.0.0-beta.209
+    "@tiptap/extension-floating-menu": ^2.0.0-beta.209
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.193
+    prosemirror-state: ^1.4.1
+    prosemirror-view: ^1.28.2
+    vue: ^3.0.0
+  checksum: 60a20c0b7b9bc0341d761080af778dd31ecb70bd2ce732ce3efe2f8a79f772dac311fab26ec5df124d1996fe9cebd9fbeae044aa63403599dfb104a122abdab3
   languageName: node
   linkType: hard
 
@@ -32041,13 +32248,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prosemirror-state@npm:^1.0.0, prosemirror-state@npm:^1.2.2, prosemirror-state@npm:^1.3.4":
-  version: 1.4.0
-  resolution: "prosemirror-state@npm:1.4.0"
+"prosemirror-state@npm:^1.0.0, prosemirror-state@npm:^1.2.2, prosemirror-state@npm:^1.3.4, prosemirror-state@npm:^1.4.1":
+  version: 1.4.2
+  resolution: "prosemirror-state@npm:1.4.2"
   dependencies:
     prosemirror-model: ^1.0.0
     prosemirror-transform: ^1.0.0
-  checksum: 1c9ba2899e9dcaec1fea52136e9c0616cbc69e2f9644407c973b6bbc765b878ee899c4a5b2952595b6b12772a06a659c25ce7f2df7b12ead72e21fe4fec675c5
+    prosemirror-view: ^1.27.0
+  checksum: a9e44df56aeb53fb99036742fbb63826380cf74cb115efffdd9f4e096bfb27dc7bf35c46d4b5fb5f260cd84e8bdc467aa5dc9540bd06f9f802de70b4873d8db4
   languageName: node
   linkType: hard
 
@@ -32068,6 +32276,17 @@ __metadata:
     prosemirror-state: ^1.0.0
     prosemirror-transform: ^1.1.0
   checksum: 06b5736bef718b8993c9cc79bacc5c02902553c34c120e99d4423823c7aea0716147d80f00df682e0dd43d47399cb0036900f011b9edc77c0e5fb97c0358889b
+  languageName: node
+  linkType: hard
+
+"prosemirror-view@npm:^1.27.0, prosemirror-view@npm:^1.28.2":
+  version: 1.30.0
+  resolution: "prosemirror-view@npm:1.30.0"
+  dependencies:
+    prosemirror-model: ^1.16.0
+    prosemirror-state: ^1.0.0
+    prosemirror-transform: ^1.1.0
+  checksum: ffd29ce9a37254337541a06ff961934f457e872374d0aac8b5b1c938c1d6726820f24a75b83b4f55c2f46e3ab5ec907664e72db3863ec17e2c8701c393384fd1
   languageName: node
   linkType: hard
 
@@ -37975,6 +38194,17 @@ __metadata:
   dependencies:
     date-fns: ^1.29.0
   checksum: a0cb9f9fe945f291df28364dafce8adf9c6eb3a807e619bc442158c12098f3b6bde33b353748e192834e9fd071b44825359a2c8cbbf0d0663fd21433b6991f21
+  languageName: node
+  linkType: hard
+
+"vue-tippy@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "vue-tippy@npm:6.0.0"
+  dependencies:
+    tippy.js: ^6.3.7
+  peerDependencies:
+    vue: ^3.2.0
+  checksum: 0ec76915f31e5a616904b00aac75316f275f83f503f42690fb585dcfcfd4a7d311b72912e22650a9dad3870422862b77cdf2faf5bbec2bb424116ac8b1fb105f
   languageName: node
   linkType: hard
 

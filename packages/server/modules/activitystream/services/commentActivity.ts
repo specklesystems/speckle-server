@@ -3,10 +3,14 @@ import { saveActivity } from '@/modules/activitystream/services'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   CommentCreateInput,
+  CreateCommentInput,
+  CreateCommentReplyInput,
   ProjectCommentsUpdatedMessageType,
-  ReplyCreateInput
+  ReplyCreateInput,
+  ViewerResourceItem
 } from '@/modules/core/graph/generated/graphql'
 import {
+  getViewerResourceItemsUngrouped,
   getViewerResourcesForComment,
   getViewerResourcesFromLegacyIdentifiers
 } from '@/modules/core/services/commit/viewerResources'
@@ -17,16 +21,43 @@ import {
   publish
 } from '@/modules/shared/utils/subscriptions'
 import { MutationCommentArchiveArgs } from '@/test/graphql/generated/graphql'
+import { has } from 'lodash'
+
+type CommentCreatedActivityInput =
+  | CommentCreateInput
+  | (CreateCommentInput & { resolvedResourceItems?: ViewerResourceItem[] })
+
+const isLegacyCommentCreateInput = (
+  i: CommentCreatedActivityInput
+): i is CommentCreateInput => has(i, 'streamId')
 
 export async function addCommentCreatedActivity(params: {
   streamId: string
   userId: string
-  input: CommentCreateInput
+  input: CommentCreatedActivityInput
   comment: CommentRecord
 }) {
   const { streamId, userId, input, comment } = params
 
-  const validResources = input.resources.filter((r): r is NonNullable<typeof r> => !!r)
+  let resourceIds: string
+  let resourceItems: ViewerResourceItem[]
+  if (isLegacyCommentCreateInput(input)) {
+    resourceIds = input.resources.map((res) => res?.resourceId).join(',')
+
+    const validResources = input.resources.filter(
+      (r): r is NonNullable<typeof r> => !!r
+    )
+    resourceItems = await getViewerResourcesFromLegacyIdentifiers(
+      streamId,
+      validResources
+    )
+  } else {
+    resourceItems =
+      input.resolvedResourceItems ||
+      (await getViewerResourceItemsUngrouped(streamId, input.resourceIdString))
+    resourceIds = resourceItems.map((i) => i.versionId || i.objectId).join(',')
+  }
+
   await Promise.all([
     saveActivity({
       resourceId: comment.id,
@@ -43,7 +74,7 @@ export async function addCommentCreatedActivity(params: {
         comment
       },
       streamId,
-      resourceIds: input.resources.map((res) => res?.resourceId).join(',')
+      resourceIds
     }),
     publish(ProjectSubscriptions.ProjectCommentsUpdated, {
       projectCommentsUpdated: {
@@ -52,9 +83,7 @@ export async function addCommentCreatedActivity(params: {
         comment
       },
       projectId: streamId,
-      resourceItems: validResources
-        ? await getViewerResourcesFromLegacyIdentifiers(streamId, validResources)
-        : []
+      resourceItems
     })
   ])
 }
@@ -103,19 +132,28 @@ export async function addCommentArchivedActivity(params: {
   ])
 }
 
+type ReplyCreatedActivityInput = ReplyCreateInput | CreateCommentReplyInput
+
+const isLegacyReplyCreateInput = (
+  i: ReplyCreatedActivityInput
+): i is ReplyCreateInput => has(i, 'streamId')
+
 export async function addReplyAddedActivity(params: {
   streamId: string
-  input: ReplyCreateInput
+  input: ReplyCreatedActivityInput
   reply: CommentRecord
   userId: string
 }) {
   const { streamId, input, reply, userId } = params
 
+  const parentCommentId = isLegacyReplyCreateInput(input)
+    ? input.parentComment
+    : input.threadId
   await Promise.all([
     saveActivity({
       streamId,
       resourceType: ResourceTypes.Comment,
-      resourceId: input.parentComment,
+      resourceId: parentCommentId,
       actionType: ActionTypes.Comment.Reply,
       userId,
       info: { input },
@@ -126,8 +164,8 @@ export async function addReplyAddedActivity(params: {
         type: 'reply-added',
         reply
       },
-      streamId: input.streamId,
-      commentId: input.parentComment
+      streamId,
+      commentId: parentCommentId
     }),
     publish(ProjectSubscriptions.ProjectCommentsUpdated, {
       projectCommentsUpdated: {

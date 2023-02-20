@@ -1,0 +1,72 @@
+<template>
+  <div class="flex flex-col items-center space-y-1">
+    <div class="bg-foundation rounded-full caption space-x-2 p-1">
+      <span>{{ absoluteDate }}</span>
+      <span>{{ timeFromNow }}</span>
+    </div>
+    <div class="bg-foundation rounded-xl p-4 w-full relative">
+      <div class="flex items-center">
+        <UserAvatar :user="comment.author" size="sm" class="mr-2" />
+        <span class="grow truncate text-sm font-medium">
+          {{ comment.author.name }}
+        </span>
+      </div>
+      <div class="truncate text-sm text-foreground-2 flex flex-col">
+        <CommonTiptapTextEditor
+          :model-value="comment.text.doc"
+          :schema-options="{ multiLine: false }"
+          readonly
+          @created="emit('mounted')"
+        />
+        <ViewerAnchoredPointThreadCommentAttachments
+          :attachments="comment"
+          :project-id="projectId"
+        />
+      </div>
+      <CommonTextLink
+        v-if="canArchive"
+        class="absolute text-foreground-2 top-3 right-3"
+        @click="() => archiveComment(comment.id)"
+      >
+        <TrashIcon class="h-4 w-4" />
+      </CommonTextLink>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { TrashIcon } from '@heroicons/vue/24/solid'
+import dayjs from 'dayjs'
+import { Roles } from '@speckle/shared'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
+
+const props = defineProps<{
+  comment: ViewerCommentsReplyItemFragment
+  projectId: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'mounted'): void
+}>()
+
+const archiveComment = useArchiveComment()
+const { activeUser } = useActiveUser()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const canArchive = computed(
+  () =>
+    activeUser.value &&
+    (props.comment.author.id === activeUser.value.id ||
+      project.value?.role === Roles.Stream.Owner)
+)
+const absoluteDate = computed(() =>
+  dayjs(props.comment.createdAt).toDate().toLocaleString()
+)
+const timeFromNow = computed(() => dayjs(props.comment.createdAt).fromNow())
+</script>

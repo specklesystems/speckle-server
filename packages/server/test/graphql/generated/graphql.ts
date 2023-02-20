@@ -196,7 +196,7 @@ export type Comment = {
   author: LimitedUser;
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  data?: Maybe<CommentData>;
+  data?: Maybe<CommentViewerData>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -246,10 +246,16 @@ export type CommentCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type CommentContentInput = {
+  blobIds?: InputMaybe<Array<Scalars['String']>>;
+  doc: Scalars['JSONObject'];
+};
+
+/** Deprecated: Used by old stream-based mutations */
 export type CommentCreateInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
-  data: CommentDataInput;
+  data: Scalars['JSONObject'];
   /**
    * Specifies the resources this comment is linked to. There are several use cases:
    * - a comment targets only one resource (commit or object)
@@ -263,23 +269,6 @@ export type CommentCreateInput = {
   text?: InputMaybe<Scalars['JSONObject']>;
 };
 
-export type CommentData = {
-  __typename?: 'CommentData';
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFilters;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: Maybe<Scalars['JSONObject']>;
-};
-
 export type CommentDataFilters = {
   __typename?: 'CommentDataFilters';
   hiddenIds?: Maybe<Array<Scalars['String']>>;
@@ -287,7 +276,7 @@ export type CommentDataFilters = {
   passMax?: Maybe<Scalars['Float']>;
   passMin?: Maybe<Scalars['Float']>;
   propertyInfoKey?: Maybe<Scalars['String']>;
-  sectionBox?: Maybe<Array<Scalars['Float']>>;
+  sectionBox?: Maybe<Scalars['JSONObject']>;
 };
 
 /** Equivalent to frontend-1's LocalFilterState */
@@ -297,7 +286,7 @@ export type CommentDataFiltersInput = {
   passMax?: InputMaybe<Scalars['Float']>;
   passMin?: InputMaybe<Scalars['Float']>;
   propertyInfoKey?: InputMaybe<Scalars['String']>;
-  sectionBox?: InputMaybe<Array<Scalars['Float']>>;
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CommentDataInput = {
@@ -316,6 +305,7 @@ export type CommentDataInput = {
   selection?: InputMaybe<Scalars['JSONObject']>;
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type CommentEditInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
@@ -323,6 +313,40 @@ export type CommentEditInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentMutations = {
+  __typename?: 'CommentMutations';
+  archive: Scalars['Boolean'];
+  create: Comment;
+  edit: Comment;
+  markViewed: Scalars['Boolean'];
+  reply: Comment;
+};
+
+
+export type CommentMutationsArchiveArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsCreateArgs = {
+  input: CreateCommentInput;
+};
+
+
+export type CommentMutationsEditArgs = {
+  input: EditCommentInput;
+};
+
+
+export type CommentMutationsMarkViewedArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsReplyArgs = {
+  input: CreateCommentReplyInput;
 };
 
 export type CommentReplyAuthorCollection = {
@@ -336,6 +360,23 @@ export type CommentThreadActivityMessage = {
   data?: Maybe<Scalars['JSONObject']>;
   reply?: Maybe<Comment>;
   type: Scalars['String'];
+};
+
+export type CommentViewerData = {
+  __typename?: 'CommentViewerData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 export type Commit = {
@@ -435,6 +476,20 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateCommentInput = {
+  content: CommentContentInput;
+  projectId: Scalars['String'];
+  /** Resources that this comment should be attached to */
+  resourceIdString: Scalars['String'];
+  screenshot?: InputMaybe<Scalars['String']>;
+  viewerData: CommentDataInput;
+};
+
+export type CreateCommentReplyInput = {
+  content: CommentContentInput;
+  threadId: Scalars['String'];
+};
+
 export type CreateModelInput = {
   name: Scalars['String'];
   projectId: Scalars['ID'];
@@ -448,6 +503,11 @@ export enum DiscoverableStreamsSortType {
 export type DiscoverableStreamsSortingInput = {
   direction: SortDirection;
   type: DiscoverableStreamsSortType;
+};
+
+export type EditCommentInput = {
+  commentId: Scalars['String'];
+  content: CommentContentInput;
 };
 
 export type FileUpload = {
@@ -643,6 +703,7 @@ export type Mutation = {
   commentCreate: Scalars['String'];
   /** Edits a comment. */
   commentEdit: Scalars['Boolean'];
+  commentMutations: CommentMutations;
   /** Adds a reply to a comment. */
   commentReply: Scalars['String'];
   /** Flags a comment as viewed by you (the logged in user). */
@@ -1336,7 +1397,7 @@ export type Query = {
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
    */
-  userSearch?: Maybe<UserSearchResultCollection>;
+  userSearch: UserSearchResultCollection;
 };
 
 
@@ -1433,9 +1494,11 @@ export type QueryUserSearchArgs = {
   query: Scalars['String'];
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
   blobIds: Array<Scalars['String']>;
+  data?: InputMaybe<Scalars['JSONObject']>;
   parentComment: Scalars['String'];
   streamId: Scalars['String'];
   /** ProseMirror document object */
@@ -2099,7 +2162,7 @@ export type UserRoleInput = {
 export type UserSearchResultCollection = {
   __typename?: 'UserSearchResultCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<LimitedUser>>>;
+  items: Array<LimitedUser>;
 };
 
 export type UserUpdateInput = {
@@ -2189,10 +2252,6 @@ export type ViewerUserSelectionInfo = {
   selectionLocation?: Maybe<Scalars['JSONObject']>;
 };
 
-/**
- * TODO: Clean this up: write proper descriptions, delete unnecessary keys and add proper GQL return types
- * where possible
- */
 export type ViewerUserSelectionInfoInput = {
   /**
    * An array representing a user's camera position:

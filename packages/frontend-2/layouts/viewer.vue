@@ -4,6 +4,6 @@
     <main class="absolute w-screen h-screen top-0 left-0 z-10">
       <slot />
     </main>
-    <SingletonManagers />
+    <SingletonManagers class="z-30" />
   </div>
 </template>

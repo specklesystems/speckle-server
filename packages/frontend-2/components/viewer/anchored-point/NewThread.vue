@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
     v-if="modelValue.isVisible"
@@ -21,14 +22,13 @@
         :style="style"
       >
         <div class="relative">
-          <div class="bg-foundation rounded-full w-80 p-4 flex flex-col">
-            <FormTextInput
-              full-width
-              name="newComment"
-              class="bg-transparent focus:ring-0 focus:outline-0"
-              placeholder="Press enter to send"
-            />
-          </div>
+          <ViewerCommentsEditor
+            ref="editor"
+            v-model="commentValue"
+            max-height="300px"
+            autofocus
+            @submit="() => onSubmit()"
+          />
           <div class="absolute w-full flex justify-between pt-2 space-x-2">
             <div class="flex space-x-2">
               <FormButton
@@ -36,23 +36,35 @@
                 hide-text
                 color="invert"
                 class="text-red-600"
+                @click="() => submitEmoji('❤️')"
               />
               <FormButton
                 :icon-left="ExclamationTriangleIcon"
                 hide-text
                 color="invert"
                 class="text-orange-500"
+                @click="() => submitEmoji('⚠️')"
               />
               <FormButton
                 :icon-left="FireIcon"
                 hide-text
                 color="invert"
                 class="text-red-600"
+                @click="() => submitEmoji('🔥')"
               />
             </div>
             <div class="space-x-2">
-              <FormButton :icon-left="PaperClipIcon" hide-text color="invert" />
-              <FormButton :icon-left="PaperAirplaneIcon" hide-text />
+              <FormButton
+                :icon-left="PaperClipIcon"
+                hide-text
+                color="invert"
+                @click="editor?.openFilePicker"
+              />
+              <FormButton
+                :icon-left="PaperAirplaneIcon"
+                hide-text
+                @click="() => onSubmit()"
+              />
             </div>
           </div>
         </div>
@@ -70,20 +82,34 @@ import {
   PaperClipIcon
 } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
+import { RichTextEditor } from '@speckle/shared'
 import {
   useExpandedThreadResponsiveLocation,
   ViewerNewThreadBubbleModel
 } from '~~/lib/viewer/composables/commentBubbles'
+import {
+  CommentEditorValue,
+  useSubmitComment
+} from '~~/lib/viewer/composables/commentManagement'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
+  (e: 'close'): void
 }>()
 
 const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
+const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
+const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
+
+const { style } = useExpandedThreadResponsiveLocation({
+  threadContainer,
+  width: 320
+})
+const createThread = useSubmitComment()
 
 const onThreadClick = () => {
   emit('update:modelValue', {
@@ -92,8 +118,37 @@ const onThreadClick = () => {
   })
 }
 
-const { style } = useExpandedThreadResponsiveLocation({
-  threadContainer,
-  width: 320
-})
+const submitEmoji = (emoji: string) =>
+  onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
+
+const onSubmit = (comment?: CommentEditorValue) => {
+  comment ||= comment || commentValue.value
+  if (!comment?.doc) return
+
+  // Intentionally not awaiting so that we emit close immediately
+  createThread(
+    {
+      doc: comment.doc,
+      blobIds: comment.attachments?.map((a) => a.result.blobId) || []
+    },
+    props.modelValue.clickLocation
+  )
+
+  // Marking all uploads as in use to prevent cleanup
+  comment.attachments?.forEach((a) => {
+    a.inUse = true
+  })
+
+  emit('close')
+}
+
+watch(
+  () => props.modelValue.isExpanded,
+  () => {
+    commentValue.value = {
+      doc: undefined,
+      attachments: undefined
+    }
+  }
+)
 </script>

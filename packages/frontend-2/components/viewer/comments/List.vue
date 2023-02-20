@@ -44,12 +44,7 @@ graphql(`
       totalCount
       cursor
       items {
-        id
-        rawText
-        author {
-          ...LimitedUserAvatar
-        }
-        createdAt
+        ...ViewerCommentsReplyItem
       }
     }
   }

@@ -18,7 +18,7 @@ export type Scalars = {
   DateTime: string;
   EmailAddress: any;
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSONObject: any;
+  JSONObject: {};
 };
 
 export type ActiveUserMutations = {
@@ -198,7 +198,7 @@ export type Comment = {
   author: LimitedUser;
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  data?: Maybe<CommentData>;
+  data?: Maybe<CommentViewerData>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -248,10 +248,16 @@ export type CommentCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type CommentContentInput = {
+  blobIds?: InputMaybe<Array<Scalars['String']>>;
+  doc: Scalars['JSONObject'];
+};
+
+/** Deprecated: Used by old stream-based mutations */
 export type CommentCreateInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
-  data: CommentDataInput;
+  data: Scalars['JSONObject'];
   /**
    * Specifies the resources this comment is linked to. There are several use cases:
    * - a comment targets only one resource (commit or object)
@@ -265,23 +271,6 @@ export type CommentCreateInput = {
   text?: InputMaybe<Scalars['JSONObject']>;
 };
 
-export type CommentData = {
-  __typename?: 'CommentData';
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFilters;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: Maybe<Scalars['JSONObject']>;
-};
-
 export type CommentDataFilters = {
   __typename?: 'CommentDataFilters';
   hiddenIds?: Maybe<Array<Scalars['String']>>;
@@ -289,7 +278,7 @@ export type CommentDataFilters = {
   passMax?: Maybe<Scalars['Float']>;
   passMin?: Maybe<Scalars['Float']>;
   propertyInfoKey?: Maybe<Scalars['String']>;
-  sectionBox?: Maybe<Array<Scalars['Float']>>;
+  sectionBox?: Maybe<Scalars['JSONObject']>;
 };
 
 /** Equivalent to frontend-1's LocalFilterState */
@@ -299,7 +288,7 @@ export type CommentDataFiltersInput = {
   passMax?: InputMaybe<Scalars['Float']>;
   passMin?: InputMaybe<Scalars['Float']>;
   propertyInfoKey?: InputMaybe<Scalars['String']>;
-  sectionBox?: InputMaybe<Array<Scalars['Float']>>;
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CommentDataInput = {
@@ -318,6 +307,7 @@ export type CommentDataInput = {
   selection?: InputMaybe<Scalars['JSONObject']>;
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type CommentEditInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
@@ -325,6 +315,40 @@ export type CommentEditInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentMutations = {
+  __typename?: 'CommentMutations';
+  archive: Scalars['Boolean'];
+  create: Comment;
+  edit: Comment;
+  markViewed: Scalars['Boolean'];
+  reply: Comment;
+};
+
+
+export type CommentMutationsArchiveArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsCreateArgs = {
+  input: CreateCommentInput;
+};
+
+
+export type CommentMutationsEditArgs = {
+  input: EditCommentInput;
+};
+
+
+export type CommentMutationsMarkViewedArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsReplyArgs = {
+  input: CreateCommentReplyInput;
 };
 
 export type CommentReplyAuthorCollection = {
@@ -338,6 +362,23 @@ export type CommentThreadActivityMessage = {
   data?: Maybe<Scalars['JSONObject']>;
   reply?: Maybe<Comment>;
   type: Scalars['String'];
+};
+
+export type CommentViewerData = {
+  __typename?: 'CommentViewerData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 export type Commit = {
@@ -432,6 +473,20 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateCommentInput = {
+  content: CommentContentInput;
+  projectId: Scalars['String'];
+  /** Resources that this comment should be attached to */
+  resourceIdString: Scalars['String'];
+  screenshot?: InputMaybe<Scalars['String']>;
+  viewerData: CommentDataInput;
+};
+
+export type CreateCommentReplyInput = {
+  content: CommentContentInput;
+  threadId: Scalars['String'];
+};
+
 export type CreateModelInput = {
   name: Scalars['String'];
   projectId: Scalars['ID'];
@@ -445,6 +500,11 @@ export enum DiscoverableStreamsSortType {
 export type DiscoverableStreamsSortingInput = {
   direction: SortDirection;
   type: DiscoverableStreamsSortType;
+};
+
+export type EditCommentInput = {
+  commentId: Scalars['String'];
+  content: CommentContentInput;
 };
 
 export type FileUpload = {
@@ -640,6 +700,7 @@ export type Mutation = {
   commentCreate: Scalars['String'];
   /** Edits a comment. */
   commentEdit: Scalars['Boolean'];
+  commentMutations: CommentMutations;
   /** Adds a reply to a comment. */
   commentReply: Scalars['String'];
   /** Flags a comment as viewed by you (the logged in user). */
@@ -1333,7 +1394,7 @@ export type Query = {
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
    */
-  userSearch?: Maybe<UserSearchResultCollection>;
+  userSearch: UserSearchResultCollection;
 };
 
 
@@ -1430,9 +1491,11 @@ export type QueryUserSearchArgs = {
   query: Scalars['String'];
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
   blobIds: Array<Scalars['String']>;
+  data?: InputMaybe<Scalars['JSONObject']>;
   parentComment: Scalars['String'];
   streamId: Scalars['String'];
   /** ProseMirror document object */
@@ -2096,7 +2159,7 @@ export type UserRoleInput = {
 export type UserSearchResultCollection = {
   __typename?: 'UserSearchResultCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<LimitedUser>>>;
+  items: Array<LimitedUser>;
 };
 
 export type UserUpdateInput = {
@@ -2186,10 +2249,6 @@ export type ViewerUserSelectionInfo = {
   selectionLocation?: Maybe<Scalars['JSONObject']>;
 };
 
-/**
- * TODO: Clean this up: write proper descriptions, delete unnecessary keys and add proper GQL return types
- * where possible
- */
 export type ViewerUserSelectionInfoInput = {
   /**
    * An array representing a user's camera position:
@@ -2345,9 +2404,9 @@ export type LimitedUserAvatarFragment = { __typename?: 'LimitedUser', id: string
 
 export type ActiveUserAvatarFragment = { __typename?: 'User', id: string, name: string, avatar?: string | null };
 
-export type ViewerAnchoredPointThreadCommentFragment = { __typename?: 'Comment', id: string, rawText: string, createdAt: string, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } };
+export type ThreadCommentAttachmentFragment = { __typename?: 'Comment', text: { __typename?: 'SmartTextEditorValue', attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } };
 
-export type ViewerCommentsListItemFragment = { __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> } };
+export type ViewerCommentsListItemFragment = { __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> } };
 
 export type ViewerModelVersionCardItemFragment = { __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null };
 
@@ -2365,6 +2424,18 @@ export type AuthServerInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AuthServerInfoQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', termsOfService?: string | null, authStrategies: Array<{ __typename?: 'AuthStrategy', id: string, name: string, url: string }> } };
+
+export type MentionsUserSearchQueryVariables = Exact<{
+  query: Scalars['String'];
+}>;
+
+
+export type MentionsUserSearchQuery = { __typename?: 'Query', userSearch: { __typename?: 'UserSearchResultCollection', items: Array<{ __typename?: 'LimitedUser', id: string, name: string, company?: string | null }> } };
+
+export type ServerInfoBlobSizeLimitQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ServerInfoBlobSizeLimitQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', blobSizeLimitBytes: number } };
 
 export type InternalTestDataQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2456,9 +2527,13 @@ export type OnProjectVersionsPreviewGeneratedSubscriptionVariables = Exact<{
 
 export type OnProjectVersionsPreviewGeneratedSubscription = { __typename?: 'Subscription', projectVersionsPreviewGenerated: { __typename?: 'ProjectVersionsPreviewGeneratedMessage', projectId: string, objectId: string, versionId: string } };
 
-export type ViewerCommentBubblesDataFragment = { __typename?: 'Comment', id: string, viewedAt?: string | null, data?: { __typename?: 'CommentData', location: any, camPos: Array<number>, sectionBox?: any | null, selection?: any | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: Array<number> | null } } | null };
+export type ViewerCommentBubblesDataFragment = { __typename?: 'Comment', id: string, viewedAt?: string | null, data?: { __typename?: 'CommentViewerData', location: {}, camPos: Array<number>, sectionBox?: {} | null, selection?: {} | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: {} | null } } | null };
 
 export type NewModelVersionMetadataFragment = { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', items: Array<{ __typename?: 'Version', id: string, referencedObject: string }> } };
+
+export type ViewerCommentThreadFragment = { __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, data?: { __typename?: 'CommentViewerData', location: {}, camPos: Array<number>, sectionBox?: {} | null, selection?: {} | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: {} | null } } | null, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } };
+
+export type ViewerCommentsReplyItemFragment = { __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } };
 
 export type BroadcastViewerUserActivityMutationVariables = Exact<{
   projectId: Scalars['String'];
@@ -2470,12 +2545,32 @@ export type BroadcastViewerUserActivityMutationVariables = Exact<{
 export type BroadcastViewerUserActivityMutation = { __typename?: 'Mutation', broadcastViewerUserActivity: boolean };
 
 export type MarkCommentViewedMutationVariables = Exact<{
-  projectId: Scalars['String'];
   threadId: Scalars['String'];
 }>;
 
 
-export type MarkCommentViewedMutation = { __typename?: 'Mutation', commentView: boolean };
+export type MarkCommentViewedMutation = { __typename?: 'Mutation', commentMutations: { __typename?: 'CommentMutations', markViewed: boolean } };
+
+export type CreateCommentThreadMutationVariables = Exact<{
+  input: CreateCommentInput;
+}>;
+
+
+export type CreateCommentThreadMutation = { __typename?: 'Mutation', commentMutations: { __typename?: 'CommentMutations', create: { __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, data?: { __typename?: 'CommentViewerData', location: {}, camPos: Array<number>, sectionBox?: {} | null, selection?: {} | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: {} | null } } | null, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } } } };
+
+export type CreateCommentReplyMutationVariables = Exact<{
+  input: CreateCommentReplyInput;
+}>;
+
+
+export type CreateCommentReplyMutation = { __typename?: 'Mutation', commentMutations: { __typename?: 'CommentMutations', reply: { __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } } } };
+
+export type ArchiveCommentMutationVariables = Exact<{
+  commentId: Scalars['String'];
+}>;
+
+
+export type ArchiveCommentMutation = { __typename?: 'Mutation', commentMutations: { __typename?: 'CommentMutations', archive: boolean } };
 
 export type ProjectViewerResourcesQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2493,7 +2588,7 @@ export type ViewerLoadedResourcesQueryVariables = Exact<{
 }>;
 
 
-export type ViewerLoadedResourcesQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, createdAt: string, name: string, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, updatedAt: string, versions: { __typename?: 'VersionCollection', totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> } }> }, commentThreads: { __typename?: 'CommentCollection', totalCount: number, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, data?: { __typename?: 'CommentData', location: any, camPos: Array<number>, sectionBox?: any | null, selection?: any | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: Array<number> | null } } | null }> } } | null };
+export type ViewerLoadedResourcesQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, role?: string | null, createdAt: string, name: string, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, updatedAt: string, versions: { __typename?: 'VersionCollection', totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> } }> }, commentThreads: { __typename?: 'CommentCollection', totalCount: number, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, data?: { __typename?: 'CommentViewerData', location: {}, camPos: Array<number>, sectionBox?: {} | null, selection?: {} | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: {} | null } } | null, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } }> } } | null };
 
 export type OnViewerUserActivityBroadcastedSubscriptionVariables = Exact<{
   projectId: Scalars['String'];
@@ -2501,7 +2596,7 @@ export type OnViewerUserActivityBroadcastedSubscriptionVariables = Exact<{
 }>;
 
 
-export type OnViewerUserActivityBroadcastedSubscription = { __typename?: 'Subscription', viewerUserActivityBroadcasted: { __typename?: 'ViewerUserActivityMessage', userName: string, userId?: string | null, viewerSessionId: string, status: ViewerUserActivityStatus, typing?: { __typename?: 'ViewerUserTypingMessage', isTyping: boolean, threadId: string } | null, selection?: { __typename?: 'ViewerUserSelectionInfo', filteringState: any, selectionLocation?: any | null, sectionBox?: any | null, camera: Array<number> } | null } };
+export type OnViewerUserActivityBroadcastedSubscription = { __typename?: 'Subscription', viewerUserActivityBroadcasted: { __typename?: 'ViewerUserActivityMessage', userName: string, userId?: string | null, viewerSessionId: string, status: ViewerUserActivityStatus, typing?: { __typename?: 'ViewerUserTypingMessage', isTyping: boolean, threadId: string } | null, selection?: { __typename?: 'ViewerUserSelectionInfo', filteringState: {}, selectionLocation?: {} | null, sectionBox?: {} | null, camera: Array<number> } | null } };
 
 export type OnViewerCommentsUpdatedSubscriptionVariables = Exact<{
   projectId: Scalars['String'];
@@ -2509,7 +2604,7 @@ export type OnViewerCommentsUpdatedSubscriptionVariables = Exact<{
 }>;
 
 
-export type OnViewerCommentsUpdatedSubscription = { __typename?: 'Subscription', projectCommentsUpdated: { __typename?: 'ProjectCommentsUpdatedMessage', id: string, type: ProjectCommentsUpdatedMessageType, comment?: { __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, parent?: { __typename?: 'Comment', id: string } | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, data?: { __typename?: 'CommentData', location: any, camPos: Array<number>, sectionBox?: any | null, selection?: any | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: Array<number> | null } } | null } | null } };
+export type OnViewerCommentsUpdatedSubscription = { __typename?: 'Subscription', projectCommentsUpdated: { __typename?: 'ProjectCommentsUpdatedMessage', id: string, type: ProjectCommentsUpdatedMessageType, comment?: { __typename?: 'Comment', id: string, rawText: string, createdAt: string, viewedAt?: string | null, parent?: { __typename?: 'Comment', id: string } | null, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, data?: { __typename?: 'CommentViewerData', location: {}, camPos: Array<number>, sectionBox?: {} | null, selection?: {} | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: {} | null } } | null, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } } | null } };
 
 export type GetActiveUserQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2535,11 +2630,13 @@ export const ProjectDashboardItemFragmentDoc = {"kind":"Document","definitions":
 export const ProjectsDashboardFilledFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectsDashboardFilled"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCollection"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectDashboardItem"}}]}}]}}]} as unknown as DocumentNode<ProjectsDashboardFilledFragment, unknown>;
 export const ActiveUserAvatarFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ActiveUserAvatar"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"User"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]} as unknown as DocumentNode<ActiveUserAvatarFragment, unknown>;
 export const LimitedUserAvatarFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedUserAvatar"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"LimitedUser"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]} as unknown as DocumentNode<LimitedUserAvatarFragment, unknown>;
-export const ViewerAnchoredPointThreadCommentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerAnchoredPointThreadComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<ViewerAnchoredPointThreadCommentFragment, unknown>;
-export const ViewerCommentsListItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerCommentsListItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]} as unknown as DocumentNode<ViewerCommentsListItemFragment, unknown>;
 export const ViewerModelVersionCardItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerModelVersionCardItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"authorUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}}]}}]} as unknown as DocumentNode<ViewerModelVersionCardItemFragment, unknown>;
-export const ViewerCommentBubblesDataFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerCommentBubblesData"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"location"}},{"kind":"Field","name":{"kind":"Name","value":"camPos"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}},{"kind":"Field","name":{"kind":"Name","value":"selection"}},{"kind":"Field","name":{"kind":"Name","value":"filters"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hiddenIds"}},{"kind":"Field","name":{"kind":"Name","value":"isolatedIds"}},{"kind":"Field","name":{"kind":"Name","value":"propertyInfoKey"}},{"kind":"Field","name":{"kind":"Name","value":"passMax"}},{"kind":"Field","name":{"kind":"Name","value":"passMin"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}}]}}]}}]}}]} as unknown as DocumentNode<ViewerCommentBubblesDataFragment, unknown>;
 export const NewModelVersionMetadataFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"NewModelVersionMetadata"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}}]}}]} as unknown as DocumentNode<NewModelVersionMetadataFragment, unknown>;
+export const ThreadCommentAttachmentFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ThreadCommentAttachment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"fileType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSize"}}]}}]}}]}}]} as unknown as DocumentNode<ThreadCommentAttachmentFragment, unknown>;
+export const ViewerCommentsReplyItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerCommentsReplyItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}}]}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ThreadCommentAttachment"}}]}}]} as unknown as DocumentNode<ViewerCommentsReplyItemFragment, unknown>;
+export const ViewerCommentsListItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerCommentsListItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LimitedUserAvatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentsReplyItem"}}]}}]}}]}}]} as unknown as DocumentNode<ViewerCommentsListItemFragment, unknown>;
+export const ViewerCommentBubblesDataFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerCommentBubblesData"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}},{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"location"}},{"kind":"Field","name":{"kind":"Name","value":"camPos"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}},{"kind":"Field","name":{"kind":"Name","value":"selection"}},{"kind":"Field","name":{"kind":"Name","value":"filters"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hiddenIds"}},{"kind":"Field","name":{"kind":"Name","value":"isolatedIds"}},{"kind":"Field","name":{"kind":"Name","value":"propertyInfoKey"}},{"kind":"Field","name":{"kind":"Name","value":"passMax"}},{"kind":"Field","name":{"kind":"Name","value":"passMin"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}}]}}]}}]}}]} as unknown as DocumentNode<ViewerCommentBubblesDataFragment, unknown>;
+export const ViewerCommentThreadFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ViewerCommentThread"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentsListItem"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentBubblesData"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentsReplyItem"}}]}}]} as unknown as DocumentNode<ViewerCommentThreadFragment, unknown>;
 export const ProjectPageProjectHeaderFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageProjectHeader"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}}]}}]} as unknown as DocumentNode<ProjectPageProjectHeaderFragment, unknown>;
 export const ProjectPageStatsBlockTeamFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockTeam"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockTeamFragment, unknown>;
 export const ProjectPageStatsBlockVersionsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockVersions"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versionCount"}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockVersionsFragment, unknown>;
@@ -2558,6 +2655,8 @@ export const CreateOnboardingProjectDocument = {"kind":"Document","definitions":
 export const ActiveUserMainMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ActiveUserMainMetadata"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"isOnboardingFinished"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<ActiveUserMainMetadataQuery, ActiveUserMainMetadataQueryVariables>;
 export const FinishOnboardingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FinishOnboarding"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUserMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"finishOnboarding"}}]}}]}}]} as unknown as DocumentNode<FinishOnboardingMutation, FinishOnboardingMutationVariables>;
 export const AuthServerInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AuthServerInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AuthStategiesServerInfoFragment"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ServerTermsOfServicePrivacyPolicyFragment"}}]}}]}},...AuthStategiesServerInfoFragmentFragmentDoc.definitions,...ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc.definitions]} as unknown as DocumentNode<AuthServerInfoQuery, AuthServerInfoQueryVariables>;
+export const MentionsUserSearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"MentionsUserSearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"query"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"userSearch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"query"},"value":{"kind":"Variable","name":{"kind":"Name","value":"query"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"NullValue"}},{"kind":"Argument","name":{"kind":"Name","value":"archived"},"value":{"kind":"BooleanValue","value":false}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}}]}}]}}]}}]} as unknown as DocumentNode<MentionsUserSearchQuery, MentionsUserSearchQueryVariables>;
+export const ServerInfoBlobSizeLimitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ServerInfoBlobSizeLimit"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"blobSizeLimitBytes"}}]}}]}}]} as unknown as DocumentNode<ServerInfoBlobSizeLimitQuery, ServerInfoBlobSizeLimitQueryVariables>;
 export const InternalTestDataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"InternalTestData"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"testNumber"}},{"kind":"Field","name":{"kind":"Name","value":"testList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"foo"}},{"kind":"Field","name":{"kind":"Name","value":"bar"}}]}}]}}]} as unknown as DocumentNode<InternalTestDataQuery, InternalTestDataQueryVariables>;
 export const CreateModelDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateModel"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateModelInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"}}]}}]}}]}},...ProjectPageLatestItemsModelItemFragmentDoc.definitions]} as unknown as DocumentNode<CreateModelMutation, CreateModelMutationVariables>;
 export const ProjectsDashboardQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectsDashboardQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"UserProjectsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectDashboardItem"}}]}}]}}]}}]}},...ProjectDashboardItemFragmentDoc.definitions,...ProjectDashboardItemNoModelsFragmentDoc.definitions,...ProjectPageLatestItemsModelItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectsDashboardQueryQuery, ProjectsDashboardQueryQueryVariables>;
@@ -2571,9 +2670,12 @@ export const OnProjectModelsUpdateDocument = {"kind":"Document","definitions":[{
 export const OnProjectVersionsUpdateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"OnProjectVersionsUpdate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectVersionsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"version"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerModelVersionCardItem"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"}}]}}]}}]}}]}},...ViewerModelVersionCardItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ProjectPageLatestItemsModelItemFragmentDoc.definitions]} as unknown as DocumentNode<OnProjectVersionsUpdateSubscription, OnProjectVersionsUpdateSubscriptionVariables>;
 export const OnProjectVersionsPreviewGeneratedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"OnProjectVersionsPreviewGenerated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectVersionsPreviewGenerated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"objectId"}},{"kind":"Field","name":{"kind":"Name","value":"versionId"}}]}}]}}]} as unknown as DocumentNode<OnProjectVersionsPreviewGeneratedSubscription, OnProjectVersionsPreviewGeneratedSubscriptionVariables>;
 export const BroadcastViewerUserActivityDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BroadcastViewerUserActivity"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"message"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ViewerUserActivityMessageInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"broadcastViewerUserActivity"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}},{"kind":"Argument","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}}},{"kind":"Argument","name":{"kind":"Name","value":"message"},"value":{"kind":"Variable","name":{"kind":"Name","value":"message"}}}]}]}}]} as unknown as DocumentNode<BroadcastViewerUserActivityMutation, BroadcastViewerUserActivityMutationVariables>;
-export const MarkCommentViewedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MarkCommentViewed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"threadId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentView"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}},{"kind":"Argument","name":{"kind":"Name","value":"commentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"threadId"}}}]}]}}]} as unknown as DocumentNode<MarkCommentViewedMutation, MarkCommentViewedMutationVariables>;
+export const MarkCommentViewedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MarkCommentViewed"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"threadId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"markViewed"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"commentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"threadId"}}}]}]}}]}}]} as unknown as DocumentNode<MarkCommentViewedMutation, MarkCommentViewedMutationVariables>;
+export const CreateCommentThreadDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateCommentThread"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateCommentInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentThread"}}]}}]}}]}},...ViewerCommentThreadFragmentDoc.definitions,...ViewerCommentsListItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ViewerCommentsReplyItemFragmentDoc.definitions,...ThreadCommentAttachmentFragmentDoc.definitions,...ViewerCommentBubblesDataFragmentDoc.definitions]} as unknown as DocumentNode<CreateCommentThreadMutation, CreateCommentThreadMutationVariables>;
+export const CreateCommentReplyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateCommentReply"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateCommentReplyInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"reply"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentsReplyItem"}}]}}]}}]}},...ViewerCommentsReplyItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ThreadCommentAttachmentFragmentDoc.definitions]} as unknown as DocumentNode<CreateCommentReplyMutation, CreateCommentReplyMutationVariables>;
+export const ArchiveCommentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ArchiveComment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"archive"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"commentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}}}]}]}}]}}]} as unknown as DocumentNode<ArchiveCommentMutation, ArchiveCommentMutationVariables>;
 export const ProjectViewerResourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectViewerResources"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceUrlString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"viewerResources"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceUrlString"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"identifier"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"versionId"}},{"kind":"Field","name":{"kind":"Name","value":"objectId"}}]}}]}}]}}]}}]} as unknown as DocumentNode<ProjectViewerResourcesQuery, ProjectViewerResourcesQueryVariables>;
-export const ViewerLoadedResourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ViewerLoadedResources"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"versionIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"ids"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"priorityIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"versionIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerModelVersionCardItem"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentsListItem"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentBubblesData"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ModelPageProject"}}]}}]}},...ViewerModelVersionCardItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ViewerCommentsListItemFragmentDoc.definitions,...ViewerCommentBubblesDataFragmentDoc.definitions,...ModelPageProjectFragmentDoc.definitions]} as unknown as DocumentNode<ViewerLoadedResourcesQuery, ViewerLoadedResourcesQueryVariables>;
+export const ViewerLoadedResourcesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ViewerLoadedResources"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelIds"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"versionIds"}},"type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"ids"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"priorityIds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"versionIds"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerModelVersionCardItem"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"commentThreads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentThread"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ModelPageProject"}}]}}]}},...ViewerModelVersionCardItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ViewerCommentThreadFragmentDoc.definitions,...ViewerCommentsListItemFragmentDoc.definitions,...ViewerCommentsReplyItemFragmentDoc.definitions,...ThreadCommentAttachmentFragmentDoc.definitions,...ViewerCommentBubblesDataFragmentDoc.definitions,...ModelPageProjectFragmentDoc.definitions]} as unknown as DocumentNode<ViewerLoadedResourcesQuery, ViewerLoadedResourcesQueryVariables>;
 export const OnViewerUserActivityBroadcastedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"OnViewerUserActivityBroadcasted"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"viewerUserActivityBroadcasted"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}},{"kind":"Argument","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"userName"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"viewerSessionId"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"typing"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isTyping"}},{"kind":"Field","name":{"kind":"Name","value":"threadId"}}]}},{"kind":"Field","name":{"kind":"Name","value":"selection"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"filteringState"}},{"kind":"Field","name":{"kind":"Name","value":"selectionLocation"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}},{"kind":"Field","name":{"kind":"Name","value":"camera"}}]}}]}}]}}]} as unknown as DocumentNode<OnViewerUserActivityBroadcastedSubscription, OnViewerUserActivityBroadcastedSubscriptionVariables>;
-export const OnViewerCommentsUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"OnViewerCommentsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectCommentsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}},{"kind":"Argument","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"comment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentsListItem"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentBubblesData"}}]}}]}}]}},...ViewerCommentsListItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ViewerCommentBubblesDataFragmentDoc.definitions]} as unknown as DocumentNode<OnViewerCommentsUpdatedSubscription, OnViewerCommentsUpdatedSubscriptionVariables>;
+export const OnViewerCommentsUpdatedDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"OnViewerCommentsUpdated"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectCommentsUpdated"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}},{"kind":"Argument","name":{"kind":"Name","value":"resourceIdString"},"value":{"kind":"Variable","name":{"kind":"Name","value":"resourceIdString"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"comment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"parent"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ViewerCommentThread"}}]}}]}}]}},...ViewerCommentThreadFragmentDoc.definitions,...ViewerCommentsListItemFragmentDoc.definitions,...LimitedUserAvatarFragmentDoc.definitions,...ViewerCommentsReplyItemFragmentDoc.definitions,...ThreadCommentAttachmentFragmentDoc.definitions,...ViewerCommentBubblesDataFragmentDoc.definitions]} as unknown as DocumentNode<OnViewerCommentsUpdatedSubscription, OnViewerCommentsUpdatedSubscriptionVariables>;
 export const GetActiveUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetActiveUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}}]} as unknown as DocumentNode<GetActiveUserQuery, GetActiveUserQueryVariables>;

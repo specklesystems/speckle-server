@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import {
   Viewer,
   DefaultViewerParams,
@@ -33,7 +34,8 @@ import {
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
   ViewerResourceItem,
-  CommentCollection
+  CommentCollection,
+  Comment
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
@@ -44,7 +46,6 @@ import { nanoid } from 'nanoid'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { containsAll } from '~~/lib/common/helpers/utils'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 
 export type LoadedModel = NonNullable<
@@ -344,6 +345,7 @@ function setupResponseResourceItems(
   InjectableViewerState['resources']['response'],
   'resourceItems' | 'resourceItemsQueryVariables'
 > {
+  const globalError = useError()
   const {
     projectId,
     resources: {
@@ -351,11 +353,21 @@ function setupResponseResourceItems(
     }
   } = state
 
-  const { result: resolvedResourcesResult, variables: resourceItemsQueryVariables } =
-    useQuery(projectViewerResourcesQuery, () => ({
-      projectId: projectId.value,
-      resourceUrlString: resourceIdString.value
-    }))
+  const {
+    result: resolvedResourcesResult,
+    variables: resourceItemsQueryVariables,
+    onError
+  } = useQuery(projectViewerResourcesQuery, () => ({
+    projectId: projectId.value,
+    resourceUrlString: resourceIdString.value
+  }))
+
+  onError((err) => {
+    globalError.value = createError({
+      statusCode: 500,
+      message: `Viewer resource resolution failed: ${err}`
+    })
+  })
 
   const resolvedResourceGroups = computed(
     () => resolvedResourcesResult.value?.project?.viewerResources || []
@@ -430,6 +442,8 @@ function setupResponseResourceData(
   InjectableViewerState['resources']['response'],
   'resourceItems' | 'resourceItemsQueryVariables'
 > {
+  const globalError = useError()
+
   const {
     projectId,
     resources: {
@@ -452,7 +466,8 @@ function setupResponseResourceData(
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
-    variables: viewerLoadedResourcesVariables
+    variables: viewerLoadedResourcesVariables,
+    onError
   } = useQuery(viewerLoadedResourcesQuery, () => ({
     projectId: projectId.value,
     modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
@@ -472,6 +487,13 @@ function setupResponseResourceData(
       }))
       .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
   )
+
+  onError((err) => {
+    globalError.value = createError({
+      statusCode: 500,
+      message: `Viewer loaded resource resolution failed: ${err}`
+    })
+  })
 
   return {
     objects,
@@ -770,7 +792,9 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
             replies: (oldValue: Optional<CommentCollection>) => {
               const newValue: CommentCollection = {
                 totalCount: (oldValue?.totalCount || 0) + 1,
-                items: [model, ...(oldValue?.items || [])]
+                // I assume that not having all of the props that `Comments` has is OK as long as you
+                // don't try to read those
+                items: [model as Comment, ...(oldValue?.items || [])]
               }
               return newValue
             }

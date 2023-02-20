@@ -10,7 +10,7 @@
     @click="onClick"
   >
     <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
-    <span v-if="!hideText"><slot>Button</slot></span>
+    <slot v-if="!hideText">Button</slot>
     <div v-else style="margin: 0 !important; width: 0.01px">
       &nbsp;
       <!-- The point of this is to ensure text & no-text buttons have the same height -->

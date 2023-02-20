@@ -1,0 +1,164 @@
+<template>
+  <div
+    :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
+  >
+    <EditorContent
+      class="simple-scrollbar"
+      :editor="editor"
+      :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
+      @click="onEditorContentClick"
+    />
+    <div v-if="$slots.actions && !readonly">
+      <slot name="actions" />
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { EditorContent, Editor } from '@tiptap/vue-3'
+import { JSONContent } from '@tiptap/core'
+import {
+  EnterKeypressTrackerExtensionStorage,
+  getEditorExtensions,
+  TiptapEditorSchemaOptions
+} from '~~/lib/common/helpers/tiptap'
+import { Nullable } from '@speckle/shared'
+import { userProfileRoute } from '~~/lib/common/helpers/route'
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: JSONContent): void
+  (e: 'submit', val: { data: JSONContent }): void
+  (e: 'created'): void
+}>()
+
+const props = defineProps<{
+  modelValue?: JSONContent | null
+  schemaOptions?: TiptapEditorSchemaOptions
+  maxHeight?: string
+  autofocus?: boolean
+  disabled?: boolean
+  placeholder?: string
+  readonly?: boolean
+}>()
+
+const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
+const isEditable = computed(() => !props.disabled && !props.readonly)
+const hasEnterTracking = computed(() => !props.readonly && !isMultiLine.value)
+
+const editor = new Editor({
+  content: props.modelValue,
+  autofocus: props.autofocus,
+  editable: isEditable.value,
+  extensions: getEditorExtensions(props.schemaOptions, {
+    placeholder: props.placeholder
+  }),
+  onUpdate: () => {
+    const data = getData()
+    if (!data || Object.keys(data).length < 1) return
+    emit('update:modelValue', data)
+  },
+  onCreate: () => {
+    emit('created')
+  }
+})
+
+const enterKeypressTracker = editor.storage
+  .enterKeypressTracker as EnterKeypressTrackerExtensionStorage
+const getData = (): JSONContent => editor.getJSON()
+const onEnter = () => {
+  if (isMultiLine.value || props.readonly) return
+  emit('submit', { data: getData() })
+}
+const onEditorContentClick = (e: MouseEvent) => {
+  const closestSelectorTarget = (e.target as HTMLElement).closest(
+    '.editor-mention'
+  ) as Nullable<HTMLElement>
+  if (!closestSelectorTarget) return
+
+  onMentionClick(closestSelectorTarget.dataset.id as string, e)
+  e.stopPropagation()
+}
+
+const onMentionClick = (userId: string, e: MouseEvent) => {
+  if (!props.readonly) return
+
+  const path = userProfileRoute(userId)
+  const isMetaKey = e.metaKey || e.ctrlKey
+  if (isMetaKey) {
+    window.open(path, '_blank')
+  } else {
+    window.location.href = path
+  }
+}
+
+watch(
+  () => hasEnterTracking.value,
+  (hasEnterTracking) => {
+    if (hasEnterTracking) {
+      enterKeypressTracker.subscribe(editor, onEnter)
+    } else {
+      enterKeypressTracker.unsubscribe(editor, onEnter)
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    const isSame = JSON.stringify(newVal) === JSON.stringify(getData())
+    if (isSame) return
+
+    editor.commands.setContent(newVal || '')
+  }
+)
+
+watch(
+  () => isEditable.value,
+  (isEditable) => {
+    editor.setEditable(isEditable)
+  }
+)
+
+onBeforeUnmount(() => {
+  editor.destroy()
+  enterKeypressTracker.unsubscribe(editor, onEnter)
+})
+</script>
+<style lang="postcss">
+/* stylelint-disable selector-class-pattern */
+.ProseMirror-focused {
+  outline: none;
+}
+
+.ProseMirror {
+  & p:last-of-type {
+    margin-bottom: 0;
+  }
+
+  & p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    pointer-events: none;
+    height: 0;
+    @apply text-foreground-disabled;
+  }
+
+  & .editor-mention {
+    box-decoration-break: clone;
+    @apply border-foreground border;
+    @apply label label--light rounded inline-block px-1 py-[0.5px];
+  }
+}
+
+.text-editor {
+  &--read-only {
+    word-break: break-word;
+    background-color: unset !important;
+    box-shadow: unset !important;
+
+    .editor-mention {
+      cursor: pointer;
+    }
+  }
+}
+</style>

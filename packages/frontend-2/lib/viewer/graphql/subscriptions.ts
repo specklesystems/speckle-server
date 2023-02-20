@@ -40,8 +40,7 @@ export const onViewerCommentsUpdatedSubscription = graphql(`
         parent {
           id
         }
-        ...ViewerCommentsListItem
-        ...ViewerCommentBubblesData
+        ...ViewerCommentThread
       }
     }
   }

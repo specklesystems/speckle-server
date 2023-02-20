@@ -2,6 +2,8 @@ import { isString, isUndefined } from 'lodash-es'
 import { GenericValidateFunction } from 'vee-validate'
 import { isNullOrUndefined } from '@speckle/shared'
 
+export const VALID_HTTP_URL = /^https?:\/\//
+
 /**
  * Note about new validators:
  * Make sure you use the word "Value" to refer to the value being validated in all error messages, cause the dynamic string replace
