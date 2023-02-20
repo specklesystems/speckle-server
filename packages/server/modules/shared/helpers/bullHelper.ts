@@ -16,6 +16,9 @@ export function buildBaseQueueOptions(): Bull.QueueOptions {
               }
             : {})
         })
+        client.on('error', (err) => {
+          throw new Error(`Unable to connect to Redis. ${err.message}`)
+        })
       } catch (e) {
         if (e instanceof Error) {
           throw new Error(

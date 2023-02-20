@@ -22,10 +22,12 @@ module.exports = async (app) => {
   app.use(passport.initialize())
 
   let redisClient
-  let redisStore
   try {
     redisClient = redis.createClient(getRedisUrl())
-    redisStore = new RedisStore({ client: redisClient })
+    redisClient.on('error', (err) => {
+      authLogger.error(err, 'Redis encountered an error.')
+      throw err
+    })
   } catch (err) {
     if (err instanceof Error) {
       authLogger.error(err, 'Could not connect to Redis')
@@ -35,7 +37,7 @@ module.exports = async (app) => {
   }
 
   const session = ExpressSession({
-    store: redisStore,
+    store: new RedisStore({ client: redisClient }),
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,

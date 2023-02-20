@@ -263,6 +263,10 @@ const initializeRedisRateLimiters = (
       enableReadyCheck: false,
       maxRetriesPerRequest: null
     })
+    redisClient.on('error', (err) => {
+      rateLimiterLogger.error(err, 'Redis encountered an error.')
+      throw err
+    })
   } catch (err) {
     rateLimiterLogger.error(err, 'Could not connect to Redis')
     sentry({ err, kind: null, extras: null })

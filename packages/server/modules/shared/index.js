@@ -35,6 +35,10 @@ const pubsub = new RedisPubSub({
     let redisClient
     try {
       redisClient = new Redis(getRedisUrl())
+      redisClient.on('error', (err) => {
+        moduleLogger.error(err, 'Redis encountered an error.')
+        //TODO should we throw here?
+      })
     } catch (err) {
       moduleLogger.error(err, 'Could not connect to Redis for pubsub Publisher')
       sentry({ err })
@@ -47,6 +51,10 @@ const pubsub = new RedisPubSub({
     let redisClient
     try {
       redisClient = new Redis(getRedisUrl())
+      redisClient.on('error', (err) => {
+        moduleLogger.error(err, 'Redis encountered an error.')
+        throw err
+      })
     } catch (err) {
       moduleLogger.error(err, 'Could not connect to Redis for pubsub Subscriber.')
       sentry({ err })
