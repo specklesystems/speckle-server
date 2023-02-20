@@ -7,7 +7,10 @@ const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const ServerAcl = () => ServerAclSchema.knex()
 
 const { Roles } = require('@speckle/shared')
-const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const {
+  adminOverrideEnabled,
+  getRedisUrl
+} = require('@/modules/shared/helpers/envHelper')
 const sentry = require('@/logging/sentryHelper')
 const { moduleLogger } = require('@/logging/logging')
 
@@ -31,11 +34,11 @@ const pubsub = new RedisPubSub({
   publisher: (() => {
     let redisClient
     try {
-      redisClient = new Redis(process.env.REDIS_URL)
+      redisClient = new Redis(getRedisUrl())
     } catch (err) {
       moduleLogger.error(err, 'Could not connect to Redis for pubsub Publisher')
       sentry({ err })
-      throw err //FIXME backoff and retry?
+      throw new Error('Unable to connect to Redis for pubsub Publisher.') //FIXME backoff and retry?
     }
 
     return redisClient
@@ -43,11 +46,11 @@ const pubsub = new RedisPubSub({
   subscriber: (() => {
     let redisClient
     try {
-      redisClient = new Redis(process.env.REDIS_URL)
+      redisClient = new Redis(getRedisUrl())
     } catch (err) {
       moduleLogger.error(err, 'Could not connect to Redis for pubsub Subscriber.')
       sentry({ err })
-      throw err //FIXME backoff and retry?
+      throw new Error('Unable to connect to Redis for pubsub Subscriber.') //FIXME backoff and retry?
     }
 
     return redisClient

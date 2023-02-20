@@ -248,6 +248,8 @@ export const createConsumer =
     } catch (err) {
       if (err instanceof RateLimiterRes)
         return { action, isWithinLimits: false, msBeforeNext: err.msBeforeNext }
+
+      rateLimiterLogger.error(err, 'Error while consuming rate limiter')
       throw err
     }
   }
@@ -264,41 +266,48 @@ const initializeRedisRateLimiters = (
   } catch (err) {
     rateLimiterLogger.error(err, 'Could not connect to Redis')
     sentry({ err, kind: null, extras: null })
-    throw err //FIXME backoff and retry?
+    throw new Error('Unable to connect to Redis for rate limiting.') //FIXME backoff and retry?
   }
 
   const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {
       const limits = options[action]
-      const burstyLimiter = new BurstyRateLimiter(
-        new RateLimiterRedis({
-          storeClient: redisClient,
-          keyPrefix: action,
-          points: limits.regularOptions.limitCount,
-          duration: limits.regularOptions.duration,
-          inMemoryBlockOnConsumed: limits.regularOptions.limitCount, // stops additional requests going to Redis once the limit is reached
-          inMemoryBlockDuration: limits.regularOptions.duration,
-          insuranceLimiter: new RateLimiterMemory({
+      let burstyLimiter: BurstyRateLimiter
+      try {
+        burstyLimiter = new BurstyRateLimiter(
+          new RateLimiterRedis({
+            storeClient: redisClient,
             keyPrefix: action,
             points: limits.regularOptions.limitCount,
-            duration: limits.regularOptions.duration
-          })
-        }),
-        new RateLimiterRedis({
-          storeClient: redisClient,
-          keyPrefix: `BURST_${action}`,
-          points: limits.burstOptions.limitCount,
-          duration: limits.burstOptions.duration,
-          inMemoryBlockOnConsumed: limits.burstOptions.limitCount,
-          inMemoryBlockDuration: limits.burstOptions.duration,
-          insuranceLimiter: new RateLimiterMemory({
+            duration: limits.regularOptions.duration,
+            inMemoryBlockOnConsumed: limits.regularOptions.limitCount, // stops additional requests going to Redis once the limit is reached
+            inMemoryBlockDuration: limits.regularOptions.duration,
+            insuranceLimiter: new RateLimiterMemory({
+              keyPrefix: action,
+              points: limits.regularOptions.limitCount,
+              duration: limits.regularOptions.duration
+            })
+          }),
+          new RateLimiterRedis({
+            storeClient: redisClient,
             keyPrefix: `BURST_${action}`,
             points: limits.burstOptions.limitCount,
-            duration: limits.burstOptions.duration
+            duration: limits.burstOptions.duration,
+            inMemoryBlockOnConsumed: limits.burstOptions.limitCount,
+            inMemoryBlockDuration: limits.burstOptions.duration,
+            insuranceLimiter: new RateLimiterMemory({
+              keyPrefix: `BURST_${action}`,
+              points: limits.burstOptions.limitCount,
+              duration: limits.burstOptions.duration
+            })
           })
-        })
-      )
+        )
+      } catch (err) {
+        rateLimiterLogger.error(err, 'Could not create rate limiter.')
+        sentry({ err, kind: null, extras: null })
+        throw new Error('Unable to create rate limiter using Redis.') //FIXME backoff and retry?
+      }
 
       return [action, createConsumer(action, burstyLimiter)]
     })

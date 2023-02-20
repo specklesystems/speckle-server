@@ -7,7 +7,7 @@ const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
-const { isSSLServer } = require('@/modules/shared/helpers/envHelper')
+const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger } = require('@/logging/logging')
 
 /**
@@ -22,18 +22,20 @@ module.exports = async (app) => {
   app.use(passport.initialize())
 
   let redisClient
+  let redisStore
   try {
-    redisClient = redis.createClient(process.env.REDIS_URL)
+    redisClient = redis.createClient(getRedisUrl())
+    redisStore = new RedisStore({ client: redisClient })
   } catch (err) {
     if (err instanceof Error) {
       authLogger.error(err, 'Could not connect to Redis')
       sentry({ err })
     }
-    throw err //FIXME backoff and retry?
+    throw new Error('Unable to connect to Redis for authentication purposes.') //FIXME backoff and retry?
   }
 
   const session = ExpressSession({
-    store: new RedisStore({ client: redisClient }),
+    store: redisStore,
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,
