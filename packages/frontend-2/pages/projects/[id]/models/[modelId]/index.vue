@@ -2,15 +2,13 @@
   <div class="absolute top-0 left-0 w-screen h-screen">
     <!-- Nav -->
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="`/projects/${project?.id}`"
-        :name="project?.name"
-      ></HeaderNavLink>
-      <!-- TODO: get name dynamically -->
-      <HeaderNavLink
-        :to="route.fullPath"
-        name="Model Name/Multiple Models"
-      ></HeaderNavLink>
+      <ViewerScope :state="state">
+        <HeaderNavLink
+          :to="`/projects/${project?.id}`"
+          :name="project?.name"
+        ></HeaderNavLink>
+        <ViewerExplorerNavbarLink />
+      </ViewerScope>
     </Portal>
 
     <ClientOnly>
@@ -49,13 +47,15 @@ definePageMeta({
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 
+const state = useSetupViewer({
+  projectId
+})
+
 const {
   resources: {
     response: { project }
   }
-} = useSetupViewer({
-  projectId
-})
+} = state
 
 graphql(`
   fragment ModelPageProject on Project {

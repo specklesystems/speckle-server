@@ -15,7 +15,7 @@
           :show-label="false"
           placeholder="Search"
           class="bg-foundation shadow w-60"
-          show-clear
+          :show-clear="search !== ''"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
@@ -26,23 +26,21 @@
         </div>
       </div>
     </div>
+    <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
     <div class="mb-14">
-      <div :class="searchLoading ? 'hidden' : 'block'">
+      <div :class="queryLoading ? 'hidden' : 'block'">
         <ProjectPageModelsListView
           v-if="gridOrList === GridListToggleValue.List"
           :search="debouncedSearch"
           :project="project"
-          @update:loading="searchLoading = $event"
+          @update:loading="queryLoading = $event"
         />
         <ProjectPageModelsCardView
           v-if="gridOrList === GridListToggleValue.Grid"
           :search="debouncedSearch"
           :project="project"
-          @update:loading="searchLoading = $event"
+          @update:loading="queryLoading = $event"
         />
-      </div>
-      <div :class="searchLoading ? 'block' : 'hidden'">
-        TODO: Stuff is loading, please wait!
       </div>
     </div>
     <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
@@ -81,10 +79,11 @@ graphql(`
   }
 `)
 
-const searchLoading = ref(false)
+const queryLoading = ref(false)
 const search = ref('')
 const debouncedSearch = ref('')
 const showNewDialog = ref(false)
+const showLoadingBar = ref(false)
 
 const viewTypeCookie = useSynchronizedCookie(`projectPage-models-viewType`)
 const gridOrList = computed({
@@ -97,10 +96,17 @@ const gridOrList = computed({
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()
-}, 2000)
+}, 500)
 
 const updateSearchImmediately = () => {
   updateDebouncedSearch.cancel()
   debouncedSearch.value = search.value.trim()
 }
+
+watch(search, (newVal) => {
+  if (newVal) showLoadingBar.value = true
+  else showLoadingBar.value = false
+})
+
+watch(queryLoading, (newVal) => (showLoadingBar.value = newVal))
 </script>

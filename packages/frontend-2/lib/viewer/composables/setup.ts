@@ -14,7 +14,8 @@ import {
   provide,
   ComputedRef,
   WritableComputedRef,
-  Raw
+  Raw,
+  Ref
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
@@ -181,6 +182,14 @@ export type InjectableViewerState = Readonly<{
       showObjects: FilterAction
       resetFilters: () => Promise<void>
       setColorFilter: (property: PropertyInfo) => void
+    }
+    camera: {
+      isPerspectiveProjection: Ref<boolean>
+      toggleProjection: () => void
+    }
+    sectionBox: {
+      isSectionBoxEnabled: Ref<boolean>
+      toggleSectionBox: () => void
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
@@ -630,7 +639,8 @@ function setupInterfaceState(
 
   const clearSelection = () => {
     // Clear any vis/iso state
-    // NOTE: turned off, as not sure it's the behaviour we want
+    // NOTE: turned off, as not sure it's the behaviour we want.
+    // Worth keeping the code for future reference.
     // if (selectedObjects.value.length > 0) {
     //   let ids = [] as string[]
     //   for (const obj of selectedObjects.value) {
@@ -657,10 +667,42 @@ function setupInterfaceState(
     setViewerSelectionFilter()
   }
 
+  const isPerspectiveProjection = ref(false)
+  const toggleProjection = () => {
+    state.viewer.instance.toggleCameraProjection()
+    isPerspectiveProjection.value = !isPerspectiveProjection.value
+  }
+
+  const isSectionBoxEnabled = ref(false)
+  const toggleSectionBox = () => {
+    if (isSectionBoxEnabled.value) {
+      isSectionBoxEnabled.value = false
+      state.viewer.instance.toggleSectionBox()
+      state.viewer.instance.requestRender()
+      return
+    }
+
+    isSectionBoxEnabled.value = true
+    const ids = selectedObjects.value.map((o) => o.id as string)
+    if (ids.length > 0) state.viewer.instance.setSectionBoxFromObjects(ids)
+    else state.viewer.instance.setSectionBox()
+
+    state.viewer.instance.toggleSectionBox()
+    state.viewer.instance.requestRender()
+  }
+
   return {
     ...state,
     ui: {
       viewerBusy,
+      camera: {
+        isPerspectiveProjection,
+        toggleProjection
+      },
+      sectionBox: {
+        isSectionBoxEnabled,
+        toggleSectionBox
+      },
       filters: {
         current: computed(() => filteringState.value),
         localFilterPropKey: computed(() => localFilterPropKey.value),
@@ -1100,6 +1142,17 @@ export function useInjectedViewerRequestedResources(): InjectableViewerState['re
 export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
   const { ui } = useInjectedViewerState()
   return ui
+}
+
+/**
+ * Use this when you want to use the viewer state outside the viewer, ie in a component that's inside a portal!
+ * @param state
+ */
+export function useSetupViewerScope(
+  state: InjectableViewerState
+): InjectableViewerState {
+  provide(InjectableViewerStateKey, state)
+  return state
 }
 
 export const test = 1

@@ -21,7 +21,9 @@
         />
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
-          <span class="text-lg font-bold text-foreground">{{ name }}</span>
+          <span class="text-lg font-bold text-foreground">
+            {{ name }}
+          </span>
           <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
             <!-- TODO: copy model link -->
             <LinkIcon class="w-3 h-3" />

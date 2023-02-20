@@ -1,7 +1,4 @@
 <template>
-  <!--     -->
-  <!-- WIP -->
-  <!--     -->
   <div class="flex justify-between flex-col bg-foundation rounded-md shadow py-2">
     <div class="flex flex-col space-y-1">
       <ViewerExplorerTreeItemOption3
@@ -9,6 +6,7 @@
         :key="idx"
         :item-id="(rootNode.data?.id as string)"
         :tree-item="markRaw(rootNode)"
+        :sub-header="'Model Version'"
         :debug="false"
         force-unfold
       />
@@ -16,21 +14,19 @@
   </div>
 </template>
 <script setup lang="ts">
-// Some questions:
-// - no idea how to ts-ify this (note: the tree lib is ts)
-
-// TODOs:
-// - handle grasshopper models
-// - test sketchup, blender, etc. models
-// - ask alex re viewer data tree types exporting
 import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
   useInjectedViewer,
+  useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-const test = useInjectedViewerState()
-const resourceItems = test.resources.request.items
+const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const {
+  resources: {
+    response: { resourceItems }
+  }
+} = useInjectedViewerState()
 const { instance: viewer } = useInjectedViewer()
 
 let realTree = viewer.getWorldTree()
@@ -49,23 +45,25 @@ const rootNodes = computed(() => {
   refHack.value
   console.log('should update rootNodes')
   const nodes = []
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const rootNodes = realTree._root.children as ExplorerNode[]
   for (const node of rootNodes) {
-    const objectId = node.model.id.split('/').reverse()[0] as string
+    const objectId = ((node.model as Record<string, unknown>).id as string)
+      .split('/')
+      .reverse()[0] as string
     const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
+    const raw = node.model?.raw as Record<string, unknown>
     if (resourceItem?.modelId) {
       // Model resource
       const model = modelsAndVersionIds.value.find(
         (item) => item.model.id === resourceItem.modelId
       )?.model
-      node.model.raw.name = model?.name
-      node.model.raw.type = model?.id
+      raw.name = model?.name
+      raw.type = model?.id
     } else {
-      node.model.raw.name = 'Object'
-      node.model.raw.type = 'Single Object'
+      raw.name = 'Object'
+      raw.type = 'Single Object'
     }
-    nodes.push(node.model)
+    nodes.push(node.model as ExplorerNode)
   }
   return nodes
 })

@@ -15,6 +15,7 @@
       </div>
     </template>
     <template v-else>No resources loaded</template>
+    <FormButton size="sm" full-width>Load Another Model</FormButton>
   </div>
 </template>
 <script setup lang="ts">

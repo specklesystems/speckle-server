@@ -60,6 +60,7 @@
                 color="invert"
                 @click="editor?.openFilePicker"
               />
+
               <FormButton
                 :icon-left="PaperAirplaneIcon"
                 hide-text
