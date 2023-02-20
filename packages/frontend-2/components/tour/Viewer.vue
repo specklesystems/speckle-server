@@ -14,7 +14,7 @@ import { useSetupViewer } from '~~/lib/viewer/composables/setup'
 const {
   viewer: { instance: viewer }
 } = useSetupViewer({
-  projectId: ''
+  projectId: 'bf8768970c'
 })
 
 onMounted(async () => {
