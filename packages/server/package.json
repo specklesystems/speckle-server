@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.12.1"
+    "node": "^18.14.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -32,7 +32,7 @@
     "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\""
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.100.0",
+    "@aws-sdk/client-s3": "^3.272.0",
     "@aws-sdk/lib-storage": "^3.100.0",
     "@godaddy/terminus": "^4.9.0",
     "@graphql-tools/schema": "^9.0.4",
@@ -89,7 +89,7 @@
     "sharp": "^0.30.5",
     "string-pixel-width": "^1.10.0",
     "subscriptions-transport-ws": "^0.11.0",
-    "undici": "^5.14.0",
+    "undici": "^5.19.1",
     "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
     "zxcvbn": "^4.4.2"

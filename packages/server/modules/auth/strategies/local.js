@@ -18,6 +18,11 @@ const {
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 const { logger } = require('@/logging/logging')
+const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
+const {
+  UserInputError,
+  PasswordTooShortError
+} = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -39,10 +44,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           password: req.body.password
         })
 
-        if (!valid) throw new Error('Invalid credentials')
+        if (!valid) throw new UserInputError('Invalid credentials')
 
         const user = await getUserByEmail({ email: req.body.email })
-        if (!user) throw new Error('Invalid credentials')
+        if (!user) throw new UserInputError('Invalid credentials')
         req.user = { id: user.id }
 
         return next()
@@ -60,7 +65,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     async (req, res, next) => {
       const serverInfo = await getServerInfo()
       try {
-        if (!req.body.password) throw new Error('Password missing')
+        if (!req.body.password) throw new UserInputError('Password missing')
 
         const user = req.body
         const ip = getIpFromRequest(req)
@@ -76,7 +81,9 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         // 1. if the server is invite only you must have an invite
         if (serverInfo.inviteOnly && !req.session.token)
-          throw new Error('This server is invite only. Please provide an invite id.')
+          throw new UserInputError(
+            'This server is invite only. Please provide an invite id.'
+          )
 
         // 2. if you have an invite it must be valid, both for invite only and public servers
         /** @type {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} */
@@ -101,8 +108,16 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         return next()
       } catch (err) {
-        logger.error(err)
-        return res.status(400).send({ err: err.message })
+        switch (err.constructor) {
+          case PasswordTooShortError:
+          case UserInputError:
+          case NoInviteFoundError:
+            logger.info(err)
+            return res.status(400).send({ err: err.message })
+          default:
+            logger.error(err)
+            return res.status(500).send({ err: err.message })
+        }
       }
     },
     finalizeAuth

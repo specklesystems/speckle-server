@@ -36,6 +36,7 @@
               v-for="comment in comments"
               :key="comment.id"
               :comment="comment"
+              :project-id="projectId"
               @mounted="onCommentMounted"
             />
           </div>

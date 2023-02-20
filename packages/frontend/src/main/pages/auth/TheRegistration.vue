@@ -343,6 +343,7 @@ export default {
             type: 'action'
           })
           processSuccessfulAuth(res)
+          this.loading = false
           return
         }
 

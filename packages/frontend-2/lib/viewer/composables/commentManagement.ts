@@ -27,6 +27,7 @@ import { useCollectCommentData } from '~~/lib/viewer/composables/activity'
 import type { Vector3 } from 'three'
 import { Nullable, RichTextEditor } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 
 export function useViewerCommentUpdateTracking(
   projectId: MaybeRef<string>,
@@ -93,7 +94,7 @@ export function useMarkThreadViewed() {
 
 export type CommentEditorValue = {
   doc?: JSONContent | null
-  attachments?: never[]
+  attachments?: SuccessfullyUploadedFileItem[] | null
 }
 
 export function useSubmitComment() {

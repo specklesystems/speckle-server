@@ -22,14 +22,13 @@
         :style="style"
       >
         <div class="relative">
-          <div class="bg-foundation rounded-4xl w-80 p-4 flex flex-col">
-            <ViewerCommentsEditor
-              v-model="commentValue"
-              max-height="300px"
-              autofocus
-              @submit="() => onSubmit()"
-            />
-          </div>
+          <ViewerCommentsEditor
+            ref="editor"
+            v-model="commentValue"
+            max-height="300px"
+            autofocus
+            @submit="() => onSubmit()"
+          />
           <div class="absolute w-full flex justify-between pt-2 space-x-2">
             <div class="flex space-x-2">
               <FormButton
@@ -55,7 +54,13 @@
               />
             </div>
             <div class="space-x-2">
-              <FormButton :icon-left="PaperClipIcon" hide-text color="invert" />
+              <FormButton
+                :icon-left="PaperClipIcon"
+                hide-text
+                color="invert"
+                @click="editor?.openFilePicker"
+              />
+
               <FormButton
                 :icon-left="PaperAirplaneIcon"
                 hide-text
@@ -97,7 +102,8 @@ const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
-const commentValue = ref(<CommentEditorValue>{ doc: undefined })
+const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
+const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 
 const { style } = useExpandedThreadResponsiveLocation({
@@ -120,15 +126,19 @@ const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
   if (!comment?.doc) return
 
-  // TODO: attachments
   // Intentionally not awaiting so that we emit close immediately
   createThread(
     {
       doc: comment.doc,
-      blobIds: []
+      blobIds: comment.attachments?.map((a) => a.result.blobId) || []
     },
     props.modelValue.clickLocation
   )
+
+  // Marking all uploads as in use to prevent cleanup
+  comment.attachments?.forEach((a) => {
+    a.inUse = true
+  })
 
   emit('close')
 }

@@ -150,7 +150,8 @@ export default {
     errorMessage: '',
     serverApp: null,
     appId: null,
-    challenge: null
+    challenge: null,
+    loading: false
   }),
   computed: {
     strategies() {
@@ -201,6 +202,9 @@ export default {
           password: this.form.password
         }
 
+        if (this.loading) return
+        this.loading = true
+
         const res = await fetch(`/auth/local/login?challenge=${this.challenge}`, {
           method: 'POST',
           headers: {
@@ -214,6 +218,7 @@ export default {
         if (res.redirected) {
           this.$mixpanel.track('Log In', { type: 'action' })
           processSuccessfulAuth(res)
+          this.loading = false
           return
         }
 
@@ -222,6 +227,8 @@ export default {
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true
+      } finally {
+        this.loading = false
       }
     }
   }

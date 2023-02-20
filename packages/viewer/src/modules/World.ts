@@ -40,4 +40,29 @@ export class World {
     this.worldBox.makeEmpty()
     this.boxes.length = 0
   }
+
+  public static getPause(priority: number) {
+    switch (priority) {
+      case 0:
+        return this.getPauseFunction(1000, 0)
+      case 1:
+        return this.getPauseFunction(100, 16)
+      case 2:
+        return this.getPauseFunction(16, 8)
+    }
+  }
+
+  private static getPauseFunction(t0: number, t1: number) {
+    const fn = (t0: number, t1: number) => {
+      let lastAsyncPause = 0
+      const pause = async () => {
+        if (Date.now() - lastAsyncPause >= t0) {
+          lastAsyncPause = Date.now()
+          await new Promise((resolve) => setTimeout(resolve, t1))
+        }
+      }
+      return pause
+    }
+    return fn(t0, t1)
+  }
 }

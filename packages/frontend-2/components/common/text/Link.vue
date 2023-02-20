@@ -6,6 +6,9 @@
     :disabled="disabled"
     :size="size"
     :foreground-link="foregroundLink"
+    :icon-left="iconLeft"
+    :icon-right="iconRight"
+    :hide-text="hideText"
     role="link"
     @click.capture="onClick"
   >
@@ -13,8 +16,8 @@
   </FormButton>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
-import { Optional } from '@speckle/shared'
+import { ConcreteComponent, PropType } from 'vue'
+import { Nullable, Optional } from '@speckle/shared'
 
 type LinkSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 const emit = defineEmits<{ (e: 'click', val: MouseEvent): void }>()
@@ -40,6 +43,27 @@ const props = defineProps({
     default: 'base'
   },
   foregroundLink: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Add icon to the left from the text
+   */
+  iconLeft: {
+    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    default: null
+  },
+  /**
+   * Add icon to the right from the text
+   */
+  iconRight: {
+    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    default: null
+  },
+  /**
+   * Hide default slot (when you want to show icons only)
+   */
+  hideText: {
     type: Boolean,
     default: false
   }
