@@ -4,7 +4,7 @@
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
     </div>
-    <div class="bg-foundation rounded-full p-4 w-full relative">
+    <div class="bg-foundation rounded-xl p-4 w-full relative">
       <div class="flex items-center">
         <UserAvatar :user="comment.author" size="sm" class="mr-2" />
         <span class="grow truncate text-sm font-medium">
@@ -18,7 +18,10 @@
           readonly
           @created="emit('mounted')"
         />
-        <ViewerAnchoredPointThreadCommentAttachments :attachments="comment" />
+        <ViewerAnchoredPointThreadCommentAttachments
+          :attachments="comment"
+          :project-id="projectId"
+        />
       </div>
       <CommonTextLink
         v-if="canArchive"
@@ -41,6 +44,7 @@ import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 
 const props = defineProps<{
   comment: ViewerCommentsReplyItemFragment
+  projectId: string
 }>()
 
 const emit = defineEmits<{

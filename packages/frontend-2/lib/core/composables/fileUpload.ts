@@ -4,6 +4,8 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   BlobUploadPrincipal,
   deleteBlob,
+  downloadBlobWithUrl,
+  getBlobUrl,
   isSuccessfullyUploaded,
   uploadFiles
 } from '~~/lib/core/api/blobStorage'
@@ -29,6 +31,31 @@ export function useFileUpload() {
         principal,
         authToken: token.value || undefined,
         callback,
+        apiOrigin
+      })
+  }
+}
+
+export function useFileDownload() {
+  const token = useAuthCookie()
+  const {
+    public: { apiOrigin }
+  } = useRuntimeConfig()
+
+  return {
+    download: (params: { blobId: string; fileName: string; projectId: string }) =>
+      downloadBlobWithUrl({
+        blobId: params.blobId,
+        fileName: params.fileName,
+        principal: { streamId: params.projectId },
+        token: token.value || undefined,
+        apiOrigin
+      }),
+    getBlobUrl: (params: { blobId: string; projectId: string }) =>
+      getBlobUrl({
+        blobId: params.blobId,
+        principal: { streamId: params.projectId },
+        token: token.value || undefined,
         apiOrigin
       })
   }
