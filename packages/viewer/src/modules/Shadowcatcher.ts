@@ -34,13 +34,14 @@ export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
   weights: { x: 1, y: 1, z: 0, w: 1 },
   blurRadius: 16,
   stdDeviation: 4,
-  sigmoidRange: 2,
-  sigmoidStrength: 2.43
+  sigmoidRange: 1.1,
+  sigmoidStrength: 2
 }
 
 export class Shadowcatcher {
   public static readonly MESH_NAME = 'Shadowcatcher'
   public static readonly PLANE_SUBD = 2
+  public static readonly MAX_TEXTURE_SIZE_SCALE = 0.5
   private planeMesh: Mesh = null
   private planeSize: Vector2 = new Vector2()
   private displayMaterial: SpeckleBasicMaterial = null
@@ -93,12 +94,9 @@ export class Shadowcatcher {
     this.shadowcatcherPass.render(renderer, null, null)
   }
 
-  public bake(worldBox: Box3, force?: boolean) {
+  public bake(worldBox: Box3, maxTexSize: number, force?: boolean) {
     this.updatePlaneMesh(worldBox, force)
-    const aspect = this.planeSize.x / this.planeSize.y
-    const size = new Vector2()
-    size.x = Math.trunc(this._config.textureSize)
-    size.y = Math.trunc(this._config.textureSize / aspect)
+    const size = this.getTextureSize(maxTexSize)
     const planeBox = new Box3().setFromObject(this.planeMesh)
     const worldHeight = worldBox.getSize(new Vector3()).z
     this.shadowcatcherPass.updateCamera(planeBox, 0.001, worldHeight)
@@ -111,6 +109,20 @@ export class Shadowcatcher {
     this.displayMaterial.clippingPlanes = planes
     this.displayMaterial.needsUpdate = true
     this.shadowcatcherPass.updateClippingPlanes(planes)
+  }
+
+  private getTextureSize(maxTexSize: number): Vector2 {
+    const aspect = this.planeSize.x / this.planeSize.y
+    const size = new Vector2()
+    size.x = Math.trunc(this._config.textureSize)
+    size.y = Math.trunc(this._config.textureSize / aspect)
+
+    if (size.y > maxTexSize * Shadowcatcher.MAX_TEXTURE_SIZE_SCALE) {
+      size.y = maxTexSize * Shadowcatcher.MAX_TEXTURE_SIZE_SCALE
+      size.x = aspect * size.y
+    }
+
+    return size
   }
 
   private updatePlaneMesh(box: Box3, force?: boolean) {

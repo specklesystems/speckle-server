@@ -141,3 +141,7 @@ export function isSSLServer() {
 export function getOnboardingStreamId(): Nullable<string> {
   return process.env.ONBOARDING_STREAM_ID || null
 }
+
+export function adminOverrideEnabled() {
+  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
+}

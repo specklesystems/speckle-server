@@ -69,7 +69,7 @@ module.exports = (app) => {
       // Token refresh
       if (req.body.refreshToken) {
         if (!req.body.appId || !req.body.appSecret)
-          throw new Error('Invalid request - refresh token')
+          throw new Error('Invalid request - App Id and Secret are required.')
 
         const authResponse = await refreshAppToken({
           refreshToken: req.body.refreshToken,
@@ -86,7 +86,9 @@ module.exports = (app) => {
         !req.body.accessCode ||
         !req.body.challenge
       )
-        throw new Error('Invalid request' + JSON.stringify(req.body))
+        throw new Error(
+          `Invalid request, insufficient information provided in the request. App Id, Secret, Access Code, and Challenge are required.`
+        )
 
       const authResponse = await createAppTokenFromAccessCode({
         appId: req.body.appId,
@@ -97,7 +99,7 @@ module.exports = (app) => {
       return res.send(authResponse)
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
+      moduleLogger.warn(err)
       return res.status(401).send({ err: err.message })
     }
   })
@@ -110,7 +112,7 @@ module.exports = (app) => {
       const token = req.body.token
       const refreshToken = req.body.refreshToken
 
-      if (!token) throw new Error('Invalid request')
+      if (!token) throw new Error('Invalid request. No token provided.')
       await revokeTokenById(token)
 
       if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
