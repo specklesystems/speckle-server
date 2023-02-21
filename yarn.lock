@@ -5431,6 +5431,7 @@ __metadata:
     prettier: ^2.5.1
     private-ip: ^2.3.3
     prom-client: ^14.0.1
+    verror: ^1.10.1
   languageName: unknown
   linkType: soft
 
