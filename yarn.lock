@@ -5321,7 +5321,6 @@ __metadata:
     prettier: ^2.5.1
     prom-client: ^14.0.1
     rate-limiter-flexible: ^2.4.1
-    redis: ^3.1.1
     request: ^2.88.2
     response-time: ^2.3.2
     sanitize-html: ^2.7.1
@@ -10029,7 +10028,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"denque@npm:^1.1.0, denque@npm:^1.5.0":
+"denque@npm:^1.1.0":
   version: 1.5.1
   resolution: "denque@npm:1.5.1"
   checksum: 4375ad19d5cea99f90effa82a8cecdaa10f4eb261fbcd7e47cd753ff2737f037aac8f7f4e031cc77f3966314c491c86a0d3b20c128aeee57f791b4662c45108e
@@ -17363,7 +17362,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redis-commands@npm:1.7.0, redis-commands@npm:^1.7.0":
+"redis-commands@npm:1.7.0":
   version: 1.7.0
   resolution: "redis-commands@npm:1.7.0"
   checksum: d1ff7fbcb5e54768c77f731f1d49679d2a62c3899522c28addb4e2e5813aea8bcac3f22519d71d330224c3f2937f935dfc3d8dc65e90db0f5fe22dc2c1515aa7
@@ -17392,18 +17391,6 @@ __metadata:
   dependencies:
     redis-errors: ^1.0.0
   checksum: 89290ae530332f2ae37577647fa18208d10308a1a6ba750b9d9a093e7398f5e5253f19855b64c98757f7129cccce958e4af2573fdc33bad41405f87f1943459a
-  languageName: node
-  linkType: hard
-
-"redis@npm:^3.1.1":
-  version: 3.1.2
-  resolution: "redis@npm:3.1.2"
-  dependencies:
-    denque: ^1.5.0
-    redis-commands: ^1.7.0
-    redis-errors: ^1.2.0
-    redis-parser: ^3.0.0
-  checksum: baec42198626b22d2dfc063b6a6f30394daee994c21f380e58ecf91c3edee333c4e32907c30f082fe66d2177695f7b2567902eef399ecb22da3e199ea6363a30
   languageName: node
   linkType: hard
 
