@@ -22,7 +22,8 @@ import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
-  viewerLoadedResourcesQuery
+  viewerLoadedResourcesQuery,
+  viewerLoadedThreadsQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
@@ -34,9 +35,12 @@ import {
   ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
+  ViewerLoadedThreadsQuery,
   ViewerResourceItem,
   CommentCollection,
-  Comment
+  Comment,
+  ViewerLoadedThreadsQueryVariables,
+  ProjectCommentsFilter
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
@@ -48,13 +52,14 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
 
 export type LoadedCommentThread = NonNullable<
-  Get<ViewerLoadedResourcesQuery, 'project.commentThreads.items[0]'>
+  Get<ViewerLoadedThreadsQuery, 'project.commentThreads.items[0]'>
 >
 
 type FilterAction = (
@@ -124,6 +129,12 @@ export type InjectableViewerState = Readonly<{
        * represented in the URL
        */
       resourceIdString: ComputedRef<string>
+
+      /**
+       * Writable computed for reading/writing current thread filters
+       */
+      threadFilters: Ref<Omit<ProjectCommentsFilter, 'resourceIdString'>>
+
       /**
        * Helper for switching model to a specific version (or just latest)
        */
@@ -164,6 +175,10 @@ export type InjectableViewerState = Readonly<{
        * Variables used to load the resource query. Relevant when making cache updates.
        */
       resourceQueryVariables: ComputedRef<Optional<ViewerLoadedResourcesQueryVariables>>
+      /**
+       * Variables used to load the threads query. Relevant when making cache updates.
+       */
+      threadsQueryVariables: ComputedRef<Optional<ViewerLoadedThreadsQueryVariables>>
     }
   }
   /**
@@ -306,6 +321,8 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value)
   )
 
+  const threadFilters = ref({} as Omit<ProjectCommentsFilter, 'resourceIdString'>)
+
   const switchModelToVersion = (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
 
@@ -338,6 +355,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       request: {
         items: resources,
         resourceIdString,
+        threadFilters,
         switchModelToVersion
       }
     }
@@ -452,11 +470,12 @@ function setupResponseResourceData(
   'resourceItems' | 'resourceItemsQueryVariables'
 > {
   const globalError = useError()
+  const { triggerNotification } = useGlobalToast()
 
   const {
     projectId,
     resources: {
-      request: { items }
+      request: { resourceIdString, threadFilters }
     }
   } = state
   const { resourceItems } = resourceItemsData
@@ -472,21 +491,20 @@ function setupResponseResourceData(
     )
   )
 
+  // MODELS AND VERSIONS
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables,
-    onError
+    onError: onViewerLoadedResourcesError
   } = useQuery(viewerLoadedResourcesQuery, () => ({
     projectId: projectId.value,
     modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
-    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort(),
-    resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(items.value)
+    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort()
   }))
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
-  const commentThreads = computed(() => project.value?.commentThreads?.items || [])
 
   const modelsAndVersionIds = computed(() =>
     nonObjectResourceItems.value
@@ -497,11 +515,37 @@ function setupResponseResourceData(
       .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
   )
 
-  onError((err) => {
+  onViewerLoadedResourcesError((err) => {
     globalError.value = createError({
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
     })
+  })
+
+  // COMMENT THREADS
+  const {
+    result: viewerLoadedThreadsResult,
+    onError: onViewerLoadedThreadsError,
+    variables: threadsQueryVariables
+  } = useQuery(viewerLoadedThreadsQuery, () => ({
+    projectId: projectId.value,
+    filter: {
+      ...threadFilters.value,
+      resourceIdString: resourceIdString.value
+    }
+  }))
+
+  const commentThreads = computed(
+    () => viewerLoadedThreadsResult.value?.project?.commentThreads.items || []
+  )
+
+  onViewerLoadedThreadsError((err) => {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Comment loading failed',
+      description: `${err.message}`
+    })
+    console.error(err)
   })
 
   return {
@@ -509,7 +553,8 @@ function setupResponseResourceData(
     commentThreads,
     modelsAndVersionIds,
     project,
-    resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value)
+    resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
+    threadsQueryVariables: computed(() => threadsQueryVariables.value)
   }
 }
 
@@ -810,7 +855,11 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
     projectId,
     resources: {
       request: { resourceIdString },
-      response: { resourceQueryVariables, resourceItemsQueryVariables }
+      response: {
+        resourceQueryVariables,
+        resourceItemsQueryVariables,
+        threadsQueryVariables
+      }
     }
   } = state
 
@@ -848,8 +897,8 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
           cache,
           {
             query: {
-              query: viewerLoadedResourcesQuery,
-              variables: resourceQueryVariables.value
+              query: viewerLoadedThreadsQuery,
+              variables: threadsQueryVariables.value
             }
           },
           (data) => {

@@ -434,6 +434,11 @@ export type PaginatedProjectCommentsParams = {
     threadsOnly: boolean
     includeArchived: boolean
     resourceIdString: string
+    /**
+     * If true, will ignore the version parts of `model@version` identifiers and look for comments of
+     * all versions of any selected comments
+     */
+    allModelVersions: boolean
   }>
 }
 
@@ -441,6 +446,7 @@ function getPaginatedProjectCommentsBaseQuery(
   params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>
 ) {
   const { projectId, filter } = params
+  const allModelVersions = filter?.allModelVersions || false
 
   const q = Comments.knex<CommentRecord[]>().distinct().select(Comments.cols)
 
@@ -487,7 +493,7 @@ function getPaginatedProjectCommentsBaseQuery(
             for (const modelResource of modelResources) {
               w3.orWhere((w4) => {
                 w4.where(Branches.col.id, modelResource.modelId)
-                if (modelResource.versionId) {
+                if (modelResource.versionId && !allModelVersions) {
                   w4.andWhere(CommentLinks.col.resourceId, modelResource.versionId)
                 }
               })

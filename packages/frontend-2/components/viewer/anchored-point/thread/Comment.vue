@@ -61,6 +61,7 @@ const {
 
 const canArchive = computed(
   () =>
+    !props.comment.archived &&
     activeUser.value &&
     (props.comment.author.id === activeUser.value.id ||
       project.value?.role === Roles.Stream.Owner)

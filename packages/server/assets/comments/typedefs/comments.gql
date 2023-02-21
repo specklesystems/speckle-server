@@ -183,6 +183,18 @@ input ProjectCommentsFilter {
   comma-delimited resouce string (same format that's used in the viewer URL)
   """
   resourceIdString: String
+
+  """
+  By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+  and all comments of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+  enabled, then only comment threads of loaded/referenced versions in resourceIdString will be returned.
+  """
+  loadedVersionsOnly: Boolean
+
+  """
+  Whether or not to include archived/resolved threads
+  """
+  includeArchived: Boolean
 }
 
 type ResourceIdentifier {

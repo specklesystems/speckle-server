@@ -25,7 +25,6 @@ export const viewerLoadedResourcesQuery = graphql(`
     $projectId: String!
     $modelIds: [String!]!
     $versionIds: [String!]
-    $resourceIdString: String!
   ) {
     project(id: $projectId) {
       id
@@ -44,13 +43,26 @@ export const viewerLoadedResourcesQuery = graphql(`
           }
         }
       }
-      commentThreads(filter: { resourceIdString: $resourceIdString }) {
+      ...ModelPageProject
+    }
+  }
+`)
+
+export const viewerLoadedThreadsQuery = graphql(`
+  query ViewerLoadedThreads(
+    $projectId: String!
+    $filter: ProjectCommentsFilter!
+    $cursor: String
+    $limit: Int = 25
+  ) {
+    project(id: $projectId) {
+      id
+      commentThreads(filter: $filter, cursor: $cursor, limit: $limit) {
         totalCount
         items {
           ...ViewerCommentThread
         }
       }
-      ...ModelPageProject
     }
   }
 `)

@@ -168,6 +168,7 @@ module.exports = {
         projectId: parent.id,
         filter: {
           ...(args.filter || {}),
+          allModelVersions: !args.filter?.loadedVersionsOnly,
           threadsOnly: true
         }
       })
