@@ -1,4 +1,5 @@
 import {
+  Box3,
   Color,
   DynamicDrawUsage,
   InterleavedBufferAttribute,
@@ -7,6 +8,7 @@ import {
   Vector2,
   Vector3
 } from 'three'
+import { ExtendedTriangle } from 'three-mesh-bvh'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import MeshBatch from './batching/MeshBatch'
@@ -69,14 +71,14 @@ export class SectionBoxOutlines {
     }
   }
 
-  public updatePlaneOutline(batches: MeshBatch[], plane: Plane) {
+  public updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
     const tempVector = new Vector3()
     const tempVector1 = new Vector3()
     const tempVector2 = new Vector3()
     const tempVector3 = new Vector3()
     const tempVector4 = new Vector3()
     const tempLine = new Line3()
-    const planeId = this.getPlaneId(plane)
+    const planeId = this.getPlaneId(_plane)
     const clipOutline = this.planeOutlines[planeId].renderable
 
     let index = 0
@@ -88,13 +90,17 @@ export class SectionBoxOutlines {
     const scratchBuffer = new Array<number>()
 
     for (let b = 0; b < batches.length; b++) {
+      const plane = new Plane().copy(_plane)
+
       batches[b].boundsTree.shapecast({
         intersectsBounds: (box) => {
           const localPlane = plane
-          return localPlane.intersectsBox(box)
+          const bbox = new Box3().copy(box)
+          bbox.applyMatrix4(batches[b].boundsTree['localTransformInv'])
+          return localPlane.intersectsBox(bbox)
         },
 
-        intersectsTriangle: (tri, i) => {
+        intersectsTriangle: (_tri, i) => {
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
           const material = batches[b].getMaterialAtIndex(i)
@@ -107,6 +113,10 @@ export class SectionBoxOutlines {
 
           const localPlane = plane
           let count = 0
+          const tri = new ExtendedTriangle().copy(_tri)
+          tri.a.applyMatrix4(batches[b].boundsTree['localTransformInv'])
+          tri.b.applyMatrix4(batches[b].boundsTree['localTransformInv'])
+          tri.c.applyMatrix4(batches[b].boundsTree['localTransformInv'])
 
           tempLine.start.copy(tri.a)
           tempLine.end.copy(tri.b)

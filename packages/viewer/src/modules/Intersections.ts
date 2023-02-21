@@ -99,6 +99,7 @@ export class Intersections {
     this.raycaster.camera = camera
     this.raycaster.set(ray.origin, ray.direction)
     this.raycaster.firstHitOnly = firstOnly
+
     return this.intersectInternal(scene, nearest, bounds)
   }
 

@@ -1,9 +1,9 @@
 /* eslint-disable camelcase */
 import {
+  Box3,
   BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
-  Float64BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
@@ -33,7 +33,8 @@ export class Geometry {
 
   public static buildBVH(
     indices: Uint32Array | Uint16Array,
-    position: Float64Array
+    position: Float64Array,
+    bounds: Box3
   ): MeshBVH {
     const bvhGeometry = new BufferGeometry()
     let bvhIndices = null
@@ -46,9 +47,28 @@ export class Geometry {
       ;(bvhIndices as Uint16Array).set(indices, 0)
       bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
     }
-    bvhGeometry.setAttribute('position', new Float64BufferAttribute(position, 3))
+    const boundsCenter = bounds.getCenter(new Vector3())
+    const transform = new Matrix4().makeTranslation(
+      boundsCenter.x,
+      boundsCenter.y,
+      boundsCenter.z
+    )
+    transform.invert()
+    const localPositions = new Float32Array(position.length)
+    const vecBuff = new Vector3()
+    for (let k = 0; k < position.length; k += 3) {
+      vecBuff.set(position[k], position[k + 1], position[k + 2])
+      vecBuff.applyMatrix4(transform)
+      localPositions[k] = vecBuff.x
+      localPositions[k + 1] = vecBuff.y
+      localPositions[k + 2] = vecBuff.z
+    }
 
-    return new MeshBVH(bvhGeometry)
+    bvhGeometry.setAttribute('position', new Float32BufferAttribute(localPositions, 3))
+    const bvh = new MeshBVH(bvhGeometry)
+    bvh['localTransform'] = transform
+    bvh['localTransformInv'] = new Matrix4().copy(transform).invert()
+    return bvh
   }
 
   public static updateRTEGeometry(

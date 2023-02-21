@@ -2,16 +2,20 @@ import {
   BackSide,
   BufferGeometry,
   DoubleSide,
+  Line,
+  LineBasicMaterial,
   Material,
   Matrix4,
   Mesh,
   Ray,
+  Raycaster,
   Sphere,
   Triangle,
   Vector2,
   Vector3
 } from 'three'
 import { estimateMemoryInBytes, MeshBVH } from 'three-mesh-bvh'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -43,6 +47,7 @@ export default class SpeckleMesh extends Mesh {
   private boundsTree: MeshBVH = null
   public boundsTreeSizeInBytes = 0
   private batchMaterial: Material = null
+  private debugLine: Line = null
 
   public get BVH() {
     return this.boundsTree
@@ -66,6 +71,7 @@ export default class SpeckleMesh extends Mesh {
     }
 
     hit.point.applyMatrix4(object.matrixWorld)
+    hit.point.applyMatrix4(this.boundsTree['localTransform'])
     hit.distance = hit.point.distanceTo(raycaster.ray.origin)
     hit.object = object
 
@@ -76,12 +82,37 @@ export default class SpeckleMesh extends Mesh {
     }
   }
 
-  raycast(raycaster, intersects) {
+  raycast(raycaster: Raycaster, intersects) {
     if (this.boundsTree) {
       if (this.batchMaterial === undefined) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
+      tmpInverseMatrix.copy(this.boundsTree['localTransform'])
+      ray.applyMatrix4(tmpInverseMatrix)
+
+      if (!this.debugLine) {
+        const lineMat = new LineBasicMaterial({
+          color: 0x0000ff
+        })
+
+        const points = []
+        points.push(new Vector3(0, 0, 0))
+        points.push(new Vector3(0, 0, 0))
+
+        const geometry = new BufferGeometry().setFromPoints(points)
+
+        this.debugLine = new Line(geometry, lineMat)
+        this.debugLine.layers.set(ObjectLayers.PROPS)
+        this.add(this.debugLine)
+      }
+      const p0 = new Vector3().copy(ray.origin)
+      const p1 = new Vector3()
+        .copy(p0)
+        .add(new Vector3().copy(ray.direction).multiplyScalar(1000))
+      this.debugLine.geometry.attributes['position'].setXYZ(0, p0.x, p0.y, p0.z)
+      this.debugLine.geometry.attributes['position'].setXYZ(1, p1.x, p1.y, p1.z)
+      this.debugLine.geometry.attributes['position'].needsUpdate = true
 
       const bvh = this.boundsTree
       if (raycaster.firstHitOnly === true) {

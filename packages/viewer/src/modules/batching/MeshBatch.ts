@@ -25,6 +25,7 @@ import {
 } from './Batch'
 import Logger from 'js-logger'
 import { GeometryConverter } from '../converter/GeometryConverter'
+import { WorldTree } from '../tree/WorldTree'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -453,8 +454,13 @@ export default class MeshBatch implements Batch {
       this.batchMaterial.vertexColors ? color : null
     )
 
-    this.boundsTree = Geometry.buildBVH(indices, position)
+    this.boundsTree = Geometry.buildBVH(
+      indices,
+      position,
+      WorldTree.getRenderTree(this.subtreeId).treeBounds
+    )
     this.boundsTree.getBoundingBox(this.bounds)
+    this.bounds.applyMatrix4(this.boundsTree['localTransformInv'])
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
   }
