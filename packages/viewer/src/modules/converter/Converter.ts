@@ -416,6 +416,12 @@ export default class Coverter {
   }
 
   private async CurveToNode(obj, node) {
+    if (!obj.displayValue) {
+      Logger.warn(
+        `Object ${obj.id} of type ${obj.speckle_type} has no display value and will be ignored`
+      )
+      return
+    }
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
     const nestedNode: TreeNode = WorldTree.getInstance().parse({
