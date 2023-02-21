@@ -206,6 +206,12 @@ module.exports = {
       })
     }
   },
+  ViewerUserActivityMessage: {
+    async user(parent, args, context) {
+      const { userId } = parent
+      return context.loaders.users.getUser.load(userId)
+    }
+  },
   Stream: {
     async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)

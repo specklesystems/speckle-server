@@ -28,21 +28,16 @@
       class="z-[10]"
     />
 
-    <!-- TODO: Ask fabs how to plop in a proper user avatar here -->
-    <!-- <Portal to="secondary-actions">
+    <!-- Active user avatars in navbar -->
+    <Portal to="secondary-actions">
       <ViewerScope :state="state">
-        <UserAvatar
-          v-for="user in Object.values(users)"
-          :key="user.viewerSessionId"
-          :user="{id: user.userId, name:users.name } as unknown as AvatarUserType"
-        />
+        <UserAvatarGroup :users="activeUserAvatars" />
       </ViewerScope>
-    </Portal> -->
+    </Portal>
   </div>
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
-import { AvatarUserType } from '~~/lib/user/composables/avatar'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
@@ -73,4 +68,6 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
     closeNewThread()
   }
 }
+
+const activeUserAvatars = computed(() => Object.values(users.value).map((u) => u.user))
 </script>

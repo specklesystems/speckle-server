@@ -11,6 +11,9 @@ export const onViewerUserActivityBroadcastedSubscription = graphql(`
     ) {
       userName
       userId
+      user {
+        ...LimitedUserAvatar
+      }
       viewerSessionId
       status
       typing {

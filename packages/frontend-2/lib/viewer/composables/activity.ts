@@ -2,6 +2,7 @@ import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
   CommentDataInput,
+  OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessage,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
@@ -10,7 +11,10 @@ import {
   ViewerUserTypingMessageInput
 } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import {
+  useSelectionEvents,
+  useViewerCameraRestTracker
+} from '~~/lib/viewer/composables/viewer'
 import { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -174,7 +178,7 @@ export function useViewerUserActivityBroadcasting() {
 }
 
 export type UserActivityModel = SetFullyRequired<
-  ViewerUserActivityMessage,
+  OnViewerUserActivityBroadcastedSubscription['viewerUserActivityBroadcasted'],
   'selection'
 > & {
   isStale: boolean
@@ -272,8 +276,8 @@ export function useViewerUserActivityTracking(params: {
         target: {
           ...user.style.target,
           ...result.style,
-          transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease',
-          opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
+          transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease'
+          // opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
         }
       }
     }
@@ -314,6 +318,12 @@ export function useViewerUserActivityTracking(params: {
   useSelectionEvents({
     singleClickCallback: selectionCallback,
     doubleClickCallback: selectionCallback
+  })
+
+  useViewerCameraRestTracker(() => sendUpdate.emitViewing())
+
+  onMounted(() => {
+    sendUpdate.emitViewing()
   })
 
   onBeforeUnmount(() => {

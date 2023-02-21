@@ -8,7 +8,7 @@
     <div class="text-sm">
       <slot>No items matching your search query found!</slot>
     </div>
-    <FormButton size="sm" @click="$emit('clear-search')">Clear Search</FormButton>
+    <FormButton size="sm" @click="() => $emit('clear-search')">Clear Search</FormButton>
   </div>
 </template>
 <script setup lang="ts">

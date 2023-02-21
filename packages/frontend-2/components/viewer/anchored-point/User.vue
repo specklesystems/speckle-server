@@ -1,8 +1,8 @@
 <template>
   <div
     :class="[
-      'absolute p-1 pointer-events-auto flex space-x-1 pl-2 pr-4 py-2 rounded-tl-full rounded-tr-full rounded-br-full text-xs shadow-lg',
-      user.isStale ? 'bg-foundation-disabled' : 'bg-foundation'
+      'absolute pointer-events-auto flex',
+      user.isStale ? 'xxxbg-foundation-disabled' : 'xxxbg-foundation'
     ]"
     :style="{
       ...user.style.target
@@ -10,6 +10,7 @@
   >
     <UserIcon class="h-4 w-4" />
     <span>{{ user.userName }}</span>
+    <!-- <IconCursor class="w-4 h-4"/> -->
   </div>
 </template>
 <script setup lang="ts">

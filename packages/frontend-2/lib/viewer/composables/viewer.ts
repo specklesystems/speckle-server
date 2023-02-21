@@ -26,6 +26,27 @@ export function useViewerCameraTracker(
   })
 }
 
+export function useViewerCameraRestTracker(
+  callback: () => void,
+  options?: Partial<{ debounceWait: number }>
+): void {
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const { debounceWait = 500 } = options || {}
+
+  const finalCallback = debounceWait ? debounce(callback, debounceWait) : callback
+
+  onMounted(() => {
+    instance.cameraHandler.controls.addEventListener('rest', finalCallback)
+  })
+
+  onBeforeUnmount(() => {
+    instance.cameraHandler.controls.removeEventListener('rest', finalCallback)
+  })
+}
+
 export function useSelectionEvents(
   params: {
     singleClickCallback?: (event: Nullable<SelectionEvent>) => void

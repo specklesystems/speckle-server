@@ -53,7 +53,7 @@ export function useViewerAnchoredPointCalculator(params: {
       style: <Partial<CSSProperties>>{
         ...(targetLoc?.x && targetLoc?.y
           ? {
-              transform: `translate(0%, -100%) translate(${targetLoc.x}px,${targetLoc.y}px)`,
+              transform: `translate(0%, 0%) translate(${targetLoc.x}px,${targetLoc.y}px)`,
               // transform: `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`,
               transformOrigin: 'center'
             }

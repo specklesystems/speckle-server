@@ -9,7 +9,7 @@
   </div>
   <CommonEmptySearchState
     v-else-if="search && latestModelsResult?.project?.models.items.length === 0"
-    @clear-search="$emit('clear-search')"
+    @clear-search="() => $emit('clear-search')"
   />
   <div v-else>TODO: Grid empty state</div>
 </template>

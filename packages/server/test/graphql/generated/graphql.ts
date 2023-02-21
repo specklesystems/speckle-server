@@ -2221,7 +2221,8 @@ export type ViewerUserActivityMessage = {
   selection?: Maybe<ViewerUserSelectionInfo>;
   status: ViewerUserActivityStatus;
   typing?: Maybe<ViewerUserTypingMessage>;
-  userId?: Maybe<Scalars['String']>;
+  user: LimitedUser;
+  userId: Scalars['String'];
   userName: Scalars['String'];
   viewerSessionId: Scalars['String'];
 };
