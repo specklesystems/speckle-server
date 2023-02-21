@@ -31,7 +31,7 @@
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.100.0",
+    "@aws-sdk/client-s3": "^3.272.0",
     "@aws-sdk/lib-storage": "^3.100.0",
     "@godaddy/terminus": "^4.9.0",
     "@graphql-tools/schema": "^9.0.4",
