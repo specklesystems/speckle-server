@@ -20,23 +20,36 @@
       @update:expanded="onThreadExpandedChange"
     />
 
-    <!-- Active user -->
+    <!-- Active users -->
     <ViewerAnchoredPointUser
       v-for="user in Object.values(users)"
       :key="user.viewerSessionId"
       :user="user"
       class="z-[10]"
     />
+
+    <!-- TODO: Ask fabs how to plop in a proper user avatar here -->
+    <!-- <Portal to="secondary-actions">
+      <ViewerScope :state="state">
+        <UserAvatar
+          v-for="user in Object.values(users)"
+          :key="user.viewerSessionId"
+          :user="{id: user.userId, name:users.name } as unknown as AvatarUserType"
+        />
+      </ViewerScope>
+    </Portal> -->
   </div>
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
+import { AvatarUserType } from '~~/lib/user/composables/avatar'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
   useViewerCommentBubbles,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
@@ -44,6 +57,8 @@ const { commentThreads, openThread } = useViewerCommentBubbles({ parentEl })
 const { buttonState, closeNewThread } = useViewerNewThreadBubble({
   parentEl
 })
+
+const state = useInjectedViewerState()
 
 const onThreadUpdate = (thread: CommentBubbleModel) => {
   // Being careful not to mutate old value directly to ensure watchers work properly

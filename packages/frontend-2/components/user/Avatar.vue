@@ -65,7 +65,7 @@ const props = withDefaults(
 const { sizeClasses } = useAvatarSizeClasses({ props: toRefs(props) })
 
 const initials = computed(() => {
-  if (!props.user?.name.length) return
+  if (!props.user?.name?.length) return
   const parts = props.user.name.split(' ')
   return parts[0][0] + (parts[1]?.[0] || '')
 })
