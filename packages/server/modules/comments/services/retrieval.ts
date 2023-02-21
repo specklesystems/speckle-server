@@ -1,3 +1,4 @@
+import { Optional } from '@speckle/shared'
 import {
   PaginatedCommitCommentsParams,
   getPaginatedCommitComments as getPaginatedCommitCommentsDb,
@@ -7,8 +8,10 @@ import {
   getPaginatedBranchCommentsTotalCount,
   getPaginatedProjectComments as getPaginatedProjectCommentsDb,
   getPaginatedProjectCommentsTotalCount,
-  PaginatedProjectCommentsParams
+  PaginatedProjectCommentsParams,
+  resolvePaginatedProjectCommentsLatestModelResources
 } from '@/modules/comments/repositories/comments'
+import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 
 export async function getPaginatedCommitComments(
   params: PaginatedCommitCommentsParams
@@ -41,9 +44,20 @@ export async function getPaginatedBranchComments(
 export async function getPaginatedProjectComments(
   params: PaginatedProjectCommentsParams
 ) {
+  let preloadedModelLatestVersions: Optional<
+    Awaited<ReturnType<typeof getBranchLatestCommits>>
+  > = undefined
+  // optimization to ensure we don't request this stuff twice
+  if (!params.filter?.allModelVersions && params.filter?.resourceIdString) {
+    preloadedModelLatestVersions =
+      await resolvePaginatedProjectCommentsLatestModelResources(
+        params.filter.resourceIdString
+      )
+  }
+
   const [result, totalCount] = await Promise.all([
-    getPaginatedProjectCommentsDb(params),
-    getPaginatedProjectCommentsTotalCount(params)
+    getPaginatedProjectCommentsDb(params, { preloadedModelLatestVersions }),
+    getPaginatedProjectCommentsTotalCount(params, { preloadedModelLatestVersions })
   ])
 
   return {

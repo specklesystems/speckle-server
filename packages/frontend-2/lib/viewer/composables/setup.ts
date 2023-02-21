@@ -45,7 +45,11 @@ import {
 import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
-import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import {
+  getCacheId,
+  modifyObjectFields,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { nanoid } from 'nanoid'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -855,22 +859,42 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
     projectId,
     resources: {
       request: { resourceIdString },
-      response: {
-        resourceQueryVariables,
-        resourceItemsQueryVariables,
-        threadsQueryVariables
-      }
+      response: { resourceQueryVariables, resourceItemsQueryVariables }
     }
   } = state
 
   useViewerCommentUpdateTracking(projectId, resourceIdString, (event, cache) => {
-    const isDeleted = event.type === ProjectCommentsUpdatedMessageType.Archived
+    const isArchived = event.type === ProjectCommentsUpdatedMessageType.Archived
     const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
     const model = event.comment
 
-    if (isDeleted) {
-      cache.evict({
-        id: getCacheId('Comment', event.id)
+    if (isArchived) {
+      // Mark as archived
+      cache.modify({
+        id: getCacheId('Comment', event.id),
+        fields: {
+          archived: () => true
+        }
+      })
+
+      // Remove from project.commentThreads
+      modifyObjectFields<
+        {
+          cursor: Nullable<string>
+          limit: Nullable<number>
+          filter: Nullable<ProjectCommentsFilter>
+        },
+        NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>
+      >(cache, getCacheId('Project', projectId.value), (fieldName, variables, data) => {
+        if (fieldName !== 'commentThreads') return
+        if (variables.filter?.includeArchived) return
+
+        const newItems = data.items.filter((i) => i.id !== event.id)
+        return {
+          ...data,
+          totalCount: data.totalCount - 1,
+          items: newItems
+        }
       })
     } else if (isNew && model) {
       const parentId = model.parent?.id
@@ -893,27 +917,24 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
         })
       } else {
         // Add comment thread
-        updateCacheByFilter(
-          cache,
+        modifyObjectFields<
           {
-            query: {
-              query: viewerLoadedThreadsQuery,
-              variables: threadsQueryVariables.value
-            }
+            cursor: Nullable<string>
+            limit: Nullable<number>
+            filter: Nullable<ProjectCommentsFilter>
           },
-          (data) => {
-            if (!data.project) return
+          NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>
+        >(
+          cache,
+          getCacheId('Project', projectId.value),
+          (fieldName, _variables, data) => {
+            if (fieldName !== 'commentThreads') return
 
+            const newItems = [model, ...data.items]
             return {
               ...data,
-              project: {
-                ...data.project,
-                commentThreads: {
-                  ...data.project.commentThreads,
-                  totalCount: data.project.commentThreads.totalCount + 1,
-                  items: [model, ...data.project.commentThreads.items]
-                }
-              }
+              totalCount: data.totalCount + 1,
+              items: newItems
             }
           }
         )
