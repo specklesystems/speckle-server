@@ -363,13 +363,13 @@ export default class Coverter {
     if (!obj) return
     if (!obj.vertices || obj.vertices.length === 0) {
       Logger.warn(
-        `Object id ${obj.id} of type ${obj.speckle_tpe} has no vertex position data and will be ignored`
+        `Object id ${obj.id} of type ${obj.speckle_type} has no vertex position data and will be ignored`
       )
       return
     }
     if (!obj.faces || obj.faces.length === 0) {
       Logger.warn(
-        `Object id ${obj.id} of type ${obj.speckle_tpe} has no face data and will be ignored`
+        `Object id ${obj.id} of type ${obj.speckle_type} has no face data and will be ignored`
       )
       return
     }
