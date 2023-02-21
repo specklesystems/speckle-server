@@ -11,6 +11,12 @@
       </ViewerScope>
     </Portal>
 
+    <Portal to="primary-actions">
+      <div class="flex space-x-4">
+        <FormButton :icon-left="ShareIcon">Share</FormButton>
+      </div>
+    </Portal>
+
     <ClientOnly>
       <!-- Viewer host -->
       <div class="special-gradient absolute w-screen h-screen z-10">
@@ -35,6 +41,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
+import { ShareIcon } from '@heroicons/vue/20/solid'
 
 definePageMeta({
   layout: 'viewer',

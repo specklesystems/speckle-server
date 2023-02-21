@@ -52,7 +52,7 @@ function useCollectSelection() {
   const selectionLocation = ref(null as Nullable<Vector3>)
 
   const selectionCallback = (event: Nullable<SelectionEvent>) => {
-    if (!event) return
+    if (!event) return (selectionLocation.value = null) // reset selection location
 
     const firstHit = event.hits[0]
     selectionLocation.value = firstHit.point
@@ -160,13 +160,14 @@ export function useViewerUserActivityBroadcasting() {
         selection: null,
         typing: null
       }),
-    emitViewing: async () =>
-      invokeMutation({
+    emitViewing: async () => {
+      await invokeMutation({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Viewing,
         selection: getSelection(),
         typing: null
-      }),
+      })
+    },
     emitTyping: async (typing: ViewerUserTypingMessageInput) =>
       invokeMutation({
         ...getMainMetadata(),
@@ -324,6 +325,9 @@ export function useViewerUserActivityTracking(params: {
 
   onMounted(() => {
     sendUpdate.emitViewing()
+    window.addEventListener('beforeunload', () => {
+      sendUpdate.emitDisconnected()
+    })
   })
 
   onBeforeUnmount(() => {

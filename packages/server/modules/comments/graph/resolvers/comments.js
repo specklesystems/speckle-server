@@ -555,7 +555,7 @@ module.exports = {
             )
           ])
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream.isPublic && !stream.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself

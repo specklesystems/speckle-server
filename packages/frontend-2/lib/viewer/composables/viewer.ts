@@ -34,7 +34,7 @@ export function useViewerCameraRestTracker(
     viewer: { instance }
   } = useInjectedViewerState()
 
-  const { debounceWait = 500 } = options || {}
+  const { debounceWait = 200 } = options || {}
 
   const finalCallback = debounceWait ? debounce(callback, debounceWait) : callback
 
