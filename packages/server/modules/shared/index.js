@@ -1,5 +1,4 @@
 'use strict'
-const Redis = require('ioredis')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
@@ -11,8 +10,7 @@ const {
   adminOverrideEnabled,
   getRedisUrl
 } = require('@/modules/shared/helpers/envHelper')
-const sentry = require('@/logging/sentryHelper')
-const { moduleLogger } = require('@/logging/logging')
+const { createRedisClient } = require('@/modules/shared/redis/redis')
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -31,38 +29,8 @@ const CommitPubsubEvents = Object.freeze({
  * GraphQL Subscription PubSub instance
  */
 const pubsub = new RedisPubSub({
-  publisher: (() => {
-    let redisClient
-    try {
-      redisClient = new Redis(getRedisUrl())
-      redisClient.on('error', (err) => {
-        moduleLogger.error(err, 'Redis encountered an error.')
-        //TODO should we throw here?
-      })
-    } catch (err) {
-      moduleLogger.error(err, 'Could not connect to Redis for pubsub Publisher')
-      sentry({ err })
-      throw new Error('Unable to connect to Redis for pubsub Publisher.') //FIXME backoff and retry?
-    }
-
-    return redisClient
-  })(),
-  subscriber: (() => {
-    let redisClient
-    try {
-      redisClient = new Redis(getRedisUrl())
-      redisClient.on('error', (err) => {
-        moduleLogger.error(err, 'Redis encountered an error.')
-        throw err
-      })
-    } catch (err) {
-      moduleLogger.error(err, 'Could not connect to Redis for pubsub Subscriber.')
-      sentry({ err })
-      throw new Error('Unable to connect to Redis for pubsub Subscriber.') //FIXME backoff and retry?
-    }
-
-    return redisClient
-  })()
+  publisher: createRedisClient(getRedisUrl()),
+  subscriber: createRedisClient(getRedisUrl())
 })
 
 let roles

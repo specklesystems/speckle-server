@@ -1,6 +1,5 @@
 'use strict'
 
-const redis = require('redis')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
@@ -9,6 +8,7 @@ const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger } = require('@/logging/logging')
+const { createRedisClient } = require('@/modules/shared/redis/redis')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -21,21 +21,7 @@ module.exports = async (app) => {
   passport.deserializeUser((user, done) => done(null, user))
   app.use(passport.initialize())
 
-  let redisClient
-  try {
-    redisClient = redis.createClient(getRedisUrl())
-    redisClient.on('error', (err) => {
-      authLogger.error(err, 'Redis encountered an error.')
-      throw err
-    })
-  } catch (err) {
-    if (err instanceof Error) {
-      authLogger.error(err, 'Could not connect to Redis')
-      sentry({ err })
-    }
-    throw new Error('Unable to connect to Redis for authentication purposes.') //FIXME backoff and retry?
-  }
-
+  const redisClient = createRedisClient(getRedisUrl())
   const session = ExpressSession({
     store: new RedisStore({ client: redisClient }),
     secret: process.env.SESSION_SECRET,
