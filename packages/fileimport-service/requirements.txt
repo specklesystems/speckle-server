@@ -1,3 +1,3 @@
-numpy-stl==2.17.1
+numpy-stl==3.0.0
 specklepy==2.9.1
 structlog==22.3.0

@@ -11,6 +11,7 @@ const {
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { logger } = require('@/logging/logging')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -42,7 +43,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
-          throw new Error(
+          throw new UserInputError(
             'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with Google'
           )
         }
@@ -68,7 +69,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // if the server is invite only and we have no invite id, throw.
         if (serverInfo.inviteOnly && !req.session.token) {
-          throw new Error(
+          throw new UserInputError(
             'This server is invite only. Please authenticate yourself through a valid invite link.'
           )
         }
@@ -88,7 +89,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return done(null, myUser)
       } catch (err) {
-        logger.error(err)
+        switch (err.constructor) {
+          case UserInputError:
+            logger.info(err)
+            break
+          default:
+            logger.error(err)
+        }
         return done(null, false, { message: err.message })
       }
     }
