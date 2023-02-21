@@ -277,41 +277,34 @@ const initializeRedisRateLimiters = (
   const mapping = Object.fromEntries(
     allActions.map((action) => {
       const limits = options[action]
-      let burstyLimiter: BurstyRateLimiter
-      try {
-        burstyLimiter = new BurstyRateLimiter(
-          new RateLimiterRedis({
-            storeClient: redisClient,
+      const burstyLimiter = new BurstyRateLimiter(
+        new RateLimiterRedis({
+          storeClient: redisClient,
+          keyPrefix: action,
+          points: limits.regularOptions.limitCount,
+          duration: limits.regularOptions.duration,
+          inMemoryBlockOnConsumed: limits.regularOptions.limitCount, // stops additional requests going to Redis once the limit is reached
+          inMemoryBlockDuration: limits.regularOptions.duration,
+          insuranceLimiter: new RateLimiterMemory({
             keyPrefix: action,
             points: limits.regularOptions.limitCount,
-            duration: limits.regularOptions.duration,
-            inMemoryBlockOnConsumed: limits.regularOptions.limitCount, // stops additional requests going to Redis once the limit is reached
-            inMemoryBlockDuration: limits.regularOptions.duration,
-            insuranceLimiter: new RateLimiterMemory({
-              keyPrefix: action,
-              points: limits.regularOptions.limitCount,
-              duration: limits.regularOptions.duration
-            })
-          }),
-          new RateLimiterRedis({
-            storeClient: redisClient,
+            duration: limits.regularOptions.duration
+          })
+        }),
+        new RateLimiterRedis({
+          storeClient: redisClient,
+          keyPrefix: `BURST_${action}`,
+          points: limits.burstOptions.limitCount,
+          duration: limits.burstOptions.duration,
+          inMemoryBlockOnConsumed: limits.burstOptions.limitCount,
+          inMemoryBlockDuration: limits.burstOptions.duration,
+          insuranceLimiter: new RateLimiterMemory({
             keyPrefix: `BURST_${action}`,
             points: limits.burstOptions.limitCount,
-            duration: limits.burstOptions.duration,
-            inMemoryBlockOnConsumed: limits.burstOptions.limitCount,
-            inMemoryBlockDuration: limits.burstOptions.duration,
-            insuranceLimiter: new RateLimiterMemory({
-              keyPrefix: `BURST_${action}`,
-              points: limits.burstOptions.limitCount,
-              duration: limits.burstOptions.duration
-            })
+            duration: limits.burstOptions.duration
           })
-        )
-      } catch (err) {
-        rateLimiterLogger.error(err, 'Could not create rate limiter.')
-        sentry({ err, kind: null, extras: null })
-        throw new Error('Unable to create rate limiter using Redis.') //FIXME backoff and retry?
-      }
+        })
+      )
 
       return [action, createConsumer(action, burstyLimiter)]
     })
