@@ -14,6 +14,7 @@ import { ApolloServer, gql } from 'apollo-server-express'
 const commentWithRepliesFragment = gql`
   fragment CommentWithReplies on Comment {
     id
+    rawText
     text {
       doc
       attachments {

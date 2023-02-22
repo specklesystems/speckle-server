@@ -2,13 +2,16 @@
 const expect = require('chai').expect
 
 const { beforeEachContext } = require('@/test/hooks')
+const { createStream } = require('@/modules/core/services/streams')
+const { createUser } = require('@/modules/core/services/users')
 
 const {
   validateServerRole,
-  buildContext,
   validateScopes,
   authorizeResolver
-} = require('../../shared')
+} = require('@/modules/shared')
+const { buildContext } = require('@/modules/shared/middleware')
+const { ForbiddenError } = require('apollo-server-express')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -34,17 +37,19 @@ describe('Generic AuthN & AuthZ controller tests', () => {
 
     await validateScopes(['a', 'b'], 'b') // should pass
   })
-
-  it('Should create proper context', async () => {
-    const res = await buildContext({ req: { headers: { authorization: 'Bearer BS' } } })
-    expect(res.auth).to.equal(false)
-
-    const res2 = await buildContext({ req: { headers: { authorization: null } } })
-    expect(res2.auth).to.equal(false)
-
-    const res3 = await buildContext({ req: { headers: { authorization: undefined } } })
-    expect(res3.auth).to.equal(false)
-  })
+  ;[
+    ['BS header', { req: { headers: { authorization: 'Bearer BS' } } }],
+    ['Null header', { req: { headers: { authorization: null } } }],
+    ['Undefined header', { req: { headers: { authorization: undefined } } }],
+    ['BS token', { token: 'Bearer BS' }],
+    ['Null token', { token: null }],
+    ['Undefined token', { token: undefined }]
+  ].map(([caseName, contextInput]) =>
+    it(`Should create proper context ${caseName}`, async () => {
+      const res = await buildContext(contextInput)
+      expect(res.auth).to.equal(false)
+    })
+  )
 
   it('Should validate server role', async () => {
     await validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
@@ -87,5 +92,103 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         throw new Error('This should have been rejected')
       })
       .catch((err) => expect('Unknown role: streams:read').to.equal(err.message))
+  })
+
+  describe('Authorize resolver ', () => {
+    const myStream = {
+      name: 'My Stream 2',
+      isPublic: true
+    }
+    const notMyStream = {
+      name: 'Not My Stream 1',
+      isPublic: false
+    }
+    const serverOwner = {
+      name: 'Itsa Me',
+      email: 'me@gmail.com',
+      password: 'sn3aky-1337-b1m'
+    }
+    const otherGuy = {
+      name: 'Some Other DUde',
+      email: 'otherguy@gmail.com',
+      password: 'sn3aky-1337-b1m'
+    }
+
+    before(async function () {
+      // Seeding
+      await Promise.all([
+        createUser(serverOwner).then((id) => (serverOwner.id = id)),
+        createUser(otherGuy).then((id) => (otherGuy.id = id))
+      ])
+
+      await Promise.all([
+        createStream({ ...myStream, ownerId: serverOwner.id }).then(
+          (id) => (myStream.id = id)
+        ),
+        createStream({ ...notMyStream, ownerId: otherGuy.id }).then(
+          (id) => (notMyStream.id = id)
+        )
+      ])
+    })
+
+    afterEach(() => {
+      process.env.ADMIN_OVERRIDE_ENABLED = 'false'
+    })
+    it('should allow stream:owners to be stream:owners', async () => {
+      const role = await authorizeResolver(
+        serverOwner.id,
+        myStream.id,
+        'stream:contributor'
+      )
+      expect(role).to.equal('stream:owner')
+    })
+
+    it('should get the passed in role for server:admins if override enabled', async () => {
+      process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      const role = await authorizeResolver(
+        serverOwner.id,
+        myStream.id,
+        'stream:contributor'
+      )
+      expect(role).to.equal('stream:contributor')
+    })
+
+    it('should not allow server:admins to be anything if adminOverride is disabled', async () => {
+      try {
+        await authorizeResolver(serverOwner.id, notMyStream.id, 'stream:contributor')
+        throw 'This should have thrown'
+      } catch (e) {
+        expect(e instanceof ForbiddenError)
+      }
+    })
+
+    it('should allow server:admins to be anything if adminOverride is enabled', async () => {
+      process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      const role = await authorizeResolver(
+        serverOwner.id,
+        notMyStream.id,
+        'stream:contributor'
+      )
+      expect(role).to.equal('stream:contributor')
+    })
+
+    it('should not allow server:users to be anything if adminOverride is disabled', async () => {
+      try {
+        await authorizeResolver(otherGuy.id, myStream.id, 'stream:contributor')
+        throw 'This should have thrown'
+      } catch (e) {
+        expect(e instanceof ForbiddenError)
+      }
+    })
+
+    it('should not allow server:users to be anything if adminOverride is enabled', async () => {
+      process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      try {
+        await authorizeResolver(otherGuy.id, myStream.id, 'stream:contributor')
+        throw 'This should have thrown'
+      } catch (e) {
+        expect(e instanceof ForbiddenError)
+      }
+    })
   })
 })

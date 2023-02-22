@@ -41,6 +41,7 @@ import { StreamWithActivityDocument } from '@/graphql/generated/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { computed } from 'vue'
+import { SKIPPABLE_ACTION_TYPES } from '@/main/lib/feed/helpers/activityStream'
 
 export default {
   name: 'StreamActivity',
@@ -61,7 +62,7 @@ export default {
     }))
     const stream = computed(() => result.value?.stream || null)
 
-    const skippableActionTypes = ['stream_invite_sent', 'stream_invite_declined']
+    const skippableActionTypes = SKIPPABLE_ACTION_TYPES
     const groupedActivity = computed(() =>
       (stream.value?.activity?.items || []).reduce(function (prev, curr) {
         if (skippableActionTypes.includes(curr.actionType)) {

@@ -13,8 +13,7 @@ spec:
 {{- if .Values.enable_prometheus_monitoring }}
   ingress:
     - fromEndpoints:
-        - matchLabels:
-{{ include "speckle.prometheus.selectorLabels" $ | indent 12 }}
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.cilium.fromEndpoints | toYaml | indent 10 }}
       toPorts:
         - ports:
             - port: "metrics"

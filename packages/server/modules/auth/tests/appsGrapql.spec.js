@@ -14,6 +14,7 @@ const {
 
 let sendRequest
 let server
+let app
 
 describe('GraphQL @apps-api', () => {
   let testUser
@@ -22,8 +23,8 @@ describe('GraphQL @apps-api', () => {
   let testToken2
 
   before(async () => {
-    const { app } = await beforeEachContext()
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ app, server } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
     testUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',
@@ -131,7 +132,7 @@ describe('GraphQL @apps-api', () => {
     expect(res).to.be.json
     expect(res.body.errors).to.not.exist
     expect(res.body.data.apps).to.be.an('array')
-    expect(res.body.data.apps.length).to.equal(6)
+    expect(res.body.data.apps.length).to.equal(7)
   })
 
   it('Should get app info without secret if not authenticated and owner', async () => {

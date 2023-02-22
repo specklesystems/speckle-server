@@ -88,7 +88,7 @@ describe('Server stats services @stats-services', function () {
 })
 
 describe('Server stats api @stats-api', function () {
-  let server, sendRequest
+  let server, sendRequest, app
 
   const adminUser = {
     name: 'Dimitrie',
@@ -119,9 +119,8 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-
-    const { app } = await beforeEachContext()
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ app, server } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
 
     adminUser.id = await createUser(adminUser)
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(

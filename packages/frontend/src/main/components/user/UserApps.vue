@@ -43,7 +43,7 @@ export default {
     apps: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             createdApps {
               id
@@ -55,7 +55,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.user.createdApps
+      update: (data) => data.activeUser.createdApps
     }
   },
   methods: {

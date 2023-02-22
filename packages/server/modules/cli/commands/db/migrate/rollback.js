@@ -1,13 +1,14 @@
 const knex = require('@/db/knex')
+const { logger } = require('@/logging/logging')
 
 /** @type {import('yargs').CommandModule} */
 const command = {
   command: 'rollback',
   describe: 'Roll back all migrations',
   async handler() {
-    console.log('Rolling back...')
+    logger.info('Rolling back migrations...')
     await knex.migrate.rollback(null, true)
-    console.log('...done')
+    logger.info('Completed rolling back migrations')
   }
 }
 

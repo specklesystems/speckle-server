@@ -26,7 +26,8 @@ const config = {
       extends: ['plugin:vue/recommended', '@vue/eslint-config-typescript', 'prettier'],
       rules: {
         'no-unused-vars': 'off',
-        '@typescript-eslint/no-unused-vars': ['error']
+        '@typescript-eslint/no-unused-vars': ['error'],
+        'vue/component-name-in-template-casing': ['warn', 'kebab-case']
       }
     },
     {

@@ -112,7 +112,7 @@ describe('Discoverable streams', () => {
     }
     await Promise.all(favoritePromises)
 
-    apollo = buildUnauthenticatedApolloServer()
+    apollo = await buildUnauthenticatedApolloServer()
   })
 
   after(async () => {
@@ -238,7 +238,7 @@ describe('Discoverable streams', () => {
     let apollo: ApolloServer
 
     before(async () => {
-      apollo = buildAuthenticatedApolloServer(me.id)
+      apollo = await buildAuthenticatedApolloServer(me.id)
     })
 
     it('can be retrieved with role properly filled out', async () => {

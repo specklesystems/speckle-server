@@ -2,7 +2,6 @@
 'use strict'
 const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
-const debug = require('debug')
 const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
@@ -11,6 +10,8 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
+const { logger } = require('@/logging/logging')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 const { getGoogleClientSecret } = require('@/modules/shared/helpers/secretsHelper')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -43,7 +44,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
-          throw new Error(
+          throw new UserInputError(
             'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with Google'
           )
         }
@@ -69,7 +70,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // if the server is invite only and we have no invite id, throw.
         if (serverInfo.inviteOnly && !req.session.token) {
-          throw new Error(
+          throw new UserInputError(
             'This server is invite only. Please authenticate yourself through a valid invite link.'
           )
         }
@@ -89,7 +90,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return done(null, myUser)
       } catch (err) {
-        debug('speckle:errors')(err)
+        switch (err.constructor) {
+          case UserInputError:
+            logger.info(err)
+            break
+          default:
+            logger.error(err)
+        }
         return done(null, false, { message: err.message })
       }
     }

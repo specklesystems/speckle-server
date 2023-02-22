@@ -24,7 +24,7 @@ const {
 const { getUsers, getUser } = require('@/modules/core/repositories/users')
 const {
   addStreamInviteSentOutActivity
-} = require('@/modules/activitystream/services/streamActivityService')
+} = require('@/modules/activitystream/services/streamActivity')
 const {
   buildBasicTemplateEmail,
   buildBasicTemplateServerInfo

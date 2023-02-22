@@ -1,13 +1,20 @@
-/* istanbul ignore file */
 require('../bootstrap')
+
+// Register global mocks as early as possible
+require('@/test/mocks/global')
+
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
 const { init, startHttp, shutdown } = require(`@/app`)
+const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
+const { logger } = require('@/logging/logging')
 
+// Register chai plugins
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
+chai.use(graphqlChaiPlugin)
 
 const unlock = async () => {
   const exists = await knex.schema.hasTable('knex_migrations_lock')
@@ -33,15 +40,19 @@ exports.truncateTables = async (tableNames) => {
   await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
-const initializeTestServer = async (app) => {
+/**
+ * @param {import('http').Server} server
+ * @param {import('express').Express} app
+ */
+const initializeTestServer = async (server, app) => {
   let serverAddress
   let wsAddress
-  const { server } = await startHttp(app, 0)
+  await startHttp(server, app, 0)
 
   app.on('appStarted', () => {
     const port = server.address().port
-    serverAddress = `http://localhost:${port}`
-    wsAddress = `ws://localhost:${port}`
+    serverAddress = `http://127.0.0.1:${port}`
+    wsAddress = `ws://127.0.0.1:${port}`
   })
   while (!serverAddress) {
     await new Promise((resolve) => setTimeout(resolve, 100))
@@ -62,23 +73,27 @@ const initializeTestServer = async (app) => {
 
 exports.mochaHooks = {
   beforeAll: async () => {
-    console.log('running before all')
+    logger.info('running before all')
     await unlock()
     await knex.migrate.rollback()
     await knex.migrate.latest()
     await init()
   },
   afterAll: async () => {
-    console.log('running after all')
+    logger.info('running after all')
     await unlock()
     await shutdown()
   }
 }
 
+exports.buildApp = async () => {
+  const { app, graphqlServer, server } = await init()
+  return { app, graphqlServer, server }
+}
+
 exports.beforeEachContext = async () => {
   await exports.truncateTables()
-  const { app, graphqlServer } = await init()
-  return { app, graphqlServer }
+  return await exports.buildApp()
 }
 
 exports.initializeTestServer = initializeTestServer

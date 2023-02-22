@@ -4,6 +4,9 @@ import { NotificationEventPayload } from '@/main/lib/core/helpers/eventHubHelper
 import { AppLocalStorage } from '@/utils/localStorage'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { getInviteTokenFromURL } from '@/main/lib/auth/services/authService'
+import { triggerToastNotification } from '@/main/lib/core/composables/notifications'
+import { getResourceType } from '@/main/lib/viewer/core/helpers/resourceHelper'
+import { setPostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
 
 Vue.prototype.$userId = function () {
   return AppLocalStorage.get(LocalStorageKeys.Uuid)
@@ -26,16 +29,18 @@ Vue.prototype.$isMobile = function () {
 }
 
 Vue.prototype.$resourceType = function (resourceId: string) {
-  return resourceId.length === 10 ? 'commit' : 'object'
+  return getResourceType(resourceId)
 }
 
 /**
  * Redirect to log in and redirect back to current page post-login
  */
 Vue.prototype.$loginAndSetRedirect = function () {
+  if (this.$loggedIn()) return
+
   // Store current path with all of the query params and everything
   const relativePath = window.location.href.replace(window.location.origin, '')
-  AppLocalStorage.set(LocalStorageKeys.ShouldRedirectTo, relativePath)
+  setPostAuthRedirect({ pathWithQuery: relativePath })
 
   // Carry inviteId over
   const token = getInviteTokenFromURL()
@@ -46,5 +51,5 @@ Vue.prototype.$loginAndSetRedirect = function () {
  * Trigger a toast notification from anywhere
  */
 Vue.prototype.$triggerNotification = function (args: NotificationEventPayload) {
-  this.$eventHub.$emit('notification', args)
+  triggerToastNotification(this.$eventHub, args)
 }

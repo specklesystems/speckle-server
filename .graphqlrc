@@ -1,0 +1,4 @@
+schema: 'http://localhost:3000/graphql'
+require:
+  - ts-node/register
+  - tsconfig-paths/register

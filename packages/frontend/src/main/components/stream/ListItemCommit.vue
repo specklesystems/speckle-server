@@ -2,10 +2,22 @@
   <div>
     <div
       :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`"
-      :style="`transition: all 0.2s ease-in-out; ${
-        highlight ? 'outline: 0.2rem solid #047EFB;' : ''
-      }`"
+      :style="`${highlighted ? 'outline: 0.2rem solid #047EFB;' : ''}`"
     >
+      <div
+        v-tooltip="selectDisabled ? selectDisabledMessage : undefined"
+        class="checkbox-hover-wrapper"
+      >
+        <v-checkbox
+          v-if="selectable"
+          v-model="selectedState"
+          :disabled="selectDisabled"
+          dense
+          hide-details
+          class="mt-0 ml-2 pa-0"
+          @change="onSelect"
+        />
+      </div>
       <div class="flex-shrink-0">
         <user-avatar :id="commit.authorId" :size="30" />
       </div>
@@ -51,6 +63,7 @@
           v-if="showSourceApp"
           :application-name="commit.sourceApplication"
         />
+        <commit-share-btn v-if="shareable" @share="onShareClicked" />
       </div>
     </div>
   </div>
@@ -58,9 +71,12 @@
 <script>
 import { gql } from '@apollo/client/core'
 import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
+import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
+import CommitShareBtn from '@/main/components/stream/commit/CommitShareBtn.vue'
 
 export default {
   components: {
+    CommitShareBtn,
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     CommitReceivedReceipts: () =>
@@ -99,10 +115,47 @@ export default {
       type: Boolean,
       default: true
     },
-    highlight: {
+    /**
+     * Whether to show a checkbox that would allow selecting this card
+     */
+    selectable: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Whether selection of this card is disabled
+     */
+    selectDisabled: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Message to show in a tooltip for a disabled card
+     */
+    selectDisabledMessage: {
+      type: String,
+      default: undefined
+    },
+    /**
+     * Whether the card is currently selected
+     */
+    selected: {
+      type: Boolean,
+      default: false
+    },
+    /**
+     * Whether to show the share button
+     */
+    shareable: {
       type: Boolean,
       default: false
     }
+  },
+  setup(props, ctx) {
+    const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
+    const onShareClicked = () => ctx.emit('share', props.commit)
+
+    return { highlighted, selectedState, onSelect, onShareClicked }
   },
   apollo: {
     activity: {

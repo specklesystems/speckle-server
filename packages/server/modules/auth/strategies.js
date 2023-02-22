@@ -1,13 +1,17 @@
 'use strict'
-
-const redis = require('redis')
-const { getRedisUrl, getSessionSecret } = require('../shared/helpers/secretsHelper')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
+const {
+  isSSLServer,
+  getRedisUrl,
+  getSessionSecret
+} = require('@/modules/shared/helpers/envHelper')
+const { authLogger } = require('@/logging/logging')
+const { createRedisClient } = require('@/modules/shared/redis/redis')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -20,12 +24,16 @@ module.exports = async (app) => {
   passport.deserializeUser((user, done) => done(null, user))
   app.use(passport.initialize())
 
+  const redisClient = createRedisClient(getRedisUrl())
   const session = ExpressSession({
-    store: new RedisStore({ client: redis.createClient(getRedisUrl()) }),
+    store: new RedisStore({ client: redisClient }),
     secret: getSessionSecret(),
     saveUninitialized: false,
     resave: false,
-    cookie: { maxAge: 1000 * 60 * 3 } // 3 minutes
+    cookie: {
+      maxAge: 1000 * 60 * 3, // 3 minutes
+      secure: isSSLServer()
+    }
   })
 
   /**
@@ -66,6 +74,7 @@ module.exports = async (app) => {
       return res.redirect(redirectUrl)
     } catch (err) {
       sentry({ err })
+      authLogger.error(err, 'Could not finalize auth')
       if (req.session) req.session.destroy()
       return res.status(401).send({ err: err.message })
     }
@@ -107,6 +116,17 @@ module.exports = async (app) => {
       finalizeAuth
     )
     authStrategies.push(azureAdStrategy)
+    strategyCount++
+  }
+
+  if (process.env.STRATEGY_OIDC === 'true') {
+    const oidcStrategy = await require('./strategies/oidc')(
+      app,
+      session,
+      sessionStorage,
+      finalizeAuth
+    )
+    authStrategies.push(oidcStrategy)
     strategyCount++
   }
 

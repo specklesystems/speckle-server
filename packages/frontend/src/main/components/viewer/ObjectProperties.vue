@@ -120,6 +120,9 @@ export default {
         )
           extras.push('visibility')
 
+        // hack
+        if (type === 'array') extras.push('visibility')
+
         // handle undefined as well as null 'values'
         // eslint-disable-next-line eqeqeq
         if (value == null) {

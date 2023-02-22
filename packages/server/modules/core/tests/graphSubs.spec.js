@@ -1,10 +1,10 @@
 /* eslint-disable no-undef */
-/* istanbul ignore file */
 const expect = require('chai').expect
 const request = require('supertest')
-const gql = require('graphql-tag')
-const { execute } = require('apollo-link')
-const { WebSocketLink } = require('apollo-link-ws')
+const { gql } = require('apollo-server-express')
+const { WebSocketLink } = require('@apollo/client/link/ws')
+const { execute } = require('@apollo/client/core')
+
 const { SubscriptionClient } = require('subscriptions-transport-ws')
 const ws = require('ws')
 
@@ -18,6 +18,7 @@ const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { getFreeServerPort } = require('@/test/serverHelper')
 
 let addr
 let wsAddr
@@ -39,11 +40,13 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     email: 'd.3@speckle.systems',
     password: 'wow8charsplease'
   }
+
+  /** @type {import('child_process').ChildProcessWithoutNullStreams} */
   let serverProcess
 
   const getWsClient = (wsurl, authToken) => {
     const client = new SubscriptionClient(
-      wsAddr,
+      wsurl,
       {
         reconnect: true,
         connectionParams: { headers: { Authorization: authToken } }
@@ -66,33 +69,31 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     await beforeEachContext()
 
     const childProcess = require('child_process')
-    console.log('  Starting server... this might take a bit.')
+    console.log('      Starting server... this may take a while.')
+
+    childPort = await getFreeServerPort()
+    addr = `http://127.0.0.1:${childPort}/graphql`
+    wsAddr = `ws://127.0.0.1:${childPort}/graphql`
+
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',
       ['run', 'dev:server:test'],
-      { cwd: packageRoot }
+      { cwd: packageRoot, env: { ...process.env, PORT: childPort } }
     )
 
-    const reg = /running at 0.0.0.0:([0-9]*)/
-    serverProcess.stderr.on('data', (data) => {
-      // uncomment this line to understand a bit more what's happening...
-      // console.error( `stderr: ${data}` )
-      // ok this is going to be a dirt hack, but I have no better idea ATM
-      const match = `${data}`.match(reg)
-
-      if (!childPort && match) {
-        childPort = parseInt(match[1])
-      }
-    })
-
+    console.log(`      Waiting on child server to be started at PORT ${childPort} `)
     // lets wait for the server is starting up
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      if (childPort) {
-        console.log(`Child server started at PORT ${childPort} `)
-        addr = `http://localhost:${childPort}/graphql`
-        wsAddr = `ws://localhost:${childPort}/graphql`
-        break
+      try {
+        const res = await sendRequest('', {
+          query: `query {serverInfo{version}}`
+        })
+        if (res.status === 200) {
+          break
+        }
+      } catch {
+        //continue
       }
       await sleep(1000)
     }

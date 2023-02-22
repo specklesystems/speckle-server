@@ -6,12 +6,14 @@
 /** @type {import("eslint").Linter.Config} */
 const config = {
   env: {
-    browser: true
+    browser: true,
+    node: true
   },
   parserOptions: {
-    sourceType: 'module'
+    sourceType: 'module',
+    ecmaVersion: 2022
   },
-  ignorePatterns: ['examples/browser/objectloader.web.js']
+  ignorePatterns: ['examples/browser/objectloader.web.js', 'types/**/*']
 }
 
 module.exports = config

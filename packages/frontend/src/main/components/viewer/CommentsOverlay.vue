@@ -1,5 +1,5 @@
 <template>
-  <!-- 
+  <!--
     HIC SVNT DRACONES
   -->
   <div
@@ -14,7 +14,7 @@
     class="d-flex align-center justify-center no-mouse"
   >
     <div
-      v-show="showComments && !viewerState.addingComment"
+      v-show="showComments && !viewerState.addingComment && modelLoaded"
       style="
         width: 100%;
         height: 100vh;
@@ -159,7 +159,6 @@
     </portal>
     <portal to="viewercontrols" :order="5">
       <v-btn
-        key="comment-toggle-button"
         v-tooltip="currentCommentVisStatus"
         rounded
         icon
@@ -193,7 +192,10 @@ import {
   setFilterDirectly,
   setPreventCommentCollapse,
   setSelectedCommentMetaData,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  sectionBoxOff,
+  sectionBoxOn,
+  setSectionBox
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 export default {
@@ -260,7 +262,12 @@ export default {
             this.localComments.push({ ...c })
           }
         }
-        return data
+
+        // If slideshow mode, focus on the 1st comment
+        if (this.commentSlideShow && this.activeComments?.length) {
+          const c = this.activeComments[0]
+          this.expandComment(c)
+        }
       },
       subscribeToMore: {
         document: gql`
@@ -316,6 +323,9 @@ export default {
         }
       }
     }
+  },
+  props: {
+    modelLoaded: { type: Boolean, default: false }
   },
   setup() {
     const { streamId, resourceId } = useCommitObjectViewerParams()
@@ -489,12 +499,12 @@ export default {
         }
       }
     },
-    collapseComment(comment) {
+    async collapseComment(comment) {
       for (const c of this.localComments) {
         if (c.id === comment.id && c.expanded) {
           c.expanded = false
-          if (c.data.filters) resetFilter()
-          if (c.data.sectionBox) this.viewer.sectionBox.off()
+          if (c.data.filters) await resetFilter()
+          if (c.data.sectionBox) sectionBoxOff()
 
           setSelectedCommentMetaData(null)
         }
@@ -511,31 +521,40 @@ export default {
       this.collapseComment(comment)
       this.expandComment(this.activeComments[index])
     },
-    setCommentPow(comment) {
+    async setCommentPow(comment) {
       const camToSet = comment.data.camPos
       if (camToSet[6] === 1) {
         this.viewer.toggleCameraProjection()
       }
-      this.viewer.interactions.setLookAt(
-        { x: camToSet[0], y: camToSet[1], z: camToSet[2] }, // position
-        { x: camToSet[3], y: camToSet[4], z: camToSet[5] } // target
-      )
-      if (camToSet[6] === 1) {
-        this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
-      }
-      if (comment.data.filters) {
-        setFilterDirectly({
-          filter: comment.data.filters
-        })
-      } else {
-        resetFilter()
-      }
+
+      this.viewer.setView({
+        position: new THREE.Vector3(camToSet[0], camToSet[1], camToSet[2]),
+        target: new THREE.Vector3(camToSet[3], camToSet[4], camToSet[5])
+      })
+      // TODO: If it's an (ortho) isometric cam.
+      // NOTE: currently not supported as parallel cam is disabled due to
+      // comment bubbles projection complications.
+      // if (camToSet[6] === 1) {
+      //   this.viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
+      // }
+
+      // NOTE: this is a "hack" to prevent jank - let the camera animation end
+      // before applying some heavy filters
+      setTimeout(async () => {
+        if (comment.data.filters) {
+          await setFilterDirectly({
+            filter: comment.data.filters
+          })
+        } else {
+          await resetFilter()
+        }
+      }, 1000)
 
       if (comment.data.sectionBox) {
-        this.viewer.sectionBox.setBox(comment.data.sectionBox, 0)
-        this.viewer.sectionBox.on()
+        setSectionBox(comment.data.sectionBox, 0)
+        sectionBoxOn()
       } else {
-        this.viewer.sectionBox.off()
+        sectionBoxOff()
       }
     },
     async handleDeletion(comment) {
@@ -545,10 +564,9 @@ export default {
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
-      // console.log('updateCommentBubbles', new Date().toISOString())
       if (!this.comments) return
-      const cam = this.viewer.cameraHandler.camera
-      cam.updateProjectionMatrix()
+      // const cam = this.viewer.cameraHandler.activeCam.camera
+      // cam.updateProjectionMatrix()
       for (const comment of this.localComments) {
         // get html elements
         const commentEl = this.$refs[`comment-${comment.id}`][0]
@@ -561,14 +579,24 @@ export default {
           comment.data.location.y,
           comment.data.location.z
         )
-
-        location.project(cam)
-
-        const commentLocation = new THREE.Vector3(
-          (location.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
-          (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
-          0
+        const projectionResult = this.viewer.query({
+          point: location,
+          operation: 'Project'
+        })
+        const commentLocation = this.viewer.Utils.NDCToScreen(
+          projectionResult.x,
+          projectionResult.y,
+          this.$refs.parent.clientWidth,
+          this.$refs.parent.clientHeight
         )
+
+        // location.project(cam)
+
+        // const commentLocation = new THREE.Vector3(
+        //   (location.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
+        //   (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
+        //   0
+        // )
 
         let tX = commentLocation.x - 20
         let tY = commentLocation.y - 20
@@ -642,6 +670,14 @@ export default {
             cardTop = paddingYTop
           card.style.top = `${cardTop}px`
         }
+        /** Just as an example */
+        const occlusionRes = this.viewer.query({
+          point: location,
+          tolerance: 0.001,
+          operation: 'Occlusion'
+        })
+        const opacity = occlusionRes.objects === null ? '1.0' : '0.25'
+        commentEl.style.opacity = opacity
       }
     },
     bounceComment(id) {

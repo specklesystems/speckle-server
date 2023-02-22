@@ -1,9 +1,23 @@
 extend type Query {
   """
+  Gets the profile of the authenticated user or null if not authenticated
+  """
+  activeUser: User
+
+  """
+  Get the (limited) profile information of another server user
+  """
+  otherUser(id: String!): LimitedUser
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:read")
+
+  """
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
-  If ID is provided, admin access is required
   """
   user(id: String): User
+    @deprecated(
+      reason: "To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user."
+    )
 
   """
   Get all (or search for specific) users, registered or invited, from the server in a paginated view.
@@ -87,6 +101,7 @@ type LimitedUser {
   company: String
   avatar: String
   verified: Boolean
+  role: String
 }
 
 """

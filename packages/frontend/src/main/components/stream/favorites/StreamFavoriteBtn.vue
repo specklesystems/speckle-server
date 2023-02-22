@@ -83,7 +83,7 @@ export default {
           // Doesn't exist, no need to update anything
           if (!data) return
 
-          const streams = data?.user?.favoriteStreams?.items || []
+          const streams = data?.activeUser?.favoriteStreams?.items || []
           let newStreams, newTotalCount
 
           if (isNowFavorited) {
@@ -96,27 +96,29 @@ export default {
 
             newStreams = streams.slice()
             newStreams.unshift(stream)
-            newTotalCount = data.user.favoriteStreams.totalCount + 1
+            newTotalCount = data.activeUser.favoriteStreams.totalCount + 1
           } else {
             // Drop from favorite streams query
             if (streams.length < 1) return
 
             newStreams = streams.filter((s) => s.id !== id)
-            newTotalCount = data.user.favoriteStreams.totalCount - 1
+            newTotalCount = data.activeUser.favoriteStreams.totalCount - 1
           }
 
           cache.writeQuery({
             query: userFavoriteStreamsQuery,
             data: {
-              user: {
-                ...data.user,
+              activeUser: {
+                ...data.activeUser,
                 favoriteStreams: {
-                  ...data.user.favoriteStreams,
+                  ...data.activeUser.favoriteStreams,
                   items: newStreams,
-                  totalCount: Math.min(newTotalCount - 1, 0)
+                  totalCount: Math.max(newTotalCount, 0)
                 }
               }
-            }
+            },
+            // So that we don't trigger the merge() function
+            overwrite: true
           })
         }
       })

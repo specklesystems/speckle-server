@@ -3,12 +3,14 @@
 const crypto = require('crypto')
 const knex = require('./knex')
 const fs = require('fs')
-const metrics = require('./prometheusMetrics')
+const metrics = require('./observability/prometheusMetrics')
+const { logger } = require('./observability/logging')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
 const { makeNetworkRequest } = require('./webhookCaller')
+const WebhookError = require('./errors')
 
 async function startTask() {
   const { rows } = await knex.raw(`
@@ -29,6 +31,7 @@ async function startTask() {
 }
 
 async function doTask(task) {
+  let boundLogger = logger.child({ taskId: task.id })
   try {
     const { rows } = await knex.raw(
       `
@@ -46,30 +49,39 @@ async function doTask(task) {
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
+    boundLogger = boundLogger.child({ webhookId: info.wh_id })
 
     const fullPayload = JSON.parse(info.evt)
+    boundLogger = boundLogger.child({
+      streamId: fullPayload.streamId,
+      eventName: fullPayload.event.event_name
+    })
 
-    const postData = { payload: info.evt }
+    const postData = { payload: fullPayload }
 
     const signature = crypto
       .createHmac('sha256', info.wh_secret || '')
-      .update(postData.payload)
+      .update(JSON.stringify(postData))
       .digest('hex')
     const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 
-    console.log(
-      `Callin webhook ${fullPayload.streamId} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...`
-    )
+    boundLogger.info('Calling webhook.')
     const result = await makeNetworkRequest({
       url: info.wh_url,
       data: postData,
-      headersData: postHeaders
+      headersData: postHeaders,
+      logger: boundLogger
     })
 
-    console.log(`  Result: ${JSON.stringify(result)}`)
+    boundLogger.info({ result }, `Received response from webhook.`)
 
     if (!result.success) {
-      throw new Error(result.error)
+      throw new WebhookError(
+        result.error,
+        'Calling webhook was unsuccessful.',
+        result.responseCode,
+        result.responseBody
+      )
     }
 
     await knex.raw(
@@ -84,6 +96,13 @@ async function doTask(task) {
       [task.id]
     )
   } catch (err) {
+    switch (err.constructor) {
+      case WebhookError:
+        boundLogger.info({ err }, 'Failed to trigger webhook event.')
+        break
+      default:
+        boundLogger.error(err, 'Failed to trigger webhook event.')
+    }
     await knex.raw(
       `
       UPDATE webhooks_events
@@ -124,17 +143,17 @@ async function tick() {
     setTimeout(tick, 10)
   } catch (err) {
     metrics.metricOperationErrors.labels('main_loop').inc()
-    console.log('Error executing task: ', err)
+    logger.error(err, 'Error executing task')
     setTimeout(tick, 5000)
   }
 }
 
 async function main() {
-  console.log('Starting Webhook Service...')
+  logger.info('Starting Webhook Service...')
 
   process.on('SIGTERM', () => {
     shouldExit = true
-    console.log('Shutting down...')
+    logger.info('Shutting down...')
   })
   metrics.initPrometheusMetrics()
 

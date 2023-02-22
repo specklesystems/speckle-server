@@ -1,22 +1,8 @@
 <template>
   <div class="mt-3">
-    <portal to="filter-actions">
-      <v-list-item-action class="pa-0 ma-0">
-        <v-btn
-          v-tooltip="'Set colors automatically based on each property'"
-          small
-          icon
-          @click.stop="toggleColors()"
-        >
-          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">
-            mdi-palette
-          </v-icon>
-        </v-btn>
-      </v-list-item-action>
-    </portal>
     <v-row
-      v-for="type in typeMap"
-      :key="type.fullName"
+      v-for="valueGroup in filter.valueGroups"
+      :key="valueGroup.value"
       no-gutters
       class="my-1 property-row rounded-lg"
     >
@@ -27,15 +13,19 @@
         }`"
         style="line-height: 24px; font-size: 9px"
       >
-        {{ type.count }}
+        {{ valueGroup.ids.length }}
       </v-col>
       <v-col
-        v-tooltip="type.fullName"
+        v-tooltip="valueGroup.value"
         cols="7"
         :class="`caption text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
         style="line-height: 24px"
       >
-        {{ type.name }}
+        {{
+          valueGroup.value.split('.').reverse()[0] !== ''
+            ? valueGroup.value.split('.').reverse()[0]
+            : valueGroup.value
+        }}
       </v-col>
       <v-col
         cols="4"
@@ -45,10 +35,9 @@
         style="line-height: 24px"
       >
         <div
-          v-if="colorBy"
           class="d-inline-block rounded mr-3 mt-1 elevation-3"
           :style="`width: 8px; height: 8px; background:${
-            viewerState.colorLegend[type.fullName]
+            colorLegend[valueGroup.value]
           };`"
         ></div>
         <v-btn
@@ -56,14 +45,10 @@
           x-small
           icon
           class="mr-1"
-          @click="toggleVisibility(type.fullName)"
+          @click="toggleVisibility(valueGroup)"
         >
           <v-icon class="grey--text" style="font-size: 11px">
-            {{
-              viewerState.hideCategoryValues.indexOf(type.fullName) === -1
-                ? 'mdi-eye'
-                : 'mdi-eye-off'
-            }}
+            {{ visibleLegend[valueGroup.value] ? 'mdi-eye' : 'mdi-eye-off' }}
           </v-icon>
         </v-btn>
         <v-btn
@@ -71,21 +56,15 @@
           x-small
           icon
           class="mr-1"
-          @click="toggleFilter(type.fullName)"
+          @click="toggleFilter(valueGroup)"
         >
           <v-icon
             :class="`${
-              viewerState.isolateCategoryValues.indexOf(type.fullName) !== -1
-                ? 'primary--text'
-                : 'grey--text'
+              isolatedLegend[valueGroup.value] ? 'primary--text' : 'grey--text'
             }`"
             style="font-size: 11px"
           >
-            {{
-              !viewerState.isolateCategoryValues.indexOf(type.fullName) !== -1
-                ? 'mdi-filter'
-                : 'mdi-filter'
-            }}
+            mdi-filter
           </v-icon>
         </v-btn>
       </v-col>
@@ -97,10 +76,10 @@ import { useQuery } from '@vue/apollo-composable'
 import gql from 'graphql-tag'
 import { computed } from 'vue'
 import {
-  hideCategoryToggle,
-  isolateCategoryToggle,
-  resetFilter,
-  toggleColorByCategory
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 export default {
   components: {},
@@ -114,10 +93,7 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          colorLegend
-          hideCategoryValues
-          isolateCategoryValues
-          appliedFilter
+          currentFilterState
         }
       }
     `)
@@ -134,66 +110,74 @@ export default {
       hidden: [],
       filtered: [],
       typeMap: [],
-      appliedFilter: {},
-      legend: {}
-    }
-  },
-  computed: {
-    colorBy() {
-      return this.viewerState.appliedFilter?.colorBy
+      legend: {},
+      colorLegend: {},
+      visibleLegend: {},
+      isolatedLegend: {}
     }
   },
   watch: {
-    filter(newVal) {
-      this.generateTypeMap(newVal)
+    viewerState: {
+      deep: true,
+      handler() {
+        this.updateLegend()
+      }
     }
   },
   mounted() {
-    this.generateTypeMap(this.filter)
-  },
-  beforeDestroy() {
-    resetFilter()
+    this.updateLegend()
   },
   methods: {
-    mashColorLegend(colorLegend) {
-      // just adds to our colors
-      if (!colorLegend) return
-      const keys = Object.keys(colorLegend)
-      for (const key of keys) {
-        if (!this.legend[key]) this.$set(this.legend, key, colorLegend[key])
+    updateLegend() {
+      if (!this.viewerState.currentFilterState?.colorGroups) {
+        return
+      }
+      const colorLegend = {}
+      const visibleLegend = {}
+      const isolatedLegend = {}
+      for (const vgc of this.viewerState.currentFilterState.colorGroups) {
+        colorLegend[vgc.value] = '#' + vgc.color.toString(16)
+
+        visibleLegend[vgc.value] = this.isVisible(vgc.ids)
+        isolatedLegend[vgc.value] = this.isIsolated(vgc.ids)
+      }
+      this.colorLegend = colorLegend
+      this.visibleLegend = visibleLegend
+      this.isolatedLegend = isolatedLegend
+    },
+    async toggleFilter(prop) {
+      if (this.isolatedLegend[prop.value]) {
+        unIsolateObjects(prop.ids, 'ui-filters')
+      } else {
+        isolateObjects(prop.ids, 'ui-filters')
       }
     },
-    async toggleColors() {
-      toggleColorByCategory({ filterKey: this.filter.targetKey })
-    },
-    async toggleFilter(type) {
-      isolateCategoryToggle({
-        colorBy: this.colorBy,
-        filterKey: this.filter.targetKey,
-        filterValue: type,
-        allValues: this.typeMap.map((t) => t.fullName)
-      })
-    },
-    async toggleVisibility(type) {
-      hideCategoryToggle({
-        colorBy: this.colorBy,
-        filterKey: this.filter.targetKey,
-        filterValue: type
-      })
-    },
-    generateTypeMap(filter) {
-      if (filter.data.type !== 'string') return []
-      const typeMap = []
-      for (const key of Object.keys(filter.data.uniqueValues)) {
-        const shortName = key.split('.').reverse()[0]
-        typeMap.push({
-          name: shortName,
-          fullName: key,
-          count: filter.data.uniqueValues[key]
-        })
+    async toggleVisibility(prop) {
+      if (this.visibleLegend[prop.value]) {
+        hideObjects(prop.ids, 'ui-filters')
+      } else {
+        showObjects(prop.ids, 'ui-filters')
       }
-      this.typeMap.splice(0, this.typeMap.length)
-      this.typeMap.push(...typeMap)
+    },
+    isVisible(ids) {
+      if (!this.viewerState.currentFilterState) return true
+      if (!this.viewerState.currentFilterState?.hiddenObjects) return true
+
+      const targetIds = this.viewerState.currentFilterState?.hiddenObjects?.filter(
+        (val) => ids.indexOf(val) !== -1
+      )
+      if (targetIds.length === 0) return true
+      else return false
+    },
+    isIsolated(ids) {
+      if (!this.viewerState.currentFilterState) return false
+      if (!this.viewerState.currentFilterState?.isolatedObjects) return false
+
+      const targetIds = this.viewerState.currentFilterState?.isolatedObjects?.filter(
+        (val) => ids.indexOf(val) !== -1
+      )
+      if (targetIds.length === 0) return false
+      else return true
     }
   }
 }

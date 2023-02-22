@@ -13,8 +13,8 @@ export const speckleLineVert = /* glsl */ `
 		attribute vec3 instanceStart;
 		attribute vec3 instanceEnd;
 
-		attribute vec3 instanceColorStart;
-		attribute vec3 instanceColorEnd;
+		attribute vec4 instanceColorStart;
+		attribute vec4 instanceColorEnd;
 		// varying vec3 debugColor;
 
 		#ifdef WORLD_UNITS
@@ -46,12 +46,8 @@ export const speckleLineVert = /* glsl */ `
 		#endif
 
         #ifdef USE_RTE
-            // attribute vec3 position_high;
-            // attribute vec3 position_low;
 			attribute vec3 instanceStartLow;
-            attribute vec3 instanceStartHigh;
 			attribute vec3 instanceEndLow;
-            attribute vec3 instanceEndHigh;
             uniform vec3 uViewer_high;
             uniform vec3 uViewer_low;
         #endif
@@ -79,11 +75,64 @@ export const speckleLineVert = /* glsl */ `
 			return length(p1.xy - p0.xy);
 		}
 
+		vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
+			/* 
+			Vector calculation for the high and low differences works on everything 
+			*BESIDES* Apple Silicon (or whatever they call it) GPUs
+
+			It would seem that when this code gets compiled, vector types get a lower precision(?)
+			which completely brakes the 2 float -> double reconstructio. Doing it separately for each 
+			vector component using floats works fine.
+			*/
+			vec3 highDifference;
+			vec3 lowDifference;
+			float t1 = position_low.x - relativeTo_low.x;
+			float e = t1 - position_low.x;
+			float t2 = ((-relativeTo_low.x - e) + (position_low.x - (t1 - e))) + position_high.x - relativeTo_high.x;
+			highDifference.x = t1 + t2;
+			lowDifference.x = t2 - (highDifference.x - t1);
+
+			t1 = position_low.y - relativeTo_low.y;
+			e = t1 - position_low.y;
+			t2 = ((-relativeTo_low.y - e) + (position_low.y - (t1 - e))) + position_high.y - relativeTo_high.y;
+			highDifference.y = t1 + t2;
+			lowDifference.y = t2 - (highDifference.y - t1);
+
+			t1 = position_low.z - relativeTo_low.z;
+			e = t1 - position_low.z;
+			t2 = ((-relativeTo_low.z - e) + (position_low.z - (t1 - e))) + position_high.z - relativeTo_high.z;
+			highDifference.z = t1 + t2;
+			lowDifference.z = t2 - (highDifference.z - t1);
+
+			vec3 position = highDifference.xyz + lowDifference.xyz;
+			return vec4(position, 1.);
+		}
+
+		vec4 computeRelativePosition(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
+			/* 
+			Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl 
+			Note here, we're storing the high part of the position encoding inside three's default 'position' attribute buffer so we avoid redundancy 
+			*/
+			vec3 t1 = position_low.xyz - relativeTo_low;
+			vec3 e = t1 - position_low.xyz;
+			vec3 t2 = ((-relativeTo_low - e) + (position_low.xyz - (t1 - e))) + position_high.xyz - relativeTo_high;
+			vec3 highDifference = t1 + t2;
+			vec3 lowDifference = t2 - (highDifference - t1);
+			
+			vec3 position = highDifference.xyz + lowDifference.xyz;
+			return vec4(position, 1.);
+		}
+
 		void main() {
+			if(instanceColorStart.w == 0.) {
+				gl_Position = vec4(0.);
+				return;
+			}
+			
             vec3 computedPosition = position;
 			#ifdef USE_COLOR
 
-				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
+				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart.xyz : instanceColorEnd.xyz;
 
 			#endif
 
@@ -98,12 +147,22 @@ export const speckleLineVert = /* glsl */ `
 
 			// camera space
             #ifdef USE_RTE
-                vec3 startHighDifference = vec3(instanceStartHigh.xyz - uViewer_high);
-                vec3 startLowDifference = vec3(instanceStartLow.xyz - uViewer_low);
-                vec3 endHighDifference = vec3(instanceEndHigh.xyz - uViewer_high);
-                vec3 endLowDifference = vec3(instanceEndLow.xyz - uViewer_low);
-                vec4 start = modelViewMatrix * vec4( startLowDifference + startHighDifference, 1.0 );
-                vec4 end = modelViewMatrix * vec4( endLowDifference + endHighDifference, 1.0 );
+			/** Source https://github.com/virtualglobebook/OpenGlobe/blob/master/Source/Examples/Chapter05/Jitter/GPURelativeToEyeDSFUN90/Shaders/VS.glsl */
+				// vec3 t1 = instanceStartLow.xyz - uViewer_low;
+				// vec3 e = t1 - instanceStartLow.xyz;
+				// vec3 t2 = ((-uViewer_low - e) + (instanceStartLow.xyz - (t1 - e))) + instanceStart.xyz - uViewer_high;
+				// vec3 highDifference = t1 + t2;
+				// vec3 lowDifference = t2 - (highDifference - t1);
+				// vec4 start = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
+				vec4 start = modelViewMatrix * computeRelativePositionSeparate(instanceStartLow.xyz, instanceStart.xyz, uViewer_low, uViewer_high);
+				
+				// t1 = instanceEndLow.xyz - uViewer_low;
+				// e = t1 - instanceEndLow.xyz;
+				// t2 = ((-uViewer_low - e) + (instanceEndLow.xyz - (t1 - e))) + instanceEnd.xyz - uViewer_high;
+				// highDifference = t1 + t2;
+				// lowDifference = t2 - (highDifference - t1);
+				// vec4 end = modelViewMatrix * vec4(highDifference.xyz + lowDifference.xyz , 1.);
+				vec4 end = modelViewMatrix * computeRelativePositionSeparate(instanceEndLow.xyz, instanceEnd.xyz, uViewer_low, uViewer_high);
             #else
                 vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
                 vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
@@ -210,10 +269,14 @@ export const speckleLineVert = /* glsl */ `
 				/*
 				Not great, not terrible
 				*/
-				float d;
-				float offsetStep = linewidth;
-				vec3 move = offset;
 				float pixelSize = length(vec2(pixelThreshold/resolution.x + pixelThreshold/resolution.y));
+				float offsetStep = linewidth;
+				float d = screenSpaceDistance(worldPos, worldPos + vec4(cOffset * offsetStep, 0.));
+				/* We're trying to start off with a step closer to the initial difference between SS distance and the pixel size we want
+				*/
+				// offsetStep += pixelSize - d;
+				vec3 move = offset;
+				
 				for(int i = 0; i < SEARCH_STEPS; i++){
 					move = cOffset * offsetStep;
 					d = screenSpaceDistance(worldPos, worldPos + vec4(move, 0.));

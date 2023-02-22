@@ -5,6 +5,8 @@ import { AppLocalStorage } from '@/utils/localStorage'
 import md5 from '@/helpers/md5'
 import * as ThemeStateManager from '@/main/utils/themeStateManager'
 
+let mixpanelInitialized = false
+
 /**
  * Get mixpanel user ID, if user is authenticated and can be identified, or undefined otherwise
  */
@@ -23,6 +25,10 @@ export function getMixpanelServerId(): string {
  * Get current mixpanel instance
  */
 export function getMixpanel(): OverridedMixpanel {
+  if (!mixpanelInitialized) {
+    throw new Error('Attempting to use uninitialized mixpanel instance')
+  }
+
   return mixpanel
 }
 
@@ -33,7 +39,7 @@ export function initialize(params: {
   hostApp: string
   hostAppDisplayName: string
 }): void {
-  const mp = getMixpanel()
+  const mp = mixpanel
   const { hostApp, hostAppDisplayName } = params
 
   // Register session
@@ -52,4 +58,6 @@ export function initialize(params: {
 
   // Track app visit
   mp.track(`Visit ${hostAppDisplayName}`)
+
+  mixpanelInitialized = true
 }

@@ -1,6 +1,9 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
-  <v-app :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`">
+  <v-app
+    id="speckle"
+    :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`"
+  >
     <v-container fill-height fluid>
       <v-row align="center" justify="center">
         <v-col

@@ -2,13 +2,15 @@ import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { createUser } from '@/modules/core/services/users'
+import { kebabCase, omit } from 'lodash'
 
 export type BasicTestUser = {
   name: string
   email: string
-  password: string
+  password?: string
   /**
-   * Will be set by createTestUser()
+   * Will be set by createTestUser(), but you need to set a default value to ''
+   * so that you don't have to check if its empty cause of TS
    */
   id: string
 } & Partial<UserRecord>
@@ -18,7 +20,15 @@ export type BasicTestUser = {
  * the new ID
  */
 export async function createTestUser(userObj: BasicTestUser) {
-  const id = await createUser(userObj)
+  if (!userObj.password) {
+    userObj.password = 'some-random-password-123456789#!@'
+  }
+
+  if (!userObj.email) {
+    userObj.email = `${kebabCase(userObj.name)}@someemail.com`
+  }
+
+  const id = await createUser(omit(userObj, ['id']))
   userObj.id = id
 }
 
