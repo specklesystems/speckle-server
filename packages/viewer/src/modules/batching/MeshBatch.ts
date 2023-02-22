@@ -10,7 +10,6 @@ import {
   Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
-import { MeshBVH } from 'three-mesh-bvh'
 import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
@@ -26,6 +25,7 @@ import {
 import Logger from 'js-logger'
 import { GeometryConverter } from '../converter/GeometryConverter'
 import { WorldTree } from '../tree/WorldTree'
+import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -34,7 +34,7 @@ export default class MeshBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
-  public boundsTree: MeshBVH
+  public boundsTree: SpeckleMeshBVH
   public bounds: Box3 = new Box3()
   private gradientIndexBuffer: BufferAttribute
   private indexBuffer0: BufferAttribute
@@ -460,7 +460,6 @@ export default class MeshBatch implements Batch {
       WorldTree.getRenderTree(this.subtreeId).treeBounds
     )
     this.boundsTree.getBoundingBox(this.bounds)
-    this.bounds.applyMatrix4(this.boundsTree['localTransformInv'])
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
   }

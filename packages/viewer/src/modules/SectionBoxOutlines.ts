@@ -1,5 +1,4 @@
 import {
-  Box3,
   Color,
   DynamicDrawUsage,
   InterleavedBufferAttribute,
@@ -8,7 +7,6 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import { ExtendedTriangle } from 'three-mesh-bvh'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import MeshBatch from './batching/MeshBatch'
@@ -95,12 +93,10 @@ export class SectionBoxOutlines {
       batches[b].boundsTree.shapecast({
         intersectsBounds: (box) => {
           const localPlane = plane
-          const bbox = new Box3().copy(box)
-          bbox.applyMatrix4(batches[b].boundsTree['localTransformInv'])
-          return localPlane.intersectsBox(bbox)
+          return localPlane.intersectsBox(box)
         },
 
-        intersectsTriangle: (_tri, i) => {
+        intersectsTriangle: (tri, i) => {
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
           const material = batches[b].getMaterialAtIndex(i)
@@ -113,11 +109,6 @@ export class SectionBoxOutlines {
 
           const localPlane = plane
           let count = 0
-          const tri = new ExtendedTriangle().copy(_tri)
-          tri.a.applyMatrix4(batches[b].boundsTree['localTransformInv'])
-          tri.b.applyMatrix4(batches[b].boundsTree['localTransformInv'])
-          tri.c.applyMatrix4(batches[b].boundsTree['localTransformInv'])
-
           tempLine.start.copy(tri.a)
           tempLine.end.copy(tri.b)
           if (localPlane.intersectLine(tempLine, tempVector)) {
