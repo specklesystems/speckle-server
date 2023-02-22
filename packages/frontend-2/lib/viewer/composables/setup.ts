@@ -38,15 +38,16 @@ import {
   ViewerLoadedThreadsQuery,
   ViewerResourceItem,
   CommentCollection,
-  Comment,
   ViewerLoadedThreadsQueryVariables,
   ProjectCommentsFilter
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get, PartialDeep } from 'type-fest'
+import { SetNonNullable, Get, PartialDeep, Merge } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import {
+  CacheObjectReference,
   getCacheId,
+  getObjectReference,
   modifyObjectFields,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
@@ -884,12 +885,17 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
           limit: Nullable<number>
           filter: Nullable<ProjectCommentsFilter>
         },
-        NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>
+        Merge<
+          NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>,
+          { items: CacheObjectReference[] }
+        >
       >(cache, getCacheId('Project', projectId.value), (fieldName, variables, data) => {
         if (fieldName !== 'commentThreads') return
         if (variables.filter?.includeArchived) return
-
-        const newItems = data.items.filter((i) => i.id !== event.id)
+        console.log(data)
+        const newItems = data.items.filter(
+          (i) => i.__ref !== getObjectReference('Comment', event.id).__ref
+        )
         return {
           ...data,
           totalCount: data.totalCount - 1,
@@ -904,12 +910,17 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
         cache.modify({
           id: getCacheId('Comment', parentId),
           fields: {
-            replies: (oldValue: Optional<CommentCollection>) => {
-              const newValue: CommentCollection = {
+            replies: (
+              oldValue: Optional<
+                Merge<CommentCollection, { items: CacheObjectReference[] }>
+              >
+            ) => {
+              const newValue: typeof oldValue = {
                 totalCount: (oldValue?.totalCount || 0) + 1,
-                // I assume that not having all of the props that `Comments` has is OK as long as you
-                // don't try to read those
-                items: [model as Comment, ...(oldValue?.items || [])]
+                items: [
+                  getObjectReference('Comment', model.id),
+                  ...(oldValue?.items || [])
+                ]
               }
               return newValue
             }
@@ -923,14 +934,17 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
             limit: Nullable<number>
             filter: Nullable<ProjectCommentsFilter>
           },
-          NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>
+          Merge<
+            NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>,
+            { items: CacheObjectReference[] }
+          >
         >(
           cache,
           getCacheId('Project', projectId.value),
           (fieldName, _variables, data) => {
             if (fieldName !== 'commentThreads') return
 
-            const newItems = [model, ...data.items]
+            const newItems = [getObjectReference('Comment', model.id), ...data.items]
             return {
               ...data,
               totalCount: data.totalCount + 1,

@@ -176,8 +176,26 @@ export function getStoreFieldName(
 }
 
 /**
+ * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
+ * objects or object arrays
+ */
+export type CacheObjectReference = { __ref: string }
+
+/**
+ * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
+ * if you want to add new ones you shouldn't add the entire object, but only its reference
+ */
+export function getObjectReference(typeName: string, id: string): CacheObjectReference {
+  return {
+    __ref: getCacheId(typeName, id)
+  }
+}
+
+/**
  * Iterate over a cached object's fields and optionally update them. Similar to cache.modify, except allows
  * better filtering capabilities to filter filters to update (e.g. you can actually get each field's variables)
+ * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
+ * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
  */
 export function modifyObjectFields<
   V extends Optional<Record<string, unknown>> = undefined,
@@ -189,7 +207,7 @@ export function modifyObjectFields<
     fieldName: string,
     variables: V,
     value: D,
-    details: Parameters<Modifier<D>>[1]
+    details: Parameters<Modifier<D>>[1] & { ref: typeof getObjectReference }
   ) => Optional<D>
 ) {
   cache.modify({
@@ -209,7 +227,10 @@ export function modifyObjectFields<
         }
       }
 
-      const res = updater(fieldName, variables as V, fieldValue as D, details)
+      const res = updater(fieldName, variables as V, fieldValue as D, {
+        ...details,
+        ref: getObjectReference
+      })
       if (isUndefined(res)) {
         return fieldValue as unknown
       } else {
@@ -221,6 +242,8 @@ export function modifyObjectFields<
 
 /**
  * Iterate over a cached object's fields and evict/delete the ones that the predicate returns true for
+ * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
+ * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
  */
 export function evictObjectFields<
   V extends Optional<Record<string, unknown>> = undefined,

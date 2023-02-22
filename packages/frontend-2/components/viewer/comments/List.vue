@@ -31,8 +31,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 
 /**
- * TODO: Figure out stale cache between project.commentThreads w/ different filters
- * - Do setup cache updates work?
+ * - TODO: FIGURE OUT VIEWERLOADEDRESOURCES NOT PRELOADING IN SSR
  */
 
 graphql(`

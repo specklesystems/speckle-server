@@ -1,6 +1,5 @@
 <template>
   <div class="py-4 flex flex-col">
-    <div>// TODO: FIX thread.archived not updating from setup.ts cache update</div>
     <div class="flex items-center mb-1">
       <UserAvatar :user="thread.author" size="sm" class="mr-2" />
       <span class="grow truncate text-sm font-medium">
