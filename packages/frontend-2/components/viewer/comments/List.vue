@@ -30,10 +30,6 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 
-/**
- * - TODO: FIGURE OUT VIEWERLOADEDRESOURCES NOT PRELOADING IN SSR
- */
-
 graphql(`
   fragment ViewerCommentsListItem on Comment {
     id
