@@ -9,7 +9,7 @@ spec:
   selector:
 {{ include "frontend.selectorLabels" . | indent 4 }}
   ports:
-    - name: www
-      port: 80
-      protocol: TCP
+    - protocol: TCP
+      name: www
+      port: 8080
       targetPort: www

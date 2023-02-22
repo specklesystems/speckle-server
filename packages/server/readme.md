@@ -60,6 +60,14 @@ You can get the best DX by typing your resolvers with the `Resolvers` type and t
 To create new migrations use `yarn migrate create`. Note that migrations are only ever read from the `./dist` folder to avoid scenarious when both the TS and JS version of the same migration is executed, so if you ever create a new migration make sure
 you build the app into `/dist` if you want it to be applied.
 
+### CLI
+
+We've got a yargs based dev-only CLI that you can run and extend with useful commands. Run it through `yarn cli` and add new commands under `./modules/cli`
+
+### Bull queue monitoring
+
+Use `yarn cli bull monitor` to serve a Web UI for our Bull queues (e.g. Notifications queues). In the prod env we don't retain old jobs, but locally these older results aren't deleted and you'll see them in this Web UI.
+
 ## Server & Apps
 
 ### Frontend

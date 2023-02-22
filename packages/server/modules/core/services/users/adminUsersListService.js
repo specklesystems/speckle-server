@@ -118,7 +118,7 @@ function mapUserToListItem(user) {
 }
 
 /**
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @returns {AdminUsersListItem}
  */
 function mapInviteToListItem(invite) {

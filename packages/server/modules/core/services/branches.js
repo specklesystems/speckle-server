@@ -1,6 +1,7 @@
 'use strict'
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
+const { getStreamBranchByName } = require('@/modules/core/repositories/branches')
 
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
@@ -66,12 +67,7 @@ module.exports = {
   },
 
   async getBranchByNameAndStreamId({ streamId, name }) {
-    const query = Branches()
-      .select('*')
-      .where({ streamId })
-      .andWhere(knex.raw('LOWER(name) = ?', [name.toLowerCase()]))
-      .first()
-    return await query
+    return await getStreamBranchByName(streamId, name)
   },
 
   async deleteBranchById({ id, streamId }) {

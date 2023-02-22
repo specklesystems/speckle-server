@@ -10,18 +10,23 @@ import { DEFAULT_EXTENSIONS } from '@babel/core'
 const isProd = process.env.NODE_ENV === 'production'
 const sourcemap = isProd ? false : 'inline'
 
-/** @returns {import('rollup').RollupOptions} */
-const config = (file, format, firstOne = false) => ({
+/** @type {import('rollup').RollupOptions} */
+const config = {
   input: 'src/index.ts',
   output: [
     {
-      file,
-      format,
+      file: 'dist/speckleviewer.esm.js',
+      format: 'esm',
+      sourcemap
+    },
+    {
+      file: 'dist/speckleviewer.js',
+      format: 'cjs',
       sourcemap
     }
   ],
   plugins: [
-    ...(isProd && firstOne ? [clean({ targets: 'dist/*' })] : []),
+    clean({ targets: 'dist/*' }),
     rebasePlugin({ keepName: true }),
     copyPlugin({
       targets: [{ src: './always-bundled-assets/**/*', dest: 'dist/assets' }]
@@ -39,9 +44,6 @@ const config = (file, format, firstOne = false) => ({
   ],
   // Externalizing all deps, we don't want to bundle them in cause this is a library
   external: Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`))
-})
+}
 
-export default [
-  config('dist/speckleviewer.esm.js', 'esm', true),
-  config('dist/speckleviewer.js', 'cjs')
-]
+export default config

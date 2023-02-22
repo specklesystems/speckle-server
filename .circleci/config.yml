@@ -1,91 +1,159 @@
 version: 2.1
 
+orbs:
+  snyk: snyk/snyk@1.4.0
+
 workflows:
   version: 2
 
   test-build:
     jobs:
+      - vulnerability-scan:
+          context: &snyk-context
+            - snyk
+          filters:
+            branches:
+              only:
+                - main
+                - hotfix*
+
       - test-server:
-          filters: &filters-everything
+          filters: &filters-allow-all
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
 
       - get-version:
-          filters: *filters-everything
-
-      - should-build:
-          filters: *filters-everything
-
-      - should-publish:
-          filters: *filters-everything
+          filters: *filters-allow-all
 
       - pre-commit:
-          filters: *filters-everything
+          filters: *filters-allow-all
 
-      - docker-build-and-publish-server:
-          context: &docker-hub-context
-            - docker-hub
+      - docker-build-server:
+          context: &build-context
+            - github-readonly-public-repos
           filters: &filters-build
             tags:
               only: /.*/
           requires:
             - test-server
             - get-version
-            - should-build
-            - should-publish
 
-      - docker-build-and-publish-frontend:
-          context: *docker-hub-context
+      - docker-build-frontend:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - should-build
-            - should-publish
 
-      - docker-build-and-publish-webhooks:
-          context: *docker-hub-context
+      - docker-build-webhooks:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
-            - should-publish
 
-      - docker-build-and-publish-file-imports:
-          context: *docker-hub-context
+      - docker-build-file-imports:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
-            - should-publish
 
-      - docker-build-and-publish-previews:
-          context: *docker-hub-context
+      - docker-build-previews:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
-            - should-publish
 
-      - docker-build-and-publish-test-container:
-          context: *docker-hub-context
+      - docker-build-test-container:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
             - test-server
-            - should-build
-            - should-publish
 
-      - docker-build-and-publish-monitor-container:
-          context: *docker-hub-context
+      - docker-build-monitor-container:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - should-build
-            - should-publish
+
+      - publish-approval:
+          type: approval
+          filters: &filters-ignore-main-branch-or-all-tags
+            branches:
+              ignore: main
+            tags:
+              ignore: /.*/
+
+      - docker-publish-server:
+          context: &docker-hub-context
+            - docker-hub
+          filters: &filters-publish
+            branches:
+              ignore: /pull\/[0-9]+/
+            tags:
+              only: /.*/
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-server
+            - pre-commit
+
+      - docker-publish-frontend:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-frontend
+            - pre-commit
+
+      - docker-publish-webhooks:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-webhooks
+            - pre-commit
+
+      - docker-publish-file-imports:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-file-imports
+            - pre-commit
+
+      - docker-publish-previews:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-previews
+            - pre-commit
+
+      - docker-publish-test-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-test-container
+            - pre-commit
+
+      - docker-publish-monitor-container:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - get-version
+            - publish-approval
+            - docker-build-monitor-container
+            - pre-commit
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -96,16 +164,15 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
-            - test-server
             - get-version
-            - should-publish
-            - docker-build-and-publish-server
-            - docker-build-and-publish-frontend
-            - docker-build-and-publish-webhooks
-            - docker-build-and-publish-file-imports
-            - docker-build-and-publish-previews
-            - docker-build-and-publish-monitor-container
-            - docker-build-and-publish-test-container
+            - publish-approval
+            - docker-publish-server
+            - docker-publish-frontend
+            - docker-publish-webhooks
+            - docker-publish-file-imports
+            - docker-publish-previews
+            - docker-publish-monitor-container
+            - docker-publish-test-container
 
       - publish-npm:
           filters:
@@ -125,7 +192,6 @@ jobs:
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
-      - run: pwd
       - run: mkdir -p workspace
       - run:
           name: set version
@@ -137,48 +203,6 @@ jobs:
           root: workspace
           paths:
             - env-vars
-
-  should-publish:
-    docker:
-      - image: cimg/base:2022.08
-    working_directory: *work-dir
-    environment:
-      # £ delimited strings of regex for matches which should be published
-      PUBLISHABLE_TAGS: '^[0-9]+\.[0-9]+\.[0-9]+$'
-      PUBLISHABLE_BRANCHES: '^main$£^hotfix.*£^alpha.*'
-    steps:
-      - checkout
-      - run: pwd
-      - run: mkdir -p workspace
-      - run:
-          name: determine whether to publish
-          command: |
-            echo "export SHOULD_PUBLISH=$(.circleci/should_publish.sh)" >> workspace/should-publish
-      - run: cat workspace/should-publish >> $BASH_ENV
-      - run: echo "SHOULD_PUBLISH=${SHOULD_PUBLISH}"
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - should-publish
-
-  should-build:
-    docker:
-      - image: cimg/base:2022.08
-    working_directory: *work-dir
-    steps:
-      - checkout
-      - run: pwd
-      - run: mkdir -p workspace
-      - run:
-          name: determine whether to build
-          command: |
-            echo "export SHOULD_BUILD=$(.circleci/should_build.sh)" >> workspace/should-build
-      - run: cat workspace/should-build >> $BASH_ENV
-      - run: echo "SHOULD_BUILD=${SHOULD_BUILD}"
-      - persist_to_workspace:
-          root: workspace
-          paths:
-            - should-build
 
   pre-commit:
     parameters:
@@ -197,7 +221,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: large
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
@@ -235,9 +259,9 @@ jobs:
 
   test-server:
     docker:
-      - image: cimg/node:16.15
-      - image: cimg/redis:6.2.6
-      - image: 'cimg/postgres:14.2'
+      - image: cimg/node:18.14.0
+      - image: cimg/redis:7.0.7
+      - image: 'cimg/postgres:14.5'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -248,17 +272,18 @@ jobs:
 
     environment:
       NODE_ENV: test
-      DATABASE_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
       PGDATABASE: speckle2_test
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
-      CANONICAL_URL: 'http://localhost:3000'
-      S3_ENDPOINT: 'http://localhost:9000'
+      CANONICAL_URL: 'http://127.0.0.1:3000'
+      S3_ENDPOINT: 'http://127.0.0.1:9000'
       S3_ACCESS_KEY: 'minioadmin'
       S3_SECRET_KEY: 'minioadmin'
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
+      REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
     steps:
       - checkout
@@ -268,8 +293,8 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn workspaces focus
-          working_directory: 'packages/server'
+          command: yarn
+          # working_directory: 'packages/server'
 
       - save_cache:
           name: Save Yarn Package Cache
@@ -278,7 +303,13 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
 
-      - run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Wait for dependencies to start
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
           command: touch .env.test
@@ -300,64 +331,163 @@ jobs:
       - store_test_results:
           path: packages/server/reports
 
-      - store_artifacts:
-          path: packages/server/coverage/lcov-report
-          destination: package/server/coverage
+      # - store_artifacts:
+      # path: packages/server/coverage/lcov-report
+      # destination: package/server/coverage
 
-  docker-build-and-publish: &docker-job
+  vulnerability-scan:
+    # snyk can undertake most types of scans through GitHub integration
+    # which does not require integration with the CI
+    # but it is not possible to scan npm/yarn package.json
+    # because it requires node_modules
+    # therefore this scanning has to be triggered via the cli
     docker: &docker-image
-      - image: cimg/node:16.15
-    resource_class: xlarge
+      - image: cimg/python:3.9.15-node
+    resource_class: small
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+      - snyk/scan:
+          additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
+          fail-on-issues: false
+
+  docker-build: &build-job
+    docker: &docker-image
+      - image: cimg/python:3.9.15-node
+    resource_class: medium
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
+      - run:
+          name: determine if draft PR
+          command: |
+            echo "export IS_DRAFT_PR=$(.circleci/is_draft.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: cat workspace/should-build >> $BASH_ENV
-      - run: cat workspace/should-publish >> $BASH_ENV
+      - run: echo "IS_DRAFT_PR=${IS_DRAFT_PR}"
+      - run:
+          name: 'Check if should proceed'
+          command: |
+            [[ "${CIRCLE_TAG}" ]] && echo "proceed because tag is set" && exit 0
+            [[ "${CIRCLE_BRANCH}" == "main" ]] && echo "proceed because main branch" && exit 0
+            [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
+            echo "proceeding"
       - setup_remote_docker:
           # a weird issue with yarn installing packages throwing EPERM errors
           # this fixes it
           version: 20.10.12
           docker_layer_caching: true
       - run:
-          name: Build and Publish
+          name: Build and Save
           command: ./.circleci/build.sh
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - speckle*
 
-  docker-build-and-publish-server:
-    <<: *docker-job
+  docker-build-server:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
 
-  docker-build-and-publish-frontend:
-    <<: *docker-job
+  docker-build-frontend:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: frontend
 
-  docker-build-and-publish-previews:
-    <<: *docker-job
+  docker-build-previews:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: preview-service
 
-  docker-build-and-publish-webhooks:
-    <<: *docker-job
+  docker-build-webhooks:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: webhook-service
 
-  docker-build-and-publish-file-imports:
-    <<: *docker-job
+  docker-build-file-imports:
+    <<: *build-job
     environment:
       SPECKLE_SERVER_PACKAGE: fileimport-service
 
-  docker-build-and-publish-test-container:
-    <<: *docker-job
+  docker-build-test-container:
+    <<: *build-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
 
-  docker-build-and-publish-monitor-container:
-    <<: *docker-job
+  docker-build-monitor-container:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: monitor-deployment
+
+  docker-publish: &publish-job
+    docker: &base-image
+      - image: cimg/python:3.9.15-node
+    resource_class: medium
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - setup_remote_docker:
+          # a weird issue with yarn installing packages throwing EPERM errors
+          # this fixes it
+          version: 20.10.12
+          docker_layer_caching: true
+      - run:
+          name: Publish
+          command: ./.circleci/publish.sh
+
+  docker-publish-server:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: server
+
+  docker-publish-frontend:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend
+
+  docker-publish-previews:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: preview-service
+
+  docker-publish-webhooks:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: webhook-service
+
+  docker-publish-file-imports:
+    <<: *publish-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: fileimport-service
+
+  docker-publish-test-container:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: test-deployment
+
+  docker-publish-monitor-container:
+    <<: *publish-job
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
@@ -389,7 +519,7 @@ jobs:
       - run:
           name: auth to npm as Speckle
           command: |
-            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml 
+            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml
             echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
       - run:
           name: try login to npm
@@ -407,14 +537,6 @@ jobs:
           name: publish to npm
           command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
 
-      # - run:
-      # name: commit changes
-      # command: |
-      # yarn prettier:fix
-      # git add .
-      # git commit -m '[ci skip] bump version to $IMAGE_VERSION_TAG'
-      # git push
-
   publish-helm-chart:
     docker: *docker-image
     working_directory: *work-dir
@@ -425,7 +547,7 @@ jobs:
       - run: cat workspace/env-vars >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
-            - '9a:57:23:d4:c9:5f:4d:83:d6:fa:b2:00:6b:8d:86:31'
+            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh

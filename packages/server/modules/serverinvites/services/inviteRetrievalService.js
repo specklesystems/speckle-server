@@ -29,7 +29,7 @@ const { keyBy, uniq } = require('lodash')
  */
 
 /**
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @returns {string}
  */
 function buildPendingStreamCollaboratorId(invite) {
@@ -37,7 +37,7 @@ function buildPendingStreamCollaboratorId(invite) {
 }
 
 /**
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | null} targetUser
  * @returns {PendingStreamCollaboratorGraphQLType}
  */

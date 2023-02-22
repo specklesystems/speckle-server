@@ -11,7 +11,7 @@
     <v-alert v-show="error" dismissible type="error">
       {{ error }}
     </v-alert>
-    <v-form ref="form" v-model="valid" lazy-validation>
+    <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="updateBranch">
       <v-card-text>
         <v-text-field
           v-model="editableBranch.name"
@@ -85,6 +85,7 @@ import { gql } from '@apollo/client/core'
 import isNull from 'lodash/isNull'
 import isUndefined from 'lodash/isUndefined'
 import clone from 'lodash/clone'
+import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 
 export default {
   props: {
@@ -190,7 +191,7 @@ export default {
       this.$eventHub.$emit('notification', { text: 'Branch deleted' })
       this.$router.push(`/streams/` + this.$route.params.streamId)
       this.$emit('close')
-      this.$eventHub.$emit('branch-refresh')
+      this.$eventHub.$emit(StreamEvents.RefetchBranches)
     },
     async updateBranch() {
       if (!this.$refs.form.validate()) return
@@ -227,7 +228,7 @@ export default {
       }
 
       this.loading = false
-      this.$eventHub.$emit('branch-refresh')
+      this.$eventHub.$emit(StreamEvents.RefetchBranches)
       this.$eventHub.$emit('notification', {
         text: 'Branch updated',
         action: {

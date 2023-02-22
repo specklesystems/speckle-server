@@ -16,6 +16,8 @@ module.exports = {
   Stream: {
     async object(parent, args) {
       const obj = await getObject({ streamId: parent.id, objectId: args.id })
+      if (!obj) return null
+
       obj.streamId = parent.id
       return obj
     }

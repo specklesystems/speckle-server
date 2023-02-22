@@ -40,7 +40,7 @@ export function useNavigationDrawerAutoResize(params: {
     { immediate: true }
   )
 
-  function resizeHandler(e: MouseEvent) {
+  function onMouseMove(e: MouseEvent) {
     e.preventDefault()
     const el = drawerEl()
 
@@ -60,7 +60,7 @@ export function useNavigationDrawerAutoResize(params: {
 
     if (e.offsetX < minSize) {
       el.style.transition = 'initial'
-      document.addEventListener('mousemove', resizeHandler, false)
+      document.addEventListener('mousemove', onMouseMove, false)
     }
   }
 
@@ -71,8 +71,11 @@ export function useNavigationDrawerAutoResize(params: {
     el.style.transition = ''
     document.body.style.cursor = ''
     navWidth.value = el.style.width
-    document.removeEventListener('mousemove', resizeHandler, false)
-    setTimeout(() => eventHub.$emit('resize-viewer'), 300)
+    document.removeEventListener('mousemove', onMouseMove, false)
+    setTimeout(() => {
+      // @Dim: Why are we resizing the viewer here? We generally want to avoid needless resizes
+      eventHub.$emit('resize-viewer')
+    }, 300)
   }
 
   // Setup resize events
@@ -97,7 +100,7 @@ export function useNavigationDrawerAutoResize(params: {
     }
 
     document.removeEventListener('mouseup', onMouseUp)
-    document.removeEventListener('mousemove', resizeHandler)
+    document.removeEventListener('mousemove', onMouseMove)
   })
 
   return {

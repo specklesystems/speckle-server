@@ -1,24 +1,15 @@
 const { pick } = require('lodash')
 
 /**
- * @typedef {{
- *  id: string,
- *  suuid: string,
- *  createdAt?: Date,
- *  name: string,
- *  bio?: string,
- *  company?: string,
- *  email: string,
- *  verified: boolean,
- *  avatar: string,
- *  profiles?: string,
- *  passwordDigest: string,
- *  ip?: string,
- * }} UserRecord
+ * @typedef {import('@/modules/core/helpers/types').UserRecord} UserRecord
  */
 
 /**
  * Fields from the entity that users can see about other users
+ */
+
+/**
+ * @type {Array<keyof import('@/modules/core/helpers/types').LimitedUserRecord>}
  */
 const LIMITED_USER_FIELDS = [
   'id',
@@ -31,10 +22,7 @@ const LIMITED_USER_FIELDS = [
 ]
 
 /**
- * @typedef {Pick<
- *  UserRecord,
- *  'id' | 'name' | 'bio' | 'company' | 'verified' | 'avatar' | 'createdAt'
- * >} LimitedUserRecord
+ * @typedef {import('@/modules/core/helpers/types').LimitedUserRecord} LimitedUserRecord
  */
 
 /**

@@ -11,21 +11,6 @@ const { uniq, isArray } = require('lodash')
 const { getStream } = require('@/modules/core/repositories/streams')
 
 /**
- * @typedef {{
- *  id: string,
- *  target: string,
- *  inviterId: string,
- *  createdAt?: Date,
- *  used?: boolean,
- *  message?: string,
- *  resourceTarget?: string,
- *  resourceId?: string,
- *  role?: string,
- *  token: string
- * }} ServerInviteRecord
- */
-
-/**
  *
  * Resolve resource from invite
  * @param {import('@/modules/serverinvites/helpers/inviteHelper').InviteResourceData} invite

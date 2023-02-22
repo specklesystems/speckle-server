@@ -11,46 +11,62 @@ const {
   getTimelineCount
 } = require('../../services/index')
 
-module.exports = {
-  Query: {},
-  User: {
-    async activity(parent, args) {
-      const { items, cursor } = await getUserActivity({
-        userId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-      const totalCount = await getActivityCountByUserId({
-        userId: parent.id,
-        actionType: args.actionType,
-        after: args.after,
-        before: args.before
-      })
+const userActivityQueryCore = async (parent, args) => {
+  const { items, cursor } = await getUserActivity({
+    userId: parent.id,
+    actionType: args.actionType,
+    after: args.after,
+    before: args.before,
+    cursor: args.cursor,
+    limit: args.limit
+  })
+  const totalCount = await getActivityCountByUserId({
+    userId: parent.id,
+    actionType: args.actionType,
+    after: args.after,
+    before: args.before
+  })
 
-      return { items, cursor, totalCount }
+  return { items, cursor, totalCount }
+}
+
+const userTimelineQueryCore = async (parent, args) => {
+  const { items, cursor } = await getUserTimeline({
+    userId: parent.id,
+    after: args.after,
+    before: args.before,
+    cursor: args.cursor,
+    limit: args.limit
+  })
+  const totalCount = await getTimelineCount({
+    userId: parent.id,
+    after: args.after,
+    before: args.before
+  })
+
+  return { items, cursor, totalCount }
+}
+
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
+module.exports = {
+  LimitedUser: {
+    async activity(parent, args) {
+      return await userActivityQueryCore(parent, args)
     },
 
     async timeline(parent, args) {
-      const { items, cursor } = await getUserTimeline({
-        userId: parent.id,
-        after: args.after,
-        before: args.before,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-      const totalCount = await getTimelineCount({
-        userId: parent.id,
-        after: args.after,
-        before: args.before
-      })
-
-      return { items, cursor, totalCount }
+      return await userTimelineQueryCore(parent, args)
     }
   },
+  User: {
+    async activity(parent, args) {
+      return await userActivityQueryCore(parent, args)
+    },
 
+    async timeline(parent, args) {
+      return await userTimelineQueryCore(parent, args)
+    }
+  },
   Stream: {
     async activity(parent, args) {
       const { items, cursor } = await getStreamActivity({

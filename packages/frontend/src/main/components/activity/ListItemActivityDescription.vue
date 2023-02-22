@@ -46,6 +46,12 @@
               {{ val ? 'public' : 'private' }}
             </i>
           </template>
+          <template v-else-if="key === UpdatedInfoKeys.IsDiscoverable">
+            📺 Stream is now
+            <i>
+              {{ val ? 'discoverable' : 'not discoverable' }}
+            </i>
+          </template>
         </p>
       </template>
     </template>
@@ -61,7 +67,8 @@ const UpdatedInfoKeys = {
   Name: 'name',
   Description: 'description',
   Message: 'message',
-  IsPublic: 'isPublic'
+  IsPublic: 'isPublic',
+  IsDiscoverable: 'isDiscoverable'
 }
 
 export default {

@@ -26,7 +26,7 @@
     </v-list>
     <v-scroll-y-transition>
       <div v-show="expand" class="px-2">
-        <div class="d-flex align-center px-2 mb-3">
+        <div v-if="$userId() !== null" class="d-flex align-center px-2 mb-3">
           <span class="caption mr-1">Filter</span>
           <v-btn
             x-small
@@ -159,7 +159,7 @@ export default {
   },
   data() {
     return {
-      expand: true,
+      expand: false,
       documentToBasicString
     }
   },
@@ -178,6 +178,7 @@ export default {
   },
   methods: {
     isUnread(comment) {
+      if (!this.$userId()) return false
       return new Date(comment.updatedAt) - new Date(comment.viewedAt) > 0
     }
   }

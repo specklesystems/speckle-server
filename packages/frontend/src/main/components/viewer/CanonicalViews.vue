@@ -30,6 +30,7 @@
 </template>
 <script lang="ts">
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
+import type { CanonicalView } from '@speckle/viewer'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -53,7 +54,7 @@ export default defineComponent({
   },
   methods: {
     setView(view: string) {
-      this.viewer.interactions.rotateTo(view.toLowerCase())
+      this.viewer.setView(view.toLowerCase() as CanonicalView)
     }
   }
 })

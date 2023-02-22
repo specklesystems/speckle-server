@@ -25,10 +25,21 @@ export function useMixpanel(): OverridedMixpanel {
 }
 
 /**
- * Composable that resolves whether the user is logged in through an Apollo query
+ * Composable that resolves user auth information through an Apollo query
  */
 export function useIsLoggedIn() {
   const { result } = useQuery(IsLoggedInDocument)
-  const isLoggedIn = computed(() => !!result.value?.user?.id)
-  return { isLoggedIn }
+  const userId = computed(() => result.value?.activeUser?.id)
+  const isLoggedIn = computed(() => !!userId.value)
+  return { isLoggedIn, userId }
+}
+
+/**
+ * Get Vuetify
+ */
+export function useVuetify() {
+  const vm = getCurrentInstance()
+  if (!vm) throw new ComposableInvokedOutOfScopeError()
+
+  return vm.proxy.$vuetify
 }

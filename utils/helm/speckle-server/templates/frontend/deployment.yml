@@ -10,6 +10,8 @@ spec:
   selector:
     matchLabels:
 {{ include "frontend.selectorLabels" . | indent 6 }}
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -22,7 +24,7 @@ spec:
 
         ports:
           - name: www
-            containerPort: 80
+            containerPort: 8080
             protocol: TCP
 
         resources:
@@ -50,6 +52,24 @@ spec:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
 
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 20000
+
+        volumeMounts:
+          - name: openresty-temp
+            mountPath: /bitnami/openresty
+          - name: openresty-conf
+            mountPath: /opt/bitnami/openresty/nginx/conf/
+          - name: openresty-logs
+            mountPath: /opt/bitnami/openresty/nginx/logs/
+
       priorityClassName: high-priority
       {{- if .Values.frontend.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.frontend.affinity "context" $) | nindent 8 }}
@@ -66,3 +86,11 @@ spec:
       {{- if .Values.frontend.serviceAccount.create }}
       serviceAccountName: {{ include "frontend.name" $ }}
       {{- end }}
+
+      volumes:
+        - name: openresty-temp
+          emptyDir: {}
+        - name: openresty-conf
+          emptyDir: {}
+        - name: openresty-logs
+          emptyDir: {}

@@ -1,25 +1,31 @@
 /* istanbul ignore file */
+import { moduleLogger } from '@/logging/logging'
 import * as SendingService from '@/modules/emails/services/sending'
+import { initializeVerificationOnRegistration } from '@/modules/emails/services/verification/request'
 import { initializeTransporter } from '@/modules/emails/utils/transporter'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import dbg from 'debug'
-import { noop } from 'lodash'
+import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
-const debug = dbg('speckle')
-const modulesDebug = debug.extend('modules')
+let quitVerificationListeners: Optional<() => void> = undefined
 
 const emailsModule: SpeckleModule = {
-  init: async (app) => {
-    modulesDebug('📧 Init emails module')
+  init: async (app, isInitial) => {
+    moduleLogger.info('📧 Init emails module')
 
     // init transporter
     await initializeTransporter()
 
     // init rest api
     ;(await import('./rest')).default(app)
+
+    // init event listeners
+    if (isInitial) {
+      quitVerificationListeners = initializeVerificationOnRegistration()
+    }
   },
 
-  finalize: noop
+  shutdown() {
+    quitVerificationListeners?.()
+  }
 }
 
 async function sendEmail({

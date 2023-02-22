@@ -1,0 +1,48 @@
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "fileimport_service.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "fileimport_service.labels" . | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+{{ include "fileimport_service.selectorLabels" . | indent 6 }}
+  policyTypes:
+    - Egress
+    - Ingress
+{{- if .Values.enable_prometheus_monitoring }}
+  ingress:
+    - from:
+        - namespaceSelector:
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.namespaceSelector | toYaml | indent 12 }}
+          podSelector:
+{{ .Values.prometheusMonitoring.networkPolicy.inCluster.kubernetes.podSelector | toYaml | indent 12 }}
+      ports:
+        - port: metrics
+{{- else }}
+  # deny all ingress
+  ingress: []
+{{- end }}
+  egress:
+    # allow access to DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    # allow egress to speckle-server
+    - to:
+        - podSelector:
+            matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
+      ports:
+        - port: 3000
+    # postgres
+{{ include "speckle.networkpolicy.egress.postgres" $ | indent 4 }}
+{{- end -}}

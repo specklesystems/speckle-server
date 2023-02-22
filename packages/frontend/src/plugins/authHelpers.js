@@ -1,8 +1,11 @@
 import { mainUserDataQuery } from '@/graphql/user'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import md5 from '@/helpers/md5'
+import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 import { VALID_EMAIL_REGEX } from '@/main/lib/common/vuetify/validators'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { has } from 'lodash'
+import { deletePostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
 
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
@@ -13,29 +16,26 @@ export function getAuthToken() {
 
 /**
  * Checks for an access token in the url and tries to exchange it for a token/refresh pair.
- * @return {boolean} true if everything is ok, otherwise throws an error.
+ * @return {Promise<boolean>} true if everything is ok, otherwise throws an error.
  */
 export async function checkAccessCodeAndGetTokens() {
   const accessCode = new URLSearchParams(window.location.search).get('access_code')
-  if (accessCode) {
-    const response = await getTokenFromAccessCode(accessCode)
-    // eslint-disable-next-line no-prototype-builtins
-    if (response.hasOwnProperty('token')) {
-      AppLocalStorage.set(LocalStorageKeys.AuthToken, response.token)
-      AppLocalStorage.set(LocalStorageKeys.RefreshToken, response.refreshToken)
-      return true
-    }
-  } else {
-    throw new Error(`No access code present in the url: ${window.location.href}`)
+  if (!accessCode) return false
+
+  const response = await getTokenFromAccessCode(accessCode)
+  if (has(response, 'token')) {
+    AppLocalStorage.set(LocalStorageKeys.AuthToken, response.token)
+    AppLocalStorage.set(LocalStorageKeys.RefreshToken, response.refreshToken)
+    return true
   }
 }
 
 /**
- * Gets the user id and suuid, sets them in local storage
+ * Gets the user id and sets it in localStorage
  * @param {import('@apollo/client/core').ApolloClient} apolloClient
- * @return {Object} The full graphql response.
+ * @return {Promise<Object>} The full graphql response.
  */
-export async function prefetchUserAndSetSuuid(apolloClient) {
+export async function prefetchUserAndSetID(apolloClient) {
   const token = AppLocalStorage.get(LocalStorageKeys.AuthToken)
   if (!token) return
 
@@ -44,18 +44,16 @@ export async function prefetchUserAndSetSuuid(apolloClient) {
     query: mainUserDataQuery
   })
 
-  if (data.user) {
-    // eslint-disable-next-line camelcase
-    const distinct_id = '@' + md5(data.user.email.toLowerCase()).toUpperCase()
-
-    AppLocalStorage.set('suuid', data.user.suuid)
-    AppLocalStorage.set('distinct_id', distinct_id)
-    AppLocalStorage.set('uuid', data.user.id)
-    AppLocalStorage.set('stcount', data.user.streams.totalCount)
+  const user = data.activeUser
+  if (user) {
+    const distinctId = '@' + md5(user.email.toLowerCase()).toUpperCase()
+    AppLocalStorage.set('distinct_id', distinctId)
+    AppLocalStorage.set('uuid', user.id)
+    AppLocalStorage.set('stcount', user.streams.totalCount)
     return data
   } else {
     await signOut()
-    throw new Error('Failed to set user')
+    throw new InvalidAuthTokenError()
   }
 }
 
@@ -95,11 +93,11 @@ export async function signOut(mixpanelInstance) {
 
   AppLocalStorage.remove(LocalStorageKeys.AuthToken)
   AppLocalStorage.remove(LocalStorageKeys.RefreshToken)
-  AppLocalStorage.remove('suuid')
   AppLocalStorage.remove('uuid')
   AppLocalStorage.remove('distinct_id')
   AppLocalStorage.remove('stcount')
   AppLocalStorage.remove('onboarding')
+  deletePostAuthRedirect()
 
   window.location = '/'
 
@@ -131,7 +129,7 @@ export async function refreshToken() {
   if (data.hasOwnProperty('token')) {
     AppLocalStorage.set(LocalStorageKeys.AuthToken, data.token)
     AppLocalStorage.set(LocalStorageKeys.RefreshToken, data.refreshToken)
-    await prefetchUserAndSetSuuid()
+    await prefetchUserAndSetID()
     return true
   }
 }

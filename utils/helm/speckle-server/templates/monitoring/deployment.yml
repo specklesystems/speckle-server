@@ -10,6 +10,8 @@ spec:
   selector:
     matchLabels:
 {{ include "monitoring.selectorLabels" . | indent 6 }}
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -53,8 +55,8 @@ spec:
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: postgres_url
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS

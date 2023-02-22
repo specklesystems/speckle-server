@@ -1,5 +1,5 @@
 const { buildApolloServer } = require('@/app')
-const { addLoadersToCtx } = require('@/modules/shared')
+const { addLoadersToCtx } = require('@/modules/shared/middleware')
 const { truncateTables } = require('@/test/hooks')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createStream } = require('@/modules/core/services/streams')
@@ -8,19 +8,20 @@ const crs = require('crypto-random-string')
 const { gql } = require('apollo-server-express')
 const { createBlobs } = require('@/modules/blobstorage/tests/helpers')
 const { expect } = require('chai')
+const { Users, Streams } = require('@/modules/core/dbSchema')
 
 describe('Blobs graphql @blobstorage', () => {
   /** @type {import('apollo-server-express').ApolloServer} */
   let apollo
   const user = {
     name: 'Baron Von Blubba',
-    email: 'barron@bubble.bobble',
+    email: 'zebarron@bubble.bobble',
     password: 'bubblesAreMyBlobs'
   }
   before(async () => {
+    await truncateTables(['blob_storage', Users.name, Streams.name])
     user.id = await createUser(user)
-    await truncateTables(['blob_storage'])
-    apollo = buildApolloServer({
+    apollo = await buildApolloServer({
       context: () =>
         addLoadersToCtx({
           auth: true,

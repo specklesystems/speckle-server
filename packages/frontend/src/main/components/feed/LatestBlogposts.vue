@@ -1,11 +1,7 @@
 <template>
-  <v-navigation-drawer app right fixed class="transparent overflow-auto" floating>
-    <v-card
-      rounded="lg"
-      style="overflow: hidden"
-      class="transparent elevation-0 pl-1 pr-3 pb-4"
-    >
-      <v-toolbar class="mt-3" rounded="lg" dense>
+  <div class="latest-blogposts">
+    <v-card rounded="lg" style="overflow: hidden" class="transparent elevation-0 pb-4">
+      <v-toolbar class="mt-0" rounded="lg" dense>
         <v-toolbar-title class="body-2 font-weight-bold">
           <a
             class="text-decoration-none"
@@ -113,7 +109,7 @@
         </v-card-text>
       </v-card>
     </v-card>
-  </v-navigation-drawer>
+  </div>
 </template>
 <script>
 import GhostContentAPI from '@tryghost/content-api'
@@ -147,3 +143,8 @@ export default {
   }
 }
 </script>
+<style lang="scss" scoped>
+.latest-blogposts {
+  width: 240px;
+}
+</style>

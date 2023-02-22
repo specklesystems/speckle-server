@@ -1,4 +1,4 @@
-{{- if .Values.s3.endpoint }}
+{{- if ( or .Values.s3.endpoint .Values.s3.configMap.enabled ) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,6 +11,8 @@ spec:
   selector:
     matchLabels:
 {{ include "fileimport_service.selectorLabels" . | indent 6 }}
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -31,7 +33,7 @@ spec:
           periodSeconds: 60
           exec:
             command:
-              - node
+              - /nodejs/bin/node
               - -e
               - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 25 * 60 * 1000)
 
@@ -63,16 +65,16 @@ spec:
 
         env:
           - name: SPECKLE_SERVER_URL
-            value: "http://speckle-server:3000"
+            value: {{ printf "http://%s:%s" ( include "server.service.fqdn" $ ) ( include "server.port" $ ) }}
 
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
-                key: postgres_url
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
 
-          - name: DEBUG
-            value: "fileimport-service:*"
+          - name: LOG_LEVEL
+            value: {{ .Values.fileimport_service.logLevel | quote }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS

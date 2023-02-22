@@ -1,6 +1,6 @@
 <template>
   <v-app
-    id="speckle-auth"
+    id="speckle"
     :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`"
   >
     <v-container fill-height fluid>

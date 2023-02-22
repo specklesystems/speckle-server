@@ -24,9 +24,10 @@ const {
 const { getUsers, getUser } = require('@/modules/core/repositories/users')
 const {
   addStreamInviteSentOutActivity
-} = require('@/modules/activitystream/services/streamActivityService')
+} = require('@/modules/activitystream/services/streamActivity')
 const {
-  buildBasicTemplateEmail
+  buildBasicTemplateEmail,
+  buildBasicTemplateServerInfo
 } = require('@/modules/emails/services/templateFormatting')
 
 /**
@@ -41,7 +42,7 @@ const {
  */
 
 /**
- * @typedef {CreateInviteParams|import('@/modules/serverinvites/repositories').ServerInviteRecord} InviteOrInputParams
+ * @typedef {CreateInviteParams|import('@/modules/serverinvites/helpers/types').ServerInviteRecord} InviteOrInputParams
  */
 
 /**
@@ -173,7 +174,7 @@ function sanitizeMessage(message, stripAll = false) {
 
 /**
  * Build the email subject line
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {string | null} resourceName
  * @returns {string}
@@ -194,7 +195,7 @@ function buildEmailSubject(invite, inviter, resourceName) {
 
 /**
  * Build invite link URL
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @returns {string}
  */
 function buildInviteLink(invite) {
@@ -259,9 +260,9 @@ ${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : '
 }
 
 /**
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
- * @param {{name: string, company: string, adminContact: string}} serverInfo
+ * @param {import('@/modules/core/helpers/types').ServerInfo} serverInfo
  * @param {string} resourceName
  * @returns {import('@/modules/emails/services/templateFormatting').BasicEmailTemplateParams}
  */
@@ -279,18 +280,13 @@ function buildEmailTemplateParams(
       title: 'Accept the invitation',
       url: inviteLink
     },
-    server: {
-      name: serverInfo.name,
-      url: process.env.CANONICAL_URL,
-      company: serverInfo.company,
-      contact: serverInfo.adminContact
-    }
+    server: buildBasicTemplateServerInfo(serverInfo)
   }
 }
 
 /**
  * Build invite email contents
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser
  * @param {Object | null} resource
@@ -388,7 +384,7 @@ async function createAndSendInvite(params) {
 
 /**
  * Re-send existing invite email
- * @param {import('@/modules/serverinvites/repositories').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  */
 async function resendInviteEmail(invite) {
   const { inviterId, target } = invite

@@ -3,7 +3,7 @@
     <div class="d-flex align-center">
       <v-autocomplete
         v-model="selectedSearchResult"
-        :loading="$apollo.loading"
+        :loading="isSearchLoading"
         :items="items"
         :search-input.sync="search"
         no-filter
@@ -61,70 +61,57 @@
           </v-list-item>
         </template>
       </v-autocomplete>
-      <v-dialog v-model="liff" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
-        <v-card>
-          <v-toolbar>
-            <v-toolbar-title>
-              thanks for all the fish
-              <v-icon>mdi-fish</v-icon>
-              <v-icon>mdi-arrow-up</v-icon>
-            </v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn icon @click="liff = false"><v-icon>mdi-close</v-icon></v-btn>
-          </v-toolbar>
-        </v-card>
-      </v-dialog>
     </div>
   </div>
 </template>
-<script>
-import { gql } from '@apollo/client/core'
+<script lang="ts">
+import { SearchStreamsDocument, SearchStreamsQuery } from '@/graphql/generated/graphql'
+import { Nullable } from '@/helpers/typeHelpers'
+import { useQuery } from '@vue/apollo-composable'
+import type { Get } from 'type-fest'
+import { defineComponent, ref, watch } from 'vue'
 
-export default {
+type SearchItemType = NonNullable<Get<SearchStreamsQuery, 'streams.items.0'>>
+
+export default defineComponent({
   components: {
-    PreviewImage: () => import('@/main/components/common/PreviewImage')
+    PreviewImage: () => import('@/main/components/common/PreviewImage.vue')
   },
   props: {
     gotostreamonclick: { type: Boolean, default: true }
   },
-  data: () => ({
-    search: '',
-    hasSearched: false,
-    liff: false,
-    items: [],
-    selectedSearchResult: null
-  }),
-  apollo: {
-    streams: {
-      query: gql`
-        query Streams($query: String) {
-          streams(query: $query) {
-            totalCount
-            cursor
-            items {
-              id
-              name
-              updatedAt
-            }
-          }
-        }
-      `,
-      variables() {
-        return {
-          query: this.search
-        }
+  setup() {
+    const search = ref('')
+    const items = ref([] as SearchItemType[])
+
+    const { onResult: onSearchResult, loading: isSearchLoading } = useQuery(
+      SearchStreamsDocument,
+      () => {
+        return { query: search.value }
       },
-      skip() {
-        return !this.search || this.search.length < 3
-      },
-      result({ data }) {
-        this.items = [...data.streams.items]
-      },
-      debounce: 300
-    }
+      () => ({
+        enabled: search.value?.length >= 3,
+        debounce: 300
+      })
+    )
+    onSearchResult((result) => {
+      const newItems = result.data?.streams?.items || []
+      items.value = newItems.slice()
+    })
+
+    watch(search, (newSearch) => {
+      if (!newSearch?.length) {
+        items.value = []
+      }
+    })
+
+    return { search, items, isSearchLoading }
   },
+  data: () => ({
+    selectedSearchResult: null as Nullable<SearchItemType>
+  }),
   watch: {
-    selectedSearchResult(val) {
+    selectedSearchResult(val: SearchItemType) {
       const myStream = this.items.find((s) => s.id === val.id)
       this.$emit('select', myStream)
 
@@ -132,15 +119,9 @@ export default {
       this.search = ''
 
       if (val && this.gotostreamonclick) this.$router.push(`/streams/${val.id}`)
-    },
-    search(val) {
-      this.hasSearched = true
-      if (val === '42') this.liff = true
-      if (!val || val === '') this.items = []
     }
-  },
-  methods: {}
-}
+  }
+})
 </script>
 <style scoped>
 .results {

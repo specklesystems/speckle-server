@@ -1,0 +1,16 @@
+<mj-text>
+<%- params.html %>
+</mj-text>
+<% if (params?.cta) { %>
+<mj-button 
+  href="<%= params.cta.url %>" 
+  title="<%= params.cta.altTitle || params.cta.title %>" 
+  background-color="white" 
+  color="black" 
+  font-weight="500" 
+  border-radius="5px" 
+  border="2px solid rgba(0,76,235,1)"
+  >
+  <%= params.cta.title %>
+</mj-button>
+<% } %>

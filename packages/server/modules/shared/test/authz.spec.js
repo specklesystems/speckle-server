@@ -6,16 +6,18 @@ const {
   validateRole,
   validateScope,
   contextRequiresStream,
-  ContextError,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
-  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+  allowForServerAdmins
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
   UnauthorizedError: SUE,
   BadRequestError,
-  UnauthorizedError
+  UnauthorizedError,
+  ContextError
 } = require('@/modules/shared/errors')
+const { Roles } = require('@speckle/shared')
 
 describe('AuthZ @shared', () => {
   describe('Auth pipeline', () => {
@@ -45,7 +47,11 @@ describe('AuthZ @shared', () => {
     })
     it('Pipeline throws Error if authorized but has error', async () => {
       const borkedStep = async () => ({
-        authResult: { authorized: true, error: new UnauthorizedError('Weird stuff') }
+        authResult: {
+          authorized: true,
+          error: new UnauthorizedError('Weird stuff'),
+          fatal: false
+        }
       })
       const pipeline = authPipelineCreator([borkedStep])
       try {
@@ -263,6 +269,18 @@ describe('AuthZ @shared', () => {
     })
   })
   describe('Escape hatches', () => {
+    describe('Admin override', () => {
+      it('server:admins get authSuccess', async () => {
+        const input = { context: { role: Roles.Server.Admin }, authResult: 'fake' }
+        const result = await allowForServerAdmins(input)
+        expect(result).to.deep.equal(authSuccess(input.context))
+      })
+      it('server:users get the previous authResult', async () => {
+        const input = { context: { role: Roles.Server.User }, authResult: 'fake' }
+        const result = await allowForServerAdmins(input)
+        expect(result).to.deep.equal(input)
+      })
+    })
     describe('Allow for public stream no role', () => {
       it('not public stream, no auth returns same context ', async () => {
         const input = { context: 'dummy', authResult: 'fake' }

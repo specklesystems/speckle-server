@@ -32,7 +32,7 @@ spec:
             port:
               name: www
       - pathType: Exact
-        path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
+        path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*))"
         backend:
           service:
             name: {{ include "server.name" . }}

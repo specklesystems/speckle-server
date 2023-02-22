@@ -64,11 +64,11 @@ let obj = await loader.getAndConstructObject((e) => console.log('Progress', e))
 
 ### On the server
 
-Since Node.js does not yet support the [`fetch API`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch), you'll need to provide your own `fetch` function in the options object. Note that `fetch` must return a [Web Stream](https://nodejs.org/api/webstreams.html), so [node-fetch](https://github.com/node-fetch/node-fetch) won't work, but [node/undici's](https://undici.nodejs.org/) implementation will.
+Since Node.js does not yet support the [`fetch API`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch), you'll need to provide your own `fetch` function in the options object, e.g., from `node-fetch` or `cross-fetch`
 
 ```js
 import ObjectLoader from '@speckle/objectloader'
-import { fetch } from 'undici'
+import fetch from 'cross-fetch'
 
 let loader = new ObjectLoader({
   serverUrl: 'https://latest.speckle.dev',
@@ -82,6 +82,12 @@ let loader = new ObjectLoader({
 
 Run `yarn build` to build prod release, run `yarn build:dev` to build dev release.
 Or run `yarn dev` to run the build in `watch` mode.
+
+### TS types
+
+The library isn't written in TypeScript so there's no typing information to be generated out of the box, but since we do want this library to be usable in TypeScript projects we write the types ourselves (for now).
+
+So whenever you make any changes to the API, make sure the types file in `types/index.d.ts` is updated
 
 ## Community
 

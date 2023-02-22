@@ -1,5 +1,5 @@
 <template>
-  <!-- 
+  <!--
     HIC SVNT DRACONES
   -->
   <div
@@ -250,9 +250,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import {
   setIsAddingComment,
-  useCommitObjectViewerParams
+  useCommitObjectViewerParams,
+  getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-
+import { ViewerEvent } from '@speckle/viewer'
 /**
  * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
  */
@@ -266,12 +267,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             name
             id
           }
         }
       `,
+      update: (data) => data.activeUser,
       skip() {
         return !this.$loggedIn()
       }
@@ -299,7 +301,8 @@ export default {
         commitObjectViewerState @client {
           selectedCommentMetaData
           commentReactions
-          appliedFilter
+          # appliedFilter
+          currentFilterState
         }
       }
     `)
@@ -333,7 +336,7 @@ export default {
   },
   mounted() {
     this.viewerSelectHandler = debounce(this.handleSelect, 10)
-    this.viewer.on('select', this.viewerSelectHandler)
+    this.viewer.on(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
 
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
@@ -351,7 +354,7 @@ export default {
     document.addEventListener('keyup', this.docKeyUpHandler)
   },
   beforeDestroy() {
-    this.viewer.removeListener('select', this.viewerSelectHandler)
+    this.viewer.removeListener(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
     this.viewer.cameraHandler.controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
@@ -401,11 +404,11 @@ export default {
             ? this.location
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
           camPos: getCamArray(this.viewer),
-          filters: this.viewerState.appliedFilter,
-          sectionBox: this.viewer.sectionBox.getCurrentBox(),
-          selection: null // TODO for later, lazy now
+          filters: getLocalFilterState(),
+          sectionBox: this.viewer.getCurrentSectionBox(),
+          selection: null // Note: comments could keep track of selected objects, but for now we're too lazy to do so.
         },
-        screenshot: this.viewer.interactions.screenshot()
+        screenshot: await this.viewer.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(
@@ -445,7 +448,7 @@ export default {
       this.visible = false
       this.commentValue = { doc: null, attachments: [] }
       setIsAddingComment(false)
-      this.viewer.interactions.deselectObjects()
+      this.viewer.resetSelection()
     },
     sendStatusUpdate() {
       // TODO: typing or not
@@ -465,8 +468,7 @@ export default {
     },
     handleSelect(info) {
       this.expand = false
-      if (!info.location) {
-        // TODO: deselect event
+      if (!info || !info.hits.length === 0) {
         this.visible = false
         this.location = null
         setIsAddingComment(false)
@@ -476,55 +478,90 @@ export default {
       if (!this.$refs.commentButton) return
       this.visible = true
 
-      const projectedLocation = new THREE.Vector3(
-        info.location.x,
-        info.location.y,
-        info.location.z
-      )
-      this.location = new THREE.Vector3(
-        info.location.x,
-        info.location.y,
-        info.location.z
-      )
-
-      const cam = this.viewer.cameraHandler.camera
-      cam.updateProjectionMatrix()
-      projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
       collapsedSize = 36
-      const mappedLocation = new THREE.Vector3(
-        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
-          collapsedSize / 2,
-        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
-          collapsedSize / 1,
-        0
+      this.location = new THREE.Vector3(
+        info.hits[0].point.x,
+        info.hits[0].point.y,
+        info.hits[0].point.z
       )
+      // const projectedLocation = new THREE.Vector3(
+      //   info.hits[0].point.x,
+      //   info.hits[0].point.y,
+      //   info.hits[0].point.z
+      // )
+
+      // const cam = this.viewer.cameraHandler.camera
+      // cam.updateProjectionMatrix()
+      // projectedLocation.project(cam)
+
+      // const mappedLocation = new THREE.Vector3(
+      //   (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
+      //     collapsedSize / 2,
+      //   (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
+      //     collapsedSize / 1,
+      //   0
+      // )
+      const projectionResult = this.viewer.query({
+        point: this.location,
+        operation: 'Project'
+      })
+      const mappedLocation = this.viewer.Utils.NDCToScreen(
+        projectionResult.x,
+        projectionResult.y,
+        this.$refs.parent.clientWidth,
+        this.$refs.parent.clientHeight
+      )
+      mappedLocation.x -= collapsedSize / 2
+      mappedLocation.y -= collapsedSize / 1
       this.$refs.commentButton.style.transform = ''
       this.$refs.commentButton.style.transition = 'all 0.3s ease'
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
     },
     updateCommentBubble() {
-      // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
-      const cam = this.viewer.cameraHandler.camera
-      cam.updateProjectionMatrix()
-      const projectedLocation = this.location.clone()
-      projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
       collapsedSize = 36
-      const mappedLocation = new THREE.Vector3(
-        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
-          collapsedSize / 2,
-        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
-          collapsedSize / 1,
-        0
+
+      // const cam = this.viewer.cameraHandler.activeCam.camera
+      // cam.updateProjectionMatrix()
+      // const projectedLocation = this.location.clone()
+      // projectedLocation.project(cam)
+      // const mappedLocation = new THREE.Vector3(
+      //   (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
+      //     collapsedSize / 2,
+      //   (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
+      //     collapsedSize / 1,
+      //   0
+      // )
+
+      const projectionResult = this.viewer.query({
+        point: this.location,
+        operation: 'Project'
+      })
+      const mappedLocation = this.viewer.Utils.NDCToScreen(
+        projectionResult.x,
+        projectionResult.y,
+        this.$refs.parent.clientWidth,
+        this.$refs.parent.clientHeight
       )
+      mappedLocation.x -= collapsedSize / 2
+      mappedLocation.y -= collapsedSize / 1
+
+      /** Just as an example */
+      const occlusionRes = this.viewer.query({
+        point: this.location,
+        tolerance: 0.001,
+        operation: 'Occlusion'
+      })
+      const opacity = occlusionRes.objects === null ? '1.0' : '0.25'
       this.$refs.commentButton.style.transform = ''
       this.$refs.commentButton.style.transition = ''
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
+      this.$refs.commentButton.style.opacity = opacity
     }
   }
 }

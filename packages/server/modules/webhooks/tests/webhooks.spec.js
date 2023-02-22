@@ -18,7 +18,7 @@ const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
 
 describe('Webhooks @webhooks', () => {
-  let server, sendRequest
+  let server, sendRequest, app
 
   const userOne = {
     name: 'User',
@@ -42,8 +42,8 @@ describe('Webhooks @webhooks', () => {
   }
 
   before(async () => {
-    const { app } = await beforeEachContext()
-    ;({ server, sendRequest } = await initializeTestServer(app))
+    ;({ app, server } = await beforeEachContext())
+    ;({ sendRequest } = await initializeTestServer(server, app))
 
     userOne.id = await createUser(userOne)
     streamOne.ownerId = userOne.id

@@ -1,9 +1,4 @@
-import {
-  ServerInviteRecord,
-  ServerInvites,
-  Streams,
-  Users
-} from '@/modules/core/dbSchema'
+import { ServerInvites, Streams, Users } from '@/modules/core/dbSchema'
 import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
 import { createStream } from '@/modules/core/services/streams'
@@ -11,10 +6,12 @@ import { times, clamp } from 'lodash'
 import { createInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
 import { buildApolloServer } from '@/app'
-import { addLoadersToCtx } from '@/modules/shared'
+import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import { ApolloServer } from 'apollo-server-express'
+import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { Optional } from '@/modules/shared/helpers/typeHelper'
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
@@ -44,7 +41,7 @@ describe('[Admin users list]', () => {
     name: 'Mr Server Admin Dude',
     email: 'adminuserguy@gmail.com',
     password: 'sn3aky-1337-b1m',
-    id: undefined
+    id: undefined as Optional<string>
   }
 
   const USER_COUNT = 15
@@ -151,20 +148,22 @@ describe('[Admin users list]', () => {
 
     // Create a few more stream invites to registered users, which should not appear in
     // the users list
-    const createdInvitesData = await Promise.all(
-      times(3, () => {
-        const { id: streamId, ownerId } = randomEl(streamData)
-        const userId = randomEl(userIds.filter((i) => i !== ownerId))
+    // (doing these sequentially, otherwise operations can interfere with each other, cause of the target being chosen randomly)
+    const createdInvitesData = <Array<{ inviteId: string; token: string }>>[]
+    for (let i = 0; i < 3; i++) {
+      const { id: streamId, ownerId } = randomEl(streamData)
+      const userId = randomEl(userIds.filter((i) => i !== ownerId))
 
-        return createInviteDirectly(
+      createdInvitesData.push(
+        await createInviteDirectly(
           {
             streamId,
             userId
           },
           ownerId
         )
-      })
-    )
+      )
+    }
 
     if (!createdInvitesData.every(({ inviteId, token }) => inviteId && token))
       throw new Error('Stream invite generation failed')
@@ -173,7 +172,7 @@ describe('[Admin users list]', () => {
     orderedInviteIds = await getOrderedInviteIds()
     orderedUserIds = await getOrderedUserIds()
 
-    apollo = buildApolloServer({
+    apollo = await buildApolloServer({
       context: () =>
         addLoadersToCtx({
           auth: true,
@@ -241,8 +240,8 @@ describe('[Admin users list]', () => {
         expect(userItem.registeredUser?.id).to.eq(expectedUserId)
 
         if (userItem.registeredUser?.id !== me.id) {
-          expect(userItem.registeredUser.name).to.contain('User #')
-          expect(userItem.registeredUser.email).to.contain('speckleuser')
+          expect(userItem.registeredUser?.name).to.contain('User #')
+          expect(userItem.registeredUser?.email).to.contain('speckleuser')
         }
       }
 

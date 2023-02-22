@@ -1,8 +1,5 @@
-const debug = require('debug')
-const { contextMiddleware } = require('@/modules/shared')
 const Busboy = require('busboy')
 const {
-  authMiddlewareCreator,
   streamReadPermissions,
   streamWritePermissions,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -17,6 +14,8 @@ const {
   getObjectAttributes
 } = require('@/modules/blobstorage/objectStorage')
 const crs = require('crypto-random-string')
+const { authMiddlewareCreator } = require('@/modules/shared/middleware')
+
 const {
   uploadFileStream,
   getFileStream,
@@ -26,25 +25,30 @@ const {
   deleteBlob,
   getBlobMetadata,
   getBlobMetadataCollection,
+  getAllStreamBlobIds,
   getFileSizeLimit
 } = require('@/modules/blobstorage/services')
+
+const { isArray } = require('lodash')
+
 const {
   NotFoundError,
   ResourceMismatch,
   BadRequestError
 } = require('@/modules/shared/errors')
+const { moduleLogger, logger } = require('@/logging/logging')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
-    debug('speckle:modules')('📦 Blob storage is DISABLED')
+    moduleLogger.info('📦 Blob storage is DISABLED')
     return
   } else {
-    debug('speckle:modules')('📦 Init BlobStorage module')
+    moduleLogger.info('📦 Init BlobStorage module')
     await ensureStorageAccess()
   }
 
   if (!process.env.S3_BUCKET) {
-    debug('speckle:error')(
+    logger.warn(
       'S3_BUCKET env variable was not specified. 📦 BlobStorage will be DISABLED.'
     )
     return
@@ -70,7 +74,6 @@ exports.init = async (app) => {
   // eslint-disable-next-line no-unused-vars
   app.post(
     '/api/stream/:streamId/blob',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamWritePermissions,
       // todo should we add public comments upload escape hatch?
@@ -86,6 +89,7 @@ exports.init = async (app) => {
         limits: { fileSize: getFileSizeLimit() }
       })
       const streamId = req.params.streamId
+
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
         const fileType = fileName.split('.').pop().toLowerCase()
@@ -95,12 +99,20 @@ exports.init = async (app) => {
           )
         }
 
-        const blobId = crs({ length: 10 })
+        let blobId = crs({ length: 10 })
+        let clientHash = null
+        if (formKey.includes('hash:')) {
+          clientHash = formKey.split(':')[1]
+          if (clientHash && clientHash !== '') {
+            // logger.debug(`I have a client hash (${clientHash})`)
+            blobId = clientHash
+          }
+        }
 
         uploadOperations[blobId] = uploadFileStream(
           storeFileStream,
           { streamId, userId: req.context.userId },
-          { blobId, fileName, fileType, fileStream: file }
+          { blobId, fileName, fileType, fileStream: file, clientHash }
         )
 
         //this file level 'close' is fired when a single file upload finishes
@@ -112,12 +124,14 @@ exports.init = async (app) => {
 
           registerUploadResult(markUploadSuccess(getObjectAttributes, streamId, blobId))
         })
+
         file.on('limit', async () => {
           await uploadOperations[blobId]
           registerUploadResult(
             markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
           )
         })
+
         file.on('error', (err) => {
           registerUploadResult(markUploadError(deleteObject, blobId, err.message))
         })
@@ -134,7 +148,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        debug('speckle:error')(`File upload error: ${err}`)
+        logger.error(err, 'File upload error')
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>
@@ -152,9 +166,31 @@ exports.init = async (app) => {
     }
   )
 
+  app.post(
+    '/api/stream/:streamId/blob/diff',
+    authMiddlewareCreator([
+      ...streamReadPermissions,
+      allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
+      allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
+      allowAnonymousUsersOnPublicStreams
+    ]),
+    async (req, res) => {
+      if (!isArray(req.body)) {
+        return res
+          .status(400)
+          .json({ error: 'An array of blob IDs expected in the body.' })
+      }
+
+      const bq = await getAllStreamBlobIds({ streamId: req.params.streamId })
+      const unknownBlobIds = [...req.body].filter(
+        (id) => bq.findIndex((bInfo) => bInfo.id === id) === -1
+      )
+      res.send(unknownBlobIds)
+    }
+  )
+
   app.get(
     '/api/stream/:streamId/blob/:blobId',
-    contextMiddleware,
     authMiddlewareCreator([
       ...streamReadPermissions,
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
@@ -180,9 +216,9 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
@@ -195,9 +231,9 @@ exports.init = async (app) => {
       })
     }
   )
+
   app.get(
     '/api/stream/:streamId/blobs',
-    contextMiddleware,
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       const fileName = req.query.fileName
@@ -212,12 +248,10 @@ exports.init = async (app) => {
       })
     }
   )
-  app.delete(
-    '/api/stream/:streamId/blobs',
-    contextMiddleware,
-    authMiddlewareCreator(streamWritePermissions)
-    // async (req, res) => {}
-  )
+
+  app.delete('/api/stream/:streamId/blobs', async (req, res) => {
+    res.status(501).send('This method is not implemented yet.')
+  })
 }
 
 exports.finalize = () => {}

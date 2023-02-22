@@ -6,9 +6,13 @@ const Scopes = () => knex('scopes')
 const Info = () => knex('server_config')
 
 module.exports = {
+  /**
+   * @returns {Promise<import('@/modules/core/helpers/types').ServerInfo>}
+   */
   async getServerInfo() {
     const serverInfo = await Info().select('*').first()
     serverInfo.version = process.env.SPECKLE_SERVER_VERSION || 'dev'
+    serverInfo.canonicalUrl = process.env.CANONICAL_URL || 'localhost'
     return serverInfo
   },
 

@@ -140,12 +140,13 @@ export default {
     user: {
       query: gql`
         query {
-          user {
+          activeUser {
             id
             name
           }
         }
       `,
+      update: (data) => data.activeUser,
       prefetch: true
     },
     serverInfo: {

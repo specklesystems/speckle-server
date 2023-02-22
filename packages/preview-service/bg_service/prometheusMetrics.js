@@ -100,7 +100,7 @@ module.exports = {
   metricDuration: new prometheusClient.Histogram({
     name: 'speckle_server_operation_duration',
     help: 'Summary of the operation durations in seconds',
-    buckets: [0.5, 1, 5, 10, 30, 60, 300, 600],
+    buckets: [0.5, 1, 5, 10, 30, 60, 300, 600, 1200, 1800],
     labelNames: ['op']
   }),
 

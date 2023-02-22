@@ -23,9 +23,9 @@ export default new Vuetify({
         error: '#FF5555', //red
         warning: '#FF9100', //orange
         info: '#313BCF', //dark blue
-        success: '#4caf50',
-        text: '#FFFFFF',
-        background: '#f5f6f7'
+        success: '#4caf50', // green
+        text: '#000000', // black
+        background: '#f5f6f7' // white
       },
       dark: {
         primary: '#047EFB', //blue
@@ -34,8 +34,9 @@ export default new Vuetify({
         error: '#FF5555', //red
         warning: '#FF9100', //orange
         info: '#9298f0', //dark blue
-        success: '#4caf50',
-        background: '#1a1a1a'
+        success: '#4caf50', // green
+        text: '#FFFFFF', // white
+        background: '#1a1a1a' // black / dark grey
       }
     }
   }

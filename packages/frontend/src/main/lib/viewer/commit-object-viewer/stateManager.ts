@@ -1,10 +1,21 @@
-import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+// NOTE: any disabling temporary, most of the filtering stuff will go away
+
+import { Nullable } from '@/helpers/typeHelpers'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
-import { makeVar, TypePolicies } from '@apollo/client/cache'
-import { DefaultViewerParams, Viewer } from '@speckle/viewer'
-import emojis from '@/main/store/emojis'
-import { cloneDeep, has, isArray } from 'lodash'
+import {
+  DefaultViewerParams,
+  Viewer,
+  SelectionEvent,
+  PropertyInfo,
+  NumericPropertyInfo
+} from '@speckle/viewer'
+import { cloneDeep } from 'lodash'
 import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
+import {
+  commitObjectViewerState,
+  StateType
+} from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_STREAMID'
@@ -24,58 +35,19 @@ type GlobalViewerData = {
   initialized: Promise<void>
 }
 
-type FilterKeyAndValues = {
-  filterKey: string
-  filterValues: string[]
-}
-
 /**
  * Global CommitObjectViewer viewer instance & container. It's not held in commitObjectViewerState, because it's a
  * complex object that keeps mutating itself (triggering Apollo Client errors)
  */
 let globalViewerData: Nullable<GlobalViewerData> = null
 
-/**
- * Queryable Apollo Client state
- */
-const commitObjectViewerState = makeVar({
-  viewerBusy: false,
-  appliedFilter: null as Nullable<UnknownObject>,
-  isolateKey: null as Nullable<string>,
-  isolateValues: [] as string[],
-  hideKey: null as Nullable<string>,
-  hideValues: [] as string[],
-  colorLegend: {} as UnknownObject,
-  isolateCategoryKey: null as Nullable<string>,
-  isolateCategoryValues: [] as string[],
-  hideCategoryKey: null as Nullable<string>,
-  hideCategoryValues: [] as string[],
-  selectedCommentMetaData: null as Nullable<{
-    id: number
-    selectionLocation: Record<string, unknown>
-  }>,
-  addingComment: false,
-  preventCommentCollapse: false,
-  commentReactions: ['❤️', '✏️', '🔥', '⚠️'],
-  emojis
-})
-
-export type StateType = GetReactiveVarType<typeof commitObjectViewerState>
-
-/**
- * Merge (through _.merge) these with the rest of your Apollo Client `typePolicies` to set up
- * commit object viewer state management
- */
-export const statePolicies: TypePolicies = {
-  Query: {
-    fields: {
-      commitObjectViewerState: {
-        read() {
-          return commitObjectViewerState()
-        }
-      }
-    }
-  }
+export type LocalFilterState = {
+  hiddenIds?: string[]
+  isolatedIds?: string[]
+  propertyInfoKey?: string
+  passMin?: number | null
+  passMax?: number | null
+  sectionBox?: number[]
 }
 
 /**
@@ -201,301 +173,225 @@ export function setSelectedCommentMetaData(
   })
 }
 
-export function isolateObjects(params: FilterKeyAndValues) {
-  const { filterKey, filterValues } = params
-
-  const state = { ...commitObjectViewerState() }
-  state.hideKey = null
-  state.hideValues = []
-  if (state.isolateKey !== filterKey) {
-    state.isolateValues = []
-  }
-
-  state.isolateKey = filterKey
-  state.isolateValues = [...new Set([...state.isolateValues, ...filterValues])]
-  if (state.isolateValues.length === 0) {
-    state.appliedFilter = null
-  } else {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { includes: state.isolateValues } },
-      ghostOthers: true
-    }
-  }
-
-  updateState(state)
-  getInitializedViewer().applyFilter(state.appliedFilter)
+export function setPreventCommentCollapse(shouldPrevent: boolean) {
+  updateState({
+    preventCommentCollapse: shouldPrevent
+  })
 }
 
-export function unisolateObjects(params: FilterKeyAndValues) {
-  const { filterKey, filterValues } = params
+// VIEWER
 
+/**
+ *
+ * @returns A bare minimum filtering state object for storing with comments or plopping in the url.
+ */
+export function getLocalFilterState(): LocalFilterState {
   const state = { ...commitObjectViewerState() }
-  state.hideKey = null
-  state.hideValues = []
-  if (state.isolateKey !== filterKey) {
-    state.isolateValues = []
+  const fs = {} as LocalFilterState
+  fs.hiddenIds = state.currentFilterState?.hiddenObjects
+  fs.isolatedIds = state.currentFilterState?.isolatedObjects
+  fs.propertyInfoKey = state.currentFilterState?.activePropFilterKey
+  fs.passMax = state.currentFilterState?.passMax
+  fs.passMin = state.currentFilterState?.passMin
+  const box = getInitializedViewer().getCurrentSectionBox()
+  if (box) {
+    fs.sectionBox = [
+      +box.min.x.toFixed(2),
+      +box.min.y.toFixed(2),
+      +box.min.z.toFixed(2),
+      +box.max.x.toFixed(2),
+      +box.max.y.toFixed(2),
+      +box.max.z.toFixed(2)
+    ]
+  }
+  return fs
+}
+
+export function setSectionBox(
+  box?: {
+    min: { x: number; y: number; z: number }
+    max: { x: number; y: number; z: number }
+  },
+  offset?: number
+) {
+  getInitializedViewer().setSectionBox(box, offset)
+}
+
+export function setSectionBoxFromObjects(objectIds: string[], offset?: number) {
+  getInitializedViewer().setSectionBoxFromObjects(objectIds, offset)
+}
+
+export function toggleSectionBox() {
+  getInitializedViewer().toggleSectionBox()
+  updateState({ sectionBox: getInitializedViewer().getCurrentSectionBox() !== null })
+}
+
+export function sectionBoxOff() {
+  getInitializedViewer().sectionBoxOff()
+  updateState({ sectionBox: false })
+}
+
+export function sectionBoxOn() {
+  getInitializedViewer().sectionBoxOn()
+  updateState({ sectionBox: true })
+}
+
+export function loadObjectProperties() {
+  setIsViewerBusy(true)
+  const props = getInitializedViewer().getObjectProperties(undefined, true)
+  setIsViewerBusy(false)
+  updateState({ objectProperties: props })
+}
+
+export async function handleViewerSelection(selectionInfo: SelectionEvent) {
+  const state = { ...commitObjectViewerState() }
+  const firstVisibleHit = selectionInfo
+    ? getFirstVisibleSelectionHit(selectionInfo)
+    : null
+
+  if (!selectionInfo || !firstVisibleHit) {
+    updateState({ selectedObjects: [] })
+    await getInitializedViewer().resetSelection()
+    return
   }
 
-  state.isolateKey = filterKey
-  state.isolateValues = state.isolateValues.filter(
-    (val) => filterValues.indexOf(val) === -1
+  if (selectionInfo.multiple) {
+    if (!state.selectedObjects.includes(firstVisibleHit.object))
+      state.selectedObjects = [...state.selectedObjects, firstVisibleHit.object]
+  } else {
+    state.selectedObjects = [firstVisibleHit.object]
+  }
+
+  getInitializedViewer().selectObjects(
+    state.selectedObjects.map((o) => o.id) as string[]
   )
-  if (state.isolateValues.length === 0) {
-    state.appliedFilter = null
-  } else {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { includes: state.isolateValues } },
-      ghostOthers: true
-    }
-  }
-
   updateState(state)
-  getInitializedViewer().applyFilter(state.appliedFilter)
 }
 
-export function hideObjects(params: FilterKeyAndValues) {
-  const { filterKey, filterValues } = params
-  const state = { ...commitObjectViewerState() }
-
-  state.isolateKey = null
-  state.isolateValues = []
-  if (state.hideKey !== filterKey) {
-    state.hideValues = []
-  }
-
-  state.hideKey = filterKey
-  state.hideValues = [...new Set([...filterValues, ...state.hideValues])]
-
-  if (state.hideValues.length === 0) {
-    state.appliedFilter = null
-  } else {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { excludes: state.hideValues } }
-    }
-  }
-
-  updateState(state)
-  getInitializedViewer().applyFilter(state.appliedFilter)
-}
-
-export function showObjects(params: FilterKeyAndValues) {
-  const { filterKey, filterValues } = params
-  const state = { ...commitObjectViewerState() }
-
-  state.isolateKey = null
-  state.isolateValues = []
-  if (state.hideKey !== filterKey) {
-    state.hideValues = []
-  }
-
-  state.hideKey = filterKey
-  state.hideValues = state.hideValues.filter((val) => filterValues.indexOf(val) === -1)
-
-  if (state.hideValues.length === 0) {
-    state.appliedFilter = null
-  } else {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { excludes: state.hideValues } }
-    }
-  }
-
-  updateState(state)
-  getInitializedViewer().applyFilter(state.appliedFilter)
-}
-
-function resetInternalHideIsolateObjectState() {
-  updateState({
-    isolateKey: null,
-    isolateValues: [],
-    hideKey: null,
-    hideValues: []
-  })
-}
-
-export async function isolateCategoryToggle(params: {
-  filterKey: string
-  filterValue: string
-  allValues: string[]
-  colorBy?: Record<string, unknown> | false
-}) {
-  resetInternalHideIsolateObjectState()
-
-  const { filterKey, filterValue, allValues, colorBy = false } = params
-  const state = { ...commitObjectViewerState() }
-  const viewer = getInitializedViewer()
-
-  state.hideCategoryKey = null
-  state.hideCategoryValues = []
-
-  if (filterKey !== state.isolateCategoryKey) {
-    state.isolateCategoryValues = []
-  }
-  state.isolateCategoryKey = filterKey
-
-  const isolateCategoryValues = [...state.isolateCategoryValues]
-  const indx = isolateCategoryValues.indexOf(filterValue)
-  if (indx === -1) {
-    isolateCategoryValues.push(filterValue)
-  } else {
-    isolateCategoryValues.splice(indx, 1)
-  }
-  state.isolateCategoryValues = isolateCategoryValues
-
-  if (
-    (state.isolateCategoryValues.length === 0 ||
-      state.isolateCategoryValues.length === allValues.length) &&
-    !colorBy
-  ) {
-    state.appliedFilter = null
-    updateState(state)
-    viewer.applyFilter(state.appliedFilter)
+export async function handleViewerDoubleClick(selectionInfo: SelectionEvent) {
+  if (!selectionInfo) {
+    await getInitializedViewer().zoom()
     return
   }
 
-  if (state.isolateCategoryValues.length === 0 && colorBy) {
-    state.appliedFilter = {
-      colorBy: { type: 'category', property: filterKey }
-    }
-  }
-  if (state.isolateCategoryValues.length !== 0) {
-    state.appliedFilter = {
-      ghostOthers: true,
-      filterBy: { [filterKey]: state.isolateCategoryValues },
-      colorBy: colorBy ? { type: 'category', property: filterKey } : null
-    }
-  }
+  const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
+  if (!firstVisibleHit) return
 
-  if (
-    state.isolateCategoryValues.length === allValues.length &&
-    state.appliedFilter?.filterBy
-  ) {
-    const newAppliedFilter = { ...state.appliedFilter }
-    delete newAppliedFilter.filterBy
-
-    state.appliedFilter = newAppliedFilter
-  }
-
-  const res = await viewer.applyFilter(state.appliedFilter)
-  state.colorLegend = res.colorLegend
-  updateState(state)
+  await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
 }
 
-export async function hideCategoryToggle(params: {
-  filterKey: string
-  filterValue: string
-  colorBy?: Record<string, unknown> | false
-}) {
-  resetInternalHideIsolateObjectState()
+function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {
+  const { currentFilterState } = { ...commitObjectViewerState() }
+  const hasHiddenObjects =
+    !!currentFilterState?.hiddenObjects &&
+    currentFilterState?.hiddenObjects.length !== 0
+  const hasIsolatedObjects =
+    !!currentFilterState?.isolatedObjects &&
+    currentFilterState?.isolatedObjects.length !== 0
 
-  const { filterKey, filterValue, colorBy = false } = params
-  const state = { ...commitObjectViewerState() }
-  const viewer = getInitializedViewer()
-
-  state.isolateCategoryKey = null
-  state.isolateCategoryValues = []
-  if (filterKey !== state.hideCategoryKey) {
-    state.hideCategoryValues = []
-  }
-  state.hideCategoryKey = filterKey
-
-  const hideCategoryValues = [...state.hideCategoryValues]
-  const indx = hideCategoryValues.indexOf(filterValue)
-  if (indx === -1) {
-    hideCategoryValues.push(filterValue)
-  } else {
-    hideCategoryValues.splice(indx, 1)
-  }
-  state.hideCategoryValues = hideCategoryValues
-
-  if (state.hideCategoryValues.length === 0 && !colorBy) {
-    state.appliedFilter = null
-    updateState(state)
-    viewer.applyFilter(state.appliedFilter)
-    return
-  }
-
-  if (state.hideCategoryValues.length === 0 && colorBy) {
-    state.appliedFilter = {
-      colorBy: { type: 'category', property: filterKey }
+  for (const hit of hits) {
+    if (hasHiddenObjects) {
+      if (!currentFilterState?.hiddenObjects?.includes(hit.object.id as string)) {
+        return hit
+      }
+    } else if (hasIsolatedObjects) {
+      if (currentFilterState.isolatedObjects?.includes(hit.object.id as string))
+        return hit
+    } else {
+      return hit
     }
   }
-  if (state.hideCategoryValues.length !== 0) {
-    state.appliedFilter = {
-      filterBy: { [filterKey]: { not: state.hideCategoryValues } },
-      colorBy: colorBy ? { type: 'category', property: filterKey } : null
-    }
-  }
-  const res = await viewer.applyFilter(state.appliedFilter)
-  state.colorLegend = res.colorLegend
-  updateState(state)
+  return null
 }
 
-export async function toggleColorByCategory(params: { filterKey: string }) {
-  const { filterKey } = params
-  const state = { ...commitObjectViewerState() }
-  const viewer = getInitializedViewer()
-
-  if (state.appliedFilter && state.appliedFilter.colorBy) {
-    state.appliedFilter = {
-      ...state.appliedFilter,
-      colorBy: null
-    }
-  } else {
-    state.appliedFilter = {
-      ...state.appliedFilter,
-      colorBy: { type: 'category', property: filterKey }
-    }
-  }
-  const res = await viewer.applyFilter(state.appliedFilter)
-  state.colorLegend = res.colorLegend
-  updateState(state)
+export async function clearSelectionDisplay() {
+  await getInitializedViewer().resetSelection()
 }
 
-function resetInternalCategoryObjectState() {
-  updateState({
-    isolateCategoryKey: null,
-    isolateCategoryValues: [],
-    hideCategoryKey: null,
-    hideCategoryValues: []
-  })
+export async function resetSelection() {
+  updateState({ selectedObjects: [] })
+  await getInitializedViewer().resetSelection()
 }
 
-export function setNumericFilter(params: {
-  filterKey: string
-  minValue: number
-  maxValue: number
-  gradientColors?: string[]
-}) {
-  resetInternalHideIsolateObjectState()
-  resetInternalCategoryObjectState()
-
-  const {
-    filterKey,
-    minValue,
-    maxValue,
-    gradientColors = ['#3F5EFB', '#FC466B']
-  } = params
-  const state = { ...commitObjectViewerState() }
-  const viewer = getInitializedViewer()
-
-  state.appliedFilter = {
-    ghostOthers: true,
-    colorBy: {
-      type: 'gradient',
-      property: filterKey,
-      minValue,
-      maxValue,
-      gradientColors
-    },
-    filterBy: { [filterKey]: { gte: minValue, lte: maxValue } }
-  }
-
-  updateState(state)
-  viewer.applyFilter(state.appliedFilter)
+export async function highlightObjects(objectIds: string[], ghost = false) {
+  await getInitializedViewer().highlightObjects(objectIds, ghost)
 }
 
-// not sure if these filter types are 100% correct, I reverse engineered them
-// from the code
+export async function removeHighlights() {
+  await getInitializedViewer().resetHighlight()
+}
+
+// FILTERING NEW
+
+export async function isolateObjects(
+  objectIds: string[],
+  stateKey: string,
+  includeDescendants = false
+) {
+  setIsViewerBusy(true)
+  const result = await getInitializedViewer().isolateObjects(
+    objectIds,
+    stateKey,
+    includeDescendants
+  )
+  updateState({ currentFilterState: result })
+  setIsViewerBusy(false)
+}
+
+export async function unIsolateObjects(
+  objectIds: string[],
+  stateKey: string,
+  includeDescendants = false
+) {
+  setIsViewerBusy(true)
+  const result = await getInitializedViewer().unIsolateObjects(
+    objectIds,
+    stateKey,
+    includeDescendants
+  )
+  updateState({ currentFilterState: result })
+  setIsViewerBusy(false)
+}
+
+export async function hideObjects(
+  objectIds: string[],
+  stateKey: string,
+  includeDescendants = false
+) {
+  setIsViewerBusy(true)
+  const result = await getInitializedViewer().hideObjects(
+    objectIds,
+    stateKey,
+    includeDescendants
+  )
+  updateState({ currentFilterState: result })
+  setIsViewerBusy(false)
+}
+
+export async function showObjects(
+  objectIds: string[],
+  stateKey: string,
+  includeDescendants = false
+) {
+  setIsViewerBusy(true)
+  const result = await getInitializedViewer().showObjects(
+    objectIds,
+    stateKey,
+    includeDescendants
+  )
+  updateState({ currentFilterState: result })
+  setIsViewerBusy(false)
+}
+
+export async function setColorFilter(property: PropertyInfo) {
+  setIsViewerBusy(true)
+  const result = await getInitializedViewer().setColorFilter(property)
+  updateState({ currentFilterState: result, localFilterPropKey: property.key })
+  setIsViewerBusy(false)
+}
+
+// FILTERING OLD
+
 type FilterByValue =
   | {
       gte: number
@@ -520,91 +416,103 @@ export type Filter = {
   ghostOthers?: boolean
 }
 
-export async function setFilterDirectly(params: { filter: Filter }) {
-  const { filter } = params
+function isLegacyFilter(obj: UnknownObject) {
+  const keys = Object.keys(obj)
+  return (
+    keys.includes('filterBy') ||
+    keys.includes('colorBy') ||
+    keys.includes('ghostOhters')
+  )
+}
 
-  const isNotFilter = (filterByVal: FilterByValue): filterByVal is { not: string[] } =>
-    has(filterByVal, 'not')
+export async function setFilterDirectly(params: { filter: Filter | LocalFilterState }) {
+  await resetFilter()
 
-  const filterBy = filter.filterBy
-  if (filterBy && filterBy.__parents) {
-    if (filterBy.__parents.includes) {
-      isolateObjects({
-        filterKey: '__parents',
-        filterValues: filterBy.__parents.includes
-      })
-      return
-    }
-    if (filterBy.__parents.excludes) {
-      hideObjects({
-        filterKey: '__parents',
-        filterValues: filterBy.__parents.excludes
-      })
-      return
-    }
-  } else if (filter.ghostOthers && filterBy) {
-    // means it's isolate by category or numeric filter
-    const filterByKey = Object.keys(filterBy || {})[0]
-    const filterVal = filterBy[filterByKey]
+  // Minimal support for legacy filters (old viewer filtering api)
+  if (isLegacyFilter(params.filter)) {
+    console.warn('Legacy filter type detected. Things might not appear as expected.')
+    const legacyFilter = params.filter as Filter
+    if (legacyFilter.colorBy) {
+      const { objectProperties } = { ...commitObjectViewerState() }
+      const prop = {
+        ...objectProperties.find((p) => p.key === legacyFilter.colorBy?.property)
+      } as PropertyInfo
 
-    if (
-      filter.colorBy &&
-      filter.colorBy.type === 'gradient' &&
-      !isArray(filterVal) &&
-      !isNotFilter(filterVal)
-    ) {
-      setNumericFilter({
-        filterKey: filterByKey,
-        minValue: filterVal.gte,
-        maxValue: filterVal.lte
-      })
-    } else if (isArray(filterVal)) {
-      for (const val of filterVal) {
-        const f = {
-          filterKey: filterByKey,
-          filterValue: val,
-          allValues: [],
-          colorBy: filter.colorBy
-        }
-        isolateCategoryToggle(f)
+      if (!prop) return
+      if ((legacyFilter.colorBy as Record<string, unknown>).maxValue) {
+        ;(prop as NumericPropertyInfo).passMax = (
+          legacyFilter.colorBy as Record<string, unknown>
+        ).maxValue as number
+      }
+
+      if ((legacyFilter.colorBy as Record<string, unknown>).minValue) {
+        ;(prop as NumericPropertyInfo).passMin = (
+          legacyFilter.colorBy as Record<string, unknown>
+        ).minValue as number
+      }
+
+      if (prop) {
+        setColorFilter(prop)
+        return
       }
     }
-  } else if (filterBy) {
-    const filterByKey = Object.keys(filterBy || {})[0]
-    const filterVal = filterBy[filterByKey]
 
-    if (isNotFilter(filterVal)) {
-      const values = filterVal.not
-      for (const val of values) {
-        const f = {
-          filterKey: filterByKey,
-          filterValue: val,
-          allValues: [],
-          colorBy: filter.colorBy
-        }
-        hideCategoryToggle(f)
-      }
+    if (legacyFilter.filterBy?.__parents?.includes) {
+      isolateObjects(legacyFilter.filterBy?.__parents?.includes, 'setfilter-direct')
     }
-  } else if (filter.colorBy) {
-    toggleColorByCategory({ filterKey: filter.colorBy.property })
+
+    if (legacyFilter.filterBy?.__parents?.excludes) {
+      hideObjects(legacyFilter.filterBy?.__parents?.excludes, 'setfilter-direct')
+    }
+
+    return
+  }
+
+  // Current filters
+  const lfs = params.filter as LocalFilterState
+
+  if (lfs.hiddenIds) {
+    hideObjects(lfs.hiddenIds, 'setfilter-direct', false)
+  }
+  if (lfs.isolatedIds) {
+    isolateObjects(lfs.isolatedIds, 'setfilter-direct', false)
+  }
+  if (lfs.propertyInfoKey) {
+    const { objectProperties } = { ...commitObjectViewerState() }
+    const prop = { ...objectProperties.find((p) => p.key === lfs.propertyInfoKey) }
+
+    if (lfs.passMax) {
+      ;(prop as NumericPropertyInfo).passMax = lfs.passMax
+    }
+    if (lfs.passMin) {
+      ;(prop as NumericPropertyInfo).passMin = lfs.passMin
+    }
+
+    if (prop) {
+      setColorFilter(prop as NumericPropertyInfo)
+      // TODO: set active filter key or something
+    } else console.warn(`${lfs.propertyInfoKey} property not found.`)
+  }
+
+  if (lfs.sectionBox) {
+    const box = {
+      min: { x: lfs.sectionBox[0], y: lfs.sectionBox[1], z: lfs.sectionBox[2] },
+      max: { x: lfs.sectionBox[3], y: lfs.sectionBox[4], z: lfs.sectionBox[5] }
+    }
+    setSectionBox(box)
+    sectionBoxOn()
   }
 }
 
-export function resetFilter() {
+export async function resetFilter() {
   const viewer = getInitializedViewer()
 
-  resetInternalHideIsolateObjectState()
-  resetInternalCategoryObjectState()
   updateState({
-    appliedFilter: null,
-    preventCommentCollapse: true
+    preventCommentCollapse: true,
+    currentFilterState: null,
+    localFilterPropKey: null
   })
 
+  await viewer.resetFilters()
   viewer.applyFilter(null)
-}
-
-export function setPreventCommentCollapse(shouldPrevent: boolean) {
-  updateState({
-    preventCommentCollapse: shouldPrevent
-  })
 }
