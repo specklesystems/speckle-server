@@ -36,20 +36,25 @@
           class="rounded-xl mr-2 px-1 py-1 border-1 border-primary flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
-          <UserAvatar
-            v-for="user in activeUserAvatars"
-            :key="user.id"
-            :user="user"
-            hover-effect
-          />
+          <template v-for="user in activeUserAvatars" :key="user.id">
+            <button @click="setUserSpotlight(user.id)">
+              <UserAvatar
+                :user="user"
+                hover-effect
+                :active="user.id === spotlightUserId"
+              />
+            </button>
+          </template>
         </div>
       </ViewerScope>
     </Portal>
+
+    <!-- Active user tracking cancel -->
     <div
       v-if="spotlightUserId"
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
-      <div class="w-full h-full border-2 border-blue-500/50 rounded-xl">
+      <div class="w-full h-full border-4 border-blue-500/50 rounded-xl">
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
           <FormButton size="sm" class="" @click="spotlightUserId = null">
             Stop Following {{ spotlightUser?.userName }}
@@ -102,4 +107,9 @@ const activeUserAvatars = computed(() => Object.values(users.value).map((u) => u
 const spotlightUser = computed(() => {
   return Object.values(users.value).find((u) => u.userId === spotlightUserId.value)
 })
+
+function setUserSpotlight(userId: string) {
+  if (spotlightUserId.value === userId) return (spotlightUserId.value = null)
+  spotlightUserId.value = userId
+}
 </script>

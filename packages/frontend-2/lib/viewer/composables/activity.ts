@@ -1,9 +1,8 @@
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { FilteringState, SelectionEvent, Viewer } from '@speckle/viewer'
+import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
   CommentDataInput,
   OnViewerUserActivityBroadcastedSubscription,
-  ViewerUserActivityMessage,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
   ViewerUserSelectionInfoInput,
