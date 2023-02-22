@@ -31,7 +31,7 @@ import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
  */
-const OWN_ACTIVITY_UPDATE_INTERVAL = 60 * 1000
+const OWN_ACTIVITY_UPDATE_INTERVAL = 5 * 1000
 /**
  * How often we check for user staleness
  */
@@ -39,7 +39,7 @@ const USER_STALE_CHECK_INTERVAL = 2000
 /**
  * How much time must pass after an update from user after which we consider them "stale" or "disconnected"
  */
-const USER_STALE_AFTER_PERIOD = 2 * OWN_ACTIVITY_UPDATE_INTERVAL
+const USER_STALE_AFTER_PERIOD = 20 * OWN_ACTIVITY_UPDATE_INTERVAL
 /**
  * How much time must pass for a user to be completely removable if a new update hasn't been received from them
  */
@@ -264,9 +264,38 @@ export function useViewerUserActivityTracking(params: {
         z: number
       }>
 
+      function getPointInBetweenByPerc(
+        pointA: Vector3,
+        pointB: Vector3,
+        percentage: number
+      ) {
+        let dir = pointB.clone().sub(pointA)
+        const len = dir.length()
+        dir = dir.normalize().multiplyScalar(len * percentage)
+        return pointA.clone().add(dir)
+      }
+
+      if (!selectionLocation) {
+        const loc = new Vector3(
+          selection.camera[0],
+          selection.camera[1],
+          selection.camera[2]
+        )
+        const camTarget = new Vector3(
+          selection.camera[3],
+          selection.camera[4],
+          selection.camera[5]
+        )
+        // let dir = camTarget.clone().sub(loc) //.normalize()
+        // const len = dir.length()
+        // dir = dir.multiplyScalar(len * 0.5) // middle between cam locaction and target
+        return getPointInBetweenByPerc(camTarget, loc, 0.2)
+      }
+
       const target = selectionLocation
         ? new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
-        : new Vector3(selection.camera[3], selection.camera[4], selection.camera[5])
+        : // : new Vector3(selection.camera[3], selection.camera[4], selection.camera[5])
+          new Vector3(selection.camera[0], selection.camera[1], selection.camera[2])
 
       return target
     },

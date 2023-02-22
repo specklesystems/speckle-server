@@ -35,11 +35,7 @@
           v-show="activeUserAvatars.length > 0"
           class="rounded-xl mr-2 px-1 py-1 border-1 border-primary flex space-x-1 items-center"
         >
-          <!-- <span class="text-xs text-foreground-2 mr-2 flex items-center">
-            <EyeIcon class="w-3 h-3 fill-foreground-2 mr-1" />
-            {{ activeUserAvatars.length }}
-          </span> -->
-          <UserAvatarGroup :users="activeUserAvatars" size="sm" :overlap="false" />
+          <UserAvatarGroup :users="activeUserAvatars" :overlap="false" />
         </div>
       </ViewerScope>
     </Portal>
@@ -47,7 +43,7 @@
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
-import { EyeIcon } from '@heroicons/vue/24/solid'
+
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
