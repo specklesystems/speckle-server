@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isUndefinedOrVoid, Optional } from '@speckle/shared'
 import {
   ApolloError,
@@ -8,7 +9,8 @@ import {
   TypedDocumentNode
 } from '@apollo/client/core'
 import { DocumentNode, GraphQLError } from 'graphql'
-import { flatten } from 'lodash-es'
+import { flatten, isUndefined } from 'lodash-es'
+import { Modifier } from '@apollo/client/cache'
 
 /**
  * Get a cached object's identifier
@@ -174,19 +176,45 @@ export function getStoreFieldName(
 }
 
 /**
- * Iterate over a cached object's fields and evict/delete the ones that the predicate returns true for
+ * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
+ * objects or object arrays
  */
-export function evictObjectFields<
+export type CacheObjectReference = { __ref: string }
+
+/**
+ * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
+ * if you want to add new ones you shouldn't add the entire object, but only its reference
+ */
+export function getObjectReference(typeName: string, id: string): CacheObjectReference {
+  return {
+    __ref: getCacheId(typeName, id)
+  }
+}
+
+/**
+ * Iterate over a cached object's fields and optionally update them. Similar to cache.modify, except allows
+ * better filtering capabilities to filter filters to update (e.g. you can actually get each field's variables)
+ * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
+ * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
+ */
+export function modifyObjectFields<
   V extends Optional<Record<string, unknown>> = undefined,
   D = unknown
 >(
   cache: ApolloCache<unknown>,
   id: string,
-  predicate: (fieldName: string, variables: V, value: D) => boolean
+  updater: (
+    fieldName: string,
+    variables: V,
+    value: D,
+    details: Parameters<Modifier<D>>[1] & { ref: typeof getObjectReference }
+  ) => Optional<D>
 ) {
   cache.modify({
     id,
-    fields(fieldValue, { storeFieldName, fieldName, DELETE }) {
+    fields(fieldValue, details) {
+      const { storeFieldName, fieldName } = details
+
       let variables: Optional<V> = undefined
       if (storeFieldName !== fieldName) {
         const variablesStringbase = storeFieldName.substring(fieldName.length)
@@ -199,11 +227,34 @@ export function evictObjectFields<
         }
       }
 
-      if (predicate(fieldName, variables as V, fieldValue as D)) {
-        return DELETE as unknown
-      } else {
+      const res = updater(fieldName, variables as V, fieldValue as D, {
+        ...details,
+        ref: getObjectReference
+      })
+      if (isUndefined(res)) {
         return fieldValue as unknown
+      } else {
+        return res
       }
     }
+  })
+}
+
+/**
+ * Iterate over a cached object's fields and evict/delete the ones that the predicate returns true for
+ * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
+ * full objects. Read more: https://www.apollographql.com/docs/react/caching/cache-interaction/#values-vs-references
+ */
+export function evictObjectFields<
+  V extends Optional<Record<string, unknown>> = undefined,
+  D = unknown
+>(
+  cache: ApolloCache<unknown>,
+  id: string,
+  predicate: (fieldName: string, variables: V, value: D) => boolean
+) {
+  modifyObjectFields<V, D>(cache, id, (fieldName, variables, value, details) => {
+    if (!predicate(fieldName, variables, value)) return undefined
+    return details.DELETE as D
   })
 }

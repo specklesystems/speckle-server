@@ -54,7 +54,8 @@ export function useViewerAnchoredPointCalculator(params: {
         ...(targetLoc?.x && targetLoc?.y
           ? {
               transform: `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`,
-              transformOrigin: 'center'
+              transformOrigin: 'center',
+              display: 'block'
             }
           : {
               display: 'none'

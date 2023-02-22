@@ -11,6 +11,7 @@ export const viewerCommentThreadFragment = graphql(`
 export const viewerReplyFragment = graphql(`
   fragment ViewerCommentsReplyItem on Comment {
     id
+    archived
     rawText
     text {
       doc

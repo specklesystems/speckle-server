@@ -47,6 +47,7 @@
             {{ isTypingMessage }}
           </div>
           <ViewerAnchoredPointThreadNewReply
+            v-if="!modelValue.archived"
             :model-value="modelValue"
             class="mt-2"
             @submit="onNewReply"

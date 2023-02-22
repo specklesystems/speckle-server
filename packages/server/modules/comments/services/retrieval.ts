@@ -1,3 +1,4 @@
+import { Optional } from '@speckle/shared'
 import {
   PaginatedCommitCommentsParams,
   getPaginatedCommitComments as getPaginatedCommitCommentsDb,
@@ -7,8 +8,11 @@ import {
   getPaginatedBranchCommentsTotalCount,
   getPaginatedProjectComments as getPaginatedProjectCommentsDb,
   getPaginatedProjectCommentsTotalCount,
-  PaginatedProjectCommentsParams
+  PaginatedProjectCommentsParams,
+  resolvePaginatedProjectCommentsLatestModelResources
 } from '@/modules/comments/repositories/comments'
+import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import { isUndefined } from 'lodash'
 
 export async function getPaginatedCommitComments(
   params: PaginatedCommitCommentsParams
@@ -41,13 +45,35 @@ export async function getPaginatedBranchComments(
 export async function getPaginatedProjectComments(
   params: PaginatedProjectCommentsParams
 ) {
-  const [result, totalCount] = await Promise.all([
-    getPaginatedProjectCommentsDb(params),
-    getPaginatedProjectCommentsTotalCount(params)
+  let preloadedModelLatestVersions: Optional<
+    Awaited<ReturnType<typeof getBranchLatestCommits>>
+  > = undefined
+  // optimization to ensure we don't request this stuff twice
+  if (!params.filter?.allModelVersions && params.filter?.resourceIdString) {
+    preloadedModelLatestVersions =
+      await resolvePaginatedProjectCommentsLatestModelResources(
+        params.filter.resourceIdString
+      )
+  }
+
+  const alreadyRequestingArchivedOnly = !!params.filter?.archivedOnly
+
+  const [result, totalCount, totalArchivedCount] = await Promise.all([
+    getPaginatedProjectCommentsDb(params, { preloadedModelLatestVersions }),
+    getPaginatedProjectCommentsTotalCount(params, { preloadedModelLatestVersions }),
+    alreadyRequestingArchivedOnly
+      ? undefined
+      : getPaginatedProjectCommentsTotalCount(
+          { ...params, filter: { ...(params.filter || {}), archivedOnly: true } },
+          { preloadedModelLatestVersions }
+        )
   ])
 
   return {
     ...result,
-    totalCount
+    totalCount,
+    totalArchivedCount: isUndefined(totalArchivedCount)
+      ? totalCount
+      : totalArchivedCount
   }
 }

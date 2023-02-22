@@ -26,7 +26,7 @@ extend type Project {
     cursor: String
     limit: Int! = 25
     filter: ProjectCommentsFilter
-  ): CommentCollection!
+  ): ProjectCommentCollection!
 }
 
 extend type Version {
@@ -177,12 +177,31 @@ type CommentCollection {
   items: [Comment!]!
 }
 
+type ProjectCommentCollection {
+  totalCount: Int!
+  totalArchivedCount: Int!
+  cursor: String
+  items: [Comment!]!
+}
+
 input ProjectCommentsFilter {
   """
   Only request comments belonging to the resources identified by this
   comma-delimited resouce string (same format that's used in the viewer URL)
   """
   resourceIdString: String
+
+  """
+  By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+  and all comments of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+  enabled, then only comment threads of loaded/referenced versions in resourceIdString will be returned.
+  """
+  loadedVersionsOnly: Boolean
+
+  """
+  Whether or not to include archived/resolved threads
+  """
+  includeArchived: Boolean
 }
 
 type ResourceIdentifier {

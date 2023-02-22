@@ -64,7 +64,7 @@ const initNuxtApp = (vueApp?: App<Element>) => {
   nuxtApp['_route'] = { query: {}, param: {} }
 
   // TODO: Fake mixpanel through nuxtApp.$mixpanel
-  nuxtApp['$mixpanel'] = () => ({ track: noop })
+  nuxtApp['$mixpanel'] = (() => ({ track: noop })) as typeof nuxtApp['$mixpanel']
 
   // This sets up the global Nuxt singleton, so that it's accessible in `useNuxtApp` etc.
   callWithNuxt(nuxtApp, () => void 0)
