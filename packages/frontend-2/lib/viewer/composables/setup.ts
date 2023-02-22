@@ -730,10 +730,6 @@ function setupInterfaceState(
 
   const spotlightUserId = ref(null as Nullable<string>)
 
-  watch(spotlightUserId, (newVal) => {
-    if (!newVal) state.viewer.instance.highlightObjects([])
-  })
-
   return {
     ...state,
     ui: {
@@ -801,7 +797,7 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObject(objectUrl, authToken.value || undefined)
+      viewer.loadObjectAsync(objectUrl, authToken.value || undefined)
     }
   }
 

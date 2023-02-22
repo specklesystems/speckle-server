@@ -375,6 +375,17 @@ export function useViewerUserActivityTracking(params: {
     sendUpdate.emitDisconnected()
   })
 
+  const state = useInjectedViewerState()
+
+  // Removes object highlights from user selection on tracking stop;
+  // Sets initial user state on tracking start
+  watch(spotlightUserId, (newVal) => {
+    if (!newVal) return state.viewer.instance.highlightObjects([])
+    const user = Object.values(users.value).find((u) => u.userId === newVal)
+    if (!user) return
+    spotlightTracker(user)
+  })
+
   return {
     users
   }
@@ -382,10 +393,7 @@ export function useViewerUserActivityTracking(params: {
 
 function useViewerSpotlightTracking() {
   const state = useInjectedViewerState()
-  // state.ui.sectionBox.toggleSectionBox
-  // TODO other injections that i need
   return async (user: UserActivityModel) => {
-    // TODO
     state.viewer.instance.setView({
       position: new Vector3(
         user.selection.camera[0],
@@ -423,15 +431,17 @@ function useViewerSpotlightTracking() {
       if (fs.isolatedObjects)
         await state.ui.filters.isolateObjects(fs.isolatedObjects, 'tracking')
 
-      // TODO
       if (fs.selectedObjects) {
         state.viewer.instance.highlightObjects(fs.selectedObjects)
       } else {
         state.viewer.instance.highlightObjects([])
       }
+
+      // Note: commented out as it's a bit "intrusive" behaviour, opted for the
+      // highlight version above.
       // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
-      // Other todos: filters implementation, once they are implemented in the FE
+      // TODOs: filters implementation, once they are implemented in the FE
     }
   }
 }
