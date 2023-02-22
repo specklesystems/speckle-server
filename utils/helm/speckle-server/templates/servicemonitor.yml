@@ -11,7 +11,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      project: speckle-server
+{{ include "speckle.commonSelectorLabels" . | indent 6 }}
 {{- if and .Values.prometheusMonitoring.namespace (ne .Values.namespace .Values.prometheusMonitoring.namespace) }}
   namespaceSelector:
     matchNames:

@@ -7,10 +7,9 @@ metadata:
 {{ include "server.labels" . | indent 4 }}
 spec:
   selector:
-    app: speckle-server
-    project: speckle-server
+{{ include "server.selectorLabels" . | indent 4 }}
   ports:
-    - protocol: TCP
-      name: web
+    - name: web
       port: 3000
+      protocol: TCP
       targetPort: http

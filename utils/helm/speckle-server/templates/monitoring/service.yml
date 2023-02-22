@@ -7,10 +7,9 @@ metadata:
 {{ include "monitoring.labels" . | indent 4 }}
 spec:
   selector:
-    app: speckle-monitoring
-    project: speckle-server
+{{ include "monitoring.selectorLabels" . | indent 4 }}
   ports:
-    - protocol: TCP
-      name: web
+    - name: web
       port: 9092
+      protocol: TCP
       targetPort: metrics
