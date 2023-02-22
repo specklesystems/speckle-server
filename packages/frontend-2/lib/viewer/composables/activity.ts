@@ -10,7 +10,10 @@ import {
   ViewerUserTypingMessage,
   ViewerUserTypingMessageInput
 } from '~~/lib/common/generated/gql/graphql'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import {
   useSelectionEvents,
   useViewerCameraRestTracker
@@ -27,6 +30,7 @@ import { MaybeRef, useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
+import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -223,8 +227,13 @@ export function useViewerUserActivityTracking(params: {
   )
 
   const users = ref({} as Record<string, UserActivityModel>)
+  const { spotlightUserId } = useInjectedViewerInterfaceState()
+  const spotlightTracker = useViewerSpotlightTracking()
 
   onUserActivity((res) => {
+    // TOTHINK/TODO: instead of fast OWN_ACTIVITY_UPDATE_INTERVAL, we could
+    // send an event when we identify here that a new user joined the party
+
     if (!res.data?.viewerUserActivityBroadcasted) return
     const event = res.data.viewerUserActivityBroadcasted
     const status = event.status
@@ -232,6 +241,7 @@ export function useViewerUserActivityTracking(params: {
 
     if (sessionId.value === incomingSessionId) return
     if (status === ViewerUserActivityStatus.Disconnected || !event.selection) {
+      if (spotlightUserId.value === incomingSessionId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
       delete users.value[incomingSessionId]
       return
     }
@@ -251,6 +261,10 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
     users.value[incomingSessionId] = userData
+
+    if (spotlightUserId.value === userData.userId) {
+      spotlightTracker(userData)
+    }
   })
 
   useViewerAnchoredPoints<UserActivityModel, Partial<{ smoothTranslation: boolean }>>({
@@ -275,6 +289,8 @@ export function useViewerUserActivityTracking(params: {
         return pointA.clone().add(dir)
       }
 
+      // If there is no selection location, return to a blended location based on the camera's target and location.
+      // This ensures that rotation and zoom will have an effect on the users' cursors and create a lively environment.
       if (!selectionLocation) {
         const loc = new Vector3(
           selection.camera[0],
@@ -286,18 +302,10 @@ export function useViewerUserActivityTracking(params: {
           selection.camera[4],
           selection.camera[5]
         )
-        // let dir = camTarget.clone().sub(loc) //.normalize()
-        // const len = dir.length()
-        // dir = dir.multiplyScalar(len * 0.5) // middle between cam locaction and target
         return getPointInBetweenByPerc(camTarget, loc, 0.2)
       }
 
-      const target = selectionLocation
-        ? new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
-        : // : new Vector3(selection.camera[3], selection.camera[4], selection.camera[5])
-          new Vector3(selection.camera[0], selection.camera[1], selection.camera[2])
-
-      return target
+      return new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
     },
     updatePositionCallback: (user, result, options) => {
       user.isOccluded = result.isOccluded
@@ -307,7 +315,7 @@ export function useViewerUserActivityTracking(params: {
           ...user.style.target,
           ...result.style,
           transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease'
-          // opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
+          // opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0' // note: handled in component via css
         }
       }
     }
@@ -352,11 +360,10 @@ export function useViewerUserActivityTracking(params: {
 
   useViewerCameraRestTracker(() => sendUpdate.emitViewing())
 
+  useOnBeforeWindowUnload(() => sendUpdate.emitDisconnected())
+
   onMounted(() => {
     sendUpdate.emitViewing()
-    window.addEventListener('beforeunload', () => {
-      sendUpdate.emitDisconnected()
-    })
   })
 
   onBeforeUnmount(() => {
@@ -365,6 +372,28 @@ export function useViewerUserActivityTracking(params: {
 
   return {
     users
+  }
+}
+
+function useViewerSpotlightTracking() {
+  const state = useInjectedViewerState()
+  // state.ui.sectionBox.toggleSectionBox
+  // TODO other injections that i need
+  return (user: UserActivityModel) => {
+    // TODO
+    console.log(user.userName)
+    state.viewer.instance.setView({
+      position: new Vector3(
+        user.selection.camera[0],
+        user.selection.camera[1],
+        user.selection.camera[2]
+      ),
+      target: new Vector3(
+        user.selection.camera[3],
+        user.selection.camera[4],
+        user.selection.camera[5]
+      )
+    })
   }
 }
 

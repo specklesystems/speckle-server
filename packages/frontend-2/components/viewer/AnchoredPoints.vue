@@ -39,6 +39,22 @@
         </div>
       </ViewerScope>
     </Portal>
+    <div
+      v-if="spotlightUserId"
+      class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
+    >
+      <div class="w-full h-full border-2 border-blue-500/50 rounded-xl">
+        <div class="absolute bottom-1 right-1">
+          <FormButton
+            size="xs"
+            class="pointer-events-auto"
+            @click="spotlightUserId = null"
+          >
+            Stop Following {{ spotlightUser?.userName }}
+          </FormButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -50,10 +66,15 @@ import {
   useViewerCommentBubbles,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
+const { spotlightUserId } = useInjectedViewerInterfaceState()
+
 const { commentThreads, openThread } = useViewerCommentBubbles({ parentEl })
 const { buttonState, closeNewThread } = useViewerNewThreadBubble({
   parentEl
@@ -76,4 +97,7 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
 }
 
 const activeUserAvatars = computed(() => Object.values(users.value).map((u) => u.user))
+const spotlightUser = computed(() => {
+  return Object.values(users.value).find((u) => u.userId === spotlightUserId.value)
+})
 </script>

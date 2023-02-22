@@ -48,6 +48,7 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
+import { UserActivityModel } from '~~/lib/viewer/composables/activity'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -173,6 +174,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * Read/write active viewer filters
      */
+    spotlightUserId: Ref<Nullable<string>>
     filters: {
       current: ComputedRef<Nullable<FilteringState>>
       localFilterPropKey: ComputedRef<Nullable<string>>
@@ -691,9 +693,12 @@ function setupInterfaceState(
     state.viewer.instance.requestRender()
   }
 
+  const spotlightUserId = ref(null as Nullable<string>)
+
   return {
     ...state,
     ui: {
+      spotlightUserId,
       viewerBusy,
       camera: {
         isPerspectiveProjection,
