@@ -48,7 +48,25 @@ export const DefaultBVHOptions = {
 
 /** 
  * 
-    
+  _____                            _              _   
+ |_   _|                          | |            | |  
+   | |  _ __ ___  _ __   ___  _ __| |_ __ _ _ __ | |_ 
+   | | | '_ ` _ \| '_ \ / _ \| '__| __/ _` | '_ \| __|
+  _| |_| | | | | | |_) | (_) | |  | || (_| | | | | |_ 
+ |_____|_| |_| |_| .__/ \___/|_|   \__\__,_|_| |_|\__|
+                 | |                                  
+                 |_|                                  
+
+We've made this wrapper around the original implementation to hide the transformations we do behind the scenes
+in order to avoid storing vertex positions as Float64. Instead we store them as Float32, but the whole BVH is 
+re-centered around world origin (0,0,0). We use the resulting transformations to transform anything that comes
+in or out of the BVH in order to keep this re-centering opaque.
+
+We've implemented auto-transformation for raycasting and shapecasting. Other functionalities like bvhcast or geometrycast
+will need to be wrapped around if required. 
+
+Otherwise, keep in mind that if you use this class for any other purposes, you can use transformInput and transformOutput
+to get the correct values for Vectors, Rays, Boxes, etc
  */
 export class SpeckleMeshBVH extends MeshBVH {
   private relativeBounds: Box3
