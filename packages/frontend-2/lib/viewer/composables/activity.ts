@@ -379,9 +379,8 @@ function useViewerSpotlightTracking() {
   const state = useInjectedViewerState()
   // state.ui.sectionBox.toggleSectionBox
   // TODO other injections that i need
-  return (user: UserActivityModel) => {
+  return async (user: UserActivityModel) => {
     // TODO
-    console.log(user.userName)
     state.viewer.instance.setView({
       position: new Vector3(
         user.selection.camera[0],
@@ -394,6 +393,37 @@ function useViewerSpotlightTracking() {
         user.selection.camera[5]
       )
     })
+
+    if (user.selection.sectionBox) {
+      state.ui.sectionBox.setSectionBox(
+        user.selection.sectionBox as {
+          min: { x: number; y: number; z: number }
+          max: { x: number; y: number; z: number }
+        },
+        0
+      )
+      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
+        state.ui.sectionBox.sectionBoxOn()
+    } else {
+      state.ui.sectionBox.sectionBoxOff()
+    }
+
+    if (user.selection.filteringState) {
+      const fs = user.selection.filteringState as FilteringState
+      await state.ui.filters.resetFilters()
+
+      if (fs.hiddenObjects)
+        await state.ui.filters.hideObjects(fs.hiddenObjects, 'tracking')
+
+      if (fs.isolatedObjects)
+        await state.ui.filters.isolateObjects(fs.isolatedObjects, 'tracking')
+
+      // TODO
+      // if(fs.selectedObjects)
+      //   await state.ui.selection.
+
+      // Other todos: filters implementation, once they are implemented in the FE
+    }
   }
 }
 

@@ -35,7 +35,13 @@
           v-show="activeUserAvatars.length > 0"
           class="rounded-xl mr-2 px-1 py-1 border-1 border-primary flex space-x-1 items-center"
         >
-          <UserAvatarGroup :users="activeUserAvatars" :overlap="false" />
+          <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
+          <UserAvatar
+            v-for="user in activeUserAvatars"
+            :key="user.id"
+            :user="user"
+            hover-effect
+          />
         </div>
       </ViewerScope>
     </Portal>
@@ -44,12 +50,8 @@
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
       <div class="w-full h-full border-2 border-blue-500/50 rounded-xl">
-        <div class="absolute bottom-1 right-1">
-          <FormButton
-            size="xs"
-            class="pointer-events-auto"
-            @click="spotlightUserId = null"
-          >
+        <div class="absolute bottom-1 right-1 p-2 pointer-events-auto">
+          <FormButton size="xs" class="" @click="spotlightUserId = null">
             Stop Following {{ spotlightUser?.userName }}
           </FormButton>
         </div>

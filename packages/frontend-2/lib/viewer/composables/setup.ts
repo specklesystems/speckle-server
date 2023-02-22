@@ -191,7 +191,16 @@ export type InjectableViewerState = Readonly<{
     }
     sectionBox: {
       isSectionBoxEnabled: Ref<boolean>
+      setSectionBox: (
+        box?: {
+          min: { x: number; y: number; z: number }
+          max: { x: number; y: number; z: number }
+        },
+        offset?: number
+      ) => void
       toggleSectionBox: () => void
+      sectionBoxOff: () => void
+      sectionBoxOn: () => void
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
@@ -692,6 +701,15 @@ function setupInterfaceState(
     state.viewer.instance.toggleSectionBox()
     state.viewer.instance.requestRender()
   }
+  const setSectionBox = (
+    box?: {
+      min: { x: number; y: number; z: number }
+      max: { x: number; y: number; z: number }
+    },
+    offset?: number
+  ) => {
+    state.viewer.instance.setSectionBox(box, offset)
+  }
 
   const spotlightUserId = ref(null as Nullable<string>)
 
@@ -706,7 +724,16 @@ function setupInterfaceState(
       },
       sectionBox: {
         isSectionBoxEnabled,
-        toggleSectionBox
+        setSectionBox,
+        toggleSectionBox,
+        sectionBoxOff: () => {
+          state.viewer.instance.sectionBoxOff()
+          isSectionBoxEnabled.value = false
+        },
+        sectionBoxOn: () => {
+          state.viewer.instance.sectionBoxOn()
+          isSectionBoxEnabled.value = true
+        }
       },
       filters: {
         current: computed(() => filteringState.value),
