@@ -59,6 +59,7 @@ export const viewerLoadedThreadsQuery = graphql(`
       id
       commentThreads(filter: $filter, cursor: $cursor, limit: $limit) {
         totalCount
+        totalArchivedCount
         items {
           ...ViewerCommentThread
         }

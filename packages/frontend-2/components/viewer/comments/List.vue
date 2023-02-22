@@ -5,7 +5,7 @@
       <FormCheckbox
         v-model="includeArchived"
         name="includeArchived"
-        label="Include archived"
+        :label="archivedLabel"
       />
       <FormCheckbox
         v-model="loadedVersionsOnly"
@@ -58,7 +58,7 @@ graphql(`
   }
 `)
 
-const { commentThreads } = useInjectedViewerLoadedResources()
+const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
 const { threadFilters } = useInjectedViewerRequestedResources()
 
 const loadedVersionsOnly = computed({
@@ -77,4 +77,12 @@ const lastThread = computed(() =>
     ? commentThreads.value[commentThreads.value.length - 1]
     : null
 )
+
+const totalArchived = computed(() => commentThreadsMetadata.value?.totalArchivedCount)
+const archivedLabel = computed(() => {
+  const base = 'Include archived'
+  if (!totalArchived.value) return base
+
+  return `${base} (${totalArchived.value})`
+})
 </script>

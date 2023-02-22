@@ -12,6 +12,7 @@ import {
   resolvePaginatedProjectCommentsLatestModelResources
 } from '@/modules/comments/repositories/comments'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import { isUndefined } from 'lodash'
 
 export async function getPaginatedCommitComments(
   params: PaginatedCommitCommentsParams
@@ -55,13 +56,24 @@ export async function getPaginatedProjectComments(
       )
   }
 
-  const [result, totalCount] = await Promise.all([
+  const alreadyRequestingArchivedOnly = !!params.filter?.archivedOnly
+
+  const [result, totalCount, totalArchivedCount] = await Promise.all([
     getPaginatedProjectCommentsDb(params, { preloadedModelLatestVersions }),
-    getPaginatedProjectCommentsTotalCount(params, { preloadedModelLatestVersions })
+    getPaginatedProjectCommentsTotalCount(params, { preloadedModelLatestVersions }),
+    alreadyRequestingArchivedOnly
+      ? undefined
+      : getPaginatedProjectCommentsTotalCount(
+          { ...params, filter: { ...(params.filter || {}), archivedOnly: true } },
+          { preloadedModelLatestVersions }
+        )
   ])
 
   return {
     ...result,
-    totalCount
+    totalCount,
+    totalArchivedCount: isUndefined(totalArchivedCount)
+      ? totalCount
+      : totalArchivedCount
   }
 }

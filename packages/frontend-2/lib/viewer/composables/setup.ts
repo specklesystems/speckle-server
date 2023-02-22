@@ -63,9 +63,11 @@ export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
 
-export type LoadedCommentThread = NonNullable<
-  Get<ViewerLoadedThreadsQuery, 'project.commentThreads.items[0]'>
+export type LoadedThreadsMetadata = NonNullable<
+  Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>
 >
+
+export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
 type FilterAction = (
   objectIds: string[],
@@ -172,6 +174,10 @@ export type InjectableViewerState = Readonly<{
        * Comment threads for all loaded resources
        */
       commentThreads: ComputedRef<Array<LoadedCommentThread>>
+      /**
+       * Metadata about requested comment threads (e.g. total counts)
+       */
+      commentThreadsMetadata: ComputedRef<Optional<LoadedThreadsMetadata>>
       /**
        * Project main metadata
        */
@@ -540,9 +546,10 @@ function setupResponseResourceData(
     }
   }))
 
-  const commentThreads = computed(
-    () => viewerLoadedThreadsResult.value?.project?.commentThreads.items || []
+  const commentThreadsMetadata = computed(
+    () => viewerLoadedThreadsResult.value?.project?.commentThreads
   )
+  const commentThreads = computed(() => commentThreadsMetadata.value?.items || [])
 
   onViewerLoadedThreadsError((err) => {
     triggerNotification({
@@ -556,6 +563,7 @@ function setupResponseResourceData(
   return {
     objects,
     commentThreads,
+    commentThreadsMetadata,
     modelsAndVersionIds,
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),

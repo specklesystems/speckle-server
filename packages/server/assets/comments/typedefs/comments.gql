@@ -26,7 +26,7 @@ extend type Project {
     cursor: String
     limit: Int! = 25
     filter: ProjectCommentsFilter
-  ): CommentCollection!
+  ): ProjectCommentCollection!
 }
 
 extend type Version {
@@ -173,6 +173,13 @@ type CommentReplyAuthorCollection {
 
 type CommentCollection {
   totalCount: Int!
+  cursor: String
+  items: [Comment!]!
+}
+
+type ProjectCommentCollection {
+  totalCount: Int!
+  totalArchivedCount: Int!
   cursor: String
   items: [Comment!]!
 }

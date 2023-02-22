@@ -431,16 +431,19 @@ export type PaginatedProjectCommentsParams = {
   projectId: string
   limit: number
   cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<{
-    threadsOnly: boolean
-    includeArchived: boolean
-    resourceIdString: string
-    /**
-     * If true, will ignore the version parts of `model@version` identifiers and look for comments of
-     * all versions of any selected comments
-     */
-    allModelVersions: boolean
-  }>
+  filter?: MaybeNullOrUndefined<
+    Partial<{
+      threadsOnly: boolean
+      includeArchived: boolean
+      archivedOnly: boolean
+      resourceIdString: string
+      /**
+       * If true, will ignore the version parts of `model@version` identifiers and look for comments of
+       * all versions of any selected comments
+       */
+      allModelVersions: boolean
+    }>
+  >
 }
 
 /**
@@ -563,8 +566,10 @@ async function getPaginatedProjectCommentsBaseQuery(
     })
   }
 
-  if (!filter?.includeArchived) {
+  if (!filter?.includeArchived && !filter?.archivedOnly) {
     q.andWhere(Comments.col.archived, false)
+  } else if (filter?.archivedOnly) {
+    q.andWhere(Comments.col.archived, true)
   }
 
   if (filter?.threadsOnly) {
