@@ -14,7 +14,7 @@ import {
   ContextError,
   BadRequestError
 } from '@/modules/shared/errors'
-// import { getbAllRoles } from '../core/services/generic'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 interface AuthResult {
   authorized: boolean
@@ -220,6 +220,12 @@ export const contextRequiresStream =
     }
   }
 
+export const allowForServerAdmins: AuthPipelineFunction = async ({
+  context,
+  authResult
+}) =>
+  context.role === Roles.Server.Admin ? authSuccess(context) : { context, authResult }
+
 export const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole: AuthPipelineFunction =
   async ({ context, authResult }) =>
     context.auth && context.stream?.isPublic
@@ -269,3 +275,5 @@ export const streamReadPermissions = [
   contextRequiresStream(getStream as StreamGetter),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor })
 ]
+
+if (adminOverrideEnabled()) streamReadPermissions.push(allowForServerAdmins)

@@ -2,14 +2,17 @@ import TreeModel from 'tree-model'
 import { DataTree, DataTreeBuilder } from './DataTree'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
+import Logger from 'js-logger'
+import { World } from '../World'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
+export type AsyncSearchPredicate = (node: TreeNode) => Promise<boolean>
 
 export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
-  children: Node[]
+  children: TreeNode[]
   atomic: boolean
   /**
    * Keeps track wether this the root commit object or not.
@@ -75,13 +78,13 @@ export class WorldTree {
   }
 
   public addSubtree(node: TreeNode) {
-    console.warn(`Adding subtree with id: ${node.model.id}`)
+    // Logger.warn(`Adding subtree with id: ${node.model.id}`)
     this._root.addChild(node)
   }
 
   public addNode(node: TreeNode, parent: TreeNode) {
     if (parent === null) {
-      console.error(`Invalid parent node!`)
+      Logger.error(`Invalid parent node!`)
       return
     }
     parent.addChild(node)
@@ -93,14 +96,14 @@ export class WorldTree {
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
     if (!node && !this.supressWarnings) {
-      console.warn(`Root will be used for searching. You might not want that`)
+      Logger.warn(`Root will be used for searching. You might not want that`)
     }
     return (node ? node : this.root).all(predicate)
   }
 
   public findId(id: string, node?: TreeNode) {
     if (!node && !this.supressWarnings) {
-      console.warn(`Root will be used for searching. You might not want that`)
+      Logger.warn(`Root will be used for searching. You might not want that`)
     }
     return (node ? node : this.root).first((_node: TreeNode) => {
       return _node.model.id === id
@@ -113,10 +116,40 @@ export class WorldTree {
 
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
     if (!node && !this.supressWarnings) {
-      console.warn(`Root will be used for searching. You might not want that`)
-      this._root.walk(predicate)
+      Logger.warn(`Root will be used for searching. You might not want that`)
     }
     this._root.walk(predicate, node)
+  }
+
+  public async walkAsync(
+    predicate: SearchPredicate,
+    node?: TreeNode,
+    priority?: number
+  ): Promise<boolean> {
+    if (!node && !this.supressWarnings) {
+      Logger.warn(`Root will be used for searching. You might not want that`)
+    }
+    const pause = World.getPause(priority)
+
+    async function* depthFirstPreOrderAsync(callback, context) {
+      let i, childCount
+      yield callback(context)
+      for (i = 0, childCount = context.children.length; i < childCount; i++) {
+        yield* depthFirstPreOrderAsync(callback, context.children[i])
+      }
+    }
+
+    const generator = depthFirstPreOrderAsync(predicate, node ? node : this._root)
+    let ret = true
+    for await (const step of generator) {
+      ret = step
+      if (step === false) {
+        generator.return()
+      }
+      await pause()
+    }
+
+    return Promise.resolve(ret)
   }
 
   public purge(subtreeId?: string) {

@@ -4,22 +4,51 @@ import {
   getBatchStreamFavoritesCounts,
   getOwnedFavoritesCountByUserIds,
   getStreams,
-  getStreamRoles
+  getStreamRoles,
+  getStreamsSourceApps
 } from '@/modules/core/repositories/streams'
 import { getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
 import { getInvites } from '@/modules/serverinvites/repositories'
 import { AuthContext } from '@/modules/shared/authz'
 import {
+  BranchRecord,
+  CommitRecord,
   LimitedUserRecord,
   StreamFavoriteRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
-import { getCommitStreams } from '@/modules/core/repositories/commits'
+import {
+  getCommitBranches,
+  getCommitStreams,
+  getStreamCommitCounts
+} from '@/modules/core/repositories/commits'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
-import { getCommentsResources } from '@/modules/comments/repositories/comments'
+import {
+  getBranchCommentCounts,
+  getCommentParents,
+  getCommentReplyAuthorIds,
+  getCommentReplyCounts,
+  getCommentsResources,
+  getCommentsViewedAt,
+  getStreamCommentCounts
+} from '@/modules/comments/repositories/comments'
+import {
+  getBranchCommitCounts,
+  getBranchesByIds,
+  getBranchLatestCommits,
+  getStreamBranchCounts,
+  getStreamBranchesByName
+} from '@/modules/core/repositories/branches'
+import { CommentRecord } from '@/modules/comments/helpers/types'
+
+/**
+ * TODO: Lazy load DataLoaders to reduce memory usage
+ * - Instead of keeping them request scoped, cache them identified by request (user ID) with a TTL,
+ * so that users with the same ID can re-use them across requests/subscriptions
+ */
 
 /**
  * Build request-scoped dataloaders
@@ -28,7 +57,7 @@ import { getCommentsResources } from '@/modules/comments/repositories/comments'
 export function buildRequestLoaders(ctx: AuthContext) {
   const userId = ctx.userId
 
-  return {
+  const loaders = {
     streams: {
       /**
        * Get favorite metadata for a specific stream and user
@@ -82,6 +111,89 @@ export function buildRequestLoaders(ctx: AuthContext) {
 
         const results = await getStreamRoles(userId, streamIds.slice())
         return streamIds.map((id) => results[id] || null)
+      }),
+      getBranchCount: new DataLoader<string, number>(async (streamIds) => {
+        const results = keyBy(
+          await getStreamBranchCounts(streamIds.slice()),
+          'streamId'
+        )
+        return streamIds.map((i) => results[i]?.count || 0)
+      }),
+      getCommitCountWithoutGlobals: new DataLoader<string, number>(
+        async (streamIds) => {
+          const results = keyBy(
+            await getStreamCommitCounts(streamIds.slice(), {
+              ignoreGlobalsBranch: true
+            }),
+            'streamId'
+          )
+          return streamIds.map((i) => results[i]?.count || 0)
+        }
+      ),
+      getCommentThreadCount: new DataLoader<string, number>(async (streamIds) => {
+        const results = keyBy(
+          await getStreamCommentCounts(streamIds.slice(), { threadsOnly: true }),
+          'streamId'
+        )
+        return streamIds.map((i) => results[i]?.count || 0)
+      }),
+      getSourceApps: new DataLoader<string, string[]>(async (streamIds) => {
+        const results = await getStreamsSourceApps(streamIds.slice())
+        return streamIds.map((i) => results[i] || [])
+      }),
+      /**
+       * Get a specific branch of a specific stream. Each stream ID technically has its own loader &
+       * thus its own query.
+       */
+      getStreamBranchByName: (() => {
+        type BranchDataLoader = DataLoader<string, Nullable<BranchRecord>>
+        const streamBranchLoaders = new Map<string, BranchDataLoader>()
+        return {
+          clearAll: () => streamBranchLoaders.clear(),
+          forStream(streamId: string): BranchDataLoader {
+            let loader = streamBranchLoaders.get(streamId)
+            if (!loader) {
+              loader = new DataLoader<string, Nullable<BranchRecord>>(
+                async (branchNames) => {
+                  const results = keyBy(
+                    await getStreamBranchesByName(streamId, branchNames.slice()),
+                    'name'
+                  )
+                  return branchNames.map((n) => results[n] || null)
+                }
+              )
+              streamBranchLoaders.set(streamId, loader)
+            }
+
+            return loader
+          }
+        }
+      })()
+    },
+    branches: {
+      getCommitCount: new DataLoader<string, number>(async (branchIds) => {
+        const results = keyBy(await getBranchCommitCounts(branchIds.slice()), 'id')
+        return branchIds.map((i) => results[i]?.count || 0)
+      }),
+      getLatestCommit: new DataLoader<string, Nullable<CommitRecord>>(
+        async (branchIds) => {
+          const results = keyBy(
+            await getBranchLatestCommits(branchIds.slice()),
+            'branchId'
+          )
+          return branchIds.map((i) => results[i] || null)
+        }
+      ),
+      getCommentThreadCount: new DataLoader<string, number>(async (branchIds) => {
+        const results = keyBy(
+          await getBranchCommentCounts(branchIds.slice(), { threadsOnly: true }),
+          'id'
+        )
+        return branchIds.map((i) => results[i]?.count || 0)
+      }),
+      getById: new DataLoader<string, Nullable<BranchRecord>>(async (branchIds) => {
+        const results = keyBy(await getBranchesByIds(branchIds.slice()), 'id')
+        return branchIds.map((i) => results[i] || null)
       })
     },
     commits: {
@@ -93,13 +205,46 @@ export function buildRequestLoaders(ctx: AuthContext) {
           const results = await getCommitStreams(commitIds.slice())
           return commitIds.map((id) => results[id] || null)
         }
+      ),
+
+      getCommitBranch: new DataLoader<string, Nullable<BranchRecord>>(
+        async (commitIds) => {
+          const results = keyBy(await getCommitBranches(commitIds.slice()), 'commitId')
+          return commitIds.map((id) => results[id] || null)
+        }
       )
     },
     comments: {
+      getViewedAt: new DataLoader<string, Nullable<Date>>(async (commentIds) => {
+        if (!userId) return commentIds.slice().map(() => null)
+
+        const results = keyBy(
+          await getCommentsViewedAt(commentIds.slice(), userId),
+          'commentId'
+        )
+        return commentIds.map((id) => results[id]?.viewedAt || null)
+      }),
       getResources: new DataLoader<string, ResourceIdentifier[]>(async (commentIds) => {
         const results = await getCommentsResources(commentIds.slice())
         return commentIds.map((id) => results[id]?.resources || [])
-      })
+      }),
+      getReplyCount: new DataLoader<string, number>(async (threadIds) => {
+        const results = keyBy(
+          await getCommentReplyCounts(threadIds.slice()),
+          'threadId'
+        )
+        return threadIds.map((id) => results[id]?.count || 0)
+      }),
+      getReplyAuthorIds: new DataLoader<string, string[]>(async (threadIds) => {
+        const results = await getCommentReplyAuthorIds(threadIds.slice())
+        return threadIds.map((id) => results[id] || [])
+      }),
+      getReplyParent: new DataLoader<string, Nullable<CommentRecord>>(
+        async (replyIds) => {
+          const results = keyBy(await getCommentParents(replyIds.slice()), 'replyId')
+          return replyIds.map((id) => results[id] || null)
+        }
+      )
     },
     users: {
       /**
@@ -121,6 +266,22 @@ export function buildRequestLoaders(ctx: AuthContext) {
         }
       )
     }
+  }
+
+  /**
+   * Clear all loaders
+   */
+  const clearAll = () => {
+    for (const groupedLoaders of Object.values(loaders)) {
+      for (const loaderItem of Object.values(groupedLoaders)) {
+        ;(loaderItem as DataLoader<unknown, unknown>).clearAll()
+      }
+    }
+  }
+
+  return {
+    ...loaders,
+    clearAll
   }
 }
 

@@ -5,14 +5,18 @@
       <div class="space-y-8">
         <h1 class="h4 sm:h3 font-bold leading-9 text-center">Log into my account</h1>
         <AuthThirdPartyLoginBlock
-          v-if="serverInfo"
+          v-if="hasThirdPartyStrategies && serverInfo"
           :server-info="serverInfo"
           :challenge="challenge"
           :app-id="appId"
         />
         <div>
           <div class="text-center label text-foreground-2 mb-3">
-            Or login with your email
+            {{
+              hasThirdPartyStrategies
+                ? 'Or login with your email'
+                : 'Login with your email'
+            }}
           </div>
           <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
         </div>
@@ -32,5 +36,9 @@ const { appId, challenge } = useLoginOrRegisterUtils()
 const serverInfo = computed(() => result.value?.serverInfo)
 const hasLocalStrategy = computed(() =>
   (serverInfo.value?.authStrategies || []).some((s) => s.id === AuthStrategy.Local)
+)
+
+const hasThirdPartyStrategies = computed(() =>
+  serverInfo.value?.authStrategies.some((s) => s.id !== AuthStrategy.Local)
 )
 </script>

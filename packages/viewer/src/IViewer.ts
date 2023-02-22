@@ -2,11 +2,15 @@ import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
+import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
+import { WorldTree } from './modules/tree/WorldTree'
+import { Utils } from './modules/Utils'
 
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
+  verbose: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
@@ -32,6 +36,7 @@ export interface Asset {
  */
 export const DefaultViewerParams: ViewerParams = {
   showStats: false,
+  verbose: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
@@ -41,9 +46,11 @@ export const DefaultViewerParams: ViewerParams = {
 export enum ViewerEvent {
   ObjectClicked = 'object-clicked',
   ObjectDoubleClicked = 'object-doubleclicked',
+  DownloadComplete = 'download-complete',
   LoadComplete = 'load-complete',
   LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
+  LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
@@ -52,9 +59,10 @@ export enum ViewerEvent {
 
 export type SelectionEvent = {
   multiple: boolean
+  event?: PointerEvent
   hits: Array<{
     guid?: string
-    object: Record<string, unknown>
+    object: Record<string, unknown> & { id: string }
     point: Vector3
   }>
 }
@@ -65,6 +73,7 @@ export interface LightConfiguration {
   intensity?: number
   color?: number
   indirectLightIntensity?: number
+  shadowcatcher?: boolean
 }
 
 export interface SunLightConfiguration extends LightConfiguration {
@@ -81,7 +90,8 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   elevation: 1.33,
   azimuth: 0.75,
   radius: 0,
-  indirectLightIntensity: 1.2
+  indirectLightIntensity: 1.2,
+  shadowcatcher: true
 }
 
 export type CanonicalView =
@@ -147,6 +157,12 @@ export interface IViewer {
   )
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
+  loadObjectAsync(
+    url: string,
+    token?: string,
+    enableCaching?: boolean,
+    priority?: number
+  ): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
@@ -195,6 +211,10 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
+  queryAsync(query: Query): Promise<QueryResult>
+  getWorldTree(): WorldTree
+  get Utils(): Utils
 
   dispose(): void
 }

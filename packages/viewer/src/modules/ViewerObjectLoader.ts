@@ -2,6 +2,7 @@ import ObjectLoader from '@speckle/objectloader'
 import { ViewerEvent } from '../IViewer'
 import Converter from './converter/Converter'
 import EventEmitter from './EventEmitter'
+import Logger from 'js-logger'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */
@@ -32,7 +33,7 @@ export default class ViewerObjectLoader {
     }
 
     if (!this.token) {
-      console.warn(
+      Logger.error(
         'Viewer: no auth token present. Requests to non-public stream objects will fail.'
       )
     }
@@ -58,7 +59,9 @@ export default class ViewerObjectLoader {
       token: this.token,
       streamId,
       objectId: this.objectId,
-      options: { enableCaching }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      options: { enableCaching, customLogger: (Logger as any).log }
     })
 
     this.converter = new Converter(this.loader)
@@ -73,6 +76,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
+    Logger.warn('Downloading object ', this.objectUrl)
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.emiter.emit(ViewerEvent.LoadProgress, {
@@ -80,7 +84,7 @@ export default class ViewerObjectLoader {
           id: this.objectId,
           url: this.objectUrl
         }) // to hide progress bar, easier on the frontend
-        this.emiter.emit('load-cancelled', { id: this.objectId, url: this.objectUrl })
+        this.emiter.emit('load-cancelled', this.objectUrl)
         return
       }
       await this.converter.asyncPause()
@@ -106,13 +110,15 @@ export default class ViewerObjectLoader {
     }
 
     // await this.viewer.sceneManager.postLoadFunction()
-    console.warn(
-      `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
+    Logger.warn(
+      `Finished downloading object ${this.objectId} in ${
+        (performance.now() - start) / 1000
+      } seconds`
     )
-    this.emiter.emit(ViewerEvent.LoadComplete, this.objectUrl)
+    this.emiter.emit(ViewerEvent.DownloadComplete, this.objectUrl)
 
     if (viewerLoads === 0) {
-      console.warn(`Viewer: no 3d objects found in object ${this.objectId}`)
+      Logger.warn(`Viewer: no 3d objects found in object ${this.objectId}`)
       this.emiter.emit('load-warning', {
         message: `No displayable objects found in object ${this.objectId}.`
       })

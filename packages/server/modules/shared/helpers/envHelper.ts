@@ -1,3 +1,4 @@
+import { Nullable } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 
@@ -46,6 +47,38 @@ export function getRedisUrl() {
   }
 
   return process.env.REDIS_URL
+}
+
+export function getOidcDiscoveryUrl() {
+  if (!process.env.OIDC_DISCOVERY_URL) {
+    throw new MisconfiguredEnvironmentError('OIDC_DISCOVERY_URL env var not configured')
+  }
+
+  return process.env.OIDC_DISCOVERY_URL
+}
+
+export function getOidcClientId() {
+  if (!process.env.OIDC_CLIENT_ID) {
+    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_ID env var not configured')
+  }
+
+  return process.env.OIDC_CLIENT_ID
+}
+
+export function getOidcClientSecret() {
+  if (!process.env.OIDC_CLIENT_SECRET) {
+    throw new MisconfiguredEnvironmentError('OIDC_CLIENT_SECRET env var not configured')
+  }
+
+  return process.env.OIDC_CLIENT_SECRET
+}
+
+export function getOidcName() {
+  if (!process.env.OIDC_NAME) {
+    throw new MisconfiguredEnvironmentError('OIDC_NAME env var not configured')
+  }
+
+  return process.env.OIDC_NAME
 }
 
 /**
@@ -100,4 +133,15 @@ export function getServerOrigin() {
  */
 export function isSSLServer() {
   return /^https:\/\//.test(getBaseUrl())
+}
+
+/**
+ * Source stream for cloning tutorial/guide streams for users
+ */
+export function getOnboardingStreamId(): Nullable<string> {
+  return process.env.ONBOARDING_STREAM_ID || null
+}
+
+export function adminOverrideEnabled() {
+  return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
 }

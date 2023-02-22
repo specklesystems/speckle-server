@@ -11,10 +11,7 @@ import { useApolloClient } from '@vue/apollo-composable'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
-  useMixpanel,
-  useMixpanelUserIdentification
-} from '~~/lib/core/composables/mixpanel'
+import { useMixpanel, useMixpanelUserIdentification } from '~~/lib/core/composables/mp'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 /**
@@ -50,7 +47,9 @@ const useResetAuthState = () => {
 }
 
 export const useAuthCookie = () =>
-  useSynchronizedCookie<Optional<string>>(CookieKeys.AuthToken)
+  useSynchronizedCookie<Optional<string>>(CookieKeys.AuthToken, {
+    maxAge: 60 * 60 * 24 * 30 // 30 days
+  })
 
 export const useAuthManager = () => {
   const {

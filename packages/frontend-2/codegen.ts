@@ -9,10 +9,16 @@ const config: CodegenConfig = {
       preset: 'client',
       config: {
         useTypeImports: true,
-        fragmentMasking: false
+        fragmentMasking: false,
+        dedupeFragments: true,
+        scalars: {
+          JSONObject: '{}',
+          DateTime: 'string'
+        }
       },
       presetConfig: {
-        fragmentMasking: false
+        fragmentMasking: false,
+        dedupeFragments: true
       },
       plugins: []
     }

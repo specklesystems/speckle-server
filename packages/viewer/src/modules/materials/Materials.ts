@@ -1,9 +1,11 @@
 import {
+  AlwaysStencilFunc,
   Color,
   DoubleSide,
   FrontSide,
   Material,
   MathUtils,
+  ReplaceStencilOp,
   Texture,
   Vector2
 } from 'three'
@@ -24,6 +26,7 @@ export interface MaterialOptions {
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
+  rampWidth?: number
 }
 
 export default class Materials {
@@ -107,6 +110,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshHighlightMaterial.clipShadows = true
+    this.meshHighlightMaterial.stencilWrite = true
+    this.meshHighlightMaterial.stencilWriteMask = 0xff
+    this.meshHighlightMaterial.stencilRef = 0x00
+    this.meshHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
@@ -121,6 +131,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshTransparentHighlightMaterial.clipShadows = true
+    this.meshTransparentHighlightMaterial.stencilWrite = true
+    this.meshTransparentHighlightMaterial.stencilWriteMask = 0xff
+    this.meshTransparentHighlightMaterial.stencilRef = 0x00
+    this.meshTransparentHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshTransparentHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
@@ -563,6 +580,9 @@ export default class Materials {
         case GeometryType.POINT:
           this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
           break
+        case GeometryType.POINT_CLOUD:
+          this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
+          break
       }
     }
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
@@ -747,12 +767,35 @@ export default class Materials {
     return retMaterial
   }
 
-  public getFilterMaterialOptions(filterMaterial: FilterMaterial) {
-    return {
-      rampIndex:
-        filterMaterial.rampIndex !== undefined ? filterMaterial.rampIndex : undefined,
-      rampIndexColor: filterMaterial.rampIndexColor,
-      rampTexture: filterMaterial.rampTexture ? filterMaterial.rampTexture : undefined
+  public getFilterMaterialOptions(filterMaterial: FilterMaterial): MaterialOptions {
+    switch (filterMaterial.filterType) {
+      case FilterMaterialType.COLORED:
+        return {
+          rampIndex:
+            filterMaterial.rampIndex !== undefined
+              ? filterMaterial.rampIndex
+              : undefined,
+          rampIndexColor: filterMaterial.rampIndexColor,
+          rampTexture: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture
+            : undefined,
+          rampWidth: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture.image.width
+            : undefined
+        }
+      case FilterMaterialType.GRADIENT:
+        return {
+          rampIndex:
+            filterMaterial.rampIndex !== undefined
+              ? filterMaterial.rampIndex
+              : undefined,
+          rampTexture: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture
+            : this.meshGradientMaterial.userData.gradientRamp.value,
+          rampWidth: filterMaterial.rampTexture
+            ? filterMaterial.rampTexture.image.width
+            : this.meshGradientMaterial.userData.gradientRamp.value.image.width
+        }
     }
   }
 

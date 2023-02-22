@@ -366,6 +366,12 @@ server:
   ## @param server.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param server.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
+
+  ## @param server.adminOverrideEnabled Enables the server side admin authz override
+  adminOverrideEnabled: false
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
@@ -438,6 +444,29 @@ server:
       ## @param server.auth.azure_ad.port Port on server to connect to. Used to allow egress in Network Policy. Defaults to 443
       ##
       port: 443
+    oidc:
+      ## @param server.auth.oidc.enabled If enabled, users can authenticate via OpenID Connect identity provider
+      ##
+      enabled: false
+      ## @param server.auth.oidc.name This is the name that you want displayed on the login button
+      ##
+      name: ''
+      ## @param server.auth.oidc.discovery_url This is the OIDC discovery URL for the identity provider you want to use
+      ##
+      discovery_url: ''
+      ## @param server.auth.oidc.client_id This is the ID for Speckle that you have registered with the OIDC identity provider
+      ##
+      client_id: ''
+      clientSecret:
+        ## @param server.auth.oidc.clientSecret.secretName The name of the Kubernetes Secret containing the OIDC client secret. This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
+        ##
+        secretName: ''
+        ## @param server.auth.oidc.clientSecret.secretKey The key within the Kubernetes Secret holding the OIDC client secret as its value.
+        ##
+        secretKey: ''
+      ## @param server.auth.oidc.domains List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy.
+      ##
+      domains: []
   ## @extra server.email Speckle can communicate with users via email, providing account verification and notification.
   ##
   email:
@@ -532,6 +561,9 @@ server:
     ## access to most secrets on the cluster and access to the Kubernetes API.
     ##
     create: true
+  fileUploads:
+    ## @param server.fileUpload.enabled If enabled, file uploads on the server will be flagged as enabled
+    enabled: true
 
   monitoring:
     apollo:
@@ -596,6 +628,9 @@ frontend:
   ## @param frontend.replicas The number of instances of the Frontend pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param frontend.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   requests:
     ## @param frontend.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -715,6 +750,9 @@ preview_service:
   ## @param preview_service.replicas The number of instances of the Preview Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param preview_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   requests:
     ## @param preview_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -775,6 +813,9 @@ webhook_service:
   ## @param webhook_service.replicas The number of instances of the Webhook Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param webhook_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   requests:
     ## @param webhook_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -835,6 +876,9 @@ fileimport_service:
   ## @param fileimport_service.replicas The number of instances of the FileImport Service pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param fileimport_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   requests:
     ## @param fileimport_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -901,6 +945,9 @@ monitoring:
   ## @param monitoring.replicas The number of instances of the Monitoring pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param monitoring.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   requests:
     ## @param monitoring.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -963,6 +1010,9 @@ monitoring:
 helm_test_enabled: true
 
 test:
+  ## @param test.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   requests:
     ## @param test.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/

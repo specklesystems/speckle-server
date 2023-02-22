@@ -5,6 +5,7 @@ import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 import { VALID_EMAIL_REGEX } from '@/main/lib/common/vuetify/validators'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { has } from 'lodash'
+import { deletePostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
 
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
@@ -96,6 +97,7 @@ export async function signOut(mixpanelInstance) {
   AppLocalStorage.remove('distinct_id')
   AppLocalStorage.remove('stcount')
   AppLocalStorage.remove('onboarding')
+  deletePostAuthRedirect()
 
   window.location = '/'
 

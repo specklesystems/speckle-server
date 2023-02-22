@@ -7,7 +7,7 @@
     >
       <span>{{ title }}</span>
     </label>
-    <div class="relative mt-1 rounded-md">
+    <div class="relative">
       <div
         v-if="hasLeadingIcon"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"
@@ -36,10 +36,11 @@
         :type="type"
         :name="name"
         :class="[
-          'block h-12 w-full rounded-xl focus:outline-none bg-foundation-page text-foreground transition-all',
+          'block w-full rounded focus:outline-none bg-foundation-page text-foreground transition-all',
           'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
           'placeholder:text-foreground-2',
-          computedClasses
+          computedClasses,
+          sizeClasses
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -47,10 +48,25 @@
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
+        @change="$emit('change', { event: $event, value })"
+        @input="$emit('input', { event: $event, value })"
       />
+      <a
+        v-if="showClear"
+        title="Clear input"
+        class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer"
+        @click="clear"
+        @keydown="clear"
+      >
+        <span class="text-xs sr-only">Clear input</span>
+        <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
+      </a>
       <div
         v-if="error"
-        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
+        :class="[
+          'pointer-events-none absolute inset-y-0 right-0 flex items-center',
+          showClear ? 'pr-8' : 'pr-2'
+        ]"
       >
         <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
       </div>
@@ -79,12 +95,17 @@ export default defineComponent({
 </script>
 <script setup lang="ts">
 import { RuleExpression, useField } from 'vee-validate'
-import { ExclamationCircleIcon, EnvelopeIcon, KeyIcon } from '@heroicons/vue/20/solid'
+import {
+  ExclamationCircleIcon,
+  EnvelopeIcon,
+  KeyIcon,
+  XMarkIcon
+} from '@heroicons/vue/20/solid'
 import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
-import { ChangeEvent } from 'rollup'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
+type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 
 const props = defineProps({
   /**
@@ -188,10 +209,22 @@ const props = defineProps({
   modelValue: {
     type: String,
     default: ''
+  },
+  size: {
+    type: String as PropType<InputSize>,
+    default: 'base'
+  },
+  showClear: {
+    type: Boolean,
+    default: false
   }
 })
 
-defineEmits<{ (e: 'update:modelValue', val: ChangeEvent): void }>()
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: string): void
+  (e: 'change', val: { event?: Event; value: string }): void
+  (e: 'input', val: { event?: Event; value: string }): void
+}>()
 
 const { value, errorMessage: error } = useField(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
@@ -224,15 +257,37 @@ const computedClasses = computed((): string => {
     classParts.push('pl-10')
   }
 
-  if (error.value) {
-    classParts.push(
-      'pr-8 border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
-    )
+  if (error.value || props.showClear) {
+    if (error.value && props.showClear) {
+      classParts.push('pr-12')
+    } else {
+      classParts.push('pr-8')
+    }
+
+    if (error.value) {
+      classParts.push(
+        'border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
+      )
+    }
   } else {
     classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
   }
 
   return classParts.join(' ')
+})
+
+const sizeClasses = computed((): string => {
+  switch (props.size) {
+    case 'sm':
+      return 'h-6'
+    case 'lg':
+      return 'h-10'
+    case 'xl':
+      return 'h-14'
+    case 'base':
+    default:
+      return 'h-8'
+  }
 })
 
 const title = computed(() => props.label || props.name)
@@ -251,6 +306,11 @@ const helpTipClasses = computed((): string =>
 
 const focus = () => {
   inputElement.value?.focus()
+}
+
+const clear = () => {
+  value.value = ''
+  emit('change', { value: '' })
 }
 
 onMounted(() => {

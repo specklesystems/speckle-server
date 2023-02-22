@@ -6,11 +6,12 @@ import express, { Express } from 'express'
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
 import compression from 'compression'
-import logger from 'morgan-debug'
 
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
+import { startupLogger, shutdownLogger } from '@/logging/logging'
+import { LoggingExpressMiddleware } from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
@@ -22,7 +23,7 @@ import {
 } from 'apollo-server-express'
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core'
 
-import { SubscriptionServer } from 'subscriptions-transport-ws'
+import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex from '@/db/knex'
@@ -35,15 +36,14 @@ import {
   useNewFrontend
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { Roles } from '@speckle/shared'
+// import { Roles } from '@speckle/shared'
 
 import { IMocks } from '@graphql-tools/mock'
-import { startupDebug, shutdownDebug } from '@/modules/shared/utils/logger'
 import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
@@ -122,6 +122,23 @@ function buildApolloSubscriptionServer(
       },
       onDisconnect: () => {
         metricConnectedClients.dec()
+      },
+      onOperation: (...params: [() => void, ExecutionParams]) => {
+        // kinda hacky, but we're using this as an "subscription event emitted"
+        // callback to clear subscription connection dataloaders to avoid stale cache
+        const baseParams = params[1]
+        const ctx = baseParams.context as GraphQLContext
+
+        baseParams.formatResponse = (val: unknown) => {
+          ctx.loaders.clearAll()
+          return val
+        }
+        baseParams.formatError = (e: Error) => {
+          ctx.loaders.clearAll()
+          return e
+        }
+
+        return baseParams
       }
     },
     {
@@ -139,43 +156,14 @@ async function buildMocksConfig(): Promise<{
   mocks: boolean | IMocks
   mockEntireSchema: boolean
 }> {
-  const roles = Object.values(Roles.Stream)
   const isDebugEnv = isDevEnv()
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 
-  const { faker } = await import('@faker-js/faker')
+  // feel free to define mocks for your dev env below
+  // const roles = Object.values(Roles.Stream)
+  // const { faker } = await import('@faker-js/faker')
 
-  return {
-    mocks: {
-      Query: () => ({
-        testNumber: () => faker.datatype.number(),
-        testList: () => [...new Array(faker.datatype.number({ min: 1, max: 10 }))],
-        projects: () => [...new Array(faker.datatype.number({ min: 5, max: 12 }))]
-      }),
-      DateTime: () => faker.datatype.datetime(),
-      ID: () => faker.unique(faker.random.alphaNumeric, [10]),
-      Project: () => ({
-        team: [...new Array(faker.datatype.number({ min: 1, max: 5 }))],
-        name:
-          faker.commerce.productAdjective() +
-          ' ' +
-          faker.commerce.productMaterial() +
-          ' ' +
-          faker.commerce.product() +
-          ' ' +
-          faker.commerce.product(),
-        modelCount: faker.datatype.number({ min: 0, max: 100 }),
-        role: roles[
-          faker.datatype.number({
-            min: 0,
-            max: roles.length - 1
-          })
-        ]
-      }),
-      JSONObject: () => ({})
-    },
-    mockEntireSchema: false
-  }
+  return { mocks: false, mockEntireSchema: false }
 }
 
 /**
@@ -235,7 +223,7 @@ export async function buildApolloServer(
  */
 export async function init() {
   if (useNewFrontend()) {
-    startupDebug('🖼️  Serving for frontend-2...')
+    startupLogger.info('🖼️  Serving for frontend-2...')
   }
 
   const app = express()
@@ -248,7 +236,7 @@ export async function init() {
   await knex.migrate.latest()
 
   if (process.env.NODE_ENV !== 'test') {
-    app.use(logger('speckle', 'dev', {}))
+    app.use(LoggingExpressMiddleware)
   }
 
   if (process.env.COMPRESSION) {
@@ -336,8 +324,8 @@ export async function startHttp(
     // app.use('/', frontendProxy)
     app.use(await createFrontendProxy())
 
-    startupDebug('✨ Proxying frontend-1 (dev mode):')
-    startupDebug(`👉 main application: http://localhost:${port}/`)
+    startupLogger.info('✨ Proxying frontend-1 (dev mode):')
+    startupLogger.info(`👉 main application: http://localhost:${port}/`)
   }
 
   // Production mode
@@ -354,13 +342,13 @@ export async function startHttp(
     signals: ['SIGTERM', 'SIGINT'],
     timeout: 5 * 60 * 1000,
     beforeShutdown: async () => {
-      shutdownDebug('Shutting down (signal received)...')
+      shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
       await shutdown()
     },
     onShutdown: () => {
-      shutdownDebug('Shutdown completed')
+      shutdownLogger.info('Shutdown completed')
       process.exit(0)
     }
   })
@@ -370,7 +358,7 @@ export async function startHttp(
     const addressString = isString(address) ? address : address?.address
     const port = isString(address) ? null : address?.port
 
-    startupDebug(
+    startupLogger.info(
       `🚀 My name is Speckle Server, and I'm running at ${addressString}:${port}`
     )
     app.emit('appStarted')

@@ -37,7 +37,7 @@
       // "envFile": "${workspaceFolder}/.env",
       "env": {
         "PORT": "0",
-        "POSTGRES_URL": "postgresql://localhost:5432/speckle2_test"
+        "POSTGRES_URL": "postgresql://127.0.0.1:5432/speckle2_test"
         // "POSTGRES_USER": "speckle",
         // "POSTGRES_PASSWORD": "speckle",
         // "POSTGRES_DB": "speckle2_test",
@@ -62,10 +62,6 @@
         "--timeout=0"
       ],
       "console": "integratedTerminal",
-      "env": {
-        // "POSTGRES_URL": "postgres://speckle:speckle@localhost/speckle2_test",
-        "DEBUG": "server:*"
-      },
       // "envFile": "${workspaceFolder}/.env",
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],

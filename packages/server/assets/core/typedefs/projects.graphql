@@ -1,28 +1,143 @@
 extend type Query {
-  projects: [Project!]! @deprecated(reason: "only used for testing for now")
-  project(id: String): Project! @deprecated(reason: "only used for testing for now")
+  """
+  Find a specific project. Will throw an authorization error if active user isn't authorized
+  to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+  """
+  project(id: String!): Project
+}
+
+"""
+Any values left null will be ignored, so only set the properties that you want updated
+"""
+input ProjectUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  """
+  Whether the stream can be viewed by non-contributors
+  """
+  isPublic: Boolean
+  """
+  Whether the stream (if public) can be found on public stream exploration pages
+  and searches
+  """
+  isDiscoverable: Boolean
+  allowPublicComments: Boolean
+}
+
+type ProjectMutations {
+  """
+  Delete an existing project
+  """
+  delete(id: String!): Boolean!
+
+  """
+  Updates an existing project
+  """
+  update(stream: ProjectUpdateInput!): Project!
+
+  """
+  Create onboarding/tutorial project
+  """
+  createForOnboarding: Project!
+}
+
+extend type Mutation {
+  projectMutations: ProjectMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
 }
 
 extend type User {
   """
   Get projects that the user participates in
   """
-  projects: [Project!]!
+  projects(
+    limit: Int! = 25
+    cursor: String
+    filter: UserProjectsFilter
+  ): ProjectCollection! @isOwner
+}
+
+type ProjectCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Project!]!
 }
 
 type Project {
   id: ID!
   name: String!
+  description: String
+  versionCount: Int!
   modelCount: Int!
-  role: String!
-  editedAt: DateTime!
+  """
+  Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
+  """
+  role: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
   team: [LimitedUser!]!
+  """
+  Source apps used in any models of this project
+  """
+  sourceApps: [String!]!
 }
 
-type Model {
-  id: ID!
-  name: String!
-  versionCount: Int!
-  author: LimitedUser!
-  sourceApp: String!
+input UserProjectsFilter {
+  """
+  Filter out projects by name
+  """
+  search: String
+}
+
+enum UserProjectsUpdatedMessageType {
+  ADDED
+  REMOVED
+}
+
+type UserProjectsUpdatedMessage {
+  """
+  Message type
+  """
+  type: UserProjectsUpdatedMessageType!
+  """
+  Project ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+enum ProjectUpdatedMessageType {
+  UPDATED
+  DELETED
+}
+
+type ProjectUpdatedMessage {
+  """
+  Message type
+  """
+  type: ProjectUpdatedMessageType!
+  """
+  Project ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+extend type Subscription {
+  """
+  Track newly added or deleted projects owned by the active user
+  """
+  userProjectsUpdated: UserProjectsUpdatedMessage!
+  """
+  Track updates to a specific project
+  """
+  projectUpdated(id: String!): ProjectUpdatedMessage!
 }

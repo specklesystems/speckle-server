@@ -79,11 +79,7 @@
         </template>
         <template #default>
           <div class="my-8 flex flex-col gap-y-4 overflow-x-scroll">
-            <div
-              v-for="size in sizes"
-              :key="size"
-              class="flex py-6 flex-wrap space-x-4"
-            >
+            <div v-for="size in sizes" :key="size" class="grid grid-cols-6">
               <span class="caption text-center col-span-4 md:col-span-1">
                 {{ size }}
               </span>
@@ -98,11 +94,24 @@
                 <!-- <FormButton :size="size" rounded outlined disabled>Button</FormButton> -->
               </div>
             </div>
-            <div
-              v-for="size in sizes"
-              :key="size"
-              class="flex py-6 flex-wrap space-x-4"
-            >
+            <div v-for="size in sizes" :key="size" class="grid grid-cols-6">
+              <span class="caption text-center col-span-4 md:col-span-1">
+                {{ size }}
+              </span>
+              <div><FormButton :size="size" rounded>Button</FormButton></div>
+              <div><FormButton :size="size" rounded disabled>Button</FormButton></div>
+              <!-- <div><FormButton :size="size" rounded>Button</FormButton></div>
+              <div><FormButton :size="size" rounded disabled>Button</FormButton></div> -->
+              <div><FormButton :size="size" rounded outlined>Button</FormButton></div>
+              <div>
+                <FormButton :size="size" rounded outlined disabled>Button</FormButton>
+              </div>
+              <!-- <div><FormButton :size="size" rounded outlined>Button</FormButton></div> -->
+              <div>
+                <!-- <FormButton :size="size" rounded outlined disabled>Button</FormButton> -->
+              </div>
+            </div>
+            <div v-for="size in sizes" :key="size" class="grid grid-cols-6">
               <span class="caption text-center col-span-4 md:col-span-1">
                 {{ size }}
               </span>

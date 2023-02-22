@@ -2,7 +2,7 @@
   <AuthLoginPanel />
 </template>
 <script setup lang="ts">
-import { useMixpanel } from '~~/lib/core/composables/mixpanel'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const mixpanel = useMixpanel()
 

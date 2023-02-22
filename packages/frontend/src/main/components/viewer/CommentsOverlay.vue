@@ -565,8 +565,8 @@ export default {
     },
     updateCommentBubbles() {
       if (!this.comments) return
-      const cam = this.viewer.cameraHandler.activeCam.camera
-      cam.updateProjectionMatrix()
+      // const cam = this.viewer.cameraHandler.activeCam.camera
+      // cam.updateProjectionMatrix()
       for (const comment of this.localComments) {
         // get html elements
         const commentEl = this.$refs[`comment-${comment.id}`][0]
@@ -579,14 +579,24 @@ export default {
           comment.data.location.y,
           comment.data.location.z
         )
-
-        location.project(cam)
-
-        const commentLocation = new THREE.Vector3(
-          (location.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
-          (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
-          0
+        const projectionResult = this.viewer.query({
+          point: location,
+          operation: 'Project'
+        })
+        const commentLocation = this.viewer.Utils.NDCToScreen(
+          projectionResult.x,
+          projectionResult.y,
+          this.$refs.parent.clientWidth,
+          this.$refs.parent.clientHeight
         )
+
+        // location.project(cam)
+
+        // const commentLocation = new THREE.Vector3(
+        //   (location.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
+        //   (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
+        //   0
+        // )
 
         let tX = commentLocation.x - 20
         let tY = commentLocation.y - 20
@@ -660,6 +670,14 @@ export default {
             cardTop = paddingYTop
           card.style.top = `${cardTop}px`
         }
+        /** Just as an example */
+        const occlusionRes = this.viewer.query({
+          point: location,
+          tolerance: 0.001,
+          operation: 'Occlusion'
+        })
+        const opacity = occlusionRes.objects === null ? '1.0' : '0.25'
+        commentEl.style.opacity = opacity
       }
     },
     bounceComment(id) {

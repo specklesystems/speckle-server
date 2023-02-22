@@ -27,6 +27,10 @@ import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
+import Logger from 'js-logger'
+import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { Queries } from './queries/Queries'
+import { Utils } from './Utils'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -50,9 +54,21 @@ export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
 
+  /** various utils/helpers */
+  private utils: Utils
   /** Gets the World object. Currently it's used for info mostly */
   public static get World(): World {
     return this.world
+  }
+
+  public get Utils(): Utils {
+    if (!this.utils) {
+      this.utils = {
+        screenToNDC: this.speckleRenderer.screenToNDC.bind(this.speckleRenderer),
+        NDCToScreen: this.speckleRenderer.NDCToScreen.bind(this.speckleRenderer)
+      }
+    }
+    return this.utils
   }
 
   public constructor(
@@ -60,6 +76,8 @@ export class Viewer extends EventEmitter implements IViewer {
     params: ViewerParams = DefaultViewerParams
   ) {
     super()
+    Logger.useDefaults()
+    Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
 
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
@@ -81,7 +99,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any)._V = this // For debugging!
+    ;(window as any)._V = this // For debugging! ಠ_ಠ
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.disable()
@@ -100,13 +118,11 @@ export class Viewer extends EventEmitter implements IViewer {
     this.frame()
     this.resize()
 
-    this.on(ViewerEvent.LoadComplete, (url) => {
-      WorldTree.getRenderTree(url).buildRenderTree()
-      this.speckleRenderer.addRenderTree(url)
-      this.zoom()
-      this.speckleRenderer.resetPipeline(true)
+    this.on(ViewerEvent.LoadCancelled, (url: string) => {
+      Logger.warn(`Cancelled load for ${url}`)
     })
   }
+
   public setSectionBox(
     box?: {
       min: {
@@ -166,8 +182,8 @@ export class Viewer extends EventEmitter implements IViewer {
           this.speckleRenderer.indirectIBL = value
         })
         .catch((reason) => {
-          console.warn(reason)
-          console.warn('Fallback to null environment!')
+          Logger.error(reason)
+          Logger.error('Fallback to null environment!')
         })
     }
   }
@@ -306,6 +322,27 @@ export class Viewer extends EventEmitter implements IViewer {
     return WorldTree.getDataTree()
   }
 
+  public getWorldTree(): WorldTree {
+    return WorldTree.getInstance()
+  }
+
+  public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] {
+    if (Queries.isPointQuery(query)) {
+      Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
+      return Queries.DefaultPointQuerySolver.solve(query)
+    }
+    if (Queries.isIntersectionQuery(query)) {
+      Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
+      return Queries.DefaultIntersectionQuerySolver.solve(query)
+    }
+  }
+
+  public queryAsync(query: Query): Promise<QueryResult> {
+    //TO DO
+    query
+    return null
+  }
+
   public toggleSectionBox() {
     this.sectionBox.toggle()
     this.speckleRenderer.updateSectionBoxCapper()
@@ -376,7 +413,12 @@ export class Viewer extends EventEmitter implements IViewer {
   /**
    * OBJECT LOADING/UNLOADING
    */
-  public async loadObject(url: string, token: string = null, enableCaching = true) {
+
+  private async downloadObject(
+    url: string,
+    token: string = null,
+    enableCaching = true
+  ) {
     try {
       if (++this.inProgressOperations === 1)
         (this as EventEmitter).emit(ViewerEvent.Busy, true)
@@ -390,8 +432,47 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
+  public async loadObject(url: string, token: string = null, enableCaching = true) {
+    await this.downloadObject(url, token, enableCaching)
+
+    let t0 = performance.now()
+    WorldTree.getRenderTree(url).buildRenderTree()
+    Logger.log('SYNC Tree build time -> ', performance.now() - t0)
+
+    t0 = performance.now()
+    this.speckleRenderer.addRenderTree(url)
+    Logger.log('SYNC batch build time -> ', performance.now() - t0)
+
+    this.zoom()
+    this.speckleRenderer.resetPipeline(true)
+    this.emit(ViewerEvent.LoadComplete, url)
+  }
+
+  public async loadObjectAsync(
+    url: string,
+    token: string = null,
+    enableCaching = true,
+    priority = 1
+  ) {
+    await this.downloadObject(url, token, enableCaching)
+
+    let t0 = performance.now()
+    const treeBuilt = await WorldTree.getRenderTree(url).buildRenderTreeAsync(priority)
+    Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+
+    if (treeBuilt) {
+      t0 = performance.now()
+      await this.speckleRenderer.addRenderTreeAsync(url, priority)
+      Logger.log('ASYNC batch build time -> ', performance.now() - t0)
+      this.speckleRenderer.resetPipeline(true)
+      this.emit(ViewerEvent.LoadComplete, url)
+    }
+  }
+
   public async cancelLoad(url: string, unload = false) {
     this.loaders[url].cancelLoad()
+    WorldTree.getRenderTree(url).cancelBuild(url)
+    this.speckleRenderer.cancelRenderTree(url)
     if (unload) {
       await this.unloadObject(url)
     }
@@ -409,7 +490,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
-        console.warn(`Removed subtree ${url}`)
+        Logger.warn(`Removed subtree ${url}`)
         ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, url)
       }
     }
@@ -432,7 +513,7 @@ export class Viewer extends EventEmitter implements IViewer {
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
-        console.warn(`Removed all subtrees`)
+        Logger.warn(`Removed all subtrees`)
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }

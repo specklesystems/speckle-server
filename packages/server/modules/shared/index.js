@@ -1,29 +1,17 @@
 'use strict'
-const Redis = require('ioredis')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
-const { RedisPubSub } = require('graphql-redis-subscriptions')
+const {
+  pubsub,
+  StreamSubscriptions,
+  CommitSubscriptions,
+  BranchSubscriptions
+} = require('@/modules/shared/utils/subscriptions')
+const { Roles } = require('@speckle/shared')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
-const StreamPubsubEvents = Object.freeze({
-  UserStreamAdded: 'USER_STREAM_ADDED',
-  UserStreamRemoved: 'USER_STREAM_REMOVED',
-  StreamUpdated: 'STREAM_UPDATED',
-  StreamDeleted: 'STREAM_DELETED'
-})
-
-const CommitPubsubEvents = Object.freeze({
-  CommitCreated: 'COMMIT_CREATED',
-  CommitUpdated: 'COMMIT_UPDATED',
-  CommitDeleted: 'COMMIT_DELETED'
-})
-
-/**
- * GraphQL Subscription PubSub instance
- */
-const pubsub = new RedisPubSub({
-  publisher: new Redis(process.env.REDIS_URL),
-  subscriber: new Redis(process.env.REDIS_URL)
-})
+const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
+const ServerAcl = () => ServerAclSchema.knex()
 
 let roles
 
@@ -58,9 +46,9 @@ async function validateServerRole(context, requiredRole) {
 
 /**
  * Validates the scope against a list of scopes of the current session.
- * @param  {[type]} scopes [description]
- * @param  {[type]} scope  [description]
- * @return {[type]}        [description]
+ * @param  {string[]|undefined} scopes
+ * @param  {string} scope
+ * @return {void}
  */
 async function validateScopes(scopes, scope) {
   if (!scopes) throw new ForbiddenError('You do not have the required privileges.')
@@ -70,7 +58,7 @@ async function validateScopes(scopes, scope) {
 
 /**
  * Checks the userId against the resource's acl.
- * @param  {string} userId
+ * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
  */
@@ -84,6 +72,11 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
   const role = roles.find((r) => r.name === requiredRole)
 
   if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
+
+  if (adminOverrideEnabled()) {
+    const serverRoles = await ServerAcl().select('role').where({ userId })
+    if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin)) return requiredRole
+  }
 
   try {
     const { isPublic } = await knex(role.resourceTarget)
@@ -107,7 +100,7 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
   userAclEntry.role = roles.find((r) => r.name === userAclEntry.role)
 
   if (userAclEntry.role.weight >= role.weight) return userAclEntry.role.name
-  else throw new ForbiddenError('You are not authorized.')
+  throw new ForbiddenError('You are not authorized.')
 }
 
 const Scopes = () => knex('scopes')
@@ -122,10 +115,10 @@ async function registerOrUpdateScope(scope) {
   return
 }
 
-const Roles = () => knex('user_roles')
+const UserRoles = () => knex('user_roles')
 async function registerOrUpdateRole(role) {
   await knex.raw(
-    `${Roles()
+    `${UserRoles()
       .insert(role)
       .toString()} on conflict (name) do update set weight = ?, description = ?, "resourceTarget" = ? `,
     [role.weight, role.description, role.resourceTarget]
@@ -141,6 +134,7 @@ module.exports = {
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents,
-  CommitPubsubEvents
+  StreamPubsubEvents: StreamSubscriptions,
+  CommitPubsubEvents: CommitSubscriptions,
+  BranchPubsubEvents: BranchSubscriptions
 }

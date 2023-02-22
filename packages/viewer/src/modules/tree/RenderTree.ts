@@ -4,9 +4,11 @@ import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 import { Geometry } from '../converter/Geometry'
+import Logger from 'js-logger'
 
 export class RenderTree {
   private root: TreeNode
+  private cancel = false
 
   public constructor(root: TreeNode) {
     this.root = root
@@ -27,6 +29,27 @@ export class RenderTree {
 
       return true
     })
+  }
+
+  public buildRenderTreeAsync(priority: number): Promise<boolean> {
+    const p = WorldTree.getInstance().walkAsync(
+      (node: TreeNode): boolean => {
+        const rendeNode = this.buildRenderNode(node)
+        node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
+        if (node.model.renderView && node.model.renderView.hasGeometry) {
+          const transform = this.computeTransform(node)
+          if (rendeNode.geometry.bakeTransform) {
+            transform.multiply(rendeNode.geometry.bakeTransform)
+          }
+          Geometry.transformGeometryData(rendeNode.geometry, transform)
+          node.model.renderView.computeAABB()
+        }
+        return !this.cancel
+      },
+      this.root,
+      priority
+    )
+    return p
   }
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
@@ -113,7 +136,7 @@ export class RenderTree {
 
     return (parent ? parent : node.parent)
       .all((_node: TreeNode): boolean => {
-        return _node.model.renderView !== null && _node.model.renderView.hasGeometry
+        return _node.model.renderView && _node.model.renderView.hasGeometry
       })
       .map((val: TreeNode) => val.model.renderView)
   }
@@ -124,7 +147,7 @@ export class RenderTree {
     }
 
     return (parent ? parent : node.parent).all((_node: TreeNode): boolean => {
-      return _node.model.renderView !== null && _node.model.renderView.hasGeometry
+      return _node.model.renderView && _node.model.renderView.hasGeometry
     })
   }
 
@@ -140,7 +163,7 @@ export class RenderTree {
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
     const node = WorldTree.getInstance().findId(id)
     if (!node) {
-      console.warn(`Id ${id} does not exist`)
+      Logger.warn(`Id ${id} does not exist`)
       return null
     }
     return this.getRenderViewsForNode(node)
@@ -149,7 +172,7 @@ export class RenderTree {
   public getRenderViewForNodeId(id: string): NodeRenderView {
     const node = WorldTree.getInstance().findId(id)
     if (!node) {
-      console.warn(`Id ${id} does not exist`)
+      Logger.warn(`Id ${id} does not exist`)
       return null
     }
     return node.model.renderView
@@ -157,5 +180,11 @@ export class RenderTree {
 
   public purge() {
     this.root = null
+  }
+
+  public cancelBuild(id: string) {
+    this.cancel = true
+    WorldTree.getInstance().purge(id)
+    this.purge()
   }
 }

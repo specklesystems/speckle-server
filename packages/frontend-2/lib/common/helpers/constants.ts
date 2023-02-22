@@ -12,3 +12,5 @@ export enum CookieKeys {
 export enum LocalStorageKeys {
   AuthAppChallenge = 'appChallenge'
 }
+
+export const ViewerSceneExplorerStateKey = 'viewer-selection'

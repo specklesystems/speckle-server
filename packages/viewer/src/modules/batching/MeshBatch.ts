@@ -1,4 +1,5 @@
 import {
+  Box3,
   BufferAttribute,
   BufferGeometry,
   DynamicDrawUsage,
@@ -22,6 +23,7 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
+import Logger from 'js-logger'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -31,6 +33,7 @@ export default class MeshBatch implements Batch {
   public batchMaterial: Material
   public mesh: SpeckleMesh
   public boundsTree: MeshBVH
+  public bounds: Box3 = new Box3()
   private gradientIndexBuffer: BufferAttribute
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
@@ -93,6 +96,7 @@ export default class MeshBatch implements Batch {
       minOffset,
       maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
     )
+    this.mesh.visible = true
   }
 
   public getVisibleRange(): BatchUpdateRange {
@@ -123,15 +127,23 @@ export default class MeshBatch implements Batch {
     let maxGradientIndex = 0
     for (let k = 0; k < sortedRanges.length; k++) {
       if (sortedRanges[k].materialOptions) {
-        if (sortedRanges[k].materialOptions.rampIndex) {
+        if (sortedRanges[k].materialOptions.rampIndex !== undefined) {
           const start = sortedRanges[k].offset
           const len = sortedRanges[k].offset + sortedRanges[k].count
+          /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+           *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+           *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+           *  sampling can occur.
+           */
+          const shiftedIndex =
+            sortedRanges[k].materialOptions.rampIndex +
+            0.5 / sortedRanges[k].materialOptions.rampWidth
           const minMaxIndices = this.updateGradientIndexBufferData(
             start,
             sortedRanges[k].count === Infinity
               ? this.geometry.attributes['gradientIndex'].array.length
               : len,
-            sortedRanges[k].materialOptions.rampIndex
+            shiftedIndex
           )
           minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
           maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
@@ -436,6 +448,7 @@ export default class MeshBatch implements Batch {
     )
 
     this.boundsTree = Geometry.buildBVH(indices, position)
+    this.boundsTree.getBoundingBox(this.bounds)
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
   }
@@ -475,7 +488,7 @@ export default class MeshBatch implements Batch {
           return this.mesh.material
         } else {
           if (!group) {
-            console.warn(`Malformed material index!`)
+            Logger.warn(`Malformed material index!`)
             return null
           }
           return this.mesh.material[group.materialIndex]

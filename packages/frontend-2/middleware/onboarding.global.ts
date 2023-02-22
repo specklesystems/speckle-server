@@ -1,6 +1,6 @@
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { HomeRoute, OnboardingRoute } from '~~/lib/common/helpers/route'
+import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
 
 /**
  * Redirect user to /onboarding, if they haven't done it yet
@@ -19,11 +19,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!data?.activeUser?.id) return
 
   const isOnboardingFinished = data.activeUser.isOnboardingFinished
-  const isGoingToOnboarding = to.path === OnboardingRoute
+  const isGoingToOnboarding = to.path === onboardingRoute
 
   if (!isOnboardingFinished && !isGoingToOnboarding) {
-    return navigateTo(OnboardingRoute)
-  } else if (isOnboardingFinished && isGoingToOnboarding) {
-    return navigateTo(HomeRoute)
+    return navigateTo(onboardingRoute)
   }
+  //TODO: uncomment for production
+  //else if (isOnboardingFinished && isGoingToOnboarding) {
+  //   return navigateTo(homeRoute)
+  // }
 })

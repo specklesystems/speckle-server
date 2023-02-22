@@ -173,6 +173,7 @@ export default class ObjectLoader {
     if (Array.isArray(obj) && obj.length !== 0) {
       const arr = []
       for (const element of obj) {
+        if (!element) continue
         if (typeof element !== 'object' && !this.options.fullyTraverseArrays) return obj
 
         // Dereference element if needed

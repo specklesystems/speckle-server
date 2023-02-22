@@ -1,9 +1,11 @@
 import '~~/assets/css/tailwind.css'
 import { setupVueApp } from '~~/lib/fake-nuxt-env/utils/nuxtAppBootstrapper'
-import { MockedProvider } from '~~/lib/fake-nuxt-env/components/MockedProvider'
+import { MockedApolloProvider } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 import { setup } from '@storybook/vue3'
 import SingletonManagers from '~~/components/singleton/Managers.vue'
-import { useArgs } from '@storybook/client-api'
+import { useArgs, useGlobals } from '@storybook/client-api'
+import { provide, watch } from 'vue'
+import { AppTheme, useTheme } from '~~/lib/core/composables/theme'
 
 setup((app) => {
   setupVueApp(app)
@@ -14,37 +16,37 @@ export const parameters = {
   viewport: {
     viewports: {
       mobile1: {
-        name: 'Small mobile',
+        name: 'Small mobile (320px)',
         styles: { width: '320px', height: '568px' }, // ratio 0.56
         type: 'mobile'
       },
       mobile2: {
-        name: 'Large mobile',
+        name: 'Large mobile (414px)',
         styles: { width: '414px', height: '896px' }, // ratio 0.46
         type: 'mobile'
       },
       SM: {
-        name: 'SM',
+        name: 'SM (640px)',
         styles: { width: '640px', height: '1024px' },
         type: 'mobile'
       },
       MD: {
-        name: 'MD',
+        name: 'MD (768px)',
         styles: { width: '768px', height: '1024px' },
         type: 'tablet'
       },
       LG: {
-        name: 'LG',
+        name: 'LG (1024px)',
         styles: { width: '1024px', height: '768px' },
         type: 'desktop'
       },
       XL: {
-        name: 'XL',
+        name: 'XL (1280px)',
         styles: { width: '1280px', height: '768px' },
         type: 'desktop'
       },
       '2XL': {
-        name: '2XL',
+        name: '2XL (1536px)',
         styles: { width: '1536px', height: '1024px' },
         type: 'desktop'
       }
@@ -90,7 +92,7 @@ export const parameters = {
   },
   // Custom params
   apolloClient: {
-    MockedProvider
+    MockedApolloProvider
   }
 }
 
@@ -108,8 +110,12 @@ export const decorators = [
    * - Global singletons
    */
   (story, ctx) => {
+    const [, updateGlobals] = useGlobals()
     const theme = ctx.globals.theme
     const isDarkMode = theme === 'dark'
+    const {
+      parameters: { manualLayout }
+    } = ctx
 
     if (isDarkMode) {
       document.querySelector('html').classList.add('dark')
@@ -122,11 +128,24 @@ export const decorators = [
         Story: story(),
         SingletonManagers
       },
+      setup: () => {
+        const { isDarkTheme, setTheme } = useTheme()
+
+        setTheme(isDarkMode ? AppTheme.Dark : AppTheme.Light)
+
+        watch(isDarkTheme, (isDark, oldIsDark) => {
+          if (isDark === oldIsDark) return
+
+          updateGlobals({
+            theme: isDark ? 'dark' : 'light'
+          })
+        })
+      },
       inheritAttrs: false,
       template: `
         <div class="text-foreground">
           <Story v-bind="$attrs" />
-          <SingletonManagers />
+          ${manualLayout ? '' : '<SingletonManagers />'}
         </div>
       `
     }
@@ -135,21 +154,39 @@ export const decorators = [
   (story, ctx) => {
     const {
       parameters: {
-        apolloClient: { MockedProvider, ...providerProps }
+        apolloClient: { MockedApolloProvider, ...providerProps }
       }
     } = ctx
 
-    if (!MockedProvider) {
-      console.error('Apollo MockedProvider missing from parameters in preview.js!')
+    if (!MockedApolloProvider) {
+      console.error(
+        'Apollo MockedApolloProvider missing from parameters in preview.js!'
+      )
       return { template: `<Story/>`, components: { Story: story() } }
     }
 
     return {
       data: () => ({ providerProps }),
-      components: { MockedProvider, Story: story() },
+      components: { MockedApolloProvider, Story: story() },
       template: `
-        <MockedProvider :options="providerProps || {}"><Story/></MockedProvider>
+        <MockedApolloProvider :options="providerProps || {}"><Story/></MockedApolloProvider>
       `
+    }
+  },
+  // Mocked router
+  (story, ctx) => {
+    const {
+      parameters: { vueRouter: { route } = { route: undefined } }
+    } = ctx
+
+    return {
+      components: { Story: story() },
+      setup: () => {
+        if (route) {
+          provide('_route', route)
+        }
+      },
+      template: `<Story/>`
     }
   }
 ]

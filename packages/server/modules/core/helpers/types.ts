@@ -80,11 +80,11 @@ export type CommitRecord = {
   id: string
   referencedObject: string
   author: string
-  message: string
+  message: Nullable<string>
   createdAt: Date
   sourceApplication: Nullable<string>
   totalChildrenCount: Nullable<number>
-  parents: Nullable<string>
+  parents: Nullable<string[]>
 }
 
 export type BranchCommitRecord = {

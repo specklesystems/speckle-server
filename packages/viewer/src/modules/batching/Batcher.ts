@@ -16,6 +16,8 @@ import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
 import { Material, Mesh, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
+import Logger from 'js-logger'
+import { World } from '../World'
 
 export default class Batcher {
   public materials: Materials
@@ -28,8 +30,8 @@ export default class Batcher {
 
   public makeBatches(
     subtreeId: string,
-    batchType: GeometryType,
-    ...speckleType: SpeckleType[]
+    speckleType: SpeckleType[],
+    batchType?: GeometryType
   ) {
     const rendeViews = WorldTree.getRenderTree(subtreeId)
       .getAtomicRenderViews(...speckleType)
@@ -42,52 +44,92 @@ export default class Batcher {
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
 
-    console.warn(materialHashes)
-    // console.warn(rendeViews)
+    Logger.warn(`Batch count: ${materialHashes}`)
 
     for (let i = 0; i < materialHashes.length; i++) {
-      const batch = rendeViews.filter(
-        (value) => value.renderMaterialHash === materialHashes[i]
-      )
-
-      let matRef = null
-
-      if (batchType === GeometryType.MESH) {
-        matRef = batch[0].renderData.renderMaterial
-      } else if (batchType === GeometryType.LINE) {
-        matRef = batch[0].renderData.displayStyle
-      } else if (batchType === GeometryType.POINT) {
-        matRef = batch[0].renderData.renderMaterial
-      } else if (batchType === GeometryType.POINT_CLOUD) {
-        matRef = batch[0].renderData.renderMaterial
-      }
-
-      const material = this.materials.updateMaterialMap(
-        materialHashes[i],
-        matRef,
-        batchType
-      )
-
-      const batchID = generateUUID()
-      switch (batchType) {
-        case GeometryType.MESH:
-          this.batches[batchID] = new MeshBatch(batchID, subtreeId, batch)
-          break
-        case GeometryType.LINE:
-          this.batches[batchID] = new LineBatch(batchID, subtreeId, batch)
-          break
-        case GeometryType.POINT:
-          this.batches[batchID] = new PointBatch(batchID, subtreeId, batch)
-          break
-        case GeometryType.POINT_CLOUD:
-          this.batches[batchID] = new PointBatch(batchID, subtreeId, batch)
-          break
-      }
-
-      this.batches[batchID].setBatchMaterial(material)
-      this.batches[batchID].buildBatch()
-      // console.warn(batch)
+      const batch = this.buildBatch(subtreeId, rendeViews, materialHashes[i], batchType)
+      this.batches[batch.id] = batch
     }
+  }
+
+  public async *makeBatchesAsync(
+    subtreeId: string,
+    speckleType: SpeckleType[],
+    batchType?: GeometryType,
+    priority?: number
+  ) {
+    const pause = World.getPause(priority)
+
+    const rendeViews = WorldTree.getRenderTree(subtreeId)
+      .getAtomicRenderViews(...speckleType)
+      .sort((a, b) => {
+        if (a.renderMaterialHash === 0) return -1
+        if (b.renderMaterialHash === 0) return 1
+        return a.renderMaterialHash - b.renderMaterialHash
+      })
+    const materialHashes = [
+      ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
+    ]
+
+    Logger.warn(`Batch count: ${materialHashes.length}`)
+
+    for (let i = 0; i < materialHashes.length; i++) {
+      const batch = this.buildBatch(subtreeId, rendeViews, materialHashes[i], batchType)
+      this.batches[batch.id] = batch
+      yield this.batches[batch.id]
+      await pause()
+    }
+  }
+
+  private buildBatch(
+    subtreeId: string,
+    renderViews: NodeRenderView[],
+    materialHash: number,
+    batchType?: GeometryType
+  ): Batch {
+    let batch = renderViews.filter((value) => value.renderMaterialHash === materialHash)
+    /** Prune any meshes with no geometry data */
+    batch = batch.filter((value) => value.validGeometry)
+
+    const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
+    let matRef = null
+
+    if (geometryType === GeometryType.MESH) {
+      matRef = batch[0].renderData.renderMaterial
+    } else if (geometryType === GeometryType.LINE) {
+      matRef = batch[0].renderData.displayStyle
+    } else if (geometryType === GeometryType.POINT) {
+      matRef = batch[0].renderData.renderMaterial
+    } else if (geometryType === GeometryType.POINT_CLOUD) {
+      matRef = batch[0].renderData.renderMaterial
+    }
+
+    const material = this.materials.updateMaterialMap(
+      materialHash,
+      matRef,
+      geometryType
+    )
+
+    const batchID = generateUUID()
+    let geometryBatch: Batch = null
+    switch (geometryType) {
+      case GeometryType.MESH:
+        geometryBatch = new MeshBatch(batchID, subtreeId, batch)
+        break
+      case GeometryType.LINE:
+        geometryBatch = new LineBatch(batchID, subtreeId, batch)
+        break
+      case GeometryType.POINT:
+        geometryBatch = new PointBatch(batchID, subtreeId, batch)
+        break
+      case GeometryType.POINT_CLOUD:
+        geometryBatch = new PointBatch(batchID, subtreeId, batch)
+        break
+    }
+
+    geometryBatch.setBatchMaterial(material)
+    geometryBatch.buildBatch()
+    return geometryBatch
   }
 
   public update(deltaTime: number) {
@@ -158,6 +200,33 @@ export default class Batcher {
     return visibilityRanges
   }
 
+  public getStencil(): Record<string, BatchUpdateRange> {
+    const visibilityRanges = {}
+    for (const k in this.batches) {
+      const batch: Batch = this.batches[k]
+      if (batch.geometryType !== GeometryType.MESH) {
+        visibilityRanges[k] = HideAllBatchUpdateRange
+        continue
+      }
+      const batchMesh: Mesh = batch.renderObject as Mesh
+      if (batchMesh.geometry.groups.length === 0) {
+        if ((batchMesh.material as Material).stencilWrite === true)
+          visibilityRanges[k] = AllBatchUpdateRange
+      } else {
+        const stencilGroup = batchMesh.geometry.groups.find((value) => {
+          return batchMesh.material[value.materialIndex].stencilWrite === true
+        })
+        if (stencilGroup) {
+          visibilityRanges[k] = {
+            offset: stencilGroup.start,
+            count: stencilGroup.count
+          }
+        }
+      }
+    }
+    return visibilityRanges
+  }
+
   public getOpaque() {
     const visibilityRanges = {}
     for (const k in this.batches) {
@@ -187,27 +256,6 @@ export default class Batcher {
       }
     }
     return visibilityRanges
-  }
-
-  public enableTransparent(value: boolean) {
-    for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) continue
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        batchMesh.visible = (batchMesh.material as Material).transparent
-          ? value
-          : batchMesh.visible
-      } else {
-        const transparentGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].transparent === true
-        })
-        batch.setVisibleRange({
-          offset: 0,
-          count: transparentGroup.start
-        })
-      }
-    }
   }
 
   public purgeBatches(subtreeId: string) {

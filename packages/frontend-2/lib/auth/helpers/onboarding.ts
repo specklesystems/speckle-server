@@ -3,26 +3,26 @@ export enum OnboardingIndustry {
   Engineering = 'engineering',
   Construction = 'construction',
   Design = 'design',
-  Manufacturing = 'manufacturing',
-  Gaming = 'gaming'
+  Gaming = 'gaming',
+  Other = 'other'
 }
 
 export enum OnboardingRole {
-  Architect = 'architect',
   BimManager = 'bim-manager',
-  StructuralEngineer = 'structural-engineer',
-  MepEngineer = 'mep-engineer',
+  ComputationalDesigner = 'computational-designer',
+  Architect = 'architect',
+  Engineer = 'engineer',
   SoftwareDeveloper = 'software-developer',
-  ComputationalDesigner = 'computational-designer'
+  Other = 'other'
 }
 
 export const RoleTitleMap: Record<OnboardingRole, string> = {
   [OnboardingRole.Architect]: 'Architect',
   [OnboardingRole.BimManager]: 'BIM Manager',
-  [OnboardingRole.StructuralEngineer]: 'Structural Engineer',
-  [OnboardingRole.MepEngineer]: 'MEP Engineer',
+  [OnboardingRole.Engineer]: 'Engineer',
   [OnboardingRole.SoftwareDeveloper]: 'Software Developer',
-  [OnboardingRole.ComputationalDesigner]: 'Computational Designer'
+  [OnboardingRole.ComputationalDesigner]: 'Computational Designer',
+  [OnboardingRole.Other]: 'Other'
 }
 
 export type OnboardingState = {

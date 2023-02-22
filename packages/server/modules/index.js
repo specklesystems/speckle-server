@@ -5,8 +5,8 @@ const { appRoot, packageRoot } = require('@/bootstrap')
 const { values, merge, camelCase } = require('lodash')
 const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
-const { modulesDebug } = require('@/modules/shared/utils/logger')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
+const { moduleLogger } = require('@/logging/logging')
 
 /**
  * Cached speckle module requires
@@ -84,13 +84,13 @@ exports.init = async (app) => {
 }
 
 exports.shutdown = async () => {
-  modulesDebug('Triggering module shutdown...')
+  moduleLogger.info('Triggering module shutdown...')
   const modules = await getSpeckleModules()
 
   for (const module of modules) {
     await module.shutdown?.()
   }
-  modulesDebug('...module shutdown finished')
+  moduleLogger.info('...module shutdown finished')
 }
 
 /**

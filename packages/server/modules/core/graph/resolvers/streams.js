@@ -3,11 +3,8 @@ const { ApolloError, ForbiddenError, UserInputError } = require('apollo-server-e
 const { withFilter } = require('graphql-subscriptions')
 
 const {
-  createStream,
   getStream,
   getStreams,
-  updateStream,
-  deleteStream,
   getStreamUsers,
   favoriteStream,
   getFavoriteStreamsCollection,
@@ -23,8 +20,6 @@ const {
   validateScopes,
   validateServerRole
 } = require(`@/modules/shared`)
-const { saveActivity } = require(`@/modules/activitystream/services`)
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const {
   RateLimitError,
   RateLimitAction,
@@ -49,6 +44,11 @@ const {
   getUserStreamsCount,
   getUserStreams
 } = require('@/modules/core/repositories/streams')
+const {
+  deleteStreamAndNotify,
+  updateStreamAndNotify,
+  createStreamReturnRecord
+} = require('@/modules/core/services/streams/management')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -56,45 +56,8 @@ const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
 const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-const _deleteStream = async (parent, args, context) => {
-  await saveActivity({
-    streamId: args.id,
-    resourceType: 'stream',
-    resourceId: args.id,
-    actionType: ActionTypes.Stream.Delete,
-    userId: context.userId,
-    info: {},
-    message: 'Stream deleted'
-  })
-
-  // Notify any listeners on the streamId
-  await pubsub.publish(STREAM_DELETED, {
-    streamDeleted: { streamId: args.id },
-    streamId: args.id
-  })
-
-  // Notify all stream users
-  const users = await getStreamUsers({ streamId: args.id })
-
-  for (const user of users) {
-    await pubsub.publish(USER_STREAM_REMOVED, {
-      userStreamRemoved: { id: args.id },
-      ownerId: user.id
-    })
-  }
-
-  // delay deletion by a bit so we can do auth checks
-  await sleep(250)
-
-  // Delete after event so we can do authz
-  await deleteStream({ streamId: args.id })
-  return true
+const _deleteStream = async (_parent, args, context) => {
+  return await deleteStreamAndNotify(args.id, context.userId)
 }
 
 const getUserStreamsCore = async (forOtherUser, parent, args) => {
@@ -243,50 +206,17 @@ module.exports = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const id = await createStream({ ...args.stream, ownerId: context.userId })
+      const { id } = await createStreamReturnRecord(
+        { ...args.stream, ownerId: context.userId },
+        { createActivity: true }
+      )
 
-      await saveActivity({
-        streamId: id,
-        resourceType: 'stream',
-        resourceId: id,
-        actionType: ActionTypes.Stream.Create,
-        userId: context.userId,
-        info: { stream: args.stream },
-        message: `Stream '${args.stream.name}' created`
-      })
-      await pubsub.publish(USER_STREAM_ADDED, {
-        userStreamAdded: { id, ...args.stream },
-        ownerId: context.userId
-      })
       return id
     },
 
     async streamUpdate(parent, args, context) {
       await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
-
-      const oldValue = await getStream({ streamId: args.stream.id })
-
-      const { stream } = args
-      await updateStream(stream)
-
-      await saveActivity({
-        streamId: args.stream.id,
-        resourceType: 'stream',
-        resourceId: args.stream.id,
-        actionType: ActionTypes.Stream.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.stream },
-        message: 'Stream metadata changed'
-      })
-      await pubsub.publish(STREAM_UPDATED, {
-        streamUpdated: {
-          id: args.stream.id,
-          name: args.stream.name,
-          description: args.stream.description
-        },
-        id: args.stream.id
-      })
-
+      await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 

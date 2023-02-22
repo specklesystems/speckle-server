@@ -3,6 +3,7 @@ import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
 import { NodeData } from '../tree/WorldTree'
+import Logger from 'js-logger'
 
 export enum SpeckleType {
   View3D = 'View3D',
@@ -21,6 +22,21 @@ export enum SpeckleType {
   Ellipse = 'Ellipse',
   Unknown = 'Unknown'
 }
+
+export const SpeckleTypeAllRenderables: SpeckleType[] = [
+  SpeckleType.Pointcloud,
+  SpeckleType.Brep,
+  SpeckleType.Mesh,
+  SpeckleType.Point,
+  SpeckleType.Line,
+  SpeckleType.Polyline,
+  SpeckleType.Box,
+  SpeckleType.Polycurve,
+  SpeckleType.Curve,
+  SpeckleType.Circle,
+  SpeckleType.Arc,
+  SpeckleType.Ellipse
+]
 
 export class GeometryConverter {
   public static getSpeckleType(node: NodeData): SpeckleType {
@@ -131,7 +147,7 @@ export class GeometryConverter {
 
     if (colorsRaw && colorsRaw.length !== 0) {
       if (colorsRaw.length !== vertices.length / 3) {
-        console.warn(
+        Logger.warn(
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
@@ -208,7 +224,7 @@ export class GeometryConverter {
 
     if (colorsRaw && colorsRaw.length !== 0) {
       if (colorsRaw.length !== vertices.length / 3) {
-        console.warn(
+        Logger.warn(
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }

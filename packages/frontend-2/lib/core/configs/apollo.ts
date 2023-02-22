@@ -79,6 +79,15 @@ function createCache(): InMemoryCache {
               checkIdentity: true
             })
           },
+          project: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'Project', id: args.id })
+              }
+
+              return original
+            }
+          },
           projects: {
             merge: buildArrayMergeFunction()
           }
@@ -111,6 +120,47 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('StreamCollection', {
               checkIdentity: true
             })
+          },
+          projects: {
+            keyArgs: ['filter'],
+            merge: buildAbstractCollectionMergeFunction('ProjectCollection', {
+              checkIdentity: true
+            })
+          }
+        }
+      },
+      Project: {
+        fields: {
+          models: {
+            keyArgs: ['filter'],
+            merge: buildAbstractCollectionMergeFunction('ModelCollection')
+          },
+          commentThreads: {
+            keyArgs: ['filter'],
+            merge: buildAbstractCollectionMergeFunction('CommentCollection')
+          },
+          replyAuthors: {
+            keyArgs: false,
+            merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
+          },
+          viewerResources: {
+            merge: (_existing, incoming) => [...incoming]
+          },
+          model: {
+            read(original, { args, toReference }) {
+              if (args?.id) {
+                return toReference({ __typename: 'Model', id: args.id })
+              }
+
+              return original
+            }
+          }
+        }
+      },
+      Model: {
+        fields: {
+          versions: {
+            keyArgs: ['filter']
           }
         }
       },
@@ -246,7 +296,9 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const link = createLink({ httpEndpoint, wsClient, authToken })
 
   return {
-    cache: createCache(),
+    // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
+    // result from parts of its internals being made reactive, even tho they shouldn't be
+    cache: markRaw(createCache()),
     link,
     name: appName,
     version: appVersion

@@ -1,33 +1,73 @@
 import {
-  Viewer,
-  DefaultViewerParams,
-  SelectionEvent,
-  ViewerEvent
-} from '@speckle/viewer'
+  InjectableViewerState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
+import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
+import { debounce, throttle } from 'lodash-es'
+import { Nullable } from '@speckle/shared'
 
-type GlobalViewerData = {
-  viewer: Viewer
-  container: HTMLElement
+export function useViewerCameraTracker(
+  callback: () => void,
+  options?: Partial<{ throttleWait: number }>
+): void {
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+  const { throttleWait = 50 } = options || {}
+
+  const finalCallback = throttleWait ? throttle(callback, throttleWait) : callback
+
+  onMounted(() => {
+    instance.cameraHandler.controls.addEventListener('update', finalCallback)
+  })
+
+  onBeforeUnmount(() => {
+    instance.cameraHandler.controls.removeEventListener('update', finalCallback)
+  })
 }
 
-let globalViewerData: GlobalViewerData | null = null
+export function useSelectionEvents(
+  params: {
+    singleClickCallback?: (event: Nullable<SelectionEvent>) => void
+    doubleClickCallback?: (event: Nullable<SelectionEvent>) => void
+  },
+  options?: Partial<{
+    state: InjectableViewerState
+    debounceWait: number
+  }>
+) {
+  if (process.server) return
+  const { singleClickCallback, doubleClickCallback } = params
+  const {
+    viewer: { instance }
+  } = options?.state || useInjectedViewerState()
+  const { debounceWait = 50 } = options || {}
 
-export async function getOrInitViewer(art = ''): Promise<GlobalViewerData> {
-  console.log('ginitviewer', !!globalViewerData, art)
-  if (globalViewerData) return globalViewerData
+  const debouncedSingleClickCallback = singleClickCallback
+    ? debounce(singleClickCallback, debounceWait)
+    : undefined
+  const debouncedDoubleClickCallback = doubleClickCallback
+    ? debounce(doubleClickCallback, debounceWait)
+    : undefined
 
-  const container = document.createElement('div')
-  container.id = 'renderer'
-  container.className = 'viewer-container'
-  container.style.width = '100%'
-  container.style.height = '100%'
-  const viewer = new Viewer(container, DefaultViewerParams)
+  onMounted(() => {
+    if (debouncedDoubleClickCallback) {
+      instance.on(ViewerEvent.ObjectDoubleClicked, debouncedDoubleClickCallback)
+    }
+    if (debouncedSingleClickCallback) {
+      instance.on(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
+    }
+  })
 
-  await viewer.init()
-  globalViewerData = {
-    viewer,
-    container
-  }
-
-  return globalViewerData
+  onBeforeUnmount(() => {
+    if (debouncedDoubleClickCallback) {
+      instance.removeListener(
+        ViewerEvent.ObjectDoubleClicked,
+        debouncedDoubleClickCallback
+      )
+    }
+    if (debouncedSingleClickCallback) {
+      instance.removeListener(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
+    }
+  })
 }

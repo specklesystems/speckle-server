@@ -1,6 +1,25 @@
 <template>
-  <div>
-    <h1 class="h2 font-bold leading-10 mb-6 mt-10">Projects</h1>
-    *imagine existing projects go here*
+  <div class="flex flex-col space-y-4">
+    <div v-for="project in items" :key="project.id">
+      <ProjectsProjectDashboardCard :key="project.id" :project="project" />
+    </div>
   </div>
 </template>
+<script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
+import { ProjectsDashboardFilledFragment } from '~~/lib/common/generated/gql/graphql'
+
+const props = defineProps<{
+  projects: ProjectsDashboardFilledFragment
+}>()
+
+graphql(`
+  fragment ProjectsDashboardFilled on ProjectCollection {
+    items {
+      ...ProjectDashboardItem
+    }
+  }
+`)
+
+const items = computed(() => props.projects.items)
+</script>

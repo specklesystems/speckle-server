@@ -1,13 +1,14 @@
 const knex = require('@/db/knex')
+const { logger } = require('@/logging/logging')
 
 /** @type {import('yargs').CommandModule} */
 const command = {
   command: 'down',
   describe: 'Undo last run migration',
   async handler() {
-    console.log('Undoing last migration...')
+    logger.info('Undoing last migration...')
     await knex.migrate.down()
-    console.log('...done')
+    logger.info('Completed undoing last migration')
   }
 }
 

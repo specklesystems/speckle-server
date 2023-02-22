@@ -127,7 +127,7 @@ async function addOrUpdateStreamCollaborator(
 
   await validateStreamAccess(addedById, streamId, Roles.Stream.Owner)
 
-  await grantPermissionsStream({
+  const stream = await grantPermissionsStream({
     streamId,
     userId,
     role
@@ -138,14 +138,16 @@ async function addOrUpdateStreamCollaborator(
       streamId,
       inviterId: addedById,
       inviteTargetId: userId,
-      role
+      role,
+      stream
     })
   } else {
     await addStreamPermissionsAddedActivity({
       streamId,
       activityUserId: addedById,
       targetUserId: userId,
-      role
+      role,
+      stream
     })
   }
 }

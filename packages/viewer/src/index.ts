@@ -20,6 +20,15 @@ import { SunLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 import { World } from './modules/World'
 import { DebugViewer } from './modules/DebugViewer'
+import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
+import {
+  PointQuery,
+  QueryResult,
+  IntersectionQuery,
+  PointQueryResult,
+  IntersectionQueryResult
+} from './modules/queries/Query'
+import { Utils } from './modules/Utils'
 
 export {
   Viewer,
@@ -27,7 +36,8 @@ export {
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
-  World
+  World,
+  WorldTree
 }
 
 export type {
@@ -43,5 +53,13 @@ export type {
   SpeckleObject,
   SpeckleView,
   CanonicalView,
-  InlineView
+  InlineView,
+  TreeNode,
+  NodeData,
+  PointQuery,
+  IntersectionQuery,
+  QueryResult,
+  PointQueryResult,
+  IntersectionQueryResult,
+  Utils
 }

@@ -40,7 +40,7 @@ extend type Query {
     limit: Int! = 25
     cursor: String
     archived: Boolean = false
-  ): UserSearchResultCollection
+  ): UserSearchResultCollection!
 
   """
   Validate password strength
@@ -81,7 +81,7 @@ type User {
   and the user isn't an admin
   """
   email: String
-  name: String
+  name: String!
   bio: String
   company: String
   avatar: String
@@ -101,7 +101,7 @@ to another user
 """
 type LimitedUser {
   id: ID!
-  name: String
+  name: String!
   bio: String
   company: String
   avatar: String
@@ -126,7 +126,7 @@ type AdminUsersListCollection {
 
 type UserSearchResultCollection {
   cursor: String
-  items: [LimitedUser]
+  items: [LimitedUser!]!
 }
 
 type ActiveUserMutations {

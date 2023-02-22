@@ -1,11 +1,21 @@
 import { LocationQueryRaw } from 'vue-router'
 
-export const HomeRoute = '/'
-export const LoginRoute = '/auth/login'
-export const RegisterRoute = '/auth/register'
-export const ForgottenPasswordRoute = '/auth/forgotten-password'
-export const OnboardingRoute = '/onboarding'
-export const DownloadManagerRoute = '/download-manager'
+export const homeRoute = '/'
+export const loginRoute = '/auth/login'
+export const registerRoute = '/auth/register'
+export const forgottenPasswordRoute = '/auth/forgotten-password'
+export const onboardingRoute = '/tour'
+export const downloadManagerRoute = '/download-manager'
+export const projectRoute = (id: string) => `/projects/${id}`
+export const modelRoute = (projectId: string, resourceIdString: string) =>
+  `/projects/${projectId}/models/${encodeURIComponent(resourceIdString)}`
+export const modelVersionsRoute = (projectId: string, modelId: string) =>
+  `/projects/${projectId}/models/${modelId}/versions`
+
+/**
+ * TODO: Page doesn't exist
+ */
+export const userProfileRoute = (userId: string) => `/profile/${userId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
@@ -15,8 +25,16 @@ const buildNavigationComposable = (route: string) => () => {
   }
 }
 
-export const useNavigateToHome = buildNavigationComposable(HomeRoute)
-export const useNavigateToLogin = buildNavigationComposable(LoginRoute)
-export const useNavigateToRegistration = buildNavigationComposable(RegisterRoute)
+export const useNavigateToHome = buildNavigationComposable(homeRoute)
+export const useNavigateToLogin = buildNavigationComposable(loginRoute)
+export const useNavigateToRegistration = buildNavigationComposable(registerRoute)
 export const useNavigateToForgottenPassword =
-  buildNavigationComposable(ForgottenPasswordRoute)
+  buildNavigationComposable(forgottenPasswordRoute)
+
+export const useNavigateToProject = () => {
+  const router = useRouter()
+  return (params: { query?: LocationQueryRaw; id: string }) => {
+    const { query, id } = params || {}
+    return router.push({ path: projectRoute(id), query })
+  }
+}
