@@ -396,6 +396,10 @@ export class GeometryConverter {
    * CURVE
    */
   private static CurveToGeometryData(node) {
+    if (node.children.length === 0) {
+      return null
+    }
+
     const polylineGeometry = this.PolylineToGeometryData(node.children[0])
     return {
       attributes: {

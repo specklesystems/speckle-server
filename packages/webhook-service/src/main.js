@@ -10,6 +10,7 @@ let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
 const { makeNetworkRequest } = require('./webhookCaller')
+const WebhookError = require('./errors')
 
 async function startTask() {
   const { rows } = await knex.raw(`
@@ -75,7 +76,12 @@ async function doTask(task) {
     boundLogger.info({ result }, `Received response from webhook.`)
 
     if (!result.success) {
-      throw new Error(result.error)
+      throw new WebhookError(
+        result.error,
+        'Calling webhook was unsuccessful.',
+        result.responseCode,
+        result.responseBody
+      )
     }
 
     await knex.raw(
@@ -90,7 +96,13 @@ async function doTask(task) {
       [task.id]
     )
   } catch (err) {
-    boundLogger.error(err, 'Failed to trigger webhook event.')
+    switch (err.constructor) {
+      case WebhookError:
+        boundLogger.info({ err }, 'Failed to trigger webhook event.')
+        break
+      default:
+        boundLogger.error(err, 'Failed to trigger webhook event.')
+    }
     await knex.raw(
       `
       UPDATE webhooks_events

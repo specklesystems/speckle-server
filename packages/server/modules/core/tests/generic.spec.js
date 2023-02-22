@@ -12,6 +12,7 @@ const {
 } = require('@/modules/shared')
 const { buildContext } = require('@/modules/shared/middleware')
 const { ForbiddenError } = require('apollo-server-express')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -132,7 +133,9 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     afterEach(() => {
-      process.env.ADMIN_OVERRIDE_ENABLED = 'false'
+      while (adminOverrideEnabled()) {
+        process.env.ADMIN_OVERRIDE_ENABLED = 'false'
+      }
     })
     it('should allow stream:owners to be stream:owners', async () => {
       const role = await authorizeResolver(
@@ -144,7 +147,9 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should get the passed in role for server:admins if override enabled', async () => {
-      process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      while (!adminOverrideEnabled()) {
+        process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      }
       const role = await authorizeResolver(
         serverOwner.id,
         myStream.id,
@@ -163,7 +168,10 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should allow server:admins to be anything if adminOverride is enabled', async () => {
-      process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      while (!adminOverrideEnabled()) {
+        process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      }
+
       const role = await authorizeResolver(
         serverOwner.id,
         notMyStream.id,
@@ -182,7 +190,9 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     })
 
     it('should not allow server:users to be anything if adminOverride is enabled', async () => {
-      process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      while (!adminOverrideEnabled()) {
+        process.env.ADMIN_OVERRIDE_ENABLED = 'true'
+      }
       try {
         await authorizeResolver(otherGuy.id, myStream.id, 'stream:contributor')
         throw 'This should have thrown'

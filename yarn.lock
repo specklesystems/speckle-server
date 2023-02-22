@@ -364,14 +364,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-s3@npm:^3.272.0":
-  version: 3.272.0
-  resolution: "@aws-sdk/client-s3@npm:3.272.0"
+"@aws-sdk/client-s3@npm:^3.276.0":
+  version: 3.276.0
+  resolution: "@aws-sdk/client-s3@npm:3.276.0"
   dependencies:
     "@aws-crypto/sha1-browser": 3.0.0
     "@aws-crypto/sha256-browser": 3.0.0
     "@aws-crypto/sha256-js": 3.0.0
-    "@aws-sdk/client-sts": 3.272.0
+    "@aws-sdk/client-sts": 3.276.0
     "@aws-sdk/config-resolver": 3.272.0
     "@aws-sdk/credential-provider-node": 3.272.0
     "@aws-sdk/eventstream-serde-browser": 3.272.0
@@ -420,9 +420,9 @@ __metadata:
     "@aws-sdk/util-utf8": 3.254.0
     "@aws-sdk/util-waiter": 3.272.0
     "@aws-sdk/xml-builder": 3.201.0
-    fast-xml-parser: 4.0.11
+    fast-xml-parser: 4.1.2
     tslib: ^2.3.1
-  checksum: 34b9c3515a01b75b170c5942fbfe2ac860efae5856dfeb831691a46f086f21a0d0f36fb05e7f8fe3bc4b84f476abd16ea6cd734592b6fb7a2d86aaaad54c4457
+  checksum: f7f475b92c0cff800536fb910bb6ffefcee6e650208f1791ea64c95bcbb6c63ef7a55e3f72af44e2e730a53865857ac4b974f00cb7da1e369d742cc95e33f02a
   languageName: node
   linkType: hard
 
@@ -506,9 +506,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/client-sts@npm:3.272.0":
-  version: 3.272.0
-  resolution: "@aws-sdk/client-sts@npm:3.272.0"
+"@aws-sdk/client-sts@npm:3.276.0":
+  version: 3.276.0
+  resolution: "@aws-sdk/client-sts@npm:3.276.0"
   dependencies:
     "@aws-crypto/sha256-browser": 3.0.0
     "@aws-crypto/sha256-js": 3.0.0
@@ -544,9 +544,9 @@ __metadata:
     "@aws-sdk/util-user-agent-browser": 3.272.0
     "@aws-sdk/util-user-agent-node": 3.272.0
     "@aws-sdk/util-utf8": 3.254.0
-    fast-xml-parser: 4.0.11
+    fast-xml-parser: 4.1.2
     tslib: ^2.3.1
-  checksum: 2e3083803a4d64de3148ef49b6dccb1a54d6766a8c60a2002cff32f005159d69d8323e50b7cb6055cb0bd595b8e8f2bc8ccd839ee9ca17c5db47fc6b63b10269
+  checksum: 3250322448500789588d24b6fac295b551ab4c1661ab9aa93f173e63b4673260bb2e551c079d811da752115e583b76f5c7ffb16d94b3c66275e75e52a93f35f3
   languageName: node
   linkType: hard
 
@@ -5225,7 +5225,7 @@ __metadata:
   resolution: "@speckle/server@workspace:packages/server"
   dependencies:
     "@apollo/client": ^3.7.0
-    "@aws-sdk/client-s3": ^3.272.0
+    "@aws-sdk/client-s3": ^3.276.0
     "@aws-sdk/lib-storage": ^3.100.0
     "@bull-board/express": ^4.2.2
     "@faker-js/faker": ^7.1.0
@@ -5321,7 +5321,6 @@ __metadata:
     prettier: ^2.5.1
     prom-client: ^14.0.1
     rate-limiter-flexible: ^2.4.1
-    redis: ^3.1.1
     request: ^2.88.2
     response-time: ^2.3.2
     sanitize-html: ^2.7.1
@@ -5431,6 +5430,7 @@ __metadata:
     prettier: ^2.5.1
     private-ip: ^2.3.3
     prom-client: ^14.0.1
+    verror: ^1.10.1
   languageName: unknown
   linkType: soft
 
@@ -10028,7 +10028,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"denque@npm:^1.1.0, denque@npm:^1.5.0":
+"denque@npm:^1.1.0":
   version: 1.5.1
   resolution: "denque@npm:1.5.1"
   checksum: 4375ad19d5cea99f90effa82a8cecdaa10f4eb261fbcd7e47cd753ff2737f037aac8f7f4e031cc77f3966314c491c86a0d3b20c128aeee57f791b4662c45108e
@@ -11489,14 +11489,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-xml-parser@npm:4.0.11":
-  version: 4.0.11
-  resolution: "fast-xml-parser@npm:4.0.11"
+"fast-xml-parser@npm:4.1.2":
+  version: 4.1.2
+  resolution: "fast-xml-parser@npm:4.1.2"
   dependencies:
     strnum: ^1.0.5
   bin:
     fxparser: src/cli/cli.js
-  checksum: d8a08e4d5597e0fc00a86735195872eeb03008913e298830941516f3766e16ee555e2d431acc92e1dda887938edc445252ec5b59494aab60a8389888bd13719c
+  checksum: 6a7d1b17057f8470e70603eddfa75f990625735d068d57ece861d0154ad8d27fda63c2831d07e1ecd7e68e993738b2448925cb9277d8c0ed68009623bbcd63c6
   languageName: node
   linkType: hard
 
@@ -17362,7 +17362,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redis-commands@npm:1.7.0, redis-commands@npm:^1.7.0":
+"redis-commands@npm:1.7.0":
   version: 1.7.0
   resolution: "redis-commands@npm:1.7.0"
   checksum: d1ff7fbcb5e54768c77f731f1d49679d2a62c3899522c28addb4e2e5813aea8bcac3f22519d71d330224c3f2937f935dfc3d8dc65e90db0f5fe22dc2c1515aa7
@@ -17391,18 +17391,6 @@ __metadata:
   dependencies:
     redis-errors: ^1.0.0
   checksum: 89290ae530332f2ae37577647fa18208d10308a1a6ba750b9d9a093e7398f5e5253f19855b64c98757f7129cccce958e4af2573fdc33bad41405f87f1943459a
-  languageName: node
-  linkType: hard
-
-"redis@npm:^3.1.1":
-  version: 3.1.2
-  resolution: "redis@npm:3.1.2"
-  dependencies:
-    denque: ^1.5.0
-    redis-commands: ^1.7.0
-    redis-errors: ^1.2.0
-    redis-parser: ^3.0.0
-  checksum: baec42198626b22d2dfc063b6a6f30394daee994c21f380e58ecf91c3edee333c4e32907c30f082fe66d2177695f7b2567902eef399ecb22da3e199ea6363a30
   languageName: node
   linkType: hard
 

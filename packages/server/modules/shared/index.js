@@ -1,5 +1,4 @@
 'use strict'
-const Redis = require('ioredis')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
@@ -7,7 +6,11 @@ const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const ServerAcl = () => ServerAclSchema.knex()
 
 const { Roles } = require('@speckle/shared')
-const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const {
+  adminOverrideEnabled,
+  getRedisUrl
+} = require('@/modules/shared/helpers/envHelper')
+const { createRedisClient } = require('@/modules/shared/redis/redis')
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -26,8 +29,8 @@ const CommitPubsubEvents = Object.freeze({
  * GraphQL Subscription PubSub instance
  */
 const pubsub = new RedisPubSub({
-  publisher: new Redis(process.env.REDIS_URL),
-  subscriber: new Redis(process.env.REDIS_URL)
+  publisher: createRedisClient(getRedisUrl()),
+  subscriber: createRedisClient(getRedisUrl())
 })
 
 let roles
