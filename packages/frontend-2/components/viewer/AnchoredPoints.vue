@@ -50,8 +50,8 @@
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
       <div class="w-full h-full border-2 border-blue-500/50 rounded-xl">
-        <div class="absolute bottom-1 right-1 p-2 pointer-events-auto">
-          <FormButton size="xs" class="" @click="spotlightUserId = null">
+        <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
+          <FormButton size="sm" class="" @click="spotlightUserId = null">
             Stop Following {{ spotlightUser?.userName }}
           </FormButton>
         </div>

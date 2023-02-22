@@ -1,5 +1,5 @@
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { FilteringState, SelectionEvent } from '@speckle/viewer'
+import { FilteringState, SelectionEvent, Viewer } from '@speckle/viewer'
 import {
   CommentDataInput,
   OnViewerUserActivityBroadcastedSubscription,
@@ -82,7 +82,12 @@ function useCollectSelection() {
     ]
 
     return {
-      filteringState: { ...(viewerState.ui.filters.current.value || {}) },
+      filteringState: {
+        ...(viewerState.ui.filters.current.value || {}),
+        selectedObjects: viewerState.ui.selection.objects.value.map(
+          (o) => o.id as string
+        )
+      },
       selectionLocation: selectionLocation.value,
       sectionBox: viewer.getCurrentSectionBox(),
       camera
@@ -419,8 +424,12 @@ function useViewerSpotlightTracking() {
         await state.ui.filters.isolateObjects(fs.isolatedObjects, 'tracking')
 
       // TODO
-      // if(fs.selectedObjects)
-      //   await state.ui.selection.
+      if (fs.selectedObjects) {
+        state.viewer.instance.highlightObjects(fs.selectedObjects)
+      } else {
+        state.viewer.instance.highlightObjects([])
+      }
+      // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
       // Other todos: filters implementation, once they are implemented in the FE
     }

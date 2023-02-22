@@ -4,7 +4,8 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
-  ViewerEvent
+  ViewerEvent,
+  TreeNode
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -206,6 +207,7 @@ export type InjectableViewerState = Readonly<{
     selection: {
       objects: ComputedRef<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
+      // setSelectionFromObjectIds: (ids: string[]) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
@@ -641,6 +643,21 @@ function setupInterfaceState(
     setViewerSelectionFilter()
   }
 
+  // NOTE: can be used for directly selecting objects coming from user tracking.
+  // commented out as not sure it's right behaviour.
+  // const setSelectionFromObjectIds = (ids: string[]) => {
+  //   const tree = viewer.instance.getWorldTree()
+  //   const res = tree.findAll((node: TreeNode) => {
+  //     const id = node.model?.raw.id as string
+  //     if (ids.includes(id)) return true
+  //     return false
+  //   })
+
+  //   const objs = res.map((node) => node.model?.raw as Record<string, unknown>)
+  //   selectedObjects.value = objs
+  //   setViewerSelectionFilter()
+  // }
+
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
     const index = selectedObjects.value.findIndex((o) => o.id === objectId)
@@ -713,6 +730,10 @@ function setupInterfaceState(
 
   const spotlightUserId = ref(null as Nullable<string>)
 
+  watch(spotlightUserId, (newVal) => {
+    if (!newVal) state.viewer.instance.highlightObjects([])
+  })
+
   return {
     ...state,
     ui: {
@@ -748,6 +769,7 @@ function setupInterfaceState(
       selection: {
         objects: computed(() => selectedObjects.value.slice()),
         addToSelection,
+        // setSelectionFromObjectIds,
         clearSelection,
         removeFromSelection
       }
