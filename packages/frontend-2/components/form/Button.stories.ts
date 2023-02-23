@@ -9,7 +9,7 @@ export default {
   component: FormButton,
   argTypes: {
     color: {
-      options: ['default', 'invert', 'danger', 'warning'],
+      options: ['default', 'invert', 'danger', 'warning', 'secondary'],
       control: { type: 'select' }
     },
     outlined: {

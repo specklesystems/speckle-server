@@ -27,7 +27,6 @@
 import { UsersIcon } from '@heroicons/vue/20/solid'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
-import { PlusIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {

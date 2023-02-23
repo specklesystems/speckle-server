@@ -44,6 +44,7 @@ export const viewerLoadedResourcesQuery = graphql(`
           }
         }
       }
+      ...ProjectPageModelsView
       ...ModelPageProject
     }
   }

@@ -46,6 +46,6 @@ const props = defineProps<{
 }>()
 
 const basePreviewUrl = computed(() => props.model.previewUrl)
-const basePreviewUrl360 = computed(() => props.model.previewUrl + '/all')
+// const basePreviewUrl360 = computed(() => props.model.previewUrl + '/all')
 const { previewUrl } = usePreviewImageBlob(basePreviewUrl)
 </script>

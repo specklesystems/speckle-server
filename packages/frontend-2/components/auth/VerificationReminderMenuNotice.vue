@@ -23,7 +23,6 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import { XMarkIcon } from '@heroicons/vue/24/solid'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage

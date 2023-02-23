@@ -1,3 +1,4 @@
+import { ApolloClient } from '@apollo/client/core'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { homeRoute } from '~~/lib/common/helpers/route'
@@ -7,7 +8,7 @@ import { homeRoute } from '~~/lib/common/helpers/route'
  */
 export default defineNuxtRouteMiddleware(async () => {
   const { $apollo } = useNuxtApp()
-  const client = $apollo.default
+  const client = ($apollo as { default: ApolloClient<unknown> }).default
 
   const { data } = await client
     .query({

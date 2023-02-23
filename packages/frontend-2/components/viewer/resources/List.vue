@@ -19,7 +19,10 @@
       </div>
     </template>
     <template v-else>No resources loaded</template>
-    <FormButton size="sm" full-width>Load Another Model</FormButton>
+    <FormButton size="sm" full-width @click="open = true">
+      Load Another Model
+    </FormButton>
+    <ViewerResourcesAddModelDialog v-model:open="open" />
   </div>
 </template>
 <script setup lang="ts">
@@ -31,4 +34,6 @@ defineEmits<{
 
 const { resourceItems, objects, modelsAndVersionIds } =
   useInjectedViewerLoadedResources()
+
+const open = ref(false)
 </script>
