@@ -15,8 +15,9 @@ module.exports = (app) => {
 
   app.post('/objects/:streamId', cors(), async (req, res) => {
     const boundLogger = uploadEndpointLogger.child({
-      user: req.context.userId || '-',
-      streamId: req.params.streamId
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId,
+      endpoint: '/objects/:streamId'
     })
 
     const hasStreamAccess = await validatePermissionsWriteStream(

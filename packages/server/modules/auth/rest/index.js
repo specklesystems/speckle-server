@@ -14,7 +14,7 @@ const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { ForbiddenError } = require('apollo-server-errors')
-const { moduleLogger } = require('@/logging/logging')
+const { authLogger } = require('@/logging/logging')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -23,7 +23,7 @@ module.exports = (app) => {
   TODO: ensure same origin.
    */
   app.get('/auth/accesscode', async (req, res) => {
-    const boundLogger = moduleLogger.child({ endpoint: '/auth/token' })
+    const boundLogger = authLogger.child({ endpoint: '/auth/token' })
     try {
       const appId = req.query.appId
       const app = await getApp({ id: appId })
@@ -69,7 +69,7 @@ module.exports = (app) => {
    */
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
-    const boundLogger = moduleLogger.child({ endpoint: '/auth/token' })
+    const boundLogger = authLogger.child({ endpoint: '/auth/token' })
     try {
       // Token refresh
       if (req.body.refreshToken) {
@@ -113,7 +113,7 @@ module.exports = (app) => {
   Ensures a user is logged out by invalidating their token and refresh token.
    */
   app.post('/auth/logout', async (req, res) => {
-    const boundLogger = moduleLogger.child({ endpoint: '/auth/logout' })
+    const boundLogger = authLogger.child({ endpoint: '/auth/logout' })
     try {
       const token = req.body.token
       const refreshToken = req.body.refreshToken
