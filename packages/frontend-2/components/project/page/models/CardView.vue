@@ -11,6 +11,10 @@
       @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
     />
   </div>
+  <CommonEmptySearchState
+    v-else-if="search && latestModelsResult?.project?.models.items.length === 0"
+    @clear-search="() => $emit('clear-search')"
+  />
   <div v-else>TODO: Grid empty state</div>
 </template>
 <script setup lang="ts">
@@ -21,6 +25,7 @@ import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
   (e: 'model-clicked', v: { id: string; e: MouseEvent }): void
+  (e: 'clear-search'): void
 }>()
 
 const props = withDefaults(

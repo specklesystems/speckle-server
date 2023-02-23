@@ -20,30 +20,74 @@
       @update:expanded="onThreadExpandedChange"
     />
 
-    <!-- Active user -->
+    <!-- Active users -->
     <ViewerAnchoredPointUser
       v-for="user in Object.values(users)"
       :key="user.viewerSessionId"
       :user="user"
       class="z-[10]"
     />
+
+    <!-- Active user avatars in navbar -->
+    <Portal to="secondary-actions">
+      <ViewerScope :state="state">
+        <div
+          v-show="activeUserAvatars.length > 0"
+          class="rounded-xl mr-2 px-1 py-1 border-1 border-primary flex space-x-1 items-center"
+        >
+          <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
+          <template v-for="user in activeUserAvatars" :key="user.id">
+            <button @click="setUserSpotlight(user.id)">
+              <UserAvatar
+                :user="user"
+                hover-effect
+                :active="user.id === spotlightUserId"
+              />
+            </button>
+          </template>
+        </div>
+      </ViewerScope>
+    </Portal>
+
+    <!-- Active user tracking cancel -->
+    <div
+      v-if="spotlightUserId && spotlightUser"
+      class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
+    >
+      <div class="w-full h-full border-4 border-blue-500/50 rounded-xl">
+        <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
+          <FormButton size="sm" class="" @click="() => (spotlightUserId = null)">
+            Stop Following {{ spotlightUser?.userName }}
+          </FormButton>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
+
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
   useViewerCommentBubbles,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
+const { spotlightUserId } = useInjectedViewerInterfaceState()
+
 const { commentThreads, openThread } = useViewerCommentBubbles({ parentEl })
 const { buttonState, closeNewThread } = useViewerNewThreadBubble({
   parentEl
 })
+
+const state = useInjectedViewerState()
 
 const onThreadUpdate = (thread: CommentBubbleModel) => {
   // Being careful not to mutate old value directly to ensure watchers work properly
@@ -57,5 +101,15 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
   if (isExpanded) {
     closeNewThread()
   }
+}
+
+const activeUserAvatars = computed(() => Object.values(users.value).map((u) => u.user))
+const spotlightUser = computed(() => {
+  return Object.values(users.value).find((u) => u.userId === spotlightUserId.value)
+})
+
+function setUserSpotlight(userId: string) {
+  if (spotlightUserId.value === userId) return (spotlightUserId.value = null)
+  spotlightUserId.value = userId
 }
 </script>

@@ -47,12 +47,6 @@
           <IconPerspectiveMore v-else class="w-4 h-4" />
         </ViewerControlsButtonToggle>
 
-        <!-- Sun and lights -->
-        <ViewerSunMenu />
-        <!-- <ViewerControlsButtonToggle flat @click="">
-          <SunIcon class="w-5 h-5" />
-        </ViewerControlsButtonToggle> -->
-
         <!-- Section Box -->
         <ViewerControlsButtonToggle
           flat
@@ -62,6 +56,9 @@
         >
           <ScissorsIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
+
+        <!-- Sun and lights -->
+        <ViewerSunMenu />
 
         <!-- Views -->
         <ViewerViewsMenu />

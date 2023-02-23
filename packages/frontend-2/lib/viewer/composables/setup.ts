@@ -206,6 +206,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * Read/write active viewer filters
      */
+    spotlightUserId: Ref<Nullable<string>>
     filters: {
       current: ComputedRef<Nullable<FilteringState>>
       localFilterPropKey: ComputedRef<Nullable<string>>
@@ -222,12 +223,22 @@ export type InjectableViewerState = Readonly<{
     }
     sectionBox: {
       isSectionBoxEnabled: Ref<boolean>
+      setSectionBox: (
+        box?: {
+          min: { x: number; y: number; z: number }
+          max: { x: number; y: number; z: number }
+        },
+        offset?: number
+      ) => void
       toggleSectionBox: () => void
+      sectionBoxOff: () => void
+      sectionBoxOn: () => void
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
       objects: ComputedRef<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
+      // setSelectionFromObjectIds: (ids: string[]) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
@@ -755,6 +766,21 @@ function setupInterfaceState(
     setViewerSelectionFilter()
   }
 
+  // NOTE: can be used for directly selecting objects coming from user tracking.
+  // commented out as not sure it's right behaviour.
+  // const setSelectionFromObjectIds = (ids: string[]) => {
+  //   const tree = viewer.instance.getWorldTree()
+  //   const res = tree.findAll((node: TreeNode) => {
+  //     const id = node.model?.raw.id as string
+  //     if (ids.includes(id)) return true
+  //     return false
+  //   })
+
+  //   const objs = res.map((node) => node.model?.raw as Record<string, unknown>)
+  //   selectedObjects.value = objs
+  //   setViewerSelectionFilter()
+  // }
+
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
     const index = selectedObjects.value.findIndex((o) => o.id === objectId)
@@ -815,10 +841,22 @@ function setupInterfaceState(
     state.viewer.instance.toggleSectionBox()
     state.viewer.instance.requestRender()
   }
+  const setSectionBox = (
+    box?: {
+      min: { x: number; y: number; z: number }
+      max: { x: number; y: number; z: number }
+    },
+    offset?: number
+  ) => {
+    state.viewer.instance.setSectionBox(box, offset)
+  }
+
+  const spotlightUserId = ref(null as Nullable<string>)
 
   return {
     ...state,
     ui: {
+      spotlightUserId,
       viewerBusy,
       camera: {
         isPerspectiveProjection,
@@ -826,7 +864,16 @@ function setupInterfaceState(
       },
       sectionBox: {
         isSectionBoxEnabled,
-        toggleSectionBox
+        setSectionBox,
+        toggleSectionBox,
+        sectionBoxOff: () => {
+          state.viewer.instance.sectionBoxOff()
+          isSectionBoxEnabled.value = false
+        },
+        sectionBoxOn: () => {
+          state.viewer.instance.sectionBoxOn()
+          isSectionBoxEnabled.value = true
+        }
       },
       filters: {
         current: computed(() => filteringState.value),
@@ -841,6 +888,7 @@ function setupInterfaceState(
       selection: {
         objects: computed(() => selectedObjects.value.slice()),
         addToSelection,
+        // setSelectionFromObjectIds,
         clearSelection,
         removeFromSelection
       }
@@ -872,7 +920,7 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObject(objectUrl, authToken.value || undefined)
+      viewer.loadObjectAsync(objectUrl, authToken.value || undefined)
     }
   }
 
