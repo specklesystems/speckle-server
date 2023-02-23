@@ -34,7 +34,7 @@ const emit = defineEmits<{
   (e: 'chosen', val: { modelId: string }): void
 }>()
 
-const { project, modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const { project, resourceItems } = useInjectedViewerLoadedResources()
 
 const search = ref('')
 const debouncedSearch = ref('')
@@ -42,7 +42,9 @@ const queryLoading = ref(false)
 const showLoadingBar = ref(false)
 
 const alreadyLoadedModelIds = computed(() =>
-  modelsAndVersionIds.value.map((m) => m.model.id)
+  resourceItems.value
+    .map((i) => i.modelId)
+    .filter((id): id is NonNullable<typeof id> => !!id)
 )
 
 const updateDebouncedSearch = debounce(() => {

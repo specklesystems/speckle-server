@@ -7,7 +7,7 @@
           v-if="activeItem.id === 'model'"
           @chosen="onModelChosen"
         />
-        <ViewerResourcesAddModelDialogObjectTab v-else />
+        <ViewerResourcesAddModelDialogObjectTab v-else @chosen="onObjectsChosen" />
       </LayoutTabs>
     </div>
   </LayoutDialog>
@@ -43,6 +43,18 @@ const onModelChosen = (params: { modelId: string }) => {
     ...items.value,
     ...SpeckleViewer.ViewerRoute.resourceBuilder().addModel(modelId).toResources()
   ]
+  open.value = false
+}
+
+const onObjectsChosen = (params: { objectIds: string[] }) => {
+  const { objectIds } = params
+
+  const resourcesApi = SpeckleViewer.ViewerRoute.resourceBuilder()
+  for (const oid of objectIds) {
+    resourcesApi.addObject(oid)
+  }
+
+  items.value = [...items.value, ...resourcesApi.toResources()]
   open.value = false
 }
 </script>
