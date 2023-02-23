@@ -51,12 +51,12 @@
 
     <!-- Active user tracking cancel -->
     <div
-      v-if="spotlightUserId"
+      v-if="spotlightUserId && spotlightUser"
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
       <div class="w-full h-full border-4 border-blue-500/50 rounded-xl">
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
-          <FormButton size="sm" class="" @click="spotlightUserId = null">
+          <FormButton size="sm" class="" @click="() => (spotlightUserId = null)">
             Stop Following {{ spotlightUser?.userName }}
           </FormButton>
         </div>
