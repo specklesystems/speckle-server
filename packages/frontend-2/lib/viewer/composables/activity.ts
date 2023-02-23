@@ -248,7 +248,6 @@ export function useViewerUserActivityTracking(params: {
     if (sessionId.value === incomingSessionId) return
     if (status === ViewerUserActivityStatus.Disconnected || !event.selection) {
       triggerNotification({
-        // title: '',
         description: `${users.value[incomingSessionId].userName} left.`,
         type: ToastNotificationType.Info
       })
@@ -274,8 +273,6 @@ export function useViewerUserActivityTracking(params: {
 
     if (!Object.keys(users.value).includes(incomingSessionId)) {
       triggerNotification({
-        // title: `${users.value[incomingSessionId].userName} joined.`,
-        // title: '',
         description: `${userData.userName} joined.`,
         type: ToastNotificationType.Info
       })
@@ -381,7 +378,7 @@ export function useViewerUserActivityTracking(params: {
 
   useViewerCameraRestTracker(() => sendUpdate.emitViewing())
 
-  useOnBeforeWindowUnload(() => sendUpdate.emitDisconnected())
+  useOnBeforeWindowUnload(async () => await sendUpdate.emitDisconnected())
 
   onMounted(() => {
     sendUpdate.emitViewing()
