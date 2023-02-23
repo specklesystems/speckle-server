@@ -23,6 +23,7 @@ module.exports = (app) => {
   TODO: ensure same origin.
    */
   app.get('/auth/accesscode', async (req, res) => {
+    const boundLogger = moduleLogger.child({ endpoint: '/auth/token' })
     try {
       const appId = req.query.appId
       const app = await getApp({ id: appId })
@@ -44,15 +45,18 @@ module.exports = (app) => {
       const ac = await createAuthorizationCode({ appId, userId, challenge })
       return res.redirect(`${app.redirectUrl}?access_code=${ac}`)
     } catch (err) {
-      sentry({ err })
-      moduleLogger.error(err)
-
       if (
         err instanceof InvalidAccessCodeRequestError ||
         err instanceof ForbiddenError
       ) {
+        boundLogger.info(
+          { err },
+          'Invalid access code request error, or Forbidden error.'
+        )
         return res.status(400).send(err.message)
       } else {
+        sentry({ err })
+        boundLogger.error(err)
         return res
           .status(500)
           .send('Something went wrong while processing your request')
@@ -65,6 +69,7 @@ module.exports = (app) => {
    */
   app.options('/auth/token', cors())
   app.post('/auth/token', cors(), async (req, res) => {
+    const boundLogger = moduleLogger.child({ endpoint: '/auth/token' })
     try {
       // Token refresh
       if (req.body.refreshToken) {
@@ -99,7 +104,7 @@ module.exports = (app) => {
       return res.send(authResponse)
     } catch (err) {
       sentry({ err })
-      moduleLogger.warn(err)
+      boundLogger.warn(err)
       return res.status(401).send({ err: err.message })
     }
   })
@@ -108,6 +113,7 @@ module.exports = (app) => {
   Ensures a user is logged out by invalidating their token and refresh token.
    */
   app.post('/auth/logout', async (req, res) => {
+    const boundLogger = moduleLogger.child({ endpoint: '/auth/logout' })
     try {
       const token = req.body.token
       const refreshToken = req.body.refreshToken
@@ -120,7 +126,7 @@ module.exports = (app) => {
       return res.status(200).send({ message: 'You have logged out.' })
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
+      boundLogger.error(err)
       return res.status(400).send('Something went wrong while trying to logout.')
     }
   })
