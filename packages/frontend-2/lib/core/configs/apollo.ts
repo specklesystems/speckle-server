@@ -97,9 +97,7 @@ function createCache(): InMemoryCache {
         fields: {
           commits: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('CommitCollection')
           }
         }
       },
@@ -111,21 +109,15 @@ function createCache(): InMemoryCache {
           },
           commits: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('CommitCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('CommitCollection')
           },
           favoriteStreams: {
             keyArgs: false,
-            merge: buildAbstractCollectionMergeFunction('StreamCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('StreamCollection')
           },
           projects: {
             keyArgs: ['filter'],
-            merge: buildAbstractCollectionMergeFunction('ProjectCollection', {
-              checkIdentity: true
-            })
+            merge: buildAbstractCollectionMergeFunction('ProjectCollection')
           }
         }
       },
@@ -160,7 +152,8 @@ function createCache(): InMemoryCache {
       Model: {
         fields: {
           versions: {
-            keyArgs: ['filter']
+            keyArgs: ['filter'],
+            merge: buildAbstractCollectionMergeFunction('VersionCollection')
           }
         }
       },

@@ -28,7 +28,7 @@
       <ViewerLoadingBar class="z-20" />
 
       <!-- Sidebar sketches -->
-      <ViewerControlsOption3 class="z-20" />
+      <ViewerControls class="z-20" />
 
       <!-- Viewer Object Selection Info Display -->
       <ViewerSelectionSidebar class="z-20" />

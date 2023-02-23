@@ -2,7 +2,11 @@
   <div class="space-y-2">
     <template v-if="resourceItems.length">
       <div v-for="{ model, versionId } in modelsAndVersionIds" :key="model.id">
-        <ViewerResourcesModelCard :model="model" :version-id="versionId" />
+        <ViewerResourcesModelCard
+          :model="model"
+          :version-id="versionId"
+          @loaded-more="$emit('loaded-more')"
+        />
       </div>
       <!-- Basic object cards for now -->
       <div
@@ -15,12 +19,21 @@
       </div>
     </template>
     <template v-else>No resources loaded</template>
-    <FormButton size="sm" full-width>Load Another Model</FormButton>
+    <FormButton size="sm" full-width @click="open = true">
+      Load Another Model
+    </FormButton>
+    <ViewerResourcesAddModelDialog v-model:open="open" />
   </div>
 </template>
 <script setup lang="ts">
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 
+defineEmits<{
+  (e: 'loaded-more'): void
+}>()
+
 const { resourceItems, objects, modelsAndVersionIds } =
   useInjectedViewerLoadedResources()
+
+const open = ref(false)
 </script>

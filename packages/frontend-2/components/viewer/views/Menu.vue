@@ -84,7 +84,7 @@ const views = ref<SpeckleView[]>([])
 
 watch(
   viewerBusy,
-  (newVal) => {
+  () => {
     views.value = instance.getViews()
   },
   { immediate: true }

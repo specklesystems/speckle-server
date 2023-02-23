@@ -10,7 +10,11 @@
       Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
       TODO: Report it to Vue/Nuxt!
     -->
-    <NuxtLink :href="modelRoute(projectId, model.id)">
+    <NuxtLink
+      :href="disableDefaultLink ? undefined : modelRoute(projectId, model.id)"
+      class="cursor-pointer"
+      @click="$emit('click', $event)"
+    >
       <div :class="`${height} flex items-center justify-center`">
         <PreviewImage v-if="model.previewUrl" :preview-url="model.previewUrl" />
         <div v-else class="h-full w-full p-4">
@@ -80,12 +84,17 @@ import {
 } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
+defineEmits<{
+  (e: 'click', val: MouseEvent): void
+}>()
+
 const props = withDefaults(
   defineProps<{
     model: ProjectPageLatestItemsModelItemFragment
     projectId: string
     showVersions?: boolean
     showActions?: boolean
+    disableDefaultLink?: boolean
     height?: string
   }>(),
   {

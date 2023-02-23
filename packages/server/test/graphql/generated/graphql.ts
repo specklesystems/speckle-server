@@ -1141,7 +1141,7 @@ export type Project = {
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
-  commentThreads: CommentCollection;
+  commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -1205,6 +1205,14 @@ export type ProjectCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type ProjectCommentCollection = {
+  __typename?: 'ProjectCommentCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Comment>;
+  totalArchivedCount: Scalars['Int'];
+  totalCount: Scalars['Int'];
+};
+
 export type ProjectCommentsFilter = {
   /** Whether or not to include archived/resolved threads */
   includeArchived?: InputMaybe<Scalars['Boolean']>;
@@ -1238,6 +1246,8 @@ export enum ProjectCommentsUpdatedMessageType {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Excldue models w/ the specified IDs */
+  excludeIds?: InputMaybe<Array<Scalars['String']>>;
   /** Only select models w/ the specified IDs */
   ids?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out models that don't have any versions */

@@ -1148,7 +1148,7 @@ export type Project = {
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
-  commentThreads: CommentCollection;
+  commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -1212,6 +1212,14 @@ export type ProjectCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type ProjectCommentCollection = {
+  __typename?: 'ProjectCommentCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Comment>;
+  totalArchivedCount: Scalars['Int'];
+  totalCount: Scalars['Int'];
+};
+
 export type ProjectCommentsFilter = {
   /** Whether or not to include archived/resolved threads */
   includeArchived?: InputMaybe<Scalars['Boolean']>;
@@ -1245,6 +1253,8 @@ export enum ProjectCommentsUpdatedMessageType {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Excldue models w/ the specified IDs */
+  excludeIds?: InputMaybe<Array<Scalars['String']>>;
   /** Only select models w/ the specified IDs */
   ids?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out models that don't have any versions */
@@ -2494,6 +2504,7 @@ export type ResolversTypes = {
   PendingStreamCollaborator: ResolverTypeWrapper<Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
+  ProjectCommentCollection: ResolverTypeWrapper<Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversTypes['Comment']> }>;
   ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
@@ -2635,6 +2646,7 @@ export type ResolversParentTypes = {
   PendingStreamCollaborator: Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
   Project: ProjectGraphQLReturn;
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
+  ProjectCommentCollection: Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
   ProjectModelsFilter: ProjectModelsFilter;
@@ -3132,7 +3144,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<ProjectCommentThreadsArgs, 'limit'>>;
+  commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, RequireFields<ProjectCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -3154,6 +3166,14 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
 export type ProjectCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCollection'] = ResolversParentTypes['ProjectCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectCommentCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCommentCollection'] = ResolversParentTypes['ProjectCommentCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Comment']>, ParentType, ContextType>;
+  totalArchivedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3577,6 +3597,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
   ProjectCollection?: ProjectCollectionResolvers<ContextType>;
+  ProjectCommentCollection?: ProjectCommentCollectionResolvers<ContextType>;
   ProjectCommentsUpdatedMessage?: ProjectCommentsUpdatedMessageResolvers<ContextType>;
   ProjectModelsUpdatedMessage?: ProjectModelsUpdatedMessageResolvers<ContextType>;
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;

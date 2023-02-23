@@ -15,7 +15,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronRightIcon, MinusIcon } from '@heroicons/vue/20/solid'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 defineProps({
   separator: {
     type: Boolean,

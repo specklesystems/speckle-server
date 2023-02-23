@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :class="[fullWidth ? 'w-full' : '']">
     <label
       :for="name"
       class="block label text-foreground"
@@ -215,6 +215,10 @@ const props = defineProps({
     default: 'base'
   },
   showClear: {
+    type: Boolean,
+    default: false
+  },
+  fullWidth: {
     type: Boolean,
     default: false
   }

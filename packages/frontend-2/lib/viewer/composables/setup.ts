@@ -23,7 +23,8 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery,
-  viewerLoadedThreadsQuery
+  viewerLoadedThreadsQuery,
+  viewerModelVersionsQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
@@ -46,7 +47,9 @@ import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/model
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import {
   CacheObjectReference,
+  convertThrowIntoFetchResult,
   getCacheId,
+  getFirstErrorMessage,
   getObjectReference,
   modifyObjectFields,
   updateCacheByFilter
@@ -190,6 +193,10 @@ export type InjectableViewerState = Readonly<{
        * Variables used to load the threads query. Relevant when making cache updates.
        */
       threadsQueryVariables: ComputedRef<Optional<ViewerLoadedThreadsQueryVariables>>
+      /**
+       * Fetch the next page of versions for a loaded model
+       */
+      loadMoreVersions: (modelId: string) => Promise<void>
     }
   }
   /**
@@ -491,6 +498,7 @@ function setupResponseResourceData(
   InjectableViewerState['resources']['response'],
   'resourceItems' | 'resourceItemsQueryVariables'
 > {
+  const apollo = useApolloClient().client
   const globalError = useError()
   const { triggerNotification } = useGlobalToast()
 
@@ -512,18 +520,26 @@ function setupResponseResourceData(
         !!r.modelId
     )
   )
+  const versionIds = computed(() =>
+    nonObjectResourceItems.value.map((r) => r.versionId).sort()
+  )
+  const versionCursors = ref({} as Record<string, Nullable<string>>)
+
+  const viewerLoadedResourcesVariablesFunc =
+    (): ViewerLoadedResourcesQueryVariables => ({
+      projectId: projectId.value,
+      modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
+      versionIds: versionIds.value
+    })
 
   // MODELS AND VERSIONS
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables,
-    onError: onViewerLoadedResourcesError
-  } = useQuery(viewerLoadedResourcesQuery, () => ({
-    projectId: projectId.value,
-    modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
-    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort()
-  }))
+    onError: onViewerLoadedResourcesError,
+    onResult: onViewerLoadedResourcesResult
+  } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc)
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -542,6 +558,56 @@ function setupResponseResourceData(
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
     })
+  })
+
+  // Load initial batch of cursors for each model
+  onViewerLoadedResourcesResult((res) => {
+    if (!res.data?.project?.models) return
+
+    for (const model of res.data.project.models.items) {
+      const modelId = model.id
+      if (versionCursors.value[modelId]) continue
+
+      const cursor = model.versions.cursor
+      if (!cursor) continue
+
+      versionCursors.value[modelId] = cursor
+    }
+  })
+
+  const loadMoreVersions = async (modelId: string) => {
+    const cursor = versionCursors.value[modelId]
+    const baseVariables = viewerLoadedResourcesVariablesFunc()
+    const { data, errors } = await apollo
+      .query({
+        query: viewerModelVersionsQuery,
+        variables: {
+          projectId: baseVariables.projectId,
+          modelId,
+          priorityVersionIds: baseVariables.versionIds,
+          versionsCursor: cursor
+        },
+        fetchPolicy: 'network-only'
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.project?.model?.versions) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Can't load more versions",
+        description: getFirstErrorMessage(errors)
+      })
+      return
+    }
+
+    if (data.project.model.versions.cursor) {
+      versionCursors.value[modelId] = data.project.model.versions.cursor
+    }
+  }
+
+  watch(versionIds, () => {
+    // clear cursors, since the query is now different
+    versionCursors.value = {}
   })
 
   // COMMENT THREADS
@@ -578,7 +644,8 @@ function setupResponseResourceData(
     modelsAndVersionIds,
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
-    threadsQueryVariables: computed(() => threadsQueryVariables.value)
+    threadsQueryVariables: computed(() => threadsQueryVariables.value),
+    loadMoreVersions
   }
 }
 

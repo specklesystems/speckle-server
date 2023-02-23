@@ -186,6 +186,9 @@ function getPaginatedProjectModelsBaseQuery<T>(
   if (filter?.ids?.length) {
     q.whereIn(Branches.col.id, filter.ids)
   }
+  if (filter?.excludeIds?.length) {
+    q.whereNotIn(Branches.col.id, filter.excludeIds)
+  }
 
   return q
 }
