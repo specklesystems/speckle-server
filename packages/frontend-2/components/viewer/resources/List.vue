@@ -2,7 +2,11 @@
   <div class="space-y-2">
     <template v-if="resourceItems.length">
       <div v-for="{ model, versionId } in modelsAndVersionIds" :key="model.id">
-        <ViewerResourcesModelCard :model="model" :version-id="versionId" />
+        <ViewerResourcesModelCard
+          :model="model"
+          :version-id="versionId"
+          @loaded-more="$emit('loaded-more')"
+        />
       </div>
       <!-- Basic object cards for now -->
       <div
@@ -20,6 +24,10 @@
 </template>
 <script setup lang="ts">
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
+
+defineEmits<{
+  (e: 'loaded-more'): void
+}>()
 
 const { resourceItems, objects, modelsAndVersionIds } =
   useInjectedViewerLoadedResources()

@@ -1141,7 +1141,7 @@ export type Project = {
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
-  commentThreads: CommentCollection;
+  commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -1202,6 +1202,14 @@ export type ProjectCollection = {
   __typename?: 'ProjectCollection';
   cursor?: Maybe<Scalars['String']>;
   items: Array<Project>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentCollection = {
+  __typename?: 'ProjectCommentCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Comment>;
+  totalArchivedCount: Scalars['Int'];
   totalCount: Scalars['Int'];
 };
 
