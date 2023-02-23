@@ -42,7 +42,7 @@
                 />
               </div>
               <div class="ml-2 w-0 flex-1 flex flex-col">
-                <p class="text-foreground font-bold">
+                <p v-if="currentNotification.title" class="text-foreground font-bold">
                   {{ currentNotification.title }}
                 </p>
                 <p

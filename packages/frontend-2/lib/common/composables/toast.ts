@@ -11,7 +11,7 @@ export enum ToastNotificationType {
 }
 
 export type ToastNotification = {
-  title: string
+  title?: string
   /**
    * Optionally provide extra text
    */

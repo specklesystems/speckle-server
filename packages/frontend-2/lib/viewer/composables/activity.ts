@@ -30,6 +30,7 @@ import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -216,6 +217,7 @@ export function useViewerUserActivityTracking(params: {
     }
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
   const sendUpdate = useViewerUserActivityBroadcasting()
 
   // TODO: For some reason subscription is set up twice? Vue Apollo bug?
@@ -245,6 +247,11 @@ export function useViewerUserActivityTracking(params: {
 
     if (sessionId.value === incomingSessionId) return
     if (status === ViewerUserActivityStatus.Disconnected || !event.selection) {
+      triggerNotification({
+        // title: '',
+        description: `${users.value[incomingSessionId].userName} left.`,
+        type: ToastNotificationType.Info
+      })
       if (spotlightUserId.value === incomingSessionId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
       delete users.value[incomingSessionId]
       return
@@ -264,6 +271,16 @@ export function useViewerUserActivityTracking(params: {
       isStale: false,
       lastUpdate: dayjs()
     }
+
+    if (!Object.keys(users.value).includes(incomingSessionId)) {
+      triggerNotification({
+        // title: `${users.value[incomingSessionId].userName} joined.`,
+        // title: '',
+        description: `${userData.userName} joined.`,
+        type: ToastNotificationType.Info
+      })
+    }
+
     users.value[incomingSessionId] = userData
 
     if (spotlightUserId.value === userData.userId) {
