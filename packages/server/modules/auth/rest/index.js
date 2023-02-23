@@ -23,7 +23,7 @@ module.exports = (app) => {
   TODO: ensure same origin.
    */
   app.get('/auth/accesscode', async (req, res) => {
-    const boundLogger = authLogger.child({ endpoint: '/auth/token' })
+    const boundLogger = authLogger.child({ endpoint: '/auth/accesscode' })
     try {
       const appId = req.query.appId
       const app = await getApp({ id: appId })
