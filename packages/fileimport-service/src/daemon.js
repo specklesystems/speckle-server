@@ -50,7 +50,7 @@ async function startTask() {
 }
 
 async function doTask(task) {
-  const taskLogger = logger.child({ task })
+  let taskLogger = logger.child({ taskId: task.id })
   let tempUserToken = null
   let serverApi = null
   let fileTypeForMetric = 'unknown'
@@ -65,7 +65,15 @@ async function doTask(task) {
     }
     fileTypeForMetric = info.fileType || 'missing_info'
     fileSizeForMetric = Number(info.fileSize) || 0
-
+    taskLogger = taskLogger.child({
+      fileId: info.id,
+      fileType: fileTypeForMetric,
+      fileName: info.fileName,
+      fileSize: fileSizeForMetric,
+      userId: info.userId,
+      streamId: info.streamId,
+      branchName: info.branchName
+    })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
     serverApi = new ServerAPI({ streamId: info.streamId })
@@ -86,6 +94,7 @@ async function doTask(task) {
 
     if (info.fileType === 'ifc') {
       await runProcessWithTimeout(
+        taskLogger,
         process.env['NODE_BINARY_PATH'] || 'node',
         [
           '--no-experimental-fetch',
@@ -104,6 +113,7 @@ async function doTask(task) {
       )
     } else if (info.fileType === 'stl') {
       await runProcessWithTimeout(
+        taskLogger,
         process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           './stl/import_file.py',
@@ -127,6 +137,7 @@ async function doTask(task) {
       })
 
       await runProcessWithTimeout(
+        taskLogger,
         process.env['PYTHON_BINARY_PATH'] || 'python3',
         [
           '-u',
@@ -190,9 +201,9 @@ async function doTask(task) {
   }
 }
 
-function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
+function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs) {
   return new Promise((resolve, reject) => {
-    let boundLogger = logger.child({ cmd, args: cmdArgs })
+    let boundLogger = processLogger.child({ cmd, args: cmdArgs })
     boundLogger.info('Starting process.')
     const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
