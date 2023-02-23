@@ -207,6 +207,12 @@ module.exports = {
       })
     }
   },
+  ViewerUserActivityMessage: {
+    async user(parent, args, context) {
+      const { userId } = parent
+      return context.loaders.users.getUser.load(userId)
+    }
+  },
   Stream: {
     async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
@@ -550,7 +556,7 @@ module.exports = {
             )
           ])
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream.isPublic && !stream.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself

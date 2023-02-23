@@ -2,15 +2,21 @@ import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
   CommentDataInput,
-  ViewerUserActivityMessage,
+  OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
   ViewerUserSelectionInfoInput,
   ViewerUserTypingMessage,
   ViewerUserTypingMessageInput
 } from '~~/lib/common/generated/gql/graphql'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
+import {
+  useSelectionEvents,
+  useViewerCameraRestTracker
+} from '~~/lib/viewer/composables/viewer'
 import { Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -23,11 +29,13 @@ import { MaybeRef, useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
+import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
  */
-const OWN_ACTIVITY_UPDATE_INTERVAL = 60 * 1000
+const OWN_ACTIVITY_UPDATE_INTERVAL = 5 * 1000
 /**
  * How often we check for user staleness
  */
@@ -35,7 +43,7 @@ const USER_STALE_CHECK_INTERVAL = 2000
 /**
  * How much time must pass after an update from user after which we consider them "stale" or "disconnected"
  */
-const USER_STALE_AFTER_PERIOD = 2 * OWN_ACTIVITY_UPDATE_INTERVAL
+const USER_STALE_AFTER_PERIOD = 20 * OWN_ACTIVITY_UPDATE_INTERVAL
 /**
  * How much time must pass for a user to be completely removable if a new update hasn't been received from them
  */
@@ -48,7 +56,7 @@ function useCollectSelection() {
   const selectionLocation = ref(null as Nullable<Vector3>)
 
   const selectionCallback = (event: Nullable<SelectionEvent>) => {
-    if (!event) return
+    if (!event) return (selectionLocation.value = null) // reset selection location
 
     const firstHit = event.hits[0]
     selectionLocation.value = firstHit.point
@@ -74,7 +82,12 @@ function useCollectSelection() {
     ]
 
     return {
-      filteringState: { ...(viewerState.ui.filters.current.value || {}) },
+      filteringState: {
+        ...(viewerState.ui.filters.current.value || {}),
+        selectedObjects: viewerState.ui.selection.objects.value.map(
+          (o) => o.id as string
+        )
+      },
       selectionLocation: selectionLocation.value,
       sectionBox: viewer.getCurrentSectionBox(),
       camera
@@ -156,13 +169,14 @@ export function useViewerUserActivityBroadcasting() {
         selection: null,
         typing: null
       }),
-    emitViewing: async () =>
-      invokeMutation({
+    emitViewing: async () => {
+      await invokeMutation({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Viewing,
         selection: getSelection(),
         typing: null
-      }),
+      })
+    },
     emitTyping: async (typing: ViewerUserTypingMessageInput) =>
       invokeMutation({
         ...getMainMetadata(),
@@ -174,7 +188,7 @@ export function useViewerUserActivityBroadcasting() {
 }
 
 export type UserActivityModel = SetFullyRequired<
-  ViewerUserActivityMessage,
+  OnViewerUserActivityBroadcastedSubscription['viewerUserActivityBroadcasted'],
   'selection'
 > & {
   isStale: boolean
@@ -203,6 +217,7 @@ export function useViewerUserActivityTracking(params: {
     }
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
   const sendUpdate = useViewerUserActivityBroadcasting()
 
   // TODO: For some reason subscription is set up twice? Vue Apollo bug?
@@ -218,8 +233,13 @@ export function useViewerUserActivityTracking(params: {
   )
 
   const users = ref({} as Record<string, UserActivityModel>)
+  const { spotlightUserId } = useInjectedViewerInterfaceState()
+  const spotlightTracker = useViewerSpotlightTracking()
 
   onUserActivity((res) => {
+    // TOTHINK/TODO: instead of fast OWN_ACTIVITY_UPDATE_INTERVAL, we could
+    // send an event when we identify here that a new user joined the party
+
     if (!res.data?.viewerUserActivityBroadcasted) return
     const event = res.data.viewerUserActivityBroadcasted
     const status = event.status
@@ -227,6 +247,11 @@ export function useViewerUserActivityTracking(params: {
 
     if (sessionId.value === incomingSessionId) return
     if (status === ViewerUserActivityStatus.Disconnected || !event.selection) {
+      triggerNotification({
+        description: `${users.value[incomingSessionId].userName} left.`,
+        type: ToastNotificationType.Info
+      })
+      if (spotlightUserId.value === incomingSessionId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
       delete users.value[incomingSessionId]
       return
     }
@@ -245,7 +270,19 @@ export function useViewerUserActivityTracking(params: {
       isStale: false,
       lastUpdate: dayjs()
     }
+
+    if (!Object.keys(users.value).includes(incomingSessionId)) {
+      triggerNotification({
+        description: `${userData.userName} joined.`,
+        type: ToastNotificationType.Info
+      })
+    }
+
     users.value[incomingSessionId] = userData
+
+    if (spotlightUserId.value === userData.userId) {
+      spotlightTracker(userData)
+    }
   })
 
   useViewerAnchoredPoints<UserActivityModel, Partial<{ smoothTranslation: boolean }>>({
@@ -259,11 +296,34 @@ export function useViewerUserActivityTracking(params: {
         z: number
       }>
 
-      const target = selectionLocation
-        ? new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
-        : new Vector3(selection.camera[3], selection.camera[4], selection.camera[5])
+      function getPointInBetweenByPerc(
+        pointA: Vector3,
+        pointB: Vector3,
+        percentage: number
+      ) {
+        let dir = pointB.clone().sub(pointA)
+        const len = dir.length()
+        dir = dir.normalize().multiplyScalar(len * percentage)
+        return pointA.clone().add(dir)
+      }
 
-      return target
+      // If there is no selection location, return to a blended location based on the camera's target and location.
+      // This ensures that rotation and zoom will have an effect on the users' cursors and create a lively environment.
+      if (!selectionLocation) {
+        const loc = new Vector3(
+          selection.camera[0],
+          selection.camera[1],
+          selection.camera[2]
+        )
+        const camTarget = new Vector3(
+          selection.camera[3],
+          selection.camera[4],
+          selection.camera[5]
+        )
+        return getPointInBetweenByPerc(camTarget, loc, 0.2)
+      }
+
+      return new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
     },
     updatePositionCallback: (user, result, options) => {
       user.isOccluded = result.isOccluded
@@ -272,8 +332,8 @@ export function useViewerUserActivityTracking(params: {
         target: {
           ...user.style.target,
           ...result.style,
-          transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease',
-          opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0'
+          transition: options?.smoothTranslation === false ? '' : 'all 0.1s ease'
+          // opacity: user.isOccluded ? '0.5' : user.isStale ? '0.2' : '1.0' // note: handled in component via css
         }
       }
     }
@@ -316,12 +376,86 @@ export function useViewerUserActivityTracking(params: {
     doubleClickCallback: selectionCallback
   })
 
+  useViewerCameraRestTracker(() => sendUpdate.emitViewing())
+
+  useOnBeforeWindowUnload(async () => await sendUpdate.emitDisconnected())
+
+  onMounted(() => {
+    sendUpdate.emitViewing()
+  })
+
   onBeforeUnmount(() => {
     sendUpdate.emitDisconnected()
   })
 
+  const state = useInjectedViewerState()
+
+  // Removes object highlights from user selection on tracking stop;
+  // Sets initial user state on tracking start
+  watch(spotlightUserId, (newVal) => {
+    if (!newVal) return state.viewer.instance.highlightObjects([])
+    const user = Object.values(users.value).find((u) => u.userId === newVal)
+    if (!user) return
+    spotlightTracker(user)
+  })
+
   return {
     users
+  }
+}
+
+function useViewerSpotlightTracking() {
+  const state = useInjectedViewerState()
+  return async (user: UserActivityModel) => {
+    state.viewer.instance.setView({
+      position: new Vector3(
+        user.selection.camera[0],
+        user.selection.camera[1],
+        user.selection.camera[2]
+      ),
+      target: new Vector3(
+        user.selection.camera[3],
+        user.selection.camera[4],
+        user.selection.camera[5]
+      )
+    })
+
+    if (user.selection.sectionBox) {
+      state.ui.sectionBox.setSectionBox(
+        user.selection.sectionBox as {
+          min: { x: number; y: number; z: number }
+          max: { x: number; y: number; z: number }
+        },
+        0
+      )
+      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
+        state.ui.sectionBox.sectionBoxOn()
+    } else {
+      state.ui.sectionBox.sectionBoxOff()
+    }
+
+    if (user.selection.filteringState) {
+      const fs = user.selection.filteringState as FilteringState
+      await state.ui.filters.resetFilters()
+
+      if (fs.hiddenObjects)
+        await state.ui.filters.hideObjects(fs.hiddenObjects, 'tracking')
+
+      if (fs.isolatedObjects)
+        await state.ui.filters.isolateObjects(fs.isolatedObjects, 'tracking')
+
+      if (fs.selectedObjects) {
+        state.viewer.instance.highlightObjects(fs.selectedObjects)
+      } else {
+        state.viewer.instance.highlightObjects([])
+      }
+
+      // Note: commented out as it's a bit "intrusive" behaviour, opted for the
+      // highlight version above.
+      // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
+
+      // TODOs: filters implementation, once they are implemented in the FE
+    }
   }
 }
 

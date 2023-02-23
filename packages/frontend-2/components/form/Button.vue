@@ -9,13 +9,13 @@
     role="button"
     @click="onClick"
   >
-    <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
+    <Component :is="iconLeft" v-if="iconLeft" :class="`${iconClasses} mr-2`" />
     <slot v-if="!hideText">Button</slot>
     <div v-else style="margin: 0 !important; width: 0.01px">
       &nbsp;
       <!-- The point of this is to ensure text & no-text buttons have the same height -->
     </div>
-    <Component :is="iconRight" v-if="iconRight" :class="iconClasses" />
+    <Component :is="iconRight" v-if="iconRight" :class="`${iconClasses} ml-2`" />
   </Component>
 </template>
 <script setup lang="ts">

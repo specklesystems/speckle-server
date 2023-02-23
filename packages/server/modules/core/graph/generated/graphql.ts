@@ -2236,7 +2236,8 @@ export type ViewerUserActivityMessage = {
   selection?: Maybe<ViewerUserSelectionInfo>;
   status: ViewerUserActivityStatus;
   typing?: Maybe<ViewerUserTypingMessage>;
-  userId?: Maybe<Scalars['String']>;
+  user: LimitedUser;
+  userId: Scalars['String'];
   userName: Scalars['String'];
   viewerSessionId: Scalars['String'];
 };
@@ -2548,7 +2549,7 @@ export type ResolversTypes = {
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
-  ViewerUserActivityMessage: ResolverTypeWrapper<ViewerUserActivityMessage>;
+  ViewerUserActivityMessage: ResolverTypeWrapper<Omit<ViewerUserActivityMessage, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
   ViewerUserActivityStatus: ViewerUserActivityStatus;
   ViewerUserSelectionInfo: ResolverTypeWrapper<ViewerUserSelectionInfo>;
@@ -2680,7 +2681,7 @@ export type ResolversParentTypes = {
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
-  ViewerUserActivityMessage: ViewerUserActivityMessage;
+  ViewerUserActivityMessage: Omit<ViewerUserActivityMessage, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
   ViewerUserSelectionInfo: ViewerUserSelectionInfo;
   ViewerUserSelectionInfoInput: ViewerUserSelectionInfoInput;
@@ -3480,7 +3481,8 @@ export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, Par
   selection?: Resolver<Maybe<ResolversTypes['ViewerUserSelectionInfo']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['ViewerUserActivityStatus'], ParentType, ContextType>;
   typing?: Resolver<Maybe<ResolversTypes['ViewerUserTypingMessage']>, ParentType, ContextType>;
-  userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   viewerSessionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
