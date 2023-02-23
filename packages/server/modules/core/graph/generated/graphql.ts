@@ -1213,6 +1213,14 @@ export type ProjectCollection = {
 };
 
 export type ProjectCommentsFilter = {
+  /** Whether or not to include archived/resolved threads */
+  includeArchived?: InputMaybe<Scalars['Boolean']>;
+  /**
+   * By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+   * and all comments of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+   * enabled, then only comment threads of loaded/referenced versions in resourceIdString will be returned.
+   */
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   /**
    * Only request comments belonging to the resources identified by this
    * comma-delimited resouce string (same format that's used in the viewer URL)

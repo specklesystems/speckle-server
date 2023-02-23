@@ -137,7 +137,8 @@ const {
 } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   type: 'checkbox',
-  checkedValue: checkboxValue
+  checkedValue: checkboxValue,
+  initialValue: props.modelValue
 })
 
 const onChange = (e: unknown) => {

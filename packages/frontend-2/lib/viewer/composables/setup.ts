@@ -4,8 +4,7 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
-  ViewerEvent,
-  TreeNode
+  ViewerEvent
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -23,7 +22,8 @@ import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
-  viewerLoadedResourcesQuery
+  viewerLoadedResourcesQuery,
+  viewerLoadedThreadsQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
@@ -35,29 +35,39 @@ import {
   ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
+  ViewerLoadedThreadsQuery,
   ViewerResourceItem,
   CommentCollection,
-  Comment
+  ViewerLoadedThreadsQueryVariables,
+  ProjectCommentsFilter
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get, PartialDeep } from 'type-fest'
+import { SetNonNullable, Get, PartialDeep, Merge } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
-import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
+import {
+  CacheObjectReference,
+  getCacheId,
+  getObjectReference,
+  modifyObjectFields,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { nanoid } from 'nanoid'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
-import { UserActivityModel } from '~~/lib/viewer/composables/activity'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
 
-export type LoadedCommentThread = NonNullable<
-  Get<ViewerLoadedResourcesQuery, 'project.commentThreads.items[0]'>
+export type LoadedThreadsMetadata = NonNullable<
+  Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>
 >
+
+export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
 type FilterAction = (
   objectIds: string[],
@@ -126,6 +136,12 @@ export type InjectableViewerState = Readonly<{
        * represented in the URL
        */
       resourceIdString: ComputedRef<string>
+
+      /**
+       * Writable computed for reading/writing current thread filters
+       */
+      threadFilters: Ref<Omit<ProjectCommentsFilter, 'resourceIdString'>>
+
       /**
        * Helper for switching model to a specific version (or just latest)
        */
@@ -159,6 +175,10 @@ export type InjectableViewerState = Readonly<{
        */
       commentThreads: ComputedRef<Array<LoadedCommentThread>>
       /**
+       * Metadata about requested comment threads (e.g. total counts)
+       */
+      commentThreadsMetadata: ComputedRef<Optional<LoadedThreadsMetadata>>
+      /**
        * Project main metadata
        */
       project: ComputedRef<Get<ViewerLoadedResourcesQuery, 'project'>>
@@ -166,6 +186,10 @@ export type InjectableViewerState = Readonly<{
        * Variables used to load the resource query. Relevant when making cache updates.
        */
       resourceQueryVariables: ComputedRef<Optional<ViewerLoadedResourcesQueryVariables>>
+      /**
+       * Variables used to load the threads query. Relevant when making cache updates.
+       */
+      threadsQueryVariables: ComputedRef<Optional<ViewerLoadedThreadsQueryVariables>>
     }
   }
   /**
@@ -319,6 +343,8 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value)
   )
 
+  const threadFilters = ref({} as Omit<ProjectCommentsFilter, 'resourceIdString'>)
+
   const switchModelToVersion = (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
 
@@ -351,6 +377,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       request: {
         items: resources,
         resourceIdString,
+        threadFilters,
         switchModelToVersion
       }
     }
@@ -465,11 +492,12 @@ function setupResponseResourceData(
   'resourceItems' | 'resourceItemsQueryVariables'
 > {
   const globalError = useError()
+  const { triggerNotification } = useGlobalToast()
 
   const {
     projectId,
     resources: {
-      request: { items }
+      request: { resourceIdString, threadFilters }
     }
   } = state
   const { resourceItems } = resourceItemsData
@@ -485,21 +513,20 @@ function setupResponseResourceData(
     )
   )
 
+  // MODELS AND VERSIONS
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables,
-    onError
+    onError: onViewerLoadedResourcesError
   } = useQuery(viewerLoadedResourcesQuery, () => ({
     projectId: projectId.value,
     modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
-    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort(),
-    resourceIdString: SpeckleViewer.ViewerRoute.createGetParamFromResources(items.value)
+    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort()
   }))
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
-  const commentThreads = computed(() => project.value?.commentThreads?.items || [])
 
   const modelsAndVersionIds = computed(() =>
     nonObjectResourceItems.value
@@ -510,19 +537,48 @@ function setupResponseResourceData(
       .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
   )
 
-  onError((err) => {
+  onViewerLoadedResourcesError((err) => {
     globalError.value = createError({
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
     })
   })
 
+  // COMMENT THREADS
+  const {
+    result: viewerLoadedThreadsResult,
+    onError: onViewerLoadedThreadsError,
+    variables: threadsQueryVariables
+  } = useQuery(viewerLoadedThreadsQuery, () => ({
+    projectId: projectId.value,
+    filter: {
+      ...threadFilters.value,
+      resourceIdString: resourceIdString.value
+    }
+  }))
+
+  const commentThreadsMetadata = computed(
+    () => viewerLoadedThreadsResult.value?.project?.commentThreads
+  )
+  const commentThreads = computed(() => commentThreadsMetadata.value?.items || [])
+
+  onViewerLoadedThreadsError((err) => {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Comment loading failed',
+      description: `${err.message}`
+    })
+    console.error(err)
+  })
+
   return {
     objects,
     commentThreads,
+    commentThreadsMetadata,
     modelsAndVersionIds,
     project,
-    resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value)
+    resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
+    threadsQueryVariables: computed(() => threadsQueryVariables.value)
   }
 }
 
@@ -865,13 +921,42 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
   } = state
 
   useViewerCommentUpdateTracking(projectId, resourceIdString, (event, cache) => {
-    const isDeleted = event.type === ProjectCommentsUpdatedMessageType.Archived
+    const isArchived = event.type === ProjectCommentsUpdatedMessageType.Archived
     const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
     const model = event.comment
 
-    if (isDeleted) {
-      cache.evict({
-        id: getCacheId('Comment', event.id)
+    if (isArchived) {
+      // Mark as archived
+      cache.modify({
+        id: getCacheId('Comment', event.id),
+        fields: {
+          archived: () => true
+        }
+      })
+
+      // Remove from project.commentThreads
+      modifyObjectFields<
+        {
+          cursor: Nullable<string>
+          limit: Nullable<number>
+          filter: Nullable<ProjectCommentsFilter>
+        },
+        Merge<
+          NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>,
+          { items: CacheObjectReference[] }
+        >
+      >(cache, getCacheId('Project', projectId.value), (fieldName, variables, data) => {
+        if (fieldName !== 'commentThreads') return
+        if (variables.filter?.includeArchived) return
+        console.log(data)
+        const newItems = data.items.filter(
+          (i) => i.__ref !== getObjectReference('Comment', event.id).__ref
+        )
+        return {
+          ...data,
+          totalCount: data.totalCount - 1,
+          items: newItems
+        }
       })
     } else if (isNew && model) {
       const parentId = model.parent?.id
@@ -881,12 +966,17 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
         cache.modify({
           id: getCacheId('Comment', parentId),
           fields: {
-            replies: (oldValue: Optional<CommentCollection>) => {
-              const newValue: CommentCollection = {
+            replies: (
+              oldValue: Optional<
+                Merge<CommentCollection, { items: CacheObjectReference[] }>
+              >
+            ) => {
+              const newValue: typeof oldValue = {
                 totalCount: (oldValue?.totalCount || 0) + 1,
-                // I assume that not having all of the props that `Comments` has is OK as long as you
-                // don't try to read those
-                items: [model as Comment, ...(oldValue?.items || [])]
+                items: [
+                  getObjectReference('Comment', model.id),
+                  ...(oldValue?.items || [])
+                ]
               }
               return newValue
             }
@@ -894,27 +984,27 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
         })
       } else {
         // Add comment thread
-        updateCacheByFilter(
-          cache,
+        modifyObjectFields<
           {
-            query: {
-              query: viewerLoadedResourcesQuery,
-              variables: resourceQueryVariables.value
-            }
+            cursor: Nullable<string>
+            limit: Nullable<number>
+            filter: Nullable<ProjectCommentsFilter>
           },
-          (data) => {
-            if (!data.project) return
+          Merge<
+            NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>,
+            { items: CacheObjectReference[] }
+          >
+        >(
+          cache,
+          getCacheId('Project', projectId.value),
+          (fieldName, _variables, data) => {
+            if (fieldName !== 'commentThreads') return
 
+            const newItems = [getObjectReference('Comment', model.id), ...data.items]
             return {
               ...data,
-              project: {
-                ...data.project,
-                commentThreads: {
-                  ...data.project.commentThreads,
-                  totalCount: data.project.commentThreads.totalCount + 1,
-                  items: [model, ...data.project.commentThreads.items]
-                }
-              }
+              totalCount: data.totalCount + 1,
+              items: newItems
             }
           }
         )

@@ -1,40 +1,40 @@
 <template>
-  <div class="p-2 flex flex-col">
+  <div class="p-2 flex flex-col space-y-1">
     <h2 class="text-sm font-bold text-foreground-2">Threads</h2>
     <div class="flex flex-col">
-      <div
+      <FormCheckbox
+        v-model="includeArchived"
+        name="includeArchived"
+        :label="archivedLabel"
+      />
+      <FormCheckbox
+        v-model="loadedVersionsOnly"
+        name="loadedVersionsOnly"
+        label="Loaded versions only"
+      />
+    </div>
+    <div class="flex flex-col">
+      <ViewerCommentsListItem
         v-for="thread in commentThreads"
         :key="thread.id"
-        :class="[
-          'py-4 flex flex-col',
-          thread.id !== lastThread?.id ? 'border-b border-foreground-3' : ''
-        ]"
-      >
-        <div class="flex items-center mb-1">
-          <UserAvatar :user="thread.author" size="sm" class="mr-2" />
-          <span class="grow truncate text-sm font-medium">
-            {{ thread.author.name }}
-          </span>
-          <span class="text-foreground-2 text-sm">
-            {{ formatDate(thread.createdAt) }}
-          </span>
-        </div>
-        <div class="truncate text-sm text-foreground-2">
-          {{ thread.rawText }}
-        </div>
-      </div>
+        :thread="thread"
+        :class="[thread.id !== lastThread?.id ? 'border-b border-foreground-3' : '']"
+      />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import dayjs from 'dayjs'
-import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerLoadedResources,
+  useInjectedViewerRequestedResources
+} from '~~/lib/viewer/composables/setup'
 
 graphql(`
   fragment ViewerCommentsListItem on Comment {
     id
     rawText
+    archived
     author {
       ...LimitedUserAvatar
     }
@@ -47,15 +47,38 @@ graphql(`
         ...ViewerCommentsReplyItem
       }
     }
+    resources {
+      resourceId
+      resourceType
+    }
   }
 `)
 
-const { commentThreads } = useInjectedViewerLoadedResources()
+const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
+const { threadFilters } = useInjectedViewerRequestedResources()
+
+const loadedVersionsOnly = computed({
+  get: () =>
+    threadFilters.value.loadedVersionsOnly || false ? 'loadedVersionsOnly' : undefined,
+  set: (newVal) => (threadFilters.value.loadedVersionsOnly = !!newVal)
+})
+const includeArchived = computed({
+  get: () =>
+    threadFilters.value.includeArchived || false ? 'includeArchived' : undefined,
+  set: (newVal) => (threadFilters.value.includeArchived = !!newVal)
+})
+
 const lastThread = computed(() =>
   commentThreads.value.length
     ? commentThreads.value[commentThreads.value.length - 1]
     : null
 )
 
-const formatDate = (date: string) => dayjs(date).from(dayjs())
+const totalArchived = computed(() => commentThreadsMetadata.value?.totalArchivedCount)
+const archivedLabel = computed(() => {
+  const base = 'Include archived'
+  if (!totalArchived.value) return base
+
+  return `${base} (${totalArchived.value})`
+})
 </script>
