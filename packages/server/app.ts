@@ -11,7 +11,10 @@ import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
 import { startupLogger, shutdownLogger } from '@/logging/logging'
-import { LoggingExpressMiddleware } from '@/logging/expressLogging'
+import {
+  DetermineRequestIdMiddleware,
+  LoggingExpressMiddleware
+} from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
@@ -183,9 +186,8 @@ export async function init() {
   // Should perhaps be done manually?
   await knex.migrate.latest()
 
-  if (process.env.NODE_ENV !== 'test') {
-    app.use(LoggingExpressMiddleware)
-  }
+  app.use(DetermineRequestIdMiddleware)
+  app.use(LoggingExpressMiddleware)
 
   if (process.env.COMPRESSION) {
     app.use(compression())
@@ -217,12 +219,10 @@ export async function init() {
 
   // Expose prometheus metrics
   app.get('/metrics', async (req, res) => {
-    const boundLogger = startupLogger.child({ endpoint: '/metrics' })
     try {
       res.set('Content-Type', prometheusClient.register.contentType)
       res.end(await prometheusClient.register.metrics())
     } catch (ex: unknown) {
-      boundLogger.error(ex, 'Error while retrieving metrics.')
       res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
     }
   })

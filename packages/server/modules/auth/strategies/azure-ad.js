@@ -12,7 +12,6 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { authLogger } = require('@/logging/logging')
 const { UserInputError } = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -51,7 +50,6 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     session,
     passportAuthenticate('azuread-openidconnect'),
     async (req, res, next) => {
-      let boundLogger = authLogger.child({ endpoint: '/auth/azure/callback' })
       const serverInfo = await getServerInfo()
 
       try {
@@ -112,7 +110,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // ID is used later for verifying access token
         req.user.id = myUser.id
-        boundLogger = boundLogger.child({ userId: myUser.id })
+        req.log = req.log.child({ userId: myUser.id })
 
         // use the invite
         await finalizeInvitedServerRegistration(user.email, myUser.id)
@@ -125,10 +123,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       } catch (err) {
         switch (err.constructor) {
           case UserInputError:
-            boundLogger.info(err)
+            req.log.info(err)
             break
           default:
-            boundLogger.error(err)
+            req.log.error(err)
         }
         return next()
       }
