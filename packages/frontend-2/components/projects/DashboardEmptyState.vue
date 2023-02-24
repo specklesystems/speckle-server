@@ -49,7 +49,6 @@ import {
 import { downloadManagerRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 
-// TOOD: Make mutation return everything needed for project page
 const createOnboardingProjectMutation = graphql(`
   mutation CreateOnboardingProject {
     projectMutations {

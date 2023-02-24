@@ -2,11 +2,19 @@ import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { MaybeRef } from '@vueuse/core'
 import { Get } from 'type-fest'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   OnProjectUpdatedSubscription,
+  ProjectCreateInput,
   ProjectUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
-import { getCacheId } from '~~/lib/common/helpers/graphql'
+import {
+  convertThrowIntoFetchResult,
+  getCacheId,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
+import { createProjectMutation } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 /**
@@ -45,10 +53,36 @@ export function useProjectUpdateTracking(
   })
 }
 
-// export function useCreateProject() {
-//   const apollo = useApolloClient().client
+export function useCreateProject() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { activeUser } = useActiveUser()
 
-//   return async () => {
+  return async (input: ProjectCreateInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
 
-//   }
-// }
+    const res = await apollo
+      .mutate({
+        mutation: createProjectMutation,
+        variables: { input }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!res.data?.projectMutations.create.id) {
+      const err = getFirstErrorMessage(res.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Project creation failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Project successfully created'
+      })
+    }
+
+    return res
+  }
+}

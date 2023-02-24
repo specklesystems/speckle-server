@@ -5,6 +5,7 @@ import {
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
 import {
+  ProjectCreateInput,
   ProjectUpdateInput,
   StreamCreateInput,
   StreamUpdateInput
@@ -19,12 +20,13 @@ import {
 import { createBranch } from '@/modules/core/services/branches'
 import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
 import { StreamUpdateError } from '@/modules/core/errors/stream'
+import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 
 export async function createStreamReturnRecord(
-  params: StreamCreateInput & { ownerId: string },
+  params: (StreamCreateInput | ProjectCreateInput) & { ownerId: string },
   options?: Partial<{ createActivity: boolean }>
 ): Promise<StreamRecord> {
-  const { ownerId, withContributors } = params
+  const { ownerId } = params
   const { createActivity = true } = options || {}
 
   const stream = await createStream(params, { ownerId })
@@ -39,8 +41,8 @@ export async function createStreamReturnRecord(
   })
 
   // Invite contributors?
-  if (withContributors && withContributors.length) {
-    await inviteUsersToStream(ownerId, streamId, withContributors)
+  if (!isProjectCreateInput(params) && params.withContributors?.length) {
+    await inviteUsersToStream(ownerId, streamId, params.withContributors)
   }
 
   // Save activity

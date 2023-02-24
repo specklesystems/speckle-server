@@ -1,3 +1,4 @@
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import {
@@ -7,6 +8,12 @@ import {
   getStream
 } from '@/modules/core/repositories/streams'
 import {
+  getRateLimitResult,
+  isRateLimitBreached,
+  RateLimitAction
+} from '@/modules/core/services/ratelimiter'
+import {
+  createStreamReturnRecord,
   deleteStreamAndNotify,
   updateStreamAndNotify
 } from '@/modules/core/services/streams/management'
@@ -53,6 +60,22 @@ export = {
     async update(_parent, { stream }, { userId }) {
       await authorizeResolver(userId, stream.id, Roles.Stream.Owner)
       return await updateStreamAndNotify(stream, userId!)
+    },
+    async create(_parent, args, context) {
+      const rateLimitResult = await getRateLimitResult(
+        RateLimitAction.STREAM_CREATE,
+        context.userId!
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
+      }
+
+      const project = await createStreamReturnRecord(
+        { ...(args.input || {}), ownerId: context.userId! },
+        { createActivity: true }
+      )
+
+      return project
     }
   },
   User: {

@@ -33,6 +33,7 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
 
 type FormValues = {
   name: string
@@ -41,12 +42,14 @@ type FormValues = {
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
+  (e: 'created'): void
 }>()
 
 const props = defineProps<{
   open: boolean
 }>()
 
+const createProject = useCreateProject()
 const { handleSubmit } = useForm<FormValues>()
 
 const open = computed({
@@ -54,7 +57,11 @@ const open = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
-const onSubmit = handleSubmit((values) => {
-  console.log(values)
+const onSubmit = handleSubmit(async (values) => {
+  await createProject({
+    ...values
+  })
+  emit('created')
+  open.value = false
 })
 </script>
