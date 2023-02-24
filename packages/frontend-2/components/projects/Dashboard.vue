@@ -24,7 +24,10 @@
       v-if="!searchKey && (forceEmptyState || (projects && !projects.totalCount))"
     />
     <ProjectsDashboardFilled v-else-if="projects?.items?.length" :projects="projects" />
-    <div v-else>TODO: Project search empty state</div>
+    <CommonEmptySearchState
+      v-else
+      @clear-search=";(search = ''), updateSearchImmediately()"
+    />
   </div>
 </template>
 <script setup lang="ts">

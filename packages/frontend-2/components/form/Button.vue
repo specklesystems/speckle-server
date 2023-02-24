@@ -9,13 +9,13 @@
     role="button"
     @click="onClick"
   >
-    <Component :is="iconLeft" v-if="iconLeft" :class="iconClasses" />
+    <Component :is="iconLeft" v-if="iconLeft" :class="`${iconClasses} mr-2`" />
     <slot v-if="!hideText">Button</slot>
     <div v-else style="margin: 0 !important; width: 0.01px">
       &nbsp;
       <!-- The point of this is to ensure text & no-text buttons have the same height -->
     </div>
-    <Component :is="iconRight" v-if="iconRight" :class="iconClasses" />
+    <Component :is="iconRight" v-if="iconRight" :class="`${iconClasses} ml-2`" />
   </Component>
 </template>
 <script setup lang="ts">
@@ -23,7 +23,13 @@ import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning' | 'card'
+type FormButtonColor =
+  | 'default'
+  | 'invert'
+  | 'danger'
+  | 'warning'
+  | 'card'
+  | 'secondary'
 
 const emit = defineEmits<{
   /**
@@ -178,6 +184,11 @@ const bgAndBorderClasses = computed(() => {
       case 'danger':
         classParts.push(props.outlined ? 'border-danger' : 'bg-danger border-danger')
         break
+      case 'secondary':
+        classParts.push(
+          props.outlined ? 'border-foreground-2' : 'bg-foreground-2 border-foreground-2'
+        )
+        break
       case 'warning':
         classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
         break
@@ -224,6 +235,13 @@ const foregroundClasses = computed(() => {
             props.outlined ? 'text-warning' : 'text-foundation dark:text-foreground'
           )
           break
+        case 'secondary':
+          classParts.push(
+            props.outlined
+              ? 'text-foreground-2'
+              : 'text-foundation dark:text-foreground'
+          )
+          break
         case 'default':
         default:
           classParts.push(
@@ -235,13 +253,19 @@ const foregroundClasses = computed(() => {
       }
     }
   } else {
-    classParts.push(
-      props.disabled
-        ? 'text-foreground-disabled'
-        : props.color === 'invert'
-        ? 'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground-2'
-        : 'text-primary hover:text-primary-focus'
-    )
+    if (props.disabled) {
+      classParts.push('text-foreground-disabled')
+    } else {
+      if (props.color === 'invert') {
+        classParts.push(
+          'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground-2'
+        )
+      } else if (props.color === 'secondary') {
+        classParts.push('text-foreground-2 hover:text-primary-focus')
+      } else {
+        classParts.push('text-primary hover:text-primary-focus')
+      }
+    }
   }
   return classParts.join(' ')
 })

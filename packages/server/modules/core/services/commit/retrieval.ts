@@ -70,7 +70,7 @@ export async function getPaginatedBranchCommits(
     priorityCommitPromise || Promise.resolve([])
   ])
 
-  const newItems = [...priorityCommits, ...results.commits]
+  const newItems = [...priorityCommits, ...results.commits].slice(0, params.limit)
   const newCursor =
     newItems.length > 0 ? newItems[newItems.length - 1].createdAt.toISOString() : null
 

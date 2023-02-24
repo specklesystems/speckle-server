@@ -5,8 +5,16 @@
       :key="item.id"
       :model="item"
       :project-id="projectId"
+      :show-actions="showActions"
+      :show-versions="showVersions"
+      :disable-default-link="disableDefaultLinks"
+      @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
     />
   </div>
+  <CommonEmptySearchState
+    v-else-if="search && latestModelsResult?.project?.models.items.length === 0"
+    @clear-search="() => $emit('clear-search')"
+  />
   <div v-else>TODO: Grid empty state</div>
 </template>
 <script setup lang="ts">
@@ -16,19 +24,32 @@ import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
+  (e: 'model-clicked', v: { id: string; e: MouseEvent }): void
+  (e: 'clear-search'): void
 }>()
 
-const props = defineProps<{
-  project: ProjectPageModelsViewFragment
-  search?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    project: ProjectPageModelsViewFragment
+    search?: string
+    showActions?: boolean
+    showVersions?: boolean
+    disableDefaultLinks?: boolean
+    excludedIds?: string[]
+  }>(),
+  {
+    showActions: true,
+    showVersions: true
+  }
+)
 
 const projectId = computed(() => props.project.id)
 const areQueriesLoading = useQueryLoading()
 const { result: latestModelsResult } = useQuery(latestModelsQuery, () => ({
   projectId: props.project.id,
   filter: {
-    search: props.search || null
+    search: props.search || null,
+    excludeIds: props.excludedIds || null
   }
 }))
 

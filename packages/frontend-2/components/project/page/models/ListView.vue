@@ -4,15 +4,18 @@
     class="space-y-4"
   >
     <ProjectPageModelsStructureItem
-      v-for="item in searchResult?.project?.models.items"
-      :key="item.id"
-      :item="{ name: item.name, model: item } as unknown as SingleLevelModelTreeItemFragment"
+      v-for="item in searchResultItems"
+      :key="item.model?.id"
+      :item="item"
       :project-id="project.id"
     />
   </div>
-  <div v-else-if="search && searchResult?.project?.models.items.length === 0">
-    TODO: Empty search result state
-  </div>
+
+  <CommonEmptySearchState
+    v-else-if="search && searchResult?.project?.models.items.length === 0"
+    @clear-search="$emit('clear-search')"
+  />
+
   <ProjectPageModelsStructuredView v-else :project="project" />
 </template>
 <script setup lang="ts">
@@ -25,6 +28,7 @@ import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
+  (e: 'clear-search'): void
 }>()
 
 const props = defineProps<{
@@ -46,5 +50,14 @@ const { result: searchResult } = useQuery(
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
+})
+
+const searchResultItems = computed(() => {
+  return searchResult.value?.project?.models.items.map((item) => {
+    return {
+      name: item.name,
+      model: item
+    } as unknown as SingleLevelModelTreeItemFragment
+  })
 })
 </script>

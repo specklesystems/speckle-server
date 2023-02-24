@@ -47,12 +47,6 @@
           <IconPerspectiveMore v-else class="w-4 h-4" />
         </ViewerControlsButtonToggle>
 
-        <!-- Sun and lights -->
-        <ViewerSunMenu />
-        <!-- <ViewerControlsButtonToggle flat @click="">
-          <SunIcon class="w-5 h-5" />
-        </ViewerControlsButtonToggle> -->
-
         <!-- Section Box -->
         <ViewerControlsButtonToggle
           flat
@@ -63,11 +57,15 @@
           <ScissorsIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
 
+        <!-- Sun and lights -->
+        <ViewerSunMenu />
+
         <!-- Views -->
         <ViewerViewsMenu />
       </ViewerControlsButtonGroup>
     </div>
     <div
+      ref="scrollableControlsContainer"
       :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-80 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
@@ -76,7 +74,10 @@
     >
       <div v-show="activeControl === 'models'">
         <KeepAlive>
-          <ViewerResourcesList class="pointer-events-auto" />
+          <ViewerResourcesList
+            class="pointer-events-auto"
+            @loaded-more="scrollControlsToBottom"
+          />
         </KeepAlive>
       </div>
       <div v-show="activeControl === 'explorer'">
@@ -98,6 +99,8 @@ import {
   ScissorsIcon
 } from '@heroicons/vue/24/outline'
 import { onKeyStroke } from '@vueuse/core'
+import { Nullable } from '@speckle/shared'
+import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const {
@@ -111,6 +114,8 @@ const {
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'comments'
 
 const activeControl = ref<ActiveControl>('models')
+const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
+
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
     ? (activeControl.value = 'none')
@@ -126,4 +131,9 @@ onKeyStroke(['c', 'C'], () => toggleActiveControl('comments'))
 onKeyStroke(' ', () => instance.zoom())
 onKeyStroke('p', () => toggleProjection())
 onKeyStroke('s', () => toggleSectionBox())
+
+const scrollControlsToBottom = () => {
+  if (scrollableControlsContainer.value)
+    scrollToBottom(scrollableControlsContainer.value)
+}
 </script>

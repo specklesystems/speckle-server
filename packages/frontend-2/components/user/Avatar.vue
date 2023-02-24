@@ -3,7 +3,8 @@
     :class="[
       'shrink-0 rounded-full overflow-hidden border-2 border-foundation bg-primary flex items-center justify-center uppercase text-xs font-semibold text-foreground-on-primary transition',
       sizeClasses,
-      hoverClasses
+      hoverClasses,
+      activeClasses
     ]"
   >
     <slot>
@@ -54,6 +55,7 @@ const props = withDefaults(
     user?: AvatarUserType | null
     size?: UserAvatarSize
     hoverEffect?: boolean
+    active?: boolean
   }>(),
   {
     size: 'base',
@@ -65,7 +67,7 @@ const props = withDefaults(
 const { sizeClasses } = useAvatarSizeClasses({ props: toRefs(props) })
 
 const initials = computed(() => {
-  if (!props.user?.name.length) return
+  if (!props.user?.name?.length) return
   const parts = props.user.name.split(' ')
   return parts[0][0] + (parts[1]?.[0] || '')
 })
@@ -73,6 +75,11 @@ const initials = computed(() => {
 const hoverClasses = computed(() => {
   if (props.hoverEffect)
     return 'hover:border-primary focus:border-primary active:scale-95'
+  return ''
+})
+
+const activeClasses = computed(() => {
+  if (props.active) return 'border-primary'
   return ''
 })
 </script>

@@ -34,12 +34,14 @@
           :search="debouncedSearch"
           :project="project"
           @update:loading="queryLoading = $event"
+          @clear-search=";(search = ''), updateSearchImmediately()"
         />
         <ProjectPageModelsCardView
           v-if="gridOrList === GridListToggleValue.Grid"
           :search="debouncedSearch"
           :project="project"
           @update:loading="queryLoading = $event"
+          @clear-search=";(search = ''), updateSearchImmediately()"
         />
       </div>
     </div>

@@ -1,8 +1,10 @@
 <template>
   <div>
     <div
-      v-show="loading"
-      class="relative w-full h-1 bg-blue-500/30 text-xs text-foreground-on-primary overflow-hidden rounded-xl"
+      :class="[
+        'relative w-full h-1 bg-blue-500/30 text-xs text-foreground-on-primary overflow-hidden rounded-xl',
+        loading ? 'opacity-100' : 'opacity-0'
+      ]"
     >
       <div class="swoosher relative top-0 bg-blue-500/50"></div>
     </div>

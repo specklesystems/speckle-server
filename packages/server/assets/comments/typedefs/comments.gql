@@ -403,7 +403,8 @@ type ViewerUserTypingMessage {
 
 type ViewerUserActivityMessage {
   userName: String!
-  userId: String
+  userId: String!
+  user: LimitedUser!
   viewerSessionId: String!
   status: ViewerUserActivityStatus!
   selection: ViewerUserSelectionInfo

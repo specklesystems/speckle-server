@@ -35,15 +35,49 @@ export const viewerLoadedResourcesQuery = graphql(`
           id
           name
           updatedAt
-          versions(filter: { priorityIds: $versionIds }) {
+          versions(filter: { priorityIds: $versionIds }, limit: 10) {
             totalCount
+            cursor
             items {
               ...ViewerModelVersionCardItem
             }
           }
         }
       }
+      ...ProjectPageModelsView
       ...ModelPageProject
+    }
+  }
+`)
+
+/**
+ * Note: The Model.versions query must be exactly the same as the one in `ViewerLoadedResources` for
+ * automatic cache updates to work properly
+ */
+export const viewerModelVersionsQuery = graphql(`
+  query ViewerModelVersions(
+    $projectId: String!
+    $modelId: String!
+    $priorityVersionIds: [String!]
+    $versionsCursor: String
+  ) {
+    project(id: $projectId) {
+      id
+      role
+      model(id: $modelId) {
+        id
+        versions(
+          filter: { priorityIds: $priorityVersionIds }
+          cursor: $versionsCursor
+          limit: 10
+        ) {
+          totalCount
+          cursor
+          items {
+            ...ViewerModelVersionCardItem
+          }
+        }
+      }
     }
   }
 `)

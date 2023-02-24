@@ -153,6 +153,10 @@ input ProjectModelsFilter {
   Only select models w/ the specified IDs
   """
   ids: [String!]
+  """
+  Excldue models w/ the specified IDs
+  """
+  excludeIds: [String!]
 }
 
 input ModelVersionsFilter {

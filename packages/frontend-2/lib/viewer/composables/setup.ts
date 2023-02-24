@@ -23,7 +23,8 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery,
-  viewerLoadedThreadsQuery
+  viewerLoadedThreadsQuery,
+  viewerModelVersionsQuery
 } from '~~/lib/viewer/graphql/queries'
 import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
@@ -46,7 +47,9 @@ import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/model
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import {
   CacheObjectReference,
+  convertThrowIntoFetchResult,
   getCacheId,
+  getFirstErrorMessage,
   getObjectReference,
   modifyObjectFields,
   updateCacheByFilter
@@ -190,6 +193,10 @@ export type InjectableViewerState = Readonly<{
        * Variables used to load the threads query. Relevant when making cache updates.
        */
       threadsQueryVariables: ComputedRef<Optional<ViewerLoadedThreadsQueryVariables>>
+      /**
+       * Fetch the next page of versions for a loaded model
+       */
+      loadMoreVersions: (modelId: string) => Promise<void>
     }
   }
   /**
@@ -199,6 +206,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * Read/write active viewer filters
      */
+    spotlightUserId: Ref<Nullable<string>>
     filters: {
       current: ComputedRef<Nullable<FilteringState>>
       localFilterPropKey: ComputedRef<Nullable<string>>
@@ -215,12 +223,22 @@ export type InjectableViewerState = Readonly<{
     }
     sectionBox: {
       isSectionBoxEnabled: Ref<boolean>
+      setSectionBox: (
+        box?: {
+          min: { x: number; y: number; z: number }
+          max: { x: number; y: number; z: number }
+        },
+        offset?: number
+      ) => void
       toggleSectionBox: () => void
+      sectionBoxOff: () => void
+      sectionBoxOn: () => void
     }
     viewerBusy: WritableComputedRef<boolean>
     selection: {
       objects: ComputedRef<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
+      // setSelectionFromObjectIds: (ids: string[]) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
@@ -480,6 +498,7 @@ function setupResponseResourceData(
   InjectableViewerState['resources']['response'],
   'resourceItems' | 'resourceItemsQueryVariables'
 > {
+  const apollo = useApolloClient().client
   const globalError = useError()
   const { triggerNotification } = useGlobalToast()
 
@@ -501,18 +520,26 @@ function setupResponseResourceData(
         !!r.modelId
     )
   )
+  const versionIds = computed(() =>
+    nonObjectResourceItems.value.map((r) => r.versionId).sort()
+  )
+  const versionCursors = ref({} as Record<string, Nullable<string>>)
+
+  const viewerLoadedResourcesVariablesFunc =
+    (): ViewerLoadedResourcesQueryVariables => ({
+      projectId: projectId.value,
+      modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
+      versionIds: versionIds.value
+    })
 
   // MODELS AND VERSIONS
   // sorting variables so that we don't refetech just because the order changed
   const {
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables,
-    onError: onViewerLoadedResourcesError
-  } = useQuery(viewerLoadedResourcesQuery, () => ({
-    projectId: projectId.value,
-    modelIds: nonObjectResourceItems.value.map((r) => r.modelId).sort(),
-    versionIds: nonObjectResourceItems.value.map((r) => r.versionId).sort()
-  }))
+    onError: onViewerLoadedResourcesError,
+    onResult: onViewerLoadedResourcesResult
+  } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc)
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -531,6 +558,56 @@ function setupResponseResourceData(
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
     })
+  })
+
+  // Load initial batch of cursors for each model
+  onViewerLoadedResourcesResult((res) => {
+    if (!res.data?.project?.models) return
+
+    for (const model of res.data.project.models.items) {
+      const modelId = model.id
+      if (versionCursors.value[modelId]) continue
+
+      const cursor = model.versions.cursor
+      if (!cursor) continue
+
+      versionCursors.value[modelId] = cursor
+    }
+  })
+
+  const loadMoreVersions = async (modelId: string) => {
+    const cursor = versionCursors.value[modelId]
+    const baseVariables = viewerLoadedResourcesVariablesFunc()
+    const { data, errors } = await apollo
+      .query({
+        query: viewerModelVersionsQuery,
+        variables: {
+          projectId: baseVariables.projectId,
+          modelId,
+          priorityVersionIds: baseVariables.versionIds,
+          versionsCursor: cursor
+        },
+        fetchPolicy: 'network-only'
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.project?.model?.versions) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Can't load more versions",
+        description: getFirstErrorMessage(errors)
+      })
+      return
+    }
+
+    if (data.project.model.versions.cursor) {
+      versionCursors.value[modelId] = data.project.model.versions.cursor
+    }
+  }
+
+  watch(versionIds, () => {
+    // clear cursors, since the query is now different
+    versionCursors.value = {}
   })
 
   // COMMENT THREADS
@@ -567,7 +644,8 @@ function setupResponseResourceData(
     modelsAndVersionIds,
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
-    threadsQueryVariables: computed(() => threadsQueryVariables.value)
+    threadsQueryVariables: computed(() => threadsQueryVariables.value),
+    loadMoreVersions
   }
 }
 
@@ -688,6 +766,21 @@ function setupInterfaceState(
     setViewerSelectionFilter()
   }
 
+  // NOTE: can be used for directly selecting objects coming from user tracking.
+  // commented out as not sure it's right behaviour.
+  // const setSelectionFromObjectIds = (ids: string[]) => {
+  //   const tree = viewer.instance.getWorldTree()
+  //   const res = tree.findAll((node: TreeNode) => {
+  //     const id = node.model?.raw.id as string
+  //     if (ids.includes(id)) return true
+  //     return false
+  //   })
+
+  //   const objs = res.map((node) => node.model?.raw as Record<string, unknown>)
+  //   selectedObjects.value = objs
+  //   setViewerSelectionFilter()
+  // }
+
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
     const index = selectedObjects.value.findIndex((o) => o.id === objectId)
@@ -748,10 +841,22 @@ function setupInterfaceState(
     state.viewer.instance.toggleSectionBox()
     state.viewer.instance.requestRender()
   }
+  const setSectionBox = (
+    box?: {
+      min: { x: number; y: number; z: number }
+      max: { x: number; y: number; z: number }
+    },
+    offset?: number
+  ) => {
+    state.viewer.instance.setSectionBox(box, offset)
+  }
+
+  const spotlightUserId = ref(null as Nullable<string>)
 
   return {
     ...state,
     ui: {
+      spotlightUserId,
       viewerBusy,
       camera: {
         isPerspectiveProjection,
@@ -759,7 +864,16 @@ function setupInterfaceState(
       },
       sectionBox: {
         isSectionBoxEnabled,
-        toggleSectionBox
+        setSectionBox,
+        toggleSectionBox,
+        sectionBoxOff: () => {
+          state.viewer.instance.sectionBoxOff()
+          isSectionBoxEnabled.value = false
+        },
+        sectionBoxOn: () => {
+          state.viewer.instance.sectionBoxOn()
+          isSectionBoxEnabled.value = true
+        }
       },
       filters: {
         current: computed(() => filteringState.value),
@@ -774,6 +888,7 @@ function setupInterfaceState(
       selection: {
         objects: computed(() => selectedObjects.value.slice()),
         addToSelection,
+        // setSelectionFromObjectIds,
         clearSelection,
         removeFromSelection
       }
@@ -805,7 +920,7 @@ function useViewerObjectAutoLoading(state: InjectableViewerState) {
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObject(objectUrl, authToken.value || undefined)
+      viewer.loadObjectAsync(objectUrl, authToken.value || undefined)
     }
   }
 

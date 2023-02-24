@@ -6,7 +6,5 @@
   </div>
 </template>
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 const route = useRoute()
 </script>

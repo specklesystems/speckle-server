@@ -129,7 +129,6 @@ const updateCommentPositions = () => {
 useViewerCameraTracker(updateCommentPositions)
 
 const hasAddedOverlay = ref(false)
-const hasSwappedVersions = ref(false)
 
 async function addOverlay() {
   // TODO

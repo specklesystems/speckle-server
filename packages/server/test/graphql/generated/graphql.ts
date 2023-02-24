@@ -1246,6 +1246,8 @@ export enum ProjectCommentsUpdatedMessageType {
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Excldue models w/ the specified IDs */
+  excludeIds?: InputMaybe<Array<Scalars['String']>>;
   /** Only select models w/ the specified IDs */
   ids?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out models that don't have any versions */
@@ -2237,7 +2239,8 @@ export type ViewerUserActivityMessage = {
   selection?: Maybe<ViewerUserSelectionInfo>;
   status: ViewerUserActivityStatus;
   typing?: Maybe<ViewerUserTypingMessage>;
-  userId?: Maybe<Scalars['String']>;
+  user: LimitedUser;
+  userId: Scalars['String'];
   userName: Scalars['String'];
   viewerSessionId: Scalars['String'];
 };
