@@ -21,7 +21,7 @@ export async function sendEmail({
 }: SendEmailParams): Promise<boolean> {
   const transporter = getTransporter()
   if (!transporter) {
-    logger.error('No email transport present. Cannot send emails.')
+    logger.warn('No email transport present. Cannot send emails.')
     return false
   }
   try {

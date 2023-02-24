@@ -35,12 +35,18 @@ exports.init = async (app) => {
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
+      const boundLogger = logger.child({
+        endpoint: '/api/file/:fileType/:streamId/:branchName?',
+        streamId: req.params.streamId,
+        userId: req.context.userId,
+        branchName: req.params.branchName ?? 'main'
+      })
       req.pipe(
         request(
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
-              logger.error(err)
+              boundLogger.error(err)
               res.status(500).send(err.message)
               return
             }
