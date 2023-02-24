@@ -47,3 +47,4 @@ spec:
             name: speckle-server
             port:
               number: 3000
+      {{- end }}
