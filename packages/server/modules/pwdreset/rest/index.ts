@@ -25,7 +25,7 @@ export default function (app: Express) {
 
       return res.status(200).send('Password reset. Please log in.')
     } catch (e: unknown) {
-      req.log.error(e, 'Error while finalizing password recovery.')
+      req.log.info({ err: e }, 'Error while finalizing password recovery.')
       res.status(400).send(ensureError(e).message)
     }
   })
