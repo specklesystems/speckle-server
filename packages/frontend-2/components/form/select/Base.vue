@@ -203,7 +203,7 @@ const props = defineProps({
    */
   by: {
     type: String,
-    required: true
+    required: false
   },
   disabled: {
     type: Boolean as PropType<Optional<boolean>>,
@@ -255,5 +255,6 @@ const filteredItems = computed(() => {
 })
 
 const simpleDisplayText = (v: ValueType) => JSON.stringify(v)
-const itemKey = (v: SingleItem): string | number => v[props.by] as string
+const itemKey = (v: SingleItem): string | number =>
+  props.by ? (v[props.by] as string) : v
 </script>

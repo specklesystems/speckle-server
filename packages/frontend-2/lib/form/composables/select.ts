@@ -7,6 +7,9 @@ import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resiz
 
 type GenericSelectValueType<T> = T | T[] | undefined
 
+/**
+ * Common setup for FormSelectBase wrapping selector components
+ */
 export function useFormSelectChildInternals<T>(params: {
   props: ToRefs<{
     modelValue?: GenericSelectValueType<T>
@@ -18,22 +21,25 @@ export function useFormSelectChildInternals<T>(params: {
   /**
    * @see {useWrappingContainerHiddenCount()}
    */
-  dynamicVisibility: {
+  dynamicVisibility?: {
     elementToWatchForChanges: Ref<Nullable<HTMLElement>>
     itemContainer: Ref<Nullable<HTMLElement>>
   }
 }) {
-  const {
-    props,
-    emit,
-    dynamicVisibility: { elementToWatchForChanges, itemContainer }
-  } = params
+  const { props, emit, dynamicVisibility } = params
 
-  const { hiddenItemCount } = useWrappingContainerHiddenCount({
-    skipCalculation: computed(() => !props.multiple?.value),
-    elementToWatchForChanges,
-    itemContainer
-  })
+  let hiddenItemCount: Ref<number>
+  if (dynamicVisibility) {
+    const { elementToWatchForChanges, itemContainer } = dynamicVisibility
+    const hiddenCountData = useWrappingContainerHiddenCount({
+      skipCalculation: computed(() => !props.multiple?.value),
+      elementToWatchForChanges,
+      itemContainer
+    })
+    hiddenItemCount = hiddenCountData.hiddenItemCount
+  } else {
+    hiddenItemCount = ref(0)
+  }
 
   /**
    * Use this to get or set the v-model value of the select input in a proper way

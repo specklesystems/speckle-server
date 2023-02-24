@@ -21,7 +21,15 @@
         />
       </div>
       <div class="flex justify-between">
-        <div>TODO: Visibility switcher</div>
+        <div class="">
+          <ProjectVisibilitySelect v-model="visibility" />
+          <!-- <select id="cars" name="cars">
+            <option value="volvo">Volvo</option>
+            <option value="saab">Saab</option>
+            <option value="mercedes">Mercedes</option>
+            <option value="audi">Audi</option>
+          </select> -->
+        </div>
         <div class="space-x-2">
           <FormButton text color="secondary" @click="open = false">Cancel</FormButton>
           <FormButton submit>Create project</FormButton>
@@ -32,6 +40,7 @@
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
+import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
 
@@ -51,6 +60,8 @@ const props = defineProps<{
 
 const createProject = useCreateProject()
 const { handleSubmit } = useForm<FormValues>()
+
+const visibility = ref(ProjectVisibility.Unlisted)
 
 const open = computed({
   get: () => props.open,

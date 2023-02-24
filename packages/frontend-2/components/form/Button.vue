@@ -9,7 +9,11 @@
     role="button"
     @click="onClick"
   >
-    <Component :is="iconLeft" v-if="iconLeft" :class="`${iconClasses} mr-2`" />
+    <Component
+      :is="iconLeft"
+      v-if="iconLeft"
+      :class="`${iconClasses} ${hideText ? '' : 'mr-2'}`"
+    />
     <slot v-if="!hideText">Button</slot>
     <div v-else style="margin: 0 !important; width: 0.01px">
       &nbsp;
