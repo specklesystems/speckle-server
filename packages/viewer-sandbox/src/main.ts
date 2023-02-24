@@ -108,7 +108,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
 
   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-  // console.log(ids[0])
+  console.log(selectionInfo)
   await viewer.selectObjects(ids as string[])
 })
 
@@ -238,6 +238,14 @@ await sandbox.loadUrl(
   // tekla 2
   // 'https://speckle.xyz/streams/be4813ccd2/commits/da85000921?c=%5B-1.12295,-2.60901,6.12402,4.77979,0.555,3.63346,0,1%5D'
   // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/bb7b718a1a'
-  'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
+  // large lines
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  // Instances Rhino
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
+  // Instances Revit
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/92858681b7'
+  'https://latest.speckle.dev/streams/f92e060177/commits/655771674e'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/00dbbf4509'
 )
