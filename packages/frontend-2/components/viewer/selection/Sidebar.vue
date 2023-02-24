@@ -52,7 +52,7 @@
 
     <div>
       <div v-for="object in objects" :key="(object.id as string)">
-        <ViewerSelectionObject :object="object" :unfold="unfold" />
+        <ViewerSelectionObject :object="object" :unfold="false" />
         <div class="w-full my-2 border-b border-outline-3"></div>
       </div>
     </div>

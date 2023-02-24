@@ -95,10 +95,9 @@ import {
   FunnelIcon,
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
-  SunIcon,
-  ScissorsIcon,
-  VideoCameraIcon
+  ScissorsIcon
 } from '@heroicons/vue/24/outline'
+import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const {
@@ -116,4 +115,15 @@ const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
     ? (activeControl.value = 'none')
     : (activeControl.value = control)
+
+// Main nav kbd shortcuts
+onKeyStroke('m', () => toggleActiveControl('models'))
+onKeyStroke('e', () => toggleActiveControl('explorer'))
+onKeyStroke('f', () => toggleActiveControl('filters'))
+onKeyStroke(['c', 'C'], () => toggleActiveControl('comments'))
+
+// Viewer actions kbd shortcuts
+onKeyStroke(' ', () => instance.zoom())
+onKeyStroke('p', () => toggleProjection())
+onKeyStroke('s', () => toggleSectionBox())
 </script>
