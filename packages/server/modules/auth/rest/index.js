@@ -47,9 +47,11 @@ module.exports = (app) => {
         err instanceof InvalidAccessCodeRequestError ||
         err instanceof ForbiddenError
       ) {
+        res.log.info({ err }, 'Invalid access code request error, or Forbidden error.')
         return res.status(400).send(err.message)
       } else {
         sentry({ err })
+        res.log.error(err)
         return res
           .status(500)
           .send('Something went wrong while processing your request')
@@ -96,6 +98,7 @@ module.exports = (app) => {
       return res.send(authResponse)
     } catch (err) {
       sentry({ err })
+      res.log.info({ err }, 'Error while trying to generate a new token.')
       return res.status(401).send({ err: err.message })
     }
   })
@@ -116,6 +119,7 @@ module.exports = (app) => {
       return res.status(200).send({ message: 'You have logged out.' })
     } catch (err) {
       sentry({ err })
+      res.log.info({ err }, 'Error while trying to logout.')
       return res.status(400).send('Something went wrong while trying to logout.')
     }
   })

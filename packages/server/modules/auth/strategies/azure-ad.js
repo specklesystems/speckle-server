@@ -123,10 +123,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       } catch (err) {
         switch (err.constructor) {
           case UserInputError:
-            req.log.info(err)
+            req.log.info(
+              { err },
+              'User input error during Azure AD authentication callback.'
+            )
             break
           default:
-            req.log.error(err)
+            req.log.error(err, 'Error during Azure AD authentication callback.')
         }
         return next()
       }

@@ -43,15 +43,16 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           password: req.body.password
         })
 
-        if (!valid) throw new UserInputError('Invalid credentials')
+        if (!valid) throw new UserInputError('Invalid credentials.')
 
         const user = await getUserByEmail({ email: req.body.email })
-        if (!user) throw new UserInputError('Invalid credentials')
+        if (!user) throw new UserInputError('Invalid credentials.')
         req.user = { id: user.id }
 
         return next()
       } catch (err) {
-        return res.status(401).send({ err: true, message: 'Invalid credentials' })
+        res.log.info({ err }, 'Error while logging in.')
+        return res.status(401).send({ err: true, message: 'Invalid credentials.' })
       }
     },
     finalizeAuth
@@ -112,8 +113,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           case PasswordTooShortError:
           case UserInputError:
           case NoInviteFoundError:
+            res.log.info({ err }, 'Error while registering.')
             return res.status(400).send({ err: err.message })
           default:
+            res.log.error(err, 'Error while registering.')
             return res.status(500).send({ err: err.message })
         }
       }

@@ -14,7 +14,7 @@ export const LoggingExpressMiddleware = HttpLogger({
   },
   customLogLevel: (req, res, err) => {
     if (res.statusCode >= 400 && res.statusCode < 500) {
-      return 'warn'
+      return 'info'
     } else if (res.statusCode >= 500 || err) {
       return 'error'
     } else if (res.statusCode >= 300 && res.statusCode < 400) {
@@ -42,20 +42,22 @@ export const LoggingExpressMiddleware = HttpLogger({
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
-      const resRawHeaders = res as SerializedResponse & {
-        raw: { headers: Record<string, string> }
+      const resRaw = res as SerializedResponse & {
+        raw: {
+          headers: Record<string, string>
+        }
       }
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
         headers: {
-          'content-length': resRawHeaders.raw.headers['content-length'],
-          'content-type': resRawHeaders.raw.headers['content-type'],
-          'retry-after': resRawHeaders.raw.headers['retry-after'],
-          'x-ratelimit-remaining': resRawHeaders.raw.headers['x-ratelimit-remaining'],
-          'x-ratelimit-reset': resRawHeaders.raw.headers['x-ratelimit-reset'],
-          'x-request-id': resRawHeaders.raw.headers['x-request-id'],
-          'x-speckle-meditation': resRawHeaders.raw.headers['x-speckle-meditation']
+          'content-length': resRaw.raw.headers['content-length'],
+          'content-type': resRaw.raw.headers['content-type'],
+          'retry-after': resRaw.raw.headers['retry-after'],
+          'x-ratelimit-remaining': resRaw.raw.headers['x-ratelimit-remaining'],
+          'x-ratelimit-reset': resRaw.raw.headers['x-ratelimit-reset'],
+          'x-request-id': resRaw.raw.headers['x-request-id'],
+          'x-speckle-meditation': resRaw.raw.headers['x-speckle-meditation']
         }
       }
     })

@@ -45,6 +45,7 @@ exports.init = async (app) => {
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
+              res.log.error(err, 'Error while uploading blob.')
               res.status(500).send(err.message)
               return
             }

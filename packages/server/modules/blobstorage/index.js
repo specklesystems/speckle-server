@@ -161,7 +161,7 @@ exports.init = async (app) => {
         )
 
         const status = 400
-        const response = 'Upload request error. The server logs may have more details'
+        const response = 'Upload request error. The server logs may have more details.'
         res.status(status).end(response)
       })
 
