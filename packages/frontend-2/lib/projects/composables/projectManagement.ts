@@ -44,3 +44,11 @@ export function useProjectUpdateTracking(
     handler?.(event, cache)
   })
 }
+
+// export function useCreateProject() {
+//   const apollo = useApolloClient().client
+
+//   return async () => {
+
+//   }
+// }

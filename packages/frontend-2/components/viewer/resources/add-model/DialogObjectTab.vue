@@ -12,6 +12,7 @@
         :custom-icon="CubeIcon"
         :rules="[isRequired, isValidValue]"
         placeholder="Comma-delimited object IDs or an URL to an object(-s)"
+        auto-focus
       />
       <FormButton :icon-left="PlusIcon" size="lg" submit>Add</FormButton>
     </form>

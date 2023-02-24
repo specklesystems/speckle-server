@@ -6,6 +6,12 @@ extend type Query {
   project(id: String!): Project
 }
 
+enum ProjectVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
 """
 Any values left null will be ignored, so only set the properties that you want updated
 """
@@ -25,6 +31,15 @@ input ProjectUpdateInput {
   allowPublicComments: Boolean
 }
 
+"""
+Any values left null will be ignored
+"""
+input ProjectCreateInput {
+  name: String
+  description: String
+  visibility: ProjectVisibility
+}
+
 type ProjectMutations {
   """
   Delete an existing project
@@ -40,6 +55,11 @@ type ProjectMutations {
   Create onboarding/tutorial project
   """
   createForOnboarding: Project!
+
+  """
+  Create new project
+  """
+  create(input: ProjectCreateInput): Project!
 }
 
 extend type Mutation {

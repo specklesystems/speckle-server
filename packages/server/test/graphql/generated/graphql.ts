@@ -1243,6 +1243,13 @@ export enum ProjectCommentsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+/** Any values left null will be ignored */
+export type ProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+};
+
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
@@ -1275,12 +1282,19 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Create new project */
+  create: Project;
   /** Create onboarding/tutorial project */
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
+};
+
+
+export type ProjectMutationsCreateArgs = {
+  input?: InputMaybe<ProjectCreateInput>;
 };
 
 
@@ -1345,6 +1359,12 @@ export enum ProjectVersionsUpdatedMessageType {
   Created = 'CREATED',
   Deleted = 'DELETED',
   Updated = 'UPDATED'
+}
+
+export enum ProjectVisibility {
+  Private = 'PRIVATE',
+  Public = 'PUBLIC',
+  Unlisted = 'UNLISTED'
 }
 
 export type Query = {

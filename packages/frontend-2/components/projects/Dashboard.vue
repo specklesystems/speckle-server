@@ -1,7 +1,9 @@
 <template>
   <div>
     <Portal to="primary-actions">
-      <FormButton :icon-left="PlusIcon">New Project</FormButton>
+      <FormButton :icon-left="PlusIcon" @click="openNewProject = true">
+        New Project
+      </FormButton>
     </Portal>
     <div class="flex items-center mb-8 top-16">
       <h1 class="h4 font-bold flex-grow">Projects</h1>
@@ -28,6 +30,7 @@
       v-else
       @clear-search=";(search = ''), updateSearchImmediately()"
     />
+    <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
 <script setup lang="ts">
@@ -68,6 +71,7 @@ const onUserProjectsUpdateSubscription = graphql(`
 
 const search = ref('')
 const debouncedSearch = ref('')
+const openNewProject = ref(false)
 
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()

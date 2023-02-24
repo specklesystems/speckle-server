@@ -8,6 +8,7 @@
         placeholder="Search"
         class="bg-foundation shadow w-60"
         :show-clear="search !== ''"
+        auto-focus
         @change="updateSearchImmediately"
         @update:model-value="updateDebouncedSearch"
       ></FormTextInput>
@@ -23,6 +24,7 @@
       disable-default-links
       @update:loading="($event) => (queryLoading = $event)"
       @model-clicked="onModelClicked"
+      @clear-search="clear"
     />
   </div>
 </template>
@@ -58,6 +60,11 @@ const updateSearchImmediately = () => {
 
 const onModelClicked = ({ id }: { id: string }) => {
   emit('chosen', { modelId: id })
+}
+
+const clear = () => {
+  search.value = ''
+  updateSearchImmediately()
 }
 
 watch(search, (newVal) => {
