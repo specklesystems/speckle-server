@@ -22,6 +22,8 @@
         :disabled="disabled"
         @submit="onSubmit"
         @created="$emit('created')"
+        @focusin="setGlobalFocus(true)"
+        @focusout="setGlobalFocus(false)"
       />
     </FormFileUploadZone>
     <FormFileUploadProgress
@@ -42,6 +44,7 @@ import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
 import { useAttachments } from '~~/lib/core/composables/fileUpload'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { isSuccessfullyUploaded } from '~~/lib/core/api/blobStorage'
+import { useTextInputGlobalFocus } from '~~/composables/states'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: Optional<CommentEditorValue>): void
@@ -132,4 +135,10 @@ watch(
 defineExpose({
   openFilePicker
 })
+
+const globalTextInputFocus = useTextInputGlobalFocus()
+
+function setGlobalFocus(status: boolean) {
+  globalTextInputFocus.value = status
+}
 </script>

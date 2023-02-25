@@ -66,7 +66,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-80 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
+      :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-72 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'

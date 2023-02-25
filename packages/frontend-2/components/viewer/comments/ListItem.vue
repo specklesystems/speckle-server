@@ -14,7 +14,8 @@
     </div>
     <div class="text-xs mt-1">
       [Archived: {{ thread.archived }}] [Is resource loaded in viewer:
-      {{ isThreadResourceLoaded ? 'yes' : 'no' }}]
+      {{ isThreadResourceLoaded ? 'yes' : 'no' }}] [author count:
+      {{ thread.replyAuthors.totalCount }}]
     </div>
   </div>
 </template>

@@ -11,7 +11,8 @@
           {{ comment.author.name }}
         </span>
         <span class="text-xs truncate text-foreground-2">{{ timeFromNow }}</span>
-        <div class="pl-2">
+        <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
+        <!-- <div class="pl-2">
           <CommonTextLink
             v-if="canArchive"
             class="absolute text-foreground-2 top-3 right-3"
@@ -19,7 +20,7 @@
           >
             <TrashIcon class="h-3 w-3" />
           </CommonTextLink>
-        </div>
+        </div> -->
       </div>
       <div class="truncate text-sm text-foreground flex flex-col mt-2">
         <CommonTiptapTextEditor

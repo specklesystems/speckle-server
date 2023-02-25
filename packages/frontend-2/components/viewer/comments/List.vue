@@ -47,6 +47,12 @@ graphql(`
         ...ViewerCommentsReplyItem
       }
     }
+    replyAuthors(limit: 4) {
+      totalCount
+      items {
+        ...FormUsersSelectItem
+      }
+    }
     resources {
       resourceId
       resourceType

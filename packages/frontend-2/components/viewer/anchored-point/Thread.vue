@@ -7,50 +7,61 @@
     }"
   >
     <div class="relative">
-      <!-- <button @click="onThreadClick">
-        <span v-if="threadEmoji">{{ threadEmoji }}</span>
-        <ChatBubbleOvalLeftEllipsisIcon
-          v-else-if="!isExpanded && !modelValue.archived"
-          class="w-6 h-6"
-        />
-        <CheckBadgeIcon v-else-if="modelValue.archived" class="w-6 h-6 text-lime-500" />
-        <XMarkIcon v-else class="w-6 h-6" />
-      </button> -->
       <button
-        :class="`${
-          isExpanded ? 'outline outline-2 outline-primary' : ''
-        } hover:outline-1 hover:outline-primary-muted bg-foundation shadow flex -space-x-1 p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
+        :class="`
+        ${
+          modelValue.isOccluded && !isExpanded
+            ? 'grayscale opacity-80 hover:grayscale-0 hover:opacity-100'
+            : ''
+        }
+        ${isExpanded ? 'outline outline-2 outline-primary' : ''}  
+        transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
         @click="onThreadClick"
       >
-        <UserAvatar :user="modelValue.author" xxxno-border :axxxctive="isExpanded" />
-        <!-- <UserAvatar :user="modelValue.author" xxxno-border :active="isExpanded" /> -->
+        <UserAvatarGroup :users="threadAuthors" />
+        <CheckCircleIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
       </button>
-
-      <!-- <FormButton
-        :icon-left="
-          threadEmoji
-            ? undefined
-            : isExpanded
-            ? XMarkIcon
-            : ChatBubbleOvalLeftEllipsisIcon
-        "
-        :hide-text="!threadEmoji"
-        :style="{
-          opacity: modelValue.style.opacity
-        }"
-        :color="isViewed ? 'invert' : 'default'"
-        @click="onThreadClick"
-      >
-        <template v-if="threadEmoji">
-          <span>{{ threadEmoji }}</span>
-        </template>
-      </FormButton> -->
       <div
         v-if="isExpanded"
         ref="threadContainer"
         class="absolute hover:bg-foundation bg-white/80 dark:bg-neutral-900/80 dark:hover:bg-neutral-900 backdrop-blur-sm rounded-lg shadow-md"
         :style="style"
       >
+        <div class="relative w-80 flex pt-3">
+          <div class="flex-grow">
+            <FormButton
+              size="sm"
+              :icon-left="ChevronLeftIcon"
+              text
+              hide-text
+            ></FormButton>
+            <FormButton
+              size="sm"
+              :icon-left="ChevronRightIcon"
+              text
+              hide-text
+            ></FormButton>
+          </div>
+          <div>
+            <FormButton
+              size="sm"
+              :icon-left="
+                modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
+              "
+              text
+              hide-text
+              :color="modelValue.archived ? 'default' : 'default'"
+            ></FormButton>
+            <FormButton size="sm" :icon-left="LinkIcon" text hide-text></FormButton>
+            <FormButton
+              size="sm"
+              :icon-left="XMarkIcon"
+              text
+              hide-text
+              @click="onThreadClick"
+            ></FormButton>
+          </div>
+        </div>
         <div class="relative w-80 flex flex-col">
           <div
             ref="commentsContainer"
@@ -85,14 +96,20 @@
 </template>
 <script setup lang="ts">
 import {
-  ChatBubbleOvalLeftEllipsisIcon,
+  LinkIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   XMarkIcon,
-  CheckBadgeIcon
+  CheckCircleIcon
 } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
-import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
+import {
+  useViewerThreadTracking,
+  useViewerThreadTypingTracking
+} from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
   useExpandedThreadResponsiveLocation
@@ -101,6 +118,7 @@ import { useMarkThreadViewed } from '~~/lib/viewer/composables/commentManagement
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { emojis } from '~~/lib/viewer/helpers/emojis'
 import { useTextInputGlobalFocus } from '~~/composables/states'
+import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -111,6 +129,8 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+props.modelValue.isExpanded
+
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
@@ -120,7 +140,10 @@ const comments = computed(() => [
   ...props.modelValue.replies.items.slice().reverse()
 ])
 
-const { projectId } = useInjectedViewerState()
+const {
+  projectId,
+  ui: { sectionBox }
+} = useInjectedViewerState()
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 
@@ -130,24 +153,45 @@ const { style } = useExpandedThreadResponsiveLocation({
 })
 
 const isExpanded = computed(() => props.modelValue.isExpanded)
+
 const isTypingMessage = computed(() => {
   if (!usersTyping.value.length) return null
   return usersTyping.value.length > 1
     ? `${usersTyping.value.map((u) => u.userName).join(', ')} are typing...`
     : `${usersTyping.value[0].userName} is typing...`
 })
+
 const isViewed = computed(() => !!props.modelValue.viewedAt)
+
 const threadEmoji = computed(() => {
   const cleanVal = props.modelValue.rawText.trim()
   return emojis.includes(cleanVal) ? cleanVal : undefined
 })
 
-const changeExpanded = (newVal: boolean) => {
+const threadAuthors = computed(() => {
+  const authors = [props.modelValue.author]
+  for (const author of props.modelValue.replyAuthors.items) {
+    if (!authors.find((u) => u.id === author.id)) authors.push(author)
+  }
+  return authors
+})
+
+const setCommentPointOfView = useViewerThreadTracking()
+
+const changeExpanded = async (newVal: boolean) => {
   emit('update:modelValue', {
     ...props.modelValue,
     isExpanded: newVal
   })
   emit('update:expanded', newVal)
+
+  if (newVal && props.modelValue.data) {
+    await setCommentPointOfView(props.modelValue.data)
+  }
+
+  if (!newVal && props.modelValue.data?.sectionBox) {
+    sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
+  }
 }
 
 const onNewReply = () => {
@@ -173,6 +217,8 @@ onKeyDown('Escape', () => {
     changeExpanded(false)
   }
 })
+
+props.modelValue.data?.camPos
 
 const globalTextInputFocus = useTextInputGlobalFocus()
 

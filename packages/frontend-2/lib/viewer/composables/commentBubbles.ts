@@ -234,8 +234,8 @@ export function useExpandedThreadResponsiveLocation(params: {
     if (!threadContainer.value || process.server) return
 
     const elRect = threadContainer.value.getBoundingClientRect()
-    const showOnLeftSide = elRect.x + elRect.width > window.innerWidth && false // TODO: hack
-    const showOnRightSide = elRect.x < 0 || true // TODO: hack
+    const showOnLeftSide = elRect.x + elRect.width > window.innerWidth // && false // TODO: hack
+    const showOnRightSide = elRect.x < 0 // || true // TODO: hack
 
     // Screen too small - do nothing
     if (
