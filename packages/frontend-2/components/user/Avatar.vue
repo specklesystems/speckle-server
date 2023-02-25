@@ -1,8 +1,9 @@
 <template>
   <div
     :class="[
-      'shrink-0 rounded-full overflow-hidden border-2 border-foundation bg-primary flex items-center justify-center uppercase text-xs font-semibold text-foreground-on-primary transition',
+      'shrink-0 rounded-full overflow-hidden bg-primary flex items-center justify-center uppercase text-xs font-semibold text-foreground-on-primary transition',
       sizeClasses,
+      borderClasses,
       hoverClasses,
       activeClasses
     ]"
@@ -56,6 +57,7 @@ const props = withDefaults(
     size?: UserAvatarSize
     hoverEffect?: boolean
     active?: boolean
+    noBorder?: boolean
   }>(),
   {
     size: 'base',
@@ -70,6 +72,11 @@ const initials = computed(() => {
   if (!props.user?.name?.length) return
   const parts = props.user.name.split(' ')
   return parts[0][0] + (parts[1]?.[0] || '')
+})
+
+const borderClasses = computed(() => {
+  if (props.noBorder) return ''
+  return 'border-2 border-foundation'
 })
 
 const hoverClasses = computed(() => {

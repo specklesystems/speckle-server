@@ -38,10 +38,18 @@
           @change-version="handleVersionChange"
         />
       </div>
-      <FormButton v-if="showLoadMore" full-width text @click="onLoadMore">
-        Load more
-      </FormButton>
-      <div v-else class="py-2" />
+      <div class="mt-4 px-2 py-2">
+        <FormButton
+          full-width
+          text
+          size="sm"
+          :disabled="!showLoadMore"
+          @click="onLoadMore"
+        >
+          {{ showLoadMore ? 'Load older versions' : 'No more versions to load' }}
+        </FormButton>
+      </div>
+      <!-- <div v-else class="py-2" /> -->
     </div>
   </div>
 </template>

@@ -1,17 +1,27 @@
 <template>
   <div class="flex flex-col items-center space-y-1">
-    <div class="bg-foundation rounded-full caption space-x-2 p-1">
+    <!-- <div class="xxx-bg-foundation rounded-full caption space-x-2 p-1">
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
-    </div>
-    <div class="bg-foundation rounded-xl p-4 w-full relative">
-      <div class="flex items-center">
+    </div> -->
+    <div class="xxx-bg-foundation rounded-xl p-4 w-full relative">
+      <div class="flex items-center space-x-1">
         <UserAvatar :user="comment.author" size="sm" class="mr-2" />
         <span class="grow truncate text-sm font-medium">
           {{ comment.author.name }}
         </span>
+        <span class="text-xs truncate text-foreground-2">{{ timeFromNow }}</span>
+        <div class="pl-2">
+          <CommonTextLink
+            v-if="canArchive"
+            class="absolute text-foreground-2 top-3 right-3"
+            @click="() => archiveComment(comment.id)"
+          >
+            <TrashIcon class="h-3 w-3" />
+          </CommonTextLink>
+        </div>
       </div>
-      <div class="truncate text-sm text-foreground-2 flex flex-col">
+      <div class="truncate text-sm text-foreground flex flex-col mt-2">
         <CommonTiptapTextEditor
           :model-value="comment.text.doc"
           :schema-options="{ multiLine: false }"
@@ -23,13 +33,6 @@
           :project-id="projectId"
         />
       </div>
-      <CommonTextLink
-        v-if="canArchive"
-        class="absolute text-foreground-2 top-3 right-3"
-        @click="() => archiveComment(comment.id)"
-      >
-        <TrashIcon class="h-4 w-4" />
-      </CommonTextLink>
     </div>
   </div>
 </template>

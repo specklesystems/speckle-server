@@ -48,6 +48,8 @@
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
+        @focusin="setGlobalFocus(true)"
+        @focusout="setGlobalFocus(false)"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
       />
@@ -89,6 +91,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { useScopedState } from '~~/lib/common/composables/scopedState'
 export default defineComponent({
   inheritAttrs: false
 })
@@ -103,6 +106,7 @@ import {
 } from '@heroicons/vue/20/solid'
 import { ConcreteComponent, PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
+import { useTextInputGlobalFocus } from '~~/composables/states'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -322,6 +326,13 @@ onMounted(() => {
     focus()
   }
 })
+
+// TODO: ask fabs if this is okay
+const globalTextInputFocus = useTextInputGlobalFocus()
+
+function setGlobalFocus(status: boolean) {
+  globalTextInputFocus.value = status
+}
 
 defineExpose({ focus })
 </script>

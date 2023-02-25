@@ -1,3 +1,5 @@
+import { useScopedState } from '~~/lib/common/composables/scopedState'
+
 type NavItem = {
   to: string
   name: string
@@ -5,3 +7,6 @@ type NavItem = {
 }
 
 export const useNav = () => useState<NavItem[]>('nav', () => [])
+
+export const useTextInputGlobalFocus = () =>
+  useState<boolean>('text-input-focus', () => false)

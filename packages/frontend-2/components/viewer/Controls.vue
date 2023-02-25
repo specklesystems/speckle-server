@@ -102,6 +102,7 @@ import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useTextInputGlobalFocus } from '~~/composables/states'
 
 const {
   viewer: { instance },
@@ -121,16 +122,32 @@ const toggleActiveControl = (control: ActiveControl) =>
     ? (activeControl.value = 'none')
     : (activeControl.value = control)
 
+const globalTextInputFocus = useTextInputGlobalFocus()
+
 // Main nav kbd shortcuts
-onKeyStroke('m', () => toggleActiveControl('models'))
-onKeyStroke('e', () => toggleActiveControl('explorer'))
-onKeyStroke('f', () => toggleActiveControl('filters'))
-onKeyStroke(['c', 'C'], () => toggleActiveControl('comments'))
+onKeyStroke('m', () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('models')
+})
+onKeyStroke('e', () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('explorer')
+})
+onKeyStroke('f', () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('filters')
+})
+onKeyStroke(['c', 'C'], () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('comments')
+})
 
 // Viewer actions kbd shortcuts
-onKeyStroke(' ', () => instance.zoom())
-onKeyStroke('p', () => toggleProjection())
-onKeyStroke('s', () => toggleSectionBox())
+onKeyStroke(' ', () => {
+  if (!globalTextInputFocus.value) instance.zoom()
+})
+onKeyStroke('p', () => {
+  if (!globalTextInputFocus.value) toggleProjection()
+})
+onKeyStroke('s', () => {
+  if (!globalTextInputFocus.value) toggleSectionBox()
+})
 
 const scrollControlsToBottom = () => {
   if (scrollableControlsContainer.value)

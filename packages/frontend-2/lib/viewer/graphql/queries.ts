@@ -35,7 +35,7 @@ export const viewerLoadedResourcesQuery = graphql(`
           id
           name
           updatedAt
-          versions(filter: { priorityIds: $versionIds }, limit: 10) {
+          versions(filter: { priorityIds: $versionIds }, limit: 3) {
             totalCount
             cursor
             items {
@@ -69,7 +69,7 @@ export const viewerModelVersionsQuery = graphql(`
         versions(
           filter: { priorityIds: $priorityVersionIds }
           cursor: $versionsCursor
-          limit: 10
+          limit: 5
         ) {
           totalCount
           cursor

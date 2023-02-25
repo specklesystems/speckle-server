@@ -7,7 +7,26 @@
     }"
   >
     <div class="relative">
-      <FormButton
+      <!-- <button @click="onThreadClick">
+        <span v-if="threadEmoji">{{ threadEmoji }}</span>
+        <ChatBubbleOvalLeftEllipsisIcon
+          v-else-if="!isExpanded && !modelValue.archived"
+          class="w-6 h-6"
+        />
+        <CheckBadgeIcon v-else-if="modelValue.archived" class="w-6 h-6 text-lime-500" />
+        <XMarkIcon v-else class="w-6 h-6" />
+      </button> -->
+      <button
+        :class="`${
+          isExpanded ? 'outline outline-2 outline-primary' : ''
+        } hover:outline-1 hover:outline-primary-muted bg-foundation shadow flex -space-x-1 p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
+        @click="onThreadClick"
+      >
+        <UserAvatar :user="modelValue.author" xxxno-border :axxxctive="isExpanded" />
+        <!-- <UserAvatar :user="modelValue.author" xxxno-border :active="isExpanded" /> -->
+      </button>
+
+      <!-- <FormButton
         :icon-left="
           threadEmoji
             ? undefined
@@ -25,8 +44,13 @@
         <template v-if="threadEmoji">
           <span>{{ threadEmoji }}</span>
         </template>
-      </FormButton>
-      <div v-if="isExpanded" ref="threadContainer" class="absolute" :style="style">
+      </FormButton> -->
+      <div
+        v-if="isExpanded"
+        ref="threadContainer"
+        class="absolute hover:bg-foundation bg-white/80 dark:bg-neutral-900/80 dark:hover:bg-neutral-900 backdrop-blur-sm rounded-lg shadow-md"
+        :style="style"
+      >
         <div class="relative w-80 flex flex-col">
           <div
             ref="commentsContainer"
@@ -51,6 +75,8 @@
             :model-value="modelValue"
             class="mt-2"
             @submit="onNewReply"
+            @focusin="setGlobalFocus(true)"
+            @focusout="setGlobalFocus(false)"
           />
         </div>
       </div>
@@ -58,7 +84,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChatBubbleOvalLeftEllipsisIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import {
+  ChatBubbleOvalLeftEllipsisIcon,
+  XMarkIcon,
+  CheckBadgeIcon
+} from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
@@ -70,6 +100,7 @@ import {
 import { useMarkThreadViewed } from '~~/lib/viewer/composables/commentManagement'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { emojis } from '~~/lib/viewer/helpers/emojis'
+import { useTextInputGlobalFocus } from '~~/composables/states'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -142,6 +173,12 @@ onKeyDown('Escape', () => {
     changeExpanded(false)
   }
 })
+
+const globalTextInputFocus = useTextInputGlobalFocus()
+
+function setGlobalFocus(status: boolean) {
+  globalTextInputFocus.value = status
+}
 
 watch(
   () => <const>[isExpanded.value, isViewed.value],
