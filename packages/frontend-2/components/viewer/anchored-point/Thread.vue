@@ -47,6 +47,7 @@
           </div>
           <div>
             <FormButton
+              v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
               size="sm"
               :icon-left="
                 modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
