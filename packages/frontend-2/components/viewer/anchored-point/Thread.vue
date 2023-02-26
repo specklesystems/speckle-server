@@ -52,7 +52,7 @@
               hide-text
               :color="modelValue.archived ? 'default' : 'default'"
               :disabled="!canArchiveOrUnarchive"
-              @click="archiveComment(modelValue.id)"
+              @click="archiveComment(modelValue.id, !modelValue.archived)"
             ></FormButton>
             <FormButton size="sm" :icon-left="LinkIcon" text hide-text></FormButton>
             <FormButton

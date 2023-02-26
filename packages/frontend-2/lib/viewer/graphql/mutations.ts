@@ -43,9 +43,9 @@ export const createCommentReplyMutation = graphql(`
 `)
 
 export const archiveCommentMutation = graphql(`
-  mutation ArchiveComment($commentId: String!) {
+  mutation ArchiveComment($commentId: String!, $archived: Boolean) {
     commentMutations {
-      archive(commentId: $commentId)
+      archive(commentId: $commentId, archived: $archived)
     }
   }
 `)

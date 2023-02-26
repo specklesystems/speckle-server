@@ -416,7 +416,7 @@ type CommentMutations {
   create(input: CreateCommentInput!): Comment!
   reply(input: CreateCommentReplyInput!): Comment!
   edit(input: EditCommentInput!): Comment!
-  archive(commentId: String!): Boolean!
+  archive(commentId: String!, archived: Boolean! = true): Boolean!
 }
 
 extend type Mutation {
