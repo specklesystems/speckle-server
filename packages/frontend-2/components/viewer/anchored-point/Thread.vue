@@ -51,6 +51,8 @@
               text
               hide-text
               :color="modelValue.archived ? 'default' : 'default'"
+              :disabled="!canArchiveOrUnarchive"
+              @click="archiveComment(modelValue.id)"
             ></FormButton>
             <FormButton size="sm" :icon-left="LinkIcon" text hide-text></FormButton>
             <FormButton
@@ -103,7 +105,7 @@ import {
   CheckCircleIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Roles } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import {
@@ -114,11 +116,15 @@ import {
   CommentBubbleModel,
   useExpandedThreadResponsiveLocation
 } from '~~/lib/viewer/composables/commentBubbles'
-import { useMarkThreadViewed } from '~~/lib/viewer/composables/commentManagement'
+import {
+  useArchiveComment,
+  useMarkThreadViewed
+} from '~~/lib/viewer/composables/commentManagement'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { emojis } from '~~/lib/viewer/helpers/emojis'
 import { useTextInputGlobalFocus } from '~~/composables/states'
 import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -177,7 +183,6 @@ const threadAuthors = computed(() => {
 })
 
 const setCommentPointOfView = useViewerThreadTracking()
-
 const changeExpanded = async (newVal: boolean) => {
   emit('update:modelValue', {
     ...props.modelValue,
@@ -193,6 +198,20 @@ const changeExpanded = async (newVal: boolean) => {
     sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
   }
 }
+const { activeUser } = useActiveUser()
+const archiveComment = useArchiveComment()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const canArchiveOrUnarchive = computed(
+  () =>
+    activeUser.value &&
+    (props.modelValue.author.id === activeUser.value.id ||
+      project.value?.role === Roles.Stream.Owner)
+)
 
 const onNewReply = () => {
   justCreatedReply.value = true
