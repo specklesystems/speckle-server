@@ -39,6 +39,9 @@
           <template v-for="user in activeUserAvatars" :key="user.id">
             <button @click="setUserSpotlight(user.id)">
               <UserAvatar
+                v-tippy="
+                  `${user.id === spotlightUserId ? 'Unfollow' : 'Follow'} ${user.name}`
+                "
                 :user="user"
                 hover-effect
                 :active="user.id === spotlightUserId"

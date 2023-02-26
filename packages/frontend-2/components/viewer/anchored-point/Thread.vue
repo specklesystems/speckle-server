@@ -33,12 +33,14 @@
         <div class="relative w-80 flex pt-3">
           <div class="flex-grow">
             <FormButton
+              v-tippy="'Previous'"
               size="sm"
               :icon-left="ChevronLeftIcon"
               text
               hide-text
             ></FormButton>
             <FormButton
+              v-tippy="'Next'"
               size="sm"
               :icon-left="ChevronRightIcon"
               text
@@ -58,7 +60,13 @@
               :disabled="!canArchiveOrUnarchive"
               @click="toggleCommentResolvedStatus()"
             ></FormButton>
-            <FormButton size="sm" :icon-left="LinkIcon" text hide-text></FormButton>
+            <FormButton
+              v-tippy="'Copy link'"
+              size="sm"
+              :icon-left="LinkIcon"
+              text
+              hide-text
+            ></FormButton>
             <FormButton
               size="sm"
               :icon-left="XMarkIcon"
