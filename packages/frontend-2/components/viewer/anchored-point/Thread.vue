@@ -18,7 +18,10 @@
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
         @click="onThreadClick"
       >
-        <UserAvatarGroup :users="threadAuthors" />
+        <!-- Note: Unsure wether to display just a checkmark for "resolved" threads, or the author list and the checkmark. 
+        Both optinos are viable, see below. Uncomment to test. -->
+        <!-- <UserAvatarGroup :users="threadAuthors" /> -->
+        <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
         <CheckCircleIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
       </button>
       <div
@@ -52,7 +55,7 @@
               hide-text
               :color="modelValue.archived ? 'default' : 'default'"
               :disabled="!canArchiveOrUnarchive"
-              @click="archiveComment(modelValue.id, !modelValue.archived)"
+              @click="toggleCommentResolvedStatus()"
             ></FormButton>
             <FormButton size="sm" :icon-left="LinkIcon" text hide-text></FormButton>
             <FormButton
@@ -123,8 +126,8 @@ import {
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { emojis } from '~~/lib/viewer/helpers/emojis'
 import { useTextInputGlobalFocus } from '~~/composables/states'
-import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -200,6 +203,7 @@ const changeExpanded = async (newVal: boolean) => {
 }
 const { activeUser } = useActiveUser()
 const archiveComment = useArchiveComment()
+const { triggerNotification } = useGlobalToast()
 const {
   resources: {
     response: { project }
@@ -212,6 +216,14 @@ const canArchiveOrUnarchive = computed(
     (props.modelValue.author.id === activeUser.value.id ||
       project.value?.role === Roles.Stream.Owner)
 )
+
+const toggleCommentResolvedStatus = async () => {
+  await archiveComment(props.modelValue.id, !props.modelValue.archived)
+  triggerNotification({
+    description: `Thread ${props.modelValue.archived ? 'reopened.' : 'resolved.'}`,
+    type: ToastNotificationType.Info
+  })
+}
 
 const onNewReply = () => {
   justCreatedReply.value = true
