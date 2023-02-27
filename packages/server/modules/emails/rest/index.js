@@ -1,4 +1,3 @@
-const { authLogger } = require('@/logging/logging')
 const { EmailVerificationFinalizationError } = require('@/modules/emails/errors')
 const {
   finalizeEmailVerification
@@ -6,7 +5,6 @@ const {
 
 module.exports = (app) => {
   app.get('/auth/verifyemail', async (req, res) => {
-    const boundLogger = authLogger.child({ endpoint: '/auth/verifyemail' })
     try {
       await finalizeEmailVerification(req.query.t)
       return res.redirect('/?emailverifiedstatus=true')
@@ -15,7 +13,7 @@ module.exports = (app) => {
         error instanceof EmailVerificationFinalizationError
           ? error.message
           : 'Email verification unexpectedly failed'
-      boundLogger.info({ err: error }, 'Email verification failed.')
+      req.log.info({ err: error }, 'Email verification failed.')
       return res.redirect(`/?emailverifiederror=${msg}`)
     }
   })

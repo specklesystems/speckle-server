@@ -17,7 +17,6 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
-const { authLogger } = require('@/logging/logging')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
 const {
   UserInputError,
@@ -38,23 +37,22 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     session,
     sessionAppId,
     async (req, res, next) => {
-      const boundLogger = authLogger.child({ endpoint: '/auth/local/login' })
       try {
         const valid = await validatePasssword({
           email: req.body.email,
           password: req.body.password
         })
 
-        if (!valid) throw new UserInputError('Invalid credentials')
+        if (!valid) throw new UserInputError('Invalid credentials.')
 
         const user = await getUserByEmail({ email: req.body.email })
-        if (!user) throw new UserInputError('Invalid credentials')
+        if (!user) throw new UserInputError('Invalid credentials.')
         req.user = { id: user.id }
 
         return next()
       } catch (err) {
-        boundLogger.info({ err }, 'Error while logging in.')
-        return res.status(401).send({ err: true, message: 'Invalid credentials' })
+        res.log.info({ err }, 'Error while logging in.')
+        return res.status(401).send({ err: true, message: 'Invalid credentials.' })
       }
     },
     finalizeAuth
@@ -65,7 +63,6 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     session,
     sessionAppId,
     async (req, res, next) => {
-      let boundLogger = authLogger.child({ endpoint: '/auth/local/register' })
       const serverInfo = await getServerInfo()
       try {
         if (!req.body.password) throw new UserInputError('Password missing')
@@ -102,7 +99,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         // so we go ahead and register the user
         const userId = await createUser(user)
         req.user = { id: userId, email: user.email }
-        boundLogger = boundLogger.child({ userId })
+        req.log = req.log.child({ userId })
 
         // 4. use up all server-only invites the email had attached to it
         await finalizeInvitedServerRegistration(user.email, userId)
@@ -116,10 +113,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           case PasswordTooShortError:
           case UserInputError:
           case NoInviteFoundError:
-            boundLogger.info({ err }, 'Error while registering user.')
+            res.log.info({ err }, 'Error while registering.')
             return res.status(400).send({ err: err.message })
           default:
-            boundLogger.error(err, 'Error while registering user.')
+            res.log.error(err, 'Error while registering.')
             return res.status(500).send({ err: err.message })
         }
       }

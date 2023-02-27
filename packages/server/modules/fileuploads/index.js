@@ -5,7 +5,7 @@ const { saveUploadFile } = require('./services/fileuploads')
 const request = require('request')
 const { streamWritePermissions } = require('@/modules/shared/authz')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-const { moduleLogger, logger } = require('@/logging/logging')
+const { moduleLogger } = require('@/logging/logging')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -35,8 +35,7 @@ exports.init = async (app) => {
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
-      const boundLogger = logger.child({
-        endpoint: '/api/file/:fileType/:streamId/:branchName?',
+      req.log = req.log.child({
         streamId: req.params.streamId,
         userId: req.context.userId,
         branchName: req.params.branchName ?? 'main'
@@ -46,7 +45,7 @@ exports.init = async (app) => {
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
-              boundLogger.error(err)
+              res.log.error(err, 'Error while uploading blob.')
               res.status(500).send(err.message)
               return
             }

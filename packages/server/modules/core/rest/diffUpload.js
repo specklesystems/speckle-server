@@ -5,16 +5,14 @@ const cors = require('cors')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')
-const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/diff/:streamId', cors())
 
   app.post('/api/diff/:streamId', cors(), async (req, res) => {
-    const boundLogger = logger.child({
+    req.log = req.log.child({
       userId: req.context.userId || '-',
-      streamId: req.params.streamId,
-      endpoint: '/api/diff/:streamId'
+      streamId: req.params.streamId
     })
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,
@@ -26,13 +24,13 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    boundLogger.info(`Diffing ${objectList.length} objects.`)
+    req.log.info(`Diffing ${objectList.length} objects.`)
 
     const response = await hasObjects({
       streamId: req.params.streamId,
       objectIds: objectList
     })
-    boundLogger.debug(response)
+    req.log.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': 'application/json'
