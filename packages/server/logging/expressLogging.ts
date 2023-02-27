@@ -4,14 +4,25 @@ import HttpLogger from 'pino-http'
 import { IncomingMessage } from 'http'
 import { NextFunction, Response } from 'express'
 import pino, { SerializedResponse } from 'pino'
+import { GenReqId } from 'pino-http'
+
+const REQUEST_ID_HEADER = 'x-request-id'
+
+const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
+
+const DetermineRequestId = (
+  req: IncomingMessage,
+  uuidGenerator: () => string = randomUUID
+): string => {
+  const headers = req.headers[REQUEST_ID_HEADER]
+  if (!Array.isArray(headers)) return headers || uuidGenerator()
+  return headers[0] || uuidGenerator()
+}
 
 export const LoggingExpressMiddleware = HttpLogger({
   logger,
   autoLogging: true,
-  genReqId: (req) => {
-    // we expect DetermineRequestIdMiddleware is called prior to LoggingExpressMiddleware
-    return req.id
-  },
+  genReqId: GenerateRequestId,
   customLogLevel: (req, res, err) => {
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
@@ -36,7 +47,7 @@ export const LoggingExpressMiddleware = HttpLogger({
         headers: {
           host: req.raw.headers.host,
           'user-agent': req.raw.headers['user-agent'],
-          'x-request-id': req.raw.headers['x-request-id'],
+          'x-request-id': req.raw.headers[REQUEST_ID_HEADER],
           referer: req.raw.headers.referer
         }
       }
@@ -69,7 +80,7 @@ export const DetermineRequestIdMiddleware = (
   res: Response,
   next: NextFunction
 ) => {
-  req.id = req.headers['x-request-id'] || randomUUID()
-  res.setHeader('x-request-id', req.id as string)
+  const id = DetermineRequestId(req)
+  res.setHeader(REQUEST_ID_HEADER, id)
   next()
 }
