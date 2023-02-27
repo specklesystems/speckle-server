@@ -116,14 +116,15 @@ onUserProjectsUpdate((res) => {
   const cache = apollo.cache
 
   // Update main projects query (no search)
+  const variables: ProjectsDashboardQueryQueryVariables = {
+    filter: { search: null }
+  }
   updateCacheByFilter(
     cache,
     {
       query: {
         query: projectsDashboardQuery,
-        variables: <ProjectsDashboardQueryQueryVariables>{
-          filter: { search: null }
-        }
+        variables
       }
     },
     (data) => {
