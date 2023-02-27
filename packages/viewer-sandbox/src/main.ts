@@ -164,7 +164,7 @@ await sandbox.loadUrl(
   // Arc flowers
   // 'https://latest.speckle.dev/streams/9e6c4343ba/commits/037e382aa2'
   // Car lines
-  'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
+  // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
   // Arc and lines
   // ' https://speckle.xyz/streams/99abc74dd4/commits/b32fdcf171?c=%5B198440.6051,6522070.21462,19199.49584,176653.24219,6523663.5,0,0,1%5D'
   // AUTOCAD test stream
@@ -241,5 +241,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
   // Big curves
-  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
 )

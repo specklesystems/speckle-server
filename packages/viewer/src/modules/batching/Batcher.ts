@@ -171,10 +171,10 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) {
-        visibilityRanges[k] = HideAllBatchUpdateRange
-        continue
-      }
+      // if (batch.geometryType !== GeometryType.MESH) {
+      //   visibilityRanges[k] = HideAllBatchUpdateRange
+      //   continue
+      // }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
         if ((batchMesh.material as Material).transparent === true)
@@ -204,10 +204,10 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) {
-        visibilityRanges[k] = HideAllBatchUpdateRange
-        continue
-      }
+      // if (batch.geometryType !== GeometryType.MESH) {
+      //   visibilityRanges[k] = HideAllBatchUpdateRange
+      //   continue
+      // }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
         if ((batchMesh.material as Material).stencilWrite === true)
@@ -231,10 +231,10 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      if (batch.geometryType !== GeometryType.MESH) {
-        visibilityRanges[k] = HideAllBatchUpdateRange
-        continue
-      }
+      // if (batch.geometryType !== GeometryType.MESH) {
+      //   visibilityRanges[k] = HideAllBatchUpdateRange
+      //   continue
+      // }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
         if ((batchMesh.material as Material).transparent === false)
@@ -325,10 +325,8 @@ export default class Batcher {
     })
   }
 
-  /** Conveniece method. This should also work as a filtering action
-   *  Though, because the batches are not smart enough yet to group
-   *  their draw ranges, it would be currently be inneficient to isolate
-   *  via filtering. This will change in the future
+  /**
+   * Used for debuggin only
    */
   public isolateRenderView(id: string) {
     const rvs = WorldTree.getRenderTree().getRenderViewsForNodeId(id)
@@ -375,6 +373,9 @@ export default class Batcher {
     }
   }
 
+  /**
+   * Used for debuggin only
+   */
   public async isolateRenderViewBatch(id: string) {
     const rv = WorldTree.getRenderTree().getRenderViewForNodeId(id)
     for (const k in this.batches) {

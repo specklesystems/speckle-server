@@ -61,7 +61,7 @@ export enum ObjectLayers {
   STREAM_CONTENT_LINE = 4,
   STREAM_CONTENT_POINT = 5,
 
-  /** This is just for reference. Three.js layers can be combined by OR-ing. */
+  /** Three.js layer OR-ing is weird... */
   STREAM_CONTENT = ObjectLayers.STREAM_CONTENT_MESH |
     ObjectLayers.STREAM_CONTENT_LINE |
     ObjectLayers.STREAM_CONTENT_POINT,
