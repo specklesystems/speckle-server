@@ -61,6 +61,9 @@ const config: StorybookConfig = {
       define: {
         'process.server': false,
         'process.client': true
+      },
+      build: {
+        sourcemap: false
       }
     }
     let final = mergeConfig(config, resolvedViteConfig)
