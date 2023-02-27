@@ -104,17 +104,17 @@ export class RenderTree {
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
-        if (
-          renderNode.speckleType === SpeckleType.BlockInstance
-          // renderNode.speckleType === SpeckleType.RevitInstance
-        ) {
+        if (renderNode.speckleType === SpeckleType.BlockInstance) {
           transform.premultiply(renderNode.geometry.transform)
         }
       }
     }
-    const renderNode: NodeRenderData = ancestors[0].model.renderView.renderData
-    if (renderNode.speckleType === SpeckleType.RevitInstance) {
-      transform.premultiply(renderNode.geometry.transform)
+
+    if (node.speckleType === SpeckleType.RevitInstance) {
+      if (ancestors.length > 0) {
+        const renderNode: NodeRenderData = ancestors[0].model.renderView.renderData
+        transform.premultiply(renderNode.geometry.transform)
+      }
     }
     return transform
   }
