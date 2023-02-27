@@ -9554,6 +9554,7 @@ __metadata:
   dependencies:
     "@babel/core": ^7.18.2
     "@babel/eslint-parser": ^7.18.2
+    "@babel/preset-env": ^7.20.2
     "@rollup/plugin-babel": ^5.3.1
     "@speckle/objectloader": "workspace:^"
     "@types/flat": ^5.0.2
