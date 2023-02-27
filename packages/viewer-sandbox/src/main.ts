@@ -178,7 +178,7 @@ await sandbox.loadUrl(
   //Gergo's house
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
   // Point cloud
-  // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+  'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
@@ -241,5 +241,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
   // Big curves
-  'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
 )

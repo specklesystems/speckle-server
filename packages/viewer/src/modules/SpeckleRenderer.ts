@@ -57,15 +57,11 @@ import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
 
 export enum ObjectLayers {
-  STREAM_CONTENT_MESH = 1,
-  STREAM_CONTENT_LINE = 4,
-  STREAM_CONTENT_POINT = 5,
+  STREAM_CONTENT_MESH = 10,
+  STREAM_CONTENT_LINE = 11,
+  STREAM_CONTENT_POINT = 12,
 
-  /** Three.js layer OR-ing is weird... */
-  STREAM_CONTENT = ObjectLayers.STREAM_CONTENT_MESH |
-    ObjectLayers.STREAM_CONTENT_LINE |
-    ObjectLayers.STREAM_CONTENT_POINT,
-
+  STREAM_CONTENT = 1,
   PROPS = 2,
   SHADOWCATCHER = 3
 }
