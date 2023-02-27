@@ -13,7 +13,8 @@ module.exports = (app) => {
   app.post('/api/diff/:streamId', cors(), async (req, res) => {
     const boundLogger = logger.child({
       userId: req.context.userId || '-',
-      streamId: req.params.streamId
+      streamId: req.params.streamId,
+      endpoint: '/api/diff/:streamId'
     })
     const hasStreamAccess = await validatePermissionsWriteStream(
       req.params.streamId,

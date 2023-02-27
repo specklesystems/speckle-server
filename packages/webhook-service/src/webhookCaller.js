@@ -64,7 +64,6 @@ async function makeNetworkRequest({ url, data, headersData, logger }) {
       responseBody: response.body
     }
   } catch (e) {
-    logger.error(e, 'error when making network request for webhook.')
     return {
       success: false,
       error: e.toString(),

@@ -217,10 +217,12 @@ export async function init() {
 
   // Expose prometheus metrics
   app.get('/metrics', async (req, res) => {
+    const boundLogger = startupLogger.child({ endpoint: '/metrics' })
     try {
       res.set('Content-Type', prometheusClient.register.contentType)
       res.end(await prometheusClient.register.metrics())
     } catch (ex: unknown) {
+      boundLogger.error(ex, 'Error while retrieving metrics.')
       res.status(500).end(ex instanceof Error ? ex.message : `${ex}`)
     }
   })

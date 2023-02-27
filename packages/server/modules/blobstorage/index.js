@@ -80,6 +80,7 @@ exports.init = async (app) => {
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
     ]),
     async (req, res) => {
+      let boundLogger = logger.child({ endpoint: '/api/stream/:streamId/blob' })
       // no checking of startup conditions, just dont init the endpoints if not configured right
       //authorize request
       const uploadOperations = {}
@@ -89,10 +90,12 @@ exports.init = async (app) => {
         limits: { fileSize: getFileSizeLimit() }
       })
       const streamId = req.params.streamId
+      boundLogger = boundLogger.child({ streamId, userId: req.context.userId })
 
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info
         const fileType = fileName.split('.').pop().toLowerCase()
+        boundLogger = boundLogger.child({ fileName, fileType })
         const registerUploadResult = (processingPromise) => {
           finalizePromises.push(
             processingPromise.then((resultItem) => ({ ...resultItem, formKey }))
@@ -108,6 +111,8 @@ exports.init = async (app) => {
             blobId = clientHash
           }
         }
+
+        boundLogger = boundLogger.child({ blobId })
 
         uploadOperations[blobId] = uploadFileStream(
           storeFileStream,
@@ -148,7 +153,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        logger.error(err, 'File upload error')
+        boundLogger.info({ err }, 'Upload request error.')
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>
@@ -157,8 +162,7 @@ exports.init = async (app) => {
         )
 
         const status = 400
-        const response = 'Upload request error. The server logs have more details'
-
+        const response = 'Upload request error. The server logs may have more details'
         res.status(status).end(response)
       })
 
