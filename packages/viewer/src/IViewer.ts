@@ -10,6 +10,7 @@ export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
   verbose: boolean
+  keepGeometryData: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
@@ -36,6 +37,7 @@ export interface Asset {
 export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
+  keepGeometryData: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR

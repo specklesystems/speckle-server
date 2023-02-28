@@ -39,6 +39,8 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
 ]
 
 export class GeometryConverter {
+  public static keepGeometryData = false
+
   public static getSpeckleType(node: NodeData): SpeckleType {
     let type = 'Base'
     if (node.raw.data)
@@ -89,6 +91,50 @@ export class GeometryConverter {
         return null
     }
   }
+
+  public static disposeNodeGeometryData(node: NodeData): void {
+    const type = GeometryConverter.getSpeckleType(node)
+    switch (type) {
+      case SpeckleType.Pointcloud:
+        node.raw.vertices = []
+        node.raw.colors = []
+        break
+      case SpeckleType.Mesh:
+        node.raw.vertices = []
+        node.raw.faces = []
+        node.raw.colors = []
+        break
+      case SpeckleType.Point:
+        if (node.raw.value) node.raw.value = []
+        else {
+          delete node.raw.x
+          delete node.raw.y
+          delete node.raw.z
+        }
+        break
+      case SpeckleType.Line:
+        if (node.raw.start.value) node.raw.start.value = []
+        else {
+          delete node.raw.start.x
+          delete node.raw.start.y
+          delete node.raw.start.z
+        }
+        if (node.raw.end.value) node.raw.end.value = []
+        else {
+          delete node.raw.end.x
+          delete node.raw.end.y
+          delete node.raw.end.z
+        }
+        break
+      case SpeckleType.Polyline:
+        node.raw.value = []
+        break
+
+      default:
+        break
+    }
+  }
+
   static View3DToGeometryData(node: NodeData): GeometryData {
     const vOrigin = GeometryConverter.PointToVector3(node.raw.origin)
     const vTarget = GeometryConverter.PointToVector3(node.raw.target)
@@ -154,6 +200,7 @@ export class GeometryConverter {
       /** We want the colors in linear space */
       colors = GeometryConverter.unpackColors(colorsRaw, true)
     }
+
     return {
       attributes: {
         POSITION: vertices,

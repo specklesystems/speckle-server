@@ -1,24 +1,22 @@
 /* eslint-disable camelcase */
 import {
+  Box3,
   BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
-  Float64BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Matrix4,
-  Uint16BufferAttribute,
-  Uint32BufferAttribute,
   Vector3
 } from 'three'
-import { MeshBVH } from 'three-mesh-bvh'
+import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
   COLOR = 'COLOR',
   NORMAL = 'NORMAL',
   UV = 'UV',
-  TANGENTS = 'TANGENTS',
+  TANGENT = 'TANGENT',
   INDEX = 'INDEX'
 }
 
@@ -33,27 +31,15 @@ export class Geometry {
 
   public static buildBVH(
     indices: Uint32Array | Uint16Array,
-    position: Float64Array
-  ): MeshBVH {
-    const bvhGeometry = new BufferGeometry()
-    let bvhIndices = null
-    if (position.length >= 65535 || indices.length >= 65535) {
-      bvhIndices = new Uint32Array(indices.length)
-      ;(bvhIndices as Uint32Array).set(indices, 0)
-      bvhGeometry.setIndex(new Uint32BufferAttribute(bvhIndices, 1))
-    } else {
-      bvhIndices = new Uint16Array(indices.length)
-      ;(bvhIndices as Uint16Array).set(indices, 0)
-      bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
-    }
-    bvhGeometry.setAttribute('position', new Float64BufferAttribute(position, 3))
-
-    return new MeshBVH(bvhGeometry)
+    position: Float64Array,
+    bounds: Box3
+  ): SpeckleMeshBVH {
+    return SpeckleMeshBVH.buildBVH(indices, position, bounds)
   }
 
   public static updateRTEGeometry(
     geometry: BufferGeometry,
-    doublePositions: Float64Array
+    doublePositions: Float64Array | Float32Array
   ) {
     if (geometry.type === 'BufferGeometry' || geometry.type === 'PlaneGeometry') {
       const position_low = new Float32Array(doublePositions.length)

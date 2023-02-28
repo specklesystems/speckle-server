@@ -46,4 +46,6 @@ export default class ObjectLoader {
   ): SpeckleObject | SpeckleObject[]
 
   async *getObjectIterator(): Generator<SpeckleObject, SpeckleObject>
+
+  dispose(): void
 }
