@@ -26,7 +26,6 @@
         v-for="thread in commentThreads"
         :key="thread.id"
         :thread="thread"
-        :xxxclass="[thread.id !== lastThread?.id ? 'border-b border-foreground-3' : '']"
       />
     </div>
   </div>

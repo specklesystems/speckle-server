@@ -13,6 +13,7 @@
     <!-- Comment bubbles -->
     <ViewerAnchoredPointThread
       v-for="thread in Object.values(commentThreads)"
+      v-show="!hideBubbles || thread.isExpanded"
       :key="thread.id"
       :model-value="thread"
       :class="openThread?.id === thread.id ? 'z-[12]' : 'z-[11]'"
@@ -97,7 +98,7 @@ const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
 const {
   spotlightUserId,
-  threads: { openThread, items: commentThreads }
+  threads: { openThread, items: commentThreads, hideBubbles }
 } = useInjectedViewerInterfaceState()
 
 useViewerCommentBubblesProjection({ parentEl })
