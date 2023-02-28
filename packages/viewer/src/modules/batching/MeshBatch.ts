@@ -24,6 +24,7 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import Logger from 'js-logger'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -451,6 +452,7 @@ export default class MeshBatch implements Batch {
     this.boundsTree.getBoundingBox(this.bounds)
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
+    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
   }
 
   public getRenderView(index: number): NodeRenderView {
