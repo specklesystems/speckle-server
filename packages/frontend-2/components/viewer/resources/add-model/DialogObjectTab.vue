@@ -3,7 +3,10 @@
     <div class="text-foreground normal">
       Add objects from the current project by their IDs or an Object URL.
     </div>
-    <form class="flex space-x-4 w-full" @submit="onSubmit">
+    <form
+      class="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 w-full"
+      @submit="onSubmit"
+    >
       <FormTextInput
         name="objectIdsOrUrl"
         label="Value"

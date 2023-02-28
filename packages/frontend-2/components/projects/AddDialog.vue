@@ -20,16 +20,13 @@
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />
       </div>
-      <div class="flex justify-between">
-        <div class="">
-          <ProjectVisibilitySelect v-model="visibility" />
-          <!-- <select id="cars" name="cars">
-            <option value="volvo">Volvo</option>
-            <option value="saab">Saab</option>
-            <option value="mercedes">Mercedes</option>
-            <option value="audi">Audi</option>
-          </select> -->
-        </div>
+      <div
+        class="flex flex-col space-y-4 items-end md:flex-row md:justify-between md:items-center md:space-y-0"
+      >
+        <ProjectVisibilitySelect
+          v-model="visibility"
+          class="max-w-[90%] sm:max-w-none"
+        />
         <div class="space-x-2">
           <FormButton text color="secondary" @click="open = false">Cancel</FormButton>
           <FormButton submit>Create project</FormButton>
@@ -70,7 +67,8 @@ const open = computed({
 
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
-    ...values
+    ...values,
+    visibility: visibility.value
   })
   emit('created')
   open.value = false
