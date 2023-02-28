@@ -23,5 +23,4 @@ export const uploadEndpointLogger = extendLoggerComponent(logger, 'upload-endpoi
 export const dbLogger = extendLoggerComponent(logger, 'db')
 export const servicesLogger = extendLoggerComponent(logger, 'services')
 export const rateLimiterLogger = extendLoggerComponent(logger, 'rate-limiter')
-export const authLogger = extendLoggerComponent(logger, 'auth')
 export const redisLogger = extendLoggerComponent(logger, 'redis')

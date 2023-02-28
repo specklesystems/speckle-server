@@ -6,7 +6,6 @@ const Busboy = require('busboy')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('../services/objects')
-const { uploadEndpointLogger } = require('@/logging/logging')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -14,8 +13,8 @@ module.exports = (app) => {
   app.options('/objects/:streamId', cors())
 
   app.post('/objects/:streamId', cors(), async (req, res) => {
-    const boundLogger = uploadEndpointLogger.child({
-      user: req.context.userId || '-',
+    req.log = req.log.child({
+      userId: req.context.userId || '-',
       streamId: req.params.streamId
     })
 
@@ -53,7 +52,7 @@ module.exports = (app) => {
 
           const gzippedBuffer = Buffer.concat(buffer)
           if (gzippedBuffer.length > MAX_FILE_SIZE) {
-            boundLogger.error(
+            req.log.error(
               `Upload error: Batch size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})`
             )
             if (!requestDropped)
@@ -67,7 +66,7 @@ module.exports = (app) => {
 
           const gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
           if (gunzippedBuffer.length > MAX_FILE_SIZE) {
-            boundLogger.error(
+            req.log.error(
               `Upload error: Batch size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})`
             )
             if (!requestDropped)
@@ -82,7 +81,7 @@ module.exports = (app) => {
           try {
             objs = JSON.parse(gunzippedBuffer)
           } catch (e) {
-            boundLogger.error(`Upload error: Batch not in JSON format`)
+            req.log.error(`Upload error: Batch not in JSON format`)
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
           }
@@ -97,7 +96,7 @@ module.exports = (app) => {
           }
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            boundLogger.error(e, `Upload error.`)
+            req.log.error(e, `Upload error.`)
             if (!requestDropped)
               res
                 .status(400)
@@ -110,7 +109,7 @@ module.exports = (app) => {
 
           await promise
 
-          boundLogger.info(
+          req.log.info(
             {
               durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
@@ -137,7 +136,7 @@ module.exports = (app) => {
           let objs = []
 
           if (buffer.length > MAX_FILE_SIZE) {
-            boundLogger.error(
+            req.log.error(
               `Upload error: Batch size too large (${buffer.length} > ${MAX_FILE_SIZE})`
             )
             if (!requestDropped)
@@ -150,7 +149,7 @@ module.exports = (app) => {
           try {
             objs = JSON.parse(buffer)
           } catch (e) {
-            boundLogger.error(`Upload error: Batch not in JSON format`)
+            req.log.error(`Upload error: Batch not in JSON format`)
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
           }
@@ -164,7 +163,7 @@ module.exports = (app) => {
           }
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            boundLogger.error(e, `Upload error.`)
+            req.log.error(e, `Upload error.`)
             if (!requestDropped)
               res
                 .status(400)
@@ -176,7 +175,7 @@ module.exports = (app) => {
           promises.push(promise)
 
           await promise
-          boundLogger.info(
+          req.log.info(
             {
               uploadedSizeMB: buffer.length / 1000000,
               durationSeconds: (Date.now() - t0) / 1000,
@@ -187,7 +186,7 @@ module.exports = (app) => {
           )
         })
       } else {
-        boundLogger.error(`Invalid ContentType header: ${mimeType}`)
+        req.log.info(`Invalid ContentType header: ${mimeType}`)
         if (!requestDropped)
           res
             .status(400)
@@ -201,7 +200,7 @@ module.exports = (app) => {
     busboy.on('finish', async () => {
       if (requestDropped) return
 
-      boundLogger.info(
+      req.log.info(
         {
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
         },
@@ -218,7 +217,7 @@ module.exports = (app) => {
     })
 
     busboy.on('error', async (err) => {
-      boundLogger.info(`Upload error: ${err}`)
+      req.log.info(`Upload error: ${err}`)
       if (!requestDropped)
         res.status(400).end('Upload request error. The server logs have more details')
       requestDropped = true

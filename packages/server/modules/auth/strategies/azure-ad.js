@@ -12,7 +12,6 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { logger } = require('@/logging/logging')
 const { UserInputError } = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -111,6 +110,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // ID is used later for verifying access token
         req.user.id = myUser.id
+        req.log = req.log.child({ userId: myUser.id })
 
         // use the invite
         await finalizeInvitedServerRegistration(user.email, myUser.id)
@@ -123,10 +123,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       } catch (err) {
         switch (err.constructor) {
           case UserInputError:
-            logger.info(err)
+            req.log.info(
+              { err },
+              'User input error during Azure AD authentication callback.'
+            )
             break
           default:
-            logger.error(err)
+            req.log.error(err, 'Error during Azure AD authentication callback.')
         }
         return next()
       }

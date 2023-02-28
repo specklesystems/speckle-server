@@ -245,4 +245,6 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/8f297ad0cd'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
+  // Big curves
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
 )
