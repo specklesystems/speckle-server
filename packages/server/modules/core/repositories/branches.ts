@@ -276,7 +276,7 @@ export async function getModelTreeItems(
 ) {
   const { filterOutEmptyMain = true } = options || {}
   const cleanModelName = trim(trim(parentModelName || ''), '/').toLowerCase()
-  const branchPartPattern = `[a-zA-Z\\d\\s]+` // regexp for each branch part between slashes
+  const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
 
   const regExp = cleanModelName.length
     ? // only direct children of parentModelName
