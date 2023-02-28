@@ -3,7 +3,7 @@
     class="p-2 min-w-0 max-w-full shadow rounded-lg flex items-center space-x-2 bg-foundation justify-between"
   >
     <div>
-      <div class="w-20 h-20 shadow rounded-md bg-foundation">
+      <div class="w-12 h-12 shadow rounded-md bg-foundation">
         <PreviewImage :preview-url="version.previewUrl" />
       </div>
     </div>

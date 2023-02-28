@@ -1,5 +1,5 @@
 <template>
-  <div class="flex justify-between flex-col bg-foundation rounded-md shadow py-2">
+  <div class="flex justify-between flex-col bg-foundation rounded-lg shadow py-2">
     <div class="flex flex-col space-y-1">
       <ViewerExplorerTreeItemOption3
         v-for="(rootNode, idx) in rootNodes"

@@ -27,7 +27,7 @@
       <div
         v-if="isExpanded"
         ref="threadContainer"
-        class="absolute hover:bg-foundation bg-white/80 dark:bg-neutral-900/80 dark:hover:bg-neutral-900 backdrop-blur-sm rounded-lg shadow-md"
+        class="absolute hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md"
         :style="style"
       >
         <div class="relative w-80 flex pt-3">
@@ -38,6 +38,7 @@
               :icon-left="ChevronLeftIcon"
               text
               hide-text
+              @click="emit('prev', props.modelValue)"
             ></FormButton>
             <FormButton
               v-tippy="'Next'"
@@ -45,6 +46,7 @@
               :icon-left="ChevronRightIcon"
               text
               hide-text
+              @click="emit('next', props.modelValue)"
             ></FormButton>
           </div>
           <div>
@@ -72,7 +74,7 @@
               :icon-left="XMarkIcon"
               text
               hide-text
-              @click="onThreadClick"
+              @click="changeExpanded(false)"
             ></FormButton>
           </div>
         </div>
@@ -100,8 +102,6 @@
             :model-value="modelValue"
             class="mt-2"
             @submit="onNewReply"
-            @focusin="setGlobalFocus(true)"
-            @focusout="setGlobalFocus(false)"
           />
         </div>
       </div>
@@ -141,6 +141,8 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
   (e: 'update:expanded', v: boolean): void
+  (e: 'next', v: CommentBubbleModel): void
+  (e: 'prev', v: CommentBubbleModel): void
 }>()
 
 const props = defineProps<{
@@ -181,6 +183,7 @@ const isTypingMessage = computed(() => {
 
 const isViewed = computed(() => !!props.modelValue.viewedAt)
 
+// TODO: will be used
 const threadEmoji = computed(() => {
   const cleanVal = props.modelValue.rawText.trim()
   return emojis.includes(cleanVal) ? cleanVal : undefined
@@ -195,20 +198,12 @@ const threadAuthors = computed(() => {
 })
 
 const setCommentPointOfView = useViewerThreadTracking()
-const changeExpanded = async (newVal: boolean) => {
+const changeExpanded = (newVal: boolean) => {
   emit('update:modelValue', {
     ...props.modelValue,
     isExpanded: newVal
   })
   emit('update:expanded', newVal)
-
-  if (newVal && props.modelValue.data) {
-    await setCommentPointOfView(props.modelValue.data)
-  }
-
-  if (!newVal && props.modelValue.data?.sectionBox) {
-    sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
-  }
 }
 const { activeUser } = useActiveUser()
 const archiveComment = useArchiveComment()
@@ -258,22 +253,25 @@ onKeyDown('Escape', () => {
   }
 })
 
-props.modelValue.data?.camPos
-
-const globalTextInputFocus = useTextInputGlobalFocus()
-
-function setGlobalFocus(status: boolean) {
-  globalTextInputFocus.value = status
-}
+// onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
+// onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
 
 watch(
   () => <const>[isExpanded.value, isViewed.value],
-  (newVals, oldVals) => {
+  async (newVals, oldVals) => {
     const [newIsExpanded, newIsViewed] = newVals
     const [oldIsExpanded] = oldVals
 
     if (newIsExpanded && newIsExpanded !== oldIsExpanded && !newIsViewed) {
       markThreadViewed(projectId.value, props.modelValue.id)
+    }
+
+    if (newIsExpanded && props.modelValue.data) {
+      await setCommentPointOfView(props.modelValue.data)
+    }
+
+    if (!newIsExpanded && props.modelValue.data?.sectionBox) {
+      sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
     }
   }
 )

@@ -46,7 +46,7 @@
           :disabled="!showLoadMore"
           @click="onLoadMore"
         >
-          {{ showLoadMore ? 'Load older versions' : 'No more versions to load' }}
+          {{ showLoadMore ? 'View older versions' : 'No more versions to load' }}
         </FormButton>
       </div>
       <!-- <div v-else class="py-2" /> -->

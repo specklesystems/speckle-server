@@ -9,55 +9,41 @@
     }"
   >
     <div class="relative">
-      <FormButton
-        :icon-left="PlusIcon"
-        hide-text
-        :style="{ opacity: modelValue.style.opacity }"
+      <button
+        v-tippy="!modelValue.isExpanded ? 'New Comment' : 'Close'"
+        :class="`bg-foundation-2 ${
+          modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
+        } rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md`"
         @click="onThreadClick"
-      />
+      >
+        <PlusIcon
+          :class="`w-5 h-5 text-primary ${
+            modelValue.isExpanded ? 'rotate-45' : ''
+          } transition`"
+        />
+        <!-- <XMarkIcon v-else class="w-5 h-5 text-primary" /> -->
+      </button>
       <div
         v-if="modelValue.isExpanded"
         ref="threadContainer"
-        class="absolute"
-        :style="style"
+        class="absolute hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md"
       >
         <div class="relative">
           <ViewerCommentsEditor
             ref="editor"
             v-model="commentValue"
+            prompt="Press enter to comment"
             max-height="300px"
             autofocus
             @submit="() => onSubmit()"
           />
-          <div class="absolute w-full flex justify-between pt-2 space-x-2">
-            <div class="flex space-x-2">
-              <FormButton
-                :icon-left="HeartIcon"
-                hide-text
-                color="invert"
-                class="text-red-600"
-                @click="() => submitEmoji('❤️')"
-              />
-              <FormButton
-                :icon-left="ExclamationTriangleIcon"
-                hide-text
-                color="invert"
-                class="text-orange-500"
-                @click="() => submitEmoji('⚠️')"
-              />
-              <FormButton
-                :icon-left="FireIcon"
-                hide-text
-                color="invert"
-                class="text-red-600"
-                @click="() => submitEmoji('🔥')"
-              />
-            </div>
+          <div class="w-full flex justify-end p-2 space-x-2">
             <div class="space-x-2">
               <FormButton
+                v-tippy="'Attach'"
                 :icon-left="PaperClipIcon"
                 hide-text
-                color="invert"
+                text
                 @click="editor?.openFilePicker"
               />
 
@@ -74,16 +60,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  HeartIcon,
-  PlusIcon,
-  FireIcon,
-  ExclamationTriangleIcon,
-  PaperAirplaneIcon,
-  PaperClipIcon
-} from '@heroicons/vue/24/solid'
+import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
 import { RichTextEditor } from '@speckle/shared'
+import { onKeyDown } from '@vueuse/core'
 import {
   useExpandedThreadResponsiveLocation,
   ViewerNewThreadBubbleModel
@@ -92,6 +72,9 @@ import {
   CommentEditorValue,
   useSubmitComment
 } from '~~/lib/viewer/composables/commentManagement'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+
+const ui = useInjectedViewerInterfaceState()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -106,6 +89,7 @@ const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { style } = useExpandedThreadResponsiveLocation({
   threadContainer,
   width: 320
@@ -119,6 +103,8 @@ const onThreadClick = () => {
   })
 }
 
+// NOTE: will be used later, keep
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const submitEmoji = (emoji: string) =>
   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
 
@@ -143,9 +129,18 @@ const onSubmit = (comment?: CommentEditorValue) => {
   emit('close')
 }
 
+onKeyDown('Escape', () => {
+  if (props.modelValue.isExpanded) {
+    onThreadClick()
+  }
+})
+
 watch(
   () => props.modelValue.isExpanded,
-  () => {
+  (newVal) => {
+    if (newVal) {
+      ui.threads.closeAllThreads()
+    }
     commentValue.value = {
       doc: undefined,
       attachments: undefined

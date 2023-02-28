@@ -107,7 +107,7 @@ import { useTextInputGlobalFocus } from '~~/composables/states'
 const {
   viewer: { instance },
   ui: {
-    camera: { toggleProjection, isPerspectiveProjection },
+    camera: { toggleProjection, isPerspectiveProjection, zoomExtentsOrSelection },
     sectionBox: { toggleSectionBox, isSectionBoxEnabled }
   }
 } = useInjectedViewerState()
@@ -125,6 +125,7 @@ const toggleActiveControl = (control: ActiveControl) =>
 const globalTextInputFocus = useTextInputGlobalFocus()
 
 // Main nav kbd shortcuts
+// TODO: better with modifier keys, and abstract away OS control/command stuff
 onKeyStroke('m', () => {
   if (!globalTextInputFocus.value) toggleActiveControl('models')
 })
@@ -140,7 +141,7 @@ onKeyStroke(['c', 'C'], () => {
 
 // Viewer actions kbd shortcuts
 onKeyStroke(' ', () => {
-  if (!globalTextInputFocus.value) instance.zoom()
+  if (!globalTextInputFocus.value) zoomExtentsOrSelection()
 })
 onKeyStroke('p', () => {
   if (!globalTextInputFocus.value) toggleProjection()

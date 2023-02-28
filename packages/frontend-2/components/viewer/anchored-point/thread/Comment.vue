@@ -6,7 +6,7 @@
     </div> -->
     <div class="xxx-bg-foundation rounded-xl p-4 w-full relative">
       <div class="flex items-center space-x-1">
-        <UserAvatar :user="comment.author" size="sm" class="mr-2" />
+        <UserAvatar :user="comment.author" class="mr-1" />
         <span class="grow truncate text-sm font-medium">
           {{ comment.author.name }}
         </span>

@@ -18,6 +18,8 @@
       :class="openThread?.id === thread.id ? 'z-[12]' : 'z-[11]'"
       @update:model-value="onThreadUpdate"
       @update:expanded="onThreadExpandedChange"
+      @next="(model) => openNextThread(model)"
+      @prev="(model) => openPrevThread(model)"
     />
 
     <!-- Active users -->
@@ -40,7 +42,9 @@
             <button @click="setUserSpotlight(user.id)">
               <UserAvatar
                 v-tippy="
-                  `${user.id === spotlightUserId ? 'Unfollow' : 'Follow'} ${user.name}`
+                  `${user.id === spotlightUserId ? 'Stop Following' : 'Follow'} ${
+                    user.name
+                  }`
                 "
                 :user="user"
                 hover-effect
@@ -59,8 +63,15 @@
     >
       <div class="w-full h-full border-4 border-blue-500/50 rounded-xl">
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
-          <FormButton size="sm" class="" @click="() => (spotlightUserId = null)">
-            Stop Following {{ spotlightUser?.userName }}
+          <FormButton
+            size="sm"
+            class="group w-36 truncate"
+            @click="() => (spotlightUserId = null)"
+          >
+            <span class="hidden group-hover:inline-block">Stop Following</span>
+            <span class="inline-block group-hover:hidden truncate">
+              {{ spotlightUser?.userName }}
+            </span>
           </FormButton>
         </div>
       </div>
@@ -74,6 +85,7 @@ import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activit
 import {
   CommentBubbleModel,
   useViewerCommentBubbles,
+  useViewerCommentBubblesProjection,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
 import {
@@ -83,9 +95,13 @@ import {
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
-const { spotlightUserId } = useInjectedViewerInterfaceState()
+const {
+  spotlightUserId,
+  threads: { openThread, items: commentThreads }
+} = useInjectedViewerInterfaceState()
 
-const { commentThreads, openThread } = useViewerCommentBubbles({ parentEl })
+useViewerCommentBubblesProjection({ parentEl })
+
 const { buttonState, closeNewThread } = useViewerNewThreadBubble({
   parentEl
 })
@@ -103,6 +119,49 @@ const onThreadUpdate = (thread: CommentBubbleModel) => {
 const onThreadExpandedChange = (isExpanded: boolean) => {
   if (isExpanded) {
     closeNewThread()
+  }
+}
+
+const allThreadsChronologicalOrder = computed(() => {
+  const vals = Object.values(commentThreads.value)
+  return vals.sort(
+    (a, b) => new Date(b.createdAt).getUTCDate() - new Date(a.createdAt).getUTCDate()
+  )
+})
+
+const openNextThread = (currentThread: CommentBubbleModel) => {
+  const threadCount = allThreadsChronologicalOrder.value.length
+  let currentThreadIndex = allThreadsChronologicalOrder.value.findIndex(
+    (t) => currentThread.id === t.id
+  )
+  if (++currentThreadIndex > threadCount - 1) currentThreadIndex = 0
+  const nextThread = allThreadsChronologicalOrder.value[currentThreadIndex]
+
+  swapThreads(currentThread, nextThread)
+}
+
+const openPrevThread = (currentThread: CommentBubbleModel) => {
+  const threadCount = allThreadsChronologicalOrder.value.length
+  let currentThreadIndex = allThreadsChronologicalOrder.value.findIndex(
+    (t) => currentThread.id === t.id
+  )
+  if (--currentThreadIndex < 0) currentThreadIndex = threadCount - 1
+  const nextThread = allThreadsChronologicalOrder.value[currentThreadIndex]
+
+  swapThreads(currentThread, nextThread)
+}
+
+const swapThreads = (from: CommentBubbleModel, to: CommentBubbleModel) => {
+  commentThreads.value = {
+    ...commentThreads.value,
+    [from.id]: {
+      ...from,
+      isExpanded: false
+    },
+    [to.id]: {
+      ...to,
+      isExpanded: true
+    }
   }
 }
 
