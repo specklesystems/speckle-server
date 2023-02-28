@@ -1,5 +1,4 @@
 import express, { RequestWithAuthContext } from 'express'
-import Redis from 'ioredis'
 import {
   getRedisUrl,
   getIntFromEnv,
@@ -15,6 +14,8 @@ import {
 import { TIME } from '@speckle/shared'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { rateLimiterLogger } from '@/logging/logging'
+import { createRedisClient } from '@/modules/shared/redis/redis'
 
 // typescript definitions
 export enum RateLimitAction {
@@ -27,7 +28,15 @@ export enum RateLimitAction {
   'POST /objects/:streamId' = 'POST /objects/:streamId',
   'GET /objects/:streamId/:objectId' = 'GET /objects/:streamId/:objectId',
   'GET /objects/:streamId/:objectId/single' = 'GET /objects/:streamId/:objectId/single',
-  'POST /graphql' = 'POST /graphql'
+  'POST /graphql' = 'POST /graphql',
+  'GET /auth/azure' = 'GET /auth/azure',
+  'GET /auth/gh' = 'GET /auth/gh',
+  'GET /auth/google' = 'GET /auth/google',
+  'GET /auth/oidc' = 'GET /auth/oidc',
+  'GET /auth/azure/callback' = 'GET /auth/azure/callback',
+  'GET /auth/gh/callback' = 'GET /auth/gh/callback',
+  'GET /auth/google/callback' = 'GET /auth/google/callback',
+  'GET /auth/oidc/callback' = 'GET /auth/oidc/callback'
 }
 
 export interface RateLimitResult {
@@ -168,6 +177,86 @@ export const LIMITS: RateLimiterOptions = {
       limitCount: getIntFromEnv('RATELIMIT_BURST_POST_GRAPHQL', '200'),
       duration: 1 * TIME.minute
     }
+  },
+  'GET /auth/azure': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/gh': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/google': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/oidc': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/azure/callback': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/gh/callback': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/google/callback': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
+  },
+  'GET /auth/oidc/callback': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
+      duration: 1 * TIME.minute
+    }
   }
 }
 
@@ -246,17 +335,20 @@ export const createConsumer =
     } catch (err) {
       if (err instanceof RateLimiterRes)
         return { action, isWithinLimits: false, msBeforeNext: err.msBeforeNext }
+
+      rateLimiterLogger.error(err, 'Error while consuming rate limiter')
       throw err
     }
   }
 
-export const initializeRedisRateLimiters = (
+const initializeRedisRateLimiters = (
   options: RateLimiterOptions = LIMITS
 ): RateLimiterMapping => {
-  const redisClient = new Redis(getRedisUrl(), {
+  const redisClient = createRedisClient(getRedisUrl(), {
     enableReadyCheck: false,
     maxRetriesPerRequest: null
   })
+
   const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {

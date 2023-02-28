@@ -129,6 +129,13 @@ export class NodeRenderView {
     )
   }
 
+  public get validGeometry() {
+    return (
+      this._renderData.geometry.attributes.POSITION &&
+      this._renderData.geometry.attributes.POSITION.length > 0
+    )
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
     this._geometryType = this.getGeometryType()

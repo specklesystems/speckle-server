@@ -17,7 +17,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
-// params.verbose = true
+params.verbose = true
 
 const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)
@@ -127,7 +127,14 @@ sandbox.makeFilteringUI()
 sandbox.makeBatchesUI()
 sandbox.makeDiffUI()
 // Load demo object
-
+// setTimeout(async () => {
+//   const objUrl = (
+//     await UrlHelper.getResourceUrls(
+//       'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
+//     )
+//   )[0]
+//   viewer.cancelLoad(objUrl)
+// }, 1500)
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
@@ -236,4 +243,14 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/8d8c1b8e8f/commits/8f6d5b7cb0'
   // diff latest
   'https://latest.speckle.dev/streams/cdbe82b016/commits/78218b1019?overlay=8e79cdb0ae'
+  // 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb',
+  // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
+  // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
+  // tekla 2
+  // 'https://speckle.xyz/streams/be4813ccd2/commits/da85000921?c=%5B-1.12295,-2.60901,6.12402,4.77979,0.555,3.63346,0,1%5D'
+  // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/bb7b718a1a'
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
+  // Big curves
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
 )

@@ -83,8 +83,8 @@ export default class Sandbox {
     weights: { x: 1, y: 1, z: 0, w: 1 },
     blurRadius: 16,
     stdDeviation: 4,
-    sigmoidRange: 2,
-    sigmoidStrength: 2.43
+    sigmoidRange: 1.1,
+    sigmoidStrength: 2
   }
 
   public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
@@ -888,7 +888,7 @@ export default class Sandbox {
       const authToken = localStorage.getItem(
         url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
       ) as string
-      await this.viewer.loadObject(url, authToken)
+      await this.viewer.loadObjectAsync(url, authToken, undefined, 1)
     }
     localStorage.setItem('last-load-url', url)
   }

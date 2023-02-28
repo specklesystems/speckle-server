@@ -237,15 +237,18 @@ export class Pipeline {
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
 
-    this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT])
-    this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT])
-    this.stencilPass.setLayers([ObjectLayers.STREAM_CONTENT])
+    this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    this.stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     this.renderPass.setLayers([
       ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
+      ObjectLayers.STREAM_CONTENT_MESH,
+      ObjectLayers.STREAM_CONTENT_LINE,
+      ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.SHADOWCATCHER
     ])
-    this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT])
+    this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {

@@ -1,8 +1,16 @@
 'use strict'
-const Redis = require('ioredis')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
+const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
+const ServerAcl = () => ServerAclSchema.knex()
+
+const { Roles } = require('@speckle/shared')
+const {
+  adminOverrideEnabled,
+  getRedisUrl
+} = require('@/modules/shared/helpers/envHelper')
+const { createRedisClient } = require('@/modules/shared/redis/redis')
 
 const StreamPubsubEvents = Object.freeze({
   UserStreamAdded: 'USER_STREAM_ADDED',
@@ -21,8 +29,8 @@ const CommitPubsubEvents = Object.freeze({
  * GraphQL Subscription PubSub instance
  */
 const pubsub = new RedisPubSub({
-  publisher: new Redis(process.env.REDIS_URL),
-  subscriber: new Redis(process.env.REDIS_URL)
+  publisher: createRedisClient(getRedisUrl()),
+  subscriber: createRedisClient(getRedisUrl())
 })
 
 let roles
@@ -85,6 +93,11 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
 
   if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
 
+  if (adminOverrideEnabled()) {
+    const serverRoles = await ServerAcl().select('role').where({ userId })
+    if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin)) return requiredRole
+  }
+
   try {
     const { isPublic } = await knex(role.resourceTarget)
       .select('isPublic')
@@ -107,7 +120,7 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
   userAclEntry.role = roles.find((r) => r.name === userAclEntry.role)
 
   if (userAclEntry.role.weight >= role.weight) return userAclEntry.role.name
-  else throw new ForbiddenError('You are not authorized.')
+  throw new ForbiddenError('You are not authorized.')
 }
 
 const Scopes = () => knex('scopes')
@@ -122,10 +135,10 @@ async function registerOrUpdateScope(scope) {
   return
 }
 
-const Roles = () => knex('user_roles')
+const UserRoles = () => knex('user_roles')
 async function registerOrUpdateRole(role) {
   await knex.raw(
-    `${Roles()
+    `${UserRoles()
       .insert(role)
       .toString()} on conflict (name) do update set weight = ?, description = ?, "resourceTarget" = ? `,
     [role.weight, role.description, role.resourceTarget]

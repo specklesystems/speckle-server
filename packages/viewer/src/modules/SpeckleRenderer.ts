@@ -25,7 +25,7 @@ import {
 import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
-import { SpeckleType } from './converter/GeometryConverter'
+import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
 import { FilterMaterial } from './filtering/FilteringManager'
 import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
@@ -57,6 +57,10 @@ import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
 
 export enum ObjectLayers {
+  STREAM_CONTENT_MESH = 10,
+  STREAM_CONTENT_LINE = 11,
+  STREAM_CONTENT_POINT = 12,
+
   STREAM_CONTENT = 1,
   PROPS = 2,
   SHADOWCATCHER = 3
@@ -83,6 +87,7 @@ export default class SpeckleRenderer {
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private cancel: { [subtreeId: string]: boolean } = {}
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -295,7 +300,8 @@ export default class SpeckleRenderer {
     })
 
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
-      ObjectLayers.STREAM_CONTENT
+      ObjectLayers.STREAM_CONTENT_MESH,
+      ObjectLayers.STREAM_CONTENT_LINE
     ])
     let restoreVisibility
     this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
@@ -441,30 +447,7 @@ export default class SpeckleRenderer {
   }
 
   public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(
-      subtreeId,
-      GeometryType.MESH,
-      SpeckleType.Mesh,
-      SpeckleType.Brep
-    )
-    this.batcher.makeBatches(
-      subtreeId,
-      GeometryType.LINE,
-      SpeckleType.Line,
-      SpeckleType.Curve,
-      SpeckleType.Polycurve,
-      SpeckleType.Polyline,
-      SpeckleType.Arc,
-      SpeckleType.Circle,
-      SpeckleType.Ellipse
-    )
-    this.batcher.makeBatches(
-      subtreeId,
-      GeometryType.POINT,
-      SpeckleType.Point,
-      SpeckleType.Pointcloud
-    )
-
+    this.batcher.makeBatches(subtreeId, SpeckleTypeAllRenderables)
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
@@ -472,36 +455,7 @@ export default class SpeckleRenderer {
 
     const batches = this.batcher.getBatches(subtreeId)
     batches.forEach((batch: Batch) => {
-      const batchRenderable = batch.renderObject
-      batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
-      subtreeGroup.add(batch.renderObject)
-
-      if (batch.geometryType === GeometryType.MESH) {
-        const mesh = batchRenderable as unknown as Mesh
-        const material = mesh.material as SpeckleStandardMaterial
-        batchRenderable.castShadow = !material.transparent
-        batchRenderable.receiveShadow = !material.transparent
-        batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
-          {
-            depthPacking: RGBADepthPacking
-          },
-          ['USE_RTE', 'ALPHATEST_REJECTION']
-        )
-        if (this.SHOW_BVH) {
-          const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
-            batchRenderable as Mesh,
-            10
-          )
-          bvhHelper.name = batch.renderObject.id + '_bvh'
-          bvhHelper.traverse((obj) => {
-            obj.layers.set(ObjectLayers.PROPS)
-          })
-          bvhHelper.displayParents = true
-          bvhHelper.visible = false
-          bvhHelper.update()
-          subtreeGroup.add(bvhHelper)
-        }
-      }
+      this.addBatch(batch, subtreeGroup)
     })
 
     this.updateDirectLights()
@@ -513,6 +467,73 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
+  public async addRenderTreeAsync(subtreeId: string, priority = 1) {
+    this.cancel[subtreeId] = false
+    const subtreeGroup = new Group()
+    subtreeGroup.name = subtreeId
+    subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
+    this.rootGroup.add(subtreeGroup)
+
+    const generator = this.batcher.makeBatchesAsync(
+      subtreeId,
+      SpeckleTypeAllRenderables,
+      undefined,
+      priority
+    )
+    for await (const batch of generator) {
+      this.addBatch(batch, subtreeGroup)
+      this.zoom()
+      if (batch.geometryType === GeometryType.MESH) {
+        this.updateDirectLights()
+        this.updateShadowCatcher()
+      }
+      this._needsRender = true
+      if (this.cancel[subtreeId]) {
+        generator.return()
+        this.removeRenderTree(subtreeId)
+        delete this.cancel[subtreeId]
+        break
+      }
+    }
+    this.updateHelpers()
+    if (this.viewer.sectionBox.display.visible) {
+      this.viewer.setSectionBox()
+    }
+    delete this.cancel[subtreeId]
+  }
+
+  private addBatch(batch: Batch, parent: Object3D) {
+    const batchRenderable = batch.renderObject
+    parent.add(batch.renderObject)
+
+    if (batch.geometryType === GeometryType.MESH) {
+      const mesh = batchRenderable as unknown as Mesh
+      const material = mesh.material as SpeckleStandardMaterial
+      batchRenderable.castShadow = !material.transparent
+      batchRenderable.receiveShadow = !material.transparent
+      batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
+        {
+          depthPacking: RGBADepthPacking
+        },
+        ['USE_RTE', 'ALPHATEST_REJECTION']
+      )
+      if (this.SHOW_BVH) {
+        const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
+          batchRenderable as Mesh,
+          10
+        )
+        bvhHelper.name = batch.renderObject.id + '_bvh'
+        bvhHelper.traverse((obj) => {
+          obj.layers.set(ObjectLayers.PROPS)
+        })
+        bvhHelper.displayParents = true
+        bvhHelper.visible = false
+        bvhHelper.update()
+        parent.add(bvhHelper)
+      }
+    }
+  }
+
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
     this.updateShadowCatcher()
@@ -520,6 +541,12 @@ export default class SpeckleRenderer {
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
     this.updateHelpers()
+  }
+
+  public cancelRenderTree(subtreeId: string) {
+    if (this.cancel[subtreeId] !== undefined) {
+      this.cancel[subtreeId] = true
+    }
   }
 
   public clearFilter() {
@@ -612,7 +639,10 @@ export default class SpeckleRenderer {
   public updateShadowCatcher() {
     this._shadowcatcher.shadowcatcherMesh.visible = this.sunConfiguration.shadowcatcher
     if (this.sunConfiguration.shadowcatcher) {
-      this._shadowcatcher.bake(this.sceneBox)
+      this._shadowcatcher.bake(
+        this.sceneBox,
+        this._renderer.capabilities.maxTextureSize
+      )
       this.resetPipeline()
     }
   }
