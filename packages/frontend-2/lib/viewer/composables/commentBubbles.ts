@@ -168,7 +168,8 @@ export function useViewerCommentBubbles(
   }
 
   const open = (id: string) => {
-    if (commentThreads.value[id]) commentThreads.value[id].isExpanded = true
+    if (commentThreads.value[id])
+      commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
   }
 
   // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`

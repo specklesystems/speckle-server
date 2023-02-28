@@ -1,52 +1,69 @@
 <template>
+  <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    class="py-2 my-2 flex flex-col bg-foundation hover:shadow-lg xxdark:hover:bg-foundation-3 hover:bg-primary-muted px-1 rounded-lg transition cursor-pointer"
+    :class="`py-2 my-2 px-2 flex flex-col space-y-1 bg-foundation hover:shadow-lg xxdark:hover:bg-foundation-3 hover:bg-primary-muted rounded-lg transition cursor-pointer
+      ${isOpenInViewer ? 'outline outline-2 outline-primary' : ''}
+    `"
+    @click="open(thread.id)"
   >
-    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <a @click="open(thread.id)">
-      <div class="flex items-center mb-1 justify-between">
-        <UserAvatarGroup :users="threadAuthors" />
-      </div>
-
-      <div class="flex items-center mb-1">
-        <!-- <UserAvatar :user="thread.author" size="sm" class="mr-2" /> -->
-        <span class="grow truncate text-xs font-medium text-foreground-2">
-          {{ thread.author.name }}
-          <span v-if="threadAuthors.length !== 1">
-            & {{ thread.replyAuthors.totalCount }} others
-          </span>
+    <div class="flex justify-between items-center">
+      <UserAvatarGroup :users="threadAuthors" />
+      <FormButton
+        v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
+        size="sm"
+        :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
+        text
+        hide-text
+        :disabled="!canArchiveOrUnarchive"
+        :color="thread.archived ? 'default' : 'default'"
+        @click.stop="toggleCommentResolvedStatus()"
+      ></FormButton>
+    </div>
+    <div class="flex items-center space-x-1">
+      <span class="grow truncate text-sm font-medium text-foreground-2">
+        {{ thread.author.name }}
+        <span v-if="threadAuthors.length !== 1">
+          & {{ thread.replyAuthors.totalCount }} others
         </span>
-        <span class="text-foreground-2 text-xs">
-          {{ formattedDate }}
-        </span>
-      </div>
-      <div class="truncate text-sm mb-1">
-        {{ thread.rawText }}
-      </div>
-      <div
-        :class="`text-xs font-bold ${
-          thread.replies.totalCount > 0 ? 'text-primary' : 'text-foreground-2'
-        } mb-1`"
-      >
-        {{ thread.replies.totalCount }}
-        {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
-      </div>
-      <!-- <div class="text-xs mt-1">
+      </span>
+    </div>
+    <div class="truncate text-sm mb-1">
+      {{ thread.rawText }}
+    </div>
+    <div
+      :class="`text-xs font-bold ${
+        thread.replies.totalCount > 0 ? 'text-primary' : 'text-foreground-2'
+      } mb-1`"
+    >
+      {{ thread.replies.totalCount }}
+      {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
+      |
+      <span class="text-foreground-2 text-xs">
+        {{ formattedDate }}
+      </span>
+    </div>
+    <!-- <div class="text-xs mt-1">
       [Archived: {{ thread.archived }}] [Is resource loaded in viewer:
       {{ isThreadResourceLoaded ? 'yes' : 'no' }}] [author count:
       {{ thread.replyAuthors.totalCount }}]
     </div> -->
-    </a>
   </div>
 </template>
 <script setup lang="ts">
+import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import {
   LoadedCommentThread,
   useInjectedViewerInterfaceState,
-  useInjectedViewerLoadedResources
+  useInjectedViewerLoadedResources,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import dayjs from 'dayjs'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { Roles } from '@speckle/shared'
 
 const props = defineProps<{
   thread: LoadedCommentThread
@@ -54,10 +71,12 @@ const props = defineProps<{
 
 const { resourceItems } = useInjectedViewerLoadedResources()
 const {
-  threads: { open }
+  threads: { open, openThread }
 } = useInjectedViewerInterfaceState()
 
 const formattedDate = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread
   const loadedResources = resourceItems.value
@@ -77,6 +96,8 @@ const isThreadResourceLoaded = computed(() => {
   return false
 })
 
+const isOpenInViewer = computed(() => openThread.value?.id === props.thread.id)
+
 const threadAuthors = computed(() => {
   const authors = [props.thread.author]
   for (const author of props.thread.replyAuthors.items) {
@@ -84,4 +105,28 @@ const threadAuthors = computed(() => {
   }
   return authors
 })
+
+const { activeUser } = useActiveUser()
+const archiveComment = useArchiveComment()
+const { triggerNotification } = useGlobalToast()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const canArchiveOrUnarchive = computed(
+  () =>
+    activeUser.value &&
+    (props.thread.author.id === activeUser.value.id ||
+      project.value?.role === Roles.Stream.Owner)
+)
+
+const toggleCommentResolvedStatus = async () => {
+  await archiveComment(props.thread.id, !props.thread.archived)
+  triggerNotification({
+    description: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
+    type: ToastNotificationType.Info
+  })
+}
 </script>

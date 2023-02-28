@@ -1,27 +1,25 @@
 <template>
-  <div class="bg-foundation rounded-lg shadow flex flex-col space-y-1">
-    <h2 class="font-bold text-foreground-2 px-2 py-2">Comments</h2>
-    <!-- <div class="flex">
+  <div
+    class="bg-foundation rounded-lg shadow flex flex-col space-y-1 xxxoverflow-hidden"
+  >
+    <!-- <h2 class="font-bold text-foreground-2 px-2 py-2">Comments</h2> -->
+    <div
+      class="flex sticky top-0 px-2 py-2 bg-foundation-2 shadow-md rounded-t-lg justify-between"
+    >
       <FormButton
         size="xs"
-        :icon-right="CheckCircleIcon"
-        :outlined="!includeArchived"
+        :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
+        text
+        :disabled="commentThreadsMetadata?.totalArchivedCount === 0"
         @click="includeArchived = includeArchived ? undefined : 'includeArchived'"
       >
-        Show Resolved
+        {{ includeArchived ? 'Hide' : 'Show' }} Resolved ({{
+          commentThreadsMetadata?.totalArchivedCount
+        }})
       </FormButton>
-    </div> -->
-    <div class="flex">
-      <FormCheckbox
-        v-model="includeArchived"
-        name="includeArchived"
-        :label="archivedLabel"
-      />
-      <FormCheckbox
-        v-model="loadedVersionsOnly"
-        name="loadedVersionsOnly"
-        label="Loaded versions only"
-      />
+      <FormButton size="xs" text @click="hideBubbles = !hideBubbles">
+        {{ !hideBubbles ? 'Hide' : 'Show' }} Threads
+      </FormButton>
     </div>
     <div class="flex flex-col px-1">
       <ViewerCommentsListItem
@@ -38,6 +36,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import {
+  useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
@@ -74,7 +73,11 @@ graphql(`
 
 const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
 const { threadFilters } = useInjectedViewerRequestedResources()
+const {
+  threads: { hideBubbles }
+} = useInjectedViewerInterfaceState()
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const loadedVersionsOnly = computed({
   get: () =>
     threadFilters.value.loadedVersionsOnly || false ? 'loadedVersionsOnly' : undefined,
@@ -91,12 +94,4 @@ const lastThread = computed(() =>
     ? commentThreads.value[commentThreads.value.length - 1]
     : null
 )
-
-const totalArchived = computed(() => commentThreadsMetadata.value?.totalArchivedCount)
-const archivedLabel = computed(() => {
-  const base = 'Show resolved'
-  if (!totalArchived.value) return base
-
-  return `${base} (${totalArchived.value})`
-})
 </script>

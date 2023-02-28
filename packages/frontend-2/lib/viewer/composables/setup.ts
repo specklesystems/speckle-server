@@ -215,6 +215,7 @@ export type InjectableViewerState = Readonly<{
       openThread: ComputedRef<CommentBubbleModel | undefined>
       closeAllThreads: () => void
       open: (id: string) => void
+      hideBubbles: Ref<boolean>
     }
     spotlightUserId: Ref<Nullable<string>>
     filters: {
@@ -880,6 +881,7 @@ function setupInterfaceState(
     { state }
   )
 
+  const hideBubbles = ref(false)
   return {
     ...state,
     ui: {
@@ -889,7 +891,8 @@ function setupInterfaceState(
         items: commentThreads,
         openThread,
         closeAllThreads,
-        open
+        open,
+        hideBubbles
       },
       camera: {
         isPerspectiveProjection,
