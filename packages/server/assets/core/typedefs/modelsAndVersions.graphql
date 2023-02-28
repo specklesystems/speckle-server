@@ -70,6 +70,7 @@ type Model {
   Return a model tree of children
   """
   childrenTree: [ModelsTreeItem!]!
+  version(id: String!): Version
   versions(
     limit: Int! = 25
     cursor: String

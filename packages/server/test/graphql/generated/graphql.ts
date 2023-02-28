@@ -618,6 +618,7 @@ export type Model = {
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
+  version?: Maybe<Version>;
   versionCount: Scalars['Int'];
   versions: VersionCollection;
 };
@@ -626,6 +627,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelVersionArgs = {
+  id: Scalars['String'];
 };
 
 
