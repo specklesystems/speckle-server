@@ -95,7 +95,10 @@ graphql(`
 `)
 
 const modelId = computed(() => props.model.id)
-const versions = computed(() => props.model.versions?.items || [])
+const versions = computed(() => [
+  ...props.model.loadedVersion.items,
+  ...props.model.versions.items
+])
 const showLoadMore = computed(() => {
   const totalCount = props.model.versions.totalCount
   const currentCount = versions.value.length

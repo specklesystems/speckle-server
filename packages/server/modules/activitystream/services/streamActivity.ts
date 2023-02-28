@@ -8,6 +8,7 @@ import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { chunk, flatten } from 'lodash'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
+  ProjectCreateInput,
   ProjectUpdatedMessageType,
   ProjectUpdateInput,
   StreamUpdateInput,
@@ -150,7 +151,7 @@ export async function addStreamClonedActivity(
 export async function addStreamCreatedActivity(params: {
   streamId: string
   creatorId: string
-  input: StreamCreateInput
+  input: StreamCreateInput | ProjectCreateInput
   stream: StreamRecord
 }) {
   const { streamId, creatorId, input, stream } = params

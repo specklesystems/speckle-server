@@ -30,7 +30,9 @@ import {
 import {
   DiscoverableStreamsSortingInput,
   DiscoverableStreamsSortType,
+  ProjectCreateInput,
   ProjectUpdateInput,
+  ProjectVisibility,
   QueryDiscoverableStreamsArgs,
   SortDirection,
   StreamCreateInput,
@@ -42,6 +44,7 @@ import dayjs from 'dayjs'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
+import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -655,7 +658,7 @@ export async function getUserStreamsCount({
 }
 
 export async function createStream(
-  input: StreamCreateInput,
+  input: StreamCreateInput | ProjectCreateInput,
   options?: Partial<{
     /**
      * If set, will assign owner permissions to this user
@@ -664,11 +667,19 @@ export async function createStream(
     trx: Knex.Transaction
   }>
 ) {
-  const { isPublic, isDiscoverable, name, description } = input
+  const { name, description } = input
   const { ownerId, trx } = options || {}
 
-  const shouldBePublic = isPublic !== false
-  const shouldBeDiscoverable = isDiscoverable !== false && shouldBePublic
+  let shouldBePublic: boolean, shouldBeDiscoverable: boolean
+  if (isProjectCreateInput(input)) {
+    shouldBeDiscoverable = input.visibility === ProjectVisibility.Public
+    shouldBePublic =
+      !input.visibility ||
+      [ProjectVisibility.Public, ProjectVisibility.Unlisted].includes(input.visibility)
+  } else {
+    shouldBePublic = input.isPublic !== false
+    shouldBeDiscoverable = input.isDiscoverable !== false && shouldBePublic
+  }
 
   const id = generateId()
   const stream = {

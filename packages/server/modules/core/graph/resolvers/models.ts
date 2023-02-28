@@ -60,6 +60,12 @@ export = {
         limit: args.limit,
         filter: args.filter
       })
+    },
+    async version(parent, args, ctx) {
+      return await ctx.loaders.branches.getBranchCommit.load({
+        branchId: parent.id,
+        commitId: args.id
+      })
     }
   },
   ModelsTreeItem: {

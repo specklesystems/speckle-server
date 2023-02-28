@@ -333,6 +333,7 @@ export type CommentMutations = {
 
 
 export type CommentMutationsArchiveArgs = {
+  archived?: Scalars['Boolean'];
   commentId: Scalars['String'];
 };
 
@@ -625,6 +626,7 @@ export type Model = {
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
+  version?: Maybe<Version>;
   versionCount: Scalars['Int'];
   versions: VersionCollection;
 };
@@ -633,6 +635,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelVersionArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1250,6 +1257,13 @@ export enum ProjectCommentsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+/** Any values left null will be ignored */
+export type ProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+};
+
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
@@ -1282,12 +1296,19 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Create new project */
+  create: Project;
   /** Create onboarding/tutorial project */
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
+};
+
+
+export type ProjectMutationsCreateArgs = {
+  input?: InputMaybe<ProjectCreateInput>;
 };
 
 
@@ -1352,6 +1373,12 @@ export enum ProjectVersionsUpdatedMessageType {
   Created = 'CREATED',
   Deleted = 'DELETED',
   Updated = 'UPDATED'
+}
+
+export enum ProjectVisibility {
+  Private = 'PRIVATE',
+  Public = 'PUBLIC',
+  Unlisted = 'UNLISTED'
 }
 
 export type Query = {
@@ -2508,6 +2535,7 @@ export type ResolversTypes = {
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversTypes['Comment']> }>;
   ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
+  ProjectCreateInput: ProjectCreateInput;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
@@ -2518,6 +2546,7 @@ export type ResolversTypes = {
   ProjectVersionsPreviewGeneratedMessage: ResolverTypeWrapper<ProjectVersionsPreviewGeneratedMessage>;
   ProjectVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectVersionsUpdatedMessage, 'version'> & { version?: Maybe<ResolversTypes['Version']> }>;
   ProjectVersionsUpdatedMessageType: ProjectVersionsUpdatedMessageType;
+  ProjectVisibility: ProjectVisibility;
   Query: ResolverTypeWrapper<{}>;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
@@ -2649,6 +2678,7 @@ export type ResolversParentTypes = {
   ProjectCommentCollection: Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
+  ProjectCreateInput: ProjectCreateInput;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
   ProjectMutations: MutationsObjectGraphQLReturn;
@@ -2897,7 +2927,7 @@ export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type CommentMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentMutations'] = ResolversParentTypes['CommentMutations']> = {
-  archive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsArchiveArgs, 'commentId'>>;
+  archive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsArchiveArgs, 'archived' | 'commentId'>>;
   create?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsCreateArgs, 'input'>>;
   edit?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsEditArgs, 'input'>>;
   markViewed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsMarkViewedArgs, 'commentId'>>;
@@ -3011,6 +3041,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3193,6 +3224,7 @@ export type ProjectModelsUpdatedMessageResolvers<ContextType = GraphQLContext, P
 };
 
 export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectMutations'] = ResolversParentTypes['ProjectMutations']> = {
+  create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, Partial<ProjectMutationsCreateArgs>>;
   createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'stream'>>;

@@ -27,6 +27,7 @@
         :key="thread.id"
         :thread="thread"
       />
+      <div v-if="commentThreads.length === 0">TODO: Empty state</div>
     </div>
   </div>
 </template>

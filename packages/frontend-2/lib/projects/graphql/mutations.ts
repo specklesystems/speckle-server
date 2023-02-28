@@ -9,3 +9,14 @@ export const createModelMutation = graphql(`
     }
   }
 `)
+
+export const createProjectMutation = graphql(`
+  mutation CreateProject($input: ProjectCreateInput) {
+    projectMutations {
+      create(input: $input) {
+        ...ProjectPageProject
+        ...ProjectDashboardItem
+      }
+    }
+  }
+`)

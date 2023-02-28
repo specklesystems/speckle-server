@@ -326,6 +326,7 @@ export type CommentMutations = {
 
 
 export type CommentMutationsArchiveArgs = {
+  archived?: Scalars['Boolean'];
   commentId: Scalars['String'];
 };
 
@@ -618,6 +619,7 @@ export type Model = {
   name: Scalars['String'];
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
+  version?: Maybe<Version>;
   versionCount: Scalars['Int'];
   versions: VersionCollection;
 };
@@ -626,6 +628,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelVersionArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1243,6 +1250,13 @@ export enum ProjectCommentsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+/** Any values left null will be ignored */
+export type ProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+};
+
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
@@ -1275,12 +1289,19 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Create new project */
+  create: Project;
   /** Create onboarding/tutorial project */
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
+};
+
+
+export type ProjectMutationsCreateArgs = {
+  input?: InputMaybe<ProjectCreateInput>;
 };
 
 
@@ -1345,6 +1366,12 @@ export enum ProjectVersionsUpdatedMessageType {
   Created = 'CREATED',
   Deleted = 'DELETED',
   Updated = 'UPDATED'
+}
+
+export enum ProjectVisibility {
+  Private = 'PRIVATE',
+  Public = 'PUBLIC',
+  Unlisted = 'UNLISTED'
 }
 
 export type Query = {

@@ -26,7 +26,7 @@
           >
             <DialogPanel
               :class="[
-                'transform overflow-hidden rounded-lg bg-foundation text-left shadow-xl transition-all',
+                'transform rounded-lg bg-foundation text-left shadow-xl transition-all',
                 widthClasses
               ]"
             >

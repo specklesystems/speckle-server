@@ -35,7 +35,12 @@ export const viewerLoadedResourcesQuery = graphql(`
           id
           name
           updatedAt
-          versions(filter: { priorityIds: $versionIds }, limit: 3) {
+          loadedVersion: versions(filter: { priorityIds: $versionIds }, limit: 1) {
+            items {
+              ...ViewerModelVersionCardItem
+            }
+          }
+          versions(limit: 10) {
             totalCount
             cursor
             items {
@@ -58,7 +63,6 @@ export const viewerModelVersionsQuery = graphql(`
   query ViewerModelVersions(
     $projectId: String!
     $modelId: String!
-    $priorityVersionIds: [String!]
     $versionsCursor: String
   ) {
     project(id: $projectId) {
@@ -66,11 +70,7 @@ export const viewerModelVersionsQuery = graphql(`
       role
       model(id: $modelId) {
         id
-        versions(
-          filter: { priorityIds: $priorityVersionIds }
-          cursor: $versionsCursor
-          limit: 5
-        ) {
+        versions(cursor: $versionsCursor, limit: 10) {
           totalCount
           cursor
           items {

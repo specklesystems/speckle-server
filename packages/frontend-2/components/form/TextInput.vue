@@ -35,16 +35,10 @@
         v-model="value"
         :type="type"
         :name="name"
-        :class="[
-          'block w-full rounded focus:outline-none bg-foundation-page text-foreground transition-all',
-          'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
-          'placeholder:text-foreground-2',
-          computedClasses,
-          sizeClasses
-        ]"
+        :class="[coreClasses, iconClasses, sizeClasses]"
         :placeholder="placeholder"
         :disabled="disabled"
-        :aria-invalid="error ? 'true' : 'false'"
+        :aria-invalid="errorMessage ? 'true' : 'false'"
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
@@ -64,7 +58,7 @@
         <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
       </a>
       <div
-        v-if="error"
+        v-if="errorMessage"
         :class="[
           'pointer-events-none absolute inset-y-0 right-0 flex items-center',
           showClear ? 'pr-8' : 'pr-2'
@@ -73,7 +67,7 @@
         <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
       </div>
       <div
-        v-if="showRequired && !error"
+        v-if="showRequired && !errorMessage"
         class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
       >
         *
@@ -91,13 +85,13 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
-import { useScopedState } from '~~/lib/common/composables/scopedState'
+import { useTextInputCore } from '~~/lib/form/composables/textInput'
 export default defineComponent({
   inheritAttrs: false
 })
 </script>
 <script setup lang="ts">
-import { RuleExpression, useField } from 'vee-validate'
+import { RuleExpression } from 'vee-validate'
 import {
   ExclamationCircleIcon,
   EnvelopeIcon,
@@ -234,18 +228,28 @@ const emit = defineEmits<{
   (e: 'input', val: { event?: Event; value: string }): void
 }>()
 
-const { value, errorMessage: error } = useField(props.name, props.rules, {
-  validateOnMount: props.validateOnMount,
-  validateOnValueUpdate: props.validateOnValueUpdate,
-  initialValue: props.modelValue || undefined
-})
-
 const inputElement = ref(null as Nullable<HTMLInputElement>)
+
+const {
+  coreClasses,
+  title,
+  value,
+  helpTipId,
+  helpTipClasses,
+  helpTip,
+  errorMessage,
+  clear,
+  focus
+} = useTextInputCore({
+  props: toRefs(props),
+  emit,
+  inputEl: inputElement
+})
 
 const leadingIconClasses = computed(() => {
   const classParts: string[] = ['h-5 w-5']
 
-  if (error.value) {
+  if (errorMessage.value) {
     classParts.push('text-danger')
   } else {
     classParts.push('text-foreground-2')
@@ -258,27 +262,19 @@ const hasLeadingIcon = computed(
   () => ['email', 'password'].includes(props.type) || props.customIcon
 )
 
-const computedClasses = computed((): string => {
+const iconClasses = computed((): string => {
   const classParts: string[] = []
 
   if (hasLeadingIcon.value) {
     classParts.push('pl-10')
   }
 
-  if (error.value || props.showClear) {
-    if (error.value && props.showClear) {
+  if (errorMessage.value || props.showClear) {
+    if (errorMessage.value && props.showClear) {
       classParts.push('pr-12')
     } else {
       classParts.push('pr-8')
     }
-
-    if (error.value) {
-      classParts.push(
-        'border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
-      )
-    }
-  } else {
-    classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
   }
 
   return classParts.join(' ')
@@ -297,42 +293,6 @@ const sizeClasses = computed((): string => {
       return 'h-8'
   }
 })
-
-const title = computed(() => props.label || props.name)
-const errorMessage = computed(() => {
-  const base = error.value
-  if (!base || !props.useLabelInErrors) return base
-  return base.replace('Value', title.value)
-})
-
-const helpTip = computed(() => errorMessage.value || props.help)
-const hasHelpTip = computed(() => !!helpTip.value)
-const helpTipId = computed(() => (hasHelpTip.value ? `${props.name}-help` : undefined))
-const helpTipClasses = computed((): string =>
-  error.value ? 'text-danger' : 'text-foreground-2'
-)
-
-const focus = () => {
-  inputElement.value?.focus()
-}
-
-const clear = () => {
-  value.value = ''
-  emit('change', { value: '' })
-}
-
-onMounted(() => {
-  if (props.autoFocus) {
-    focus()
-  }
-})
-
-// TODO: ask fabs if this is okay
-const globalTextInputFocus = useTextInputGlobalFocus()
-
-function setGlobalFocus(status: boolean) {
-  globalTextInputFocus.value = status
-}
 
 defineExpose({ focus })
 </script>

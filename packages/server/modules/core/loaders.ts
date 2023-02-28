@@ -23,6 +23,7 @@ import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import {
   getCommitBranches,
   getCommitStreams,
+  getSpecificBranchCommits,
   getStreamCommitCounts
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
@@ -194,7 +195,23 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getById: new DataLoader<string, Nullable<BranchRecord>>(async (branchIds) => {
         const results = keyBy(await getBranchesByIds(branchIds.slice()), 'id')
         return branchIds.map((i) => results[i] || null)
-      })
+      }),
+      getBranchCommit: new DataLoader<
+        { branchId: string; commitId: string },
+        Nullable<CommitRecord>,
+        string
+      >(
+        async (idPairs) => {
+          const results = keyBy(await getSpecificBranchCommits(idPairs.slice()), 'id')
+          return idPairs.map((p) => {
+            const commit = results[p.commitId]
+            return commit?.id === p.commitId && commit?.branchId === p.branchId
+              ? commit
+              : null
+          })
+        },
+        { cacheKeyFn: (key) => `${key.branchId}:${key.commitId}` }
+      )
     },
     commits: {
       /**

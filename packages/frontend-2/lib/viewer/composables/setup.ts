@@ -596,7 +596,6 @@ function setupResponseResourceData(
         variables: {
           projectId: baseVariables.projectId,
           modelId,
-          priorityVersionIds: baseVariables.versionIds,
           versionsCursor: cursor
         },
         fetchPolicy: 'network-only'
@@ -616,11 +615,6 @@ function setupResponseResourceData(
       versionCursors.value[modelId] = data.project.model.versions.cursor
     }
   }
-
-  watch(versionIds, () => {
-    // clear cursors, since the query is now different
-    versionCursors.value = {}
-  })
 
   // COMMENT THREADS
   const {

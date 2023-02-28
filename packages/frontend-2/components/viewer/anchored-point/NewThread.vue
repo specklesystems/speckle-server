@@ -26,7 +26,7 @@
       <div
         v-if="modelValue.isExpanded"
         ref="threadContainer"
-        class="absolute hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md"
+        class="absolute hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md"
       >
         <div class="relative">
           <ViewerCommentsEditor
