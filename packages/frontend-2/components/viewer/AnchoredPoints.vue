@@ -85,7 +85,6 @@ import { Nullable } from '@speckle/shared'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
-  useViewerCommentBubbles,
   useViewerCommentBubblesProjection,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
