@@ -53,49 +53,27 @@
         >
           {{ model?.versionCount }}
         </FormButton>
-        <LayoutMenu
+        <ProjectPageModelsActions
           v-if="showActions"
           v-model:open="showActionsMenu"
-          :items="actionsItems"
+          :model="model"
+          :project-id="projectId"
           @click.stop.prevent
-          @chosen="onActionChosen"
-        >
-          <!-- TODO with proper disclosure menu or whatever -->
-          <FormButton size="sm" text @click="showActionsMenu = !showActionsMenu">
-            <EllipsisVerticalIcon class="w-4 h-4" />
-          </FormButton>
-        </LayoutMenu>
+        />
       </div>
     </NuxtLink>
-    <ProjectPageModelsCardRenameDialog
-      v-model:open="isRenameDialogOpen"
-      :model="model"
-      :project-id="projectId"
-    />
-    <ProjectPageModelsCardDeleteDialog
-      v-model:open="isDeleteDialogOpen"
-      :model="model"
-      :project-id="projectId"
-    />
   </div>
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
-import {
-  ArrowPathRoundedSquareIcon,
-  EllipsisVerticalIcon
-} from '@heroicons/vue/24/solid'
+import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
-import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
-import { Nullable } from '@speckle/shared'
-import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 
-enum ActionTypes {
-  Rename = 'rename',
-  Delete = 'delete',
-  Share = 'share'
-}
+/**
+ * TODO:
+ * - Fix cache updates of structureditem (doesnt reload cuz not model)
+ */
 
 defineEmits<{
   (e: 'click', val: MouseEvent): void
@@ -117,19 +95,7 @@ const props = withDefaults(
   }
 )
 
-const copyModelLink = useCopyModelLink()
-
-const openDialog = ref(null as Nullable<ActionTypes>)
 const showActionsMenu = ref(false)
-
-const isMain = computed(() => props.model.name === 'main')
-const actionsItems = computed<LayoutMenuItem[][]>(() => [
-  [
-    { title: 'Rename', id: ActionTypes.Rename },
-    { title: 'Delete', id: ActionTypes.Delete, disabled: isMain.value }
-  ],
-  [{ title: 'Share', id: ActionTypes.Share }]
-])
 
 const path = computed(() => {
   const model = props.model
@@ -139,26 +105,4 @@ const path = computed(() => {
 })
 
 const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))
-const isRenameDialogOpen = computed({
-  get: () => openDialog.value === ActionTypes.Rename,
-  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Rename : null)
-})
-const isDeleteDialogOpen = computed({
-  get: () => openDialog.value === ActionTypes.Delete,
-  set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Delete : null)
-})
-
-const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
-  const { item } = params
-
-  switch (item.id) {
-    case ActionTypes.Rename:
-    case ActionTypes.Delete:
-      openDialog.value = item.id
-      break
-    case ActionTypes.Share:
-      copyModelLink(props.projectId, props.model.id)
-      break
-  }
-}
 </script>

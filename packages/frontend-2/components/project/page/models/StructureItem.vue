@@ -1,5 +1,6 @@
+<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="space-y-4">
+  <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <!--
       Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
       TODO: Report it to Vue/Nuxt!
@@ -25,8 +26,12 @@
             {{ name }}
           </span>
           <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
-            <!-- TODO: copy model link -->
-            <LinkIcon class="w-3 h-3" />
+            <ProjectPageModelsActions
+              v-model:open="showActionsMenu"
+              :model="model"
+              :project-id="projectId"
+              @click.stop.prevent
+            />
           </span>
         </div>
         <!-- Empty model action -->
@@ -185,8 +190,7 @@ import {
   PlusIcon,
   ArrowPathRoundedSquareIcon,
   ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon,
-  LinkIcon
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -218,6 +222,7 @@ const props = defineProps<{
 }>()
 
 const expanded = ref(false)
+const showActionsMenu = ref(false)
 
 const itemType = computed<StructureItemType>(() => {
   const item = props.item

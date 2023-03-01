@@ -2,7 +2,9 @@
   <Menu v-slot="{ open: isMenuOpen }" as="div" class="relative inline-block">
     <div>
       <MenuButton ref="menuButton" class="hidden" @click.stop.prevent />
-      <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
+      <div :class="isMenuOpen ? 'pointer-events-none' : ''">
+        <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
+      </div>
     </div>
     <Transition
       enter-active-class="transition duration-100 ease-out"
@@ -13,7 +15,7 @@
       leave-to-class="transform scale-95 opacity-0"
     >
       <MenuItems
-        class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+        class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40"
       >
         <div v-for="(group, i) in items" :key="i" class="px-1 py-1">
           <MenuItem
