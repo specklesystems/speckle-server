@@ -134,7 +134,6 @@ import {
 } from '~~/lib/viewer/composables/commentManagement'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { emojis } from '~~/lib/viewer/helpers/emojis'
-import { useTextInputGlobalFocus } from '~~/composables/states'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
@@ -148,8 +147,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
-
-props.modelValue.isExpanded
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)

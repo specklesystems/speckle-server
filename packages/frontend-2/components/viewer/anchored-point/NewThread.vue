@@ -21,7 +21,6 @@
             modelValue.isExpanded ? 'rotate-45' : ''
           } transition`"
         />
-        <!-- <XMarkIcon v-else class="w-5 h-5 text-primary" /> -->
       </button>
       <div
         v-if="modelValue.isExpanded"

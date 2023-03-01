@@ -10,7 +10,7 @@
       @update:model-value="onInput"
       @submit="onSubmit"
     />
-    <div class="absolute w-full flex justify-end pt-2 space-x-2">
+    <div class="w-full flex justify-end pt-2 space-x-2 p-2">
       <div class="flex space-x-2">
         <FormButton
           :icon-left="PaperClipIcon"
