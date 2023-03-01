@@ -1,15 +1,19 @@
 <template>
-  <div class="flex justify-between flex-col bg-foundation rounded-lg shadow py-2">
-    <div class="flex flex-col space-y-1">
-      <ViewerExplorerTreeItemOption3
+  <div class="">
+    <div class="flex flex-col space-y-2">
+      <div
         v-for="(rootNode, idx) in rootNodes"
         :key="idx"
-        :item-id="(rootNode.data?.id as string)"
-        :tree-item="markRaw(rootNode)"
-        :sub-header="'Model Version'"
-        :debug="false"
-        force-unfold
-      />
+        class="bg-foundation rounded-lg shadow"
+      >
+        <ViewerExplorerTreeItemOption3
+          :item-id="(rootNode.data?.id as string)"
+          :tree-item="markRaw(rootNode)"
+          :sub-header="'Model Version'"
+          :debug="false"
+          force-unfold
+        />
+      </div>
     </div>
   </div>
 </template>

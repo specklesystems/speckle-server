@@ -21,6 +21,8 @@
       >
         <FunnelIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
+
+      <!-- Comment threads -->
       <ViewerControlsButtonToggle
         :active="activeControl === 'comments'"
         @click="toggleActiveControl('comments')"
@@ -28,10 +30,13 @@
         <ChatBubbleLeftRightIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- TODO: direct add comment -->
+      <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
+
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
         <!-- Zoom extents -->
-        <ViewerControlsButtonToggle flat @click="instance.zoom()">
+        <ViewerControlsButtonToggle flat @click="zoomExtentsOrSelection()">
           <ArrowsPointingOutIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
 
