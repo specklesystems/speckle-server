@@ -1,21 +1,25 @@
 <template>
   <div class="rounded-lg">
     <div
-      class="relative p-2 min-w-0 max-w-full rounded-lg shadow-md flex items-center space-x-2 bg-foundation justify-between z-20"
+      class="relative p-2 min-w-0 h-16 max-w-full rounded-lg shadow-md flex items-center space-x-2 bg-foundation justify-between z-20"
     >
       <div>
         <UserAvatar :user="author" />
       </div>
       <div class="flex flex-col flex-grow space-y-0 min-w-0">
-        <div class="font-bold text-lg">{{ model.name }}</div>
-        <div class="flex items-center space-x-2 min-w-0">
-          <div class="text-xs text-foreground-2 truncate">{{ version.message }}</div>
-        </div>
+        <!-- <div class="text-xs text-foreground-2 truncate">
+          {{ modelName.subheader }}
+        </div> -->
+        <span v-tippy="modelName.subheader ? model.name : null" class="font-bold">
+          {{ modelName.header }}
+        </span>
+        <div class="text-xs text-foreground-2 truncate">{{ version.message }}</div>
       </div>
       <div class="flex text-sm items-center space-x-2 flex-none">
         <FormButton
           rounded
           size="xs"
+          color="invert"
           :icon-left="ArrowPathRoundedSquareIcon"
           :disabled="model.versions.totalCount <= 1"
           @click="$emit('show-versions')"
@@ -59,4 +63,21 @@ const author = computed(() => props.version.authorUser)
 const timeAgoCreatedAt = computed(() =>
   dayjs(props.version.createdAt as string).from(dayjs())
 )
+
+const modelName = computed(() => {
+  const parts = props.model.name.split('/')
+  if (parts.length > 1) {
+    const name = parts[parts.length - 1]
+    parts.pop()
+    return {
+      subheader: parts.join('/'),
+      header: name
+    }
+  } else {
+    return {
+      subheader: null,
+      header: props.model.name
+    }
+  }
+})
 </script>

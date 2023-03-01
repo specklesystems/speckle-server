@@ -16,20 +16,6 @@
       v-if="showVersions"
       class="mr-0 -mt-4 pt-8 bg-foundation flex flex-col rounded-md max-h-96 overflow-y-auto simple-scrollbar"
     >
-      <!-- <div class="px-2 py-4 flex items-center truncate space-x-2">
-        <FormButton
-          :icon-left="ChevronLeftIcon"
-          text
-          size="xs"
-          @click="showVersions = false"
-        >
-          Back
-        </FormButton>
-        <span class="-mt-1">
-          <b>{{ model.name }}</b>
-          versions
-        </span>
-      </div> -->
       <div>
         <ViewerResourcesVersionCard
           v-if="loadedVersion"
@@ -40,7 +26,7 @@
           :show-timeline="false"
           @change-version="handleVersionChange"
         />
-        <!-- <hr /> -->
+        <hr class="dark:border-gray-700 my-2" />
         <ViewerResourcesVersionCard
           v-for="version in props.model.versions.items"
           :key="version.id"
@@ -59,7 +45,7 @@
           :disabled="!showLoadMore"
           @click="onLoadMore"
         >
-          {{ showLoadMore ? 'View older versions' : 'No more versions to load' }}
+          {{ showLoadMore ? 'View older versions' : 'No more versions' }}
         </FormButton>
       </div>
       <!-- <div v-else class="py-2" /> -->

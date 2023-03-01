@@ -22,6 +22,7 @@
         }`"
       ></div>
       <div
+        v-show="showTimeline"
         class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
       >
         <span>
