@@ -1,8 +1,9 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef } from '@vueuse/core'
+import { MaybeRef, useClipboard } from '@vueuse/core'
 import { Get } from 'type-fest'
 import { GenericValidateFunction } from 'vee-validate'
+import { SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   DeleteModelInput,
@@ -23,6 +24,7 @@ import {
   updateModelMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { modelRoute } from '~~/lib/common/helpers/route'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -214,4 +216,27 @@ export function useProjectModelUpdateTracking(
 
     handler?.(event, apollo.cache)
   })
+}
+
+export function useCopyModelLink() {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (projectId: string, modelId: string) => {
+    if (process.server) {
+      throw new Error('Not supported in SSR')
+    }
+
+    const path = modelRoute(
+      projectId,
+      SpeckleViewer.ViewerRoute.resourceBuilder().addModel(modelId).toString()
+    )
+    const url = new URL(path, window.location.toString()).toString()
+
+    await copy(url)
+    triggerNotification({
+      type: ToastNotificationType.Info,
+      title: 'Copied model link to clipboard'
+    })
+  }
 }

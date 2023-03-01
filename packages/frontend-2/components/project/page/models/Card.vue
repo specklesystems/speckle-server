@@ -89,6 +89,7 @@ import {
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { Nullable } from '@speckle/shared'
+import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 
 enum ActionTypes {
   Rename = 'rename',
@@ -115,6 +116,8 @@ const props = withDefaults(
     height: 'h-64'
   }
 )
+
+const copyModelLink = useCopyModelLink()
 
 const openDialog = ref(null as Nullable<ActionTypes>)
 const showActionsMenu = ref(false)
@@ -152,7 +155,8 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       openDialog.value = item.id
       break
     case ActionTypes.Share:
-      console.log('SHARE')
+      copyModelLink(props.projectId, props.model.id)
+      break
   }
 }
 </script>
