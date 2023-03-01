@@ -1,6 +1,7 @@
-import { CSSProperties, Ref } from 'vue'
+import { ComputedRef, CSSProperties, Ref } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 import {
+  InitialStateWithRequestAndResponse,
   LoadedCommentThread,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -110,27 +111,68 @@ export type CommentBubbleModel = LoadedCommentThread & {
   style: Partial<CSSProperties>
 }
 
-export function useViewerCommentBubbles(params: {
+export function useViewerCommentBubblesProjection(params: {
   parentEl: Ref<Nullable<HTMLElement>>
 }) {
   const { parentEl } = params
   const {
+    ui: {
+      threads: { items: commentThreads }
+    }
+  } = useInjectedViewerState()
+
+  useViewerAnchoredPoints({
+    parentEl,
+    points: computed(() => Object.values(commentThreads.value)),
+    pointLocationGetter: (t) => t.data?.location as Optional<Vector3>,
+    updatePositionCallback: (thread, result) => {
+      thread.isOccluded = result.isOccluded
+      thread.style = {
+        ...thread.style,
+        ...result.style,
+        opacity: thread.isOccluded ? '0.5' : '1.0',
+        transition: 'all 0.1s ease'
+      }
+    }
+  })
+}
+
+export function useViewerCommentBubbles(
+  options?: Partial<{
+    state: InitialStateWithRequestAndResponse
+  }>
+) {
+  const {
     resources: {
       response: { commentThreads: commentThreadsBase }
     }
-  } = useInjectedViewerState()
+  } = options?.state || useInjectedViewerState()
 
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
   const openThread = computed(() =>
     Object.values(commentThreads.value).find((t) => t.isExpanded)
   )
 
-  useSelectionEvents({
-    singleClickCallback: () => {
-      // Close open thread
-      Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
-    }
-  })
+  useSelectionEvents(
+    {
+      singleClickCallback: (eventInfo) => {
+        if ((eventInfo && eventInfo?.hits.length === 0) || !eventInfo) {
+          // Close open thread
+          Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+        }
+      }
+    },
+    { state: options?.state }
+  )
+
+  const closeAllThreads = () => {
+    Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+  }
+
+  const open = (id: string) => {
+    if (commentThreads.value[id])
+      commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
+  }
 
   // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
   watch(
@@ -184,24 +226,11 @@ export function useViewerCommentBubbles(params: {
     { deep: true }
   )
 
-  useViewerAnchoredPoints({
-    parentEl,
-    points: computed(() => Object.values(commentThreads.value)),
-    pointLocationGetter: (t) => t.data?.location as Optional<Vector3>,
-    updatePositionCallback: (thread, result) => {
-      thread.isOccluded = result.isOccluded
-      thread.style = {
-        ...thread.style,
-        ...result.style,
-        opacity: thread.isOccluded ? '0.5' : '1.0',
-        transition: 'all 0.1s ease'
-      }
-    }
-  })
-
   return {
     commentThreads,
-    openThread
+    openThread,
+    closeAllThreads,
+    open
   }
 }
 
@@ -234,8 +263,8 @@ export function useExpandedThreadResponsiveLocation(params: {
     if (!threadContainer.value || process.server) return
 
     const elRect = threadContainer.value.getBoundingClientRect()
-    const showOnLeftSide = elRect.x + elRect.width > window.innerWidth
-    const showOnRightSide = elRect.x < 0
+    const showOnLeftSide = elRect.x + elRect.width > window.innerWidth // && false // TODO: hack
+    const showOnRightSide = elRect.x < 0 // || true // TODO: hack
 
     // Screen too small - do nothing
     if (

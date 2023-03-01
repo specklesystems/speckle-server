@@ -40,7 +40,7 @@ export const viewerLoadedResourcesQuery = graphql(`
               ...ViewerModelVersionCardItem
             }
           }
-          versions(limit: 10) {
+          versions(limit: 5) {
             totalCount
             cursor
             items {
@@ -70,7 +70,7 @@ export const viewerModelVersionsQuery = graphql(`
       role
       model(id: $modelId) {
         id
-        versions(cursor: $versionsCursor, limit: 10) {
+        versions(cursor: $versionsCursor, limit: 5) {
           totalCount
           cursor
           items {

@@ -1,4 +1,5 @@
 import {
+  InitialStateWithRequestAndResponse,
   InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -53,7 +54,7 @@ export function useSelectionEvents(
     doubleClickCallback?: (event: Nullable<SelectionEvent>) => void
   },
   options?: Partial<{
-    state: InjectableViewerState
+    state: InitialStateWithRequestAndResponse
     debounceWait: number
   }>
 ) {

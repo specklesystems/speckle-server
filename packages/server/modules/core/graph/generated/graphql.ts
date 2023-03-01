@@ -333,6 +333,7 @@ export type CommentMutations = {
 
 
 export type CommentMutationsArchiveArgs = {
+  archived?: Scalars['Boolean'];
   commentId: Scalars['String'];
 };
 
@@ -2926,7 +2927,7 @@ export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type CommentMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentMutations'] = ResolversParentTypes['CommentMutations']> = {
-  archive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsArchiveArgs, 'commentId'>>;
+  archive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsArchiveArgs, 'archived' | 'commentId'>>;
   create?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsCreateArgs, 'input'>>;
   edit?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsEditArgs, 'input'>>;
   markViewed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsMarkViewedArgs, 'commentId'>>;

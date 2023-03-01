@@ -19,7 +19,11 @@
       &nbsp;
       <!-- The point of this is to ensure text & no-text buttons have the same height -->
     </div>
-    <Component :is="iconRight" v-if="iconRight" :class="`${iconClasses} ml-2`" />
+    <Component
+      :is="iconRight"
+      v-if="iconRight"
+      :class="`${iconClasses} ${hideText ? '' : 'ml-2'}`"
+    />
   </Component>
 </template>
 <script setup lang="ts">
@@ -32,6 +36,7 @@ type FormButtonColor =
   | 'invert'
   | 'danger'
   | 'warning'
+  | 'success'
   | 'card'
   | 'secondary'
 
@@ -196,6 +201,9 @@ const bgAndBorderClasses = computed(() => {
       case 'warning':
         classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
         break
+      case 'success':
+        classParts.push(props.outlined ? 'border-success' : 'bg-success border-success')
+        break
       case 'default':
       default:
         classParts.push(
@@ -239,6 +247,11 @@ const foregroundClasses = computed(() => {
             props.outlined ? 'text-warning' : 'text-foundation dark:text-foreground'
           )
           break
+        case 'success':
+          classParts.push(
+            props.outlined ? 'text-success' : 'text-foundation dark:text-foreground'
+          )
+          break
         case 'secondary':
           classParts.push(
             props.outlined
@@ -266,6 +279,12 @@ const foregroundClasses = computed(() => {
         )
       } else if (props.color === 'secondary') {
         classParts.push('text-foreground-2 hover:text-primary-focus')
+      } else if (props.color === 'success') {
+        classParts.push('text-success')
+      } else if (props.color === 'warning') {
+        classParts.push('text-warning')
+      } else if (props.color === 'danger') {
+        classParts.push('text-danger')
       } else {
         classParts.push('text-primary hover:text-primary-focus')
       }
@@ -292,6 +311,9 @@ const ringClasses = computed(() => {
         break
       case 'warning':
         classParts.push('hover:ring-4 ring-warning-lighter dark:ring-warning-darker')
+        break
+      case 'success':
+        classParts.push('hover:ring-4 ring-success-lighter dark:ring-success-darker')
         break
       case 'default':
       default:

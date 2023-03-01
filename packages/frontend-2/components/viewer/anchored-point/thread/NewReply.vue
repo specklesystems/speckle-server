@@ -4,6 +4,7 @@
     <ViewerCommentsEditor
       ref="editor"
       v-model="commentValue"
+      prompt="Press enter to reply"
       autofocus
       max-height="150px"
       @update:model-value="onInput"
@@ -14,7 +15,7 @@
         <FormButton
           :icon-left="PaperClipIcon"
           hide-text
-          color="invert"
+          text
           :disabled="loading"
           @click="editor?.openFilePicker"
         />

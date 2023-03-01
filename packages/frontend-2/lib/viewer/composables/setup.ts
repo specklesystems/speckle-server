@@ -61,6 +61,10 @@ import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import {
+  CommentBubbleModel,
+  useViewerCommentBubbles
+} from '~~/lib/viewer/composables/commentBubbles'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -206,6 +210,13 @@ export type InjectableViewerState = Readonly<{
     /**
      * Read/write active viewer filters
      */
+    threads: {
+      items: Ref<Record<string, CommentBubbleModel>>
+      openThread: ComputedRef<CommentBubbleModel | undefined>
+      closeAllThreads: () => void
+      open: (id: string) => void
+      hideBubbles: Ref<boolean>
+    }
     spotlightUserId: Ref<Nullable<string>>
     filters: {
       current: ComputedRef<Nullable<FilteringState>>
@@ -220,6 +231,7 @@ export type InjectableViewerState = Readonly<{
     camera: {
       isPerspectiveProjection: Ref<boolean>
       toggleProjection: () => void
+      zoomExtentsOrSelection: () => void
     }
     sectionBox: {
       isSectionBoxEnabled: Ref<boolean>
@@ -261,7 +273,7 @@ type InitialStateWithRequest = InitialSetupState & {
   resources: { request: InjectableViewerState['resources']['request'] }
 }
 
-type InitialStateWithRequestAndResponse = InitialSetupState &
+export type InitialStateWithRequestAndResponse = InitialSetupState &
   Pick<InjectableViewerState, 'resources'>
 
 /**
@@ -818,6 +830,15 @@ function setupInterfaceState(
     isPerspectiveProjection.value = !isPerspectiveProjection.value
   }
 
+  const zoomExtentsOrSelection = () => {
+    if (selectedObjects.value.length > 0) {
+      return state.viewer.instance.zoom(
+        selectedObjects.value.map((o) => o.id as string)
+      )
+    }
+    state.viewer.instance.zoom()
+  }
+
   const isSectionBoxEnabled = ref(false)
   const toggleSectionBox = () => {
     if (isSectionBoxEnabled.value) {
@@ -847,14 +868,30 @@ function setupInterfaceState(
 
   const spotlightUserId = ref(null as Nullable<string>)
 
+  /**
+   * THREADS
+   */
+  const { commentThreads, openThread, closeAllThreads, open } = useViewerCommentBubbles(
+    { state }
+  )
+
+  const hideBubbles = ref(false)
   return {
     ...state,
     ui: {
       spotlightUserId,
       viewerBusy,
+      threads: {
+        items: commentThreads,
+        openThread,
+        closeAllThreads,
+        open,
+        hideBubbles
+      },
       camera: {
         isPerspectiveProjection,
-        toggleProjection
+        toggleProjection,
+        zoomExtentsOrSelection
       },
       sectionBox: {
         isSectionBoxEnabled,
@@ -862,6 +899,7 @@ function setupInterfaceState(
         toggleSectionBox,
         sectionBoxOff: () => {
           state.viewer.instance.sectionBoxOff()
+          state.viewer.instance.requestRender() // TODO: seems render does not update on section box off
           isSectionBoxEnabled.value = false
         },
         sectionBoxOn: () => {

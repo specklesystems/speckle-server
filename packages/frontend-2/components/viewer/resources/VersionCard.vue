@@ -2,22 +2,27 @@
   <button
     :class="`relative group block space-y-2 w-full transition text-left pb-2 rounded-md ${
       clickable ? 'hover:bg-primary-muted' : 'cursor-default'
-    }`"
+    }
+    ${!showTimeline ? 'bg-primary-muted' : ''}`"
     @click="handleClick"
   >
     <!-- Timeline left border -->
     <div
-      v-if="!isLoadedVersion"
-      class="absolute w-1 h-[99%] top-3 border-l-2 border-outline-3 left-[7px] z-10"
+      v-if="showTimeline"
+      :class="`absolute w-1 h-[99%] top-3 border-l-2 ${
+        isLoaded ? 'border-primary' : 'border-outline-3'
+      } left-[7px] z-10`"
     ></div>
     <div class="pl-1 flex items-center space-x-2">
       <!-- Timeline circle -->
       <div
+        v-show="showTimeline"
         :class="`w-2 h-2 rounded-full z-10 ${
           isLoaded || isLatest ? 'bg-primary' : 'bg-outline-3'
         }`"
       ></div>
       <div
+        v-show="showTimeline"
         class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
       >
         <span>
@@ -25,7 +30,7 @@
         </span>
       </div>
       <div
-        v-if="isLoaded"
+        v-if="isLoaded && showTimeline"
         class="inline-block rounded-full px-2 text-xs bg-primary text-foreground-on-primary font-bold"
       >
         Currently Viewing
@@ -61,11 +66,13 @@ const props = withDefaults(
     clickable: boolean
     isLatestVersion: boolean
     isLoadedVersion: boolean
+    showTimeline: boolean
   }>(),
   {
     showMetadata: true,
     clickable: true,
-    default: false
+    default: false,
+    showTimeline: true
   }
 )
 
