@@ -42,8 +42,8 @@
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
-        @focusin="setGlobalFocus(true)"
-        @focusout="setGlobalFocus(false)"
+        @focusin="textInputGlobalFocus = true"
+        @focusout="textInputGlobalFocus = false"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
       />
@@ -245,6 +245,8 @@ const {
   emit,
   inputEl: inputElement
 })
+
+const textInputGlobalFocus = useTextInputGlobalFocus()
 
 const leadingIconClasses = computed(() => {
   const classParts: string[] = ['h-5 w-5']

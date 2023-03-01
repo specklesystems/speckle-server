@@ -155,9 +155,11 @@ export function useViewerCommentBubbles(
 
   useSelectionEvents(
     {
-      singleClickCallback: () => {
-        // Close open thread
-        // Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+      singleClickCallback: (eventInfo) => {
+        if ((eventInfo && eventInfo?.hits.length === 0) || !eventInfo) {
+          // Close open thread
+          Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+        }
       }
     },
     { state: options?.state }
