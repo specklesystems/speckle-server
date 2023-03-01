@@ -121,10 +121,12 @@ const copyModelLink = useCopyModelLink()
 
 const openDialog = ref(null as Nullable<ActionTypes>)
 const showActionsMenu = ref(false)
-const actionsItems = ref<LayoutMenuItem[][]>([
+
+const isMain = computed(() => props.model.name === 'main')
+const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     { title: 'Rename', id: ActionTypes.Rename },
-    { title: 'Delete', id: ActionTypes.Delete }
+    { title: 'Delete', id: ActionTypes.Delete, disabled: isMain.value }
   ],
   [{ title: 'Share', id: ActionTypes.Share }]
 ])
