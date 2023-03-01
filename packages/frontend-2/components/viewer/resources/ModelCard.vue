@@ -2,18 +2,21 @@
   <div>
     <div v-if="model">
       <div>
-        <ViewerResourcesLoadedVersionCard
-          v-if="!showVersions && loadedVersion"
+        <ViewerResourcesLoadedVersionCardVersion2
+          v-if="loadedVersion"
           :version="loadedVersion"
           :model="model"
           :is-latest-version="loadedVersion?.id === latestVersionId"
-          @show-versions="showVersions = true"
+          @show-versions="showVersions = !showVersions"
           @load-latest="loadLatestVersion"
         />
       </div>
     </div>
-    <div v-if="showVersions" class="bg-foundation flex flex-col rounded-md px-1">
-      <div class="px-2 py-4 flex items-center truncate space-x-2">
+    <div
+      v-if="showVersions"
+      class="mr-0 -mt-4 pt-8 bg-foundation flex flex-col rounded-md max-h-96 overflow-y-auto simple-scrollbar"
+    >
+      <!-- <div class="px-2 py-4 flex items-center truncate space-x-2">
         <FormButton
           :icon-left="ChevronLeftIcon"
           text
@@ -22,14 +25,24 @@
         >
           Back
         </FormButton>
-        <span>
+        <span class="-mt-1">
           <b>{{ model.name }}</b>
           versions
         </span>
-      </div>
+      </div> -->
       <div>
         <ViewerResourcesVersionCard
-          v-for="version in versions"
+          v-if="loadedVersion"
+          :model-id="modelId"
+          :version="loadedVersion"
+          :is-latest-version="loadedVersion.id === latestVersionId"
+          :is-loaded-version="loadedVersion.id === loadedVersion?.id"
+          :show-timeline="false"
+          @change-version="handleVersionChange"
+        />
+        <!-- <hr /> -->
+        <ViewerResourcesVersionCard
+          v-for="version in props.model.versions.items"
           :key="version.id"
           :model-id="modelId"
           :version="version"
