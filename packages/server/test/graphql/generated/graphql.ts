@@ -495,6 +495,11 @@ export type CreateModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type DeleteModelInput = {
+  id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -651,11 +656,23 @@ export type ModelCollection = {
 export type ModelMutations = {
   __typename?: 'ModelMutations';
   create: Model;
+  delete: Scalars['Boolean'];
+  update: Model;
 };
 
 
 export type ModelMutationsCreateArgs = {
   input: CreateModelInput;
+};
+
+
+export type ModelMutationsDeleteArgs = {
+  input: DeleteModelInput;
+};
+
+
+export type ModelMutationsUpdateArgs = {
+  input: UpdateModelInput;
 };
 
 export type ModelVersionsFilter = {
@@ -2050,6 +2067,12 @@ export type TestItem = {
   __typename?: 'TestItem';
   bar: Scalars['String'];
   foo: Scalars['String'];
+};
+
+export type UpdateModelInput = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
 };
 
 /**

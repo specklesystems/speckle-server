@@ -5,9 +5,12 @@ import { pubsub, BranchPubsubEvents } from '@/modules/shared'
 import {
   BranchDeleteInput,
   BranchUpdateInput,
-  ProjectModelsUpdatedMessageType
+  DeleteModelInput,
+  ProjectModelsUpdatedMessageType,
+  UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 
 /**
  * Save "branch created" activity
@@ -41,16 +44,17 @@ export async function addBranchCreatedActivity(params: { branch: BranchRecord })
 }
 
 export async function addBranchUpdatedActivity(params: {
-  update: BranchUpdateInput
+  update: BranchUpdateInput | UpdateModelInput
   userId: string
   oldBranch: BranchRecord
   newBranch: BranchRecord
 }) {
   const { update, userId, oldBranch, newBranch } = params
 
+  const streamId = isBranchUpdateInput(update) ? update.streamId : update.projectId
   await Promise.all([
     saveActivity({
-      streamId: update.streamId,
+      streamId,
       resourceType: ResourceTypes.Branch,
       resourceId: update.id,
       actionType: ActionTypes.Branch.Update,
@@ -60,11 +64,11 @@ export async function addBranchUpdatedActivity(params: {
     }),
     pubsub.publish(BranchPubsubEvents.BranchUpdated, {
       branchUpdated: { ...update },
-      streamId: update.streamId,
+      streamId,
       branchId: update.id
     }),
     publish(ProjectSubscriptions.ProjectModelsUpdated, {
-      projectId: update.streamId,
+      projectId: streamId,
       projectModelsUpdated: {
         model: newBranch,
         id: newBranch.id,
@@ -75,15 +79,16 @@ export async function addBranchUpdatedActivity(params: {
 }
 
 export async function addBranchDeletedActivity(params: {
-  input: BranchDeleteInput
+  input: BranchDeleteInput | DeleteModelInput
   userId: string
   branchName: string
 }) {
   const { input, userId, branchName } = params
 
+  const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
   await Promise.all([
     saveActivity({
-      streamId: input.streamId,
+      streamId,
       resourceType: ResourceTypes.Branch,
       resourceId: input.id,
       actionType: ActionTypes.Branch.Delete,
@@ -93,10 +98,10 @@ export async function addBranchDeletedActivity(params: {
     }),
     pubsub.publish(BranchPubsubEvents.BranchDeleted, {
       branchDeleted: input,
-      streamId: input.streamId
+      streamId
     }),
     publish(ProjectSubscriptions.ProjectModelsUpdated, {
-      projectId: input.streamId,
+      projectId: streamId,
       projectModelsUpdated: {
         id: input.id,
         type: ProjectModelsUpdatedMessageType.Deleted,

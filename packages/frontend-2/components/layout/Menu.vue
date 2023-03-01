@@ -1,0 +1,105 @@
+<template>
+  <Menu v-slot="{ open: isMenuOpen }" as="div" class="relative inline-block">
+    <div>
+      <MenuButton ref="menuButton" class="hidden" @click.stop.prevent />
+      <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
+    </div>
+    <Transition
+      enter-active-class="transition duration-100 ease-out"
+      enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100"
+      leave-active-class="transition duration-75 ease-in"
+      leave-from-class="transform scale-100 opacity-100"
+      leave-to-class="transform scale-95 opacity-0"
+    >
+      <MenuItems
+        class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+      >
+        <div v-for="(group, i) in items" :key="i" class="px-1 py-1">
+          <MenuItem
+            v-for="item in group"
+            v-slot="{ active, disabled }"
+            :key="item.id"
+            :disabled="item.disabled"
+          >
+            <button
+              :class="buildButtonClassses({ active, disabled })"
+              @click="chooseItem(item, $event)"
+            >
+              <slot name="item" :item="item">{{ item.title }}</slot>
+            </button>
+          </MenuItem>
+        </div>
+      </MenuItems>
+    </Transition>
+  </Menu>
+</template>
+<script setup lang="ts">
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
+import { Nullable } from '@speckle/shared'
+import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+  (e: 'chosen', val: { event: MouseEvent; item: LayoutMenuItem }): void
+}>()
+
+const props = defineProps<{
+  open?: boolean
+  /**
+   * 2D array so that items can be grouped with dividers between them
+   */
+  items: LayoutMenuItem[][]
+}>()
+
+const finalOpen = computed({
+  get: () => props.open || false,
+  set: (newVal) => emit('update:open', newVal)
+})
+
+const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
+const isOpenInternally = ref(false)
+
+const buildButtonClassses = (params: { active?: boolean; disabled?: boolean }) => {
+  const { active, disabled } = params
+  const classParts = ['group flex w-full items-center rounded-md px-2 py-2 text-sm']
+
+  if (active) {
+    classParts.push('bg-primary text-foreground-on-primary')
+  } else if (disabled) {
+    classParts.push('text-foreground-disabled')
+  } else {
+    classParts.push('text-foreground')
+  }
+
+  return classParts.join(' ')
+}
+
+const chooseItem = (item: LayoutMenuItem, event: MouseEvent) => {
+  emit('chosen', { item, event })
+}
+
+const toggle = () => menuButton.value?.el.click()
+
+// ok this is a bit hacky, but it's done because of headlessui's limited API
+// the point of this is 1) cast any to bool 2) store 'open' state locally
+// so that we can access it outside of the template
+const processOpen = (val: unknown): val is boolean => {
+  const isOpen = !!val
+  isOpenInternally.value = isOpen
+  return isOpen
+}
+
+watch(isOpenInternally, (newVal, oldVal) => {
+  if (newVal === oldVal) return
+  finalOpen.value = newVal
+})
+
+watch(finalOpen, (shouldBeOpen) => {
+  if (shouldBeOpen && !isOpenInternally.value) {
+    toggle()
+  } else if (!shouldBeOpen && isOpenInternally.value) {
+    toggle()
+  }
+})
+</script>

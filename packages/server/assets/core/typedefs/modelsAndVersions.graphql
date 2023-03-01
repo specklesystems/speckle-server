@@ -89,8 +89,21 @@ input CreateModelInput {
   name: String!
 }
 
+input UpdateModelInput {
+  projectId: ID!
+  id: ID!
+  name: String!
+}
+
+input DeleteModelInput {
+  projectId: ID!
+  id: ID!
+}
+
 type ModelMutations {
   create(input: CreateModelInput!): Model!
+  update(input: UpdateModelInput!): Model!
+  delete(input: DeleteModelInput!): Boolean!
 }
 
 extend type Mutation {

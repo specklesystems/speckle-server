@@ -13,7 +13,9 @@ import {
   BranchCreateInput,
   BranchDeleteInput,
   BranchUpdateInput,
-  CreateModelInput
+  CreateModelInput,
+  DeleteModelInput,
+  UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import {
@@ -25,6 +27,7 @@ import {
 } from '@/modules/core/repositories/branches'
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { has } from 'lodash'
+import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -51,12 +54,16 @@ export async function createBranchAndNotify(
   return branch
 }
 
-export async function updateBranchAndNotify(input: BranchUpdateInput, userId: string) {
+export async function updateBranchAndNotify(
+  input: BranchUpdateInput | UpdateModelInput,
+  userId: string
+) {
+  const streamId = isBranchUpdateInput(input) ? input.streamId : input.projectId
   const existingBranch = await getBranchById(input.id)
   if (!existingBranch) {
     throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
   }
-  if (existingBranch.streamId !== input.streamId) {
+  if (existingBranch.streamId !== streamId) {
     throw new BranchUpdateError(
       'The branch ID and stream ID do not match, please check your inputs',
       {
@@ -66,7 +73,9 @@ export async function updateBranchAndNotify(input: BranchUpdateInput, userId: st
   }
 
   const updates: Partial<BranchRecord> = {
-    ...(input.description ? { description: input.description } : {}),
+    ...(isBranchUpdateInput(input) && input.description
+      ? { description: input.description }
+      : {}),
     ...(input.name ? { name: input.name } : {})
   }
   if (!Object.values(updates).length) {
@@ -87,15 +96,19 @@ export async function updateBranchAndNotify(input: BranchUpdateInput, userId: st
   return newBranch
 }
 
-export async function deleteBranchAndNotify(input: BranchDeleteInput, userId: string) {
+export async function deleteBranchAndNotify(
+  input: BranchDeleteInput | DeleteModelInput,
+  userId: string
+) {
+  const streamId = isBranchDeleteInput(input) ? input.streamId : input.projectId
   const [existingBranch, stream] = await Promise.all([
     getBranchById(input.id),
-    getStream({ streamId: input.streamId, userId })
+    getStream({ streamId, userId })
   ])
   if (!existingBranch) {
     throw new BranchUpdateError('Branch not found', { info: { ...input, userId } })
   }
-  if (!stream || existingBranch.streamId !== input.streamId) {
+  if (!stream || existingBranch.streamId !== streamId) {
     throw new BranchUpdateError(
       'The branch ID and stream ID do not match, please check your inputs',
       {

@@ -502,6 +502,11 @@ export type CreateModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type DeleteModelInput = {
+  id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -658,11 +663,23 @@ export type ModelCollection = {
 export type ModelMutations = {
   __typename?: 'ModelMutations';
   create: Model;
+  delete: Scalars['Boolean'];
+  update: Model;
 };
 
 
 export type ModelMutationsCreateArgs = {
   input: CreateModelInput;
+};
+
+
+export type ModelMutationsDeleteArgs = {
+  input: DeleteModelInput;
+};
+
+
+export type ModelMutationsUpdateArgs = {
+  input: UpdateModelInput;
 };
 
 export type ModelVersionsFilter = {
@@ -2059,6 +2076,12 @@ export type TestItem = {
   foo: Scalars['String'];
 };
 
+export type UpdateModelInput = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -2506,6 +2529,7 @@ export type ResolversTypes = {
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
+  DeleteModelInput: DeleteModelInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
@@ -2576,6 +2600,7 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
+  UpdateModelInput: UpdateModelInput;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
@@ -2651,6 +2676,7 @@ export type ResolversParentTypes = {
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
   DateTime: Scalars['DateTime'];
+  DeleteModelInput: DeleteModelInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailAddress: Scalars['EmailAddress'];
@@ -2711,6 +2737,7 @@ export type ResolversParentTypes = {
   String: Scalars['String'];
   Subscription: {};
   TestItem: TestItem;
+  UpdateModelInput: UpdateModelInput;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
@@ -3055,6 +3082,8 @@ export type ModelCollectionResolvers<ContextType = GraphQLContext, ParentType ex
 
 export type ModelMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelMutations'] = ResolversParentTypes['ModelMutations']> = {
   create?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsCreateArgs, 'input'>>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ModelMutationsDeleteArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

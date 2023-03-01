@@ -5,8 +5,10 @@ import { Get } from 'type-fest'
 import { GenericValidateFunction } from 'vee-validate'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
+  DeleteModelInput,
   OnProjectModelsUpdateSubscription,
-  ProjectModelsUpdatedMessageType
+  ProjectModelsUpdatedMessageType,
+  UpdateModelInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -14,19 +16,25 @@ import {
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { isRequired } from '~~/lib/common/helpers/validation'
-import { createModelMutation } from '~~/lib/projects/graphql/mutations'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import {
+  createModelMutation,
+  deleteModelMutation,
+  updateModelMutation
+} from '~~/lib/projects/graphql/mutations'
 import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
+  name = name.trim()
   if (
     name.startsWith('/') ||
+    name.endsWith('/') ||
     name.startsWith('#') ||
     name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
     name.indexOf(',') !== -1
   )
-    return 'Value should not start with "#", "/", "$", have multiple slashes next to each other or contain commas'
+    return 'Value should not start with "#", "$", start or end with "/", have multiple slashes next to each other or contain commas'
 
   return true
 }
@@ -34,7 +42,7 @@ const isValidModelName: GenericValidateFunction<string> = (name) => {
 export function useModelNameValidationRules() {
   return computed(() => [
     isRequired,
-    // isStringOfLength({ minLength: 3 }),
+    isStringOfLength({ maxLength: 512 }),
     isValidModelName
   ])
 }
@@ -91,6 +99,79 @@ export function useCreateNewModel() {
     }
 
     return data?.modelMutations?.create
+  }
+}
+
+export function useUpdateModel() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: UpdateModelInput) => {
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateModelMutation,
+        variables: {
+          input
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.modelMutations.update.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Model updated'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Model update failed',
+        description: errMsg
+      })
+    }
+
+    return data?.modelMutations.update
+  }
+}
+
+export function useDeleteModel() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const evictProjectModels = useEvictProjectModelFields()
+
+  return async (input: DeleteModelInput) => {
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: deleteModelMutation,
+        variables: {
+          input
+        },
+        update: (cache, res) => {
+          if (!res.data?.modelMutations.delete) return
+
+          cache.evict({
+            id: getCacheId('Model', input.id)
+          })
+          evictProjectModels(input.projectId)
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.modelMutations.delete) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Model deleted'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Model delete failed',
+        description: errMsg
+      })
+    }
+
+    return !!data?.modelMutations.delete
   }
 }
 

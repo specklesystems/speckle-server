@@ -347,19 +347,21 @@ export async function getModelTreeItems(
 }
 
 export const validateBranchName = (name: string) => {
-  if (!(name || '').trim()) {
+  name = (name || '').trim()
+  if (!name) {
     throw new BranchNameError('Branch name is required')
   }
 
   if (
     name.startsWith('/') ||
+    name.endsWith('/') ||
     name.startsWith('#') ||
     name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
     name.indexOf(',') !== -1
   )
     throw new BranchNameError(
-      'Bad name for branch. Branch names cannot start with "#", "/", "$", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
       {
         info: {
           name

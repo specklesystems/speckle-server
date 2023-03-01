@@ -99,7 +99,7 @@ import {
   ScissorsIcon
 } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
-import { scrollToBottom } from '~~/lib/common/helpers/dom'
+// import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const {
@@ -121,7 +121,8 @@ const toggleActiveControl = (control: ActiveControl) =>
     : (activeControl.value = control)
 
 const scrollControlsToBottom = () => {
-  if (scrollableControlsContainer.value)
-    scrollToBottom(scrollableControlsContainer.value)
+  // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded
+  // if (scrollableControlsContainer.value)
+  //   scrollToBottom(scrollableControlsContainer.value)
 }
 </script>
