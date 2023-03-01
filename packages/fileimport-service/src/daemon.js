@@ -92,7 +92,7 @@ async function doTask(task) {
       destination: TMP_FILE_PATH
     })
 
-    if (info.fileType === 'ifc') {
+    if (info.fileType.toLowerCase() === 'ifc') {
       await runProcessWithTimeout(
         taskLogger,
         process.env['NODE_BINARY_PATH'] || 'node',
@@ -111,7 +111,7 @@ async function doTask(task) {
         },
         TIME_LIMIT
       )
-    } else if (info.fileType === 'stl') {
+    } else if (info.fileType.toLowerCase() === 'stl') {
       await runProcessWithTimeout(
         taskLogger,
         process.env['PYTHON_BINARY_PATH'] || 'python3',
@@ -128,7 +128,7 @@ async function doTask(task) {
         },
         TIME_LIMIT
       )
-    } else if (info.fileType === 'obj') {
+    } else if (info.fileType.toLowerCase() === 'obj') {
       await objDependencies.downloadDependencies({
         objFilePath: TMP_FILE_PATH,
         streamId: info.streamId,
