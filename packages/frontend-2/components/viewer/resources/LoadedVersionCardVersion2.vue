@@ -19,7 +19,7 @@
         <FormButton
           rounded
           size="xs"
-          color="invert"
+          text
           :icon-left="ArrowPathRoundedSquareIcon"
           :disabled="model.versions.totalCount <= 1"
           @click="$emit('show-versions')"
