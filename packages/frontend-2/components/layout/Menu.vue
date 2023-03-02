@@ -2,6 +2,7 @@
   <Menu v-slot="{ open: isMenuOpen }" as="div" class="relative inline-block">
     <div>
       <MenuButton ref="menuButton" class="hidden" @click.stop.prevent />
+      <!-- conditional pointer-events-none is necessary to avoid double events when clicking on the button when the menu is already open -->
       <div :class="isMenuOpen ? 'pointer-events-none' : ''">
         <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
       </div>
@@ -15,7 +16,11 @@
       leave-to-class="transform scale-95 opacity-0"
     >
       <MenuItems
-        class="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40"
+        ref="menuItems"
+        :class="[
+          'absolute mt-2 w-56 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
+          menuDirection === HorizontalDirection.Left ? 'right-0' : ''
+        ]"
       >
         <div v-for="(group, i) in items" :key="i" class="px-1 py-1">
           <MenuItem
@@ -39,6 +44,10 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { Nullable } from '@speckle/shared'
+import {
+  HorizontalDirection,
+  useResponsiveHorizontalDirectionCalculation
+} from '~~/lib/common/composables/window'
 import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
 const emit = defineEmits<{
@@ -54,13 +63,20 @@ const props = defineProps<{
   items: LayoutMenuItem[][]
 }>()
 
-const finalOpen = computed({
-  get: () => props.open || false,
-  set: (newVal) => emit('update:open', newVal)
+const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)
+const { direction: menuDirection } = useResponsiveHorizontalDirectionCalculation({
+  el: computed(() => menuItems.value?.el || null),
+  defaultDirection: HorizontalDirection.Left,
+  stopUpdatesBelowWidth: 300
 })
 
 const menuButton = ref(null as Nullable<{ el: HTMLButtonElement }>)
 const isOpenInternally = ref(false)
+
+const finalOpen = computed({
+  get: () => props.open || false,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const buildButtonClassses = (params: { active?: boolean; disabled?: boolean }) => {
   const { active, disabled } = params
