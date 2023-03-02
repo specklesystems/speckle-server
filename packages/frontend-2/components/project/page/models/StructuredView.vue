@@ -1,7 +1,11 @@
 <template>
   <div v-if="treeItemCount" class="space-y-4 mb-14 max-w-full">
     <div v-for="item in topLevelItems" :key="item.fullName">
-      <ProjectPageModelsStructureItem :item="item" :project-id="projectId" />
+      <ProjectPageModelsStructureItem
+        :item="item"
+        :project-id="projectId"
+        @model-updated="onModelUpdated"
+      />
     </div>
     <ProjectPageModelsNewModelStructureItem :project-id="projectId" />
   </div>
@@ -21,13 +25,18 @@ const props = defineProps<{
 
 const projectId = computed(() => props.project.id)
 
-const { result: treeTopLevelResult } = useQuery(projectModelsTreeTopLevelQuery, () => ({
-  projectId: projectId.value
-}))
+const { result: treeTopLevelResult, refetch: refetchTree } = useQuery(
+  projectModelsTreeTopLevelQuery,
+  () => ({
+    projectId: projectId.value
+  })
+)
 
 const topLevelItems = computed(
   (): SingleLevelModelTreeItemFragment[] =>
     treeTopLevelResult.value?.project?.modelsTree || []
 )
 const treeItemCount = computed(() => topLevelItems.value.length)
+
+const onModelUpdated = () => refetchTree()
 </script>

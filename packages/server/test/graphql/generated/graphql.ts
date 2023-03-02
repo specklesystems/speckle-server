@@ -686,6 +686,7 @@ export type ModelsTreeItem = {
   fullName: Scalars['String'];
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
+  id: Scalars['ID'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,

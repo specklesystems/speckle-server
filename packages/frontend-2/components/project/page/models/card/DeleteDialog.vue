@@ -30,6 +30,7 @@ graphql(`
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
+  (e: 'deleted'): void
 }>()
 
 const props = defineProps<{
@@ -49,10 +50,12 @@ const isOpen = computed({
 
 const onDelete = async () => {
   loading.value = true
-  await deleteModel({
+  const deleted = await deleteModel({
     id: props.model.id,
     projectId: props.projectId
   }).finally(() => (loading.value = false))
   isOpen.value = false
+
+  if (deleted) emit('deleted')
 }
 </script>

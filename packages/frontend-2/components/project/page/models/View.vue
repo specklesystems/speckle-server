@@ -74,6 +74,7 @@ graphql(`
   fragment ProjectModelsViewModelItem on Model {
     id
     name
+    displayName
     versionCount
     commentThreadCount
     previewUrl

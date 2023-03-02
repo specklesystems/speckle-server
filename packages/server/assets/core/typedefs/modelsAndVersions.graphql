@@ -113,6 +113,7 @@ extend type Mutation {
 }
 
 type ModelsTreeItem {
+  id: ID!
   name: String!
   fullName: String!
   """

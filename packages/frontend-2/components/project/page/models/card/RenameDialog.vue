@@ -22,9 +22,13 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
+import { Get } from 'type-fest'
 import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectPageModelsCardRenameDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectPageModelsCardRenameDialogFragment,
+  UpdateModelMutation
+} from '~~/lib/common/generated/gql/graphql'
 import {
   useModelNameValidationRules,
   useUpdateModel
@@ -39,6 +43,7 @@ graphql(`
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
+  (e: 'updated', newModel: Get<UpdateModelMutation, 'modelMutations.update'>): void
 }>()
 
 const props = defineProps<{
@@ -61,12 +66,14 @@ const isOpen = computed({
 
 const onSubmit = handleSubmit(async (vals) => {
   loading.value = true
-  await updateModel({
+  const updatedModel = await updateModel({
     id: props.model.id,
     name: vals.name,
     projectId: props.projectId
   }).finally(() => (loading.value = false))
   isOpen.value = false
+
+  if (updatedModel) emit('updated', updatedModel)
 })
 
 watch(

@@ -31,6 +31,7 @@
               :model="model"
               :project-id="projectId"
               @click.stop.prevent
+              @model-updated="$emit('model-updated')"
             />
           </span>
         </div>
@@ -169,6 +170,7 @@
             :item="child"
             :project-id="projectId"
             class="flex-grow"
+            @model-updated="onModelUpdated"
           />
         </div>
         <ProjectPageModelsNewModelStructureItem
@@ -206,6 +208,7 @@ enum StructureItemType {
 
 graphql(`
   fragment SingleLevelModelTreeItem on ModelsTreeItem {
+    id
     name
     fullName
     model {
@@ -215,6 +218,10 @@ graphql(`
     updatedAt
   }
 `)
+
+const emit = defineEmits<{
+  (e: 'model-updated'): void
+}>()
 
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
@@ -274,7 +281,7 @@ const viewAllUrl = computed(() => {
   return modelRoute(props.projectId, `$${props.item.fullName}`)
 })
 
-const { result: childrenResult } = useQuery(
+const { result: childrenResult, refetch: refetchChildren } = useQuery(
   projectModelChildrenTreeQuery,
   () => ({
     projectId: props.projectId,
@@ -284,4 +291,9 @@ const { result: childrenResult } = useQuery(
 )
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])
+
+const onModelUpdated = () => {
+  emit('model-updated')
+  refetchChildren()
+}
 </script>

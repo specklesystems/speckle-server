@@ -693,6 +693,7 @@ export type ModelsTreeItem = {
   fullName: Scalars['String'];
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
+  id: Scalars['ID'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -3091,6 +3092,7 @@ export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType ext
   children?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;

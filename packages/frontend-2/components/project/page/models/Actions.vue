@@ -15,11 +15,13 @@
       v-model:open="isRenameDialogOpen"
       :model="model"
       :project-id="projectId"
+      @updated="$emit('model-updated')"
     />
     <ProjectPageModelsCardDeleteDialog
       v-model:open="isDeleteDialogOpen"
       :model="model"
       :project-id="projectId"
+      @deleted="$emit('model-updated')"
     />
   </div>
 </template>
@@ -46,6 +48,7 @@ enum ActionTypes {
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
+  (e: 'model-updated'): void
 }>()
 
 const props = defineProps<{

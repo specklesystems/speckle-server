@@ -335,6 +335,7 @@ export async function getModelTreeItems(
     const fullName = cleanModelName ? `${cleanModelName}/${i.branchPart}` : i.branchPart
 
     return {
+      id: `${projectId}-${fullName}`,
       projectId,
       name: i.branchPart,
       fullName,

@@ -70,11 +70,6 @@ import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
-/**
- * TODO:
- * - Fix cache updates of structureditem (doesnt reload cuz not model)
- */
-
 defineEmits<{
   (e: 'click', val: MouseEvent): void
 }>()
