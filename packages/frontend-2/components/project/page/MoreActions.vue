@@ -1,14 +1,14 @@
 <template>
   <div class="flex flex-col">
-    <h2 class="h3 font-bold mb-4">More actions</h2>
+    <h2 class="h3 font-bold mb-4">Automation</h2>
     <div class="grid gap-4 grid-cols-12">
-      <ProjectPageMoreActionsCard :class="cardWidthClasses">
+      <!-- <ProjectPageMoreActionsCard :class="cardWidthClasses">
         <template #title>Globals</template>
         <template #description>
           Global variables can hold various information that's useful across the
           project.
         </template>
-      </ProjectPageMoreActionsCard>
+      </ProjectPageMoreActionsCard> -->
       <ProjectPageMoreActionsCard :class="cardWidthClasses">
         <template #title>Webhooks</template>
         <template #description>
