@@ -137,7 +137,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -179,6 +179,7 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
   // Point cloud
   // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+  'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
