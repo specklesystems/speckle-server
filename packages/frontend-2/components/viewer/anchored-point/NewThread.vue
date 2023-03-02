@@ -92,6 +92,10 @@ import {
   CommentEditorValue,
   useSubmitComment
 } from '~~/lib/viewer/composables/commentManagement'
+import {
+  isValidCommentContentInput,
+  convertCommentEditorValueToInput
+} from '~~/lib/viewer/helpers/comments'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -126,14 +130,11 @@ const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
   if (!comment?.doc) return
 
+  const content = convertCommentEditorValueToInput(commentValue.value)
+  if (!isValidCommentContentInput(content)) return
+
   // Intentionally not awaiting so that we emit close immediately
-  createThread(
-    {
-      doc: comment.doc,
-      blobIds: comment.attachments?.map((a) => a.result.blobId) || []
-    },
-    props.modelValue.clickLocation
-  )
+  createThread(content, props.modelValue.clickLocation)
 
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {

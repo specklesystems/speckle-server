@@ -13,6 +13,7 @@
       </div>
       <div class="truncate text-sm text-foreground-2 flex flex-col">
         <CommonTiptapTextEditor
+          v-if="comment.text.doc"
           :model-value="comment.text.doc"
           :schema-options="{ multiLine: false }"
           readonly

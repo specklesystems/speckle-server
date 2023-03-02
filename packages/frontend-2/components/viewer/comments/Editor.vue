@@ -118,6 +118,7 @@ const openFilePicker = () => {
   uploadZone.value?.triggerPicker()
 }
 
+// sync upload updates to modelValue
 watch(
   uploads,
   (newUploads) => {
@@ -127,6 +128,16 @@ watch(
     }
   },
   { deep: true }
+)
+
+// remove removed attachments from modelValue
+watch(
+  () => props.modelValue?.attachments,
+  (newAttachments) => {
+    if (!newAttachments && uploads.value.length) {
+      uploads.value = []
+    }
+  }
 )
 
 defineExpose({

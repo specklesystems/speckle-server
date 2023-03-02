@@ -282,7 +282,7 @@ input CommentCreateInput {
 }
 
 input CommentContentInput {
-  doc: JSONObject!
+  doc: JSONObject
   blobIds: [String!]
 }
 

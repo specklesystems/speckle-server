@@ -248,7 +248,7 @@ export type CommentCollection = {
 
 export type CommentContentInput = {
   blobIds?: InputMaybe<Array<Scalars['String']>>;
-  doc: Scalars['JSONObject'];
+  doc?: InputMaybe<Scalars['JSONObject']>;
 };
 
 /** Deprecated: Used by old stream-based mutations */

@@ -26,7 +26,6 @@ import {
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
 } from '~~/lib/viewer/graphql/queries'
-import { useGetObjectUrl } from '~~/lib/viewer/helpers'
 import { difference, merge, uniq } from 'lodash-es'
 import {
   ProjectCommentsUpdatedMessageType,
@@ -61,6 +60,7 @@ import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useGetObjectUrl } from '~~/lib/viewer/composables/viewer'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
