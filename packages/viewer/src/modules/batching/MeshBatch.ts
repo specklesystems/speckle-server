@@ -30,7 +30,7 @@ export default class MeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  public geometry: BufferGeometry
+  private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
   public boundsTree: MeshBVH
@@ -533,12 +533,6 @@ export default class MeshBatch implements Batch {
     this.updateGradientIndexBufferData(0, buffer.length, 0)
     this.updateGradientIndexBuffer()
 
-    const diffBuffer = new Float32Array(position.length / 3)
-    diffBuffer.fill(1)
-    const diffBufferAttribute = new Float32BufferAttribute(diffBuffer, 1)
-    diffBufferAttribute.setUsage(DynamicDrawUsage)
-    this.geometry.setAttribute('diffOpacity', diffBufferAttribute)
-
     Geometry.computeVertexNormals(this.geometry, position)
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
@@ -585,14 +579,6 @@ export default class MeshBatch implements Batch {
     }
     this.gradientIndexBuffer.needsUpdate = true
     this.geometry.attributes['gradientIndex'].needsUpdate = true
-  }
-
-  public updateDiffOpacity(start: number, end: number, time: number) {
-    const diffBuffer = this.geometry.attributes.diffOpacity.array as number[]
-    for (let k = start; k < end; k++) {
-      diffBuffer[k] = time
-    }
-    this.geometry.attributes.diffOpacity.needsUpdate = true
   }
 
   public purge() {

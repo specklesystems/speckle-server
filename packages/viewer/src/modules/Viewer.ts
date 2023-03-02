@@ -6,13 +6,12 @@ import EventEmitter from './EventEmitter'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox, { SectionBoxEvent } from './SectionBox'
-import { Clock, Texture } from 'three'
+import { Clock, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
   CanonicalView,
   DefaultViewerParams,
-  DiffResult,
   InlineView,
   IViewer,
   PolarView,
@@ -32,8 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import MeshBatch from './batching/MeshBatch'
-import { NodeRenderView } from './tree/NodeRenderView'
+import { DiffResult } from './Differ'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -518,137 +516,58 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public diff(urlA: string, urlB: string): Promise<DiffResult> {
-    const diffResult: DiffResult = {
-      unchanged: [],
-      added: [],
-      removed: [],
-      modifiedNew: [],
-      modifiedOld: []
-    }
-    const renderTreeA = WorldTree.getRenderTree(urlA)
-    const renderTreeB = WorldTree.getRenderTree(urlB)
-    const rootA = WorldTree.getInstance().findId(urlA)
-    const rootB = WorldTree.getInstance().findId(urlB)
-    const rvsA = renderTreeA.getAtomicNodes(SpeckleType.Mesh)
-    const rvsB = renderTreeB.getAtomicNodes(SpeckleType.Mesh)
-    // console.log(rvsA.map((value: TreeNode) => value.model.raw.id))
-    // console.log(rvsB.map((value: TreeNode) => value.model.raw.id))
-
-    for (let k = 0; k < rvsB.length; k++) {
-      // console.log('Node -> ', rvsB[k].model.raw.id)
-      const res = rootA.first((node: TreeNode) => {
-        return rvsB[k].model.raw.id === node.model.raw.id
-      })
-      if (res) {
-        diffResult.unchanged.push(res)
-      } else {
-        const applicationId = rvsB[k].model.applicationId
-          ? rvsB[k].model.raw.applicationId
-          : rvsB[k].parent.model.raw.applicationId
-        const res2 = rootA.first((node: TreeNode) => {
-          return applicationId === node.model.raw.applicationId
-        })
-        if (res2) {
-          diffResult.modifiedNew.push(rvsB[k])
-        } else {
-          diffResult.added.push(rvsB[k])
-        }
-      }
-    }
-
-    for (let k = 0; k < rvsA.length; k++) {
-      // console.log('Node -> ', rvsB[k].model.raw.id)
-      const res = rootB.first((node: TreeNode) => {
-        return rvsA[k].model.raw.id === node.model.raw.id
-      })
-      if (!res) {
-        const applicationId = rvsA[k].model.applicationId
-          ? rvsA[k].model.raw.applicationId
-          : rvsA[k].parent.model.raw.applicationId
-        const res2 = rootB.first((node: TreeNode) => {
-          return applicationId === node.model.raw.applicationId
-        })
-        if (!res2) diffResult.removed.push(rvsA[k])
-        else diffResult.modifiedOld.push(rvsA[k])
-      }
-    }
-    this.setUserObjectColors([
-      {
-        objectIds: diffResult.added.map((value) => value.model.raw.id),
-        color: '#00ff00'
-      },
-      {
-        objectIds: diffResult.removed.map((value) => value.model.raw.id),
-        color: '#ff0000'
-      },
-      {
-        objectIds: diffResult.modifiedNew.map((value) => value.model.raw.id),
-        color: '#ffff00'
-      },
-      {
-        objectIds: diffResult.modifiedOld.map((value) => value.model.raw.id),
-        color: '#ffff00'
-      }
-    ])
-    for (let k = 0; k < diffResult.modifiedOld.length; k++) {
-      const rv: NodeRenderView = diffResult.modifiedOld[k].model.renderView
-      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
-      batch.updateDiffOpacity(rv.vertStart, rv.vertEnd, 0.2)
-      batch.renderObject.renderOrder = 1
-    }
-    for (let k = 0; k < diffResult.removed.length; k++) {
-      const rv: NodeRenderView = diffResult.removed[k].model.renderView
-      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
-      batch.updateDiffOpacity(rv.vertStart, rv.vertEnd, 0.2)
-      batch.renderObject.renderOrder = 1
-    }
-
-    console.warn(diffResult)
-    return Promise.resolve(diffResult)
+  public async diff(urlA: string, urlB: string): Promise<DiffResult> {
+    const pipelineOptions = this.speckleRenderer.pipelineOptions
+    const diff = await this.speckleRenderer.differ.diff(urlA, urlB)
+    this.speckleRenderer.differ.visualDiff(diff)
+    this.speckleRenderer.differ.setDiffTime(0)
+    pipelineOptions.depthSide = FrontSide
+    this.speckleRenderer.pipelineOptions = pipelineOptions
+    return Promise.resolve(diff)
   }
 
   public setDiffTime(diffResult: DiffResult, time: number) {
-    for (let k = 0; k < diffResult.modifiedOld.length; k++) {
-      const rv: NodeRenderView = diffResult.modifiedOld[k].model.renderView
-      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
-      batch.updateDiffOpacity(
-        rv.vertStart,
-        rv.vertEnd,
-        Math.min(Math.max(time, 0.2), 1)
-      )
-      batch.renderObject.renderOrder = time > 0.5 ? 0 : 1
-    }
-    for (let k = 0; k < diffResult.modifiedNew.length; k++) {
-      const rv: NodeRenderView = diffResult.modifiedNew[k].model.renderView
-      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
-      batch.updateDiffOpacity(
-        rv.vertStart,
-        rv.vertEnd,
-        Math.min(Math.max(1 - time, 0.2), 1)
-      )
-      batch.renderObject.renderOrder = time < 0.5 ? 0 : 1
-    }
-    for (let k = 0; k < diffResult.removed.length; k++) {
-      const rv: NodeRenderView = diffResult.removed[k].model.renderView
-      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
-      batch.updateDiffOpacity(
-        rv.vertStart,
-        rv.vertEnd,
-        Math.min(Math.max(time, 0.2), 1)
-      )
-      batch.renderObject.renderOrder = time > 0.5 ? 0 : 1
-    }
-    for (let k = 0; k < diffResult.added.length; k++) {
-      const rv: NodeRenderView = diffResult.added[k].model.renderView
-      const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
-      batch.updateDiffOpacity(
-        rv.vertStart,
-        rv.vertEnd,
-        Math.min(Math.max(1 - time, 0.2), 1)
-      )
-      batch.renderObject.renderOrder = time < 0.5 ? 0 : 1
-    }
+    this.speckleRenderer.differ.setDiffTime(time)
+    // for (let k = 0; k < diffResult.modifiedOld.length; k++) {
+    //   const rv: NodeRenderView = diffResult.modifiedOld[k].model.renderView
+    //   const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+    //   batch.updateDiffOpacity(
+    //     rv.vertStart,
+    //     rv.vertEnd,
+    //     Math.min(Math.max(time, 0.2), 1)
+    //   )
+    //   batch.renderObject.renderOrder = time > 0.5 ? 0 : 1
+    // }
+    // for (let k = 0; k < diffResult.modifiedNew.length; k++) {
+    //   const rv: NodeRenderView = diffResult.modifiedNew[k].model.renderView
+    //   const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+    //   batch.updateDiffOpacity(
+    //     rv.vertStart,
+    //     rv.vertEnd,
+    //     Math.min(Math.max(1 - time, 0.2), 1)
+    //   )
+    //   batch.renderObject.renderOrder = time < 0.5 ? 0 : 1
+    // }
+    // for (let k = 0; k < diffResult.removed.length; k++) {
+    //   const rv: NodeRenderView = diffResult.removed[k].model.renderView
+    //   const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+    //   batch.updateDiffOpacity(
+    //     rv.vertStart,
+    //     rv.vertEnd,
+    //     Math.min(Math.max(time, 0.2), 1)
+    //   )
+    //   batch.renderObject.renderOrder = time > 0.5 ? 0 : 1
+    // }
+    // for (let k = 0; k < diffResult.added.length; k++) {
+    //   const rv: NodeRenderView = diffResult.added[k].model.renderView
+    //   const batch: MeshBatch = this.speckleRenderer.batcher.getBatch(rv) as MeshBatch
+    //   batch.updateDiffOpacity(
+    //     rv.vertStart,
+    //     rv.vertEnd,
+    //     Math.min(Math.max(1 - time, 0.2), 1)
+    //   )
+    //   batch.renderObject.renderOrder = time < 0.5 ? 0 : 1
+    // }
   }
 
   public dispose() {

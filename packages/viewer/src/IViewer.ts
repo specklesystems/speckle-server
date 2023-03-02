@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { DiffResult } from './modules/Differ'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
@@ -121,19 +122,6 @@ export type PolarView = {
   polar: number
   radius?: number
   origin?: Vector3
-}
-
-export interface DiffResult {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  unchanged: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  added: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  removed: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  modifiedNew: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  modifiedOld: Array<Record<string, any>>
 }
 
 export interface IViewer {
