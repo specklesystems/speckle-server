@@ -325,7 +325,7 @@ export default class Coverter {
   }
 
   private async RevitInstanceToNode(obj, node) {
-    const traverseList = async (list) => {
+    const traverseList = async (list, hostId?: string) => {
       if (!list) return
       for (const def of list) {
         const ref = await this.resolveReference(def)
@@ -335,10 +335,10 @@ export default class Coverter {
           atomic: true,
           children: []
         })
+        if (hostId) {
+          childNode.model.raw.host = hostId
+        }
         WorldTree.getInstance().addNode(childNode, node)
-        // console.warn(
-        //   `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
-        // )
         await this.convertToNode(ref, childNode)
       }
     }
@@ -347,7 +347,7 @@ export default class Coverter {
 
     await traverseList(definition.elements)
     await traverseList(definition.displayValue)
-    await traverseList(obj.elements)
+    await traverseList(obj.elements, obj.id)
   }
 
   private async PointcloudToNode(obj, node) {
