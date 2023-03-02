@@ -326,6 +326,7 @@ export type CommentMutations = {
 
 
 export type CommentMutationsArchiveArgs = {
+  archived?: Scalars['Boolean'];
   commentId: Scalars['String'];
 };
 

@@ -198,14 +198,15 @@ export function useArchiveComment() {
   const client = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
 
-  return async (commentId: string) => {
+  return async (commentId: string, archived = true) => {
     if (!isLoggedIn.value || !commentId) return false
 
     const { data, errors } = await client
       .mutate({
         mutation: archiveCommentMutation,
         variables: {
-          commentId
+          commentId,
+          archived
         }
       })
       .catch(convertThrowIntoFetchResult)

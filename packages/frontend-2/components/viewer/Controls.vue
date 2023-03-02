@@ -21,6 +21,8 @@
       >
         <FunnelIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
+
+      <!-- Comment threads -->
       <ViewerControlsButtonToggle
         :active="activeControl === 'comments'"
         @click="toggleActiveControl('comments')"
@@ -28,10 +30,13 @@
         <ChatBubbleLeftRightIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- TODO: direct add comment -->
+      <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
+
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
         <!-- Zoom extents -->
-        <ViewerControlsButtonToggle flat @click="instance.zoom()">
+        <ViewerControlsButtonToggle flat @click="zoomExtentsOrSelection()">
           <ArrowsPointingOutIcon class="w-5 h-5" />
         </ViewerControlsButtonToggle>
 
@@ -66,7 +71,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-80 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
+      :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-72 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -98,14 +103,15 @@ import {
   ArrowsPointingOutIcon,
   ScissorsIcon
 } from '@heroicons/vue/24/outline'
+import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
 // import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useTextInputGlobalFocus } from '~~/composables/states'
 
 const {
-  viewer: { instance },
   ui: {
-    camera: { toggleProjection, isPerspectiveProjection },
+    camera: { toggleProjection, isPerspectiveProjection, zoomExtentsOrSelection },
     sectionBox: { toggleSectionBox, isSectionBoxEnabled }
   }
 } = useInjectedViewerState()
@@ -119,6 +125,34 @@ const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
     ? (activeControl.value = 'none')
     : (activeControl.value = control)
+
+const globalTextInputFocus = useTextInputGlobalFocus()
+
+// Main nav kbd shortcuts
+// TODO: better with modifier keys, and abstract away OS control/command stuff
+onKeyStroke('m', () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('models')
+})
+onKeyStroke('e', () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('explorer')
+})
+onKeyStroke('f', () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('filters')
+})
+onKeyStroke(['c', 'C'], () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('comments')
+})
+
+// Viewer actions kbd shortcuts
+onKeyStroke(' ', () => {
+  if (!globalTextInputFocus.value) zoomExtentsOrSelection()
+})
+onKeyStroke('p', () => {
+  if (!globalTextInputFocus.value) toggleProjection()
+})
+onKeyStroke('s', () => {
+  if (!globalTextInputFocus.value) toggleSectionBox()
+})
 
 const scrollControlsToBottom = () => {
   // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded

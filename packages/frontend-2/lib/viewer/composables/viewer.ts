@@ -1,5 +1,5 @@
 import {
-  InjectableViewerState,
+  InitialStateWithRequestAndResponse,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
@@ -53,7 +53,7 @@ export function useSelectionEvents(
     doubleClickCallback?: (event: Nullable<SelectionEvent>) => void
   },
   options?: Partial<{
-    state: InjectableViewerState
+    state: InitialStateWithRequestAndResponse
     debounceWait: number
   }>
 ) {

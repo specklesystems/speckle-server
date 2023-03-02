@@ -1,9 +1,28 @@
 <template>
-  <div class="bg-foundation rounded-4xl px-4 py-3 flex w-full relative">
-    <div class="flex flex-col shrink grow">
-      <div class="text-foreground space-x-1 inline-flex">
+  <div class="bg-foundation rounded-4xl px-4 py-3 w-full max-w-full relative">
+    <div class="flex space-x-1 items-center">
+      <span class="truncate text-sm flex-shrink">{{ item.file.name }}</span>
+      <span class="text-tiny flex-grow text-foreground-2">
+        {{ prettyFileSize(item.file.size) }}
+      </span>
+      <FormButton
+        color="danger"
+        size="xs"
+        rounded
+        hide-text
+        :icon-left="XMarkIcon"
+        @click="onDelete"
+      ></FormButton>
+    </div>
+    <div
+      v-if="item.progress > 0"
+      :class="['h-1 w-full mt-2', progressBarColorClass]"
+      :style="{ width: `${item.progress}%` }"
+    />
+    <div v-if="false" class="flex flex-col flex-grow">
+      <div class="text-foreground space-x-1 inline-flex max-w-full truncate">
         <span class="normal truncate">{{ item.file.name }}</span>
-        <span class="label label--light text-foreground-2">
+        <span class="label label--light text-foreground-2 truncate">
           {{ prettyFileSize(item.file.size) }}
         </span>
       </div>
@@ -17,6 +36,7 @@
       />
     </div>
     <FormButton
+      v-if="false"
       class="absolute -right-8 top-4"
       color="danger"
       size="xs"

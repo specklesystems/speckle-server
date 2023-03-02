@@ -52,7 +52,7 @@
 
     <div>
       <div v-for="object in objects" :key="(object.id as string)">
-        <ViewerSelectionObject :object="object" :unfold="unfold" title="todo" />
+        <ViewerSelectionObject :object="object" :unfold="false" />
         <div class="w-full my-2 border-b border-outline-3"></div>
       </div>
     </div>
@@ -86,7 +86,7 @@ const {
   viewer: { instance: viewerInstance }
 } = useInjectedViewerState()
 
-const unfold = computed(() => objects.value.length === 1)
+// const unfold = computed(() => objects.value.length === 1)
 
 const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
 const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)

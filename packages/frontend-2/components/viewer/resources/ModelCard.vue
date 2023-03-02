@@ -2,34 +2,33 @@
   <div>
     <div v-if="model">
       <div>
-        <ViewerResourcesLoadedVersionCard
-          v-if="!showVersions && loadedVersion"
+        <ViewerResourcesLoadedVersionCardVersion2
+          v-if="loadedVersion"
           :version="loadedVersion"
           :model="model"
           :is-latest-version="loadedVersion?.id === latestVersionId"
-          @show-versions="showVersions = true"
+          @show-versions="showVersions = !showVersions"
           @load-latest="loadLatestVersion"
         />
       </div>
     </div>
-    <div v-if="showVersions" class="bg-foundation flex flex-col rounded-md px-1">
-      <div class="px-2 py-4 flex items-center truncate space-x-2">
-        <FormButton
-          :icon-left="ChevronLeftIcon"
-          text
-          size="xs"
-          @click="showVersions = false"
-        >
-          Back
-        </FormButton>
-        <span>
-          <b>{{ model.name }}</b>
-          versions
-        </span>
-      </div>
+    <div
+      v-if="showVersions"
+      class="mr-0 -mt-4 pt-8 bg-foundation flex flex-col rounded-md max-h-96 overflow-y-auto simple-scrollbar"
+    >
       <div>
         <ViewerResourcesVersionCard
-          v-for="version in versions"
+          v-if="loadedVersion"
+          :model-id="modelId"
+          :version="loadedVersion"
+          :is-latest-version="loadedVersion.id === latestVersionId"
+          :is-loaded-version="loadedVersion.id === loadedVersion?.id"
+          :show-timeline="false"
+          @change-version="handleVersionChange"
+        />
+        <hr class="dark:border-gray-700 my-2" />
+        <ViewerResourcesVersionCard
+          v-for="version in props.model.versions.items"
           :key="version.id"
           :model-id="modelId"
           :version="version"
@@ -38,17 +37,25 @@
           @change-version="handleVersionChange"
         />
       </div>
-      <FormButton v-if="showLoadMore" full-width text @click="onLoadMore">
-        Load more
-      </FormButton>
-      <div v-else class="py-2" />
+      <div class="mt-4 px-2 py-2">
+        <FormButton
+          full-width
+          text
+          size="sm"
+          :disabled="!showLoadMore"
+          @click="onLoadMore"
+        >
+          {{ showLoadMore ? 'View older versions' : 'No more versions' }}
+        </FormButton>
+      </div>
+      <!-- <div v-else class="py-2" /> -->
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
+// import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {

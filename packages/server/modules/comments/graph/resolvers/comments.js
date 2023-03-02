@@ -272,7 +272,7 @@ module.exports = {
         commentId: args.commentId,
         requireProjectRole: true
       })
-      await archiveCommentAndNotify(args.commentId, ctx.userId)
+      await archiveCommentAndNotify(args.commentId, ctx.userId, args.archived)
       return true
     }
   },

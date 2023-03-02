@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div class="flex flex-col w-80">
+  <div class="flex flex-col w-80 max-h-40 overflow-y-auto simple-scrollbar">
     <FormFileUploadZone
       ref="uploadZone"
       v-slot="{ isDraggingFiles }"
@@ -13,15 +13,17 @@
       <CommonTiptapTextEditor
         v-model="doc"
         :class="[
-          'bg-foundation rounded-4xl p-4 border',
+          'bg-foundation-2 rounded-lg p-4 border',
           isDraggingFiles ? 'border-success' : 'border-transparent'
         ]"
         :autofocus="autofocus"
-        placeholder="Press enter to send"
+        :placeholder="prompt || 'Press enter to send'"
         :schema-options="{ multiLine: false }"
         :disabled="disabled"
         @submit="onSubmit"
         @created="$emit('created')"
+        @focusin="setGlobalFocus(true)"
+        @focusout="setGlobalFocus(false)"
       />
     </FormFileUploadZone>
     <FormFileUploadProgress
@@ -42,6 +44,7 @@ import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
 import { useAttachments } from '~~/lib/core/composables/fileUpload'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { isSuccessfullyUploaded } from '~~/lib/core/api/blobStorage'
+import { useTextInputGlobalFocus } from '~~/composables/states'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: Optional<CommentEditorValue>): void
@@ -53,6 +56,7 @@ const props = defineProps<{
   modelValue?: CommentEditorValue
   disabled?: boolean
   autofocus?: boolean
+  prompt?: string
 }>()
 
 const { projectId } = useInjectedViewerState()
@@ -143,4 +147,10 @@ watch(
 defineExpose({
   openFilePicker
 })
+
+const globalTextInputFocus = useTextInputGlobalFocus()
+
+function setGlobalFocus(status: boolean) {
+  globalTextInputFocus.value = status
+}
 </script>
