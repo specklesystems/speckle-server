@@ -34,7 +34,7 @@
                 <slot>Put your content here!</slot>
                 <button
                   v-if="!hideCloser"
-                  class="absolute top-0 right-0"
+                  class="absolute top-0 right-0 text-foreground"
                   @click="open = false"
                 >
                   <XMarkIcon class="h-6 w-6" />

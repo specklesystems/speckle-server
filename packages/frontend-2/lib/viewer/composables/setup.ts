@@ -836,6 +836,13 @@ function setupInterfaceState(
         selectedObjects.value.map((o) => o.id as string)
       )
     }
+
+    if (
+      filteringState.value?.isolatedObjects &&
+      filteringState.value.isolatedObjects?.length > 0
+    ) {
+      return state.viewer.instance.zoom(filteringState.value.isolatedObjects)
+    }
     state.viewer.instance.zoom()
   }
 

@@ -8,7 +8,12 @@
     by="id"
   >
     <template #something-selected="{ value }">
-      {{ value.description }}
+      <div class="text-sm">
+        <div class="font-bold">
+          {{ value.title }}
+        </div>
+        {{ value.description }}
+      </div>
     </template>
     <template #option="{ item }">
       <div class="flex flex-col">
@@ -40,7 +45,7 @@ const items = ref<
   [ProjectVisibility.Unlisted]: {
     id: ProjectVisibility.Unlisted,
     description: 'Anyone with the link will be able to view',
-    title: 'Link Sharing'
+    title: 'Link Shareable'
   },
   [ProjectVisibility.Private]: {
     id: ProjectVisibility.Private,
