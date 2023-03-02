@@ -54,7 +54,10 @@ export async function addCommentCreatedActivity(params: {
   } else {
     resourceItems =
       input.resolvedResourceItems ||
-      (await getViewerResourceItemsUngrouped(streamId, input.resourceIdString))
+      (await getViewerResourceItemsUngrouped({
+        projectId: streamId,
+        resourceIdString: input.resourceIdString
+      }))
     resourceIds = resourceItems.map((i) => i.versionId || i.objectId).join(',')
   }
 

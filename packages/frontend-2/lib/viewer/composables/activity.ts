@@ -213,7 +213,7 @@ export function useViewerUserActivityTracking(params: {
     projectId,
     sessionId,
     resources: {
-      request: { resourceIdString }
+      request: { resourceIdString, threadFilters }
     }
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
@@ -224,8 +224,11 @@ export function useViewerUserActivityTracking(params: {
   const { onResult: onUserActivity } = useSubscription(
     onViewerUserActivityBroadcastedSubscription,
     () => ({
-      projectId: projectId.value,
-      resourceIdString: resourceIdString.value
+      target: {
+        projectId: projectId.value,
+        resourceIdString: resourceIdString.value,
+        loadedVersionsOnly: threadFilters.value.loadedVersionsOnly
+      }
     }),
     () => ({
       enabled: isLoggedIn.value
@@ -472,15 +475,18 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
   const {
     projectId,
     resources: {
-      request: { resourceIdString }
+      request: { resourceIdString, threadFilters }
     }
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const { onResult: onUserActivity } = useSubscription(
     onViewerUserActivityBroadcastedSubscription,
     () => ({
-      projectId: projectId.value,
-      resourceIdString: resourceIdString.value
+      target: {
+        projectId: projectId.value,
+        resourceIdString: resourceIdString.value,
+        loadedVersionsOnly: threadFilters.value.loadedVersionsOnly
+      }
     }),
     () => ({
       enabled: isLoggedIn.value

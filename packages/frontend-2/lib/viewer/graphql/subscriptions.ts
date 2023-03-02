@@ -1,14 +1,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const onViewerUserActivityBroadcastedSubscription = graphql(`
-  subscription OnViewerUserActivityBroadcasted(
-    $projectId: String!
-    $resourceIdString: String!
-  ) {
-    viewerUserActivityBroadcasted(
-      projectId: $projectId
-      resourceIdString: $resourceIdString
-    ) {
+  subscription OnViewerUserActivityBroadcasted($target: ViewerUpdateTrackingTarget!) {
+    viewerUserActivityBroadcasted(target: $target) {
       userName
       userId
       user {
@@ -31,11 +25,8 @@ export const onViewerUserActivityBroadcastedSubscription = graphql(`
 `)
 
 export const onViewerCommentsUpdatedSubscription = graphql(`
-  subscription OnViewerCommentsUpdated(
-    $projectId: String!
-    $resourceIdString: String!
-  ) {
-    projectCommentsUpdated(projectId: $projectId, resourceIdString: $resourceIdString) {
+  subscription OnViewerCommentsUpdated($target: ViewerUpdateTrackingTarget!) {
+    projectCommentsUpdated(target: $target) {
       id
       type
       comment {

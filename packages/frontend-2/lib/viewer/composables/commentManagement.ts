@@ -25,14 +25,17 @@ import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subsc
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCollectCommentData } from '~~/lib/viewer/composables/activity'
 import type { Vector3 } from 'three'
-import { Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
 
 export function useViewerCommentUpdateTracking(
-  projectId: MaybeRef<string>,
-  resourceIdString: MaybeRef<string>,
+  params: {
+    projectId: MaybeRef<string>
+    resourceIdString: MaybeRef<string>
+    loadedVersionsOnly?: MaybeRef<MaybeNullOrUndefined<boolean>>
+  },
   handler?: (
     data: NonNullable<
       Get<OnViewerCommentsUpdatedSubscription, 'projectCommentsUpdated'>
@@ -44,8 +47,11 @@ export function useViewerCommentUpdateTracking(
   const { onResult: onViewerCommentUpdated } = useSubscription(
     onViewerCommentsUpdatedSubscription,
     () => ({
-      projectId: unref(projectId),
-      resourceIdString: unref(resourceIdString)
+      target: {
+        projectId: unref(params.projectId),
+        resourceIdString: unref(params.resourceIdString),
+        loadedVersionsOnly: unref(params.loadedVersionsOnly)
+      }
     })
   )
 

@@ -2017,8 +2017,7 @@ export type SubscriptionCommitUpdatedArgs = {
 
 
 export type SubscriptionProjectCommentsUpdatedArgs = {
-  projectId: Scalars['String'];
-  resourceIdString?: InputMaybe<Scalars['String']>;
+  target: ViewerUpdateTrackingTarget;
 };
 
 
@@ -2060,8 +2059,7 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
-  projectId: Scalars['String'];
-  resourceIdString: Scalars['String'];
+  target: ViewerUpdateTrackingTarget;
 };
 
 export type TestItem = {
@@ -2282,6 +2280,21 @@ export type ViewerResourceItem = {
   objectId: Scalars['String'];
   /** Null if resource represents an object */
   versionId?: Maybe<Scalars['String']>;
+};
+
+export type ViewerUpdateTrackingTarget = {
+  /**
+   * By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+   * and all updates to of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+   * enabled, then only updates of loaded/referenced versions in resourceIdString will be returned.
+   */
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
+  projectId: Scalars['String'];
+  /**
+   * Only request updates to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString: Scalars['String'];
 };
 
 export type ViewerUserActivityMessage = {

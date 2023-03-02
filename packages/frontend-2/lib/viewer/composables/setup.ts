@@ -976,75 +976,32 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
   const {
     projectId,
     resources: {
-      request: { resourceIdString },
+      request: { resourceIdString, threadFilters },
       response: { resourceQueryVariables, resourceItemsQueryVariables }
     }
   } = state
 
-  useViewerCommentUpdateTracking(projectId, resourceIdString, (event, cache) => {
-    const isArchived = event.type === ProjectCommentsUpdatedMessageType.Archived
-    const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
-    const model = event.comment
+  useViewerCommentUpdateTracking(
+    {
+      projectId,
+      resourceIdString,
+      loadedVersionsOnly: computed(() => threadFilters.value.loadedVersionsOnly)
+    },
+    (event, cache) => {
+      const isArchived = event.type === ProjectCommentsUpdatedMessageType.Archived
+      const isNew = event.type === ProjectCommentsUpdatedMessageType.Created
+      const model = event.comment
 
-    if (isArchived) {
-      // Mark as archived
-      cache.modify({
-        id: getCacheId('Comment', event.id),
-        fields: {
-          archived: () => true
-        }
-      })
-
-      // Remove from project.commentThreads
-      modifyObjectFields<
-        {
-          cursor: Nullable<string>
-          limit: Nullable<number>
-          filter: Nullable<ProjectCommentsFilter>
-        },
-        Merge<
-          NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>,
-          { items: CacheObjectReference[] }
-        >
-      >(cache, getCacheId('Project', projectId.value), (fieldName, variables, data) => {
-        if (fieldName !== 'commentThreads') return
-        if (variables.filter?.includeArchived) return
-        console.log(data)
-        const newItems = data.items.filter(
-          (i) => i.__ref !== getObjectReference('Comment', event.id).__ref
-        )
-        return {
-          ...data,
-          totalCount: data.totalCount - 1,
-          items: newItems
-        }
-      })
-    } else if (isNew && model) {
-      const parentId = model.parent?.id
-
-      // Add reply to parent
-      if (parentId) {
+      if (isArchived) {
+        // Mark as archived
         cache.modify({
-          id: getCacheId('Comment', parentId),
+          id: getCacheId('Comment', event.id),
           fields: {
-            replies: (
-              oldValue: Optional<
-                Merge<CommentCollection, { items: CacheObjectReference[] }>
-              >
-            ) => {
-              const newValue: typeof oldValue = {
-                totalCount: (oldValue?.totalCount || 0) + 1,
-                items: [
-                  getObjectReference('Comment', model.id),
-                  ...(oldValue?.items || [])
-                ]
-              }
-              return newValue
-            }
+            archived: () => true
           }
         })
-      } else {
-        // Add comment thread
+
+        // Remove from project.commentThreads
         modifyObjectFields<
           {
             cursor: Nullable<string>
@@ -1058,20 +1015,74 @@ function useViewerSubscriptionEventTracker(state: InjectableViewerState) {
         >(
           cache,
           getCacheId('Project', projectId.value),
-          (fieldName, _variables, data) => {
+          (fieldName, variables, data) => {
             if (fieldName !== 'commentThreads') return
-
-            const newItems = [getObjectReference('Comment', model.id), ...data.items]
+            if (variables.filter?.includeArchived) return
+            console.log(data)
+            const newItems = data.items.filter(
+              (i) => i.__ref !== getObjectReference('Comment', event.id).__ref
+            )
             return {
               ...data,
-              totalCount: data.totalCount + 1,
+              totalCount: data.totalCount - 1,
               items: newItems
             }
           }
         )
+      } else if (isNew && model) {
+        const parentId = model.parent?.id
+
+        // Add reply to parent
+        if (parentId) {
+          cache.modify({
+            id: getCacheId('Comment', parentId),
+            fields: {
+              replies: (
+                oldValue: Optional<
+                  Merge<CommentCollection, { items: CacheObjectReference[] }>
+                >
+              ) => {
+                const newValue: typeof oldValue = {
+                  totalCount: (oldValue?.totalCount || 0) + 1,
+                  items: [
+                    getObjectReference('Comment', model.id),
+                    ...(oldValue?.items || [])
+                  ]
+                }
+                return newValue
+              }
+            }
+          })
+        } else {
+          // Add comment thread
+          modifyObjectFields<
+            {
+              cursor: Nullable<string>
+              limit: Nullable<number>
+              filter: Nullable<ProjectCommentsFilter>
+            },
+            Merge<
+              NonNullable<Get<ViewerLoadedThreadsQuery, 'project.commentThreads'>>,
+              { items: CacheObjectReference[] }
+            >
+          >(
+            cache,
+            getCacheId('Project', projectId.value),
+            (fieldName, _variables, data) => {
+              if (fieldName !== 'commentThreads') return
+
+              const newItems = [getObjectReference('Comment', model.id), ...data.items]
+              return {
+                ...data,
+                totalCount: data.totalCount + 1,
+                items: newItems
+              }
+            }
+          )
+        }
       }
     }
-  })
+  )
 
   useProjectModelUpdateTracking(projectId, (event) => {
     // If model deleted, delete resource item

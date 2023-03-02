@@ -33,7 +33,7 @@ export = {
       return await getModelTreeItems(parent.id, fullName)
     },
     async viewerResources(parent, { resourceIdString }) {
-      return await getViewerResourceGroups(parent.id, resourceIdString)
+      return await getViewerResourceGroups({ projectId: parent.id, resourceIdString })
     }
   },
   Model: {
