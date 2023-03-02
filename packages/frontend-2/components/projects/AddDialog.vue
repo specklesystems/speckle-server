@@ -25,7 +25,7 @@
       >
         <ProjectVisibilitySelect
           v-model="visibility"
-          class="max-w-[90%] sm:max-w-none"
+          class="sm:max-w-none w-full sm:w-80"
         />
         <div class="space-x-2">
           <FormButton text color="secondary" @click="open = false">Cancel</FormButton>

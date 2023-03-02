@@ -17,8 +17,8 @@
       <ListboxButton
         v-slot="{ open }"
         :class="[
-          'normal w-full cursor-default rounded-lg py-2 px-3',
-          'focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1 flex items-center',
+          'normal w-full rounded-lg py-2 px-3 cursor-pointer outline outline-2 outline-primary-muted hover:shadow transition',
+          'focus:outline-none flex items-center',
           disabled
             ? 'bg-foundation-disabled text-foreground-disabled'
             : 'bg-foundation text-foreground'
@@ -51,7 +51,7 @@
         leave-to-class="opacity-0"
       >
         <ListboxOptions
-          class="absolute z-10 mt-1 w-full rounded bg-foundation-2 py-1 label label--light shadow-md focus:outline-none"
+          class="absolute z-10 mt-1 w-full rounded-lg bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none"
           @focus="searchInput?.focus()"
         >
           <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
@@ -84,7 +84,7 @@
               <li
                 :class="[
                   active ? 'text-primary' : 'text-foreground',
-                  'relative cursor-default select-none py-1.5 pl-3 pr-9'
+                  'relative transition cursor-pointer select-none py-1.5 pl-3 pr-9'
                 ]"
               >
                 <span :class="['block truncate']">

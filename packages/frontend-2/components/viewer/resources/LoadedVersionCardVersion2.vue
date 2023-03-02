@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg">
+  <div class="rounded-lg group">
     <div
       class="relative p-2 min-w-0 h-16 max-w-full rounded-lg shadow-md flex items-center space-x-2 bg-foundation justify-between z-20"
     >
@@ -28,6 +28,9 @@
         </FormButton>
       </div>
     </div>
+    <!-- <FormButton class="absolute top-0 right-0 z-20 group-hover:opacity-100" rounded size="xs">
+      <XMarkIcon class="w-3 h-3" />
+    </FormButton> -->
     <button
       v-if="!isLatest"
       class="relative -mt-2 pt-3 pb-1 block w-full shadow-md transition bg-foundation hover:bg-foundation-focus text-xs text-foreground-2 text-center rounded-b-md z-10"
@@ -43,7 +46,7 @@ import {
   ViewerModelVersionCardItemFragment,
   ViewerLoadedResourcesQuery
 } from '~~/lib/common/generated/gql/graphql'
-import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
+import { ArrowPathRoundedSquareIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 import { Get } from 'type-fest'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
