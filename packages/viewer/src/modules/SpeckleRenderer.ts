@@ -153,6 +153,10 @@ export default class SpeckleRenderer {
     this.pipeline.pipelineOptions = value
   }
 
+  public get pipelineOptions() {
+    return this.pipeline.pipelineOptions
+  }
+
   public set showBVH(value: boolean) {
     this.SHOW_BVH = value
     this.allObjects.traverse((obj) => {

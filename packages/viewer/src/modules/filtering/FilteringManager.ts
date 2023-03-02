@@ -9,6 +9,7 @@ import {
   NumericPropertyInfo
 } from './PropertyManager'
 import SpeckleRenderer from '../SpeckleRenderer'
+import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -27,11 +28,14 @@ export enum FilterMaterialType {
   GRADIENT,
   COLORED,
   OVERLAY,
+  USER_MATERIAL,
   HIDDEN
 }
 
+/** This needs to be rethunked */
 export interface FilterMaterial {
   filterType: FilterMaterialType
+  userMaterial?: SpeckleStandardMaterial
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
