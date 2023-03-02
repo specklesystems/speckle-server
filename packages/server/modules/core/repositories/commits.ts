@@ -13,7 +13,7 @@ import {
   StreamCommitRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
-import { clamp, keyBy, uniq, uniqBy } from 'lodash'
+import { clamp, keyBy, uniq, uniqBy, reduce } from 'lodash'
 
 const CommitWithStreamBranchMetadataFields = [
   ...Commits.cols,
@@ -375,4 +375,28 @@ export async function getObjectCommitsWithStreamIds(objectIds: string[]) {
     ])
     .whereIn(Commits.col.referencedObject, objectIds)
     .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+}
+
+export async function getAllBranchCommits(
+  branchIds: string[]
+): Promise<Record<string, CommitRecord[]>> {
+  if (!branchIds.length) return {}
+
+  const q = BranchCommits.knex()
+    .select<Array<CommitRecord & { branchId: string }>>([
+      ...Commits.cols,
+      BranchCommits.col.branchId
+    ])
+    .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+    .whereIn(BranchCommits.col.branchId, branchIds)
+  const res = await q
+  return reduce(
+    res,
+    (res, item) => {
+      const branchId = item.branchId
+      ;(res[branchId] = res[branchId] || []).push(item)
+      return res
+    },
+    {} as Record<string, CommitRecord[]>
+  )
 }

@@ -40,6 +40,10 @@ import {
   CommentEditorValue,
   useSubmitReply
 } from '~~/lib/viewer/composables/commentManagement'
+import {
+  convertCommentEditorValueToInput,
+  isValidCommentContentInput
+} from '~~/lib/viewer/helpers/comments'
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
@@ -72,14 +76,14 @@ const onInput = () => {
 }
 
 const onSubmit = async () => {
-  if (!commentValue.value.doc || loading.value) return
+  if (!commentValue.value || loading.value) return
+
+  const content = convertCommentEditorValueToInput(commentValue.value)
+  if (!isValidCommentContentInput(content)) return
 
   loading.value = true
   await createReply({
-    content: {
-      doc: commentValue.value.doc,
-      blobIds: commentValue.value.attachments?.map((a) => a.result.blobId) || []
-    },
+    content,
     threadId: threadId.value
   })
 

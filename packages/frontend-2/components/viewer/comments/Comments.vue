@@ -89,9 +89,9 @@ const includeArchived = computed({
   set: (newVal) => (threadFilters.value.includeArchived = !!newVal)
 })
 
-const lastThread = computed(() =>
-  commentThreads.value.length
-    ? commentThreads.value[commentThreads.value.length - 1]
-    : null
-)
+// const lastThread = computed(() =>
+//   commentThreads.value.length
+//     ? commentThreads.value[commentThreads.value.length - 1]
+//     : null
+// )
 </script>

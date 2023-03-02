@@ -86,7 +86,7 @@ const {
   viewer: { instance: viewerInstance }
 } = useInjectedViewerState()
 
-const unfold = computed(() => objects.value.length === 1)
+// const unfold = computed(() => objects.value.length === 1)
 
 const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
 const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)

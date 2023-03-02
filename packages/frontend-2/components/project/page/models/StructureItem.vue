@@ -1,5 +1,6 @@
+<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="space-y-4">
+  <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <!--
       Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
       TODO: Report it to Vue/Nuxt!
@@ -25,8 +26,13 @@
             {{ name }}
           </span>
           <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
-            <!-- TODO: copy model link -->
-            <LinkIcon class="w-3 h-3" />
+            <ProjectPageModelsActions
+              v-model:open="showActionsMenu"
+              :model="model"
+              :project-id="projectId"
+              @click.stop.prevent
+              @model-updated="$emit('model-updated')"
+            />
           </span>
         </div>
         <!-- Empty model action -->
@@ -164,6 +170,7 @@
             :item="child"
             :project-id="projectId"
             class="flex-grow"
+            @model-updated="onModelUpdated"
           />
         </div>
         <ProjectPageModelsNewModelStructureItem
@@ -185,8 +192,7 @@ import {
   PlusIcon,
   ArrowPathRoundedSquareIcon,
   ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon,
-  LinkIcon
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -202,6 +208,7 @@ enum StructureItemType {
 
 graphql(`
   fragment SingleLevelModelTreeItem on ModelsTreeItem {
+    id
     name
     fullName
     model {
@@ -212,12 +219,17 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  (e: 'model-updated'): void
+}>()
+
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
   projectId: string
 }>()
 
 const expanded = ref(false)
+const showActionsMenu = ref(false)
 
 const itemType = computed<StructureItemType>(() => {
   const item = props.item
@@ -269,7 +281,7 @@ const viewAllUrl = computed(() => {
   return modelRoute(props.projectId, `$${props.item.fullName}`)
 })
 
-const { result: childrenResult } = useQuery(
+const { result: childrenResult, refetch: refetchChildren } = useQuery(
   projectModelChildrenTreeQuery,
   () => ({
     projectId: props.projectId,
@@ -279,4 +291,9 @@ const { result: childrenResult } = useQuery(
 )
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])
+
+const onModelUpdated = () => {
+  emit('model-updated')
+  refetchChildren()
+}
 </script>

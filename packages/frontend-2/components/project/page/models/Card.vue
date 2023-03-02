@@ -1,10 +1,8 @@
+<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
-    @focusin="hovered = true"
-    @focusout="hovered = false"
-    @mouseenter="hovered = true"
-    @mouseleave=";(showActionsMenu = false), (hovered = false)"
+    class="group rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
+    @mouseleave="showActionsMenu = false"
   >
     <!--
       Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
@@ -21,7 +19,7 @@
           <div
             class="rounded-xl p-4 flex items-center h-full w-full border-dashed border-2 border-blue-500/10 text-foreground-2 text-xs text-center"
           >
-            <div :class="`opacity-50 ${hovered ? 'opacity-100' : ''}`">
+            <div :class="`opacity-50 group-hover:opacity-100`">
               Use our
               <b>connectors</b>
               to send data to this model, or drag and drop a IFC/OBJ/STL file here.
@@ -38,9 +36,7 @@
         </div>
 
         <div
-          :class="`text-xs text-foreground-2 mr-1 opacity-0 truncate transition ${
-            hovered ? 'opacity-100' : ''
-          }`"
+          :class="`text-xs text-foreground-2 mr-1 opacity-0 truncate transition group-hover:opacity-100`"
         >
           updated
           <b>{{ updatedAt }}</b>
@@ -52,36 +48,26 @@
           size="xs"
           :icon-left="ArrowPathRoundedSquareIcon"
           :to="modelVersionsRoute(projectId, model.id)"
-          :class="`opacity-0 ${hovered ? 'opacity-100' : ''}`"
+          :class="`opacity-0 group-hover:opacity-100`"
           :disabled="model.versionCount === 0"
         >
           {{ model?.versionCount }}
         </FormButton>
-        <div v-if="showActions">
-          <!-- TODO with proper disclosure menu or whatever -->
-          <FormButton size="sm" text @click.stop="showActionsMenu = !showActionsMenu">
-            <EllipsisVerticalIcon class="w-4 h-4" />
-          </FormButton>
-        </div>
+        <ProjectPageModelsActions
+          v-if="showActions"
+          v-model:open="showActionsMenu"
+          :model="model"
+          :project-id="projectId"
+          @click.stop.prevent
+        />
       </div>
     </NuxtLink>
-    <div
-      v-show="showActionsMenu"
-      class="absolute -bottom-10 right-2 rounded-md bg-foundation-2 w-52 shadow-md divide-y text-sm"
-    >
-      <div class="px-2 py-1">TODO</div>
-      <div class="px-2 py-1">rename</div>
-      <div class="px-2 py-1 text-danger">delete</div>
-    </div>
   </div>
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
-import {
-  ArrowPathRoundedSquareIcon,
-  EllipsisVerticalIcon
-} from '@heroicons/vue/24/solid'
+import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
 defineEmits<{
@@ -105,7 +91,6 @@ const props = withDefaults(
 )
 
 const showActionsMenu = ref(false)
-const hovered = ref(false)
 
 const path = computed(() => {
   const model = props.model

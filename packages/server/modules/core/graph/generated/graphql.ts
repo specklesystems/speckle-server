@@ -255,7 +255,7 @@ export type CommentCollection = {
 
 export type CommentContentInput = {
   blobIds?: InputMaybe<Array<Scalars['String']>>;
-  doc: Scalars['JSONObject'];
+  doc?: InputMaybe<Scalars['JSONObject']>;
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -503,6 +503,11 @@ export type CreateModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type DeleteModelInput = {
+  id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -659,11 +664,23 @@ export type ModelCollection = {
 export type ModelMutations = {
   __typename?: 'ModelMutations';
   create: Model;
+  delete: Scalars['Boolean'];
+  update: Model;
 };
 
 
 export type ModelMutationsCreateArgs = {
   input: CreateModelInput;
+};
+
+
+export type ModelMutationsDeleteArgs = {
+  input: DeleteModelInput;
+};
+
+
+export type ModelMutationsUpdateArgs = {
+  input: UpdateModelInput;
 };
 
 export type ModelVersionsFilter = {
@@ -677,6 +694,7 @@ export type ModelsTreeItem = {
   fullName: Scalars['String'];
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
+  id: Scalars['ID'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -2007,8 +2025,7 @@ export type SubscriptionCommitUpdatedArgs = {
 
 
 export type SubscriptionProjectCommentsUpdatedArgs = {
-  projectId: Scalars['String'];
-  resourceIdString?: InputMaybe<Scalars['String']>;
+  target: ViewerUpdateTrackingTarget;
 };
 
 
@@ -2050,14 +2067,19 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
-  projectId: Scalars['String'];
-  resourceIdString: Scalars['String'];
+  target: ViewerUpdateTrackingTarget;
 };
 
 export type TestItem = {
   __typename?: 'TestItem';
   bar: Scalars['String'];
   foo: Scalars['String'];
+};
+
+export type UpdateModelInput = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
 };
 
 /**
@@ -2266,6 +2288,21 @@ export type ViewerResourceItem = {
   objectId: Scalars['String'];
   /** Null if resource represents an object */
   versionId?: Maybe<Scalars['String']>;
+};
+
+export type ViewerUpdateTrackingTarget = {
+  /**
+   * By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+   * and all updates to of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+   * enabled, then only updates of loaded/referenced versions in resourceIdString will be returned.
+   */
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
+  projectId: Scalars['String'];
+  /**
+   * Only request updates to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString: Scalars['String'];
 };
 
 export type ViewerUserActivityMessage = {
@@ -2507,6 +2544,7 @@ export type ResolversTypes = {
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
+  DeleteModelInput: DeleteModelInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
@@ -2577,6 +2615,7 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
+  UpdateModelInput: UpdateModelInput;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
@@ -2589,6 +2628,7 @@ export type ResolversTypes = {
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
+  ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
   ViewerUserActivityMessage: ResolverTypeWrapper<Omit<ViewerUserActivityMessage, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
   ViewerUserActivityStatus: ViewerUserActivityStatus;
@@ -2652,6 +2692,7 @@ export type ResolversParentTypes = {
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
   DateTime: Scalars['DateTime'];
+  DeleteModelInput: DeleteModelInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailAddress: Scalars['EmailAddress'];
@@ -2712,6 +2753,7 @@ export type ResolversParentTypes = {
   String: Scalars['String'];
   Subscription: {};
   TestItem: TestItem;
+  UpdateModelInput: UpdateModelInput;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
@@ -2723,6 +2765,7 @@ export type ResolversParentTypes = {
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
+  ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
   ViewerUserActivityMessage: Omit<ViewerUserActivityMessage, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
   ViewerUserSelectionInfo: ViewerUserSelectionInfo;
@@ -3056,6 +3099,8 @@ export type ModelCollectionResolvers<ContextType = GraphQLContext, ParentType ex
 
 export type ModelMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelMutations'] = ResolversParentTypes['ModelMutations']> = {
   create?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsCreateArgs, 'input'>>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ModelMutationsDeleteArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3063,6 +3108,7 @@ export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType ext
   children?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -3436,7 +3482,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitCreated", ParentType, ContextType, RequireFields<SubscriptionCommitCreatedArgs, 'streamId'>>;
   commitDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitDeleted", ParentType, ContextType, RequireFields<SubscriptionCommitDeletedArgs, 'streamId'>>;
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
-  projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'projectId'>>;
+  projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
   projectVersionsPreviewGenerated?: SubscriptionResolver<ResolversTypes['ProjectVersionsPreviewGeneratedMessage'], "projectVersionsPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsPreviewGeneratedArgs, 'id'>>;
@@ -3447,7 +3493,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   userStreamAdded?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamAdded", ParentType, ContextType>;
   userStreamRemoved?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamRemoved", ParentType, ContextType>;
   userViewerActivity?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userViewerActivity", ParentType, ContextType, RequireFields<SubscriptionUserViewerActivityArgs, 'resourceId' | 'streamId'>>;
-  viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'projectId' | 'resourceIdString'>>;
+  viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'target'>>;
 };
 
 export type TestItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestItem'] = ResolversParentTypes['TestItem']> = {

@@ -25,13 +25,17 @@ import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subsc
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCollectCommentData } from '~~/lib/viewer/composables/activity'
 import type { Vector3 } from 'three'
-import { Nullable, RichTextEditor } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
+import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
 
 export function useViewerCommentUpdateTracking(
-  projectId: MaybeRef<string>,
-  resourceIdString: MaybeRef<string>,
+  params: {
+    projectId: MaybeRef<string>
+    resourceIdString: MaybeRef<string>
+    loadedVersionsOnly?: MaybeRef<MaybeNullOrUndefined<boolean>>
+  },
   handler?: (
     data: NonNullable<
       Get<OnViewerCommentsUpdatedSubscription, 'projectCommentsUpdated'>
@@ -43,8 +47,11 @@ export function useViewerCommentUpdateTracking(
   const { onResult: onViewerCommentUpdated } = useSubscription(
     onViewerCommentsUpdatedSubscription,
     () => ({
-      projectId: unref(projectId),
-      resourceIdString: unref(resourceIdString)
+      target: {
+        projectId: unref(params.projectId),
+        resourceIdString: unref(params.resourceIdString),
+        loadedVersionsOnly: unref(params.loadedVersionsOnly)
+      }
     })
   )
 
@@ -114,10 +121,8 @@ export function useSubmitComment() {
     content: CommentContentInput,
     selectionLocation?: Nullable<Vector3>
   ) => {
-    if (!isLoggedIn.value) return null
-
-    const isEmpty = RichTextEditor.isDocEmpty(content.doc)
-    if (isEmpty) return null
+    if (!isLoggedIn.value) return null //
+    if (!isValidCommentContentInput(content)) return null
 
     const viewerData = collectViewerData()
     if (selectionLocation) {
@@ -162,9 +167,7 @@ export function useSubmitReply() {
 
   return async (input: CreateCommentReplyInput) => {
     if (!isLoggedIn.value) return null
-
-    const isEmpty = RichTextEditor.isDocEmpty(input.content.doc)
-    if (isEmpty) return null
+    if (!isValidCommentContentInput(input.content)) return null
 
     const { data, errors } = await client
       .mutate({

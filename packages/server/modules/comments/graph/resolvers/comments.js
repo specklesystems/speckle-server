@@ -286,10 +286,7 @@ module.exports = {
 
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
         projectId: args.projectId,
-        resourceItems: await getViewerResourceItemsUngrouped(
-          args.projectId,
-          args.resourceIdString
-        ),
+        resourceItems: await getViewerResourceItemsUngrouped(args),
         viewerUserActivityBroadcasted: args.message,
         userId: context.userId
       })
@@ -542,18 +539,16 @@ module.exports = {
       subscribe: filteredSubscribe(
         ViewerSubscriptions.UserActivityBroadcasted,
         async (payload, variables, context) => {
-          if (!variables.resourceIdString.trim().length) return false
-          if (payload.projectId !== variables.projectId) return false
+          const target = variables.target
+          if (!target.resourceIdString.trim().length) return false
+          if (payload.projectId !== target.projectId) return false
 
           const [stream, requestedResourceItems] = await Promise.all([
             getStream({
               streamId: payload.projectId,
               userId: context.userId
             }),
-            getViewerResourceItemsUngrouped(
-              variables.projectId,
-              variables.resourceIdString
-            )
+            getViewerResourceItemsUngrouped(target)
           ])
 
           if (!stream.isPublic && !stream.role)
@@ -577,23 +572,21 @@ module.exports = {
       subscribe: filteredSubscribe(
         ProjectSubscriptions.ProjectCommentsUpdated,
         async (payload, variables, context) => {
-          if (payload.projectId !== variables.projectId) return false
+          const target = variables.target
+          if (payload.projectId !== target.projectId) return false
 
           const [stream, requestedResourceItems] = await Promise.all([
             getStream({
               streamId: payload.projectId,
               userId: context.userId
             }),
-            getViewerResourceItemsUngrouped(
-              variables.projectId,
-              variables.resourceIdString || ''
-            )
+            getViewerResourceItemsUngrouped(target)
           ])
 
           if (!stream.allowPublicComments && !stream.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
-          if (!variables.resourceIdString) {
+          if (!target.resourceIdString) {
             return true
           }
 

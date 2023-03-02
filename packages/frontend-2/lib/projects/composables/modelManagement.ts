@@ -1,12 +1,15 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef } from '@vueuse/core'
+import { MaybeRef, useClipboard } from '@vueuse/core'
 import { Get } from 'type-fest'
 import { GenericValidateFunction } from 'vee-validate'
+import { SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
+  DeleteModelInput,
   OnProjectModelsUpdateSubscription,
-  ProjectModelsUpdatedMessageType
+  ProjectModelsUpdatedMessageType,
+  UpdateModelInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -14,19 +17,26 @@ import {
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { isRequired } from '~~/lib/common/helpers/validation'
-import { createModelMutation } from '~~/lib/projects/graphql/mutations'
+import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import {
+  createModelMutation,
+  deleteModelMutation,
+  updateModelMutation
+} from '~~/lib/projects/graphql/mutations'
 import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
+import { modelRoute } from '~~/lib/common/helpers/route'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
+  name = name.trim()
   if (
     name.startsWith('/') ||
+    name.endsWith('/') ||
     name.startsWith('#') ||
     name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
     name.indexOf(',') !== -1
   )
-    return 'Value should not start with "#", "/", "$", have multiple slashes next to each other or contain commas'
+    return 'Value should not start with "#", "$", start or end with "/", have multiple slashes next to each other or contain commas'
 
   return true
 }
@@ -34,7 +44,7 @@ const isValidModelName: GenericValidateFunction<string> = (name) => {
 export function useModelNameValidationRules() {
   return computed(() => [
     isRequired,
-    // isStringOfLength({ minLength: 3 }),
+    isStringOfLength({ maxLength: 512 }),
     isValidModelName
   ])
 }
@@ -94,6 +104,79 @@ export function useCreateNewModel() {
   }
 }
 
+export function useUpdateModel() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: UpdateModelInput) => {
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateModelMutation,
+        variables: {
+          input
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.modelMutations.update.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Model updated'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Model update failed',
+        description: errMsg
+      })
+    }
+
+    return data?.modelMutations.update
+  }
+}
+
+export function useDeleteModel() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const evictProjectModels = useEvictProjectModelFields()
+
+  return async (input: DeleteModelInput) => {
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: deleteModelMutation,
+        variables: {
+          input
+        },
+        update: (cache, res) => {
+          if (!res.data?.modelMutations.delete) return
+
+          cache.evict({
+            id: getCacheId('Model', input.id)
+          })
+          evictProjectModels(input.projectId)
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.modelMutations.delete) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Model deleted'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Model delete failed',
+        description: errMsg
+      })
+    }
+
+    return !!data?.modelMutations.delete
+  }
+}
+
 /**
  * Track project model updates/deletes and make cache updates accordingly. Optionally
  * provide an extra handler that you can use to react to all model update events (create/update/delete)
@@ -133,4 +216,27 @@ export function useProjectModelUpdateTracking(
 
     handler?.(event, apollo.cache)
   })
+}
+
+export function useCopyModelLink() {
+  const { copy } = useClipboard()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (projectId: string, modelId: string) => {
+    if (process.server) {
+      throw new Error('Not supported in SSR')
+    }
+
+    const path = modelRoute(
+      projectId,
+      SpeckleViewer.ViewerRoute.resourceBuilder().addModel(modelId).toString()
+    )
+    const url = new URL(path, window.location.toString()).toString()
+
+    await copy(url)
+    triggerNotification({
+      type: ToastNotificationType.Info,
+      title: 'Copied model link to clipboard'
+    })
+  }
 }

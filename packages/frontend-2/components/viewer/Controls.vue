@@ -105,12 +105,11 @@ import {
 } from '@heroicons/vue/24/outline'
 import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-import { scrollToBottom } from '~~/lib/common/helpers/dom'
+// import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useTextInputGlobalFocus } from '~~/composables/states'
 
 const {
-  viewer: { instance },
   ui: {
     camera: { toggleProjection, isPerspectiveProjection, zoomExtentsOrSelection },
     sectionBox: { toggleSectionBox, isSectionBoxEnabled }
@@ -156,7 +155,8 @@ onKeyStroke('s', () => {
 })
 
 const scrollControlsToBottom = () => {
-  if (scrollableControlsContainer.value)
-    scrollToBottom(scrollableControlsContainer.value)
+  // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded
+  // if (scrollableControlsContainer.value)
+  //   scrollToBottom(scrollableControlsContainer.value)
 }
 </script>

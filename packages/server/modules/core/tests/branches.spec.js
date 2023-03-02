@@ -70,14 +70,14 @@ describe('Branches @core-branches', () => {
       await createBranch({ name: '/pasta', streamId: stream.id, authorId: user.id })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
       await createBranch({ name: '#rice', streamId: stream.id, authorId: user.id })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
@@ -89,7 +89,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
@@ -101,7 +101,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
@@ -112,7 +112,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
   })
 

@@ -282,7 +282,7 @@ input CommentCreateInput {
 }
 
 input CommentContentInput {
-  doc: JSONObject!
+  doc: JSONObject
   blobIds: [String!]
 }
 
@@ -517,13 +517,29 @@ type ProjectCommentsUpdatedMessage {
   comment: Comment
 }
 
+input ViewerUpdateTrackingTarget {
+  projectId: String!
+
+  """
+  Only request updates to the resources identified by this
+  comma-delimited resouce string (same format that's used in the viewer URL)
+  """
+  resourceIdString: String!
+
+  """
+  By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+  and all updates to of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+  enabled, then only updates of loaded/referenced versions in resourceIdString will be returned.
+  """
+  loadedVersionsOnly: Boolean
+}
+
 extend type Subscription {
   """
   Track user activities in the viewer relating to the specified resources
   """
   viewerUserActivityBroadcasted(
-    projectId: String!
-    resourceIdString: String!
+    target: ViewerUpdateTrackingTarget!
   ): ViewerUserActivityMessage!
 
   """
@@ -531,8 +547,7 @@ extend type Subscription {
   updates regarding comments for those resources.
   """
   projectCommentsUpdated(
-    projectId: String!
-    resourceIdString: String
+    target: ViewerUpdateTrackingTarget!
   ): ProjectCommentsUpdatedMessage!
 
   """

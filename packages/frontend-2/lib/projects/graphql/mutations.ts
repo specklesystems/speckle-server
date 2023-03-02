@@ -20,3 +20,21 @@ export const createProjectMutation = graphql(`
     }
   }
 `)
+
+export const updateModelMutation = graphql(`
+  mutation UpdateModel($input: UpdateModelInput!) {
+    modelMutations {
+      update(input: $input) {
+        ...ProjectPageLatestItemsModelItem
+      }
+    }
+  }
+`)
+
+export const deleteModelMutation = graphql(`
+  mutation DeleteModel($input: DeleteModelInput!) {
+    modelMutations {
+      delete(input: $input)
+    }
+  }
+`)

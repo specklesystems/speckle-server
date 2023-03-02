@@ -1,7 +1,11 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getModelTreeItems } from '@/modules/core/repositories/branches'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import {
+  createBranchAndNotify,
+  deleteBranchAndNotify,
+  updateBranchAndNotify
+} from '@/modules/core/services/branch/management'
 import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -29,7 +33,7 @@ export = {
       return await getModelTreeItems(parent.id, fullName)
     },
     async viewerResources(parent, { resourceIdString }) {
-      return await getViewerResourceGroups(parent.id, resourceIdString)
+      return await getViewerResourceGroups({ projectId: parent.id, resourceIdString })
     }
   },
   Model: {
@@ -89,6 +93,22 @@ export = {
         Roles.Stream.Contributor
       )
       return await createBranchAndNotify(args.input, ctx.userId!)
+    },
+    async update(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Contributor
+      )
+      return await updateBranchAndNotify(args.input, ctx.userId!)
+    },
+    async delete(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Contributor
+      )
+      return await deleteBranchAndNotify(args.input, ctx.userId!)
     }
   },
   Subscription: {

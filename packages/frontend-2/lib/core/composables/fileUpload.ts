@@ -106,6 +106,14 @@ export function useAttachments(params: {
     }
   })
 
+  watch(currentFiles, (newFiles, oldFiles) => {
+    const deletableFiles = differenceBy(oldFiles || [], newFiles, (f) => f.id)
+    for (const deletableFile of deletableFiles) {
+      if (deletableFile.inUse) continue
+      deleteUpload(deletableFile.id)
+    }
+  })
+
   return {
     onFilesSelected: (e: FilesSelectedEvent) => {
       const countLimit = unref(params.countLimit)
@@ -145,6 +153,6 @@ export function useAttachments(params: {
 
     blobIds,
 
-    uploads: computed(() => currentFiles.value)
+    uploads: currentFiles
   }
 }

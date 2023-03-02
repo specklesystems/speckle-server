@@ -61,16 +61,16 @@
 <script setup lang="ts">
 import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
-import { RichTextEditor } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
-import {
-  useExpandedThreadResponsiveLocation,
-  ViewerNewThreadBubbleModel
-} from '~~/lib/viewer/composables/commentBubbles'
+import { ViewerNewThreadBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import {
   CommentEditorValue,
   useSubmitComment
 } from '~~/lib/viewer/composables/commentManagement'
+import {
+  isValidCommentContentInput,
+  convertCommentEditorValueToInput
+} from '~~/lib/viewer/helpers/comments'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const ui = useInjectedViewerInterfaceState()
@@ -88,11 +88,10 @@ const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { style } = useExpandedThreadResponsiveLocation({
-  threadContainer,
-  width: 320
-})
+// const { style } = useExpandedThreadResponsiveLocation({
+//   threadContainer,
+//   width: 320
+// })
 const createThread = useSubmitComment()
 
 const onThreadClick = () => {
@@ -103,22 +102,18 @@ const onThreadClick = () => {
 }
 
 // NOTE: will be used later, keep
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const submitEmoji = (emoji: string) =>
-  onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
+// const submitEmoji = (emoji: string) =>
+//   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
 
 const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
   if (!comment?.doc) return
 
+  const content = convertCommentEditorValueToInput(commentValue.value)
+  if (!isValidCommentContentInput(content)) return
+
   // Intentionally not awaiting so that we emit close immediately
-  createThread(
-    {
-      doc: comment.doc,
-      blobIds: comment.attachments?.map((a) => a.result.blobId) || []
-    },
-    props.modelValue.clickLocation
-  )
+  createThread(content, props.modelValue.clickLocation)
 
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {

@@ -25,10 +25,13 @@ const documents = {
     "\n  fragment ProjectPageLatestItemsComments on Project {\n    id\n    commentThreadCount\n  }\n": types.ProjectPageLatestItemsCommentsFragmentDoc,
     "\n  fragment ProjectPageLatestItemsCommentItem on Comment {\n    id\n    author {\n      ...FormUsersSelectItem\n    }\n    screenshot\n    rawText\n    createdAt\n    repliesCount\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectPageLatestItemsCommentItemFragmentDoc,
     "\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n": types.ProjectPageLatestItemsModelsFragmentDoc,
+    "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
     "\n  fragment ModelPreview on Model {\n    previewUrl\n  }\n": types.ModelPreviewFragmentDoc,
-    "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
+    "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
     "\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n": types.ProjectPageModelsViewFragmentDoc,
-    "\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n": types.ProjectModelsViewModelItemFragmentDoc,
+    "\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n": types.ProjectModelsViewModelItemFragmentDoc,
+    "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
+    "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
     "\n  fragment ProjectPageStatsBlockComments on Project {\n    commentThreadCount\n  }\n": types.ProjectPageStatsBlockCommentsFragmentDoc,
     "\n  fragment ProjectPageStatsBlockModels on Project {\n    modelCount\n  }\n": types.ProjectPageStatsBlockModelsFragmentDoc,
     "\n  fragment ProjectPageStatsBlockTeam on Project {\n    role\n    team {\n      id\n      name\n      avatar\n    }\n    role\n  }\n": types.ProjectPageStatsBlockTeamFragmentDoc,
@@ -49,9 +52,11 @@ const documents = {
     "\n  query InternalTestData {\n    testNumber\n    testList {\n      foo\n      bar\n    }\n  }\n": types.InternalTestDataDocument,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      name\n      avatar\n    }\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
     "\n  fragment ProjectDashboardItem on Project {\n    id\n    ...ProjectDashboardItemNoModels\n    models(limit: 4, filter: { onlyWithVersions: true }) {\n      totalCount\n      items {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.ProjectDashboardItemFragmentDoc,
-    "\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n  }\n": types.ProjectPageLatestItemsModelItemFragmentDoc,
+    "\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n    ...ProjectPageModelsCardRenameDialog\n    ...ProjectPageModelsCardDeleteDialog\n    ...ProjectPageModelsActions\n  }\n": types.ProjectPageLatestItemsModelItemFragmentDoc,
     "\n  mutation CreateModel($input: CreateModelInput!) {\n    modelMutations {\n      create(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.CreateModelDocument,
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectPageProject\n        ...ProjectDashboardItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
+    "\n  mutation UpdateModel($input: UpdateModelInput!) {\n    modelMutations {\n      update(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.UpdateModelDocument,
+    "\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n": types.DeleteModelDocument,
     "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
     "\n  query ProjectPageQuery($id: String!) {\n    project(id: $id) {\n      ...ProjectPageProject\n    }\n  }\n": types.ProjectPageQueryDocument,
     "\n  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {\n    project(id: $projectId) {\n      id\n      models(cursor: null, limit: 100, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestModelsDocument,
@@ -59,11 +64,10 @@ const documents = {
     "\n  query ProjectModelChildrenTree($projectId: String!, $parentName: String!) {\n    project(id: $projectId) {\n      id\n      modelChildrenTree(fullName: $parentName) {\n        ...SingleLevelModelTreeItem\n      }\n    }\n  }\n": types.ProjectModelChildrenTreeDocument,
     "\n  query ProjectLatestCommentThreads($projectId: String!) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: null, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestCommentThreadsDocument,
     "\n  subscription OnProjectUpdated($id: String!) {\n    projectUpdated(id: $id) {\n      id\n      type\n      project {\n        ...ProjectPageProject\n        ...ProjectDashboardItemNoModels\n      }\n    }\n  }\n": types.OnProjectUpdatedDocument,
-    "\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        ...ProjectPageLatestItemsModelItem\n        ...NewModelVersionMetadata\n      }\n    }\n  }\n": types.OnProjectModelsUpdateDocument,
+    "\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n            referencedObject\n          }\n        }\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.OnProjectModelsUpdateDocument,
     "\n  subscription OnProjectVersionsUpdate($id: String!) {\n    projectVersionsUpdated(id: $id) {\n      id\n      modelId\n      type\n      version {\n        id\n        ...ViewerModelVersionCardItem\n        model {\n          id\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.OnProjectVersionsUpdateDocument,
     "\n  subscription OnProjectVersionsPreviewGenerated($id: String!) {\n    projectVersionsPreviewGenerated(id: $id) {\n      projectId\n      objectId\n      versionId\n    }\n  }\n": types.OnProjectVersionsPreviewGeneratedDocument,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    data {\n      location\n      camPos\n      sectionBox\n      selection\n      filters {\n        hiddenIds\n        isolatedIds\n        propertyInfoKey\n        passMax\n        passMin\n        sectionBox\n      }\n    }\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
-    "\n  fragment NewModelVersionMetadata on Model {\n    id\n    versions(limit: 1) {\n      items {\n        id\n        referencedObject\n      }\n    }\n  }\n": types.NewModelVersionMetadataFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
     "\n  mutation BroadcastViewerUserActivity(\n    $projectId: String!\n    $resourceIdString: String!\n    $message: ViewerUserActivityMessageInput!\n  ) {\n    broadcastViewerUserActivity(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n      message: $message\n    )\n  }\n": types.BroadcastViewerUserActivityDocument,
@@ -75,8 +79,8 @@ const documents = {
     "\n  query ViewerLoadedResources(\n    $projectId: String!\n    $modelIds: [String!]!\n    $versionIds: [String!]\n  ) {\n    project(id: $projectId) {\n      id\n      role\n      models(filter: { ids: $modelIds }) {\n        totalCount\n        items {\n          id\n          name\n          updatedAt\n          loadedVersion: versions(filter: { priorityIds: $versionIds }, limit: 1) {\n            items {\n              ...ViewerModelVersionCardItem\n            }\n          }\n          versions(limit: 5) {\n            totalCount\n            cursor\n            items {\n              ...ViewerModelVersionCardItem\n            }\n          }\n        }\n      }\n      ...ProjectPageModelsView\n      ...ModelPageProject\n    }\n  }\n": types.ViewerLoadedResourcesDocument,
     "\n  query ViewerModelVersions(\n    $projectId: String!\n    $modelId: String!\n    $versionsCursor: String\n  ) {\n    project(id: $projectId) {\n      id\n      role\n      model(id: $modelId) {\n        id\n        versions(cursor: $versionsCursor, limit: 5) {\n          totalCount\n          cursor\n          items {\n            ...ViewerModelVersionCardItem\n          }\n        }\n      }\n    }\n  }\n": types.ViewerModelVersionsDocument,
     "\n  query ViewerLoadedThreads(\n    $projectId: String!\n    $filter: ProjectCommentsFilter!\n    $cursor: String\n    $limit: Int = 25\n  ) {\n    project(id: $projectId) {\n      id\n      commentThreads(filter: $filter, cursor: $cursor, limit: $limit) {\n        totalCount\n        totalArchivedCount\n        items {\n          ...ViewerCommentThread\n        }\n      }\n    }\n  }\n": types.ViewerLoadedThreadsDocument,
-    "\n  subscription OnViewerUserActivityBroadcasted(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    viewerUserActivityBroadcasted(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n    ) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n": types.OnViewerUserActivityBroadcastedDocument,
-    "\n  subscription OnViewerCommentsUpdated(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    projectCommentsUpdated(projectId: $projectId, resourceIdString: $resourceIdString) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n": types.OnViewerCommentsUpdatedDocument,
+    "\n  subscription OnViewerUserActivityBroadcasted($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n": types.OnViewerUserActivityBroadcastedDocument,
+    "\n  subscription OnViewerCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n": types.OnViewerCommentsUpdatedDocument,
     "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n": types.GetActiveUserDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageStatsBlockVersions\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n    ...ProjectPageLatestItemsModels\n    ...ProjectPageLatestItemsComments\n    ...ProjectPageModelsView\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n": types.ModelPageProjectFragmentDoc,
@@ -147,11 +151,15 @@ export function graphql(source: "\n  fragment ProjectPageLatestItemsModels on Pr
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ModelPreview on Model {\n    previewUrl\n  }\n"): (typeof documents)["\n  fragment ModelPreview on Model {\n    previewUrl\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n"];
+export function graphql(source: "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -159,7 +167,15 @@ export function graphql(source: "\n  fragment ProjectPageModelsView on Project {
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n"];
+export function graphql(source: "\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -243,7 +259,7 @@ export function graphql(source: "\n  fragment ProjectDashboardItem on Project {\
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n    ...ProjectPageModelsCardRenameDialog\n    ...ProjectPageModelsCardDeleteDialog\n    ...ProjectPageModelsActions\n  }\n"): (typeof documents)["\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n    ...ProjectPageModelsCardRenameDialog\n    ...ProjectPageModelsCardDeleteDialog\n    ...ProjectPageModelsActions\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -252,6 +268,14 @@ export function graphql(source: "\n  mutation CreateModel($input: CreateModelInp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectPageProject\n        ...ProjectDashboardItem\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectPageProject\n        ...ProjectDashboardItem\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateModel($input: UpdateModelInput!) {\n    modelMutations {\n      update(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateModel($input: UpdateModelInput!) {\n    modelMutations {\n      update(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -283,7 +307,7 @@ export function graphql(source: "\n  subscription OnProjectUpdated($id: String!)
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        ...ProjectPageLatestItemsModelItem\n        ...NewModelVersionMetadata\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        ...ProjectPageLatestItemsModelItem\n        ...NewModelVersionMetadata\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n            referencedObject\n          }\n        }\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n            referencedObject\n          }\n        }\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -296,10 +320,6 @@ export function graphql(source: "\n  subscription OnProjectVersionsPreviewGenera
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    data {\n      location\n      camPos\n      sectionBox\n      selection\n      filters {\n        hiddenIds\n        isolatedIds\n        propertyInfoKey\n        passMax\n        passMin\n        sectionBox\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    data {\n      location\n      camPos\n      sectionBox\n      selection\n      filters {\n        hiddenIds\n        isolatedIds\n        propertyInfoKey\n        passMax\n        passMin\n        sectionBox\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment NewModelVersionMetadata on Model {\n    id\n    versions(limit: 1) {\n      items {\n        id\n        referencedObject\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment NewModelVersionMetadata on Model {\n    id\n    versions(limit: 1) {\n      items {\n        id\n        referencedObject\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -347,11 +367,11 @@ export function graphql(source: "\n  query ViewerLoadedThreads(\n    $projectId:
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription OnViewerUserActivityBroadcasted(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    viewerUserActivityBroadcasted(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n    ) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnViewerUserActivityBroadcasted(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    viewerUserActivityBroadcasted(\n      projectId: $projectId\n      resourceIdString: $resourceIdString\n    ) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  subscription OnViewerUserActivityBroadcasted($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnViewerUserActivityBroadcasted($target: ViewerUpdateTrackingTarget!) {\n    viewerUserActivityBroadcasted(target: $target) {\n      userName\n      userId\n      user {\n        ...LimitedUserAvatar\n      }\n      viewerSessionId\n      status\n      typing {\n        isTyping\n        threadId\n      }\n      selection {\n        filteringState\n        selectionLocation\n        sectionBox\n        camera\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription OnViewerCommentsUpdated(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    projectCommentsUpdated(projectId: $projectId, resourceIdString: $resourceIdString) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnViewerCommentsUpdated(\n    $projectId: String!\n    $resourceIdString: String!\n  ) {\n    projectCommentsUpdated(projectId: $projectId, resourceIdString: $resourceIdString) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  subscription OnViewerCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnViewerCommentsUpdated($target: ViewerUpdateTrackingTarget!) {\n    projectCommentsUpdated(target: $target) {\n      id\n      type\n      comment {\n        id\n        parent {\n          id\n        }\n        ...ViewerCommentThread\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

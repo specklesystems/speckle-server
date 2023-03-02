@@ -38,5 +38,8 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     previewUrl
     createdAt
     updatedAt
+    ...ProjectPageModelsCardRenameDialog
+    ...ProjectPageModelsCardDeleteDialog
+    ...ProjectPageModelsActions
   }
 `)

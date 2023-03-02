@@ -133,7 +133,7 @@ import {
   useMarkThreadViewed
 } from '~~/lib/viewer/composables/commentManagement'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { emojis } from '~~/lib/viewer/helpers/emojis'
+// import { emojis } from '~~/lib/viewer/helpers/emojis'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
@@ -180,11 +180,11 @@ const isTypingMessage = computed(() => {
 
 const isViewed = computed(() => !!props.modelValue.viewedAt)
 
-// TODO: will be used
-const threadEmoji = computed(() => {
-  const cleanVal = props.modelValue.rawText.trim()
-  return emojis.includes(cleanVal) ? cleanVal : undefined
-})
+// // TODO: will be used
+// const threadEmoji = computed(() => {
+//   const cleanVal = props.modelValue.rawText.trim()
+//   return emojis.includes(cleanVal) ? cleanVal : undefined
+// })
 
 const threadAuthors = computed(() => {
   const authors = [props.modelValue.author]
@@ -255,7 +255,7 @@ onKeyDown('Escape', () => {
 
 watch(
   () => <const>[isExpanded.value, isViewed.value],
-  async (newVals, oldVals) => {
+  (newVals, oldVals) => {
     const [newIsExpanded, newIsViewed] = newVals
     const [oldIsExpanded] = oldVals
 
@@ -264,7 +264,7 @@ watch(
     }
 
     if (newIsExpanded && props.modelValue.data) {
-      await setCommentPointOfView(props.modelValue.data)
+      setCommentPointOfView(props.modelValue.data)
     }
 
     if (!newIsExpanded && props.modelValue.data?.sectionBox) {

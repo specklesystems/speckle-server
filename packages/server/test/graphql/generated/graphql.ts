@@ -248,7 +248,7 @@ export type CommentCollection = {
 
 export type CommentContentInput = {
   blobIds?: InputMaybe<Array<Scalars['String']>>;
-  doc: Scalars['JSONObject'];
+  doc?: InputMaybe<Scalars['JSONObject']>;
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -496,6 +496,11 @@ export type CreateModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type DeleteModelInput = {
+  id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -652,11 +657,23 @@ export type ModelCollection = {
 export type ModelMutations = {
   __typename?: 'ModelMutations';
   create: Model;
+  delete: Scalars['Boolean'];
+  update: Model;
 };
 
 
 export type ModelMutationsCreateArgs = {
   input: CreateModelInput;
+};
+
+
+export type ModelMutationsDeleteArgs = {
+  input: DeleteModelInput;
+};
+
+
+export type ModelMutationsUpdateArgs = {
+  input: UpdateModelInput;
 };
 
 export type ModelVersionsFilter = {
@@ -670,6 +687,7 @@ export type ModelsTreeItem = {
   fullName: Scalars['String'];
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
+  id: Scalars['ID'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -2000,8 +2018,7 @@ export type SubscriptionCommitUpdatedArgs = {
 
 
 export type SubscriptionProjectCommentsUpdatedArgs = {
-  projectId: Scalars['String'];
-  resourceIdString?: InputMaybe<Scalars['String']>;
+  target: ViewerUpdateTrackingTarget;
 };
 
 
@@ -2043,14 +2060,19 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
-  projectId: Scalars['String'];
-  resourceIdString: Scalars['String'];
+  target: ViewerUpdateTrackingTarget;
 };
 
 export type TestItem = {
   __typename?: 'TestItem';
   bar: Scalars['String'];
   foo: Scalars['String'];
+};
+
+export type UpdateModelInput = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
 };
 
 /**
@@ -2259,6 +2281,21 @@ export type ViewerResourceItem = {
   objectId: Scalars['String'];
   /** Null if resource represents an object */
   versionId?: Maybe<Scalars['String']>;
+};
+
+export type ViewerUpdateTrackingTarget = {
+  /**
+   * By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+   * and all updates to of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+   * enabled, then only updates of loaded/referenced versions in resourceIdString will be returned.
+   */
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
+  projectId: Scalars['String'];
+  /**
+   * Only request updates to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString: Scalars['String'];
 };
 
 export type ViewerUserActivityMessage = {

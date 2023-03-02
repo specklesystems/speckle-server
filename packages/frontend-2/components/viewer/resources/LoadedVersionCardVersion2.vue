@@ -41,12 +41,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
+// import dayjs from 'dayjs'
 import {
   ViewerModelVersionCardItemFragment,
   ViewerLoadedResourcesQuery
 } from '~~/lib/common/generated/gql/graphql'
-import { ArrowPathRoundedSquareIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { Get } from 'type-fest'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
@@ -63,9 +63,9 @@ const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
 
-const timeAgoCreatedAt = computed(() =>
-  dayjs(props.version.createdAt as string).from(dayjs())
-)
+// const timeAgoCreatedAt = computed(() =>
+//   dayjs(props.version.createdAt as string).from(dayjs())
+// )
 
 const modelName = computed(() => {
   const parts = props.model.name.split('/')

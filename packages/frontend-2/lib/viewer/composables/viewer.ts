@@ -1,6 +1,5 @@
 import {
   InitialStateWithRequestAndResponse,
-  InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
@@ -92,4 +91,10 @@ export function useSelectionEvents(
       instance.removeListener(ViewerEvent.ObjectClicked, debouncedSingleClickCallback)
     }
   })
+}
+
+export function useGetObjectUrl() {
+  const config = useRuntimeConfig()
+  return (projectId: string, objectId: string) =>
+    `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
 }

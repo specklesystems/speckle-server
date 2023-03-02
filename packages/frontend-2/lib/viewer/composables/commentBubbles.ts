@@ -1,4 +1,4 @@
-import { ComputedRef, CSSProperties, Ref } from 'vue'
+import { CSSProperties, Ref } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 import {
   InitialStateWithRequestAndResponse,
@@ -13,7 +13,10 @@ import {
   useViewerCameraTracker
 } from '~~/lib/viewer/composables/viewer'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
-import { useWindowResizeHandler } from '~~/lib/common/composables/window'
+import {
+  HorizontalDirection,
+  useResponsiveHorizontalDirectionCalculation
+} from '~~/lib/common/composables/window'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -250,47 +253,29 @@ export function useExpandedThreadResponsiveLocation(params: {
   const leftForShowingOnRightSide = `calc(100% + ${margin}px)`
   const leftForShowingOnLeftSide = `calc(-${width + margin}px)`
 
-  const style = ref({
+  const { direction, recalculateDirection } =
+    useResponsiveHorizontalDirectionCalculation({
+      el: threadContainer,
+      defaultDirection: HorizontalDirection.Right,
+      stopUpdatesBelowWidth
+    })
+
+  const style = computed(() => ({
     top: '50%',
-    left: leftForShowingOnRightSide,
+    left:
+      direction.value === HorizontalDirection.Right
+        ? leftForShowingOnRightSide
+        : leftForShowingOnLeftSide,
     transformOrigin: 'center center',
     transform: 'translateY(-50%)',
     transition: 'all 0.1s ease',
     width: `${width}px`
-  })
+  }))
 
-  const calculateStyle = () => {
-    if (!threadContainer.value || process.server) return
-
-    const elRect = threadContainer.value.getBoundingClientRect()
-    const showOnLeftSide = elRect.x + elRect.width > window.innerWidth // && false // TODO: hack
-    const showOnRightSide = elRect.x < 0 // || true // TODO: hack
-
-    // Screen too small - do nothing
-    if (
-      (showOnLeftSide && showOnRightSide) ||
-      window.innerWidth < stopUpdatesBelowWidth
-    )
-      return
-
-    if (showOnLeftSide) {
-      style.value.left = leftForShowingOnLeftSide
-    } else if (showOnRightSide) {
-      style.value.left = leftForShowingOnRightSide
-    }
-  }
-
-  useViewerCameraTracker(() => calculateStyle())
-  useWindowResizeHandler(() => calculateStyle())
-
-  watch(threadContainer, (container) => {
-    if (container) {
-      calculateStyle()
-    }
-  })
+  useViewerCameraTracker(() => recalculateDirection())
 
   return {
     style,
-    recalculateStyle: calculateStyle
+    recalculateStyle: recalculateDirection
   }
 }

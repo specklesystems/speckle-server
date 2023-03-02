@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
+// import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
