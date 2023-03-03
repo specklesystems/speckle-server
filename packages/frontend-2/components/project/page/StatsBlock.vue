@@ -8,5 +8,6 @@
         <slot name="bottom" />
       </div>
     </div>
+    <slot />
   </div>
 </template>

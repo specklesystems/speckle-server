@@ -1,5 +1,5 @@
 import { merge } from 'lodash-es'
-import type { Parameters, Story } from '@storybook/vue3'
+import type { Parameters, StoryObj } from '@storybook/vue3'
 import type { Get } from 'type-fest'
 import { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
 import { MockedRouteParameters } from '~~/lib/fake-nuxt-env/utils/mockedRouter'
@@ -7,7 +7,7 @@ import { MockedRouteParameters } from '~~/lib/fake-nuxt-env/utils/mockedRouter'
 /**
  * Vue Play function type
  */
-export type VuePlayFunction = NonNullable<Get<Story, 'play'>>
+export type VuePlayFunction = NonNullable<Get<StoryObj, 'play'>>
 
 /**
  * SB parameters type adjusted with our own custom parameters
@@ -27,8 +27,8 @@ export type StorybookParameters = Parameters & {
  * Combine multiple stories by merging them
  */
 export function mergeStories(
-  source: Story,
-  ...targetsToApply: Partial<Story>[]
-): Story {
-  return merge({}, source, ...targetsToApply) as Story
+  source: StoryObj,
+  ...targetsToApply: Partial<StoryObj>[]
+): StoryObj {
+  return merge({}, source, ...targetsToApply) as StoryObj
 }

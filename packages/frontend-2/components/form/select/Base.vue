@@ -13,17 +13,8 @@
     >
       {{ label }}
     </ListboxLabel>
-    <div class="relative mt-1">
-      <ListboxButton
-        v-slot="{ open }"
-        :class="[
-          'normal w-full rounded-lg py-2 px-3 cursor-pointer outline outline-2 outline-primary-muted hover:shadow transition',
-          'focus:outline-none flex items-center',
-          disabled
-            ? 'bg-foundation-disabled text-foreground-disabled'
-            : 'bg-foundation text-foreground'
-        ]"
-      >
+    <div :class="['relative', showLabel ? 'mt-1' : '']">
+      <ListboxButton v-slot="{ open }" :class="buttonClasses">
         <span class="block truncate grow text-left">
           <template v-if="!value || (isArray(value) && !value.length)">
             <slot name="nothing-selected">
@@ -84,7 +75,8 @@
               <li
                 :class="[
                   active ? 'text-primary' : 'text-foreground',
-                  'relative transition cursor-pointer select-none py-1.5 pl-3 pr-9'
+                  'relative transition cursor-pointer select-none py-1.5 pl-3',
+                  !hideCheckmarks ? 'pr-9' : ''
                 ]"
               >
                 <span :class="['block truncate']">
@@ -99,7 +91,7 @@
                 </span>
 
                 <span
-                  v-if="selected"
+                  v-if="!hideCheckmarks && selected"
                   :class="[
                     active ? 'text-primary' : 'text-foreground',
                     'absolute inset-y-0 right-0 flex items-center pr-4'
@@ -139,6 +131,7 @@ import { isArray } from 'lodash-es'
 import { PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
+type ButtonStyle = 'base' | 'simple'
 type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
@@ -208,11 +201,41 @@ const props = defineProps({
   disabled: {
     type: Boolean as PropType<Optional<boolean>>,
     default: false
+  },
+  buttonStyle: {
+    type: String as PropType<Optional<ButtonStyle>>,
+    default: 'base'
+  },
+  hideCheckmarks: {
+    type: Boolean as PropType<Optional<boolean>>,
+    default: false
+  },
+  allowUnset: {
+    type: Boolean as PropType<Optional<boolean>>,
+    default: true
   }
 })
 
 const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
+
+const buttonClasses = computed(() => {
+  const classParts = [
+    'normal w-full rounded-lg cursor-pointer transition',
+    'focus:outline-none flex items-center'
+  ]
+
+  if (props.buttonStyle !== 'simple') {
+    classParts.push('py-2 px-3 outline outline-2 outline-primary-muted hover:shadow ')
+    classParts.push(
+      props.disabled
+        ? 'bg-foundation-disabled text-foreground-disabled'
+        : 'bg-foundation text-foreground'
+    )
+  }
+
+  return classParts.join(' ')
+})
 
 const hasSearch = computed(() => !!(props.search && props.searchFilterPredicate))
 
@@ -239,6 +262,7 @@ const value = computed({
     } else {
       const currentVal = value.value
       const isUnset =
+        props.allowUnset &&
         currentVal &&
         newVal &&
         itemKey(currentVal as SingleItem) === itemKey(newVal as SingleItem)

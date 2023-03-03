@@ -15,11 +15,14 @@
       <div class="flex items-center justify-between mt-2">
         <UserAvatarGroup :users="project.team" class="max-w-[104px]" />
         <div>
-          <FormButton class="ml-2">
+          <FormButton class="ml-2" @click="dialogOpen = true">
             {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
           </FormButton>
         </div>
       </div>
+    </template>
+    <template #default>
+      <ProjectPageTeamDialog v-model:open="dialogOpen" />
     </template>
   </ProjectPageStatsBlock>
 </template>
@@ -43,4 +46,6 @@ graphql(`
 defineProps<{
   project: ProjectPageStatsBlockTeamFragment
 }>()
+
+const dialogOpen = ref(false)
 </script>

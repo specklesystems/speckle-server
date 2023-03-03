@@ -5,6 +5,7 @@
     label="Project visibility"
     :show-label="showLabel"
     :name="name || 'visibility'"
+    :allow-unset="false"
     by="id"
   >
     <template #something-selected="{ value }">

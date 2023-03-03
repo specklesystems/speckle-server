@@ -12,6 +12,12 @@ enum ProjectVisibility {
   PUBLIC
 }
 
+enum ProjectRole {
+  OWNER
+  CONTRIBUTOR
+  REVIEWER
+}
+
 """
 Any values left null will be ignored, so only set the properties that you want updated
 """

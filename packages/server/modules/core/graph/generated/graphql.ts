@@ -1340,6 +1340,12 @@ export type ProjectMutationsUpdateArgs = {
   stream: ProjectUpdateInput;
 };
 
+export enum ProjectRole {
+  Contributor = 'CONTRIBUTOR',
+  Owner = 'OWNER',
+  Reviewer = 'REVIEWER'
+}
+
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
@@ -2579,6 +2585,7 @@ export type ResolversTypes = {
   ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectRole: ProjectRole;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   ProjectUpdatedMessageType: ProjectUpdatedMessageType;

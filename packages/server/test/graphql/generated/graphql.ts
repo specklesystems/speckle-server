@@ -1333,6 +1333,12 @@ export type ProjectMutationsUpdateArgs = {
   stream: ProjectUpdateInput;
 };
 
+export enum ProjectRole {
+  Contributor = 'CONTRIBUTOR',
+  Owner = 'OWNER',
+  Reviewer = 'REVIEWER'
+}
+
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
