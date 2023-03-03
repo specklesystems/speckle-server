@@ -7,6 +7,7 @@
     :show-label="showLabel"
     :name="name || 'role'"
     :allow-unset="false"
+    :disabled="disabled"
     hide-checkmarks
     by="id"
     class="min-w-[85px]"
@@ -26,7 +27,12 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { Roles, StreamRoles } from '@speckle/shared'
+import { StreamRoles } from '@speckle/shared'
+import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
+
+/**
+ * TODO: Delete entirely item
+ */
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void
@@ -36,22 +42,10 @@ const props = defineProps<{
   modelValue: StreamRoles | string
   showLabel?: boolean
   name?: string
+  disabled?: boolean
 }>()
 
-const items = ref<Record<StreamRoles, { id: StreamRoles; title: string }>>({
-  [Roles.Stream.Owner]: {
-    id: Roles.Stream.Owner,
-    title: 'Owner'
-  },
-  [Roles.Stream.Contributor]: {
-    id: Roles.Stream.Contributor,
-    title: 'Can edit'
-  },
-  [Roles.Stream.Reviewer]: {
-    id: Roles.Stream.Reviewer,
-    title: 'Can view'
-  }
-})
+const items = ref(roleSelectItems)
 
 const selectedValue = computed({
   get: () => props.modelValue as StreamRoles,

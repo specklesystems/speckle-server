@@ -7,14 +7,18 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import {
   OnProjectUpdatedSubscription,
   ProjectCreateInput,
-  ProjectUpdatedMessageType
+  ProjectUpdatedMessageType,
+  ProjectUpdateRoleInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { createProjectMutation } from '~~/lib/projects/graphql/mutations'
+import {
+  createProjectMutation,
+  updateProjectRoleMutation
+} from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 /**
@@ -84,5 +88,39 @@ export function useCreateProject() {
     }
 
     return res
+  }
+}
+
+export function useUpdateUserRole() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: ProjectUpdateRoleInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateProjectRoleMutation,
+        variables: { input }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.projectMutations.updateRole.id) {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Permission update failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Project permissions updated'
+      })
+    }
+
+    return data?.projectMutations.updateRole
   }
 }

@@ -42,7 +42,7 @@
         leave-to-class="opacity-0"
       >
         <ListboxOptions
-          class="absolute z-10 mt-1 w-full rounded-lg bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none"
+          class="absolute z-10 mt-1 w-full rounded-lg bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
           @focus="searchInput?.focus()"
         >
           <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">

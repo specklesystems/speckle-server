@@ -40,6 +40,15 @@ input ProjectCreateInput {
   visibility: ProjectVisibility
 }
 
+input ProjectUpdateRoleInput {
+  projectId: String!
+  userId: String!
+  """
+  Leave role as null to revoke access entirely
+  """
+  role: String
+}
+
 type ProjectMutations {
   """
   Delete an existing project
@@ -60,6 +69,11 @@ type ProjectMutations {
   Create new project
   """
   create(input: ProjectCreateInput): Project!
+
+  """
+  Update role for a collaborator
+  """
+  updateRole(input: ProjectUpdateRoleInput!): Project!
 }
 
 extend type Mutation {

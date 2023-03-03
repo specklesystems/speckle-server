@@ -41,7 +41,6 @@ graphql(`
         ...LimitedUserAvatar
       }
     }
-    role
   }
 `)
 

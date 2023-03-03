@@ -1,7 +1,3 @@
-const {
-  revokePermissionsStream,
-  grantPermissionsStream
-} = require('@/modules/core/services/streams')
 const { authorizeResolver } = require(`@/modules/shared`)
 
 const { Roles } = require('@/modules/core/helpers/mainConstants')
@@ -13,7 +9,11 @@ const {
   addStreamPermissionsRevokedActivity,
   addStreamInviteAcceptedActivity
 } = require('@/modules/activitystream/services/streamActivity')
-const { getStream } = require('@/modules/core/repositories/streams')
+const {
+  getStream,
+  revokeStreamPermissions,
+  grantStreamPermissions
+} = require('@/modules/core/repositories/streams')
 
 /**
  * Check if user is a stream collaborator
@@ -85,13 +85,15 @@ async function removeStreamCollaborator(streamId, userId, removedById) {
     await isStreamCollaborator(userId, streamId)
   }
 
-  await revokePermissionsStream({ streamId, userId })
+  const stream = await revokeStreamPermissions({ streamId, userId })
 
   await addStreamPermissionsRevokedActivity({
     streamId,
     activityUserId: removedById,
     removedUserId: userId
   })
+
+  return stream
 }
 
 /**
@@ -127,7 +129,7 @@ async function addOrUpdateStreamCollaborator(
 
   await validateStreamAccess(addedById, streamId, Roles.Stream.Owner)
 
-  const stream = await grantPermissionsStream({
+  const stream = await grantStreamPermissions({
     streamId,
     userId,
     role
@@ -150,6 +152,8 @@ async function addOrUpdateStreamCollaborator(
       stream
     })
   }
+
+  return stream
 }
 
 module.exports = {

@@ -1322,6 +1322,8 @@ export type ProjectMutations = {
   delete: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
+  /** Update role for a collaborator */
+  updateRole: Project;
 };
 
 
@@ -1339,6 +1341,11 @@ export type ProjectMutationsUpdateArgs = {
   stream: ProjectUpdateInput;
 };
 
+
+export type ProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
+};
+
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
@@ -1352,6 +1359,13 @@ export type ProjectUpdateInput = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectUpdateRoleInput = {
+  projectId: Scalars['String'];
+  /** Leave role as null to revoke access entirely */
+  role?: InputMaybe<Scalars['String']>;
+  userId: Scalars['String'];
 };
 
 export type ProjectUpdatedMessage = {

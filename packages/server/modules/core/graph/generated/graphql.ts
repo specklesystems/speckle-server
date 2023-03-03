@@ -1329,6 +1329,8 @@ export type ProjectMutations = {
   delete: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
+  /** Update role for a collaborator */
+  updateRole: Project;
 };
 
 
@@ -1346,6 +1348,11 @@ export type ProjectMutationsUpdateArgs = {
   stream: ProjectUpdateInput;
 };
 
+
+export type ProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
+};
+
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
@@ -1359,6 +1366,13 @@ export type ProjectUpdateInput = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectUpdateRoleInput = {
+  projectId: Scalars['String'];
+  /** Leave role as null to revoke access entirely */
+  role?: InputMaybe<Scalars['String']>;
+  userId: Scalars['String'];
 };
 
 export type ProjectUpdatedMessage = {
@@ -2587,6 +2601,7 @@ export type ResolversTypes = {
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectUpdateInput: ProjectUpdateInput;
+  ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   ProjectUpdatedMessageType: ProjectUpdatedMessageType;
   ProjectVersionsPreviewGeneratedMessage: ResolverTypeWrapper<ProjectVersionsPreviewGeneratedMessage>;
@@ -2733,6 +2748,7 @@ export type ResolversParentTypes = {
   ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;
+  ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
   ProjectVersionsPreviewGeneratedMessage: ProjectVersionsPreviewGeneratedMessage;
   ProjectVersionsUpdatedMessage: Omit<ProjectVersionsUpdatedMessage, 'version'> & { version?: Maybe<ResolversParentTypes['Version']> };
@@ -3289,6 +3305,7 @@ export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType e
   createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'stream'>>;
+  updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

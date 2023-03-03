@@ -34,7 +34,7 @@ const documents = {
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
     "\n  fragment ProjectPageStatsBlockComments on Project {\n    commentThreadCount\n  }\n": types.ProjectPageStatsBlockCommentsFragmentDoc,
     "\n  fragment ProjectPageStatsBlockModels on Project {\n    modelCount\n  }\n": types.ProjectPageStatsBlockModelsFragmentDoc,
-    "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    role\n  }\n": types.ProjectPageStatsBlockTeamFragmentDoc,
+    "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n  }\n": types.ProjectPageStatsBlockTeamFragmentDoc,
     "\n  fragment ProjectPageStatsBlockVersions on Project {\n    versionCount\n  }\n": types.ProjectPageStatsBlockVersionsFragmentDoc,
     "\n  subscription OnUserProjectsUpdate {\n    userProjectsUpdated {\n      type\n      id\n      project {\n        ...ProjectDashboardItem\n      }\n    }\n  }\n": types.OnUserProjectsUpdateDocument,
     "\n  mutation CreateOnboardingProject {\n    projectMutations {\n      createForOnboarding {\n        ...ProjectPageProject\n        ...ProjectDashboardItem\n      }\n    }\n  }\n": types.CreateOnboardingProjectDocument,
@@ -58,6 +58,7 @@ const documents = {
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        ...ProjectPageProject\n        ...ProjectDashboardItem\n      }\n    }\n  }\n": types.CreateProjectDocument,
     "\n  mutation UpdateModel($input: UpdateModelInput!) {\n    modelMutations {\n      update(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.UpdateModelDocument,
     "\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n": types.DeleteModelDocument,
+    "\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        ...ProjectPageStatsBlockTeam\n      }\n    }\n  }\n": types.UpdateProjectRoleDocument,
     "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter) {\n    activeUser {\n      id\n      projects(filter: $filter) {\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
     "\n  query ProjectPageQuery($id: String!) {\n    project(id: $id) {\n      ...ProjectPageProject\n    }\n  }\n": types.ProjectPageQueryDocument,
     "\n  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {\n    project(id: $projectId) {\n      id\n      models(cursor: null, limit: 100, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestModelsDocument,
@@ -188,7 +189,7 @@ export function graphql(source: "\n  fragment ProjectPageStatsBlockModels on Pro
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    role\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -281,6 +282,10 @@ export function graphql(source: "\n  mutation UpdateModel($input: UpdateModelInp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        ...ProjectPageStatsBlockTeam\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        ...ProjectPageStatsBlockTeam\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -15,7 +15,8 @@ import {
 import {
   createStreamReturnRecord,
   deleteStreamAndNotify,
-  updateStreamAndNotify
+  updateStreamAndNotify,
+  updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
@@ -76,6 +77,10 @@ export = {
       )
 
       return project
+    },
+    async updateRole(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId, args.input.projectId, Roles.Stream.Owner)
+      return await updateStreamRoleAndNotify(args.input, ctx.userId!)
     }
   },
   User: {

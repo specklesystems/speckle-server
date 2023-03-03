@@ -38,3 +38,13 @@ export const deleteModelMutation = graphql(`
     }
   }
 `)
+
+export const updateProjectRoleMutation = graphql(`
+  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {
+    projectMutations {
+      updateRole(input: $input) {
+        ...ProjectPageStatsBlockTeam
+      }
+    }
+  }
+`)
