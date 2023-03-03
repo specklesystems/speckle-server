@@ -32,8 +32,12 @@ export = {
     async modelChildrenTree(parent, { fullName }) {
       return await getModelTreeItems(parent.id, fullName)
     },
-    async viewerResources(parent, { resourceIdString }) {
-      return await getViewerResourceGroups({ projectId: parent.id, resourceIdString })
+    async viewerResources(parent, { resourceIdString, loadedVersionsOnly }) {
+      return await getViewerResourceGroups({
+        projectId: parent.id,
+        resourceIdString,
+        loadedVersionsOnly
+      })
     }
   },
   Model: {

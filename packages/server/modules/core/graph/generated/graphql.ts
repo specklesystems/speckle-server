@@ -1227,6 +1227,7 @@ export type ProjectModelsArgs = {
 
 
 export type ProjectViewerResourcesArgs = {
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   resourceIdString: Scalars['String'];
 };
 
@@ -3236,7 +3237,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'resourceIdString'>>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

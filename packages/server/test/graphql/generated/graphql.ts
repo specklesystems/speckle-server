@@ -1220,6 +1220,7 @@ export type ProjectModelsArgs = {
 
 
 export type ProjectViewerResourcesArgs = {
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   resourceIdString: Scalars['String'];
 };
 

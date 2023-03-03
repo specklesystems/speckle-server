@@ -23,7 +23,10 @@ extend type Project {
   """
   Return metadata about resources being requested in the viewer
   """
-  viewerResources(resourceIdString: String!): [ViewerResourceGroup!]!
+  viewerResources(
+    resourceIdString: String!
+    loadedVersionsOnly: Boolean = true
+  ): [ViewerResourceGroup!]!
 }
 
 type ViewerResourceGroup {
