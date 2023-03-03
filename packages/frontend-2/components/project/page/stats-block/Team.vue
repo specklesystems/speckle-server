@@ -13,7 +13,7 @@
     </template>
     <template #bottom>
       <div class="flex items-center justify-between mt-2">
-        <UserAvatarGroup :users="project.team" class="max-w-[104px]" />
+        <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
         <div>
           <FormButton class="ml-2" @click="dialogOpen = true">
             {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
@@ -22,7 +22,7 @@
       </div>
     </template>
     <template #default>
-      <ProjectPageTeamDialog v-model:open="dialogOpen" />
+      <ProjectPageTeamDialog v-model:open="dialogOpen" :project="project" />
     </template>
   </ProjectPageStatsBlock>
 </template>
@@ -33,19 +33,23 @@ import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/g
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {
+    id
     role
     team {
-      id
-      name
-      avatar
+      role
+      user {
+        ...LimitedUserAvatar
+      }
     }
     role
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   project: ProjectPageStatsBlockTeamFragment
 }>()
 
 const dialogOpen = ref(false)
+
+const teamUsers = computed(() => props.project.team.map((t) => t.user))
 </script>

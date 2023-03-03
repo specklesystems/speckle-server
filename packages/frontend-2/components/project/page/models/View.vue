@@ -65,7 +65,9 @@ graphql(`
     modelCount
     sourceApps
     team {
-      ...FormUsersSelectItem
+      user {
+        ...FormUsersSelectItem
+      }
     }
   }
 `)

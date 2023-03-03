@@ -1194,7 +1194,7 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  team: Array<LimitedUser>;
+  team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
   /** Return metadata about resources being requested in the viewer */
@@ -1229,6 +1229,12 @@ export type ProjectModelsArgs = {
 export type ProjectViewerResourcesArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   resourceIdString: Scalars['String'];
+};
+
+export type ProjectCollaborator = {
+  __typename?: 'ProjectCollaborator';
+  role: Scalars['String'];
+  user: LimitedUser;
 };
 
 export type ProjectCollection = {
@@ -1339,12 +1345,6 @@ export type ProjectMutationsDeleteArgs = {
 export type ProjectMutationsUpdateArgs = {
   stream: ProjectUpdateInput;
 };
-
-export enum ProjectRole {
-  Contributor = 'CONTRIBUTOR',
-  Owner = 'OWNER',
-  Reviewer = 'REVIEWER'
-}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -2575,6 +2575,7 @@ export type ResolversTypes = {
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
+  ProjectCollaborator: ResolverTypeWrapper<Omit<ProjectCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   ProjectCommentCollection: ResolverTypeWrapper<Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
   ProjectCommentsFilter: ProjectCommentsFilter;
@@ -2585,7 +2586,6 @@ export type ResolversTypes = {
   ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  ProjectRole: ProjectRole;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   ProjectUpdatedMessageType: ProjectUpdatedMessageType;
@@ -2723,6 +2723,7 @@ export type ResolversParentTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
   Project: ProjectGraphQLReturn;
+  ProjectCollaborator: Omit<ProjectCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   ProjectCommentCollection: Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
   ProjectCommentsFilter: ProjectCommentsFilter;
@@ -3241,10 +3242,16 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
-  team?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCollaborator'] = ResolversParentTypes['ProjectCollaborator']> = {
+  role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3682,6 +3689,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
+  ProjectCollaborator?: ProjectCollaboratorResolvers<ContextType>;
   ProjectCollection?: ProjectCollectionResolvers<ContextType>;
   ProjectCommentCollection?: ProjectCommentCollectionResolvers<ContextType>;
   ProjectCommentsUpdatedMessage?: ProjectCommentsUpdatedMessageResolvers<ContextType>;

@@ -12,12 +12,6 @@ enum ProjectVisibility {
   PUBLIC
 }
 
-enum ProjectRole {
-  OWNER
-  CONTRIBUTOR
-  REVIEWER
-}
-
 """
 Any values left null will be ignored, so only set the properties that you want updated
 """
@@ -91,6 +85,11 @@ type ProjectCollection {
   items: [Project!]!
 }
 
+type ProjectCollaborator {
+  role: String!
+  user: LimitedUser!
+}
+
 type Project {
   id: ID!
   name: String!
@@ -103,7 +102,7 @@ type Project {
   role: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  team: [LimitedUser!]!
+  team: [ProjectCollaborator!]!
   """
   Source apps used in any models of this project
   """

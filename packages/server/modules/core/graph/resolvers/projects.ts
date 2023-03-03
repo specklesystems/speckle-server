@@ -106,7 +106,10 @@ export = {
     },
     async team(parent) {
       const users = await getStreamCollaborators(parent.id)
-      return users
+      return users.map((u) => ({
+        user: u,
+        role: u.role
+      }))
     },
     async modelCount(parent, _args, ctx) {
       return await ctx.loaders.streams.getBranchCount.load(parent.id)

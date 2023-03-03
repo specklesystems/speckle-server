@@ -1187,7 +1187,7 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  team: Array<LimitedUser>;
+  team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
   /** Return metadata about resources being requested in the viewer */
@@ -1222,6 +1222,12 @@ export type ProjectModelsArgs = {
 export type ProjectViewerResourcesArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   resourceIdString: Scalars['String'];
+};
+
+export type ProjectCollaborator = {
+  __typename?: 'ProjectCollaborator';
+  role: Scalars['String'];
+  user: LimitedUser;
 };
 
 export type ProjectCollection = {
@@ -1332,12 +1338,6 @@ export type ProjectMutationsDeleteArgs = {
 export type ProjectMutationsUpdateArgs = {
   stream: ProjectUpdateInput;
 };
-
-export enum ProjectRole {
-  Contributor = 'CONTRIBUTOR',
-  Owner = 'OWNER',
-  Reviewer = 'REVIEWER'
-}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {

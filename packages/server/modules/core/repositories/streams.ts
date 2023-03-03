@@ -45,6 +45,7 @@ import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import { SetRequired } from 'type-fest'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -541,7 +542,10 @@ export async function getDiscoverableStreams(params: GetDiscoverableStreamsParam
  */
 export async function getStreamCollaborators(streamId: string, type?: StreamRoles) {
   const q = StreamAcl.knex()
-    .select<UserWithOptionalRole[]>([...Users.cols, StreamAcl.col.role])
+    .select<SetRequired<UserWithOptionalRole, 'role'>[]>([
+      ...Users.cols,
+      StreamAcl.col.role
+    ])
     .where(StreamAcl.col.resourceId, streamId)
     .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
     .orderBy(StreamAcl.col.role)

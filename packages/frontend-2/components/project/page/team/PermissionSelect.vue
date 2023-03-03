@@ -26,35 +26,35 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { ProjectRole } from '~~/lib/common/generated/gql/graphql'
+import { Roles, StreamRoles } from '@speckle/shared'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: ProjectRole): void
+  (e: 'update:modelValue', v: StreamRoles): void
 }>()
 
 const props = defineProps<{
-  modelValue: ProjectRole
+  modelValue: StreamRoles | string
   showLabel?: boolean
   name?: string
 }>()
 
-const items = ref<Record<ProjectRole, { id: ProjectRole; title: string }>>({
-  [ProjectRole.Owner]: {
-    id: ProjectRole.Owner,
+const items = ref<Record<StreamRoles, { id: StreamRoles; title: string }>>({
+  [Roles.Stream.Owner]: {
+    id: Roles.Stream.Owner,
     title: 'Owner'
   },
-  [ProjectRole.Contributor]: {
-    id: ProjectRole.Contributor,
+  [Roles.Stream.Contributor]: {
+    id: Roles.Stream.Contributor,
     title: 'Can edit'
   },
-  [ProjectRole.Reviewer]: {
-    id: ProjectRole.Reviewer,
+  [Roles.Stream.Reviewer]: {
+    id: Roles.Stream.Reviewer,
     title: 'Can view'
   }
 })
 
 const selectedValue = computed({
-  get: () => props.modelValue,
+  get: () => props.modelValue as StreamRoles,
   set: (newVal) => emit('update:modelValue', newVal)
 })
 

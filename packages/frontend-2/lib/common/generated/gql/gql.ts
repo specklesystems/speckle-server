@@ -24,17 +24,17 @@ const documents = {
     "\n  mutation UpdateProjectMetadata($update: ProjectUpdateInput!) {\n    projectMutations {\n      update(stream: $update) {\n        id\n        ...ProjectUpdatableMetadata\n      }\n    }\n  }\n": types.UpdateProjectMetadataDocument,
     "\n  fragment ProjectPageLatestItemsComments on Project {\n    id\n    commentThreadCount\n  }\n": types.ProjectPageLatestItemsCommentsFragmentDoc,
     "\n  fragment ProjectPageLatestItemsCommentItem on Comment {\n    id\n    author {\n      ...FormUsersSelectItem\n    }\n    screenshot\n    rawText\n    createdAt\n    repliesCount\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectPageLatestItemsCommentItemFragmentDoc,
-    "\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n": types.ProjectPageLatestItemsModelsFragmentDoc,
+    "\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectPageLatestItemsModelsFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
     "\n  fragment ModelPreview on Model {\n    previewUrl\n  }\n": types.ModelPreviewFragmentDoc,
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectModelsViewModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
-    "\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n": types.ProjectPageModelsViewFragmentDoc,
+    "\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectPageModelsViewFragmentDoc,
     "\n  fragment ProjectModelsViewModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    updatedAt\n  }\n": types.ProjectModelsViewModelItemFragmentDoc,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
     "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
     "\n  fragment ProjectPageStatsBlockComments on Project {\n    commentThreadCount\n  }\n": types.ProjectPageStatsBlockCommentsFragmentDoc,
     "\n  fragment ProjectPageStatsBlockModels on Project {\n    modelCount\n  }\n": types.ProjectPageStatsBlockModelsFragmentDoc,
-    "\n  fragment ProjectPageStatsBlockTeam on Project {\n    role\n    team {\n      id\n      name\n      avatar\n    }\n    role\n  }\n": types.ProjectPageStatsBlockTeamFragmentDoc,
+    "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    role\n  }\n": types.ProjectPageStatsBlockTeamFragmentDoc,
     "\n  fragment ProjectPageStatsBlockVersions on Project {\n    versionCount\n  }\n": types.ProjectPageStatsBlockVersionsFragmentDoc,
     "\n  subscription OnUserProjectsUpdate {\n    userProjectsUpdated {\n      type\n      id\n      project {\n        ...ProjectDashboardItem\n      }\n    }\n  }\n": types.OnUserProjectsUpdateDocument,
     "\n  mutation CreateOnboardingProject {\n    projectMutations {\n      createForOnboarding {\n        ...ProjectPageProject\n        ...ProjectDashboardItem\n      }\n    }\n  }\n": types.CreateOnboardingProjectDocument,
@@ -48,9 +48,10 @@ const documents = {
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
     "\n  query AuthServerInfo {\n    serverInfo {\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n    }\n  }\n": types.AuthServerInfoDocument,
     "\n  query MentionsUserSearch($query: String!) {\n    userSearch(query: $query, limit: 5, cursor: null, archived: false) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
+    "\n  query UserSearch($query: String!, $limit: Int, $cursor: String, $archived: Boolean) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n      }\n    }\n  }\n": types.UserSearchDocument,
     "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      blobSizeLimitBytes\n    }\n  }\n": types.ServerInfoBlobSizeLimitDocument,
     "\n  query InternalTestData {\n    testNumber\n    testList {\n      foo\n      bar\n    }\n  }\n": types.InternalTestDataDocument,
-    "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      name\n      avatar\n    }\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
+    "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
     "\n  fragment ProjectDashboardItem on Project {\n    id\n    ...ProjectDashboardItemNoModels\n    models(limit: 4, filter: { onlyWithVersions: true }) {\n      totalCount\n      items {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.ProjectDashboardItemFragmentDoc,
     "\n  fragment ProjectPageLatestItemsModelItem on Model {\n    id\n    name\n    displayName\n    versionCount\n    commentThreadCount\n    previewUrl\n    createdAt\n    updatedAt\n    ...ProjectPageModelsCardRenameDialog\n    ...ProjectPageModelsCardDeleteDialog\n    ...ProjectPageModelsActions\n  }\n": types.ProjectPageLatestItemsModelItemFragmentDoc,
     "\n  mutation CreateModel($input: CreateModelInput!) {\n    modelMutations {\n      create(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.CreateModelDocument,
@@ -147,7 +148,7 @@ export function graphql(source: "\n  fragment ProjectPageLatestItemsCommentItem 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -163,7 +164,7 @@ export function graphql(source: "\n  fragment SingleLevelModelTreeItem on Models
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      ...FormUsersSelectItem\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsView on Project {\n    id\n    modelCount\n    sourceApps\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -187,7 +188,7 @@ export function graphql(source: "\n  fragment ProjectPageStatsBlockModels on Pro
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageStatsBlockTeam on Project {\n    role\n    team {\n      id\n      name\n      avatar\n    }\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectPageStatsBlockTeam on Project {\n    role\n    team {\n      id\n      name\n      avatar\n    }\n    role\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    role\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -243,6 +244,10 @@ export function graphql(source: "\n  query MentionsUserSearch($query: String!) {
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query UserSearch($query: String!, $limit: Int, $cursor: String, $archived: Boolean) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserSearch($query: String!, $limit: Int, $cursor: String, $archived: Boolean) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      blobSizeLimitBytes\n    }\n  }\n"): (typeof documents)["\n  query ServerInfoBlobSizeLimit {\n    serverInfo {\n      blobSizeLimitBytes\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -251,7 +256,7 @@ export function graphql(source: "\n  query InternalTestData {\n    testNumber\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      name\n      avatar\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      name\n      avatar\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

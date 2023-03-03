@@ -8,9 +8,11 @@ export const projectDashboardItemNoModelsFragment = graphql(`
     updatedAt
     role
     team {
-      id
-      name
-      avatar
+      user {
+        id
+        name
+        avatar
+      }
     }
   }
 `)
