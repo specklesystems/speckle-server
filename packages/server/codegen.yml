@@ -20,10 +20,12 @@ generates:
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
         ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ProjectInviteMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
+        PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

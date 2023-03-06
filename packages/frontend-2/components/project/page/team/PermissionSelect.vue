@@ -35,10 +35,7 @@
 <script setup lang="ts">
 import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
 import { StreamRoles } from '@speckle/shared'
-
-/**
- * TODO: Delete entirely item
- */
+import { reduce } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void
@@ -50,9 +47,21 @@ const props = defineProps<{
   showLabel?: boolean
   name?: string
   disabled?: boolean
+  hideRemove?: boolean
 }>()
 
-const items = ref(roleSelectItems)
+const items = ref(
+  reduce(
+    roleSelectItems,
+    (results, item) => {
+      if (!props.hideRemove || item.id !== 'delete') {
+        results[item.id] = item
+      }
+      return results
+    },
+    {} as typeof roleSelectItems
+  )
+)
 
 const selectedValue = computed({
   get: () => props.modelValue as StreamRoles,

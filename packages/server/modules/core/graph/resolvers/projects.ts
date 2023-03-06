@@ -19,6 +19,12 @@ import {
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
+import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
+import { getPendingStreamCollaborators } from '@/modules/serverinvites/services/inviteRetrievalService'
+import {
+  createStreamInviteAndNotify,
+  useStreamInviteAndNotify
+} from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
@@ -81,6 +87,23 @@ export = {
     async updateRole(_parent, args, ctx) {
       await authorizeResolver(ctx.userId, args.input.projectId, Roles.Stream.Owner)
       return await updateStreamRoleAndNotify(args.input, ctx.userId!)
+    },
+    invites: () => ({})
+  },
+  ProjectInviteMutations: {
+    async create(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId!, args.input.projectId, Roles.Stream.Owner)
+      await createStreamInviteAndNotify(args.input, ctx.userId!)
+      return ctx.loaders.streams.getStream.load(args.input.projectId)
+    },
+    async use(_parent, args, ctx) {
+      await useStreamInviteAndNotify(args.input, ctx.userId!)
+      return ctx.loaders.streams.getStream.load(args.input.projectId)
+    },
+    async cancel(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId, args.projectId, Roles.Stream.Owner)
+      await cancelStreamInvite(args.projectId, args.inviteId)
+      return ctx.loaders.streams.getStream.load(args.projectId)
     }
   },
   User: {
@@ -124,6 +147,14 @@ export = {
     },
     async sourceApps(parent, _args, ctx) {
       return ctx.loaders.streams.getSourceApps.load(parent.id)
+    },
+    async invitedTeam(parent) {
+      return await getPendingStreamCollaborators(parent.id)
+    }
+  },
+  PendingStreamCollaborator: {
+    async projectId(parent) {
+      return parent.streamId
     }
   },
   Subscription: {

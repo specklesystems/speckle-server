@@ -42,7 +42,7 @@ export function buildArrayMergeFunction(
     let finalItems: Record<string, unknown>[]
     if (checkIdentity) {
       finalItems = [...(existing || [])]
-      for (const newItem of incoming) {
+      for (const newItem of incoming || []) {
         if (
           finalItems.findIndex(
             (item) => item[identityProp] === newItem[identityProp]
@@ -52,7 +52,7 @@ export function buildArrayMergeFunction(
         }
       }
     } else {
-      finalItems = [...(existing || []), ...incoming]
+      finalItems = [...(existing || []), ...(incoming || [])]
     }
 
     return finalItems

@@ -7,6 +7,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import {
   OnProjectUpdatedSubscription,
   ProjectCreateInput,
+  ProjectInviteCreateInput,
   ProjectUpdatedMessageType,
   ProjectUpdateRoleInput
 } from '~~/lib/common/generated/gql/graphql'
@@ -16,7 +17,9 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import {
+  cancelProjectInviteMutation,
   createProjectMutation,
+  inviteProjectUserMutation,
   updateProjectRoleMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
@@ -122,5 +125,73 @@ export function useUpdateUserRole() {
     }
 
     return data?.projectMutations.updateRole
+  }
+}
+
+export function useInviteUserToProject() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: ProjectInviteCreateInput) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: inviteProjectUserMutation,
+        variables: { input }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.projectMutations.invites.create.id) {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Invitation failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Invite successfully sent'
+      })
+    }
+
+    return data?.projectMutations.invites.create
+  }
+}
+
+export function useCancelProjectInvite() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: { projectId: string; inviteId: string }) => {
+    const userId = activeUser.value?.id
+    if (!userId) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: cancelProjectInviteMutation,
+        variables: input
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (!data?.projectMutations.invites.cancel) {
+      const err = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Invitation cancelation failed',
+        description: err
+      })
+    } else {
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: 'Invitation canceled'
+      })
+    }
+
+    return data?.projectMutations.invites.cancel
   }
 }

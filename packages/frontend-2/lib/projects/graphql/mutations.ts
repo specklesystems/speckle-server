@@ -43,7 +43,37 @@ export const updateProjectRoleMutation = graphql(`
   mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {
     projectMutations {
       updateRole(input: $input) {
-        ...ProjectPageStatsBlockTeam
+        id
+        team {
+          role
+          user {
+            ...LimitedUserAvatar
+          }
+        }
+      }
+    }
+  }
+`)
+
+export const inviteProjectUserMutation = graphql(`
+  mutation InviteProjectUser($input: ProjectInviteCreateInput!) {
+    projectMutations {
+      invites {
+        create(input: $input) {
+          ...ProjectPageTeamDialog
+        }
+      }
+    }
+  }
+`)
+
+export const cancelProjectInviteMutation = graphql(`
+  mutation CancelProjectInvite($projectId: ID!, $inviteId: String!) {
+    projectMutations {
+      invites {
+        cancel(projectId: $projectId, inviteId: $inviteId) {
+          ...ProjectPageTeamDialog
+        }
       }
     }
   }

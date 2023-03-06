@@ -49,6 +49,45 @@ input ProjectUpdateRoleInput {
   role: String
 }
 
+input ProjectInviteCreateInput {
+  """
+  Either this or userId must be filled
+  """
+  email: String
+  """
+  Either this or email must be filled
+  """
+  userId: String
+  projectId: ID!
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
+}
+
+input ProjectInviteUseInput {
+  projectId: ID!
+  token: String!
+  accept: Boolean!
+}
+
+type ProjectInviteMutations {
+  """
+  Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner.
+  """
+  create(input: ProjectInviteCreateInput!): Project! @hasScope(scope: "users:invite")
+
+  """
+  Accept or decline a project invite
+  """
+  use(input: ProjectInviteUseInput!): Project!
+
+  """
+  Cancel a pending stream invite. Can only be invoked by a project owner.
+  """
+  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
+}
+
 type ProjectMutations {
   """
   Delete an existing project
@@ -69,6 +108,11 @@ type ProjectMutations {
   Create new project
   """
   create(input: ProjectCreateInput): Project!
+
+  """
+  Invite related mutations
+  """
+  invites: ProjectInviteMutations!
 
   """
   Update role for a collaborator
@@ -117,6 +161,10 @@ type Project {
   createdAt: DateTime!
   updatedAt: DateTime!
   team: [ProjectCollaborator!]!
+  """
+  Collaborators who have been invited, but not yet accepted.
+  """
+  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_OWNER)
   """
   Source apps used in any models of this project
   """

@@ -119,6 +119,7 @@ type StreamCollaborator {
 type PendingStreamCollaborator {
   id: String!
   inviteId: String!
+  projectId: String!
   streamId: String!
   streamName: String!
   """

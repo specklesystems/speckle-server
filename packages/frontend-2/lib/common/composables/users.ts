@@ -4,12 +4,17 @@ import { userSearchQuery } from '~~/lib/common/graphql/queries'
 
 export function useUserSearch(params: { variables: Ref<UserSearchQueryVariables> }) {
   const { variables } = params
-  const { result } = useQuery(userSearchQuery, variables, () => ({
-    debounce: 300,
-    enabled: (variables.value.query || '').length >= 3
-  }))
+  const { result, variables: usedVariables } = useQuery(
+    userSearchQuery,
+    variables,
+    () => ({
+      debounce: 300,
+      enabled: (variables.value.query || '').length >= 3
+    })
+  )
 
   return {
-    userSearch: result
+    userSearch: result,
+    searchVariables: usedVariables
   }
 }

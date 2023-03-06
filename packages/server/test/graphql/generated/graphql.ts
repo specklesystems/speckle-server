@@ -1150,6 +1150,7 @@ export type PendingStreamCollaborator = {
   id: Scalars['String'];
   inviteId: Scalars['String'];
   invitedBy: LimitedUser;
+  projectId: Scalars['String'];
   role: Scalars['String'];
   streamId: Scalars['String'];
   streamName: Scalars['String'];
@@ -1170,6 +1171,8 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  /** Collaborators who have been invited, but not yet accepted. */
+  invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
@@ -1282,6 +1285,48 @@ export type ProjectCreateInput = {
   visibility?: InputMaybe<ProjectVisibility>;
 };
 
+export type ProjectInviteCreateInput = {
+  /** Either this or userId must be filled */
+  email?: InputMaybe<Scalars['String']>;
+  projectId: Scalars['ID'];
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']>;
+  /** Either this or email must be filled */
+  userId?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectInviteMutations = {
+  __typename?: 'ProjectInviteMutations';
+  /** Cancel a pending stream invite. Can only be invoked by a project owner. */
+  cancel: Project;
+  /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
+  create: Project;
+  /** Accept or decline a project invite */
+  use: Project;
+};
+
+
+export type ProjectInviteMutationsCancelArgs = {
+  inviteId: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
+
+export type ProjectInviteMutationsCreateArgs = {
+  input: ProjectInviteCreateInput;
+};
+
+
+export type ProjectInviteMutationsUseArgs = {
+  input: ProjectInviteUseInput;
+};
+
+export type ProjectInviteUseInput = {
+  accept: Scalars['Boolean'];
+  projectId: Scalars['ID'];
+  token: Scalars['String'];
+};
+
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
@@ -1320,6 +1365,8 @@ export type ProjectMutations = {
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
+  /** Invite related mutations */
+  invites: ProjectInviteMutations;
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
