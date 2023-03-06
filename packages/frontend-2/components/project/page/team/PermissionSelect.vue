@@ -19,7 +19,13 @@
     </template>
     <template #option="{ item, selected }">
       <div class="flex flex-col">
-        <div :class="['text-normal', selected ? 'text-primary' : '']">
+        <div
+          :class="[
+            'text-normal',
+            selected ? 'text-primary' : '',
+            item.id === 'delete' ? 'text-danger' : ''
+          ]"
+        >
           {{ item.title }}
         </div>
       </div>
@@ -27,8 +33,8 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { StreamRoles } from '@speckle/shared'
 import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
+import { StreamRoles } from '@speckle/shared'
 
 /**
  * TODO: Delete entirely item
@@ -36,6 +42,7 @@ import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void
+  (e: 'delete'): void
 }>()
 
 const props = defineProps<{
@@ -54,6 +61,9 @@ const selectedValue = computed({
 
 const selectValue = computed({
   get: () => items.value[selectedValue.value],
-  set: (newVal) => (selectedValue.value = newVal.id)
+  set: (newVal) => {
+    if (newVal.id === 'delete') return emit('delete')
+    selectedValue.value = newVal.id
+  }
 })
 </script>

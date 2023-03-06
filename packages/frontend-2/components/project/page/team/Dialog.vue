@@ -45,6 +45,7 @@
             :model-value="collaborator.role"
             :disabled="roleLoadingStatuses[collaborator.user.id]"
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
+            @delete="onCollaboratorRoleChange(collaborator, null)"
           />
           <span v-else>{{ roleSelectItems[collaborator.role].title }}</span>
         </div>
@@ -54,12 +55,23 @@
 </template>
 <script setup lang="ts">
 import { Get } from 'type-fest'
-import { Roles, StreamRoles } from '@speckle/shared'
+import { Nullable, Roles, StreamRoles } from '@speckle/shared'
 import { useUserSearch } from '~~/lib/common/composables/users'
 import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
 import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
 import { useUpdateUserRole } from '~~/lib/projects/composables/projectManagement'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useApolloClient } from '@vue/apollo-composable'
+import {
+  CacheObjectReference,
+  getCacheId,
+  getObjectReference,
+  modifyObjectFields
+} from '~~/lib/common/helpers/graphql'
+
+type ProjectCollaborator = NonNullable<
+  Get<ProjectPageStatsBlockTeamFragment, 'team[0]'>
+>
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -70,6 +82,7 @@ const props = defineProps<{
   project: ProjectPageStatsBlockTeamFragment
 }>()
 
+const apollo = useApolloClient().client
 const updateRole = useUpdateUserRole()
 const { activeUser } = useActiveUser()
 
@@ -101,9 +114,10 @@ const searchUsers = computed(() => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const onInviteUser = (user: NonNullable<Get<typeof searchUsers.value, '[0]'>>) => void 0
+
 const onCollaboratorRoleChange = async (
-  collaborator: NonNullable<Get<ProjectPageStatsBlockTeamFragment, 'team[0]'>>,
-  newRole: StreamRoles
+  collaborator: ProjectCollaborator,
+  newRole: Nullable<StreamRoles>
 ) => {
   roleLoadingStatuses.value[collaborator.user.id] = true
   await updateRole({
@@ -112,5 +126,21 @@ const onCollaboratorRoleChange = async (
     role: newRole
   })
   roleLoadingStatuses.value[collaborator.user.id] = false
+
+  if (!newRole) {
+    // Remove from team
+    modifyObjectFields<undefined, Array<{ role: string; user: CacheObjectReference }>>(
+      apollo.cache,
+      getCacheId('Project', props.project.id),
+      (fieldName, _variables, value) => {
+        if (fieldName !== 'team') return
+        return value.filter(
+          (t) =>
+            t.user.__ref !==
+            getObjectReference('LimitedUser', collaborator.user.id).__ref
+        )
+      }
+    )
+  }
 }
 </script>

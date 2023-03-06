@@ -1,8 +1,10 @@
 import { Roles, StreamRoles } from '@speckle/shared'
 
+export type SelectableStreamRole = StreamRoles | 'delete'
+
 export const roleSelectItems: Record<
-  StreamRoles | string,
-  { id: StreamRoles; title: string }
+  SelectableStreamRole | string,
+  { id: SelectableStreamRole; title: string }
 > = {
   [Roles.Stream.Owner]: {
     id: Roles.Stream.Owner,
@@ -15,5 +17,9 @@ export const roleSelectItems: Record<
   [Roles.Stream.Reviewer]: {
     id: Roles.Stream.Reviewer,
     title: 'Can view'
+  },
+  ['delete']: {
+    id: 'delete',
+    title: 'Remove'
   }
 }
