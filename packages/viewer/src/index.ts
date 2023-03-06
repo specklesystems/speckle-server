@@ -29,6 +29,7 @@ import {
 } from './modules/queries/Query'
 import { Utils } from './modules/Utils'
 import { ObjectLayers } from './modules/SpeckleRenderer'
+import { DiffResult } from './modules/Differ'
 
 export {
   Viewer,
@@ -59,5 +60,6 @@ export type {
   QueryResult,
   PointQueryResult,
   IntersectionQueryResult,
-  Utils
+  Utils,
+  DiffResult
 }

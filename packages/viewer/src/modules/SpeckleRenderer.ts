@@ -325,7 +325,7 @@ export default class SpeckleRenderer {
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
 
-    this._differ = new Differ(this.batcher)
+    this._differ = new Differ()
   }
 
   public update(deltaTime: number) {
@@ -569,6 +569,19 @@ export default class SpeckleRenderer {
   public applyFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
+    )
+  }
+
+  public applyMaterial(ids: NodeRenderView[], material: SpeckleStandardMaterial) {
+    this.filterBatchRecording.push(
+      ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
+        return {
+          offset: rv.batchStart,
+          count: rv.batchCount,
+          material,
+          materialOptions: null
+        }
+      })
     )
   }
 

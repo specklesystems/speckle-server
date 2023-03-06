@@ -833,7 +833,7 @@ export default class Sandbox {
 
   public makeDiffUI() {
     const container = this.tabs.pages[4]
-    let diffResult = null
+    let diffResult: DiffResult = null
     const diffButton = container.addButton({
       title: 'Diff'
     })
@@ -852,7 +852,15 @@ export default class Sandbox {
         'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
         'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8'
       )
+      this.viewer.visualDiff(diffResult)
     })
+    const unDiffButton = container.addButton({
+      title: 'Undiff'
+    })
+    unDiffButton.on('click', async () => {
+      this.viewer.visualDiff(null)
+    })
+
     container
       .addInput({ time: 0 }, 'time', {
         label: 'Diff Time',
