@@ -251,5 +251,5 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
   // Jonathon's lines
   // 'https://speckle.xyz/streams/7ce9010d71/commits/8cd9e7e4fc'
-  'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
+  // 'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
 )
