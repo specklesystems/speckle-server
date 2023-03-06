@@ -382,10 +382,10 @@ export class GeometryConverter {
   /**
    * POLYCURVE
    */
-  private static PolycurveToGeometryData(node): GeometryData {
+  private static PolycurveToGeometryData(node: NodeData): GeometryData {
     const buffers = []
-    for (let i = 0; i < node.children.length; i++) {
-      const element = node.children[i]
+    for (let i = 0; i < node.nestedNodes.length; i++) {
+      const element = node.nestedNodes[i].model
       const conv = GeometryConverter.convertNodeToGeometryData(element)
       buffers.push(conv)
     }
