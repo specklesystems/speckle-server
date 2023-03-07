@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const projectAccessCheckQuery = graphql(`
+  query ProjectAccessCheck($id: String!) {
+    project(id: $id) {
+      id
+    }
+  }
+`)
+
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter) {
     activeUser {

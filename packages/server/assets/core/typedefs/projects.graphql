@@ -145,6 +145,7 @@ type Project {
   name: String!
   description: String
   visibility: ProjectVisibility!
+  allowPublicComments: Boolean!
   versionCount: Int!
   modelCount: Int!
   """

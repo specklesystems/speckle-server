@@ -1164,6 +1164,7 @@ export type PendingStreamCollaborator = {
 
 export type Project = {
   __typename?: 'Project';
+  allowPublicComments: Scalars['Boolean'];
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */

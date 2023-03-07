@@ -33,7 +33,7 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
+import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import { StreamRoles } from '@speckle/shared'
 import { reduce } from 'lodash-es'
 

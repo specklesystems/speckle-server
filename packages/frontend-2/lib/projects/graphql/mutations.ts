@@ -89,3 +89,11 @@ export const updateProjectMetadataMutation = graphql(`
     }
   }
 `)
+
+export const deleteProjectMutation = graphql(`
+  mutation DeleteProject($id: String!) {
+    projectMutations {
+      delete(id: $id)
+    }
+  }
+`)

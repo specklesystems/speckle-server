@@ -3,7 +3,7 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
@@ -17,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data, errors } = await client
     .query({
-      query: projectPageQuery,
+      query: projectAccessCheckQuery,
       variables: { id: projectId }
     })
     .catch(convertThrowIntoFetchResult)

@@ -18,9 +18,11 @@ import {
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
+import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
   createProjectMutation,
+  deleteProjectMutation,
   inviteProjectUserMutation,
   updateProjectMetadataMutation,
   updateProjectRoleMutation
@@ -235,5 +237,51 @@ export function useUpdateProject() {
     }
 
     return result.data?.projectMutations.update
+  }
+}
+
+export function useDeleteProject() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const navigateHome = useNavigateToHome()
+
+  return async (id: string, options?: Partial<{ goHome: boolean }>) => {
+    if (!activeUser.value) return
+    const { goHome } = options || {}
+
+    const result = await apollo
+      .mutate({
+        mutation: deleteProjectMutation,
+        variables: {
+          id
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (result?.data?.projectMutations.delete) {
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: 'Project deleted'
+      })
+
+      if (goHome) {
+        navigateHome()
+      }
+
+      // evict project from cache
+      apollo.cache.evict({
+        id: getCacheId('Project', id)
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(result.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Project deletion failed',
+        description: errMsg
+      })
+    }
+
+    return !!result.data?.projectMutations.delete
   }
 }
