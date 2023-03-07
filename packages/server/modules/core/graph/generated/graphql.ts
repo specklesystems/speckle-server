@@ -1499,6 +1499,11 @@ export type Query = {
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
   project?: Maybe<Project>;
+  /**
+   * Look for an invitation to a project, for the current user (authed or not). If token
+   * isn't specified, the server will look for any valid invite.
+   */
+  projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -1587,6 +1592,12 @@ export type QueryOtherUserArgs = {
 
 export type QueryProjectArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryProjectInviteArgs = {
+  projectId: Scalars['String'];
+  token?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -3409,6 +3420,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
+  projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;

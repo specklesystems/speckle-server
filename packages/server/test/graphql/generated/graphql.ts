@@ -1491,6 +1491,11 @@ export type Query = {
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
   project?: Maybe<Project>;
+  /**
+   * Look for an invitation to a project, for the current user (authed or not). If token
+   * isn't specified, the server will look for any valid invite.
+   */
+  projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -1579,6 +1584,12 @@ export type QueryOtherUserArgs = {
 
 export type QueryProjectArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryProjectInviteArgs = {
+  projectId: Scalars['String'];
+  token?: InputMaybe<Scalars['String']>;
 };
 
 

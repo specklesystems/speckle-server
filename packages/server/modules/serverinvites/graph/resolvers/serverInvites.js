@@ -134,8 +134,11 @@ module.exports = {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args
-
       return await getUserPendingStreamInvite(streamId, context.userId, token)
+    },
+    async projectInvite(_parent, args, context) {
+      const { projectId, token } = args
+      return await getUserPendingStreamInvite(projectId, context.userId, token)
     },
     async streamInvites(_parrent, _args, context) {
       const { userId } = context

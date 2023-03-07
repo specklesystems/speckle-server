@@ -57,6 +57,12 @@ extend type Query {
   streamInvite(streamId: String!, token: String): PendingStreamCollaborator
 
   """
+  Look for an invitation to a project, for the current user (authed or not). If token
+  isn't specified, the server will look for any valid invite.
+  """
+  projectInvite(projectId: String!, token: String): PendingStreamCollaborator
+
+  """
   Get all invitations to streams that the active user has
   """
   streamInvites: [PendingStreamCollaborator!]!
