@@ -44,6 +44,7 @@ export function useTeamDialogInternals(params: {
 
   const canLeaveProject = computed(() => {
     if (!activeUser.value) return false
+    if (!project.value.role) return false
 
     const userId = activeUser.value.id
     const owners = project.value.team.filter((t) => t.role === Roles.Stream.Owner)
