@@ -222,3 +222,13 @@ extend type Subscription {
   """
   projectUpdated(id: String!): ProjectUpdatedMessage!
 }
+
+extend type User {
+  """
+  Get all invitations to projects that the active user has
+  """
+  projectInvites: [PendingStreamCollaborator!]!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:read")
+    @isOwner
+}

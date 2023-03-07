@@ -1151,6 +1151,7 @@ export type PendingStreamCollaborator = {
   inviteId: Scalars['String'];
   invitedBy: LimitedUser;
   projectId: Scalars['String'];
+  projectName: Scalars['String'];
   role: Scalars['String'];
   streamId: Scalars['String'];
   streamName: Scalars['String'];
@@ -2180,6 +2181,8 @@ export type User = {
   name: Scalars['String'];
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
+  /** Get all invitations to projects that the active user has */
+  projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
   projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;

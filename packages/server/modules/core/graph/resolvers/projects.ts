@@ -20,7 +20,10 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
-import { getPendingStreamCollaborators } from '@/modules/serverinvites/services/inviteRetrievalService'
+import {
+  getPendingStreamCollaborators,
+  getUserPendingStreamInvites
+} from '@/modules/serverinvites/services/inviteRetrievalService'
 import {
   createStreamInviteAndNotify,
   useStreamInviteAndNotify
@@ -123,6 +126,10 @@ export = {
       })
 
       return { totalCount, cursor, items: streams }
+    },
+    async projectInvites(_parent, _args, context) {
+      const { userId } = context
+      return await getUserPendingStreamInvites(userId!)
     }
   },
   Project: {
@@ -160,6 +167,11 @@ export = {
   PendingStreamCollaborator: {
     async projectId(parent) {
       return parent.streamId
+    },
+    async projectName(parent, _args, ctx) {
+      const { streamId } = parent
+      const stream = await ctx.loaders.streams.getStream.load(streamId)
+      return stream?.name || ''
     }
   },
   Subscription: {

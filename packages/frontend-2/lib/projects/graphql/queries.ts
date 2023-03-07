@@ -18,6 +18,7 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
+      ...ProjectsInviteBanners
     }
   }
 `)

@@ -1159,6 +1159,7 @@ export type PendingStreamCollaborator = {
   inviteId: Scalars['String'];
   invitedBy: LimitedUser;
   projectId: Scalars['String'];
+  projectName: Scalars['String'];
   role: Scalars['String'];
   streamId: Scalars['String'];
   streamName: Scalars['String'];
@@ -2188,6 +2189,8 @@ export type User = {
   name: Scalars['String'];
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
+  /** Get all invitations to projects that the active user has */
+  projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
   projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;
@@ -2686,7 +2689,7 @@ export type ResolversTypes = {
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
   UpdateModelInput: UpdateModelInput;
-  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
+  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -2829,7 +2832,7 @@ export type ResolversParentTypes = {
   Subscription: {};
   TestItem: TestItem;
   UpdateModelInput: UpdateModelInput;
-  User: Omit<User, 'commits' | 'favoriteStreams' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
+  User: Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -3286,6 +3289,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3614,6 +3618,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  projectInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<UserProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserStreamsArgs, 'limit'>>;
