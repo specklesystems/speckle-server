@@ -868,11 +868,13 @@ export async function revokeStreamPermissions(params: {
     .first()
 
   if (aclEntry?.role === 'stream:owner') {
-    const ownersCount = await StreamAcl.knex().count({
-      resourceId: streamId,
-      role: Roles.Stream.Owner
-    })
-    if (ownersCount === 1)
+    const [countObj] = await StreamAcl.knex()
+      .where({
+        resourceId: streamId,
+        role: Roles.Stream.Owner
+      })
+      .count()
+    if (parseInt(countObj.count) === 1)
       throw new StreamAccessUpdateError('Could not revoke permissions for last admin', {
         info: { streamId, userId }
       })

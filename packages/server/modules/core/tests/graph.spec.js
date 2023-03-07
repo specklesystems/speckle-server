@@ -12,7 +12,6 @@ const {
   removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { noop } = require('lodash')
 
 let app
 let server
@@ -547,7 +546,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should fail to delete a stream because of permissions', async () => {
         // Make sure user is no longer a stream collaborator
-        await removeStreamCollaborator(ts1, userB.id, userB.id).catch(noop)
+        await removeStreamCollaborator(ts1, userB.id, userB.id)
 
         const res = await sendRequest(userB.token, {
           query: `mutation { streamDelete( id:"${ts1}")}`
