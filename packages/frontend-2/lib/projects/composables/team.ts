@@ -1,4 +1,5 @@
 import { Roles } from '@speckle/shared'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
 
@@ -10,6 +11,8 @@ export function useTeamDialogInternals(params: {
   const {
     props: { project }
   } = params
+
+  const { activeUser } = useActiveUser()
 
   const collaboratorListItems = computed((): ProjectCollaboratorListItem[] => {
     const results: ProjectCollaboratorListItem[] = []
@@ -39,8 +42,17 @@ export function useTeamDialogInternals(params: {
 
   const isOwner = computed(() => project.value.role === Roles.Stream.Owner)
 
+  const canLeaveProject = computed(() => {
+    if (!activeUser.value) return false
+
+    const userId = activeUser.value.id
+    const owners = project.value.team.filter((t) => t.role === Roles.Stream.Owner)
+    return owners.length !== 1 || owners[0].user.id !== userId
+  })
+
   return {
     collaboratorListItems,
-    isOwner
+    isOwner,
+    canLeaveProject
   }
 }

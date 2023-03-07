@@ -72,7 +72,7 @@ type ProjectInviteMutations {
   """
   Accept or decline a project invite
   """
-  use(input: ProjectInviteUseInput!): Project!
+  use(input: ProjectInviteUseInput!): Boolean!
 
   """
   Cancel a pending stream invite. Can only be invoked by a project owner.
@@ -110,6 +110,11 @@ type ProjectMutations {
   Update role for a collaborator
   """
   updateRole(input: ProjectUpdateRoleInput!): Project!
+
+  """
+  Leave a project. Only possible if you're not the last remaining owner.
+  """
+  leave(id: String!): Boolean!
 }
 
 extend type Mutation {

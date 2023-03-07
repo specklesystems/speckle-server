@@ -19,6 +19,7 @@ import {
   updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
+import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getPendingStreamCollaborators,
@@ -91,6 +92,12 @@ export = {
       await authorizeResolver(ctx.userId, args.input.projectId, Roles.Stream.Owner)
       return await updateStreamRoleAndNotify(args.input, ctx.userId!)
     },
+    async leave(_parent, args, context) {
+      const { id } = args
+      const { userId } = context
+      await removeStreamCollaborator(id, userId!, userId!)
+      return true
+    },
     invites: () => ({})
   },
   ProjectInviteMutations: {
@@ -101,7 +108,7 @@ export = {
     },
     async use(_parent, args, ctx) {
       await useStreamInviteAndNotify(args.input, ctx.userId!)
-      return ctx.loaders.streams.getStream.load(args.input.projectId)
+      return true
     },
     async cancel(_parent, args, ctx) {
       await authorizeResolver(ctx.userId, args.projectId, Roles.Stream.Owner)

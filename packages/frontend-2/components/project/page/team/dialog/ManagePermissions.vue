@@ -16,7 +16,10 @@
         :disabled="!isOwner || loading"
         @update:model-value="onChangeCommentPermissions"
       />
-      <ProjectPageTeamDialogDangerZone v-if="isOwner" :project="project" />
+      <ProjectPageTeamDialogDangerZone
+        v-if="isOwner || canLeaveProject"
+        :project="project"
+      />
     </div>
   </div>
 </template>
@@ -33,7 +36,7 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
 }>()
 
-const { isOwner } = useTeamDialogInternals({ props: toRefs(props) })
+const { isOwner, canLeaveProject } = useTeamDialogInternals({ props: toRefs(props) })
 const updateProject = useUpdateProject()
 
 const loading = ref(false)

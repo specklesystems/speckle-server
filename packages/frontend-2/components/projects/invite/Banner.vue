@@ -19,11 +19,13 @@
       </div>
       <div class="flex space-x-2 w-full sm:w-auto">
         <template v-if="isLoggedIn">
-          <FormButton full-width>Accept</FormButton>
-          <FormButton full-width color="danger">Decline</FormButton>
+          <FormButton full-width @click="useInvite(true)">Accept</FormButton>
+          <FormButton full-width color="danger" @click="useInvite(false)">
+            Decline
+          </FormButton>
         </template>
         <template v-else>
-          <FormButton>Log In</FormButton>
+          <FormButton :to="loginRoute">Log In</FormButton>
         </template>
       </div>
     </div>
@@ -33,7 +35,8 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectRoute, loginRoute } from '~~/lib/common/helpers/route'
+import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
@@ -47,7 +50,7 @@ graphql(`
   }
 `)
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     invite: ProjectsInviteBannerFragment
     showStreamName?: boolean
@@ -56,4 +59,22 @@ withDefaults(
 )
 
 const { isLoggedIn } = useActiveUser()
+const processInvite = useProcessProjectInvite()
+
+const loading = ref(false)
+
+const useInvite = async (accept: boolean) => {
+  if (!props.invite.token) return
+
+  loading.value = true
+  await processInvite(
+    {
+      projectId: props.invite.projectId,
+      accept,
+      token: props.invite.token
+    },
+    { inviteId: props.invite.id }
+  )
+  loading.value = false
+}
 </script>

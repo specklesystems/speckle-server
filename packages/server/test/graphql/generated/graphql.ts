@@ -1305,7 +1305,7 @@ export type ProjectInviteMutations = {
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
   /** Accept or decline a project invite */
-  use: Project;
+  use: Scalars['Boolean'];
 };
 
 
@@ -1370,6 +1370,8 @@ export type ProjectMutations = {
   delete: Scalars['Boolean'];
   /** Invite related mutations */
   invites: ProjectInviteMutations;
+  /** Leave a project. Only possible if you're not the last remaining owner. */
+  leave: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -1383,6 +1385,11 @@ export type ProjectMutationsCreateArgs = {
 
 
 export type ProjectMutationsDeleteArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectMutationsLeaveArgs = {
   id: Scalars['String'];
 };
 

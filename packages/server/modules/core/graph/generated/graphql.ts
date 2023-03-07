@@ -1313,7 +1313,7 @@ export type ProjectInviteMutations = {
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
   /** Accept or decline a project invite */
-  use: Project;
+  use: Scalars['Boolean'];
 };
 
 
@@ -1378,6 +1378,8 @@ export type ProjectMutations = {
   delete: Scalars['Boolean'];
   /** Invite related mutations */
   invites: ProjectInviteMutations;
+  /** Leave a project. Only possible if you're not the last remaining owner. */
+  leave: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
   /** Update role for a collaborator */
@@ -1391,6 +1393,11 @@ export type ProjectMutationsCreateArgs = {
 
 
 export type ProjectMutationsDeleteArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectMutationsLeaveArgs = {
   id: Scalars['String'];
 };
 
@@ -3365,7 +3372,7 @@ export type ProjectCommentsUpdatedMessageResolvers<ContextType = GraphQLContext,
 export type ProjectInviteMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectInviteMutations'] = ResolversParentTypes['ProjectInviteMutations']> = {
   cancel?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCancelArgs, 'inviteId' | 'projectId'>>;
   create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCreateArgs, 'input'>>;
-  use?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsUseArgs, 'input'>>;
+  use?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectInviteMutationsUseArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3381,6 +3388,7 @@ export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType e
   createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   invites?: Resolver<ResolversTypes['ProjectInviteMutations'], ParentType, ContextType>;
+  leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsLeaveArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'update'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

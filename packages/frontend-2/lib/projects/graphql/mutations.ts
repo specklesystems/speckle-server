@@ -97,3 +97,21 @@ export const deleteProjectMutation = graphql(`
     }
   }
 `)
+
+export const useProjectInviteMutation = graphql(`
+  mutation UseProjectInvite($input: ProjectInviteUseInput!) {
+    projectMutations {
+      invites {
+        use(input: $input)
+      }
+    }
+  }
+`)
+
+export const leaveProjectMutation = graphql(`
+  mutation LeaveProject($projectId: String!) {
+    projectMutations {
+      leave(id: $projectId)
+    }
+  }
+`)

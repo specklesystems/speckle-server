@@ -8,6 +8,7 @@ import {
   OnProjectUpdatedSubscription,
   ProjectCreateInput,
   ProjectInviteCreateInput,
+  ProjectInviteUseInput,
   ProjectUpdatedMessageType,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
@@ -24,8 +25,10 @@ import {
   createProjectMutation,
   deleteProjectMutation,
   inviteProjectUserMutation,
+  leaveProjectMutation,
   updateProjectMetadataMutation,
-  updateProjectRoleMutation
+  updateProjectRoleMutation,
+  useProjectInviteMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 
@@ -283,5 +286,90 @@ export function useDeleteProject() {
     }
 
     return !!result.data?.projectMutations.delete
+  }
+}
+
+export function useProcessProjectInvite() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (
+    input: ProjectInviteUseInput,
+    options?: Partial<{ inviteId: string }>
+  ) => {
+    if (!activeUser.value) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: useProjectInviteMutation,
+        variables: { input },
+        update: (cache, { data }) => {
+          if (!data?.projectMutations.invites.use || !options?.inviteId) return
+
+          // Evict PendingStreamCollaborator
+          cache.evict({
+            id: getCacheId('PendingStreamCollaborator', options.inviteId)
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.projectMutations.invites.use) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Invite accepted'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't process invite",
+        description: errMsg
+      })
+    }
+
+    return data?.projectMutations.invites.use
+  }
+}
+
+export function useLeaveProject() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const navigateHome = useNavigateToHome()
+
+  return async (projectId: string, options?: Partial<{ goHome: boolean }>) => {
+    if (!activeUser.value) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: leaveProjectMutation,
+        variables: { projectId },
+        update: (cache, { data }) => {
+          if (!data?.projectMutations.leave) return
+
+          cache.evict({
+            id: getCacheId('Project', projectId)
+          })
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.projectMutations.leave) {
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: "You've left the project"
+      })
+
+      if (options?.goHome) navigateHome()
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't leave project",
+        description: errMsg
+      })
+    }
   }
 }
