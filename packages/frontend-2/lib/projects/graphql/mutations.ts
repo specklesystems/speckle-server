@@ -78,3 +78,14 @@ export const cancelProjectInviteMutation = graphql(`
     }
   }
 `)
+
+export const updateProjectMetadataMutation = graphql(`
+  mutation UpdateProjectMetadata($update: ProjectUpdateInput!) {
+    projectMutations {
+      update(update: $update) {
+        id
+        ...ProjectUpdatableMetadata
+      }
+    }
+  }
+`)

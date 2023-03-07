@@ -9,7 +9,9 @@ import {
   ProjectCreateInput,
   ProjectInviteCreateInput,
   ProjectUpdatedMessageType,
-  ProjectUpdateRoleInput
+  ProjectUpdateInput,
+  ProjectUpdateRoleInput,
+  UpdateProjectMetadataMutation
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -20,6 +22,7 @@ import {
   cancelProjectInviteMutation,
   createProjectMutation,
   inviteProjectUserMutation,
+  updateProjectMetadataMutation,
   updateProjectRoleMutation
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
@@ -193,5 +196,44 @@ export function useCancelProjectInvite() {
     }
 
     return data?.projectMutations.invites.cancel
+  }
+}
+
+export function useUpdateProject() {
+  const apollo = useApolloClient().client
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (
+    update: ProjectUpdateInput,
+    options?: Partial<{ optimisticResponse: UpdateProjectMetadataMutation }>
+  ) => {
+    if (!activeUser.value) return
+
+    const result = await apollo
+      .mutate({
+        mutation: updateProjectMetadataMutation,
+        variables: {
+          update
+        },
+        optimisticResponse: options?.optimisticResponse
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (result?.data?.projectMutations.update?.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Project updated'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(result.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Project update failed',
+        description: errMsg
+      })
+    }
+
+    return result.data?.projectMutations.update
   }
 }

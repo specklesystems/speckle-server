@@ -19,15 +19,7 @@ input ProjectUpdateInput {
   id: ID!
   name: String
   description: String
-  """
-  Whether the stream can be viewed by non-contributors
-  """
-  isPublic: Boolean
-  """
-  Whether the stream (if public) can be found on public stream exploration pages
-  and searches
-  """
-  isDiscoverable: Boolean
+  visibility: ProjectVisibility
   allowPublicComments: Boolean
 }
 
@@ -97,7 +89,7 @@ type ProjectMutations {
   """
   Updates an existing project
   """
-  update(stream: ProjectUpdateInput!): Project!
+  update(update: ProjectUpdateInput!): Project!
 
   """
   Create onboarding/tutorial project
@@ -152,6 +144,7 @@ type Project {
   id: ID!
   name: String!
   description: String
+  visibility: ProjectVisibility!
   versionCount: Int!
   modelCount: Int!
   """

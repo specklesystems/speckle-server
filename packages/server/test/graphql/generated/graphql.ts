@@ -1195,6 +1195,7 @@ export type Project = {
   versionCount: Scalars['Int'];
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
+  visibility: ProjectVisibility;
 };
 
 
@@ -1385,7 +1386,7 @@ export type ProjectMutationsDeleteArgs = {
 
 
 export type ProjectMutationsUpdateArgs = {
-  stream: ProjectUpdateInput;
+  update: ProjectUpdateInput;
 };
 
 
@@ -1398,14 +1399,8 @@ export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  /**
-   * Whether the stream (if public) can be found on public stream exploration pages
-   * and searches
-   */
-  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
-  /** Whether the stream can be viewed by non-contributors */
-  isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
 };
 
 export type ProjectUpdateRoleInput = {

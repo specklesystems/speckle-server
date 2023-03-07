@@ -1,5 +1,5 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import {
   getUserStreamsCount,
@@ -64,9 +64,9 @@ export = {
     async createForOnboarding(_parent, _args, { userId }) {
       return await createOnboardingStream(userId!)
     },
-    async update(_parent, { stream }, { userId }) {
-      await authorizeResolver(userId, stream.id, Roles.Stream.Owner)
-      return await updateStreamAndNotify(stream, userId!)
+    async update(_parent, { update }, { userId }) {
+      await authorizeResolver(userId, update.id, Roles.Stream.Owner)
+      return await updateStreamAndNotify(update, userId!)
     },
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult(
@@ -150,6 +150,11 @@ export = {
     },
     async invitedTeam(parent) {
       return await getPendingStreamCollaborators(parent.id)
+    },
+    async visibility(parent) {
+      const { isPublic, isDiscoverable } = parent
+      if (!isPublic) return ProjectVisibility.Private
+      return isDiscoverable ? ProjectVisibility.Public : ProjectVisibility.Unlisted
     }
   },
   PendingStreamCollaborator: {

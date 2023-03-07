@@ -26,7 +26,9 @@
                 <div class="flex items-center space-x-2">
                   <UserAvatar :user="user" />
                   <span class="grow truncate">{{ user.name }}</span>
-                  <FormButton @click="onInviteUser(user)">Invite</FormButton>
+                  <FormButton :disabled="loading" @click="onInviteUser(user)">
+                    Invite
+                  </FormButton>
                 </div>
               </template>
             </template>
@@ -35,6 +37,7 @@
                 <UserAvatar />
                 <span class="grow truncate">{{ searchVariables.query }}</span>
                 <FormButton
+                  :disabled="loading"
                   @click="
                     () =>
                       searchVariables?.query
@@ -64,7 +67,7 @@
               v-if="isOwner && activeUser && collaborator.id !== activeUser.id"
               class="shrink-0"
               :model-value="collaborator.role"
-              :disabled="roleLoadingStatuses[collaborator.id]"
+              :disabled="loading"
               @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
               @delete="onCollaboratorRoleChange(collaborator, null)"
             />
@@ -72,11 +75,12 @@
               {{ roleSelectItems[collaborator.role].title }}
             </span>
           </template>
-          <template v-else>
+          <template v-else-if="isOwner">
             <FormButton
               class="shrink-0"
               color="danger"
               size="sm"
+              :disabled="loading"
               @click="
                 cancelInvite({
                   projectId: project.id,
@@ -90,6 +94,14 @@
           </template>
         </div>
       </div>
+      <div class="h4 font-bold">Project permissions</div>
+      <div class="flex flex-col space-y-4">
+        <ProjectVisibilitySelect
+          :model-value="project.visibility"
+          :disabled="!isOwner || loading"
+          @update:model-value="onChangeVisibility"
+        />
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -99,13 +111,15 @@ import { Nullable, Roles, StreamRoles } from '@speckle/shared'
 import { useUserSearch } from '~~/lib/common/composables/users'
 import {
   LimitedUserAvatarFragment,
-  ProjectPageTeamDialogFragment
+  ProjectPageTeamDialogFragment,
+  ProjectVisibility
 } from '~~/lib/common/generated/gql/graphql'
 import { roleSelectItems } from '~~/lib/projects/helpers/permissions'
 import {
   useUpdateUserRole,
   useInviteUserToProject,
-  useCancelProjectInvite
+  useCancelProjectInvite,
+  useUpdateProject
 } from '~~/lib/projects/composables/projectManagement'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useApolloClient } from '@vue/apollo-composable'
@@ -124,6 +138,7 @@ graphql(`
   fragment ProjectPageTeamDialog on Project {
     id
     role
+    visibility
     team {
       role
       user {
@@ -165,11 +180,12 @@ const apollo = useApolloClient().client
 const updateRole = useUpdateUserRole()
 const createInvite = useInviteUserToProject()
 const cancelInvite = useCancelProjectInvite()
+const updateProject = useUpdateProject()
 const { activeUser } = useActiveUser()
 
+const loading = ref(false)
 const search = ref('')
 const role = ref(Roles.Stream.Contributor)
-const roleLoadingStatuses = ref({} as Record<string, boolean>)
 
 const { userSearch, searchVariables } = useUserSearch({
   variables: computed(() => ({
@@ -225,18 +241,22 @@ const onInviteUser = async (user: InvitableUser) => {
   if (isString(user)) {
     if (!isValidEmail(user)) return
     // Invite email
+    loading.value = true
     await createInvite({
       email: user,
       role: role.value,
       projectId: props.project.id
     })
+    loading.value = false
   } else {
     // Invite existing user
+    loading.value = true
     await createInvite({
       userId: user.id,
       role: role.value,
       projectId: props.project.id
     })
+    loading.value = false
   }
 }
 
@@ -246,13 +266,13 @@ const onCollaboratorRoleChange = async (
 ) => {
   if (collaborator.inviteId) return
 
-  roleLoadingStatuses.value[collaborator.id] = true
+  loading.value = true
   await updateRole({
     projectId: props.project.id,
     userId: collaborator.id,
     role: newRole
   })
-  roleLoadingStatuses.value[collaborator.id] = false
+  loading.value = false
 
   if (!newRole) {
     // Remove from team
@@ -278,4 +298,10 @@ const isValidEmail = (val: string) =>
   }) === true
     ? true
     : false
+
+const onChangeVisibility = async (visibility: ProjectVisibility) => {
+  loading.value = true
+  await updateProject({ visibility, id: props.project.id })
+  loading.value = false
+}
 </script>

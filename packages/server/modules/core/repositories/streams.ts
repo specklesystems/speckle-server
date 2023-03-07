@@ -758,14 +758,26 @@ export async function getStreamsSourceApps(streamIds: string[]) {
   return mapValues(mappedToSets, (v) => [...v.values()])
 }
 
+const isProjectUpdateInput = (
+  i: StreamUpdateInput | ProjectUpdateInput
+): i is ProjectUpdateInput => has(i, 'visibility')
+
 export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
   const { id: streamId } = update
 
   if (!update.name) update.name = null // to prevent saving name ''
   const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
 
-  if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-    validUpdate.isDiscoverable = false
+  if (isProjectUpdateInput(update)) {
+    if (has(validUpdate, 'visibility')) {
+      validUpdate.isPublic = update.visibility !== ProjectVisibility.Private
+      validUpdate.isDiscoverable = update.visibility === ProjectVisibility.Public
+      delete validUpdate['visibility'] // cause it's not a real column
+    }
+  } else {
+    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+      validUpdate.isDiscoverable = false
+    }
   }
 
   if (!Object.keys(validUpdate).length) return null

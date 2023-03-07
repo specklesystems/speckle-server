@@ -10,7 +10,7 @@ import {
   Version
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -50,28 +50,30 @@ export type CommitGraphQLReturn = Commit & {
   author: string
 }
 
-export type ProjectGraphQLReturn = Omit<
-  Project,
-  | 'modelCount'
-  | 'role'
-  | 'team'
-  | 'versionCount'
-  | 'commentThreadCount'
-  | 'sourceApps'
-  | 'commentThreads'
-  | 'models'
-  | 'structuredModels'
-  | 'modelsTree'
-  | 'model'
-  | 'modelChildrenTree'
-  | 'viewerResources'
-> & {
-  /**
-   * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
-   * be resolved by the Project.role resolver in an efficient manner.
-   */
-  role?: string | null
-}
+export type ProjectGraphQLReturn = StreamRecord &
+  Omit<
+    Project,
+    | 'modelCount'
+    | 'role'
+    | 'team'
+    | 'versionCount'
+    | 'commentThreadCount'
+    | 'sourceApps'
+    | 'commentThreads'
+    | 'models'
+    | 'structuredModels'
+    | 'modelsTree'
+    | 'model'
+    | 'modelChildrenTree'
+    | 'viewerResources'
+    | 'visibility'
+  > & {
+    /**
+     * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
+     * be resolved by the Project.role resolver in an efficient manner.
+     */
+    role?: string | null
+  }
 
 export type ModelGraphQLReturn = Omit<
   Model,

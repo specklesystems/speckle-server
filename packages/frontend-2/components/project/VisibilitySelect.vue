@@ -6,6 +6,7 @@
     :show-label="showLabel"
     :name="name || 'visibility'"
     :allow-unset="false"
+    :disabled="disabled"
     by="id"
   >
     <template #something-selected="{ value }">
@@ -35,6 +36,7 @@ const props = defineProps<{
   modelValue: ProjectVisibility
   showLabel?: boolean
   name?: string
+  disabled?: boolean
 }>()
 
 const items = ref<

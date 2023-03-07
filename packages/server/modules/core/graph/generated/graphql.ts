@@ -1203,6 +1203,7 @@ export type Project = {
   versionCount: Scalars['Int'];
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
+  visibility: ProjectVisibility;
 };
 
 
@@ -1393,7 +1394,7 @@ export type ProjectMutationsDeleteArgs = {
 
 
 export type ProjectMutationsUpdateArgs = {
-  stream: ProjectUpdateInput;
+  update: ProjectUpdateInput;
 };
 
 
@@ -1406,14 +1407,8 @@ export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  /**
-   * Whether the stream (if public) can be found on public stream exploration pages
-   * and searches
-   */
-  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
-  /** Whether the stream can be viewed by non-contributors */
-  isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
 };
 
 export type ProjectUpdateRoleInput = {
@@ -3318,6 +3313,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
+  visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3368,7 +3364,7 @@ export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType e
   createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
   invites?: Resolver<ResolversTypes['ProjectInviteMutations'], ParentType, ContextType>;
-  update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'stream'>>;
+  update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'update'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

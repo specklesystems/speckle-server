@@ -45,3 +45,12 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     ...ProjectPageModelsActions
   }
 `)
+
+export const projectUpdatableMetadataFragment = graphql(`
+  fragment ProjectUpdatableMetadata on Project {
+    id
+    name
+    description
+    visibility
+  }
+`)
