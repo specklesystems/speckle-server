@@ -63,6 +63,11 @@ const buildAuthUrl = (strat: StrategyType) => {
   const url = new URL(strat.url, apiOrigin)
   url.searchParams.set('appId', props.appId)
   url.searchParams.set('challenge', props.challenge)
+
+  if (inviteToken.value) {
+    url.searchParams.set('token', inviteToken.value)
+  }
+
   return url.toString()
 }
 

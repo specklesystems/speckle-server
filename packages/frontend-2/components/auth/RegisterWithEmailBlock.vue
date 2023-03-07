@@ -42,7 +42,7 @@
     </div>
     <div class="mt-8 text-center">
       <span class="mr-2">Already have an account?</span>
-      <CommonTextLink :to="loginRoute">Log in</CommonTextLink>
+      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
     </div>
   </form>
 </template>
@@ -78,6 +78,7 @@ const props = defineProps<{
 }>()
 
 const { handleSubmit } = useForm<FormValues>()
+const router = useRouter()
 
 const loading = ref(false)
 const password = ref('')
@@ -85,14 +86,26 @@ const password = ref('')
 const emailRules = [isEmail]
 const nameRules = [isRequired]
 
-const { signUpWithEmail } = useAuthManager()
+const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+
+const finalLoginRoute = computed(() => {
+  const result = router.resolve({
+    path: loginRoute,
+    query: inviteToken.value ? { token: inviteToken.value } : {}
+  })
+  return result.fullPath
+})
 
 const onSubmit = handleSubmit(async (fullUser) => {
   try {
     loading.value = true
     const user = fullUser
-    await signUpWithEmail({ user, challenge: props.challenge })
+    await signUpWithEmail({
+      user,
+      challenge: props.challenge,
+      inviteToken: inviteToken.value
+    })
   } catch (e) {
     triggerNotification({
       type: ToastNotificationType.Danger,

@@ -5,6 +5,7 @@ export const loginServerInfoQuery = graphql(`
     serverInfo {
       ...AuthStategiesServerInfoFragment
       ...ServerTermsOfServicePrivacyPolicyFragment
+      ...AuthRegisterPanelServerInfo
     }
   }
 `)
