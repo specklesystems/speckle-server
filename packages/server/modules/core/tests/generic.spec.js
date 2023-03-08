@@ -124,10 +124,8 @@ describe('Generic AuthN & AuthZ controller tests', () => {
 
     before(async function () {
       // Seeding
-      await Promise.all([
-        createUser(serverOwner).then((id) => (serverOwner.id = id)),
-        createUser(otherGuy).then((id) => (otherGuy.id = id))
-      ])
+      serverOwner.id = await createUser(serverOwner)
+      otherGuy.id = await createUser(otherGuy)
 
       await Promise.all([
         createStream({ ...myStream, ownerId: serverOwner.id }).then(

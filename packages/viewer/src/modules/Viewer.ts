@@ -25,7 +25,7 @@ import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import { SpeckleType } from './converter/GeometryConverter'
+import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
 import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
@@ -78,6 +78,7 @@ export class Viewer extends EventEmitter implements IViewer {
     super()
     Logger.useDefaults()
     Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
+    GeometryConverter.keepGeometryData = params.keepGeometryData
 
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
@@ -99,7 +100,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any)._V = this // For debugging! ಠ_ಠ
+    // ;(window as any)._V = this // For debugging! ಠ_ಠ
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.disable()
@@ -442,6 +443,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.zoom()
     this.speckleRenderer.resetPipeline(true)
     this.emit(ViewerEvent.LoadComplete, url)
+    this.loaders[url].dispose()
+    delete this.loaders[url]
   }
 
   public async loadObjectAsync(
@@ -463,6 +466,8 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)
     }
+    this.loaders[url].dispose()
+    delete this.loaders[url]
   }
 
   public async cancelLoad(url: string, unload = false) {

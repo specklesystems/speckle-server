@@ -5,7 +5,7 @@
 </mj-section>
 <mj-section
   border-radius="8px"
-  background-color="linear-gradient(90deg, rgba(0,143,233,1) 0%, rgba(0,76,235,1) 100%)"
+  background-color="rgba(59, 130, 246, 1)"
   padding="10px 0 15px 0"
 >
   <mj-column>

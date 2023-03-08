@@ -422,6 +422,7 @@ export default class Coverter {
   }
 
   private async PolycurveToNode(obj, node) {
+    node.model.nestedNodes = []
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       /** Not a big fan of this... */
@@ -438,7 +439,9 @@ export default class Coverter {
         children: []
       })
       await this.convertToNode(element, nestedNode)
-      WorldTree.getInstance().addNode(nestedNode, node)
+      /** We're not adding the segments as children since they shouldn't exist as individual line elements */
+      node.model.nestedNodes.push(nestedNode)
+      // WorldTree.getInstance().addNode(nestedNode, node)
     }
   }
 
