@@ -30,7 +30,6 @@ import {
   useStreamInviteAndNotify
 } from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
-import { NotFoundError } from '@/modules/shared/errors'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
@@ -45,7 +44,7 @@ export = {
         streamId: args.id,
         userId: context.userId
       })
-      if (!stream) throw new NotFoundError('Project not found')
+      if (!stream) return null
 
       await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 

@@ -175,6 +175,12 @@ module.exports = {
     }
   },
   Version: {
+    async commentThreadCount(parent, _args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ApolloForbiddenError('You are not authorized.')
+
+      return await context.loaders.commits.getCommentThreadCount.load(parent.id)
+    },
     async commentThreads(parent, args, context) {
       const stream = await context.loaders.commits.getCommitStream.load(parent.id)
       await authorizeProjectCommentsAccess({

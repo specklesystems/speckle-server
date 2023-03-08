@@ -34,6 +34,7 @@ import {
   getCommentReplyCounts,
   getCommentsResources,
   getCommentsViewedAt,
+  getCommitCommentCounts,
   getStreamCommentCounts
 } from '@/modules/comments/repositories/comments'
 import {
@@ -229,7 +230,14 @@ export function buildRequestLoaders(ctx: AuthContext) {
           const results = keyBy(await getCommitBranches(commitIds.slice()), 'commitId')
           return commitIds.map((id) => results[id] || null)
         }
-      )
+      ),
+      getCommentThreadCount: new DataLoader<string, number>(async (commitIds) => {
+        const results = keyBy(
+          await getCommitCommentCounts(commitIds.slice(), { threadsOnly: true }),
+          'commitId'
+        )
+        return commitIds.map((i) => results[i]?.count || 0)
+      })
     },
     comments: {
       getViewedAt: new DataLoader<string, Nullable<Date>>(async (commentIds) => {

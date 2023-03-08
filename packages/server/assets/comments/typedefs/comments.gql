@@ -31,6 +31,10 @@ extend type Project {
 
 extend type Version {
   """
+  The total number of comment threads in this version
+  """
+  commentThreadCount: Int!
+  """
   All comment threads in this version
   """
   commentThreads(cursor: String, limit: Int! = 25): CommentCollection!

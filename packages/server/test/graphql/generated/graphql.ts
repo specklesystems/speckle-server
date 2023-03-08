@@ -2327,6 +2327,8 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  /** The total number of comment threads in this version */
+  commentThreadCount: Scalars['Int'];
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];

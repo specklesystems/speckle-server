@@ -26,15 +26,7 @@
             ref="itemContainer"
             class="flex flex-wrap overflow-hidden space-x-0.5 h-5"
           >
-            <CommonBadge
-              v-for="item in value"
-              :key="item.name"
-              color-classes="text-foreground-on-primary"
-              rounded
-              :style="{ backgroundColor: item.bgColor }"
-            >
-              {{ item.short }}
-            </CommonBadge>
+            <SourceAppBadge v-for="item in value" :key="item.name" :source-app="item" />
           </div>
           <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
             +{{ hiddenSelectedItemCount }}

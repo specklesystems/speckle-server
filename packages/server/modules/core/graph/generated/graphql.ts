@@ -2335,6 +2335,8 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  /** The total number of comment threads in this version */
+  commentThreadCount: Scalars['Int'];
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
@@ -3663,6 +3665,7 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
   authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

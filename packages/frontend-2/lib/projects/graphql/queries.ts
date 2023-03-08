@@ -91,3 +91,22 @@ export const projectInviteQuery = graphql(`
     }
   }
 `)
+
+export const projectModelCheckQuery = graphql(`
+  query ProjectModelCheck($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        id
+      }
+    }
+  }
+`)
+
+export const projectModelPageQuery = graphql(`
+  query ProjectModelPage($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      ...ProjectModelPageHeaderProject
+      ...ProjectModelPageVersionsProject
+    }
+  }
+`)

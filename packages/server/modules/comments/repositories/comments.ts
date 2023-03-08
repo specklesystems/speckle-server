@@ -178,7 +178,6 @@ export async function getStreamCommentCounts(
   const q = Comments.knex()
     .select(Comments.col.streamId)
     .whereIn(Comments.col.streamId, streamIds)
-    .andWhere(Comments.col.archived, false)
     .count()
     .groupBy(Comments.col.streamId)
 
@@ -192,6 +191,36 @@ export async function getStreamCommentCounts(
 
   const results = (await q) as { streamId: string; count: string }[]
   return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getCommitCommentCounts(
+  commitIds: string[],
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
+) {
+  if (!commitIds?.length) return []
+  const { threadsOnly, includeArchived } = options || {}
+
+  const q = CommentLinks.knex()
+    .select(CommentLinks.col.resourceId)
+    .where(CommentLinks.col.resourceType, ResourceType.Commit)
+    .whereIn(CommentLinks.col.resourceId, commitIds)
+    .count()
+    .groupBy(CommentLinks.col.resourceId)
+
+  if (threadsOnly || !includeArchived) {
+    q.innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+
+    if (threadsOnly) {
+      q.where(Comments.col.parentComment, null)
+    }
+
+    if (!includeArchived) {
+      q.where(Comments.col.archived, false)
+    }
+  }
+
+  const results = (await q) as { resourceId: string; count: string }[]
+  return results.map((r) => ({ commitId: r.resourceId, count: parseInt(r.count) }))
 }
 
 export async function getStreamCommentCount(
