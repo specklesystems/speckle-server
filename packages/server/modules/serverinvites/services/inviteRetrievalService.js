@@ -17,15 +17,7 @@ const { keyBy, uniq } = require('lodash')
  * The token field is intentionally ommited from this and only managed through the .token resolver
  * for extra security - so that no one accidentally returns it out from this service
  *
- * @typedef {{
- *  id: string,
- *  inviteId: string,
- *  streamId: string,
- *  title: string,
- *  role: string,
- *  invitedById: string,
- *  user: import('@/modules/core/helpers/userHelper').LimitedUserRecord | null,
- * }} PendingStreamCollaboratorGraphQLType
+ * @typedef {import('@/modules/serverinvites/helpers/graphTypes').PendingStreamCollaboratorGraphQLReturn} PendingStreamCollaboratorGraphQLType
  */
 
 /**

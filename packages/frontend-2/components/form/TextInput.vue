@@ -35,7 +35,7 @@
         v-model="value"
         :type="type"
         :name="name"
-        :class="[coreClasses, iconClasses, sizeClasses]"
+        :class="[coreClasses, iconClasses, sizeClasses, inputClasses || '']"
         :placeholder="placeholder"
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
@@ -47,31 +47,33 @@
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
       />
-      <a
-        v-if="showClear"
-        title="Clear input"
-        class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer"
-        @click="clear"
-        @keydown="clear"
-      >
-        <span class="text-xs sr-only">Clear input</span>
-        <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
-      </a>
-      <div
-        v-if="errorMessage"
-        :class="[
-          'pointer-events-none absolute inset-y-0 right-0 flex items-center',
-          showClear ? 'pr-8' : 'pr-2'
-        ]"
-      >
-        <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
-      </div>
-      <div
-        v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
-      >
-        *
-      </div>
+      <slot name="input-right">
+        <a
+          v-if="showClear"
+          title="Clear input"
+          class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer"
+          @click="clear"
+          @keydown="clear"
+        >
+          <span class="text-xs sr-only">Clear input</span>
+          <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
+        </a>
+        <div
+          v-if="errorMessage"
+          :class="[
+            'pointer-events-none absolute inset-y-0 right-0 flex items-center',
+            showClear ? 'pr-8' : 'pr-2'
+          ]"
+        >
+          <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
+        </div>
+        <div
+          v-if="showRequired && !errorMessage"
+          class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
+        >
+          *
+        </div>
+      </slot>
     </div>
     <p
       v-if="helpTipId"
@@ -219,6 +221,10 @@ const props = defineProps({
   fullWidth: {
     type: Boolean,
     default: false
+  },
+  inputClasses: {
+    type: String,
+    default: null
   }
 })
 
@@ -227,6 +233,8 @@ const emit = defineEmits<{
   (e: 'change', val: { event?: Event; value: string }): void
   (e: 'input', val: { event?: Event; value: string }): void
 }>()
+
+const slots = useSlots()
 
 const inputElement = ref(null as Nullable<HTMLInputElement>)
 
@@ -271,11 +279,13 @@ const iconClasses = computed((): string => {
     classParts.push('pl-10')
   }
 
-  if (errorMessage.value || props.showClear) {
-    if (errorMessage.value && props.showClear) {
-      classParts.push('pr-12')
-    } else {
-      classParts.push('pr-8')
+  if (!slots['input-right']) {
+    if (errorMessage.value || props.showClear) {
+      if (errorMessage.value && props.showClear) {
+        classParts.push('pr-12')
+      } else {
+        classParts.push('pr-8')
+      }
     }
   }
 

@@ -29,6 +29,7 @@ const {
   buildBasicTemplateEmail,
   buildBasicTemplateServerInfo
 } = require('@/modules/emails/services/templateFormatting')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * @typedef {{
@@ -204,14 +205,14 @@ function buildInviteLink(invite) {
   if (isServerInvite(invite)) {
     return new URL(
       `${getRegistrationRoute()}?token=${token}`,
-      process.env.CANONICAL_URL
+      getFrontendOrigin()
     ).toString()
   }
 
   if (resourceTarget === 'streams') {
     return new URL(
       `${getStreamRoute(resourceId)}?token=${token}`,
-      process.env.CANONICAL_URL
+      getFrontendOrigin()
     ).toString()
   } else {
     throw new InviteCreateValidationError('Unexpected resource target type')

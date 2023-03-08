@@ -95,39 +95,15 @@ import { projectRoute } from '~~/lib/common/helpers/route'
 import { omit, debounce, trim } from 'lodash-es'
 import { isNullOrUndefined, Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useApolloClient, useMutationLoading } from '@vue/apollo-composable'
-import {
-  convertThrowIntoFetchResult,
-  getCacheId,
-  getFirstErrorMessage,
-  updateCacheByFilter
-} from '~~/lib/common/helpers/graphql'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useMutationLoading } from '@vue/apollo-composable'
+import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 
 graphql(`
   fragment ProjectPageProjectHeader on Project {
     id
     name
     description
-  }
-`)
-
-const projectUpdatableMetadataFragment = graphql(`
-  fragment ProjectUpdatableMetadata on Project {
-    id
-    name
-    description
-  }
-`)
-
-const updateProjectMetadataMutation = graphql(`
-  mutation UpdateProjectMetadata($update: ProjectUpdateInput!) {
-    projectMutations {
-      update(stream: $update) {
-        id
-        ...ProjectUpdatableMetadata
-      }
-    }
+    visibility
   }
 `)
 
@@ -136,9 +112,8 @@ const props = defineProps<{
 }>()
 
 const mp = useMixpanel()
-const apollo = useApolloClient().client
-const { triggerNotification } = useGlobalToast()
 const anyMutationsLoading = useMutationLoading()
+const updateProject = useUpdateProject()
 
 const titleInput = ref(null as Nullable<HTMLTextAreaElement>)
 const descriptionInput = ref(null as Nullable<HTMLTextAreaElement>)
@@ -204,65 +179,23 @@ const save = async () => {
   const update = currentUpdate.value
 
   mp.track('Stream Action', { type: 'action', name: 'update' })
-  const result = await apollo
-    .mutate({
-      mutation: updateProjectMetadataMutation,
-      variables: {
-        update
-      },
-      optimisticResponse: {
-        projectMutations: {
-          __typename: 'ProjectMutations',
-          update: {
-            __typename: 'Project',
-            id: props.project.id,
-            name: update.name || props.project.name,
-            description:
-              update.description !== null
-                ? update.description
-                : props.project.description
-          }
+  const res = await updateProject(update, {
+    optimisticResponse: {
+      projectMutations: {
+        __typename: 'ProjectMutations',
+        update: {
+          __typename: 'Project',
+          id: props.project.id,
+          visibility: props.project.visibility,
+          name: update.name || props.project.name,
+          description:
+            update.description !== null ? update.description : props.project.description
         }
-      },
-      update: (cache, { data }) => {
-        if (!data?.projectMutations.update) return
-
-        updateCacheByFilter(
-          cache,
-          {
-            fragment: {
-              fragment: projectUpdatableMetadataFragment,
-              fragmentName: 'ProjectUpdatableMetadata',
-              id: getCacheId('Project', update.id)
-            }
-          },
-          (res) => {
-            return {
-              ...res,
-              name: update.name || res.name,
-              description: update.description || res.description
-            }
-          }
-        )
-
-        resetInputs()
       }
-    })
-    .catch(convertThrowIntoFetchResult)
+    }
+  })
 
-  if (result?.data?.projectMutations.update?.id) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Project updated'
-    })
-  } else {
-    const errMsg = getFirstErrorMessage(result.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Project update failed',
-      description: errMsg
-    })
-  }
+  if (res?.id) resetInputs()
 }
 
 const onUpdatableInputKeydown = (e: KeyboardEvent) => {

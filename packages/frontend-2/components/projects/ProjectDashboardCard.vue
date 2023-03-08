@@ -8,7 +8,7 @@
       >
         <div class="text-2xl font-bold group-hover:text-primary transition">
           <NuxtLink :to="projectRoute(project.id)">{{ project.name }}</NuxtLink>
-          <UserAvatarGroup :users="project.team" :max-count="2" />
+          <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
         <div class="flex-grow"></div>
         <div class="text-xs text-foreground-2 flex items-center">
@@ -198,6 +198,7 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
   )
 })
 
+const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const models = computed(() => props.project.models?.items || [])
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 </script>

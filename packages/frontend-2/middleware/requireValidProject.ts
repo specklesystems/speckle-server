@@ -1,15 +1,18 @@
 import { ApolloClient } from '@apollo/client/core'
+import { Optional } from '@speckle/shared'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+import { registerRoute } from '~~/lib/common/helpers/route'
+import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
 
 /**
  * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
+  const inviteToken = to.query.token as Optional<string>
 
   const { $apollo } = useNuxtApp()
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -17,7 +20,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data, errors } = await client
     .query({
-      query: projectPageQuery,
+      query: projectAccessCheckQuery,
       variables: { id: projectId }
     })
     .catch(convertThrowIntoFetchResult)
@@ -36,6 +39,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
   if (isForbidden) {
+    if (inviteToken) {
+      // Redirect to registration page for now
+      return navigateTo({
+        path: registerRoute,
+        query: {
+          token: inviteToken
+        }
+      })
+    }
+
     return abortNavigation(
       createError({
         statusCode: 403,

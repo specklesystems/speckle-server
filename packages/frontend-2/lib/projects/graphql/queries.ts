@@ -1,5 +1,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const projectAccessCheckQuery = graphql(`
+  query ProjectAccessCheck($id: String!) {
+    project(id: $id) {
+      id
+    }
+  }
+`)
+
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter) {
     activeUser {
@@ -10,6 +18,7 @@ export const projectsDashboardQuery = graphql(`
           ...ProjectDashboardItem
         }
       }
+      ...ProjectsInviteBanners
     }
   }
 `)
@@ -71,6 +80,14 @@ export const latestCommentThreadsQuery = graphql(`
           ...ProjectPageLatestItemsCommentItem
         }
       }
+    }
+  }
+`)
+
+export const projectInviteQuery = graphql(`
+  query ProjectInvite($projectId: String!, $token: String) {
+    projectInvite(projectId: $projectId, token: $token) {
+      ...ProjectsInviteBanner
     }
   }
 `)

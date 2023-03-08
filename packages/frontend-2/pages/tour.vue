@@ -1,7 +1,7 @@
 <template>
   <div>
     <ClientOnly>
-      <TourViewer />
+      <TourViewer v-if="false" />
     </ClientOnly>
   </div>
 </template>

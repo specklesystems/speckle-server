@@ -48,6 +48,7 @@ graphql(`
     createdAt
     ...ProjectPageProjectHeader
     ...ProjectPageStatsBlockTeam
+    ...ProjectPageTeamDialog
     ...ProjectPageStatsBlockVersions
     ...ProjectPageStatsBlockModels
     ...ProjectPageStatsBlockComments
@@ -91,9 +92,17 @@ useProjectUpdateTracking(projectId, (event) => {
   })
 })
 
-const { result: projectPageResult } = useQuery(projectPageQuery, () => ({
-  id: projectId.value
-}))
+const { result: projectPageResult } = useQuery(
+  projectPageQuery,
+  () => ({
+    id: projectId.value
+  }),
+  () => ({
+    // Custom error policy so that a failing invitedTeam resolver (due to access rights)
+    // doesn't kill the entire query
+    errorPolicy: 'all'
+  })
+)
 
 const project = computed(() => projectPageResult.value?.project)
 </script>

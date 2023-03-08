@@ -8,10 +8,11 @@ const {
   setStreamFavorited,
   canUserFavoriteStream,
   deleteStream: deleteStreamFromDb,
-  updateStream: updateStreamInDb
+  updateStream: updateStreamInDb,
+  revokeStreamPermissions,
+  grantStreamPermissions
 } = require('@/modules/core/repositories/streams')
 const { UnauthorizedError, InvalidArgumentError } = require('@/modules/shared/errors')
-const { StreamAccessUpdateError } = require('@/modules/core/errors/stream')
 const { dbLogger } = require('@/logging/logging')
 const {
   createStreamReturnRecord
@@ -50,75 +51,18 @@ module.exports = {
 
   setStreamFavorited,
 
+  /**
+   * @deprecated Use repository method directly
+   */
   async grantPermissionsStream({ streamId, userId, role }) {
-    // upserts the existing role (sets a new one!)
-    // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
-    const query =
-      StreamAcl.knex().insert({ userId, resourceId: streamId, role }).toString() +
-      ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
-
-    await knex.raw(query)
-
-    // update stream updated at
-    const [stream] = await Streams.knex()
-      .where({ id: streamId })
-      .update({ updatedAt: knex.fn.now() }, '*')
-    return stream
+    return await grantStreamPermissions({ streamId, userId, role })
   },
 
+  /**
+   * @deprecated Use repository method directly
+   */
   async revokePermissionsStream({ streamId, userId }) {
-    const [streamAclEntriesCount] = await StreamAcl.knex()
-      // let [streamAclEntriesCount] = await StreamAcl.knex()
-      .where({ resourceId: streamId })
-      .count()
-    // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
-
-    if (parseInt(streamAclEntriesCount.count) === 1)
-      throw new StreamAccessUpdateError(
-        'Stream has only one ownership link left - cannot revoke permissions.',
-        { info: { streamId, userId } }
-      )
-
-    // TODO: below behaviour not correct. Flow:
-    // Count owners
-    // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
-
-    const aclEntry = await StreamAcl.knex()
-      .where({ resourceId: streamId, userId })
-      .select('*')
-      .first()
-
-    if (aclEntry.role === 'stream:owner') {
-      const ownersCount = StreamAcl.knex().count({
-        resourceId: streamId,
-        role: 'stream:owner'
-      })
-      if (ownersCount === 1)
-        throw new StreamAccessUpdateError(
-          'Could not revoke permissions for last admin',
-          {
-            info: { streamId, userId }
-          }
-        )
-      else {
-        await StreamAcl.knex().where({ resourceId: streamId, userId }).del()
-        return true
-      }
-    }
-
-    const delCount = await StreamAcl.knex()
-      .where({ resourceId: streamId, userId })
-      .del()
-
-    if (delCount === 0)
-      throw new StreamAccessUpdateError('Could not revoke permissions for user', {
-        info: { streamId, userId }
-      })
-
-    // update stream updated at
-    await Streams.knex().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
-
-    return true
+    return await revokeStreamPermissions({ streamId, userId })
   },
 
   /**

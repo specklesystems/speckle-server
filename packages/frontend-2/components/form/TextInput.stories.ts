@@ -1,6 +1,7 @@
 import { userEvent, within } from '@storybook/testing-library'
 import FormTextInput from '~~/components/form/TextInput.vue'
-import { Story, Meta } from '@storybook/vue3'
+import FormButton from '~~/components/form/Button.vue'
+import { StoryObj, Meta } from '@storybook/vue3'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 import { wait } from '@speckle/shared'
 
@@ -44,7 +45,7 @@ const buildTextWriterPlayFunction =
     userEvent.tab()
   }
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { FormTextInput },
     setup() {
@@ -65,7 +66,8 @@ export const Default: Story = {
     showRequired: false,
     showLabel: true,
     disabled: false,
-    validateOnMount: false
+    validateOnMount: false,
+    inputClasses: ''
   },
   parameters: {
     docs: {
@@ -76,7 +78,7 @@ export const Default: Story = {
   }
 }
 
-export const Email: Story = mergeStories(Default, {
+export const Email: StoryObj = mergeStories(Default, {
   play: buildTextWriterPlayFunction('admin@example.com'),
   args: {
     type: 'email',
@@ -134,5 +136,29 @@ export const WithClear = mergeStories(Default, {
     name: generateRandomName('withclear'),
     label: 'Click on cross to clear',
     showClear: true
+  }
+})
+
+export const WithCustomRightSlot = mergeStories(Default, {
+  render: (args) => ({
+    components: { FormTextInput, FormButton },
+    setup() {
+      return { args }
+    },
+    template: `<div class="bg-foundation p-5">
+      <form-text-input v-bind="args" @update:modelValue="args['update:modelValue']">
+        <template #input-right>
+          <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+            <form-button size="xs">Click me</form-button>
+          </div>
+        </template>
+      </form-text-input>
+    </div>`
+  }),
+  play: buildTextWriterPlayFunction('12345'),
+  args: {
+    name: generateRandomName('withcustomrightslot'),
+    label: 'Right side is customized with a button!',
+    inputClasses: 'pr-20'
   }
 })
