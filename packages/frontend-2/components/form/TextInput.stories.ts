@@ -151,7 +151,7 @@ export const WithCustomRightSlot = mergeStories(Default, {
           <div class="absolute inset-y-0 right-0 flex items-center pr-2">
             <form-button size="xs">Click me</form-button>
           </div>
-        <template/>
+        </template>
       </form-text-input>
     </div>`
   }),
