@@ -121,6 +121,13 @@ export class RenderTree {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
         if (renderNode.speckleType === SpeckleType.BlockInstance) {
           transform.premultiply(renderNode.geometry.transform)
+        } else if (renderNode.speckleType === SpeckleType.RevitInstance) {
+          /** Revit Instances *hosted* on other instances do not stack the host's transform */
+          if (k > 0) {
+            const curentAncestorId = ancestors[k].model.raw.id
+            if (ancestors[k - 1].model.raw.host === curentAncestorId) continue
+          }
+          transform.premultiply(renderNode.geometry.transform)
         }
       }
     }

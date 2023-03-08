@@ -108,7 +108,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
 
   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-  // console.log(ids[0])
+  console.log(selectionInfo)
   await viewer.selectObjects(ids as string[])
 })
 
@@ -137,7 +137,7 @@ sandbox.makeBatchesUI()
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
-  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
   // 'Super' heavy revit shit
   // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
   // IFC building (good for a tree based structure)
@@ -246,10 +246,22 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/8f297ad0cd'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
+  // large lines
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  // Instances Rhino
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
+  // Instances Revit
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/92858681b7'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/655771674e'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/00dbbf4509'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/46fd255010'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
+  // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
   // Big curves
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
   // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
   // Jonathon's lines
   // 'https://speckle.xyz/streams/7ce9010d71/commits/8cd9e7e4fc'
   // 'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
+  'https://speckle.xyz/streams/813b728084/commits/e2f5ac9775'
 )

@@ -20,6 +20,7 @@ export enum SpeckleType {
   Circle = 'Circle',
   Arc = 'Arc',
   Ellipse = 'Ellipse',
+  RevitInstance = 'RevitInstance',
   Unknown = 'Unknown'
 }
 
@@ -86,6 +87,8 @@ export class GeometryConverter {
         return GeometryConverter.EllipseToGeometryData(node)
       case SpeckleType.View3D:
         return GeometryConverter.View3DToGeometryData(node)
+      case SpeckleType.RevitInstance:
+        return GeometryConverter.RevitInstanceToGeometryData(node)
       default:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
@@ -158,6 +161,42 @@ export class GeometryConverter {
     const matrixData: number[] = Array.isArray(node.raw.transform)
       ? node.raw.transform
       : node.raw.transform.value
+      ? node.raw.transform.value
+      : node.raw.transform.matrix
+    const matrix = new Matrix4().fromArray(matrixData).transpose()
+    /** We need to scale the transform, but not propagate the scale towards the block's children
+     *  They do the scaling on their own. That's why we multiply with the inverse scale at the end
+     *  Not 100% sure on this if the original block matrix containts it's own scale + rotation
+     */
+    const transform: Matrix4 = new Matrix4()
+      .makeScale(conversionFactor, conversionFactor, conversionFactor)
+      .multiply(matrix)
+      .multiply(
+        new Matrix4().makeScale(
+          1 / conversionFactor,
+          1 / conversionFactor,
+          1 / conversionFactor
+        )
+      )
+
+    return {
+      attributes: null,
+      bakeTransform: null,
+      transform
+    } as GeometryData
+  }
+
+  private static RevitInstanceToGeometryData(node: NodeData): GeometryData {
+    const conversionFactor = getConversionFactor(node.raw.units)
+    /**
+     * Speckle matrices are row major. Three's 'fromArray' function assumes
+     * the matrix is in column major. That's why we transpose it here.
+     */
+    const matrixData: number[] = Array.isArray(node.raw.transform)
+      ? node.raw.transform
+      : node.raw.transform.value
+      ? node.raw.transform.value
+      : node.raw.transform.matrix
     const matrix = new Matrix4().fromArray(matrixData).transpose()
     /** We need to scale the transform, but not propagate the scale towards the block's children
      *  They do the scaling on their own. That's why we multiply with the inverse scale at the end

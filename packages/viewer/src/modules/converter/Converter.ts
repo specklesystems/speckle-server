@@ -34,7 +34,8 @@ export default class Coverter {
     Curve: this.CurveToNode.bind(this),
     Circle: this.CircleToNode.bind(this),
     Arc: this.ArcToNode.bind(this),
-    Ellipse: this.EllipseToNode.bind(this)
+    Ellipse: this.EllipseToNode.bind(this),
+    RevitInstance: this.RevitInstanceToNode.bind(this)
   }
 
   constructor(objectLoader: unknown) {
@@ -321,6 +322,32 @@ export default class Coverter {
 
       await this.convertToNode(ref, childNode)
     }
+  }
+
+  private async RevitInstanceToNode(obj, node) {
+    const traverseList = async (list, hostId?: string) => {
+      if (!list) return
+      for (const def of list) {
+        const ref = await this.resolveReference(def)
+        const childNode: TreeNode = WorldTree.getInstance().parse({
+          id: this.getNodeId(ref),
+          raw: Object.assign({}, ref),
+          atomic: true,
+          children: []
+        })
+        if (hostId) {
+          childNode.model.raw.host = hostId
+        }
+        WorldTree.getInstance().addNode(childNode, node)
+        await this.convertToNode(ref, childNode)
+      }
+    }
+    const definition = await this.resolveReference(obj.definition)
+    node.model.raw.definition = definition
+
+    await traverseList(definition.elements)
+    await traverseList(definition.displayValue)
+    await traverseList(obj.elements, obj.id)
   }
 
   private async PointcloudToNode(obj, node) {
