@@ -11,7 +11,7 @@
       <div class="flex flex-row space-x-4">
         <FormSelectUsers
           v-model="selectedMembers"
-          :users="project.team"
+          :users="team"
           :disabled="isQueryLoading"
           multiple
           search
@@ -49,7 +49,9 @@ graphql(`
     modelCount
     sourceApps
     team {
-      ...FormUsersSelectItem
+      user {
+        ...FormUsersSelectItem
+      }
     }
   }
 `)
@@ -79,4 +81,6 @@ const availableSourceApps = computed((): SourceAppDefinition[] =>
     props.project.sourceApps.find((pa) => pa.includes(a.searchKey))
   )
 )
+
+const team = computed(() => props.project.team.map((t) => t.user))
 </script>

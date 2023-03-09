@@ -1,5 +1,5 @@
 'use strict'
-const { ApolloError, ForbiddenError, UserInputError } = require('apollo-server-express')
+const { ApolloError, UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
 const {
@@ -31,11 +31,8 @@ const {
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 const {
-  removeStreamCollaborator,
-  addOrUpdateStreamCollaborator,
-  isStreamCollaborator
+  removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
 const {
   getDiscoverableStreams
 } = require('@/modules/core/services/streams/discoverableStreams')
@@ -47,7 +44,8 @@ const {
 const {
   deleteStreamAndNotify,
   updateStreamAndNotify,
-  createStreamReturnRecord
+  createStreamReturnRecord,
+  updateStreamRoleAndNotify
 } = require('@/modules/core/services/streams/management')
 
 // subscription events
@@ -243,32 +241,11 @@ module.exports = {
         'stream:owner'
       )
 
-      const smallestStreamRole = Roles.Stream.Reviewer
-      const params = {
-        streamId: args.permissionParams.streamId,
-        userId: args.permissionParams.userId,
-        role: args.permissionParams.role.toLowerCase() || smallestStreamRole
-      }
-
-      // We only allow changing roles, not adding access - for that the user must use stream invites
-      const isCollaboratorAlready = await isStreamCollaborator(
-        params.userId,
-        params.streamId
-      )
-      if (!isCollaboratorAlready) {
-        throw new ForbiddenError(
-          "Cannot grant permissions to users who aren't collaborators already - invite the user to the stream first"
-        )
-      }
-
-      await addOrUpdateStreamCollaborator(
-        params.streamId,
-        params.userId,
-        params.role,
+      const result = await updateStreamRoleAndNotify(
+        args.permissionParams,
         context.userId
       )
-
-      return true
+      return !!result
     },
 
     async streamRevokePermission(parent, args, context) {
@@ -278,13 +255,11 @@ module.exports = {
         'stream:owner'
       )
 
-      await removeStreamCollaborator(
-        args.permissionParams.streamId,
-        args.permissionParams.userId,
+      const result = await updateStreamRoleAndNotify(
+        args.permissionParams,
         context.userId
       )
-
-      return true
+      return !!result
     },
 
     async streamFavorite(_parent, args, ctx) {

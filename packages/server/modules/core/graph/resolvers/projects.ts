@@ -1,5 +1,5 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import {
   getUserStreamsCount,
@@ -15,9 +15,20 @@ import {
 import {
   createStreamReturnRecord,
   deleteStreamAndNotify,
-  updateStreamAndNotify
+  updateStreamAndNotify,
+  updateStreamRoleAndNotify
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
+import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
+import {
+  getPendingStreamCollaborators,
+  getUserPendingStreamInvites
+} from '@/modules/serverinvites/services/inviteRetrievalService'
+import {
+  createStreamInviteAndNotify,
+  useStreamInviteAndNotify
+} from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
 import { NotFoundError } from '@/modules/shared/errors'
 import {
@@ -57,9 +68,9 @@ export = {
     async createForOnboarding(_parent, _args, { userId }) {
       return await createOnboardingStream(userId!)
     },
-    async update(_parent, { stream }, { userId }) {
-      await authorizeResolver(userId, stream.id, Roles.Stream.Owner)
-      return await updateStreamAndNotify(stream, userId!)
+    async update(_parent, { update }, { userId }) {
+      await authorizeResolver(userId, update.id, Roles.Stream.Owner)
+      return await updateStreamAndNotify(update, userId!)
     },
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult(
@@ -76,6 +87,33 @@ export = {
       )
 
       return project
+    },
+    async updateRole(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId, args.input.projectId, Roles.Stream.Owner)
+      return await updateStreamRoleAndNotify(args.input, ctx.userId!)
+    },
+    async leave(_parent, args, context) {
+      const { id } = args
+      const { userId } = context
+      await removeStreamCollaborator(id, userId!, userId!)
+      return true
+    },
+    invites: () => ({})
+  },
+  ProjectInviteMutations: {
+    async create(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId!, args.input.projectId, Roles.Stream.Owner)
+      await createStreamInviteAndNotify(args.input, ctx.userId!)
+      return ctx.loaders.streams.getStream.load(args.input.projectId)
+    },
+    async use(_parent, args, ctx) {
+      await useStreamInviteAndNotify(args.input, ctx.userId!)
+      return true
+    },
+    async cancel(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId, args.projectId, Roles.Stream.Owner)
+      await cancelStreamInvite(args.projectId, args.inviteId)
+      return ctx.loaders.streams.getStream.load(args.projectId)
     }
   },
   User: {
@@ -95,6 +133,10 @@ export = {
       })
 
       return { totalCount, cursor, items: streams }
+    },
+    async projectInvites(_parent, _args, context) {
+      const { userId } = context
+      return await getUserPendingStreamInvites(userId!)
     }
   },
   Project: {
@@ -106,7 +148,10 @@ export = {
     },
     async team(parent) {
       const users = await getStreamCollaborators(parent.id)
-      return users
+      return users.map((u) => ({
+        user: u,
+        role: u.role
+      }))
     },
     async modelCount(parent, _args, ctx) {
       return await ctx.loaders.streams.getBranchCount.load(parent.id)
@@ -116,6 +161,24 @@ export = {
     },
     async sourceApps(parent, _args, ctx) {
       return ctx.loaders.streams.getSourceApps.load(parent.id)
+    },
+    async invitedTeam(parent) {
+      return await getPendingStreamCollaborators(parent.id)
+    },
+    async visibility(parent) {
+      const { isPublic, isDiscoverable } = parent
+      if (!isPublic) return ProjectVisibility.Private
+      return isDiscoverable ? ProjectVisibility.Public : ProjectVisibility.Unlisted
+    }
+  },
+  PendingStreamCollaborator: {
+    async projectId(parent) {
+      return parent.streamId
+    },
+    async projectName(parent, _args, ctx) {
+      const { streamId } = parent
+      const stream = await ctx.loaders.streams.getStream.load(streamId)
+      return stream?.name || ''
     }
   },
   Subscription: {

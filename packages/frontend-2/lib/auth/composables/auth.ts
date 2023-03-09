@@ -227,13 +227,15 @@ export const useAuthManager = () => {
       company?: string
     }
     challenge: string
+    inviteToken?: string
   }) => {
-    const { user, challenge } = params
+    const { user, challenge, inviteToken } = params
 
     const { accessCode } = await registerAndGetAccessCode({
       apiOrigin,
       challenge,
-      user
+      user,
+      inviteToken
     })
 
     // eslint-disable-next-line camelcase
@@ -295,7 +297,15 @@ const useAuthAppIdAndChallenge = () => {
 
 export const useLoginOrRegisterUtils = () => {
   const appIdAndChallenge = useAuthAppIdAndChallenge()
+  const route = useRoute()
+
+  /**
+   * Invite token, if any
+   */
+  const inviteToken = computed(() => route.query.token as Optional<string>)
+
   return {
-    ...appIdAndChallenge
+    ...appIdAndChallenge,
+    inviteToken
   }
 }

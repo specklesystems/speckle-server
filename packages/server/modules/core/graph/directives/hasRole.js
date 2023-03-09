@@ -120,7 +120,7 @@ module.exports = {
               const [parent, , context, info] = args
 
               // Validate stream role only if parent is a Stream type
-              if (info.parentType?.name === 'Stream' && parent) {
+              if (['Stream', 'Project'].includes(info.parentType?.name) && parent) {
                 if (!parent.id) {
                   // This should never happen as long as our resolvers always return streams with their IDs
                   throw new ForbiddenError('Unexpected access of unidentifiable stream')

@@ -31,7 +31,7 @@
     <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
     <div class="text-center">
       <span class="mr-2">Don't have an account?</span>
-      <CommonTextLink :to="registerRoute">Register</CommonTextLink>
+      <CommonTextLink :to="finalRegisterRoute">Register</CommonTextLink>
     </div>
   </form>
 </template>
@@ -55,8 +55,17 @@ const loading = ref(false)
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
-const { loginWithEmail } = useAuthManager()
+const { loginWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+const router = useRouter()
+
+const finalRegisterRoute = computed(() => {
+  const result = router.resolve({
+    path: registerRoute,
+    query: inviteToken.value ? { token: inviteToken.value } : {}
+  })
+  return result.fullPath
+})
 
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {

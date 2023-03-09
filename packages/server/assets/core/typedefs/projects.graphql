@@ -19,15 +19,7 @@ input ProjectUpdateInput {
   id: ID!
   name: String
   description: String
-  """
-  Whether the stream can be viewed by non-contributors
-  """
-  isPublic: Boolean
-  """
-  Whether the stream (if public) can be found on public stream exploration pages
-  and searches
-  """
-  isDiscoverable: Boolean
+  visibility: ProjectVisibility
   allowPublicComments: Boolean
 }
 
@@ -40,6 +32,54 @@ input ProjectCreateInput {
   visibility: ProjectVisibility
 }
 
+input ProjectUpdateRoleInput {
+  projectId: String!
+  userId: String!
+  """
+  Leave role as null to revoke access entirely
+  """
+  role: String
+}
+
+input ProjectInviteCreateInput {
+  """
+  Either this or userId must be filled
+  """
+  email: String
+  """
+  Either this or email must be filled
+  """
+  userId: String
+  projectId: ID!
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
+}
+
+input ProjectInviteUseInput {
+  projectId: ID!
+  token: String!
+  accept: Boolean!
+}
+
+type ProjectInviteMutations {
+  """
+  Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner.
+  """
+  create(input: ProjectInviteCreateInput!): Project! @hasScope(scope: "users:invite")
+
+  """
+  Accept or decline a project invite
+  """
+  use(input: ProjectInviteUseInput!): Boolean!
+
+  """
+  Cancel a pending stream invite. Can only be invoked by a project owner.
+  """
+  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
+}
+
 type ProjectMutations {
   """
   Delete an existing project
@@ -49,7 +89,7 @@ type ProjectMutations {
   """
   Updates an existing project
   """
-  update(stream: ProjectUpdateInput!): Project!
+  update(update: ProjectUpdateInput!): Project!
 
   """
   Create onboarding/tutorial project
@@ -60,6 +100,21 @@ type ProjectMutations {
   Create new project
   """
   create(input: ProjectCreateInput): Project!
+
+  """
+  Invite related mutations
+  """
+  invites: ProjectInviteMutations!
+
+  """
+  Update role for a collaborator
+  """
+  updateRole(input: ProjectUpdateRoleInput!): Project!
+
+  """
+  Leave a project. Only possible if you're not the last remaining owner.
+  """
+  leave(id: String!): Boolean!
 }
 
 extend type Mutation {
@@ -85,10 +140,17 @@ type ProjectCollection {
   items: [Project!]!
 }
 
+type ProjectCollaborator {
+  role: String!
+  user: LimitedUser!
+}
+
 type Project {
   id: ID!
   name: String!
   description: String
+  visibility: ProjectVisibility!
+  allowPublicComments: Boolean!
   versionCount: Int!
   modelCount: Int!
   """
@@ -97,7 +159,11 @@ type Project {
   role: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  team: [LimitedUser!]!
+  team: [ProjectCollaborator!]!
+  """
+  Collaborators who have been invited, but not yet accepted.
+  """
+  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_OWNER)
   """
   Source apps used in any models of this project
   """
@@ -160,4 +226,14 @@ extend type Subscription {
   Track updates to a specific project
   """
   projectUpdated(id: String!): ProjectUpdatedMessage!
+}
+
+extend type User {
+  """
+  Get all invitations to projects that the active user has
+  """
+  projectInvites: [PendingStreamCollaborator!]!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:read")
+    @isOwner
 }

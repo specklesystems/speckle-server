@@ -1150,6 +1150,8 @@ export type PendingStreamCollaborator = {
   id: Scalars['String'];
   inviteId: Scalars['String'];
   invitedBy: LimitedUser;
+  projectId: Scalars['String'];
+  projectName: Scalars['String'];
   role: Scalars['String'];
   streamId: Scalars['String'];
   streamName: Scalars['String'];
@@ -1163,6 +1165,7 @@ export type PendingStreamCollaborator = {
 
 export type Project = {
   __typename?: 'Project';
+  allowPublicComments: Scalars['Boolean'];
   /** The total number of comment threads in this project */
   commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
@@ -1170,6 +1173,8 @@ export type Project = {
   createdAt: Scalars['DateTime'];
   description?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  /** Collaborators who have been invited, but not yet accepted. */
+  invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
@@ -1187,11 +1192,12 @@ export type Project = {
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
   sourceApps: Array<Scalars['String']>;
-  team: Array<LimitedUser>;
+  team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
   versionCount: Scalars['Int'];
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
+  visibility: ProjectVisibility;
 };
 
 
@@ -1222,6 +1228,12 @@ export type ProjectModelsArgs = {
 export type ProjectViewerResourcesArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   resourceIdString: Scalars['String'];
+};
+
+export type ProjectCollaborator = {
+  __typename?: 'ProjectCollaborator';
+  role: Scalars['String'];
+  user: LimitedUser;
 };
 
 export type ProjectCollection = {
@@ -1276,6 +1288,48 @@ export type ProjectCreateInput = {
   visibility?: InputMaybe<ProjectVisibility>;
 };
 
+export type ProjectInviteCreateInput = {
+  /** Either this or userId must be filled */
+  email?: InputMaybe<Scalars['String']>;
+  projectId: Scalars['ID'];
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']>;
+  /** Either this or email must be filled */
+  userId?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectInviteMutations = {
+  __typename?: 'ProjectInviteMutations';
+  /** Cancel a pending stream invite. Can only be invoked by a project owner. */
+  cancel: Project;
+  /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
+  create: Project;
+  /** Accept or decline a project invite */
+  use: Scalars['Boolean'];
+};
+
+
+export type ProjectInviteMutationsCancelArgs = {
+  inviteId: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
+
+export type ProjectInviteMutationsCreateArgs = {
+  input: ProjectInviteCreateInput;
+};
+
+
+export type ProjectInviteMutationsUseArgs = {
+  input: ProjectInviteUseInput;
+};
+
+export type ProjectInviteUseInput = {
+  accept: Scalars['Boolean'];
+  projectId: Scalars['ID'];
+  token: Scalars['String'];
+};
+
 export type ProjectModelsFilter = {
   /** Filter by IDs of contributors who participated in models */
   contributors?: InputMaybe<Array<Scalars['String']>>;
@@ -1314,8 +1368,14 @@ export type ProjectMutations = {
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
+  /** Invite related mutations */
+  invites: ProjectInviteMutations;
+  /** Leave a project. Only possible if you're not the last remaining owner. */
+  leave: Scalars['Boolean'];
   /** Updates an existing project */
   update: Project;
+  /** Update role for a collaborator */
+  updateRole: Project;
 };
 
 
@@ -1329,8 +1389,18 @@ export type ProjectMutationsDeleteArgs = {
 };
 
 
+export type ProjectMutationsLeaveArgs = {
+  id: Scalars['String'];
+};
+
+
 export type ProjectMutationsUpdateArgs = {
-  stream: ProjectUpdateInput;
+  update: ProjectUpdateInput;
+};
+
+
+export type ProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
 };
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
@@ -1338,14 +1408,15 @@ export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  /**
-   * Whether the stream (if public) can be found on public stream exploration pages
-   * and searches
-   */
-  isDiscoverable?: InputMaybe<Scalars['Boolean']>;
-  /** Whether the stream can be viewed by non-contributors */
-  isPublic?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectUpdateRoleInput = {
+  projectId: Scalars['String'];
+  /** Leave role as null to revoke access entirely */
+  role?: InputMaybe<Scalars['String']>;
+  userId: Scalars['String'];
 };
 
 export type ProjectUpdatedMessage = {
@@ -1427,6 +1498,11 @@ export type Query = {
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
   project?: Maybe<Project>;
+  /**
+   * Look for an invitation to a project, for the current user (authed or not). If token
+   * isn't specified, the server will look for any valid invite.
+   */
+  projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -1515,6 +1591,12 @@ export type QueryOtherUserArgs = {
 
 export type QueryProjectArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryProjectInviteArgs = {
+  projectId: Scalars['String'];
+  token?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -2117,6 +2199,8 @@ export type User = {
   name: Scalars['String'];
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
+  /** Get all invitations to projects that the active user has */
+  projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
   projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;

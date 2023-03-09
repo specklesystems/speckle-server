@@ -8,7 +8,7 @@ import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
  */
 
 export function getStreamRoute(streamId: string): string {
-  return `/streams/${streamId}`
+  return useNewFrontend() ? `/projects/${streamId}` : `/streams/${streamId}`
 }
 
 export function getRegistrationRoute(): string {

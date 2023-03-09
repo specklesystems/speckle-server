@@ -5,6 +5,11 @@
         New Project
       </FormButton>
     </Portal>
+    <ProjectsInviteBanners
+      v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
+      class="mb-4"
+      :invites="projectsPanelResult?.activeUser"
+    />
     <div class="flex items-center mb-8 top-16">
       <h1 class="h4 font-bold flex-grow">Projects</h1>
       <div class="w-96">

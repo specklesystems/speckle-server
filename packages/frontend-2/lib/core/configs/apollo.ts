@@ -146,6 +146,12 @@ function createCache(): InMemoryCache {
 
               return original
             }
+          },
+          team: {
+            merge: (_existing, incoming) => incoming
+          },
+          invitedTeam: {
+            merge: (_existing, incoming) => incoming
           }
         }
       },

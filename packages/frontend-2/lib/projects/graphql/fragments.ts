@@ -8,9 +8,11 @@ export const projectDashboardItemNoModelsFragment = graphql(`
     updatedAt
     role
     team {
-      id
-      name
-      avatar
+      user {
+        id
+        name
+        avatar
+      }
     }
   }
 `)
@@ -41,5 +43,14 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     ...ProjectPageModelsCardRenameDialog
     ...ProjectPageModelsCardDeleteDialog
     ...ProjectPageModelsActions
+  }
+`)
+
+export const projectUpdatableMetadataFragment = graphql(`
+  fragment ProjectUpdatableMetadata on Project {
+    id
+    name
+    description
+    visibility
   }
 `)

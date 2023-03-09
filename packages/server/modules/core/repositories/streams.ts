@@ -45,6 +45,8 @@ import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import { SetRequired } from 'type-fest'
+import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -541,7 +543,10 @@ export async function getDiscoverableStreams(params: GetDiscoverableStreamsParam
  */
 export async function getStreamCollaborators(streamId: string, type?: StreamRoles) {
   const q = StreamAcl.knex()
-    .select<UserWithOptionalRole[]>([...Users.cols, StreamAcl.col.role])
+    .select<SetRequired<UserWithOptionalRole, 'role'>[]>([
+      ...Users.cols,
+      StreamAcl.col.role
+    ])
     .where(StreamAcl.col.resourceId, streamId)
     .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
     .orderBy(StreamAcl.col.role)
@@ -753,14 +758,26 @@ export async function getStreamsSourceApps(streamIds: string[]) {
   return mapValues(mappedToSets, (v) => [...v.values()])
 }
 
+const isProjectUpdateInput = (
+  i: StreamUpdateInput | ProjectUpdateInput
+): i is ProjectUpdateInput => has(i, 'visibility')
+
 export async function updateStream(update: StreamUpdateInput | ProjectUpdateInput) {
   const { id: streamId } = update
 
   if (!update.name) update.name = null // to prevent saving name ''
   const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
 
-  if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
-    validUpdate.isDiscoverable = false
+  if (isProjectUpdateInput(update)) {
+    if (has(validUpdate, 'visibility')) {
+      validUpdate.isPublic = update.visibility !== ProjectVisibility.Private
+      validUpdate.isDiscoverable = update.visibility === ProjectVisibility.Public
+      delete validUpdate['visibility'] // cause it's not a real column
+    }
+  } else {
+    if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+      validUpdate.isDiscoverable = false
+    }
   }
 
   if (!Object.keys(validUpdate).length) return null
@@ -798,4 +815,87 @@ export async function markCommitStreamUpdated(commitId: string) {
     .update(Streams.withoutTablePrefix.col.updatedAt, new Date())
   const updates = await q
   return updates > 0
+}
+
+/**
+ * (Moved from services/streams.js, could be refactored into something better)
+ */
+export async function grantStreamPermissions(params: {
+  streamId: string
+  userId: string
+  role: StreamRoles
+}) {
+  const { streamId, userId, role } = params
+
+  // upserts the existing role (sets a new one!)
+  // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
+  const query =
+    StreamAcl.knex().insert({ userId, resourceId: streamId, role }).toString() +
+    ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
+
+  await knex.raw(query)
+
+  // update stream updated at
+  const streams = await Streams.knex()
+    .where({ id: streamId })
+    .update({ updatedAt: knex.fn.now() }, '*')
+
+  return streams[0] as StreamRecord
+}
+
+/**
+ * (Moved from services/streams.js, could be refactored into something better)
+ */
+export async function revokeStreamPermissions(params: {
+  streamId: string
+  userId: string
+}) {
+  const { streamId, userId } = params
+
+  const [streamAclEntriesCount] = await StreamAcl.knex()
+    .where({ resourceId: streamId })
+    .count<{ count: string }[]>()
+
+  if (parseInt(streamAclEntriesCount.count) === 1)
+    throw new StreamAccessUpdateError(
+      'Stream has only one ownership link left - cannot revoke permissions.',
+      { info: { streamId, userId } }
+    )
+
+  const aclEntry = await StreamAcl.knex()
+    .where({ resourceId: streamId, userId })
+    .select<StreamAclRecord[]>('*')
+    .first()
+
+  if (aclEntry?.role === 'stream:owner') {
+    const [countObj] = await StreamAcl.knex()
+      .where({
+        resourceId: streamId,
+        role: Roles.Stream.Owner
+      })
+      .count()
+    if (parseInt(countObj.count) === 1)
+      throw new StreamAccessUpdateError('Could not revoke permissions for last admin', {
+        info: { streamId, userId }
+      })
+    else {
+      await StreamAcl.knex().where({ resourceId: streamId, userId }).del()
+    }
+  } else {
+    const delCount = await StreamAcl.knex()
+      .where({ resourceId: streamId, userId })
+      .del()
+
+    if (delCount === 0)
+      throw new StreamAccessUpdateError('Could not revoke permissions for user', {
+        info: { streamId, userId }
+      })
+  }
+
+  // update stream updated at
+  const [stream] = await Streams.knex()
+    .where({ id: streamId })
+    .update({ updatedAt: knex.fn.now() }, '*')
+
+  return stream as StreamRecord
 }
