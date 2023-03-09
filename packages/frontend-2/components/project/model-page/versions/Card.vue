@@ -15,9 +15,17 @@
     >
       <div class="h-64 flex items-center justify-center relative">
         <PreviewImage :preview-url="version.previewUrl" />
-        <div class="absolute top-0 left-0 p-2 flex space-x-1 items-center">
+        <div
+          class="absolute top-0 left-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+        >
           <UserAvatar :user="version.authorUser" />
           <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
+        </div>
+        <div
+          class="absolute top-0 right-0 p-2 flex items-center space-x-1 transition opacity-0 group-hover:opacity-100"
+        >
+          <ChatBubbleLeftEllipsisIcon class="h-4 w-4" />
+          <span>{{ version.commentThreadCount }}</span>
         </div>
       </div>
       <div class="flex flex-col px-2 pt-1 pb-3">
@@ -28,7 +36,9 @@
           <b>{{ createdAt }}</b>
         </div>
         <div class="w-full flex">
-          <div class="font-bold truncate">{{ version.message || 'no message' }}</div>
+          <div class="font-bold truncate grow">
+            {{ version.message || 'no message' }}
+          </div>
           <ProjectModelPageVersionsCardActions v-model:open="showActionsMenu" />
         </div>
       </div>
@@ -41,10 +51,7 @@ import { ProjectModelPageVersionsCardVersionFragment } from '~~/lib/common/gener
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
-
-/**
- * GOD DAMN ABSOLUTE POSITIONING
- */
+import { ChatBubbleLeftEllipsisIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
