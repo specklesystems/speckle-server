@@ -114,3 +114,15 @@ export const projectModelPageQuery = graphql(`
     }
   }
 `)
+
+export const projectModelVersionsQuery = graphql(`
+  query ProjectModelVersions(
+    $projectId: String!
+    $modelId: String!
+    $versionsCursor: String
+  ) {
+    project(id: $projectId) {
+      ...ProjectModelPageVersionsProject
+    }
+  }
+`)

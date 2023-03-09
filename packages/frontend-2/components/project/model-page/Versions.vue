@@ -16,13 +16,14 @@
       />
     </div>
     <div v-else>TODO: Versions Empty state</div>
-    <InfiniteLoading :allow-retry="true" @infinite="infiniteLoad" />
+    <InfiniteLoading @infinite="infiniteLoad" />
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageVersionsProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { useModelVersions } from '~~/lib/projects/composables/versionManagement'
 
 graphql(`
   fragment ProjectModelPageVersionsProject on Project {
@@ -30,6 +31,7 @@ graphql(`
     model(id: $modelId) {
       id
       versions(limit: 16, cursor: $versionsCursor) {
+        cursor
         totalCount
         items {
           ...ProjectModelPageVersionsCardVersion
@@ -43,10 +45,29 @@ const props = defineProps<{
   project: ProjectModelPageVersionsProjectFragment
 }>()
 
-const items = computed(() => props.project.model?.versions.items)
+// we're not using versions off props.versions, cause 'versions' should already have those
+// from the cache (no extraneous queries should be invoked)
+const { versions, loadMore, moreToLoad } = useModelVersions({
+  projectId: computed(() => props.project.id),
+  modelId: computed(() => props.project.model?.id || '')
+})
 
-const infiniteLoad = (state: InfiniteLoaderState) => {
-  console.log(state)
-  state.complete()
+const items = computed(() => versions.value?.items)
+
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  if (!moreToLoad.value) return state.complete()
+
+  try {
+    await loadMore()
+  } catch (e) {
+    console.error(e)
+    state.error()
+    return
+  }
+
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
+  }
 }
 </script>
