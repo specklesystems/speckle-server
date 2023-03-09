@@ -17,7 +17,11 @@
       />
     </div>
     <div class="ml-2 text-sm" style="padding-top: 3px">
-      <label :for="finalId" class="font-medium text-foreground">
+      <label
+        :for="finalId"
+        class="font-medium text-foreground"
+        :class="{ 'sr-only': hideLabel }"
+      >
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
       </label>
@@ -29,6 +33,7 @@
 </template>
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { nanoid } from 'nanoid'
 export default defineComponent({
   inheritAttrs: false
 })
@@ -38,7 +43,16 @@ import { RuleExpression, useField } from 'vee-validate'
 import { PropType } from 'vue'
 import { Optional } from '@speckle/shared'
 
-type ValueType = Optional<string> | string[]
+/**
+ * Troubleshooting:
+ * - If clicking on the checkbox doesn't do anything, check if any of its ancestor elements
+ * have a @click.prevent on them anywhere.
+ * - If you're not using the checkbox in a group, it's suggested that you set :value="true",
+ * so that a v-model attached to the checkbox will be either 'true' or 'undefined' depending on the
+ * checked state
+ */
+
+type ValueType = Optional<string | boolean> | string[]
 
 const props = defineProps({
   /**
@@ -105,11 +119,11 @@ const props = defineProps({
     default: undefined
   },
   /**
-   * Checkbox's own string value. If it is checked, modelValue will include this value (amongst any other checked values from the same group).
+   * Checkbox's own value. If it is checked, modelValue will include this value (amongst any other checked values from the same group).
    * If not set will default to 'name' value.
    */
   value: {
-    type: String as PropType<Optional<string>>,
+    type: [String, Boolean] as PropType<Optional<string | boolean>>,
     default: undefined
   },
   /**
@@ -118,11 +132,14 @@ const props = defineProps({
   id: {
     type: String as PropType<Optional<string>>,
     default: undefined
+  },
+  hideLabel: {
+    type: Boolean,
+    default: false
   }
 })
 
-const generateRandomId = (prefix: string) =>
-  `${prefix}-${Math.ceil(Math.random() * 100000000)}-${Date.now()}`
+const generateRandomId = (prefix: string) => `${prefix}-${nanoid()}`
 
 defineEmits<{
   (e: 'update:modelValue', val: ValueType): void

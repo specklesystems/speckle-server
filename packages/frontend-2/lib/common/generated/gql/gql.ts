@@ -21,7 +21,7 @@ const documents = {
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
-    "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
+    "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsCardVersion on Version {\n    id\n    message\n    authorUser {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    previewUrl\n    sourceApplication\n    commentThreadCount\n  }\n": types.ProjectModelPageVersionsCardVersionFragmentDoc,
     "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    name\n    description\n    visibility\n  }\n": types.ProjectPageProjectHeaderFragmentDoc,
     "\n  fragment ProjectPageLatestItemsComments on Project {\n    id\n    commentThreadCount\n  }\n": types.ProjectPageLatestItemsCommentsFragmentDoc,
@@ -154,7 +154,7 @@ export function graphql(source: "\n  fragment ProjectModelPageHeaderProject on P
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

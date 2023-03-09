@@ -9,10 +9,13 @@
       <ProjectModelPageVersionsCard
         v-for="(item, i) in items"
         :key="item.id"
+        v-model:selected="itemsSelected[item.id]"
         :version="item"
         :model-id="project.model.id"
         :project-id="project.id"
         :style="`z-index: ${items.length - i};`"
+        :selectable="areItemsSelectable"
+        @select="areItemsSelectable = true"
       />
     </div>
     <div v-else>TODO: Versions Empty state</div>
@@ -28,6 +31,7 @@ import { useModelVersions } from '~~/lib/projects/composables/versionManagement'
 graphql(`
   fragment ProjectModelPageVersionsProject on Project {
     id
+    role
     model(id: $modelId) {
       id
       versions(limit: 16, cursor: $versionsCursor) {
@@ -45,7 +49,7 @@ const props = defineProps<{
   project: ProjectModelPageVersionsProjectFragment
 }>()
 
-// we're not using versions off props.versions, cause 'versions' should already have those
+// we're not using versions off props, cause 'versions' should already have those
 // from the cache (no extraneous queries should be invoked)
 const { versions, loadMore, moreToLoad } = useModelVersions({
   projectId: computed(() => props.project.id),
@@ -53,6 +57,8 @@ const { versions, loadMore, moreToLoad } = useModelVersions({
 })
 
 const items = computed(() => versions.value?.items)
+const areItemsSelectable = ref(false)
+const itemsSelected = ref({} as Record<string, boolean>)
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) return state.complete()
@@ -70,4 +76,8 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
     state.complete()
   }
 }
+
+watch(areItemsSelectable, (selectable) => {
+  if (!selectable) itemsSelected.value = {}
+})
 </script>

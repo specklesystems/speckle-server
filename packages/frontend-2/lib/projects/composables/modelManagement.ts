@@ -222,21 +222,23 @@ export function useCopyModelLink() {
   const { copy } = useClipboard()
   const { triggerNotification } = useGlobalToast()
 
-  return async (projectId: string, modelId: string) => {
+  return async (projectId: string, modelId: string, versionId?: string) => {
     if (process.server) {
       throw new Error('Not supported in SSR')
     }
 
     const path = modelRoute(
       projectId,
-      SpeckleViewer.ViewerRoute.resourceBuilder().addModel(modelId).toString()
+      SpeckleViewer.ViewerRoute.resourceBuilder()
+        .addModel(modelId, versionId)
+        .toString()
     )
     const url = new URL(path, window.location.toString()).toString()
 
     await copy(url)
     triggerNotification({
       type: ToastNotificationType.Info,
-      title: 'Copied model link to clipboard'
+      title: `Copied ${versionId ? 'version' : 'model'} link to clipboard`
     })
   }
 }

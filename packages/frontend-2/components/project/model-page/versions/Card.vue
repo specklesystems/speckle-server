@@ -35,11 +35,24 @@
           created
           <b>{{ createdAt }}</b>
         </div>
-        <div class="w-full flex">
+        <div class="w-full flex" @click.stop>
+          <FormCheckbox
+            v-if="selectable"
+            v-model="checkboxModel"
+            name="selected"
+            hide-label
+            :value="true"
+          />
           <div class="font-bold truncate grow">
             {{ version.message || 'no message' }}
           </div>
-          <ProjectModelPageVersionsCardActions v-model:open="showActionsMenu" />
+          <ProjectModelPageVersionsCardActions
+            v-model:open="showActionsMenu"
+            :project-id="projectId"
+            :model-id="modelId"
+            :version-id="version.id"
+            @select="onSelect"
+          />
         </div>
       </div>
     </NuxtLink>
@@ -67,14 +80,18 @@ graphql(`
   }
 `)
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'click', val: MouseEvent): void
+  (e: 'select'): void
+  (e: 'update:selected', val: boolean): void
 }>()
 
 const props = defineProps<{
   version: ProjectModelPageVersionsCardVersionFragment
   projectId: string
   modelId: string
+  selectable?: boolean
+  selected?: boolean
 }>()
 
 const showActionsMenu = ref(false)
@@ -90,4 +107,14 @@ const viewerRoute = computed(() => {
 const sourceApp = computed(() =>
   SourceApps.find((a) => props.version.sourceApplication?.includes(a.searchKey))
 )
+
+const checkboxModel = computed({
+  get: () => (props.selectable && props.selected ? true : undefined),
+  set: (newVal) => emit('update:selected', !!newVal)
+})
+
+const onSelect = () => {
+  emit('select')
+  emit('update:selected', true)
+}
 </script>
