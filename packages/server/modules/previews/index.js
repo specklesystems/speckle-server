@@ -246,8 +246,7 @@ exports.init = (app) => {
   app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
     const { hasPermissions } = await checkStreamPermissions(req)
     if (!hasPermissions) {
-      // return res.status( httpErrorCode ).end()
-      return res.sendFile()
+      return res.status(403).end()
     }
 
     return sendObjectPreview(
