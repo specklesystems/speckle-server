@@ -16,18 +16,20 @@
       />
     </div>
     <div v-else>TODO: Versions Empty state</div>
+    <InfiniteLoading :allow-retry="true" @infinite="infiniteLoad" />
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageVersionsProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 
 graphql(`
   fragment ProjectModelPageVersionsProject on Project {
     id
     model(id: $modelId) {
       id
-      versions(limit: 16) {
+      versions(limit: 16, cursor: $versionsCursor) {
         totalCount
         items {
           ...ProjectModelPageVersionsCardVersion
@@ -42,4 +44,9 @@ const props = defineProps<{
 }>()
 
 const items = computed(() => props.project.model?.versions.items)
+
+const infiniteLoad = (state: InfiniteLoaderState) => {
+  console.log(state)
+  state.complete()
+}
 </script>

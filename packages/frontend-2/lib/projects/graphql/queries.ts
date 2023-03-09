@@ -103,7 +103,11 @@ export const projectModelCheckQuery = graphql(`
 `)
 
 export const projectModelPageQuery = graphql(`
-  query ProjectModelPage($projectId: String!, $modelId: String!) {
+  query ProjectModelPage(
+    $projectId: String!
+    $modelId: String!
+    $versionsCursor: String
+  ) {
     project(id: $projectId) {
       ...ProjectModelPageHeaderProject
       ...ProjectModelPageVersionsProject
