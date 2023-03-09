@@ -28,7 +28,7 @@ export interface PointQueryResult {
 export interface IntersectionQueryResult {
   objects: Array<{
     guid: string
-    object: Record<string, unknown>
+    object?: Record<string, unknown>
     point: { x: number; y: number; z: number }
   }> | null
 }
