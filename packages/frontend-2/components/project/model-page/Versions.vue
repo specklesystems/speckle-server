@@ -16,7 +16,7 @@
       />
     </div>
     <div v-else>TODO: Versions Empty state</div>
-    <InfiniteLoading @infinite="infiniteLoad" />
+    <InfiniteLoading v-if="items?.length" @infinite="infiniteLoad" />
   </div>
 </template>
 <script setup lang="ts">

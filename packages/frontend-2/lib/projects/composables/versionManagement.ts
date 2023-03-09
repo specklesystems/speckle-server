@@ -110,7 +110,7 @@ export function useModelVersions(params: {
 
   const versions = computed(() => result.value?.project?.model?.versions)
   const moreToLoad = computed(
-    () => !versions.value || versions.value.items.length !== versions.value.totalCount
+    () => !versions.value || versions.value.items.length < versions.value.totalCount
   )
 
   const loadMore = () => {
