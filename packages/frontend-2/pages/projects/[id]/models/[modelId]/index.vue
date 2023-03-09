@@ -18,21 +18,41 @@
     </Portal>
 
     <ClientOnly>
+      <!-- Tour host -->
+      <div
+        v-if="tourState.showTour"
+        class="z-30 fixed w-full h-full flex justify-center items-center pointer-events-none"
+      >
+        <TourOnboarding />
+      </div>
       <!-- Viewer host -->
       <div class="special-gradient absolute w-screen h-screen z-10">
         <ViewerBase />
-        <ViewerAnchoredPoints />
+        <Transition
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-1000"
+        >
+          <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
+        </Transition>
       </div>
 
       <!-- Global loading bar -->
       <ViewerLoadingBar class="z-20" />
 
       <!-- Sidebar sketches -->
-      <ViewerControls class="z-20" />
-
+      <Transition
+        enter-from-class="opacity-0"
+        enter-active-class="transition duration-1000"
+      >
+        <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
+      </Transition>
       <!-- Viewer Object Selection Info Display -->
-      <ViewerSelectionSidebar class="z-20" />
-
+      <Transition
+        enter-from-class="opacity-0"
+        enter-active-class="transition duration-1000"
+      >
+        <ViewerSelectionSidebar v-show="tourState.showViewerControls" class="z-20" />
+      </Transition>
       <!-- Shows up when filters are applied for an easy return to normality -->
       <ViewerGlobalFilterReset class="z-20" />
     </ClientOnly>
@@ -42,6 +62,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
 import { ShareIcon } from '@heroicons/vue/20/solid'
+
+const tourState = useTourStageState()
 
 definePageMeta({
   layout: 'viewer',

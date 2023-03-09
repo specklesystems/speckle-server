@@ -63,6 +63,16 @@ const incrementingDateGenerator = () => {
   }
 }
 
+const decrementingDateGenerator = () => {
+  let date = dayjs()
+  return {
+    getNewDate: () => {
+      date = date.subtract(1, 'millisecond')
+      return date.toDate()
+    }
+  }
+}
+
 const prepareState = async (
   userId: string,
   sourceStreamId: string
@@ -121,7 +131,7 @@ async function cloneCommits(state: CloneStreamInitialState) {
   // oldCommitId/newCommitId
   const commitIdMap = new Map<string, string>()
 
-  const { getNewDate } = incrementingDateGenerator()
+  const { getNewDate } = decrementingDateGenerator()
   for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id, {
     trx: state.trx
   })) {

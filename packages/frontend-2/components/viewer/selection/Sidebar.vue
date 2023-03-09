@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`fixed max-h-[calc(100vh-5.5rem)] top-[4.5rem] w-80 px-2 py-1 right-4 rounded-md shadow mb-4 transition bg-foundation overflow-y-auto simple-scrollbar ${
+    :class="`fixed max-h-[calc(100vh-5.5rem)] top-[4.5rem] w-64 px-2 py-1 right-4 rounded-md shadow mb-4 transition bg-foundation overflow-y-auto simple-scrollbar ${
       objects.length !== 0
         ? 'translate-x-0 opacity-100'
         : 'translate-x-[120%] opacity-0'
