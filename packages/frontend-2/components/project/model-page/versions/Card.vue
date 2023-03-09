@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
@@ -39,11 +40,20 @@
           <FormCheckbox
             v-if="selectable"
             v-model="checkboxModel"
+            v-tippy="
+              selectionDisabled
+                ? `To select this version you must be its or its project's owner`
+                : undefined
+            "
             name="selected"
             hide-label
             :value="true"
+            :disabled="selectionDisabled"
           />
-          <div class="font-bold truncate grow">
+          <div
+            class="font-bold truncate grow"
+            @click.stop.prevent="checkboxModel = !checkboxModel ? true : undefined"
+          >
             {{ version.message || 'no message' }}
           </div>
           <ProjectModelPageVersionsCardActions
@@ -52,6 +62,7 @@
             :model-id="modelId"
             :version-id="version.id"
             @select="onSelect"
+            @chosen="$emit('chosen', $event)"
           />
         </div>
       </div>
@@ -65,6 +76,7 @@ import { modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/vue/24/solid'
+import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
@@ -77,6 +89,8 @@ graphql(`
     previewUrl
     sourceApplication
     commentThreadCount
+    ...ProjectModelPageDialogDeleteVersion
+    ...ProjectModelPageDialogMoveToVersion
   }
 `)
 
@@ -84,6 +98,7 @@ const emit = defineEmits<{
   (e: 'click', val: MouseEvent): void
   (e: 'select'): void
   (e: 'update:selected', val: boolean): void
+  (e: 'chosen', val: VersionActionTypes): void
 }>()
 
 const props = defineProps<{
@@ -92,6 +107,7 @@ const props = defineProps<{
   modelId: string
   selectable?: boolean
   selected?: boolean
+  selectionDisabled?: boolean
 }>()
 
 const showActionsMenu = ref(false)
@@ -115,6 +131,5 @@ const checkboxModel = computed({
 
 const onSelect = () => {
   emit('select')
-  emit('update:selected', true)
 }
 </script>

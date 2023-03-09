@@ -35,3 +35,18 @@ export const serverInfoBlobSizeLimitQuery = graphql(`
     }
   }
 `)
+
+export const projectModelsSelectorValuesQuery = graphql(`
+  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {
+    project(id: $projectId) {
+      id
+      models(limit: 100, cursor: $cursor) {
+        cursor
+        totalCount
+        items {
+          ...CommonModelSelectorModel
+        }
+      }
+    }
+  }
+`)

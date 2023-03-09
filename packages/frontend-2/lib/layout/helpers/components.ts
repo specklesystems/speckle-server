@@ -3,13 +3,13 @@ export enum GridListToggleValue {
   List = 'list'
 }
 
-export type LayoutTabItem = {
+export type LayoutTabItem<I extends string = string> = {
   title: string
-  id: string
+  id: I
 }
 
-export type LayoutMenuItem = {
+export type LayoutMenuItem<I extends string = string> = {
   title: string
-  id: string
+  id: I
   disabled?: boolean
 }

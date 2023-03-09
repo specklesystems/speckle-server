@@ -51,3 +51,11 @@ export const commentPermissionsSelectItems: Record<
     title: 'Only team members can comment'
   }
 }
+
+export enum VersionActionTypes {
+  Delete = 'delete',
+  MoveTo = 'move-to',
+  EditMessage = 'edit-message',
+  Select = 'select',
+  Share = 'share'
+}

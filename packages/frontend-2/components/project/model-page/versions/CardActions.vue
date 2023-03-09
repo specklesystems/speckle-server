@@ -17,18 +17,12 @@
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
 import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
-
-enum ActionTypes {
-  Delete = 'delete',
-  MoveTo = 'move-to',
-  EditMessage = 'edit-message',
-  Select = 'select',
-  Share = 'share'
-}
+import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'select'): void
+  (e: 'chosen', v: VersionActionTypes): void
 }>()
 
 const props = defineProps<{
@@ -46,26 +40,28 @@ const showActionsMenu = computed({
 })
 
 // TODO: Permissions? Disabled?
-const actionsItems = computed<LayoutMenuItem[][]>(() => [
+const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
   [
-    { title: 'Delete', id: ActionTypes.Delete },
-    { title: 'Move to', id: ActionTypes.MoveTo },
-    { title: 'Edit message', id: ActionTypes.EditMessage }
+    { title: 'Delete', id: VersionActionTypes.Delete },
+    { title: 'Move to', id: VersionActionTypes.MoveTo },
+    { title: 'Edit message', id: VersionActionTypes.EditMessage }
   ],
-  [{ title: 'Select', id: ActionTypes.Select }],
-  [{ title: 'Share', id: ActionTypes.Share }]
+  [{ title: 'Select', id: VersionActionTypes.Select }],
+  [{ title: 'Share', id: VersionActionTypes.Share }]
 ])
 
-const onActionChosen = (params: { item: LayoutMenuItem }) => {
+const onActionChosen = (params: { item: LayoutMenuItem<VersionActionTypes> }) => {
   const { item } = params
 
   switch (item.id) {
-    case ActionTypes.Select:
+    case VersionActionTypes.Select:
       emit('select')
       break
-    case ActionTypes.Share:
+    case VersionActionTypes.Share:
       copyModelLink(props.projectId, props.modelId, props.versionId)
       break
   }
+
+  emit('chosen', item.id)
 }
 </script>

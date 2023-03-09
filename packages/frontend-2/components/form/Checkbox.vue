@@ -52,7 +52,7 @@ import { Optional } from '@speckle/shared'
  * checked state
  */
 
-type ValueType = Optional<string | boolean> | string[]
+type ValueType = Optional<string | true> | string[]
 
 const props = defineProps({
   /**
@@ -115,7 +115,7 @@ const props = defineProps({
    * Checkbox group's value
    */
   modelValue: {
-    type: String as PropType<ValueType>,
+    type: [String, Boolean] as PropType<ValueType>,
     default: undefined
   },
   /**
@@ -123,7 +123,7 @@ const props = defineProps({
    * If not set will default to 'name' value.
    */
   value: {
-    type: [String, Boolean] as PropType<Optional<string | boolean>>,
+    type: [String, Boolean] as PropType<Optional<string | true>>,
     default: undefined
   },
   /**

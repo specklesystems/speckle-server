@@ -52,7 +52,8 @@ import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'chosen', val: { event: MouseEvent; item: LayoutMenuItem }): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (e: 'chosen', val: { event: MouseEvent; item: LayoutMenuItem<any> }): void
 }>()
 
 const props = defineProps<{
