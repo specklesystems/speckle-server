@@ -501,6 +501,10 @@ export type DeleteModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type DeleteVersionsInput = {
+  versionIds: Array<Scalars['String']>;
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -698,6 +702,12 @@ export type ModelsTreeItem = {
   updatedAt: Scalars['DateTime'];
 };
 
+export type MoveVersionsInput = {
+  /** If the name references a nonexistant model, it will be created */
+  targetModelName: Scalars['String'];
+  versionIds: Array<Scalars['String']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
@@ -795,6 +805,7 @@ export type Mutation = {
    * @deprecated Use broadcastViewerUserActivity
    */
   userViewerActivityBroadcast: Scalars['Boolean'];
+  versionMutations: VersionMutations;
   /** Creates a new webhook on a stream */
   webhookCreate: Scalars['String'];
   /** Deletes an existing webhook */
@@ -2158,6 +2169,12 @@ export type UpdateModelInput = {
   projectId: Scalars['ID'];
 };
 
+/** Only non-null values will be updated */
+export type UpdateVersionInput = {
+  message?: InputMaybe<Scalars['String']>;
+  versionId: Scalars['String'];
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -2351,6 +2368,28 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type VersionMutations = {
+  __typename?: 'VersionMutations';
+  delete: Scalars['Boolean'];
+  moveToModel: Model;
+  update: Version;
+};
+
+
+export type VersionMutationsDeleteArgs = {
+  input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMoveToModelArgs = {
+  input: MoveVersionsInput;
+};
+
+
+export type VersionMutationsUpdateArgs = {
+  input: UpdateVersionInput;
 };
 
 export type ViewerResourceGroup = {

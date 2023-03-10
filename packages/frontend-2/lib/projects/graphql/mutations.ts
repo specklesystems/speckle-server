@@ -115,3 +115,32 @@ export const leaveProjectMutation = graphql(`
     }
   }
 `)
+
+export const deleteVersionsMutation = graphql(`
+  mutation DeleteVersions($input: DeleteVersionsInput!) {
+    versionMutations {
+      delete(input: $input)
+    }
+  }
+`)
+
+export const moveVersionsMutation = graphql(`
+  mutation MoveVersions($input: MoveVersionsInput!) {
+    versionMutations {
+      moveToModel(input: $input) {
+        id
+      }
+    }
+  }
+`)
+
+export const updateVersionMutation = graphql(`
+  mutation UpdateVersion($input: UpdateVersionInput!) {
+    versionMutations {
+      update(input: $input) {
+        id
+        message
+      }
+    }
+  }
+`)

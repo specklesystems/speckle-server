@@ -50,10 +50,7 @@
             :value="true"
             :disabled="selectionDisabled"
           />
-          <div
-            class="font-bold truncate grow"
-            @click.stop.prevent="checkboxModel = !checkboxModel ? true : undefined"
-          >
+          <div class="font-bold truncate grow">
             {{ version.message || 'no message' }}
           </div>
           <ProjectModelPageVersionsCardActions

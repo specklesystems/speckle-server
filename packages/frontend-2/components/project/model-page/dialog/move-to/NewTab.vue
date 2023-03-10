@@ -11,7 +11,6 @@
         will be moved to.
       </div>
       <FormTextInput
-        v-model="newModelName"
         name="name"
         label="Model Name"
         placeholder="model/name/here"
@@ -21,9 +20,7 @@
         :disabled="loading"
       />
       <div class="flex justify-end">
-        <FormButton submit :disabled="loading">
-          Create model and move versions
-        </FormButton>
+        <FormButton submit :disabled="loading">Move</FormButton>
       </div>
     </div>
   </form>

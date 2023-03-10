@@ -6,6 +6,10 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  batchDeleteCommits,
+  batchMoveCommits
+} from '@/modules/core/services/commit/batchCommitActions'
 
 export = {
   Version: {
@@ -20,6 +24,18 @@ export = {
       const stream = await ctx.loaders.commits.getCommitStream.load(parent.id)
       const path = `/preview/${stream!.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
+    }
+  },
+  Mutation: {
+    versionMutations: () => ({})
+  },
+  VersionMutations: {
+    async moveToModel(_parent, args, ctx) {
+      return await batchMoveCommits(args.input, ctx.userId!)
+    },
+    async delete(_parent, args, ctx) {
+      await batchDeleteCommits(args.input, ctx.userId!)
+      return true
     }
   },
   Subscription: {

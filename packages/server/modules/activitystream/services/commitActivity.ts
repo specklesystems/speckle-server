@@ -5,7 +5,8 @@ import {
   CommitCreateInput,
   CommitReceivedInput,
   CommitUpdateInput,
-  ProjectVersionsUpdatedMessageType
+  ProjectVersionsUpdatedMessageType,
+  UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
@@ -53,7 +54,7 @@ export async function addCommitUpdatedActivity(params: {
   streamId: string
   userId: string
   originalCommit: CommitRecord
-  update: CommitUpdateInput
+  update: CommitUpdateInput | UpdateVersionInput
   newCommit: CommitRecord
 }) {
   const { commitId, streamId, userId, originalCommit, update, newCommit } = params

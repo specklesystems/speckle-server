@@ -6,6 +6,7 @@
     :label="label || 'Models'"
     :show-label="showLabel"
     :multiple="multiple"
+    :disabled="!items.length"
     by="id"
   >
     <template #nothing-selected>

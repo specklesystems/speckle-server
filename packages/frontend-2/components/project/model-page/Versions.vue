@@ -55,6 +55,15 @@
       :versions="moveToDialogVersions"
       @fully-closed="dialogState = null"
     />
+    <ProjectModelPageDialogEditMessage
+      v-model:open="isEditMessageDialogOpen"
+      :project-id="project.id"
+      :version="editMessageDialogVersion"
+      @fully-closed="dialogState = null"
+    />
+    <div class="py-12">
+      <!-- Some padding to deal with a card menu potentially opening at the bottom of the page -->
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -155,7 +164,21 @@ const moveToDialogVersions = computed(() =>
   dialogState.value?.type === VersionActionTypes.MoveTo ? dialogState.value.items : []
 )
 const isMoveToDialogOpen = computed({
-  get: () => !!moveToDialogVersions.value?.length && !dialogState.value?.closed,
+  get: () => !!(moveToDialogVersions.value?.length && !dialogState.value?.closed),
+  set: (newVal) => {
+    if (!newVal && dialogState.value) {
+      dialogState.value.closed = true
+    }
+  }
+})
+
+const editMessageDialogVersion = computed(() =>
+  dialogState.value?.type === VersionActionTypes.EditMessage
+    ? dialogState.value.items[0]
+    : null
+)
+const isEditMessageDialogOpen = computed({
+  get: () => !!(editMessageDialogVersion.value && !dialogState.value?.closed),
   set: (newVal) => {
     if (!newVal && dialogState.value) {
       dialogState.value.closed = true

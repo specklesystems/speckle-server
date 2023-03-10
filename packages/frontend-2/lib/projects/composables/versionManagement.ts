@@ -5,13 +5,29 @@ import { Get } from 'type-fest'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
+  DeleteVersionsInput,
+  MoveVersionsInput,
   OnProjectVersionsUpdateSubscription,
-  ProjectVersionsUpdatedMessageType
+  ProjectVersionsUpdatedMessageType,
+  UpdateVersionInput
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { onProjectVersionsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
-import { evictObjectFields, getCacheId } from '~~/lib/common/helpers/graphql'
+import {
+  CacheObjectReference,
+  convertThrowIntoFetchResult,
+  evictObjectFields,
+  getCacheId,
+  getFirstErrorMessage,
+  modifyObjectFields
+} from '~~/lib/common/helpers/graphql'
 import { projectModelVersionsQuery } from '~~/lib/projects/graphql/queries'
+import {
+  deleteVersionsMutation,
+  moveVersionsMutation,
+  updateVersionMutation
+} from '~~/lib/projects/graphql/mutations'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 /**
  * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
@@ -104,18 +120,18 @@ export function useModelVersions(params: {
   }))
 
   onResult((res) => {
-    if (!res.data.project?.model?.versions.cursor) return
-    cursor.value = res.data.project.model.versions.cursor
+    cursor.value = res.data.project?.model?.versions.cursor || null
   })
 
   const versions = computed(() => result.value?.project?.model?.versions)
   const moreToLoad = computed(
-    () => !versions.value || versions.value.items.length < versions.value.totalCount
+    () =>
+      (!versions.value || versions.value.items.length < versions.value.totalCount) &&
+      cursor.value
   )
 
   const loadMore = () => {
     if (!moreToLoad.value) return
-    if (!cursor.value) return
     return fetchMore({ variables: { versionsCursor: cursor.value } })
   }
 
@@ -123,5 +139,168 @@ export function useModelVersions(params: {
     versions,
     loadMore,
     moreToLoad
+  }
+}
+
+export function useDeleteVersions() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (input: DeleteVersionsInput) => {
+    if (!input.versionIds.length) return
+    if (!isLoggedIn.value) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: deleteVersionsMutation,
+        variables: { input },
+        update: (cache, { data }) => {
+          if (!data?.versionMutations.delete) return
+
+          // Evict all versions from cache
+          for (const versionId of input.versionIds) {
+            cache.evict({
+              id: getCacheId('Version', versionId)
+            })
+          }
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.versionMutations.delete) {
+      const deleteCount = input.versionIds.length
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: `${deleteCount} version${deleteCount > 1 ? 's' : ''} deleted`
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Version deletion failed',
+        description: errMsg
+      })
+    }
+
+    return !!data?.versionMutations.delete
+  }
+}
+
+export function useMoveVersions() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (
+    input: MoveVersionsInput,
+    options?: Partial<{ previousModelId: string }>
+  ) => {
+    if (!input.versionIds.length || !input.targetModelName.trim()) return
+    if (!isLoggedIn.value) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: moveVersionsMutation,
+        variables: { input },
+        update: (cache, { data }) => {
+          if (!data?.versionMutations.moveToModel.id) return
+
+          const previousModelId = options?.previousModelId
+          if (!previousModelId) return
+
+          // Remove from previous model's versions
+          modifyObjectFields<{ id: string }>(
+            cache,
+            getCacheId('Model', previousModelId),
+            (fieldName, variables) => {
+              if (fieldName !== 'version') return
+              if (!input.versionIds.includes(variables.id)) return
+
+              // Set to null
+              return null
+            }
+          )
+
+          modifyObjectFields<
+            undefined,
+            Partial<{
+              totalCount: number
+              cursor: string
+              items: Array<CacheObjectReference>
+            }>
+          >(
+            cache,
+            getCacheId('Model', previousModelId),
+            (fieldName, _variables, data) => {
+              if (fieldName !== 'versions') return
+              if (!data.items) return
+
+              const oldItems = data.items
+              const newItems = oldItems.filter(
+                (i) => !input.versionIds.includes(i.__ref)
+              )
+              if (oldItems.length === newItems.length) return
+
+              return {
+                ...data,
+                items: newItems
+              }
+            }
+          )
+        }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.versionMutations.moveToModel.id) {
+      const deleteCount = input.versionIds.length
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: `${deleteCount} version${deleteCount > 1 ? 's' : ''} moved`
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Version move failed',
+        description: errMsg
+      })
+    }
+
+    return !!data?.versionMutations.moveToModel.id
+  }
+}
+
+export function useUpdateVersion() {
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+  const { isLoggedIn } = useActiveUser()
+
+  return async (input: UpdateVersionInput) => {
+    if (!input.versionId) return
+    if (!isLoggedIn.value) return
+
+    const { data, errors } = await apollo
+      .mutate({
+        mutation: updateVersionMutation,
+        variables: { input }
+      })
+      .catch(convertThrowIntoFetchResult)
+
+    if (data?.versionMutations.update.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: `Version successfully updated`
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Version update failed',
+        description: errMsg
+      })
+    }
+
+    return data?.versionMutations.update
   }
 }

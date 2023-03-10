@@ -19,7 +19,7 @@
         please click on the button below!
       </p>
       <div class="flex justify-end">
-        <FormButton submit :disabled="loading" color="danger" @click="onDelete">
+        <FormButton :disabled="loading" color="danger" @click="onDelete">
           Delete
         </FormButton>
       </div>

@@ -109,8 +109,38 @@ type ModelMutations {
   delete(input: DeleteModelInput!): Boolean!
 }
 
+input MoveVersionsInput {
+  versionIds: [String!]!
+  """
+  If the name references a nonexistant model, it will be created
+  """
+  targetModelName: String!
+}
+
+input DeleteVersionsInput {
+  versionIds: [String!]!
+}
+
+"""
+Only non-null values will be updated
+"""
+input UpdateVersionInput {
+  versionId: String!
+  message: String
+}
+
+type VersionMutations {
+  moveToModel(input: MoveVersionsInput!): Model!
+  delete(input: DeleteVersionsInput!): Boolean!
+  update(input: UpdateVersionInput!): Version!
+}
+
 extend type Mutation {
   modelMutations: ModelMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+
+  versionMutations: VersionMutations!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 }
