@@ -13,11 +13,16 @@
           v-if="activeItem.id === 'existing-model'"
           :versions="versions"
           :project-id="projectId"
+          :disabled="loading"
+          :model-id="modelId"
+          @model-selected="onMove"
         />
         <ProjectModelPageDialogMoveToNewTab
           v-else
           :project-id="projectId"
           :versions="versions"
+          :disabled="loading"
+          @model-selected="onMove($event, true)"
         />
       </LayoutTabs>
     </div>
@@ -27,6 +32,13 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
+import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
+
+/**
+ * TODO: Get rid of commentCount, versionCount etc.! Requires extra cache updets
+ * TODO: Check project model cards post move (updating correctly?)
+ * TODO: Make sure totalCoutns are updated as well!
+ */
 
 graphql(`
   fragment ProjectModelPageDialogMoveToVersion on Version {
@@ -44,8 +56,12 @@ const props = defineProps<{
   projectId: string
   versions: ProjectModelPageDialogMoveToVersionFragment[]
   open: boolean
+  modelId?: string
 }>()
 
+const moveVersions = useMoveVersions()
+
+const loading = ref(false)
 const tabItems = ref<LayoutTabItem[]>([
   { title: 'Existing model', id: 'existing-model' },
   { title: 'New model', id: 'new-model' }
@@ -55,4 +71,18 @@ const isOpen = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
 })
+
+const onMove = async (targetModelName: string, newModelCreated?: boolean) => {
+  loading.value = true
+  const success = await moveVersions(
+    {
+      versionIds: props.versions.map((v) => v.id),
+      targetModelName
+    },
+    { previousModelId: props.modelId, newModelCreated, projectId: props.projectId }
+  )
+  loading.value = false
+
+  if (success) isOpen.value = false
+}
 </script>

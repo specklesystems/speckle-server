@@ -17,10 +17,10 @@
         help="Use forward slashes in the model name to nest it below other models."
         :custom-icon="CubeIcon"
         :rules="rules"
-        :disabled="loading"
+        :disabled="disabled"
       />
       <div class="flex justify-end">
-        <FormButton submit :disabled="loading">Move</FormButton>
+        <FormButton submit :disabled="disabled">Move</FormButton>
       </div>
     </div>
   </form>
@@ -31,17 +31,20 @@ import { useModelNameValidationRules } from '~~/lib/projects/composables/modelMa
 import { CubeIcon } from '@heroicons/vue/24/solid'
 import { useForm } from 'vee-validate'
 
+const emit = defineEmits<{
+  (e: 'model-selected', val: string): void
+}>()
+
 defineProps<{
   projectId: string
   versions: ProjectModelPageDialogMoveToVersionFragment[]
+  disabled?: boolean
 }>()
 
 const rules = useModelNameValidationRules()
 const { handleSubmit } = useForm<{ name: string }>()
 
-const loading = ref(false)
-
-const onSubmit = handleSubmit(async (values) => {
-  console.log(values)
+const onSubmit = handleSubmit((values) => {
+  emit('model-selected', values.name)
 })
 </script>

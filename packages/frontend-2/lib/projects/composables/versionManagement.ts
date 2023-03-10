@@ -19,6 +19,7 @@ import {
   evictObjectFields,
   getCacheId,
   getFirstErrorMessage,
+  getObjectReference,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
 import { projectModelVersionsQuery } from '~~/lib/projects/graphql/queries'
@@ -28,6 +29,7 @@ import {
   updateVersionMutation
 } from '~~/lib/projects/graphql/mutations'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 
 /**
  * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
@@ -191,10 +193,15 @@ export function useMoveVersions() {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
+  const evictProjectModels = useEvictProjectModelFields()
 
   return async (
     input: MoveVersionsInput,
-    options?: Partial<{ previousModelId: string }>
+    options?: Partial<{
+      previousModelId: string
+      newModelCreated: boolean
+      projectId: string
+    }>
   ) => {
     if (!input.versionIds.length || !input.targetModelName.trim()) return
     if (!isLoggedIn.value) return
@@ -206,10 +213,11 @@ export function useMoveVersions() {
         update: (cache, { data }) => {
           if (!data?.versionMutations.moveToModel.id) return
 
+          const newModelId = data.versionMutations.moveToModel.id
           const previousModelId = options?.previousModelId
           if (!previousModelId) return
 
-          // Remove from previous model's versions
+          // Remove from Model.version
           modifyObjectFields<{ id: string }>(
             cache,
             getCacheId('Model', previousModelId),
@@ -222,6 +230,7 @@ export function useMoveVersions() {
             }
           )
 
+          // Remove from Model.versions
           modifyObjectFields<
             undefined,
             Partial<{
@@ -238,7 +247,10 @@ export function useMoveVersions() {
 
               const oldItems = data.items
               const newItems = oldItems.filter(
-                (i) => !input.versionIds.includes(i.__ref)
+                (i) =>
+                  !input.versionIds
+                    .map((id) => getCacheId('Version', id))
+                    .includes(i.__ref)
               )
               if (oldItems.length === newItems.length) return
 
@@ -248,6 +260,44 @@ export function useMoveVersions() {
               }
             }
           )
+
+          // Add to new model's Model.version
+          modifyObjectFields<{ id: string }>(
+            cache,
+            getCacheId('Model', newModelId),
+            (fieldName, variables) => {
+              if (fieldName !== 'version') return
+              if (!input.versionIds.includes(variables.id)) return
+              return getObjectReference('Version', variables.id)
+            }
+          )
+
+          // Add to new model's Model.versions
+          modifyObjectFields<
+            undefined,
+            Partial<{
+              totalCount: number
+              cursor: string
+              items: Array<CacheObjectReference>
+            }>
+          >(cache, getCacheId('Model', newModelId), (fieldName, _variables, data) => {
+            if (fieldName !== 'versions') return
+            if (!data.items) return
+
+            const newItems = [
+              ...input.versionIds.map((i) => getObjectReference('Version', i)),
+              ...data.items
+            ]
+
+            return {
+              ...data,
+              items: newItems
+            }
+          })
+
+          if (options?.newModelCreated && options?.projectId) {
+            evictProjectModels(options.projectId)
+          }
         }
       })
       .catch(convertThrowIntoFetchResult)

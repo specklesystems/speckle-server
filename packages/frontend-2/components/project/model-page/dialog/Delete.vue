@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import { useDeleteVersions } from '~~/lib/projects/composables/versionManagement'
 
 graphql(`
   fragment ProjectModelPageDialogDeleteVersion on Version {
@@ -48,6 +49,8 @@ const props = defineProps<{
   open: boolean
 }>()
 
+const deleteVersions = useDeleteVersions()
+
 const loading = ref(false)
 
 const isOpen = computed({
@@ -57,12 +60,11 @@ const isOpen = computed({
 
 const onDelete = async () => {
   loading.value = true
-  // const deleted = await deleteModel({
-  //   id: props.model.id,
-  //   projectId: props.projectId
-  // }).finally(() => (loading.value = false))
-  isOpen.value = false
+  const success = await deleteVersions({
+    versionIds: props.versions.map((v) => v.id)
+  })
+  loading.value = false
 
-  // if (deleted) emit('deleted')
+  if (success) isOpen.value = false
 }
 </script>

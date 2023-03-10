@@ -7,6 +7,7 @@
     :show-label="showLabel"
     :multiple="multiple"
     :disabled="!items.length"
+    :allow-unset="allowUnset"
     by="id"
   >
     <template #nothing-selected>
@@ -48,7 +49,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
 import { projectModelsSelectorValuesQuery } from '~~/lib/common/graphql/queries'
 import { CommonModelSelectorModelFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
@@ -93,6 +94,14 @@ const props = defineProps({
   name: {
     type: String,
     default: undefined
+  },
+  excludedIds: {
+    type: Array as PropType<Optional<string[]>>,
+    default: undefined
+  },
+  allowUnset: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -114,7 +123,11 @@ const { selectedValue, isMultiItemArrayValue, isArrayValue, hiddenSelectedItemCo
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const items = computed(() => result.value?.project?.models.items || [])
+const items = computed(() => {
+  const queryItems = result.value?.project?.models.items || []
+  if (!props.excludedIds?.length) return queryItems
+  return queryItems.filter((i) => !(props.excludedIds || []).includes(i.id))
+})
 
 onResult((res) => {
   if (!res.data?.project) return

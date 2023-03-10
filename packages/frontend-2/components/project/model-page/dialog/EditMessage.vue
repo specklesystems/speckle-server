@@ -13,6 +13,7 @@
         placeholder="Version message"
         show-required
         :rules="[isRequired]"
+        :disabled="loading"
       />
       <div class="flex justify-end">
         <FormButton submit :disabled="loading">Save</FormButton>
@@ -26,6 +27,7 @@ import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { isRequired } from '~~/lib/common/helpers/validation'
+import { useUpdateVersion } from '~~/lib/projects/composables/versionManagement'
 
 graphql(`
   fragment ProjectModelPageDialogEditMessageVersion on Version {
@@ -45,6 +47,7 @@ const props = defineProps<{
 }>()
 
 const { handleSubmit } = useForm<{ newMessage: string }>()
+const updateVersion = useUpdateVersion()
 
 const loading = ref(false)
 const message = ref('')
@@ -58,8 +61,20 @@ watch(
   () => props.version,
   (newVersion) => {
     message.value = newVersion?.message || ''
-  }
+  },
+  { deep: true }
 )
 
-const onSubmit = handleSubmit((values) => console.log(values))
+const onSubmit = handleSubmit(async ({ newMessage }) => {
+  if (!props.version) return
+
+  loading.value = true
+  const success = !!(await updateVersion({
+    versionId: props.version?.id,
+    message: newMessage
+  }))
+  loading.value = false
+
+  if (success) isOpen.value = false
+})
 </script>

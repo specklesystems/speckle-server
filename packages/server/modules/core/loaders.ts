@@ -5,7 +5,9 @@ import {
   getOwnedFavoritesCountByUserIds,
   getStreams,
   getStreamRoles,
-  getStreamsSourceApps
+  getStreamsSourceApps,
+  getCommitStreams,
+  StreamWithCommitId
 } from '@/modules/core/repositories/streams'
 import { getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
@@ -22,7 +24,6 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import {
   getCommitBranches,
-  getCommitStreams,
   getSpecificBranchCommits,
   getStreamCommitCounts
 } from '@/modules/core/repositories/commits'
@@ -218,9 +219,12 @@ export function buildRequestLoaders(ctx: AuthContext) {
       /**
        * Get a commit's stream from DB
        */
-      getCommitStream: new DataLoader<string, Nullable<StreamRecord>>(
+      getCommitStream: new DataLoader<string, Nullable<StreamWithCommitId>>(
         async (commitIds) => {
-          const results = await getCommitStreams(commitIds.slice())
+          const results = keyBy(
+            await getCommitStreams({ commitIds: commitIds.slice(), userId }),
+            'commitId'
+          )
           return commitIds.map((id) => results[id] || null)
         }
       ),

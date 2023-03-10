@@ -243,6 +243,8 @@ export async function updateCommitAndNotify(
       markCommitBranchUpdated(commit.id)
     ])
   }
+
+  return newCommit
 }
 
 export async function deleteCommitAndNotify(

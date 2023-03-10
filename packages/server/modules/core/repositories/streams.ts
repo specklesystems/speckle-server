@@ -151,7 +151,7 @@ export async function getStream(
   return <Optional<StreamWithOptionalRole>>streams[0]
 }
 
-type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
+export type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
 
 export async function getCommitStreams(params: {
   commitIds: string[]

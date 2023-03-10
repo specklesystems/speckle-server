@@ -25,7 +25,7 @@
     </div>
     <div
       v-if="items?.length && project.model"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-0"
     >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <ProjectModelPageVersionsCard
@@ -53,6 +53,7 @@
       v-model:open="isMoveToDialogOpen"
       :project-id="project.id"
       :versions="moveToDialogVersions"
+      :model-id="modelId"
       @fully-closed="dialogState = null"
     />
     <ProjectModelPageDialogEditMessage
@@ -105,11 +106,13 @@ const props = defineProps<{
   project: ProjectModelPageVersionsProjectFragment
 }>()
 
+const modelId = computed(() => props.project.model?.id || '')
+
 // we're not using versions off props, cause 'versions' should already have those
 // from the cache (no extraneous queries should be invoked)
 const { versions, loadMore, moreToLoad } = useModelVersions({
   projectId: computed(() => props.project.id),
-  modelId: computed(() => props.project.model?.id || '')
+  modelId: modelId.value
 })
 const { activeUser } = useActiveUser()
 

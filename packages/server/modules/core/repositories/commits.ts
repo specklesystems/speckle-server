@@ -3,17 +3,15 @@ import {
   Branches,
   Commits,
   knex,
-  StreamCommits,
-  Streams
+  StreamCommits
 } from '@/modules/core/dbSchema'
 import {
   BranchCommitRecord,
   BranchRecord,
   CommitRecord,
-  StreamCommitRecord,
-  StreamRecord
+  StreamCommitRecord
 } from '@/modules/core/helpers/types'
-import { clamp, keyBy, uniq, uniqBy, reduce } from 'lodash'
+import { clamp, uniq, uniqBy, reduce } from 'lodash'
 
 const CommitWithStreamBranchMetadataFields = [
   ...Commits.cols,
@@ -35,23 +33,6 @@ export type CommitWithStreamBranchMetadata = CommitRecord & {
   streamId: string
   branchId: string
   branchName: string
-}
-
-/**
- * Get commit associated streams. Results are streams keyed by commit IDs
- */
-export async function getCommitStreams(commitIds: string[]) {
-  const q = Commits.knex()
-    .select<Array<StreamRecord & { commitId: string }>>([
-      ...Streams.cols,
-      `${Commits.col.id} as commitId`
-    ])
-    .whereIn(Commits.col.id, commitIds)
-    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
-    .innerJoin(Streams.name, Streams.col.id, StreamCommits.col.streamId)
-
-  const results = await q
-  return keyBy(results, (r) => r.commitId)
 }
 
 /**
