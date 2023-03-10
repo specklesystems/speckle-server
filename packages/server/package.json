@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.14.2"
+    "node": "^18.15.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
