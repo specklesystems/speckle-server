@@ -557,7 +557,7 @@ server:
     ##
     create: true
   fileUploads:
-    ## @param server.fileUpload.enabled If enabled, file uploads on the server will be flagged as enabled
+    ## @param server.fileUploads.enabled If enabled, file uploads on the server will be flagged as enabled
     enabled: true
 
   monitoring:
