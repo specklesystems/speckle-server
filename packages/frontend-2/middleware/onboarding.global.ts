@@ -22,7 +22,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingFinished = data.activeUser.isOnboardingFinished
   const isGoingToOnboarding = to.path === onboardingRoute
 
-  if (!isOnboardingFinished && !isGoingToOnboarding) {
+  if (
+    !isOnboardingFinished &&
+    !isGoingToOnboarding &&
+    to.query['skiponboarding'] !== 'true'
+  ) {
     return navigateTo(onboardingRoute)
   }
 

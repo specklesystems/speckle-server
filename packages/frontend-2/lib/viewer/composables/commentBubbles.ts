@@ -111,7 +111,7 @@ export function useViewerNewThreadBubble(params: {
 export type CommentBubbleModel = LoadedCommentThread & {
   isExpanded: boolean
   isOccluded: boolean
-  style: Partial<CSSProperties>
+  style: Partial<CSSProperties> & { x?: number; y?: number }
 }
 
 export function useViewerCommentBubblesProjection(params: {
@@ -161,7 +161,7 @@ export function useViewerCommentBubbles(
       singleClickCallback: (eventInfo) => {
         if ((eventInfo && eventInfo?.hits.length === 0) || !eventInfo) {
           // Close open thread
-          Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+          // Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
         }
       }
     },
@@ -245,6 +245,7 @@ export function useExpandedThreadResponsiveLocation(params: {
   threadContainer: Ref<Nullable<HTMLElement>>
   width: number
   stopUpdatesBelowWidth?: number
+  position?: { x: number; y: number }
 }) {
   const { threadContainer, width } = params
   const stopUpdatesBelowWidth = params.stopUpdatesBelowWidth || width * 2
