@@ -8,7 +8,7 @@
     :search-placeholder="searchPlaceholder"
     :label="label"
     :show-label="showLabel"
-    :name="name"
+    :name="name || 'users'"
     by="id"
   >
     <template #nothing-selected>

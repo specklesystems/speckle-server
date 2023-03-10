@@ -68,6 +68,11 @@ import { useModelVersions } from '~~/lib/projects/composables/versionManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { reduce } from 'lodash-es'
 
+/**
+ * TODO:
+ * Dialogs inside each card as well so that it can be used anywhere?
+ */
+
 type SingleVersion = NonNullable<Get<typeof versions.value, 'items[0]'>>
 
 graphql(`

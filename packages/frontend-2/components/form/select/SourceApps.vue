@@ -7,7 +7,7 @@
     :search-placeholder="searchPlaceholder"
     :label="label"
     :show-label="showLabel"
-    :name="name"
+    :name="name || 'sourceApps'"
     :search-filter-predicate="searchFilterPredicate"
     by="name"
   >

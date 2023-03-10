@@ -11,9 +11,14 @@
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ProjectModelPageDialogMoveToExistingTab
           v-if="activeItem.id === 'existing-model'"
+          :versions="versions"
           :project-id="projectId"
         />
-        <ProjectModelPageDialogMoveToNewTab v-else />
+        <ProjectModelPageDialogMoveToNewTab
+          v-else
+          :project-id="projectId"
+          :versions="versions"
+        />
       </LayoutTabs>
     </div>
   </LayoutDialog>

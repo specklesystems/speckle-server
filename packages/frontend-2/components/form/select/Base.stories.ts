@@ -1,5 +1,6 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectBase from '~~/components/form/select/Base.vue'
+import { isRequired } from '~~/lib/common/helpers/validation'
 
 type FakeItemType = { id: string; name: string }
 
@@ -70,7 +71,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args, ctx) => ({
     components: { FormSelectBase },
     setup: () => {
@@ -98,11 +99,12 @@ export const Default: Story = {
     searchPlaceholder: 'Search',
     label: 'Choose an item',
     showLabel: false,
-    by: 'name'
+    by: 'name',
+    name: 'example'
   }
 }
 
-export const WithCustomSlots: Story = {
+export const WithCustomSlots: StoryObj = {
   render: (args, ctx) => ({
     components: { FormSelectBase },
     setup: () => {
@@ -139,10 +141,44 @@ export const WithCustomSlots: Story = {
   }
 }
 
-export const Disabled: Story = {
+export const Disabled: StoryObj = {
   ...Default,
   args: {
     ...Default.args,
     disabled: true
+  }
+}
+
+export const WithValidation: StoryObj = {
+  render: (args, ctx) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate" validate-on-mount/>
+      </div>
+    `,
+    methods: {
+      onModelUpdate(val: FakeItemType) {
+        args['update:modelValue'](val)
+        ctx.updateArgs({ ...args, modelValue: val })
+      }
+    }
+  }),
+  args: {
+    multiple: false,
+    items: fakeItems,
+    modelValue: undefined,
+    search: false,
+    searchFilterPredicate: (val: FakeItemType, search: string) =>
+      val.name.toLowerCase().includes(search.toLowerCase()),
+    searchPlaceholder: 'Search',
+    label: 'Item',
+    showLabel: true,
+    by: 'name',
+    rules: [isRequired],
+    help: 'This is a random help message'
   }
 }

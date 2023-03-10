@@ -9,15 +9,14 @@
     by="id"
   >
     <template #nothing-selected>
-      {{ multiple ? 'Select models' : 'Select a model' }}
+      <div class="label label--light">
+        {{ multiple ? 'Select models' : 'Select a model' }}
+      </div>
     </template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
         <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
-          <div
-            ref="itemContainer"
-            class="flex flex-wrap overflow-hidden space-x-0.5 h-6"
-          >
+          <div ref="itemContainer" class="flex flex-wrap overflow-hidden space-x-0.5">
             <span
               v-for="branch in value"
               :key="branch.id"
@@ -69,14 +68,32 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
-const props = defineProps<{
-  projectId: string
-  multiple?: boolean
-  modelValue?: ValueType
-  label?: string
-  showLabel?: boolean
-  name?: string
-}>()
+const props = defineProps({
+  projectId: {
+    type: String,
+    required: true
+  },
+  multiple: {
+    type: Boolean,
+    default: false
+  },
+  modelValue: {
+    type: [Object, Array] as PropType<ValueType>,
+    default: undefined
+  },
+  label: {
+    type: String,
+    default: undefined
+  },
+  showLabel: {
+    type: Boolean,
+    default: false
+  },
+  name: {
+    type: String,
+    default: undefined
+  }
+})
 
 const { result, onResult, fetchMore } = useQuery(
   projectModelsSelectorValuesQuery,
