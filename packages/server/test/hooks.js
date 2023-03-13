@@ -62,11 +62,17 @@ const initializeTestServer = async (server, app) => {
     serverAddress,
     wsAddress,
     sendRequest(auth, obj) {
-      return chai
-        .request(serverAddress)
-        .post('/graphql')
-        .set('Authorization', auth)
-        .send(obj)
+      return (
+        chai
+          .request(serverAddress)
+          .post('/graphql')
+          // if you set the header to null, the actual header in the req will be
+          // a string -> 'null'
+          // this is now treated as an invalid token, and gets forbidden
+          // switching to an empty string token
+          .set('Authorization', auth || '')
+          .send(obj)
+      )
     }
   }
 }

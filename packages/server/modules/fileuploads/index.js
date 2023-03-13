@@ -57,6 +57,14 @@ exports.init = async (app) => {
                 branchName: req.params.branchName ?? 'main',
                 uploadResults
               })
+            } else {
+              res.log.error(
+                {
+                  statusCode: response.statusCode,
+                  path: `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`
+                },
+                'Error while uploading file.'
+              )
             }
             res.status(response.statusCode).send(body)
           }

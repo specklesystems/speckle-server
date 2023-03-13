@@ -79,19 +79,19 @@ describe('Upload/Download Routes @api-rest', () => {
     let res = await request(app)
       .get('/objects/wow_hack/null')
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(401)
+    expect(res).to.have.status(403)
 
     // private stream snooping is forbidden
     res = await request(app)
       .get(`/objects/${privateTestStream.id}/maybeSomethingIsHere`)
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(401)
+    expect(res).to.have.status(403)
 
     // invalid token for public stream works
     res = await request(app)
       .get(`/objects/${testStream.id}/null`)
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(404)
+    expect(res).to.have.status(403)
 
     // invalid streamId
     res = await request(app)
@@ -110,16 +110,17 @@ describe('Upload/Download Routes @api-rest', () => {
       .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
 
     // should allow invalid tokens (treat them the same as no tokens?)
+    // no, we're treating invalid tokens as invalid tokens
     res = await request(app)
       .get(`/objects/${testStream.id}/${objBatches[0][0].id}`)
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(200)
+    expect(res).to.have.status(403)
 
     // should not allow invalid tokens on private streams
     res = await request(app)
       .get(`/objects/${privateTestStream.id}/${objBatches[0][0].id}`)
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(401)
+    expect(res).to.have.status(403)
 
     // should not allow user b to access user a's private stream
     res = await request(app)
@@ -155,13 +156,13 @@ describe('Upload/Download Routes @api-rest', () => {
     let res = await request(app)
       .post('/objects/wow_hack')
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(401)
+    expect(res).to.have.status(403)
 
     // invalid token
     res = await request(app)
       .post(`/objects/${testStream.id}`)
       .set('Authorization', 'this is a hoax')
-    expect(res).to.have.status(401)
+    expect(res).to.have.status(403)
 
     // invalid streamId
     res = await request(app)

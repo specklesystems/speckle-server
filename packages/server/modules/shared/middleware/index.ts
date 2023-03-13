@@ -56,13 +56,17 @@ export async function createAuthContextFromToken(
     tokenString: string
   ) => Promise<TokenValidationResult> = validateToken
 ): Promise<AuthContext> {
-  if (rawToken === null) return { auth: false }
+  // null, undefined or empty string tokens can continue without errors and auth: false
+  // to enable anonymous user access to public resources
+  if (!rawToken) return { auth: false }
   let token = rawToken
   if (token.startsWith('Bearer ')) token = token.split(' ')[1]
 
   try {
     const tokenValidationResult = await tokenValidator(token)
-    if (!tokenValidationResult.valid) return { auth: false }
+    // invalid tokens however will be rejected.
+    if (!tokenValidationResult.valid)
+      return { auth: false, err: new ForbiddenError('Your token is not valid.') }
 
     const { scopes, userId, role } = tokenValidationResult
 
@@ -75,11 +79,19 @@ export async function createAuthContextFromToken(
 
 export async function authContextMiddleware(
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ) {
   const token = getTokenFromRequest(req)
   const authContext = await createAuthContextFromToken(token)
+  if (!authContext.auth && authContext.err) {
+    let message = 'Unknown Auth context error'
+    let status = 500
+    message = authContext.err?.message || message
+    if (authContext.err instanceof UnauthorizedError) status = 401
+    if (authContext.err instanceof ForbiddenError) status = 403
+    return res.status(status).json({ error: message })
+  }
   ;(req as RequestWithAuthContext).context = authContext
   next()
 }
