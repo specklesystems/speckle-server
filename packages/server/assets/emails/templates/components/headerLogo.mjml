@@ -3,11 +3,7 @@
     <mj-spacer height="10px" />
   </mj-column>
 </mj-section>
-<mj-section
-  border-radius="8px"
-  background-color="rgba(59, 130, 246, 1)"
-  padding="10px 0 15px 0"
->
+<mj-section border-radius="8px" mj-class="bgblue" padding="10px 0 15px 0">
   <mj-column>
     <mj-image
       width="100px"

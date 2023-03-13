@@ -68,7 +68,7 @@
     "volar.completion.preferredTagNameCase": "kebab",
     "volar.vueserver.maxOldSpaceSize": 4000,
     "vscode-graphql.cacheSchemaFileForLookup": true,
-    "cSpell.words": ["Bursty"]
+    "cSpell.words": ["Bursty", "mjml"]
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
