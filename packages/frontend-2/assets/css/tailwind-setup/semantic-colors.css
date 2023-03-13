@@ -19,14 +19,14 @@
   /* for hover/focus states */
   --foundation-focus: #dbeafe;
   /* for disabled backgrounds */
-  --foundation-disabled: #dbeafe;
+  --foundation-disabled: #e5e5e5;
 
   /* default foreground color */
   --foreground: #334155;
   /* dimmer foreground color, e.g. caption text */
   --foreground-2: #94a3b8;
   /* disabled foreground color */
-  --foreground-disabled: #93c5fd;
+  --foreground-disabled: #a3a3a3;
   /* primary color when used for text directly on top of foundation-page */
   --foreground-primary: #3b82f6;
   /* foreground color when put on top of a primary colored background */
@@ -77,14 +77,14 @@
   /* for hover/focus states */
   --foundation-focus: #52525b;
   /* for disabled backgrounds */
-  --foundation-disabled: #52525b;
+  --foundation-disabled: #3c3c3d;
 
   /* default foreground color */
   --foreground: #f4f4f5;
   /* dimmer foreground color, e.g. caption text */
   --foreground-2: #71717a;
   /* disabled foreground color */
-  --foreground-disabled: #a1a1aa;
+  --foreground-disabled: #5a5a5f;
   /* primary color when used for text directly on top of foundation-page */
   --foreground-primary: #bfdbfe;
   /* foreground color when put on top of a primary colored background */

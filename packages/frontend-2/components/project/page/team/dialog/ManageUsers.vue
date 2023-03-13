@@ -1,6 +1,10 @@
 <template>
   <div class="flex flex-col space-y-4">
-    <div class="h4 font-bold">{{ isOwner ? 'Manage your team' : 'Team' }}</div>
+    <!-- <div class="h4 font-bold">{{ isOwner ? 'Manage Your Team' : 'Team' }}</div> -->
+    <div class="h4 font-bold flex items-center space-x-2">
+      <UsersIcon class="w-6 h-6" />
+      <span>Team</span>
+    </div>
     <div class="flex flex-col space-y-4">
       <div
         v-for="collaborator in collaboratorListItems"
@@ -24,10 +28,13 @@
           </span>
         </template>
         <template v-else-if="isOwner">
+          <span class="shrink-0 text-foreground-2">
+            {{ roleSelectItems[collaborator.role].title }}
+          </span>
           <FormButton
             class="shrink-0"
             color="danger"
-            size="sm"
+            size="xs"
             :disabled="loading"
             @click="
               cancelInvite({
@@ -38,7 +45,6 @@
           >
             Cancel Invite
           </FormButton>
-          <span class="shrink-0">{{ roleSelectItems[collaborator.role].title }}</span>
         </template>
       </div>
     </div>
@@ -64,6 +70,7 @@ import {
   ProjectCollaboratorListItem,
   roleSelectItems
 } from '~~/lib/projects/helpers/components'
+import { UsersIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
