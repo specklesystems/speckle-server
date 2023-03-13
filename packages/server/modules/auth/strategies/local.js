@@ -80,6 +80,8 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         }
 
         // 1. if the server is invite only you must have an invite
+        if (!req.session)
+          throw new Error('Local cannot authenticate without a valid session')
         if (serverInfo.inviteOnly && !req.session.token)
           throw new UserInputError(
             'This server is invite only. Please provide an invite id.'
