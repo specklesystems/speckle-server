@@ -108,7 +108,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
 const handler: NotificationHandler<NewStreamAccessRequestMessage> = async (msg) => {
   const state = await validateMessage(msg)
   const htmlTemplateParams = buildEmailTemplateParams(state)
-  const serverInfo = getServerInfo()
+  const serverInfo = await getServerInfo()
   const { html, text } = await renderEmail(
     htmlTemplateParams,
     serverInfo,
