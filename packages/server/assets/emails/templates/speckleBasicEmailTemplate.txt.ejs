@@ -1,0 +1,6 @@
+<%_ if (params.text?.bodyStart?.length) print("\n" + params.text.bodyStart + "\n"); _%>
+<%_ if (params.cta) print("\n" + params.cta.title + ': ' + params.cta.url + "\n"); _%>
+<%_ if (params.text?.bodyEnd?.length) print("\n" + params.text.bodyEnd + "\n"); _%>
+
+------------------------------------------------------
+Sent from <%= params.server.name || 'Speckle Server' %> at <%= params.server.canonicalUrl %>, deployed and managed by <%= params.server.company %>. Your admin contact is <%= params.server.adminContact %>.

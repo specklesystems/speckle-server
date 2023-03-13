@@ -2,7 +2,10 @@
   <mj-column>
     <mj-text font-size="12px" line-height="18px" align="center" color="#999">
       Sent from <%- params.serverInfo.name -%> at
-      <a href="<%- params.serverInfo.canonicalUrl -%>">
+      <a
+        href="<%- params.serverInfo.canonicalUrl -%>"
+        title="<%- params.serverInfo.name -%>"
+      >
         <%- params.serverInfo.canonicalUrl -%>
       </a>
       , deployed and managed by <%- params.serverInfo.company -%>. Your admin contact is

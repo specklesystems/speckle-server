@@ -1,12 +1,11 @@
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { sendEmail } from '@/modules/emails/services/sending'
 import {
-  BasicEmailTemplateParams,
-  buildBasicTemplateEmail,
-  buildBasicTemplateServerInfo
-} from '@/modules/emails/services/templateFormatting'
+  EmailTemplateParams,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
 import {
   createToken,
@@ -77,23 +76,26 @@ function buildTextBody() {
 
 function buildEmailTemplateParams(
   state: PasswordRecoveryRequestState
-): BasicEmailTemplateParams {
-  const { serverInfo, newToken } = state
+): EmailTemplateParams {
+  const { newToken } = state
 
   return {
-    html: buildHtmlBody(),
+    mjml: buildHtmlBody(),
     text: buildTextBody(),
     cta: {
       title: 'Reset Your Password',
       url: buildResetLink(newToken)
-    },
-    server: buildBasicTemplateServerInfo(serverInfo)
+    }
   }
 }
 
 async function sendResetEmail(state: PasswordRecoveryRequestState) {
   const emailTemplateParams = buildEmailTemplateParams(state)
-  const { html, text } = await buildBasicTemplateEmail(emailTemplateParams)
+  const { html, text } = await renderEmail(
+    emailTemplateParams,
+    state.serverInfo,
+    state.user
+  )
   await sendEmail({
     to: state.email,
     subject: EMAIL_SUBJECT,

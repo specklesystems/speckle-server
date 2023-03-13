@@ -11,14 +11,15 @@ import { NotificationValidationError } from '@/modules/notifications/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  BasicEmailTemplateParams,
-  buildBasicTemplateEmail
-} from '@/modules/emails/services/templateFormatting'
-import {
   buildAbsoluteUrlFromRoute,
   getStreamCollaboratorsRoute
 } from '@/modules/core/helpers/routeHelper'
 import { sendEmail } from '@/modules/emails/services/sending'
+import {
+  EmailTemplateParams,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
+import { getServerInfo } from '@/modules/core/services/generic'
 
 async function validateMessage(msg: NewStreamAccessRequestMessage) {
   const {
@@ -63,22 +64,26 @@ type ValidatedMessageState = Awaited<ReturnType<typeof validateMessage>>
 
 function buildEmailTemplateHtml(
   state: ValidatedMessageState
-): BasicEmailTemplateParams['html'] {
+): EmailTemplateParams['mjml'] {
   const { requester, stream } = state
 
   return {
-    bodyStart: `Hello,<br/>
+    bodyStart: `<mj-text>
+Hello,<br/>
 <br/>
 <b>${requester.name}</b> requested access to the <b>${stream.name}</b> stream.
 You can add them as a collaborator by clicking the button below.
+</mj-text>
 `,
-    bodyEnd: `You received this email because you are an owner on <b>${stream.name}</b>.`
+    bodyEnd: `<mj-text>
+You received this email because you are an owner on <b>${stream.name}</b>.
+</mj-text>`
   }
 }
 
 function buildEmailTemplateText(
   state: ValidatedMessageState
-): BasicEmailTemplateParams['text'] {
+): EmailTemplateParams['text'] {
   const { requester, stream } = state
 
   return {
@@ -87,13 +92,11 @@ function buildEmailTemplateText(
   }
 }
 
-function buildEmailTemplateParams(
-  state: ValidatedMessageState
-): BasicEmailTemplateParams {
+function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplateParams {
   const { stream } = state
 
   return {
-    html: buildEmailTemplateHtml(state),
+    mjml: buildEmailTemplateHtml(state),
     text: buildEmailTemplateText(state),
     cta: {
       title: 'Review Request',
@@ -105,7 +108,12 @@ function buildEmailTemplateParams(
 const handler: NotificationHandler<NewStreamAccessRequestMessage> = async (msg) => {
   const state = await validateMessage(msg)
   const htmlTemplateParams = buildEmailTemplateParams(state)
-  const { html, text } = await buildBasicTemplateEmail(htmlTemplateParams)
+  const serverInfo = await getServerInfo()
+  const { html, text } = await renderEmail(
+    htmlTemplateParams,
+    serverInfo,
+    state.targetUser
+  )
 
   await sendEmail({
     to: state.targetUser.email,

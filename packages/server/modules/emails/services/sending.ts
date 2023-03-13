@@ -26,13 +26,14 @@ export async function sendEmail({
   }
   try {
     const emailFrom = process.env.EMAIL_FROM || 'no-reply@speckle.systems'
-    return await transporter.sendMail({
+    await transporter.sendMail({
       from: from || `"Speckle" <${emailFrom}>`,
       to,
       subject,
       text,
       html
     })
+    return true
   } catch (error) {
     logger.error(error)
   }
