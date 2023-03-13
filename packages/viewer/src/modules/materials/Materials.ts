@@ -564,7 +564,7 @@ export default class Materials {
     return mat
   }
 
-  public updateMaterialMap(
+  public getMaterial(
     hash: number,
     material: RenderMaterial | DisplayStyle,
     type: GeometryType

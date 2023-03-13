@@ -180,6 +180,7 @@ await sandbox.loadUrl(
   // Point cloud
   // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
   // 'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
+  'https://latest.speckle.dev/streams/ca0378725b/commits/fbae00db5a'
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
@@ -263,5 +264,7 @@ await sandbox.loadUrl(
   // Jonathon's lines
   // 'https://speckle.xyz/streams/7ce9010d71/commits/8cd9e7e4fc'
   // 'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
-  'https://speckle.xyz/streams/813b728084/commits/e2f5ac9775'
+  // 'https://speckle.xyz/streams/813b728084/commits/e2f5ac9775'
+  // Overlayhs
+  // 'https://latest.speckle.dev/streams/85b9f0b9f5/commits/cdfbf3e036?overlay=71f61af444,00fe449457,53a6692b79'
 )

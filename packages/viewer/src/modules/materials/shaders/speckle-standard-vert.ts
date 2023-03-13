@@ -9,6 +9,9 @@ export const speckleStandardVert = /* glsl */ `
     uniform vec3 uShadowViewer_high;
     uniform vec3 uShadowViewer_low;
 #endif
+#define OBJ_COUNT 1
+attribute float objIndex;
+uniform mat4 objMatrix[OBJ_COUNT];
 
 varying vec3 vViewPosition;
 

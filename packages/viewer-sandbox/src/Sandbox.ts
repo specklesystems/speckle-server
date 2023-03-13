@@ -106,14 +106,10 @@ export default class Sandbox {
     viewer.on(ViewerEvent.LoadComplete, (url: string) => {
       this.addStreamControls(url)
       this.addViewControls()
+      this.addBatches()
       this.properties = this.viewer.getObjectProperties()
       Sandbox.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
-      // const dataTree = this.viewer.getDataTree()
-      // const objects = dataTree.findAll((guid, obj) => {
-      //   return obj.speckle_type === 'Objects.Geometry.Mesh'
-      // })
-      // console.log(objects)
     })
     viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
       this.removeViewControls()
@@ -131,6 +127,19 @@ export default class Sandbox {
 
   public refresh() {
     this.pane.refresh()
+  }
+
+  private addBatches() {
+    const batchIds = this.viewer.getRenderer().getBatchIds()
+    for (let k = 0; k < batchIds.length; k++) {
+      const button = this.tabs.pages[3].addButton({
+        title: this.viewer.getRenderer().getBatchSize(batchIds[k]).toString()
+      })
+      button.on('click', () => {
+        this.viewer.getRenderer().isolateBatch(batchIds[k])
+        this.viewer.requestRender()
+      })
+    }
   }
 
   private addStreamControls(url: string) {

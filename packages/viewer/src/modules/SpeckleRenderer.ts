@@ -179,7 +179,6 @@ export default class SpeckleRenderer {
     this.rootGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this._scene.add(this.rootGroup)
 
-    this.batcher = new Batcher()
     this._intersections = new Intersections()
     this.viewer = viewer
     this.lastSectionPlanes.push(
@@ -214,6 +213,8 @@ export default class SpeckleRenderer {
     this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
+
+    this.batcher = new Batcher(this.renderer.capabilities.maxVertexUniforms)
 
     this.pipeline = new Pipeline(this._renderer, this.batcher)
     this.pipeline.configure()
@@ -1242,5 +1243,24 @@ export default class SpeckleRenderer {
         )
       })
     }
+  }
+
+  public getBatchIds() {
+    const batches = Object.values(this.batcher.batches)
+    batches.sort((a, b) => a.renderViews.length - b.renderViews.length)
+    const ids = []
+    for (let k = 0; k < batches.length; k++) {
+      ids.push(batches[k].id)
+    }
+    return ids.reverse()
+  }
+
+  public getBatchSize(batchId: string) {
+    return this.batcher.batches[batchId].renderViews.length
+  }
+
+  public isolateBatch(batchId: string) {
+    this.batcher.resetBatchesDrawRanges()
+    this.batcher.isolateBatch(batchId)
   }
 }
