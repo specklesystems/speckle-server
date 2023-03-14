@@ -41,12 +41,10 @@
       <span class="text-foreground-2 text-xs">
         {{ formattedDate }}
       </span>
+      |
+      <!-- TODO: Debug only -->
+      <span>{{ isThreadResourceLoaded }}</span>
     </div>
-    <!-- <div class="text-xs mt-1">
-      [Archived: {{ thread.archived }}] [Is resource loaded in viewer:
-      {{ isThreadResourceLoaded ? 'yes' : 'no' }}] [author count:
-      {{ thread.replyAuthors.totalCount }}]
-    </div> -->
   </div>
 </template>
 <script setup lang="ts">

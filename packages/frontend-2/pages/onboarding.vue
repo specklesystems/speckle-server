@@ -1,9 +1,50 @@
 <template>
-  <AuthOnboardingPanel />
+  <!-- 
+    Note: You might be asking yourself why do we need this route: the answer is that cloning 
+    a stream is not instant, and it might take some time to get it done. We want to display
+    some sort of progress to the user in the meantime. Moreover, it makes various composables 
+    more sane to use rather than in the router navigation guards.
+  -->
+  <!-- 
+    TODO: Make this page nicer :)  
+  -->
+
+  <div class="w-full h-full bg-foundation flex items-center justify-center">
+    <div class="w-1/5 flex flex-col space-y-2 justify-center text-center">
+      <div class="text-xs text-foreground-2">{{ status }}</div>
+      <CommonLoadingBar loading />
+      <!-- <div class="mx-auto w-20"><LogoTextWhite /></div> -->
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
+import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
+import { modelRoute } from '~~/lib/common/helpers/route'
+
 definePageMeta({
   middleware: ['auth'],
-  layout: 'empty'
+  layout: 'onboarding'
+})
+
+const { createOnboardingProject, setUserOnboardingComplete } = useProcessOnboarding()
+const tourStage = useTourStageState()
+
+const status = ref('Setting up your account')
+
+onMounted(async () => {
+  // Little hacks to make things more exciting
+  setTimeout(() => {
+    status.value = 'Getting there...'
+  }, 2000)
+  const { projectId, modelId } = await createOnboardingProject()
+
+  await setUserOnboardingComplete()
+  status.value = 'Almost done!'
+
+  tourStage.value.showNavbar = false
+  tourStage.value.showViewerControls = false
+  tourStage.value.showTour = true
+  console.log(modelRoute(projectId as string, modelId as string))
+  useRouter().push({ path: modelRoute(projectId as string, modelId as string) })
 })
 </script>

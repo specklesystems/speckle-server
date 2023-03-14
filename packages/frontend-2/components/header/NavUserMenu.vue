@@ -1,0 +1,104 @@
+<template>
+  <div>
+    <Menu as="div" class="ml-2 flex items-center">
+      <MenuButton v-slot="{ open: userOpen }">
+        <span class="sr-only">Open user menu</span>
+        <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
+        <UserAvatar v-else size="lg" hover-effect>
+          <XMarkIcon class="w-5 h-5" />
+        </UserAvatar>
+      </MenuButton>
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition ease-in duration-75"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
+      >
+        <MenuItems
+          class="absolute right-4 top-16 w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+        >
+          <MenuItem v-if="activeUser" v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+              ]"
+            >
+              My Profile
+              <UserAvatar :user="activeUser" size="base" />
+            </NuxtLink>
+          </MenuItem>
+          <MenuItem v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+              ]"
+              @click="onClick"
+            >
+              {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+              <Icon class="w-5 h-5 mr-2" />
+            </NuxtLink>
+          </MenuItem>
+          <MenuItem v-if="activeUser" v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center  justify-between px-2 py-3 text-sm text-danger cursor-pointer transition'
+              ]"
+              @click="logout"
+            >
+              Sign Out
+              <ArrowLeftOnRectangleIcon class="w-5 h-5 mr-2" />
+            </NuxtLink>
+          </MenuItem>
+          <MenuItem v-if="!activeUser" v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center  justify-between px-2 py-3 text-sm text-primary cursor-pointer transition'
+              ]"
+              :to="loginRoute"
+            >
+              Sign In
+              <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
+            </NuxtLink>
+          </MenuItem>
+          <!-- <MenuItem>
+            <AuthVerificationReminderMenuNotice />
+          </MenuItem> -->
+        </MenuItems>
+      </Transition>
+    </Menu>
+  </div>
+</template>
+<script setup lang="ts">
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import {
+  XMarkIcon,
+  ArrowLeftOnRectangleIcon,
+  ArrowRightOnRectangleIcon,
+  SunIcon,
+  MoonIcon
+} from '@heroicons/vue/24/solid'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
+import { loginRoute } from '~~/lib/common/helpers/route'
+import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
+
+const { logout } = useAuthManager()
+const { activeUser } = useActiveUser()
+
+const { isDarkTheme, setTheme } = useTheme()
+const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
+
+const onClick = () => {
+  if (isDarkTheme.value) {
+    setTheme(AppTheme.Light)
+  } else {
+    setTheme(AppTheme.Dark)
+  }
+}
+</script>

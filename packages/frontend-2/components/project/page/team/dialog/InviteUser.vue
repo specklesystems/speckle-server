@@ -1,12 +1,15 @@
 <template>
   <div class="flex flex-col space-y-4">
-    <div class="h4 font-bold">Invite</div>
+    <div class="h4 font-bold flex items-center space-x-2">
+      <UserPlusIcon class="w-6 h-6" />
+      <span>Invite</span>
+    </div>
     <div class="flex flex-col space-y-4">
       <FormTextInput
         v-model="search"
         name="search"
-        size="lg"
-        placeholder="username or email"
+        size="xl"
+        placeholder="search by username or email"
         input-classes="pr-[100px]"
       >
         <template #input-right>
@@ -59,6 +62,7 @@ import { isEmail } from '~~/lib/common/helpers/validation'
 import { isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
+import { UserPlusIcon } from '@heroicons/vue/24/solid'
 
 type InvitableUser = NonNullable<Get<typeof searchUsers.value, '[0]'>> | string
 

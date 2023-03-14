@@ -234,6 +234,8 @@ const buttonClasses = computed(() => {
     )
   }
 
+  if (props.disabled) classParts.push('cursor-not-allowed')
+
   return classParts.join(' ')
 })
 

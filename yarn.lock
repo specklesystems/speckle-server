@@ -9192,7 +9192,7 @@ __metadata:
     "@typescript-eslint/parser": ^5.38.1
     "@vue/apollo-composable": 4.0.0-beta.1
     "@vue/apollo-ssr": ^4.0.0-alpha.18
-    "@vueuse/core": ^9.0.0
+    "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
     browserify-zlib: ^0.2.0
     chromatic: ^6.11.4
@@ -9282,7 +9282,7 @@ __metadata:
     "@vue/eslint-config-typescript": ^11.0.1
     "@vuejs-community/vue-filter-date-format": ^1.6.3
     "@vuejs-community/vue-filter-date-parse": ^1.1.6
-    "@vueuse/core": ^9.0.0
+    "@vueuse/core": ^9.13.0
     apexcharts: ^3.33.1
     apollo-upload-client: ^17.0.0
     babel-plugin-lodash: ^3.3.4
@@ -12573,10 +12573,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/web-bluetooth@npm:^0.0.15":
-  version: 0.0.15
-  resolution: "@types/web-bluetooth@npm:0.0.15"
-  checksum: 4e3b3b1c0baf6735690ce0c5ffaac53de3dbd16362316cbc5e32970bcb1e1baf16dae0a9f30fe86256ad0ee22a4533423f443835273efc54b15235086ebda85b
+"@types/web-bluetooth@npm:^0.0.16":
+  version: 0.0.16
+  resolution: "@types/web-bluetooth@npm:0.0.16"
+  checksum: f68a630d062202a25c46d48686ebae1cf429dc70b4578fcf13b8357b2db63e4aedfb6f6d752bd388366be46ebd19c1c9de45f8a15c2631bb79e904fdfc454f94
   languageName: node
   linkType: hard
 
@@ -13562,15 +13562,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vueuse/core@npm:^9.0.0":
-  version: 9.0.0
-  resolution: "@vueuse/core@npm:9.0.0"
+"@vueuse/core@npm:^9.13.0":
+  version: 9.13.0
+  resolution: "@vueuse/core@npm:9.13.0"
   dependencies:
-    "@types/web-bluetooth": ^0.0.15
-    "@vueuse/metadata": 9.0.0
-    "@vueuse/shared": 9.0.0
+    "@types/web-bluetooth": ^0.0.16
+    "@vueuse/metadata": 9.13.0
+    "@vueuse/shared": 9.13.0
     vue-demi: "*"
-  checksum: 2825bad3f90bf030a23e4f14d67018a9b3497e672fa61fc555da483488bb4df28d61e2141637d6ed97a3d0c8544f60e7474ebf94d7deb6933199727505cba08b
+  checksum: 2b19d8ec4305f6c65650813c0fa9c15af6b322fc253ad656eb1c4bc8d7617a2ddd46a46d7ea359c4cdc5a5724aa5fc152fa7a3816ed6ebeaec4f7e58defb7153
   languageName: node
   linkType: hard
 
@@ -13588,19 +13588,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vueuse/metadata@npm:9.0.0":
-  version: 9.0.0
-  resolution: "@vueuse/metadata@npm:9.0.0"
-  checksum: 13404823d085df4d5221a7be4c8847915d7682888d9465aad3b257e511a509e1baf99575236cdfd2d3cc1abaaddf4180ab5e6e63fb54d6dfbf007c099e0020b3
+"@vueuse/metadata@npm:9.13.0":
+  version: 9.13.0
+  resolution: "@vueuse/metadata@npm:9.13.0"
+  checksum: 91e137bf2fb1406587b523edae26b58b315d3a59797c9f2ed5dde9cb707026aa740b86da5955ea7f9662a93ce92249d0b3af763c65449b4a843bbd0725eb67f6
   languageName: node
   linkType: hard
 
-"@vueuse/shared@npm:9.0.0":
-  version: 9.0.0
-  resolution: "@vueuse/shared@npm:9.0.0"
+"@vueuse/shared@npm:9.13.0":
+  version: 9.13.0
+  resolution: "@vueuse/shared@npm:9.13.0"
   dependencies:
     vue-demi: "*"
-  checksum: 4925d94e53d27174757e153ac3fc1f350633399faa2a8f4e6cf323b5ccb0d106e2415e050664c3fe325932464bfaaad7ea9d38afb2ffa219e35f6accd64b2ee6
+  checksum: e53e7312bdd2030b7970afcf4d3dc3f9a47f7721a92ccb51c364d23246233cb54758f7ddacbdb9ac63d1e86ec82e97d06cb53b05a4b8d43be877d16ab61dd9bb
   languageName: node
   linkType: hard
 

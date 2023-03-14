@@ -1,7 +1,7 @@
 import { ApolloClient } from '@apollo/client/core'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { onboardingRoute } from '~~/lib/common/helpers/route'
+import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
 
 /**
  * Redirect user to /onboarding, if they haven't done it yet
@@ -22,11 +22,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const isOnboardingFinished = data.activeUser.isOnboardingFinished
   const isGoingToOnboarding = to.path === onboardingRoute
 
-  if (!isOnboardingFinished && !isGoingToOnboarding) {
+  if (
+    !isOnboardingFinished &&
+    !isGoingToOnboarding &&
+    to.query['skiponboarding'] !== 'true'
+  ) {
     return navigateTo(onboardingRoute)
   }
-  //TODO: uncomment for production
-  //else if (isOnboardingFinished && isGoingToOnboarding) {
-  //   return navigateTo(homeRoute)
-  // }
+
+  if (isGoingToOnboarding && isOnboardingFinished && to.query['force'] !== 'true') {
+    return navigateTo(homeRoute)
+  }
 })

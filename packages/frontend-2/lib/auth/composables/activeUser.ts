@@ -12,6 +12,7 @@ export const activeUserQuery = graphql(`
       avatar
       isOnboardingFinished
       createdAt
+      verified
     }
   }
 `)

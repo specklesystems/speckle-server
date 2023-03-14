@@ -187,7 +187,7 @@ const bgAndBorderClasses = computed(() => {
         classParts.push(
           props.outlined
             ? 'border-foundation-2 shadow'
-            : 'bg-foundation-2 dark:bg-foreground border-foundation dark:border-foreground shadow'
+            : 'bg-foundation-2 dark:bg-foundation-2 border-foundation shadow'
         )
         break
       case 'danger':
@@ -233,9 +233,7 @@ const foregroundClasses = computed(() => {
           )
           break
         case 'card':
-          classParts.push(
-            props.outlined ? 'text-foreground' : 'text-foreground dark:text-foundation'
-          )
+          classParts.push(props.outlined ? 'text-foreground' : 'text-foreground')
           break
         case 'danger':
           classParts.push(

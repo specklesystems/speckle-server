@@ -18,8 +18,13 @@ const previewUrlObjectIdRegexp = /\/commits\/([\w\d]+)/i
 export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefined>) {
   const authToken = useAuthCookie()
   const url = ref(null as Nullable<string>)
+  const panoramaUrl = ref(null as Nullable<string>)
+  const isLoadingPanorama = ref(false)
   const ret = {
-    previewUrl: computed(() => url.value)
+    previewUrl: computed(() => url.value),
+    panoramaPreviewUrl: computed(() => panoramaUrl.value),
+    isLoadingPanorama,
+    processPanoramaPreviewUrl
   }
 
   if (process.server) return ret
@@ -98,6 +103,34 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     } catch (e) {
       console.error('Preview image load error', e)
       url.value = basePreviewUrl || null
+    }
+  }
+
+  async function processPanoramaPreviewUrl() {
+    const basePreviewUrl = unref(previewUrl)
+    try {
+      isLoadingPanorama.value = true
+      if (!basePreviewUrl) {
+        url.value = null
+        return
+      }
+
+      const res = await fetch(basePreviewUrl + '/all', {
+        headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
+      })
+
+      if (res.headers.has('X-Preview-Error')) {
+        throw new Error('Failed getting preview')
+      }
+
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      panoramaUrl.value = blobUrl
+    } catch (e) {
+      console.error('Panorama preview image load error', e)
+      panoramaUrl.value = basePreviewUrl || null
+    } finally {
+      isLoadingPanorama.value = false
     }
   }
 

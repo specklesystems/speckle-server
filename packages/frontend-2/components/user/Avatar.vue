@@ -1,8 +1,9 @@
 <template>
   <div
     :class="[
-      'shrink-0 rounded-full overflow-hidden bg-primary flex items-center justify-center uppercase text-xs font-semibold text-foreground-on-primary transition',
+      'shrink-0 rounded-full overflow-hidden flex items-center justify-center uppercase text-xs font-semibold text-foreground-on-primary transition',
       sizeClasses,
+      bgClasses,
       borderClasses,
       hoverClasses,
       activeClasses
@@ -58,6 +59,7 @@ const props = withDefaults(
     hoverEffect?: boolean
     active?: boolean
     noBorder?: boolean
+    noBg?: boolean
   }>(),
   {
     size: 'base',
@@ -77,6 +79,11 @@ const initials = computed(() => {
 const borderClasses = computed(() => {
   if (props.noBorder) return ''
   return 'border-2 border-foundation'
+})
+
+const bgClasses = computed(() => {
+  if (props.noBg) return ''
+  return 'bg-primary'
 })
 
 const hoverClasses = computed(() => {

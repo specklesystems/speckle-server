@@ -14,13 +14,13 @@
         <div class="font-bold">
           {{ value.title }}
         </div>
-        {{ value.description }}
+        <span class="text-foreground-2">{{ value.description }}</span>
       </div>
     </template>
     <template #option="{ item }">
       <div class="flex flex-col">
         <div class="label">{{ item.title }}</div>
-        <div class="label label--light">{{ item.description }}</div>
+        <div class="label label--light text-foreground-2">{{ item.description }}</div>
       </div>
     </template>
   </FormSelectBase>
@@ -45,6 +45,11 @@ const items = ref<
     { id: ProjectVisibility; description: string; title: string }
   >
 >({
+  [ProjectVisibility.Public]: {
+    id: ProjectVisibility.Public,
+    description: 'Project will be visible to everyone',
+    title: 'Discoverable'
+  },
   [ProjectVisibility.Unlisted]: {
     id: ProjectVisibility.Unlisted,
     description: 'Anyone with the link will be able to view',
@@ -54,11 +59,6 @@ const items = ref<
     id: ProjectVisibility.Private,
     description: 'Only team members will have access',
     title: 'Private'
-  },
-  [ProjectVisibility.Public]: {
-    id: ProjectVisibility.Public,
-    description: 'Project will be visible to everyone',
-    title: 'Discoverable'
   }
 })
 
