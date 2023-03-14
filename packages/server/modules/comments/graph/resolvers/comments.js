@@ -119,9 +119,6 @@ module.exports = {
     async author(parent, _args, ctx) {
       return ctx.loaders.users.getUser.load(parent.authorId)
     },
-    async repliesCount(parent, _args, ctx) {
-      return ctx.loaders.comments.getReplyCount.load(parent.id)
-    },
     async replyAuthors(parent, args, ctx) {
       const authorIds = await ctx.loaders.comments.getReplyAuthorIds.load(parent.id)
       return {
@@ -152,12 +149,6 @@ module.exports = {
     }
   },
   Project: {
-    async commentThreadCount(parent, _args, context) {
-      if (context.role === Roles.Server.ArchivedUser)
-        throw new ApolloForbiddenError('You are not authorized.')
-
-      return await context.loaders.streams.getCommentThreadCount.load(parent.id)
-    },
     async commentThreads(parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: parent.id,

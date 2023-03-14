@@ -11,6 +11,25 @@ import {
 import { DocumentNode, GraphQLError } from 'graphql'
 import { flatten, isUndefined } from 'lodash-es'
 import { Modifier } from '@apollo/client/cache'
+import { PartialDeep } from 'type-fest'
+
+/**
+ * Utility type for typing cached data in Apollo modify functions.
+ * Essentially inside a modify function all references to cached objects that can be uniquely identified (have an ID field) are converted
+ * to CacheObjectReference objects and additionally all properties are optional as you can never know what exactly has been requested & cached
+ * and what hasn't
+ */
+export type ModifyFnCacheData<Data> = Data extends
+  | Record<string, unknown>
+  | Record<string, unknown>[]
+  ? PartialDeep<{
+      [key in keyof Data]: Data[key] extends { id: string }
+        ? CacheObjectReference
+        : Data[key] extends { id: string }[]
+        ? CacheObjectReference[]
+        : ModifyFnCacheData<Data[key]>
+    }>
+  : Data
 
 /**
  * Get a cached object's identifier
@@ -177,7 +196,7 @@ export function getStoreFieldName(
 
 /**
  * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
- * objects or object arrays
+ * identifiable objects or object arrays
  */
 export type CacheObjectReference = { __ref: string }
 
@@ -206,9 +225,11 @@ export function modifyObjectFields<
   updater: (
     fieldName: string,
     variables: V,
-    value: D,
-    details: Parameters<Modifier<D>>[1] & { ref: typeof getObjectReference }
-  ) => Optional<D>
+    value: ModifyFnCacheData<D>,
+    details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
+      ref: typeof getObjectReference
+    }
+  ) => Optional<ModifyFnCacheData<D>> | void
 ) {
   cache.modify({
     id,
@@ -227,10 +248,15 @@ export function modifyObjectFields<
         }
       }
 
-      const res = updater(fieldName, variables as V, fieldValue as D, {
-        ...details,
-        ref: getObjectReference
-      })
+      const res = updater(
+        fieldName,
+        variables as V,
+        fieldValue as ModifyFnCacheData<D>,
+        {
+          ...details,
+          ref: getObjectReference
+        }
+      )
       if (isUndefined(res)) {
         return fieldValue as unknown
       } else {

@@ -151,6 +151,49 @@ export async function getStream(
   return <Optional<StreamWithOptionalRole>>streams[0]
 }
 
+export type StreamWithCommitId = StreamWithOptionalRole & { commitId: string }
+
+export async function getCommitStreams(params: {
+  commitIds: string[]
+  userId?: string
+}) {
+  const { commitIds, userId } = params
+  if (!commitIds?.length) return []
+
+  const q = StreamCommits.knex()
+    .select<Array<StreamWithCommitId>>([...Streams.cols, StreamCommits.col.commitId])
+    .innerJoin(Streams.name, Streams.col.id, StreamCommits.col.streamId)
+    .whereIn(StreamCommits.col.commitId, commitIds)
+
+  if (userId) {
+    q.select([
+      // Getting first role from grouped results
+      knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+    ])
+    q.leftJoin(StreamAcl.name, function () {
+      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+        StreamAcl.col.userId,
+        userId
+      )
+    })
+    q.groupBy(Streams.col.id, StreamCommits.col.commitId)
+  }
+
+  const results = await q
+  return results
+}
+
+export async function getCommitStream(params: { commitId: string; userId?: string }) {
+  const { commitId } = params
+  if (!commitId) throw new InvalidArgumentError('Invalid commit ID')
+
+  const results = await getCommitStreams({
+    commitIds: [commitId],
+    userId: params.userId
+  })
+  return <Optional<StreamWithCommitId>>results[0]
+}
+
 /**
  * Get base query for finding or counting user favorited streams
  * @param {string} userId The user's ID

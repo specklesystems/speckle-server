@@ -28,15 +28,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // If project succesfully resolved, move on
   if (data?.project?.id) return
 
-  const isNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'NOT_FOUND_ERROR'
-  )
-  if (isNotFound) {
-    return abortNavigation(
-      createError({ statusCode: 404, message: 'Project not found' })
-    )
-  }
-
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
   if (isForbidden) {
     if (inviteToken) {
@@ -57,6 +48,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
     )
   }
 
-  const errMsg = getFirstErrorMessage(errors)
-  return abortNavigation(errMsg)
+  if (errors?.length) {
+    const errMsg = getFirstErrorMessage(errors)
+    return abortNavigation(errMsg)
+  }
+
+  if (!data?.project) {
+    return abortNavigation(
+      createError({ statusCode: 404, message: 'Project not found' })
+    )
+  }
 })

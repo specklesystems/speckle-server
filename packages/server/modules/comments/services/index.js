@@ -12,6 +12,7 @@ const {
   getStreamCommentCount,
   markCommentViewed
 } = require('@/modules/comments/repositories/comments')
+const { clamp } = require('lodash')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -288,15 +289,16 @@ module.exports = {
       query.where('createdAt', '<', cursor)
     }
 
+    limit = clamp(limit ?? 10, 0, 100)
     query.orderBy('createdAt', 'desc')
-    query.limit(limit ?? 10)
+    query.limit(limit || 1) // need at least 1 row to get totalCount
 
     const rows = await query
     const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
     const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 
     return {
-      items: rows,
+      items: !limit ? [] : rows,
       cursor: nextCursor ? nextCursor.toISOString() : null,
       totalCount
     }

@@ -12,7 +12,10 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash'
 
 import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
-import { getPaginatedBranchCommits } from '@/modules/core/services/commit/retrieval'
+import {
+  getPaginatedBranchCommits,
+  getPaginatedStreamCommits
+} from '@/modules/core/services/commit/retrieval'
 import {
   filteredSubscribe,
   ProjectSubscriptions
@@ -38,22 +41,19 @@ export = {
         resourceIdString,
         loadedVersionsOnly
       })
+    },
+    async versions(parent, args) {
+      return await getPaginatedStreamCommits(parent.id, args)
     }
   },
   Model: {
     async author(parent, _args, ctx) {
       return await ctx.loaders.users.getUser.load(parent.authorId)
     },
-    async versionCount(parent, _args, ctx) {
-      return await ctx.loaders.branches.getCommitCount.load(parent.id)
-    },
     async previewUrl(parent, _args, ctx) {
       const latestCommit = await ctx.loaders.branches.getLatestCommit.load(parent.id)
       const path = `/preview/${parent.streamId}/commits/${latestCommit?.id || ''}`
       return latestCommit ? new URL(path, getServerOrigin()).toString() : null
-    },
-    async commentThreadCount(parent, _args, ctx) {
-      return await ctx.loaders.branches.getCommentThreadCount.load(parent.id)
     },
     async childrenTree(parent) {
       return await getModelTreeItems(parent.streamId, parent.name)

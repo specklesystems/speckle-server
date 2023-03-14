@@ -49,9 +49,9 @@
           :icon-left="ArrowPathRoundedSquareIcon"
           :to="modelVersionsRoute(projectId, model.id)"
           :class="`opacity-0 group-hover:opacity-100`"
-          :disabled="model.versionCount === 0"
+          :disabled="model.versionCount.totalCount === 0"
         >
-          {{ model?.versionCount }}
+          {{ model?.versionCount.totalCount }}
         </FormButton>
         <ProjectPageModelsActions
           v-if="showActions"

@@ -15,11 +15,12 @@
   </div>
 </template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Nullable } from '@speckle/shared'
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 
 const props = defineProps<{
-  items: LayoutTabItem[]
+  items: LayoutTabItem<any>[]
 }>()
 
 const activeItemId = ref(null as Nullable<string>)

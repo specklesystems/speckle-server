@@ -6,6 +6,12 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  batchDeleteCommits,
+  batchMoveCommits
+} from '@/modules/core/services/commit/batchCommitActions'
+import { CommitUpdateError } from '@/modules/core/errors/commit'
+import { updateCommitAndNotify } from '@/modules/core/services/commit/management'
 
 export = {
   Version: {
@@ -20,6 +26,29 @@ export = {
       const stream = await ctx.loaders.commits.getCommitStream.load(parent.id)
       const path = `/preview/${stream!.id}/commits/${parent.id}`
       return new URL(path, getServerOrigin()).toString()
+    }
+  },
+  Mutation: {
+    versionMutations: () => ({})
+  },
+  VersionMutations: {
+    async moveToModel(_parent, args, ctx) {
+      return await batchMoveCommits(args.input, ctx.userId!)
+    },
+    async delete(_parent, args, ctx) {
+      await batchDeleteCommits(args.input, ctx.userId!)
+      return true
+    },
+    async update(_parent, args, ctx) {
+      const stream = await ctx.loaders.commits.getCommitStream.load(
+        args.input.versionId
+      )
+      if (!stream) {
+        throw new CommitUpdateError('Commit stream not found')
+      }
+
+      await authorizeResolver(ctx.userId!, stream.id, Roles.Stream.Contributor)
+      return await updateCommitAndNotify(args.input, ctx.userId!)
     }
   },
   Subscription: {
