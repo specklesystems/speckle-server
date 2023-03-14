@@ -21,7 +21,7 @@
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
         :model-value="project.visibility"
-        :disabled="!isOwner"
+        :disabled="!isOwner || loading"
         @update:model-value="onChangeVisibility"
       />
       <!-- <div class="text-foreground-2 text-sm">Comments</div> -->
@@ -31,7 +31,7 @@
             ? CommentPermissions.Anyone
             : CommentPermissions.TeamMembersOnly
         "
-        :disabled="!isOwner"
+        :disabled="!isOwner || loading"
         @update:model-value="onChangeCommentPermissions"
       />
       <!-- <hr class="border border-outline-3" /> -->

@@ -56,5 +56,6 @@ export const projectUpdatableMetadataFragment = graphql(`
     name
     description
     visibility
+    allowPublicComments
   }
 `)

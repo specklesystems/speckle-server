@@ -809,7 +809,10 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
   const { id: streamId } = update
 
   if (!update.name) update.name = null // to prevent saving name ''
-  const validUpdate = omitBy(update, (v) => isNull(v) || isUndefined(v))
+  const validUpdate: Partial<StreamRecord> & Record<string, unknown> = omitBy(
+    update,
+    (v) => isNull(v) || isUndefined(v)
+  )
 
   if (isProjectUpdateInput(update)) {
     if (has(validUpdate, 'visibility')) {
@@ -821,6 +824,15 @@ export async function updateStream(update: StreamUpdateInput | ProjectUpdateInpu
     if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
       validUpdate.isDiscoverable = false
     }
+  }
+
+  if (has(validUpdate, 'isPublic') && !validUpdate.isPublic) {
+    validUpdate.allowPublicComments = false
+  } else if (
+    has(validUpdate, 'allowPublicComments') &&
+    validUpdate.allowPublicComments
+  ) {
+    validUpdate.isPublic = true
   }
 
   if (!Object.keys(validUpdate).length) return null
