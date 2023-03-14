@@ -34,13 +34,6 @@ import { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/gener
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
 
-/**
- * TODO: Check project model cards post move (updating correctly?)
- * TODO: Make sure totalCoutns are updated as well!
- *
- * TODO: keyArgs fn that checks if limit is 0 or maybe limit is lower/higher than what we have in cache?
- */
-
 graphql(`
   fragment ProjectModelPageDialogMoveToVersion on Version {
     id

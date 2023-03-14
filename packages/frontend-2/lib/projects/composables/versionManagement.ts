@@ -34,6 +34,7 @@ import {
 } from '~~/lib/projects/graphql/mutations'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
+import { isUndefined } from 'lodash-es'
 
 /**
  * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
@@ -189,7 +190,7 @@ export function useDeleteVersions() {
                 if (fieldName !== 'versions') return
                 return {
                   ...data,
-                  ...(data.totalCount
+                  ...(!isUndefined(data.totalCount)
                     ? {
                         totalCount: Math.max(
                           data.totalCount - input.versionIds.length,
@@ -211,7 +212,7 @@ export function useDeleteVersions() {
                 if (fieldName !== 'versions') return
                 return {
                   ...data,
-                  ...(data.totalCount
+                  ...(!isUndefined(data.totalCount)
                     ? {
                         totalCount: Math.max(
                           data.totalCount - input.versionIds.length,
@@ -293,24 +294,21 @@ export function useMoveVersions() {
             getCacheId('Model', previousModelId),
             (fieldName, _variables, data) => {
               if (fieldName !== 'versions') return
-              if (!data.items) return
 
-              const oldItems = data.items
+              const oldItems = data.items || []
               const newItems = oldItems.filter(
                 (i) =>
                   !input.versionIds
                     .map((id) => getCacheId('Version', id))
                     .includes(i.__ref)
               )
-              if (oldItems.length === newItems.length) return
 
-              const difference = oldItems.length - newItems.length
               return {
                 ...data,
-                items: newItems,
-                ...(data.totalCount
+                ...(data.items ? { items: newItems } : {}),
+                ...(!isUndefined(data.totalCount)
                   ? {
-                      totalCount: data.totalCount - difference
+                      totalCount: data.totalCount - input.versionIds.length
                     }
                   : {})
               }
@@ -334,17 +332,16 @@ export function useMoveVersions() {
             getCacheId('Model', newModelId),
             (fieldName, _variables, data) => {
               if (fieldName !== 'versions') return
-              if (!data.items) return
 
               const newItems = [
                 ...input.versionIds.map((i) => getObjectReference('Version', i)),
-                ...data.items
+                ...(data.items || [])
               ]
 
               return {
                 ...data,
-                items: newItems,
-                ...(data.totalCount
+                ...(data.items ? { items: newItems } : {}),
+                ...(!isUndefined(data.totalCount)
                   ? {
                       totalCount: data.totalCount + input.versionIds.length
                     }
