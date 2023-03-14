@@ -16,6 +16,7 @@ const {
   updateCommitAndNotify,
   deleteCommitAndNotify
 } = require('@/modules/core/services/commit/management')
+const { clamp } = require('lodash')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
   publicOnly = publicOnly !== false
@@ -166,7 +167,9 @@ module.exports = {
    * }>}
    */
   async getCommitsByStreamId({ streamId, limit, cursor, ignoreGlobalsBranch }) {
-    limit = limit || 25
+    limit = clamp(limit || 25, 0, 100)
+    if (!limit) return { commits: [], cursor: null }
+
     const query = StreamCommits()
       .columns([
         { id: 'commits.id' },

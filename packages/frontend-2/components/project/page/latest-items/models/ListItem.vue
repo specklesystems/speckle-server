@@ -16,13 +16,13 @@
     <td class="text-foreground-2 normal">
       <div class="inline-flex items-center space-x-1 align-middle">
         <ArrowPathRoundedSquareIcon class="h-5 w-5" />
-        <span>{{ model.versionCount }}</span>
+        <span>{{ model.versionCount.totalCount }}</span>
       </div>
     </td>
     <td class="text-foreground normal pr-5">
       <div class="inline-flex items-center space-x-1 align-middle">
         <ChatBubbleLeftEllipsisIcon class="h-5 w-5" />
-        <span>{{ model.commentThreadCount }}</span>
+        <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
     </td>
     <td class="pr-5">{{ updatedAt }}</td>

@@ -26,7 +26,7 @@
           class="absolute top-0 right-0 p-2 flex items-center space-x-1 transition opacity-0 group-hover:opacity-100"
         >
           <ChatBubbleLeftEllipsisIcon class="h-4 w-4" />
-          <span>{{ version.commentThreadCount }}</span>
+          <span>{{ version.commentThreadCount.totalCount }}</span>
         </div>
       </div>
       <div class="flex flex-col px-2 pt-1 pb-3">
@@ -85,7 +85,9 @@ graphql(`
     createdAt
     previewUrl
     sourceApplication
-    commentThreadCount
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
     ...ProjectModelPageDialogDeleteVersion
     ...ProjectModelPageDialogMoveToVersion
   }

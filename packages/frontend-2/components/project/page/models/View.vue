@@ -62,7 +62,9 @@ defineProps<{
 graphql(`
   fragment ProjectPageModelsView on Project {
     id
-    modelCount
+    modelCount: models(limit: 0) {
+      totalCount
+    }
     sourceApps
     team {
       user {
@@ -77,8 +79,12 @@ graphql(`
     id
     name
     displayName
-    versionCount
-    commentThreadCount
+    versionCount: versions(limit: 0) {
+      totalCount
+    }
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
     previewUrl
     updatedAt
   }

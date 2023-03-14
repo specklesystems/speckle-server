@@ -7,8 +7,8 @@
       </div>
     </template>
     <template #bottom>
-      <span v-if="project.versionCount" class="h2 font-bold">
-        {{ project.versionCount }}
+      <span v-if="project.versionCount.totalCount" class="h2 font-bold">
+        {{ project.versionCount.totalCount }}
       </span>
       <span v-else class="h2 font-bold text-slate-400 dark:text-neutral-700">0</span>
     </template>
@@ -21,7 +21,9 @@ import { ProjectPageStatsBlockVersionsFragment } from '~~/lib/common/generated/g
 
 graphql(`
   fragment ProjectPageStatsBlockVersions on Project {
-    versionCount
+    versionCount: versions(limit: 0) {
+      totalCount
+    }
   }
 `)
 

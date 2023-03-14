@@ -216,8 +216,6 @@ export type Comment = {
   reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** Gets the replies to this comment. */
   replies: CommentCollection;
-  /** Total number of replies to this comment */
-  repliesCount: Scalars['Int'];
   /** Get authors of replies to this comment */
   replyAuthors: CommentReplyAuthorCollection;
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
@@ -624,7 +622,6 @@ export type Model = {
   author: LimitedUser;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
-  commentThreadCount: Scalars['Int'];
   /** All comment threads in this model */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
@@ -637,7 +634,6 @@ export type Model = {
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   version?: Maybe<Version>;
-  versionCount: Scalars['Int'];
   versions: VersionCollection;
 };
 
@@ -1185,8 +1181,6 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
-  /** The total number of comment threads in this project */
-  commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -1198,7 +1192,6 @@ export type Project = {
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
-  modelCount: Scalars['Int'];
   /** Returns a flat list of all models */
   models: ModelCollection;
   /**
@@ -1213,7 +1206,8 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
-  versionCount: Scalars['Int'];
+  /** Returns a flat list of all project versions */
+  versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
@@ -1240,6 +1234,12 @@ export type ProjectModelChildrenTreeArgs = {
 export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
 
@@ -2352,8 +2352,6 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
-  /** The total number of comment threads in this version */
-  commentThreadCount: Scalars['Int'];
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
@@ -3081,7 +3079,6 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   rawText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   reactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   replies?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
-  repliesCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   replyAuthors?: Resolver<ResolversTypes['CommentReplyAuthorCollection'], ParentType, ContextType, RequireFields<CommentReplyAuthorsArgs, 'limit'>>;
   resources?: Resolver<Array<ResolversTypes['ResourceIdentifier']>, ParentType, ContextType>;
   screenshot?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3220,7 +3217,6 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
 export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
-  commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<ModelCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3230,7 +3226,6 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
-  versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3369,7 +3364,6 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, RequireFields<ProjectCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3377,7 +3371,6 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
-  modelCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
   modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -3385,7 +3378,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  versionCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ProjectVersionsArgs, 'limit'>>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
   visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3713,7 +3706,6 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
   authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
-  commentThreadCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

@@ -356,7 +356,9 @@ export async function getPaginatedCommitComments(
 ) {
   const { cursor } = params
 
-  const limit = clamp(params.limit, 1, 100)
+  const limit = clamp(params.limit, 0, 100)
+  if (!limit) return { items: [], cursor: null }
+
   const q = getPaginatedCommitCommentsBaseQuery(params)
     .orderBy(Comments.col.createdAt, 'desc')
     .limit(limit)
@@ -428,7 +430,9 @@ export async function getPaginatedBranchComments(
 ) {
   const { cursor } = params
 
-  const limit = clamp(params.limit, 1, 100)
+  const limit = clamp(params.limit, 0, 100)
+  if (!limit) return { items: [], cursor: null }
+
   const q = getPaginatedBranchCommentsBaseQuery(params)
     .orderBy(Comments.col.createdAt, 'desc')
     .limit(limit)
@@ -616,7 +620,8 @@ export async function getPaginatedProjectComments(
   }
 ) {
   const { cursor } = params
-  const limit = clamp(params.limit, 1, 100)
+  const limit = clamp(params.limit, 0, 100)
+  if (!limit) return { items: [], cursor: null }
 
   const { baseQuery } = await getPaginatedProjectCommentsBaseQuery(params, options)
   const q = baseQuery.orderBy(Comments.col.createdAt, 'desc').limit(limit)

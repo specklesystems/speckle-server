@@ -53,14 +53,13 @@ export type CommitGraphQLReturn = Commit & {
 export type ProjectGraphQLReturn = StreamRecord &
   Omit<
     Project,
-    | 'modelCount'
     | 'role'
     | 'team'
-    | 'versionCount'
     | 'commentThreadCount'
     | 'sourceApps'
     | 'commentThreads'
     | 'models'
+    | 'versions'
     | 'structuredModels'
     | 'modelsTree'
     | 'model'

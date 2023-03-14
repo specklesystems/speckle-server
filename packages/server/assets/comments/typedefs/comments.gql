@@ -16,10 +16,6 @@ extend type Query {
 
 extend type Project {
   """
-  The total number of comment threads in this project
-  """
-  commentThreadCount: Int!
-  """
   All comment threads in this project
   """
   commentThreads(
@@ -30,10 +26,6 @@ extend type Project {
 }
 
 extend type Version {
-  """
-  The total number of comment threads in this version
-  """
-  commentThreadCount: Int!
   """
   All comment threads in this version
   """
@@ -151,10 +143,6 @@ type Comment {
   Gets the replies to this comment.
   """
   replies(limit: Int = 25, cursor: String): CommentCollection!
-  """
-  Total number of replies to this comment
-  """
-  repliesCount: Int!
   """
   Get authors of replies to this comment
   """

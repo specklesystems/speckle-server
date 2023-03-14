@@ -7,8 +7,8 @@
       </div>
     </template>
     <template #bottom>
-      <span v-if="project.commentThreadCount" class="h2 font-bold">
-        {{ project.commentThreadCount }}
+      <span v-if="project.commentThreadCount.totalCount" class="h2 font-bold">
+        {{ project.commentThreadCount.totalCount }}
       </span>
       <span v-else class="h2 font-bold text-slate-400 dark:text-neutral-700">0</span>
     </template>
@@ -21,7 +21,9 @@ import { ProjectPageStatsBlockCommentsFragment } from '~~/lib/common/generated/g
 
 graphql(`
   fragment ProjectPageStatsBlockComments on Project {
-    commentThreadCount
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
   }
 `)
 

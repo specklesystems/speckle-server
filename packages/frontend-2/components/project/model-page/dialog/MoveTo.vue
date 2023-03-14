@@ -35,9 +35,11 @@ import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
 
 /**
- * TODO: Get rid of commentCount, versionCount etc.! Requires extra cache updets
+ * TODO: Get rid of commentCount, versionCount, modelCount , commentThreadCount, repliesCount etc.! Requires extra cache updets
  * TODO: Check project model cards post move (updating correctly?)
  * TODO: Make sure totalCoutns are updated as well!
+ *
+ * TODO: keyArgs fn that checks if limit is 0 or maybe limit is lower/higher than what we have in cache?
  */
 
 graphql(`

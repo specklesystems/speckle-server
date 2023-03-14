@@ -27,6 +27,10 @@ extend type Project {
     resourceIdString: String!
     loadedVersionsOnly: Boolean = true
   ): [ViewerResourceGroup!]!
+  """
+  Returns a flat list of all project versions
+  """
+  versions(limit: Int! = 25, cursor: String): VersionCollection!
 }
 
 type ViewerResourceGroup {
@@ -66,9 +70,7 @@ type Model {
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  versionCount: Int!
   previewUrl: String
-  commentThreadCount: Int!
   """
   Return a model tree of children
   """

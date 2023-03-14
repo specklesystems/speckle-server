@@ -1,6 +1,6 @@
 <template>
   <ProjectPageLatestItems
-    :count="project.commentThreadCount"
+    :count="project.commentThreadCount.totalCount"
     :hide-filters="showCommentsIntro"
     title="Latest Threads"
   >
@@ -28,7 +28,9 @@ import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
 graphql(`
   fragment ProjectPageLatestItemsComments on Project {
     id
-    commentThreadCount
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
   }
 `)
 
@@ -41,7 +43,9 @@ graphql(`
     screenshot
     rawText
     createdAt
-    repliesCount
+    repliesCount: replies(limit: 0) {
+      totalCount
+    }
     replyAuthors(limit: 4) {
       totalCount
       items {
@@ -59,5 +63,7 @@ const { result: latestCommentsResult } = useQuery(latestCommentThreadsQuery, () 
   projectId: props.project?.id
 }))
 
-const showCommentsIntro = computed(() => props.project.commentThreadCount < 1)
+const showCommentsIntro = computed(
+  () => props.project.commentThreadCount.totalCount < 1
+)
 </script>

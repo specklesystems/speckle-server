@@ -26,7 +26,7 @@
         <div class="flex items-center space-x-2.5">
           <div class="text-foreground inline-flex items-center">
             <ChatBubbleLeftEllipsisIcon class="w-4 h-4 mr-1" />
-            <span class="caption">{{ thread.repliesCount }}</span>
+            <span class="caption">{{ thread.repliesCount.totalCount }}</span>
           </div>
           <LinkIcon class="w-4 h-4" />
         </div>
