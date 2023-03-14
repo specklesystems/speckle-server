@@ -48,9 +48,11 @@
 import { Nullable, StreamRoles } from '@speckle/shared'
 import { useApolloClient } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import {
-  CacheObjectReference,
+  Project,
+  ProjectPageTeamDialogFragment
+} from '~~/lib/common/generated/gql/graphql'
+import {
   getCacheId,
   getObjectReference,
   modifyObjectFields
@@ -95,13 +97,14 @@ const onCollaboratorRoleChange = async (
 
   if (!newRole) {
     // Remove from team
-    modifyObjectFields<undefined, Array<{ role: string; user: CacheObjectReference }>>(
+    modifyObjectFields<undefined, Project['team']>(
       apollo.cache,
       getCacheId('Project', props.project.id),
       (fieldName, _variables, value) => {
         if (fieldName !== 'team') return
         return value.filter(
           (t) =>
+            !t.user ||
             t.user.__ref !== getObjectReference('LimitedUser', collaborator.id).__ref
         )
       }

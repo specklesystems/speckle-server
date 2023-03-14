@@ -47,6 +47,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   versions: ProjectModelPageDialogDeleteVersionFragment[]
   open: boolean
+  projectId?: string
+  modelId?: string
 }>()
 
 const deleteVersions = useDeleteVersions()
@@ -60,9 +62,15 @@ const isOpen = computed({
 
 const onDelete = async () => {
   loading.value = true
-  const success = await deleteVersions({
-    versionIds: props.versions.map((v) => v.id)
-  })
+  const success = await deleteVersions(
+    {
+      versionIds: props.versions.map((v) => v.id)
+    },
+    {
+      projectId: props.projectId,
+      modelId: props.modelId
+    }
+  )
   loading.value = false
 
   if (success) isOpen.value = false

@@ -6,15 +6,19 @@ import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   DeleteVersionsInput,
+  Model,
+  ModelVersionArgs,
+  ModelVersionsArgs,
   MoveVersionsInput,
   OnProjectVersionsUpdateSubscription,
+  Project,
+  ProjectVersionsArgs,
   ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { onProjectVersionsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
 import {
-  CacheObjectReference,
   convertThrowIntoFetchResult,
   evictObjectFields,
   getCacheId,
@@ -149,7 +153,16 @@ export function useDeleteVersions() {
   const { triggerNotification } = useGlobalToast()
   const { isLoggedIn } = useActiveUser()
 
-  return async (input: DeleteVersionsInput) => {
+  return async (
+    input: DeleteVersionsInput,
+    /**
+     * Various options for better cache updates, set if possible
+     */
+    options?: Partial<{
+      projectId: string
+      modelId: string
+    }>
+  ) => {
     if (!input.versionIds.length) return
     if (!isLoggedIn.value) return
 
@@ -165,6 +178,50 @@ export function useDeleteVersions() {
             cache.evict({
               id: getCacheId('Version', versionId)
             })
+          }
+
+          // Update totalCounts in project
+          if (options?.projectId) {
+            modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
+              cache,
+              getCacheId('Project', options.projectId),
+              (fieldName, _variables, data) => {
+                if (fieldName !== 'versions') return
+                return {
+                  ...data,
+                  ...(data.totalCount
+                    ? {
+                        totalCount: Math.max(
+                          data.totalCount - input.versionIds.length,
+                          0
+                        )
+                      }
+                    : {})
+                }
+              }
+            )
+          }
+
+          // Update totalCounts in model
+          if (options?.modelId) {
+            modifyObjectFields<ModelVersionsArgs, Model['versions']>(
+              cache,
+              getCacheId('Model', options.modelId),
+              (fieldName, _variables, data) => {
+                if (fieldName !== 'versions') return
+                return {
+                  ...data,
+                  ...(data.totalCount
+                    ? {
+                        totalCount: Math.max(
+                          data.totalCount - input.versionIds.length,
+                          0
+                        )
+                      }
+                    : {})
+                }
+              }
+            )
           }
         }
       })
@@ -218,7 +275,7 @@ export function useMoveVersions() {
           if (!previousModelId) return
 
           // Remove from Model.version
-          modifyObjectFields<{ id: string }>(
+          modifyObjectFields<ModelVersionArgs>(
             cache,
             getCacheId('Model', previousModelId),
             (fieldName, variables) => {
@@ -231,14 +288,7 @@ export function useMoveVersions() {
           )
 
           // Remove from Model.versions
-          modifyObjectFields<
-            undefined,
-            Partial<{
-              totalCount: number
-              cursor: string
-              items: Array<CacheObjectReference>
-            }>
-          >(
+          modifyObjectFields<ModelVersionsArgs, Model['versions']>(
             cache,
             getCacheId('Model', previousModelId),
             (fieldName, _variables, data) => {
@@ -254,15 +304,21 @@ export function useMoveVersions() {
               )
               if (oldItems.length === newItems.length) return
 
+              const difference = oldItems.length - newItems.length
               return {
                 ...data,
-                items: newItems
+                items: newItems,
+                ...(data.totalCount
+                  ? {
+                      totalCount: data.totalCount - difference
+                    }
+                  : {})
               }
             }
           )
 
           // Add to new model's Model.version
-          modifyObjectFields<{ id: string }>(
+          modifyObjectFields<ModelVersionArgs>(
             cache,
             getCacheId('Model', newModelId),
             (fieldName, variables) => {
@@ -273,27 +329,29 @@ export function useMoveVersions() {
           )
 
           // Add to new model's Model.versions
-          modifyObjectFields<
-            undefined,
-            Partial<{
-              totalCount: number
-              cursor: string
-              items: Array<CacheObjectReference>
-            }>
-          >(cache, getCacheId('Model', newModelId), (fieldName, _variables, data) => {
-            if (fieldName !== 'versions') return
-            if (!data.items) return
+          modifyObjectFields<ModelVersionsArgs, Model['versions']>(
+            cache,
+            getCacheId('Model', newModelId),
+            (fieldName, _variables, data) => {
+              if (fieldName !== 'versions') return
+              if (!data.items) return
 
-            const newItems = [
-              ...input.versionIds.map((i) => getObjectReference('Version', i)),
-              ...data.items
-            ]
+              const newItems = [
+                ...input.versionIds.map((i) => getObjectReference('Version', i)),
+                ...data.items
+              ]
 
-            return {
-              ...data,
-              items: newItems
+              return {
+                ...data,
+                items: newItems,
+                ...(data.totalCount
+                  ? {
+                      totalCount: data.totalCount + input.versionIds.length
+                    }
+                  : {})
+              }
             }
-          })
+          )
 
           if (options?.newModelCreated && options?.projectId) {
             evictProjectModels(options.projectId)
