@@ -28,7 +28,9 @@ export default class Batcher {
 
   public constructor(maxUniformCount: number) {
     this.maxHardwareUniformCount = maxUniformCount
-    this.maxBatchObjects = Math.floor(this.maxHardwareUniformCount * 0.5)
+    this.maxBatchObjects = Math.floor(
+      (this.maxHardwareUniformCount - Materials.UNIFORM_VECTORS_USED) / 4
+    )
     this.materials = new Materials()
     this.materials.createDefaultMaterials()
   }
@@ -233,6 +235,8 @@ export default class Batcher {
 
     geometryBatch.setBatchMaterial(material)
     geometryBatch.buildBatch()
+    geometryBatch.updateBatchObjects()
+
     return geometryBatch
   }
 

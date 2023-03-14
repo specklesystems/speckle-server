@@ -5,6 +5,7 @@ import {
   DynamicDrawUsage,
   Float32BufferAttribute,
   Material,
+  Matrix4,
   Object3D,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
@@ -28,10 +29,17 @@ import { WorldTree } from '../tree/WorldTree'
 import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
 
+export interface BatchObject {
+  rv: NodeRenderView
+  transform: Matrix4
+  batchIndex: number
+}
+
 export default class MeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
+  public batchObjects: BatchObject[]
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
@@ -46,6 +54,7 @@ export default class MeshBatch implements Batch {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+    this.batchObjects = new Array<BatchObject>()
   }
 
   public get geometryType(): GeometryType {
@@ -70,6 +79,24 @@ export default class MeshBatch implements Batch {
 
   public onRender(renderer: WebGLRenderer) {
     renderer
+  }
+
+  public updateBatchObjects() {
+    const targetMaterials = Array.isArray(this.mesh.material)
+      ? this.mesh.material
+      : [this.mesh.material]
+    for (let k = 0; k < targetMaterials.length; k++) {
+      if (
+        !targetMaterials[k].defines['OBJ_COUNT'] ||
+        targetMaterials[k].defines['OBJ_COUNT'] !== this.batchObjects.length
+      ) {
+        targetMaterials[k].defines['OBJ_COUNT'] = this.batchObjects.length
+      }
+      targetMaterials[k].userData.objMatrix.value = this.batchObjects.map(
+        (value) => value.transform
+      )
+      targetMaterials[k].needsUpdate = true
+    }
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
@@ -419,10 +446,14 @@ export default class MeshBatch implements Batch {
     const attributeCount = this.renderViews.flatMap(
       (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
     ).length
+    const hasVertexColors =
+      this.renderViews[0].renderData.geometry.attributes.COLOR !== undefined
     const indices = new Uint32Array(indicesCount)
     const position = new Float64Array(attributeCount)
-    const color = new Float32Array(this.batchMaterial.vertexColors ? attributeCount : 0)
+    const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
+    const batchIndices = new Float32Array(this.renderViews.length)
+
     let offset = 0
     let arrayOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
@@ -433,6 +464,11 @@ export default class MeshBatch implements Batch {
       )
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+      batchIndices.fill(
+        k,
+        offset / 3,
+        offset / 3 + geometry.attributes.POSITION.length / 3
+      )
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
@@ -440,6 +476,11 @@ export default class MeshBatch implements Batch {
         offset / 3,
         offset / 3 + geometry.attributes.POSITION.length / 3
       )
+      this.batchObjects.push({
+        rv: this.renderViews[k],
+        transform: new Matrix4(),
+        batchIndex: k
+      })
 
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
@@ -452,7 +493,8 @@ export default class MeshBatch implements Batch {
     this.makeMeshGeometry(
       indices,
       position,
-      this.batchMaterial.vertexColors ? color : null
+      batchIndices,
+      hasVertexColors ? color : null
     )
 
     this.boundsTree = Geometry.buildBVH(
@@ -513,6 +555,7 @@ export default class MeshBatch implements Batch {
   private makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -531,6 +574,13 @@ export default class MeshBatch implements Batch {
        * down float32 position!
        */
       this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+    }
+
+    if (batchIndices) {
+      this.geometry.setAttribute(
+        'objIndex',
+        new Float32BufferAttribute(batchIndices, 1)
+      )
     }
 
     if (color) {

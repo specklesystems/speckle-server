@@ -9,7 +9,6 @@ export const speckleStandardVert = /* glsl */ `
     uniform vec3 uShadowViewer_high;
     uniform vec3 uShadowViewer_low;
 #endif
-#define OBJ_COUNT 1
 attribute float objIndex;
 uniform mat4 objMatrix[OBJ_COUNT];
 
@@ -101,9 +100,9 @@ void main() {
     #include <displacementmap_vertex>
     //#include <project_vertex> // EDITED CHUNK
     #ifdef USE_RTE
-        vec4 mvPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
+        vec4 mvPosition = objMatrix[int(objIndex)] * computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
     #else
-        vec4 mvPosition = vec4( transformed, 1.0 );
+        vec4 mvPosition = objMatrix[int(objIndex)] * vec4( transformed, 1.0 );
     #endif
     
     #ifdef USE_INSTANCING

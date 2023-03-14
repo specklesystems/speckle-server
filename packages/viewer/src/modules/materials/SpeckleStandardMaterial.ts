@@ -3,7 +3,13 @@
 /* eslint-disable camelcase */
 import { speckleStandardVert } from './shaders/speckle-standard-vert'
 import { speckleStandardFrag } from './shaders/speckle-standard-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshStandardMaterial } from 'three'
+import {
+  UniformsUtils,
+  ShaderLib,
+  Vector3,
+  MeshStandardMaterial,
+  Material
+} from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
@@ -32,7 +38,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       value: new Vector3()
     }
     this.userData.objMatrix = {
-      value: new Matrix4()
+      value: [new Matrix4()]
     }
     ;(this as any).vertProgram = speckleStandardVert
     ;(this as any).fragProgram = speckleStandardFrag
@@ -130,6 +136,13 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
 
     this.needsUpdate = true
+  }
+
+  private getUniforms(gl, material: Material) {
+    const materialProperties = gl.properties.get(this)
+    if (materialProperties.currentProgram) {
+      console.warn(materialProperties.currentProgram.getUniforms())
+    }
   }
 }
 

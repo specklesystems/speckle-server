@@ -30,6 +30,7 @@ export interface MaterialOptions {
 }
 
 export default class Materials {
+  public static readonly UNIFORM_VECTORS_USED = 33
   private readonly materialMap: { [hash: number]: Material } = {}
   private meshHighlightMaterial: Material = null
   private meshTransparentHighlightMaterial: Material = null
