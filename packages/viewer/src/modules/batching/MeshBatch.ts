@@ -452,7 +452,7 @@ export default class MeshBatch implements Batch {
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
-    const batchIndices = new Float32Array(this.renderViews.length)
+    const batchIndices = new Float32Array(attributeCount / 3)
 
     let offset = 0
     let arrayOffset = 0
