@@ -66,9 +66,9 @@
               <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
             </NuxtLink>
           </MenuItem>
-          <MenuItem>
+          <!-- <MenuItem>
             <AuthVerificationReminderMenuNotice />
-          </MenuItem>
+          </MenuItem> -->
         </MenuItems>
       </Transition>
     </Menu>

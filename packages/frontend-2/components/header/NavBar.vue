@@ -21,6 +21,7 @@
               <PortalTarget name="primary-actions"></PortalTarget>
 
               <!-- Profile dropdown -->
+              <HeaderNavNotifications />
               <HeaderNavUserMenu />
             </div>
           </div>

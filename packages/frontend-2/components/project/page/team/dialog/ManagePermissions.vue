@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col space-y-4">
-    <hr class="border border-outline-3" />
+    <!-- <hr class="border border-outline-3" /> -->
     <!-- <div class="h4 font-bold">Project Permissions</div> -->
-    <div class="h4 font-bold flex items-center space-x-2">
+    <div class="h5 font-bold flex items-center space-x-2 mt-5">
       <LockOpenIcon
         v-if="project.visibility === ProjectVisibility.Public"
         class="w-6 h-6"
@@ -17,14 +17,14 @@
       />
       <span>Access</span>
     </div>
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col space-y-2">
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
         :model-value="project.visibility"
         :disabled="!isOwner"
         @update:model-value="onChangeVisibility"
       />
-      <div class="text-foreground-2 text-sm">Comments</div>
+      <!-- <div class="text-foreground-2 text-sm">Comments</div> -->
       <ProjectCommentPermissionsSelect
         :model-value="
           project.allowPublicComments
@@ -34,13 +34,12 @@
         :disabled="!isOwner"
         @update:model-value="onChangeCommentPermissions"
       />
-      <hr class="border border-outline-3" />
-
-      <ProjectPageTeamDialogDangerZones
-        v-if="isOwner || canLeaveProject"
-        :project="project"
-      />
+      <!-- <hr class="border border-outline-3" /> -->
     </div>
+    <ProjectPageTeamDialogDangerZones
+      v-if="isOwner || canLeaveProject"
+      :project="project"
+    />
   </div>
 </template>
 <script setup lang="ts">

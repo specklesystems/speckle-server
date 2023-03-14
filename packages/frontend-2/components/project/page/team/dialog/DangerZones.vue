@@ -1,16 +1,17 @@
 <template>
   <div class="space-y-4">
-    <div v-if="canLeaveProject" class="border-l-2 border-danger pl-2 rounded">
+    <div
+      v-if="canLeaveProject"
+      class="border-l-2 border-danger pl-2 rounded transition hover:bg-red-500/10"
+    >
       <Disclosure>
-        <DisclosureButton
-          class="py-2 flex w-full justify-between items-center text-danger text-sm pr-3"
-        >
+        <DisclosureButton class="pr-3 text-danger h-10 w-full flex items-center">
           <div class="inline-flex items-center space-x-4">
             <ArrowRightOnRectangleIcon class="h-4 w-4" />
             <span>Leave Project</span>
           </div>
         </DisclosureButton>
-        <DisclosurePanel class="flex flex-col space-y-4">
+        <DisclosurePanel class="flex flex-col space-y-4 pb-2">
           <div class="flex flex-col space-y-2">
             <div class="label label--light">
               As long as you're not the only owner you can remove yourself from this
@@ -28,18 +29,19 @@
         </DisclosurePanel>
       </Disclosure>
     </div>
-    <div v-if="isOwner" class="border-l-2 border-danger pl-2 py-1 rounded">
+    <div
+      v-if="isOwner"
+      class="border-l-2 border-danger pl-2 rounded transition hover:bg-red-500/10"
+    >
       <Disclosure>
-        <DisclosureButton
-          class="py-2 flex w-full justify-between items-center text-danger text-sm pr-3"
-        >
+        <DisclosureButton class="pr-3 text-danger h-10 w-full flex items-center">
           <div class="inline-flex items-center space-x-4">
             <TrashIcon class="h-4 w-4" />
             <span>Delete Project</span>
           </div>
         </DisclosureButton>
         <DisclosurePanel class="flex flex-col space-y-4">
-          <div v-if="isOwner" class="flex flex-col space-y-3">
+          <div v-if="isOwner" class="flex flex-col space-y-2 pb-2">
             <div class="label label--light">
               Deleting a project is an irreversible action! If you are sure you want to
               proceed, please type in the project name

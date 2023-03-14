@@ -32,7 +32,7 @@
           <div v-if="path" class="text-xs text-foreground-2 relative -mb-1 truncate">
             {{ path }}
           </div>
-          <div class="font-bold truncate">{{ model.displayName }}</div>
+          <div class="font-bold truncate text-foreground">{{ model.displayName }}</div>
         </div>
 
         <div
