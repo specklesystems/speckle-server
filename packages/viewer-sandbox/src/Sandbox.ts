@@ -857,6 +857,16 @@ export default class Sandbox {
       label: 'BVH Size(MB)',
       disabled: true
     })
+    container
+      .addInput({ explode: 0 }, 'explode', {
+        label: 'Explode',
+        min: 0,
+        max: 1,
+        step: 0.01
+      })
+      .on('change', (value) => {
+        this.viewer.getRenderer().setExplodeTime(value.value)
+      })
   }
 
   private getBVHSize() {

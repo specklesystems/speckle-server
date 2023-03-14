@@ -1263,4 +1263,24 @@ export default class SpeckleRenderer {
     this.batcher.resetBatchesDrawRanges()
     this.batcher.isolateBatch(batchId)
   }
+
+  public setExplodeTime(time: number) {
+    const batches: MeshBatch[] = this.batcher.getBatches(
+      undefined,
+      GeometryType.MESH
+    ) as MeshBatch[]
+    for (let k = 0; k < batches.length; k++) {
+      const objects = batches[k].batchObjects
+      for (let i = 0; i < objects.length; i++) {
+        const center = objects[i].rv.aabb.getCenter(new Vector3())
+        const dir = center.sub(Viewer.World.worldOrigin)
+        dir.normalize().multiplyScalar(time * 100)
+        const mat = new Matrix4().makeTranslation(dir.x, dir.y, dir.z)
+        objects[i].transform.copy(mat)
+      }
+      batches[k].updateBatchObjects()
+    }
+    this.needsRender = true
+    this.resetPipeline()
+  }
 }
