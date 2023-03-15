@@ -4,7 +4,7 @@ export const homeRoute = '/'
 export const loginRoute = '/authn/login'
 export const registerRoute = '/authn/register'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
-export const onboardingRoute = '/onboarding'
+export const onboardingRoute = '/tour'
 export const downloadManagerRoute = '/download-manager'
 export const projectRoute = (id: string) => `/projects/${id}`
 export const modelRoute = (projectId: string, resourceIdString: string) =>
