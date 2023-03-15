@@ -1,10 +1,11 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import {
   ProjectLatestCommentThreadsQuery,
   ProjectLatestModelsQuery,
   ProjectModelChildrenTreeQuery,
   ProjectModelsTreeTopLevelQuery,
-  ProjectPageQueryQuery
+  ProjectPageQueryQuery,
+  ProjectVisibility
 } from '~~/lib/common/generated/gql/graphql'
 import { StorybookParameters } from '~~/lib/common/helpers/storybook'
 import {
@@ -36,7 +37,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { ProjectPage, DefaultLayout },
     setup: () => ({ args }),
@@ -56,12 +57,24 @@ export const Default: Story = {
                 createdAt: new Date().toISOString(),
                 name: 'Test project',
                 description: 'Test project description',
-                versionCount: 10,
-                modelCount: 15,
-                commentThreadCount: 20,
+                visibility: ProjectVisibility.Public,
+                allowPublicComments: true,
+                role: Roles.Stream.Owner,
+                commentThreadCount: {
+                  totalCount: 20
+                },
+                versionCount: {
+                  totalCount: 15
+                },
+                modelCount: {
+                  totalCount: 10
+                },
                 sourceApps: SourceApps.map((s) => s.searchKey),
-                team: fakeUsers,
-                role: Roles.Stream.Owner
+                team: fakeUsers.map((u) => ({
+                  role: Roles.Stream.Contributor,
+                  user: u
+                })),
+                invitedTeam: null
               }
             } as ProjectPageQueryQuery
           }
@@ -92,8 +105,12 @@ export const Default: Story = {
                     id: `Model${i}`,
                     name: `Model #${i}`,
                     displayName: `Model #${i}`,
-                    versionCount: Math.ceil(Math.random() * 10),
-                    commentThreadCount: Math.ceil(Math.random() * 10),
+                    versionCount: {
+                      totalCount: Math.ceil(Math.random() * 10)
+                    },
+                    commentThreadCount: {
+                      totalCount: Math.ceil(Math.random() * 10)
+                    },
                     previewUrl:
                       'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
                     createdAt: new Date().toISOString(),
@@ -133,8 +150,12 @@ export const Default: Story = {
                           __typename: 'Model',
                           id: `Model${i}`,
                           name: `Model #${i}`,
-                          versionCount: Math.ceil(Math.random() * 10),
-                          commentThreadCount: Math.ceil(Math.random() * 10),
+                          versionCount: {
+                            totalCount: Math.ceil(Math.random() * 10)
+                          },
+                          commentThreadCount: {
+                            totalCount: Math.ceil(Math.random() * 10)
+                          },
                           previewUrl:
                             'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
                           createdAt: new Date().toISOString(),
@@ -166,6 +187,7 @@ export const Default: Story = {
                   const name = `child item ${i}`
                   return {
                     __typename: 'ModelsTreeItem',
+                    id: `${fakeProjectId}/ModelsTreeItem/${i}`,
                     name,
                     fullName: `top level item #1/${name}`,
                     hasChildren: false,
@@ -174,8 +196,13 @@ export const Default: Story = {
                       __typename: 'Model',
                       id: `Model${i}`,
                       name: `Model #${i}`,
-                      versionCount: Math.ceil(Math.random() * 10),
-                      commentThreadCount: Math.ceil(Math.random() * 10),
+                      displayName: `Model #${i}`,
+                      versionCount: {
+                        totalCount: Math.ceil(Math.random() * 10)
+                      },
+                      commentThreadCount: {
+                        totalCount: Math.ceil(Math.random() * 10)
+                      },
                       previewUrl:
                         'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
                       createdAt: new Date().toISOString(),
@@ -202,7 +229,7 @@ export const Default: Story = {
                 __typename: 'Project',
                 id: fakeProjectId,
                 commentThreads: {
-                  __typename: 'CommentCollection',
+                  __typename: 'ProjectCommentCollection',
                   totalCount: 20,
                   cursor: null,
                   items: times(6).map((i) => ({
@@ -213,7 +240,9 @@ export const Default: Story = {
                     rawText:
                       'Hello there, this is an example comment text. Do you like it?',
                     createdAt: new Date().toISOString(),
-                    repliesCount: 100,
+                    repliesCount: {
+                      totalCount: 100
+                    },
                     replyAuthors: {
                       __typename: 'CommentReplyAuthorCollection',
                       items: fakeUsers.slice(0, 4),
@@ -233,7 +262,7 @@ export const Default: Story = {
   } as StorybookParameters
 }
 
-export const EmptyState: Story = {
+export const EmptyState: StoryObj = {
   ...Default,
   parameters: {
     apolloClient: {
@@ -248,12 +277,24 @@ export const EmptyState: Story = {
                 createdAt: new Date().toISOString(),
                 name: 'New Empty Project',
                 description: null,
-                versionCount: 0,
-                modelCount: 1,
-                commentThreadCount: 0,
+                visibility: ProjectVisibility.Public,
+                allowPublicComments: true,
+                versionCount: {
+                  totalCount: 0
+                },
+                modelCount: {
+                  totalCount: 1
+                },
+                commentThreadCount: {
+                  totalCount: 0
+                },
                 sourceApps: [],
-                team: fakeUsers.slice(0, 1),
-                role: Roles.Stream.Owner
+                team: fakeUsers.slice(0, 1).map((u) => ({
+                  role: Roles.Stream.Contributor,
+                  user: u
+                })),
+                role: Roles.Stream.Owner,
+                invitedTeam: null
               }
             } as ProjectPageQueryQuery
           }
@@ -281,8 +322,12 @@ export const EmptyState: Story = {
                       __typename: 'Model',
                       id: `Model1`,
                       name: `main`,
-                      versionCount: 0,
-                      commentThreadCount: 0,
+                      versionCount: {
+                        totalCount: 0
+                      },
+                      commentThreadCount: {
+                        totalCount: 0
+                      },
                       previewUrl:
                         'https://latest.speckle.dev/preview/7d051a6449/commits/270741bd70',
                       createdAt: new Date().toISOString(),
@@ -308,7 +353,7 @@ export const EmptyState: Story = {
                 __typename: 'Project',
                 id: fakeProjectId,
                 commentThreads: {
-                  __typename: 'CommentCollection',
+                  __typename: 'ProjectCommentCollection',
                   totalCount: 0,
                   cursor: null,
                   items: []

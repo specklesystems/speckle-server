@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import AuthRegisterPanel from '~~/components/auth/RegisterPanel.vue'
 import * as AuthLoginPanelStories from '~~/components/auth/LoginPanel.stories'
 
@@ -12,7 +12,7 @@ export default {
   ...AuthLoginPanelStories.default
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   ...AuthLoginPanelStories.Default,
   render: (args) => ({
     components: { AuthRegisterPanel },

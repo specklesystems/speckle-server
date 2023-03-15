@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import AuthLoginPanel from '~~/components/auth/LoginPanel.vue'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
@@ -14,7 +14,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { AuthLoginPanel },
     setup() {
@@ -50,7 +50,8 @@ export const Default: Story = {
                   }
                 ],
                 termsOfService:
-                  'This piece of text is managed by server admins! You agree to our Terms of Use and Privacy policy.'
+                  'This piece of text is managed by server admins! You agree to our Terms of Use and Privacy policy.',
+                inviteOnly: false
               }
             } as AuthServerInfoQuery
           }
