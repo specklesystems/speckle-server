@@ -66,6 +66,9 @@
               <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
             </NuxtLink>
           </MenuItem>
+          <MenuItem v-if="version">
+            <div class="px-2 py-3 text-xs text-foreground-2">Version {{ version }}</div>
+          </MenuItem>
           <!-- <MenuItem>
             <AuthVerificationReminderMenuNotice />
           </MenuItem> -->
@@ -83,10 +86,12 @@ import {
   SunIcon,
   MoonIcon
 } from '@heroicons/vue/24/solid'
+import { useQuery } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
+import { serverVersionInfoQuery } from '~~/lib/core/graphql/queries'
 
 const { logout } = useAuthManager()
 const { activeUser } = useActiveUser()
@@ -101,4 +106,7 @@ const onClick = () => {
     setTheme(AppTheme.Dark)
   }
 }
+
+const { result } = useQuery(serverVersionInfoQuery)
+const version = computed(() => result.value?.serverInfo.version)
 </script>
