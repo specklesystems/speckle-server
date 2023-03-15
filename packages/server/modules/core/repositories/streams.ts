@@ -783,6 +783,7 @@ export async function getStreamsSourceApps(streamIds: string[]) {
       Commits.col.sourceApplication
     ])
     .whereIn(Streams.col.id, streamIds)
+    .whereNotNull(Commits.col.sourceApplication)
     .innerJoin(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)
     .innerJoin(Commits.name, StreamCommits.col.commitId, Commits.col.id)
 
@@ -791,7 +792,7 @@ export async function getStreamsSourceApps(streamIds: string[]) {
     results,
     (result, item) => {
       const set = result[item.id] || new Set<string>()
-      set.add(item.sourceApplication)
+      if (item.sourceApplication?.length) set.add(item.sourceApplication)
       result[item.id] = set
 
       return result
