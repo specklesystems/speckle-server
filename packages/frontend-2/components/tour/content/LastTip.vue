@@ -1,13 +1,11 @@
 <template>
   <div>
-    <p class="text-sm">There's much more to Speckle.</p>
-    <p class="text-sm pl-5">
+    <div class="text-sm">There's much more to Speckle.</div>
+    <div class="text-sm pl-5">
       <ul class="list-disc">
-        <li>
-          Test
-        </li>
+        <li>Test</li>
       </ul>
-    </p>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
