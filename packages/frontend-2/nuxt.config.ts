@@ -5,6 +5,7 @@ export default defineNuxtConfig({
     strict: true
   },
   modules: [
+    '@nuxt/devtools',
     '@nuxtjs/tailwindcss',
     [
       '~/lib/core/nuxt-modules/apollo/module.ts',
