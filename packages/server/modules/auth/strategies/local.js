@@ -17,7 +17,6 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
-const { logger } = require('@/logging/logging')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
 const {
   UserInputError,
@@ -44,15 +43,16 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           password: req.body.password
         })
 
-        if (!valid) throw new UserInputError('Invalid credentials')
+        if (!valid) throw new UserInputError('Invalid credentials.')
 
         const user = await getUserByEmail({ email: req.body.email })
-        if (!user) throw new UserInputError('Invalid credentials')
+        if (!user) throw new UserInputError('Invalid credentials.')
         req.user = { id: user.id }
 
         return next()
       } catch (err) {
-        return res.status(401).send({ err: true, message: 'Invalid credentials' })
+        res.log.info({ err }, 'Error while logging in.')
+        return res.status(401).send({ err: true, message: 'Invalid credentials.' })
       }
     },
     finalizeAuth
@@ -99,6 +99,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         // so we go ahead and register the user
         const userId = await createUser(user)
         req.user = { id: userId, email: user.email }
+        req.log = req.log.child({ userId })
 
         // 4. use up all server-only invites the email had attached to it
         await finalizeInvitedServerRegistration(user.email, userId)
@@ -112,10 +113,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           case PasswordTooShortError:
           case UserInputError:
           case NoInviteFoundError:
-            logger.info(err)
+            res.log.info({ err }, 'Error while registering.')
             return res.status(400).send({ err: err.message })
           default:
-            logger.error(err)
+            res.log.error(err, 'Error while registering.')
             return res.status(500).send({ err: err.message })
         }
       }

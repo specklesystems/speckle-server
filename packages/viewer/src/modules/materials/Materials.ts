@@ -388,12 +388,17 @@ export default class Materials {
     ;(
       this.pointCloudHighlightMaterial as SpecklePointMaterial
     ).color.convertSRGBToLinear()
+    ;(this.pointCloudHighlightMaterial as SpecklePointMaterial).toneMapped = false
     ;(this.pointHighlightMaterial as SpecklePointMaterial).color.convertSRGBToLinear()
+    ;(this.pointHighlightMaterial as SpecklePointMaterial).toneMapped = false
     ;(this.pointOverlayMaterial as SpecklePointMaterial).color.convertSRGBToLinear()
+    ;(this.pointOverlayMaterial as SpecklePointMaterial).toneMapped = false
     // Jesus prettier... o_0
     ;(
       this.pointCloudOverlayMaterial as SpecklePointMaterial
     ).color.convertSRGBToLinear()
+    ;(this.pointCloudOverlayMaterial as SpecklePointMaterial).toneMapped = false
+    ;(this.pointGhostMaterial as SpecklePointMaterial).toneMapped = false
   }
 
   private async createDefaultNullMaterials() {
@@ -554,6 +559,7 @@ export default class Materials {
     )
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
+    mat.toneMapped = false
     mat.color.convertSRGBToLinear()
     return mat
   }

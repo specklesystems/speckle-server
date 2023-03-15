@@ -1,5 +1,4 @@
 import express, { RequestWithAuthContext } from 'express'
-import Redis from 'ioredis'
 import {
   getRedisUrl,
   getIntFromEnv,
@@ -15,6 +14,8 @@ import {
 import { TIME } from '@speckle/shared'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { rateLimiterLogger } from '@/logging/logging'
+import { createRedisClient } from '@/modules/shared/redis/redis'
 
 // typescript definitions
 export enum RateLimitAction {
@@ -334,17 +335,20 @@ export const createConsumer =
     } catch (err) {
       if (err instanceof RateLimiterRes)
         return { action, isWithinLimits: false, msBeforeNext: err.msBeforeNext }
+
+      rateLimiterLogger.error(err, 'Error while consuming rate limiter')
       throw err
     }
   }
 
-export const initializeRedisRateLimiters = (
+const initializeRedisRateLimiters = (
   options: RateLimiterOptions = LIMITS
 ): RateLimiterMapping => {
-  const redisClient = new Redis(getRedisUrl(), {
+  const redisClient = createRedisClient(getRedisUrl(), {
     enableReadyCheck: false,
     maxRetriesPerRequest: null
   })
+
   const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {

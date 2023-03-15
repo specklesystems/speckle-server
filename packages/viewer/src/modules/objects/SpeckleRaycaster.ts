@@ -6,7 +6,12 @@ export class SpeckleRaycaster extends Raycaster {
 
   constructor(origin?, direction?, near = 0, far = Infinity) {
     super(origin, direction, near, far)
-    this.layers.set(ObjectLayers.STREAM_CONTENT)
+    this.layers.disableAll()
+    this.layers.enable(ObjectLayers.STREAM_CONTENT)
+    this.layers.enable(ObjectLayers.STREAM_CONTENT_MESH)
+    this.layers.enable(ObjectLayers.STREAM_CONTENT_LINE)
+    // OFF by default
+    // this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
   }
 
   public intersectObjects(objects, recursive = true, intersects = []) {

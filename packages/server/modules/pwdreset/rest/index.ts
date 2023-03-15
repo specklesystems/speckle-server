@@ -12,6 +12,7 @@ export default function (app: Express) {
 
       return res.status(200).send('Password reset email sent.')
     } catch (e: unknown) {
+      req.log.info({ err: e }, 'Error while requesting password recovery.')
       res.status(400).send(ensureError(e).message)
     }
   })
@@ -24,6 +25,7 @@ export default function (app: Express) {
 
       return res.status(200).send('Password reset. Please log in.')
     } catch (e: unknown) {
+      req.log.info({ err: e }, 'Error while finalizing password recovery.')
       res.status(400).send(ensureError(e).message)
     }
   })

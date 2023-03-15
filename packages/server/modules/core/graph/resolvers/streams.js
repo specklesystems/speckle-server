@@ -47,6 +47,8 @@ const {
   createStreamReturnRecord,
   updateStreamRoleAndNotify
 } = require('@/modules/core/services/streams/management')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const { Roles } = require('@speckle/shared')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -186,8 +188,11 @@ module.exports = {
     }
   },
   LimitedUser: {
-    async streams(parent, args) {
-      return await getUserStreamsCore(true, parent, args)
+    async streams(parent, args, context) {
+      // a little escape hatch for admins to look into users streams
+
+      const isAdmin = adminOverrideEnabled() && context.role === Roles.Server.Admin
+      return await getUserStreamsCore(!isAdmin, parent, args)
     },
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent

@@ -16,6 +16,7 @@ export = (app: Express) => {
         error instanceof EmailVerificationFinalizationError
           ? error.message
           : 'Email verification unexpectedly failed'
+      req.log.info({ err: error }, 'Email verification failed.')
 
       return res.redirect(
         new URL(`/?emailverifiederror=${msg}`, getFrontendOrigin()).toString()

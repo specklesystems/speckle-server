@@ -1,12 +1,11 @@
-import Redis from 'ioredis'
 import Bull from 'bull'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import { createRedisClient } from '@/modules/shared/redis/redis'
 
 export function buildBaseQueueOptions(): Bull.QueueOptions {
   return {
     createClient: (type) => {
-      // @see https://github.com/OptimalBits/bull/issues/1873
-      const client = new Redis(getRedisUrl(), {
+      const client = createRedisClient(getRedisUrl(), {
         ...(['bclient', 'subscriber'].includes(type)
           ? {
               enableReadyCheck: false,
@@ -14,6 +13,7 @@ export function buildBaseQueueOptions(): Bull.QueueOptions {
             }
           : {})
       })
+
       return client
     }
   }

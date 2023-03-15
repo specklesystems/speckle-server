@@ -13,6 +13,7 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
+import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Viewer } from '../Viewer'
 import {
@@ -198,6 +199,7 @@ export default class LineBatch implements Batch {
     this.mesh.scale.set(1, 1, 1)
 
     this.mesh.uuid = this.id
+    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_LINE)
   }
 
   public getRenderView(index: number): NodeRenderView {

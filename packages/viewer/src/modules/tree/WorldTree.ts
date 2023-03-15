@@ -13,6 +13,7 @@ export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
   children: TreeNode[]
+  nestedNodes: TreeNode[]
   atomic: boolean
   /**
    * Keeps track wether this the root commit object or not.

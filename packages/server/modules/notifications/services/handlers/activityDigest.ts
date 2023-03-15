@@ -2,7 +2,6 @@ import {
   ActivityDigestMessage,
   NotificationHandler
 } from '@/modules/notifications/helpers/types'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
 import {
   ActionTypes,
   StreamActivityRecord,
@@ -10,19 +9,23 @@ import {
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { ServerInfo } from '@/modules/core/helpers/types'
+import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
 import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
 import { groupBy } from 'lodash'
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import * as ejs from 'ejs'
-import mjml2html from 'mjml'
 import {
   ActivitySummary,
   createActivitySummary,
   StreamActivitySummary
 } from '@/modules/activitystream/services/summary'
+import {
+  EmailBody,
+  EmailInput,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
 
 const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
   const {
@@ -364,20 +367,17 @@ export const prepareSummaryEmail = async (
   serverInfo: ServerInfo
 ): Promise<EmailInput> => {
   const body = await renderEmailBody(digest, serverInfo)
-  return await renderEmailShell(body, serverInfo, digest.user)
-}
-
-type EmailInput = {
-  from?: string
-  to: string
-  subject: string
-  text: string
-  html: string
-}
-
-type EmailBody = {
-  text: string
-  mjml: string
+  const cta = {
+    title: 'Check activities',
+    url: serverInfo.canonicalUrl
+  }
+  const subject = 'Speckle weekly digest'
+  const { text, html } = await renderEmail(
+    { mjml: { bodyStart: body.mjml }, text: { bodyStart: body.text }, cta },
+    serverInfo,
+    digest.user
+  )
+  return { to: digest.user.email, subject, text, html }
 }
 
 export const renderEmailBody = async (
@@ -416,39 +416,4 @@ Here's a summary of what happened in the past week
 
   mjml += mjmlTopics.join('\n')
   return { text, mjml }
-}
-
-const renderEmailShell = async (
-  body: EmailBody,
-  serverInfo: ServerInfo,
-  user: UserRecord
-): Promise<EmailInput> => {
-  const mjmlPath = path.resolve(
-    packageRoot,
-    'assets/emails/templates/speckleBasicEmailTemplate.mjml.ejs'
-  )
-  const cta = {
-    title: 'Check activities',
-    url: serverInfo.canonicalUrl
-  }
-  const params = {
-    cta,
-    body,
-    user,
-    serverInfo
-  }
-  const fullMjml = await ejs.renderFile(
-    mjmlPath,
-    { params },
-    { cache: false, outputFunctionName: 'print' }
-  )
-  const fullHtml = mjml2html(fullMjml, { filePath: mjmlPath })
-  const renderedHtml = ejs.render(fullHtml.html, { params })
-
-  return {
-    to: user.email,
-    subject: 'Speckle weekly digest',
-    text: body.text,
-    html: renderedHtml
-  }
 }

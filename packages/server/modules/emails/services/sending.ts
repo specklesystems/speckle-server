@@ -21,18 +21,19 @@ export async function sendEmail({
 }: SendEmailParams): Promise<boolean> {
   const transporter = getTransporter()
   if (!transporter) {
-    logger.error('No email transport present. Cannot send emails.')
+    logger.warn('No email transport present. Cannot send emails.')
     return false
   }
   try {
     const emailFrom = process.env.EMAIL_FROM || 'no-reply@speckle.systems'
-    return await transporter.sendMail({
+    await transporter.sendMail({
       from: from || `"Speckle" <${emailFrom}>`,
       to,
       subject,
       text,
       html
     })
+    return true
   } catch (error) {
     logger.error(error)
   }

@@ -4,11 +4,12 @@ import {
 } from '@/modules/core/helpers/routeHelper'
 import { getStream } from '@/modules/core/repositories/streams'
 import { getUser } from '@/modules/core/repositories/users'
-import { sendEmail } from '@/modules/emails/services/sending'
+import { getServerInfo } from '@/modules/core/services/generic'
 import {
-  BasicEmailTemplateParams,
-  buildBasicTemplateEmail
-} from '@/modules/emails/services/templateFormatting'
+  EmailTemplateParams,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
   NotificationHandler,
@@ -45,23 +46,27 @@ async function validateMessage(msg: StreamAccessRequestApprovedMessage) {
 
 type ValidatedMessageState = Awaited<ReturnType<typeof validateMessage>>
 
-function buildEmailTemplateHtml(
+function buildEmailTemplateMjml(
   state: ValidatedMessageState
-): BasicEmailTemplateParams['html'] {
+): EmailTemplateParams['mjml'] {
   const { stream } = state
 
   return {
-    bodyStart: `Hello,<br/>
+    bodyStart: `<mj-text>
+Hello,<br/>
 <br/>
 You have just been granted access to the <b>${stream.name}</b> stream. Check it out below:
+</mj-text>
 `,
-    bodyEnd: `You received this email because you requested access to this stream`
+    bodyEnd: `<mj-text>
+You received this email because you requested access to this stream
+</mj-text>`
   }
 }
 
 function buildEmailTemplateText(
   state: ValidatedMessageState
-): BasicEmailTemplateParams['text'] {
+): EmailTemplateParams['text'] {
   const { stream } = state
 
   return {
@@ -70,12 +75,10 @@ function buildEmailTemplateText(
   }
 }
 
-function buildEmailTemplateParams(
-  state: ValidatedMessageState
-): BasicEmailTemplateParams {
+function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplateParams {
   const { stream } = state
   return {
-    html: buildEmailTemplateHtml(state),
+    mjml: buildEmailTemplateMjml(state),
     text: buildEmailTemplateText(state),
     cta: {
       title: 'View Stream',
@@ -89,7 +92,12 @@ const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
 ) => {
   const state = await validateMessage(msg)
   const htmlTemplateParams = buildEmailTemplateParams(state)
-  const { html, text } = await buildBasicTemplateEmail(htmlTemplateParams)
+  const serverInfo = await getServerInfo()
+  const { html, text } = await renderEmail(
+    htmlTemplateParams,
+    serverInfo,
+    state.targetUser
+  )
 
   await sendEmail({
     to: state.targetUser.email,
