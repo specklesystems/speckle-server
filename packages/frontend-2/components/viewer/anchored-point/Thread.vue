@@ -101,10 +101,6 @@
           ref="commentsContainer"
           class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
         >
-          <!-- TODO: Debug only -->
-          <!-- <span class="text-xs text-foreground-2">
-            resource loaded: {{ isThreadResourceLoaded }}
-          </span> -->
           <div
             v-if="!isThreadResourceLoaded"
             class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
