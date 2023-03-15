@@ -58,7 +58,6 @@ import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import FirstTip from '~~/components/tour/content/FirstTip.vue'
 import BasicViewerNavigation from '~~/components/tour/content/BasicViewerNavigation.vue'
 import OverlayModel from '~~/components/tour/content/OverlayModel.vue'
-import LastTip from '~~/components/tour/content/LastTip.vue'
 
 const emit = defineEmits(['next'])
 

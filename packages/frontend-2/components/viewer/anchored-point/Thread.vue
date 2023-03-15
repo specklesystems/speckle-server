@@ -146,10 +146,7 @@ import {
   useViewerThreadTracking,
   useViewerThreadTypingTracking
 } from '~~/lib/viewer/composables/activity'
-import {
-  CommentBubbleModel,
-  useExpandedThreadResponsiveLocation
-} from '~~/lib/viewer/composables/commentBubbles'
+import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
   useMarkThreadViewed
