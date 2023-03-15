@@ -34,7 +34,7 @@ export function getCommentRoute(
 
 export function getPasswordResetFinalizationRoute(tokenId: string): string {
   return useNewFrontend()
-    ? `/auth/reset-password?token=${tokenId}`
+    ? `/authn/reset-password?token=${tokenId}`
     : `/authn/resetpassword/finalize?t=${tokenId}`
 }
 

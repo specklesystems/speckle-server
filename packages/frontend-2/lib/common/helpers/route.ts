@@ -1,9 +1,9 @@
 import { LocationQueryRaw } from 'vue-router'
 
 export const homeRoute = '/'
-export const loginRoute = '/auth/login'
-export const registerRoute = '/auth/register'
-export const forgottenPasswordRoute = '/auth/forgotten-password'
+export const loginRoute = '/authn/login'
+export const registerRoute = '/authn/register'
+export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const projectRoute = (id: string) => `/projects/${id}`
