@@ -8,6 +8,15 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
+// export const projectInvitesQuery = graphql(`
+//   query ProjectsDashboardQuery($filter: UserProjectsFilter) {
+//     activeUser {
+//       id
+//       ...ProjectsInviteBanners
+//     }
+//   }
+// `)
+
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter) {
     activeUser {

@@ -20,11 +20,13 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
   const url = ref(null as Nullable<string>)
   const panoramaUrl = ref(null as Nullable<string>)
   const isLoadingPanorama = ref(false)
+  const shouldLoadPanorama = ref(false)
   const ret = {
     previewUrl: computed(() => url.value),
     panoramaPreviewUrl: computed(() => panoramaUrl.value),
     isLoadingPanorama,
-    processPanoramaPreviewUrl
+    processPanoramaPreviewUrl,
+    shouldLoadPanorama
   }
 
   if (process.server) return ret
@@ -79,6 +81,7 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
 
     if (regenerate) {
       processBasePreviewUrl(unref(previewUrl))
+      if (shouldLoadPanorama) processPanoramaPreviewUrl()
     }
   })
 
@@ -105,6 +108,9 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       url.value = basePreviewUrl || null
     }
   }
+
+  // TODO:
+  // return out a shouldLoadPanorama = ref(false)
 
   async function processPanoramaPreviewUrl() {
     const basePreviewUrl = unref(previewUrl)
@@ -134,7 +140,20 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     }
   }
 
-  watch(() => unref(previewUrl), processBasePreviewUrl, { immediate: true })
+  // watcher on should load pan => processPanoramama....
+
+  watch(shouldLoadPanorama, (newVal) => {
+    if (newVal) processPanoramaPreviewUrl()
+  })
+
+  watch(
+    () => unref(previewUrl),
+    (newVal) => {
+      processBasePreviewUrl(newVal)
+      if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+    },
+    { immediate: true }
+  )
 
   return ret
 }

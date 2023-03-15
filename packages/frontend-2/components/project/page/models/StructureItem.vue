@@ -81,11 +81,7 @@
         </div>
       </div>
       <!-- Preview or icon section -->
-      <div
-        :class="`w-24 h-20 ml-4 ${
-          hasVersions ? 'hover:w-44 hover:h-44 transition-all' : ''
-        }`"
-      >
+      <div class="w-24 h-20 ml-4">
         <PreviewImage
           v-if="hasVersions && item.model && item.model.previewUrl"
           :preview-url="item.model.previewUrl"
