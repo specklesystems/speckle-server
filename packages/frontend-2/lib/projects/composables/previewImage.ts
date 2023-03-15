@@ -25,7 +25,6 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     previewUrl: computed(() => url.value),
     panoramaPreviewUrl: computed(() => panoramaUrl.value),
     isLoadingPanorama,
-    processPanoramaPreviewUrl,
     shouldLoadPanorama
   }
 
@@ -109,9 +108,6 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     }
   }
 
-  // TODO:
-  // return out a shouldLoadPanorama = ref(false)
-
   async function processPanoramaPreviewUrl() {
     const basePreviewUrl = unref(previewUrl)
     try {
@@ -139,8 +135,6 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       isLoadingPanorama.value = false
     }
   }
-
-  // watcher on should load pan => processPanoramama....
 
   watch(shouldLoadPanorama, (newVal) => {
     if (newVal) processPanoramaPreviewUrl()
