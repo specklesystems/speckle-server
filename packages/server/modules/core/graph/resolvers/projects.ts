@@ -153,7 +153,7 @@ export = {
       }))
     },
     async sourceApps(parent, _args, ctx) {
-      return ctx.loaders.streams.getSourceApps.load(parent.id)
+      return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
     async invitedTeam(parent) {
       return await getPendingStreamCollaborators(parent.id)
