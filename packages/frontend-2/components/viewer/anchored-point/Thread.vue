@@ -102,9 +102,16 @@
           class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
         >
           <!-- TODO: Debug only -->
-          <span class="text-xs text-foreground-2">
+          <!-- <span class="text-xs text-foreground-2">
             resource loaded: {{ isThreadResourceLoaded }}
-          </span>
+          </span> -->
+          <div
+            v-if="!isThreadResourceLoaded"
+            class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
+          >
+            <span>Conversation started in a different version.</span>
+            <ExclamationCircleIcon class="w-4 h-4" />
+          </div>
           <ViewerAnchoredPointThreadComment
             v-for="comment in comments"
             :key="comment.id"
@@ -139,6 +146,7 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Nullable, Roles } from '@speckle/shared'
 import { onKeyDown, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'

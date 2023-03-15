@@ -13,7 +13,7 @@
       <CommonTiptapTextEditor
         v-model="doc"
         :class="[
-          'bg-foundation-2 rounded-lg p-4 border',
+          'dark:bg-foundation-2 bg-neutral-100 rounded-lg p-4 border',
           isDraggingFiles ? 'border-success' : 'border-transparent'
         ]"
         :autofocus="autofocus"
