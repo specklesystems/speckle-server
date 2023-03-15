@@ -402,6 +402,7 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   chromatic:
+    resource_class: medium+
     docker:
       - image: cimg/node:16.15
     steps:
