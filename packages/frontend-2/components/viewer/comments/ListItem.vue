@@ -31,25 +31,38 @@
       {{ thread.rawText }}
     </div>
     <div
-      :class="`text-xs font-bold ${
+      :class="`text-xs font-bold flex items-center space-x-2 ${
         thread.replies.totalCount > 0 ? 'text-primary' : 'text-foreground-2'
       } mb-1`"
     >
-      {{ thread.replies.totalCount }}
-      {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
-      |
+      <span
+        v-if="!isThreadResourceLoaded"
+        v-tippy="'Conversation started in a different version.'"
+      >
+        <ExclamationCircleIcon class="w-4 h-4" />
+      </span>
+      <span>
+        {{ thread.replies.totalCount }}
+        {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
+      </span>
       <span class="text-foreground-2 text-xs">
         {{ formattedDate }}
       </span>
-      |
-      <!-- TODO: Debug only -->
-      <span>{{ isThreadResourceLoaded }}</span>
+
+      <!-- <div
+        v-if="!isThreadResourceLoaded"
+        class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
+      >
+        <span>Conversation started in a different version.</span>
+        <ExclamationCircleIcon class="w-4 h-4" />
+      </div> -->
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import {
   LoadedCommentThread,
   useInjectedViewerInterfaceState,

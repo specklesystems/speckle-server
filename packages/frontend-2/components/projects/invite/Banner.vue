@@ -9,7 +9,7 @@
           <span class="font-bold">{{ invite.invitedBy.name }}</span>
           has invited you to become a bollaborator on
           <template v-if="showStreamName">
-            the stream
+            the project
             <CommonTextLink :to="projectRoute(invite.projectId)">
               {{ invite.projectName }}
             </CommonTextLink>
@@ -20,8 +20,14 @@
       <div class="flex space-x-2 w-full sm:w-auto">
         <template v-if="isLoggedIn">
           <FormButton full-width @click="useInvite(true)">Accept</FormButton>
-          <FormButton full-width color="danger" @click="useInvite(false)">
-            Decline
+          <FormButton
+            v-tippy="'Dismiss'"
+            full-width
+            text
+            color="danger"
+            @click="useInvite(false)"
+          >
+            <XMarkIcon class="w-5 h-5" />
           </FormButton>
         </template>
         <template v-else>
@@ -37,6 +43,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, loginRoute } from '~~/lib/common/helpers/route'
 import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
+import { XMarkIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {

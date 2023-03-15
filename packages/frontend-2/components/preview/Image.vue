@@ -7,40 +7,61 @@
     @mouseleave="hovered = false"
   >
     <ClientOnly>
-      <div
-        v-show="(!hovered && previewUrl) || isLoadingPanorama || !props.panoramaOnHover"
-        class="w-full h-full bg-contain bg-no-repeat bg-center transition"
-        :style="{
-          backgroundImage: `url('${previewUrl}')`
-        }"
-      />
-      <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
-      <div
-        v-show="hovered && panoramaPreviewUrl && props.panoramaOnHover"
-        ref="panorama"
-        :style="{
-          backgroundImage: `url('${panoramaPreviewUrl}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: `${positionMagic}px 0`,
-          position: 'absolute',
-          top: '0',
-          width: '100%',
-          height: '100%',
-          opacity: hovered && panoramaPreviewUrl ? '1' : '0',
-          transition: 'opacity 0.5s'
-        }"
-        @mousemove="(e: MouseEvent) => calculatePanoramaStyle(e)"
-        @touchmove="(e:TouchEvent) =>
+      <Transition
+        enter-from-class="opacity-0"
+        enter-active-class="transition duration-300"
+        leave-to-class="opacity-0"
+        leave-active-class="transition duration-300"
+      >
+        <div
+          v-show="
+            (!hovered && previewUrl) || isLoadingPanorama || !props.panoramaOnHover
+          "
+          class="w-full h-full bg-contain bg-no-repeat bg-center transition"
+          :style="{
+            backgroundImage: `url('${previewUrl}')`
+          }"
+        />
+      </Transition>
+      <Transition
+        enter-from-class="opacity-0"
+        enter-active-class="transition duration-300"
+        leave-to-class="opacity-0"
+        leave-active-class="transition duration-300"
+      >
+        <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
+        <div
+          v-show="hovered && panoramaPreviewUrl && props.panoramaOnHover"
+          ref="panorama"
+          :style="{
+            backgroundImage: `url('${panoramaPreviewUrl}')`,
+            backgroundSize: 'cover',
+            backgroundPosition: `${positionMagic}px 0`,
+            position: 'absolute',
+            top: '0',
+            width: '100%',
+            height: '100%'
+          }"
+          @mousemove="(e: MouseEvent) => calculatePanoramaStyle(e)"
+          @touchmove="(e:TouchEvent) =>
           calculatePanoramaStyle({
             target: e.target,
             clientX: e.touches[0].clientX,
             clientY: e.touches[0].clientY
           } as MouseEvent)"
-      />
-      <CommonLoadingBar
-        :loading="isLoadingPanorama && hovered"
-        class="absolute bottom-0 w-full"
-      />
+        />
+      </Transition>
+      <Transition
+        enter-from-class="opacity-0"
+        leave-to-class="opacity-0"
+        enter-active-class="transition duration-300"
+        leave-active-class="transition duration-300"
+      >
+        <CommonLoadingBar
+          :loading="isLoadingPanorama && hovered"
+          class="absolute bottom-0 w-full"
+        />
+      </Transition>
     </ClientOnly>
   </div>
 </template>
@@ -60,14 +81,14 @@ const props = withDefaults(
 )
 
 const basePreviewUrl = computed(() => props.previewUrl)
-const { previewUrl, panoramaPreviewUrl, processPanoramaPreviewUrl, isLoadingPanorama } =
+const { previewUrl, panoramaPreviewUrl, shouldLoadPanorama, isLoadingPanorama } =
   usePreviewImageBlob(basePreviewUrl)
 
 const hovered = ref(false)
 
 watch(hovered, (newVal) => {
   if (newVal && !panoramaPreviewUrl.value && props.panoramaOnHover)
-    processPanoramaPreviewUrl()
+    shouldLoadPanorama.value = true
 })
 
 const panorama = ref(null as Nullable<HTMLDivElement>)

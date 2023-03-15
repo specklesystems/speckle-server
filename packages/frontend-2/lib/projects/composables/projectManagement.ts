@@ -317,8 +317,8 @@ export function useProcessProjectInvite() {
 
     if (data?.projectMutations.invites.use) {
       triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Invite accepted'
+        type: input.accept ? ToastNotificationType.Success : ToastNotificationType.Info,
+        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
       })
     } else {
       const errMsg = getFirstErrorMessage(errors)

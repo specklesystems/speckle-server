@@ -2,21 +2,23 @@
   <div>
     <Menu as="div" class="ml-2 flex items-center">
       <MenuButton v-slot="{ open: menuOpen }" as="div">
-        <span class="sr-only">Open notifications menu</span>
-        <div class="relative">
-          <div v-if="hasNotifications && !menuOpen">
-            <div
-              class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary animate-ping"
-            ></div>
-            <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary"></div>
-          </div>
+        <div class="cursor-pointer">
+          <span class="sr-only">Open notifications menu</span>
+          <div class="relative">
+            <div v-if="hasNotifications && !menuOpen">
+              <div
+                class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary animate-ping"
+              ></div>
+              <div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary"></div>
+            </div>
 
-          <UserAvatar v-if="!menuOpen" no-bg size="lg" hover-effect>
-            <BellIcon class="text-foreground w-5 h-5" />
-          </UserAvatar>
-          <UserAvatar v-else size="lg" hover-effect no-bg>
-            <XMarkIcon class="text-foreground w-5 h-5" />
-          </UserAvatar>
+            <UserAvatar v-if="!menuOpen" no-bg size="lg" hover-effect>
+              <BellIcon class="text-foreground w-5 h-5" />
+            </UserAvatar>
+            <UserAvatar v-else size="lg" hover-effect no-bg>
+              <XMarkIcon class="text-foreground w-5 h-5" />
+            </UserAvatar>
+          </div>
         </div>
       </MenuButton>
       <Transition
@@ -31,6 +33,9 @@
           class="absolute top-16 right-14 w-96 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <div class="p-2 text-sm font-bold">Notifications</div>
+          <div class="p-2 text-sm">TODO: project invites</div>
+          <div class="p-2 text-sm">TODO: manager download reminder</div>
+
           <MenuItem>
             <AuthVerificationReminderMenuNotice />
           </MenuItem>
