@@ -32,7 +32,7 @@
     />
     <ProjectsDashboardFilled v-else-if="projects?.items?.length" :projects="projects" />
     <CommonEmptySearchState
-      v-else
+      v-else-if="!showLoadingBar"
       @clear-search=";(search = ''), updateSearchImmediately()"
     />
     <ProjectsAddDialog v-model:open="openNewProject" />
