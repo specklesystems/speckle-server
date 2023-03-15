@@ -29,6 +29,7 @@ import {
   IntersectionQueryResult
 } from './modules/queries/Query'
 import { Utils } from './modules/Utils'
+import { ObjectLayers } from './modules/SpeckleRenderer'
 
 export {
   Viewer,
@@ -56,6 +57,7 @@ export type {
   InlineView,
   TreeNode,
   NodeData,
+  ObjectLayers,
   PointQuery,
   IntersectionQuery,
   QueryResult,

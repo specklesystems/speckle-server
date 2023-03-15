@@ -35,8 +35,12 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     id
     name
     displayName
-    versionCount
-    commentThreadCount
+    versionCount: versions(limit: 0) {
+      totalCount
+    }
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
     previewUrl
     createdAt
     updatedAt
@@ -52,5 +56,6 @@ export const projectUpdatableMetadataFragment = graphql(`
     name
     description
     visibility
+    allowPublicComments
   }
 `)

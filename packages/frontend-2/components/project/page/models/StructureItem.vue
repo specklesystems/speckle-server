@@ -13,11 +13,11 @@
       <div class="flex items-center flex-grow">
         <!-- Icon -->
         <CubeIcon
-          v-if="model && model.versionCount !== 0"
+          v-if="model && model.versionCount.totalCount !== 0"
           class="w-4 h-4 text-foreground-2 mx-2"
         />
         <CubeTransparentIcon
-          v-if="model && model.versionCount === 0"
+          v-if="model && model.versionCount.totalCount === 0"
           class="w-4 h-4 text-foreground-2 mx-2"
         />
         <!-- Name -->
@@ -52,7 +52,7 @@
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
-            <span>{{ model?.commentThreadCount }}</span>
+            <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
           </div>
           <div class="text-xs text-foreground-2">
@@ -63,7 +63,7 @@
               :icon-left="ArrowPathRoundedSquareIcon"
               :to="modelVersionsRoute(projectId, item.model.id)"
             >
-              {{ model?.versionCount }}
+              {{ model?.versionCount.totalCount }}
             </FormButton>
           </div>
         </div>
@@ -230,7 +230,7 @@ const showActionsMenu = ref(false)
 const itemType = computed<StructureItemType>(() => {
   const item = props.item
 
-  if (item.model?.versionCount) {
+  if (item.model?.versionCount.totalCount) {
     if (item.hasChildren) {
       return StructureItemType.ModelWithVersionsAndSubmodels
     } else {
@@ -269,7 +269,7 @@ const updatedAt = computed(() =>
 )
 
 const modelLink = computed(() => {
-  if (!props.item.model || props.item.model?.versionCount === 0) return null
+  if (!props.item.model || props.item.model?.versionCount.totalCount === 0) return null
   return modelRoute(props.projectId, props.item.model.id)
 })
 

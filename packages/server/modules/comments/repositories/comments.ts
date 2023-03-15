@@ -178,7 +178,6 @@ export async function getStreamCommentCounts(
   const q = Comments.knex()
     .select(Comments.col.streamId)
     .whereIn(Comments.col.streamId, streamIds)
-    .andWhere(Comments.col.archived, false)
     .count()
     .groupBy(Comments.col.streamId)
 
@@ -192,6 +191,36 @@ export async function getStreamCommentCounts(
 
   const results = (await q) as { streamId: string; count: string }[]
   return results.map((r) => ({ ...r, count: parseInt(r.count) }))
+}
+
+export async function getCommitCommentCounts(
+  commitIds: string[],
+  options?: Partial<{ threadsOnly: boolean; includeArchived: boolean }>
+) {
+  if (!commitIds?.length) return []
+  const { threadsOnly, includeArchived } = options || {}
+
+  const q = CommentLinks.knex()
+    .select(CommentLinks.col.resourceId)
+    .where(CommentLinks.col.resourceType, ResourceType.Commit)
+    .whereIn(CommentLinks.col.resourceId, commitIds)
+    .count()
+    .groupBy(CommentLinks.col.resourceId)
+
+  if (threadsOnly || !includeArchived) {
+    q.innerJoin(Comments.name, Comments.col.id, CommentLinks.col.commentId)
+
+    if (threadsOnly) {
+      q.where(Comments.col.parentComment, null)
+    }
+
+    if (!includeArchived) {
+      q.where(Comments.col.archived, false)
+    }
+  }
+
+  const results = (await q) as { resourceId: string; count: string }[]
+  return results.map((r) => ({ commitId: r.resourceId, count: parseInt(r.count) }))
 }
 
 export async function getStreamCommentCount(
@@ -327,7 +356,9 @@ export async function getPaginatedCommitComments(
 ) {
   const { cursor } = params
 
-  const limit = clamp(params.limit, 1, 100)
+  const limit = clamp(params.limit, 0, 100)
+  if (!limit) return { items: [], cursor: null }
+
   const q = getPaginatedCommitCommentsBaseQuery(params)
     .orderBy(Comments.col.createdAt, 'desc')
     .limit(limit)
@@ -399,7 +430,9 @@ export async function getPaginatedBranchComments(
 ) {
   const { cursor } = params
 
-  const limit = clamp(params.limit, 1, 100)
+  const limit = clamp(params.limit, 0, 100)
+  if (!limit) return { items: [], cursor: null }
+
   const q = getPaginatedBranchCommentsBaseQuery(params)
     .orderBy(Comments.col.createdAt, 'desc')
     .limit(limit)
@@ -587,7 +620,8 @@ export async function getPaginatedProjectComments(
   }
 ) {
   const { cursor } = params
-  const limit = clamp(params.limit, 1, 100)
+  const limit = clamp(params.limit, 0, 100)
+  if (!limit) return { items: [], cursor: null }
 
   const { baseQuery } = await getPaginatedProjectCommentsBaseQuery(params, options)
   const q = baseQuery.orderBy(Comments.col.createdAt, 'desc').limit(limit)

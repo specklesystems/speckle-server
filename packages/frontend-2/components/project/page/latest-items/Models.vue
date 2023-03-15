@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageLatestItems :count="project.modelCount" title="Models">
+  <ProjectPageLatestItems :count="project.modelCount.totalCount" title="Models">
     <template #default="{ gridOrList }">
       <ProjectPageLatestItemsModelsGrid
         v-if="gridOrList === GridListToggleValue.Grid"
@@ -46,7 +46,9 @@ import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 graphql(`
   fragment ProjectPageLatestItemsModels on Project {
     id
-    modelCount
+    modelCount: models(limit: 0) {
+      totalCount
+    }
     sourceApps
     team {
       user {

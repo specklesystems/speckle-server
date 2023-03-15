@@ -54,7 +54,7 @@
 </template>
 <script setup lang="ts">
 import { Vector3 } from 'three'
-import { XMarkIcon, ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
+import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { SlideshowItem } from '~~/lib/tour/slideshowItems'
 

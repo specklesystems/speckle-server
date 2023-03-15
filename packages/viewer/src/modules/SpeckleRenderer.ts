@@ -57,6 +57,10 @@ import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
 
 export enum ObjectLayers {
+  STREAM_CONTENT_MESH = 10,
+  STREAM_CONTENT_LINE = 11,
+  STREAM_CONTENT_POINT = 12,
+
   STREAM_CONTENT = 1,
   PROPS = 2,
   SHADOWCATCHER = 3
@@ -296,7 +300,8 @@ export default class SpeckleRenderer {
     })
 
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
-      ObjectLayers.STREAM_CONTENT
+      ObjectLayers.STREAM_CONTENT_MESH,
+      ObjectLayers.STREAM_CONTENT_LINE
     ])
     let restoreVisibility
     this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
@@ -499,7 +504,6 @@ export default class SpeckleRenderer {
 
   private addBatch(batch: Batch, parent: Object3D) {
     const batchRenderable = batch.renderObject
-    batchRenderable.layers.set(ObjectLayers.STREAM_CONTENT)
     parent.add(batch.renderObject)
 
     if (batch.geometryType === GeometryType.MESH) {
@@ -788,6 +792,28 @@ export default class SpeckleRenderer {
         parentNode = parentNode.parent
       }
       queryResult.push({ node: parentNode, point: points[k] })
+    }
+
+    return queryResult
+  }
+
+  public queryHitIds(
+    results: Array<Intersection>
+  ): Array<{ nodeId: string; point: Vector3 }> {
+    const queryResult = []
+    for (let k = 0; k < results.length; k++) {
+      const rv = this.batcher.getRenderView(
+        results[k].object.uuid,
+        results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+      )
+      if (rv) {
+        queryResult.push({ nodeId: rv.renderData.id, point: results[k].point })
+      }
+    }
+
+    /** Batch rejected picking. This only happens with hidden lines */
+    if (queryResult.length === 0) {
+      return null
     }
 
     return queryResult

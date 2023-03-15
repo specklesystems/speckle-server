@@ -91,7 +91,7 @@ export async function createCommentThreadAndNotify(
   userId: string
 ) {
   const [resources] = await Promise.all([
-    getViewerResourceItemsUngrouped(input),
+    getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
     validateInputAttachments(input.projectId, input.content.blobIds || [])
   ])
   if (!resources.length) {

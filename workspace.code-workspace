@@ -70,6 +70,7 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
+    "cSpell.words": ["Bursty", "mjml"],
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.js": "packages/frontend-2/**"
     },

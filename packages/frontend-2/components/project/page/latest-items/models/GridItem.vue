@@ -6,7 +6,7 @@
     <div class="grow flex">
       <ClientOnly>
         <div
-          v-if="previewUrl && model.versionCount > 0"
+          v-if="previewUrl && model.versionCount.totalCount > 0"
           class="grow bg-contain bg-no-repeat bg-center"
           :style="{ backgroundImage: `url('${previewUrl}')` }"
         />
@@ -26,7 +26,7 @@
       >
         <div class="invisible group-hover:visible inline-flex items-center transition">
           <ArrowPathRoundedSquareIcon class="h-4 w-4" />
-          <span class="ml-1">{{ model.versionCount }}</span>
+          <span class="ml-1">{{ model.versionCount.totalCount }}</span>
         </div>
         <EllipsisVerticalIcon class="h-5 w-5" />
       </div>

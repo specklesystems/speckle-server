@@ -100,3 +100,38 @@ export const projectInviteQuery = graphql(`
     }
   }
 `)
+
+export const projectModelCheckQuery = graphql(`
+  query ProjectModelCheck($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        id
+      }
+    }
+  }
+`)
+
+export const projectModelPageQuery = graphql(`
+  query ProjectModelPage(
+    $projectId: String!
+    $modelId: String!
+    $versionsCursor: String
+  ) {
+    project(id: $projectId) {
+      ...ProjectModelPageHeaderProject
+      ...ProjectModelPageVersionsProject
+    }
+  }
+`)
+
+export const projectModelVersionsQuery = graphql(`
+  query ProjectModelVersions(
+    $projectId: String!
+    $modelId: String!
+    $versionsCursor: String
+  ) {
+    project(id: $projectId) {
+      ...ProjectModelPageVersionsProject
+    }
+  }
+`)

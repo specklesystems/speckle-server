@@ -25,12 +25,11 @@ export enum PlaneId {
 }
 
 export interface PlaneOutline {
-  buffer: Float64Array
   renderable: LineSegments2
 }
 
 export class SectionBoxOutlines {
-  private static readonly INITIAL_BUFFER_SIZE = 60000
+  private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
   private static readonly Z_OFFSET = -0.001
 
   private tmpVec: Vector3 = new Vector3()
@@ -70,27 +69,27 @@ export class SectionBoxOutlines {
     }
   }
 
-  public updatePlaneOutline(batches: MeshBatch[], plane: Plane) {
+  public updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
     const tempVector = new Vector3()
     const tempVector1 = new Vector3()
     const tempVector2 = new Vector3()
     const tempVector3 = new Vector3()
     const tempVector4 = new Vector3()
     const tempLine = new Line3()
-    const planeId = this.getPlaneId(plane)
+    const planeId = this.getPlaneId(_plane)
     const clipOutline = this.planeOutlines[planeId].renderable
 
     let index = 0
     let posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
-    const posAttrLow = (
-      clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
-    ).data
+
     /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
     const scratchBuffer = new Array<number>()
 
     for (let b = 0; b < batches.length; b++) {
+      const plane = new Plane().copy(_plane)
+
       batches[b].boundsTree.shapecast({
         intersectsBounds: (box) => {
           const localPlane = plane
@@ -110,7 +109,6 @@ export class SectionBoxOutlines {
 
           const localPlane = plane
           let count = 0
-
           tempLine.start.copy(tri.a)
           tempLine.end.copy(tri.b)
           if (localPlane.intersectLine(tempLine, tempVector)) {
@@ -207,6 +205,9 @@ export class SectionBoxOutlines {
     posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
+    const posAttrLow = (
+      clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
+    ).data
     Geometry.DoubleToHighLowBuffer(
       scratchBuffer,
       posAttrLow.array as Float32Array,
@@ -257,7 +258,6 @@ export class SectionBoxOutlines {
     clipOutline.layers.set(ObjectLayers.PROPS)
 
     return {
-      buffer,
       renderable: clipOutline
     }
   }
@@ -265,7 +265,7 @@ export class SectionBoxOutlines {
   private resizeGeometryBuffer(outline: PlaneOutline, size: number) {
     outline.renderable.geometry.dispose()
 
-    const buffer = new Float64Array(size)
+    const buffer = new Float32Array(size)
     outline.renderable.geometry = new LineSegmentsGeometry()
     outline.renderable.geometry.setPositions(new Float32Array(buffer))
     ;(
@@ -274,7 +274,6 @@ export class SectionBoxOutlines {
       ] as InterleavedBufferAttribute
     ).data.setUsage(DynamicDrawUsage)
     Geometry.updateRTEGeometry(outline.renderable.geometry, buffer)
-    outline.buffer = buffer
   }
 
   private getPlaneId(plane: Plane) {

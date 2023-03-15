@@ -1,6 +1,6 @@
 import Logger from 'js-logger'
 import { Intersection, Ray, Vector2, Vector3 } from 'three'
-import SpeckleRenderer from '../SpeckleRenderer'
+import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 import { IntersectionQuery, IntersectionQueryResult } from './Query'
 
 export class IntersectionQuerySolver {
@@ -32,21 +32,22 @@ export class IntersectionQuerySolver {
       this.renderer.camera,
       ray,
       true,
-      this.renderer.currentSectionBox
+      this.renderer.currentSectionBox,
+      [ObjectLayers.STREAM_CONTENT_MESH]
     )
     if (!results || results.length === 0) return { objects: null }
-    const hits = this.renderer.queryHits(results)
+    const hits = this.renderer.queryHitIds(results)
     if (!hits) return { objects: null }
     let targetDistance = this.renderer.camera.position.distanceTo(target)
     targetDistance -= query.tolerance
+
     if (targetDistance < results[0].distance) {
       return { objects: null }
     } else {
       return {
         objects: [
           {
-            guid: hits[0].node.model.id,
-            object: hits[0].node.model.raw,
+            guid: hits[0].nodeId,
             point: hits[0].point
           }
         ]

@@ -151,8 +151,6 @@ type Project {
   description: String
   visibility: ProjectVisibility!
   allowPublicComments: Boolean!
-  versionCount: Int!
-  modelCount: Int!
   """
   Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
   """

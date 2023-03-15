@@ -17,6 +17,8 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import Logger from 'js-logger'
+import { GeometryConverter } from '../converter/GeometryConverter'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -281,10 +283,15 @@ export default class PointBatch implements Batch {
       )
 
       offset += geometry.attributes.POSITION.length
+
+      if (!GeometryConverter.keepGeometryData) {
+        this.renderViews[k].disposeGeometry()
+      }
     }
     this.makePointGeometry(position, color)
     this.mesh = new Points(this.geometry, this.batchMaterial)
     this.mesh.uuid = this.id
+    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_POINT)
   }
 
   public getRenderView(index: number): NodeRenderView {

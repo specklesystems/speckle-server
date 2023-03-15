@@ -8,7 +8,10 @@ import {
   CommitDeleteError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
-import { CommitUpdateInput } from '@/modules/core/graph/generated/graphql'
+import {
+  CommitUpdateInput,
+  UpdateVersionInput
+} from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
   getStreamBranchByName,
@@ -25,8 +28,13 @@ import {
   updateCommit
 } from '@/modules/core/repositories/commits'
 import { getObject } from '@/modules/core/repositories/objects'
-import { getStream, markCommitStreamUpdated } from '@/modules/core/repositories/streams'
+import {
+  getCommitStream,
+  getStream,
+  markCommitStreamUpdated
+} from '@/modules/core/repositories/streams'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import { has } from 'lodash'
 
 /**
  * Note: Doesn't notify subscriptions or save activityStream due to missing branchName
@@ -141,17 +149,37 @@ export async function createCommitByBranchName(
   return commit
 }
 
-export async function updateCommitAndNotify(params: CommitUpdateInput, userId: string) {
-  const { message, newBranchName, streamId, id: commitId } = params
+const isOldVersionUpdateInput = (
+  i: CommitUpdateInput | UpdateVersionInput
+): i is CommitUpdateInput => has(i, 'streamId')
+
+export async function updateCommitAndNotify(
+  params: CommitUpdateInput | UpdateVersionInput,
+  userId: string
+) {
+  const {
+    message,
+    newBranchName,
+    streamId,
+    id: commitId
+  } = isOldVersionUpdateInput(params)
+    ? params
+    : {
+        message: params.message,
+        id: params.versionId,
+        streamId: null,
+        newBranchName: null
+      }
+
   if (!message && !newBranchName) {
-    throw new CommitUpdateError('Please provide a message and/or a new branch name', {
+    throw new CommitUpdateError('Nothing to update', {
       info: { ...params, userId }
     })
   }
 
   const [commit, stream] = await Promise.all([
     getCommit(commitId),
-    getStream({ streamId, userId })
+    streamId ? getStream({ streamId, userId }) : getCommitStream({ commitId, userId })
   ])
   if (!commit) {
     throw new CommitUpdateError("Can't update nonexistant commit", {
@@ -203,7 +231,7 @@ export async function updateCommitAndNotify(params: CommitUpdateInput, userId: s
   if (commit) {
     await addCommitUpdatedActivity({
       commitId,
-      streamId,
+      streamId: stream.id,
       userId,
       originalCommit: commit,
       update: params,
@@ -215,6 +243,8 @@ export async function updateCommitAndNotify(params: CommitUpdateInput, userId: s
       markCommitBranchUpdated(commit.id)
     ])
   }
+
+  return newCommit
 }
 
 export async function deleteCommitAndNotify(

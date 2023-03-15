@@ -208,8 +208,6 @@ export type Comment = {
   reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** Gets the replies to this comment. */
   replies: CommentCollection;
-  /** Total number of replies to this comment */
-  repliesCount: Scalars['Int'];
   /** Get authors of replies to this comment */
   replyAuthors: CommentReplyAuthorCollection;
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
@@ -501,6 +499,10 @@ export type DeleteModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type DeleteVersionsInput = {
+  versionIds: Array<Scalars['String']>;
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -612,7 +614,6 @@ export type Model = {
   author: LimitedUser;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
-  commentThreadCount: Scalars['Int'];
   /** All comment threads in this model */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
@@ -625,7 +626,6 @@ export type Model = {
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   version?: Maybe<Version>;
-  versionCount: Scalars['Int'];
   versions: VersionCollection;
 };
 
@@ -696,6 +696,12 @@ export type ModelsTreeItem = {
   model?: Maybe<Model>;
   name: Scalars['String'];
   updatedAt: Scalars['DateTime'];
+};
+
+export type MoveVersionsInput = {
+  /** If the name references a nonexistant model, it will be created */
+  targetModelName: Scalars['String'];
+  versionIds: Array<Scalars['String']>;
 };
 
 export type Mutation = {
@@ -795,6 +801,7 @@ export type Mutation = {
    * @deprecated Use broadcastViewerUserActivity
    */
   userViewerActivityBroadcast: Scalars['Boolean'];
+  versionMutations: VersionMutations;
   /** Creates a new webhook on a stream */
   webhookCreate: Scalars['String'];
   /** Deletes an existing webhook */
@@ -1166,8 +1173,6 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
-  /** The total number of comment threads in this project */
-  commentThreadCount: Scalars['Int'];
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -1179,7 +1184,6 @@ export type Project = {
   model?: Maybe<Model>;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
-  modelCount: Scalars['Int'];
   /** Returns a flat list of all models */
   models: ModelCollection;
   /**
@@ -1194,7 +1198,8 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
-  versionCount: Scalars['Int'];
+  /** Returns a flat list of all project versions */
+  versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
@@ -1221,6 +1226,12 @@ export type ProjectModelChildrenTreeArgs = {
 export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
 };
 
@@ -2158,6 +2169,12 @@ export type UpdateModelInput = {
   projectId: Scalars['ID'];
 };
 
+/** Only non-null values will be updated */
+export type UpdateVersionInput = {
+  message?: InputMaybe<Scalars['String']>;
+  versionId: Scalars['String'];
+};
+
 /**
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
@@ -2349,6 +2366,28 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type VersionMutations = {
+  __typename?: 'VersionMutations';
+  delete: Scalars['Boolean'];
+  moveToModel: Model;
+  update: Version;
+};
+
+
+export type VersionMutationsDeleteArgs = {
+  input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMoveToModelArgs = {
+  input: MoveVersionsInput;
+};
+
+
+export type VersionMutationsUpdateArgs = {
+  input: UpdateVersionInput;
 };
 
 export type ViewerResourceGroup = {

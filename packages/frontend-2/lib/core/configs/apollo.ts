@@ -116,7 +116,7 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('StreamCollection')
           },
           projects: {
-            keyArgs: ['filter'],
+            keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
           }
         }
@@ -124,11 +124,15 @@ function createCache(): InMemoryCache {
       Project: {
         fields: {
           models: {
-            keyArgs: ['filter'],
+            keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ModelCollection')
           },
+          versions: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('VersionCollection')
+          },
           commentThreads: {
-            keyArgs: ['filter'],
+            keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('CommentCollection')
           },
           replyAuthors: {
@@ -158,8 +162,15 @@ function createCache(): InMemoryCache {
       Model: {
         fields: {
           versions: {
-            keyArgs: ['filter'],
+            keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('VersionCollection')
+          }
+        }
+      },
+      Comment: {
+        fields: {
+          replies: {
+            keyArgs: ['limit']
           }
         }
       },

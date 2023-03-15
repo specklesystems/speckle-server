@@ -71,4 +71,10 @@ export class UnexpectedErrorStructureError extends BaseError {
   static defaultMessage = 'An unexpected error type was thrown'
 }
 
+export class EnvironmentResourceError extends BaseError {
+  static code = 'ENVIRONMENT_RESOURCE_ERROR'
+  static defaultMessage =
+    'An error occurred while trying to access a resource in the environment.'
+}
+
 export { BaseError }

@@ -7,8 +7,8 @@
       </div>
     </template>
     <template #bottom>
-      <span v-if="project.modelCount" class="h2 font-bold">
-        {{ project.modelCount }}
+      <span v-if="project.modelCount.totalCount" class="h2 font-bold">
+        {{ project.modelCount.totalCount }}
       </span>
       <span v-else class="h2 font-bold text-slate-400 dark:text-neutral-700">0</span>
     </template>
@@ -21,7 +21,9 @@ import { ProjectPageStatsBlockModelsFragment } from '~~/lib/common/generated/gql
 
 graphql(`
   fragment ProjectPageStatsBlockModels on Project {
-    modelCount
+    modelCount: models(limit: 0) {
+      totalCount
+    }
   }
 `)
 

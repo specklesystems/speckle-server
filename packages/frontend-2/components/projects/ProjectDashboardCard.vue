@@ -146,7 +146,7 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
       ProjectModelsUpdatedMessageType.Created,
       ProjectModelsUpdatedMessageType.Updated
     ].includes(event.type) &&
-    model?.versionCount
+    model?.versionCount.totalCount
   ) {
     // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
     // So - add it to the list, if its not already there

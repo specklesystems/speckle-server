@@ -244,13 +244,15 @@ describe('Batch commits', () => {
         expect(result).to.haveGraphQLErrors('commits belong to different streams')
       })
 
-      it("can't do it when specifying a nonexistant target branch", async () => {
+      it('moves to new branch when specifying a nonexistant target branch', async () => {
+        const newBranchName = 'some-nonexistant-stream'
         const commitIds = myMovableCommits
           .filter((c) => c.streamId === myStream.id)
           .map((c) => c.id)
-        const result = await invokeMove(commitIds, 'some-nonexistant-stream')
+        const result = await invokeMove(commitIds, newBranchName)
 
-        expect(result).to.haveGraphQLErrors('invalid target branch')
+        expect(result).to.not.haveGraphQLErrors()
+        await validateMoved(commitIds, newBranchName)
       })
 
       it('can do it with commits belonging to the same stream', async () => {

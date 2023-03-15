@@ -27,6 +27,10 @@ extend type Project {
     resourceIdString: String!
     loadedVersionsOnly: Boolean = true
   ): [ViewerResourceGroup!]!
+  """
+  Returns a flat list of all project versions
+  """
+  versions(limit: Int! = 25, cursor: String): VersionCollection!
 }
 
 type ViewerResourceGroup {
@@ -66,9 +70,7 @@ type Model {
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  versionCount: Int!
   previewUrl: String
-  commentThreadCount: Int!
   """
   Return a model tree of children
   """
@@ -109,8 +111,38 @@ type ModelMutations {
   delete(input: DeleteModelInput!): Boolean!
 }
 
+input MoveVersionsInput {
+  versionIds: [String!]!
+  """
+  If the name references a nonexistant model, it will be created
+  """
+  targetModelName: String!
+}
+
+input DeleteVersionsInput {
+  versionIds: [String!]!
+}
+
+"""
+Only non-null values will be updated
+"""
+input UpdateVersionInput {
+  versionId: String!
+  message: String
+}
+
+type VersionMutations {
+  moveToModel(input: MoveVersionsInput!): Model!
+  delete(input: DeleteVersionsInput!): Boolean!
+  update(input: UpdateVersionInput!): Version!
+}
+
 extend type Mutation {
   modelMutations: ModelMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+
+  versionMutations: VersionMutations!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 }
