@@ -60,8 +60,9 @@ const initNuxtApp = (vueApp?: App<Element>) => {
     vueApp: initVueApp
   })
 
-  // Mocked useRoute() (no param & no query)
+  // Mocked useRoute() & router (no param & no query)
   nuxtApp['_route'] = { query: {}, param: {} }
+  nuxtApp['$router'] = { resolve: (to: unknown) => to }
 
   // TODO: Fake mixpanel through nuxtApp.$mixpanel
   nuxtApp['$mixpanel'] = (() => ({ track: noop })) as typeof nuxtApp['$mixpanel']
