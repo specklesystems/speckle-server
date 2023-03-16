@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles } from '@speckle/shared'
 
@@ -26,6 +28,10 @@ export type LimitedUserRecord = Pick<
   UserRecord,
   'id' | 'name' | 'bio' | 'company' | 'verified' | 'avatar' | 'createdAt'
 >
+
+export type UsersMetaRecord<V = any> = {
+  userId: string
+} & BaseMetaRecord<V>
 
 export type ServerAclRecord = {
   userId: string
