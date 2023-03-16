@@ -58,6 +58,7 @@
             :project-id="projectId"
             :model-id="modelId"
             :version-id="version.id"
+            :selection-disabled="selectionDisabled"
             @select="onSelect"
             @chosen="$emit('chosen', $event)"
           />
