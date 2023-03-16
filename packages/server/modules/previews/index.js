@@ -75,6 +75,7 @@ exports.init = (app) => {
       return {
         type: 'file',
         error: true,
+        errorCode: 'ANGLE_NOT_FOUND',
         file: previewErrorImage
       }
     }
@@ -114,6 +115,9 @@ exports.init = (app) => {
     }
     if (previewBufferOrFile.error) {
       res.set('X-Preview-Error', 'true')
+    }
+    if (previewBufferOrFile.errorCode) {
+      res.set('X-Preview-Error-Code', previewBufferOrFile.errorCode)
     }
     if (previewBufferOrFile.type === 'file') {
       res.sendFile(previewBufferOrFile.file)
