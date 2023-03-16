@@ -129,7 +129,7 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       const blobUrl = URL.createObjectURL(blob)
       panoramaUrl.value = blobUrl
     } catch (e) {
-      console.error('Panorama preview image load error', e)
+      console.warn('Panorama preview image load error - might be an old commit!', e)
       panoramaUrl.value = basePreviewUrl || null
     } finally {
       isLoadingPanorama.value = false
