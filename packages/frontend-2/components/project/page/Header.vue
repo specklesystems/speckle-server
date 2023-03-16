@@ -20,7 +20,7 @@
               rows="1"
               spellcheck="false"
               :cols="titleState.length < 20 ? titleState.length : undefined"
-              :disabled="anyMutationsLoading"
+              :disabled="anyMutationsLoading || !canEdit"
               @keydown="onUpdatableInputKeydown"
               @blur="save()"
               @input="onInputChange()"
@@ -28,6 +28,7 @@
           </div>
         </label>
         <PencilIcon
+          v-if="canEdit"
           class="shrink-0 ml-2 mt-2 w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
@@ -64,7 +65,7 @@
             :placeholder="
               descriptionState ? undefined : 'Click here to add a description.'
             "
-            :disabled="anyMutationsLoading"
+            :disabled="anyMutationsLoading || !canEdit"
             rows="1"
             spellcheck="false"
             maxlength="1000"
@@ -77,6 +78,7 @@
       </label>
       <div class="shrink-0 ml-2 mt-0.5 text-foreground-2">
         <PencilIcon
+          v-if="canEdit"
           class="w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
@@ -97,13 +99,16 @@ import { isNullOrUndefined, Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
+import { canEditProject } from '~~/lib/projects/helpers/permissions'
 
 graphql(`
   fragment ProjectPageProjectHeader on Project {
     id
+    role
     name
     description
     visibility
+    allowPublicComments
   }
 `)
 
@@ -119,6 +124,8 @@ const titleInput = ref(null as Nullable<HTMLTextAreaElement>)
 const descriptionInput = ref(null as Nullable<HTMLTextAreaElement>)
 const descriptionState = ref('')
 const titleState = ref('')
+
+const canEdit = computed(() => canEditProject(props.project))
 
 const inputResetClasses = computed(() => [
   'p-0 bg-transparent border-transparent focus:outline-none focus:ring-0'
@@ -185,8 +192,7 @@ const save = async () => {
         __typename: 'ProjectMutations',
         update: {
           __typename: 'Project',
-          id: props.project.id,
-          visibility: props.project.visibility,
+          ...props.project,
           name: update.name || props.project.name,
           description:
             update.description !== null ? update.description : props.project.description

@@ -9,7 +9,7 @@
       TODO: Report it to Vue/Nuxt!
     -->
     <NuxtLink
-      :href="disableDefaultLink ? undefined : modelRoute(projectId, model.id)"
+      :href="disableDefaultLink ? undefined : modelRoute(project.id, model.id)"
       class="cursor-pointer"
       @click="$emit('click', $event)"
     >
@@ -47,7 +47,7 @@
           rounded
           size="xs"
           :icon-left="ArrowPathRoundedSquareIcon"
-          :to="modelVersionsRoute(projectId, model.id)"
+          :to="modelVersionsRoute(project.id, model.id)"
           :class="`opacity-0 group-hover:opacity-100`"
           :disabled="model.versionCount.totalCount === 0"
         >
@@ -57,7 +57,8 @@
           v-if="showActions"
           v-model:open="showActionsMenu"
           :model="model"
-          :project-id="projectId"
+          :project-id="project.id"
+          :can-edit="canEdit"
           @click.stop.prevent
         />
       </div>
@@ -66,9 +67,21 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { ProjectPageLatestItemsModelItemFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectPageLatestItemsModelItemFragment,
+  ProjectPageModelsCardProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
+import { graphql } from '~~/lib/common/generated/gql'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
+
+graphql(`
+  fragment ProjectPageModelsCardProject on Project {
+    id
+    role
+  }
+`)
 
 defineEmits<{
   (e: 'click', val: MouseEvent): void
@@ -77,7 +90,7 @@ defineEmits<{
 const props = withDefaults(
   defineProps<{
     model: ProjectPageLatestItemsModelItemFragment
-    projectId: string
+    project: ProjectPageModelsCardProjectFragment
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
@@ -100,4 +113,6 @@ const path = computed(() => {
 })
 
 const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))
+
+const canEdit = computed(() => canModifyModels(props.project))
 </script>

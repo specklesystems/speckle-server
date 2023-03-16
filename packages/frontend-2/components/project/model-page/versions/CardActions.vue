@@ -30,6 +30,7 @@ const props = defineProps<{
   projectId: string
   modelId: string
   versionId: string
+  selectionDisabled?: boolean
 }>()
 
 const copyModelLink = useCopyModelLink()
@@ -39,14 +40,31 @@ const showActionsMenu = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
-// TODO: Permissions? Disabled?
 const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
   [
-    { title: 'Delete', id: VersionActionTypes.Delete },
-    { title: 'Move to', id: VersionActionTypes.MoveTo },
-    { title: 'Edit message', id: VersionActionTypes.EditMessage }
+    {
+      title: 'Delete',
+      id: VersionActionTypes.Delete,
+      disabled: !!props.selectionDisabled
+    },
+    {
+      title: 'Move to',
+      id: VersionActionTypes.MoveTo,
+      disabled: !!props.selectionDisabled
+    },
+    {
+      title: 'Edit message',
+      id: VersionActionTypes.EditMessage,
+      disabled: !!props.selectionDisabled
+    }
   ],
-  [{ title: 'Select', id: VersionActionTypes.Select }],
+  [
+    {
+      title: 'Select',
+      id: VersionActionTypes.Select,
+      disabled: !!props.selectionDisabled
+    }
+  ],
   [{ title: 'Share', id: VersionActionTypes.Share }]
 ])
 

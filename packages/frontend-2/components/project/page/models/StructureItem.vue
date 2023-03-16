@@ -165,11 +165,13 @@
           <ProjectPageModelsStructureItem
             :item="child"
             :project-id="projectId"
+            :can-contribute="canContribute"
             class="flex-grow"
             @model-updated="onModelUpdated"
           />
         </div>
         <ProjectPageModelsNewModelStructureItem
+          v-if="canContribute"
           :project-id="projectId"
           :parent-model-name="item.fullName"
         />
@@ -222,6 +224,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
   projectId: string
+  canContribute?: boolean
 }>()
 
 const expanded = ref(false)
