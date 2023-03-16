@@ -571,10 +571,10 @@ export default class Materials {
     type: GeometryType
   ): Material {
     // console.log(this.materialMap)
-    if (this.materialMap[hash]) {
-      // console.warn(`Duplicate material hash found: ${hash}`)
-      return this.materialMap[hash]
-    }
+    // if (this.materialMap[hash]) {
+    //   console.warn(`Duplicate material hash found: ${hash}`)
+    //   return this.materialMap[hash]
+    // }
 
     if (material) {
       switch (type) {

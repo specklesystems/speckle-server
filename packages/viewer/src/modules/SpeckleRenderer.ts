@@ -214,7 +214,10 @@ export default class SpeckleRenderer {
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
-    this.batcher = new Batcher(this.renderer.capabilities.maxVertexUniforms)
+    this.batcher = new Batcher(
+      this.renderer.capabilities.maxVertexUniforms,
+      this.renderer.capabilities.floatVertexTextures
+    )
 
     this.pipeline = new Pipeline(this._renderer, this.batcher)
     this.pipeline.configure()

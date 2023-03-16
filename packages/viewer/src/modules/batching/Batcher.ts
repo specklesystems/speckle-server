@@ -19,18 +19,25 @@ import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManage
 import Logger from 'js-logger'
 import { World } from '../World'
 
+export enum TransformStorage {
+  VERTEX_TEXTURE = 0,
+  UNIFORM_ARRAY = 1
+}
+
 export default class Batcher {
   private maxHardwareUniformCount = 0
+  private floatTextures = false
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
   public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
-  public constructor(maxUniformCount: number) {
-    this.maxHardwareUniformCount = maxUniformCount
+  public constructor(maxUniformCount: number, floatTextures: boolean) {
+    this.maxHardwareUniformCount = 1024 //maxUniformCount
     this.maxBatchObjects = Math.floor(
       (this.maxHardwareUniformCount - Materials.UNIFORM_VECTORS_USED) / 4
     )
+    this.floatTextures = floatTextures
     this.materials = new Materials()
     this.materials.createDefaultMaterials()
   }
@@ -220,7 +227,12 @@ export default class Batcher {
     let geometryBatch: Batch = null
     switch (geometryType) {
       case GeometryType.MESH:
-        geometryBatch = new MeshBatch(batchID, subtreeId, renderViews)
+        geometryBatch = new MeshBatch(
+          batchID,
+          subtreeId,
+          renderViews,
+          TransformStorage.UNIFORM_ARRAY
+        )
         break
       case GeometryType.LINE:
         geometryBatch = new LineBatch(batchID, subtreeId, renderViews)

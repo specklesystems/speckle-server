@@ -2,11 +2,14 @@ import {
   Box3,
   BufferAttribute,
   BufferGeometry,
+  DataTexture,
   DynamicDrawUsage,
   Float32BufferAttribute,
+  FloatType,
   Material,
   Matrix4,
   Object3D,
+  RGBAFormat,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
   WebGLRenderer
@@ -28,6 +31,7 @@ import { GeometryConverter } from '../converter/GeometryConverter'
 import { WorldTree } from '../tree/WorldTree'
 import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
+import { TransformStorage } from './Batcher'
 
 export interface BatchObject {
   rv: NodeRenderView
@@ -39,6 +43,7 @@ export default class MeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
+  private transformStorage: TransformStorage
   public batchObjects: BatchObject[]
   private geometry: BufferGeometry
   public batchMaterial: Material
@@ -49,12 +54,20 @@ export default class MeshBatch implements Batch {
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
+  private transformsTextureBuffer: Float32Array = null
+  private transformsTexture: DataTexture = null
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+  public constructor(
+    id: string,
+    subtreeId: string,
+    renderViews: NodeRenderView[],
+    transformStorage: TransformStorage
+  ) {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
     this.batchObjects = new Array<BatchObject>()
+    this.transformStorage = transformStorage
   }
 
   public get geometryType(): GeometryType {
@@ -82,19 +95,56 @@ export default class MeshBatch implements Batch {
   }
 
   public updateBatchObjects() {
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      if (this.transformsTextureBuffer === null) {
+        this.transformsTextureBuffer = new Float32Array(
+          this.batchObjects.length * 3 * 4
+        )
+        this.transformsTexture = new DataTexture(
+          this.transformsTextureBuffer,
+          this.transformsTextureBuffer.length / 4,
+          1,
+          RGBAFormat,
+          FloatType
+        )
+      }
+    }
     const targetMaterials = Array.isArray(this.mesh.material)
       ? this.mesh.material
       : [this.mesh.material]
     for (let k = 0; k < targetMaterials.length; k++) {
+      targetMaterials[k].defines['TRANSFORM_STORAGE'] = this.transformStorage
       if (
         !targetMaterials[k].defines['OBJ_COUNT'] ||
         targetMaterials[k].defines['OBJ_COUNT'] !== this.batchObjects.length
       ) {
         targetMaterials[k].defines['OBJ_COUNT'] = this.batchObjects.length
       }
-      targetMaterials[k].userData.objMatrix.value = this.batchObjects.map(
-        (value) => value.transform
-      )
+      if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+        this.batchObjects.forEach((batchObject: BatchObject) => {
+          const index = batchObject.batchIndex * 12
+          this.transformsTextureBuffer[index] = batchObject.transform.elements[0]
+          this.transformsTextureBuffer[index + 1] = batchObject.transform.elements[4]
+          this.transformsTextureBuffer[index + 2] = batchObject.transform.elements[8]
+          this.transformsTextureBuffer[index + 3] = batchObject.transform.elements[12]
+
+          this.transformsTextureBuffer[index + 4] = batchObject.transform.elements[1]
+          this.transformsTextureBuffer[index + 5] = batchObject.transform.elements[5]
+          this.transformsTextureBuffer[index + 6] = batchObject.transform.elements[9]
+          this.transformsTextureBuffer[index + 7] = batchObject.transform.elements[13]
+
+          this.transformsTextureBuffer[index + 8] = batchObject.transform.elements[3]
+          this.transformsTextureBuffer[index + 9] = batchObject.transform.elements[6]
+          this.transformsTextureBuffer[index + 10] = batchObject.transform.elements[10]
+          this.transformsTextureBuffer[index + 11] = batchObject.transform.elements[14]
+        })
+        this.transformsTexture.needsUpdate = true
+        targetMaterials[k].userData.tTransforms.value = this.transformsTexture
+      } else {
+        targetMaterials[k].userData.uTransforms.value = this.batchObjects.map(
+          (value) => value.transform
+        )
+      }
       targetMaterials[k].needsUpdate = true
     }
   }

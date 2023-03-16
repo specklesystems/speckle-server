@@ -37,8 +37,11 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.uShadowViewer_low = {
       value: new Vector3()
     }
-    this.userData.objMatrix = {
+    this.userData.uTransforms = {
       value: [new Matrix4()]
+    }
+    this.userData.tTransforms = {
+      value: null
     }
     ;(this as any).vertProgram = speckleStandardVert
     ;(this as any).fragProgram = speckleStandardFrag
@@ -60,8 +63,11 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
         uShadowViewer_low: {
           value: this.userData.uShadowViewer_low.value
         },
-        objMatrix: {
-          value: this.userData.objMatrix.value
+        uTransforms: {
+          value: this.userData.uTransforms.value
+        },
+        tTransforms: {
+          value: this.userData.tTransforms.value
         }
       }
     ])
@@ -72,7 +78,8 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
       shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
       shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
-      shader.uniforms.objMatrix = this.userData.objMatrix
+      shader.uniforms.uTransforms = this.userData.uTransforms
+      shader.uniforms.tTransforms = this.userData.tTransforms
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -103,8 +110,11 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.uShadowViewer_low = {
       value: new Vector3()
     }
-    this.userData.objMatrix = {
-      value: new Matrix4()
+    this.userData.uTransforms = {
+      value: [new Matrix4()]
+    }
+    this.userData.tTransforms = {
+      value: null
     }
 
     this.defines['USE_RTE'] = ' '
