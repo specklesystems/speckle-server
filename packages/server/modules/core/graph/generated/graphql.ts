@@ -617,15 +617,6 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int'];
 };
 
-export type MetaValue = {
-  __typename?: 'MetaValue';
-  createdAt?: Maybe<Scalars['DateTime']>;
-  id: Scalars['ID'];
-  key: Scalars['String'];
-  updatedAt?: Maybe<Scalars['DateTime']>;
-  value?: Maybe<Scalars['JSONObject']>;
-};
-
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
@@ -2690,7 +2681,6 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']>;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
-  MetaValue: ResolverTypeWrapper<MetaValue>;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
   ModelMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -2847,7 +2837,6 @@ export type ResolversParentTypes = {
   Int: Scalars['Int'];
   JSONObject: Scalars['JSONObject'];
   LimitedUser: LimitedUserGraphQLReturn;
-  MetaValue: MetaValue;
   Model: ModelGraphQLReturn;
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
   ModelMutations: MutationsObjectGraphQLReturn;
@@ -3222,15 +3211,6 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
   timeline?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<LimitedUserTimelineArgs, 'limit'>>;
   totalOwnedStreamsFavorites?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type MetaValueResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['MetaValue'] = ResolversParentTypes['MetaValue']> = {
-  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  value?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3852,7 +3832,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   FileUpload?: FileUploadResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
   LimitedUser?: LimitedUserResolvers<ContextType>;
-  MetaValue?: MetaValueResolvers<ContextType>;
   Model?: ModelResolvers<ContextType>;
   ModelCollection?: ModelCollectionResolvers<ContextType>;
   ModelMutations?: ModelMutationsResolvers<ContextType>;

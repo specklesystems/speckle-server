@@ -2,7 +2,7 @@
 
 import { Nullable } from '@speckle/shared'
 import { SchemaConfig, MetaSchemaConfig } from '@/modules/core/dbSchema'
-import { isString } from 'lodash'
+import { camelCase, isString } from 'lodash'
 
 /**
  * All meta records must follow this interface
@@ -108,6 +108,16 @@ export function metaHelpers<
         .del()
       const res = await q
       return res > 0
+    },
+    /**
+     * Get unique GQL ID for the meta record
+     */
+    getGraphqlId: (record: R) => {
+      const metaName = camelCase(table.meta.name)
+      const entityId = (record as Record<string, unknown>)[
+        table.meta.parentIdentityCol
+      ] as string
+      return `MetaValue/${metaName}/${entityId}/${record.key}`
     }
   }
 }

@@ -21,6 +21,7 @@ const {
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 const { markOnboardingComplete } = require('@/modules/core/repositories/users')
+const { UsersMeta } = require('@/modules/core/dbSchema')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -114,6 +115,13 @@ module.exports = {
     },
     async role(parent) {
       return await getUserRole(parent.id)
+    },
+    async isOnboardingFinished(parent, _args, ctx) {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.id,
+        key: UsersMeta.metaKey.isOnboardingFinished
+      })
+      return !!metaVal?.value
     }
   },
   LimitedUser: {

@@ -609,15 +609,6 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int'];
 };
 
-export type MetaValue = {
-  __typename?: 'MetaValue';
-  createdAt?: Maybe<Scalars['DateTime']>;
-  id: Scalars['ID'];
-  key: Scalars['String'];
-  updatedAt?: Maybe<Scalars['DateTime']>;
-  value?: Maybe<Scalars['JSONObject']>;
-};
-
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;

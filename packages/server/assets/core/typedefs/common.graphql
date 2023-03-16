@@ -25,11 +25,3 @@ enum SortDirection {
   ASC
   DESC
 }
-
-type MetaValue {
-  id: ID!
-  key: String!
-  value: JSONObject
-  createdAt: DateTime
-  updatedAt: DateTime
-}

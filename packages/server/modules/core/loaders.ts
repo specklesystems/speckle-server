@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import DataLoader from 'dataloader'
 import {
   getBatchUserFavoriteData,
@@ -18,7 +19,8 @@ import {
   CommitRecord,
   LimitedUserRecord,
   StreamFavoriteRecord,
-  StreamRecord
+  StreamRecord,
+  UsersMetaRecord
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
@@ -46,6 +48,8 @@ import {
   getStreamBranchesByName
 } from '@/modules/core/repositories/branches'
 import { CommentRecord } from '@/modules/comments/helpers/types'
+import { metaHelpers } from '@/modules/core/helpers/meta'
+import { Users } from '@/modules/core/dbSchema'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -282,7 +286,33 @@ export function buildRequestLoaders(ctx: AuthContext) {
       getUser: new DataLoader<string, Nullable<LimitedUserRecord>>(async (userIds) => {
         const results = keyBy(await getUsers(userIds.slice()), 'id')
         return userIds.map((i) => results[i] || null)
-      })
+      }),
+
+      /**
+       * Get meta values associated with one or more users
+       */
+      getUserMeta: new DataLoader<
+        { userId: string; key: keyof typeof Users['meta']['metaKey'] },
+        Nullable<UsersMetaRecord & { id: string }>,
+        string
+      >(
+        async (requests) => {
+          const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
+          const results = await meta.getMultiple(
+            requests.map((r) => ({
+              id: r.userId,
+              key: r.key
+            }))
+          )
+          return requests.map((r) => {
+            const resultItem = results[r.userId]?.[r.key]
+            return resultItem
+              ? { ...resultItem, id: meta.getGraphqlId(resultItem) }
+              : null
+          })
+        },
+        { cacheKeyFn: (key) => `${key.userId}:${key.key}` }
+      )
     },
     invites: {
       /**

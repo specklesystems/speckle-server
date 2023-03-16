@@ -2,6 +2,7 @@ import { ServerAcl, Users, knex } from '@/modules/core/dbSchema'
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { isArray } from 'lodash'
+import { metaHelpers } from '@/modules/core/helpers/meta'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -83,12 +84,8 @@ export async function markUserAsVerified(email: string) {
 export async function markOnboardingComplete(userId: string) {
   if (!userId) return false
 
-  const UserCols = Users.withoutTablePrefix.col
-  const q = Users.knex()
-    .where(Users.col.id, userId)
-    .update({
-      [UserCols.isOnboardingFinished]: true
-    })
+  const meta = metaHelpers(Users)
+  const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
 
-  return !!(await q)
+  return !!newMeta.value
 }
