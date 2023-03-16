@@ -60,7 +60,6 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
-            - test-frontend-2
 
       - docker-build-webhooks:
           context: *build-context
@@ -137,6 +136,7 @@ workflows:
             - publish-approval
             - docker-build-frontend-2
             - pre-commit
+            - test-frontend-2
 
       - docker-publish-webhooks:
           context: *docker-hub-context
