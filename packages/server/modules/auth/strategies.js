@@ -1,12 +1,15 @@
 'use strict'
-
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
-const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
+const {
+  isSSLServer,
+  getRedisUrl,
+  getSessionSecret
+} = require('@/modules/shared/helpers/envHelper')
 const { authLogger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
 
@@ -24,7 +27,7 @@ module.exports = async (app) => {
   const redisClient = createRedisClient(getRedisUrl())
   const session = ExpressSession({
     store: new RedisStore({ client: redisClient }),
-    secret: process.env.SESSION_SECRET,
+    secret: getSessionSecret(),
     saveUninitialized: false,
     resave: false,
     cookie: {

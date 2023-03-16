@@ -14,6 +14,7 @@ const {
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { logger } = require('@/logging/logging')
 const { UserInputError } = require('@/modules/core/errors/userinput')
+const { getGitHubClientSecret } = require('@/modules/shared/helpers/secretsHelper')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -28,7 +29,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const myStrategy = new GithubStrategy(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      clientSecret: getGitHubClientSecret(),
       callbackURL: new URL(strategy.callbackUrl, process.env.CANONICAL_URL).toString(),
       scope: ['profile', 'user:email'],
       passReqToCallback: true

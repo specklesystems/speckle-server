@@ -1,5 +1,6 @@
 const { logger } = require('@/logging/logging')
 const { NotFoundError } = require('@/modules/shared/errors')
+const { getS3SecretKey } = require('@/modules/shared/helpers/secretsHelper')
 const {
   S3Client,
   GetObjectCommand,
@@ -16,13 +17,11 @@ const getS3Config = () => {
   if (!s3Config) {
     if (!process.env.S3_ACCESS_KEY)
       throw new Error('Config value S3_ACCESS_KEY is missing')
-    if (!process.env.S3_SECRET_KEY)
-      throw new Error('Config value S3_SECRET_KEY is missing')
     if (!process.env.S3_ENDPOINT) throw new Error('Config value S3_ENDPOINT is missing')
     s3Config = {
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY,
-        secretAccessKey: process.env.S3_SECRET_KEY
+        secretAccessKey: getS3SecretKey()
       },
       endpoint: process.env.S3_ENDPOINT,
       forcePathStyle: true,

@@ -12,6 +12,7 @@ const {
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { logger } = require('@/logging/logging')
 const { UserInputError } = require('@/modules/core/errors/userinput')
+const { getGoogleClientSecret } = require('@/modules/shared/helpers/secretsHelper')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -26,7 +27,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const myStrategy = new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientSecret: getGoogleClientSecret(),
       callbackURL: strategy.callbackUrl,
       scope: ['profile', 'email'],
       passReqToCallback: true

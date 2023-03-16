@@ -6,6 +6,7 @@ const { packageRoot } = require('./bootstrap')
 const fs = require('fs')
 const path = require('path')
 const { isTestEnv } = require('@/modules/shared/helpers/envHelper')
+const { getPostgresUrl } = require('@/modules/shared/helpers/secretsHelper')
 
 function walk(dir) {
   let results = []
@@ -42,11 +43,11 @@ let connectionUri
 if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
   connectionUri = `postgres://${encodeURIComponent(
     env.POSTGRES_USER
-  )}:${encodeURIComponent(env.POSTGRES_PASSWORD)}@${
-    env.POSTGRES_URL
-  }/${encodeURIComponent(env.POSTGRES_DB)}`
+  )}:${encodeURIComponent(
+    env.POSTGRES_PASSWORD
+  )}@${getPostgresUrl()}/${encodeURIComponent(env.POSTGRES_DB)}`
 } else {
-  connectionUri = env.POSTGRES_URL
+  connectionUri = getPostgresUrl()
 }
 
 // NOTE: fixes time pagination, breaks graphql DateTime parsing :/
