@@ -60,6 +60,27 @@ spec:
             exec:
               command: ["sleep", "5"]
 
+        livenessProbe:
+          # account for long-running migrations
+          initialDelaySeconds: 600
+          periodSeconds: 60
+          timeoutSeconds: 10
+          exec:
+            command:
+              - node
+              - -e
+              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
+
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 10
+          exec:
+            command:
+              - node
+              - -e
+              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
+
         env:
           - name: CANONICAL_URL
             {{- if .Values.ssl_canonical_url }}
