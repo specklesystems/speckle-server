@@ -21,6 +21,7 @@ import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
+import Logger from 'js-logger'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -570,33 +571,58 @@ export default class Materials {
     material: RenderMaterial | DisplayStyle,
     type: GeometryType
   ): Material {
-    // console.log(this.materialMap)
-    // if (this.materialMap[hash]) {
-    //   console.warn(`Duplicate material hash found: ${hash}`)
-    //   return this.materialMap[hash]
-    // }
-
-    if (material) {
-      switch (type) {
-        case GeometryType.MESH:
-          this.materialMap[hash] = this.makeMeshMaterial(material as RenderMaterial)
-          break
-        case GeometryType.LINE:
-          this.materialMap[hash] = this.makeLineMaterial(material as DisplayStyle)
-          break
-        case GeometryType.POINT:
-          this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
-          break
-        case GeometryType.POINT_CLOUD:
-          this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
-          break
-      }
+    let mat
+    switch (type) {
+      case GeometryType.MESH:
+        mat = this.getMeshMaterial(hash, material as RenderMaterial)
+        break
+      case GeometryType.LINE:
+        mat = this.getLineMaterial(hash, material)
+        break
+      case GeometryType.POINT:
+        mat = this.getPointMaterial(hash, material as RenderMaterial)
+        break
+      case GeometryType.POINT_CLOUD:
+        mat = this.getPointCloudMaterial(hash, material as RenderMaterial)
+        break
     }
+    // }
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
      *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array
      */
-    this.materialMap[hash].clippingPlanes = []
-    return this.materialMap[hash]
+    mat.clippingPlanes = []
+
+    return mat
+  }
+
+  private getMeshMaterial(hash: number, material: RenderMaterial) {
+    if (material) {
+      return this.makeMeshMaterial(material)
+    } else {
+      if (this.materialMap[hash]) {
+        return this.materialMap[hash].clone()
+      } else {
+        Logger.warn(`Could not create mesh material hash ${hash} for `, material)
+      }
+    }
+  }
+
+  private getLineMaterial(hash: number, material: RenderMaterial | DisplayStyle) {
+    if (this.materialMap[hash]) {
+      return this.materialMap[hash]
+    }
+    return this.makeLineMaterial(material as DisplayStyle)
+  }
+
+  private getPointMaterial(hash: number, material: RenderMaterial) {
+    if (this.materialMap[hash]) {
+      return this.materialMap[hash]
+    }
+    return this.makePointMaterial(material as RenderMaterial)
+  }
+
+  private getPointCloudMaterial(hash: number, material: RenderMaterial) {
+    return this.getPointMaterial(hash, material)
   }
 
   public getHighlightMaterial(renderView: NodeRenderView): Material {

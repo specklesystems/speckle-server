@@ -489,7 +489,8 @@ export default class SpeckleRenderer {
       this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
-        this.updateShadowCatcher()
+        /** Updating the shadowcatcher after each batch is a bit too much. Stalls a lot */
+        // this.updateShadowCatcher()
       }
       this._needsRender = true
       if (this.cancel[subtreeId]) {
@@ -500,6 +501,9 @@ export default class SpeckleRenderer {
       }
     }
     this.updateHelpers()
+
+    /** We'll just update the shadowcatcher after all batches are loaded */
+    this.updateShadowCatcher()
     if (this.viewer.sectionBox.display.visible) {
       this.viewer.setSectionBox()
     }

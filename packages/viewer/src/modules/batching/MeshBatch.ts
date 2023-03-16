@@ -528,7 +528,7 @@ export default class MeshBatch implements Batch {
       )
       this.batchObjects.push({
         rv: this.renderViews[k],
-        transform: new Matrix4(),
+        transform: new Matrix4().identity(),
         batchIndex: k
       })
 

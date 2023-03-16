@@ -33,7 +33,7 @@ export default class Batcher {
   public batches: { [id: string]: Batch } = {}
 
   public constructor(maxUniformCount: number, floatTextures: boolean) {
-    this.maxHardwareUniformCount = 1024 //maxUniformCount
+    this.maxHardwareUniformCount = maxUniformCount
     this.maxBatchObjects = Math.floor(
       (this.maxHardwareUniformCount - Materials.UNIFORM_VECTORS_USED) / 4
     )
@@ -231,7 +231,7 @@ export default class Batcher {
           batchID,
           subtreeId,
           renderViews,
-          TransformStorage.UNIFORM_ARRAY
+          TransformStorage.VERTEX_TEXTURE
         )
         break
       case GeometryType.LINE:
