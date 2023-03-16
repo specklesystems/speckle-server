@@ -55,6 +55,7 @@ const props = defineProps<{
   open?: boolean
   model: ProjectPageModelsActionsFragment
   projectId: string
+  canEdit?: boolean
 }>()
 
 const copyModelLink = useCopyModelLink()
@@ -65,8 +66,12 @@ const openDialog = ref(null as Nullable<ActionTypes>)
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
-    { title: 'Rename', id: ActionTypes.Rename },
-    { title: 'Delete', id: ActionTypes.Delete, disabled: isMain.value }
+    { title: 'Rename', id: ActionTypes.Rename, disabled: !props.canEdit },
+    {
+      title: 'Delete',
+      id: ActionTypes.Delete,
+      disabled: isMain.value || !props.canEdit
+    }
   ],
   [{ title: 'Share', id: ActionTypes.Share }]
 ])
@@ -95,7 +100,6 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
 }
 
 const onButtonClick = () => {
-  console.log('onButtonClick', showActionsMenu.value)
   showActionsMenu.value = !showActionsMenu.value
 }
 

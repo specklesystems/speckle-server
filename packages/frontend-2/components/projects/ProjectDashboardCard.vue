@@ -32,7 +32,7 @@
           v-for="model in models"
           :key="model.id"
           :model="model"
-          :project-id="project.id"
+          :project="project"
           :show-versions="false"
           :show-actions="false"
           height="h-52"

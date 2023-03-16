@@ -14,6 +14,7 @@ export const projectDashboardItemNoModelsFragment = graphql(`
         avatar
       }
     }
+    ...ProjectPageModelsCardProject
   }
 `)
 

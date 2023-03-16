@@ -8,7 +8,13 @@
         <!-- <FormButton size="sm" rounded>New</FormButton> -->
       </div>
       <div class="flex items-center space-x-2">
-        <FormButton :icon-left="PlusIcon" @click="showNewDialog = true">New</FormButton>
+        <FormButton
+          v-if="canContribute"
+          :icon-left="PlusIcon"
+          @click="showNewDialog = true"
+        >
+          New
+        </FormButton>
         <FormTextInput
           v-model="search"
           name="modelsearch"
@@ -55,13 +61,16 @@ import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { debounce } from 'lodash-es'
 import { PlusIcon } from '@heroicons/vue/24/solid'
-defineProps<{
+import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+
+const props = defineProps<{
   project: ProjectPageModelsViewFragment
 }>()
 
 graphql(`
   fragment ProjectPageModelsView on Project {
     id
+    role
     modelCount: models(limit: 0) {
       totalCount
     }
@@ -71,6 +80,7 @@ graphql(`
         ...FormUsersSelectItem
       }
     }
+    ...ProjectPageModelsCardProject
   }
 `)
 
@@ -104,6 +114,14 @@ const gridOrList = computed({
       : GridListToggleValue.Grid,
   set: (newVal) => (viewTypeCookie.value = newVal)
 })
+
+const canContribute = computed(() =>
+  (
+    [Roles.Stream.Contributor, Roles.Stream.Owner] as Array<
+      MaybeNullOrUndefined<string>
+    >
+  ).includes(props.project.role)
+)
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()

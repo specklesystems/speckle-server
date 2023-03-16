@@ -5,7 +5,7 @@
       v-for="(item, i) in items"
       :key="item.id"
       :model="item"
-      :project-id="projectId"
+      :project="project"
       :show-actions="showActions"
       :show-versions="showVersions"
       :disable-default-link="disableDefaultLinks"
@@ -45,7 +45,6 @@ const props = withDefaults(
   }
 )
 
-const projectId = computed(() => props.project.id)
 const areQueriesLoading = useQueryLoading()
 const { result: latestModelsResult } = useQuery(latestModelsQuery, () => ({
   projectId: props.project.id,

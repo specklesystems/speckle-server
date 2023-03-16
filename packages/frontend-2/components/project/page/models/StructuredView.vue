@@ -4,10 +4,14 @@
       <ProjectPageModelsStructureItem
         :item="item"
         :project-id="projectId"
+        :can-contribute="canContribute"
         @model-updated="onModelUpdated"
       />
     </div>
-    <ProjectPageModelsNewModelStructureItem :project-id="projectId" />
+    <ProjectPageModelsNewModelStructureItem
+      v-if="canContribute"
+      :project-id="projectId"
+    />
   </div>
   <div v-else>TODO: List empty state</div>
 </template>
@@ -18,6 +22,7 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelsTreeTopLevelQuery } from '~~/lib/projects/graphql/queries'
+import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 
 const props = defineProps<{
   project: ProjectPageModelsViewFragment
@@ -37,6 +42,14 @@ const topLevelItems = computed(
     treeTopLevelResult.value?.project?.modelsTree || []
 )
 const treeItemCount = computed(() => topLevelItems.value.length)
+
+const canContribute = computed(() =>
+  (
+    [Roles.Stream.Contributor, Roles.Stream.Owner] as Array<
+      MaybeNullOrUndefined<string>
+    >
+  ).includes(props.project.role)
+)
 
 const onModelUpdated = () => refetchTree()
 </script>
