@@ -32,6 +32,7 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     this.onBeforeCompile = function (shader) {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
+
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }

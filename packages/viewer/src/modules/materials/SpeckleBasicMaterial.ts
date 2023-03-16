@@ -22,6 +22,12 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
+    this.userData.uTransforms = {
+      value: [new Matrix4()]
+    }
+    this.userData.tTransforms = {
+      value: null
+    }
     ;(this as any).vertProgram = speckleBasicVert
     ;(this as any).fragProgram = speckleBasicFrag
     ;(this as any).uniforms = UniformsUtils.merge([
@@ -32,6 +38,12 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
         },
         uViewer_low: {
           value: this.userData.uViewer_low.value
+        },
+        uTransforms: {
+          value: this.userData.uTransforms.value
+        },
+        tTransforms: {
+          value: this.userData.tTransforms.value
         }
       }
     ])
@@ -39,6 +51,8 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this.onBeforeCompile = function (shader) {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
+      shader.uniforms.uTransforms = this.userData.uTransforms
+      shader.uniforms.tTransforms = this.userData.tTransforms
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -59,6 +73,12 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     }
     this.userData.uViewer_low = {
       value: new Vector3()
+    }
+    this.userData.uTransforms = {
+      value: [new Matrix4()]
+    }
+    this.userData.tTransforms = {
+      value: null
     }
 
     this.defines['USE_RTE'] = ' '

@@ -6,6 +6,8 @@ import { speckleDepthFrag } from './shaders/speckle-depth-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshDepthMaterial, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
+import MeshBatch from '../batching/MeshBatch'
+import SpeckleMesh from '../objects/SpeckleMesh'
 
 class SpeckleDepthMaterial extends MeshDepthMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
@@ -27,6 +29,12 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     }
     this.userData.near = { value: 0 }
     this.userData.far = { value: 0 }
+    this.userData.uTransforms = {
+      value: [new Matrix4()]
+    }
+    this.userData.tTransforms = {
+      value: null
+    }
     ;(this as any).vertProgram = speckleDepthVert
     ;(this as any).fragProgram = speckleDepthFrag
     ;(this as any).uniforms = UniformsUtils.merge([
@@ -46,6 +54,12 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
         },
         far: {
           value: this.userData.far.value
+        },
+        uTransforms: {
+          value: this.userData.uTransforms.value
+        },
+        tTransforms: {
+          value: this.userData.tTransforms.value
         }
       }
     ])
@@ -56,6 +70,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
       shader.uniforms.rteModelViewMatrix = this.userData.rteModelViewMatrix
       shader.uniforms.near = this.userData.near
       shader.uniforms.far = this.userData.far
+      shader.uniforms.uTransforms = this.userData.uTransforms
+      shader.uniforms.tTransforms = this.userData.tTransforms
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -81,6 +97,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     ret.userData.rteModelViewMatrix = this.userData.rteModelViewMatrix
     ret.userData.near = this.userData.near
     ret.userData.far = this.userData.far
+    ret.userData.uTransforms = this.userData.uTransforms
+    ret.userData.tTransforms = this.userData.tTransforms
     return ret
   }
 
@@ -101,6 +119,12 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     }
     this.userData.far = {
       value: 0
+    }
+    this.userData.uTransforms = {
+      value: [new Matrix4()]
+    }
+    this.userData.tTransforms = {
+      value: null
     }
     this.defines['USE_RTE'] = ' '
 
@@ -150,6 +174,10 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
         )
     }
     // console.log(materialProperties)
+    if ((object as SpeckleMesh).batch) {
+      ;(object as SpeckleMesh).batch.updateBatchTransforms(this)
+    }
+
     this.needsUpdate = true
   }
 }

@@ -13,6 +13,7 @@ import {
   Vector3
 } from 'three'
 import { estimateMemoryInBytes } from 'three-mesh-bvh'
+import MeshBatch from '../batching/MeshBatch'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 
 const _inverseMatrix = new Matrix4()
@@ -45,12 +46,19 @@ export default class SpeckleMesh extends Mesh {
   private boundsTree: SpeckleMeshBVH = null
   public boundsTreeSizeInBytes = 0
   private batchMaterial: Material = null
+  // NEEDS ATTENTION
+  public batch: MeshBatch = null
 
   public get BVH() {
     return this.boundsTree
   }
 
-  constructor(geometry: BufferGeometry, material: Material, bvh: SpeckleMeshBVH) {
+  constructor(
+    geometry: BufferGeometry,
+    material: Material,
+    bvh: SpeckleMeshBVH,
+    batch: MeshBatch
+  ) {
     super(geometry, material)
     this.batchMaterial = material
     this.boundsTree = bvh
@@ -58,6 +66,7 @@ export default class SpeckleMesh extends Mesh {
     this.boundsTreeSizeInBytes =
       estimateMemoryInBytes(this.boundsTree) -
       (this.geometry.attributes['position'].array as unknown as ArrayBuffer).byteLength
+    this.batch = batch
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast

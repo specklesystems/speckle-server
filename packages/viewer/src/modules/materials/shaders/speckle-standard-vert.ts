@@ -138,10 +138,14 @@ void main() {
     #include <skinning_vertex>
     #include <displacementmap_vertex>
     //#include <project_vertex> // EDITED CHUNK
+    mat4 objectMatrix;
+    #ifdef TRANSFORM_STORAGE
+        objectMatrix = objectTransform();
+    #endif
     #ifdef USE_RTE
-        vec4 mvPosition = objectTransform() * computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
+        vec4 mvPosition = objectMatrix * computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
     #else
-        vec4 mvPosition = objectTransform() * vec4( transformed, 1.0 );
+        vec4 mvPosition = objectMatrix * vec4( transformed, 1.0 );
     #endif
     
     #ifdef USE_INSTANCING
@@ -171,7 +175,7 @@ void main() {
 	#pragma unroll_loop_start
 	for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {
         #ifdef USE_RTE
-            vec4 shadowPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
+            vec4 shadowPosition = objectMatrix * computeRelativePositionSeparate(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
             vDirectionalShadowCoord[ i ] = rteShadowMatrix * shadowWorldPosition;
         #else

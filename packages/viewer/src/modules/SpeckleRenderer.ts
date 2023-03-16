@@ -346,6 +346,7 @@ export default class SpeckleRenderer {
     for (let k = 0; k < meshBatches.length; k++) {
       const meshBatch: Mesh = meshBatches[k].renderObject as Mesh
       if (meshBatch.isMesh) {
+        const batch: MeshBatch = meshBatches[k] as MeshBatch
         const rteModelView = new Matrix4()
         rteModelView.copy(rteView)
         rteModelView.multiply(meshBatch.matrixWorld)
@@ -355,6 +356,8 @@ export default class SpeckleRenderer {
           depthMaterial.userData.uViewer_low.value.copy(viewerLow)
           depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
           depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
+          // NEEDS ATTENTION !!!
+          batch.updateBatchTransforms(depthMaterial)
           depthMaterial.needsUpdate = true
         }
 
@@ -580,6 +583,14 @@ export default class SpeckleRenderer {
     }
     this.renderer.shadowMap.needsUpdate = true
     this.updateShadowCatcher()
+    // NEEDS ATTENTION
+    const batches: MeshBatch[] = this.batcher.getBatches(
+      undefined,
+      GeometryType.MESH
+    ) as MeshBatch[]
+    for (let k = 0; k < batches.length; k++) {
+      batches[k].updateBatchObjects()
+    }
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -1287,6 +1298,7 @@ export default class SpeckleRenderer {
       }
       batches[k].updateBatchObjects()
     }
+    this.renderer.shadowMap.needsUpdate = true
     this.needsRender = true
     this.resetPipeline()
   }

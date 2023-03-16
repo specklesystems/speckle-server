@@ -88,6 +88,7 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
       },
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
+
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide
   }

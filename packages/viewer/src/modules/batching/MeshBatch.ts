@@ -94,6 +94,43 @@ export default class MeshBatch implements Batch {
     renderer
   }
 
+  // NEEDS ATTENTION
+  public updateBatchTransforms(material: Material) {
+    material.defines['TRANSFORM_STORAGE'] = this.transformStorage
+    if (
+      !material.defines['OBJ_COUNT'] ||
+      material.defines['OBJ_COUNT'] !== this.batchObjects.length
+    ) {
+      material.defines['OBJ_COUNT'] = this.batchObjects.length
+    }
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      this.batchObjects.forEach((batchObject: BatchObject) => {
+        const index = batchObject.batchIndex * 12
+        this.transformsTextureBuffer[index] = batchObject.transform.elements[0]
+        this.transformsTextureBuffer[index + 1] = batchObject.transform.elements[4]
+        this.transformsTextureBuffer[index + 2] = batchObject.transform.elements[8]
+        this.transformsTextureBuffer[index + 3] = batchObject.transform.elements[12]
+
+        this.transformsTextureBuffer[index + 4] = batchObject.transform.elements[1]
+        this.transformsTextureBuffer[index + 5] = batchObject.transform.elements[5]
+        this.transformsTextureBuffer[index + 6] = batchObject.transform.elements[9]
+        this.transformsTextureBuffer[index + 7] = batchObject.transform.elements[13]
+
+        this.transformsTextureBuffer[index + 8] = batchObject.transform.elements[3]
+        this.transformsTextureBuffer[index + 9] = batchObject.transform.elements[6]
+        this.transformsTextureBuffer[index + 10] = batchObject.transform.elements[10]
+        this.transformsTextureBuffer[index + 11] = batchObject.transform.elements[14]
+      })
+      this.transformsTexture.needsUpdate = true
+      material.userData.tTransforms.value = this.transformsTexture
+    } else {
+      material.userData.uTransforms.value = this.batchObjects.map(
+        (value) => value.transform
+      )
+    }
+    material.needsUpdate = true
+  }
+
   public updateBatchObjects() {
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       if (this.transformsTextureBuffer === null) {
@@ -113,39 +150,7 @@ export default class MeshBatch implements Batch {
       ? this.mesh.material
       : [this.mesh.material]
     for (let k = 0; k < targetMaterials.length; k++) {
-      targetMaterials[k].defines['TRANSFORM_STORAGE'] = this.transformStorage
-      if (
-        !targetMaterials[k].defines['OBJ_COUNT'] ||
-        targetMaterials[k].defines['OBJ_COUNT'] !== this.batchObjects.length
-      ) {
-        targetMaterials[k].defines['OBJ_COUNT'] = this.batchObjects.length
-      }
-      if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
-        this.batchObjects.forEach((batchObject: BatchObject) => {
-          const index = batchObject.batchIndex * 12
-          this.transformsTextureBuffer[index] = batchObject.transform.elements[0]
-          this.transformsTextureBuffer[index + 1] = batchObject.transform.elements[4]
-          this.transformsTextureBuffer[index + 2] = batchObject.transform.elements[8]
-          this.transformsTextureBuffer[index + 3] = batchObject.transform.elements[12]
-
-          this.transformsTextureBuffer[index + 4] = batchObject.transform.elements[1]
-          this.transformsTextureBuffer[index + 5] = batchObject.transform.elements[5]
-          this.transformsTextureBuffer[index + 6] = batchObject.transform.elements[9]
-          this.transformsTextureBuffer[index + 7] = batchObject.transform.elements[13]
-
-          this.transformsTextureBuffer[index + 8] = batchObject.transform.elements[3]
-          this.transformsTextureBuffer[index + 9] = batchObject.transform.elements[6]
-          this.transformsTextureBuffer[index + 10] = batchObject.transform.elements[10]
-          this.transformsTextureBuffer[index + 11] = batchObject.transform.elements[14]
-        })
-        this.transformsTexture.needsUpdate = true
-        targetMaterials[k].userData.tTransforms.value = this.transformsTexture
-      } else {
-        targetMaterials[k].userData.uTransforms.value = this.batchObjects.map(
-          (value) => value.transform
-        )
-      }
-      targetMaterials[k].needsUpdate = true
+      this.updateBatchTransforms(targetMaterials[k])
     }
   }
 
@@ -553,7 +558,12 @@ export default class MeshBatch implements Batch {
       WorldTree.getRenderTree(this.subtreeId).treeBounds
     )
     this.boundsTree.getBoundingBox(this.bounds)
-    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
+    this.mesh = new SpeckleMesh(
+      this.geometry,
+      this.batchMaterial,
+      this.boundsTree,
+      this
+    )
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
   }

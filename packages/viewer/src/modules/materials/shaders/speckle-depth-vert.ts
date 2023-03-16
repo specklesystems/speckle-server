@@ -7,9 +7,21 @@ export const speckleDepthVert = /* glsl */ `
     uniform vec3 uViewer_low;
     uniform mat4 rteModelViewMatrix;
 #endif
+
+attribute float objIndex;
+
+#if TRANSFORM_STORAGE == 0
+    uniform sampler2D tTransforms;
+    const vec2 cUv = vec2(0.5/float(OBJ_COUNT * 3), 0.5);
+    const vec2 dUv = vec2(1./float(OBJ_COUNT * 3), 0.);
+#elif TRANSFORM_STORAGE == 1
+    uniform mat4 uTransforms[OBJ_COUNT];
+#endif
+
 #ifdef LINEAR_DEPTH
     varying vec4 vViewPosition;
 #endif
+
 #include <uv_pars_vertex>
 #include <displacementmap_pars_vertex>
 #include <morphtarget_pars_vertex>
@@ -20,6 +32,37 @@ export const speckleDepthVert = /* glsl */ `
 // Some platforms compute gl_FragCoord at a lower precision which makes the manually computed value better for
 // depth-based postprocessing effects. Reproduced on iPad with A10 processor / iPadOS 13.3.1.
 varying vec2 vHighPrecisionZW;
+
+mat4 objectTransform(){
+    #if TRANSFORM_STORAGE == 0
+        #if __VERSION__ == 300
+            ivec2 uv = ivec2(int(objIndex)*3, 0); 
+            vec4 r0 = texelFetch( tTransforms, uv, 0 );
+            vec4 r1 = texelFetch( tTransforms, uv + ivec2(1, 0), 0);
+            vec4 r2 = texelFetch( tTransforms, uv + ivec2(2, 0), 0);
+            return mat4(
+                r0.x, r1.x, r2.x, 0.,
+                r0.y, r1.y, r2.y, 0.,
+                r0.z, r1.z, r2.z, 0.,
+                r0.w, r1.w, r2.w, 1.
+            );
+        #elif
+            float size = float(OBJ_COUNT * 3);
+            vec2 uv = vec2((objIndex * 3.)/size + cUv.x, cUv.y);
+            vec4 r0 = texture2D( tTransforms, uv);
+            vec4 r1 = texture2D( tTransforms, uv + dUv);
+            vec4 r2 = texture2D( tTransforms, uv + 2. * dUv);
+             return mat4(
+                r0.x, r1.x, r2.x, 0.,
+                r0.y, r1.y, r2.y, 0.,
+                r0.z, r1.z, r2.z, 0.,
+                r0.w, r1.w, r2.w, 1.
+            );
+        #endif
+    #elif TRANSFORM_STORAGE == 1
+        return uTransforms[int(objIndex)];
+    #endif
+}
 
 vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
     /* 
@@ -84,9 +127,9 @@ void main() {
 	#include <displacementmap_vertex>
 	//#include <project_vertex> // EDITED CHUNK
     #ifdef USE_RTE
-        vec4 mvPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
+        vec4 mvPosition = objectTransform() * computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
     #else
-        vec4 mvPosition = vec4( transformed, 1.0 );
+        vec4 mvPosition = objectTransform() * vec4( transformed, 1.0 );
     #endif
     
     #ifdef USE_INSTANCING
