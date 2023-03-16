@@ -4,6 +4,10 @@ const TABLE_NAME = 'users'
 const COL_NAME = 'isOnboardingFinished'
 
 export async function up(knex: Knex): Promise<void> {
+  // for some reason doesn't exist in tests sometime?
+  const hasCol = await knex.schema.hasColumn(TABLE_NAME, COL_NAME)
+  if (!hasCol) return
+
   await knex.schema.alterTable(TABLE_NAME, (table) => {
     table.dropColumn(COL_NAME)
   })
