@@ -74,7 +74,7 @@ import {
 import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -114,11 +114,5 @@ const path = computed(() => {
 
 const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))
 
-const canEdit = computed(() =>
-  (
-    [Roles.Stream.Contributor, Roles.Stream.Owner] as Array<
-      MaybeNullOrUndefined<string>
-    >
-  ).includes(props.project.role)
-)
+const canEdit = computed(() => canModifyModels(props.project))
 </script>

@@ -61,7 +61,7 @@ import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { debounce } from 'lodash-es'
 import { PlusIcon } from '@heroicons/vue/24/solid'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 
 const props = defineProps<{
   project: ProjectPageModelsViewFragment
@@ -115,13 +115,7 @@ const gridOrList = computed({
   set: (newVal) => (viewTypeCookie.value = newVal)
 })
 
-const canContribute = computed(() =>
-  (
-    [Roles.Stream.Contributor, Roles.Stream.Owner] as Array<
-      MaybeNullOrUndefined<string>
-    >
-  ).includes(props.project.role)
-)
+const canContribute = computed(() => canModifyModels(props.project))
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()

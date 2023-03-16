@@ -22,7 +22,7 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelsTreeTopLevelQuery } from '~~/lib/projects/graphql/queries'
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 
 const props = defineProps<{
   project: ProjectPageModelsViewFragment
@@ -43,13 +43,7 @@ const topLevelItems = computed(
 )
 const treeItemCount = computed(() => topLevelItems.value.length)
 
-const canContribute = computed(() =>
-  (
-    [Roles.Stream.Contributor, Roles.Stream.Owner] as Array<
-      MaybeNullOrUndefined<string>
-    >
-  ).includes(props.project.role)
-)
+const canContribute = computed(() => canModifyModels(props.project))
 
 const onModelUpdated = () => refetchTree()
 </script>
