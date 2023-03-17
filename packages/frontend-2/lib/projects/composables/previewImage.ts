@@ -9,6 +9,8 @@ const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
 const previewUrlObjectIdRegexp = /\/commits\/([\w\d]+)/i
 
+class AngleNotFoundError extends Error {}
+
 /**
  * Get authenticated preview image URL and subscribes to preview image generation events so that the preview image URL
  * is updated whenever generation finishes
@@ -121,6 +123,13 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
         headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
       })
 
+      const errCode = res.headers.get('X-Preview-Error-Code')
+      if (errCode?.length) {
+        if (errCode === 'ANGLE_NOT_FOUND') {
+          throw new AngleNotFoundError()
+        }
+      }
+
       if (res.headers.has('X-Preview-Error')) {
         throw new Error('Failed getting preview')
       }
@@ -129,7 +138,10 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       const blobUrl = URL.createObjectURL(blob)
       panoramaUrl.value = blobUrl
     } catch (e) {
-      console.warn('Panorama preview image load error - might be an old commit!', e)
+      if (!(e instanceof AngleNotFoundError)) {
+        console.error('Panorama preview image load error:', e)
+      }
+
       panoramaUrl.value = basePreviewUrl || null
     } finally {
       isLoadingPanorama.value = false
