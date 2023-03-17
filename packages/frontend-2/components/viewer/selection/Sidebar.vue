@@ -1,58 +1,59 @@
 <template>
   <div
-    :class="`bg-foundation simple-scrollbar fixed top-[4.5rem] right-4 mb-4 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md px-2 py-1 shadow transition ${
+    :class="`bg-foundation simple-scrollbar fixed top-[4.5rem] right-4 mb-4 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md shadow transition ${
       objects.length !== 0
         ? 'translate-x-0 opacity-100'
         : 'translate-x-[120%] opacity-0'
     }`"
   >
-    <div class="mb-2">
-      <div class="flex items-center space-x-2">
-        <div class="flex items-center space-x-1 text-xs font-bold">
-          <CubeIcon class="h-3 w-3" />
-          <span>{{ objects.length }}</span>
-        </div>
+    <div
+      class="bg-foundation-2 sticky top-0 mb-2 flex h-10 items-center justify-start rounded-t-lg px-2 shadow-md"
+    >
+      <div class="flex w-full items-center justify-between space-x-2">
+        <div>
+          <button
+            class="hover:text-primary px-1 py-2 transition"
+            @click.stop="hideOrShowSelection"
+          >
+            <EyeIcon v-if="!isHidden" class="h-3 w-3" />
+            <EyeSlashIcon v-else class="h-3 w-3" />
+          </button>
 
-        <button
-          class="hover:text-primary px-1 py-2 transition"
-          @click.stop="hideOrShowSelection"
-        >
-          <EyeIcon v-if="!isHidden" class="h-3 w-3" />
-          <EyeSlashIcon v-else class="h-3 w-3" />
-        </button>
-        <button
-          class="hover:text-primary px-1 py-2 transition"
-          @click.stop="isolateOrUnisolateSelection"
-        >
-          <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-          <FunnelIcon v-else class="h-3 w-3" />
-        </button>
-        <!-- <button
+          <button
+            class="hover:text-primary px-1 py-2 transition"
+            @click.stop="isolateOrUnisolateSelection"
+          >
+            <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+            <FunnelIcon v-else class="h-3 w-3" />
+          </button>
+          <!-- <button
           class="px-1 py-2 hover:text-primary transition"
           title="Open selection in a new tab"
           @click.stop="clearSelection()"
         >
           <ArrowTopRightOnSquareIcon class="w-3 h-3" />
         </button> -->
+        </div>
         <button
+          v-tippy="'Clear selection'"
           class="hover:text-primary px-1 py-2 transition"
-          title="Clear selection"
           @click.stop="clearSelection()"
         >
           <XMarkIcon class="h-3 w-3" />
         </button>
       </div>
     </div>
-    <div class="border-outline-3 my-2 w-full border-b"></div>
 
-    <div>
-      <div v-for="object in objects" :key="(object.id as string)">
-        <ViewerSelectionObject :object="object" :unfold="false" />
-        <div class="border-outline-3 my-2 w-full border-b"></div>
+    <div class="px-1 py-2">
+      <div class="space-y-2">
+        <div v-for="object in objects" :key="(object.id as string)">
+          <ViewerSelectionObject :object="object" :unfold="false" />
+          <!-- <div class="border-outline-3 my-2 w-full border-b"></div> -->
+        </div>
       </div>
-    </div>
-    <div v-if="objects.length === 1" class="text-foreground-2 mt-2 text-xs">
-      Hold down "shift" to select multiple objects.
+      <div v-if="objects.length === 1" class="text-foreground-2 mt-2 px-2 text-xs">
+        Hold down "shift" to select multiple objects.
+      </div>
     </div>
   </div>
 </template>
