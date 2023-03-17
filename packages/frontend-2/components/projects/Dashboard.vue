@@ -14,6 +14,7 @@
       <h1 class="h4 font-bold flex-grow">Projects</h1>
       <div class="w-96">
         <FormTextInput
+          v-if="!showEmptyState"
           v-model="search"
           name="modelsearch"
           :show-label="false"
@@ -26,11 +27,11 @@
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
-
-    <ProjectsDashboardEmptyState
-      v-if="!searchKey && (forceEmptyState || (projects && !projects.totalCount))"
-    />
-    <ProjectsDashboardFilled v-else-if="projects?.items?.length" :projects="projects" />
+    <ProjectsDashboardEmptyState v-if="showEmptyState" />
+    <template v-else-if="projects?.items?.length">
+      <ProjectsDashboardFilled :projects="projects" />
+      <InfiniteLoading @infinite="infiniteLoad" />
+    </template>
     <CommonEmptySearchState
       v-else-if="!showLoadingBar"
       @clear-search=";(search = ''), updateSearchImmediately()"
@@ -61,6 +62,8 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { Nullable } from '@speckle/shared'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -74,33 +77,48 @@ const onUserProjectsUpdateSubscription = graphql(`
   }
 `)
 
+const cursor = ref(null as Nullable<string>)
 const search = ref('')
 const debouncedSearch = ref('')
 const openNewProject = ref(false)
+const showLoadingBar = ref(false)
 
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
-const { result: projectsPanelResult, variables: searchVariables } = useQuery(
-  projectsDashboardQuery,
-  () => {
-    return {
-      filter: {
-        search: (debouncedSearch.value || '').trim() || null
-      }
+const {
+  result: projectsPanelResult,
+  fetchMore: fetchMoreProjects,
+  onResult: onProjectsResult
+} = useQuery(projectsDashboardQuery, () => {
+  return {
+    filter: {
+      search: (debouncedSearch.value || '').trim() || null
     }
   }
-)
+})
+
+onProjectsResult((res) => {
+  cursor.value = res.data.activeUser?.projects.cursor || null
+})
 
 const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
 
-const searchKey = computed(() => searchVariables.value?.filter?.search)
 const forceEmptyState = computed(() => !!route.query.forceEmpty)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
+const showEmptyState = computed(
+  () => forceEmptyState.value || (projects.value && !projects.value.totalCount)
+)
+
+const moreToLoad = computed(
+  () =>
+    (!projects.value || projects.value.items.length < projects.value.totalCount) &&
+    cursor.value
+)
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = search.value.trim()
@@ -198,7 +216,27 @@ onUserProjectsUpdate((res) => {
   })
 })
 
-const showLoadingBar = ref(false)
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  if (!moreToLoad.value) return state.complete()
+
+  try {
+    await fetchMoreProjects({
+      variables: {
+        cursor: cursor.value
+      }
+    })
+  } catch (e) {
+    console.error(e)
+    state.error()
+    return
+  }
+
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
+  }
+}
+
 watch(search, (newVal) => {
   if (newVal) showLoadingBar.value = true
   else showLoadingBar.value = false
