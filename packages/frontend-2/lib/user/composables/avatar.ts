@@ -48,7 +48,43 @@ export function useAvatarSizeClasses(params: {
     }
   })
 
-  const sizeClasses = computed(() => `${widthClasses.value} ${heightClasses.value}`)
+  const textClasses = computed(() => {
+    const size = props.size?.value
+    switch (size) {
+      case 'xs':
+        return 'text-tiny'
+      case 'sm':
+        return 'text-xs'
+      case 'lg':
+        return 'text-md'
+      case 'xl':
+        return 'text-2xl'
+      case 'base':
+      default:
+        return 'text-sm'
+    }
+  })
 
-  return { heightClasses, widthClasses, sizeClasses }
+  const iconClasses = computed(() => {
+    const size = props.size?.value
+    switch (size) {
+      case 'xs':
+        return 'w-3 h-3'
+      case 'sm':
+        return 'w-3 h-3'
+      case 'lg':
+        return 'w-5 h-5'
+      case 'xl':
+        return 'w-8 h-8'
+      case 'base':
+      default:
+        return 'w-4 h-4'
+    }
+  })
+
+  const sizeClasses = computed(
+    () => `${widthClasses.value} ${heightClasses.value} ${textClasses.value}`
+  )
+
+  return { heightClasses, widthClasses, sizeClasses, iconClasses }
 }

@@ -2,7 +2,7 @@
   <Component
     :is="form ? 'form' : 'div'"
     :class="[
-      'divide-y divide-outline-3 overflow-hidden bg-foundation text-foreground shadow flex flex-col',
+      'divide-outline-3 bg-foundation text-foreground flex flex-col divide-y overflow-hidden shadow',
       computedClasses
     ]"
     @submit="emit('submit', $event)"
@@ -10,7 +10,7 @@
     <div v-if="$slots.header" class="px-4 py-4 sm:px-6">
       <slot name="header" />
     </div>
-    <div class="px-4 py-4 sm:p-6 grow">
+    <div class="grow px-4 py-4 sm:p-6">
       <slot />
     </div>
     <div v-if="$slots.footer" class="px-4 py-4 sm:px-6">
@@ -41,11 +41,11 @@ const computedClasses = computed(() => {
 
   switch (props.roundedBorderSize) {
     case 'base':
-      classParts.push('rounded')
+      classParts.push('rounded-md')
       break
     case '2xl':
     default:
-      classParts.push('rounded-2xl')
+      classParts.push('rounded-md')
       break
   }
 
