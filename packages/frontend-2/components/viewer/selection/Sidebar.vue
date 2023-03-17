@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`bg-foundation simple-scrollbar fixed top-[4.5rem] right-4 mb-4 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md shadow transition ${
+    :class="`bg-foundation simple-scrollbar fixed top-[4rem] right-4 mb-4 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md shadow transition ${
       objects.length !== 0
         ? 'translate-x-0 opacity-100'
         : 'translate-x-[120%] opacity-0'

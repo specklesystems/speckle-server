@@ -1,19 +1,19 @@
 <template>
   <div>
     <div
-      class="absolute h-screen pt-[4.5rem] px-2 flex flex-col space-y-2 bg-green-300/0 z-20"
+      class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
       <ViewerControlsButtonToggle
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
-        <CubeIcon class="w-5 h-5" />
+        <CubeIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
       <ViewerControlsButtonToggle
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
-        <IconFileExplorer class="w-5 h-5" />
+        <IconFileExplorer class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO -->
@@ -29,7 +29,7 @@
         :active="activeControl === 'comments'"
         @click="toggleActiveControl('comments')"
       >
-        <ChatBubbleLeftRightIcon class="w-5 h-5" />
+        <ChatBubbleLeftRightIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO: direct add comment -->
@@ -39,7 +39,7 @@
       <ViewerControlsButtonGroup>
         <!-- Zoom extents -->
         <ViewerControlsButtonToggle flat @click="zoomExtentsOrSelection()">
-          <ArrowsPointingOutIcon class="w-5 h-5" />
+          <ArrowsPointingOutIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
         <!-- Projection type -->
@@ -50,8 +50,8 @@
           :active="isPerspectiveProjection"
           @click="toggleProjection()"
         >
-          <IconPerspective v-if="!isPerspectiveProjection" class="w-4 h-4" />
-          <IconPerspectiveMore v-else class="w-4 h-4" />
+          <IconPerspective v-if="!isPerspectiveProjection" class="h-4 w-4" />
+          <IconPerspectiveMore v-else class="h-4 w-4" />
         </ViewerControlsButtonToggle>
 
         <!-- Section Box -->
@@ -61,7 +61,7 @@
           :active="isSectionBoxEnabled"
           @click="toggleSectionBox()"
         >
-          <ScissorsIcon class="w-5 h-5" />
+          <ScissorsIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
         <!-- Sun and lights -->
@@ -73,7 +73,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`z-10 absolute max-h-[calc(100vh-5.5rem)] w-72 mt-[4.5rem] px-[2px] py-[2px] mx-14 mb-4 transition overflow-y-auto simple-scrollbar ${
+      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'

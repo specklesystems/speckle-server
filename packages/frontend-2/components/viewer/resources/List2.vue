@@ -55,10 +55,6 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { PlusIcon, CheckIcon, MinusIcon } from '@heroicons/vue/24/solid'
-import { Get } from 'type-fest'
-import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
-
-type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 const showRemove = ref(false)
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()

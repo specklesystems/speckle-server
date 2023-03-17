@@ -52,7 +52,7 @@ const { instance: viewer } = useInjectedViewer()
 
 let realTree = viewer.getWorldTree()
 
-const expandLevel = ref(0)
+const expandLevel = ref(-1)
 
 const refHack = ref(1)
 onMounted(() => {
@@ -67,7 +67,7 @@ onMounted(() => {
 const rootNodes = computed(() => {
   refHack.value
 
-  expandLevel.value = 0
+  expandLevel.value = -1
   const nodes = []
   const rootNodes = realTree._root.children as ExplorerNode[]
   for (const node of rootNodes) {
