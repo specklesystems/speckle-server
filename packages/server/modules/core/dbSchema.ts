@@ -169,9 +169,7 @@ function buildMetaTableHelper<T extends string, C extends string, MK extends str
     ...buildBaseConfig(params),
     metaKeys,
     metaKey: reduce(
-      [...metaKeys, 'key', 'value', 'createdAt', 'updatedAt'] as Array<
-        keyof BaseMetaRecord | MK
-      >,
+      [...metaKeys, ...baseColumns],
       (prev, curr) => {
         prev[curr] = curr
         return prev
