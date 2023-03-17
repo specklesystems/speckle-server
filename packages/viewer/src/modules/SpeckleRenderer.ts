@@ -787,10 +787,11 @@ export default class SpeckleRenderer {
     const rvs = []
     const points = []
     for (let k = 0; k < results.length; k++) {
-      const rv = this.batcher.getRenderView(
-        results[k].object.uuid,
-        results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-      )
+      const rv = results[k]['rv']
+      // const rv = this.batcher.getRenderView(
+      //   results[k].object.uuid,
+      //   results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+      // )
       if (rv) {
         rvs.push(rv)
         points.push(results[k].point)
@@ -821,10 +822,11 @@ export default class SpeckleRenderer {
   ): Array<{ nodeId: string; point: Vector3 }> {
     const queryResult = []
     for (let k = 0; k < results.length; k++) {
-      const rv = this.batcher.getRenderView(
-        results[k].object.uuid,
-        results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-      )
+      const rv = results[k]['rv']
+      // const rv = this.batcher.getRenderView(
+      //   results[k].object.uuid,
+      //   results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+      // )
       if (rv) {
         queryResult.push({ nodeId: rv.renderData.id, point: results[k].point })
       }

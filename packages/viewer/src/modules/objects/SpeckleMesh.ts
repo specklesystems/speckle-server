@@ -12,8 +12,8 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import { estimateMemoryInBytes } from 'three-mesh-bvh'
-import MeshBatch from '../batching/MeshBatch'
+import MeshBatch, { BatchObject } from '../batching/MeshBatch'
+import { SpeckleMeshBatchBVH } from './SpeckleMeshBatchBVH'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 
 const _inverseMatrix = new Matrix4()
@@ -43,7 +43,7 @@ const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export default class SpeckleMesh extends Mesh {
-  private boundsTree: SpeckleMeshBVH = null
+  private boundsTree: SpeckleMeshBatchBVH = null
   public boundsTreeSizeInBytes = 0
   private batchMaterial: Material = null
   // NEEDS ATTENTION
@@ -56,19 +56,30 @@ export default class SpeckleMesh extends Mesh {
   constructor(
     geometry: BufferGeometry,
     material: Material,
-    bvh: SpeckleMeshBVH,
+    bvh: SpeckleMeshBatchBVH,
     batch: MeshBatch
   ) {
     super(geometry, material)
     this.batchMaterial = material
     this.boundsTree = bvh
-    this.geometry.boundsTree = this.boundsTree
-    this.boundsTreeSizeInBytes =
-      estimateMemoryInBytes(this.boundsTree) -
-      (this.geometry.attributes['position'].array as unknown as ArrayBuffer).byteLength
+    // this.boundsTreeSizeInBytes =
+    //   estimateMemoryInBytes(this.boundsTree) -
+    //   (this.geometry.attributes['position'].array as unknown as ArrayBuffer).byteLength
     this.batch = batch
   }
 
+  public updateBVHTransforms(batchObjects: BatchObject[]) {
+    const matBuff = new Matrix4()
+    this.boundsTree.bvhs.forEach((bvh: SpeckleMeshBVH) => {
+      const obj = batchObjects.find((batchObj: BatchObject) => {
+        return batchObj.rv.renderData === bvh.renderView.renderData
+      })
+      matBuff.copy(obj.transform)
+      bvh.localTransformInv.copy(matBuff)
+      matBuff.invert()
+      bvh.localTransform.copy(matBuff)
+    })
+  }
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
   private convertRaycastIntersect(hit, object, raycaster) {

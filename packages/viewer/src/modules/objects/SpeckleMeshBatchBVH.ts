@@ -1,7 +1,5 @@
 import {
   Box3,
-  BufferGeometry,
-  Float32BufferAttribute,
   FrontSide,
   Intersection,
   Material,
@@ -9,98 +7,47 @@ import {
   Object3D,
   Ray,
   Side,
-  Uint16BufferAttribute,
-  Uint32BufferAttribute,
-  Vector3,
-  Event
+  Vector3
 } from 'three'
-import {
-  CENTER,
-  ExtendedTriangle,
-  MeshBVH,
-  ShapecastIntersection,
-  SplitStrategy
-} from 'three-mesh-bvh'
+import { ShapecastIntersection, ExtendedTriangle } from 'three-mesh-bvh'
 import { NodeRenderView } from '../tree/NodeRenderView'
+import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 
-const SKIP_GENERATION = Symbol('skip tree generation')
+export class SpeckleMeshBatchBVH {
+  private batchBounds: Box3 = null
+  private originTransform: Matrix4 = null
+  private originTransformInv: Matrix4 = null
+  public bvhs: SpeckleMeshBVH[] = []
 
-export interface BVHOptions {
-  strategy: SplitStrategy
-  maxDepth: number
-  maxLeafTris: number
-  verbose: boolean
-  useSharedArrayBuffer: boolean
-  setBoundingBox: boolean
-  onProgress: () => void
-  [SKIP_GENERATION]: boolean
-}
+  public constructor(rvs: NodeRenderView[], bounds: Box3) {
+    this.batchBounds = bounds
+    const boundsCenter = bounds.getCenter(new Vector3())
+    const transform = new Matrix4().makeTranslation(
+      boundsCenter.x,
+      boundsCenter.y,
+      boundsCenter.z
+    )
+    transform.invert()
+    this.originTransform = transform
+    this.originTransformInv = new Matrix4().copy(this.originTransform).invert()
 
-export const DefaultBVHOptions = {
-  strategy: CENTER,
-  maxDepth: 40,
-  maxLeafTris: 10,
-  verbose: true,
-  useSharedArrayBuffer: false,
-  setBoundingBox: false,
-  onProgress: null,
-  [SKIP_GENERATION]: false
-}
+    for (let k = 0; k < rvs.length; k++) {
+      const indices = rvs[k].renderData.geometry.attributes.INDEX
+      const position = rvs[k].renderData.geometry.attributes.POSITION
 
-/** 
- * 
-  _____                            _              _   
- |_   _|                          | |            | |  
-   | |  _ __ ___  _ __   ___  _ __| |_ __ _ _ __ | |_ 
-   | | | '_ ` _ \| '_ \ / _ \| '__| __/ _` | '_ \| __|
-  _| |_| | | | | | |_) | (_) | |  | || (_| | | | | |_ 
- |_____|_| |_| |_| .__/ \___/|_|   \__\__,_|_| |_|\__|
-                 | |                                  
-                 |_|                                  
-
-We've made this wrapper around the original implementation to hide the transformations we do behind the scenes
-in order to avoid storing vertex positions as Float64. Instead we store them as Float32, but the whole BVH is 
-re-centered around world origin (0,0,0). We use the resulting transformations to transform anything that comes
-in or out of the BVH in order to keep this re-centering opaque.
-
-We've implemented auto-transformation for raycasting and shapecasting. Other functionalities like bvhcast or geometrycast
-will need to be wrapped around if required. 
-
-Otherwise, keep in mind that if you use this class for any other purposes, you can use transformInput and transformOutput
-to get the correct values for Vectors, Rays, Boxes, etc
- */
-export class SpeckleMeshBVH extends MeshBVH {
-  public localTransform: Matrix4
-  public localTransformInv: Matrix4
-  public renderView: NodeRenderView
-
-  public static buildBVH(
-    indices: number[],
-    position: Float32Array,
-    options: BVHOptions = DefaultBVHOptions
-  ): SpeckleMeshBVH {
-    const bvhGeometry = new BufferGeometry()
-    let bvhIndices = null
-    if (position.length >= 65535 || indices.length >= 65535) {
-      bvhIndices = new Uint32Array(indices.length)
-      ;(bvhIndices as Uint32Array).set(indices, 0)
-      bvhGeometry.setIndex(new Uint32BufferAttribute(bvhIndices, 1))
-    } else {
-      bvhIndices = new Uint16Array(indices.length)
-      ;(bvhIndices as Uint16Array).set(indices, 0)
-      bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
+      const localPositions = new Float32Array(position.length)
+      const vecBuff = new Vector3()
+      for (let k = 0; k < position.length; k += 3) {
+        vecBuff.set(position[k], position[k + 1], position[k + 2])
+        vecBuff.applyMatrix4(transform)
+        localPositions[k] = vecBuff.x
+        localPositions[k + 1] = vecBuff.y
+        localPositions[k + 2] = vecBuff.z
+      }
+      const bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
+      bvh.renderView = rvs[k]
+      this.bvhs.push(bvh)
     }
-
-    bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
-    const bvh = new SpeckleMeshBVH(bvhGeometry, options)
-    bvh.localTransform = new Matrix4()
-    bvh.localTransformInv = new Matrix4()
-    bvh.geometry.boundingBox = bvh.getBoundingBox(new Box3())
-    return bvh
-  }
-
-  constructor(geometry, options = {}) {
-    super(geometry, options)
   }
 
   /* Core Cast Functions */
@@ -108,10 +55,15 @@ export class SpeckleMeshBVH extends MeshBVH {
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
   ): Intersection<Object3D<Event>>[] {
-    const res = super.raycast(this.transformInput<Ray>(ray), materialOrSide)
+    const res = []
+    const rayBuff = new Ray()
+    this.bvhs.forEach((bvh: SpeckleMeshBVH) => {
+      rayBuff.copy(ray)
+      const hits = bvh.raycast(this.transformInput(rayBuff), materialOrSide)
+      res.push(...hits)
+    })
     res.forEach((value) => {
       value.point = this.transformOutput(value.point)
-      value['rv'] = this.renderView
     })
     return res
   }
@@ -120,10 +72,16 @@ export class SpeckleMeshBVH extends MeshBVH {
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
   ): Intersection<Object3D<Event>> {
-    const res = super.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
-    res.point = this.transformOutput(res.point)
-    res['rv'] = this.renderView
-    return res
+    let res = null
+    const rayBuff = new Ray()
+    for (let k = 0; k < this.bvhs.length; k++) {
+      rayBuff.copy(ray)
+      res = this.bvhs[k].raycastFirst(this.transformInput<Ray>(rayBuff), materialOrSide)
+      if (res) {
+        res.point = this.transformOutput(res.point)
+        return res
+      }
+    }
   }
 
   public shapecast(
@@ -237,19 +195,27 @@ export class SpeckleMeshBVH extends MeshBVH {
     //@ts-ignore
     newCallbacks.traverseBoundsOrder = callbacks.traverseBoundsOrder
 
-    return super.shapecast(newCallbacks)
+    let ret = false
+    this.bvhs.forEach((bvh: SpeckleMeshBVH) => {
+      ret ||= bvh.shapecast(newCallbacks)
+    })
+    return ret
+  }
+
+  public getBoundingBox(target: Box3) {
+    target.makeEmpty()
+    const scratchBox: Box3 = new Box3()
+    this.bvhs.forEach((bvh: SpeckleMeshBVH) => {
+      target.union(bvh.getBoundingBox(scratchBox))
+    })
+    return this.transformOutput(target)
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    return input.applyMatrix4(this.localTransform) as T
+    return input.applyMatrix4(this.originTransform) as T
   }
 
   public transformOutput<T extends Vector3 | Ray | Box3>(output: T): T {
-    return output.applyMatrix4(this.localTransformInv) as T
-  }
-
-  public getBoundingBox(target) {
-    super.getBoundingBox(target)
-    return this.transformOutput(target)
+    return output.applyMatrix4(this.originTransformInv) as T
   }
 }

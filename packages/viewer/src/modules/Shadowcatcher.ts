@@ -91,7 +91,9 @@ export class Shadowcatcher {
   }
 
   public render(renderer: WebGLRenderer) {
-    this.shadowcatcherPass.render(renderer, null, null)
+    renderer
+    // NEEDS ATTENTION
+    // this.shadowcatcherPass.render(renderer, null, null)
   }
 
   public bake(worldBox: Box3, maxTexSize: number, force?: boolean) {

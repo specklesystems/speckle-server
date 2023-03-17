@@ -126,7 +126,7 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     this.userData.tTransforms = {
       value: null
     }
-    this.defines['USE_RTE'] = ' '
+    Object.assign(this.defines, source.defines)
 
     return this
   }

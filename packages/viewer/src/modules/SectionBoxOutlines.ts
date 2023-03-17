@@ -11,7 +11,6 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
 import MeshBatch from './batching/MeshBatch'
 import { Geometry } from './converter/Geometry'
-import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { ObjectLayers } from './SpeckleRenderer'
 
@@ -97,15 +96,17 @@ export class SectionBoxOutlines {
         },
 
         intersectsTriangle: (tri, i) => {
+          i
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
-          const material = batches[b].getMaterialAtIndex(i)
-          if (
-            material instanceof SpeckleGhostMaterial ||
-            material.visible === false ||
-            material === null
-          )
-            return
+          // NEEDS ATTENTION
+          // const material = batches[b].getMaterialAtIndex(i)
+          // if (
+          //   material instanceof SpeckleGhostMaterial ||
+          //   material.visible === false ||
+          //   material === null
+          // )
+          //   return
 
           const localPlane = plane
           let count = 0

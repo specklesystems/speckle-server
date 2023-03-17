@@ -26,12 +26,10 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import Logger from 'js-logger'
-import { GeometryConverter } from '../converter/GeometryConverter'
 import { WorldTree } from '../tree/WorldTree'
-import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { TransformStorage } from './Batcher'
+import { SpeckleMeshBatchBVH } from '../objects/SpeckleMeshBatchBVH'
 
 export interface BatchObject {
   rv: NodeRenderView
@@ -48,7 +46,7 @@ export default class MeshBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
-  public boundsTree: SpeckleMeshBVH
+  public boundsTree: SpeckleMeshBatchBVH
   public bounds: Box3 = new Box3()
   private gradientIndexBuffer: BufferAttribute
   private indexBuffer0: BufferAttribute
@@ -129,6 +127,7 @@ export default class MeshBatch implements Batch {
       )
     }
     material.needsUpdate = true
+    this.mesh.updateBVHTransforms(this.batchObjects)
   }
 
   public updateBatchObjects() {
@@ -540,9 +539,9 @@ export default class MeshBatch implements Batch {
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
 
-      if (!GeometryConverter.keepGeometryData) {
-        this.renderViews[k].disposeGeometry()
-      }
+      // if (!GeometryConverter.keepGeometryData) {
+      //   this.renderViews[k].disposeGeometry()
+      // }
     }
 
     this.makeMeshGeometry(
@@ -552,11 +551,11 @@ export default class MeshBatch implements Batch {
       hasVertexColors ? color : null
     )
 
-    this.boundsTree = Geometry.buildBVH(
-      indices,
-      position,
+    this.boundsTree = new SpeckleMeshBatchBVH(
+      this.renderViews,
       WorldTree.getRenderTree(this.subtreeId).treeBounds
     )
+
     this.boundsTree.getBoundingBox(this.bounds)
     this.mesh = new SpeckleMesh(
       this.geometry,
@@ -569,47 +568,53 @@ export default class MeshBatch implements Batch {
   }
 
   public getRenderView(index: number): NodeRenderView {
-    for (let k = 0; k < this.renderViews.length; k++) {
-      // if (
-      //   index * 3 >= this.renderViews[k].batchStart &&
-      //   index * 3 < this.renderViews[k].batchEnd
-      // ) {
-      //   return this.renderViews[k]
-      // }
-      const vertIndex = this.boundsTree.geometry.index.array[index * 3]
-      if (
-        vertIndex >= this.renderViews[k].vertStart &&
-        vertIndex < this.renderViews[k].vertEnd
-      )
-        return this.renderViews[k]
-    }
+    index
+    // NEEDS ATTENTION
+    // for (let k = 0; k < this.renderViews.length; k++) {
+    //   // if (
+    //   //   index * 3 >= this.renderViews[k].batchStart &&
+    //   //   index * 3 < this.renderViews[k].batchEnd
+    //   // ) {
+    //   //   return this.renderViews[k]
+    //   // }
+    //   const vertIndex = this.boundsTree.geometry.index.array[index * 3]
+    //   if (
+    //     vertIndex >= this.renderViews[k].vertStart &&
+    //     vertIndex < this.renderViews[k].vertEnd
+    //   )
+    //     return this.renderViews[k]
+    // }
+    return null
   }
 
   public getMaterialAtIndex(index: number): Material {
-    for (let k = 0; k < this.renderViews.length; k++) {
-      const vertIndex = this.boundsTree.geometry.index.array[index * 3]
-      if (
-        vertIndex >= this.renderViews[k].vertStart &&
-        vertIndex < this.renderViews[k].vertEnd
-      ) {
-        const rv = this.renderViews[k]
-        const group = this.geometry.groups.find((value) => {
-          return (
-            rv.batchStart >= value.start &&
-            rv.batchStart + rv.batchCount <= value.count + value.start
-          )
-        })
-        if (!Array.isArray(this.mesh.material)) {
-          return this.mesh.material
-        } else {
-          if (!group) {
-            Logger.warn(`Malformed material index!`)
-            return null
-          }
-          return this.mesh.material[group.materialIndex]
-        }
-      }
-    }
+    index
+    // NEEDS ATTENTION
+    // for (let k = 0; k < this.renderViews.length; k++) {
+    //   const vertIndex = this.boundsTree.geometry.index.array[index * 3]
+    //   if (
+    //     vertIndex >= this.renderViews[k].vertStart &&
+    //     vertIndex < this.renderViews[k].vertEnd
+    //   ) {
+    //     const rv = this.renderViews[k]
+    //     const group = this.geometry.groups.find((value) => {
+    //       return (
+    //         rv.batchStart >= value.start &&
+    //         rv.batchStart + rv.batchCount <= value.count + value.start
+    //       )
+    //     })
+    //     if (!Array.isArray(this.mesh.material)) {
+    //       return this.mesh.material
+    //     } else {
+    //       if (!group) {
+    //         Logger.warn(`Malformed material index!`)
+    //         return null
+    //       }
+    //       return this.mesh.material[group.materialIndex]
+    //     }
+    //   }
+    // }
+    return null
   }
 
   private makeMeshGeometry(
