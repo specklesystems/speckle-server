@@ -32,13 +32,13 @@
           <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
           <FunnelIcon v-else class="w-3 h-3" />
         </button>
-        <button
+        <!-- <button
           class="px-1 py-2 hover:text-primary transition"
           title="Open selection in a new tab"
           @click.stop="clearSelection()"
         >
           <ArrowTopRightOnSquareIcon class="w-3 h-3" />
-        </button>
+        </button> -->
         <button
           class="px-1 py-2 hover:text-primary transition"
           title="Clear selection"

@@ -2,9 +2,8 @@
   <div
     class="bg-foundation rounded-lg shadow flex flex-col space-y-1 xxxoverflow-hidden"
   >
-    <!-- <h2 class="font-bold text-foreground-2 px-2 py-2">Comments</h2> -->
     <div
-      class="flex sticky top-0 px-2 py-2 bg-foundation-2 shadow-md rounded-t-lg justify-between"
+      class="flex sticky top-0 px-2 h-10 items-center bg-foundation-2 shadow-md rounded-t-lg"
     >
       <FormButton
         size="xs"

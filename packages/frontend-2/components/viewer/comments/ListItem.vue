@@ -1,8 +1,8 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`py-2 my-2 px-2 flex flex-col space-y-1 bg-foundation hover:shadow-lg xxdark:hover:bg-foundation-3 hover:bg-primary-muted rounded-lg transition cursor-pointer
-      ${isOpenInViewer ? 'outline outline-2 outline-primary' : ''}
+    :class="`py-2 my-2 px-2 flex flex-col space-y-1 bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
+      ${isOpenInViewer ? 'border-primary' : 'border-transparent'}
     `"
     @click="open(thread.id)"
   >
@@ -48,14 +48,6 @@
       <span class="text-foreground-2 text-xs">
         {{ formattedDate }}
       </span>
-
-      <!-- <div
-        v-if="!isThreadResourceLoaded"
-        class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
-      >
-        <span>Conversation started in a different version.</span>
-        <ExclamationCircleIcon class="w-4 h-4" />
-      </div> -->
     </div>
   </div>
 </template>

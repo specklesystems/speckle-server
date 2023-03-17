@@ -1,6 +1,13 @@
 <template>
   <div>
     <div v-if="model">
+      <ViewerResourcesLoadedVersionCardVersion3
+        v-if="loadedVersion"
+        :version="loadedVersion"
+        :model="model"
+      />
+    </div>
+    <div v-if="model && false">
       <div>
         <ViewerResourcesLoadedVersionCardVersion2
           v-if="loadedVersion"
@@ -48,8 +55,8 @@
           {{ showLoadMore ? 'View older versions' : 'No more versions' }}
         </FormButton>
       </div>
-      <!-- <div v-else class="py-2" /> -->
-    </div>
+    <!-- <div v-else class="py-2" /> -->
+    <!-- </div> -->
   </div>
 </template>
 <script setup lang="ts">

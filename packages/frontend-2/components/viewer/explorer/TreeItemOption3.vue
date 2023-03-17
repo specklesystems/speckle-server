@@ -20,8 +20,8 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`group flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
-            ${isSelected ? 'ring-1' : 'ring-0'}
+          :class="`group flex items-center space-x-1 overflow-hidden border-l-4 pl-2 transition flex-grow hover:bg-primary-muted hover:shadow-md cursor-pointer rounded pr-1
+            ${isSelected ? 'border-primary' : 'border-transparent'}
           `"
           @click="(e) => setSelection(e)"
         >
@@ -47,16 +47,20 @@
           <div class="flex-grow"></div>
           <div class="flex items-center space-x-1 flex-shrink-0">
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
-            <div class="flex space-x-2 transition opacity-0 group-hover:opacity-100">
+            <div class="flex space-x-2 transition">
               <button
-                class="px-1 py-2 hover:text-primary transition"
+                :class="`px-1 py-2 hover:text-primary transition opacity-0 group-hover:opacity-100 ${
+                  isHidden ? 'opacity-100' : ''
+                }`"
                 @click.stop="hideOrShowObject"
               >
                 <EyeIcon v-if="!isHidden" class="w-3 h-3" />
                 <EyeSlashIcon v-else class="w-3 h-3" />
               </button>
               <button
-                class="px-1 py-2 hover:text-primary transition"
+                :class="`px-1 py-2 hover:text-primary transition opacity-0 group-hover:opacity-100 ${
+                  isIsolated ? 'opacity-100' : ''
+                }`"
                 @click.stop="isolateOrUnisolateObject"
               >
                 <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
@@ -91,6 +95,7 @@
             :item-id="(collection.raw?.id as string)"
             :tree-item="collection"
             :depth="depth + 1"
+            :expand-level="props.expandLevel"
             :debug="debug"
           />
         </div>
@@ -98,13 +103,19 @@
       <!-- If we have a single model collection -->
       <div v-if="isSingleCollection">
         <!-- single col items -->
-        <div v-for="item in singleCollectionItems" :key="item.raw?.id">
+        <div v-for="item in singleCollectionItemsPaginated" :key="item.raw?.id">
           <TreeItemOption3
             :item-id="(item.raw?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
+            :expand-level="props.expandLevel"
             :debug="debug"
           />
+        </div>
+        <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
+          <FormButton size="xs" text full-width @click="itemCount += pageSize">
+            View More ({{ singleCollectionItems.length - itemCount }})
+          </FormButton>
         </div>
       </div>
     </div>
@@ -137,14 +148,12 @@ const props = withDefaults(
     treeItem: ExplorerNode
     depth: number
     debug?: boolean
-    forceUnfold?: boolean
+    expandLevel: number
     header?: string | null
     subHeader?: string | null
   }>(),
-  { depth: 1, debug: false, forceUnfold: false, header: null, subHeader: null }
+  { depth: 0, debug: false, header: null, subHeader: null }
 )
-
-const unfold = ref(props.forceUnfold)
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -180,6 +189,12 @@ const singleCollectionItems = computed(() => {
     return treeItems.filter((item) => ids.includes(item.raw?.id as string))
   }
   return treeItems
+})
+
+const itemCount = ref(10)
+const pageSize = 10
+const singleCollectionItemsPaginated = computed(() => {
+  return singleCollectionItems.value.slice(0, itemCount.value)
 })
 
 // Creates a list of all model collections that are not defined as collections. specifically, handles cases such as
@@ -224,6 +239,18 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
+
+const unfold =
+  isSingleCollection || isMultipleCollection
+    ? ref(props.expandLevel >= props.depth)
+    : ref(false)
+
+watch(
+  () => props.expandLevel,
+  (newVal) => {
+    if (isSingleCollection || isMultipleCollection) unfold.value = newVal >= props.depth
+  }
+)
 
 const {
   selection: { addToSelection, clearSelection, removeFromSelection, objects },

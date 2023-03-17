@@ -2,7 +2,7 @@
   <div class="space-y-2">
     <template v-if="resourceItems.length">
       <div v-for="{ model, versionId } in modelsAndVersionIds" :key="model.id">
-        <ViewerResourcesModelCard
+        <ViewerResourcesModelCard2
           :model="model"
           :version-id="versionId"
           @loaded-more="$emit('loaded-more')"

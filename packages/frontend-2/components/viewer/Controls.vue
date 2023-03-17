@@ -15,12 +15,14 @@
       >
         <IconFileExplorer class="w-5 h-5" />
       </ViewerControlsButtonToggle>
-      <ViewerControlsButtonToggle
+
+      <!-- TODO -->
+      <!-- <ViewerControlsButtonToggle
         :active="activeControl === 'filters'"
         @click="toggleActiveControl('filters')"
       >
         <FunnelIcon class="w-5 h-5" />
-      </ViewerControlsButtonToggle>
+      </ViewerControlsButtonToggle> -->
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
@@ -79,7 +81,7 @@
     >
       <div v-show="activeControl === 'models'">
         <KeepAlive>
-          <ViewerResourcesList
+          <ViewerResourcesList2
             class="pointer-events-auto"
             @loaded-more="scrollControlsToBottom"
           />
