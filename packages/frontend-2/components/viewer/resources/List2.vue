@@ -1,10 +1,10 @@
 <template>
   <div>
     <div
-      class="bg-foundation rounded-lg shadow flex flex-col space-y-1 xxxoverflow-hidden"
+      class="bg-foundation xxxoverflow-hidden flex flex-col space-y-1 rounded-lg shadow"
     >
       <div
-        class="flex items-center sticky top-0 px-2 h-10 bg-foundation-2 shadow-md rounded-t-lg justify-between z-30"
+        class="bg-foundation-2 sticky top-0 z-30 flex h-10 items-center justify-between rounded-t-lg px-2 shadow-md"
       >
         <div>
           <FormButton
@@ -28,7 +28,7 @@
           </FormButton>
         </div>
       </div>
-      <div class="flex flex-col px-1 py-2 space-y-2">
+      <div class="flex flex-col space-y-2 px-1 py-2">
         <template v-if="resourceItems.length">
           <div
             v-for="({ model, versionId }, index) in modelsAndVersionIds"

@@ -2,49 +2,49 @@
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`rounded group border-l-4 transition  ${
+      :class="`group rounded border-l-4 transition  ${
         showVersions
-          ? 'max-h-96 border-primary'
+          ? 'border-primary max-h-96'
           : 'hover:border-primary border-transparent'
       } cursor-pointer`"
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
-        class="p-2 min-w-0 h-20 max-w-full transition flex items-center space-x-2 bg-foundation justify-between z-20 sticky top-0"
+        class="bg-foundation sticky top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition"
         @click="showVersions = !showVersions"
       >
         <div>
           <UserAvatar :user="loadedVersion?.authorUser" />
         </div>
-        <div class="flex flex-col flex-grow space-y-0 min-w-0">
+        <div class="flex min-w-0 flex-grow flex-col space-y-0">
           <div>
             <span v-tippy="modelName.subheader ? model.name : null" class="font-bold">
               {{ modelName.header }}
             </span>
           </div>
-          <div class="text-xs text-foreground-2 truncate">
+          <div class="text-foreground-2 truncate text-xs">
             <span class="text-xs font-semibold">two weeks behind latest</span>
           </div>
         </div>
         <div
           v-if="!showVersions"
-          class="opacity-0 group-hover:opacity-100 transition-opacity flex text-xs font-bold items-center space-x-1 flex-none"
+          class="flex flex-none items-center space-x-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100"
         >
           <span>{{ model.versions?.totalCount }}</span>
-          <ArrowPathRoundedSquareIcon class="w-4 h-4" />
+          <ArrowPathRoundedSquareIcon class="h-4 w-4" />
         </div>
         <div
           v-else
-          class="opacity-0 group-hover:opacity-100 transition-opacity flex text-xs font-bold items-center space-x-2 flex-none"
+          class="flex flex-none items-center space-x-2 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100"
         >
-          <XMarkIcon class="w-4 h-4" />
+          <XMarkIcon class="h-4 w-4" />
         </div>
       </div>
     </div>
     <Transition>
       <div
         v-if="showRemove"
-        class="group absolute inset-0 w-full h-full bg-gradient-to-r from-blue-500/0 to-foundation z-[21] flex items-center justify-end rounded p-4 space-x-2"
+        class="to-foundation group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-blue-500/0 p-4"
       >
         <FormButton
           color="danger"
@@ -52,13 +52,13 @@
           class="rounded-full"
           @click="$emit('remove', props.model.id)"
         >
-          <XMarkIcon class="w-5 h-5" />
+          <XMarkIcon class="h-5 w-5" />
         </FormButton>
       </div>
     </Transition>
     <div
       v-show="showVersions && !showRemove"
-      class="flex flex-col space-y-0 mt-2 ml-4 h-auto"
+      class="mt-2 ml-4 flex h-auto flex-col space-y-0"
     >
       <ViewerResourcesVersionCard3
         v-for="version in props.model.versions.items"

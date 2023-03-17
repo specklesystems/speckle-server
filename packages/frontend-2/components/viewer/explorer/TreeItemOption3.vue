@@ -4,23 +4,23 @@
   <!--     -->
   <div class="w-full select-none">
     <!-- Header -->
-    <div class="bg-foundation py-1 rounded-md px-1 w-full">
-      <div class="flex items-stretch space-x-1 w-full">
+    <div class="bg-foundation w-full rounded-md py-1 px-1">
+      <div class="flex w-full items-stretch space-x-1">
         <!-- Unfold button -->
-        <div class="w-6 overflow-hidden flex-shrink-0">
+        <div class="w-6 flex-shrink-0 overflow-hidden">
           <button
             v-if="isSingleCollection || isMultipleCollection"
-            class="h-full px-1 hover:bg-primary-muted hover:text-primary rounded flex items-center justify-center"
+            class="hover:bg-primary-muted hover:text-primary flex h-full items-center justify-center rounded px-1"
             @click="unfold = !unfold"
           >
             <ChevronDownIcon
-              :class="`w-4 h-4 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+              :class="`h-4 w-4 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
             />
           </button>
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`group flex items-center space-x-1 overflow-hidden border-l-4 pl-2 transition flex-grow hover:bg-primary-muted hover:shadow-md cursor-pointer rounded pr-1
+          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
             ${isSelected ? 'border-primary' : 'border-transparent'}
           `"
           @click="(e) => setSelection(e)"
@@ -32,7 +32,7 @@
                 : ''
             }`"
           >
-            <div class="text-sm truncate">
+            <div class="truncate text-sm">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>
@@ -45,26 +45,26 @@
             </div>
           </div>
           <div class="flex-grow"></div>
-          <div class="flex items-center space-x-1 flex-shrink-0">
+          <div class="flex flex-shrink-0 items-center space-x-1">
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
             <div class="flex space-x-2 transition">
               <button
-                :class="`px-1 py-2 hover:text-primary transition opacity-0 group-hover:opacity-100 ${
+                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
                   isHidden ? 'opacity-100' : ''
                 }`"
                 @click.stop="hideOrShowObject"
               >
-                <EyeIcon v-if="!isHidden" class="w-3 h-3" />
-                <EyeSlashIcon v-else class="w-3 h-3" />
+                <EyeIcon v-if="!isHidden" class="h-3 w-3" />
+                <EyeSlashIcon v-else class="h-3 w-3" />
               </button>
               <button
-                :class="`px-1 py-2 hover:text-primary transition opacity-0 group-hover:opacity-100 ${
+                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
                   isIsolated ? 'opacity-100' : ''
                 }`"
                 @click.stop="isolateOrUnisolateObject"
               >
-                <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
-                <FunnelIcon v-else class="w-3 h-3" />
+                <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+                <FunnelIcon v-else class="h-3 w-3" />
               </button>
             </div>
             <div
@@ -79,7 +79,7 @@
         </div>
       </div>
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-      <div v-if="debug" class="text-xs text-foreground-2" @click="setSelection">
+      <div v-if="debug" class="text-foreground-2 text-xs" @click="setSelection">
         single: {{ isSingleCollection }}; multiple: {{ isMultipleCollection }}; a:
         {{ isAtomic }}
       </div>

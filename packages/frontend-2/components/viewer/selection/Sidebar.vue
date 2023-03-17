@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`fixed max-h-[calc(100vh-5.5rem)] top-[4.5rem] w-64 px-2 py-1 right-4 rounded-md shadow mb-4 transition bg-foundation overflow-y-auto simple-scrollbar ${
+    :class="`bg-foundation simple-scrollbar fixed top-[4.5rem] right-4 mb-4 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md px-2 py-1 shadow transition ${
       objects.length !== 0
         ? 'translate-x-0 opacity-100'
         : 'translate-x-[120%] opacity-0'
@@ -13,24 +13,24 @@
         isolated: {{ isIsolated }} / hidden: {{ isHidden }}
       </div> -->
       <div class="flex items-center space-x-2">
-        <div class="font-bold text-xs flex items-center space-x-1">
-          <CubeIcon class="w-3 h-3" />
+        <div class="flex items-center space-x-1 text-xs font-bold">
+          <CubeIcon class="h-3 w-3" />
           <span>{{ objects.length }}</span>
         </div>
 
         <button
-          class="px-1 py-2 hover:text-primary transition"
+          class="hover:text-primary px-1 py-2 transition"
           @click.stop="hideOrShowSelection"
         >
-          <EyeIcon v-if="!isHidden" class="w-3 h-3" />
-          <EyeSlashIcon v-else class="w-3 h-3" />
+          <EyeIcon v-if="!isHidden" class="h-3 w-3" />
+          <EyeSlashIcon v-else class="h-3 w-3" />
         </button>
         <button
-          class="px-1 py-2 hover:text-primary transition"
+          class="hover:text-primary px-1 py-2 transition"
           @click.stop="isolateOrUnisolateSelection"
         >
-          <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
-          <FunnelIcon v-else class="w-3 h-3" />
+          <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+          <FunnelIcon v-else class="h-3 w-3" />
         </button>
         <!-- <button
           class="px-1 py-2 hover:text-primary transition"
@@ -40,23 +40,23 @@
           <ArrowTopRightOnSquareIcon class="w-3 h-3" />
         </button> -->
         <button
-          class="px-1 py-2 hover:text-primary transition"
+          class="hover:text-primary px-1 py-2 transition"
           title="Clear selection"
           @click.stop="clearSelection()"
         >
-          <XMarkIcon class="w-3 h-3" />
+          <XMarkIcon class="h-3 w-3" />
         </button>
       </div>
     </div>
-    <div class="w-full my-2 border-b border-outline-3"></div>
+    <div class="border-outline-3 my-2 w-full border-b"></div>
 
     <div>
       <div v-for="object in objects" :key="(object.id as string)">
         <ViewerSelectionObject :object="object" :unfold="false" />
-        <div class="w-full my-2 border-b border-outline-3"></div>
+        <div class="border-outline-3 my-2 w-full border-b"></div>
       </div>
     </div>
-    <div v-if="objects.length === 1" class="text-xs text-foreground-2 mt-2">
+    <div v-if="objects.length === 1" class="text-foreground-2 mt-2 text-xs">
       Hold down "shift" to select multiple objects.
     </div>
   </div>
