@@ -18,10 +18,11 @@ export const projectAccessCheckQuery = graphql(`
 // `)
 
 export const projectsDashboardQuery = graphql(`
-  query ProjectsDashboardQuery($filter: UserProjectsFilter) {
+  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {
       id
-      projects(filter: $filter) {
+      projects(filter: $filter, limit: 6, cursor: $cursor) {
+        cursor
         totalCount
         items {
           ...ProjectDashboardItem
