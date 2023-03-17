@@ -7,21 +7,23 @@
     <div class="bg-foundation w-full rounded-md py-1 px-1">
       <div class="flex w-full items-stretch space-x-1">
         <!-- Unfold button -->
-        <div class="w-6 flex-shrink-0 overflow-hidden">
+        <div class="flex w-5 flex-shrink-0 justify-center overflow-hidden">
           <button
             v-if="isSingleCollection || isMultipleCollection"
-            class="hover:bg-primary-muted hover:text-primary flex h-full items-center justify-center rounded px-1"
+            class="hover:bg-primary-muted hover:text-primary flex h-full w-full items-center justify-center rounded"
             @click="unfold = !unfold"
           >
             <ChevronDownIcon
-              :class="`h-4 w-4 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+              :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'} ${
+                isSelected ? 'text-primary' : ''
+              }`"
             />
           </button>
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
           :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
-            ${isSelected ? 'border-primary' : 'border-transparent'}
+            ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
           @click="(e) => setSelection(e)"
         >

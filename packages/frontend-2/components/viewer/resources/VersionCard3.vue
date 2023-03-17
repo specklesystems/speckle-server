@@ -1,6 +1,6 @@
 <template>
   <button
-    :class="`relative group block space-y-2 w-full bg-foundation transition text-left pb-2 rounded-md ${
+    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left transition ${
       clickable ? 'hover:bg-primary-muted' : 'cursor-default'
     }
     ${!showTimeline ? 'bg-primary-muted' : ''}`"
@@ -9,18 +9,18 @@
     <!-- Timeline left border -->
     <div
       v-if="showTimeline && !last"
-      :class="`absolute ml-[2px] w-1 h-[99%] top-3 border-dashed ${
+      :class="`absolute top-3 ml-[2px] h-[99%] w-1 border-dashed ${
         isLoaded ? 'border-primary border-r-2' : 'border-outline-3 border-r-2'
-      } left-[7px] z-10 group-hover:border-primary transition-all`"
+      } group-hover:border-primary left-[7px] z-10 transition-all`"
     ></div>
-    <div class="pl-1 flex items-center space-x-2">
+    <div class="flex items-center space-x-2 pl-1">
       <div class="z-20 -ml-2">
         <UserAvatar :user="author" />
       </div>
       <div
         v-show="showTimeline"
         v-tippy="`${createdAt}`"
-        class="inline-block rounded-full px-2 text-xs bg-foundation-focus font-bold"
+        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold"
       >
         <span>
           {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
@@ -28,18 +28,17 @@
       </div>
     </div>
     <!-- Main stuff -->
-    <div class="pl-5 flex space-x-1 items-center">
-      <div class="bg-foundation w-16 h-16 shadow rounded-md flex-shrink-0">
+    <div class="flex items-center space-x-1 pl-5">
+      <div class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md shadow">
         <PreviewImage :preview-url="version.previewUrl" />
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
-        <div class="flex items-center space-x-1 min-w-0">
-          <UserAvatar :user="author" size="sm" />
-          <div class="text-xs truncate">
+        <div class="flex min-w-0 items-center space-x-1">
+          <div class="truncate text-xs">
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <div class="inline-block pl-1 rounded-full text-xs text-primary font-bold">
+        <div class="text-primary inline-block rounded-full pl-1 text-xs font-bold">
           {{ version.sourceApplication }}
         </div>
       </div>

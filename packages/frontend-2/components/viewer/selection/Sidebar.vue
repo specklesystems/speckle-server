@@ -7,11 +7,6 @@
     }`"
   >
     <div class="mb-2">
-      <!-- <div class="text-tiny text-foreground-2">
-        {{ allTargetIds }}
-        <hr />
-        isolated: {{ isIsolated }} / hidden: {{ isHidden }}
-      </div> -->
       <div class="flex items-center space-x-2">
         <div class="flex items-center space-x-1 text-xs font-bold">
           <CubeIcon class="h-3 w-3" />

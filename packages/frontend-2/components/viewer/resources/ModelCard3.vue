@@ -2,7 +2,7 @@
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`group rounded border-l-4 transition  ${
+      :class="`group rounded border-l-4 transition hover:shadow-md ${
         showVersions
           ? 'border-primary max-h-96'
           : 'hover:border-primary border-transparent'
@@ -10,7 +10,9 @@
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
-        class="bg-foundation sticky top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition"
+        :class="`${
+          showVersions ? 'bg-primary-muted' : 'bg-foundation'
+        } hover:bg-primary-muted sticky top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition`"
         @click="showVersions = !showVersions"
       >
         <div>

@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-foundation rounded-lg shadow flex flex-col space-y-1">
+  <div class="bg-foundation flex flex-col space-y-1 rounded-lg shadow">
     <div
-      class="flex px-2 h-10 items-center bg-foundation-2 shadow-md rounded-t-lg justify-start"
+      class="bg-foundation-2 flex h-10 items-center justify-start rounded-t-lg px-2 shadow-md"
     >
       <FormButton size="xs" text :icon-left="BarsArrowDownIcon" @click="expandLevel++">
         Unfold
@@ -15,9 +15,8 @@
       >
         Collapse
       </FormButton>
-      <!-- <span class="text-xs text-foreground-2">Depth: {{ expandLevel }}</span> -->
     </div>
-    <div class="relative flex flex-col space-y-2 pt-2">
+    <div class="relative flex flex-col space-y-2 py-2">
       <div
         v-for="(rootNode, idx) in rootNodes"
         :key="idx"
