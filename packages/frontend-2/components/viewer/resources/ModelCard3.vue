@@ -2,7 +2,7 @@
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`group rounded border-l-4 transition hover:shadow-md ${
+      :class="`group rounded-md border-l-4 transition hover:shadow-md ${
         showVersions
           ? 'border-primary max-h-96'
           : 'hover:border-primary border-transparent'
@@ -30,7 +30,7 @@
         </div>
         <div
           v-if="!showVersions"
-          class="flex flex-none items-center space-x-1 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100"
+          class="flex flex-none items-center space-x-1 text-xs font-bold"
         >
           <span>{{ model.versions?.totalCount }}</span>
           <ArrowPathRoundedSquareIcon class="h-4 w-4" />
@@ -39,7 +39,7 @@
           v-else
           class="flex flex-none items-center space-x-2 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100"
         >
-          <XMarkIcon class="h-4 w-4" />
+          <ChevronUpIcon class="h-4 w-4" />
         </div>
       </div>
     </div>
@@ -90,7 +90,11 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import { XMarkIcon, ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
+import {
+  XMarkIcon,
+  ArrowPathRoundedSquareIcon,
+  ChevronUpIcon
+} from '@heroicons/vue/24/solid'
 import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
