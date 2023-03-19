@@ -4,24 +4,26 @@
   <!--     -->
   <div class="w-full select-none">
     <!-- Header -->
-    <div class="bg-foundation py-1 rounded-md px-1 w-full">
-      <div class="flex items-stretch space-x-1 w-full">
+    <div class="bg-foundation w-full rounded-md py-1 px-1">
+      <div class="flex w-full items-stretch space-x-1">
         <!-- Unfold button -->
-        <div class="w-6 overflow-hidden flex-shrink-0">
+        <div class="flex w-5 flex-shrink-0 justify-center overflow-hidden">
           <button
             v-if="isSingleCollection || isMultipleCollection"
-            class="h-full px-1 hover:bg-primary-muted hover:text-primary rounded flex items-center justify-center"
+            class="hover:bg-primary-muted hover:text-primary flex h-full w-full items-center justify-center rounded"
             @click="unfold = !unfold"
           >
             <ChevronDownIcon
-              :class="`w-4 h-4 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+              :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'} ${
+                isSelected ? 'text-primary' : ''
+              }`"
             />
           </button>
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`group flex items-center space-x-1 overflow-hidden flex-grow hover:bg-foundation-focus cursor-pointer rounded-md px-1
-            ${isSelected ? 'ring-1' : 'ring-0'}
+          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
+            ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
           @click="(e) => setSelection(e)"
         >
@@ -32,7 +34,7 @@
                 : ''
             }`"
           >
-            <div class="text-sm truncate">
+            <div class="truncate text-sm">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>
@@ -45,22 +47,26 @@
             </div>
           </div>
           <div class="flex-grow"></div>
-          <div class="flex items-center space-x-1 flex-shrink-0">
+          <div class="flex flex-shrink-0 items-center space-x-1">
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
-            <div class="flex space-x-2 transition opacity-0 group-hover:opacity-100">
+            <div class="flex space-x-2 transition">
               <button
-                class="px-1 py-2 hover:text-primary transition"
+                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+                  isHidden ? 'opacity-100' : ''
+                }`"
                 @click.stop="hideOrShowObject"
               >
-                <EyeIcon v-if="!isHidden" class="w-3 h-3" />
-                <EyeSlashIcon v-else class="w-3 h-3" />
+                <EyeIcon v-if="!isHidden" class="h-3 w-3" />
+                <EyeSlashIcon v-else class="h-3 w-3" />
               </button>
               <button
-                class="px-1 py-2 hover:text-primary transition"
+                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+                  isIsolated ? 'opacity-100' : ''
+                }`"
                 @click.stop="isolateOrUnisolateObject"
               >
-                <FunnelIconOutline v-if="!isIsolated" class="w-3 h-3" />
-                <FunnelIcon v-else class="w-3 h-3" />
+                <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+                <FunnelIcon v-else class="h-3 w-3" />
               </button>
             </div>
             <div
@@ -75,7 +81,7 @@
         </div>
       </div>
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-      <div v-if="debug" class="text-xs text-foreground-2" @click="setSelection">
+      <div v-if="debug" class="text-foreground-2 text-xs" @click="setSelection">
         single: {{ isSingleCollection }}; multiple: {{ isMultipleCollection }}; a:
         {{ isAtomic }}
       </div>
@@ -91,6 +97,7 @@
             :item-id="(collection.raw?.id as string)"
             :tree-item="collection"
             :depth="depth + 1"
+            :expand-level="props.expandLevel"
             :debug="debug"
           />
         </div>
@@ -98,13 +105,19 @@
       <!-- If we have a single model collection -->
       <div v-if="isSingleCollection">
         <!-- single col items -->
-        <div v-for="item in singleCollectionItems" :key="item.raw?.id">
+        <div v-for="item in singleCollectionItemsPaginated" :key="item.raw?.id">
           <TreeItemOption3
             :item-id="(item.raw?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
+            :expand-level="props.expandLevel"
             :debug="debug"
           />
+        </div>
+        <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
+          <FormButton size="xs" text full-width @click="itemCount += pageSize">
+            View More ({{ singleCollectionItems.length - itemCount }})
+          </FormButton>
         </div>
       </div>
     </div>
@@ -137,14 +150,12 @@ const props = withDefaults(
     treeItem: ExplorerNode
     depth: number
     debug?: boolean
-    forceUnfold?: boolean
+    expandLevel: number
     header?: string | null
     subHeader?: string | null
   }>(),
-  { depth: 1, debug: false, forceUnfold: false, header: null, subHeader: null }
+  { depth: 0, debug: false, header: null, subHeader: null }
 )
-
-const unfold = ref(props.forceUnfold)
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -180,6 +191,12 @@ const singleCollectionItems = computed(() => {
     return treeItems.filter((item) => ids.includes(item.raw?.id as string))
   }
   return treeItems
+})
+
+const itemCount = ref(10)
+const pageSize = 10
+const singleCollectionItemsPaginated = computed(() => {
+  return singleCollectionItems.value.slice(0, itemCount.value)
 })
 
 // Creates a list of all model collections that are not defined as collections. specifically, handles cases such as
@@ -224,6 +241,18 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
+
+const unfold =
+  isSingleCollection || isMultipleCollection
+    ? ref(props.expandLevel >= props.depth)
+    : ref(false)
+
+watch(
+  () => props.expandLevel,
+  (newVal) => {
+    if (isSingleCollection || isMultipleCollection) unfold.value = newVal >= props.depth
+  }
+)
 
 const {
   selection: { addToSelection, clearSelection, removeFromSelection, objects },

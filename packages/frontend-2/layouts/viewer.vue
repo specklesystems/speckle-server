@@ -1,7 +1,8 @@
 <template>
-  <div :class="`min-h-full relative`">
+  <div :class="`relative min-h-full`">
     <div
-      class="fixed z-40 bottom-0 w-full text-xs flex space-x-2 p-3 pointer-events-none"
+      v-if="debug"
+      class="pointer-events-none fixed bottom-0 z-40 flex w-full space-x-2 p-3 text-xs"
     >
       <FormButton
         class="pointer-events-auto"
@@ -31,9 +32,9 @@
       enter-from-class="opacity-0"
       enter-active-class="transition duration-1000"
     >
-      <HeaderNavBar v-show="tourState.showNavbar" class="mb-6 z-20 relative" />
+      <HeaderNavBar v-show="tourState.showNavbar" class="relative z-20 mb-6" />
     </Transition>
-    <main class="absolute w-screen h-screen top-0 left-0 z-10">
+    <main class="absolute top-0 left-0 z-10 h-screen w-screen">
       <slot />
     </main>
     <SingletonManagers class="z-30" />
@@ -41,4 +42,5 @@
 </template>
 <script setup lang="ts">
 const tourState = useTourStageState()
+const debug = ref(false)
 </script>

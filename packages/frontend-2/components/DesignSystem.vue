@@ -6,8 +6,8 @@
       </div>
     </header>
 
-    <div class="">
-      <LayoutPanel class="background text-foreground mb-4">
+    <div class="space-y-4">
+      <LayoutPanel class="background text-foreground">
         <template #header>
           <span class="h3">Typograhpy</span>
         </template>
@@ -25,7 +25,7 @@
             <div class="label label--light">Label text (light)</div>
             <div class="caption">Caption text</div>
           </div>
-          <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-focus">
+          <div class="bg-foundation-focus mt-4 rounded-lg px-4 py-12 shadow-inner">
             <b>Font faces?</b>
             system ui only - using github's stack. Lighter, better performance, no more
             google fonts trakcing and a more native look.
@@ -46,14 +46,14 @@
           </div>
         </template>
       </LayoutPanel>
-      <LayoutPanel class="background text-foreground mb-4">
+      <LayoutPanel class="background text-foreground">
         <template #header>
           <span class="h3">Colors</span>
         </template>
         <template #default>
           <div>Here are the available foreground colors:</div>
           <div class="mt-4">
-            <div class="mt-4 px-4 py-12 rounded-lg shadow-inner bg-foundation-focus">
+            <div class="bg-foundation-focus mt-4 rounded-lg px-4 py-12 shadow-inner">
               <b class="text-primary">Text colors? &nbsp;</b>
               <span class="text-foreground">
                 <b>foreground</b>
@@ -73,14 +73,14 @@
           </div>
         </template>
       </LayoutPanel>
-      <LayoutPanel class="background text-foreground mb-4">
+      <LayoutPanel class="background text-foreground">
         <template #header>
           <span class="h3">Buttons</span>
         </template>
         <template #default>
           <div class="my-8 flex flex-col gap-y-4 overflow-x-scroll">
             <div v-for="size in sizes" :key="size" class="grid grid-cols-6">
-              <span class="caption text-center col-span-4 md:col-span-1">
+              <span class="caption col-span-4 text-center md:col-span-1">
                 {{ size }}
               </span>
               <div><FormButton :size="size">Button</FormButton></div>
@@ -95,7 +95,7 @@
               </div>
             </div>
             <div v-for="size in sizes" :key="size" class="grid grid-cols-6">
-              <span class="caption text-center col-span-4 md:col-span-1">
+              <span class="caption col-span-4 text-center md:col-span-1">
                 {{ size }}
               </span>
               <div><FormButton :size="size" rounded>Button</FormButton></div>
@@ -112,7 +112,7 @@
               </div>
             </div>
             <div v-for="size in sizes" :key="size" class="grid grid-cols-6">
-              <span class="caption text-center col-span-4 md:col-span-1">
+              <span class="caption col-span-4 text-center md:col-span-1">
                 {{ size }}
               </span>
               <div>
@@ -148,9 +148,9 @@
             <div
               v-for="type in types"
               :key="type"
-              class="flex py-6 flex-wrap space-x-4"
+              class="flex flex-wrap space-x-4 py-6"
             >
-              <span class="caption text-center col-span-4 md:col-span-1">
+              <span class="caption col-span-4 text-center md:col-span-1">
                 {{ type }}
               </span>
               <div><FormButton :color="type">Delete</FormButton></div>
@@ -165,7 +165,7 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-around flex-wrap py-6 rounded-md">
+            <div class="flex flex-wrap items-center justify-around rounded-md py-6">
               <FormButton text size="xs">Text</FormButton>
               <FormButton text size="sm">Text</FormButton>
               <FormButton text size="base">Text</FormButton>
@@ -176,7 +176,7 @@
               <FormButton text disabled>Text</FormButton>
             </div>
             <div class="bg-primary rounded-md">
-              <div class="flex items-center justify-around flex-wrap py-6">
+              <div class="flex flex-wrap items-center justify-around py-6">
                 <FormButton color="invert" text size="xs">Text</FormButton>
                 <FormButton color="invert" text size="sm">Text</FormButton>
                 <FormButton color="invert" text size="base">Text</FormButton>
@@ -186,7 +186,7 @@
                 <FormButton color="invert" text disabled>Text</FormButton>
                 <FormButton color="invert" text disabled>Text</FormButton>
               </div>
-              <div class="flex items-center justify-around flex-wrap py-6">
+              <div class="flex flex-wrap items-center justify-around py-6">
                 <FormButton color="invert" invert size="xs" :icon-right="XMarkIcon">
                   Button
                 </FormButton>
@@ -210,7 +210,7 @@
                   Button
                 </FormButton>
               </div>
-              <div class="flex items-center justify-around flex-wrap py-6">
+              <div class="flex flex-wrap items-center justify-around py-6">
                 <FormButton color="invert" disabled size="xs" :icon-right="XMarkIcon">
                   Button
                 </FormButton>
@@ -238,7 +238,79 @@
           </div>
         </template>
       </LayoutPanel>
-      <LayoutPanel class="background text-foreground mb-4">
+      <LayoutPanel class="background text-foreground">
+        <template #header>
+          <span class="h3">Avatars</span>
+        </template>
+        <template #default>
+          <div class="flex justify-around">
+            <div class="flex items-center space-x-2">
+              <UserAvatar hover-effect size="xl" />
+              <UserAvatar hover-effect size="lg" />
+              <UserAvatar hover-effect />
+              <UserAvatar hover-effect size="sm" />
+              <UserAvatar hover-effect size="xs" />
+            </div>
+            <div class="flex items-center space-x-2">
+              <UserAvatar
+                :user="{ name: 'Dimitrie Stefanescu', id: 'ds' }"
+                hover-effect
+                size="xl"
+              />
+              <UserAvatar
+                :user="{ name: 'Andrei Stefanescu', id: 'ds' }"
+                hover-effect
+                size="lg"
+              />
+              <UserAvatar
+                :user="{ name: 'Dimitrie Berbinski', id: 'ds' }"
+                hover-effect
+              />
+              <UserAvatar
+                :user="{ name: 'Zorkan Stefanescu', id: 'ds' }"
+                hover-effect
+                size="sm"
+              />
+              <UserAvatar
+                :user="{ name: 'Gergo Cant Type Your Last Name', id: 'ds' }"
+                hover-effect
+                size="xs"
+              />
+            </div>
+            <div class="flex items-center space-x-2">
+              <UserAvatar
+                :user="{ name: 'Dimitrie Stefanescu', id: 'ds', avatar: img }"
+                hover-effect
+                size="xl"
+              />
+              <UserAvatar
+                :user="{ name: 'Andrei Stefanescu', id: 'ds', avatar: img }"
+                hover-effect
+                size="lg"
+              />
+              <UserAvatar
+                :user="{ name: 'Dimitrie Berbinski', id: 'ds', avatar: img }"
+                hover-effect
+              />
+              <UserAvatar
+                :user="{ name: 'Zorkan Stefanescu', id: 'ds', avatar: img }"
+                hover-effect
+                size="sm"
+              />
+              <UserAvatar
+                :user="{
+                  name: 'Gergo Cant Type Your Last Name',
+                  id: 'ds',
+                  avatar: img
+                }"
+                hover-effect
+                size="xs"
+              />
+            </div>
+          </div>
+        </template>
+      </LayoutPanel>
+      <LayoutPanel class="background text-foreground">
         <template #header>
           <span class="h3">Links & form elements</span>
         </template>
@@ -359,4 +431,6 @@ type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
 const sizes: FormButtonSize[] = ['xs', 'sm', 'base', 'lg', 'xl']
 const types: FormButtonColor[] = ['danger', 'warning']
+const img =
+  'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4QAuRXhpZgAATU0AKgAAAAgAAkAAAAMAAAABAD4AAEABAAEAAAABAAAAAAAAAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAA+AGQDASIAAhEBAxEB/8QAGwABAAIDAQEAAAAAAAAAAAAABQQGAAIDBwH/xAAjEAACAQUAAgIDAQAAAAAAAAAAAQQCAxEhMUFRBRITFGGh/8QAGgEAAwADAQAAAAAAAAAAAAAAAwQFAQIGB//EAB4RAAIDAQEBAAMAAAAAAAAAAAADAQIRBBITFCEx/9oADAMBAAIRAxEAPwBqmw2zqo2fBPtR98JtqLlcN6sOl6o/QDXEfo4VwqmWtQsrhrVB/gzRpzXVJT6oTzw0cN+mW2qB/DjXCx4/wPVhzvVaYKrVFa8HC5HaLPeiY8EG/HxnQettIrG5JW7thkK9ZLDfsh0i0M1k1o2dAL9rTQfft9HZFHQ2TQMV/g8q4Q7ezCU6dmG436Peo9lOrgrHjrHCFFa+w5ESwjirbB6N020+URVjhs4a9CVmhYO341gzS8wQOiugNcNeiHfiJZ0WW5aXogyLS3oZowg9KtKtJj48BMqzjJaJdtbA5lHR9VtITkTpXZNGM6CpNO2OS6eg8pFCgGqp0HkLoVJ4xaVrIPJfRqsDyqTBDfWYc3VtmBMGsPdYchfbo/DkLWygRJmKujkSfjGzlbJ09LeuS9R5Cwtkum8n5KjHn82I2ZyaWwMpmCU1Q9VWmQpDTyRlLTXTS5IT8mK1mCa7n0jS/IFNXRaTdTT2DzK1scVJJbyAsxdBJmhmZWtgcytbKipFPxsCJj6CS6haZX0CmV7Y7SQlU4RXVtmEZ1rLMC6E+Z6DYltPolHnYxsqtq48ku3dq9kbxB6s5Bco/wAjjyI2PkubKNav1eydZkVryYlUSSXJL1Z+Qz5O/wC9ldKbYk1+ydbkVtdF7KwnsUPXZSa6GS5HdkWu9VjpAlXqsMxSuSINTBrMvrewOZf7s6Tb1WwOZdq2PrErpiDnMvrewSZd6dpV17CJVb2NVkF8z47u2YQ8ttmBPRnwf//Z'
 </script>

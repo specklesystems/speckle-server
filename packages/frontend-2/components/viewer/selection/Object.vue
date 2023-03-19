@@ -1,14 +1,14 @@
 <template>
   <div>
-    <div class="flex items-center mb-1">
+    <div class="mb-1 flex items-center">
       <button
-        class="h-full hover:bg-primary-muted hover:text-primary rounded flex items-center space-x-1 min-w-0"
+        class="hover:bg-primary-muted hover:text-primary flex h-full min-w-0 items-center space-x-1 rounded"
         @click="unfold = !unfold"
       >
         <ChevronDownIcon
-          :class="`w-3 h-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+          :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
         />
-        <div class="text-xs font-bold truncate">
+        <div class="truncate text-xs font-bold">
           {{ title || headerAndSubheader.header }}
         </div>
       </button>
@@ -27,12 +27,12 @@
           }`"
         >
           <div
-            class="truncate text-xs col-span-1 font-bold"
+            class="col-span-1 truncate text-xs font-bold"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
-          <div class="truncate text-xs col-span-2" :title="(kvp.value as string)">
+          <div class="col-span-2 truncate text-xs" :title="(kvp.value as string)">
             <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
             {{ kvp.value === null ? 'null' : kvp.value }}
           </div>
@@ -50,15 +50,15 @@
         :key="index"
         class="text-xs"
       >
-        <div class="grid grid-cols-3 text-foreground-2">
+        <div class="text-foreground-2 grid grid-cols-3">
           <div
-            class="truncate text-xs col-span-1 font-bold"
+            class="col-span-1 truncate text-xs font-bold"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
-          <div class="truncate text-xs col-span-2 flex min-w-0 w-full">
-            <div class="truncate flex-grow">{{ kvp.innerType }} array</div>
+          <div class="col-span-2 flex w-full min-w-0 truncate text-xs">
+            <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
         </div>
@@ -66,16 +66,16 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="truncate text-xs col-span-1 font-bold"
+            class="col-span-1 truncate text-xs font-bold"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="truncate text-xs col-span-2 flex min-w-0 w-full"
+            class="col-span-2 flex w-full min-w-0 truncate text-xs"
             :title="(kvp.value as string)"
           >
-            <div class="truncate flex-grow">{{ kvp.arrayPreview }}</div>
+            <div class="flex-grow truncate">{{ kvp.arrayPreview }}</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
         </div>
@@ -94,7 +94,7 @@ import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/hel
 const props = withDefaults(
   defineProps<{
     object: Record<string, unknown>
-    title: string
+    title?: string
     unfold: boolean
     debug?: boolean
   }>(),

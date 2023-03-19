@@ -1,23 +1,38 @@
 <template>
-  <div class="">
-    <div class="flex flex-col space-y-2">
+  <ViewerLayoutPanel @close="$emit('close')">
+    <template #actions>
+      <FormButton size="xs" text :icon-left="BarsArrowDownIcon" @click="expandLevel++">
+        Unfold
+      </FormButton>
+      <FormButton
+        size="xs"
+        text
+        :icon-left="BarsArrowUpIcon"
+        :disabled="expandLevel <= -1"
+        @click="expandLevel--"
+      >
+        Collapse
+      </FormButton>
+    </template>
+    <div class="relative flex flex-col space-y-2 py-2">
       <div
         v-for="(rootNode, idx) in rootNodes"
         :key="idx"
-        class="bg-foundation rounded-lg shadow"
+        class="bg-foundation rounded-lg"
       >
         <ViewerExplorerTreeItemOption3
           :item-id="(rootNode.data?.id as string)"
           :tree-item="markRaw(rootNode)"
           :sub-header="'Model Version'"
           :debug="false"
-          force-unfold
+          :expand-level="expandLevel"
         />
       </div>
     </div>
-  </div>
+  </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
+import { BarsArrowUpIcon, BarsArrowDownIcon } from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
@@ -25,6 +40,9 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+
+defineEmits(['close'])
+
 const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const {
   resources: {
@@ -34,6 +52,8 @@ const {
 const { instance: viewer } = useInjectedViewer()
 
 let realTree = viewer.getWorldTree()
+
+const expandLevel = ref(-1)
 
 const refHack = ref(1)
 onMounted(() => {
@@ -47,7 +67,8 @@ onMounted(() => {
 
 const rootNodes = computed(() => {
   refHack.value
-  console.log('should update rootNodes')
+
+  expandLevel.value = -1
   const nodes = []
   const rootNodes = realTree._root.children as ExplorerNode[]
   for (const node of rootNodes) {

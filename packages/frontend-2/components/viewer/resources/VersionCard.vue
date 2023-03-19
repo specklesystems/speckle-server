@@ -1,6 +1,6 @@
 <template>
   <button
-    :class="`relative group block space-y-2 w-full transition text-left pb-2 rounded-md ${
+    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left transition ${
       clickable ? 'hover:bg-primary-muted' : 'cursor-default'
     }
     ${!showTimeline ? 'bg-primary-muted' : ''}`"
@@ -9,46 +9,44 @@
     <!-- Timeline left border -->
     <div
       v-if="showTimeline"
-      :class="`absolute w-1 h-[99%] top-3 border-l-2 ${
-        isLoaded ? 'border-primary' : 'border-outline-3'
-      } left-[7px] z-10`"
+      :class="`absolute top-3 ml-[2px] h-[99%] w-1 border-dashed ${
+        isLoaded ? 'border-primary border-r-2' : 'border-outline-3 border-r-2'
+      } group-hover:border-primary left-[7px] z-10 transition-all`"
     ></div>
-    <div class="pl-1 flex items-center space-x-2">
-      <!-- Timeline circle -->
-      <div
-        v-show="showTimeline"
-        :class="`w-2 h-2 rounded-full z-10 ${
-          isLoaded || isLatest ? 'bg-primary' : 'bg-outline-3'
-        }`"
-      ></div>
-      <div
-        v-show="showTimeline"
-        class="inline-block rounded-full px-2 text-xs bg-foundation-focus xxxtext-foreground-on-primary font-bold"
-      >
-        <span>
-          {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
-        </span>
+    <div
+      v-if="last"
+      class="bg-primary absolute -bottom-5 ml-2 h-2 w-2 rounded-sm"
+    ></div>
+    <div
+      v-if="lastLoaded && !last"
+      class="bg-primary absolute -bottom-6 z-10 ml-[4px] flex h-4 w-4 items-center justify-center rounded-full"
+    >
+      <ChevronDownIcon class="h-3 w-3" />
+    </div>
+    <div class="flex items-center space-x-2 pl-1">
+      <div class="z-20 -ml-2">
+        <UserAvatar :user="author" />
       </div>
       <div
-        v-if="isLoaded && showTimeline"
-        class="inline-block rounded-full px-2 text-xs bg-primary text-foreground-on-primary font-bold"
+        v-show="showTimeline"
+        v-tippy="`${createdAt}`"
+        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold"
       >
-        Currently Viewing
+        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }} {{ last }}</span>
       </div>
     </div>
     <!-- Main stuff -->
-    <div class="pl-5 flex space-x-1 items-center">
-      <div class="bg-foundation w-20 h-20 shadow rounded-md flex-shrink-0">
+    <div class="flex items-center space-x-1 pl-5">
+      <div class="bg-foundation h-16 w-16 flex-shrink-0 rounded-md shadow">
         <PreviewImage :preview-url="version.previewUrl" />
       </div>
       <div class="flex flex-col space-y-1 overflow-hidden">
-        <div class="flex items-center space-x-1 min-w-0">
-          <UserAvatar :user="author" size="sm" />
-          <div class="text-xs truncate">
+        <div class="flex min-w-0 items-center space-x-1">
+          <div class="truncate text-xs">
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <div class="inline-block pl-1 rounded-full text-xs text-primary font-bold">
+        <div class="text-primary inline-block rounded-full pl-1 text-xs font-bold">
           {{ version.sourceApplication }}
         </div>
       </div>
@@ -56,8 +54,12 @@
   </button>
 </template>
 <script setup lang="ts">
+import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+
+dayjs.extend(localizedFormat)
 
 const props = withDefaults(
   defineProps<{
@@ -67,12 +69,16 @@ const props = withDefaults(
     isLatestVersion: boolean
     isLoadedVersion: boolean
     showTimeline: boolean
+    last: boolean
+    lastLoaded: boolean
   }>(),
   {
     showMetadata: true,
     clickable: true,
     default: false,
-    showTimeline: true
+    showTimeline: true,
+    last: false,
+    lastLoaded: false
   }
 )
 
@@ -85,9 +91,10 @@ const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
 
-const timeAgoCreatedAt = computed(() =>
-  dayjs(props.version.createdAt as string).from(dayjs())
-)
+const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
+const createdAt = computed(() => {
+  return dayjs(props.version.createdAt).format('LLL')
+})
 
 function handleClick() {
   if (props.clickable) emit('changeVersion', props.version.id)
