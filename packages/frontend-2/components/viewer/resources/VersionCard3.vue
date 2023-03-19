@@ -8,11 +8,21 @@
   >
     <!-- Timeline left border -->
     <div
-      v-if="showTimeline && !last"
+      v-if="showTimeline"
       :class="`absolute top-3 ml-[2px] h-[99%] w-1 border-dashed ${
         isLoaded ? 'border-primary border-r-2' : 'border-outline-3 border-r-2'
       } group-hover:border-primary left-[7px] z-10 transition-all`"
     ></div>
+    <div
+      v-if="last"
+      class="bg-primary absolute -bottom-5 ml-2 h-2 w-2 rounded-sm"
+    ></div>
+    <div
+      v-if="lastLoaded && !last"
+      class="bg-primary absolute -bottom-6 z-10 ml-[4px] flex h-4 w-4 items-center justify-center rounded-full"
+    >
+      <ChevronDownIcon class="h-3 w-3" />
+    </div>
     <div class="flex items-center space-x-2 pl-1">
       <div class="z-20 -ml-2">
         <UserAvatar :user="author" />
@@ -22,9 +32,7 @@
         v-tippy="`${createdAt}`"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold"
       >
-        <span>
-          {{ isLatest ? 'Latest' : timeAgoCreatedAt }}
-        </span>
+        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }} {{ last }}</span>
       </div>
     </div>
     <!-- Main stuff -->
@@ -46,8 +54,12 @@
   </button>
 </template>
 <script setup lang="ts">
+import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+
+dayjs.extend(localizedFormat)
 
 const props = withDefaults(
   defineProps<{
@@ -58,13 +70,15 @@ const props = withDefaults(
     isLoadedVersion: boolean
     showTimeline: boolean
     last: boolean
+    lastLoaded: boolean
   }>(),
   {
     showMetadata: true,
     clickable: true,
     default: false,
     showTimeline: true,
-    last: false
+    last: false,
+    lastLoaded: false
   }
 )
 
@@ -77,11 +91,9 @@ const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
 
-const timeAgoCreatedAt = computed(() =>
-  dayjs(props.version.createdAt as string).from(dayjs())
-)
+const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
 const createdAt = computed(() => {
-  return dayjs(props.version.createdAt)
+  return dayjs(props.version.createdAt).format('LLL')
 })
 
 function handleClick() {

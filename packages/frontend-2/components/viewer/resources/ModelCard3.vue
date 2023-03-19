@@ -25,7 +25,7 @@
             </span>
           </div>
           <div class="text-foreground-2 truncate text-xs">
-            <span class="text-xs font-semibold">two weeks behind latest</span>
+            <span class="text-xs font-semibold">{{ timeFromLatest }}</span>
           </div>
         </div>
         <div
@@ -63,12 +63,14 @@
       class="mt-2 ml-4 flex h-auto flex-col space-y-0"
     >
       <ViewerResourcesVersionCard3
-        v-for="version in props.model.versions.items"
+        v-for="(version, index) in props.model.versions.items"
         :key="version.id"
         :model-id="modelId"
         :version="version"
         :is-latest-version="version.id === latestVersionId"
         :is-loaded-version="version.id === loadedVersion?.id"
+        :last="index === props.model.versions.totalCount - 1"
+        :last-loaded="index === props.model.versions.items.length - 1"
         @change-version="handleVersionChange"
       />
       <div class="mt-4 px-2 py-2">
@@ -146,6 +148,13 @@ const latestVersion = computed(() => {
   return versions.value
     .slice()
     .sort((a, b) => (dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1))[0]
+})
+
+const timeFromLatest = computed(() => {
+  return dayjs(latestVersion.value.createdAt).from(
+    dayjs(loadedVersion.value?.createdAt),
+    true
+  )
 })
 
 const latestVersionId = computed(() => latestVersion.value.id)
