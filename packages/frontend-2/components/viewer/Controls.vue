@@ -84,15 +84,20 @@
           <ViewerResourcesList
             class="pointer-events-auto"
             @loaded-more="scrollControlsToBottom"
+            @close="activeControl = 'none'"
           />
         </KeepAlive>
       </div>
       <div v-show="activeControl === 'explorer'">
         <KeepAlive>
-          <ViewerExplorer class="pointer-events-auto" />
+          <ViewerExplorer class="pointer-events-auto" @close="activeControl = 'none'" />
         </KeepAlive>
       </div>
-      <ViewerComments v-if="activeControl === 'comments'" class="pointer-events-auto" />
+      <ViewerComments
+        v-if="activeControl === 'comments'"
+        class="pointer-events-auto"
+        @close="activeControl = 'none'"
+      />
       <ViewerFilters v-if="activeControl === 'filters'" class="pointer-events-auto" />
     </div>
   </div>

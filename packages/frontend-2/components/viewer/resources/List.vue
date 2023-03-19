@@ -1,52 +1,44 @@
 <template>
-  <div>
-    <div
-      class="bg-foundation xxxoverflow-hidden flex flex-col space-y-1 rounded-lg shadow"
-    >
-      <div
-        class="bg-foundation-2 sticky top-0 z-30 flex h-10 items-center justify-between rounded-t-lg px-2 shadow-md"
+  <ViewerLayoutPanel @close="$emit('close')">
+    <template #actions>
+      <FormButton
+        size="xs"
+        text
+        :icon-left="PlusIcon"
+        :disabled="showRemove"
+        @click="open = true"
       >
-        <div>
-          <FormButton
-            size="xs"
-            text
-            :icon-left="PlusIcon"
-            :disabled="showRemove"
-            @click="open = true"
-          >
-            Add
-          </FormButton>
-          <FormButton
-            size="xs"
-            text
-            :color="showRemove ? 'primary' : 'secondary'"
-            :icon-left="showRemove ? CheckIcon : MinusIcon"
-            :disabled="modelsAndVersionIds.length <= 1"
-            @click="showRemove = !showRemove"
-          >
-            {{ showRemove ? 'Done' : 'Remove' }}
-          </FormButton>
+        Add
+      </FormButton>
+      <FormButton
+        size="xs"
+        text
+        :color="showRemove ? 'primary' : 'secondary'"
+        :icon-left="showRemove ? CheckIcon : MinusIcon"
+        :disabled="modelsAndVersionIds.length <= 1"
+        @click="showRemove = !showRemove"
+      >
+        {{ showRemove ? 'Done' : 'Remove' }}
+      </FormButton>
+    </template>
+    <div class="flex flex-col space-y-2 px-1 py-2">
+      <template v-if="resourceItems.length">
+        <div
+          v-for="({ model, versionId }, index) in modelsAndVersionIds"
+          :key="model.id"
+        >
+          <ViewerResourcesModelCard
+            :model="model"
+            :version-id="versionId"
+            :last="index === modelsAndVersionIds.length - 1"
+            :show-remove="showRemove"
+            @remove="(id) => removeResource(id as unknown as string)"
+          />
         </div>
-      </div>
-      <div class="flex flex-col space-y-2 px-1 py-2">
-        <template v-if="resourceItems.length">
-          <div
-            v-for="({ model, versionId }, index) in modelsAndVersionIds"
-            :key="model.id"
-          >
-            <ViewerResourcesModelCard
-              :model="model"
-              :version-id="versionId"
-              :last="index === modelsAndVersionIds.length - 1"
-              :show-remove="showRemove"
-              @remove="(id) => removeResource(id as unknown as string)"
-            />
-          </div>
-        </template>
-      </div>
+      </template>
     </div>
     <ViewerResourcesAddModelDialog v-model:open="open" />
-  </div>
+  </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
@@ -55,6 +47,8 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { PlusIcon, CheckIcon, MinusIcon } from '@heroicons/vue/24/solid'
+
+defineEmits(['close'])
 
 const showRemove = ref(false)
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()

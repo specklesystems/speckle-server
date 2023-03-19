@@ -1,8 +1,6 @@
 <template>
-  <div class="bg-foundation flex flex-col space-y-1 rounded-lg shadow">
-    <div
-      class="bg-foundation-2 flex h-10 items-center justify-start rounded-t-lg px-2 shadow-md"
-    >
+  <ViewerLayoutPanel @close="$emit('close')">
+    <template #actions>
       <FormButton size="xs" text :icon-left="BarsArrowDownIcon" @click="expandLevel++">
         Unfold
       </FormButton>
@@ -15,7 +13,7 @@
       >
         Collapse
       </FormButton>
-    </div>
+    </template>
     <div class="relative flex flex-col space-y-2 py-2">
       <div
         v-for="(rootNode, idx) in rootNodes"
@@ -31,7 +29,7 @@
         />
       </div>
     </div>
-  </div>
+  </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
 import { BarsArrowUpIcon, BarsArrowDownIcon } from '@heroicons/vue/24/solid'
@@ -42,6 +40,9 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+
+defineEmits(['close'])
+
 const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const {
   resources: {
