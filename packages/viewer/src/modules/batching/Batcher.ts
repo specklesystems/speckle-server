@@ -75,9 +75,11 @@ export default class Batcher {
 
     for (let i = 0; i < materialHashes.length; i++) {
       const batch = this.buildBatch(subtreeId, rendeViews, materialHashes[i], batchType)
-      this.batches[batch.id] = batch
-      yield this.batches[batch.id]
-      await pause()
+      if (batch) {
+        this.batches[batch.id] = batch
+        yield this.batches[batch.id]
+        await pause()
+      }
     }
   }
 
@@ -91,45 +93,47 @@ export default class Batcher {
     /** Prune any meshes with no geometry data */
     batch = batch.filter((value) => value.validGeometry)
 
-    const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
-    let matRef = null
+    if (batch.length > 0) {
+      const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
+      let matRef = null
 
-    if (geometryType === GeometryType.MESH) {
-      matRef = batch[0].renderData.renderMaterial
-    } else if (geometryType === GeometryType.LINE) {
-      matRef = batch[0].renderData.displayStyle
-    } else if (geometryType === GeometryType.POINT) {
-      matRef = batch[0].renderData.renderMaterial
-    } else if (geometryType === GeometryType.POINT_CLOUD) {
-      matRef = batch[0].renderData.renderMaterial
+      if (geometryType === GeometryType.MESH) {
+        matRef = batch[0].renderData.renderMaterial
+      } else if (geometryType === GeometryType.LINE) {
+        matRef = batch[0].renderData.displayStyle
+      } else if (geometryType === GeometryType.POINT) {
+        matRef = batch[0].renderData.renderMaterial
+      } else if (geometryType === GeometryType.POINT_CLOUD) {
+        matRef = batch[0].renderData.renderMaterial
+      }
+
+      const material = this.materials.updateMaterialMap(
+        materialHash,
+        matRef,
+        geometryType
+      )
+
+      const batchID = generateUUID()
+      let geometryBatch: Batch = null
+      switch (geometryType) {
+        case GeometryType.MESH:
+          geometryBatch = new MeshBatch(batchID, subtreeId, batch)
+          break
+        case GeometryType.LINE:
+          geometryBatch = new LineBatch(batchID, subtreeId, batch)
+          break
+        case GeometryType.POINT:
+          geometryBatch = new PointBatch(batchID, subtreeId, batch)
+          break
+        case GeometryType.POINT_CLOUD:
+          geometryBatch = new PointBatch(batchID, subtreeId, batch)
+          break
+      }
+
+      geometryBatch.setBatchMaterial(material)
+      geometryBatch.buildBatch()
+      return geometryBatch
     }
-
-    const material = this.materials.updateMaterialMap(
-      materialHash,
-      matRef,
-      geometryType
-    )
-
-    const batchID = generateUUID()
-    let geometryBatch: Batch = null
-    switch (geometryType) {
-      case GeometryType.MESH:
-        geometryBatch = new MeshBatch(batchID, subtreeId, batch)
-        break
-      case GeometryType.LINE:
-        geometryBatch = new LineBatch(batchID, subtreeId, batch)
-        break
-      case GeometryType.POINT:
-        geometryBatch = new PointBatch(batchID, subtreeId, batch)
-        break
-      case GeometryType.POINT_CLOUD:
-        geometryBatch = new PointBatch(batchID, subtreeId, batch)
-        break
-    }
-
-    geometryBatch.setBatchMaterial(material)
-    geometryBatch.buildBatch()
-    return geometryBatch
   }
 
   public update(deltaTime: number) {
