@@ -81,7 +81,7 @@
     >
       <div v-show="activeControl === 'models'">
         <KeepAlive>
-          <ViewerResourcesList2
+          <ViewerResourcesList
             class="pointer-events-auto"
             @loaded-more="scrollControlsToBottom"
           />

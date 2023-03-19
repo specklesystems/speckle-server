@@ -34,12 +34,12 @@
             v-for="({ model, versionId }, index) in modelsAndVersionIds"
             :key="model.id"
           >
-            <ViewerResourcesModelCard3
+            <ViewerResourcesModelCard
               :model="model"
               :version-id="versionId"
               :last="index === modelsAndVersionIds.length - 1"
               :show-remove="showRemove"
-              @remove="removeResource"
+              @remove="(id) => removeResource(id as unknown as string)"
             />
           </div>
         </template>
