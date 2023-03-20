@@ -24,17 +24,4 @@ const activeUserQuery = graphql(`
 
 const { result: activeUserResult } = useQuery(activeUserQuery)
 const user = computed(() => activeUserResult.value?.activeUser || null)
-
-// const nav = useNav()
-// onMounted(() => {
-//   nav.value[0] = {
-//     to: `/designsystem`,
-//     name: 'Design System Demo',
-//     separator: true
-//   }
-// })
-
-// onUnmounted(() => {
-//   nav.value.splice(0, 1)
-// })
 </script>

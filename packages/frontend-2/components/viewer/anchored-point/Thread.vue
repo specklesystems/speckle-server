@@ -211,12 +211,14 @@ const isTypingMessage = computed(() => {
 })
 
 const isViewed = computed(() => !!props.modelValue.viewedAt)
+
 const initialDragPosition = computed(() => {
   return {
     x: props.modelValue.style.x as number,
     y: props.modelValue.style.y as number
   }
 })
+
 const isDragged = ref(false)
 const { x, y } = useDraggable(threadContainer, {
   stopPropagation: true,
@@ -224,6 +226,9 @@ const { x, y } = useDraggable(threadContainer, {
   initialValue: initialDragPosition,
   onStart() {
     isDragged.value = true
+  },
+  onEnd() {
+    // todo
   }
 })
 

@@ -1,11 +1,6 @@
 <template>
-  <div
-    class="bg-foundation rounded-lg shadow flex flex-col space-y-1 xxxoverflow-hidden"
-  >
-    <!-- <h2 class="font-bold text-foreground-2 px-2 py-2">Comments</h2> -->
-    <div
-      class="flex sticky top-0 px-2 py-2 bg-foundation-2 shadow-md rounded-t-lg justify-between"
-    >
+  <ViewerLayoutPanel @close="$emit('close')">
+    <template #actions>
       <FormButton
         size="xs"
         :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
@@ -20,7 +15,7 @@
       <FormButton size="xs" text @click="hideBubbles = !hideBubbles">
         {{ !hideBubbles ? 'Hide' : 'Show' }} Threads
       </FormButton>
-    </div>
+    </template>
     <div class="flex flex-col px-1">
       <ViewerCommentsListItem
         v-for="thread in commentThreads"
@@ -29,7 +24,7 @@
       />
       <div v-if="commentThreads.length === 0">TODO: Empty state</div>
     </div>
-  </div>
+  </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
@@ -40,6 +35,8 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
+
+defineEmits(['close'])
 
 graphql(`
   fragment ViewerCommentsListItem on Comment {
@@ -88,10 +85,4 @@ const includeArchived = computed({
     threadFilters.value.includeArchived || false ? 'includeArchived' : undefined,
   set: (newVal) => (threadFilters.value.includeArchived = !!newVal)
 })
-
-// const lastThread = computed(() =>
-//   commentThreads.value.length
-//     ? commentThreads.value[commentThreads.value.length - 1]
-//     : null
-// )
 </script>

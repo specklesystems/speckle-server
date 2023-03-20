@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="open">
     <div class="flex flex-col space-y-4">
-      <div class="h4 font-bold text-foreground">Add model</div>
+      <div class="h4 text-foreground font-bold">Add model</div>
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ViewerResourcesAddModelDialogModelTab
           v-if="activeItem.id === 'model'"
