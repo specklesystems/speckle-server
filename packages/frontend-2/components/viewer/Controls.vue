@@ -105,14 +105,12 @@
 <script setup lang="ts">
 import {
   CubeIcon,
-  FunnelIcon,
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
   ScissorsIcon
 } from '@heroicons/vue/24/outline'
 import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-// import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useTextInputGlobalFocus } from '~~/composables/states'
 
