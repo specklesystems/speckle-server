@@ -8,7 +8,7 @@
     />
     <div
       v-if="!minimal"
-      class="hidden md:flex text-primary mt-0 h6 font-bold leading-7"
+      class="text-primary h6 mt-0 hidden font-bold leading-7 md:flex"
     >
       Speckle
     </div>

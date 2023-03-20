@@ -7,6 +7,5 @@
   "vueIndentScriptAndStyle": false,
   "htmlWhitespaceSensitivity": "ignore",
   "printWidth": 88,
-  "singleQuote": true,
-  "plugins": ["prettier-plugin-tailwindcss"]
+  "singleQuote": true
 }
