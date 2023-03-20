@@ -17,7 +17,7 @@
           <template v-else>this stream</template>
         </div>
       </div>
-      <div class="flex space-x-2 w-full sm:w-auto">
+      <div class="flex space-x-2 w-full sm:w-auto shrink-0">
         <template v-if="isLoggedIn">
           <FormButton full-width @click="useInvite(true)">Accept</FormButton>
           <FormButton
@@ -31,7 +31,7 @@
           </FormButton>
         </template>
         <template v-else>
-          <FormButton :to="loginRoute">Log In</FormButton>
+          <FormButton full-width @click.stop.prevent="onLoginClick">Log In</FormButton>
         </template>
       </div>
     </div>
@@ -41,9 +41,11 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute, loginRoute } from '~~/lib/common/helpers/route'
+import { projectRoute, useNavigateToLogin } from '~~/lib/common/helpers/route'
 import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
+import { Optional } from '@speckle/shared'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
@@ -65,23 +67,35 @@ const props = withDefaults(
   { showStreamName: true }
 )
 
+const route = useRoute()
 const { isLoggedIn } = useActiveUser()
 const processInvite = useProcessProjectInvite()
+const postAuthRedirect = usePostAuthRedirect()
+const goToLogin = useNavigateToLogin()
 
 const loading = ref(false)
 
+const token = computed(
+  () => props.invite.token || (route.query.token as Optional<string>)
+)
+
 const useInvite = async (accept: boolean) => {
-  if (!props.invite.token) return
+  if (!token.value) return
 
   loading.value = true
   await processInvite(
     {
       projectId: props.invite.projectId,
       accept,
-      token: props.invite.token
+      token: token.value
     },
     { inviteId: props.invite.id }
   )
   loading.value = false
+}
+
+const onLoginClick = () => {
+  postAuthRedirect.setCurrentRoute()
+  goToLogin()
 }
 </script>

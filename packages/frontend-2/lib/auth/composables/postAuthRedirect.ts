@@ -11,12 +11,16 @@ const usePostAuthRedirectCookie = () =>
 export const usePostAuthRedirect = () => {
   const cookie = usePostAuthRedirectCookie()
   const router = useRouter()
+  const route = useRoute()
 
   const deleteState = () => (cookie.value = undefined)
   const set = (pathWithQuery: string, force?: boolean) => {
     const currVal = cookie.value
     if (currVal && !force) return
     cookie.value = pathWithQuery
+  }
+  const setCurrentRoute = (force?: boolean) => {
+    set(route.fullPath, force)
   }
   const popAndFollowRedirect = () => {
     const pathWithQuery = cookie.value
@@ -40,6 +44,7 @@ export const usePostAuthRedirect = () => {
   return {
     set,
     deleteState,
-    popAndFollowRedirect
+    popAndFollowRedirect,
+    setCurrentRoute
   }
 }

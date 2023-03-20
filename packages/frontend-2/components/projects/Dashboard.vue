@@ -101,7 +101,7 @@ const {
 })
 
 onProjectsResult((res) => {
-  cursor.value = res.data.activeUser?.projects.cursor || null
+  cursor.value = res.data?.activeUser?.projects.cursor || null
 })
 
 const { onResult: onUserProjectsUpdate } = useSubscription(

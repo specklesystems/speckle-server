@@ -8,15 +8,6 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
-// export const projectInvitesQuery = graphql(`
-//   query ProjectsDashboardQuery($filter: UserProjectsFilter) {
-//     activeUser {
-//       id
-//       ...ProjectsInviteBanners
-//     }
-//   }
-// `)
-
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {
@@ -34,14 +25,16 @@ export const projectsDashboardQuery = graphql(`
 `)
 
 export const projectPageQuery = graphql(`
-  query ProjectPageQuery($id: String!) {
+  query ProjectPageQuery($id: String!, $token: String) {
     project(id: $id) {
       ...ProjectPageProject
+    }
+    projectInvite(projectId: $id, token: $token) {
+      ...ProjectsInviteBanner
     }
   }
 `)
 
-// TODO: Pagination
 export const latestModelsQuery = graphql(`
   query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
     project(id: $projectId) {
@@ -90,14 +83,6 @@ export const latestCommentThreadsQuery = graphql(`
           ...ProjectPageLatestItemsCommentItem
         }
       }
-    }
-  }
-`)
-
-export const projectInviteQuery = graphql(`
-  query ProjectInvite($projectId: String!, $token: String) {
-    projectInvite(projectId: $projectId, token: $token) {
-      ...ProjectsInviteBanner
     }
   }
 `)
