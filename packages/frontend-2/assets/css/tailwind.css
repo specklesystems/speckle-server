@@ -45,6 +45,10 @@
     }
   }
 
+  .label-light {
+    @apply label label--light;
+  }
+
   .normal {
     @apply text-base font-normal;
   }

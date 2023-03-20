@@ -1,11 +1,15 @@
 import { ToRefs } from 'vue'
 import {
   ActiveUserAvatarFragment,
-  LimitedUserAvatarFragment
+  LimitedUserAvatarFragment,
+  AppAuthorAvatarFragment
 } from '~~/lib/common/generated/gql/graphql'
 
 export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-export type AvatarUserType = LimitedUserAvatarFragment | ActiveUserAvatarFragment
+export type AvatarUserType =
+  | LimitedUserAvatarFragment
+  | ActiveUserAvatarFragment
+  | AppAuthorAvatarFragment
 
 export function useAvatarSizeClasses(params: {
   props: ToRefs<{

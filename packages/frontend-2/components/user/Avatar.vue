@@ -35,6 +35,14 @@ import {
 } from '~~/lib/user/composables/avatar'
 
 graphql(`
+  fragment AppAuthorAvatar on AppAuthor {
+    id
+    name
+    avatar
+  }
+`)
+
+graphql(`
   fragment LimitedUserAvatar on LimitedUser {
     id
     name

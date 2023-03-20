@@ -9,3 +9,24 @@ export const loginServerInfoQuery = graphql(`
     }
   }
 `)
+
+export const authorizableAppMetadataQuery = graphql(`
+  query AuthorizableAppMetadata($id: String!) {
+    app(id: $id) {
+      id
+      name
+      description
+      trustByDefault
+      redirectUrl
+      scopes {
+        name
+        description
+      }
+      author {
+        name
+        id
+        avatar
+      }
+    }
+  }
+`)

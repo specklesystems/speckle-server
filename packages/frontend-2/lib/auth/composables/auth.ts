@@ -13,11 +13,11 @@ import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel, useMixpanelUserIdentification } from '~~/lib/core/composables/mp'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 
 /**
  * TODO:
  * - OAuth error page w/ message passed from server
- * - Invite only servers
  * - Invite redirects from server
  * - Verify overall flow - does this make sense (from a security perspective as well)?
  *  - Does challenge do anything?
@@ -61,6 +61,7 @@ export const useAuthManager = () => {
   const goHome = useNavigateToHome()
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
+  const postAuthRedirect = usePostAuthRedirect()
 
   /**
    * Invite token, if any
@@ -172,6 +173,8 @@ export const useAuthManager = () => {
               title: 'Welcome!',
               description: "You've been successfully authenticated"
             })
+
+            postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
             triggerNotification({
               type: ToastNotificationType.Danger,
@@ -243,7 +246,7 @@ export const useAuthManager = () => {
 
     mixpanel.track('Sign Up', {
       type: 'action',
-      isInvite: !!inviteToken.value
+      isInvite: !!inviteToken
     })
   }
 
@@ -258,6 +261,8 @@ export const useAuthManager = () => {
       title: 'Goodbye!',
       description: "You've been logged out"
     })
+
+    postAuthRedirect.deleteState()
   }
 
   return {

@@ -1705,7 +1705,7 @@ export type ServerApp = {
   name: Scalars['String'];
   public?: Maybe<Scalars['Boolean']>;
   redirectUrl: Scalars['String'];
-  scopes: Array<Maybe<Scope>>;
+  scopes: Array<Scope>;
   secret?: Maybe<Scalars['String']>;
   termsAndConditionsLink?: Maybe<Scalars['String']>;
   trustByDefault?: Maybe<Scalars['Boolean']>;
@@ -2196,7 +2196,7 @@ export type User = {
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
-  createdApps?: Maybe<Array<Maybe<ServerApp>>>;
+  createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']>;
   /**
    * E-mail can be null, if it's requested for a user other than the authenticated one
