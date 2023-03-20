@@ -6,6 +6,7 @@ dist-*
 coverage
 .nyc_output
 packages/server/reports*
+packages/preview-service/public/render/**/*
 packages/objectloader/examples/browser/objectloader.web.js
 packages/viewer/example/speckleviewer.web.js
 
