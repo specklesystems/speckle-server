@@ -105,7 +105,6 @@
 <script setup lang="ts">
 import {
   CubeIcon,
-  FunnelIcon,
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
   ScissorsIcon
