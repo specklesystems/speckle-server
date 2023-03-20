@@ -1,6 +1,7 @@
 <template>
   <div>
     <div v-if="project">
+      <ProjectsInviteBanner v-if="invite" :invite="invite" :show-stream-name="false" />
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
@@ -27,6 +28,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
+import { Optional } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
@@ -95,7 +97,8 @@ useProjectUpdateTracking(projectId, (event) => {
 const { result: projectPageResult } = useQuery(
   projectPageQuery,
   () => ({
-    id: projectId.value
+    id: projectId.value,
+    token: (route.query.token as Optional<string>) || null
   }),
   () => ({
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
@@ -105,4 +108,5 @@ const { result: projectPageResult } = useQuery(
 )
 
 const project = computed(() => projectPageResult.value?.project)
+const invite = computed(() => projectPageResult.value?.projectInvite)
 </script>

@@ -3,6 +3,5 @@
     <main class="layout-container">
       <slot />
     </main>
-    <SingletonManagers />
   </div>
 </template>

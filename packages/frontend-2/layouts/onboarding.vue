@@ -3,6 +3,5 @@
     <ClientOnly>
       <slot />
     </ClientOnly>
-    <SingletonManagers />
   </div>
 </template>

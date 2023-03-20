@@ -11,6 +11,9 @@ const usePostAuthRedirectCookie = () =>
 export const usePostAuthRedirect = () => {
   const cookie = usePostAuthRedirectCookie()
   const router = useRouter()
+  const route = useRoute()
+
+  const hadPendingRedirect = computed(() => !!cookie.value?.length)
 
   const deleteState = () => (cookie.value = undefined)
   const set = (pathWithQuery: string, force?: boolean) => {
@@ -18,28 +21,41 @@ export const usePostAuthRedirect = () => {
     if (currVal && !force) return
     cookie.value = pathWithQuery
   }
+  const setCurrentRoute = (force?: boolean) => {
+    set(route.fullPath, force)
+  }
   const popAndFollowRedirect = () => {
     const pathWithQuery = cookie.value
     if (!pathWithQuery) return
 
-    const url = new URL(pathWithQuery, 'http://notimportant.com')
-    router.replace({
-      path: url.pathname,
-      query: reduce(
-        [...url.searchParams.entries()],
-        (result, entry) => {
-          result[entry[0]] = entry[1]
-          return result
-        },
-        {} as Record<string, string>
-      )
-    })
     deleteState()
+
+    if (process.server) {
+      const url = new URL(pathWithQuery, 'http://notimportant.com')
+      router
+        .push({
+          path: url.pathname,
+          query: reduce(
+            [...url.searchParams.entries()],
+            (result, entry) => {
+              result[entry[0]] = entry[1]
+              return result
+            },
+            {} as Record<string, string>
+          )
+        })
+        .catch(console.error)
+    } else {
+      // cause nuxt doesn't show error page for some reason
+      window.location.href = pathWithQuery
+    }
   }
 
   return {
     set,
     deleteState,
-    popAndFollowRedirect
+    popAndFollowRedirect,
+    setCurrentRoute,
+    hadPendingRedirect
   }
 }
