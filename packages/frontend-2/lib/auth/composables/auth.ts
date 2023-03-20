@@ -76,7 +76,10 @@ export const useAuthManager = () => {
   /**
    * Set/clear new token value and redirect to home
    */
-  const saveNewToken = async (newToken?: string) => {
+  const saveNewToken = async (
+    newToken?: string,
+    options?: Partial<{ skipRedirect: boolean }>
+  ) => {
     // write to cookie
     authToken.value = newToken
 
@@ -87,13 +90,15 @@ export const useAuthManager = () => {
     await resetAuthState()
 
     // redirect home & wipe access code from querystring
-    goHome({ query: {} })
+    if (!options?.skipRedirect) goHome({ query: {} })
   }
 
   /**
    * Check for access_code in query string and attempt to finalize login
    */
-  const finalizeLoginWithAccessCode = async () => {
+  const finalizeLoginWithAccessCode = async (
+    options?: Partial<{ skipRedirect: boolean }>
+  ) => {
     const accessCode = route.query['access_code'] as Optional<string>
     const challenge = SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge) || ''
     if (!accessCode) return
@@ -105,7 +110,7 @@ export const useAuthManager = () => {
         apiOrigin
       })
 
-      await saveNewToken(newToken)
+      await saveNewToken(newToken, options)
     } catch (error) {
       await saveNewToken(undefined)
       throw error
@@ -166,7 +171,9 @@ export const useAuthManager = () => {
       async (newVal, oldVal) => {
         if (newVal && newVal !== oldVal) {
           try {
-            await finalizeLoginWithAccessCode()
+            await finalizeLoginWithAccessCode({
+              skipRedirect: postAuthRedirect.hadPendingRedirect.value
+            })
 
             triggerNotification({
               type: ToastNotificationType.Success,

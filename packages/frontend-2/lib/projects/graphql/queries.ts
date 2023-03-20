@@ -87,6 +87,14 @@ export const latestCommentThreadsQuery = graphql(`
   }
 `)
 
+export const projectInviteQuery = graphql(`
+  query ProjectInvite($projectId: String!, $token: String) {
+    projectInvite(projectId: $projectId, token: $token) {
+      ...ProjectsInviteBanner
+    }
+  }
+`)
+
 export const projectModelCheckQuery = graphql(`
   query ProjectModelCheck($projectId: String!, $modelId: String!) {
     project(id: $projectId) {

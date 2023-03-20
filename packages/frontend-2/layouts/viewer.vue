@@ -37,7 +37,6 @@
     <main class="absolute top-0 left-0 z-10 h-screen w-screen">
       <slot />
     </main>
-    <SingletonManagers class="z-30" />
   </div>
 </template>
 <script setup lang="ts">

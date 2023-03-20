@@ -10,7 +10,10 @@
           has invited you to become a bollaborator on
           <template v-if="showStreamName">
             the project
-            <CommonTextLink :to="projectRoute(invite.projectId)">
+            <CommonTextLink
+              :to="projectRoute(invite.projectId)"
+              @click.prevent="onProjectNameClick"
+            >
               {{ invite.projectName }}
             </CommonTextLink>
           </template>
@@ -41,11 +44,16 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute, useNavigateToLogin } from '~~/lib/common/helpers/route'
+import {
+  projectRoute,
+  useNavigateToLogin,
+  useNavigateToProject
+} from '~~/lib/common/helpers/route'
 import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
-import { Optional } from '@speckle/shared'
+import { ensureError, Optional } from '@speckle/shared'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
@@ -59,6 +67,10 @@ graphql(`
   }
 `)
 
+const emit = defineEmits<{
+  (e: 'processed', val: { accepted: boolean }): void
+}>()
+
 const props = withDefaults(
   defineProps<{
     invite: ProjectsInviteBannerFragment
@@ -67,11 +79,13 @@ const props = withDefaults(
   { showStreamName: true }
 )
 
+const { triggerNotification } = useGlobalToast()
 const route = useRoute()
 const { isLoggedIn } = useActiveUser()
 const processInvite = useProcessProjectInvite()
 const postAuthRedirect = usePostAuthRedirect()
 const goToLogin = useNavigateToLogin()
+const goToProject = useNavigateToProject()
 
 const loading = ref(false)
 
@@ -83,7 +97,7 @@ const useInvite = async (accept: boolean) => {
   if (!token.value) return
 
   loading.value = true
-  await processInvite(
+  const success = await processInvite(
     {
       projectId: props.invite.projectId,
       accept,
@@ -92,10 +106,25 @@ const useInvite = async (accept: boolean) => {
     { inviteId: props.invite.id }
   )
   loading.value = false
+
+  if (success) {
+    emit('processed', { accepted: accept })
+  }
 }
 
 const onLoginClick = () => {
   postAuthRedirect.setCurrentRoute()
   goToLogin()
+}
+
+const onProjectNameClick = async () => {
+  try {
+    await goToProject({ id: props.invite.projectId })
+  } catch (e) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: ensureError(e).message
+    })
+  }
 }
 </script>

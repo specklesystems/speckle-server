@@ -3,6 +3,7 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <SingletonManagers />
   </div>
 </template>
 <script setup lang="ts">

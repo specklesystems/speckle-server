@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectsInviteBanner v-if="invite" :invite="invite" />
+      <ProjectsInviteBanner v-if="invite" :invite="invite" :show-stream-name="false" />
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->

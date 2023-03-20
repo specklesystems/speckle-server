@@ -4,6 +4,5 @@
     <main>
       <slot />
     </main>
-    <SingletonManagers />
   </div>
 </template>
