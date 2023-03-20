@@ -17,7 +17,6 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 /**
  * TODO:
  * - OAuth error page w/ message passed from server
- * - Invite only servers
  * - Invite redirects from server
  * - Verify overall flow - does this make sense (from a security perspective as well)?
  *  - Does challenge do anything?
@@ -243,7 +242,7 @@ export const useAuthManager = () => {
 
     mixpanel.track('Sign Up', {
       type: 'action',
-      isInvite: !!inviteToken.value
+      isInvite: !!inviteToken
     })
   }
 

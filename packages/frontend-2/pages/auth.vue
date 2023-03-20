@@ -14,7 +14,7 @@ definePageMeta({
   middleware: [
     'guest',
     (to) => {
-      if (to.path === '/auth') {
+      if (to.path === '/authn') {
         return loginRoute
       }
     }

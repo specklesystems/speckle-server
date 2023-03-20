@@ -1713,7 +1713,7 @@ export type ServerApp = {
   name: Scalars['String'];
   public?: Maybe<Scalars['Boolean']>;
   redirectUrl: Scalars['String'];
-  scopes: Array<Maybe<Scope>>;
+  scopes: Array<Scope>;
   secret?: Maybe<Scalars['String']>;
   termsAndConditionsLink?: Maybe<Scalars['String']>;
   trustByDefault?: Maybe<Scalars['Boolean']>;
@@ -2204,7 +2204,7 @@ export type User = {
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
-  createdApps?: Maybe<Array<Maybe<ServerApp>>>;
+  createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']>;
   /**
    * E-mail can be null, if it's requested for a user other than the authenticated one
@@ -3514,7 +3514,7 @@ export type ServerAppResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   public?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   redirectUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  scopes?: Resolver<Array<Maybe<ResolversTypes['Scope']>>, ParentType, ContextType>;
+  scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
   secret?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   termsAndConditionsLink?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   trustByDefault?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
@@ -3671,7 +3671,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerApp']>>>, ParentType, ContextType>;
+  createdApps?: Resolver<Maybe<Array<ResolversTypes['ServerApp']>>, ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
