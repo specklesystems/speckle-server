@@ -29,8 +29,10 @@ export default {
   component: ProjectPage,
   parameters: {
     docs: {
-      inlineStories: false,
-      iframeHeight: 1000
+      story: {
+        inline: false,
+        iframeHeight: 1000
+      }
     },
     layout: 'fullscreen',
     manualLayout: true
@@ -48,7 +50,10 @@ export const Default: StoryObj = {
       mocks: [
         // Main project page query
         {
-          request: { query: projectPageQuery, variables: { id: fakeProjectId } },
+          request: {
+            query: projectPageQuery,
+            variables: { id: fakeProjectId, token: null }
+          },
           result: {
             data: {
               project: {
@@ -75,7 +80,8 @@ export const Default: StoryObj = {
                   user: u
                 })),
                 invitedTeam: null
-              }
+              },
+              projectInvite: null
             } as ProjectPageQueryQuery
           }
         },
@@ -257,7 +263,7 @@ export const Default: StoryObj = {
       ]
     },
     vueRouter: {
-      route: { params: { id: fakeProjectId } }
+      route: { params: { id: fakeProjectId }, query: {} }
     }
   } as StorybookParameters
 }
@@ -268,7 +274,10 @@ export const EmptyState: StoryObj = {
     apolloClient: {
       mocks: [
         {
-          request: { query: projectPageQuery, variables: { id: fakeProjectId } },
+          request: {
+            query: projectPageQuery,
+            variables: { id: fakeProjectId, token: null }
+          },
           result: {
             data: {
               project: {
@@ -295,7 +304,8 @@ export const EmptyState: StoryObj = {
                 })),
                 role: Roles.Stream.Owner,
                 invitedTeam: null
-              }
+              },
+              projectInvite: null
             } as ProjectPageQueryQuery
           }
         },
@@ -365,7 +375,7 @@ export const EmptyState: StoryObj = {
       ]
     },
     vueRouter: {
-      route: { params: { id: fakeProjectId } }
+      route: { params: { id: fakeProjectId }, query: {} }
     }
   } as StorybookParameters
 }
