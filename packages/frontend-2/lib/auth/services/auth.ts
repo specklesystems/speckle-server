@@ -55,8 +55,6 @@ async function resolveAccessCode(res: Response): Promise<string> {
     throw new AuthFailedError('Unable to resolver access_code from auth response')
   }
 
-  // TODO: Re-introduce post login redirect (url coming from server or from client)
-
   return accessCode
 }
 

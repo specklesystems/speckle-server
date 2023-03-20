@@ -13,6 +13,7 @@ import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useMixpanel, useMixpanelUserIdentification } from '~~/lib/core/composables/mp'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 
 /**
  * TODO:
@@ -60,6 +61,7 @@ export const useAuthManager = () => {
   const goHome = useNavigateToHome()
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
+  const postAuthRedirect = usePostAuthRedirect()
 
   /**
    * Invite token, if any
@@ -171,6 +173,8 @@ export const useAuthManager = () => {
               title: 'Welcome!',
               description: "You've been successfully authenticated"
             })
+
+            postAuthRedirect.popAndFollowRedirect()
           } catch (e) {
             triggerNotification({
               type: ToastNotificationType.Danger,
@@ -257,6 +261,8 @@ export const useAuthManager = () => {
       title: 'Goodbye!',
       description: "You've been logged out"
     })
+
+    postAuthRedirect.deleteState()
   }
 
   return {

@@ -3,7 +3,8 @@
  */
 export enum CookieKeys {
   AuthToken = 'authn',
-  Theme = 'theme'
+  Theme = 'theme',
+  PostAuthRedirect = 'postAuthRedirect'
 }
 
 /**
