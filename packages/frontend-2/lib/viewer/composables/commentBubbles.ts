@@ -1,7 +1,8 @@
 import { CSSProperties, Ref } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 import {
-  InitialStateWithRequestAndResponse,
+  InitialStateWithUrlHashState,
+  InjectableViewerState,
   LoadedCommentThread,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -10,13 +11,16 @@ import { reduce } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
   useSelectionEvents,
-  useViewerCameraTracker
+  useViewerCameraTracker,
+  useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import {
   HorizontalDirection,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
+import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
+import { ViewerEvent } from '@speckle/viewer'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -142,13 +146,14 @@ export function useViewerCommentBubblesProjection(params: {
 
 export function useViewerCommentBubbles(
   options?: Partial<{
-    state: InitialStateWithRequestAndResponse
+    state: InitialStateWithUrlHashState
   }>
 ) {
   const {
     resources: {
       response: { commentThreads: commentThreadsBase }
-    }
+    },
+    urlHashState: { focusedThreadId }
   } = options?.state || useInjectedViewerState()
 
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
@@ -169,12 +174,12 @@ export function useViewerCommentBubbles(
   )
 
   const closeAllThreads = () => {
-    Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+    focusedThreadId.value = null
   }
 
   const open = (id: string) => {
-    if (commentThreads.value[id])
-      commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
+    if (id === focusedThreadId.value) return
+    focusedThreadId.value = id
   }
 
   // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
@@ -193,7 +198,8 @@ export function useViewerCommentBubbles(
                   isOccluded: false,
                   style: {}
                 }),
-            ...item
+            ...item,
+            isExpanded: !!(focusedThreadId.value && id === focusedThreadId.value)
           }
           return results
         },
@@ -229,12 +235,76 @@ export function useViewerCommentBubbles(
     { deep: true }
   )
 
+  // Toggling isExpanded when threadIdToOpen changes
+  watch(focusedThreadId, (id) => {
+    if (id) {
+      if (commentThreads.value[id])
+        commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
+    } else {
+      Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+    }
+  })
+
   return {
     commentThreads,
     openThread,
     closeAllThreads,
     open
   }
+}
+
+/**
+ * Set up auto-focusing on opened thread
+ */
+export function useViewerThreadTracking(state: InjectableViewerState) {
+  if (process.server) return
+
+  const {
+    ui: {
+      threads: { openThread }
+    }
+  } = state
+
+  const refocus = (data: CommentViewerData) => {
+    if (data.camPos) {
+      state.viewer.instance.setView({
+        position: new Vector3(data.camPos[0], data.camPos[1], data.camPos[2]),
+        target: new Vector3(data.camPos[3], data.camPos[4], data.camPos[5])
+      })
+    }
+
+    if (data.sectionBox) {
+      state.ui.sectionBox.setSectionBox(
+        data.sectionBox as {
+          min: { x: number; y: number; z: number }
+          max: { x: number; y: number; z: number }
+        },
+        0
+      )
+      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
+        state.ui.sectionBox.sectionBoxOn()
+    } else {
+      state.ui.sectionBox.sectionBoxOff()
+    }
+  }
+
+  // Do this once viewer loads things
+  useViewerEventListener(
+    ViewerEvent.LoadComplete,
+    () => {
+      if (openThread.value?.data) {
+        refocus(openThread.value.data)
+      }
+    },
+    { state }
+  )
+
+  // Also do this when openThread changes
+  watch(openThread, (newThread, oldThread) => {
+    if (newThread?.id && newThread.id !== oldThread?.id && newThread.data) {
+      refocus(newThread.data)
+    }
+  })
 }
 
 /**

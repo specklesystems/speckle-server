@@ -2,7 +2,6 @@ import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
   CommentDataInput,
-  CommentViewerData,
   OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
@@ -459,32 +458,6 @@ function useViewerSpotlightTracking() {
       // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
       // TODOs: filters implementation, once they are implemented in the FE
-    }
-  }
-}
-
-export function useViewerThreadTracking() {
-  const state = useInjectedViewerState()
-  return (data: CommentViewerData) => {
-    if (data.camPos) {
-      state.viewer.instance.setView({
-        position: new Vector3(data.camPos[0], data.camPos[1], data.camPos[2]),
-        target: new Vector3(data.camPos[3], data.camPos[4], data.camPos[5])
-      })
-    }
-
-    if (data.sectionBox) {
-      state.ui.sectionBox.setSectionBox(
-        data.sectionBox as {
-          min: { x: number; y: number; z: number }
-          max: { x: number; y: number; z: number }
-        },
-        0
-      )
-      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
-        state.ui.sectionBox.sectionBoxOn()
-    } else {
-      state.ui.sectionBox.sectionBoxOff()
     }
   }
 }

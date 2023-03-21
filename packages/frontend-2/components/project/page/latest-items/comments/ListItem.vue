@@ -1,7 +1,10 @@
 <template>
-  <tr class="h-[62px] bg-foundation">
+  <NuxtLink
+    class="list-item-row h-[62px] bg-foundation table-row align-middle hover:shadow-md ring-outline-2 hover:ring-2"
+    :to="threadLink"
+  >
     <td class="normal text-foreground font-semibold">
-      <div class="inline-flex align-middle items-center space-x-1 pl-5 pr-8 w-[250px]">
+      <div class="inline-flex align-middle items-center space-x-2 pl-5 pr-8 w-[250px]">
         <UserAvatar no-border :user="thread.author" />
         <span class="truncate">{{ thread.author.name }}</span>
       </div>
@@ -22,7 +25,7 @@
       <UserAvatarGroup :users="allAvatars" :max-count="4" />
     </td>
     <td class="bg-cover bg-no-repeat bg-center" :style="{ backgroundImage }" />
-  </tr>
+  </NuxtLink>
 </template>
 <script setup lang="ts">
 import { ChatBubbleLeftEllipsisIcon } from '@heroicons/vue/24/solid'
@@ -31,9 +34,11 @@ import { times } from 'lodash-es'
 import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { AvatarUserType } from '~~/lib/user/composables/avatar'
+import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
+  projectId: string
 }>()
 
 const { backgroundImage } = useCommentScreenshotImage(
@@ -54,4 +59,6 @@ const allAvatars = computed((): AvatarUserType[] => [
     (): AvatarUserType => ({ id: 'fake', name: 'fake' })
   )
 ])
+
+const threadLink = computed(() => getLinkToThread(props.projectId, props.thread))
 </script>

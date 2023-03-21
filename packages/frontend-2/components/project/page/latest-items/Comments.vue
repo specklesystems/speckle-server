@@ -52,6 +52,7 @@ graphql(`
         ...FormUsersSelectItem
       }
     }
+    ...LinkableComment
   }
 `)
 

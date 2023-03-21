@@ -64,8 +64,10 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useGetObjectUrl } from '~~/lib/viewer/composables/viewer'
 import {
   CommentBubbleModel,
-  useViewerCommentBubbles
+  useViewerCommentBubbles,
+  useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
+import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -244,6 +246,12 @@ export type InjectableViewerState = Readonly<{
       clearSelection: () => void
     }
   }
+  /**
+   * State stored in the anchor string of the URL
+   */
+  urlHashState: {
+    focusedThreadId: WritableComputedRef<Nullable<string>>
+  }
 }>
 
 type CachedViewerState = Pick<
@@ -264,6 +272,12 @@ type InitialStateWithRequest = InitialSetupState & {
 
 export type InitialStateWithRequestAndResponse = InitialSetupState &
   Pick<InjectableViewerState, 'resources'>
+
+export type InitialStateWithUrlHashState = InitialStateWithRequestAndResponse &
+  Pick<InjectableViewerState, 'urlHashState'>
+
+export type InitialStateWithInterface = InitialStateWithUrlHashState &
+  Pick<InjectableViewerState, 'ui'>
 
 /**
  * Scoped state key for 'viewer' metadata, as we reuse it between routes
@@ -342,7 +356,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     set: (newResources) => {
       const modelId =
         SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
-      router.push({ params: { modelId } })
+      router.push({ params: { modelId }, query: route.query, hash: route.hash })
     }
   })
 
@@ -668,8 +682,8 @@ function setupResourceResponse(
 }
 
 function setupInterfaceState(
-  state: InitialStateWithRequestAndResponse
-): InjectableViewerState {
+  state: InitialStateWithUrlHashState
+): InitialStateWithInterface {
   const { viewer } = state
 
   // Is viewer busy - Using writable computed so that we can always intercept these calls
@@ -1324,7 +1338,11 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const initState = setupInitialState(params)
   const initialStateWithRequest = setupResourceRequest(initState)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
-  const state = setupInterfaceState(stateWithResources)
+  const stateWithUrlHashState: InitialStateWithUrlHashState = {
+    ...stateWithResources,
+    urlHashState: setupUrlHashState()
+  }
+  const state: InjectableViewerState = setupInterfaceState(stateWithUrlHashState)
 
   // Inject it into descendant components
   provide(InjectableViewerStateKey, state)
@@ -1334,6 +1352,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   useViewerSelectionEventHandler(state)
   useViewerIsBusyEventHandler(state)
   useViewerSubscriptionEventTracker(state)
+  useViewerThreadTracking(state)
 
   return state
 }

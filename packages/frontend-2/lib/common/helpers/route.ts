@@ -1,4 +1,6 @@
 import { LocationQueryRaw } from 'vue-router'
+import { serializeHashState } from '~~/lib/common/composables/url'
+import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
 export const homeRoute = '/'
 export const loginRoute = '/authn/login'
@@ -7,8 +9,14 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/tour'
 export const downloadManagerRoute = '/download-manager'
 export const projectRoute = (id: string) => `/projects/${id}`
-export const modelRoute = (projectId: string, resourceIdString: string) =>
-  `/projects/${projectId}/models/${encodeURIComponent(resourceIdString)}`
+export const modelRoute = (
+  projectId: string,
+  resourceIdString: string,
+  hashState?: Record<ViewerHashStateKeys, string>
+) =>
+  `/projects/${projectId}/models/${encodeURIComponent(resourceIdString)}${
+    hashState ? serializeHashState(hashState) || '' : ''
+  }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
 
