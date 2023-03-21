@@ -4,7 +4,7 @@ import { Nullable, Optional } from '@speckle/shared'
 export function serializeHashState(
   state: Record<string, Nullable<string>>
 ): Optional<string> {
-  return !Object.values(state)
+  return !Object.values(state).filter((i) => i !== null).length
     ? undefined
     : `#${Object.entries(state)
         .filter((entry): entry is [string, string] => !!entry[1])

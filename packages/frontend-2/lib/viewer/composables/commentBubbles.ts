@@ -7,7 +7,7 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
-import { reduce } from 'lodash-es'
+import { reduce, difference } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
   useSelectionEvents,
@@ -210,26 +210,30 @@ export function useViewerCommentBubbles(
     { immediate: true }
   )
 
-  // Making sure there's only ever 1 expanded thread
+  // Making sure there's only ever 1 expanded thread & focusedThreadId is linked to these values
   watch(
     () =>
       Object.values(commentThreads.value)
         .filter((t) => t.isExpanded)
         .map((t) => t.id),
     (newExpandedThreadIds, oldExpandedThreadIds) => {
-      // If expanding new thread, close old one
-      const oldOpenThreadId = oldExpandedThreadIds[0]
-      if (!oldOpenThreadId) return
+      const completelyNewIds = difference(
+        newExpandedThreadIds,
+        oldExpandedThreadIds || []
+      )
+      const finalOpenThreadId =
+        (completelyNewIds.length ? completelyNewIds[0] : newExpandedThreadIds[0]) ||
+        null
 
-      if (newExpandedThreadIds.length < 2) return
-
-      const finalOpenThread = newExpandedThreadIds.filter(
-        (tid) => tid !== oldOpenThreadId
-      )[0]
-      for (const currentOpenThreadId of newExpandedThreadIds) {
-        if (currentOpenThreadId !== finalOpenThread) {
-          commentThreads.value[currentOpenThreadId].isExpanded = false
+      for (const commentThread of Object.values(commentThreads.value)) {
+        const shouldBeExpanded = commentThread.id === finalOpenThreadId
+        if (commentThread.isExpanded !== shouldBeExpanded) {
+          commentThreads.value[commentThread.id].isExpanded = shouldBeExpanded
         }
+      }
+
+      if (focusedThreadId.value !== finalOpenThreadId) {
+        focusedThreadId.value = finalOpenThreadId
       }
     },
     { deep: true }
@@ -238,8 +242,7 @@ export function useViewerCommentBubbles(
   // Toggling isExpanded when threadIdToOpen changes
   watch(focusedThreadId, (id) => {
     if (id) {
-      if (commentThreads.value[id])
-        commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
+      if (commentThreads.value[id]) commentThreads.value[id].isExpanded = true
     } else {
       Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
     }
