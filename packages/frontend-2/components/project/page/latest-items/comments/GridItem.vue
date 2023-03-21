@@ -1,6 +1,7 @@
 <template>
-  <div
+  <NuxtLink
     class="h-40 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2"
+    :to="threadLink"
   >
     <!-- Main data -->
     <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
@@ -39,18 +40,22 @@
       class="shrink-0 w-[25%] sm:w-36 border-l border-outline-3 bg-no-repeat bg-center bg-cover"
       :style="{ backgroundImage }"
     ></div>
-  </div>
+  </NuxtLink>
 </template>
 <script setup lang="ts">
 import { ChatBubbleLeftEllipsisIcon, LinkIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
-import { times } from 'lodash-es'
+import { sortBy, times } from 'lodash-es'
 import { AvatarUserType } from '~~/lib/user/composables/avatar'
+import { modelRoute } from '~~/lib/common/helpers/route'
+import { SpeckleViewer } from '@speckle/shared'
+import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
+  projectId: string
 }>()
 
 const { backgroundImage } = useCommentScreenshotImage(
@@ -71,4 +76,25 @@ const allAvatars = computed((): AvatarUserType[] => [
     (): AvatarUserType => ({ id: 'fake', name: 'fake' })
   )
 ])
+
+const threadLink = computed(() => {
+  if (!props.thread.viewerResources.length) return undefined
+  const sortedResources = sortBy(props.thread.viewerResources, (r) => {
+    if (r.versionId) return 1
+    if (r.modelId) return 2
+    if (r.objectId) return 3
+  })
+
+  const resource = sortedResources[0]
+  const resourceUrlBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
+  if (resource.modelId) {
+    resourceUrlBuilder.addModel(resource.modelId, resource.versionId || undefined)
+  } else {
+    resourceUrlBuilder.addObject(resource.objectId)
+  }
+
+  return modelRoute(props.projectId, resourceUrlBuilder.toString(), {
+    [ViewerHashStateKeys.FocusedThreadId]: props.thread.id
+  })
+})
 </script>

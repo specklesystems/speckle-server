@@ -52,6 +52,11 @@ graphql(`
         ...FormUsersSelectItem
       }
     }
+    viewerResources {
+      modelId
+      versionId
+      objectId
+    }
   }
 `)
 

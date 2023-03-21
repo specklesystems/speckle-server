@@ -151,6 +151,7 @@ export function useViewerCommentBubbles(
     }
   } = options?.state || useInjectedViewerState()
 
+  const threadIdToOpen = ref(null as Nullable<string>)
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
   const openThread = computed(() =>
     Object.values(commentThreads.value).find((t) => t.isExpanded)
@@ -169,12 +170,12 @@ export function useViewerCommentBubbles(
   )
 
   const closeAllThreads = () => {
-    Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+    threadIdToOpen.value = null
   }
 
   const open = (id: string) => {
-    if (commentThreads.value[id])
-      commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
+    if (id === threadIdToOpen.value) return
+    threadIdToOpen.value = id
   }
 
   // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
@@ -193,7 +194,8 @@ export function useViewerCommentBubbles(
                   isOccluded: false,
                   style: {}
                 }),
-            ...item
+            ...item,
+            isExpanded: !!(threadIdToOpen.value && id === threadIdToOpen.value)
           }
           return results
         },
@@ -229,11 +231,22 @@ export function useViewerCommentBubbles(
     { deep: true }
   )
 
+  // Toggling isExpanded when threadIdToOpen changes
+  watch(threadIdToOpen, (id) => {
+    if (id) {
+      if (commentThreads.value[id])
+        commentThreads.value[id].isExpanded = !commentThreads.value[id].isExpanded
+    } else {
+      Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
+    }
+  })
+
   return {
     commentThreads,
     openThread,
     closeAllThreads,
-    open
+    open,
+    queuedOpenThreadId: computed(() => threadIdToOpen.value)
   }
 }
 
