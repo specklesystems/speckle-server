@@ -253,7 +253,8 @@ export const Default: StoryObj = {
                       __typename: 'CommentReplyAuthorCollection',
                       items: fakeUsers.slice(0, 4),
                       totalCount: 100
-                    }
+                    },
+                    viewerResources: []
                   }))
                 }
               }
