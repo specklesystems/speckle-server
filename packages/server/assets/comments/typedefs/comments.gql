@@ -130,6 +130,10 @@ type Comment {
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
   resources: [ResourceIdentifier!]!
+  """
+  Resource identifiers as defined and implemented in the Viewer of the new frontend
+  """
+  viewerResources: [ViewerResourceItem!]!
   createdAt: DateTime!
   """
   The time this comment was last updated. Corresponds also to the latest reply to this comment, if any.

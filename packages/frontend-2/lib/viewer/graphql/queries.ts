@@ -96,6 +96,7 @@ export const viewerLoadedThreadsQuery = graphql(`
         totalArchivedCount
         items {
           ...ViewerCommentThread
+          ...LinkableComment
         }
       }
     }

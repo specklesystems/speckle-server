@@ -97,7 +97,7 @@ const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
 const {
   spotlightUserId,
-  threads: { openThread, items: commentThreads, hideBubbles }
+  threads: { openThread, items: commentThreads, hideBubbles, open }
 } = useInjectedViewerInterfaceState()
 
 useViewerCommentBubblesProjection({ parentEl })
@@ -136,8 +136,9 @@ const openNextThread = (currentThread: CommentBubbleModel) => {
   )
   if (++currentThreadIndex > threadCount - 1) currentThreadIndex = 0
   const nextThread = allThreadsChronologicalOrder.value[currentThreadIndex]
+  if (!nextThread) return
 
-  swapThreads(currentThread, nextThread)
+  open(nextThread.id)
 }
 
 const openPrevThread = (currentThread: CommentBubbleModel) => {
@@ -147,22 +148,9 @@ const openPrevThread = (currentThread: CommentBubbleModel) => {
   )
   if (--currentThreadIndex < 0) currentThreadIndex = threadCount - 1
   const nextThread = allThreadsChronologicalOrder.value[currentThreadIndex]
+  if (!nextThread) return
 
-  swapThreads(currentThread, nextThread)
-}
-
-const swapThreads = (from: CommentBubbleModel, to: CommentBubbleModel) => {
-  commentThreads.value = {
-    ...commentThreads.value,
-    [from.id]: {
-      ...from,
-      isExpanded: false
-    },
-    [to.id]: {
-      ...to,
-      isExpanded: true
-    }
-  }
+  open(nextThread.id)
 }
 
 const activeUserAvatars = computed(() => Object.values(users.value).map((u) => u.user))

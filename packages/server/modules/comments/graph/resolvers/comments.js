@@ -42,6 +42,7 @@ const {
 } = require('@/modules/activitystream/services/commentActivity')
 const {
   getViewerResourceItemsUngrouped,
+  getViewerResourcesForComment,
   doViewerResourcesFit
 } = require('@/modules/core/services/commit/viewerResources')
 const {
@@ -125,6 +126,9 @@ module.exports = {
         totalCount: authorIds.length,
         authorIds: authorIds.slice(0, args.limit || 25)
       }
+    },
+    async viewerResources(parent) {
+      return await getViewerResourcesForComment(parent.streamId, parent.id)
     },
     /**
      * Until recently 'data' was just a JSONObject so theoretically it was possible to return all kinds of object

@@ -1,11 +1,12 @@
 <template>
-  <div
+  <NuxtLink
     class="h-40 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2"
+    :to="threadLink"
   >
     <!-- Main data -->
     <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
       <div class="flex flex-col">
-        <div class="flex space-x-1 items-center mb-2">
+        <div class="flex space-x-2 items-center mb-2">
           <UserAvatar no-border :user="thread.author" />
           <span
             class="normal font-semibold text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
@@ -39,7 +40,7 @@
       class="shrink-0 w-[25%] sm:w-36 border-l border-outline-3 bg-no-repeat bg-center bg-cover"
       :style="{ backgroundImage }"
     ></div>
-  </div>
+  </NuxtLink>
 </template>
 <script setup lang="ts">
 import { ChatBubbleLeftEllipsisIcon, LinkIcon } from '@heroicons/vue/24/solid'
@@ -48,9 +49,11 @@ import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generat
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
 import { AvatarUserType } from '~~/lib/user/composables/avatar'
+import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
+  projectId: string
 }>()
 
 const { backgroundImage } = useCommentScreenshotImage(
@@ -71,4 +74,6 @@ const allAvatars = computed((): AvatarUserType[] => [
     (): AvatarUserType => ({ id: 'fake', name: 'fake' })
   )
 ])
+
+const threadLink = computed(() => getLinkToThread(props.projectId, props.thread))
 </script>

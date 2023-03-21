@@ -4,7 +4,27 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, throttle } from 'lodash-es'
-import { Nullable } from '@speckle/shared'
+import { MaybeAsync, Nullable } from '@speckle/shared'
+
+export function useViewerEventListener(
+  name: ViewerEvent,
+  listener: () => MaybeAsync<void>,
+  options?: Partial<{
+    state: InitialStateWithRequestAndResponse
+  }>
+) {
+  const {
+    viewer: { instance }
+  } = options?.state || useInjectedViewerState()
+
+  onMounted(() => {
+    instance.on(name, listener)
+  })
+
+  onBeforeUnmount(() => {
+    instance.removeListener(name, listener)
+  })
+}
 
 export function useViewerCameraTracker(
   callback: () => void,
@@ -29,7 +49,7 @@ export function useViewerCameraTracker(
 export function useViewerCameraRestTracker(
   callback: () => void,
   options?: Partial<{ debounceWait: number }>
-): void {
+) {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
@@ -37,14 +57,18 @@ export function useViewerCameraRestTracker(
   const { debounceWait = 200 } = options || {}
 
   const finalCallback = debounceWait ? debounce(callback, debounceWait) : callback
+  const removeListener = () =>
+    instance.cameraHandler.controls.removeEventListener('rest', finalCallback)
 
   onMounted(() => {
     instance.cameraHandler.controls.addEventListener('rest', finalCallback)
   })
 
   onBeforeUnmount(() => {
-    instance.cameraHandler.controls.removeEventListener('rest', finalCallback)
+    removeListener()
   })
+
+  return removeListener
 }
 
 export function useSelectionEvents(
