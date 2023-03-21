@@ -161,13 +161,6 @@ const latestVersion = computed(() => {
 
 const isLatest = computed(() => loadedVersion.value?.id === latestVersion.value.id)
 
-const timeFromLatest = computed(() => {
-  return dayjs(loadedVersion.value?.createdAt).from(
-    dayjs(latestVersion.value?.createdAt),
-    true
-  )
-})
-
 const timeAgoCreatedAt = computed(() =>
   dayjs(loadedVersion.value?.createdAt).from(dayjs())
 )
