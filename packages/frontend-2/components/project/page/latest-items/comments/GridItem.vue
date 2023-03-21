@@ -6,7 +6,7 @@
     <!-- Main data -->
     <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
       <div class="flex flex-col">
-        <div class="flex space-x-1 items-center mb-2">
+        <div class="flex space-x-2 items-center mb-2">
           <UserAvatar no-border :user="thread.author" />
           <span
             class="normal font-semibold text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
@@ -47,11 +47,9 @@ import { ChatBubbleLeftEllipsisIcon, LinkIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
-import { sortBy, times } from 'lodash-es'
+import { times } from 'lodash-es'
 import { AvatarUserType } from '~~/lib/user/composables/avatar'
-import { modelRoute } from '~~/lib/common/helpers/route'
-import { SpeckleViewer } from '@speckle/shared'
-import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
+import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
@@ -77,24 +75,5 @@ const allAvatars = computed((): AvatarUserType[] => [
   )
 ])
 
-const threadLink = computed(() => {
-  if (!props.thread.viewerResources.length) return undefined
-  const sortedResources = sortBy(props.thread.viewerResources, (r) => {
-    if (r.versionId) return 1
-    if (r.modelId) return 2
-    if (r.objectId) return 3
-  })
-
-  const resource = sortedResources[0]
-  const resourceUrlBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
-  if (resource.modelId) {
-    resourceUrlBuilder.addModel(resource.modelId, resource.versionId || undefined)
-  } else {
-    resourceUrlBuilder.addObject(resource.objectId)
-  }
-
-  return modelRoute(props.projectId, resourceUrlBuilder.toString(), {
-    [ViewerHashStateKeys.FocusedThreadId]: props.thread.id
-  })
-})
+const threadLink = computed(() => getLinkToThread(props.projectId, props.thread))
 </script>

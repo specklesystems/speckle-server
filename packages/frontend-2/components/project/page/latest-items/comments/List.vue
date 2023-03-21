@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-x-auto simple-scrollbar">
+  <div class="overflow-x-auto simple-scrollbar p-[2px]">
     <table class="table-fixed text-left w-[928px] lg:w-full">
       <thead>
         <tr class="text-foreground-2 label font-semibold">
@@ -11,13 +11,18 @@
           <th class="w-[100px]">Preview</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="">
         <tr class="h-3">
           <!-- You can't use margins on thead, hence this hack -->
         </tr>
-        <template v-for="(item, i) in items" :key="item.id">
-          <ProjectPageLatestItemsCommentsListItem :thread="item" />
-          <tr v-if="i < items.length - 1" class="h-4" />
+        <template v-if="projectId">
+          <template v-for="(item, i) in items" :key="item.id">
+            <ProjectPageLatestItemsCommentsListItem
+              :project-id="projectId"
+              :thread="item"
+            />
+            <tr v-if="i < items.length - 1" class="h-4" />
+          </template>
         </template>
       </tbody>
     </table>
@@ -33,4 +38,5 @@ const props = defineProps<{
 const items = computed(() =>
   (props.threads?.project?.commentThreads?.items || []).slice(0, 6)
 )
+const projectId = computed(() => props.threads?.project?.id)
 </script>
