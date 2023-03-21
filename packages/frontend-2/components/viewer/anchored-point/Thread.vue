@@ -146,10 +146,7 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Nullable, Roles } from '@speckle/shared'
 import { onKeyDown, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
-import {
-  useViewerThreadTracking,
-  useViewerThreadTypingTracking
-} from '~~/lib/viewer/composables/activity'
+import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
 import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
@@ -180,8 +177,8 @@ const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
 
 const handle = ref(null as Nullable<HTMLElement>)
-
 const justCreatedReply = ref(false)
+
 const threadId = computed(() => props.modelValue.id)
 const comments = computed(() => [
   props.modelValue,
@@ -265,7 +262,6 @@ const threadAuthors = computed(() => {
   return authors
 })
 
-const setCommentPointOfView = useViewerThreadTracking()
 const changeExpanded = (newVal: boolean) => {
   emit('update:modelValue', {
     ...props.modelValue,
@@ -353,10 +349,6 @@ watch(
 
     if (newIsExpanded && newIsExpanded !== oldIsExpanded && !newIsViewed) {
       markThreadViewed(projectId.value, props.modelValue.id)
-    }
-
-    if (newIsExpanded && props.modelValue.data) {
-      setCommentPointOfView(props.modelValue.data)
     }
 
     if (!newIsExpanded && props.modelValue.data?.sectionBox) {

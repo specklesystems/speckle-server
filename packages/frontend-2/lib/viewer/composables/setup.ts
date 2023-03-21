@@ -43,7 +43,7 @@ import {
   ProjectCommentThreadsArgs,
   Project
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get, PartialDeep, Merge } from 'type-fest'
+import { SetNonNullable, Get, PartialDeep } from 'type-fest'
 import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import {
@@ -64,7 +64,8 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useGetObjectUrl } from '~~/lib/viewer/composables/viewer'
 import {
   CommentBubbleModel,
-  useViewerCommentBubbles
+  useViewerCommentBubbles,
+  useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 
@@ -203,7 +204,6 @@ export type InjectableViewerState = Readonly<{
     threads: {
       items: Ref<Record<string, CommentBubbleModel>>
       openThread: ComputedRef<CommentBubbleModel | undefined>
-      queuedOpenThreadId: ComputedRef<string | null>
       closeAllThreads: () => void
       open: (id: string) => void
       hideBubbles: Ref<boolean>
@@ -245,9 +245,12 @@ export type InjectableViewerState = Readonly<{
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
-    urlHashState: {
-      focusedThreadId: WritableComputedRef<Nullable<string>>
-    }
+  }
+  /**
+   * State stored in the anchor string of the URL
+   */
+  urlHashState: {
+    focusedThreadId: WritableComputedRef<Nullable<string>>
   }
 }>
 
@@ -270,10 +273,11 @@ type InitialStateWithRequest = InitialSetupState & {
 export type InitialStateWithRequestAndResponse = InitialSetupState &
   Pick<InjectableViewerState, 'resources'>
 
-export type InitialStateWithInterfaceCore = Merge<
-  InjectableViewerState,
-  { ui: Omit<InjectableViewerState['ui'], 'urlHashState'> }
->
+export type InitialStateWithUrlHashState = InitialStateWithRequestAndResponse &
+  Pick<InjectableViewerState, 'urlHashState'>
+
+export type InitialStateWithInterface = InitialStateWithUrlHashState &
+  Pick<InjectableViewerState, 'ui'>
 
 /**
  * Scoped state key for 'viewer' metadata, as we reuse it between routes
@@ -678,8 +682,8 @@ function setupResourceResponse(
 }
 
 function setupInterfaceState(
-  state: InitialStateWithRequestAndResponse
-): InitialStateWithInterfaceCore {
+  state: InitialStateWithUrlHashState
+): InitialStateWithInterface {
   const { viewer } = state
 
   // Is viewer busy - Using writable computed so that we can always intercept these calls
@@ -877,8 +881,9 @@ function setupInterfaceState(
   /**
    * THREADS
    */
-  const { commentThreads, openThread, closeAllThreads, open, queuedOpenThreadId } =
-    useViewerCommentBubbles({ state })
+  const { commentThreads, openThread, closeAllThreads, open } = useViewerCommentBubbles(
+    { state }
+  )
 
   const hideBubbles = ref(false)
   return {
@@ -891,8 +896,7 @@ function setupInterfaceState(
         openThread,
         closeAllThreads,
         open,
-        hideBubbles,
-        queuedOpenThreadId
+        hideBubbles
       },
       camera: {
         isPerspectiveProjection,
@@ -1334,14 +1338,11 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const initState = setupInitialState(params)
   const initialStateWithRequest = setupResourceRequest(initState)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
-  const stateWithInterface = setupInterfaceState(stateWithResources)
-  const state: InjectableViewerState = {
-    ...stateWithInterface,
-    ui: {
-      ...stateWithInterface.ui,
-      urlHashState: setupUrlHashState(stateWithInterface)
-    }
+  const stateWithUrlHashState: InitialStateWithUrlHashState = {
+    ...stateWithResources,
+    urlHashState: setupUrlHashState()
   }
+  const state: InjectableViewerState = setupInterfaceState(stateWithUrlHashState)
 
   // Inject it into descendant components
   provide(InjectableViewerStateKey, state)
@@ -1351,6 +1352,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   useViewerSelectionEventHandler(state)
   useViewerIsBusyEventHandler(state)
   useViewerSubscriptionEventTracker(state)
+  useViewerThreadTracking(state)
 
   return state
 }
