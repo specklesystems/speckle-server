@@ -86,6 +86,7 @@
             :icon-left="LinkIcon"
             text
             hide-text
+            @click="onCopyLink"
           ></FormButton>
           <FormButton
             size="sm"
@@ -143,8 +144,8 @@ import {
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { Nullable, Roles } from '@speckle/shared'
-import { onKeyDown, useDraggable } from '@vueuse/core'
+import { ensureError, Nullable, Roles } from '@speckle/shared'
+import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
 import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
@@ -160,6 +161,7 @@ import {
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
+import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -269,6 +271,8 @@ const changeExpanded = (newVal: boolean) => {
   })
   emit('update:expanded', newVal)
 }
+
+const { copy } = useClipboard()
 const { activeUser } = useActiveUser()
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
@@ -330,6 +334,28 @@ const onCommentMounted = () => {
 
 const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
+}
+
+const onCopyLink = async () => {
+  if (process.server) return
+  const url = getLinkToThread(projectId.value, props.modelValue)
+  if (!url) return
+
+  try {
+    await copy(new URL(url, window.location.origin).toString())
+  } catch (e) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Thread link copy failed',
+      description: ensureError(e).message
+    })
+    throw e
+  }
+
+  triggerNotification({
+    type: ToastNotificationType.Info,
+    title: 'Thread link copied'
+  })
 }
 
 onKeyDown('Escape', () => {
