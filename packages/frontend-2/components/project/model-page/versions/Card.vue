@@ -23,10 +23,11 @@
           <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
         </div>
         <div
-          class="absolute top-0 right-0 p-2 flex items-center space-x-1 transition opacity-0 group-hover:opacity-100"
+          class="absolute top-0 right-0 p-2 flex items-center transition opacity-0 group-hover:opacity-100 h-8 bg-foundation-focus shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
         >
-          <ChatBubbleLeftEllipsisIcon class="h-4 w-4" />
+          <!-- <ChatBubbleLeftEllipsisIcon class="h-4 w-4" /> -->
           <span>{{ version.commentThreadCount.totalCount }}</span>
+          &nbsp;comments
         </div>
       </div>
       <div class="flex flex-col px-2 pt-1 pb-3">
