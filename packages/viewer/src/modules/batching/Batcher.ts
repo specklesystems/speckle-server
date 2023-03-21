@@ -247,7 +247,6 @@ export default class Batcher {
 
     geometryBatch.setBatchMaterial(material)
     geometryBatch.buildBatch()
-    geometryBatch.updateBatchObjects()
 
     return geometryBatch
   }

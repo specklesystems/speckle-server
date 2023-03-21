@@ -13,7 +13,7 @@ import { ShapecastIntersection, ExtendedTriangle } from 'three-mesh-bvh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 
-export class SpeckleMeshBatchBVH {
+export class SpeckleBatchBVH {
   private batchBounds: Box3 = null
   private originTransform: Matrix4 = null
   private originTransformInv: Matrix4 = null
@@ -45,7 +45,7 @@ export class SpeckleMeshBatchBVH {
         localPositions[k + 2] = vecBuff.z
       }
       const bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
-      bvh.renderView = rvs[k]
+      // bvh.renderView = rvs[k]
       this.bvhs.push(bvh)
     }
   }

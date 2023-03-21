@@ -174,9 +174,7 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
         )
     }
     // console.log(materialProperties)
-    if ((object as SpeckleMesh).batch) {
-      ;(object as SpeckleMesh).batch.updateBatchTransforms(this)
-    }
+    ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }

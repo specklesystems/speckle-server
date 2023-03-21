@@ -12,6 +12,7 @@ import {
 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
+import SpeckleMesh from '../objects/SpeckleMesh'
 
 class SpeckleStandardMaterial extends MeshStandardMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
@@ -144,6 +145,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
     this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
+    ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }

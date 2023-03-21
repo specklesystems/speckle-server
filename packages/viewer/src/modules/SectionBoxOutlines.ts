@@ -2,7 +2,6 @@ import {
   Color,
   DynamicDrawUsage,
   InterleavedBufferAttribute,
-  Line3,
   Plane,
   Vector2,
   Vector3
@@ -69,164 +68,156 @@ export class SectionBoxOutlines {
   }
 
   public updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
-    const tempVector = new Vector3()
-    const tempVector1 = new Vector3()
-    const tempVector2 = new Vector3()
-    const tempVector3 = new Vector3()
-    const tempVector4 = new Vector3()
-    const tempLine = new Line3()
-    const planeId = this.getPlaneId(_plane)
-    const clipOutline = this.planeOutlines[planeId].renderable
-
-    let index = 0
-    let posAttr = (
-      clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
-    ).data
-
-    /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
-    const scratchBuffer = new Array<number>()
-
-    for (let b = 0; b < batches.length; b++) {
-      const plane = new Plane().copy(_plane)
-
-      batches[b].boundsTree.shapecast({
-        intersectsBounds: (box) => {
-          const localPlane = plane
-          return localPlane.intersectsBox(box)
-        },
-
-        intersectsTriangle: (tri, i) => {
-          i
-          // check each triangle edge to see if it intersects with the plane. If so then
-          // add it to the list of segments.
-          // NEEDS ATTENTION
-          // const material = batches[b].getMaterialAtIndex(i)
-          // if (
-          //   material instanceof SpeckleGhostMaterial ||
-          //   material.visible === false ||
-          //   material === null
-          // )
-          //   return
-
-          const localPlane = plane
-          let count = 0
-          tempLine.start.copy(tri.a)
-          tempLine.end.copy(tri.b)
-          if (localPlane.intersectLine(tempLine, tempVector)) {
-            tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
-            )
-            scratchBuffer[index * 3] = tempVector.x
-            scratchBuffer[index * 3 + 1] = tempVector.y
-            scratchBuffer[index * 3 + 2] = tempVector.z
-            index++
-            count++
-          }
-
-          tempLine.start.copy(tri.b)
-          tempLine.end.copy(tri.c)
-          if (localPlane.intersectLine(tempLine, tempVector)) {
-            tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
-            )
-            scratchBuffer[index * 3] = tempVector.x
-            scratchBuffer[index * 3 + 1] = tempVector.y
-            scratchBuffer[index * 3 + 2] = tempVector.z
-            count++
-            index++
-          }
-
-          tempLine.start.copy(tri.c)
-          tempLine.end.copy(tri.a)
-          if (localPlane.intersectLine(tempLine, tempVector)) {
-            tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
-            )
-            scratchBuffer[index * 3] = tempVector.x
-            scratchBuffer[index * 3 + 1] = tempVector.y
-            scratchBuffer[index * 3 + 2] = tempVector.z
-            count++
-            index++
-          }
-
-          // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
-          if (count === 3) {
-            tempVector1.set(
-              scratchBuffer[(index - 3) * 3],
-              scratchBuffer[(index - 3) * 3 + 1],
-              scratchBuffer[(index - 3) * 3 + 2]
-            )
-            tempVector2.set(
-              scratchBuffer[(index - 2) * 3],
-              scratchBuffer[(index - 2) * 3 + 1],
-              scratchBuffer[(index - 2) * 3 + 2]
-            )
-            tempVector3.set(
-              scratchBuffer[(index - 1) * 3],
-              scratchBuffer[(index - 1) * 3 + 1],
-              scratchBuffer[(index - 1) * 3 + 2]
-            )
-            // If the last point is a duplicate intersection
-            if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
-              count--
-              index--
-            } else if (tempVector1.equals(tempVector2)) {
-              // If the last point is not a duplicate intersection
-              // Set the penultimate point as a distinct point and delete the last point
-              tempVector3.set(tempVector.x, tempVector.y, tempVector.z)
-              tempVector3.add(
-                tempVector4
-                  .copy(plane.normal)
-                  .multiplyScalar(SectionBoxOutlines.Z_OFFSET)
-              )
-              scratchBuffer[(index - 2) * 3] = tempVector3.x
-              scratchBuffer[(index - 2) * 3 + 1] = tempVector3.y
-              scratchBuffer[(index - 2) * 3 + 2] = tempVector3.z
-              count--
-              index--
-            }
-          }
-
-          // If we only intersected with one or three sides then just remove it. This could be handled
-          // more gracefully.
-          if (count !== 2) {
-            index -= count
-          }
-        }
-      })
-    }
-    if (scratchBuffer.length > posAttr.array.length) {
-      this.resizeGeometryBuffer(this.planeOutlines[planeId], scratchBuffer.length)
-      console.warn(
-        `Resized outline buffer from ${posAttr.array.length} to ${
-          scratchBuffer.length
-        }. ${scratchBuffer.length / 6} instance count`
-      )
-    }
-    posAttr = (
-      clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
-    ).data
-    const posAttrLow = (
-      clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
-    ).data
-    Geometry.DoubleToHighLowBuffer(
-      scratchBuffer,
-      posAttrLow.array as Float32Array,
-      posAttr.array as Float32Array
-    )
-    // posAttr.set(scratchBuffer, 0)
-    posAttr.needsUpdate = true
-    posAttr.updateRange = { offset: 0, count: index * 3 }
-    posAttrLow.needsUpdate = true
-    posAttrLow.updateRange = { offset: 0, count: index * 3 }
-    clipOutline.visible = true
-    clipOutline.geometry.instanceCount = index / 2
-    clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
-    clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
-    clipOutline.geometry.attributes['instanceStartLow'].needsUpdate = true
-    clipOutline.geometry.attributes['instanceEndLow'].needsUpdate = true
-    clipOutline.geometry.computeBoundingBox()
-    clipOutline.geometry.computeBoundingSphere()
+    batches
+    _plane
+    // const tempVector = new Vector3()
+    // const tempVector1 = new Vector3()
+    // const tempVector2 = new Vector3()
+    // const tempVector3 = new Vector3()
+    // const tempVector4 = new Vector3()
+    // const tempLine = new Line3()
+    // const planeId = this.getPlaneId(_plane)
+    // const clipOutline = this.planeOutlines[planeId].renderable
+    // let index = 0
+    // let posAttr = (
+    //   clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    // ).data
+    // /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
+    // const scratchBuffer = new Array<number>()
+    // for (let b = 0; b < batches.length; b++) {
+    //   const plane = new Plane().copy(_plane)
+    //   batches[b].boundsTree.shapecast({
+    //     intersectsBounds: (box) => {
+    //       const localPlane = plane
+    //       return localPlane.intersectsBox(box)
+    //     },
+    //     intersectsTriangle: (tri, i) => {
+    //       i
+    //       // check each triangle edge to see if it intersects with the plane. If so then
+    //       // add it to the list of segments.
+    //       // NEEDS ATTENTION
+    //       // const material = batches[b].getMaterialAtIndex(i)
+    //       // if (
+    //       //   material instanceof SpeckleGhostMaterial ||
+    //       //   material.visible === false ||
+    //       //   material === null
+    //       // )
+    //       //   return
+    //       const localPlane = plane
+    //       let count = 0
+    //       tempLine.start.copy(tri.a)
+    //       tempLine.end.copy(tri.b)
+    //       if (localPlane.intersectLine(tempLine, tempVector)) {
+    //         tempVector.add(
+    //           tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+    //         )
+    //         scratchBuffer[index * 3] = tempVector.x
+    //         scratchBuffer[index * 3 + 1] = tempVector.y
+    //         scratchBuffer[index * 3 + 2] = tempVector.z
+    //         index++
+    //         count++
+    //       }
+    //       tempLine.start.copy(tri.b)
+    //       tempLine.end.copy(tri.c)
+    //       if (localPlane.intersectLine(tempLine, tempVector)) {
+    //         tempVector.add(
+    //           tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+    //         )
+    //         scratchBuffer[index * 3] = tempVector.x
+    //         scratchBuffer[index * 3 + 1] = tempVector.y
+    //         scratchBuffer[index * 3 + 2] = tempVector.z
+    //         count++
+    //         index++
+    //       }
+    //       tempLine.start.copy(tri.c)
+    //       tempLine.end.copy(tri.a)
+    //       if (localPlane.intersectLine(tempLine, tempVector)) {
+    //         tempVector.add(
+    //           tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+    //         )
+    //         scratchBuffer[index * 3] = tempVector.x
+    //         scratchBuffer[index * 3 + 1] = tempVector.y
+    //         scratchBuffer[index * 3 + 2] = tempVector.z
+    //         count++
+    //         index++
+    //       }
+    //       // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
+    //       if (count === 3) {
+    //         tempVector1.set(
+    //           scratchBuffer[(index - 3) * 3],
+    //           scratchBuffer[(index - 3) * 3 + 1],
+    //           scratchBuffer[(index - 3) * 3 + 2]
+    //         )
+    //         tempVector2.set(
+    //           scratchBuffer[(index - 2) * 3],
+    //           scratchBuffer[(index - 2) * 3 + 1],
+    //           scratchBuffer[(index - 2) * 3 + 2]
+    //         )
+    //         tempVector3.set(
+    //           scratchBuffer[(index - 1) * 3],
+    //           scratchBuffer[(index - 1) * 3 + 1],
+    //           scratchBuffer[(index - 1) * 3 + 2]
+    //         )
+    //         // If the last point is a duplicate intersection
+    //         if (tempVector3.equals(tempVector1) || tempVector3.equals(tempVector2)) {
+    //           count--
+    //           index--
+    //         } else if (tempVector1.equals(tempVector2)) {
+    //           // If the last point is not a duplicate intersection
+    //           // Set the penultimate point as a distinct point and delete the last point
+    //           tempVector3.set(tempVector.x, tempVector.y, tempVector.z)
+    //           tempVector3.add(
+    //             tempVector4
+    //               .copy(plane.normal)
+    //               .multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+    //           )
+    //           scratchBuffer[(index - 2) * 3] = tempVector3.x
+    //           scratchBuffer[(index - 2) * 3 + 1] = tempVector3.y
+    //           scratchBuffer[(index - 2) * 3 + 2] = tempVector3.z
+    //           count--
+    //           index--
+    //         }
+    //       }
+    //       // If we only intersected with one or three sides then just remove it. This could be handled
+    //       // more gracefully.
+    //       if (count !== 2) {
+    //         index -= count
+    //       }
+    //     }
+    //   })
+    // }
+    // if (scratchBuffer.length > posAttr.array.length) {
+    //   this.resizeGeometryBuffer(this.planeOutlines[planeId], scratchBuffer.length)
+    //   console.warn(
+    //     `Resized outline buffer from ${posAttr.array.length} to ${
+    //       scratchBuffer.length
+    //     }. ${scratchBuffer.length / 6} instance count`
+    //   )
+    // }
+    // posAttr = (
+    //   clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
+    // ).data
+    // const posAttrLow = (
+    //   clipOutline.geometry.attributes['instanceStartLow'] as InterleavedBufferAttribute
+    // ).data
+    // Geometry.DoubleToHighLowBuffer(
+    //   scratchBuffer,
+    //   posAttrLow.array as Float32Array,
+    //   posAttr.array as Float32Array
+    // )
+    // // posAttr.set(scratchBuffer, 0)
+    // posAttr.needsUpdate = true
+    // posAttr.updateRange = { offset: 0, count: index * 3 }
+    // posAttrLow.needsUpdate = true
+    // posAttrLow.updateRange = { offset: 0, count: index * 3 }
+    // clipOutline.visible = true
+    // clipOutline.geometry.instanceCount = index / 2
+    // clipOutline.geometry.attributes['instanceStart'].needsUpdate = true
+    // clipOutline.geometry.attributes['instanceEnd'].needsUpdate = true
+    // clipOutline.geometry.attributes['instanceStartLow'].needsUpdate = true
+    // clipOutline.geometry.attributes['instanceEndLow'].needsUpdate = true
+    // clipOutline.geometry.computeBoundingBox()
+    // clipOutline.geometry.computeBoundingSphere()
   }
 
   private createPlaneOutline(planeId: string): PlaneOutline {

@@ -1,20 +1,23 @@
 import {
   BackSide,
   BufferGeometry,
+  DataTexture,
   DoubleSide,
+  FloatType,
   Material,
   Matrix4,
   Mesh,
   Ray,
   Raycaster,
+  RGBAFormat,
   Sphere,
   Triangle,
   Vector2,
   Vector3
 } from 'three'
-import MeshBatch, { BatchObject } from '../batching/MeshBatch'
-import { SpeckleMeshBatchBVH } from './SpeckleMeshBatchBVH'
-import { SpeckleMeshBVH } from './SpeckleMeshBVH'
+import { TransformStorage } from '../batching/Batcher'
+import { BatchObject } from '../batching/BatchObject'
+import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -43,43 +46,96 @@ const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export default class SpeckleMesh extends Mesh {
-  private boundsTree: SpeckleMeshBatchBVH = null
+  private boundsTree: SpeckleBatchBVH = null
   public boundsTreeSizeInBytes = 0
   private batchMaterial: Material = null
-  // NEEDS ATTENTION
-  public batch: MeshBatch = null
+
+  private _batchObjects: BatchObject[]
+  private transformsBuffer: Float32Array = null
+  private transformStorage: TransformStorage
+  public transformsDirty = true
+
+  public transformsTextureUniform: DataTexture = null
+  public transformsArrayUniforms: Matrix4[] = null
 
   public get BVH() {
     return this.boundsTree
   }
 
-  constructor(
-    geometry: BufferGeometry,
-    material: Material,
-    bvh: SpeckleMeshBatchBVH,
-    batch: MeshBatch
-  ) {
-    super(geometry, material)
-    this.batchMaterial = material
-    this.boundsTree = bvh
-    // this.boundsTreeSizeInBytes =
-    //   estimateMemoryInBytes(this.boundsTree) -
-    //   (this.geometry.attributes['position'].array as unknown as ArrayBuffer).byteLength
-    this.batch = batch
+  public get batchObjects(): BatchObject[] {
+    return this._batchObjects
   }
 
-  public updateBVHTransforms(batchObjects: BatchObject[]) {
-    const matBuff = new Matrix4()
-    this.boundsTree.bvhs.forEach((bvh: SpeckleMeshBVH) => {
-      const obj = batchObjects.find((batchObj: BatchObject) => {
-        return batchObj.rv.renderData === bvh.renderView.renderData
-      })
-      matBuff.copy(obj.transform)
-      bvh.localTransformInv.copy(matBuff)
-      matBuff.invert()
-      bvh.localTransform.copy(matBuff)
-    })
+  constructor(geometry: BufferGeometry, material: Material) {
+    super(geometry, material)
+    this.batchMaterial = material
   }
+
+  public setBatchObjects(
+    batchObjects: BatchObject[],
+    transformStorage: TransformStorage
+  ) {
+    this._batchObjects = batchObjects
+    this.transformStorage = transformStorage
+
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      this.transformsBuffer = new Float32Array(this._batchObjects.length * 3 * 4)
+      this.transformsTextureUniform = new DataTexture(
+        this.transformsBuffer,
+        this.transformsBuffer.length / 4,
+        1,
+        RGBAFormat,
+        FloatType
+      )
+    } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY) {
+      this.transformsArrayUniforms = this._batchObjects.map((value) => value.transform)
+    }
+    this.updateTransformsUniform()
+  }
+
+  public updateMaterialTransformsUniform(material: Material) {
+    material.defines['TRANSFORM_STORAGE'] = this.transformStorage
+    if (
+      !material.defines['OBJ_COUNT'] ||
+      material.defines['OBJ_COUNT'] !== this._batchObjects.length
+    ) {
+      material.defines['OBJ_COUNT'] = this._batchObjects.length
+    }
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE)
+      material.userData.tTransforms.value = this.transformsTextureUniform
+    else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY)
+      material.userData.uTransforms.value = this.transformsArrayUniforms
+
+    material.needsUpdate = true
+  }
+
+  public updateTransformsUniform() {
+    if (!this.transformsDirty) return
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      this._batchObjects.forEach((batchObject: BatchObject) => {
+        const index = batchObject.batchIndex * 12
+        this.transformsBuffer[index] = batchObject.transform.elements[0]
+        this.transformsBuffer[index + 1] = batchObject.transform.elements[4]
+        this.transformsBuffer[index + 2] = batchObject.transform.elements[8]
+        this.transformsBuffer[index + 3] = batchObject.transform.elements[12]
+
+        this.transformsBuffer[index + 4] = batchObject.transform.elements[1]
+        this.transformsBuffer[index + 5] = batchObject.transform.elements[5]
+        this.transformsBuffer[index + 6] = batchObject.transform.elements[9]
+        this.transformsBuffer[index + 7] = batchObject.transform.elements[13]
+
+        this.transformsBuffer[index + 8] = batchObject.transform.elements[3]
+        this.transformsBuffer[index + 9] = batchObject.transform.elements[6]
+        this.transformsBuffer[index + 10] = batchObject.transform.elements[10]
+        this.transformsBuffer[index + 11] = batchObject.transform.elements[14]
+      })
+      this.transformsTextureUniform.needsUpdate = true
+    } else {
+      this.transformsArrayUniforms = this._batchObjects.map((value) => value.transform)
+    }
+    this.transformsDirty = false
+  }
+
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
   private convertRaycastIntersect(hit, object, raycaster) {

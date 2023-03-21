@@ -97,7 +97,8 @@ class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
 
     this.userData.uViewer_low.value.copy(SpeckleBasicMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleBasicMaterial.vecBuff2)
-    ;(object as SpeckleMesh).batch.updateBatchTransforms(this)
+    ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
+
     this.needsUpdate = true
   }
 }

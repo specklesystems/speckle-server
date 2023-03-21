@@ -28,7 +28,6 @@ export interface Batch {
   getRenderView(index: number): NodeRenderView
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
-  updateBatchObjects()
   purge()
 }
 

@@ -1,15 +1,10 @@
 import {
-  Box3,
   BufferAttribute,
   BufferGeometry,
-  DataTexture,
   DynamicDrawUsage,
   Float32BufferAttribute,
-  FloatType,
   Material,
-  Matrix4,
   Object3D,
-  RGBAFormat,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
   WebGLRenderer
@@ -26,34 +21,24 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { WorldTree } from '../tree/WorldTree'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { TransformStorage } from './Batcher'
-import { SpeckleMeshBatchBVH } from '../objects/SpeckleMeshBatchBVH'
-
-export interface BatchObject {
-  rv: NodeRenderView
-  transform: Matrix4
-  batchIndex: number
-}
+import { BatchObject } from './BatchObject'
 
 export default class MeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
   private transformStorage: TransformStorage
-  public batchObjects: BatchObject[]
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
-  public boundsTree: SpeckleMeshBatchBVH
-  public bounds: Box3 = new Box3()
+
   private gradientIndexBuffer: BufferAttribute
+
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
-  private transformsTextureBuffer: Float32Array = null
-  private transformsTexture: DataTexture = null
 
   public constructor(
     id: string,
@@ -64,7 +49,6 @@ export default class MeshBatch implements Batch {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
-    this.batchObjects = new Array<BatchObject>()
     this.transformStorage = transformStorage
   }
 
@@ -90,67 +74,6 @@ export default class MeshBatch implements Batch {
 
   public onRender(renderer: WebGLRenderer) {
     renderer
-  }
-
-  // NEEDS ATTENTION
-  public updateBatchTransforms(material: Material) {
-    material.defines['TRANSFORM_STORAGE'] = this.transformStorage
-    if (
-      !material.defines['OBJ_COUNT'] ||
-      material.defines['OBJ_COUNT'] !== this.batchObjects.length
-    ) {
-      material.defines['OBJ_COUNT'] = this.batchObjects.length
-    }
-    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
-      this.batchObjects.forEach((batchObject: BatchObject) => {
-        const index = batchObject.batchIndex * 12
-        this.transformsTextureBuffer[index] = batchObject.transform.elements[0]
-        this.transformsTextureBuffer[index + 1] = batchObject.transform.elements[4]
-        this.transformsTextureBuffer[index + 2] = batchObject.transform.elements[8]
-        this.transformsTextureBuffer[index + 3] = batchObject.transform.elements[12]
-
-        this.transformsTextureBuffer[index + 4] = batchObject.transform.elements[1]
-        this.transformsTextureBuffer[index + 5] = batchObject.transform.elements[5]
-        this.transformsTextureBuffer[index + 6] = batchObject.transform.elements[9]
-        this.transformsTextureBuffer[index + 7] = batchObject.transform.elements[13]
-
-        this.transformsTextureBuffer[index + 8] = batchObject.transform.elements[3]
-        this.transformsTextureBuffer[index + 9] = batchObject.transform.elements[6]
-        this.transformsTextureBuffer[index + 10] = batchObject.transform.elements[10]
-        this.transformsTextureBuffer[index + 11] = batchObject.transform.elements[14]
-      })
-      this.transformsTexture.needsUpdate = true
-      material.userData.tTransforms.value = this.transformsTexture
-    } else {
-      material.userData.uTransforms.value = this.batchObjects.map(
-        (value) => value.transform
-      )
-    }
-    material.needsUpdate = true
-    this.mesh.updateBVHTransforms(this.batchObjects)
-  }
-
-  public updateBatchObjects() {
-    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
-      if (this.transformsTextureBuffer === null) {
-        this.transformsTextureBuffer = new Float32Array(
-          this.batchObjects.length * 3 * 4
-        )
-        this.transformsTexture = new DataTexture(
-          this.transformsTextureBuffer,
-          this.transformsTextureBuffer.length / 4,
-          1,
-          RGBAFormat,
-          FloatType
-        )
-      }
-    }
-    const targetMaterials = Array.isArray(this.mesh.material)
-      ? this.mesh.material
-      : [this.mesh.material]
-    for (let k = 0; k < targetMaterials.length; k++) {
-      this.updateBatchTransforms(targetMaterials[k])
-    }
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
@@ -510,6 +433,7 @@ export default class MeshBatch implements Batch {
 
     let offset = 0
     let arrayOffset = 0
+    const batchObjects = []
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       indices.set(
@@ -530,11 +454,9 @@ export default class MeshBatch implements Batch {
         offset / 3,
         offset / 3 + geometry.attributes.POSITION.length / 3
       )
-      this.batchObjects.push({
-        rv: this.renderViews[k],
-        transform: new Matrix4().identity(),
-        batchIndex: k
-      })
+
+      const batchObject = new BatchObject(this.renderViews[k], k)
+      batchObjects.push(batchObject)
 
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
@@ -551,18 +473,15 @@ export default class MeshBatch implements Batch {
       hasVertexColors ? color : null
     )
 
-    this.boundsTree = new SpeckleMeshBatchBVH(
-      this.renderViews,
-      WorldTree.getRenderTree(this.subtreeId).treeBounds
-    )
+    // this.boundsTree = new SpeckleBatchBVH(
+    //   this.renderViews,
+    //   WorldTree.getRenderTree(this.subtreeId).treeBounds
+    // )
 
-    this.boundsTree.getBoundingBox(this.bounds)
-    this.mesh = new SpeckleMesh(
-      this.geometry,
-      this.batchMaterial,
-      this.boundsTree,
-      this
-    )
+    // this.boundsTree.getBoundingBox(this.bounds)
+
+    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
+    this.mesh.setBatchObjects(batchObjects, this.transformStorage)
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
   }

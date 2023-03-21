@@ -55,6 +55,7 @@ import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
+import SpeckleMesh from './objects/SpeckleMesh'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -344,9 +345,9 @@ export default class SpeckleRenderer {
 
     const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: Mesh = meshBatches[k].renderObject as Mesh
+      const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
       if (meshBatch.isMesh) {
-        const batch: MeshBatch = meshBatches[k] as MeshBatch
+        meshBatch.updateTransformsUniform()
         const rteModelView = new Matrix4()
         rteModelView.copy(rteView)
         rteModelView.multiply(meshBatch.matrixWorld)
@@ -357,7 +358,7 @@ export default class SpeckleRenderer {
           depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
           depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
           // NEEDS ATTENTION !!!
-          batch.updateBatchTransforms(depthMaterial)
+          meshBatch.updateMaterialTransformsUniform(depthMaterial)
           depthMaterial.needsUpdate = true
         }
 
@@ -584,13 +585,13 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.needsUpdate = true
     this.updateShadowCatcher()
     // NEEDS ATTENTION
-    const batches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    ) as MeshBatch[]
-    for (let k = 0; k < batches.length; k++) {
-      batches[k].updateBatchObjects()
-    }
+    // const batches: MeshBatch[] = this.batcher.getBatches(
+    //   undefined,
+    //   GeometryType.MESH
+    // ) as MeshBatch[]
+    // for (let k = 0; k < batches.length; k++) {
+    //   batches[k].updateBatchObjects()
+    // }
   }
 
   public updateClippingPlanes(planes: Plane[]) {
@@ -1290,15 +1291,15 @@ export default class SpeckleRenderer {
       GeometryType.MESH
     ) as MeshBatch[]
     for (let k = 0; k < batches.length; k++) {
-      const objects = batches[k].batchObjects
+      const objects = batches[k].mesh.batchObjects
       for (let i = 0; i < objects.length; i++) {
-        const center = objects[i].rv.aabb.getCenter(new Vector3())
+        const center = objects[i].renderView.aabb.getCenter(new Vector3())
         const dir = center.sub(Viewer.World.worldOrigin)
         dir.normalize().multiplyScalar(time * 100)
         const mat = new Matrix4().makeTranslation(dir.x, dir.y, dir.z)
         objects[i].transform.copy(mat)
       }
-      batches[k].updateBatchObjects()
+      batches[k].mesh.transformsDirty = true
     }
     this.renderer.shadowMap.needsUpdate = true
     this.needsRender = true

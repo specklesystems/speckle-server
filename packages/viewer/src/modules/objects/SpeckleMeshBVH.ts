@@ -21,7 +21,6 @@ import {
   ShapecastIntersection,
   SplitStrategy
 } from 'three-mesh-bvh'
-import { NodeRenderView } from '../tree/NodeRenderView'
 
 const SKIP_GENERATION = Symbol('skip tree generation')
 
@@ -72,7 +71,6 @@ to get the correct values for Vectors, Rays, Boxes, etc
 export class SpeckleMeshBVH extends MeshBVH {
   public localTransform: Matrix4
   public localTransformInv: Matrix4
-  public renderView: NodeRenderView
 
   public static buildBVH(
     indices: number[],
@@ -99,7 +97,7 @@ export class SpeckleMeshBVH extends MeshBVH {
     return bvh
   }
 
-  constructor(geometry, options = {}) {
+  private constructor(geometry, options = {}) {
     super(geometry, options)
   }
 
@@ -111,7 +109,6 @@ export class SpeckleMeshBVH extends MeshBVH {
     const res = super.raycast(this.transformInput<Ray>(ray), materialOrSide)
     res.forEach((value) => {
       value.point = this.transformOutput(value.point)
-      value['rv'] = this.renderView
     })
     return res
   }
@@ -122,7 +119,6 @@ export class SpeckleMeshBVH extends MeshBVH {
   ): Intersection<Object3D<Event>> {
     const res = super.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
     res.point = this.transformOutput(res.point)
-    res['rv'] = this.renderView
     return res
   }
 

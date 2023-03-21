@@ -1,5 +1,10 @@
-import { Object3D, Raycaster } from 'three'
+import { Intersection, Object3D, Raycaster } from 'three'
 import { ObjectLayers } from '../SpeckleRenderer'
+import { NodeRenderView } from '../tree/NodeRenderView'
+
+export interface ExtendedIntersection extends Intersection {
+  renderView?: NodeRenderView
+}
 
 export class SpeckleRaycaster extends Raycaster {
   public onObjectIntersectionTest: (object: Object3D) => void = null
