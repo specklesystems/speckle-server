@@ -25,7 +25,9 @@
             </span>
           </div>
           <div class="text-foreground-2 truncate text-xs">
-            <span class="text-xs font-semibold">{{ timeFromLatest }}</span>
+            <span v-tippy="createdAt" class="text-xs font-semibold">
+              {{ isLatest ? 'latest version' : timeAgoCreatedAt }}
+            </span>
           </div>
         </div>
         <div
@@ -89,6 +91,7 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   XMarkIcon,
@@ -101,6 +104,8 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
+
+dayjs.extend(localizedFormat)
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -154,11 +159,14 @@ const latestVersion = computed(() => {
     .sort((a, b) => (dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1))[0]
 })
 
-const timeFromLatest = computed(() => {
-  return dayjs(latestVersion.value.createdAt).from(
-    dayjs(loadedVersion.value?.createdAt),
-    true
-  )
+const isLatest = computed(() => loadedVersion.value?.id === latestVersion.value.id)
+
+const timeAgoCreatedAt = computed(() =>
+  dayjs(loadedVersion.value?.createdAt).from(dayjs())
+)
+
+const createdAt = computed(() => {
+  return dayjs(loadedVersion.value?.createdAt).format('LLL')
 })
 
 const latestVersionId = computed(() => latestVersion.value.id)

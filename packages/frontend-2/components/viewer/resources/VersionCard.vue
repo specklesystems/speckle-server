@@ -19,7 +19,7 @@
     ></div>
     <div
       v-if="lastLoaded && !last"
-      class="bg-primary absolute -bottom-6 z-10 ml-[4px] flex h-4 w-4 items-center justify-center rounded-full"
+      class="bg-primary absolute -bottom-6 z-10 ml-[4px] flex h-4 w-4 items-center justify-center rounded-full text-foreground-on-primary"
     >
       <ChevronDownIcon class="h-3 w-3" />
     </div>
@@ -32,7 +32,7 @@
         v-tippy="`${createdAt}`"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold"
       >
-        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }} {{ last }}</span>
+        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
       </div>
     </div>
     <!-- Main stuff -->
