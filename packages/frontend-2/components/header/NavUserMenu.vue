@@ -27,7 +27,7 @@
               ]"
             >
               My Profile
-              <UserAvatar :user="activeUser" size="base" />
+              <UserAvatar :user="activeUser" size="sm" class="mr-1" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
@@ -36,10 +36,22 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
-              @click="onClick"
+              @click="onThemeClick"
             >
               {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
               <Icon class="w-5 h-5 mr-2" />
+            </NuxtLink>
+          </MenuItem>
+          <MenuItem v-if="activeUser" v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+              ]"
+              @click="toggleInviteDialog"
+            >
+              Invite to Speckle
+              <EnvelopeIcon class="w-5 h-5 mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
@@ -69,12 +81,10 @@
           <MenuItem v-if="version">
             <div class="px-2 py-3 text-xs text-foreground-2">Version {{ version }}</div>
           </MenuItem>
-          <!-- <MenuItem>
-            <AuthVerificationReminderMenuNotice />
-          </MenuItem> -->
         </MenuItems>
       </Transition>
     </Menu>
+    <ServerInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -84,7 +94,8 @@ import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  EnvelopeIcon
 } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -95,18 +106,23 @@ import { serverVersionInfoQuery } from '~~/lib/core/graphql/queries'
 
 const { logout } = useAuthManager()
 const { activeUser } = useActiveUser()
-
 const { isDarkTheme, setTheme } = useTheme()
-const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
+const { result } = useQuery(serverVersionInfoQuery)
 
-const onClick = () => {
+const showInviteDialog = ref(false)
+
+const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
+const version = computed(() => result.value?.serverInfo.version)
+
+const toggleInviteDialog = () => {
+  showInviteDialog.value = true
+}
+
+const onThemeClick = () => {
   if (isDarkTheme.value) {
     setTheme(AppTheme.Light)
   } else {
     setTheme(AppTheme.Dark)
   }
 }
-
-const { result } = useQuery(serverVersionInfoQuery)
-const version = computed(() => result.value?.serverInfo.version)
 </script>
