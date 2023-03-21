@@ -158,8 +158,8 @@ function getPaginatedProjectModelsBaseQuery<T>(
     .where(Branches.col.streamId, projectId)
     .leftJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     .leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-
     .groupBy(Branches.col.id)
+    .havingRaw(knex.raw(`?? != 'globals'`, [Branches.col.name]))
 
   if (filter?.search) {
     q.whereILike(Branches.col.name, `%${filter.search}%`)

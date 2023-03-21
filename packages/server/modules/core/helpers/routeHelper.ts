@@ -12,7 +12,7 @@ export function getStreamRoute(streamId: string): string {
 }
 
 export function getRegistrationRoute(): string {
-  return useNewFrontend() ? `/auth/register` : '/authn/register'
+  return useNewFrontend() ? `/authn/register` : '/authn/register'
 }
 
 export function getCommentRoute(
