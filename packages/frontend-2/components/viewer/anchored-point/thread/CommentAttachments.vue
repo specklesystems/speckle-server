@@ -28,7 +28,7 @@
               }}
             </FormButton>
           </div>
-          <div>
+          <div class="flex justify-center text-foreground">
             <template v-if="dialogAttachmentError">
               <span class="inline-flex space-x-2 items-center">
                 <ExclamationTriangleIcon class="w-4 h-4" />
