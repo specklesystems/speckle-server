@@ -258,9 +258,11 @@ const isObject = (x: unknown) =>
 
 const unfold = ref(false)
 
+// NOTE: not happy with how unfolding and collapsing panned out :(
+// it works, but requiring two different props... phew.
 watch(
   () => props.expandLevel,
-  (newVal, oldVal) => {
+  (newVal) => {
     if (isSingleCollection.value || isMultipleCollection.value) {
       unfold.value = newVal >= props.depth
     }

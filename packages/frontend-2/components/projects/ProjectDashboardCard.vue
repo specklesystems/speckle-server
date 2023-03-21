@@ -1,7 +1,7 @@
 <template>
   <NuxtLink :to="projectRoute(project.id)">
     <div
-      class="group flex flex-col md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition"
+      class="relative group flex flex-col md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition overflow-hidden"
     >
       <div
         class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
@@ -17,7 +17,7 @@
         </div>
         <div class="text-xs text-foreground-2 flex items-center">
           <CubeIcon class="w-4 h-4 mr-1" />
-          {{ models.length }} models
+          {{ project.models.totalCount }} models
         </div>
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
@@ -37,6 +37,12 @@
           :show-actions="false"
           height="h-52"
         />
+        <!-- <div
+          v-if="maxModels.length === 3"
+          class="flex justify-center items-center text-lg text-blue-500/40 col-span-1"
+        >
+          and {{ project.models.totalCount - 3 }} more models
+        </div> -->
         <div v-if="models.length === 0" class="h-36 flex items-center col-span-4 py-4">
           <div
             class="w-full h-full border-dashed border-2 border-outline-2 rounded-md p-10 flex items-center justify-center"
@@ -48,6 +54,14 @@
             </span>
           </div>
         </div>
+      </div>
+      <div
+        v-if="project.models.totalCount > 4"
+        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-semibold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-2"
+      >
+        +{{ project.models.totalCount - 4 }} model{{
+          project.models.totalCount - 4 !== 1 ? 's' : ''
+        }}
       </div>
     </div>
   </NuxtLink>
@@ -200,5 +214,10 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const models = computed(() => props.project.models?.items || [])
+const maxModels = computed(() => {
+  if (props.project.models.totalCount >= 5) return models.value.slice(0, 3)
+  else return models.value
+})
+
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 </script>
