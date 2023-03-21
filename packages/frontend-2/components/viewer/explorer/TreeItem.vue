@@ -11,7 +11,7 @@
           <button
             v-if="isSingleCollection || isMultipleCollection"
             class="hover:bg-primary-muted hover:text-primary flex h-full w-full items-center justify-center rounded"
-            @click="unfold = !unfold"
+            @click="manualUnfoldToggle()"
           >
             <ChevronDownIcon
               :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'} ${
@@ -93,12 +93,13 @@
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
         <div v-for="collection in arrayCollections" :key="collection?.raw?.name">
-          <TreeItemOption3
+          <TreeItem
             :item-id="(collection.raw?.id as string)"
             :tree-item="collection"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :debug="debug"
+            @expanded="(e) => $emit('expanded', e)"
           />
         </div>
       </div>
@@ -106,12 +107,13 @@
       <div v-if="isSingleCollection">
         <!-- single col items -->
         <div v-for="item in singleCollectionItemsPaginated" :key="item.raw?.id">
-          <TreeItemOption3
+          <TreeItem
             :item-id="(item.raw?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :debug="debug"
+            @expanded="(e) => $emit('expanded', e)"
           />
         </div>
         <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
@@ -156,6 +158,10 @@ const props = withDefaults(
   }>(),
   { depth: 0, debug: false, header: null, subHeader: null }
 )
+
+const emit = defineEmits<{
+  (e: 'expanded', depth: number): void
+}>()
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -253,6 +259,13 @@ watch(
     if (isSingleCollection || isMultipleCollection) unfold.value = newVal >= props.depth
   }
 )
+
+// Note: we need to emit a manual unfold event with the current depth so we can set it upstream
+// for the collapse/unfold functionality
+const manualUnfoldToggle = () => {
+  unfold.value = !unfold.value
+  if (unfold.value) emit('expanded', props.depth)
+}
 
 const {
   selection: { addToSelection, clearSelection, removeFromSelection, objects },

@@ -20,7 +20,7 @@
         :key="idx"
         class="bg-foundation rounded-lg"
       >
-        <ViewerExplorerTreeItemOption3
+        <ViewerExplorerTreeItem
           :item-id="(rootNode.data?.id as string)"
           :tree-item="markRaw(rootNode)"
           :sub-header="'Model Version'"
