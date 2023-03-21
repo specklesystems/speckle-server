@@ -1,8 +1,6 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
-import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
-import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -2624,7 +2622,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
-  ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ActiveUserMutations: ResolverTypeWrapper<ActiveUserMutations>;
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
@@ -2644,7 +2642,7 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
-  Comment: ResolverTypeWrapper<CommentGraphQLReturn>;
+  Comment: ResolverTypeWrapper<Omit<Comment, 'author' | 'parent' | 'replies' | 'replyAuthors'> & { author: ResolversTypes['LimitedUser'], parent?: Maybe<ResolversTypes['Comment']>, replies: ResolversTypes['CommentCollection'], replyAuthors: ResolversTypes['CommentReplyAuthorCollection'] }>;
   CommentActivityMessage: ResolverTypeWrapper<Omit<CommentActivityMessage, 'comment'> & { comment: ResolversTypes['Comment'] }>;
   CommentCollection: ResolverTypeWrapper<Omit<CommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
   CommentContentInput: CommentContentInput;
@@ -2653,11 +2651,11 @@ export type ResolversTypes = {
   CommentDataFiltersInput: CommentDataFiltersInput;
   CommentDataInput: CommentDataInput;
   CommentEditInput: CommentEditInput;
-  CommentMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  CommentReplyAuthorCollection: ResolverTypeWrapper<CommentReplyAuthorCollectionGraphQLReturn>;
+  CommentMutations: ResolverTypeWrapper<Omit<CommentMutations, 'create' | 'edit' | 'reply'> & { create: ResolversTypes['Comment'], edit: ResolversTypes['Comment'], reply: ResolversTypes['Comment'] }>;
+  CommentReplyAuthorCollection: ResolverTypeWrapper<Omit<CommentReplyAuthorCollection, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
   CommentThreadActivityMessage: ResolverTypeWrapper<Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversTypes['Comment']> }>;
   CommentViewerData: ResolverTypeWrapper<CommentViewerData>;
-  Commit: ResolverTypeWrapper<CommitGraphQLReturn>;
+  Commit: ResolverTypeWrapper<Omit<Commit, 'stream'> & { stream: ResolversTypes['Stream'] }>;
   CommitCollection: ResolverTypeWrapper<Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Commit']>> }>;
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
@@ -2681,11 +2679,11 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']>;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
-  Model: ResolverTypeWrapper<ModelGraphQLReturn>;
+  Model: ResolverTypeWrapper<Omit<Model, 'author' | 'childrenTree' | 'commentThreads' | 'version' | 'versions'> & { author: ResolversTypes['LimitedUser'], childrenTree: Array<ResolversTypes['ModelsTreeItem']>, commentThreads: ResolversTypes['CommentCollection'], version?: Maybe<ResolversTypes['Version']>, versions: ResolversTypes['VersionCollection'] }>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
-  ModelMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ModelMutations: ResolverTypeWrapper<Omit<ModelMutations, 'create' | 'update'> & { create: ResolversTypes['Model'], update: ResolversTypes['Model'] }>;
   ModelVersionsFilter: ModelVersionsFilter;
-  ModelsTreeItem: ResolverTypeWrapper<ModelsTreeItemGraphQLReturn>;
+  ModelsTreeItem: ResolverTypeWrapper<Omit<ModelsTreeItem, 'children' | 'model'> & { children: Array<ResolversTypes['ModelsTreeItem']>, model?: Maybe<ResolversTypes['Model']> }>;
   MoveVersionsInput: MoveVersionsInput;
   Mutation: ResolverTypeWrapper<{}>;
   Object: ResolverTypeWrapper<Object>;
@@ -2693,8 +2691,8 @@ export type ResolversTypes = {
   ObjectCreateInput: ObjectCreateInput;
   PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
-  PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
-  Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
+  PendingStreamCollaborator: ResolverTypeWrapper<Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  Project: ResolverTypeWrapper<Omit<Project, 'commentThreads' | 'invitedTeam' | 'model' | 'modelChildrenTree' | 'models' | 'modelsTree' | 'team' | 'versions'> & { commentThreads: ResolversTypes['ProjectCommentCollection'], invitedTeam?: Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, model?: Maybe<ResolversTypes['Model']>, modelChildrenTree: Array<ResolversTypes['ModelsTreeItem']>, models: ResolversTypes['ModelCollection'], modelsTree: Array<ResolversTypes['ModelsTreeItem']>, team: Array<ResolversTypes['ProjectCollaborator']>, versions: ResolversTypes['VersionCollection'] }>;
   ProjectCollaborator: ResolverTypeWrapper<Omit<ProjectCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   ProjectCommentCollection: ResolverTypeWrapper<Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
@@ -2703,12 +2701,12 @@ export type ResolversTypes = {
   ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
   ProjectCreateInput: ProjectCreateInput;
   ProjectInviteCreateInput: ProjectInviteCreateInput;
-  ProjectInviteMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectInviteMutations: ResolverTypeWrapper<Omit<ProjectInviteMutations, 'cancel' | 'create'> & { cancel: ResolversTypes['Project'], create: ResolversTypes['Project'] }>;
   ProjectInviteUseInput: ProjectInviteUseInput;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
-  ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectMutations: ResolverTypeWrapper<Omit<ProjectMutations, 'create' | 'createForOnboarding' | 'invites' | 'update' | 'updateRole'> & { create: ResolversTypes['Project'], createForOnboarding: ResolversTypes['Project'], invites: ResolversTypes['ProjectInviteMutations'], update: ResolversTypes['Project'], updateRole: ResolversTypes['Project'] }>;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -2757,9 +2755,9 @@ export type ResolversTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
   UserUpdateInput: UserUpdateInput;
-  Version: ResolverTypeWrapper<VersionGraphQLReturn>;
+  Version: ResolverTypeWrapper<Omit<Version, 'authorUser' | 'commentThreads' | 'model'> & { authorUser?: Maybe<ResolversTypes['LimitedUser']>, commentThreads: ResolversTypes['CommentCollection'], model: ResolversTypes['Model'] }>;
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
-  VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  VersionMutations: ResolverTypeWrapper<Omit<VersionMutations, 'moveToModel' | 'update'> & { moveToModel: ResolversTypes['Model'], update: ResolversTypes['Version'] }>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
@@ -2781,7 +2779,7 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
-  ActiveUserMutations: MutationsObjectGraphQLReturn;
+  ActiveUserMutations: ActiveUserMutations;
   Activity: Activity;
   ActivityCollection: ActivityCollection;
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
@@ -2801,7 +2799,7 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
-  Comment: CommentGraphQLReturn;
+  Comment: Omit<Comment, 'author' | 'parent' | 'replies' | 'replyAuthors'> & { author: ResolversParentTypes['LimitedUser'], parent?: Maybe<ResolversParentTypes['Comment']>, replies: ResolversParentTypes['CommentCollection'], replyAuthors: ResolversParentTypes['CommentReplyAuthorCollection'] };
   CommentActivityMessage: Omit<CommentActivityMessage, 'comment'> & { comment: ResolversParentTypes['Comment'] };
   CommentCollection: Omit<CommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
   CommentContentInput: CommentContentInput;
@@ -2810,11 +2808,11 @@ export type ResolversParentTypes = {
   CommentDataFiltersInput: CommentDataFiltersInput;
   CommentDataInput: CommentDataInput;
   CommentEditInput: CommentEditInput;
-  CommentMutations: MutationsObjectGraphQLReturn;
-  CommentReplyAuthorCollection: CommentReplyAuthorCollectionGraphQLReturn;
+  CommentMutations: Omit<CommentMutations, 'create' | 'edit' | 'reply'> & { create: ResolversParentTypes['Comment'], edit: ResolversParentTypes['Comment'], reply: ResolversParentTypes['Comment'] };
+  CommentReplyAuthorCollection: Omit<CommentReplyAuthorCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
   CommentThreadActivityMessage: Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversParentTypes['Comment']> };
   CommentViewerData: CommentViewerData;
-  Commit: CommitGraphQLReturn;
+  Commit: Omit<Commit, 'stream'> & { stream: ResolversParentTypes['Stream'] };
   CommitCollection: Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Commit']>> };
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
@@ -2837,11 +2835,11 @@ export type ResolversParentTypes = {
   Int: Scalars['Int'];
   JSONObject: Scalars['JSONObject'];
   LimitedUser: LimitedUserGraphQLReturn;
-  Model: ModelGraphQLReturn;
+  Model: Omit<Model, 'author' | 'childrenTree' | 'commentThreads' | 'version' | 'versions'> & { author: ResolversParentTypes['LimitedUser'], childrenTree: Array<ResolversParentTypes['ModelsTreeItem']>, commentThreads: ResolversParentTypes['CommentCollection'], version?: Maybe<ResolversParentTypes['Version']>, versions: ResolversParentTypes['VersionCollection'] };
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
-  ModelMutations: MutationsObjectGraphQLReturn;
+  ModelMutations: Omit<ModelMutations, 'create' | 'update'> & { create: ResolversParentTypes['Model'], update: ResolversParentTypes['Model'] };
   ModelVersionsFilter: ModelVersionsFilter;
-  ModelsTreeItem: ModelsTreeItemGraphQLReturn;
+  ModelsTreeItem: Omit<ModelsTreeItem, 'children' | 'model'> & { children: Array<ResolversParentTypes['ModelsTreeItem']>, model?: Maybe<ResolversParentTypes['Model']> };
   MoveVersionsInput: MoveVersionsInput;
   Mutation: {};
   Object: Object;
@@ -2849,8 +2847,8 @@ export type ResolversParentTypes = {
   ObjectCreateInput: ObjectCreateInput;
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
-  PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
-  Project: ProjectGraphQLReturn;
+  PendingStreamCollaborator: Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  Project: Omit<Project, 'commentThreads' | 'invitedTeam' | 'model' | 'modelChildrenTree' | 'models' | 'modelsTree' | 'team' | 'versions'> & { commentThreads: ResolversParentTypes['ProjectCommentCollection'], invitedTeam?: Maybe<Array<ResolversParentTypes['PendingStreamCollaborator']>>, model?: Maybe<ResolversParentTypes['Model']>, modelChildrenTree: Array<ResolversParentTypes['ModelsTreeItem']>, models: ResolversParentTypes['ModelCollection'], modelsTree: Array<ResolversParentTypes['ModelsTreeItem']>, team: Array<ResolversParentTypes['ProjectCollaborator']>, versions: ResolversParentTypes['VersionCollection'] };
   ProjectCollaborator: Omit<ProjectCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   ProjectCommentCollection: Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
@@ -2858,11 +2856,11 @@ export type ResolversParentTypes = {
   ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
   ProjectCreateInput: ProjectCreateInput;
   ProjectInviteCreateInput: ProjectInviteCreateInput;
-  ProjectInviteMutations: MutationsObjectGraphQLReturn;
+  ProjectInviteMutations: Omit<ProjectInviteMutations, 'cancel' | 'create'> & { cancel: ResolversParentTypes['Project'], create: ResolversParentTypes['Project'] };
   ProjectInviteUseInput: ProjectInviteUseInput;
   ProjectModelsFilter: ProjectModelsFilter;
   ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
-  ProjectMutations: MutationsObjectGraphQLReturn;
+  ProjectMutations: Omit<ProjectMutations, 'create' | 'createForOnboarding' | 'invites' | 'update' | 'updateRole'> & { create: ResolversParentTypes['Project'], createForOnboarding: ResolversParentTypes['Project'], invites: ResolversParentTypes['ProjectInviteMutations'], update: ResolversParentTypes['Project'], updateRole: ResolversParentTypes['Project'] };
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -2903,9 +2901,9 @@ export type ResolversParentTypes = {
   UserRoleInput: UserRoleInput;
   UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
   UserUpdateInput: UserUpdateInput;
-  Version: VersionGraphQLReturn;
+  Version: Omit<Version, 'authorUser' | 'commentThreads' | 'model'> & { authorUser?: Maybe<ResolversParentTypes['LimitedUser']>, commentThreads: ResolversParentTypes['CommentCollection'], model: ResolversParentTypes['Model'] };
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
-  VersionMutations: MutationsObjectGraphQLReturn;
+  VersionMutations: Omit<VersionMutations, 'moveToModel' | 'update'> & { moveToModel: ResolversParentTypes['Model'], update: ResolversParentTypes['Version'] };
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
