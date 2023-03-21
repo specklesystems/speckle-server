@@ -38,6 +38,9 @@ const isValidModelName: GenericValidateFunction<string> = (name) => {
   )
     return 'Value should not start with "#", "$", start or end with "/", have multiple slashes next to each other or contain commas'
 
+  if (['globals', 'main'].includes(name))
+    return `'main' and 'globals' are reserved names`
+
   return true
 }
 
