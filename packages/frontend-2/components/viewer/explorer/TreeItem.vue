@@ -40,10 +40,11 @@
             </div>
             <div class="text-tiny text-foreground-2 truncate">
               {{ subHeader || headerAndSubheader.subheader }}
-              <span v-if="debug">
-                / selected: {{ isSelected }} / hidden: {{ isHidden }} / isolated:
-                {{ isIsolated }}
-              </span>
+            </div>
+            <div v-if="debug" class="text-tiny text-foreground-2">
+              unfold: {{ unfold }} / selected: {{ isSelected }} / hidden:
+              {{ isHidden }} / isolated:
+              {{ isIsolated }}
             </div>
           </div>
           <div class="flex-grow"></div>
@@ -98,7 +99,9 @@
             :tree-item="collection"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
+            :manual-expand-level="manualExpandLevel"
             :debug="debug"
+            :parent="treeItem"
             @expanded="(e) => $emit('expanded', e)"
           />
         </div>
@@ -112,7 +115,9 @@
             :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
+            :manual-expand-level="manualExpandLevel"
             :debug="debug"
+            :parent="treeItem"
             @expanded="(e) => $emit('expanded', e)"
           />
         </div>
@@ -150,9 +155,11 @@ const props = withDefaults(
   defineProps<{
     itemId: string
     treeItem: ExplorerNode
+    parent?: ExplorerNode
     depth: number
     debug?: boolean
     expandLevel: number
+    manualExpandLevel: number
     header?: string | null
     subHeader?: string | null
   }>(),
@@ -231,7 +238,8 @@ const arrayCollections = computed(() => {
         speckle_type: 'Array Collection',
         children: val //actualRawRefs.map((ref) => ref.raw) as SpeckleObject[]
       },
-      children: actualRawRefs
+      children: actualRawRefs,
+      expanded: false
     }
     arr.push(modelCollectionItem)
   }
@@ -248,15 +256,30 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
-const unfold =
-  isSingleCollection || isMultipleCollection
-    ? ref(props.expandLevel >= props.depth)
-    : ref(false)
+const unfold = ref(false)
 
 watch(
   () => props.expandLevel,
-  (newVal) => {
-    if (isSingleCollection || isMultipleCollection) unfold.value = newVal >= props.depth
+  (newVal, oldVal) => {
+    if (isSingleCollection.value || isMultipleCollection.value) {
+      unfold.value = newVal >= props.depth
+    }
+    // if (newVal > oldVal) unfold.value = true
+    // else if (newVal <= props.depth) unfold.value = false
+  }
+)
+
+watch(
+  () => props.manualExpandLevel,
+  (newVal, oldVal) => {
+    if (!(isSingleCollection.value || isMultipleCollection.value)) return
+    if (
+      newVal < oldVal &&
+      unfold.value &&
+      (isSingleCollection.value || isMultipleCollection.value) &&
+      props.depth > newVal
+    )
+      unfold.value = false
   }
 )
 
