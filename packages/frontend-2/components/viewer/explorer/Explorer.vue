@@ -8,11 +8,12 @@
         size="xs"
         text
         :icon-left="BarsArrowUpIcon"
-        :disabled="expandLevel <= -1"
-        @click="expandLevel--"
+        :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
+        @click="collapse()"
       >
         Collapse
       </FormButton>
+      <!-- <span class="text-xs">{{ expandLevel }}, {{ manualExpandLevel }}</span> -->
     </template>
     <div class="relative flex flex-col space-y-2 py-2">
       <div
@@ -20,12 +21,14 @@
         :key="idx"
         class="bg-foundation rounded-lg"
       >
-        <ViewerExplorerTreeItemOption3
+        <ViewerExplorerTreeItem
           :item-id="(rootNode.data?.id as string)"
           :tree-item="markRaw(rootNode)"
           :sub-header="'Model Version'"
           :debug="false"
           :expand-level="expandLevel"
+          :manual-expand-level="manualExpandLevel"
+          @expanded="(e) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
         />
       </div>
     </div>
@@ -54,8 +57,15 @@ const { instance: viewer } = useInjectedViewer()
 let realTree = viewer.getWorldTree()
 
 const expandLevel = ref(-1)
+const manualExpandLevel = ref(-1)
+
+const collapse = () => {
+  if (expandLevel.value > -1) expandLevel.value--
+  if (manualExpandLevel.value > -1) manualExpandLevel.value--
+}
 
 const refHack = ref(1)
+
 onMounted(() => {
   viewer.on(ViewerEvent.Busy, (isBusy) => {
     if (isBusy) return

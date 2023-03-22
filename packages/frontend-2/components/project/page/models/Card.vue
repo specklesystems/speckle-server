@@ -2,7 +2,8 @@
 <template>
   <div
     class="group rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
-    @mouseleave="showActionsMenu = false"
+    @mouseleave=";(showActionsMenu = false), (hovered = false)"
+    @mouseenter="hovered = true"
   >
     <!--
       Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
@@ -28,39 +29,47 @@
         </div>
       </div>
       <div class="h-12 flex items-center px-2 py-1 space-x-1">
-        <div class="flex-grow">
+        <div class="flex-grow min-w-0">
           <div v-if="path" class="text-xs text-foreground-2 relative -mb-1 truncate">
             {{ path }}
           </div>
-          <div class="font-bold truncate text-foreground">{{ model.displayName }}</div>
+          <div class="font-bold truncate text-foreground flex-shrink min-w-0">
+            {{ model.displayName }}
+          </div>
         </div>
+        <div class="flex items-center">
+          <div
+            :class="`text-xs text-foreground-2 mr-1 truncate transition ${
+              hovered ? 'w-auto' : 'w-0'
+            }`"
+          >
+            updated
+            <b>{{ updatedAt }}</b>
+          </div>
 
-        <div
-          :class="`text-xs text-foreground-2 mr-1 opacity-0 truncate transition group-hover:opacity-100`"
-        >
-          updated
-          <b>{{ updatedAt }}</b>
+          <FormButton
+            v-if="showVersions"
+            v-tippy="'View Version Gallery'"
+            rounded
+            size="xs"
+            :icon-left="ArrowPathRoundedSquareIcon"
+            :to="modelVersionsRoute(project.id, model.id)"
+            :class="`transition ${
+              hovered ? 'inline-block opacity-100' : 'hidden opacity-0'
+            }`"
+            :disabled="model.versionCount.totalCount === 0"
+          >
+            {{ model?.versionCount.totalCount }}
+          </FormButton>
+          <ProjectPageModelsActions
+            v-if="showActions"
+            v-model:open="showActionsMenu"
+            :model="model"
+            :project-id="project.id"
+            :can-edit="canEdit"
+            @click.stop.prevent
+          />
         </div>
-
-        <FormButton
-          v-if="showVersions"
-          rounded
-          size="xs"
-          :icon-left="ArrowPathRoundedSquareIcon"
-          :to="modelVersionsRoute(project.id, model.id)"
-          :class="`opacity-0 group-hover:opacity-100`"
-          :disabled="model.versionCount.totalCount === 0"
-        >
-          {{ model?.versionCount.totalCount }}
-        </FormButton>
-        <ProjectPageModelsActions
-          v-if="showActions"
-          v-model:open="showActionsMenu"
-          :model="model"
-          :project-id="project.id"
-          :can-edit="canEdit"
-          @click.stop.prevent
-        />
       </div>
     </NuxtLink>
   </div>
@@ -104,6 +113,7 @@ const props = withDefaults(
 )
 
 const showActionsMenu = ref(false)
+const hovered = ref(false)
 
 const path = computed(() => {
   const model = props.model

@@ -4,12 +4,14 @@
       class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
       <ViewerControlsButtonToggle
+        v-tippy="'Models (m)'"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
         <CubeIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
       <ViewerControlsButtonToggle
+        v-tippy="'Scene Explorer (e)'"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
@@ -26,6 +28,7 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
+        v-tippy="'Comments (c)'"
         :active="activeControl === 'comments'"
         @click="toggleActiveControl('comments')"
       >
@@ -38,13 +41,18 @@
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
         <!-- Zoom extents -->
-        <ViewerControlsButtonToggle flat @click="zoomExtentsOrSelection()">
+        <ViewerControlsButtonToggle
+          v-tippy="'Zoom Extents (spacebar)'"
+          flat
+          @click="zoomExtentsOrSelection()"
+        >
           <ArrowsPointingOutIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
         <!-- Projection type -->
         <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
         <ViewerControlsButtonToggle
+          v-tippy="'Projection (p)'"
           flat
           secondary
           :active="isPerspectiveProjection"
@@ -56,6 +64,7 @@
 
         <!-- Section Box -->
         <ViewerControlsButtonToggle
+          v-tippy="'Section Box (s)'"
           flat
           secondary
           :active="isSectionBoxEnabled"
@@ -65,10 +74,10 @@
         </ViewerControlsButtonToggle>
 
         <!-- Sun and lights -->
-        <ViewerSunMenu />
+        <ViewerSunMenu v-tippy="'Light Controls'" />
 
         <!-- Views -->
-        <ViewerViewsMenu />
+        <ViewerViewsMenu v-tippy="'Views'" />
       </ViewerControlsButtonGroup>
     </div>
     <div
