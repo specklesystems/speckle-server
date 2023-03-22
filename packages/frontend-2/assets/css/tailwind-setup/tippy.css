@@ -1,0 +1,10 @@
+/**
+ * Tippy mentions theme
+ */
+.tippy-box[data-theme='mention'] {
+  background: none;
+
+  .tippy-arrow {
+    @apply hidden;
+  }
+}

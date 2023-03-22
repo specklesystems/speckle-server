@@ -274,7 +274,8 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
           showOnCreate: true,
           interactive: true,
           trigger: 'manual',
-          placement: 'bottom-start'
+          placement: 'bottom-start',
+          theme: 'mention'
         })
       },
 
@@ -286,7 +287,7 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
         }
 
         popup[0].setProps({
-          getReferenceClientRect: props.clientRect as GetReferenceClientRect
+          getReferenceClientRect: props.clientRect as null | GetReferenceClientRect
         })
       },
 
