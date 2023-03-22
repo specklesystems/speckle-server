@@ -6,6 +6,7 @@ import { speckleBasicFrag } from './shaders/speckle-basic-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshBasicMaterial } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
+import SpeckleMesh from '../objects/SpeckleMesh'
 
 class SpeckleBasicMaterial extends MeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()

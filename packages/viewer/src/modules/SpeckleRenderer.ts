@@ -306,8 +306,8 @@ export default class SpeckleRenderer {
     })
 
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE
+      ObjectLayers.STREAM_CONTENT_MESH
+      // ObjectLayers.STREAM_CONTENT_LINE
     ])
     let restoreVisibility
     this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
@@ -358,7 +358,6 @@ export default class SpeckleRenderer {
           depthMaterial.userData.uViewer_low.value.copy(viewerLow)
           depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
           depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
-          // NEEDS ATTENTION !!!
           meshBatch.updateMaterialTransformsUniform(depthMaterial)
           depthMaterial.needsUpdate = true
         }
@@ -585,14 +584,6 @@ export default class SpeckleRenderer {
     }
     this.renderer.shadowMap.needsUpdate = true
     this.updateShadowCatcher()
-    // NEEDS ATTENTION
-    // const batches: MeshBatch[] = this.batcher.getBatches(
-    //   undefined,
-    //   GeometryType.MESH
-    // ) as MeshBatch[]
-    // for (let k = 0; k < batches.length; k++) {
-    //   batches[k].updateBatchObjects()
-    // }
   }
 
   public updateClippingPlanes(planes: Plane[]) {

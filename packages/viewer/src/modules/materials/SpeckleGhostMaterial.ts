@@ -5,6 +5,7 @@ import { Matrix4, ShaderLib, UniformsUtils, Vector3 } from 'three'
 import { speckleGhostVert } from './shaders/speckle-ghost-vert'
 import { speckleGhostFrag } from './shaders/speckle-ghost-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
+import SpeckleMesh from '../objects/SpeckleMesh'
 
 class SpeckleGhostMaterial extends SpeckleBasicMaterial {
   constructor(parameters, defines = []) {
@@ -43,6 +44,11 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ' '
     }
+  }
+
+  onBeforeRender(_this, scene, camera, geometry, object, group) {
+    super.onBeforeRender(_this, scene, camera, geometry, object, group)
+    ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
   }
 }
 
