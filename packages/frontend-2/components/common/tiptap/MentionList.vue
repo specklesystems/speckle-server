@@ -29,7 +29,7 @@
 </template>
 <script setup lang="ts">
 import { SuggestionKeyDownProps } from '@tiptap/suggestion'
-import { MentionData, SuggestionOptionsItem } from '~~/lib/common/helpers/tiptap'
+import { MentionData, SuggestionOptionsItem } from '~~/lib/core/tiptap/mentionExtension'
 
 const props = defineProps<{
   query?: string

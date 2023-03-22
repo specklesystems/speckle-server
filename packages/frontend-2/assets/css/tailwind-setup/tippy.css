@@ -3,8 +3,13 @@
  */
 .tippy-box[data-theme='mention'] {
   background: none;
+  pointer-events: none;
 
   .tippy-arrow {
-    @apply hidden;
+    display: none;
+  }
+
+  .tippy-content > * {
+    pointer-events: auto;
   }
 }

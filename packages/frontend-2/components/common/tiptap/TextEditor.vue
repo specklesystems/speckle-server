@@ -143,7 +143,8 @@ onBeforeUnmount(() => {
     @apply text-foreground-disabled;
   }
 
-  & .editor-mention {
+  & .editor-mention,
+  & .editor-email-mention {
     box-decoration-break: clone;
     @apply border-foreground border;
     @apply label label--light rounded inline-block px-1 py-[0.5px];
@@ -156,7 +157,8 @@ onBeforeUnmount(() => {
     background-color: unset !important;
     box-shadow: unset !important;
 
-    .editor-mention {
+    .editor-mention,
+    .editor-email-mention {
       cursor: pointer;
     }
   }

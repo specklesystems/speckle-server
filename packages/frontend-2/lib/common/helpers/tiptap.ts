@@ -7,22 +7,15 @@ import Italic from '@tiptap/extension-italic'
 import Strike from '@tiptap/extension-strike'
 import Link from '@tiptap/extension-link'
 import HardBreak from '@tiptap/extension-hard-break'
-import Mention from '@tiptap/extension-mention'
 import History from '@tiptap/extension-history'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Node, Extension, Editor, CommandProps } from '@tiptap/core'
-import { TextSelection } from 'prosemirror-state'
-import { VueRenderer } from '@tiptap/vue-3'
-import TiptapMentionList from '~~/components/common/tiptap/MentionList.vue'
+import { TextSelection } from '@tiptap/pm/state'
 
 import { VALID_HTTP_URL } from '~~/lib/common/helpers/validation'
 import { Nullable } from '@speckle/shared'
-import { SuggestionKeyDownProps, SuggestionOptions } from '@tiptap/suggestion'
-import { ApolloClient } from '@apollo/client/core'
-import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
-import { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphql'
-import { Get } from 'type-fest'
-import tippy, { Instance, GetReferenceClientRect } from 'tippy.js'
+import { getMentionExtension } from '~~/lib/core/tiptap/mentionExtension'
+import { EmailMention } from '~~/lib/core/tiptap/emailMentionExtension'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -231,86 +224,6 @@ const UtilitiesExtension = Extension.create<unknown, SpeckleUtilitiesExtensionSt
   }
 })
 
-export type SuggestionOptionsItem = NonNullable<
-  Get<MentionsUserSearchQuery, 'userSearch.items[0]'>
->
-
-export type MentionData = { label: string; id: string }
-
-const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'> = {
-  items: async ({ query }) => {
-    if (query.length < 3) return []
-
-    const { $apollo } = useNuxtApp()
-    const apolloClient = ($apollo as { default: ApolloClient<unknown> }).default
-    const { data } = await apolloClient.query({
-      query: mentionsUserSearchQuery,
-      variables: {
-        query
-      }
-    })
-
-    return data.userSearch?.items || []
-  },
-  render: () => {
-    let component: VueRenderer
-    let popup: Instance[]
-
-    return {
-      onStart: (props) => {
-        component = new VueRenderer(TiptapMentionList, {
-          props,
-          editor: props.editor
-        })
-
-        if (!props.clientRect) {
-          return
-        }
-
-        popup = tippy('body', {
-          getReferenceClientRect: props.clientRect as null | GetReferenceClientRect,
-          appendTo: () => document.body,
-          content: component.element,
-          showOnCreate: true,
-          interactive: true,
-          trigger: 'manual',
-          placement: 'bottom-start',
-          theme: 'mention'
-        })
-      },
-
-      onUpdate(props) {
-        component.updateProps(props)
-
-        if (!props.clientRect) {
-          return
-        }
-
-        popup[0].setProps({
-          getReferenceClientRect: props.clientRect as null | GetReferenceClientRect
-        })
-      },
-
-      onKeyDown(props) {
-        if (props.event.key === 'Escape') {
-          popup[0].hide()
-          return true
-        }
-
-        return (
-          component.ref as { onKeyDown: (props: SuggestionKeyDownProps) => boolean }
-        ).onKeyDown(props)
-      },
-
-      onExit() {
-        popup[0].destroy()
-        component.destroy()
-        component.element.remove()
-      }
-    }
-  }
-}
-
 /**
  * Get TipTap editor extensions that should be loaded in the editor
  */
@@ -338,12 +251,8 @@ export function getEditorExtensions(
       // Autolink off cause otherwise it's impossible to end the link
       autolink: false
     }),
-    Mention.configure({
-      suggestion: suggestionOptions,
-      HTMLAttributes: {
-        class: 'editor-mention'
-      }
-    }),
+    getMentionExtension(),
+    EmailMention,
     History,
     ...(placeholder ? [Placeholder.configure({ placeholder })] : [])
   ]
