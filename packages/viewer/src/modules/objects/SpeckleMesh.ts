@@ -1,3 +1,4 @@
+import Logger from 'js-logger'
 import {
   BackSide,
   Box3,
@@ -133,11 +134,36 @@ export default class SpeckleMesh extends Mesh {
     } else {
       this.transformsArrayUniforms = this._batchObjects.map((value) => value.transform)
     }
+    if (this.bvh) {
+      this.bvh.getBoundingBox(this.bvh.bounds)
+      this.geometry.boundingBox.copy(this.bvh.bounds)
+    }
     this.transformsDirty = false
   }
 
   public buildBVH(bounds: Box3) {
     this.bvh = new SpeckleBatchBVH(this.batchObjects, bounds)
+  }
+
+  public getBatchObjectMaterial(batchObject: BatchObject) {
+    const rv = batchObject.renderView
+    const group = this.geometry.groups.find((value) => {
+      return (
+        rv.batchStart >= value.start &&
+        rv.batchStart + rv.batchCount <= value.count + value.start
+      )
+    })
+    if (!Array.isArray(this.material)) {
+      return this.material
+    } else {
+      if (!group) {
+        Logger.warn(
+          `Could not get material for ${batchObject.renderView.renderData.id}`
+        )
+        return null
+      }
+      return this.material[group.materialIndex]
+    }
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast

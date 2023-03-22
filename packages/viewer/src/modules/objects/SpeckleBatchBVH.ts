@@ -1,14 +1,15 @@
 import { Box3, FrontSide, Material, Matrix4, Ray, Side, Vector3 } from 'three'
 import { ShapecastIntersection, ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
-import { ExtendedIntersection } from './SpeckleRaycaster'
+import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
 
 export class SpeckleBatchBVH {
   private static readonly vecBuff: Vector3 = new Vector3()
-  private bounds: Box3 = new Box3()
+
   private originTransform: Matrix4 = null
   private originTransformInv: Matrix4 = null
   public batchObjects: BatchObject[] = []
+  public bounds: Box3 = new Box3()
 
   public constructor(batchObjects: BatchObject[], bounds: Box3) {
     const boundsCenter = bounds.getCenter(new Vector3())
@@ -104,93 +105,69 @@ export class SpeckleBatchBVH {
             triangle: ExtendedTriangle,
             triangleIndex: number,
             contained: boolean,
-            depth: number
+            depth: number,
+            batchObject?: BatchObject
           ) => boolean | void
         }
     )
   ): boolean {
     const boxBuffer = new Box3()
     const triangleBuffer = new ExtendedTriangle()
-    const newCallbacks: {
-      intersectsBounds: (
-        box: Box3,
-        isLeaf: boolean,
-        score: number | undefined,
-        depth: number,
-        nodeIndex: number
-      ) => ShapecastIntersection | boolean
-
-      traverseBoundsOrder?: (box: Box3) => number
-    } & (
-      | {
-          intersectsRange: (
-            triangleOffset: number,
-            triangleCount: number,
-            contained: boolean,
-            depth: number,
-            nodeIndex: number,
-            box: Box3
-          ) => boolean
-        }
-      | {
-          intersectsTriangle: (
-            triangle: ExtendedTriangle,
-            triangleIndex: number,
-            contained: boolean,
-            depth: number
-          ) => boolean | void
-        }
-    ) = Object.create(null)
-    if (callbacks.intersectsBounds) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      newCallbacks.intersectsBounds = (
-        box: Box3,
-        isLeaf: boolean,
-        score: number | undefined,
-        depth: number,
-        nodeIndex: number
-      ): ShapecastIntersection | boolean => {
-        boxBuffer.copy(box)
-        this.transformOutput(boxBuffer)
-        return callbacks.intersectsBounds(boxBuffer, isLeaf, score, depth, nodeIndex)
-      }
-    }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    if (callbacks.intersectsTriangle) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      //@ts-ignore
-      newCallbacks.intersectsTriangle = (
-        triangle: ExtendedTriangle,
-        triangleIndex: number,
-        contained: boolean,
-        depth: number
-      ): boolean | void => {
-        triangleBuffer.copy(triangle)
-        this.transformOutput(triangleBuffer.a)
-        this.transformOutput(triangleBuffer.b)
-        this.transformOutput(triangleBuffer.c)
+    const wrapCallbacks = (batchObject: BatchObject): ExtendedShapeCastCallbacks => {
+      const newCallbacks: ExtendedShapeCastCallbacks = Object.create(null)
+      if (callbacks.intersectsBounds) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        return callbacks.intersectsTriangle(
-          triangleBuffer,
-          triangleIndex,
-          contained,
-          depth
-        )
+        newCallbacks.intersectsBounds = (
+          box: Box3,
+          isLeaf: boolean,
+          score: number | undefined,
+          depth: number,
+          nodeIndex: number
+        ): ShapecastIntersection | boolean => {
+          boxBuffer.copy(box)
+          this.transformOutput(boxBuffer)
+          return callbacks.intersectsBounds(boxBuffer, isLeaf, score, depth, nodeIndex)
+        }
       }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      if (callbacks.intersectsTriangle) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        newCallbacks.intersectsTriangle = (
+          triangle: ExtendedTriangle,
+          triangleIndex: number,
+          contained: boolean,
+          depth: number
+        ): boolean | void => {
+          triangleBuffer.copy(triangle)
+          this.transformOutput(triangleBuffer.a)
+          this.transformOutput(triangleBuffer.b)
+          this.transformOutput(triangleBuffer.c)
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          return callbacks.intersectsTriangle(
+            triangleBuffer,
+            triangleIndex,
+            contained,
+            depth,
+            batchObject
+          )
+        }
+      }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      newCallbacks.intersectsRange = callbacks.intersectsRange
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      newCallbacks.traverseBoundsOrder = callbacks.traverseBoundsOrder
+      return newCallbacks
     }
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
-    newCallbacks.intersectsRange = callbacks.intersectsRange
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
-    newCallbacks.traverseBoundsOrder = callbacks.traverseBoundsOrder
 
     let ret = false
     this.batchObjects.forEach((batchObject: BatchObject) => {
-      ret ||= batchObject.bvh.shapecast(newCallbacks)
+      ret ||= batchObject.bvh.shapecast(wrapCallbacks(batchObject))
     })
     return ret
   }

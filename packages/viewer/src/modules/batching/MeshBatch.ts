@@ -462,10 +462,6 @@ export default class MeshBatch implements Batch {
 
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
-
-      // if (!GeometryConverter.keepGeometryData) {
-      //   this.renderViews[k].disposeGeometry()
-      // }
     }
 
     this.makeMeshGeometry(
@@ -474,13 +470,6 @@ export default class MeshBatch implements Batch {
       batchIndices,
       hasVertexColors ? color : null
     )
-
-    // this.boundsTree = new SpeckleBatchBVH(
-    //   this.renderViews,
-    //   WorldTree.getRenderTree(this.subtreeId).treeBounds
-    // )
-
-    // this.boundsTree.getBoundingBox(this.bounds)
 
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
     this.mesh.setBatchObjects(batchObjects, this.transformStorage)
@@ -491,51 +480,13 @@ export default class MeshBatch implements Batch {
 
   public getRenderView(index: number): NodeRenderView {
     index
-    // NEEDS ATTENTION
-    // for (let k = 0; k < this.renderViews.length; k++) {
-    //   // if (
-    //   //   index * 3 >= this.renderViews[k].batchStart &&
-    //   //   index * 3 < this.renderViews[k].batchEnd
-    //   // ) {
-    //   //   return this.renderViews[k]
-    //   // }
-    //   const vertIndex = this.boundsTree.geometry.index.array[index * 3]
-    //   if (
-    //     vertIndex >= this.renderViews[k].vertStart &&
-    //     vertIndex < this.renderViews[k].vertEnd
-    //   )
-    //     return this.renderViews[k]
-    // }
+    // NOT IMPLEMENTED
     return null
   }
 
   public getMaterialAtIndex(index: number): Material {
     index
-    // NEEDS ATTENTION
-    // for (let k = 0; k < this.renderViews.length; k++) {
-    //   const vertIndex = this.boundsTree.geometry.index.array[index * 3]
-    //   if (
-    //     vertIndex >= this.renderViews[k].vertStart &&
-    //     vertIndex < this.renderViews[k].vertEnd
-    //   ) {
-    //     const rv = this.renderViews[k]
-    //     const group = this.geometry.groups.find((value) => {
-    //       return (
-    //         rv.batchStart >= value.start &&
-    //         rv.batchStart + rv.batchCount <= value.count + value.start
-    //       )
-    //     })
-    //     if (!Array.isArray(this.mesh.material)) {
-    //       return this.mesh.material
-    //     } else {
-    //       if (!group) {
-    //         Logger.warn(`Malformed material index!`)
-    //         return null
-    //       }
-    //       return this.mesh.material[group.materialIndex]
-    //     }
-    //   }
-    // }
+    // NOT IMPLEMENTED
     return null
   }
 
