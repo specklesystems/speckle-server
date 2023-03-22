@@ -19,10 +19,11 @@
           <UserAvatar :user="loadedVersion?.authorUser" />
         </div>
         <div class="flex min-w-0 flex-grow flex-col space-y-0">
-          <div>
-            <span v-tippy="modelName.subheader ? model.name : null" class="font-bold">
-              {{ modelName.header }}
-            </span>
+          <div
+            v-tippy="modelName.subheader ? model.name : null"
+            class="font-bold truncate min-w-0"
+          >
+            {{ modelName.header }}
           </div>
           <div class="text-foreground-2 truncate text-xs">
             <span v-tippy="createdAt" class="text-xs font-semibold">
