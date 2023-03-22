@@ -160,13 +160,13 @@ module.exports = {
   /**
    * User search available for normal server users. It's more limited because of the lower access level.
    */
-  async searchUsers(searchQuery, limit, cursor, archived = false) {
+  async searchUsers(searchQuery, limit, cursor, archived = false, emailOnly = false) {
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
       .select(...LIMITED_USER_FIELDS)
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
-        queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
         if (!archived) queryBuilder.andWhere('role', '!=', 'server:archived-user')
       })
 

@@ -8,40 +8,59 @@ import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view'
 import { findSuggestionMatch } from './findSuggestionMatch'
 
+import tippy, { Instance, GetReferenceClientRect } from 'tippy.js'
+import TiptapEmailMentionPopup from '~~/components/common/tiptap/EmailMentionPopup.vue'
+import { VueRenderer } from '@tiptap/vue-3'
+import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
+import { ApolloClient } from '@apollo/client/core'
+import { MentionData, SuggestionOptionsItem } from '~~/lib/core/tiptap/mentionExtension'
+
 /**
  * This is essentially the original Tiptap suggestion extension adapted to support the specialized
- * email mention use case. A bit of a mess probably, but this low level prosemirror stuff is quite complicated.
+ * email mention use case. A bit of a mess probably, but this low level prosemirror stuff is quite complicated
+ * and I just tried my best to reverse engineer it.
  */
 
-export interface SuggestionOptions<I = any> {
-  pluginKey?: PluginKey
-  editor: Editor
-  char?: string
-  allowSpaces?: boolean
-  allowedPrefixes?: string[] | null
-  startOfLine?: boolean
-  decorationTag?: string
-  decorationClass?: string
-  command?: (props: { editor: Editor; range: Range; props: I }) => void
-  items?: (props: { query: string | null; editor: Editor }) => I[] | Promise<I[]>
-  render?: () => {
-    onBeforeStart?: (props: SuggestionProps<I>) => void
-    onStart?: (props: SuggestionProps<I>) => void
-    onBeforeUpdate?: (props: SuggestionProps<I>) => void
-    onUpdate?: (props: SuggestionProps<I>) => void
-    onExit?: (props: SuggestionProps<I>) => void
-    onKeyDown?: (props: SuggestionKeyDownProps) => boolean
-  }
-  allow?: (props: { editor: Editor; state: EditorState; range: Range }) => boolean
+export type SuggestionCommandProps = {
+  mention: MentionData | null
+  email: string | null
 }
 
-export interface SuggestionProps<I = any> {
+type SuggestionCommand = (props: {
+  editor: Editor
+  range: Range
+  props: SuggestionCommandProps
+  nodeName: string
+}) => void
+
+type AllowFn = (props: {
+  editor: Editor
+  state: EditorState
+  range: Range
+  nodeName: string
+}) => boolean
+
+type SuggestionRenderer = () => {
+  onBeforeStart?: (props: SuggestionProps) => void
+  onStart?: (props: SuggestionProps) => void
+  onBeforeUpdate?: (props: SuggestionProps) => void
+  onUpdate?: (props: SuggestionProps) => void
+  onExit?: (props: SuggestionProps) => void
+  onKeyDown?: (props: SuggestionKeyDownProps) => boolean
+}
+
+export interface SuggestionOptions {
+  editor: Editor
+  nodeName: string
+}
+
+export interface SuggestionProps {
   editor: Editor
   range: Range
   query: string | null
   text: string | null
-  items: I[]
-  command: (props: I) => void
+  items: SuggestionOptionsItem[]
+  command: (props: SuggestionCommandProps) => void
   decorationNode: Element | null
   clientRect?: (() => DOMRect | null) | null
 }
@@ -61,27 +80,161 @@ type SuggestionPluginState = {
   decorationId?: string | null
 }
 
-export const SuggestionPluginKey = new PluginKey('emailSuggestion')
+const inviteEmail = async (email: string) => {
+  // TODO
+}
 
-export function Suggestion<I = any>({
-  pluginKey = SuggestionPluginKey,
-  editor,
-  char = '@',
-  allowSpaces = false,
-  allowedPrefixes = [' '],
-  startOfLine = false,
-  decorationTag = 'span',
-  decorationClass = 'emailSuggestion',
-  command = () => null,
-  items = () => [],
-  render = () => ({}),
-  allow = () => true
-}: SuggestionOptions<I>) {
-  let props: SuggestionProps<I> | undefined
-  const renderer = render?.()
+const command: SuggestionCommand = ({ editor, range, props, nodeName }) => {
+  // increase range.to by one when the next node is of type "text"
+  // and starts with a space character
+  const nodeAfter = editor.view.state.selection.$to.nodeAfter
+  const overrideSpace = nodeAfter?.text?.startsWith(' ')
+
+  if (overrideSpace) {
+    range.to += 1
+  }
+
+  const chain = editor.chain().focus()
+
+  if (props.mention) {
+    // Insert mention
+    chain
+      .insertContentAt(range, [
+        {
+          type: 'mention',
+          attrs: props.mention
+        },
+        {
+          type: 'text',
+          text: ' '
+        }
+      ])
+      .run()
+  } else {
+    // Insert email mention
+    chain
+      .insertContentAt(range, [
+        {
+          type: nodeName,
+          attrs: {
+            email: props.email
+          }
+        },
+        {
+          type: 'text',
+          text: ' '
+        }
+      ])
+      .run()
+
+    inviteEmail(props.email)
+  }
+
+  window.getSelection()?.collapseToEnd()
+}
+
+const allow: AllowFn = (props) => {
+  const { state, range, nodeName } = props
+
+  const $from = state.doc.resolve(range.from)
+  const type = state.schema.nodes[nodeName]
+  const allow = !!$from.parent.type.contentMatch.matchType(type)
+  return allow
+}
+
+const getItems = async (params: { editor: Editor; query: string | null }) => {
+  const { query } = params
+  if (!query?.length) return []
+
+  const { $apollo } = useNuxtApp()
+  const apolloClient = ($apollo as { default: ApolloClient<unknown> }).default
+  const { data } = await apolloClient.query({
+    query: mentionsUserSearchQuery,
+    variables: {
+      query,
+      emailOnly: true
+    }
+  })
+
+  return data.userSearch?.items || []
+}
+
+const buildRenderer: SuggestionRenderer = () => {
+  let component: VueRenderer
+  let popup: Instance[]
+
+  return {
+    onStart: (props) => {
+      component = new VueRenderer(TiptapEmailMentionPopup, {
+        props,
+        editor: props.editor
+      })
+
+      if (!props.clientRect) {
+        return
+      }
+
+      popup = tippy('body', {
+        getReferenceClientRect: props.clientRect as null | GetReferenceClientRect,
+        appendTo: () => document.body,
+        content: component.element,
+        showOnCreate: true,
+        interactive: true,
+        trigger: 'manual',
+        placement: 'bottom-start',
+        theme: 'mention'
+      })
+    },
+
+    onUpdate(props) {
+      component.updateProps(props)
+
+      if (!props.clientRect) {
+        return
+      }
+
+      popup[0].setProps({
+        getReferenceClientRect: props.clientRect as null | GetReferenceClientRect
+      })
+    },
+
+    onKeyDown(props) {
+      if (props.event.key === 'Escape') {
+        popup[0].hide()
+        return true
+      }
+
+      return (
+        component.ref as { onKeyDown: (props: SuggestionKeyDownProps) => boolean }
+      ).onKeyDown(props)
+    },
+
+    onExit() {
+      popup[0].destroy()
+      component.destroy()
+      component.element.remove()
+    }
+  }
+}
+
+export const SuggestionPluginKey = new PluginKey<SuggestionPluginState>(
+  'emailSuggestion'
+)
+
+export function EmailSuggestion({ editor, nodeName }: SuggestionOptions) {
+  let props: SuggestionProps | undefined
+
+  const allowSpaces = false
+  const allowedPrefixes = [' ']
+  const startOfLine = false
+  const decorationTag = 'span'
+  const decorationClass = 'emailSuggestion'
+  const items = getItems
+
+  const renderer = buildRenderer()
 
   const plugin: Plugin<SuggestionPluginState> = new Plugin({
-    key: pluginKey,
+    key: SuggestionPluginKey,
 
     view() {
       return {
@@ -119,7 +272,8 @@ export function Suggestion<I = any>({
               command({
                 editor,
                 range: state.range,
-                props: commandProps
+                props: commandProps,
+                nodeName
               })
             },
             decorationNode,
@@ -128,7 +282,9 @@ export function Suggestion<I = any>({
             clientRect: decorationNode
               ? () => {
                   // because of `items` can be asynchrounous we’ll search for the current decoration node
-                  const { decorationId } = this.key?.getState(editor.state) // eslint-disable-line
+                  const { decorationId } = this.key?.getState(
+                    editor.state
+                  ) as SuggestionPluginState
                   const currentDecorationNode = view.dom.querySelector(
                     `[data-decoration-id="${decorationId}"]`
                   )
@@ -225,7 +381,6 @@ export function Suggestion<I = any>({
 
           // Try to match against where our cursor currently is
           const match = findSuggestionMatch({
-            char,
             allowSpaces,
             allowedPrefixes,
             startOfLine,
@@ -234,7 +389,7 @@ export function Suggestion<I = any>({
           const decorationId = `id_${Math.floor(Math.random() * 0xffffffff)}`
 
           // If we found a match, update the current state to show it
-          if (match && allow({ editor, state, range: match.range })) {
+          if (match && allow({ editor, state, range: match.range, nodeName })) {
             next.active = true
             next.decorationId = prev.decorationId ? prev.decorationId : decorationId
             next.range = match.range

@@ -1649,6 +1649,7 @@ export type QueryUserPwdStrengthArgs = {
 export type QueryUserSearchArgs = {
   archived?: InputMaybe<Scalars['Boolean']>;
   cursor?: InputMaybe<Scalars['String']>;
+  emailOnly?: InputMaybe<Scalars['Boolean']>;
   limit?: Scalars['Int'];
   query: Scalars['String'];
 };

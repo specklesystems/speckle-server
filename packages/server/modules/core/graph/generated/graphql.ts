@@ -1657,6 +1657,7 @@ export type QueryUserPwdStrengthArgs = {
 export type QueryUserSearchArgs = {
   archived?: InputMaybe<Scalars['Boolean']>;
   cursor?: InputMaybe<Scalars['String']>;
+  emailOnly?: InputMaybe<Scalars['Boolean']>;
   limit?: Scalars['Int'];
   query: Scalars['String'];
 };
@@ -3486,7 +3487,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   testNumber?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
-  userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'limit' | 'query'>>;
+  userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {

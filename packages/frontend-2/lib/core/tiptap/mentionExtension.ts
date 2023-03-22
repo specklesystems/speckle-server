@@ -8,6 +8,7 @@ import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
 import { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import tippy, { Instance, GetReferenceClientRect } from 'tippy.js'
+import { Optional } from '@speckle/shared'
 
 export type SuggestionOptionsItem = NonNullable<
   Get<MentionsUserSearchQuery, 'userSearch.items[0]'>
@@ -76,8 +77,12 @@ const suggestionOptions: Omit<SuggestionOptions<SuggestionOptionsItem>, 'editor'
         }
 
         return (
-          component.ref as { onKeyDown: (props: SuggestionKeyDownProps) => boolean }
-        ).onKeyDown(props)
+          (
+            component?.ref as Optional<{
+              onKeyDown: (props: SuggestionKeyDownProps) => boolean
+            }>
+          )?.onKeyDown(props) || false
+        )
       },
 
       onExit() {

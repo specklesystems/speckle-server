@@ -40,6 +40,7 @@ extend type Query {
     limit: Int! = 25
     cursor: String
     archived: Boolean = false
+    emailOnly: Boolean = false
   ): UserSearchResultCollection!
 
   """

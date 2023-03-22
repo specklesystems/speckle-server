@@ -1,8 +1,9 @@
-import { escapeForRegEx, Range } from '@tiptap/core'
+import { Range } from '@tiptap/core'
 import { ResolvedPos } from '@tiptap/pm/model'
 
+const EMAIL_RGX = /[\w-_.]+@[\w-_.]+/
+
 export interface Trigger {
-  char: string
   allowSpaces: boolean
   allowedPrefixes: string[] | null
   startOfLine: boolean
@@ -16,14 +17,14 @@ export type SuggestionMatch = {
 } | null
 
 export function findSuggestionMatch(config: Trigger): SuggestionMatch {
-  const { char, allowSpaces, allowedPrefixes, startOfLine, $position } = config
+  const { allowSpaces, allowedPrefixes, startOfLine, $position } = config
 
-  const escapedChar = escapeForRegEx(char)
-  const suffix = new RegExp(`\\s${escapedChar}$`)
+  const emailRegexSource = EMAIL_RGX.source
+  const suffix = new RegExp(`\\s${emailRegexSource}$`)
   const prefix = startOfLine ? '^' : ''
   const regexp = allowSpaces
-    ? new RegExp(`${prefix}${escapedChar}.*?(?=\\s${escapedChar}|$)`, 'gm')
-    : new RegExp(`${prefix}(?:^)?${escapedChar}[^\\s${escapedChar}]*`, 'gm')
+    ? new RegExp(`${prefix}${emailRegexSource}.*?(?=\\s\\w-_.|$)`, 'gm')
+    : new RegExp(`${prefix}(?:^)?${emailRegexSource}[^\\s\\w-_.]*`, 'gm')
 
   const text = $position.nodeBefore?.isText && $position.nodeBefore.text
 
@@ -67,7 +68,7 @@ export function findSuggestionMatch(config: Trigger): SuggestionMatch {
         from,
         to
       },
-      query: match[0].slice(char.length),
+      query: match[0],
       text: match[0]
     }
   }

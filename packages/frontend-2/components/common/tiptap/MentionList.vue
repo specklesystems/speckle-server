@@ -6,19 +6,11 @@
     <ul>
       <template v-if="items.length">
         <li v-for="(item, i) in items" :key="item.id">
-          <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-          <a
-            :class="[
-              'flex flex-col p-2 cursor-pointer',
-              i === selectedIndex ? 'bg-foundation-2' : 'hover:bg-foundation-3'
-            ]"
+          <CommonTiptapMentionListItem
+            :item="item"
+            :is-selected="i === selectedIndex"
             @click="() => selectItem(i)"
-          >
-            <span class="normal font-bold truncate">{{ item.name }}</span>
-            <span v-if="item.company" class="label label--light truncate">
-              {{ item.company }}
-            </span>
-          </a>
+          />
         </li>
       </template>
       <template v-else>

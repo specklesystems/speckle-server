@@ -3,6 +3,7 @@
     :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
   >
     <EditorContent
+      ref="editorContentRef"
       class="simple-scrollbar"
       :editor="editor"
       :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
@@ -23,6 +24,7 @@ import {
 } from '~~/lib/common/helpers/tiptap'
 import { Nullable } from '@speckle/shared'
 import { userProfileRoute } from '~~/lib/common/helpers/route'
+import { onKeyDown } from '@vueuse/core'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
@@ -39,6 +41,8 @@ const props = defineProps<{
   placeholder?: string
   readonly?: boolean
 }>()
+
+const editorContentRef = ref(null as Nullable<HTMLElement>)
 
 const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
 const isEditable = computed(() => !props.disabled && !props.readonly)
@@ -89,6 +93,16 @@ const onMentionClick = (userId: string, e: MouseEvent) => {
     window.location.href = path
   }
 }
+
+onKeyDown(
+  'Escape',
+  (e) => {
+    // TipTap handles Escape, we don't want this to bubble up and close the thread
+    e.stopImmediatePropagation()
+    e.stopPropagation()
+  },
+  { target: editorContentRef }
+)
 
 watch(
   () => hasEnterTracking.value,
@@ -143,8 +157,7 @@ onBeforeUnmount(() => {
     @apply text-foreground-disabled;
   }
 
-  & .editor-mention,
-  & .editor-email-mention {
+  & .editor-mention {
     box-decoration-break: clone;
     @apply border-foreground border;
     @apply label label--light rounded inline-block px-1 py-[0.5px];
@@ -157,8 +170,7 @@ onBeforeUnmount(() => {
     background-color: unset !important;
     box-shadow: unset !important;
 
-    .editor-mention,
-    .editor-email-mention {
+    .editor-mention {
       cursor: pointer;
     }
   }

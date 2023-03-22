@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Node, mergeAttributes } from '@tiptap/core'
+import { EmailSuggestion } from '~~/lib/core/tiptap/email-mention/suggestion'
 
 export type EmailMentionOptions = {}
 
@@ -76,5 +77,14 @@ export const EmailMention = Node.create<EmailMentionOptions>({
           return isMention
         })
     }
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      EmailSuggestion({
+        editor: this.editor,
+        nodeName: this.name
+      })
+    ]
   }
 })
