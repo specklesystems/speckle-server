@@ -27,6 +27,7 @@
           v-if="comment.text.doc"
           :model-value="comment.text.doc"
           :schema-options="{ multiLine: false }"
+          :project-id="projectId"
           readonly
           @created="emit('mounted')"
         />

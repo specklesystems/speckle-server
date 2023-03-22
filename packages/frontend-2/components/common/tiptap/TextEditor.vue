@@ -40,6 +40,10 @@ const props = defineProps<{
   disabled?: boolean
   placeholder?: string
   readonly?: boolean
+  /**
+   * Used to invite users to project when their emails are mentioned
+   */
+  projectId?: string
 }>()
 
 const editorContentRef = ref(null as Nullable<HTMLElement>)
@@ -53,7 +57,8 @@ const editor = new Editor({
   autofocus: props.autofocus,
   editable: isEditable.value,
   extensions: getEditorExtensions(props.schemaOptions, {
-    placeholder: props.placeholder
+    placeholder: props.placeholder,
+    projectId: props.projectId
   }),
   onUpdate: () => {
     const data = getData()

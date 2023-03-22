@@ -2,15 +2,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Node, mergeAttributes } from '@tiptap/core'
+import type { Plugin } from '@tiptap/pm/state'
 import { EmailSuggestion } from '~~/lib/core/tiptap/email-mention/suggestion'
 
-export type EmailMentionOptions = {}
+export type EmailMentionOptions = {
+  projectId?: string
+}
 
 export const EmailMention = Node.create<EmailMentionOptions>({
   name: 'emailMention',
 
   addOptions() {
-    return {}
+    return {
+      projectId: undefined
+    }
   },
 
   group: 'inline',
@@ -80,11 +85,17 @@ export const EmailMention = Node.create<EmailMentionOptions>({
   },
 
   addProseMirrorPlugins() {
-    return [
-      EmailSuggestion({
-        editor: this.editor,
-        nodeName: this.name
-      })
-    ]
+    const plugins: Array<Plugin> = []
+    if (this.options.projectId) {
+      plugins.push(
+        EmailSuggestion({
+          editor: this.editor,
+          nodeName: this.name,
+          projectId: this.options.projectId
+        })
+      )
+    }
+
+    return plugins
   }
 })

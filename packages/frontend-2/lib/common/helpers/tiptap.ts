@@ -37,6 +37,11 @@ export type TiptapEditorExtensionOptions = {
    * Placeholder to show, if any
    */
   placeholder?: string
+
+  /**
+   * If set, will be used to invite users to this project when the relevant CTA is triggered (e.g. email mentions)
+   */
+  projectId?: string
 }
 
 /**
@@ -232,7 +237,7 @@ export function getEditorExtensions(
   extensionOptions?: TiptapEditorExtensionOptions
 ) {
   const { multiLine = true } = schemaOptions || {}
-  const { placeholder } = extensionOptions || {}
+  const { placeholder, projectId } = extensionOptions || {}
   return [
     ...(multiLine ? [Document] : [InlineDoc, EnterKeypressTrackerExtension]),
     HardBreak,
@@ -252,7 +257,9 @@ export function getEditorExtensions(
       autolink: false
     }),
     getMentionExtension(),
-    EmailMention,
+    EmailMention.configure({
+      projectId
+    }),
     History,
     ...(placeholder ? [Placeholder.configure({ placeholder })] : [])
   ]

@@ -14,6 +14,13 @@ import { VueRenderer } from '@tiptap/vue-3'
 import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
 import { ApolloClient } from '@apollo/client/core'
 import { MentionData, SuggestionOptionsItem } from '~~/lib/core/tiptap/mentionExtension'
+import { Optional } from '@speckle/shared'
+import { inviteProjectUserMutation } from '~~/lib/projects/graphql/mutations'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 /**
  * This is essentially the original Tiptap suggestion extension adapted to support the specialized
@@ -31,6 +38,7 @@ type SuggestionCommand = (props: {
   range: Range
   props: SuggestionCommandProps
   nodeName: string
+  projectId: string
 }) => void
 
 type AllowFn = (props: {
@@ -52,6 +60,7 @@ type SuggestionRenderer = () => {
 export interface SuggestionOptions {
   editor: Editor
   nodeName: string
+  projectId: string
 }
 
 export interface SuggestionProps {
@@ -80,11 +89,38 @@ type SuggestionPluginState = {
   decorationId?: string | null
 }
 
-const inviteEmail = async (email: string) => {
-  // TODO
+const inviteEmail = async (email: string, projectId: string) => {
+  if (!email) return
+
+  const { $apollo } = useNuxtApp()
+  const { triggerNotification } = useGlobalToast()
+  const apolloClient = ($apollo as { default: ApolloClient<unknown> }).default
+
+  const { data, errors } = await apolloClient
+    .mutate({
+      mutation: inviteProjectUserMutation,
+      variables: {
+        input: { projectId, email }
+      }
+    })
+    .catch(convertThrowIntoFetchResult)
+
+  if (data?.projectMutations.invites.create.id) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Invite sent'
+    })
+  } else {
+    const errMsg = getFirstErrorMessage(errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Invitation failed',
+      description: errMsg
+    })
+  }
 }
 
-const command: SuggestionCommand = ({ editor, range, props, nodeName }) => {
+const command: SuggestionCommand = ({ editor, range, props, nodeName, projectId }) => {
   // increase range.to by one when the next node is of type "text"
   // and starts with a space character
   const nodeAfter = editor.view.state.selection.$to.nodeAfter
@@ -110,7 +146,7 @@ const command: SuggestionCommand = ({ editor, range, props, nodeName }) => {
         }
       ])
       .run()
-  } else {
+  } else if (props.email) {
     // Insert email mention
     chain
       .insertContentAt(range, [
@@ -127,7 +163,7 @@ const command: SuggestionCommand = ({ editor, range, props, nodeName }) => {
       ])
       .run()
 
-    inviteEmail(props.email)
+    inviteEmail(props.email, projectId)
   }
 
   window.getSelection()?.collapseToEnd()
@@ -205,8 +241,12 @@ const buildRenderer: SuggestionRenderer = () => {
       }
 
       return (
-        component.ref as { onKeyDown: (props: SuggestionKeyDownProps) => boolean }
-      ).onKeyDown(props)
+        (
+          component?.ref as Optional<{
+            onKeyDown: (props: SuggestionKeyDownProps) => boolean
+          }>
+        )?.onKeyDown(props) || false
+      )
     },
 
     onExit() {
@@ -221,7 +261,7 @@ export const SuggestionPluginKey = new PluginKey<SuggestionPluginState>(
   'emailSuggestion'
 )
 
-export function EmailSuggestion({ editor, nodeName }: SuggestionOptions) {
+export function EmailSuggestion({ editor, nodeName, projectId }: SuggestionOptions) {
   let props: SuggestionProps | undefined
 
   const allowSpaces = false
@@ -273,7 +313,8 @@ export function EmailSuggestion({ editor, nodeName }: SuggestionOptions) {
                 editor,
                 range: state.range,
                 props: commandProps,
-                nodeName
+                nodeName,
+                projectId
               })
             },
             decorationNode,
