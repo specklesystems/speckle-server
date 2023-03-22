@@ -226,6 +226,8 @@ export type Comment = {
   updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
+  /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
+  viewerResources: Array<ViewerResourceItem>;
 };
 
 
@@ -3085,6 +3087,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   text?: Resolver<ResolversTypes['SmartTextEditorValue'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   viewedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

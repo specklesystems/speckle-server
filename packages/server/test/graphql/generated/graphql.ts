@@ -218,6 +218,8 @@ export type Comment = {
   updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
+  /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
+  viewerResources: Array<ViewerResourceItem>;
 };
 
 
