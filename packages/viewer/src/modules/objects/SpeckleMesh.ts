@@ -1,5 +1,6 @@
 import {
   BackSide,
+  Box3,
   BufferGeometry,
   DataTexture,
   DoubleSide,
@@ -46,8 +47,7 @@ const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export default class SpeckleMesh extends Mesh {
-  private boundsTree: SpeckleBatchBVH = null
-  public boundsTreeSizeInBytes = 0
+  private bvh: SpeckleBatchBVH = null
   private batchMaterial: Material = null
 
   private _batchObjects: BatchObject[]
@@ -59,7 +59,7 @@ export default class SpeckleMesh extends Mesh {
   public transformsArrayUniforms: Matrix4[] = null
 
   public get BVH() {
-    return this.boundsTree
+    return this.bvh
   }
 
   public get batchObjects(): BatchObject[] {
@@ -136,6 +136,10 @@ export default class SpeckleMesh extends Mesh {
     this.transformsDirty = false
   }
 
+  public buildBVH(bounds: Box3) {
+    this.bvh = new SpeckleBatchBVH(this.batchObjects, bounds)
+  }
+
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
   private convertRaycastIntersect(hit, object, raycaster) {
@@ -155,13 +159,13 @@ export default class SpeckleMesh extends Mesh {
   }
 
   raycast(raycaster: Raycaster, intersects) {
-    if (this.boundsTree) {
+    if (this.bvh) {
       if (this.batchMaterial === undefined) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
 
-      const bvh = this.boundsTree
+      const bvh = this.bvh
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
           bvh.raycastFirst(ray, this.batchMaterial),

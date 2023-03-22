@@ -24,6 +24,7 @@ import {
 import { ObjectLayers } from '../SpeckleRenderer'
 import { TransformStorage } from './Batcher'
 import { BatchObject } from './BatchObject'
+import { WorldTree } from '../tree/WorldTree'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -456,6 +457,7 @@ export default class MeshBatch implements Batch {
       )
 
       const batchObject = new BatchObject(this.renderViews[k], k)
+      batchObject.buildBVH(WorldTree.getRenderTree(this.subtreeId).treeBounds)
       batchObjects.push(batchObject)
 
       offset += geometry.attributes.POSITION.length
@@ -482,6 +484,7 @@ export default class MeshBatch implements Batch {
 
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
     this.mesh.setBatchObjects(batchObjects, this.transformStorage)
+    this.mesh.buildBVH(WorldTree.getRenderTree(this.subtreeId).treeBounds)
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
   }

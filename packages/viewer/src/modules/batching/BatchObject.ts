@@ -50,5 +50,7 @@ export class BatchObject {
       localPositions[k + 2] = vecBuff.z
     }
     this._bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
+    this._bvh.inputTransform = this.transformInv
+    this._bvh.outputTransform = this.transform
   }
 }

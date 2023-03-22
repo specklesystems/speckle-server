@@ -1,26 +1,16 @@
-import {
-  Box3,
-  FrontSide,
-  Intersection,
-  Material,
-  Matrix4,
-  Object3D,
-  Ray,
-  Side,
-  Vector3
-} from 'three'
+import { Box3, FrontSide, Material, Matrix4, Ray, Side, Vector3 } from 'three'
 import { ShapecastIntersection, ExtendedTriangle } from 'three-mesh-bvh'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import { SpeckleMeshBVH } from './SpeckleMeshBVH'
+import { BatchObject } from '../batching/BatchObject'
+import { ExtendedIntersection } from './SpeckleRaycaster'
 
 export class SpeckleBatchBVH {
-  private batchBounds: Box3 = null
+  private static readonly vecBuff: Vector3 = new Vector3()
+  private bounds: Box3 = new Box3()
   private originTransform: Matrix4 = null
   private originTransformInv: Matrix4 = null
-  public bvhs: SpeckleMeshBVH[] = []
+  public batchObjects: BatchObject[] = []
 
-  public constructor(rvs: NodeRenderView[], bounds: Box3) {
-    this.batchBounds = bounds
+  public constructor(batchObjects: BatchObject[], bounds: Box3) {
     const boundsCenter = bounds.getCenter(new Vector3())
     const transform = new Matrix4().makeTranslation(
       boundsCenter.x,
@@ -31,35 +21,28 @@ export class SpeckleBatchBVH {
     this.originTransform = transform
     this.originTransformInv = new Matrix4().copy(this.originTransform).invert()
 
-    for (let k = 0; k < rvs.length; k++) {
-      const indices = rvs[k].renderData.geometry.attributes.INDEX
-      const position = rvs[k].renderData.geometry.attributes.POSITION
-
-      const localPositions = new Float32Array(position.length)
-      const vecBuff = new Vector3()
-      for (let k = 0; k < position.length; k += 3) {
-        vecBuff.set(position[k], position[k + 1], position[k + 2])
-        vecBuff.applyMatrix4(transform)
-        localPositions[k] = vecBuff.x
-        localPositions[k + 1] = vecBuff.y
-        localPositions[k + 2] = vecBuff.z
-      }
-      const bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
-      // bvh.renderView = rvs[k]
-      this.bvhs.push(bvh)
-    }
+    this.batchObjects = batchObjects
+    this.getBoundingBox(this.bounds)
   }
 
   /* Core Cast Functions */
   public raycast(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): Intersection<Object3D<Event>>[] {
+  ): ExtendedIntersection[] {
     const res = []
     const rayBuff = new Ray()
-    this.bvhs.forEach((bvh: SpeckleMeshBVH) => {
+    rayBuff.copy(ray)
+    if (!rayBuff.intersectBox(this.bounds, SpeckleBatchBVH.vecBuff)) {
+      return res
+    }
+
+    this.batchObjects.forEach((batchObject: BatchObject) => {
       rayBuff.copy(ray)
-      const hits = bvh.raycast(this.transformInput(rayBuff), materialOrSide)
+      const hits = batchObject.bvh.raycast(this.transformInput(rayBuff), materialOrSide)
+      hits.forEach((hit) => {
+        ;(hit as ExtendedIntersection).batchObject = batchObject
+      })
       res.push(...hits)
     })
     res.forEach((value) => {
@@ -71,14 +54,24 @@ export class SpeckleBatchBVH {
   public raycastFirst(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): Intersection<Object3D<Event>> {
+  ): ExtendedIntersection {
     let res = null
     const rayBuff = new Ray()
-    for (let k = 0; k < this.bvhs.length; k++) {
+    rayBuff.copy(ray)
+    if (!rayBuff.intersectBox(this.bounds, SpeckleBatchBVH.vecBuff)) {
+      return res
+    }
+
+    for (let k = 0; k < this.batchObjects.length; k++) {
       rayBuff.copy(ray)
-      res = this.bvhs[k].raycastFirst(this.transformInput<Ray>(rayBuff), materialOrSide)
+      res = this.batchObjects[k].bvh.raycastFirst(
+        this.transformInput<Ray>(rayBuff),
+        materialOrSide
+      )
       if (res) {
-        res.point = this.transformOutput(res.point)
+        res.point = this.transformOutput(res.point)(
+          res as ExtendedIntersection
+        ).batchObject = this.batchObjects[k]
         return res
       }
     }
@@ -196,8 +189,8 @@ export class SpeckleBatchBVH {
     newCallbacks.traverseBoundsOrder = callbacks.traverseBoundsOrder
 
     let ret = false
-    this.bvhs.forEach((bvh: SpeckleMeshBVH) => {
-      ret ||= bvh.shapecast(newCallbacks)
+    this.batchObjects.forEach((batchObject: BatchObject) => {
+      ret ||= batchObject.bvh.shapecast(newCallbacks)
     })
     return ret
   }
@@ -205,8 +198,8 @@ export class SpeckleBatchBVH {
   public getBoundingBox(target: Box3) {
     target.makeEmpty()
     const scratchBox: Box3 = new Box3()
-    this.bvhs.forEach((bvh: SpeckleMeshBVH) => {
-      target.union(bvh.getBoundingBox(scratchBox))
+    this.batchObjects.forEach((batchObject: BatchObject) => {
+      target.union(batchObject.bvh.getBoundingBox(scratchBox))
     })
     return this.transformOutput(target)
   }

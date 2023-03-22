@@ -56,6 +56,7 @@ import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
 import SpeckleMesh from './objects/SpeckleMesh'
+import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -783,16 +784,18 @@ export default class SpeckleRenderer {
   }
 
   public queryHits(
-    results: Array<Intersection>
+    results: Array<ExtendedIntersection>
   ): Array<{ node: TreeNode; point: Vector3 }> {
     const rvs = []
     const points = []
     for (let k = 0; k < results.length; k++) {
-      const rv = results[k]['rv']
-      // const rv = this.batcher.getRenderView(
-      //   results[k].object.uuid,
-      //   results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-      // )
+      let rv = results[k].batchObject?.renderView
+      if (!rv) {
+        rv = this.batcher.getRenderView(
+          results[k].object.uuid,
+          results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+        )
+      }
       if (rv) {
         rvs.push(rv)
         points.push(results[k].point)
@@ -819,15 +822,17 @@ export default class SpeckleRenderer {
   }
 
   public queryHitIds(
-    results: Array<Intersection>
+    results: Array<ExtendedIntersection>
   ): Array<{ nodeId: string; point: Vector3 }> {
     const queryResult = []
     for (let k = 0; k < results.length; k++) {
-      const rv = results[k]['rv']
-      // const rv = this.batcher.getRenderView(
-      //   results[k].object.uuid,
-      //   results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-      // )
+      let rv = results[k].batchObject?.renderView
+      if (!rv) {
+        rv = this.batcher.getRenderView(
+          results[k].object.uuid,
+          results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+        )
+      }
       if (rv) {
         queryResult.push({ nodeId: rv.renderData.id, point: results[k].point })
       }
@@ -1298,6 +1303,8 @@ export default class SpeckleRenderer {
         dir.normalize().multiplyScalar(time * 100)
         const mat = new Matrix4().makeTranslation(dir.x, dir.y, dir.z)
         objects[i].transform.copy(mat)
+        const matInv = new Matrix4().copy(mat).invert()
+        objects[i].transformInv.copy(matInv)
       }
       batches[k].mesh.transformsDirty = true
     }

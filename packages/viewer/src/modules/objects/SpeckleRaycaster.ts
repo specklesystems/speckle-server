@@ -1,9 +1,10 @@
-import { Intersection, Object3D, Raycaster } from 'three'
+import { Intersection, Material, Object3D, Raycaster } from 'three'
+import { BatchObject } from '../batching/BatchObject'
 import { ObjectLayers } from '../SpeckleRenderer'
-import { NodeRenderView } from '../tree/NodeRenderView'
 
 export interface ExtendedIntersection extends Intersection {
-  renderView?: NodeRenderView
+  batchObject?: BatchObject
+  material?: Material
 }
 
 export class SpeckleRaycaster extends Raycaster {
