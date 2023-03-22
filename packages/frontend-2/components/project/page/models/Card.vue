@@ -34,7 +34,7 @@
             {{ path }}
           </div>
           <div class="font-bold truncate text-foreground flex-shrink min-w-0">
-            testtest{{ model.displayName }}
+            {{ model.displayName }}
           </div>
         </div>
         <div class="flex items-center">
