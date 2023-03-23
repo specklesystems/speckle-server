@@ -8,13 +8,6 @@
         <!-- <FormButton size="sm" rounded>New</FormButton> -->
       </div>
       <div class="flex items-center space-x-2">
-        <FormButton
-          v-if="canContribute"
-          :icon-left="PlusIcon"
-          @click="showNewDialog = true"
-        >
-          New
-        </FormButton>
         <FormTextInput
           v-model="search"
           name="modelsearch"
@@ -28,8 +21,15 @@
         <div
           class="flex items-center justify-center rounded bg-foundation h-8 w-8 shadow"
         >
-          <LayoutGridListToggle v-model="gridOrList" />
+          <LayoutGridListToggle v-model="gridOrList" v-tippy="'Swap Grid/Card View'" />
         </div>
+        <FormButton
+          v-if="canContribute"
+          :icon-left="PlusIcon"
+          @click="showNewDialog = true"
+        >
+          New
+        </FormButton>
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />

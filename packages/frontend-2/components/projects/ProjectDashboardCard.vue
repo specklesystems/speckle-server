@@ -7,8 +7,10 @@
         class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
       >
         <div class="text-2xl font-bold group-hover:text-primary transition">
-          <NuxtLink :to="projectRoute(project.id)">{{ project.name }}</NuxtLink>
-          <UserAvatarGroup :users="teamUsers" :max-count="2" />
+          <NuxtLink :to="projectRoute(project.id)" class="break-words">
+            {{ project.name }}
+          </NuxtLink>
+          <UserAvatarGroup :users="teamUsers" :max-count="2" class="mt-2" />
         </div>
         <div class="flex-grow"></div>
         <div class="text-xs text-foreground-2 flex items-center">

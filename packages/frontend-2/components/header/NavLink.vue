@@ -1,17 +1,17 @@
 <template>
-  <div class="flex items-center">
-    <div v-if="separator">
-      <ChevronRightIcon class="text-foreground hidden sm:flex w-5 h-5 mt-[1px] mx-1" />
-    </div>
-    <div>
-      <NuxtLink
-        :to="to"
-        class="text-sm rounded-full transition text-foreground hover:text-primary-focus"
-        active-class="text-primary font-bold"
-      >
+  <div class="transition text-foreground hover:text-primary-focus">
+    <NuxtLink
+      :to="to"
+      class="flex items-center text-sm"
+      active-class="text-primary font-bold"
+    >
+      <div v-if="separator">
+        <ChevronRightIcon class="hidden sm:flex w-4 h-4 mt-[3px] mx-1" />
+      </div>
+      <div>
         {{ name || to }}
-      </NuxtLink>
-    </div>
+      </div>
+    </NuxtLink>
   </div>
 </template>
 <script setup lang="ts">

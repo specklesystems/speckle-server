@@ -1,6 +1,11 @@
 <template>
   <NuxtErrorBoundary @error="onError">
-    <ProjectsInviteBanner v-if="invite" :invite="invite" @processed="onProcessed" />
+    <ProjectsInviteBanner
+      v-if="invite"
+      :invite="invite"
+      :show-stream-name="false"
+      @processed="onProcessed"
+    />
   </NuxtErrorBoundary>
 </template>
 <script setup lang="ts">
