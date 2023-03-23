@@ -300,8 +300,8 @@ export default class SpeckleRenderer {
     })
 
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE
+      ObjectLayers.STREAM_CONTENT_MESH
+      // ObjectLayers.STREAM_CONTENT_LINE
     ])
     let restoreVisibility
     this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
