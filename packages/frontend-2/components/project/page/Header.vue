@@ -38,11 +38,12 @@
           :name="project.name"
         ></HeaderNavLink>
       </Portal>
-      <Portal to="primary-actions">
+      <!-- Note: commented out until we scope it properly. -->
+      <!-- <Portal to="primary-actions">
         <div class="flex space-x-4">
           <FormButton :icon-left="ShareIcon">Share</FormButton>
         </div>
-      </Portal>
+      </Portal> -->
     </div>
     <div class="mt-3 flex space-x-2 group">
       <div class="shrink-0 mt-0.5 text-foreground-2">
