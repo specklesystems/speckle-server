@@ -226,6 +226,8 @@ export type Comment = {
   updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
+  /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
+  viewerResources: Array<ViewerResourceItem>;
 };
 
 
@@ -1655,6 +1657,7 @@ export type QueryUserPwdStrengthArgs = {
 export type QueryUserSearchArgs = {
   archived?: InputMaybe<Scalars['Boolean']>;
   cursor?: InputMaybe<Scalars['String']>;
+  emailOnly?: InputMaybe<Scalars['Boolean']>;
   limit?: Scalars['Int'];
   query: Scalars['String'];
 };
@@ -3085,6 +3088,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   text?: Resolver<ResolversTypes['SmartTextEditorValue'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   viewedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3483,7 +3487,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   testNumber?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
-  userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'limit' | 'query'>>;
+  userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {

@@ -3,6 +3,7 @@ import { GenericValidateFunction } from 'vee-validate'
 import { isNullOrUndefined } from '@speckle/shared'
 
 export const VALID_HTTP_URL = /^https?:\/\//
+export const VALID_EMAIL = /^[\w-_.]+@[\w-_.]+$/
 
 /**
  * Note about new validators:
@@ -14,9 +15,7 @@ export const VALID_HTTP_URL = /^https?:\/\//
  * E-mail validation rule (not perfect, but e-mails should be validated by sending out confirmation e-mails anyway)
  */
 export const isEmail: GenericValidateFunction<string> = (val) =>
-  (val || '').match(/^[\w-_.]+@[\w-_.]+$/)
-    ? true
-    : 'Value should be a valid e-mail address'
+  (val || '').match(VALID_EMAIL) ? true : 'Value should be a valid e-mail address'
 
 export const isRequired: GenericValidateFunction<unknown> = (val) => {
   if (isString(val)) {

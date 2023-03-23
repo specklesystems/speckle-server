@@ -20,6 +20,7 @@
         :placeholder="prompt || 'Press enter to send'"
         :schema-options="{ multiLine: false }"
         :disabled="disabled"
+        :project-id="projectId"
         @submit="onSubmit"
         @created="$emit('created')"
         @focusin="setGlobalFocus(true)"

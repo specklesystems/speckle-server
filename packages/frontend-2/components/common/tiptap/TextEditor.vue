@@ -3,6 +3,7 @@
     :class="['text-editor flex flex-col', !!readonly ? 'text-editor--read-only' : '']"
   >
     <EditorContent
+      ref="editorContentRef"
       class="simple-scrollbar"
       :editor="editor"
       :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
@@ -23,6 +24,7 @@ import {
 } from '~~/lib/common/helpers/tiptap'
 import { Nullable } from '@speckle/shared'
 import { userProfileRoute } from '~~/lib/common/helpers/route'
+import { onKeyDown } from '@vueuse/core'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
@@ -38,7 +40,13 @@ const props = defineProps<{
   disabled?: boolean
   placeholder?: string
   readonly?: boolean
+  /**
+   * Used to invite users to project when their emails are mentioned
+   */
+  projectId?: string
 }>()
+
+const editorContentRef = ref(null as Nullable<HTMLElement>)
 
 const isMultiLine = computed(() => !!props.schemaOptions?.multiLine)
 const isEditable = computed(() => !props.disabled && !props.readonly)
@@ -49,7 +57,8 @@ const editor = new Editor({
   autofocus: props.autofocus,
   editable: isEditable.value,
   extensions: getEditorExtensions(props.schemaOptions, {
-    placeholder: props.placeholder
+    placeholder: props.placeholder,
+    projectId: props.projectId
   }),
   onUpdate: () => {
     const data = getData()
@@ -89,6 +98,16 @@ const onMentionClick = (userId: string, e: MouseEvent) => {
     window.location.href = path
   }
 }
+
+onKeyDown(
+  'Escape',
+  (e) => {
+    // TipTap handles Escape, we don't want this to bubble up and close the thread
+    e.stopImmediatePropagation()
+    e.stopPropagation()
+  },
+  { target: editorContentRef }
+)
 
 watch(
   () => hasEnterTracking.value,

@@ -27,5 +27,6 @@ export type CommentGraphQLReturn = Omit<
   | 'text'
   | 'hasParent'
   | 'parent'
+  | 'viewerResources'
 > &
   CommentRecord

@@ -81,7 +81,8 @@ module.exports = {
         args.query,
         args.limit,
         args.cursor,
-        args.archived
+        args.archived,
+        args.emailOnly
       )
       return { cursor, items: users }
     },
