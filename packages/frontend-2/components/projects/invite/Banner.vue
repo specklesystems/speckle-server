@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row py-2 px-2 rounded transition bg-blue-500/0 hover:bg-blue-500/10"
+    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row py-5 sm:py-2 px-2 rounded transition"
   >
     <div class="flex space-x-2 items-center grow text-sm">
       <UserAvatar :user="invite.invitedBy" />
@@ -13,14 +13,9 @@
     </div>
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
-        <FormButton
-          v-tippy="'Discard invite'"
-          size="sm"
-          color="danger"
-          @click="useInvite(false)"
-        >
+        <FormButton size="sm" color="danger" text @click="useInvite(false)">
           <!-- <XMarkIcon class="w-4 h-4" /> -->
-          Refuse
+          Decline
         </FormButton>
         <FormButton
           size="sm"

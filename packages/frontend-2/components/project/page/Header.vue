@@ -4,10 +4,10 @@
       class="relative mb-3 mt-10 flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between"
     >
       <div class="flex group">
-        <label class="max-w-full">
+        <label class="max-w-full overflow-hidden">
           <div class="sr-only">Edit title</div>
           <div
-            class="grow-textarea"
+            class="grow-textarea max-w-96 overflow-hidden"
             :data-replicated-value="titleState"
             :class="titleInputClasses"
           >
@@ -29,7 +29,7 @@
         </label>
         <PencilIcon
           v-if="canEdit"
-          class="shrink-0 ml-2 mt-2 w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
+          class="shrink-0 ml-2 mt-2 w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
       <Portal to="navigation">
@@ -46,7 +46,7 @@
     </div>
     <div class="mt-3 flex space-x-2 group">
       <div class="shrink-0 mt-0.5 text-foreground-2">
-        <InformationCircleIcon class="w-5 h-5" />
+        <InformationCircleIcon class="hidden md:inline-block w-5 h-5" />
       </div>
       <label>
         <div class="sr-only">Edit description</div>

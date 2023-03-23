@@ -11,9 +11,11 @@
           class="shadow hover:shadow-xl w-full md:w-72 transition"
         />
         <div class="grow hidden md:flex"></div>
-        <ProjectPageStatsBlockVersions :project="project" />
-        <ProjectPageStatsBlockModels :project="project" />
-        <ProjectPageStatsBlockComments :project="project" />
+        <div class="grid grid-cols-3 gap-2">
+          <ProjectPageStatsBlockVersions :project="project" />
+          <ProjectPageStatsBlockModels :project="project" />
+          <ProjectPageStatsBlockComments :project="project" />
+        </div>
       </div>
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->

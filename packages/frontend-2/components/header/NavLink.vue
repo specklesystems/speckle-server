@@ -6,9 +6,9 @@
       active-class="text-primary font-bold"
     >
       <div v-if="separator">
-        <ChevronRightIcon class="hidden sm:flex w-4 h-4 mt-[3px] mx-1" />
+        <ChevronRightIcon class="flex w-4 h-4 mt-[3px] mx-0 md:mx-1" />
       </div>
-      <div>
+      <div class="max-w-[120px] md:max-w-[200px] lg:max-w-[300px] truncate">
         {{ name || to }}
       </div>
     </NuxtLink>
