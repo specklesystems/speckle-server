@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Menu as="div" class="ml-2 flex items-center">
+    <Menu as="div" class="flex items-center">
       <MenuButton v-slot="{ open: menuOpen }" as="div">
         <div class="cursor-pointer">
           <span class="sr-only">Open notifications menu</span>

@@ -36,7 +36,7 @@
       <ViewerScope :state="state">
         <div
           v-show="activeUserAvatars.length > 0"
-          class="rounded-xl mr-2 px-1 py-1 border-1 border-primary flex space-x-1 items-center"
+          class="px-1 py-1 flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
           <template v-for="user in activeUserAvatars" :key="user.id">

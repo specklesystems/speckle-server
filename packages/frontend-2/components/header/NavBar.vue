@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="fixed top-0 h-14 bg-foundation max-w-full w-full shadow hover:shadow-md transition z-50"
+    class="fixed top-0 h-14 bg-foundation max-w-full w-full shadow hover:shadow-md transition z-20"
   >
     <div class="px-4">
       <div class="flex items-center h-14 transition-all justify-between">
@@ -22,8 +22,9 @@
               <PortalTarget name="secondary-actions"></PortalTarget>
               <PortalTarget name="primary-actions"></PortalTarget>
             </div>
-            <!-- Profile dropdown -->
+            <!-- Notifications dropdown -->
             <HeaderNavNotifications />
+            <!-- Profile dropdown -->
             <HeaderNavUserMenu />
           </div>
         </div>
