@@ -214,10 +214,10 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const models = computed(() => props.project.models?.items || [])
-const maxModels = computed(() => {
-  if (props.project.models.totalCount >= 5) return models.value.slice(0, 3)
-  else return models.value
-})
+// const maxModels = computed(() => {
+//   if (props.project.models.totalCount >= 5) return models.value.slice(0, 3)
+//   else return models.value
+// })
 
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 </script>
