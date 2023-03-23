@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-full">
-    <HeaderNavBar class="mb-6" />
+    <HeaderNavBar />
     <!-- <AuthVerificationReminder class="my-4 layout-container" /> -->
-    <main class="my-4 layout-container pb-20">
+    <main class="my-4 layout-container pb-20 mt-20">
       <slot />
     </main>
     <SingletonManagers />
