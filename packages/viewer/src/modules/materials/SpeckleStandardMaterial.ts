@@ -14,6 +14,8 @@ import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 
+export type Uniforms = Record<string, any>
+
 class SpeckleStandardMaterial extends MeshStandardMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff0: Vector3 = new Vector3()
@@ -28,11 +30,22 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     return speckleStandardFrag
   }
 
+  protected get uniformsDef(): Uniforms {
+    return {
+      uViewer_high: new Vector3(),
+      uViewer_low: new Vector3(),
+      rteShadowMatrix: new Matrix4(),
+      uShadowViewer_high: new Vector3(),
+      uShadowViewer_low: new Vector3(),
+      uTransforms: [new Matrix4()],
+      tTransforms: null
+    }
+  }
+
   constructor(parameters, defines = []) {
     super(parameters)
 
-    this.defineUniforms()
-    this['uniforms'] = this.getAllUniforms()
+    this.setUniforms(this.uniformsDef)
 
     if (defines) {
       this.defines = {}
@@ -40,83 +53,45 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ' '
     }
+
+    this.onBeforeCompile = this.onCompile
   }
 
-  protected defineUniforms() {
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.rteShadowMatrix = {
-      value: new Matrix4()
-    }
-    this.userData.uShadowViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uShadowViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.uTransforms = {
-      value: [new Matrix4()]
-    }
-    this.userData.tTransforms = {
-      value: null
-    }
-  }
-
-  protected getAllUniforms() {
-    return UniformsUtils.merge([
-      ShaderLib.standard.uniforms,
-      {
-        uViewer_high: {
-          value: this.userData.uViewer_high.value
-        },
-        uViewer_low: {
-          value: this.userData.uViewer_low.value
-        },
-        rteShadowMatrix: {
-          value: this.userData.rteShadowMatrix.value
-        },
-        uShdowViewer_high: {
-          value: this.userData.uShadowViewer_high.value
-        },
-        uShadowViewer_low: {
-          value: this.userData.uShadowViewer_low.value
-        },
-        uTransforms: {
-          value: this.userData.uTransforms.value
-        },
-        tTransforms: {
-          value: this.userData.tTransforms.value
-        }
+  protected setUniforms(def: Uniforms) {
+    for (const k in def) {
+      this.userData[k] = {
+        value: def[k]
       }
-    ])
+    }
+    this['uniforms'] = UniformsUtils.merge([ShaderLib.standard.uniforms, this.userData])
   }
 
-  public onBeforeCompile(shader, renderer) {
-    shader.uniforms.uViewer_high = this.userData.uViewer_high
-    shader.uniforms.uViewer_low = this.userData.uViewer_low
-    shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
-    shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
-    shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
-    shader.uniforms.uTransforms = this.userData.uTransforms
-    shader.uniforms.tTransforms = this.userData.tTransforms
+  protected onCompile(shader, renderer) {
+    for (const k in this.uniformsDef) {
+      shader.uniforms[k] = this.userData[k]
+    }
     shader.vertexShader = this.vertexShader
     shader.fragmentShader = this.fragmentShader
+  }
+
+  /** We need a unique key per program */
+  public customProgramCacheKey() {
+    /** Bruh... */
+    // return this.onBeforeCompile.toString()
+    return this.constructor.name
   }
 
   public copy(source) {
     super.copy(source)
     this.userData = {}
-    this.defineUniforms()
+    this.setUniforms(this.uniformsDef)
 
     Object.assign(this.defines, source.defines)
 
     return this
   }
 
+  /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
     SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
     SpeckleStandardMaterial.matBuff.elements[12] = 0
@@ -144,7 +119,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.needsUpdate = true
   }
 
-  private getUniforms(gl, material: Material) {
+  private getRuntimeUniforms(gl, material: Material) {
     const materialProperties = gl.properties.get(this)
     if (materialProperties.currentProgram) {
       console.warn(materialProperties.currentProgram.getUniforms())

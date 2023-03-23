@@ -4,7 +4,7 @@
 import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
 import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
 import { UniformsUtils, Texture, NearestFilter } from 'three'
-import SpeckleStandardMaterial from './SpeckleStandardMaterial'
+import SpeckleStandardMaterial, { Uniforms } from './SpeckleStandardMaterial'
 
 class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
   protected get vertexShader(): string {
@@ -15,36 +15,12 @@ class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
     return speckleStandardColoredFrag
   }
 
+  protected get uniformsDef(): Uniforms {
+    return { ...super.uniformsDef, gradientRamp: null }
+  }
+
   constructor(parameters, defines = []) {
     super(parameters, defines)
-  }
-
-  protected defineUniforms() {
-    super.defineUniforms()
-    this.userData.gradientRamp = {
-      value: null
-    }
-  }
-
-  protected getAllUniforms() {
-    return UniformsUtils.merge([
-      super.defineUniforms(),
-      {
-        gradientRamp: {
-          value: this.userData.gradientRamp.value
-        }
-      }
-    ])
-  }
-
-  public onBeforeCompile(shader, renderer) {
-    super.onBeforeCompile(shader, renderer)
-    shader.uniforms.gradientRamp = this.userData.gradientRamp
-  }
-
-  copy(source) {
-    super.copy(source)
-    return this
   }
 
   public setGradientTexture(texture: Texture) {
