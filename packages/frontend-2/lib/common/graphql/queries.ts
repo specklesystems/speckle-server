@@ -1,8 +1,14 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const mentionsUserSearchQuery = graphql(`
-  query MentionsUserSearch($query: String!) {
-    userSearch(query: $query, limit: 5, cursor: null, archived: false) {
+  query MentionsUserSearch($query: String!, $emailOnly: Boolean = false) {
+    userSearch(
+      query: $query
+      limit: 5
+      cursor: null
+      archived: false
+      emailOnly: $emailOnly
+    ) {
       items {
         id
         name

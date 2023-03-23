@@ -38,9 +38,8 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }],
-      // i've no idea why, but the same version of prosemirror-state gets bundled twice in the build,
-      // breaking comment editors
-      dedupe: ['prosemirror-state']
+      // i've no idea why, but the same version of various prosemirror deps gets bundled twice
+      dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model']
     },
     ...(process.env.IS_STORYBOOK_BUILD
       ? {}

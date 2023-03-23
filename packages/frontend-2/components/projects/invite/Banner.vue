@@ -106,6 +106,10 @@ const useInvite = async (accept: boolean) => {
 
 const onLoginClick = () => {
   postAuthRedirect.setCurrentRoute()
-  goToLogin()
+  goToLogin({
+    query: {
+      token: token.value || undefined
+    }
+  })
 }
 </script>

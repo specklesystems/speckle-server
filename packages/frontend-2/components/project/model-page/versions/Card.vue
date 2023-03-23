@@ -74,7 +74,6 @@ import { ProjectModelPageVersionsCardVersionFragment } from '~~/lib/common/gener
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
-import { ChatBubbleLeftEllipsisIcon } from '@heroicons/vue/24/solid'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 
 graphql(`

@@ -218,6 +218,8 @@ export type Comment = {
   updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
+  /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
+  viewerResources: Array<ViewerResourceItem>;
 };
 
 
@@ -1647,6 +1649,7 @@ export type QueryUserPwdStrengthArgs = {
 export type QueryUserSearchArgs = {
   archived?: InputMaybe<Scalars['Boolean']>;
   cursor?: InputMaybe<Scalars['String']>;
+  emailOnly?: InputMaybe<Scalars['Boolean']>;
   limit?: Scalars['Int'];
   query: Scalars['String'];
 };
