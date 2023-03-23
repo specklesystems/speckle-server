@@ -72,7 +72,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex items-center  justify-between px-2 py-3 text-sm text-primary cursor-pointer transition'
               ]"
-              :to="loginRoute"
+              :to="loginUrl"
             >
               Sign In
               <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
@@ -98,6 +98,7 @@ import {
   EnvelopeIcon
 } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
+import { Optional } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
@@ -108,8 +109,11 @@ const { logout } = useAuthManager()
 const { activeUser } = useActiveUser()
 const { isDarkTheme, setTheme } = useTheme()
 const { result } = useQuery(serverVersionInfoQuery)
+const route = useRoute()
+const router = useRouter()
 
 const showInviteDialog = ref(false)
+const token = computed(() => route.query.token as Optional<string>)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => result.value?.serverInfo.version)
@@ -125,4 +129,13 @@ const onThemeClick = () => {
     setTheme(AppTheme.Dark)
   }
 }
+
+const loginUrl = computed(() =>
+  router.resolve({
+    path: loginRoute,
+    query: {
+      token: token.value || undefined
+    }
+  })
+)
 </script>
