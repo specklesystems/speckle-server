@@ -327,6 +327,20 @@ export default class SpeckleRenderer {
 
     this.batcher.update(deltaTime)
 
+    this.updateRTEShadows()
+    this.updateTransforms()
+    this.updateFrustum()
+
+    this.pipeline.update(this)
+
+    if (this.sunConfiguration.shadowcatcher) {
+      this._shadowcatcher.update(this._scene)
+    }
+  }
+
+  private updateRTEShadows() {
+    if (!this._renderer.shadowMap.needsUpdate) return
+
     const viewer = new Vector3()
     const viewerLow = new Vector3()
     const viewerHigh = new Vector3()
@@ -344,60 +358,77 @@ export default class SpeckleRenderer {
     rteView.elements[13] = 0
     rteView.elements[14] = 0
 
+    const shadowMatrix = new Matrix4()
+    // Lovely
+    shadowMatrix.set(
+      0.5,
+      0.0,
+      0.0,
+      0.5,
+      0.0,
+      0.5,
+      0.0,
+      0.5,
+      0.0,
+      0.0,
+      0.5,
+      0.5,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    )
+
+    shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
+    shadowMatrix.multiply(rteView)
+
+    const rteModelView = new Matrix4()
     const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
     for (let k = 0; k < meshBatches.length; k++) {
       const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
-      if (meshBatch.isMesh) {
-        meshBatch.updateTransformsUniform()
-        const rteModelView = new Matrix4()
-        rteModelView.copy(rteView)
-        rteModelView.multiply(meshBatch.matrixWorld)
-        const depthMaterial: SpeckleDepthMaterial =
-          meshBatch.customDepthMaterial as SpeckleDepthMaterial
-        if (depthMaterial) {
-          depthMaterial.userData.uViewer_low.value.copy(viewerLow)
-          depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
-          depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
-          meshBatch.updateMaterialTransformsUniform(depthMaterial)
-          depthMaterial.needsUpdate = true
-        }
 
-        const shadowMatrix = new Matrix4()
-        shadowMatrix.set(
-          0.5,
-          0.0,
-          0.0,
-          0.5,
-          0.0,
-          0.5,
-          0.0,
-          0.5,
-          0.0,
-          0.0,
-          0.5,
-          0.5,
-          0.0,
-          0.0,
-          0.0,
-          1.0
-        )
+      rteModelView.copy(rteView)
+      rteModelView.multiply(meshBatch.matrixWorld)
+      /** Shadowmap depth material does not go thorugh the normal flow. It's onBeforeRender is not getting called
+       *  That's why we're updating the RTE related uniforms manually here
+       */
+      const depthMaterial: SpeckleDepthMaterial =
+        meshBatch.customDepthMaterial as SpeckleDepthMaterial
+      if (depthMaterial) {
+        depthMaterial.userData.uViewer_low.value.copy(viewerLow)
+        depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
+        depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
+        depthMaterial.needsUpdate = true
+      }
 
-        shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
-        shadowMatrix.multiply(rteView)
-        let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] =
-          meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
-        material = Array.isArray(material) ? material : [material]
-        for (let k = 0; k < material.length; k++) {
-          if (material[k] instanceof SpeckleStandardMaterial) {
-            material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
-            material[k].userData.uShadowViewer_low.value.copy(viewerLow)
-            material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
-            material[k].needsUpdate = true
-          }
+      let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] =
+        meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
+      material = Array.isArray(material) ? material : [material]
+      for (let k = 0; k < material.length; k++) {
+        if (material[k].userData.rteShadowMatrix) {
+          material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
+          material[k].userData.uShadowViewer_low.value.copy(viewerLow)
+          material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
+          material[k].needsUpdate = true
         }
       }
     }
+  }
 
+  private updateTransforms() {
+    const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
+    for (let k = 0; k < meshBatches.length; k++) {
+      const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
+      meshBatch.updateTransformsUniform()
+      const depthMaterial: SpeckleDepthMaterial =
+        meshBatch.customDepthMaterial as SpeckleDepthMaterial
+      if (depthMaterial) {
+        meshBatch.updateMaterialTransformsUniform(depthMaterial)
+      }
+    }
+  }
+
+  private updateFrustum() {
     const v = new Vector3()
     const box = this.sceneBox
     const camPos = new Vector3().copy(
@@ -424,11 +455,6 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.activeCam.camera.far = d * 2
     this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
-
-    this.pipeline.update(this)
-    if (this.sunConfiguration.shadowcatcher) {
-      this._shadowcatcher.update(this._scene)
-    }
   }
 
   public resetPipeline(force = false) {

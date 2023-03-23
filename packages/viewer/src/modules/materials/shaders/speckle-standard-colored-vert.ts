@@ -5,6 +5,9 @@ export const speckleStandardColoredVert = /* glsl */ `
     attribute vec3 position_low;
     uniform vec3 uViewer_high;
     uniform vec3 uViewer_low;
+    uniform mat4 rteShadowMatrix;
+    uniform vec3 uShadowViewer_high;
+    uniform vec3 uShadowViewer_low;
 #endif
 
 attribute float objIndex;
@@ -138,10 +141,14 @@ void main() {
     #include <skinning_vertex>
     #include <displacementmap_vertex>
     //#include <project_vertex> // EDITED CHUNK
+    mat4 objectMatrix;
+    #ifdef TRANSFORM_STORAGE
+        objectMatrix = objectTransform();
+    #endif
     #ifdef USE_RTE
-        vec4 mvPosition = objectTransform() * computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
+        vec4 mvPosition = objectMatrix * computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
     #else
-        vec4 mvPosition = objectTransform() * vec4( transformed, 1.0 );
+        vec4 mvPosition = objectMatrix * vec4( transformed, 1.0 );
     #endif
     
     #ifdef USE_INSTANCING
@@ -160,7 +167,50 @@ void main() {
     vViewPosition = - mvPosition.xyz;
 
     #include <worldpos_vertex>
-    #include <shadowmap_vertex>
+    // #include <shadowmap_vertex>// EDITED CHUNK
+    #ifdef USE_SHADOWMAP
+	#if NUM_DIR_LIGHT_SHADOWS > 0 || NUM_SPOT_LIGHT_SHADOWS > 0 || NUM_POINT_LIGHT_SHADOWS > 0
+		// Offsetting the position used for querying occlusion along the world normal can be used to reduce shadow acne.
+		vec3 shadowWorldNormal = inverseTransformDirection( transformedNormal, viewMatrix );
+		vec4 shadowWorldPosition;
+	#endif
+	#if NUM_DIR_LIGHT_SHADOWS > 0
+	#pragma unroll_loop_start
+	for ( int i = 0; i < NUM_DIR_LIGHT_SHADOWS; i ++ ) {
+        #ifdef USE_RTE
+            vec4 shadowPosition = objectMatrix * computeRelativePositionSeparate(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
+            shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
+            vDirectionalShadowCoord[ i ] = rteShadowMatrix * shadowWorldPosition;
+        #else
+            shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
+            vDirectionalShadowCoord[ i ] = directionalShadowMatrix[ i ] * shadowWorldPosition;
+        #endif
+        
+	}
+	#pragma unroll_loop_end
+	#endif
+	#if NUM_SPOT_LIGHT_SHADOWS > 0
+	#pragma unroll_loop_start
+	for ( int i = 0; i < NUM_SPOT_LIGHT_SHADOWS; i ++ ) {
+		shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * spotLightShadows[ i ].shadowNormalBias, 0 );
+		vSpotShadowCoord[ i ] = spotShadowMatrix[ i ] * shadowWorldPosition;
+	}
+	#pragma unroll_loop_end
+	#endif
+	#if NUM_POINT_LIGHT_SHADOWS > 0
+	#pragma unroll_loop_start
+	for ( int i = 0; i < NUM_POINT_LIGHT_SHADOWS; i ++ ) {
+		shadowWorldPosition = worldPosition + vec4( shadowWorldNormal * pointLightShadows[ i ].shadowNormalBias, 0 );
+		vPointShadowCoord[ i ] = pointShadowMatrix[ i ] * shadowWorldPosition;
+	}
+	#pragma unroll_loop_end
+	#endif
+	/*
+	#if NUM_RECT_AREA_LIGHTS > 0
+		// TODO (abelnation): update vAreaShadowCoord with area light info
+	#endif
+	*/
+    #endif
     #include <fog_vertex>
 
 #ifdef USE_TRANSMISSION

@@ -20,9 +20,29 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
 
+  protected get vertexShader(): string {
+    return speckleStandardVert
+  }
+
+  protected get fragmentShader(): string {
+    return speckleStandardFrag
+  }
+
   constructor(parameters, defines = []) {
     super(parameters)
 
+    this.defineUniforms()
+    this['uniforms'] = this.getAllUniforms()
+
+    if (defines) {
+      this.defines = {}
+    }
+    for (let k = 0; k < defines.length; k++) {
+      this.defines[defines[k]] = ' '
+    }
+  }
+
+  protected defineUniforms() {
     this.userData.uViewer_high = {
       value: new Vector3()
     }
@@ -44,9 +64,10 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.tTransforms = {
       value: null
     }
-    ;(this as any).vertProgram = speckleStandardVert
-    ;(this as any).fragProgram = speckleStandardFrag
-    ;(this as any).uniforms = UniformsUtils.merge([
+  }
+
+  protected getAllUniforms() {
+    return UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {
         uViewer_high: {
@@ -72,58 +93,31 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
         }
       }
     ])
-
-    this.onBeforeCompile = function (shader) {
-      shader.uniforms.uViewer_high = this.userData.uViewer_high
-      shader.uniforms.uViewer_low = this.userData.uViewer_low
-      shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
-      shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
-      shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
-      shader.uniforms.uTransforms = this.userData.uTransforms
-      shader.uniforms.tTransforms = this.userData.tTransforms
-      shader.vertexShader = this.vertProgram
-      shader.fragmentShader = this.fragProgram
-    }
-
-    if (defines) {
-      this.defines = {}
-    }
-    for (let k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ' '
-    }
   }
 
-  copy(source) {
+  public onBeforeCompile(shader, renderer) {
+    shader.uniforms.uViewer_high = this.userData.uViewer_high
+    shader.uniforms.uViewer_low = this.userData.uViewer_low
+    shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
+    shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
+    shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
+    shader.uniforms.uTransforms = this.userData.uTransforms
+    shader.uniforms.tTransforms = this.userData.tTransforms
+    shader.vertexShader = this.vertexShader
+    shader.fragmentShader = this.fragmentShader
+  }
+
+  public copy(source) {
     super.copy(source)
     this.userData = {}
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.rteShadowMatrix = {
-      value: new Matrix4()
-    }
-    this.userData.uShadowViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uShadowViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.uTransforms = {
-      value: [new Matrix4()]
-    }
-    this.userData.tTransforms = {
-      value: null
-    }
+    this.defineUniforms()
 
-    this.defines['USE_RTE'] = ' '
+    Object.assign(this.defines, source.defines)
 
     return this
   }
 
-  onBeforeRender(_this, scene, camera, geometry, object, group) {
+  public onBeforeRender(_this, scene, camera, geometry, object, group) {
     SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
     SpeckleStandardMaterial.matBuff.elements[12] = 0
     SpeckleStandardMaterial.matBuff.elements[13] = 0
