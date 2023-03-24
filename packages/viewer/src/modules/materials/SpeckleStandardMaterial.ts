@@ -49,9 +49,9 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
     if (defines) {
       this.defines = {}
-    }
-    for (let k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ' '
+      for (let k = 0; k < defines.length; k++) {
+        this.defines[defines[k]] = ' '
+      }
     }
 
     this.onBeforeCompile = this.onCompile
@@ -114,7 +114,9 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
     this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
-    ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
+
+    if (object.updateMaterialTransformsUniform)
+      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }

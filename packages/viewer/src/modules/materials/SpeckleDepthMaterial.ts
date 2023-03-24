@@ -8,6 +8,7 @@ import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import MeshBatch from '../batching/MeshBatch'
 import SpeckleMesh from '../objects/SpeckleMesh'
+import { Uniforms } from './SpeckleStandardMaterial'
 
 class SpeckleDepthMaterial extends MeshDepthMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
@@ -15,73 +16,63 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
   private static readonly vecBuff1: Vector3 = new Vector3()
   private static readonly vecBuff2: Vector3 = new Vector3()
 
+  protected get vertexShader(): string {
+    return speckleDepthVert
+  }
+
+  protected get fragmentShader(): string {
+    return speckleDepthFrag
+  }
+
+  protected get uniformsDef(): Uniforms {
+    return {
+      uViewer_high: new Vector3(),
+      uViewer_low: new Vector3(),
+      rteModelViewMatrix: new Matrix4(),
+      near: 0,
+      far: 0,
+      uTransforms: [new Matrix4()],
+      tTransforms: null
+    }
+  }
+
   constructor(parameters, defines = []) {
     super(parameters)
 
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.rteModelViewMatrix = {
-      value: new Matrix4()
-    }
-    this.userData.near = { value: 0 }
-    this.userData.far = { value: 0 }
-    this.userData.uTransforms = {
-      value: [new Matrix4()]
-    }
-    this.userData.tTransforms = {
-      value: null
-    }
-    ;(this as any).vertProgram = speckleDepthVert
-    ;(this as any).fragProgram = speckleDepthFrag
-    ;(this as any).uniforms = UniformsUtils.merge([
-      ShaderLib.standard.uniforms,
-      {
-        uViewer_high: {
-          value: this.userData.uViewer_high.value
-        },
-        uViewer_low: {
-          value: this.userData.uViewer_low.value
-        },
-        rteModelViewMatrix: {
-          value: this.userData.rteModelViewMatrix.value
-        },
-        near: {
-          value: this.userData.near.value
-        },
-        far: {
-          value: this.userData.far.value
-        },
-        uTransforms: {
-          value: this.userData.uTransforms.value
-        },
-        tTransforms: {
-          value: this.userData.tTransforms.value
-        }
-      }
-    ])
-
-    this.onBeforeCompile = function (shader) {
-      shader.uniforms.uViewer_high = this.userData.uViewer_high
-      shader.uniforms.uViewer_low = this.userData.uViewer_low
-      shader.uniforms.rteModelViewMatrix = this.userData.rteModelViewMatrix
-      shader.uniforms.near = this.userData.near
-      shader.uniforms.far = this.userData.far
-      shader.uniforms.uTransforms = this.userData.uTransforms
-      shader.uniforms.tTransforms = this.userData.tTransforms
-      shader.vertexShader = this.vertProgram
-      shader.fragmentShader = this.fragProgram
-    }
+    this.setUniforms(this.uniformsDef)
 
     if (defines) {
       this.defines = {}
+      for (let k = 0; k < defines.length; k++) {
+        this.defines[defines[k]] = ' '
+      }
     }
-    for (let k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ' '
+
+    this.onBeforeCompile = this.onCompile
+  }
+
+  protected setUniforms(def: Uniforms) {
+    for (const k in def) {
+      this.userData[k] = {
+        value: def[k]
+      }
     }
+    this['uniforms'] = UniformsUtils.merge([ShaderLib.depth.uniforms, this.userData])
+  }
+
+  protected onCompile(shader, renderer) {
+    for (const k in this.uniformsDef) {
+      shader.uniforms[k] = this.userData[k]
+    }
+    shader.vertexShader = this.vertexShader
+    shader.fragmentShader = this.fragmentShader
+  }
+
+  /** We need a unique key per program */
+  public customProgramCacheKey() {
+    /** Bruh... */
+    // return this.onBeforeCompile.toString()
+    return this.constructor.name
   }
 
   /** A note here:
@@ -102,30 +93,11 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     return ret
   }
 
-  copy(source) {
+  public copy(source) {
     super.copy(source)
     this.userData = {}
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.rteModelViewMatrix = {
-      value: new Matrix4()
-    }
-    this.userData.near = {
-      value: 0
-    }
-    this.userData.far = {
-      value: 0
-    }
-    this.userData.uTransforms = {
-      value: [new Matrix4()]
-    }
-    this.userData.tTransforms = {
-      value: null
-    }
+    this.setUniforms(this.uniformsDef)
+
     Object.assign(this.defines, source.defines)
 
     return this
@@ -173,8 +145,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
           this.userData.rteModelViewMatrix.value.elements
         )
     }
-    // console.log(materialProperties)
-    ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
+    if (object.updateMaterialTransformsUniform)
+      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }
