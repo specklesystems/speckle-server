@@ -21,6 +21,7 @@
         :schema-options="{ multiLine: false }"
         :disabled="disabled"
         :project-id="projectId"
+        :disable-invitation-cta="!canInvite"
         @submit="onSubmit"
         @created="$emit('created')"
         @focusin="setGlobalFocus(true)"
@@ -46,6 +47,7 @@ import { useAttachments } from '~~/lib/core/composables/fileUpload'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { isSuccessfullyUploaded } from '~~/lib/core/api/blobStorage'
 import { useTextInputGlobalFocus } from '~~/composables/states'
+import { canInviteToProject } from '~~/lib/projects/helpers/permissions'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: Optional<CommentEditorValue>): void
@@ -60,9 +62,15 @@ const props = defineProps<{
   prompt?: string
 }>()
 
-const { projectId } = useInjectedViewerState()
+const {
+  projectId,
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
 const { onFilesSelected, uploads, onUploadDelete } = useAttachments({ projectId })
 const { maxSizeInBytes } = useServerFileUploadLimit()
+const globalTextInputFocus = useTextInputGlobalFocus()
 
 const uploadZone = ref(null as Nullable<{ triggerPicker: () => void }>)
 const acceptValue = ref(
@@ -116,11 +124,17 @@ const doc = computed({
     })
 })
 
+const canInvite = computed(() => canInviteToProject(project.value || {}))
+
 const onSubmit = (val: { data: JSONContent }) =>
   emit('submit', { data: { doc: val.data } })
 
 const openFilePicker = () => {
   uploadZone.value?.triggerPicker()
+}
+
+function setGlobalFocus(status: boolean) {
+  globalTextInputFocus.value = status
 }
 
 // sync upload updates to modelValue
@@ -148,10 +162,4 @@ watch(
 defineExpose({
   openFilePicker
 })
-
-const globalTextInputFocus = useTextInputGlobalFocus()
-
-function setGlobalFocus(status: boolean) {
-  globalTextInputFocus.value = status
-}
 </script>

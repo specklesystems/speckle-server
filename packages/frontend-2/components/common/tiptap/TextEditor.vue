@@ -44,6 +44,10 @@ const props = defineProps<{
    * Used to invite users to project when their emails are mentioned
    */
   projectId?: string
+  /**
+   * Disable invitation CTA, e.g. if user doesn't have the required accesses
+   */
+  disableInvitationCta?: boolean
 }>()
 
 const editorContentRef = ref(null as Nullable<HTMLElement>)
@@ -58,7 +62,8 @@ const editor = new Editor({
   editable: isEditable.value,
   extensions: getEditorExtensions(props.schemaOptions, {
     placeholder: props.placeholder,
-    projectId: props.projectId
+    projectId:
+      props.projectId && !props.disableInvitationCta ? props.projectId : undefined
   }),
   onUpdate: () => {
     const data = getData()

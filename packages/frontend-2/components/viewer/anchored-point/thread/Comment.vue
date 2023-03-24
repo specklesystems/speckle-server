@@ -28,6 +28,7 @@
           :model-value="comment.text.doc"
           :schema-options="{ multiLine: false }"
           :project-id="projectId"
+          disable-invitation-cta
           readonly
           @created="emit('mounted')"
         />
