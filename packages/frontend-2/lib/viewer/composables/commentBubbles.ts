@@ -4,10 +4,11 @@ import {
   InitialStateWithUrlHashState,
   InjectableViewerState,
   LoadedCommentThread,
+  useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
-import { reduce, difference } from 'lodash-es'
+import { reduce, difference, debounce } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
   useSelectionEvents,
@@ -17,10 +18,12 @@ import {
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import {
   HorizontalDirection,
+  useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
 import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
 import { ViewerEvent } from '@speckle/viewer'
+import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -56,6 +59,12 @@ export function useViewerNewThreadBubble(params: {
   block?: Ref<boolean>
 }) {
   const { parentEl, block } = params
+
+  const {
+    threads: {
+      openThread: { newThreadEditor }
+    }
+  } = useInjectedViewerInterfaceState()
 
   const buttonState = ref({
     isExpanded: false,
@@ -108,6 +117,13 @@ export function useViewerNewThreadBubble(params: {
       closeNewThread()
     })
   }
+
+  watch(
+    () => buttonState.value.isExpanded,
+    (newVal) => {
+      newThreadEditor.value = newVal
+    }
+  )
 
   return { buttonState, closeNewThread }
 }
@@ -351,5 +367,39 @@ export function useExpandedThreadResponsiveLocation(params: {
   return {
     style,
     recalculateStyle: recalculateDirection
+  }
+}
+
+export function useIsTypingUpdateEmitter() {
+  const {
+    threads: {
+      openThread: { isTyping }
+    }
+  } = useInjectedViewerInterfaceState()
+  const { emitViewing } = useViewerUserActivityBroadcasting()
+
+  const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
+
+  const updateIsTyping = (newVal: boolean) => {
+    if (newVal === isTyping.value) return
+
+    isTyping.value = newVal
+    emitViewing()
+  }
+
+  const onInputUpdated = () => {
+    if (!isTyping.value) {
+      isTyping.value = true
+    }
+    debouncedMarkNoLongerTyping()
+  }
+
+  watch(isTyping, emitViewing)
+  onBeforeUnmount(() => updateIsTyping(false))
+  useOnBeforeWindowUnload(() => updateIsTyping(false))
+
+  return {
+    onInputUpdated,
+    updateIsTyping
   }
 }

@@ -35,6 +35,7 @@
             max-height="300px"
             autofocus
             @submit="() => onSubmit()"
+            @update:model-value="onInputUpdated"
           />
           <div class="w-full flex justify-end p-2 space-x-2">
             <div class="space-x-2">
@@ -62,7 +63,10 @@
 import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
-import { ViewerNewThreadBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import {
+  useIsTypingUpdateEmitter,
+  ViewerNewThreadBubbleModel
+} from '~~/lib/viewer/composables/commentBubbles'
 import {
   CommentEditorValue,
   useSubmitComment
@@ -73,8 +77,6 @@ import {
 } from '~~/lib/viewer/helpers/comments'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
-const ui = useInjectedViewerInterfaceState()
-
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
   (e: 'close'): void
@@ -83,6 +85,9 @@ const emit = defineEmits<{
 const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
+
+const ui = useInjectedViewerInterfaceState()
+const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
@@ -95,9 +100,13 @@ const threadContainer = ref(null as Nullable<HTMLElement>)
 const createThread = useSubmitComment()
 
 const onThreadClick = () => {
+  const newIsExpanded = !props.modelValue.isExpanded
+  if (!newIsExpanded) {
+    updateIsTyping(false)
+  }
   emit('update:modelValue', {
     ...props.modelValue,
-    isExpanded: !props.modelValue.isExpanded
+    isExpanded: newIsExpanded
   })
 }
 
@@ -114,6 +123,7 @@ const onSubmit = (comment?: CommentEditorValue) => {
 
   // Intentionally not awaiting so that we emit close immediately
   createThread(content, props.modelValue.clickLocation)
+  updateIsTyping(false)
 
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {

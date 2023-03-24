@@ -206,6 +206,7 @@ export type InjectableViewerState = Readonly<{
       openThread: {
         thread: ComputedRef<CommentBubbleModel | undefined>
         isTyping: Ref<boolean>
+        newThreadEditor: Ref<boolean>
       }
       closeAllThreads: () => void
       open: (id: string) => void
@@ -888,6 +889,7 @@ function setupInterfaceState(
     { state }
   )
   const isTyping = ref(false)
+  const newThreadEditor = ref(false)
 
   const hideBubbles = ref(false)
   return {
@@ -899,7 +901,8 @@ function setupInterfaceState(
         items: commentThreads,
         openThread: {
           thread: openThread,
-          isTyping
+          isTyping,
+          newThreadEditor
         },
         closeAllThreads,
         open,

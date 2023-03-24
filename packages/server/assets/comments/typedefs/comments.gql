@@ -358,7 +358,10 @@ input ViewerUserSelectionInfoInput {
 
 input ViewerUserOpenThreadMessageInput {
   isTyping: Boolean!
-  threadId: String!
+  """
+  Set to null, if inside the "new thread" editor, not an existing thread
+  """
+  threadId: String
 }
 
 enum ViewerUserActivityStatus {
@@ -383,7 +386,7 @@ input ViewerUserActivityMessageInput {
   """
   selection: ViewerUserSelectionInfoInput
   """
-  Must be set if status !== DISCONNECTED & user has a thread open
+  Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open
   """
   thread: ViewerUserOpenThreadMessageInput
 }
@@ -397,7 +400,7 @@ type ViewerUserSelectionInfo {
 
 type ViewerUserOpenThreadMessage {
   isTyping: Boolean!
-  threadId: String!
+  threadId: String
 }
 
 type ViewerUserActivityMessage {

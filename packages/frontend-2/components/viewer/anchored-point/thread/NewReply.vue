@@ -7,7 +7,7 @@
       prompt="Press enter to reply"
       autofocus
       max-height="150px"
-      @update:model-value="onInput"
+      @update:model-value="onInputUpdated"
       @submit="onSubmit"
     />
     <div class="w-full flex justify-end pt-2 space-x-2 p-2">
@@ -31,11 +31,11 @@
 </template>
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
-import { debounce } from 'lodash-es'
 import { Nullable } from '@speckle/shared'
-import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
-import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
-import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import {
+  CommentBubbleModel,
+  useIsTypingUpdateEmitter
+} from '~~/lib/viewer/composables/commentBubbles'
 import {
   CommentEditorValue,
   useSubmitReply
@@ -44,7 +44,6 @@ import {
   convertCommentEditorValueToInput,
   isValidCommentContentInput
 } from '~~/lib/viewer/helpers/comments'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
@@ -54,30 +53,13 @@ const emit = defineEmits<{
   (e: 'submit'): void
 }>()
 
-const {
-  threads: {
-    openThread: { isTyping }
-  }
-} = useInjectedViewerInterfaceState()
-const { emitViewing } = useViewerUserActivityBroadcasting()
 const createReply = useSubmitReply()
+const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
 
 const loading = ref(false)
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadId = computed(() => props.modelValue.id)
-
-const updateIsTyping = (newVal: boolean) => {
-  isTyping.value = newVal
-  emitViewing()
-}
-
-const onInput = () => {
-  if (!isTyping.value) {
-    isTyping.value = true
-  }
-  debouncedMarkNoLongerTyping()
-}
 
 const onSubmit = async () => {
   if (!commentValue.value || loading.value) return
@@ -90,7 +72,7 @@ const onSubmit = async () => {
     content,
     threadId: threadId.value
   })
-  isTyping.value = false
+  updateIsTyping(false)
 
   // Mark all attachments as in use to prevent cleanup
   commentValue.value.attachments?.forEach((a) => {
@@ -105,9 +87,5 @@ const onSubmit = async () => {
   emit('submit')
 }
 
-const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
-
-watch(isTyping, emitViewing)
 onBeforeUnmount(() => updateIsTyping(false))
-useOnBeforeWindowUnload(() => updateIsTyping(false))
 </script>

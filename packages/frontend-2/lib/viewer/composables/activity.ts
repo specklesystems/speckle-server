@@ -22,7 +22,6 @@ import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { onViewerUserActivityBroadcastedSubscription } from '../graphql/subscriptions'
 import dayjs, { Dayjs } from 'dayjs'
 import { get } from 'lodash-es'
 import { MaybeRef, useIntervalFn } from '@vueuse/core'
@@ -31,6 +30,7 @@ import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { onViewerUserActivityBroadcastedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -136,12 +136,13 @@ function useCollectMainMetadata() {
     userName: activeUser.value?.name || 'Anonymous Viewer',
     viewerSessionId: sessionId.value,
     resourceIdString: resourceIdString.value,
-    thread: openThread.thread.value
-      ? {
-          threadId: openThread.thread.value.id,
-          isTyping: openThread.isTyping.value
-        }
-      : null
+    thread:
+      openThread.thread.value || openThread.newThreadEditor
+        ? {
+            threadId: openThread.thread.value?.id || null,
+            isTyping: openThread.isTyping.value
+          }
+        : null
   })
 }
 
@@ -505,21 +506,24 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
 
     const event = res.data.viewerUserActivityBroadcasted
     const typingPayload = event.thread
-    if (typingPayload?.threadId !== unref(threadId)) return
+    const userId = event.userId || event.viewerSessionId
+
+    const existingItemIdx = usersTyping.value.findIndex((i) => i.userId === userId)
+
+    // remove existing data before (potentially) adding new
+    if (existingItemIdx !== -1) {
+      usersTyping.value.splice(existingItemIdx, 1)
+    }
+
+    if (typingPayload?.threadId !== unref(threadId)) {
+      return
+    }
 
     const typingInfo: UserTypingInfo = {
-      userId: event.userId || event.viewerSessionId,
+      userId,
       userName: event.userName,
       thread: typingPayload,
       lastSeen: dayjs()
-    }
-
-    const existingItemIdx = usersTyping.value.findIndex(
-      (i) => i.userId === typingInfo.userId
-    )
-
-    if (existingItemIdx !== -1) {
-      usersTyping.value.splice(existingItemIdx, 1)
     }
 
     if (typingInfo.thread.isTyping) usersTyping.value.push(typingInfo)

@@ -2440,7 +2440,7 @@ export type ViewerUserActivityMessageInput = {
   /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  /** Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open */
   thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
@@ -2456,12 +2456,13 @@ export enum ViewerUserActivityStatus {
 export type ViewerUserOpenThreadMessage = {
   __typename?: 'ViewerUserOpenThreadMessage';
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  threadId?: Maybe<Scalars['String']>;
 };
 
 export type ViewerUserOpenThreadMessageInput = {
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  /** Set to null, if inside the "new thread" editor, not an existing thread */
+  threadId?: InputMaybe<Scalars['String']>;
 };
 
 export type ViewerUserSelectionInfo = {
@@ -3022,7 +3023,7 @@ export type OnViewerUserActivityBroadcastedSubscriptionVariables = Exact<{
 }>;
 
 
-export type OnViewerUserActivityBroadcastedSubscription = { __typename?: 'Subscription', viewerUserActivityBroadcasted: { __typename?: 'ViewerUserActivityMessage', userName: string, userId: string, resourceIdString: string, viewerSessionId: string, status: ViewerUserActivityStatus, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, thread?: { __typename?: 'ViewerUserOpenThreadMessage', isTyping: boolean, threadId: string } | null, selection?: { __typename?: 'ViewerUserSelectionInfo', filteringState: {}, selectionLocation?: {} | null, sectionBox?: {} | null, camera: Array<number> } | null } };
+export type OnViewerUserActivityBroadcastedSubscription = { __typename?: 'Subscription', viewerUserActivityBroadcasted: { __typename?: 'ViewerUserActivityMessage', userName: string, userId: string, resourceIdString: string, viewerSessionId: string, status: ViewerUserActivityStatus, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, thread?: { __typename?: 'ViewerUserOpenThreadMessage', isTyping: boolean, threadId?: string | null } | null, selection?: { __typename?: 'ViewerUserSelectionInfo', filteringState: {}, selectionLocation?: {} | null, sectionBox?: {} | null, camera: Array<number> } | null } };
 
 export type OnViewerCommentsUpdatedSubscriptionVariables = Exact<{
   target: ViewerUpdateTrackingTarget;
