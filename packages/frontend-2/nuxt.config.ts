@@ -1,3 +1,15 @@
+import { join } from 'path'
+import type { OutputOptions } from 'rollup'
+import { withoutLeadingSlash } from 'ufo'
+import { sanitizeFilePath } from 'mlly'
+import { filename } from 'pathe/utils'
+
+// Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
+const buildOutputFileName = (chunkName: string) =>
+  withoutLeadingSlash(
+    join('/_nuxt/', `${sanitizeFilePath(filename(chunkName))}.[hash].js`)
+  )
+
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   typescript: {
@@ -50,6 +62,30 @@ export default defineNuxtConfig({
       fs: {
         // Allowing symlinks
         // allow: ['/home/fabis/Code/random/vue-apollo/']
+      }
+    },
+
+    build: {
+      rollupOptions: {
+        output: <OutputOptions>{
+          /**
+           * Overriding some output file names to avoid adblock
+           */
+          entryFileNames: (chunkInfo) => {
+            if (chunkInfo.name.includes('mixpanel')) {
+              return buildOutputFileName('mp')
+            }
+
+            return buildOutputFileName(chunkInfo.name)
+          },
+          chunkFileNames: (chunkInfo) => {
+            if (chunkInfo.name.includes('mixpanel')) {
+              return buildOutputFileName('mp-chunk')
+            }
+
+            return buildOutputFileName(chunkInfo.name)
+          }
+        }
       }
     }
   },
