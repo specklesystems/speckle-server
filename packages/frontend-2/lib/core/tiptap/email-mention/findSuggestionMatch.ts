@@ -1,7 +1,7 @@
 import { Range } from '@tiptap/core'
 import { ResolvedPos } from '@tiptap/pm/model'
 
-const EMAIL_RGX = /[\w-_.]+@[\w-_.]+/
+const EMAIL_RGX = /[\w-_.+]+@[\w-_.+]+/
 
 export interface Trigger {
   allowSpaces: boolean
