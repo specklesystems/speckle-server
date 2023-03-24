@@ -295,15 +295,15 @@ export function useViewerThreadTracking(state: InjectableViewerState) {
   useViewerEventListener(
     ViewerEvent.LoadComplete,
     () => {
-      if (openThread.value?.data) {
-        refocus(openThread.value.data)
+      if (openThread.thread.value?.data) {
+        refocus(openThread.thread.value.data)
       }
     },
     { state }
   )
 
   // Also do this when openThread changes
-  watch(openThread, (newThread, oldThread) => {
+  watch(openThread.thread, (newThread, oldThread) => {
     if (newThread?.id && newThread.id !== oldThread?.id && newThread.data) {
       refocus(newThread.data)
     }

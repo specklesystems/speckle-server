@@ -44,6 +44,7 @@ import {
   convertCommentEditorValueToInput,
   isValidCommentContentInput
 } from '~~/lib/viewer/helpers/comments'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
@@ -53,20 +54,23 @@ const emit = defineEmits<{
   (e: 'submit'): void
 }>()
 
-const { emitTyping } = useViewerUserActivityBroadcasting()
+const {
+  threads: {
+    openThread: { isTyping }
+  }
+} = useInjectedViewerInterfaceState()
+const { emitViewing } = useViewerUserActivityBroadcasting()
 const createReply = useSubmitReply()
 
 const loading = ref(false)
-const isTyping = ref(false)
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadId = computed(() => props.modelValue.id)
 
-const updateIsTyping = async (isTyping: boolean) =>
-  emitTyping({
-    threadId: threadId.value,
-    isTyping
-  })
+const updateIsTyping = (newVal: boolean) => {
+  isTyping.value = newVal
+  emitViewing()
+}
 
 const onInput = () => {
   if (!isTyping.value) {
@@ -103,7 +107,7 @@ const onSubmit = async () => {
 
 const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
 
-watch(isTyping, (newVal) => updateIsTyping(newVal))
+watch(isTyping, emitViewing)
 onBeforeUnmount(() => updateIsTyping(false))
 useOnBeforeWindowUnload(() => updateIsTyping(false))
 </script>

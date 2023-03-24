@@ -2435,9 +2435,10 @@ export type ViewerUpdateTrackingTarget = {
 
 export type ViewerUserActivityMessage = {
   __typename?: 'ViewerUserActivityMessage';
+  resourceIdString: Scalars['String'];
   selection?: Maybe<ViewerUserSelectionInfo>;
   status: ViewerUserActivityStatus;
-  typing?: Maybe<ViewerUserTypingMessage>;
+  thread?: Maybe<ViewerUserOpenThreadMessage>;
   user: LimitedUser;
   userId: Scalars['String'];
   userName: Scalars['String'];
@@ -2445,11 +2446,13 @@ export type ViewerUserActivityMessage = {
 };
 
 export type ViewerUserActivityMessageInput = {
-  /** Must be set if status !== 'disconnected' */
+  /** Resource identifier string from the URL that represents all of the actively loaded models and versions */
+  resourceIdString: Scalars['String'];
+  /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status === 'typing' */
-  typing?: InputMaybe<ViewerUserTypingMessageInput>;
+  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
   /** The same user will have different session IDs across tabs where the viewer is open */
@@ -2458,9 +2461,19 @@ export type ViewerUserActivityMessageInput = {
 
 export enum ViewerUserActivityStatus {
   Disconnected = 'DISCONNECTED',
-  Typing = 'TYPING',
   Viewing = 'VIEWING'
 }
+
+export type ViewerUserOpenThreadMessage = {
+  __typename?: 'ViewerUserOpenThreadMessage';
+  isTyping: Scalars['Boolean'];
+  threadId: Scalars['String'];
+};
+
+export type ViewerUserOpenThreadMessageInput = {
+  isTyping: Scalars['Boolean'];
+  threadId: Scalars['String'];
+};
 
 export type ViewerUserSelectionInfo = {
   __typename?: 'ViewerUserSelectionInfo';
@@ -2482,17 +2495,6 @@ export type ViewerUserSelectionInfoInput = {
   sectionBox?: InputMaybe<Scalars['JSONObject']>;
   /** THREE.Vector3 - the user's selection's focus point */
   selectionLocation?: InputMaybe<Scalars['JSONObject']>;
-};
-
-export type ViewerUserTypingMessage = {
-  __typename?: 'ViewerUserTypingMessage';
-  isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
-};
-
-export type ViewerUserTypingMessageInput = {
-  isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
 };
 
 export type Webhook = {
@@ -2769,10 +2771,10 @@ export type ResolversTypes = {
   ViewerUserActivityMessage: ResolverTypeWrapper<Omit<ViewerUserActivityMessage, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
   ViewerUserActivityStatus: ViewerUserActivityStatus;
+  ViewerUserOpenThreadMessage: ResolverTypeWrapper<ViewerUserOpenThreadMessage>;
+  ViewerUserOpenThreadMessageInput: ViewerUserOpenThreadMessageInput;
   ViewerUserSelectionInfo: ResolverTypeWrapper<ViewerUserSelectionInfo>;
   ViewerUserSelectionInfoInput: ViewerUserSelectionInfoInput;
-  ViewerUserTypingMessage: ResolverTypeWrapper<ViewerUserTypingMessage>;
-  ViewerUserTypingMessageInput: ViewerUserTypingMessageInput;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -2914,10 +2916,10 @@ export type ResolversParentTypes = {
   ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
   ViewerUserActivityMessage: Omit<ViewerUserActivityMessage, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
+  ViewerUserOpenThreadMessage: ViewerUserOpenThreadMessage;
+  ViewerUserOpenThreadMessageInput: ViewerUserOpenThreadMessageInput;
   ViewerUserSelectionInfo: ViewerUserSelectionInfo;
   ViewerUserSelectionInfoInput: ViewerUserSelectionInfoInput;
-  ViewerUserTypingMessage: ViewerUserTypingMessage;
-  ViewerUserTypingMessageInput: ViewerUserTypingMessageInput;
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -3749,13 +3751,20 @@ export type ViewerResourceItemResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserActivityMessage'] = ResolversParentTypes['ViewerUserActivityMessage']> = {
+  resourceIdString?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   selection?: Resolver<Maybe<ResolversTypes['ViewerUserSelectionInfo']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['ViewerUserActivityStatus'], ParentType, ContextType>;
-  typing?: Resolver<Maybe<ResolversTypes['ViewerUserTypingMessage']>, ParentType, ContextType>;
+  thread?: Resolver<Maybe<ResolversTypes['ViewerUserOpenThreadMessage']>, ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   viewerSessionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerUserOpenThreadMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserOpenThreadMessage'] = ResolversParentTypes['ViewerUserOpenThreadMessage']> = {
+  isTyping?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  threadId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3764,12 +3773,6 @@ export type ViewerUserSelectionInfoResolvers<ContextType = GraphQLContext, Paren
   filteringState?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   selectionLocation?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type ViewerUserTypingMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserTypingMessage'] = ResolversParentTypes['ViewerUserTypingMessage']> = {
-  isTyping?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  threadId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3882,8 +3885,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ViewerResourceGroup?: ViewerResourceGroupResolvers<ContextType>;
   ViewerResourceItem?: ViewerResourceItemResolvers<ContextType>;
   ViewerUserActivityMessage?: ViewerUserActivityMessageResolvers<ContextType>;
+  ViewerUserOpenThreadMessage?: ViewerUserOpenThreadMessageResolvers<ContextType>;
   ViewerUserSelectionInfo?: ViewerUserSelectionInfoResolvers<ContextType>;
-  ViewerUserTypingMessage?: ViewerUserTypingMessageResolvers<ContextType>;
   Webhook?: WebhookResolvers<ContextType>;
   WebhookCollection?: WebhookCollectionResolvers<ContextType>;
   WebhookEvent?: WebhookEventResolvers<ContextType>;

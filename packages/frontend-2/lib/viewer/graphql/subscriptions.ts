@@ -8,9 +8,10 @@ export const onViewerUserActivityBroadcastedSubscription = graphql(`
       user {
         ...LimitedUserAvatar
       }
+      resourceIdString
       viewerSessionId
       status
-      typing {
+      thread {
         isTyping
         threadId
       }

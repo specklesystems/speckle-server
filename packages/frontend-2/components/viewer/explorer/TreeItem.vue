@@ -249,7 +249,8 @@ const arrayCollections = computed(() => {
 
 const isMultipleCollection = computed(() => arrayCollections.value.length > 0)
 
-const isNonEmptyArray = (x: unknown) => !!x && Array.isArray(x) && x.length > 0
+const isNonEmptyArray = (x: unknown): x is Array<unknown> =>
+  !!x && Array.isArray(x) && x.length > 0
 
 const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0])
 

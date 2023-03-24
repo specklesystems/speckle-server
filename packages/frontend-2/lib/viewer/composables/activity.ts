@@ -5,11 +5,11 @@ import {
   OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
-  ViewerUserSelectionInfoInput,
-  ViewerUserTypingMessage,
-  ViewerUserTypingMessageInput
+  ViewerUserOpenThreadMessage,
+  ViewerUserSelectionInfoInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
+  InjectableViewerState,
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -120,26 +120,42 @@ export function useCollectCommentData() {
 }
 
 function useCollectMainMetadata() {
-  const { sessionId } = useInjectedViewerState()
+  const {
+    sessionId,
+    resources: {
+      request: { resourceIdString }
+    },
+    ui: {
+      threads: { openThread }
+    }
+  } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
 
-  return (): Omit<
-    ViewerUserActivityMessageInput,
-    'status' | 'selection' | 'typing'
-  > => ({
+  return (): Omit<ViewerUserActivityMessageInput, 'status' | 'selection'> => ({
     userId: activeUser.value?.id || null,
     userName: activeUser.value?.name || 'Anonymous Viewer',
-    viewerSessionId: sessionId.value
+    viewerSessionId: sessionId.value,
+    resourceIdString: resourceIdString.value,
+    thread: openThread.thread.value
+      ? {
+          threadId: openThread.thread.value.id,
+          isTyping: openThread.isTyping.value
+        }
+      : null
   })
 }
 
-export function useViewerUserActivityBroadcasting() {
+export function useViewerUserActivityBroadcasting(
+  options?: Partial<{
+    state: InjectableViewerState
+  }>
+) {
   const {
     projectId,
     resources: {
       request: { resourceIdString }
     }
-  } = useInjectedViewerState()
+  } = options?.state || useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const getSelection = useCollectSelection()
   const getMainMetadata = useCollectMainMetadata()
@@ -166,24 +182,15 @@ export function useViewerUserActivityBroadcasting() {
       invokeMutation({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Disconnected,
-        selection: null,
-        typing: null
+        selection: null
       }),
     emitViewing: async () => {
       await invokeMutation({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Viewing,
-        selection: getSelection(),
-        typing: null
+        selection: getSelection()
       })
-    },
-    emitTyping: async (typing: ViewerUserTypingMessageInput) =>
-      invokeMutation({
-        ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Typing,
-        selection: getSelection(),
-        typing
-      })
+    }
   }
 }
 
@@ -465,7 +472,7 @@ function useViewerSpotlightTracking() {
 type UserTypingInfo = {
   userId: string
   userName: string
-  typing: ViewerUserTypingMessage
+  thread: ViewerUserOpenThreadMessage
   lastSeen: Dayjs
 }
 
@@ -497,15 +504,13 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
     if (!res.data?.viewerUserActivityBroadcasted) return
 
     const event = res.data.viewerUserActivityBroadcasted
-    if (event.status !== ViewerUserActivityStatus.Typing || !event.typing) return
-
-    const typingPayload = event.typing
-    if (typingPayload.threadId !== unref(threadId)) return
+    const typingPayload = event.thread
+    if (typingPayload?.threadId !== unref(threadId)) return
 
     const typingInfo: UserTypingInfo = {
       userId: event.userId || event.viewerSessionId,
       userName: event.userName,
-      typing: typingPayload,
+      thread: typingPayload,
       lastSeen: dayjs()
     }
 
@@ -517,7 +522,7 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
       usersTyping.value.splice(existingItemIdx, 1)
     }
 
-    if (typingInfo.typing.isTyping) usersTyping.value.push(typingInfo)
+    if (typingInfo.thread.isTyping) usersTyping.value.push(typingInfo)
   })
 
   return {

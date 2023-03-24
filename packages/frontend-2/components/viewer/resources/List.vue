@@ -13,7 +13,7 @@
       <FormButton
         size="xs"
         text
-        :color="showRemove ? 'primary' : 'secondary'"
+        :color="showRemove ? 'default' : 'secondary'"
         :icon-left="showRemove ? CheckIcon : MinusIcon"
         :disabled="modelsAndVersionIds.length <= 1"
         @click="showRemove = !showRemove"

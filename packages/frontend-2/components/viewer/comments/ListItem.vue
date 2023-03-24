@@ -99,7 +99,7 @@ const isThreadResourceLoaded = computed(() => {
   return false
 })
 
-const isOpenInViewer = computed(() => openThread.value?.id === props.thread.id)
+const isOpenInViewer = computed(() => openThread.thread.value?.id === props.thread.id)
 
 const threadAuthors = computed(() => {
   const authors = [props.thread.author]

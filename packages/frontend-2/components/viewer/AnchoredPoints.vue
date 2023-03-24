@@ -97,7 +97,12 @@ const parentEl = ref(null as Nullable<HTMLElement>)
 const { users } = useViewerUserActivityTracking({ parentEl })
 const {
   spotlightUserId,
-  threads: { openThread, items: commentThreads, hideBubbles, open }
+  threads: {
+    openThread: { thread: openThread },
+    items: commentThreads,
+    hideBubbles,
+    open
+  }
 } = useInjectedViewerInterfaceState()
 
 useViewerCommentBubblesProjection({ parentEl })
