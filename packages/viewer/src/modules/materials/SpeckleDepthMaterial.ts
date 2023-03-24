@@ -132,20 +132,20 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     /** Not a big fan of this, but otherwise three.js won't update
      *  our uniforms when the material is used the scene's override
      */
-    const materialProperties = _this.properties.get(this)
-    const program = materialProperties.currentProgram
-    if (program) {
-      _this.getContext().useProgram(program.program)
-      const p_uniforms = program.getUniforms()
-      _this
-        .getContext()
-        .uniformMatrix4fv(
-          p_uniforms.map['rteModelViewMatrix'].addr,
-          false,
-          this.userData.rteModelViewMatrix.value.elements
-        )
-    }
-    if (object.updateMaterialTransformsUniform)
+    // const materialProperties = _this.properties.get(this)
+    // const program = materialProperties.currentProgram
+    // if (program) {
+    //   _this.getContext().useProgram(program.program)
+    //   const p_uniforms = program.getUniforms()
+    //   _this
+    //     .getContext()
+    //     .uniformMatrix4fv(
+    //       p_uniforms.map['rteModelViewMatrix'].addr,
+    //       false,
+    //       this.userData.rteModelViewMatrix.value.elements
+    //     )
+    // }
+    if (object instanceof SpeckleMesh)
       (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true

@@ -1329,4 +1329,17 @@ export default class SpeckleRenderer {
     this.needsRender = true
     this.resetPipeline()
   }
+
+  // public compile() {
+  //   const batches: MeshBatch[] = this.batcher.getBatches(
+  //     undefined,
+  //     GeometryType.MESH
+  //   ) as MeshBatch[]
+  //   for (let k = 0; k < batches.length; k++) {
+  //     const mesh = batches[k].mesh
+  //     const materialProperties = (this._renderer as any).properties.get(mesh.material)
+  //     const programs = materialProperties.programs
+  //     // console.log(programs)
+  //   }
+  // }
 }

@@ -276,28 +276,7 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      // this.viewer.getRenderer().updateShadowCatcher()
-      // const start = performance.now()
-      // await this.viewer.getWorldTree().walkAsync(
-      //   (node: unknown) => {
-      //     node
-      //     let plm = 0
-      //     for (let i = 0; i < 100000; i++) {
-      //       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //       plm++
-      //     }
-      //     return true
-      //   },
-      //   undefined,
-      //   2
-      // )
-      // console.log('DOne: ', performance.now() - start)
-      const objUrl = (
-        await UrlHelper.getResourceUrls(
-          'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
-        )
-      )[0]
-      this.viewer.cancelLoad(objUrl)
+      this.viewer.getRenderer().compile()
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -863,8 +842,8 @@ export default class Sandbox {
       .addInput(Sandbox.batchesParams, 'explode', {
         label: 'Explode',
         min: 0,
-        max: 1,
-        step: 0.01
+        max: 0.25,
+        step: 0.001
       })
       .on('change', (value) => {
         value

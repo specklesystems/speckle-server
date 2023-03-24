@@ -115,7 +115,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
 
-    if (object.updateMaterialTransformsUniform)
+    if (object instanceof SpeckleMesh)
       (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true

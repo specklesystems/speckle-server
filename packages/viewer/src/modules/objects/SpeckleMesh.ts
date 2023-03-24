@@ -48,6 +48,9 @@ const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export default class SpeckleMesh extends Mesh {
+  public static MeshBatchNumber = 0
+
+  private batchNumber = -1
   private bvh: SpeckleBatchBVH = null
   private batchMaterial: Material = null
 
@@ -70,6 +73,7 @@ export default class SpeckleMesh extends Mesh {
   constructor(geometry: BufferGeometry, material: Material) {
     super(geometry, material)
     this.batchMaterial = material
+    this.batchNumber = SpeckleMesh.MeshBatchNumber++
   }
 
   public setBatchObjects(
@@ -95,6 +99,7 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateMaterialTransformsUniform(material: Material) {
+    material.defines['BATCH_NUMBER'] = this.batchNumber
     material.defines['TRANSFORM_STORAGE'] = this.transformStorage
     if (
       !material.defines['OBJ_COUNT'] ||
