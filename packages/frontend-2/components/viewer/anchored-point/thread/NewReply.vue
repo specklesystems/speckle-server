@@ -86,6 +86,7 @@ const onSubmit = async () => {
     content,
     threadId: threadId.value
   })
+  isTyping.value = false
 
   // Mark all attachments as in use to prevent cleanup
   commentValue.value.attachments?.forEach((a) => {
