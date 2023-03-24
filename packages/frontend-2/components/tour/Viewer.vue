@@ -1,13 +1,15 @@
 <template>
-  <div class="special-gradient absolute w-screen h-screen">
-    <ViewerBase />
-  </div>
+  <ViewerPostSetupWrapper>
+    <div class="special-gradient absolute w-screen h-screen">
+      <ViewerBase />
+    </div>
 
-  <div
-    class="absolute h-screen w-screen z-10 pointer-events-none flex items-center justify-center"
-  >
-    <TourOnboarding />
-  </div>
+    <div
+      class="absolute h-screen w-screen z-10 pointer-events-none flex items-center justify-center"
+    >
+      <TourOnboarding />
+    </div>
+  </ViewerPostSetupWrapper>
 </template>
 <script setup lang="ts">
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'

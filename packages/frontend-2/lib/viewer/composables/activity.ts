@@ -410,6 +410,12 @@ export function useViewerUserActivityTracking(params: {
     spotlightTracker(user)
   })
 
+  watch(resourceIdString, (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      sendUpdate.emitViewing()
+    }
+  })
+
   return {
     users
   }
@@ -466,6 +472,16 @@ function useViewerSpotlightTracking() {
       // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
       // TODOs: filters implementation, once they are implemented in the FE
+    }
+
+    // sync resourceIdString to ensure we have the same exact resources loaded
+    if (state.resources.request.resourceIdString.value !== user.resourceIdString) {
+      state.resources.request.resourceIdString.value = user.resourceIdString
+    }
+
+    // sync opened thread
+    if (state.urlHashState.focusedThreadId.value !== user.thread?.threadId) {
+      state.urlHashState.focusedThreadId.value = user.thread?.threadId || null
     }
   }
 }

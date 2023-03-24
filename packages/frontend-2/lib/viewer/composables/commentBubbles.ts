@@ -2,7 +2,6 @@ import { CSSProperties, Ref } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 import {
   InitialStateWithUrlHashState,
-  InjectableViewerState,
   LoadedCommentThread,
   useInjectedViewerInterfaceState,
   useInjectedViewerState
@@ -273,12 +272,28 @@ export function useViewerCommentBubbles(
   }
 }
 
+export function useViewerOpenedThreadUpdateEmitter() {
+  if (process.server) return
+
+  const {
+    urlHashState: { focusedThreadId }
+  } = useInjectedViewerState()
+  const { emitViewing } = useViewerUserActivityBroadcasting()
+
+  watch(focusedThreadId, (id, oldId) => {
+    if (id !== oldId) {
+      emitViewing()
+    }
+  })
+}
+
 /**
  * Set up auto-focusing on opened thread
  */
-export function useViewerThreadTracking(state: InjectableViewerState) {
+export function useViewerThreadTracking() {
   if (process.server) return
 
+  const state = useInjectedViewerState()
   const {
     ui: {
       threads: { openThread }
@@ -395,7 +410,6 @@ export function useIsTypingUpdateEmitter() {
     debouncedMarkNoLongerTyping()
   }
 
-  watch(isTyping, emitViewing)
   onBeforeUnmount(() => updateIsTyping(false))
   useOnBeforeWindowUnload(() => updateIsTyping(false))
 
