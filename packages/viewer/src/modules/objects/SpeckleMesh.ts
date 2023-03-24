@@ -137,6 +137,7 @@ export default class SpeckleMesh extends Mesh {
     if (this.bvh) {
       this.bvh.getBoundingBox(this.bvh.bounds)
       this.geometry.boundingBox.copy(this.bvh.bounds)
+      this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
     }
     this.transformsDirty = false
   }

@@ -70,7 +70,9 @@ export default class Sandbox {
 
   public static batchesParams = {
     showBvh: false,
-    totalBvhSize: 0
+    totalBvhSize: 0,
+    explode: 0,
+    culling: true
   }
 
   public static filterParams = {
@@ -858,15 +860,25 @@ export default class Sandbox {
       disabled: true
     })
     container
-      .addInput({ explode: 0 }, 'explode', {
+      .addInput(Sandbox.batchesParams, 'explode', {
         label: 'Explode',
         min: 0,
         max: 1,
         step: 0.01
       })
       .on('change', (value) => {
-        this.viewer.getRenderer().setExplodeTime(value.value)
+        value
+        this.viewer.getRenderer().setExplodeTime(Sandbox.batchesParams.explode)
       })
+    // container
+    //   .addInput(Sandbox.batchesParams, 'culling', {
+    //     label: 'Culling'
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer
+    //       .getRenderer()
+    //       .setExplodeTime(Sandbox.batchesParams.explode)
+    //   })
   }
 
   private getBVHSize() {
