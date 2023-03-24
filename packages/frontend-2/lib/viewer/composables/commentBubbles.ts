@@ -410,6 +410,7 @@ export function useIsTypingUpdateEmitter() {
     debouncedMarkNoLongerTyping()
   }
 
+  watch(isTyping, emitViewing)
   onBeforeUnmount(() => updateIsTyping(false))
   useOnBeforeWindowUnload(() => updateIsTyping(false))
 

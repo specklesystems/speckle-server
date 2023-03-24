@@ -86,6 +86,4 @@ const onSubmit = async () => {
   loading.value = false
   emit('submit')
 }
-
-onBeforeUnmount(() => updateIsTyping(false))
 </script>
