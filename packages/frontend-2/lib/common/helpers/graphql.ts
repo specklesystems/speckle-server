@@ -277,10 +277,10 @@ export function evictObjectFields<
 >(
   cache: ApolloCache<unknown>,
   id: string,
-  predicate: (fieldName: string, variables: V, value: D) => boolean
+  predicate: (fieldName: string, variables: V, value: ModifyFnCacheData<D>) => boolean
 ) {
   modifyObjectFields<V, D>(cache, id, (fieldName, variables, value, details) => {
     if (!predicate(fieldName, variables, value)) return undefined
-    return details.DELETE as D
+    return details.DELETE as ModifyFnCacheData<D>
   })
 }

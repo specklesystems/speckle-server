@@ -2427,9 +2427,10 @@ export type ViewerUpdateTrackingTarget = {
 
 export type ViewerUserActivityMessage = {
   __typename?: 'ViewerUserActivityMessage';
+  resourceIdString: Scalars['String'];
   selection?: Maybe<ViewerUserSelectionInfo>;
   status: ViewerUserActivityStatus;
-  typing?: Maybe<ViewerUserTypingMessage>;
+  thread?: Maybe<ViewerUserOpenThreadMessage>;
   user: LimitedUser;
   userId: Scalars['String'];
   userName: Scalars['String'];
@@ -2437,11 +2438,13 @@ export type ViewerUserActivityMessage = {
 };
 
 export type ViewerUserActivityMessageInput = {
-  /** Must be set if status !== 'disconnected' */
+  /** Resource identifier string from the URL that represents all of the actively loaded models and versions */
+  resourceIdString: Scalars['String'];
+  /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status === 'typing' */
-  typing?: InputMaybe<ViewerUserTypingMessageInput>;
+  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
   /** The same user will have different session IDs across tabs where the viewer is open */
@@ -2450,9 +2453,19 @@ export type ViewerUserActivityMessageInput = {
 
 export enum ViewerUserActivityStatus {
   Disconnected = 'DISCONNECTED',
-  Typing = 'TYPING',
   Viewing = 'VIEWING'
 }
+
+export type ViewerUserOpenThreadMessage = {
+  __typename?: 'ViewerUserOpenThreadMessage';
+  isTyping: Scalars['Boolean'];
+  threadId: Scalars['String'];
+};
+
+export type ViewerUserOpenThreadMessageInput = {
+  isTyping: Scalars['Boolean'];
+  threadId: Scalars['String'];
+};
 
 export type ViewerUserSelectionInfo = {
   __typename?: 'ViewerUserSelectionInfo';
@@ -2474,17 +2487,6 @@ export type ViewerUserSelectionInfoInput = {
   sectionBox?: InputMaybe<Scalars['JSONObject']>;
   /** THREE.Vector3 - the user's selection's focus point */
   selectionLocation?: InputMaybe<Scalars['JSONObject']>;
-};
-
-export type ViewerUserTypingMessage = {
-  __typename?: 'ViewerUserTypingMessage';
-  isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
-};
-
-export type ViewerUserTypingMessageInput = {
-  isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
 };
 
 export type Webhook = {

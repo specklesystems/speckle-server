@@ -5,11 +5,11 @@ import {
   OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessageInput,
   ViewerUserActivityStatus,
-  ViewerUserSelectionInfoInput,
-  ViewerUserTypingMessage,
-  ViewerUserTypingMessageInput
+  ViewerUserOpenThreadMessage,
+  ViewerUserSelectionInfoInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
+  InjectableViewerState,
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -22,7 +22,6 @@ import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { onViewerUserActivityBroadcastedSubscription } from '../graphql/subscriptions'
 import dayjs, { Dayjs } from 'dayjs'
 import { get } from 'lodash-es'
 import { MaybeRef, useIntervalFn } from '@vueuse/core'
@@ -31,6 +30,7 @@ import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { onViewerUserActivityBroadcastedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -120,26 +120,43 @@ export function useCollectCommentData() {
 }
 
 function useCollectMainMetadata() {
-  const { sessionId } = useInjectedViewerState()
+  const {
+    sessionId,
+    resources: {
+      request: { resourceIdString }
+    },
+    ui: {
+      threads: { openThread }
+    }
+  } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
 
-  return (): Omit<
-    ViewerUserActivityMessageInput,
-    'status' | 'selection' | 'typing'
-  > => ({
+  return (): Omit<ViewerUserActivityMessageInput, 'status' | 'selection'> => ({
     userId: activeUser.value?.id || null,
     userName: activeUser.value?.name || 'Anonymous Viewer',
-    viewerSessionId: sessionId.value
+    viewerSessionId: sessionId.value,
+    resourceIdString: resourceIdString.value,
+    thread:
+      openThread.thread.value || openThread.newThreadEditor
+        ? {
+            threadId: openThread.thread.value?.id || null,
+            isTyping: openThread.isTyping.value
+          }
+        : null
   })
 }
 
-export function useViewerUserActivityBroadcasting() {
+export function useViewerUserActivityBroadcasting(
+  options?: Partial<{
+    state: InjectableViewerState
+  }>
+) {
   const {
     projectId,
     resources: {
       request: { resourceIdString }
     }
-  } = useInjectedViewerState()
+  } = options?.state || useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const getSelection = useCollectSelection()
   const getMainMetadata = useCollectMainMetadata()
@@ -166,24 +183,15 @@ export function useViewerUserActivityBroadcasting() {
       invokeMutation({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Disconnected,
-        selection: null,
-        typing: null
+        selection: null
       }),
     emitViewing: async () => {
       await invokeMutation({
         ...getMainMetadata(),
         status: ViewerUserActivityStatus.Viewing,
-        selection: getSelection(),
-        typing: null
+        selection: getSelection()
       })
-    },
-    emitTyping: async (typing: ViewerUserTypingMessageInput) =>
-      invokeMutation({
-        ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Typing,
-        selection: getSelection(),
-        typing
-      })
+    }
   }
 }
 
@@ -402,6 +410,12 @@ export function useViewerUserActivityTracking(params: {
     spotlightTracker(user)
   })
 
+  watch(resourceIdString, (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      sendUpdate.emitViewing()
+    }
+  })
+
   return {
     users
   }
@@ -459,13 +473,23 @@ function useViewerSpotlightTracking() {
 
       // TODOs: filters implementation, once they are implemented in the FE
     }
+
+    // sync resourceIdString to ensure we have the same exact resources loaded
+    if (state.resources.request.resourceIdString.value !== user.resourceIdString) {
+      state.resources.request.resourceIdString.value = user.resourceIdString
+    }
+
+    // sync opened thread
+    if (state.urlHashState.focusedThreadId.value !== user.thread?.threadId) {
+      state.urlHashState.focusedThreadId.value = user.thread?.threadId || null
+    }
   }
 }
 
 type UserTypingInfo = {
   userId: string
   userName: string
-  typing: ViewerUserTypingMessage
+  thread: ViewerUserOpenThreadMessage
   lastSeen: Dayjs
 }
 
@@ -497,27 +521,28 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
     if (!res.data?.viewerUserActivityBroadcasted) return
 
     const event = res.data.viewerUserActivityBroadcasted
-    if (event.status !== ViewerUserActivityStatus.Typing || !event.typing) return
+    const typingPayload = event.thread
+    const userId = event.userId || event.viewerSessionId
 
-    const typingPayload = event.typing
-    if (typingPayload.threadId !== unref(threadId)) return
+    const existingItemIdx = usersTyping.value.findIndex((i) => i.userId === userId)
 
-    const typingInfo: UserTypingInfo = {
-      userId: event.userId || event.viewerSessionId,
-      userName: event.userName,
-      typing: typingPayload,
-      lastSeen: dayjs()
-    }
-
-    const existingItemIdx = usersTyping.value.findIndex(
-      (i) => i.userId === typingInfo.userId
-    )
-
+    // remove existing data before (potentially) adding new
     if (existingItemIdx !== -1) {
       usersTyping.value.splice(existingItemIdx, 1)
     }
 
-    if (typingInfo.typing.isTyping) usersTyping.value.push(typingInfo)
+    if (typingPayload?.threadId !== unref(threadId)) {
+      return
+    }
+
+    const typingInfo: UserTypingInfo = {
+      userId,
+      userName: event.userName,
+      thread: typingPayload,
+      lastSeen: dayjs()
+    }
+
+    if (typingInfo.thread.isTyping) usersTyping.value.push(typingInfo)
   })
 
   return {

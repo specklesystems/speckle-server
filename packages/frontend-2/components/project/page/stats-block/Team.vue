@@ -41,6 +41,7 @@ graphql(`
         ...LimitedUserAvatar
       }
     }
+    ...ProjectPageTeamDialog
   }
 `)
 

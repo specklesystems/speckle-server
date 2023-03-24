@@ -356,13 +356,15 @@ input ViewerUserSelectionInfoInput {
   camera: [Float!]!
 }
 
-input ViewerUserTypingMessageInput {
+input ViewerUserOpenThreadMessageInput {
   isTyping: Boolean!
-  threadId: String!
+  """
+  Set to null, if inside the "new thread" editor, not an existing thread
+  """
+  threadId: String
 }
 
 enum ViewerUserActivityStatus {
-  TYPING
   VIEWING
   DISCONNECTED
 }
@@ -374,15 +376,19 @@ input ViewerUserActivityMessageInput {
   The same user will have different session IDs across tabs where the viewer is open
   """
   viewerSessionId: String!
+  """
+  Resource identifier string from the URL that represents all of the actively loaded models and versions
+  """
+  resourceIdString: String!
   status: ViewerUserActivityStatus!
   """
-  Must be set if status !== 'disconnected'
+  Must be set if status !== DISCONNECTED
   """
   selection: ViewerUserSelectionInfoInput
   """
-  Must be set if status === 'typing'
+  Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open
   """
-  typing: ViewerUserTypingMessageInput
+  thread: ViewerUserOpenThreadMessageInput
 }
 
 type ViewerUserSelectionInfo {
@@ -392,9 +398,9 @@ type ViewerUserSelectionInfo {
   camera: [Float!]!
 }
 
-type ViewerUserTypingMessage {
+type ViewerUserOpenThreadMessage {
   isTyping: Boolean!
-  threadId: String!
+  threadId: String
 }
 
 type ViewerUserActivityMessage {
@@ -402,9 +408,10 @@ type ViewerUserActivityMessage {
   userId: String!
   user: LimitedUser!
   viewerSessionId: String!
+  resourceIdString: String!
   status: ViewerUserActivityStatus!
   selection: ViewerUserSelectionInfo
-  typing: ViewerUserTypingMessage
+  thread: ViewerUserOpenThreadMessage
 }
 
 type CommentMutations {

@@ -6,7 +6,6 @@
 import { Editor, Range } from '@tiptap/core'
 import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view'
-import { findSuggestionMatch } from './findSuggestionMatch'
 
 import tippy, { Instance, GetReferenceClientRect } from 'tippy.js'
 import TiptapEmailMentionPopup from '~~/components/common/tiptap/EmailMentionPopup.vue'
@@ -21,6 +20,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { findSuggestionMatch } from '~~/lib/core/tiptap/email-mention/findSuggestionMatch'
 
 /**
  * This is essentially the original Tiptap suggestion extension adapted to support the specialized

@@ -6,7 +6,12 @@
         overlap ? '-space-x-2 ' : ''
       } ${heightClasses}`"
     >
-      <UserAvatar v-for="user in items" :key="user.id" :user="user" :size="size" />
+      <UserAvatar
+        v-for="(user, i) in items"
+        :key="user.id || i"
+        :user="user"
+        :size="size"
+      />
     </div>
     <UserAvatar v-if="finalHiddenItemCount" :size="size">
       +{{ finalHiddenItemCount }}

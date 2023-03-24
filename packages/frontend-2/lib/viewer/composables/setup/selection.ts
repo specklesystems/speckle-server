@@ -1,5 +1,8 @@
 import { SelectionEvent } from '@speckle/viewer'
-import { InjectableViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  InjectableViewerState,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
 function getFirstVisibleSelectionHit(
@@ -31,7 +34,9 @@ function getFirstVisibleSelectionHit(
   return null
 }
 
-export function useViewerSelectionEventHandler(state: InjectableViewerState) {
+export function useViewerSelectionEventHandler() {
+  const state = useInjectedViewerState()
+
   useSelectionEvents(
     {
       singleClickCallback: (args) => {

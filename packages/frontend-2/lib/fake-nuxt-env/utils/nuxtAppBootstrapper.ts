@@ -7,6 +7,7 @@ import { noop } from 'lodash-es'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import PortalVue from 'portal-vue'
+import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
 
 const stubGlobalComponents = (app: App<Element>) => {
   const Head = defineComponent({
@@ -61,8 +62,8 @@ const initNuxtApp = (vueApp?: App<Element>) => {
   })
 
   // Mocked useRoute() & router (no param & no query)
-  nuxtApp['_route'] = { query: {}, param: {} }
-  nuxtApp['$router'] = { resolve: (to: unknown) => to }
+  nuxtApp['_route'] = { query: {}, params: {} } as RouteLocationNormalizedLoaded
+  nuxtApp['$router'] = { resolve: (to: unknown) => to } as Router
 
   // TODO: Fake mixpanel through nuxtApp.$mixpanel
   nuxtApp['$mixpanel'] = (() => ({ track: noop })) as typeof nuxtApp['$mixpanel']
