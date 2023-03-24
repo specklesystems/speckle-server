@@ -24,6 +24,7 @@ import {
 import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
+import { useIntervalFn } from '@vueuse/core'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -402,4 +403,19 @@ export function useIsTypingUpdateEmitter() {
     onInputUpdated,
     updateIsTyping
   }
+}
+
+export function useAnimatingEllipsis() {
+  const baseValue = '.'
+  const value = ref(baseValue)
+
+  const { pause, resume } = useIntervalFn(() => {
+    if (value.value.length < 3) {
+      value.value = value.value + baseValue
+    } else {
+      value.value = baseValue
+    }
+  }, 250)
+
+  return { ellipsis: value, controls: { pause, resume } }
 }

@@ -22,16 +22,18 @@
     >
       <span class="text-xs space-x-1">
         <span>{{ user.userName }}</span>
-        <span v-if="isCreatingNewThread">is typing...</span>
+        <span v-if="isCreatingNewThread">is typing{{ ellipsis }}</span>
       </span>
     </button>
   </div>
 </template>
 <script setup lang="ts">
 import { UserActivityModel } from '~~/lib/viewer/composables/activity'
+import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const { spotlightUserId } = useInjectedViewerInterfaceState()
+const { ellipsis, controls } = useAnimatingEllipsis()
 
 const props = defineProps<{
   user: UserActivityModel
@@ -45,4 +47,12 @@ function setUserSpotlight() {
   if (spotlightUserId.value === props.user.userId) return (spotlightUserId.value = null)
   spotlightUserId.value = props.user.userId
 }
+
+watch(isCreatingNewThread, (isCreating) => {
+  if (isCreating) {
+    controls.resume()
+  } else {
+    controls.pause()
+  }
+})
 </script>

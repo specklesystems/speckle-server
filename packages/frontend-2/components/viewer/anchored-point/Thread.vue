@@ -150,7 +150,10 @@ import { ensureError, Nullable, Roles } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
-import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import {
+  CommentBubbleModel,
+  useAnimatingEllipsis
+} from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
   useMarkThreadViewed
@@ -195,6 +198,7 @@ const {
 } = useInjectedViewerState()
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
+const { ellipsis, controls } = useAnimatingEllipsis()
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({
@@ -207,8 +211,10 @@ const isExpanded = computed(() => props.modelValue.isExpanded)
 const isTypingMessage = computed(() => {
   if (!usersTyping.value.length) return null
   return usersTyping.value.length > 1
-    ? `${usersTyping.value.map((u) => u.userName).join(', ')} are typing...`
-    : `${usersTyping.value[0].userName} is typing...`
+    ? `${usersTyping.value.map((u) => u.userName).join(', ')} are typing${
+        ellipsis.value
+      }`
+    : `${usersTyping.value[0].userName} is typing${ellipsis.value}`
 })
 
 const isViewed = computed(() => !!props.modelValue.viewedAt)
@@ -385,6 +391,17 @@ watch(
 
     if (!newIsExpanded) {
       isDragged.value = false
+    }
+  }
+)
+
+watch(
+  () => usersTyping.value.length > 1,
+  (areUsersTyping) => {
+    if (areUsersTyping) {
+      controls.resume()
+    } else {
+      controls.pause()
     }
   }
 )
