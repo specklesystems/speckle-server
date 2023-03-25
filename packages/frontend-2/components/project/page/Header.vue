@@ -88,7 +88,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ShareIcon, PencilIcon } from '@heroicons/vue/20/solid'
+import { PencilIcon } from '@heroicons/vue/20/solid'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import {
   ProjectPageProjectHeaderFragment,

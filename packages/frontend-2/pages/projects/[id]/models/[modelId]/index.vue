@@ -64,7 +64,6 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
-import { ShareIcon } from '@heroicons/vue/20/solid'
 
 const tourState = useTourStageState()
 

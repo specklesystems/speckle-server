@@ -32,7 +32,4 @@
     </div>
   </nav>
 </template>
-<script setup lang="ts">
-import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/solid'
-</script>
+<script setup lang="ts"></script>

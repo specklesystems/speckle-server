@@ -14,7 +14,6 @@
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton size="sm" color="danger" text @click="useInvite(false)">
-          <!-- <XMarkIcon class="w-4 h-4" /> -->
           Decline
         </FormButton>
         <FormButton
@@ -42,7 +41,7 @@ import { useNavigateToLogin } from '~~/lib/common/helpers/route'
 import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import { Optional } from '@speckle/shared'
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { CheckIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
