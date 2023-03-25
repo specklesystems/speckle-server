@@ -18,6 +18,9 @@ useHead({
   htmlAttrs: {
     class: computed(() => (isDarkTheme.value ? `dark` : ``)),
     lang: 'en'
+  },
+  bodyAttrs: {
+    class: 'simple-scrollbar bg-foundation-page text-foreground'
   }
 })
 

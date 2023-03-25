@@ -1,49 +1,51 @@
 <template>
   <NuxtLink
-    class="h-40 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2"
+    class="group relative h-60 rounded-lg bg-foundation shadow flex items-stretch hover:shadow-md ring-outline-2 hover:ring-2 overflow-hidden transition"
     :to="threadLink"
   >
-    <!-- Main data -->
-    <div class="grow flex flex-col justify-between py-2 px-6 min-w-0">
-      <div class="flex flex-col">
-        <div class="flex space-x-2 items-center mb-2">
-          <UserAvatar no-border :user="thread.author" />
-          <span
-            class="normal font-semibold text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
-          >
-            {{ thread.author.name }}
-          </span>
-        </div>
-        <div
-          class="normal text-foreground whitespace-nowrap text-ellipsis overflow-hidden"
-        >
-          {{ thread.rawText }}
-        </div>
-        <div class="caption text-foreground-2">{{ createdAt }}</div>
-      </div>
-      <div
-        class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:items-center lg:space-x-2.5"
-      >
-        <div class="flex items-center space-x-2.5">
-          <div class="text-foreground inline-flex items-center">
-            <ChatBubbleLeftEllipsisIcon class="w-4 h-4 mr-1" />
-            <span class="caption">{{ thread.repliesCount.totalCount }}</span>
-          </div>
-          <LinkIcon class="w-4 h-4" />
-        </div>
-
-        <UserAvatarGroup :users="allAvatars" :max-count="4" />
-      </div>
-    </div>
     <!-- Image preview -->
     <div
-      class="shrink-0 w-[25%] sm:w-36 border-l border-outline-3 bg-no-repeat bg-center bg-cover"
-      :style="{ backgroundImage }"
+      class="absolute w-full h-full cover scale-125 group-hover:scale-100 transition xxxduration-700"
+      :style="{
+        backgroundImage: `url(${screenshot})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center'
+      }"
     ></div>
+    <div class="absolute w-full h-full flex items-end">
+      <div class="flex flex-col w-full">
+        <div class="flex items-center w-full px-2">
+          <UserAvatarGroup
+            v-tippy="
+              `${thread.author.name} ${
+                allAvatars.length !== 1
+                  ? '& ' + (allAvatars.length - 1) + ' others'
+                  : ''
+              }`
+            "
+            :users="allAvatars"
+            :max-count="4"
+          />
+        </div>
+        <div
+          class="mt-2 p-2 transition-all bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-t-lg dark:group-hover:bg-neutral-800 group-hover:bg-foundation"
+        >
+          <div class="truncate text-sm">{{ thread.rawText }}</div>
+          <div class="space-x-1">
+            <span class="text-xs font-bold text-primary">
+              {{ thread.repliesCount.totalCount }}
+              {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
+            </span>
+            <span class="text-xs">
+              {{ updatedAt }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
   </NuxtLink>
 </template>
 <script setup lang="ts">
-import { ChatBubbleLeftEllipsisIcon, LinkIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
@@ -56,17 +58,27 @@ const props = defineProps<{
   projectId: string
 }>()
 
-const { backgroundImage } = useCommentScreenshotImage(
+const { screenshot } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
 
-const createdAt = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
+const updatedAt = computed(() => dayjs(props.thread.updatedAt).from(dayjs()))
+
 const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length
 )
 
+// Combined thread authors set of (original author + any respondents)
+const threadAuthors = computed(() => {
+  const authors = [props.thread.author]
+  for (const author of props.thread.replyAuthors.items) {
+    if (!authors.find((u) => u.id === author.id)) authors.push(author)
+  }
+  return authors
+})
+
 const allAvatars = computed((): AvatarUserType[] => [
-  ...props.thread.replyAuthors.items,
+  ...threadAuthors.value,
   // We're adding fake entries so that the proper "+X" number is rendered, and the actual data is
   // not really important because it's never going to be rendered
   ...times(

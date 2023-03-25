@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Menu as="div" class="ml-2 flex items-center">
+    <Menu as="div" class="flex items-center">
       <MenuButton v-slot="{ open: menuOpen }" as="div">
         <div class="cursor-pointer">
           <span class="sr-only">Open notifications menu</span>
@@ -30,7 +30,7 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute top-16 right-14 w-96 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute z-50 right-0 md:right-14 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <div class="p-2 text-sm font-bold">Notifications</div>
           <div class="p-2 text-sm">TODO: project invites</div>

@@ -2,7 +2,7 @@
   <ProjectPageLatestItems
     :count="project.commentThreadCount.totalCount"
     :hide-filters="showCommentsIntro"
-    title="Latest Threads"
+    title="Discussions"
   >
     <template #default="{ gridOrList }">
       <template v-if="!showCommentsIntro">
@@ -43,6 +43,7 @@ graphql(`
     screenshot
     rawText
     createdAt
+    updatedAt
     repliesCount: replies(limit: 0) {
       totalCount
     }

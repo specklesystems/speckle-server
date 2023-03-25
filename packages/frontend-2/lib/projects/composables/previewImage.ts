@@ -1,7 +1,6 @@
 import { MaybeRef } from '@vueuse/core'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import { useTheme } from '~~/lib/core/composables/theme'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
 
@@ -167,16 +166,10 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
 export function useCommentScreenshotImage(
   screenshotData: MaybeRef<string | null | undefined>
 ) {
-  const { isDarkTheme } = useTheme()
   const backgroundImage = computed(() => {
     const screenshot = unref(screenshotData) || 'data:null'
-
-    const color = isDarkTheme.value
-      ? 'rgba(100,115,201,0.33), rgba(25,32,72,0.7)'
-      : 'rgba(100,115,231,0.1), rgba(25,32,72,0.05)'
-
-    return `linear-gradient(to right top, ${color}), url("${screenshot}")`
+    return `url("${screenshot}")`
   })
 
-  return { backgroundImage }
+  return { backgroundImage, screenshot: unref(screenshotData) }
 }

@@ -71,6 +71,15 @@
           />
         </div>
       </div>
+      <div
+        v-if="model.commentThreadCount.totalCount !== 0"
+        :class="`absolute top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
+          hovered ? 'opacity-100' : 'opacity-0'
+        }`"
+      >
+        <ChatBubbleLeftRightIcon class="w-4 h-4" />
+        <span>{{ model.commentThreadCount.totalCount }}</span>
+      </div>
     </NuxtLink>
   </div>
 </template>
@@ -80,7 +89,10 @@ import {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
+import {
+  ArrowPathRoundedSquareIcon,
+  ChatBubbleLeftRightIcon
+} from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
@@ -125,4 +137,6 @@ const path = computed(() => {
 const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))
 
 const canEdit = computed(() => canModifyModels(props.project))
+
+props.model.commentThreadCount
 </script>

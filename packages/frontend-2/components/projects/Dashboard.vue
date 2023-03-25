@@ -1,29 +1,28 @@
 <template>
   <div>
-    <Portal to="primary-actions">
-      <FormButton :icon-left="PlusIcon" @click="openNewProject = true">
-        New Project
-      </FormButton>
-    </Portal>
+    <Portal to="primary-actions"></Portal>
     <ProjectsInviteBanners
       v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
       class="mb-4"
       :invites="projectsPanelResult?.activeUser"
     />
-    <div class="flex items-center mb-8 top-16">
-      <h1 class="h4 font-bold flex-grow">Projects</h1>
-      <div class="w-96">
+    <div class="flex flex-col space-y-2 sm:flex-row sm:items-center mb-8 top-16">
+      <h1 class="h4 font-bold">Projects</h1>
+      <div class="flex-grow flex items-center justify-end space-x-2">
         <FormTextInput
           v-if="!showEmptyState"
           v-model="search"
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
-          class="bg-foundation shadow"
+          class="bg-foundation shadow w-60"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
+        <FormButton :icon-left="PlusIcon" @click="openNewProject = true">
+          New
+        </FormButton>
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />

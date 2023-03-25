@@ -12,11 +12,12 @@
         </ViewerScope>
       </Portal>
 
-      <Portal to="primary-actions">
-        <div class="flex space-x-4">
-          <FormButton :icon-left="ShareIcon">Share</FormButton>
-        </div>
-      </Portal>
+      <!-- Note: commented out until we scope it properly. -->
+      <!-- <Portal to="primary-actions">
+      <div class="flex space-x-4">
+        <FormButton :icon-left="ShareIcon">Share</FormButton>
+      </div>
+    </Portal> -->
 
       <ClientOnly>
         <!-- Tour host -->
@@ -63,7 +64,6 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
-import { ShareIcon } from '@heroicons/vue/20/solid'
 
 const tourState = useTourStageState()
 

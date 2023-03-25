@@ -17,7 +17,7 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-4 top-16 w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute right-0 md:right-4 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
