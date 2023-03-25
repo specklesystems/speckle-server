@@ -4,8 +4,8 @@
     <NuxtLayout name="default">
       <div class="flex flex-col items-center space-y-8">
         <ErrorPageProjectInviteBanner />
-        <h1 class="h1 font-bold">{{ error.statusCode }}</h1>
-        <h2 class="h3 text-foreground-2">{{ error.message }}</h2>
+        <h1 class="h1 font-bold">{{ error.statusCode || 500 }}</h1>
+        <h2 class="h3 text-foreground-2">{{ capitalize(error.message || '') }}</h2>
         <div v-if="isDev && error.stack" class="max-w-xl" v-html="error.stack" />
         <FormButton :to="homeRoute" size="xl">Go Home</FormButton>
       </div>
@@ -15,6 +15,7 @@
 </template>
 <script setup lang="ts">
 import { NuxtError } from '#app'
+import { capitalize } from 'lodash-es'
 import { homeRoute } from './lib/common/helpers/route'
 
 /**

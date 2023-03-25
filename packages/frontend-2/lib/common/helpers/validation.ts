@@ -3,7 +3,7 @@ import { GenericValidateFunction } from 'vee-validate'
 import { isNullOrUndefined } from '@speckle/shared'
 
 export const VALID_HTTP_URL = /^https?:\/\//
-export const VALID_EMAIL = /^[\w-_.]+@[\w-_.]+$/
+export const VALID_EMAIL = /^[\w-_.+]+@[\w-_.+]+$/
 
 /**
  * Note about new validators:

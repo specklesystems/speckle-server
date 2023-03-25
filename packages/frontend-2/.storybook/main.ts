@@ -42,8 +42,7 @@ const config: StorybookConfig = {
     options: {}
   },
   features: {
-    storyStoreV7: true,
-    interactionsDebugger: true
+    storyStoreV7: true
   },
   async viteFinal(config) {
     const now = performance.now()

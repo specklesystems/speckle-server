@@ -2,12 +2,12 @@ import { CSSProperties, Ref } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 import {
   InitialStateWithUrlHashState,
-  InjectableViewerState,
   LoadedCommentThread,
+  useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
-import { reduce, difference } from 'lodash-es'
+import { reduce, difference, debounce } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
   useSelectionEvents,
@@ -17,10 +17,13 @@ import {
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import {
   HorizontalDirection,
+  useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
 import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
 import { ViewerEvent } from '@speckle/viewer'
+import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
+import { useIntervalFn } from '@vueuse/core'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -56,6 +59,12 @@ export function useViewerNewThreadBubble(params: {
   block?: Ref<boolean>
 }) {
   const { parentEl, block } = params
+
+  const {
+    threads: {
+      openThread: { newThreadEditor }
+    }
+  } = useInjectedViewerInterfaceState()
 
   const buttonState = ref({
     isExpanded: false,
@@ -108,6 +117,13 @@ export function useViewerNewThreadBubble(params: {
       closeNewThread()
     })
   }
+
+  watch(
+    () => buttonState.value.isExpanded,
+    (newVal) => {
+      newThreadEditor.value = newVal
+    }
+  )
 
   return { buttonState, closeNewThread }
 }
@@ -256,12 +272,28 @@ export function useViewerCommentBubbles(
   }
 }
 
+export function useViewerOpenedThreadUpdateEmitter() {
+  if (process.server) return
+
+  const {
+    urlHashState: { focusedThreadId }
+  } = useInjectedViewerState()
+  const { emitViewing } = useViewerUserActivityBroadcasting()
+
+  watch(focusedThreadId, (id, oldId) => {
+    if (id !== oldId) {
+      emitViewing()
+    }
+  })
+}
+
 /**
  * Set up auto-focusing on opened thread
  */
-export function useViewerThreadTracking(state: InjectableViewerState) {
+export function useViewerThreadTracking() {
   if (process.server) return
 
+  const state = useInjectedViewerState()
   const {
     ui: {
       threads: { openThread }
@@ -295,15 +327,15 @@ export function useViewerThreadTracking(state: InjectableViewerState) {
   useViewerEventListener(
     ViewerEvent.LoadComplete,
     () => {
-      if (openThread.value?.data) {
-        refocus(openThread.value.data)
+      if (openThread.thread.value?.data) {
+        refocus(openThread.thread.value.data)
       }
     },
     { state }
   )
 
   // Also do this when openThread changes
-  watch(openThread, (newThread, oldThread) => {
+  watch(openThread.thread, (newThread, oldThread) => {
     if (newThread?.id && newThread.id !== oldThread?.id && newThread.data) {
       refocus(newThread.data)
     }
@@ -352,4 +384,53 @@ export function useExpandedThreadResponsiveLocation(params: {
     style,
     recalculateStyle: recalculateDirection
   }
+}
+
+export function useIsTypingUpdateEmitter() {
+  const {
+    threads: {
+      openThread: { isTyping }
+    }
+  } = useInjectedViewerInterfaceState()
+  const { emitViewing } = useViewerUserActivityBroadcasting()
+
+  const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
+
+  const updateIsTyping = (newVal: boolean) => {
+    if (newVal === isTyping.value) return
+
+    isTyping.value = newVal
+    emitViewing()
+  }
+
+  const onInputUpdated = () => {
+    if (!isTyping.value) {
+      isTyping.value = true
+    }
+    debouncedMarkNoLongerTyping()
+  }
+
+  watch(isTyping, emitViewing)
+  onBeforeUnmount(() => updateIsTyping(false))
+  useOnBeforeWindowUnload(() => updateIsTyping(false))
+
+  return {
+    onInputUpdated,
+    updateIsTyping
+  }
+}
+
+export function useAnimatingEllipsis() {
+  const baseValue = '.'
+  const value = ref(baseValue)
+
+  const { pause, resume } = useIntervalFn(() => {
+    if (value.value.length < 3) {
+      value.value = value.value + baseValue
+    } else {
+      value.value = baseValue
+    }
+  }, 250)
+
+  return { ellipsis: value, controls: { pause, resume } }
 }
