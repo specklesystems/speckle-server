@@ -24,7 +24,7 @@
         </div>
         <div
           v-if="version.commentThreadCount.totalCount !== 0"
-          class="absolute top-0 right-0 p-2 flex items-center transition opacity-0 group-hover:opacity-100 h-8 bg-foundation-focus shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
+          class="absolute top-0 right-0 p-2 flex items-center transition opacity-0 group-hover:opacity-100 h-8 bg-foundation border-2 border-primary-muted shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
         >
           <ChatBubbleLeftRightIcon class="w-4 h-4" />
           <span>{{ version.commentThreadCount.totalCount }}</span>

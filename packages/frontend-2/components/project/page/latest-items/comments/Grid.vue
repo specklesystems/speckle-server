@@ -1,10 +1,10 @@
 <template>
-  <div class="grid grid-cols-12 space-y-8 sm:space-y-0 sm:gap-8">
+  <div class="grid grid-cols-4 gap-4">
     <template v-if="projectId">
-      <ProjectPageLatestItemsCommentsGridItem
+      <ProjectPageLatestItemsCommentsGridItem2
         v-for="item in items"
         :key="item.id"
-        :class="gridItemWidthClasses"
+        class="col-span-4 md:col-span-2 lg:col-span-1"
         :thread="item"
         :project-id="projectId"
       />

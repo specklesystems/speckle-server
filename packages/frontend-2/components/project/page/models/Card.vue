@@ -73,7 +73,7 @@
       </div>
       <div
         v-if="model.commentThreadCount.totalCount !== 0"
-        :class="`absolute top-0 right-0 p-2 flex items-center transition h-8 bg-foundation-focus shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
+        :class="`absolute top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
           hovered ? 'opacity-100' : 'opacity-0'
         }`"
       >
