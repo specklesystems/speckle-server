@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col w-full space-y-4">
-    <ProjectPageLatestItemsCommentsListItem2
+    <ProjectPageLatestItemsCommentsListItem
       v-for="item in items"
       :key="item.id"
       :project-id="projectId"
