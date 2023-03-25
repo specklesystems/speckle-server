@@ -9,26 +9,25 @@
       @mouseleave="rotateGently(Math.random() * 2)"
     >
       <h2 class="text-center text-2xl font-bold">Ready to send your first model?</h2>
-      <p class="text-center">
-        Todo. We've got connectors for most AEC authoring tools, such as Rhino, Revit,
-        etc.
-      </p>
-      <p class="text-center">MANAGER TIME</p>
+      <!-- <p class="text-center">MANAGER TIME</p> -->
+      <div class="w-full h-72 bg-primary rounded-xl flex items-center justify-center">
+        <PlayIcon class="w-10 h-10 text-white" />
+      </div>
       <div class="flex justify-center">
-        <FormButton size="xl" class="shadow-md" :icon-right="CloudArrowDownIcon">
+        <FormButton size="xl" class="shadow-md" :cccicon-right="CloudArrowDownIcon">
           Download Now
         </FormButton>
       </div>
     </div>
-    <div class="pointer-events-auto">
-      <FormButton size="sm" @click="$emit('next')">
-        Later, let me explore first
+    <div class="pointer-events-auto pt-2">
+      <FormButton size="sm" color="card" @click="$emit('next')">
+        Let me explore first
       </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { CloudArrowDownIcon } from '@heroicons/vue/24/solid'
+import { CloudArrowDownIcon, PlayIcon } from '@heroicons/vue/24/solid'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 const { instance: viewer } = useInjectedViewer()
 

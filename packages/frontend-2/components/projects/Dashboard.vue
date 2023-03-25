@@ -1,11 +1,16 @@
 <template>
   <div>
     <Portal to="primary-actions"></Portal>
-    <ProjectsInviteBanners
-      v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
-      class="mb-4"
-      :invites="projectsPanelResult?.activeUser"
-    />
+    <div
+      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 bg-blue-500/10 rounded-b-md"
+    >
+      <ProjectsChecklistV1 />
+
+      <ProjectsInviteBanners
+        v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
+        :invites="projectsPanelResult?.activeUser"
+      />
+    </div>
     <div class="flex flex-col space-y-2 sm:flex-row sm:items-center mb-8 top-16">
       <h1 class="h4 font-bold">Projects</h1>
       <div class="flex-grow flex items-center justify-end space-x-2">
