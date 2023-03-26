@@ -11,7 +11,10 @@
   "main": "dist/speckleviewer.js",
   "module": "dist/speckleviewer.esm.js",
   "exports": {
-    ".": "./dist/speckleviewer.esm.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/speckleviewer.esm.js"
+    },
     "./dist/assets/*": "./dist/assets/*",
     "./assets/*": "./dist/assets/*"
   },
