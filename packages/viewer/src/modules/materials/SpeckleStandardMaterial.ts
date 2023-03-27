@@ -38,7 +38,8 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       uShadowViewer_high: new Vector3(),
       uShadowViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
-      tTransforms: null
+      tTransforms: null,
+      objCount: 1
     }
   }
 

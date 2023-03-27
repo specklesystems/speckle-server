@@ -6,7 +6,6 @@ import { speckleDepthFrag } from './shaders/speckle-depth-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshDepthMaterial, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import MeshBatch from '../batching/MeshBatch'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { Uniforms } from './SpeckleStandardMaterial'
 
@@ -32,7 +31,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
       near: 0,
       far: 0,
       uTransforms: [new Matrix4()],
-      tTransforms: null
+      tTransforms: null,
+      objCount: 1
     }
   }
 
@@ -58,6 +58,12 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
       }
     }
     this['uniforms'] = UniformsUtils.merge([ShaderLib.depth.uniforms, this.userData])
+  }
+
+  protected copyUniforms(material: Material) {
+    for (const k in material.userData) {
+      if (this.userData[k]) this.userData[k].value = material.userData[k].value
+    }
   }
 
   protected onCompile(shader, renderer) {
@@ -95,9 +101,9 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
 
   public copy(source) {
     super.copy(source)
-    this.userData = {}
-    this.setUniforms(this.uniformsDef)
+    this.copyUniforms(source)
 
+    this.defines = {}
     Object.assign(this.defines, source.defines)
 
     return this
@@ -129,24 +135,43 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     this.userData.uViewer_low.value.copy(SpeckleDepthMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleDepthMaterial.vecBuff2)
     this.userData.rteModelViewMatrix.value.copy(object.modelViewMatrix)
+    if (object instanceof SpeckleMesh) {
+      ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
+    }
+
     /** Not a big fan of this, but otherwise three.js won't update
      *  our uniforms when the material is used the scene's override
      */
-    // const materialProperties = _this.properties.get(this)
-    // const program = materialProperties.currentProgram
-    // if (program) {
-    //   _this.getContext().useProgram(program.program)
-    //   const p_uniforms = program.getUniforms()
-    //   _this
-    //     .getContext()
-    //     .uniformMatrix4fv(
-    //       p_uniforms.map['rteModelViewMatrix'].addr,
-    //       false,
-    //       this.userData.rteModelViewMatrix.value.elements
+    // if (scene.overrideMaterial === this) {
+    //   const materialProperties = _this.properties.get(this)
+    //   const program = materialProperties.currentProgram
+    //   if (program) {
+    //     // _this.getContext().useProgram(program.program)
+    //     const p_uniforms = program.getUniforms()
+    //     _this
+    //       .getContext()
+    //       .uniformMatrix4fv(
+    //         p_uniforms.map['rteModelViewMatrix'].addr,
+    //         false,
+    //         this.userData.rteModelViewMatrix.value.elements
+    //       )
+
+    //     if (p_uniforms.map['objCount'])
+    //       _this
+    //         .getContext()
+    //         .uniform1f(p_uniforms.map['objCount'].addr, this.userData.objCount.value)
+
+    //     const textureProperties = _this.properties.get(this.userData.tTransforms.value)
+    //     const gl = _this.getContext()
+
+    //     gl.uniform1i(
+    //       p_uniforms.map['tTransforms'].addr,
+    //       p_uniforms.map['tTransforms'].cache
     //     )
+    //     // gl.activeTexture(p_uniforms.map['tTransforms'].cache)
+    //     gl.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture)
+    //   }
     // }
-    if (object instanceof SpeckleMesh)
-      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }

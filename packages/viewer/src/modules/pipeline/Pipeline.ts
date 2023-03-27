@@ -25,6 +25,9 @@ import { SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
+import SpeckleMesh from '../objects/SpeckleMesh'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
+import { GeometryType } from '../batching/Batch'
 
 export enum RenderType {
   NORMAL,
@@ -255,9 +258,19 @@ export class Pipeline {
       restoreVisibility = this._batcher.saveVisiblity()
       const opaque = this._batcher.getOpaque()
       this._batcher.applyVisibility(opaque)
+      for (const k in opaque) {
+        if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
+        const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
+        mesh.setDepthMaterial(this.depthPass.material as SpeckleDepthMaterial)
+      }
     }
     this.depthPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      for (const k in restoreVisibility) {
+        if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
+        const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
+        mesh.restoreMaterial()
+      }
     }
 
     this.normalsPass.onBeforeRender = () => {

@@ -9,8 +9,10 @@ import {
   Material,
   Matrix4,
   Mesh,
+  NoBlending,
   Ray,
   Raycaster,
+  RGBADepthPacking,
   RGBAFormat,
   Sphere,
   Triangle,
@@ -19,6 +21,7 @@ import {
 } from 'three'
 import { TransformStorage } from '../batching/Batcher'
 import { BatchObject } from '../batching/BatchObject'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 
 const _inverseMatrix = new Matrix4()
@@ -53,6 +56,8 @@ export default class SpeckleMesh extends Mesh {
   private batchNumber = -1
   private bvh: SpeckleBatchBVH = null
   private batchMaterial: Material = null
+  private depthMaterial: SpeckleDepthMaterial = null
+  private materialStack: Array<Material | Material[]> = []
 
   private _batchObjects: BatchObject[]
   private transformsBuffer: Float32Array = null
@@ -98,18 +103,42 @@ export default class SpeckleMesh extends Mesh {
     this.updateTransformsUniform()
   }
 
-  public updateMaterialTransformsUniform(material: Material) {
-    material.defines['BATCH_NUMBER'] = this.batchNumber
-    material.defines['TRANSFORM_STORAGE'] = this.transformStorage
-    if (
-      !material.defines['OBJ_COUNT'] ||
-      material.defines['OBJ_COUNT'] !== this._batchObjects.length
-    ) {
-      material.defines['OBJ_COUNT'] = this._batchObjects.length
+  public setDepthMaterial(material: SpeckleDepthMaterial) {
+    this.materialStack.push(this.material)
+    if (this.depthMaterial === null) {
+      this.depthMaterial = new SpeckleDepthMaterial(
+        {
+          depthPacking: RGBADepthPacking
+        },
+        ['USE_RTE', 'ALPHATEST_REJECTION']
+      )
+
+      this.depthMaterial.blending = NoBlending
+      this.depthMaterial.side = DoubleSide
     }
-    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE)
+    this.depthMaterial.copy(material)
+    this.material = this.depthMaterial
+    this.material.needsUpdate = true
+  }
+
+  public restoreMaterial() {
+    if (this.materialStack.length > 0) this.material = this.materialStack.pop()
+  }
+
+  public updateMaterialTransformsUniform(material: Material) {
+    // material.defines['BATCH_NUMBER'] = this.batchNumber
+    material.defines['TRANSFORM_STORAGE'] = this.transformStorage
+    // if (
+    //   !material.defines['OBJ_COUNT'] ||
+    //   material.defines['OBJ_COUNT'] !== this._batchObjects.length
+    // ) {
+    //   material.defines['OBJ_COUNT'] = this._batchObjects.length
+    // }
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       material.userData.tTransforms.value = this.transformsTextureUniform
-    else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY)
+      if (material.userData.objCount)
+        material.userData.objCount.value = this._batchObjects.length
+    } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY)
       material.userData.uTransforms.value = this.transformsArrayUniforms
 
     material.needsUpdate = true
