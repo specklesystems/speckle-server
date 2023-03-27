@@ -15,8 +15,7 @@ export const speckleStandardColoredVert = /* glsl */ `
 
     #if TRANSFORM_STORAGE == 0
         uniform sampler2D tTransforms;
-        const vec2 cUv = vec2(0.5/float(OBJ_COUNT * 3), 0.5);
-        const vec2 dUv = vec2(1./float(OBJ_COUNT * 3), 0.);
+        uniform float objCount;
     #elif TRANSFORM_STORAGE == 1
         uniform mat4 uTransforms[OBJ_COUNT];
     #endif
@@ -43,36 +42,41 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
-mat4 objectTransform(){
-    #if TRANSFORM_STORAGE == 0
-        #if __VERSION__ == 300
-            ivec2 uv = ivec2(int(objIndex)*3, 0); 
-            vec4 r0 = texelFetch( tTransforms, uv, 0 );
-            vec4 r1 = texelFetch( tTransforms, uv + ivec2(1, 0), 0);
-            vec4 r2 = texelFetch( tTransforms, uv + ivec2(2, 0), 0);
-            return mat4(
-                r0.x, r1.x, r2.x, 0.,
-                r0.y, r1.y, r2.y, 0.,
-                r0.z, r1.z, r2.z, 0.,
-                r0.w, r1.w, r2.w, 1.
-            );
-        #elif
-            float size = float(OBJ_COUNT * 3);
-            vec2 uv = vec2((objIndex * 3.)/size + cUv.x, cUv.y);
-            vec4 r0 = texture2D( tTransforms, uv);
-            vec4 r1 = texture2D( tTransforms, uv + dUv);
-            vec4 r2 = texture2D( tTransforms, uv + 2. * dUv);
-             return mat4(
-                r0.x, r1.x, r2.x, 0.,
-                r0.y, r1.y, r2.y, 0.,
-                r0.z, r1.z, r2.z, 0.,
-                r0.w, r1.w, r2.w, 1.
-            );
+#ifdef TRANSFORM_STORAGE
+    mat4 objectTransform(){
+        #if TRANSFORM_STORAGE == 0
+            #if __VERSION__ == 300
+                ivec2 uv = ivec2(int(objIndex)*3, 0); 
+                vec4 r0 = texelFetch( tTransforms, uv, 0 );
+                vec4 r1 = texelFetch( tTransforms, uv + ivec2(1, 0), 0);
+                vec4 r2 = texelFetch( tTransforms, uv + ivec2(2, 0), 0);
+                return mat4(
+                    r0.x, r1.x, r2.x, 0.,
+                    r0.y, r1.y, r2.y, 0.,
+                    r0.z, r1.z, r2.z, 0.,
+                    r0.w, r1.w, r2.w, 1.
+                );
+            #elif
+                float size = objCount * 3.;
+                vec2 cUv = vec2(0.5/size, 0.5);
+                vec2 dUv = vec2(1./size, 0.);
+                
+                vec2 uv = vec2((objIndex * 3.)/size + cUv.x, cUv.y);
+                vec4 r0 = texture2D( tTransforms, uv);
+                vec4 r1 = texture2D( tTransforms, uv + dUv);
+                vec4 r2 = texture2D( tTransforms, uv + 2. * dUv);
+                return mat4(
+                    r0.x, r1.x, r2.x, 0.,
+                    r0.y, r1.y, r2.y, 0.,
+                    r0.z, r1.z, r2.z, 0.,
+                    r0.w, r1.w, r2.w, 1.
+                );
+            #endif
+        #elif TRANSFORM_STORAGE == 1
+            return uTransforms[int(objIndex)];
         #endif
-    #elif TRANSFORM_STORAGE == 1
-        return uTransforms[int(objIndex)];
-    #endif
-}
+    }
+#endif
 
 attribute float gradientIndex;
 varying float vGradientIndex;

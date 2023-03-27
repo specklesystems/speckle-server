@@ -51,7 +51,7 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     this.onBeforeCompile = this.onCompile
   }
 
-  protected setUniforms(def: Uniforms) {
+  protected setUniforms(def: Uniforms, target: Material = this) {
     for (const k in def) {
       this.userData[k] = {
         value: def[k]
@@ -62,7 +62,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
 
   protected copyUniforms(material: Material) {
     for (const k in material.userData) {
-      if (this.userData[k]) this.userData[k].value = material.userData[k].value
+      if (this.userData[k] !== undefined)
+        this.userData[k].value = material.userData[k].value
     }
   }
 
@@ -89,13 +90,14 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
    */
   clone(): this {
     const ret = super.clone()
-    ret.userData.uViewer_high = this.userData.uViewer_high
-    ret.userData.uViewer_low = this.userData.uViewer_low
-    ret.userData.rteModelViewMatrix = this.userData.rteModelViewMatrix
-    ret.userData.near = this.userData.near
-    ret.userData.far = this.userData.far
-    ret.userData.uTransforms = this.userData.uTransforms
-    ret.userData.tTransforms = this.userData.tTransforms
+    // ret.userData.uViewer_high = this.userData.uViewer_high
+    // ret.userData.uViewer_low = this.userData.uViewer_low
+    // ret.userData.rteModelViewMatrix = this.userData.rteModelViewMatrix
+    // ret.userData.near = this.userData.near
+    // ret.userData.far = this.userData.far
+    // ret.userData.uTransforms = this.userData.uTransforms
+    // ret.userData.tTransforms = this.userData.tTransforms
+    this.setUniforms(this.defines, ret)
     return ret
   }
 

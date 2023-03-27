@@ -12,8 +12,7 @@ export const speckleGhostVert = /* glsl */ `
 
     #if TRANSFORM_STORAGE == 0
         uniform sampler2D tTransforms;
-        const vec2 cUv = vec2(0.5/float(OBJ_COUNT * 3), 0.5);
-        const vec2 dUv = vec2(1./float(OBJ_COUNT * 3), 0.);
+        uniform float objCount;
     #elif TRANSFORM_STORAGE == 1
         uniform mat4 uTransforms[OBJ_COUNT];
     #endif
@@ -44,7 +43,10 @@ export const speckleGhostVert = /* glsl */ `
                     r0.w, r1.w, r2.w, 1.
                 );
             #elif
-                float size = float(OBJ_COUNT * 3);
+                float size = objCount * 3.;
+                vec2 cUv = vec2(0.5/size, 0.5);
+                vec2 dUv = vec2(1./size, 0.);
+                
                 vec2 uv = vec2((objIndex * 3.)/size + cUv.x, cUv.y);
                 vec4 r0 = texture2D( tTransforms, uv);
                 vec4 r1 = texture2D( tTransforms, uv + dUv);

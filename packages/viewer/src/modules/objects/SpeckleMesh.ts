@@ -9,10 +9,8 @@ import {
   Material,
   Matrix4,
   Mesh,
-  NoBlending,
   Ray,
   Raycaster,
-  RGBADepthPacking,
   RGBAFormat,
   Sphere,
   Triangle,
@@ -21,7 +19,6 @@ import {
 } from 'three'
 import { TransformStorage } from '../batching/Batcher'
 import { BatchObject } from '../batching/BatchObject'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 
 const _inverseMatrix = new Matrix4()
@@ -56,7 +53,7 @@ export default class SpeckleMesh extends Mesh {
   private batchNumber = -1
   private bvh: SpeckleBatchBVH = null
   private batchMaterial: Material = null
-  private depthMaterial: SpeckleDepthMaterial = null
+  private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
 
   private _batchObjects: BatchObject[]
@@ -103,22 +100,21 @@ export default class SpeckleMesh extends Mesh {
     this.updateTransformsUniform()
   }
 
-  public setDepthMaterial(material: SpeckleDepthMaterial) {
+  public setOverrideMaterial(material: Material) {
     this.materialStack.push(this.material)
-    if (this.depthMaterial === null) {
-      this.depthMaterial = new SpeckleDepthMaterial(
-        {
-          depthPacking: RGBADepthPacking
-        },
-        ['USE_RTE', 'ALPHATEST_REJECTION']
-      )
-
-      this.depthMaterial.blending = NoBlending
-      this.depthMaterial.side = DoubleSide
+    if (!this.materialCache[material.id]) {
+      this.materialCache[material.id] = material.clone()
     }
-    this.depthMaterial.copy(material)
-    this.material = this.depthMaterial
+    this.materialCache[material.id].copy(material)
+    this.material = this.materialCache[material.id]
     this.material.needsUpdate = true
+  }
+
+  public getCachedMaterial(material: Material) {
+    if (!this.materialCache[material.id]) {
+      this.materialCache[material.id] = material.clone()
+    }
+    return this.materialCache[material.id]
   }
 
   public restoreMaterial() {

@@ -261,7 +261,7 @@ export class Pipeline {
       for (const k in opaque) {
         if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
         const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
-        mesh.setDepthMaterial(this.depthPass.material as SpeckleDepthMaterial)
+        mesh.setOverrideMaterial(this.depthPass.material as SpeckleDepthMaterial)
       }
     }
     this.depthPass.onAfterRender = () => {

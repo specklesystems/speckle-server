@@ -775,7 +775,7 @@ export default class Materials {
     let retMaterial: Material
     switch (filterMaterial) {
       case FilterMaterialType.SELECT:
-        retMaterial = this.getHighlightMaterial(renderView).clone()
+        retMaterial = this.getHighlightMaterial(renderView)
         break
       case FilterMaterialType.GHOST:
         retMaterial = this.getGhostMaterial(renderView)
