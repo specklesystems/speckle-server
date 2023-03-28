@@ -26,7 +26,6 @@ import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
 import SpeckleMesh from '../objects/SpeckleMesh'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import { GeometryType } from '../batching/Batch'
 
 export enum RenderType {
@@ -261,7 +260,7 @@ export class Pipeline {
       for (const k in opaque) {
         if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
         const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
-        mesh.setOverrideMaterial(this.depthPass.material as SpeckleDepthMaterial)
+        mesh.setOverrideMaterial(this.depthPass.material)
       }
     }
     this.depthPass.onAfterRender = () => {
@@ -286,18 +285,38 @@ export class Pipeline {
       restoreVisibility = this._batcher.saveVisiblity()
       const stencil = this._batcher.getStencil()
       this._batcher.applyVisibility(stencil)
+      for (const k in stencil) {
+        if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
+        const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
+        mesh.setOverrideMaterial(this.stencilPass.material)
+      }
     }
     this.stencilPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      for (const k in restoreVisibility) {
+        if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
+        const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
+        mesh.restoreMaterial()
+      }
     }
 
     this.stencilMaskPass.onBeforeRender = () => {
       restoreVisibility = this._batcher.saveVisiblity()
       const stencil = this._batcher.getStencil()
       this._batcher.applyVisibility(stencil)
+      for (const k in stencil) {
+        if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
+        const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
+        mesh.setOverrideMaterial(this.stencilMaskPass.material)
+      }
     }
     this.stencilMaskPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      for (const k in restoreVisibility) {
+        if (this._batcher.batches[k].geometryType !== GeometryType.MESH) continue
+        const mesh = this._batcher.batches[k].renderObject as SpeckleMesh
+        mesh.restoreMaterial()
+      }
     }
 
     this.setPipeline(this.getDefaultPipeline())

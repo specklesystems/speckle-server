@@ -3,7 +3,7 @@
 /* eslint-disable camelcase */
 import { speckleBasicVert } from './shaders/speckle-basic-vert'
 import { speckleBasicFrag } from './shaders/speckle-basic-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshBasicMaterial } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, MeshBasicMaterial, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
@@ -15,6 +15,7 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
+  private _internalUniforms = null
 
   protected get vertexShader(): string {
     return speckleBasicVert
@@ -29,7 +30,8 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
       uViewer_high: new Vector3(),
       uViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
-      tTransforms: null
+      tTransforms: null,
+      objCount: 1
     }
   }
 
@@ -57,10 +59,25 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this['uniforms'] = UniformsUtils.merge([ShaderLib.basic.uniforms, this.userData])
   }
 
-  protected onCompile(shader, renderer) {
-    for (const k in this.uniformsDef) {
-      shader.uniforms[k] = this.userData[k]
+  protected copyUniforms(material: Material) {
+    for (const k in material.userData) {
+      if (this.userData[k] !== undefined)
+        this.userData[k].value = material.userData[k].value
     }
+  }
+
+  protected bindUniforms() {
+    if (!this._internalUniforms) return
+
+    for (const k in this.uniformsDef) {
+      this._internalUniforms.uniforms[k] = this.userData[k]
+    }
+  }
+
+  protected onCompile(shader, renderer) {
+    this._internalUniforms = shader
+
+    this.bindUniforms()
     shader.vertexShader = this.vertexShader
     shader.fragmentShader = this.fragmentShader
   }
@@ -74,10 +91,12 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
 
   public copy(source) {
     super.copy(source)
-    this.userData = {}
-    this.setUniforms(this.uniformsDef)
+    this.copyUniforms(source)
 
+    this.defines = {}
     Object.assign(this.defines, source.defines)
+    /** We need to bind the uniforms here, otherwise three.js fucks up and sporadically doesn't update our uniforms! */
+    this.bindUniforms()
 
     return this
   }

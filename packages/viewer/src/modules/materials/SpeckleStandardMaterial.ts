@@ -8,15 +8,17 @@ import {
   ShaderLib,
   Vector3,
   MeshStandardMaterial,
-  Material
+  Material,
+  IUniform
 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
+import { ExtendedMeshStandardMaterial } from './SpeckleMaterial'
 
 export type Uniforms = Record<string, any>
 
-class SpeckleStandardMaterial extends MeshStandardMaterial {
+class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
@@ -28,6 +30,10 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
   protected get fragmentShader(): string {
     return speckleStandardFrag
+  }
+
+  protected get baseUniforms(): { [uniform: string]: IUniform } {
+    return ShaderLib.standard.uniforms
   }
 
   protected get uniformsDef(): Uniforms {
@@ -45,34 +51,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
   constructor(parameters, defines = []) {
     super(parameters)
-
-    this.setUniforms(this.uniformsDef)
-
-    if (defines) {
-      this.defines = {}
-      for (let k = 0; k < defines.length; k++) {
-        this.defines[defines[k]] = ' '
-      }
-    }
-
-    this.onBeforeCompile = this.onCompile
-  }
-
-  protected setUniforms(def: Uniforms) {
-    for (const k in def) {
-      this.userData[k] = {
-        value: def[k]
-      }
-    }
-    this['uniforms'] = UniformsUtils.merge([ShaderLib.standard.uniforms, this.userData])
-  }
-
-  protected onCompile(shader, renderer) {
-    for (const k in this.uniformsDef) {
-      shader.uniforms[k] = this.userData[k]
-    }
-    shader.vertexShader = this.vertexShader
-    shader.fragmentShader = this.fragmentShader
+    this.init(defines)
   }
 
   /** We need a unique key per program */
@@ -84,11 +63,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
   public copy(source) {
     super.copy(source)
-    this.userData = {}
-    this.setUniforms(this.uniformsDef)
-
-    Object.assign(this.defines, source.defines)
-
+    this.copyFrom(source)
     return this
   }
 
@@ -120,13 +95,6 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
-  }
-
-  private getRuntimeUniforms(gl, material: Material) {
-    const materialProperties = gl.properties.get(this)
-    if (materialProperties.currentProgram) {
-      console.warn(materialProperties.currentProgram.getUniforms())
-    }
   }
 }
 
