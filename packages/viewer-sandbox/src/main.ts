@@ -269,4 +269,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/85b9f0b9f5/commits/cdfbf3e036?overlay=71f61af444,00fe449457,53a6692b79'
   //'Rafinery'
   // 'https://speckle.xyz/streams/b7cac6a6df/commits/2e42381302'
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
 )

@@ -1,12 +1,11 @@
 import { getPasswordResetFinalizationRoute } from '@/modules/core/helpers/routeHelper'
 import { getUserByEmail } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { sendEmail } from '@/modules/emails/services/sending'
 import {
-  BasicEmailTemplateParams,
-  buildBasicTemplateEmail,
-  buildBasicTemplateServerInfo
-} from '@/modules/emails/services/templateFormatting'
+  EmailTemplateParams,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
 import {
   createToken,
@@ -54,10 +53,10 @@ function buildResetLink(token: PasswordResetTokenRecord) {
   return new URL(getPasswordResetFinalizationRoute(token.id), getBaseUrl()).toString()
 }
 
-function buildHtmlBody() {
-  const bodyStart = `Hello,<br/><br/>You have just requested a password reset a few moments ago for your Speckle account. Please click on the button below to complete the process:`
+function buildMjmlBody() {
+  const bodyStart = `<mj-text>Hello,<br/><br/>You have just requested a password reset a few moments ago for your Speckle account. Please click on the button below to complete the process:</mj-text>`
 
-  const bodyEnd = `The link above is valid for <strong>1 hour</strong>. If you didn't request a password reset, feel free to ignore this email - nothing will happen, and your account is secure.`
+  const bodyEnd = `<mj-text>The link above is valid for <strong>1 hour</strong>. If you didn't request a password reset, feel free to ignore this email - nothing will happen, and your account is secure.</mj-text>`
 
   return {
     bodyStart,
@@ -77,23 +76,26 @@ function buildTextBody() {
 
 function buildEmailTemplateParams(
   state: PasswordRecoveryRequestState
-): BasicEmailTemplateParams {
-  const { serverInfo, newToken } = state
+): EmailTemplateParams {
+  const { newToken } = state
 
   return {
-    html: buildHtmlBody(),
+    mjml: buildMjmlBody(),
     text: buildTextBody(),
     cta: {
       title: 'Reset Your Password',
       url: buildResetLink(newToken)
-    },
-    server: buildBasicTemplateServerInfo(serverInfo)
+    }
   }
 }
 
 async function sendResetEmail(state: PasswordRecoveryRequestState) {
   const emailTemplateParams = buildEmailTemplateParams(state)
-  const { html, text } = await buildBasicTemplateEmail(emailTemplateParams)
+  const { html, text } = await renderEmail(
+    emailTemplateParams,
+    state.serverInfo,
+    state.user
+  )
   await sendEmail({
     to: state.email,
     subject: EMAIL_SUBJECT,
