@@ -14,6 +14,7 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
   private static readonly vecBuff0: Vector3 = new Vector3()
   private static readonly vecBuff1: Vector3 = new Vector3()
   private static readonly vecBuff2: Vector3 = new Vector3()
+  private _internalUniforms = null
 
   protected get vertexShader(): string {
     return speckleDepthVert
@@ -51,7 +52,7 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     this.onBeforeCompile = this.onCompile
   }
 
-  protected setUniforms(def: Uniforms, target: Material = this) {
+  protected setUniforms(def: Uniforms) {
     for (const k in def) {
       this.userData[k] = {
         value: def[k]
@@ -67,10 +68,18 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     }
   }
 
-  protected onCompile(shader, renderer) {
+  protected bindUniforms() {
+    if (!this._internalUniforms) return
+
     for (const k in this.uniformsDef) {
-      shader.uniforms[k] = this.userData[k]
+      this._internalUniforms.uniforms[k] = this.userData[k]
     }
+  }
+
+  protected onCompile(shader, renderer) {
+    this._internalUniforms = shader
+
+    this.bindUniforms()
     shader.vertexShader = this.vertexShader
     shader.fragmentShader = this.fragmentShader
   }
@@ -82,31 +91,14 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     return this.constructor.name
   }
 
-  /** A note here:
-   *  We need to do this, becuse three creates clones behind the scenes when the depth material
-   *  has clipping planes enabled. Those clones do not have the user data bound anymore so we
-   *  end up not being able to update our custom uniforms, meaning nothing will work right
-   *  Dick move from three.js doing dirty stuff like this behind our back.
-   */
-  clone(): this {
-    const ret = super.clone()
-    // ret.userData.uViewer_high = this.userData.uViewer_high
-    // ret.userData.uViewer_low = this.userData.uViewer_low
-    // ret.userData.rteModelViewMatrix = this.userData.rteModelViewMatrix
-    // ret.userData.near = this.userData.near
-    // ret.userData.far = this.userData.far
-    // ret.userData.uTransforms = this.userData.uTransforms
-    // ret.userData.tTransforms = this.userData.tTransforms
-    this.setUniforms(this.defines, ret)
-    return ret
-  }
-
   public copy(source) {
     super.copy(source)
     this.copyUniforms(source)
 
     this.defines = {}
     Object.assign(this.defines, source.defines)
+    /** We need to bind the uniforms here, otherwise three.js fucks up and sporadically doesn't update our uniforms! */
+    this.bindUniforms()
 
     return this
   }
@@ -140,6 +132,8 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     if (object instanceof SpeckleMesh) {
       ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
     }
+
+    // console.log(this.userData.rteModelViewMatrix.value)
 
     /** Not a big fan of this, but otherwise three.js won't update
      *  our uniforms when the material is used the scene's override
