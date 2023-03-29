@@ -98,7 +98,12 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         //    * the server public and the user doesn't have an invite
         // so we go ahead and register the user
         const userId = await createUser(user)
-        req.user = { id: userId, email: user.email, isNewUser: true }
+        req.user = {
+          id: userId,
+          email: user.email,
+          isNewUser: true,
+          isInvite: !!invite
+        }
         req.log = req.log.child({ userId })
 
         // 4. use up all server-only invites the email had attached to it

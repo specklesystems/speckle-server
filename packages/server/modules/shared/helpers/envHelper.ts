@@ -103,3 +103,7 @@ export function isSSLServer() {
 export function adminOverrideEnabled() {
   return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
 }
+
+export function disableMixpanel() {
+  return ['1', 'true'].includes(process.env.DISABLE_MP || 'false')
+}

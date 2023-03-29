@@ -5,24 +5,27 @@ import {
   AuthParams,
   authHasFailed
 } from '@/modules/shared/authz'
-import { Request, Response, NextFunction, RequestWithAuthContext } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import { validateToken } from '@/modules/core/services/tokens'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import {
+  GraphQLContext,
+  MaybeNullOrUndefined,
+  Nullable
+} from '@/modules/shared/helpers/typeHelper'
+import { getUser } from '@/modules/core/repositories/users'
+import { resolveMixpanelUserId } from '@speckle/shared'
+import { mixpanel } from '@/modules/shared/utils/mixpanel'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
 
-  const middleware = async (
-    req: RequestWithAuthContext,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const middleware = async (req: Request, res: Response, next: NextFunction) => {
     const { authResult } = await pipeline({
-      context: req.context as AuthContext,
+      context: req.context,
       params: req.params as AuthParams,
       authResult: { authorized: false }
     })
@@ -92,7 +95,7 @@ export async function authContextMiddleware(
     if (authContext.err instanceof ForbiddenError) status = 403
     return res.status(status).json({ error: message })
   }
-  ;(req as RequestWithAuthContext).context = authContext
+  req.context = authContext
   next()
 }
 
@@ -100,11 +103,7 @@ export function addLoadersToCtx(ctx: AuthContext): GraphQLContext {
   const loaders = buildRequestLoaders(ctx)
   return { ...ctx, loaders }
 }
-type MaybeAuthenticatedRequest = Request | RequestWithAuthContext | null | undefined
-const isRequestWithAuthContext = (
-  req: MaybeAuthenticatedRequest
-): req is RequestWithAuthContext =>
-  req !== null && req !== undefined && 'context' in req
+
 /**
  * Build context for GQL operations
  */
@@ -112,13 +111,30 @@ export async function buildContext({
   req,
   token
 }: {
-  req: MaybeAuthenticatedRequest
-  token: string | null
+  req: MaybeNullOrUndefined<Request>
+  token: Nullable<string>
 }): Promise<GraphQLContext> {
-  const ctx = isRequestWithAuthContext(req)
-    ? req.context
-    : await createAuthContextFromToken(token ?? getTokenFromRequest(req))
+  const ctx =
+    req?.context ||
+    (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
 
   // Adding request data loaders
   return addLoadersToCtx(ctx)
+}
+
+/**
+ * Adds a .mixpanel helper onto the req object that is already pre-identified with the active user's identity
+ */
+export async function mixpanelTrackerHelperMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  const ctx = req.context
+  const user = ctx.userId ? await getUser(ctx.userId) : null
+  const mixpanelUserId = user?.email ? resolveMixpanelUserId(user.email) : undefined
+  const mp = mixpanel({ mixpanelUserId })
+
+  req.mixpanel = mp
+  next()
 }
