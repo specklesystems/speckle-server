@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
 import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import { disableMixpanel } from '@/modules/shared/helpers/envHelper'
+import { enableMixpanel } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 
 export function initialize() {
-  if (client || disableMixpanel()) return
+  if (client || !enableMixpanel()) return
 
   client = Mixpanel.init('acd87c5a50b56df91a795e999812a3a4', {
     host: 'analytics.speckle.systems'
