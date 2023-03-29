@@ -89,6 +89,12 @@ module.exports = {
     return newUser.id
   },
 
+  /**
+   * @returns {Promise<{
+   *  id: string,
+   *  isNewUser?: boolean
+   * }>}
+   */
   async findOrCreateUser({ user }) {
     const existingUser = await userByEmailQuery(user.email).select('id').first()
     if (existingUser) return existingUser

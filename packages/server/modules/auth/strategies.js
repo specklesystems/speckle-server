@@ -66,6 +66,11 @@ module.exports = async (app) => {
       // Resolve redirect URL
       const urlObj = new URL(req.authRedirectPath || '/', process.env.CANONICAL_URL)
       urlObj.searchParams.set('access_code', ac)
+
+      if (req.user.isNewUser) {
+        urlObj.searchParams.set('register', 'true')
+      }
+
       const redirectUrl = urlObj.toString()
 
       return res.redirect(redirectUrl)
