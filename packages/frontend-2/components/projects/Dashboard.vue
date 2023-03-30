@@ -4,7 +4,7 @@
     <div
       class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 bg-blue-500/10 rounded-b-md"
     >
-      <ProjectsChecklistV1 />
+      <OnboardingChecklistV1 />
 
       <ProjectsInviteBanners
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"

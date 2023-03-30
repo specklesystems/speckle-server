@@ -1,51 +1,64 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div class="hidden layout-container rounded-2xl md:flex justify-between items-center">
+  <div
+    class="hidden layout-container rounded-2xl md:flex justify-between items-center border-b-2 border-primary-muted"
+  >
     <div class="grid grid-cols-5 gap-2">
       <div v-for="(step, idx) in steps" :key="idx" class="py-2 col-span-1">
         <div
           :class="`${
             step.active
-              ? 'bg-foundation-2 shadow hover:shadow-md'
-              : 'text-foreground-2 hover:bg-primary-muted'
-          } transition rounded-md flex flex-col px-2 py-1 cursor-pointer`"
-          @click.stop="activateStep(idx)"
+              ? 'bg-primary text-foreground-on-primary shadow hover:shadow-md scale-100'
+              : 'text-foreground-2 hover:bg-primary-muted scale-95'
+          } transition rounded-md flex flex-col justify-between px-2 cursor-pointer h-full`"
+          @click.stop="!step.active ? activateStep(idx) : step.action()"
         >
           <div
-            :class="`text-3xl  flex items-center justify-between ${
-              step.active ? 'text-primary' : 'text-foreground-2'
+            :class="`text-xl font-bold flex items-center justify-between ${
+              step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
             }`"
           >
             <span>{{ idx + 1 }}</span>
             <Component :is="step.icon" v-if="!step.completed" :class="`w-4 h-4 mt-1`" />
             <CheckCircleIcon v-else class="w-4 h-4 mt-1" />
           </div>
-          <div :class="`${step.active ? 'font-bold text-primary' : ''}`">
+          <div :class="`${step.active ? 'font-bold text-forergound-on-primary' : ''}`">
             {{ step.title }}
           </div>
           <div class="text-xs mt-[2px]">{{ step.blurb }}</div>
           <div class="flex justify-between items-center py-2">
             <FormButton
-              v-if="!step.completed"
+              v-if="!step.completed && step.active"
               size="sm"
               :disabled="!step.active"
+              color="invert"
               @click.stop="step.action"
             >
-              Let's go!
+              {{ step.cta }}
             </FormButton>
 
             <FormButton
               v-if="step.active && idx !== steps.length - 1 && !step.completed"
+              v-tippy="'Mark completed'"
               text
               link
               size="xs"
-              color="card"
+              color="invert"
               @click.stop="markComplete(idx)"
             >
-              Mark as complete
+              <!-- Mark as complete -->
+              <OutlineCheckCircleIcon class="w-4 h-4" />
             </FormButton>
-            <FormButton v-if="step.completed" text link size="xs">
-              Completed!
+            <span v-if="step.completed" class="text-xs font-bold">Completed!</span>
+            <FormButton
+              v-if="step.completed && step.active"
+              text
+              link
+              size="xs"
+              color="invert"
+              @click.stop="step.action"
+            >
+              {{ step.postCompletionCta }}
             </FormButton>
           </div>
         </div>
@@ -57,13 +70,26 @@
         </div>
       </div>
     </div>
-    <TourManager
+
+    <OnboardingDialogManager
       v-show="showManagerDownloadDialog"
-      :allow-escape="false"
       @close=";(showManagerDownloadDialog = false), markComplete(0)"
+      @cancel="showManagerDownloadDialog = false"
+    ></OnboardingDialogManager>
+    <OnboardingDialogAccountLink
+      v-show="showAccountLinkDialog"
+      @close=";(showAccountLinkDialog = false), markComplete(1)"
+      @cancel="showAccountLinkDialog = false"
     >
-      <template #header>Download Manager</template>
-    </TourManager>
+      <template #header>Desktop Login</template>
+    </OnboardingDialogAccountLink>
+    <OnboardingDialogFirstSend
+      v-show="showFirstSendDialog"
+      @close=";(showFirstSendDialog = false), markComplete(2)"
+      @cancel="showFirstSendDialog = false"
+    >
+      <template #header>Your First Upload</template>
+    </OnboardingDialogFirstSend>
   </div>
 </template>
 <script setup lang="ts">
@@ -72,20 +98,23 @@ import {
   ShareIcon,
   ComputerDesktopIcon,
   UserPlusIcon,
-  CloudArrowUpIcon,
-  HeartIcon
+  CloudArrowUpIcon
 } from '@heroicons/vue/24/solid'
+import { CheckCircleIcon as OutlineCheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 const showManagerDownloadDialog = ref(false)
+const showAccountLinkDialog = ref(false)
+const showFirstSendDialog = ref(false)
 const hasDownloadedManager = useSynchronizedCookie<boolean>(`hasDownloadedManager`)
 
 const steps = ref([
   {
     title: 'Get Connectors',
-    blurb:
-      'Use Manager to install the Speckle Connectors for your design applications!',
+    blurb: 'Use Manager to install the Speckle Connectors for your apps!',
     active: false,
+    cta: "Let's go!",
+    postCompletionCta: 'Download Again',
     action: () => {
       showManagerDownloadDialog.value = true
     },
@@ -93,11 +122,13 @@ const steps = ref([
     icon: ComputerDesktopIcon
   },
   {
-    title: 'Link Account',
+    title: 'Desktop Login',
     blurb: 'Authorise our application connectors to send data to Speckle.',
     active: false,
+    cta: "Let's go!",
+    postCompletionCta: 'Login Again',
     action: () => {
-      //TODO
+      showAccountLinkDialog.value = true
     },
     completed: false,
     icon: UserPlusIcon
@@ -106,16 +137,20 @@ const steps = ref([
     title: 'Send your first model',
     blurb: 'Use your favourite design app to send your first model to Speckle.',
     active: false,
+    cta: "Let's go!",
+    postCompletionCta: 'Show Again',
     action: () => {
-      //TODO
+      showFirstSendDialog.value = true
     },
     completed: false,
     icon: CloudArrowUpIcon
   },
   {
-    title: 'Share your model!',
-    blurb: 'Create an account on our community forum and share your model!',
+    title: 'Enable Multiplayer',
+    blurb: 'Share your project with your colleagues!',
     active: false,
+    cta: "Let's go!",
+    postCompletionCta: 'Download Again',
     action: () => {
       //TODO
     },

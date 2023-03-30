@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="isOpen" max-width="md">
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
-        <h1 class="h4 font-bold">Send an invite</h1>
+        <h1 class="h4 font-bold">Get your colleagues in!</h1>
         <p>
           Speckle will send a server invite link to the email below. You can also add a
           personal message if you want to.
