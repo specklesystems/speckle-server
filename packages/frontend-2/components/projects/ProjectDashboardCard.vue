@@ -39,23 +39,38 @@
           :show-actions="false"
           height="h-52"
         />
-        <!-- <div
-          v-if="maxModels.length === 3"
-          class="flex justify-center items-center text-lg text-blue-500/40 col-span-1"
+        <FormFileUploadZone
+          v-if="models.length === 0"
+          v-slot="{ isDraggingFiles }"
+          :size-limit="maxSizeInBytes"
+          :accept="accept"
+          class="h-36 flex items-center col-span-4 py-4"
+          @files-selected="onFilesSelected"
         >
-          and {{ project.models.totalCount - 3 }} more models
-        </div> -->
-        <div v-if="models.length === 0" class="h-36 flex items-center col-span-4 py-4">
           <div
-            class="w-full h-full border-dashed border-2 border-outline-2 rounded-md p-10 flex items-center justify-center"
+            class="w-full h-full border-dashed border-2 rounded-md p-10 flex items-center justify-center"
+            :class="[
+              isDraggingFiles
+                ? 'border-primary'
+                : fileError
+                ? 'border-danger'
+                : 'border-outline-2'
+            ]"
           >
-            <span class="text-sm text-foreground-2">
+            <span
+              v-if="fileError"
+              class="text-sm text-danger inline-flex space-x-1 items-center"
+            >
+              <ExclamationTriangleIcon class="h-4 w-4" />
+              <span>{{ fileError.message }}</span>
+            </span>
+            <span v-else class="text-sm text-foreground-2">
               Use our
               <b>connectors</b>
               to send data to this model, or drag and drop a IFC/OBJ/STL file here.
             </span>
           </div>
-        </div>
+        </FormFileUploadZone>
       </div>
       <div
         v-if="project.models.totalCount > 4"
@@ -93,6 +108,8 @@ import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/model
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
 import { Nullable } from '@speckle/shared'
+import { useFileImport } from '~~/lib/core/composables/fileImport'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 
 const fullProjectDashboardItemFragment = addFragmentDependencies(
   projectDashboardItemFragment,
@@ -106,6 +123,12 @@ const props = defineProps<{
 
 const projectId = computed(() => props.project.id)
 
+const {
+  maxSizeInBytes,
+  onFilesSelected,
+  accept,
+  error: fileError
+} = useFileImport({ projectId })
 useProjectUpdateTracking(projectId)
 
 useProjectVersionUpdateTracking(
@@ -216,10 +239,5 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const models = computed(() => props.project.models?.items || [])
-// const maxModels = computed(() => {
-//   if (props.project.models.totalCount >= 5) return models.value.slice(0, 3)
-//   else return models.value
-// })
-
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 </script>
