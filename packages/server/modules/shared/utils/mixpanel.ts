@@ -53,7 +53,7 @@ export function mixpanel(params: { mixpanelUserId: Optional<string> }) {
   })
 
   return {
-    track: (eventName: string, extraProperties?: Record<string, unknown>) => {
+    track: async (eventName: string, extraProperties?: Record<string, unknown>) => {
       const payload = {
         ...getUserIdentificationProperties(),
         ...getBaseTrackingProperties(),
@@ -62,15 +62,23 @@ export function mixpanel(params: { mixpanelUserId: Optional<string> }) {
 
       const client = getClient()
       if (client) {
-        mixpanelLogger.info(
-          {
-            eventName,
-            payload
-          },
-          'Mixpanel track() invoked'
-        )
-        client.track(eventName, payload)
+        return new Promise<void>((resolve, reject) => {
+          client.track(eventName, payload, (err) => {
+            mixpanelLogger.info(
+              {
+                eventName,
+                payload,
+                err: err || false
+              },
+              'Mixpanel track() invoked'
+            )
+            if (err) return reject(err)
+            resolve()
+          })
+        })
       }
+
+      return false
     }
   }
 }

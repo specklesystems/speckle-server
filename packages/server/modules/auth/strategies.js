@@ -76,7 +76,7 @@ module.exports = async (app) => {
         const userId = req.user.email ? resolveMixpanelUserId(req.user.email) : null
         const isInvite = !!req.user.isInvite
         if (userId) {
-          mixpanel({ mixpanelUserId: userId }).track('Sign Up', {
+          await mixpanel({ mixpanelUserId: userId }).track('Sign Up', {
             isInvite
           })
         }
