@@ -89,8 +89,17 @@ module.exports = {
     return newUser.id
   },
 
+  /**
+   * @returns {Promise<{
+   *  id: string,
+   *  email: string,
+   *  isNewUser?: boolean
+   * }>}
+   */
   async findOrCreateUser({ user }) {
-    const existingUser = await userByEmailQuery(user.email).select('id').first()
+    const existingUser = await userByEmailQuery(user.email)
+      .select(['id', 'email'])
+      .first()
     if (existingUser) return existingUser
 
     user.password = crs({ length: 20 })

@@ -5296,6 +5296,7 @@ __metadata:
     ioredis: ^5.2.2
     knex: ^2.4.1
     lodash: ^4.17.21
+    mixpanel: ^0.17.0
     mjml: ^4.13.0
     mocha: ^10.1.0
     mocha-junit-reporter: ^2.0.2
@@ -12857,6 +12858,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"https-proxy-agent@npm:5.0.0":
+  version: 5.0.0
+  resolution: "https-proxy-agent@npm:5.0.0"
+  dependencies:
+    agent-base: 6
+    debug: 4
+  checksum: 165bfb090bd26d47693597661298006841ab733d0c7383a8cb2f17373387a94c903a3ac687090aa739de05e379ab6f868bae84ab4eac288ad85c328cd1ec9e53
+  languageName: node
+  linkType: hard
+
 "https-proxy-agent@npm:5.0.1, https-proxy-agent@npm:^5.0.0":
   version: 5.0.1
   resolution: "https-proxy-agent@npm:5.0.1"
@@ -14694,6 +14705,15 @@ __metadata:
   version: 2.45.0
   resolution: "mixpanel-browser@npm:2.45.0"
   checksum: 43722dd5019ece65302e933f3d5812ea015aff8525b3ba5347da9cd8694871ed85179047bf2bc7f47cd58c050158ea4ce84cc2810e128988c151fe4457f52f55
+  languageName: node
+  linkType: hard
+
+"mixpanel@npm:^0.17.0":
+  version: 0.17.0
+  resolution: "mixpanel@npm:0.17.0"
+  dependencies:
+    https-proxy-agent: 5.0.0
+  checksum: 43afa7dfd5ad199318f9b5555bc8b4ed1e0536ad87545c7b9290d3c76da665f86fb7c336eb9346a026f71959039658e8fcea9a9eafdf2a743c9ec11789e6b143
   languageName: node
   linkType: hard
 

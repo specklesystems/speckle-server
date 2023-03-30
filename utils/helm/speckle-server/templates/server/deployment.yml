@@ -138,7 +138,11 @@ spec:
           - name: ADMIN_OVERRIDE_ENABLED
             value: "true"
           {{- end }}
-            
+
+          {{- if (and .Values.server.mp .Values.server.mp.enabled) }}
+          - name: ENABLE_MP
+            value: {{ default "true" ( .Values.server.mp.enabled | quote) }}
+          {{- end }}
 
           # *** S3 Object Storage ***
           {{- if (or .Values.s3.configMap.enabled .Values.s3.endpoint) }}

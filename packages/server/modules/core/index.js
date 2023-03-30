@@ -1,6 +1,6 @@
-'use strict'
 const { registerOrUpdateScope, registerOrUpdateRole } = require('@/modules/shared')
 const { moduleLogger } = require('@/logging/logging')
+const mp = require('@/modules/shared/utils/mixpanel')
 
 exports.init = async (app) => {
   moduleLogger.info('💥 Init core module')
@@ -26,6 +26,9 @@ exports.init = async (app) => {
   for (const role of roles) {
     await registerOrUpdateRole(role)
   }
+
+  // Init mp
+  mp.initialize()
 }
 
 exports.finalize = () => {}

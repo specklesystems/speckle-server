@@ -55,6 +55,9 @@ spec:
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
+{{- if (default true .Values.server.mp.enabled ) -}}
+              - matchName: 'analytics.speckle.systems'
+{{- end }}
 {{- if .Values.server.email.enabled }}
               # email server
 {{ include "speckle.networkpolicy.dns.email.cilium" $ | indent 14 }}

@@ -1,4 +1,4 @@
-import express, { RequestWithAuthContext } from 'express'
+import express from 'express'
 import {
   getRedisUrl,
   getIntFromEnv,
@@ -282,9 +282,7 @@ export const getActionForPath = (path: string, verb: string): RateLimitAction =>
 }
 
 export const getSourceFromRequest = (req: express.Request): string => {
-  let source: string | null =
-    ((req as RequestWithAuthContext)?.context?.userId as string) ||
-    getIpFromRequest(req)
+  let source: string | null = req?.context?.userId || getIpFromRequest(req)
 
   if (!source) source = 'unknown'
   return source
