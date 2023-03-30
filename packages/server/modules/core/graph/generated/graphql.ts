@@ -1847,7 +1847,7 @@ export type Stream = {
   /** Returns a specific file upload that belongs to this stream. */
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
-  fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  fileUploads: Array<FileUpload>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -2451,7 +2451,7 @@ export type ViewerUserActivityMessageInput = {
   /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  /** Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open */
   thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
@@ -2467,12 +2467,13 @@ export enum ViewerUserActivityStatus {
 export type ViewerUserOpenThreadMessage = {
   __typename?: 'ViewerUserOpenThreadMessage';
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  threadId?: Maybe<Scalars['String']>;
 };
 
 export type ViewerUserOpenThreadMessageInput = {
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  /** Set to null, if inside the "new thread" editor, not an existing thread */
+  threadId?: InputMaybe<Scalars['String']>;
 };
 
 export type ViewerUserSelectionInfo = {
@@ -3598,7 +3599,7 @@ export type StreamResolvers<ContextType = GraphQLContext, ParentType extends Res
   favoritedDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   favoritesCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileUpload?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<StreamFileUploadArgs, 'id'>>;
-  fileUploads?: Resolver<Maybe<Array<Maybe<ResolversTypes['FileUpload']>>>, ParentType, ContextType>;
+  fileUploads?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isDiscoverable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3764,7 +3765,7 @@ export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, Par
 
 export type ViewerUserOpenThreadMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserOpenThreadMessage'] = ResolversParentTypes['ViewerUserOpenThreadMessage']> = {
   isTyping?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  threadId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  threadId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

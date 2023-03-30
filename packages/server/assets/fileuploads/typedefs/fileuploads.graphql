@@ -2,7 +2,7 @@ extend type Stream {
   """
   Returns a list of all the file uploads for this stream.
   """
-  fileUploads: [FileUpload]
+  fileUploads: [FileUpload!]!
   """
   Returns a specific file upload that belongs to this stream.
   """

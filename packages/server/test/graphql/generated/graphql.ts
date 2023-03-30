@@ -1839,7 +1839,7 @@ export type Stream = {
   /** Returns a specific file upload that belongs to this stream. */
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
-  fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  fileUploads: Array<FileUpload>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -2443,7 +2443,7 @@ export type ViewerUserActivityMessageInput = {
   /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  /** Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open */
   thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
@@ -2459,12 +2459,13 @@ export enum ViewerUserActivityStatus {
 export type ViewerUserOpenThreadMessage = {
   __typename?: 'ViewerUserOpenThreadMessage';
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  threadId?: Maybe<Scalars['String']>;
 };
 
 export type ViewerUserOpenThreadMessageInput = {
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  /** Set to null, if inside the "new thread" editor, not an existing thread */
+  threadId?: InputMaybe<Scalars['String']>;
 };
 
 export type ViewerUserSelectionInfo = {
