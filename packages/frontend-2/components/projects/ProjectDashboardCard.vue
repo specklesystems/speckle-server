@@ -42,13 +42,14 @@
         <FormFileUploadZone
           v-if="models.length === 0"
           v-slot="{ isDraggingFiles }"
+          :disabled="isUploading"
           :size-limit="maxSizeInBytes"
           :accept="accept"
           class="h-36 flex items-center col-span-4 py-4"
           @files-selected="onFilesSelected"
         >
           <div
-            class="w-full h-full border-dashed border-2 rounded-md p-10 flex items-center justify-center"
+            class="w-full h-full border-dashed border-2 rounded-md p-10 flex items-center justify-center text-sm"
             :class="[
               isDraggingFiles
                 ? 'border-primary'
@@ -57,14 +58,15 @@
                 : 'border-outline-2'
             ]"
           >
+            <div></div>
             <span
               v-if="fileError"
-              class="text-sm text-danger inline-flex space-x-1 items-center"
+              class="text-danger inline-flex space-x-1 items-center"
             >
               <ExclamationTriangleIcon class="h-4 w-4" />
               <span>{{ fileError.message }}</span>
             </span>
-            <span v-else class="text-sm text-foreground-2">
+            <span v-else class="text-foreground-2">
               Use our
               <b>connectors</b>
               to send data to this model, or drag and drop a IFC/OBJ/STL file here.
@@ -127,7 +129,9 @@ const {
   maxSizeInBytes,
   onFilesSelected,
   accept,
-  error: fileError
+  error: fileError,
+  upload: fileUpload,
+  isUploading
 } = useFileImport({ projectId })
 useProjectUpdateTracking(projectId)
 
