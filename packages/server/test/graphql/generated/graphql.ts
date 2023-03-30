@@ -530,10 +530,16 @@ export type FileUpload = {
   convertedMessage?: Maybe<Scalars['String']>;
   /** 0 = queued, 1 = processing, 2 = success, 3 = error */
   convertedStatus: Scalars['Int'];
+  /** Alias for convertedCommitId */
+  convertedVersionId?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Alias for branchName */
+  modelName: Scalars['String'];
+  /** Alias for streamId */
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   uploadComplete: Scalars['Boolean'];
   uploadDate: Scalars['DateTime'];
@@ -625,6 +631,8 @@ export type Model = {
   id: Scalars['ID'];
   /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
+  /** Returns a list of versions that are being created from a file import */
+  pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   version?: Maybe<Version>;
@@ -1194,6 +1202,8 @@ export type Project = {
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
+  /** Returns a list models that are being created from a file import */
+  pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */

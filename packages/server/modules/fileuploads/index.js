@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-const { saveUploadFile } = require('./services/fileuploads')
+const { saveUploadFile } = require('@/modules/fileuploads/repositories/fileUploads')
 const request = require('request')
 const { streamWritePermissions } = require('@/modules/shared/authz')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')

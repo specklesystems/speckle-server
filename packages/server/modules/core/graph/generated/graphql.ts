@@ -3,6 +3,7 @@ import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, Version
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
+import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -538,10 +539,16 @@ export type FileUpload = {
   convertedMessage?: Maybe<Scalars['String']>;
   /** 0 = queued, 1 = processing, 2 = success, 3 = error */
   convertedStatus: Scalars['Int'];
+  /** Alias for convertedCommitId */
+  convertedVersionId?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Alias for branchName */
+  modelName: Scalars['String'];
+  /** Alias for streamId */
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   uploadComplete: Scalars['Boolean'];
   uploadDate: Scalars['DateTime'];
@@ -633,6 +640,8 @@ export type Model = {
   id: Scalars['ID'];
   /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
+  /** Returns a list of versions that are being created from a file import */
+  pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   version?: Maybe<Version>;
@@ -1202,6 +1211,8 @@ export type Project = {
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
+  /** Returns a list models that are being created from a file import */
+  pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
@@ -2681,7 +2692,7 @@ export type ResolversTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailAddress: ResolverTypeWrapper<Scalars['EmailAddress']>;
-  FileUpload: ResolverTypeWrapper<FileUpload>;
+  FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   ID: ResolverTypeWrapper<Scalars['ID']>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
@@ -2837,7 +2848,7 @@ export type ResolversParentTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailAddress: Scalars['EmailAddress'];
-  FileUpload: FileUpload;
+  FileUpload: FileUploadGraphQLReturn;
   Float: Scalars['Float'];
   ID: Scalars['ID'];
   Int: Scalars['Int'];
@@ -3190,10 +3201,13 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
   convertedLastUpdate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   convertedMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   convertedStatus?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  convertedVersionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   fileSize?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  modelName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   uploadComplete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   uploadDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -3230,6 +3244,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingImportedVersions?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
@@ -3381,6 +3396,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
   modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;

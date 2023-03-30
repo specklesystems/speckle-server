@@ -408,4 +408,20 @@ export const Objects = buildTableHelper('objects', [
   'streamId'
 ])
 
+export const FileUploads = buildTableHelper('file_uploads', [
+  'id',
+  'streamId',
+  'branchName',
+  'userId',
+  'fileName',
+  'fileType',
+  'fileSize',
+  'uploadComplete',
+  'uploadDate',
+  'convertedStatus',
+  'convertedLastUpdate',
+  'convertedMessage',
+  'convertedCommitId'
+])
+
 export { knex }

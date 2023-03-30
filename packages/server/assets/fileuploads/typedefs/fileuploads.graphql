@@ -9,14 +9,40 @@ extend type Stream {
   fileUpload(id: String!): FileUpload
 }
 
+extend type Project {
+  """
+  Returns a list models that are being created from a file import
+  """
+  pendingImportedModels: [FileUpload!]!
+}
+
+extend type Model {
+  """
+  Returns a list of versions that are being created from a file import
+  """
+  pendingImportedVersions: [FileUpload!]!
+}
+
 type FileUpload {
   id: String!
+  """
+  Alias for streamId
+  """
+  projectId: String!
+  """
+  Alias for branchName
+  """
+  modelName: String!
   streamId: String!
   branchName: String!
   """
   If present, the conversion result is stored in this commit.
   """
   convertedCommitId: String
+  """
+  Alias for convertedCommitId
+  """
+  convertedVersionId: String
   """
   The user's id that uploaded this file.
   """

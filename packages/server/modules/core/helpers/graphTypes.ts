@@ -67,6 +67,7 @@ export type ProjectGraphQLReturn = StreamRecord &
     | 'viewerResources'
     | 'visibility'
     | 'allowPublicComments'
+    | 'pendingImportedModels'
   > & {
     /**
      * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
@@ -85,6 +86,7 @@ export type ModelGraphQLReturn = Omit<
   | 'displayName'
   | 'versions'
   | 'commentThreads'
+  | 'pendingImportedVersions'
 > &
   BranchRecord
 
